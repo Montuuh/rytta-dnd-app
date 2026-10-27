@@ -43,12 +43,12 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-000"],
-      "sources": ["Drive: roles"],
-      "scope": "Sign-in/out, auth provider and PKCE callback; no gameplay.",
+      "sources": ["Drive: roles", "User: Google-only open registration and campaign hub"],
+      "scope": "Google sign-in/out, identity-scoped session/cache lifecycle and PKCE callback; no email allowlist or gameplay.",
       "acceptance": [
-        "Select auth provider and email policy before implementation.",
+        "Use Google with open registration, no email allowlist and no password screen.",
         "Signed-out, loading, expired, invalid callback and retry states are usable.",
         "User change cancels requests and clears private cached data.",
         "HashRouter and Pages base survive auth redirects; logs contain no tokens."
@@ -58,7 +58,13 @@
         "Two-account Supabase integration",
         "Mobile sign-in and sign-out browser tests"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/decisions/003-identity-campaign-membership.md",
+        "docs/evidence/RYT-001-002/validation.md",
+        "docs/evidence/RYT-001-002/supabase-connection.md",
+        "docs/evidence/RYT-001-002/release-readiness.md",
+        "docs/evidence/RYT-001-002/production-configuration.md"
+      ]
     },
     {
       "id": "RYT-002",
@@ -69,21 +75,31 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-001"],
-      "sources": ["Drive: DM/player roles"],
-      "scope": "Campaign creation, selection and invitation lifecycle.",
+      "sources": [
+        "Drive: DM/player roles",
+        "User: multi-campaign hub, in-app invitations and multiple DMs"
+      ],
+      "scope": "Campaign hub, creation/selection, seven-day in-app email invitations, multiple DMs, handover and non-destructive removal; no email notifications. Character-targeted invitations and assignment extend this flow in RYT-003 (ADR 004).",
       "acceptance": [
         "Creator becomes DM atomically.",
         "Invites expire and cannot be replayed or escalated to DM.",
-        "Revoked users lose access; protect last DM and immutable ownership.",
+        "Revoked users lose access without deleting characters; protect last DM and immutable creator attribution with no permanent creator privileges.",
+        "DMs invite Players, promote/demote/remove members; members can leave after appointing a DM successor when needed.",
         "A user in two campaigns never mixes private cache or records."
       ],
       "validation": [
         "SQL invite/role/outsider denial tests",
         "Two-user invitation and revocation e2e"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/decisions/003-identity-campaign-membership.md",
+        "docs/evidence/RYT-001-002/validation.md",
+        "docs/evidence/RYT-001-002/supabase-connection.md",
+        "docs/evidence/RYT-001-002/release-readiness.md",
+        "docs/evidence/RYT-001-002/production-configuration.md"
+      ]
     },
     {
       "id": "RYT-003",
@@ -96,15 +112,28 @@
       },
       "status": "planned",
       "dependsOn": ["RYT-002"],
-      "sources": ["Drive: character sheets and resources"],
-      "scope": "Character ownership and revision-checked gold/water/ration/exhaustion operations.",
+      "sources": [
+        "Drive: character sheets and resources",
+        "User: DM creates characters and invites a Player to one character per campaign",
+        "docs/decisions/004-player-character-assignment.md"
+      ],
+      "scope": "DM-created unassigned characters, character-targeted invitations with atomic Player assignment, and revision-checked gold/water/ration/exhaustion operations. One assigned character per Player per campaign initially; multiple characters and activation/deactivation are deferred.",
       "acceptance": [
         "Choose edition, resource units and player-facing language.",
+        "DM can create a character before its Player has an account or campaign membership, then invite an email for that specific unassigned character.",
+        "Invitation acceptance atomically activates Player membership and links the invited character; the Player cannot self-select or create a different character.",
+        "Database enforces at most one assigned character per Player per campaign and at most one assigned Player per character; reject cross-campaign links, already-assigned characters, duplicate assignments and expired/reused/revoked invitations, including concurrent acceptance.",
+        "Define DM-driven reassignment and preserve characters/resources when membership is revoked; no implicit transfer or character lifecycle/switcher feature.",
         "Player can read own resources but never edit them directly.",
         "DM editor uses RPC revision checks; revoke direct resource writes.",
         "Audit every change; reject negative/unsafe integer values and stale revisions."
       ],
-      "validation": ["SQL actor matrix and stale-write tests", "Two-device resource update test"],
+      "validation": [
+        "SQL actor matrix, unassigned-character, one-to-one assignment and stale-write tests",
+        "Concurrent invitation acceptance and cross-campaign assignment denial tests",
+        "DM character creation to Player invitation/acceptance e2e, including a previously nonexistent account",
+        "Two-device resource update test"
+      ],
       "evidence": []
     },
     {

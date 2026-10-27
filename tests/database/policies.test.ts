@@ -17,12 +17,13 @@ async function asUser(id: string) {
 beforeAll(async () => {
   // Auth shim only. Real PostgreSQL runs the migration, policies and grants.
   await db.exec(`create role anon; create role authenticated;
-    create schema auth; create table auth.users(id uuid primary key);
+    create schema auth; create table auth.users(id uuid primary key, email text, email_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     grant usage on schema auth to authenticated, anon;
     grant execute on function auth.uid() to authenticated, anon;
     insert into auth.users values ('${dm}'), ('${player}'), ('${outsider}');`)
-  await db.exec(readFileSync('supabase/migrations/202610270001_foundation.sql', 'utf8'))
+  await db.exec(readFileSync('supabase/migrations/20261027225922_foundation.sql', 'utf8'))
+  await db.exec(readFileSync('supabase/migrations/20261027225926_membership.sql', 'utf8'))
   await asUser(dm)
   campaign = (
     await db.query<{ id: string }>("select public.create_campaign('Test campaign') as id")

@@ -3,6 +3,7 @@ import { Notifications } from '@mantine/notifications'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { PropsWithChildren } from 'react'
 import { theme } from './theme'
+import { AuthProvider } from '@/features/auth'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true } },
@@ -35,7 +36,7 @@ export function Providers({ children }: PropsWithChildren) {
     >
       <QueryClientProvider client={queryClient}>
         <Notifications position="top-right" />
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </QueryClientProvider>
     </MantineProvider>
   )

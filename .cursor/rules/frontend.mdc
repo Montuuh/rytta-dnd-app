@@ -1,0 +1,9 @@
+---
+description: Rytta frontend module boundaries and touch accessibility
+globs: src/**/*.ts,src/**/*.tsx,src/**/*.css
+alwaysApply: false
+---
+Follow AGENTS.md and src/AGENTS.md. Read docs/design-system.md for visual work.
+Use feature entrypoints. Supabase access belongs in adapters. Keep demo data explicit.
+Use typed ES/EN catalogs and light/dark tokens. Invoke ui-ux after interface changes;
+the user authorized this standing review. Follow docs/ui-review.md before completion.

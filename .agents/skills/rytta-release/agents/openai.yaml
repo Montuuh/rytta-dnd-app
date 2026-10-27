@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Rytta Release'
+  short_description: 'Verify Rytta releases and prepare static deployments'
+  default_prompt: 'Use $rytta-release for the requested Rytta delivery.'

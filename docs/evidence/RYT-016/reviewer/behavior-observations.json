@@ -1,0 +1,107 @@
+[
+  {
+    "name": "fresh defaults ignore OS and browser locale",
+    "pass": true
+  },
+  {
+    "name": "skip link first",
+    "pass": true
+  },
+  {
+    "name": "skip link main focus",
+    "pass": true
+  },
+  {
+    "name": "drawer controls",
+    "closeName": "Cerrar navegación",
+    "closeBox": {
+      "x": -56,
+      "y": 17,
+      "width": 44,
+      "height": 44
+    }
+  },
+  {
+    "name": "drawer focus trap",
+    "pass": true
+  },
+  {
+    "name": "Escape returns focus to menu",
+    "pass": true
+  },
+  {
+    "name": "persist English and light",
+    "pass": true
+  },
+  {
+    "name": "drawer navigation focus",
+    "active": {
+      "tag": "MAIN",
+      "id": "main-content",
+      "label": null
+    }
+  },
+  {
+    "name": "theme radio keyboard updates",
+    "pass": true
+  },
+  {
+    "name": "settings synchronizes header",
+    "pass": true
+  },
+  {
+    "name": "visible target sizes",
+    "targets": [
+      {
+        "name": "Abrir navegación",
+        "width": 44,
+        "height": 44
+      },
+      {
+        "name": "Cambiar a modo claro",
+        "width": 44,
+        "height": 44
+      },
+      {
+        "name": "Idioma",
+        "width": 128,
+        "height": 44
+      },
+      {
+        "name": "Oscuro",
+        "width": 64.796875,
+        "height": 44
+      },
+      {
+        "name": "Claro",
+        "width": 53.09375,
+        "height": 44
+      },
+      {
+        "name": "Idioma",
+        "width": 260,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "name": "notfound ES",
+    "heading": "Página no encontrada",
+    "title": "Página no encontrada · Rytta"
+  },
+  {
+    "name": "notfound EN",
+    "heading": "Page not found",
+    "title": "Page not found · Rytta"
+  },
+  {
+    "name": "camp 150% reflow",
+    "width": 390,
+    "scroll": 390
+  },
+  {
+    "name": "no JS errors",
+    "pass": true,
+    "details": []
+  }
+]

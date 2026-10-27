@@ -1,0 +1,19 @@
+{
+  "description": "Load Rytta delivery context on session start or resume. No network access or repository writes.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/session-context.mjs\"",
+            "commandWindows": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/session-context.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Loading Rytta delivery context"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "measurements": {
+    "width": 192,
+    "font": "21px / 51px Inter, ui-sans-serif, system-ui, sans-serif",
+    "paddingLeft": "18px",
+    "paddingRight": "51px",
+    "textWidth": 71.8388671875
+  },
+  "drawer": {
+    "width": 390,
+    "scroll": 388
+  },
+  "close": {
+    "x": 306.5,
+    "y": 25,
+    "width": 66,
+    "height": 66
+  },
+  "motion": {
+    "transition": "1e-05s",
+    "animation": "1e-05s"
+  }
+}

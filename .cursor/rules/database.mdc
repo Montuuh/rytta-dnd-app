@@ -1,0 +1,7 @@
+---
+description: Rytta campaign isolation and server authority
+globs: supabase/**/*.sql
+alwaysApply: false
+---
+Follow AGENTS.md and supabase/AGENTS.md. Read docs/security.md before migrations.
+Run denial tests and never infer a production deployment from local migration work.

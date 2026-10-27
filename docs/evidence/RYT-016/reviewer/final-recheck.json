@@ -1,0 +1,192 @@
+[
+  {
+    "width": 390,
+    "language": "es",
+    "scheme": "dark",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 47.892578125,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "language": "es",
+    "scheme": "light",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 47.892578125,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "language": "en",
+    "scheme": "dark",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 43.8935546875,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "language": "en",
+    "scheme": "light",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 43.8935546875,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 820,
+    "language": "es",
+    "scheme": "dark",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 47.892578125,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 820,
+    "language": "es",
+    "scheme": "light",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 47.892578125,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 820,
+    "language": "en",
+    "scheme": "dark",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 43.8935546875,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 820,
+    "language": "en",
+    "scheme": "light",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 43.8935546875,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "language": "es",
+    "scheme": "dark",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 47.892578125,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "language": "es",
+    "scheme": "light",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 47.892578125,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "language": "en",
+    "scheme": "dark",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 43.8935546875,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "language": "en",
+    "scheme": "light",
+    "size": {
+      "width": 126,
+      "available": 80,
+      "needed": 43.8935546875,
+      "fits": true
+    },
+    "overflow": false,
+    "violations": [],
+    "errors": []
+  },
+  {
+    "mode": "invalid-storage",
+    "defaults": {
+      "lang": "es",
+      "scheme": "dark"
+    },
+    "after": {
+      "lang": "en",
+      "scheme": "light"
+    }
+  },
+  {
+    "mode": "blocked-storage",
+    "defaults": {
+      "lang": "es",
+      "scheme": "dark"
+    },
+    "after": {
+      "lang": "en",
+      "scheme": "light"
+    }
+  }
+]

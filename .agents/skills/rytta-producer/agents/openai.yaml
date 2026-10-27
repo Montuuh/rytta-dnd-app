@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Rytta Producer'
+  short_description: 'Plan scoped deliveries and maintain the Rytta backlog'
+  default_prompt: 'Use $rytta-producer for the requested Rytta delivery.'

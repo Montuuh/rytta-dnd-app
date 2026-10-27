@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Rytta Feature'
+  short_description: 'Implement and verify accessible Rytta frontend slices'
+  default_prompt: 'Use $rytta-feature for the requested Rytta delivery.'

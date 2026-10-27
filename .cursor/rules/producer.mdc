@@ -1,0 +1,7 @@
+---
+description: Rytta delivery planning and evidence
+globs: docs/backlog/**,docs/decisions/**
+alwaysApply: false
+---
+Follow docs/AGENTS.md and docs/ai-workflow.md. items.json is the single status source.
+Every ticket needs scope, dependencies, acceptance criteria, validation and evidence before Done.

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Rytta Supabase'
+  short_description: 'Build and test Rytta data permissions and transactions'
+  default_prompt: 'Use $rytta-supabase for the requested Rytta delivery.'

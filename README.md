@@ -72,5 +72,6 @@ Start with the [documentation index](docs/README.md).
 Invoke `$rytta-producer` to prepare the next delivery from the
 [backlog](docs/backlog/items.json). [Deployment instructions](docs/deployment.md)
 cover GitHub Pages and Vercel. The Rytta Supabase project is connected and its initial
-schema is applied; no frontend site has been published. See
+schema is applied. The frontend is published at <https://montuuh.github.io/rytta-dnd-app/>.
+See [deployment evidence](docs/evidence/RYT-001-002/pages-deployment.md) and
 [hosted connection evidence](docs/evidence/RYT-001-002/supabase-connection.md).

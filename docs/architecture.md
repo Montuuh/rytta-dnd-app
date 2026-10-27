@@ -22,7 +22,8 @@ flowchart LR
 Google sign-in, PKCE callback handling and the campaign hub are implemented. The Rytta
 Supabase project has the initial schema and hosted SQL/API probes pass. The user confirmed
 one completed local Google sign-in, corroborated by a Google identity in hosted Auth.
-Two-account access flows and the deployed callback remain unverified; fixtures do not prove them.
+The Pages deployment also passed a real single-account Google callback and session reload.
+Two-account access flows remain unverified; fixtures do not prove them.
 Dashed connections are future tickets.
 
 ## Boundaries

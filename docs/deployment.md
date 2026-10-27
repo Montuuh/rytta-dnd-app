@@ -6,9 +6,11 @@ The frontend is static; Supabase is a separate backend. Hash routes avoid rewrit
 
 The current repository has Pages enabled with GitHub Actions and public Supabase variables
 configured. Production Auth URLs are also configured. See the
-[configuration follow-up](evidence/RYT-001-002/production-configuration.md). Publication still
-requires an explicit workflow dispatch and a public smoke; the second-account test is
-deferred by the user. The numbered steps below also serve as setup instructions for new environments.
+[configuration follow-up](evidence/RYT-001-002/production-configuration.md). The initial
+frontend is published at https://montuuh.github.io/rytta-dnd-app/ with a verified Google
+callback and session reload; see [deployment evidence](evidence/RYT-001-002/pages-deployment.md).
+The second-account test is deferred by the user. Future publications still require explicit
+authorization and public verification. The steps below also serve as setup instructions for new environments.
 
 1. Create/connect a GitHub repo and push only when requested.
 2. Settings → Pages: choose GitHub Actions.

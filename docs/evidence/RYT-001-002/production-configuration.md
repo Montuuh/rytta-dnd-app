@@ -37,3 +37,6 @@ request. RYT-001/RYT-002 therefore remain in review. Production publication is a
 manual `Publish Pages` workflow dispatch; enabling Pages and pushing source alone do not
 dispatch that workflow. No successful public deployment or full production Google callback
 is claimed in this report. No production migration, paid resource or external message was sent.
+
+Subsequently the user explicitly authorized publication. The successful deployment and real
+Google callback are recorded separately in [deployment evidence](pages-deployment.md).

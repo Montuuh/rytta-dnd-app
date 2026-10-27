@@ -1,0 +1,336 @@
+:root {
+  --app-bg: #121a17;
+  --app-surface: #1b2722;
+  --app-raised: #24362d;
+  --app-text: #f0efdf;
+  --app-muted: #b1bcae;
+  --app-accent: #b8d18c;
+  --app-border: #43594a;
+  --app-hero: #263a30;
+  --app-focus: #d9bc78;
+  --app-on-accent: #14241d;
+  color: var(--app-text);
+  background: var(--app-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+html[data-mantine-color-scheme='light'] {
+  --app-bg: #f7f7f2;
+  --app-surface: #fffefa;
+  --app-raised: #eff1e6;
+  --app-text: #292f27;
+  --app-muted: #626b5b;
+  --app-accent: #4c6038;
+  --app-border: #d4ddc3;
+  --app-hero: #e8ecdc;
+  --app-focus: #796329;
+  --app-on-accent: #ffffff;
+}
+.topbar-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.topbar-identity {
+  min-width: 0;
+}
+.language-select {
+  max-width: 260px;
+}
+.topbar .language-select {
+  width: 8rem;
+}
+.loading-screen {
+  padding: 24px;
+}
+.fatal-error button {
+  min-height: 44px;
+  padding: 8px 20px;
+}
+html[data-mantine-color-scheme='dark'] .sidebar {
+  background: #14241d;
+  border-right: 1px solid var(--app-border);
+}
+html[data-mantine-color-scheme='dark'] .nav-item.active {
+  background: #b8d18c;
+  color: #14241d;
+}
+body {
+  margin: 0;
+}
+a {
+  color: inherit;
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 4px;
+}
+.app-layout {
+  min-height: 100dvh;
+}
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 244px;
+  padding: 34px 22px 24px;
+  background: #243b32;
+  color: #edf0df;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: Georgia, serif;
+  font-size: 28px;
+  letter-spacing: 4px;
+}
+.brand small {
+  display: block;
+  font:
+    9px/2.2 system-ui,
+    sans-serif;
+  letter-spacing: 2px;
+  color: #c3d0bc;
+}
+.nav-caption {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #bdc9b7;
+  margin: 44px 12px 16px;
+}
+.nav-item {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-decoration: none;
+  font-size: 14px;
+  color: inherit;
+}
+.nav-item:hover {
+  background: #ffffff12;
+}
+.nav-item.active {
+  background: #e8ecd8;
+  color: #243b32;
+  font-weight: 650;
+}
+.settings-link {
+  margin-top: 26px;
+}
+.sidebar-note {
+  margin-top: auto;
+  padding: 38px 12px 0;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #c3d0bc;
+}
+.workspace {
+  margin-left: 244px;
+}
+.topbar {
+  flex-wrap: wrap;
+  min-height: 78px;
+  padding: 20px 42px;
+  border-bottom: 1px solid var(--app-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topbar .mobile-menu {
+  display: none;
+}
+main {
+  max-width: 1200px;
+  margin: auto;
+  padding: 42px;
+  outline: none;
+}
+main h1 {
+  font-size: clamp(2.1rem, 3.6vw, 3.3rem);
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+}
+main h2 {
+  font-size: 27px;
+}
+main h3 {
+  font-size: 23px;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: var(--app-accent);
+  margin-bottom: 14px;
+}
+.campaign-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 262px;
+  background: var(--app-hero);
+  border-color: var(--app-border);
+  display: flex;
+  align-items: center;
+}
+.hero-copy {
+  position: relative;
+  z-index: 1;
+}
+.campaign-hero h2 {
+  font-size: 34px;
+}
+.compass-art {
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  right: -20px;
+  top: -30px;
+  color: var(--app-accent);
+  opacity: 0.22;
+  transform: rotate(-15deg);
+}
+.compass-art svg {
+  width: 100%;
+  height: 100%;
+}
+.compass-art::after {
+  content: '';
+  position: absolute;
+  inset: 30px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.module-card {
+  text-decoration: none;
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  transition:
+    border-color 150ms,
+    transform 150ms;
+}
+.module-card:hover {
+  border-color: var(--app-accent);
+  transform: translateY(-2px);
+}
+.module-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--app-raised);
+  color: var(--app-accent);
+}
+.section-note {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--app-muted);
+}
+.feature-icon {
+  flex-shrink: 0;
+  color: var(--app-accent);
+}
+.page-footer {
+  padding: 12px 42px 28px;
+  font-size: 12px;
+  color: var(--app-muted);
+  text-align: center;
+}
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 1000;
+  background: var(--app-surface);
+  color: var(--app-text);
+  padding: 14px;
+}
+.skip-link:focus {
+  top: 12px;
+}
+.fatal-error {
+  max-width: 650px;
+  padding: 32px;
+}
+@media (max-width: 62em) {
+  .sidebar {
+    width: 216px;
+    padding-inline: 16px;
+  }
+  .workspace {
+    margin-left: 216px;
+  }
+  main {
+    padding: 32px 24px;
+  }
+  .topbar {
+    padding-inline: 24px;
+  }
+}
+@media (max-width: 48em) {
+  .topbar-tools {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sidebar {
+    display: none;
+  }
+  .workspace {
+    margin-left: 0;
+  }
+  .topbar {
+    padding: 14px 18px;
+    flex-wrap: wrap;
+    min-height: 70px;
+  }
+  .topbar .mobile-menu {
+    display: inline-flex;
+  }
+  main {
+    padding: 30px 20px;
+  }
+  .desktop-break {
+    display: none;
+  }
+  .section-note {
+    display: none;
+  }
+  .campaign-hero {
+    padding: 24px;
+  }
+  .campaign-hero h2 {
+    font-size: 29px;
+  }
+  .compass-art {
+    right: -130px;
+    opacity: 0.13;
+  }
+  .page-footer {
+    padding-inline: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

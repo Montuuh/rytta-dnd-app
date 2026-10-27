@@ -1,0 +1,63 @@
+{
+  "name": "rytta-dnd-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty false",
+    "lint": "oxlint --deny-warnings",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:db": "vitest run tests/database",
+    "test:e2e": "playwright test",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "check:docs": "node scripts/check-docs.mjs",
+    "check:fast": "npm run typecheck && npm run lint && npm run check:architecture && npm run check:docs && npm run check:ai",
+    "check": "npm run check:fast && npm run test && npm run build",
+    "db:types": "node scripts/generate-db-types.mjs",
+    "prepare": "husky",
+    "check:ai": "node scripts/check-ai.mjs",
+    "check:ui-review": "node scripts/check-ui-review.mjs"
+  },
+  "dependencies": {
+    "@mantine/core": "^9.7.4",
+    "@mantine/form": "^9.7.4",
+    "@mantine/hooks": "^9.7.4",
+    "@mantine/notifications": "^9.7.4",
+    "@supabase/supabase-js": "^2.118.0",
+    "@tanstack/react-query": "^5.105.0",
+    "i18next": "^26.5.11",
+    "lucide-react": "^1.62.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^17.1.9",
+    "react-router": "^8.5.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@electric-sql/pglite": "^0.5.12",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^5.0.5",
+    "husky": "^9.1.7",
+    "oxlint": "^1.89.0",
+    "prettier": "^3.9.10",
+    "smol-toml": "^1.9.1",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=24.13.0 <25"
+  }
+}

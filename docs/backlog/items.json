@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-27",
+  "items": [
+    {
+      "id": "RYT-000",
+      "title": "Foundation and delivery system",
+      "priority": "P0",
+      "owner": "producer",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": [],
+      "sources": ["User scaffold request"],
+      "scope": "Scaffold, architecture, permissions baseline, AI workflows and documentation.",
+      "acceptance": [
+        "Demo runs without credentials and planned modules are explicit.",
+        "SQL rejects cross-campaign access and player resource edits.",
+        "Repository guidance, skills, role definitions, hooks and backlog are executable/documented.",
+        "Production subpath navigation and responsive browser checks pass."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run format:check",
+        "Inspect phone/tablet captures"
+      ],
+      "evidence": [
+        "docs/evidence/scaffold-validation.md",
+        "docs/evidence/camp-desktop.png",
+        "docs/evidence/camp-tablet.png",
+        "docs/evidence/camp-mobile.png"
+      ]
+    },
+    {
+      "id": "RYT-001",
+      "title": "Identity and session lifecycle",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-000"],
+      "sources": ["Drive: roles"],
+      "scope": "Sign-in/out, auth provider and PKCE callback; no gameplay.",
+      "acceptance": [
+        "Select auth provider and email policy before implementation.",
+        "Signed-out, loading, expired, invalid callback and retry states are usable.",
+        "User change cancels requests and clears private cached data.",
+        "HashRouter and Pages base survive auth redirects; logs contain no tokens."
+      ],
+      "validation": [
+        "Auth adapter unit tests",
+        "Two-account Supabase integration",
+        "Mobile sign-in and sign-out browser tests"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-002",
+      "title": "Campaign membership and invitations",
+      "priority": "P0",
+      "owner": "backend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-001"],
+      "sources": ["Drive: DM/player roles"],
+      "scope": "Campaign creation, selection and invitation lifecycle.",
+      "acceptance": [
+        "Creator becomes DM atomically.",
+        "Invites expire and cannot be replayed or escalated to DM.",
+        "Revoked users lose access; protect last DM and immutable ownership.",
+        "A user in two campaigns never mixes private cache or records."
+      ],
+      "validation": [
+        "SQL invite/role/outsider denial tests",
+        "Two-user invitation and revocation e2e"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-003",
+      "title": "Characters and DM resource control",
+      "priority": "P0",
+      "owner": "backend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-002"],
+      "sources": ["Drive: character sheets and resources"],
+      "scope": "Character ownership and revision-checked gold/water/ration/exhaustion operations.",
+      "acceptance": [
+        "Choose edition, resource units and player-facing language.",
+        "Player can read own resources but never edit them directly.",
+        "DM editor uses RPC revision checks; revoke direct resource writes.",
+        "Audit every change; reject negative/unsafe integer values and stale revisions."
+      ],
+      "validation": ["SQL actor matrix and stale-write tests", "Two-device resource update test"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-004",
+      "title": "Inventory, equipment and use/undo",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-003"],
+      "sources": ["Drive: items, equipment, encumbrance"],
+      "scope": "Item definitions, stacks, equipment slots, item use and compensating undo.",
+      "acceptance": [
+        "Choose encumbrance variant and undo conflict/time policy.",
+        "Item icons have accessible pressable details, quantity and weight.",
+        "Use and undo are authorized/idempotent transactions, not snapshot restores.",
+        "Equipment constraints, empty inventory, retries and concurrent edits are covered."
+      ],
+      "validation": [
+        "Domain weight/equipment tests",
+        "SQL double-use/undo denial and race tests",
+        "Phone/tablet inventory e2e"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-005",
+      "title": "Merchants, purchases and sales",
+      "priority": "P0",
+      "owner": "backend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-004"],
+      "sources": ["Drive: shops, prices, per-player visibility"],
+      "scope": "DM merchants/stock/pricing and player transactions.",
+      "acceptance": [
+        "Hidden merchants are absent from API responses for unauthorized players.",
+        "Prices and resale rates are server-derived; reject insufficient funds/stock.",
+        "Lock related records atomically and honor idempotency keys.",
+        "Simultaneous last-item purchases cannot double-spend; show actionable retry feedback."
+      ],
+      "validation": [
+        "Postgres concurrency integration",
+        "Price spoofing/visibility tests",
+        "Two-account purchase/sale e2e"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-006",
+      "title": "Quest journal",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "medium"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-002"],
+      "sources": ["Drive: quest register"],
+      "scope": "Visible campaign quests and DM status transitions.",
+      "acceptance": [
+        "Hidden quest text never reaches player payload/cache.",
+        "DM can publish/advance quests and players see authorized changes.",
+        "Statuses and journal navigation work with keyboard and touch."
+      ],
+      "validation": ["RLS hidden content tests", "Mobile journal e2e"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-007",
+      "title": "Shared combat overview",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-003", "RYT-013"],
+      "sources": ["Drive: HP and initiative", "D&D Sync: shared session visibility"],
+      "scope": "Read-only shared HP/initiative with DM encounter controls.",
+      "acceptance": [
+        "Define public HP visibility separately from private character data.",
+        "DM changes turn/order through authoritative operations.",
+        "Reconnect restores current state; no stale turn presented as current.",
+        "Table projection contains no DM secrets."
+      ],
+      "validation": [
+        "Two-client encounter integration",
+        "Public projection policy tests",
+        "Tablet and table display review"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-008",
+      "title": "Rules and homebrew glossary",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "medium"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-002"],
+      "sources": ["Drive: keyword glossary"],
+      "scope": "Searchable conditions, spells, items and homebrew references.",
+      "acceptance": [
+        "Select licensed sources and record attribution before import.",
+        "Keyword search covers aliases and shows useful empty states.",
+        "Homebrew visibility is authorized and text is rendered safely."
+      ],
+      "validation": ["Search/alias tests", "Content provenance review", "Keyboard search e2e"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-009",
+      "title": "Campaign memories album",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-002"],
+      "sources": ["Drive: memory album"],
+      "scope": "Private campaign media, captions and published visibility.",
+      "acceptance": [
+        "Private buckets and signed URLs enforce campaign ownership.",
+        "Validate file size/type; provide alt text and upload retry.",
+        "DM-only media never receives a public URL; define retention/deletion."
+      ],
+      "validation": ["Storage access integration", "Invalid upload tests", "Mobile album review"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-010",
+      "title": "Atlas and travel planning discovery",
+      "priority": "P2",
+      "owner": "producer",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-003"],
+      "sources": [
+        "Drive: routes and travel",
+        "Legacy: maps/submaps/terrain",
+        "Owlbear: VTT reference"
+      ],
+      "scope": "Choose lightweight map integration and travel rules before renderer work.",
+      "acceptance": [
+        "Document image scale, terrain, movement/resource rules and supported gestures.",
+        "Compare coexistence/link-out with Owlbear to a small custom atlas.",
+        "Define marker visibility, route calculation tests and caching policy.",
+        "Produce an ADR and separately scoped implementation tickets."
+      ],
+      "validation": ["ADR review", "Representative route calculations and map prototype"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-011",
+      "title": "Mano Hundida stronghold",
+      "priority": "P2",
+      "owner": "backend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-003"],
+      "sources": ["Drive: Mano Hundida"],
+      "scope": "Stronghold treasury, staff, allies/enemies and scheduled upkeep.",
+      "acceptance": [
+        "Model Mano Hundida as a campaign-owned stronghold.",
+        "Choose in-game time and upkeep/income cadence.",
+        "Period settlement is authorized, idempotent and auditable.",
+        "Separate treasury from personal inventory balances."
+      ],
+      "validation": ["Ledger/period boundary tests", "Permission denial tests"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-012",
+      "title": "DM crafting and relationships",
+      "priority": "P2",
+      "owner": "producer",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "medium"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-004"],
+      "sources": ["Drive: DM crafting and relationships"],
+      "scope": "Discover crafting costs/results and character relationship visibility.",
+      "acceptance": [
+        "Define recipe, ingredient, outcome and failure rules with the group.",
+        "Specify DM-only versus shared relationships.",
+        "Split crafting transactions and relationship editor into deliverable tickets."
+      ],
+      "validation": ["Product rule examples", "ADR and dependency review"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-013",
+      "title": "Realtime and recovery",
+      "priority": "P0",
+      "owner": "backend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-003"],
+      "sources": ["User: multi-device companion", "D&D Sync: live sync"],
+      "scope": "Scoped subscriptions, reconnect/refetch and truthful network state.",
+      "acceptance": [
+        "Publish only approved tables/channels; RLS remains authoritative.",
+        "Invalidate scoped query keys; remove channels on campaign/identity change.",
+        "Offline/stale/reconnecting states are visible; no automatic economic replay.",
+        "Refetch on reconnect and foreground without private-data leakage."
+      ],
+      "validation": ["Two-client Supabase Realtime tests", "Network loss and identity-switch e2e"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-014",
+      "title": "Legacy import discovery",
+      "priority": "P2",
+      "owner": "backend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-004"],
+      "sources": ["Legacy Rytta JSON export"],
+      "scope": "Document formats and design validated dry-run import; no automatic migration.",
+      "acceptance": [
+        "Inventory format versions from user-approved samples without changing legacy files.",
+        "Validate size/schema/content, map ownership and sanitize imported text.",
+        "Show dry-run report, backup plan and rollback before live import.",
+        "Create separate implementation tickets after format evidence."
+      ],
+      "validation": ["Malformed/oversized fixture tests", "Dry-run output review"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-015",
+      "title": "Live companion release readiness",
+      "priority": "P0",
+      "owner": "reviewer",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-001", "RYT-002", "RYT-003", "RYT-004", "RYT-005", "RYT-013"],
+      "sources": ["User: mobile/tablet and Pages"],
+      "scope": "Staging verification, accessibility, backup/restore and deployment evidence.",
+      "acceptance": [
+        "Exercise real Supabase Auth/PostgREST/RLS/Realtime with multiple accounts.",
+        "Verify mobile Safari on a real supported device plus Chromium/tablet.",
+        "Verify Spanish/English coverage and preference persistence across live campaign flows.",
+        "Test backup/restore, public Pages URL, error reporting and rollback.",
+        "Resolve all blocking findings; publish only with explicit authorization."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Supabase staging report",
+        "Real-device report",
+        "Authorized deployment smoke"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-016",
+      "title": "Appearance, localization and independent UI/UX review",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-000"],
+      "sources": ["User: dark/light, Spanish/English and UI/UX reviewer"],
+      "scope": "Persistent dark/light and ES/EN preferences for the scaffold, semantic palettes and a required independent UI/UX review workflow.",
+      "acceptance": [
+        "Fresh visits default to dark and Spanish regardless of OS/browser preferences.",
+        "Users can choose theme/language; preferences survive routes and reloads.",
+        "All scaffold UI, accessible labels, loading/errors and document language/title are localized; user content is preserved.",
+        "Both themes/languages pass contrast, touch, keyboard and responsive checks.",
+        "The ui-ux role is invoked after interface changes and returns a recorded independent verdict."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run check:ui-review",
+        "Independent UI/UX report"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-016/validation.md",
+        "docs/evidence/RYT-016/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    }
+  ]
+}

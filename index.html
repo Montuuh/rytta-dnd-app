@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es" data-mantine-color-scheme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#121a17" />
+    <meta name="description" content="Rytta, tu compañero para campañas de rol presenciales." />
+    <title>Rytta · Tu compañero de mesa</title>
+    <script>
+      // Set validated preferences before the first paint; storage may be unavailable.
+      try {
+        const scheme = localStorage.getItem('rytta-color-scheme') === 'light' ? 'light' : 'dark'
+        document.documentElement.dataset.mantineColorScheme = scheme
+        document.documentElement.lang =
+          localStorage.getItem('rytta-language') === 'en' ? 'en' : 'es'
+        document.querySelector('meta[name="theme-color"]').content =
+          scheme === 'dark' ? '#121a17' : '#f7f7f2'
+      } catch {
+        /* Spanish and dark are already set on the document. */
+      }
+    </script>
+    <style>
+      html {
+        background: #121a17;
+        color: #f0efdf;
+        color-scheme: dark;
+      }
+      html[data-mantine-color-scheme='light'] {
+        background: #f7f7f2;
+        color: #292f27;
+        color-scheme: light;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

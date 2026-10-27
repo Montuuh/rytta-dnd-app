@@ -12,6 +12,6 @@ if (result.error || result.status !== 0 || !result.stdout.includes('export type 
   )
   process.exitCode = 1
 } else {
-  writeFileSync('src/shared/api/database.types.ts', result.stdout)
+  writeFileSync('src/shared/api/database.generated.ts', result.stdout)
   console.log('Database types generated from local Supabase.')
 }

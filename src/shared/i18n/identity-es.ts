@@ -1,0 +1,86 @@
+import type { identityEn } from './identity-en'
+export const identityEs = {
+  'auth.title': 'Tu próxima aventura empieza aquí.',
+  'auth.intro': 'Entra para crear una campaña o unirte a tu mesa.',
+  'auth.google': 'Continuar con Google',
+  'auth.open': '¿Primera vez en Rytta? Tu cuenta se crea cuando entras por primera vez.',
+  'auth.problem': 'Revisa el inicio de sesión',
+  'auth.issue.callback':
+    'Este enlace de acceso no es válido, ha caducado o ya se ha usado. Continúa con Google para empezar de nuevo.',
+  'auth.issue.connection': 'No pudimos conectar. Comprueba tu conexión y vuelve a intentarlo.',
+  'auth.issue.expired': 'Tu sesión ha terminado. Entra de nuevo para continuar.',
+  'auth.issue.sign-out':
+    'No se pudo completar el cierre de sesión. Las vistas privadas están cerradas; reintenta cerrar sesión antes de dejar este dispositivo.',
+  'auth.signOut': 'Cerrar sesión',
+  'auth.account': 'Sesión de {{email}}',
+  'hub.title': 'Mis campañas',
+  'hub.intro': 'Elige tu mesa o empieza una nueva historia.',
+  'hub.create': 'Crear campaña',
+  'hub.name': 'Nombre de la campaña',
+  'hub.description': 'Descripción (opcional)',
+  'hub.createHint': 'Serás el primer DM. Después podrás invitar jugadores y añadir otros DMs.',
+  'hub.empty': 'Tu mesa te espera.',
+  'hub.emptyHint': 'Crea una campaña o pide a tu DM que invite al correo de tu cuenta de Google.',
+  'hub.open': 'Abrir campaña',
+  'hub.invitations': 'Unirse a una campaña',
+  'hub.inviteHint':
+    'Aquí aparecen las invitaciones para {{email}}. Si te invitaron a otro correo, cierra sesión y elige esa cuenta de Google.',
+  'hub.noInvitations': 'No tienes invitaciones pendientes.',
+  'hub.accept': 'Aceptar invitación',
+  'hub.decline': 'Rechazar',
+  'hub.expires': 'Caduca el {{date}}',
+  'hub.refresh': 'Actualizar',
+  'hub.invalidName': 'Escribe un nombre de entre 1 y 100 caracteres.',
+  'hub.invalidDescription': 'Usa un máximo de 2000 caracteres.',
+  'campaign.role.dm': 'DM',
+  'campaign.role.player': 'Player',
+  'campaign.current': 'CAMPAÑA ACTUAL',
+  'campaign.switch': 'Cambiar de campaña',
+  'campaign.manage': 'Miembros e invitaciones',
+  'campaign.unavailable': 'Esta campaña no está disponible para tu cuenta.',
+  'campaign.back': 'Volver a mis campañas',
+  'campaign.planned':
+    'Tu campaña está preparada. Los módulos de juego llegarán en las próximas entregas.',
+  'campaign.offline':
+    'Estás sin conexión. La información puede estar desactualizada; reconecta antes de hacer cambios.',
+  'campaign.refreshing': 'Actualizando…',
+  'members.title': 'Tu mesa',
+  'members.intro':
+    'Los DMs comparten la gestión de la campaña. Las invitaciones siempre dan el rol Player.',
+  'members.list': 'Miembros',
+  'members.you': 'Tú',
+  'members.invite': 'Invitar jugador',
+  'members.email': 'Correo de la cuenta de Google',
+  'members.inviteHint':
+    'La invitación aparecerá en Rytta cuando entre con este correo. No se envía un aviso por email. Caduca a los 7 días.',
+  'members.invalidEmail': 'Escribe una dirección de correo válida.',
+  'members.invited': 'Invitación creada. Puede aceptarla en Mis campañas.',
+  'members.sent': 'Invitaciones pendientes',
+  'members.noneSent': 'No hay invitaciones pendientes para esta campaña.',
+  'members.revoke': 'Cancelar invitación',
+  'members.promote': 'Nombrar DM',
+  'members.demote': 'Cambiar a Player',
+  'members.remove': 'Retirar miembro',
+  'members.leave': 'Salir de la campaña',
+  'members.lastDm':
+    'La campaña siempre necesita un DM. Nombra a otro miembro DM antes de dejar el rol o salir.',
+  'members.playerHint': 'Tu DM gestiona los miembros y las invitaciones.',
+  'members.confirm': 'Confirmar cambio de miembros',
+  'members.confirmRole':
+    '¿Cambiar a {{name}} al rol {{role}}? Los DMs pueden gestionar todo el contenido, los miembros y los roles de la campaña.',
+  'members.confirmRemove':
+    '¿Retirar a {{name}} de esta campaña? Perderá el acceso; se conservarán sus personajes y recursos.',
+  'members.confirmLeave':
+    '¿Salir de esta campaña? Se conservarán tus personajes y recursos. Necesitarás otra invitación para volver.',
+  'members.confirmRevoke': '¿Cancelar la invitación para {{email}}?',
+  'members.confirmDecline': '¿Rechazar la invitación a {{name}}? Tu DM podrá invitarte de nuevo.',
+  'action.confirm': 'Confirmar',
+  'action.cancel': 'Cancelar',
+  'action.error': 'No se pudo completar la acción',
+  'action.last-dm':
+    'Debe quedar al menos un DM. Actualiza los miembros y nombra primero a un sucesor.',
+  'action.already-member': 'Esta persona ya pertenece a la campaña.',
+  'action.unavailable':
+    'Comprueba tu conexión y actualiza. Tus permisos o esta invitación pueden haber cambiado. Revisa el resultado antes de repetir una acción.',
+  'query.error': 'No se pudo cargar esta información.',
+} satisfies Record<keyof typeof identityEn, string>

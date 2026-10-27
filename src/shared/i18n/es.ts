@@ -1,6 +1,8 @@
 import type { en } from './en'
+import { identityEs } from './identity-es'
 
 export const es = {
+  ...identityEs,
   'module.camp': 'Campamento',
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
@@ -36,7 +38,7 @@ export const es = {
   'brand.more': 'Más aventuras.',
   'brand.footer': 'Para quienes comparten tu mesa.',
   'mode.demo': 'Vista previa · datos de ejemplo',
-  'mode.backend': 'Supabase · configuración',
+  'mode.backend': 'Tu mesa',
   'camp.welcome': 'BIENVENIDO A TU CAMPAMENTO',
   'camp.title': 'Toda aventura empieza alrededor de una mesa.',
   'camp.intro':
@@ -92,7 +94,7 @@ export const es = {
   'settings.demoDescription':
     'El contenido de ejemplo es local y de solo lectura. No representa una cuenta, conexión ni progreso guardado.',
   'settings.backendDescription':
-    'El adaptador de campañas está habilitado. Las pantallas de acceso y la gestión de cuentas son la próxima entrega.',
+    'El acceso con Google y los miembros de campaña usan tu proyecto Supabase configurado. Los módulos de juego siguen previstos.',
   'settings.connection': 'Configuración del backend: {{status}}.',
   'settings.provided': 'disponible (conexión no verificada)',
   'settings.missing': 'no disponible',

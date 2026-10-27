@@ -29,8 +29,10 @@ saved and no Supabase connection is made in demo mode.
 - PostgreSQL policy tests, Vitest, Playwright/axe, CI and an explicit Pages publishing workflow.
 - Producer backlog, ADRs, security model, repo skills, role definitions and hooks.
 
-Authentication screens, invitations and gameplay remain backlog work. Supabase mode
-is an integration foundation, with an explicit signed-out error until RYT-001.
+Supabase mode includes Google sign-in, My campaigns, campaign creation, in-app invitations
+and multiple DM management. Gameplay modules remain planned. Follow the
+[Google/Supabase setup guide](docs/setup-google-supabase.md) to configure a staging backend;
+hosted authentication and permissions still require real multi-account verification.
 
 ## Commands
 
@@ -69,4 +71,6 @@ docs/                    Product, architecture, backlog, ADRs and evidence
 Start with the [documentation index](docs/README.md).
 Invoke `$rytta-producer` to prepare the next delivery from the
 [backlog](docs/backlog/items.json). [Deployment instructions](docs/deployment.md)
-cover GitHub Pages and Vercel. No remote backend or site has been provisioned.
+cover GitHub Pages and Vercel. The Rytta Supabase project is connected and its initial
+schema is applied; no frontend site has been published. See
+[hosted connection evidence](docs/evidence/RYT-001-002/supabase-connection.md).

@@ -46,6 +46,39 @@ html[data-mantine-color-scheme='light'] {
 .loading-screen {
   padding: 24px;
 }
+.sign-in-card {
+  max-width: 560px;
+  margin: 5vh auto;
+}
+.account-row {
+  width: 100%;
+}
+.user-copy,
+.campaign-card h2,
+.campaign-context,
+.member-identity {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.campaign-card .mantine-Button-root {
+  margin-top: auto;
+}
+.campaign-context {
+  border-bottom: 1px solid var(--app-border);
+  padding-bottom: 16px;
+}
+.mantine-Input-input {
+  min-height: 44px;
+}
+.mantine-Button-root {
+  max-width: 100%;
+  height: auto;
+}
+.mantine-Button-label {
+  white-space: normal;
+  padding-block: 8px;
+  text-align: start;
+}
 .fatal-error button {
   min-height: 44px;
   padding: 8px 20px;

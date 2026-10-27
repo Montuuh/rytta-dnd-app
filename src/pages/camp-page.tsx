@@ -1,67 +1,11 @@
-import {
-  Alert,
-  Badge,
-  Button,
-  Group,
-  Loader,
-  Paper,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
+import { Badge, Button, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { ArrowRight, Compass, Feather, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { campaignsQuery, CampaignAccessError } from '@/features/campaigns'
-import { config } from '@/shared/lib/config'
 import { modules } from '@/app/modules'
 
 export function CampPage() {
   const { t } = useTranslation()
-  const query = useQuery(campaignsQuery)
-  if (query.isPending)
-    return (
-      <Group role="status">
-        <Loader size="sm" />
-        <Text>{t('common.loadingCamp')}</Text>
-      </Group>
-    )
-  if (query.isError)
-    return (
-      <Alert color="red" title={t('campaigns.unavailable')}>
-        <Stack>
-          <Text>
-            {t(
-              query.error instanceof CampaignAccessError && query.error.code === 'sign-in'
-                ? 'error.signIn'
-                : 'error.campaigns',
-            )}
-          </Text>
-          <Button variant="light" onClick={() => void query.refetch()}>
-            {t('common.retry')}
-          </Button>
-        </Stack>
-      </Alert>
-    )
-  if (config.VITE_DATA_MODE === 'supabase')
-    return (
-      <Stack>
-        <Title order={1}>{t('campaigns.title')}</Title>
-        <Text>{t('campaigns.next')}</Text>
-        {query.data.length ? (
-          query.data.map((c) => (
-            <Paper key={c.id} p="lg">
-              <Title order={2}>{c.name}</Title>
-              <Text>{c.description}</Text>
-            </Paper>
-          ))
-        ) : (
-          <Paper p="xl">{t('campaigns.empty')}</Paper>
-        )}
-      </Stack>
-    )
   return (
     <Stack gap="xl">
       <div>

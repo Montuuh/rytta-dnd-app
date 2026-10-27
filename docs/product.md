@@ -12,7 +12,16 @@ A shared screen already handles maps. Keep the table playing.
 - A future table display is a read-only projection, never a blindly mirrored DM session.
 
 Roles belong to campaigns. A user can be a DM in one and a player in another.
-Bootstrap creates the first DM; invitations and ownership transfer remain future work.
+Bootstrap creates the first DM. Email-addressed in-app invitations add Players; multiple
+DMs may share management. Promote another DM before stepping down or leaving. Creator
+attribution confers no special privileges. The campaign hub lists campaigns and invitations.
+
+Accepted requirement for RYT-003: the DM creates a character before inviting its Player.
+The invitation targets that character; acceptance links it to the Player in the same campaign.
+Initially each Player has at most one assigned character per campaign, and a character has
+at most one assigned Player. Characters can await assignment without a player account.
+Multiple characters per Player and character activation/deactivation are deferred.
+This flow is not yet implemented; see [ADR 004](decisions/004-player-character-assignment.md).
 
 ## Delivery strategy
 
@@ -29,8 +38,9 @@ Quests, glossary and combat follow; atlas, album, stronghold and crafting are la
 - Interface languages are Spanish (default) and English, selected per device. Dark mode
   is the default; light mode is optional. User-authored campaign content is preserved.
 - Start online. Offline mutation queues require explicit conflict/economy semantics.
-- Before affected tickets, settle identity provider/email delivery, invitation expiry,
-  multiple DMs, character ownership, public HP visibility, undo limits, resale rounding,
+- Google is the only initial identity provider, with open registration and no email allowlist.
+  Invitations last seven days and appear inside Rytta; no email notifications are sent.
+- Before affected tickets, settle character reassignment details, public HP visibility, undo limits, resale rounding,
   supported browser floor and licensed glossary sources.
 
 ## Non-goals

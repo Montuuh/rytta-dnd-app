@@ -13,6 +13,10 @@
 11. [Mandatory UI/UX review](ui-review.md).
 12. [ADR 002: appearance and localization](decisions/002-appearance-localization-review.md)
     and [RYT-016 verification](evidence/RYT-016/validation.md).
+13. [Google and Supabase setup](setup-google-supabase.md) and
+    [ADR 003: identity and campaign membership](decisions/003-identity-campaign-membership.md).
+14. [ADR 004: DM-created characters and player assignment](decisions/004-player-character-assignment.md)
+    records the accepted RYT-003 requirement; it is not implemented yet.
 
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

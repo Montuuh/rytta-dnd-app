@@ -1,4 +1,6 @@
+import { identityEn } from './identity-en'
 export const en = {
+  ...identityEn,
   'module.camp': 'Camp',
   'module.party': 'Party',
   'module.inventory': 'Inventory',
@@ -34,7 +36,7 @@ export const en = {
   'brand.more': 'More adventure.',
   'brand.footer': 'Made for the people around your table.',
   'mode.demo': 'Preview · sample data',
-  'mode.backend': 'Supabase · setup',
+  'mode.backend': 'Your table',
   'camp.welcome': 'WELCOME TO YOUR CAMP',
   'camp.title': 'Every adventure starts around a table.',
   'camp.intro':
@@ -87,7 +89,7 @@ export const en = {
   'settings.demoDescription':
     'Sample content is local and read-only. No account, connection or saved progress is implied.',
   'settings.backendDescription':
-    'The campaign adapter is enabled. Sign-in screens and account lifecycle are the next delivery.',
+    'Google sign-in and campaign membership use your configured Supabase project. Gameplay modules are still planned.',
   'settings.connection': 'Backend configuration: {{status}}.',
   'settings.provided': 'provided (connection not verified)',
   'settings.missing': 'not provided',

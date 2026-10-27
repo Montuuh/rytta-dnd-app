@@ -22,7 +22,8 @@
     "db:types": "node scripts/generate-db-types.mjs",
     "prepare": "husky",
     "check:ai": "node scripts/check-ai.mjs",
-    "check:ui-review": "node scripts/check-ui-review.mjs"
+    "check:ui-review": "node scripts/check-ui-review.mjs",
+    "check:supabase": "node scripts/verify-supabase-public.mjs"
   },
   "dependencies": {
     "@mantine/core": "^9.7.4",

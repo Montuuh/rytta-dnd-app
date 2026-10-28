@@ -572,6 +572,40 @@
         "docs/evidence/RYT-019/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-020",
+      "title": "Member cards, membership invites and Player POV preview",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-018", "RYT-019"],
+      "sources": [
+        "User: unlink on kick; characters on member cards; invite without character; impersonate Player POV"
+      ],
+      "scope": "Restructure members UI around per-member character lists with link/unlink, restore membership-only invitations, unlink characters when membership ends, and let DMs preview as a chosen Player.",
+      "acceptance": [
+        "Removing or leaving a campaign unlinks that member's characters while preserving resources.",
+        "Members page shows each member's characters and link/unlink on the card; no separate assignment section.",
+        "DM can invite a Google email to the campaign without assigning a character.",
+        "Player view lets the DM pick a Player and see that Player's character POV without changing SQL privileges."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "SQL revoke/unlink and membership-invite tests",
+        "Independent ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/009-member-cards-membership-invite-preview.md",
+        "docs/evidence/RYT-020/validation.md",
+        "docs/evidence/RYT-020/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

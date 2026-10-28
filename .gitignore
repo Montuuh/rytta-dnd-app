@@ -37,3 +37,6 @@ supabase/.branches/
 # Local validation runtimes and databases
 .tmp/
 dist-review-focus/
+dist-ryt020-review/
+
+*.traineddata

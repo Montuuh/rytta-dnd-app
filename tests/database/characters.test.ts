@@ -110,9 +110,11 @@ describe('RYT-003 complete migration chain', () => {
     await expect(db.query("update public.characters set name='Bad'")).rejects.toThrow(
       /permission denied/,
     )
+    await asUser(outsider)
     await expect(
       db.query('select public.invite_campaign_member($1,$2)', [c, 'x@example.com']),
-    ).rejects.toThrow(/permission denied/)
+    ).rejects.toThrow(/Forbidden|42501/)
+    await asUser(dm)
     await db.exec('reset role; set role anon')
     await expect(edit(c, ch)).rejects.toThrow(/permission denied/)
     await expect(invite(c, ch)).rejects.toThrow(/permission denied/)
@@ -175,7 +177,7 @@ describe('RYT-003 complete migration chain', () => {
       db.query('update public.characters set user_id=$1 where id=$2', [player, other.ch]),
     ).rejects.toThrow(/foreign key/)
   })
-  it('preserves revoked assignment/resources; explicit unlink permits a new invitation', async () => {
+  it('unlinks characters on revoke while preserving resources; membership invite joins without a character', async () => {
     const { c, ch } = await setup()
     await edit(c, ch)
     const id = await invite(c, ch)
@@ -189,15 +191,29 @@ describe('RYT-003 complete migration chain', () => {
     )
     await asUser(dm)
     expect(
+      (
+        await db.query(
+          'select ch.user_id, r.gold from public.characters ch join public.character_resources r on r.character_id=ch.id where ch.id=$1',
+          [ch],
+        )
+      ).rows,
+    ).toEqual([{ user_id: null, gold: 20 }])
+    const membership = await scalar('select public.invite_campaign_member($1,$2) result', [
+      c,
+      'player@example.com',
+    ])
+    await asUser(player)
+    await db.query('select public.respond_campaign_invitation($1,true)', [membership])
+    await asUser(dm)
+    expect(
       (await db.query('select user_id from public.characters where id=$1', [ch])).rows,
-    ).toEqual([{ user_id: player }])
-    await expect(
-      db.query('select public.unassign_character($1,$2,$3)', [c, ch, outsider]),
-    ).rejects.toThrow(/changed/)
-    await db.query('select public.unassign_character($1,$2,$3)', [c, ch, player])
+    ).toEqual([{ user_id: null }])
+    await db.query('select public.assign_character($1,$2,$3)', [c, ch, player])
+    await db.query('select public.change_campaign_member($1,$2,null)', [c, player])
     const next = await invite(c, ch, 'other@example.com')
     await asUser(outsider)
     await db.query('select public.respond_campaign_invitation($1,true)', [next])
+    await asUser(dm)
     expect(
       (
         await db.query(

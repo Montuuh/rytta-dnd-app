@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, campaignId } from './fixtures/identity.ts'
+import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
 
 test('DM creates before assignment, invites, edits whole homebrew units and recovers from a stale editor', async ({
   page,
@@ -154,27 +154,30 @@ test('member assignment uses metadata only and Player preview hides DM actions',
 }, info) => {
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await page.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
-  await page.getByLabel('Jugador existente').selectOption('10000000-0000-4000-8000-000000000002')
-  await page
-    .getByRole('dialog')
-    .getByRole('button', { name: 'Vincular personaje', exact: true })
-    .click()
-  await expect(page.getByText('Arin: Arin', { exact: true })).toBeVisible()
+  const playerCard = page.locator('.mantine-Paper-root').filter({
+    has: page.getByText('player@example.com', { exact: true }),
+  })
+  await playerCard.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
+  const linkDialog = page.getByRole('dialog', { name: 'Vincular personaje' })
+  await linkDialog.getByLabel('Personaje', { exact: true }).selectOption(characterId)
+  await linkDialog.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
+  await expect(playerCard.getByText('Arin', { exact: true })).toBeVisible()
   await expect(page.getByText('Oro', { exact: true })).toHaveCount(0)
   const requests = f.calls.filter((c) => c.method === 'characters')
   expect(requests.length).toBeGreaterThan(0)
-  await page.getByRole('button', { name: 'Desvincular jugador', exact: true }).click()
+  await playerCard.getByRole('button', { name: 'Desvincular jugador', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
-  await expect(page.getByText('Arin: Sin personaje', { exact: true })).toBeVisible()
+  await expect(playerCard.getByText('Sin personaje vinculado.')).toBeVisible()
   await page.goto(`./#/campaign/${campaignId}/party`)
   await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toBeVisible()
   await expect(page.getByText('CAMPAÑA ACTUAL')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Volver a mi cuenta', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Invitar jugador', exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'Vista Player', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Arin', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Editar recursos', exact: true })).toHaveCount(0)
+  await expect(page.getByText('Vista de Arin')).toBeVisible()
   await expect(page.getByText('Tu DM todavía no te ha asignado un personaje.')).toBeVisible()
   await page.screenshot({ path: info.outputPath('player-preview.png'), fullPage: true })
   expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)

@@ -17,7 +17,7 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { useCampaign } from '@/features/campaigns'
+import { useCampaign, useCampaignView } from '@/features/campaigns'
 import { charactersQuery, useCharacterAction } from '../api'
 import { resourceSchema, type Character } from '../domain/character'
 
@@ -28,8 +28,10 @@ export function CharacterParty() {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const campaign = useCampaign()
+  const { playerPreview, previewUserId, previewLabel } = useCampaignView()
   const dm = campaign.role === 'dm'
-  const query = useQuery(charactersQuery(state.user!.id, campaign.id, !dm))
+  const filterUserId = dm ? undefined : (previewUserId ?? state.user!.id)
+  const query = useQuery(charactersQuery(state.user!.id, campaign.id, filterUserId))
   const opener = useRef<HTMLElement | null>(null)
   const open = (next: Editor, target: HTMLElement) => {
     opener.current = target
@@ -46,6 +48,11 @@ export function CharacterParty() {
       <Group justify="space-between" align="start">
         <div>
           <Title order={1}>{t('characters.title')}</Title>
+          {playerPreview && previewLabel && (
+            <Text c="dimmed" mt="xs">
+              {t('shell.previewAs', { name: previewLabel })}
+            </Text>
+          )}
         </div>
         {dm && (
           <Button onClick={(event) => open({ kind: 'create' }, event.currentTarget)}>

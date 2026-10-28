@@ -225,7 +225,7 @@ export async function identityFixture(
     }
     if (method === 'list_campaign_members') return respond(members)
     if (method === 'campaign_invitations') return respond(sent)
-    if (method === 'invite_character_player') {
+    if (method === 'invite_character_player' || method === 'invite_campaign_member') {
       sent.push({
         id: inviteId,
         email: String(body.invite_email),
@@ -238,6 +238,11 @@ export async function identityFixture(
       return respond(null)
     }
     if (method === 'change_campaign_member') {
+      if (!body.new_role) {
+        characters = characters.map((c) =>
+          c.user_id === body.target_user ? { ...c, user_id: null } : c,
+        )
+      }
       members = body.new_role
         ? members.map((m) =>
             m.user_id === body.target_user ? { ...m, role: String(body.new_role) } : m,

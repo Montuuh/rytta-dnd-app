@@ -103,7 +103,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeDisabled()
-  await page.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
+  await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
   await page
     .getByRole('dialog')
@@ -115,6 +115,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.getByRole('button', { name: 'Cancelar invitación', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('No hay invitaciones pendientes para esta campaña.')).toBeVisible()
+  expect(f.calls.some((c) => c.method === 'invite_campaign_member')).toBe(true)
   await page.getByRole('button', { name: 'Nombrar DM', exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: 'Nombrar DM', exact: true })).toBeFocused()
@@ -196,7 +197,7 @@ test('self-demotion clears management views and offline actions are not queued',
   const f = await identityFixture(page, { twoDms: true })
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
+  await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await context.setOffline(true)
   await page.getByLabel('Correo de la cuenta de Google').fill('offline@example.com')
   await page
@@ -207,7 +208,7 @@ test('self-demotion clears management views and offline actions are not queued',
     'No se pudo completar la acción',
   )
   await context.setOffline(false)
-  expect(f.calls.filter((c) => c.method === 'invite_character_player')).toHaveLength(0)
+  expect(f.calls.filter((c) => c.method === 'invite_campaign_member')).toHaveLength(0)
   await page.keyboard.press('Escape')
   await page.goto(`./#/campaign/${campaignId}/members`)
   const self = page

@@ -1,0 +1,211 @@
+[
+  {
+    "name": "home-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "party-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-focus-390",
+    "focusReturned": true
+  },
+  {
+    "name": "menu-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "menu-focus-390",
+    "focusReturned": true
+  },
+  {
+    "name": "home-navigation-390",
+    "focus": "main-content",
+    "url": "http://127.0.0.1:4175/rytta-dnd-app/#/",
+    "errors": []
+  },
+  {
+    "name": "max-resources-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 392
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "home-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "party-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-focus-390",
+    "focusReturned": true
+  },
+  {
+    "name": "menu-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "menu-focus-390",
+    "focusReturned": true
+  },
+  {
+    "name": "home-navigation-390",
+    "focus": "main-content",
+    "url": "http://127.0.0.1:4175/rytta-dnd-app/#/",
+    "errors": []
+  },
+  {
+    "name": "home-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "party-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-focus-820",
+    "focusReturned": true
+  },
+  {
+    "name": "menu-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "menu-focus-820",
+    "focusReturned": true
+  },
+  {
+    "name": "home-navigation-820",
+    "focus": "main-content",
+    "url": "http://127.0.0.1:4175/rytta-dnd-app/#/",
+    "errors": []
+  },
+  {
+    "name": "home-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "party-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "editor-focus-820",
+    "focusReturned": true
+  },
+  {
+    "name": "menu-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "smallTargets": []
+  },
+  {
+    "name": "menu-focus-820",
+    "focusReturned": true
+  },
+  {
+    "name": "home-navigation-820",
+    "focus": "main-content",
+    "url": "http://127.0.0.1:4175/rytta-dnd-app/#/",
+    "errors": []
+  }
+]

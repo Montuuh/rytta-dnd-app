@@ -1,0 +1,41 @@
+export const charactersEn = {
+  'account.home': 'My account',
+  'account.menu': 'Open account and settings menu',
+  'account.exit': 'Back to my account',
+  'account.settings': 'Preferences',
+  'characters.title': 'Characters & resources',
+  'characters.intro':
+    'Create a character, then invite its Player. Resources are managed by the DM.',
+  'characters.playerIntro': 'Your character and resources. Ask your DM to make changes.',
+  'characters.rules': 'Homebrew · Whole gold, food and water rations · Manual exhaustion',
+  'characters.create': 'Create character',
+  'characters.name': 'Character name',
+  'characters.empty': 'No characters yet.',
+  'characters.emptyPlayer': 'Your DM has not assigned a character to you yet.',
+  'characters.unassigned': 'Unassigned',
+  'characters.assigned': 'Assigned to a Player',
+  'characters.you': 'Your character',
+  'characters.invite': 'Invite Player',
+  'characters.inviteHint':
+    'Invite a Google email to this character. They accept from My account. No email is sent. Reissuing cancels the previous invitation.',
+  'characters.invited': 'Invitation created. Manage pending invitations in Members & invitations.',
+  'characters.edit': 'Edit resources',
+  'characters.gold': 'Gold',
+  'characters.water_units': 'Water rations',
+  'characters.rations': 'Food rations',
+  'characters.exhaustion': 'Exhaustion',
+  'characters.save': 'Save resources',
+  'characters.saved': 'Resources saved.',
+  'characters.invalid': 'Enter a whole number within the allowed range.',
+  'characters.stale':
+    'Another DM updated these resources. Close and reopen the editor to load the latest values before saving.',
+  'characters.unavailable':
+    'Could not complete this action. Refresh and check the character, assignment and connection before retrying.',
+  'characters.unassign': 'Unlink Player',
+  'characters.unassignHint':
+    'Unlink the Player from {{name}}? They will lose access to this character. Membership and resources are preserved. You can then invite another Player.',
+  'characters.invitation': 'Character: {{name}}',
+  'characters.manageHint':
+    'Create characters and invite their Players from Characters & resources.',
+  'characters.updated': 'Last checked: {{time}}',
+} as const

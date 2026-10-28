@@ -1,22 +1,10 @@
 import { useState } from 'react'
-import {
-  Alert,
-  Badge,
-  Button,
-  Group,
-  Modal,
-  Paper,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from '@mantine/core'
-import { useForm } from '@mantine/form'
+import { Badge, Button, Group, Modal, Paper, Stack, Text, Title } from '@mantine/core'
+import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, sentInvitationsQuery, useCampaignAction, type CampaignAction } from '../api'
-import { inviteEmailSchema } from '../domain/campaign'
 import { useCampaign } from '../campaign-context'
 import { ActionFeedback, QueryFeedback } from './feedback'
 
@@ -29,18 +17,10 @@ export function CampaignMembers() {
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
   const invitations = useQuery({ ...sentInvitationsQuery(user.id, campaign.id), enabled: dm })
   const action = useCampaignAction()
-  const invite = useCampaignAction()
   const [confirmation, setConfirmation] = useState<{
     action: CampaignAction
     message: string
   } | null>(null)
-  const form = useForm({
-    initialValues: { email: '' },
-    validate: {
-      email: (value) =>
-        inviteEmailSchema.safeParse(value.trim()).success ? null : t('members.invalidEmail'),
-    },
-  })
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
@@ -56,34 +36,12 @@ export function CampaignMembers() {
       {dm && (
         <>
           <Paper p="lg">
-            <form
-              onSubmit={form.onSubmit(({ email }) =>
-                invite.mutate(
-                  { kind: 'invite', campaignId: campaign.id, email },
-                  { onSuccess: () => form.reset() },
-                ),
-              )}
-            >
-              <Stack>
-                <Title order={2}>{t('members.invite')}</Title>
-                <TextInput
-                  label={t('members.email')}
-                  type="email"
-                  required
-                  maxLength={254}
-                  autoComplete="email"
-                  {...form.getInputProps('email')}
-                />
-                <Text size="sm" c="dimmed">
-                  {t('members.inviteHint')}
-                </Text>
-                <ActionFeedback error={invite.error} />
-                {invite.isSuccess && <Alert role="status">{t('members.invited')}</Alert>}
-                <Button type="submit" loading={invite.isPending} w="fit-content">
-                  {t('members.invite')}
-                </Button>
-              </Stack>
-            </form>
+            <Stack>
+              <Text>{t('characters.manageHint')}</Text>
+              <Button component={Link} to={`/campaign/${campaign.id}/party`} variant="light">
+                {t('characters.title')}
+              </Button>
+            </Stack>
           </Paper>
           <section aria-labelledby="members-heading">
             <Stack>

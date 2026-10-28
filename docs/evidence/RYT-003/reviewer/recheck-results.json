@@ -1,0 +1,566 @@
+[
+  {
+    "name": "recheck-max-390-es-dark",
+    "layout": {
+      "viewport": 390,
+      "scroll": 390,
+      "cells": [
+        {
+          "text": "9.007.199.254.740.991",
+          "width": 308,
+          "top": 668.859375,
+          "left": 41,
+          "right": 349,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "2.147.483.647",
+          "width": 308,
+          "top": 738.15625,
+          "left": 41,
+          "right": 349,
+          "bottom": 791.453125,
+          "contained": true
+        },
+        {
+          "text": "2.147.483.647",
+          "width": 308,
+          "top": 807.453125,
+          "left": 41,
+          "right": 349,
+          "bottom": 860.75,
+          "contained": true
+        },
+        {
+          "text": "2.147.483.647",
+          "width": 308,
+          "top": 876.75,
+          "left": 41,
+          "right": 349,
+          "bottom": 930.046875,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-boundary-390-es-dark",
+    "layout": {
+      "viewport": 390,
+      "scroll": 390,
+      "cells": [
+        {
+          "text": "999.999.999",
+          "width": 146,
+          "top": 668.859375,
+          "left": 41,
+          "right": 187,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "999.999.999",
+          "width": 146,
+          "top": 668.859375,
+          "left": 203,
+          "right": 349,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "999.999.999",
+          "width": 146,
+          "top": 738.15625,
+          "left": 41,
+          "right": 187,
+          "bottom": 791.453125,
+          "contained": true
+        },
+        {
+          "text": "999.999.999",
+          "width": 146,
+          "top": 738.15625,
+          "left": 203,
+          "right": 349,
+          "bottom": 791.453125,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-normal-390-es-dark",
+    "layout": {
+      "viewport": 390,
+      "scroll": 390,
+      "cells": [
+        {
+          "text": "25",
+          "width": 146,
+          "top": 668.859375,
+          "left": 41,
+          "right": 187,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "3",
+          "width": 146,
+          "top": 668.859375,
+          "left": 203,
+          "right": 349,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "4",
+          "width": 146,
+          "top": 738.15625,
+          "left": 41,
+          "right": 187,
+          "bottom": 791.453125,
+          "contained": true
+        },
+        {
+          "text": "0",
+          "width": 146,
+          "top": 738.15625,
+          "left": 203,
+          "right": 349,
+          "bottom": 791.453125,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-max-390-en-light",
+    "layout": {
+      "viewport": 390,
+      "scroll": 390,
+      "cells": [
+        {
+          "text": "9,007,199,254,740,991",
+          "width": 308,
+          "top": 668.859375,
+          "left": 41,
+          "right": 349,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "2,147,483,647",
+          "width": 308,
+          "top": 738.15625,
+          "left": 41,
+          "right": 349,
+          "bottom": 791.453125,
+          "contained": true
+        },
+        {
+          "text": "2,147,483,647",
+          "width": 308,
+          "top": 807.453125,
+          "left": 41,
+          "right": 349,
+          "bottom": 860.75,
+          "contained": true
+        },
+        {
+          "text": "2,147,483,647",
+          "width": 308,
+          "top": 876.75,
+          "left": 41,
+          "right": 349,
+          "bottom": 930.046875,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-boundary-390-en-light",
+    "layout": {
+      "viewport": 390,
+      "scroll": 390,
+      "cells": [
+        {
+          "text": "999,999,999",
+          "width": 146,
+          "top": 668.859375,
+          "left": 41,
+          "right": 187,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "999,999,999",
+          "width": 146,
+          "top": 668.859375,
+          "left": 203,
+          "right": 349,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "999,999,999",
+          "width": 146,
+          "top": 738.15625,
+          "left": 41,
+          "right": 187,
+          "bottom": 791.453125,
+          "contained": true
+        },
+        {
+          "text": "999,999,999",
+          "width": 146,
+          "top": 738.15625,
+          "left": 203,
+          "right": 349,
+          "bottom": 791.453125,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-normal-390-en-light",
+    "layout": {
+      "viewport": 390,
+      "scroll": 390,
+      "cells": [
+        {
+          "text": "25",
+          "width": 146,
+          "top": 668.859375,
+          "left": 41,
+          "right": 187,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "3",
+          "width": 146,
+          "top": 668.859375,
+          "left": 203,
+          "right": 349,
+          "bottom": 722.15625,
+          "contained": true
+        },
+        {
+          "text": "4",
+          "width": 146,
+          "top": 738.15625,
+          "left": 41,
+          "right": 187,
+          "bottom": 791.453125,
+          "contained": true
+        },
+        {
+          "text": "0",
+          "width": 146,
+          "top": 738.15625,
+          "left": 203,
+          "right": 349,
+          "bottom": 791.453125,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-max-820-es-light",
+    "layout": {
+      "viewport": 820,
+      "scroll": 820,
+      "cells": [
+        {
+          "text": "9.007.199.254.740.991",
+          "width": 514,
+          "top": 580.171875,
+          "left": 261,
+          "right": 775,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "2.147.483.647",
+          "width": 514,
+          "top": 649.46875,
+          "left": 261,
+          "right": 775,
+          "bottom": 702.765625,
+          "contained": true
+        },
+        {
+          "text": "2.147.483.647",
+          "width": 514,
+          "top": 718.765625,
+          "left": 261,
+          "right": 775,
+          "bottom": 772.0625,
+          "contained": true
+        },
+        {
+          "text": "2.147.483.647",
+          "width": 514,
+          "top": 788.0625,
+          "left": 261,
+          "right": 775,
+          "bottom": 841.359375,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-boundary-820-es-light",
+    "layout": {
+      "viewport": 820,
+      "scroll": 820,
+      "cells": [
+        {
+          "text": "999.999.999",
+          "width": 249,
+          "top": 580.171875,
+          "left": 261,
+          "right": 510,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "999.999.999",
+          "width": 249,
+          "top": 580.171875,
+          "left": 526,
+          "right": 775,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "999.999.999",
+          "width": 249,
+          "top": 649.46875,
+          "left": 261,
+          "right": 510,
+          "bottom": 702.765625,
+          "contained": true
+        },
+        {
+          "text": "999.999.999",
+          "width": 249,
+          "top": 649.46875,
+          "left": 526,
+          "right": 775,
+          "bottom": 702.765625,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-normal-820-es-light",
+    "layout": {
+      "viewport": 820,
+      "scroll": 820,
+      "cells": [
+        {
+          "text": "25",
+          "width": 249,
+          "top": 580.171875,
+          "left": 261,
+          "right": 510,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "3",
+          "width": 249,
+          "top": 580.171875,
+          "left": 526,
+          "right": 775,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "4",
+          "width": 249,
+          "top": 649.46875,
+          "left": 261,
+          "right": 510,
+          "bottom": 702.765625,
+          "contained": true
+        },
+        {
+          "text": "0",
+          "width": 249,
+          "top": 649.46875,
+          "left": 526,
+          "right": 775,
+          "bottom": 702.765625,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-max-820-en-dark",
+    "layout": {
+      "viewport": 820,
+      "scroll": 820,
+      "cells": [
+        {
+          "text": "9,007,199,254,740,991",
+          "width": 514,
+          "top": 580.171875,
+          "left": 261,
+          "right": 775,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "2,147,483,647",
+          "width": 514,
+          "top": 649.46875,
+          "left": 261,
+          "right": 775,
+          "bottom": 702.765625,
+          "contained": true
+        },
+        {
+          "text": "2,147,483,647",
+          "width": 514,
+          "top": 718.765625,
+          "left": 261,
+          "right": 775,
+          "bottom": 772.0625,
+          "contained": true
+        },
+        {
+          "text": "2,147,483,647",
+          "width": 514,
+          "top": 788.0625,
+          "left": 261,
+          "right": 775,
+          "bottom": 841.359375,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-boundary-820-en-dark",
+    "layout": {
+      "viewport": 820,
+      "scroll": 820,
+      "cells": [
+        {
+          "text": "999,999,999",
+          "width": 249,
+          "top": 580.171875,
+          "left": 261,
+          "right": 510,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "999,999,999",
+          "width": 249,
+          "top": 580.171875,
+          "left": 526,
+          "right": 775,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "999,999,999",
+          "width": 249,
+          "top": 649.46875,
+          "left": 261,
+          "right": 510,
+          "bottom": 702.765625,
+          "contained": true
+        },
+        {
+          "text": "999,999,999",
+          "width": 249,
+          "top": 649.46875,
+          "left": 526,
+          "right": 775,
+          "bottom": 702.765625,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "recheck-normal-820-en-dark",
+    "layout": {
+      "viewport": 820,
+      "scroll": 820,
+      "cells": [
+        {
+          "text": "25",
+          "width": 249,
+          "top": 580.171875,
+          "left": 261,
+          "right": 510,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "3",
+          "width": 249,
+          "top": 580.171875,
+          "left": 526,
+          "right": 775,
+          "bottom": 633.46875,
+          "contained": true
+        },
+        {
+          "text": "4",
+          "width": 249,
+          "top": 649.46875,
+          "left": 261,
+          "right": 510,
+          "bottom": 702.765625,
+          "contained": true
+        },
+        {
+          "text": "0",
+          "width": 249,
+          "top": 649.46875,
+          "left": 526,
+          "right": 775,
+          "bottom": 702.765625,
+          "contained": true
+        }
+      ]
+    },
+    "axe": [],
+    "errors": []
+  }
+]

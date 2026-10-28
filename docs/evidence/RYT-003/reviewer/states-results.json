@@ -1,0 +1,27 @@
+[
+  {
+    "scenario": "dm-empty",
+    "axe": [],
+    "passed": true
+  },
+  {
+    "scenario": "player-empty",
+    "axe": [],
+    "passed": true
+  },
+  {
+    "scenario": "error-retry",
+    "axe": [],
+    "passed": true
+  },
+  {
+    "scenario": "signed-out",
+    "axe": [],
+    "passed": true
+  },
+  {
+    "scenario": "stale",
+    "axe": [],
+    "passed": true
+  }
+]

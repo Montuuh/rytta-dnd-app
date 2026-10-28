@@ -63,7 +63,7 @@ export function CampaignBoundary() {
               </Group>
             </div>
             <Button variant="subtle" component={Link} to="/">
-              {t('campaign.switch')}
+              {t('account.exit')}
             </Button>
           </Group>
         </div>

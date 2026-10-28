@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ActionIcon, Alert, Badge, Button, Drawer, Group, Stack, Text } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Compass, Menu, Settings } from 'lucide-react'
+import { Compass, Menu } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { modules } from './modules'
@@ -50,21 +50,13 @@ function Navigation({ close }: { close?: () => void }) {
           </NavLink>
         )}
       </Stack>
-      <NavLink
-        to="/settings"
-        onClick={close}
-        className={({ isActive }) => `nav-item settings-link ${isActive ? 'active' : ''}`}
-      >
-        <Settings size={19} aria-hidden="true" />
-        {t('nav.settings')}
-      </NavLink>
     </nav>
   )
 }
 
 export function Layout() {
   const { t } = useTranslation()
-  const { state, controller } = useAuth()
+  const { state } = useAuth()
   const live = config.VITE_DATA_MODE === 'supabase'
   const [online, setOnline] = useState(navigator.onLine)
   useEffect(() => {
@@ -77,6 +69,12 @@ export function Layout() {
     }
   }, [])
   const [opened, { open, close }] = useDisclosure(false)
+  const menuButton = useRef<HTMLButtonElement>(null)
+  const restoreMenuFocus = useRef(false)
+  const closeNavigation = () => {
+    restoreMenuFocus.current = false
+    close()
+  }
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
@@ -99,7 +97,9 @@ export function Layout() {
     document.title = `${t(key)} · Rytta`
   }, [pathname, t, live, state.status])
   return (
-    <div className="app-layout">
+    <div
+      className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''}`}
+    >
       <a
         className="skip-link"
         href="#main-content"
@@ -129,10 +129,16 @@ export function Layout() {
         <header className="topbar">
           <Group gap="sm" className="topbar-identity">
             <ActionIcon
-              className="mobile-menu"
+              ref={menuButton}
+              className="account-menu"
               variant="subtle"
-              aria-label={t('nav.open')}
-              onClick={open}
+              aria-label={t('account.menu')}
+              aria-expanded={opened}
+              aria-controls="account-drawer"
+              onClick={() => {
+                restoreMenuFocus.current = true
+                open()
+              }}
               size={44}
             >
               <Menu />
@@ -145,18 +151,7 @@ export function Layout() {
             <Badge variant="outline" color="forest">
               {t(config.VITE_DATA_MODE === 'demo' ? 'mode.demo' : 'mode.backend')}
             </Badge>
-            <PreferencesControls compact />
           </div>
-          {live && state.user && (
-            <Group className="account-row" justify="space-between">
-              <Text size="xs" c="dimmed" className="user-copy">
-                {t('auth.account', { email: state.user.email })}
-              </Text>
-              <Button variant="subtle" onClick={() => void controller?.signOut()}>
-                {t('auth.signOut')}
-              </Button>
-            </Group>
-          )}
         </header>
         <main id="main-content" ref={mainRef} tabIndex={-1}>
           {live && !online && (
@@ -171,12 +166,29 @@ export function Layout() {
       <Drawer
         opened={opened}
         onClose={close}
-        title={t('nav.drawer')}
+        title={t('account.home')}
+        id="account-drawer"
         closeButtonProps={{ 'aria-label': t('nav.close'), size: 44 }}
         size="xs"
-        returnFocus
+        returnFocus={false}
+        onExitTransitionEnd={() => {
+          if (restoreMenuFocus.current) menuButton.current?.focus()
+        }}
       >
-        <Navigation close={close} />
+        <Stack gap="lg">
+          <Button
+            component={NavLink}
+            to="/"
+            variant="light"
+            onClick={closeNavigation}
+            className="user-copy"
+          >
+            {state.user ? t('auth.account', { email: state.user.email }) : t('account.home')}
+          </Button>
+          <Text fw={600}>{t('account.settings')}</Text>
+          <PreferencesControls />
+          <Navigation close={closeNavigation} />
+        </Stack>
       </Drawer>
     </div>
   )

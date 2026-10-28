@@ -68,10 +68,16 @@ Do not combine implicit-flow fragments with hash routing.
 ## Backend extension
 
 Current schema: campaigns, campaign_members, campaign_invitations, characters and
-character_resources. RPCs create campaigns, list authorized data, invite/respond/revoke
+character_resources, with character_events added by the pending RYT-003 migration. RPCs create campaigns, list authorized data, invite/respond/revoke
 and change membership. Client membership writes remain closed. Each membership mutation
 locks the campaign row; the last active DM is protected. Inactive membership preserves
 characters while RLS denies access. Creator attribution has no permanent privileges.
+
+RYT-003 adds a characters feature with validated adapters, identity/campaign query keys,
+20-second resource polling and explicit refresh. DM forms call revision-checked SQL RPCs;
+Player views never offer writes. Realtime remains RYT-013. Campaign exit only navigates
+home and clears scoped queries; leaving membership is a separate confirmed action.
+The account home is the default signed-in landing route; deep links remain reloadable.
 
 Future domains: item definitions, inventory, equipment, merchants/stock, quests,
 encounters/participants, glossary, media, maps/routes, strongholds and relationships.

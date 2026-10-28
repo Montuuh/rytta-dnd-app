@@ -34,7 +34,7 @@ export function CampaignPage() {
               <div>
                 <Title order={2}>{t(label)}</Title>
                 <Text size="sm" c="dimmed">
-                  {t('common.planned')}
+                  {t(path === '/party' ? 'summary.party' : 'common.planned')}
                 </Text>
               </div>
             </Group>

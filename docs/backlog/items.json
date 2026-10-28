@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-27",
+  "updatedAt": "2026-10-28",
   "items": [
     {
       "id": "RYT-000",
@@ -112,16 +112,17 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-002"],
       "sources": [
         "Drive: character sheets and resources",
         "User: DM creates characters and invites a Player to one character per campaign",
-        "docs/decisions/004-player-character-assignment.md"
+        "docs/decisions/004-player-character-assignment.md",
+        "User 2026-10-28: whole gold, food rations, water rations and account-home navigation"
       ],
-      "scope": "DM-created unassigned characters, character-targeted invitations with atomic Player assignment, and revision-checked gold/water/ration/exhaustion operations. One assigned character per Player per campaign initially; multiple characters and activation/deactivation are deferred.",
+      "scope": "DM-created unassigned characters, character-targeted invitations with atomic Player assignment, and revision-checked whole-gold/water-ration/food-ration/manual-exhaustion operations. One assigned character per Player per campaign initially; multiple characters and activation/deactivation are deferred. Includes requested RYT-001/002 account-home, navigation and settings UX.",
       "acceptance": [
-        "Choose edition, resource units and player-facing language.",
+        "Homebrew uses whole gold, food rations, water rations and manual exhaustion; Spanish defaults with English available.",
         "DM can create a character before its Player has an account or campaign membership, then invite an email for that specific unassigned character.",
         "Invitation acceptance atomically activates Player membership and links the invited character; the Player cannot self-select or create a different character.",
         "Database enforces at most one assigned character per Player per campaign and at most one assigned Player per character; reject cross-campaign links, already-assigned characters, duplicate assignments and expired/reused/revoked invitations, including concurrent acceptance.",
@@ -136,6 +137,42 @@
         "DM character creation to Player invitation/acceptance e2e, including a previously nonexistent account",
         "Two-device resource update test"
       ],
+      "evidence": [
+        "docs/decisions/004-player-character-assignment.md",
+        "docs/decisions/005-homebrew-resources-account-home.md",
+        "docs/evidence/RYT-003/validation.md",
+        "docs/evidence/RYT-003/reviewer/review-initial.md",
+        "docs/evidence/RYT-003/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-017",
+      "title": "Local and production database workflow",
+      "priority": "P0",
+      "owner": "producer",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-003"],
+      "sources": [
+        "User: define local and production database workflow in the next backlog item",
+        "docs/decisions/005-homebrew-resources-account-home.md"
+      ],
+      "scope": "Define and validate a reproducible local Supabase workflow and a controlled path for staging and production database changes, including the pending RYT-003 migration. This ticket does not itself authorize production changes.",
+      "acceptance": [
+        "Document local setup, migration ordering, reset safety, generated types and repeatable Auth/PostgREST/RLS validation.",
+        "Define staging and production migration, backup/restore, preflight, rollback and approval procedures; assess existing copper balances, assignments and pending invitations before RYT-003 migration.",
+        "Record environment separation, secrets handling and drift detection; distinguish local tests from hosted integration.",
+        "Present any production migration as a separately reviewable action requiring explicit authorization."
+      ],
+      "validation": [
+        "Local Supabase setup and migration rehearsal where available",
+        "Documented staging and production checklist and recovery procedure",
+        "Backlog evidence and explicit untested environments"
+      ],
       "evidence": []
     },
     {
@@ -148,7 +185,7 @@
         "reasoningEffort": "high"
       },
       "status": "planned",
-      "dependsOn": ["RYT-003"],
+      "dependsOn": ["RYT-003", "RYT-017"],
       "sources": ["Drive: items, equipment, encumbrance"],
       "scope": "Item definitions, stacks, equipment slots, item use and compensating undo.",
       "acceptance": [

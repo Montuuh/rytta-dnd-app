@@ -394,3 +394,109 @@ main h3 {
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
+
+.topbar {
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+.header-actions {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.header-campaign {
+  min-width: 0;
+}
+.account-button {
+  min-width: 44px;
+}
+.account-email {
+  display: block;
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-navigation {
+  display: none;
+}
+.disabled-module {
+  opacity: 0.65;
+  cursor: default;
+}
+.planned-label {
+  font-size: 0.75em;
+  margin-left: auto;
+}
+.module-card[aria-disabled='true']:hover {
+  transform: none;
+  border-color: var(--app-border);
+}
+.mantine-Menu-item {
+  min-height: 44px;
+}
+@media (max-width: 48em) {
+  .mobile-navigation {
+    display: inline-flex;
+  }
+  .account-email {
+    display: none;
+  }
+  .account-button .mantine-Button-section {
+    margin-inline-end: 0;
+  }
+  .topbar {
+    gap: 4px;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 65%;
+  }
+}
+
+.topbar {
+  flex-wrap: wrap;
+}
+.header-campaign {
+  flex: 1 1 10rem;
+  max-width: 100%;
+}
+.header-actions {
+  max-width: 100%;
+}
+.disabled-module {
+  flex-wrap: wrap;
+}
+@media (max-width: 62em) {
+  .account-email {
+    display: none;
+  }
+  .account-button .mantine-Button-section {
+    margin-inline-end: 0;
+  }
+}
+
+.account-dropdown .mantine-Menu-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+.invitations-heading {
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+.invitation-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.invitation-account {
+  border-top: 1px solid var(--app-border);
+  padding-top: 16px;
+}

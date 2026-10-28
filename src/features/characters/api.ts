@@ -1,11 +1,11 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
-import { changeCharacter, listCharacters } from './data/repository'
+import { changeCharacter, listCharacters, listAssignments } from './data/repository'
 import type { CharacterAction } from './domain/character'
-export const charactersQuery = (userId: string, campaignId: string) =>
+export const charactersQuery = (userId: string, campaignId: string, playerOnly = false) =>
   queryOptions({
-    queryKey: ['private', userId, 'campaign', campaignId, 'characters'],
-    queryFn: ({ signal }) => listCharacters(campaignId, signal),
+    queryKey: ['private', userId, 'campaign', campaignId, 'characters', playerOnly],
+    queryFn: ({ signal }) => listCharacters(campaignId, signal, playerOnly ? userId : undefined),
     refetchInterval: 20_000,
   })
 export function useCharacterAction(campaignId: string) {
@@ -32,3 +32,10 @@ export function useCharacterAction(campaignId: string) {
     },
   })
 }
+
+export const assignmentsQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'assignments'],
+    queryFn: ({ signal }) => listAssignments(campaignId, signal),
+    refetchInterval: 20000,
+  })

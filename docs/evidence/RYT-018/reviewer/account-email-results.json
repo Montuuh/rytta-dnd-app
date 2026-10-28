@@ -1,0 +1,22 @@
+[
+  {
+    "email": "alexander.adventurer@example.com",
+    "bounds": {
+      "x": 5,
+      "y": 206,
+      "width": 347.265625,
+      "height": 161.984375
+    },
+    "width": 390
+  },
+  {
+    "email": "alexander.adventurer.with.a.long.address@example.com",
+    "bounds": {
+      "x": 5,
+      "y": 206,
+      "width": 507.34375,
+      "height": 161.984375
+    },
+    "width": 512
+  }
+]

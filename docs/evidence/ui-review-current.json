@@ -1,8 +1,8 @@
 {
-  "ticket": "RYT-003 / RYT-001-002 account UX",
+  "ticket": "RYT-019",
   "reviewer": "ui-ux",
   "verdict": "PASS",
   "reviewedAt": "2026-10-28",
-  "sourceDigest": "a001c30f6d1fda3cf139f5a5fbf4de98dfe94dca24cafff9bbf1e4f6d40639dd",
-  "report": "docs/evidence/RYT-003/reviewer/review.md"
+  "sourceDigest": "f8e33e3db42563f4a4bb0aa04b1a87c26af58c514671d0212a742c4eefce07ef",
+  "report": "docs/evidence/RYT-019/reviewer/review-focus.md"
 }

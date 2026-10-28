@@ -22,6 +22,7 @@ export const characterSchema = z.object({
 export type Character = z.infer<typeof characterSchema>
 export type Resources = z.infer<typeof resourceSchema>
 export type CharacterAction =
+  | { kind: 'assign'; characterId: string; userId: string }
   | { kind: 'create'; name: string }
   | { kind: 'invite'; characterId: string; email: string }
   | { kind: 'unassign'; characterId: string; expectedUser: string }

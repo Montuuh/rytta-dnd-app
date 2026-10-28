@@ -16,7 +16,8 @@ test('theme and language persist across navigation and reload and can be changed
   page,
 }) => {
   await page.goto('./')
-  await page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' }).click()
+  await page.getByRole('button', { name: 'Abrir menú de ajustes' }).click()
+  await page.getByRole('menuitem', { name: 'Ajustes', exact: true }).click()
   await page
     .getByRole('dialog')
     .locator('label')
@@ -120,7 +121,8 @@ test('blocked storage does not prevent changing language or theme', async ({ pag
   })
   await page.goto('./')
   await expect(page.getByRole('heading', { name: /Toda aventura/ })).toBeVisible()
-  await page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' }).click()
+  await page.getByRole('button', { name: 'Abrir menú de ajustes' }).click()
+  await page.getByRole('menuitem', { name: 'Ajustes', exact: true }).click()
   await page
     .getByRole('dialog')
     .locator('label')

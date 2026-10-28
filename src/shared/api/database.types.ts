@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database as GeneratedDatabase } from './database.generated'
 import type { CharacterFunctions } from './character-functions'
 
@@ -8,7 +9,7 @@ type GoldFields<T> = Omit<T, 'copper'> & { gold: number }
 
 // PostgreSQL permits explicit NULL arguments, but generated RPC types omit that fact.
 // NULL is the intentional membership-deactivation operation in this API.
-export type Database = Omit<GeneratedDatabase, 'public'> & {
+type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
   public: Omit<GeneratedDatabase['public'], 'Functions' | 'Tables'> & {
     // Pending migration overlay; database.generated.ts remains the last actual CLI output.
     Tables: Omit<Tables, 'characters' | 'character_resources' | 'campaign_invitations'> & {
@@ -40,3 +41,7 @@ export type Database = Omit<GeneratedDatabase, 'public'> & {
       }
   }
 }
+
+// PRE is a verified schema clone of the same application contract.
+export type Database = PublicDatabase & { pre: PublicDatabase['public'] }
+export type AppSupabaseClient = SupabaseClient<Database, 'public' | 'pre'>

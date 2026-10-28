@@ -23,7 +23,10 @@
     "prepare": "husky",
     "check:ai": "node scripts/check-ai.mjs",
     "check:ui-review": "node scripts/check-ui-review.mjs",
-    "check:supabase": "node scripts/verify-supabase-public.mjs"
+    "check:supabase": "node scripts/verify-supabase-public.mjs",
+    "pre:plan": "node scripts/sync-pre.mjs",
+    "pre:sync": "node scripts/sync-pre.mjs --apply",
+    "pre:restore": "node scripts/sync-pre.mjs --apply --restore"
   },
   "dependencies": {
     "@mantine/core": "^9.7.4",

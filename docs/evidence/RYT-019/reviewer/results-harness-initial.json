@@ -1,0 +1,32 @@
+{
+  "sourceDigest": "f279bcc8cc9c1c107dc5294f0c2809d2c513414bdda33a62170d50bfb6b53d1e",
+  "matrix": [
+    {
+      "tag": "390-es-dark",
+      "captures": [
+        {
+          "name": "home-100-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "home-150-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": [],
+      "errors": []
+    }
+  ],
+  "failure": {
+    "message": "expect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 240\nReceived:    330",
+    "stack": "Error: expect(received).toBeLessThanOrEqual(expected)\n\nExpected: <= 240\nReceived:    330\n    at captureRawStack (C:\\Users\\dmont\\Desktop\\CODE - Proyectos\\rytta-dnd-app\\node_modules\\playwright-core\\lib\\coreBundle.js:9282:17)\n    at callMatcherAsStep (C:\\Users\\dmont\\Desktop\\CODE - Proyectos\\rytta-dnd-app\\node_modules\\playwright\\lib\\matchers\\expect.js:13316:57)\n    at Object.toBeLessThanOrEqual (C:\\Users\\dmont\\Desktop\\CODE - Proyectos\\rytta-dnd-app\\node_modules\\playwright\\lib\\matchers\\expect.js:13308:23)\n    at C:\\Users\\dmont\\Desktop\\CODE - Proyectos\\rytta-dnd-app\\docs\\evidence\\RYT-019\\reviewer\\review.mjs:56:27"
+  }
+}

@@ -9,13 +9,25 @@ This repository is a foundation; planned modules are not implemented features.
 - Talk to the user in Spanish. Keep code, documentation and identifiers in English.
 - Inspect `git status` and existing changes before editing. Own a named ticket and paths.
 - The producer maintains priority, dependencies, acceptance criteria and evidence.
-- Work on the requested delivery only. No autonomous release, paid service creation,
-  production database migration, destructive import or external messages.
+- Work on the requested delivery only. The user authorizes necessary Supabase changes and
+  non-destructive production migrations within that delivery without a separate approval.
+  Check the target, existing data, permissions and migration history; validate and report results.
+  No autonomous release, paid service creation, destructive import or external messages.
 - Delegate only when the user authorizes it; role files do not authorize spawning.
 - Standing user authorization: invoke `ui-ux` after every interface change, including
   translations, theme, layout and interaction changes.
 - Do not edit the legacy sibling `../rytta`; use it only as a reference.
 - Keep durable decisions in ADRs and backlog evidence, not chat history alone.
+
+## Database environments
+
+- Local development and localhost previews use `pre`; hosted production uses `public`.
+  The runtime selector is authoritative; do not add a browser-controlled schema override.
+- `pre_private` contains PRE helpers, audit internals and idempotency state. Auth is shared.
+- Use `npm run pre:plan` before `pre:sync`. Existing PRE refreshes require `--replace-pre`
+  and retain a complete server-side backup. ETL is public/private to pre/pre_private only.
+- Test database changes in PRE, then apply reviewed production migrations within the task.
+  Never promote PRE data into PROD or use public RPCs for local application testing.
 
 ## Engineering rules
 

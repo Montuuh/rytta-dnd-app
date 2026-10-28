@@ -1,0 +1,29 @@
+[
+  {
+    "name": "state-invalid-email",
+    "axe": []
+  },
+  {
+    "name": "state-offline-invite",
+    "axe": []
+  },
+  {
+    "name": "state-mobile-navigation",
+    "axe": []
+  },
+  {
+    "name": "metadata-projection",
+    "requests": [
+      "https://rytta-test.supabase.co/rest/v1/characters?select=id%2Cname%2Cuser_id&campaign_id=eq.20000000-0000-4000-8000-000000000001&order=created_at.asc"
+    ],
+    "resourcesRequested": false
+  },
+  {
+    "name": "state-guest-settings",
+    "axe": []
+  },
+  {
+    "name": "state-empty-home-settings",
+    "axe": []
+  }
+]

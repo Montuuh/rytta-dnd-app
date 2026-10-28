@@ -1,0 +1,52 @@
+{
+  "html": "<div class=\"m_38a85659 mantine-Menu-dropdown m_dc9b7c9f\" aria-labelledby=\"mantine-j5zluvusi\" id=\"mantine-j5zluvusi-dropdown\" role=\"menu\" tabindex=\"-1\" aria-orientation=\"vertical\" data-menu-dropdown=\"true\" data-position=\"bottom-end\" style=\"transition-property: opacity; backface-visibility: hidden; transition-duration: 150ms; transition-timing-function: ease; opacity: 1; z-index: 300; top: 114px; left: 182.328px; width: max-content;\"><div role=\"presentation\" tabindex=\"-1\" data-autofocus=\"true\" data-mantine-stop-propagation=\"true\" style=\"outline: 0px;\"></div><div class=\"m_9bfac126 mantine-Menu-label user-copy\">dm@example.com</div><a tabindex=\"-1\" role=\"menuitem\" data-menu-item=\"true\" data-mantine-stop-propagation=\"true\" class=\"mantine-focus-auto m_99ac2aa1 mantine-Menu-item m_87cf2631 mantine-UnstyledButton-root\" href=\"#/\" data-discover=\"true\"><div class=\"m_5476e0d3 mantine-Menu-itemLabel\" data-menu-item-label=\"true\">Mis campañas</div></a><button class=\"mantine-focus-auto m_99ac2aa1 mantine-Menu-item m_87cf2631 mantine-UnstyledButton-root\" type=\"button\" tabindex=\"-1\" role=\"menuitem\" data-menu-item=\"true\" data-mantine-stop-propagation=\"true\"><div class=\"m_5476e0d3 mantine-Menu-itemLabel\" data-menu-item-label=\"true\">Cerrar sesión</div></button></div>",
+  "violations": [
+    {
+      "id": "aria-required-children",
+      "impact": "critical",
+      "tags": [
+        "cat.aria",
+        "wcag2a",
+        "wcag131",
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAAv4",
+        "RGAA-9.3.1"
+      ],
+      "description": "Ensure elements with an ARIA role that require child roles contain them",
+      "help": "Certain ARIA roles must contain particular children",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/aria-required-children?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "aria-required-children",
+              "data": {
+                "messageKey": "unallowedPresentational",
+                "values": "[tabindex]"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"presentation\" tabindex=\"-1\" data-autofocus=\"true\" data-mantine-stop-propagation=\"true\" style=\"outline: 0px;\"></div>",
+                  "target": [
+                    "div[role=\"presentation\"]"
+                  ]
+                }
+              ],
+              "impact": "critical",
+              "message": "Element has presentational children which cannot be ignored because of [tabindex]"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "critical",
+          "html": "<div class=\"m_38a85659 mantine-M...\" aria-labelledby=\"mantine-j5zluvusi\" id=\"mantine-j5zluvusi-dr...\" role=\"menu\" tabindex=\"-1\" aria-orientation=\"vertical\" data-menu-dropdown=\"true\" data-position=\"bottom-end\" style=\"transition-property:...\">",
+          "target": [
+            "#mantine-j5zluvusi-dropdown"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has presentational children which cannot be ignored because of [tabindex]"
+        }
+      ]
+    }
+  ]
+}

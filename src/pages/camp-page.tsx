@@ -1,3 +1,4 @@
+import { ModuleCard } from '@/app/module-card'
 import { Badge, Button, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { ArrowRight, Compass, Feather, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router'
@@ -51,7 +52,7 @@ export function CampPage() {
       </Group>
       <SimpleGrid cols={{ base: 1, xs: 2, lg: 3 }} spacing="md">
         {modules.slice(1, 7).map(({ path, label, summary, icon: Icon }) => (
-          <Paper component={Link} to={path} className="module-card" key={path} p="lg">
+          <ModuleCard to={path} enabled={path === '/party'} key={path}>
             <Group justify="space-between">
               <span className="module-icon">
                 <Icon size={23} strokeWidth={1.5} aria-hidden="true" />
@@ -67,7 +68,7 @@ export function CampPage() {
             <Text size="xs" mt="lg" fw={600}>
               {t('common.planned')}
             </Text>
-          </Paper>
+          </ModuleCard>
         ))}
       </SimpleGrid>
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="xl">

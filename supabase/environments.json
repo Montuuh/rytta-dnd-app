@@ -1,0 +1,6 @@
+{
+  "projectRef": "ekscdsmniukuxqjixapu",
+  "productionSchema": "public",
+  "developmentSchema": "pre",
+  "developmentPrivateSchema": "pre_private"
+}

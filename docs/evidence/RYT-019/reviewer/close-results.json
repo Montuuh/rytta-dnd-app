@@ -1,0 +1,62 @@
+{
+  "sourceDigest": "621bb1876b44181b3a68041e524c3731e0f74be5712992cac6a8bcf43ae89064",
+  "matrix": [
+    {
+      "width": 390,
+      "lang": "es",
+      "scheme": "dark",
+      "size": {
+        "x": 287,
+        "y": 187.71875,
+        "width": 66,
+        "height": 66
+      },
+      "axe": [],
+      "errors": [],
+      "closesAndReturnsFocus": true
+    },
+    {
+      "width": 390,
+      "lang": "en",
+      "scheme": "light",
+      "size": {
+        "x": 287,
+        "y": 202.9375,
+        "width": 66,
+        "height": 66
+      },
+      "axe": [],
+      "errors": [],
+      "closesAndReturnsFocus": true
+    },
+    {
+      "width": 820,
+      "lang": "es",
+      "scheme": "light",
+      "size": {
+        "x": 695.5,
+        "y": 185.15625,
+        "width": 66,
+        "height": 66
+      },
+      "axe": [],
+      "errors": [],
+      "closesAndReturnsFocus": true
+    },
+    {
+      "width": 820,
+      "lang": "en",
+      "scheme": "dark",
+      "size": {
+        "x": 695.5,
+        "y": 185.15625,
+        "width": 66,
+        "height": 66
+      },
+      "axe": [],
+      "errors": [],
+      "closesAndReturnsFocus": true
+    }
+  ],
+  "failure": null
+}

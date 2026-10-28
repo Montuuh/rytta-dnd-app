@@ -1,5 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/shared/api/database.types'
+import type { AppSupabaseClient } from '@/shared/api/database.types'
 import { z } from 'zod'
 import {
   campaignSchema,
@@ -23,9 +22,7 @@ function check(error: { message: string } | null) {
   )
 }
 
-export function createSupabaseCampaignRepository(
-  client: SupabaseClient<Database>,
-): CampaignRepository {
+export function createSupabaseCampaignRepository(client: AppSupabaseClient): CampaignRepository {
   return {
     async list(signal) {
       let query = client.rpc('list_my_campaigns')

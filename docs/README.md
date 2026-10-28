@@ -20,5 +20,13 @@
 15. [ADR 005: resources and account home](decisions/005-homebrew-resources-account-home.md)
     and [RYT-003 verification](evidence/RYT-003/validation.md).
 
+16. [ADR 006: shell and member character management](decisions/006-shell-member-character-management.md)
+    and [RYT-018 verification](evidence/RYT-018/validation.md).
+17. [PRE environment and ETL](pre-environment.md),
+    [ADR 007](decisions/007-shared-project-pre.md) and
+    [RYT-017 verification](evidence/RYT-017/validation.md).
+18. [ADR 008: campaign home and compact settings](decisions/008-campaign-home-compact-settings.md)
+    and [RYT-019 verification](evidence/RYT-019/validation.md).
+
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

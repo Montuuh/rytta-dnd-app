@@ -22,9 +22,12 @@ export const identityEn = {
   'hub.emptyHint': 'Create a campaign or ask your DM to invite your Google account email.',
   'hub.open': 'Open campaign',
   'hub.invitations': 'Join a campaign',
-  'hub.inviteHint':
-    'Invitations for {{email}} appear here. Already invited with another email? Sign out and choose that Google account.',
+  'hub.inviteHint': 'Invitations for: {{email}}',
+  'hub.joinHint': 'Accept an invitation from your DM to join their table.',
+  'hub.pendingCount': 'Pending invitations: {{count}}',
   'hub.noInvitations': 'No pending invitations.',
+  'hub.noInvitationsHint':
+    'Ask your DM to invite you using the email below. Your invitation will appear here.',
   'hub.accept': 'Accept invitation',
   'hub.decline': 'Decline',
   'hub.expires': 'Expires {{date}}',

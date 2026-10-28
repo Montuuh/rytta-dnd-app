@@ -1,0 +1,331 @@
+{
+  "sourceDigest": "f279bcc8cc9c1c107dc5294f0c2809d2c513414bdda33a62170d50bfb6b53d1e",
+  "matrix": [
+    {
+      "tag": "390-es-dark",
+      "captures": [
+        {
+          "name": "home-100-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "home-150-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "menu-150-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "preferences-150-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "empty-after-decline-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "menuBox": {
+            "x": 42,
+            "y": 92,
+            "width": 330,
+            "height": 66.546875
+          },
+          "themeTargets": [
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            },
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            }
+          ],
+          "keyboard": "menu Enter/Escape, outside close, 12 trapped Tabs, modal Escape",
+          "themeChanged": "light"
+        },
+        {
+          "accountSwitchAndEscape": true
+        },
+        {
+          "declineConfirmed": true,
+          "accountLogout": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "tag": "390-en-light",
+      "captures": [
+        {
+          "name": "home-100-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "home-150-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "menu-150-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "preferences-150-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "empty-after-decline-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "menuBox": {
+            "x": 42,
+            "y": 92,
+            "width": 330,
+            "height": 66.546875
+          },
+          "themeTargets": [
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            },
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            }
+          ],
+          "keyboard": "menu Enter/Escape, outside close, 12 trapped Tabs, modal Escape",
+          "themeChanged": "dark"
+        },
+        {
+          "accountSwitchAndEscape": true
+        },
+        {
+          "declineConfirmed": true,
+          "accountLogout": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "tag": "820-es-light",
+      "captures": [
+        {
+          "name": "home-100-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "home-150-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "menu-150-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "preferences-150-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "empty-after-decline-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "menuBox": {
+            "x": 466,
+            "y": 94,
+            "width": 330,
+            "height": 66.546875
+          },
+          "themeTargets": [
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            },
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            }
+          ],
+          "keyboard": "menu Enter/Escape, outside close, 12 trapped Tabs, modal Escape",
+          "themeChanged": "dark"
+        },
+        {
+          "accountSwitchAndEscape": true
+        },
+        {
+          "declineConfirmed": true,
+          "accountLogout": true
+        }
+      ],
+      "errors": []
+    },
+    {
+      "tag": "820-en-dark",
+      "captures": [
+        {
+          "name": "home-100-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "home-150-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "menu-150-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "preferences-150-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "empty-after-decline-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "menuBox": {
+            "x": 466,
+            "y": 94,
+            "width": 330,
+            "height": 66.546875
+          },
+          "themeTargets": [
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            },
+            {
+              "width": 74,
+              "height": 53,
+              "icons": 1
+            }
+          ],
+          "keyboard": "menu Enter/Escape, outside close, 12 trapped Tabs, modal Escape",
+          "themeChanged": "light"
+        },
+        {
+          "accountSwitchAndEscape": true
+        },
+        {
+          "declineConfirmed": true,
+          "accountLogout": true
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "failure": null,
+  "loading": {
+    "name": "loading-phone",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "axe": []
+  },
+  "failedRefresh": {
+    "name": "failed-refresh-phone",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "axe": []
+  },
+  "acceptAndRecovery": true
+}

@@ -30,10 +30,9 @@ VITE_BASE_PATH=/
 
 These are the only application variables required for this delivery. `.env.local` is
 ignored by Git. The existing `.env` can stay in demo mode: `.env.local` overrides it.
-Restart `npm run dev` after changes. Local development normally uses `http://localhost:5173/`.
-The current real-backend preview uses `http://127.0.0.1:4182/` because another application
-already occupies 5173. Start that preview with
-`npm run build` then `npm run preview -- --host 127.0.0.1 --port 4182 --strictPort`.
+Restart Vite after changes. Current local development uses `http://localhost:5174/`:
+`npm run dev -- --port 5174 --strictPort`. Another app occupies 5173. A previous dedicated
+preview on `http://127.0.0.1:4182/` remains allowlisted but is not the current local URL.
 For project Pages, build with `/rytta-dnd-app/` (or the actual repository subpath).
 
 All `VITE_` values are shipped to the browser. Never add Google Client Secret, database
@@ -67,11 +66,17 @@ and publishing requirements before making the app broadly available.
 
 In **Authentication → URL Configuration**:
 
-- Local Site URL: `http://localhost:5173/`.
-- Allowed Redirect URLs: `http://localhost:5173/` and `http://127.0.0.1:5173/` if used.
-- For the current dedicated preview, include `http://127.0.0.1:4182/`.
-- When deploying later, set Site URL to the exact deployed frontend base, for example
-  `https://YOUR_USER.github.io/rytta-dnd-app/`, and allow that exact URL too.
+- Shared-project Site URL stays `https://montuuh.github.io/rytta-dnd-app/`.
+- Allowed Redirect URLs must include the active local base `http://localhost:5174/`.
+  Also add `http://localhost:5174/?sb_flow_id=*` for the SDK's PKCE correlation query.
+  Existing 5173 and legacy 4182 entries can remain. A different hostname, port or subpath
+  needs its own exact entry. Use the trailing slash matching the frontend base.
+- Keep the exact production base allowlisted too. A missing local URL makes Supabase
+  use Site URL as fallback, sending a localhost sign-in to production.
+  Include `https://montuuh.github.io/rytta-dnd-app/?sb_flow_id=*` so that production
+  preserves PKCE correlation too. These patterns keep fixed hosts, ports and paths.
+- Verify with `npm run check:supabase`; pass another base explicitly as
+  `npm run check:supabase -- http://localhost:5174/` when needed.
 
 Do not add `/#/` routes to the callback. Rytta consumes the PKCE query-string code before
 rendering campaign routes and removes it from the URL. Complete login in the browser/device
@@ -90,8 +95,9 @@ The reviewed migrations must be applied in timestamp order:
 
 Both are already applied to the current Rytta project: do not apply them again there.
 Their local filenames match the versions assigned by MCP. For another environment, use
-a separate staging project first. Applying a hosted migration is a separate, explicitly authorized operation;
-do not run a production reset. The public URL and publishable key alone cannot migrate SQL.
+a separate staging project when available. Necessary non-destructive hosted migrations within
+the requested delivery are authorized; check target, history, data impact and recovery, then
+verify the hosted result. Do not run a production reset without explicit authorization. The public URL and publishable key alone cannot migrate SQL.
 CLI migration access uses your locally authenticated Supabase CLI and, where required, a
 database password; keep credentials in the CLI/password manager, not in browser variables.
 

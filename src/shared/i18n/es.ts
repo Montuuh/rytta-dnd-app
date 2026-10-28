@@ -81,6 +81,7 @@ export const es = {
     'Recarga para intentarlo de nuevo. Si el problema continúa, comprueba la configuración.',
   'error.reload': 'Recargar',
   'preferences.title': 'A tu manera',
+  'preferences.close': 'Cerrar ajustes',
   'preferences.theme': 'Apariencia',
   'preferences.dark': 'Oscuro',
   'preferences.light': 'Claro',

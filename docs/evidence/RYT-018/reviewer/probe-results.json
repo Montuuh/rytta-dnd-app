@@ -1,0 +1,386 @@
+[
+  {
+    "name": "party-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "menu-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "settings-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "account-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-2w5rsfu7o-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "preview-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-2w5rsfu7o-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "members-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "link-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "unlink-390-es-dark",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "errors-390-es-dark",
+    "errors": []
+  },
+  {
+    "name": "party-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "menu-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "settings-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "account-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-qj8kkcy1x-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "preview-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-qj8kkcy1x-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "members-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "link-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "unlink-390-en-light",
+    "overflow": {
+      "viewport": 390,
+      "scroll": 390
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "errors-390-en-light",
+    "errors": []
+  },
+  {
+    "name": "party-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "menu-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "settings-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "account-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-osqxr5g8j-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "preview-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-osqxr5g8j-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "members-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "link-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "unlink-820-es-light",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "errors-820-es-light",
+    "errors": []
+  },
+  {
+    "name": "party-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "menu-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "settings-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "account-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-r7199oh98-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "preview-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "targets": [
+          [
+            "#mantine-r7199oh98-dropdown"
+          ]
+        ]
+      }
+    ],
+    "small": []
+  },
+  {
+    "name": "members-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "link-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "unlink-820-en-dark",
+    "overflow": {
+      "viewport": 820,
+      "scroll": 820
+    },
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "errors-820-en-dark",
+    "errors": []
+  }
+]

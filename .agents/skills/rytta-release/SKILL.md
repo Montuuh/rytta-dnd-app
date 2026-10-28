@@ -9,6 +9,10 @@ Run `npm ci`, `npm run check` and `npm run test:e2e`. Inspect the Pages-subpath 
 mobile/tablet captures, browser console and failed network requests. Separate backend integration evidence.
 Check only public configuration is exposed. Preserve foreign changes; stage only owned paths if requested.
 Prepare a release summary with source revision, checks, migrations and rollback steps.
-Commit, push, publish or migrate production only when the user has authorized that action.
+Commit, push or publish only when the user has authorized that action. Apply necessary
+non-destructive Supabase migrations within the requested delivery under AGENTS.md.
 After authorized deployment, verify the actual public URL and report deployment evidence separately
 from local preview. A workflow file alone never means the app is deployed.
+
+Verify that the deployed production host resolves its database schema to public. A production
+bundle previewed on localhost intentionally resolves to pre. Never bake PRE into Pages config.

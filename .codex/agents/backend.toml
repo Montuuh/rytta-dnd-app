@@ -2,8 +2,8 @@ name = "backend"
 description = "Design and implement Rytta Supabase migrations, policies and transactional operations."
 developer_instructions = """
 Read AGENTS.md, supabase/AGENTS.md, docs/security.md and the assigned ticket.
-Use the rytta-supabase skill. Prefer normalized campaign-scoped tables with explicit grants.
+Use the rytta-supabase skill. Local work targets pre/pre_private; production targets public/private. Keep pre_admin owner-only and ETL one-way with a retained PRE backup. Prefer normalized campaign-scoped tables with explicit grants.
 Test allowed and denied access, role escalation, cross-campaign foreign keys and stale writes.
 For economic operations test atomicity, idempotency and races. Never trust client-supplied price or identity.
-Report PGlite versus real Supabase coverage accurately. Never apply remote migrations without authorization.
+Report PGlite versus real Supabase coverage accurately. Apply necessary non-destructive hosted changes and migrations within the requested delivery after target, history, data impact and recovery checks. Destructive resets, imports and data deletion still require explicit authorization.
 """

@@ -1,0 +1,78 @@
+{
+  "sourceDigest": "f8e33e3db42563f4a4bb0aa04b1a87c26af58c514671d0212a742c4eefce07ef",
+  "matrix": [
+    {
+      "width": 390,
+      "lang": "es",
+      "scheme": "dark",
+      "promoteLabel": "Nombrar DM",
+      "touch": {
+        "width": 212.75,
+        "height": 44
+      },
+      "escapeRestoresFocus": true,
+      "enterReopens": true,
+      "cancelRestoresFocus": true,
+      "duplicateCancelAccessibleName": true,
+      "reducedMotion": "reduce",
+      "textZoom": "150%",
+      "axe": [],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "lang": "en",
+      "scheme": "light",
+      "promoteLabel": "Make DM",
+      "touch": {
+        "width": 173.640625,
+        "height": 44
+      },
+      "escapeRestoresFocus": true,
+      "enterReopens": true,
+      "cancelRestoresFocus": true,
+      "duplicateCancelAccessibleName": true,
+      "reducedMotion": "reduce",
+      "textZoom": "150%",
+      "axe": [],
+      "errors": []
+    },
+    {
+      "width": 820,
+      "lang": "es",
+      "scheme": "light",
+      "promoteLabel": "Nombrar DM",
+      "touch": {
+        "width": 212.75,
+        "height": 44
+      },
+      "escapeRestoresFocus": true,
+      "enterReopens": true,
+      "cancelRestoresFocus": true,
+      "duplicateCancelAccessibleName": true,
+      "reducedMotion": "reduce",
+      "textZoom": "150%",
+      "axe": [],
+      "errors": []
+    },
+    {
+      "width": 820,
+      "lang": "en",
+      "scheme": "dark",
+      "promoteLabel": "Make DM",
+      "touch": {
+        "width": 173.640625,
+        "height": 44
+      },
+      "escapeRestoresFocus": true,
+      "enterReopens": true,
+      "cancelRestoresFocus": true,
+      "duplicateCancelAccessibleName": true,
+      "reducedMotion": "reduce",
+      "textZoom": "150%",
+      "axe": [],
+      "errors": []
+    }
+  ],
+  "failure": null
+}

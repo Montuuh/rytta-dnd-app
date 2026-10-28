@@ -5,6 +5,7 @@ import {
   SegmentedControl,
   Stack,
   Text,
+  VisuallyHidden,
   useComputedColorScheme,
   useMantineColorScheme,
 } from '@mantine/core'
@@ -61,8 +62,24 @@ export function PreferencesControls({ compact = false }: { compact?: boolean }) 
           value={scheme}
           onChange={(value) => setColorScheme(value === 'light' ? 'light' : 'dark')}
           data={[
-            { value: 'dark', label: t('preferences.dark') },
-            { value: 'light', label: t('preferences.light') },
+            {
+              value: 'dark',
+              label: (
+                <span className="theme-option" title={t('preferences.dark')}>
+                  <Moon size={22} aria-hidden="true" />
+                  <VisuallyHidden>{t('preferences.dark')}</VisuallyHidden>
+                </span>
+              ),
+            },
+            {
+              value: 'light',
+              label: (
+                <span className="theme-option" title={t('preferences.light')}>
+                  <Sun size={22} aria-hidden="true" />
+                  <VisuallyHidden>{t('preferences.light')}</VisuallyHidden>
+                </span>
+              ),
+            },
           ]}
         />
       </div>

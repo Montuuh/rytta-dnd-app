@@ -155,25 +155,36 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "done",
       "dependsOn": ["RYT-003"],
       "sources": [
         "User: define local and production database workflow in the next backlog item",
-        "docs/decisions/005-homebrew-resources-account-home.md"
+        "docs/decisions/005-homebrew-resources-account-home.md",
+        "User: connect localhost to a production-like PRE database and provide PROD-to-PRE schema/data ETL",
+        "User: use a clone schema pre in the same project, local targets pre and production remains public"
       ],
-      "scope": "Define and validate a reproducible local Supabase workflow and a controlled path for staging and production database changes, including the pending RYT-003 migration. This ticket does not itself authorize production changes.",
+      "scope": "Prepare pre/pre_private in the existing Rytta Supabase project, pin local app traffic to pre and hosted production to public, and deliver an owner-only one-way bulk schema/data ETL with dry-run, transactional replacement, full PRE backups and restore.",
       "acceptance": [
-        "Document local setup, migration ordering, reset safety, generated types and repeatable Auth/PostgREST/RLS validation.",
-        "Define staging and production migration, backup/restore, preflight, rollback and approval procedures; assess existing copper balances, assignments and pending invitations before RYT-003 migration.",
-        "Record environment separation, secrets handling and drift detection; distinguish local tests from hosted integration.",
-        "Present any production migration as a separately reviewable action requiring explicit authorization."
+        "Local development and localhost previews use pre; hosted production uses public, with no editable browser schema override.",
+        "Clone public/private application tables, data, functions, triggers, foreign keys, grants and RLS into pre/pre_private; retain shared Auth without copying sessions or secrets.",
+        "Default ETL is a read-only plan; initial copy is explicit and replacement requires --replace-pre, retaining a full owner-only server-side PRE backup and transactional restore.",
+        "Maintenance remains inaccessible to anon, authenticated and service_role; application roles retain the source permission model.",
+        "Verify row equality, actor denials, PRE-only writes and backup/restore; fail closed on unsupported database objects rather than silently producing a partial clone.",
+        "Record setup, credentials, history, API schema exposure, refresh, recovery and shared-project limits in doctrine and evidence."
       ],
       "validation": [
-        "Local Supabase setup and migration rehearsal where available",
-        "Documented staging and production checklist and recovery procedure",
-        "Backlog evidence and explicit untested environments"
+        "npm run check",
+        "npm run test:e2e",
+        "Hosted PRE clone equality and rolled-back actor/isolation probes",
+        "PRE and public anonymous REST denials",
+        "PRE refresh/restore and environment selector regressions"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-017/pre-implementation.md",
+        "docs/evidence/RYT-017/validation.md",
+        "docs/decisions/007-shared-project-pre.md",
+        "docs/pre-environment.md"
+      ]
     },
     {
       "id": "RYT-004",
@@ -487,6 +498,78 @@
       "evidence": [
         "docs/evidence/RYT-016/validation.md",
         "docs/evidence/RYT-016/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-018",
+      "title": "Account shell and member character assignment",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-003"],
+      "sources": [
+        "User: right-side settings and account controls; member character assignment; DM Player preview; disable unfinished modules"
+      ],
+      "scope": "Separate global settings and account controls, move character assignment to membership, add a read-only Player presentation preview and disable unfinished navigation.",
+      "acceptance": [
+        "Header shows campaign name, account control and right-side settings drawer; settings open in a centered large modal.",
+        "Member management lists character names without resources and supports invite, link and unlink. Character page only creates characters and edits resources.",
+        "DM preview changes presentation only and prevents DM controls; real authorization remains in SQL.",
+        "Unimplemented modules are disabled in camp and navigation; account home is reached through account control."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "SQL assignment actor matrix",
+        "Independent ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/006-shell-member-character-management.md",
+        "docs/evidence/RYT-018/validation.md",
+        "docs/evidence/RYT-018/reviewer/review-initial.md",
+        "docs/evidence/RYT-018/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-019",
+      "title": "Campaign home and compact settings menu",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-018"],
+      "sources": [
+        "User: four browser comments on duplicate account panel, campaign invitation UX, oversized hamburger drawer and theme icons"
+      ],
+      "scope": "Remove the duplicate account block from campaign home, improve invitation hierarchy and states, replace the settings drawer with a compact anchored menu and show accessible moon/sun theme choices.",
+      "acceptance": [
+        "Campaign home has no duplicate account/logout panel; account-menu logout remains available.",
+        "Join-campaign invitations have clear pending/empty/loading/error states, recipient identity, refresh and working accept/decline actions.",
+        "The hamburger opens a content-sized menu containing Settings only; keyboard, outside click, Escape and modal focus restoration work.",
+        "Appearance uses moon/sun icons with localized accessible names, selected state and 44px targets.",
+        "Verify phone/tablet, both languages/themes, 150% text, reduced motion and independent ui-ux verdict."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run format:check",
+        "npm run check:ui-review",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/008-campaign-home-compact-settings.md",
+        "docs/evidence/RYT-019/validation.md",
+        "docs/evidence/RYT-019/reviewer/review-initial.md",
+        "docs/evidence/RYT-019/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
     }

@@ -68,7 +68,7 @@ Do not combine implicit-flow fragments with hash routing.
 ## Backend extension
 
 Current schema: campaigns, campaign_members, campaign_invitations, characters and
-character_resources, with character_events added by the pending RYT-003 migration. RPCs create campaigns, list authorized data, invite/respond/revoke
+character_resources, including character_events added by the applied RYT-003 migration. RPCs create campaigns, list authorized data, invite/respond/revoke
 and change membership. Client membership writes remain closed. Each membership mutation
 locks the campaign row; the last active DM is protected. Inactive membership preserves
 characters while RLS denies access. Creator attribution has no permanent privileges.
@@ -91,3 +91,12 @@ Prefer SQL RPC for transactions; Edge Functions are for secrets/external service
 Strict TypeScript, Oxlint, Prettier, Vitest, PGlite policy tests and Playwright/axe.
 Git hooks provide feedback; CI repeats gates. Deployment is explicit. No service worker:
 offline support first needs update, privacy and conflict policies.
+
+## Development and production schemas
+
+Local development and loopback previews route all SDK table/RPC traffic to pre; hosted
+production routes to public. PRE mirrors the application contract, while pre_private mirrors
+private helpers/audit/idempotency targets. Auth remains shared in this project. pre_admin
+is an owner-only maintenance schema, absent from exposed Data API schemas. Its one-way
+ETL clones live application structure and data in a stable transaction and retains full
+PRE schema backups on explicit replacement. See ADR 007 and docs/pre-environment.md.

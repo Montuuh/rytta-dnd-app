@@ -240,4 +240,44 @@ describe('RYT-003 complete migration chain', () => {
       ).rows,
     ).toEqual([{ revision: 1 }])
   })
+  it('DM links only unassigned characters to active Players in the same campaign, with audit', async () => {
+    const { c, ch } = await setup()
+    await db.exec('reset role')
+    await db.query(
+      "insert into public.campaign_members(campaign_id,user_id,role) values ($1,$2,'player')",
+      [c, player],
+    )
+    for (const actor of [player, outsider]) {
+      await asUser(actor)
+      await expect(
+        db.query('select public.assign_character($1,$2,$3)', [c, ch, player]),
+      ).rejects.toThrow(/Forbidden/)
+    }
+    await db.exec('reset role; set role anon')
+    await expect(
+      db.query('select public.assign_character($1,$2,$3)', [c, ch, player]),
+    ).rejects.toThrow(/permission denied/)
+    await asUser(dm)
+    await expect(
+      db.query('select public.assign_character($1,$2,$3)', [c, ch, outsider]),
+    ).rejects.toThrow(/Player unavailable/)
+    await expect(db.query('select public.assign_character($1,$2,$3)', [c, ch, dm])).rejects.toThrow(
+      /Player unavailable/,
+    )
+    await db.query('select public.assign_character($1,$2,$3)', [c, ch, player])
+    await expect(
+      db.query('select public.assign_character($1,$2,$3)', [c, ch, player]),
+    ).rejects.toThrow(/Already assigned/)
+    expect(
+      (await db.query('select user_id from public.characters where id=$1', [ch])).rows,
+    ).toEqual([{ user_id: player }])
+    expect(
+      (await db.query('select * from public.character_events where character_id=$1', [ch])).rows,
+    ).toHaveLength(3)
+    await db.query('select public.unassign_character($1,$2,$3)', [c, ch, player])
+    const other = await setup()
+    await expect(
+      db.query('select public.assign_character($1,$2,$3)', [c, other.ch, player]),
+    ).rejects.toThrow(/Character unavailable/)
+  })
 })

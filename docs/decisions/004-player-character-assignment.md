@@ -1,6 +1,6 @@
 # ADR 004: DM-created characters and player assignment
 
-Date: 2026-10-27. Status: accepted requirement for RYT-003; not implemented.
+Date: 2026-10-27. Status: implemented in the RYT-003 source delivery; production migration pending.
 
 ## Context
 
@@ -31,11 +31,16 @@ characters per Player and character activation/deactivation are future work.
 
 ## Consequences and current boundary
 
-RYT-003 must extend character ownership and the RYT-002 invitation flow. The current
-foundation requires a character's `user_id` to reference a campaign member, and invitations
-have no character association. That model does not yet support pre-created unassigned
-characters or atomic invitation-to-character linking. A later reviewed migration and UI
-delivery must add these capabilities; recording this ADR changes no runtime behavior.
+RYT-003 adds nullable ownership, campaign-scoped unique assignment, targeted invitations,
+RPC creation/unlinking and audited resources. Every assignment mutation locks the campaign
+before checking active DM permissions. Acceptance activates Player membership and links
+its character atomically. Explicit unlink uses the expected previous owner, preserves
+resources/membership and cancels pending character invitations. Revocation preserves the
+assignment until a DM explicitly unlinks it; returning Players also use this deliberate
+unlink/reinvite flow. Existing untargeted pending invitations are revoked by the migration
+and must be reissued for a character. See ADR 005 for homebrew units and account navigation.
+
+The migration is verified locally and has not been applied to the hosted project.
 
 Module-specific Player/DM permissions remain separate requirements. The character link
 does not grant DM privileges or access to another Player's private character data.

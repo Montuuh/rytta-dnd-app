@@ -10,10 +10,11 @@ import {
 } from '@mantine/core'
 import { Moon, Sun } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 
 export function PreferencesControls({ compact = false }: { compact?: boolean }) {
   const { t, i18n } = useTranslation()
+  const appearanceId = useId()
   const scheme = useComputedColorScheme('dark')
   const { setColorScheme } = useMantineColorScheme()
   useEffect(() => {
@@ -52,11 +53,11 @@ export function PreferencesControls({ compact = false }: { compact?: boolean }) 
   return (
     <Stack gap="lg">
       <div>
-        <Text id="appearance-label" size="sm" fw={500} mb="xs">
+        <Text id={appearanceId} size="sm" fw={500} mb="xs">
           {t('preferences.theme')}
         </Text>
         <SegmentedControl
-          aria-labelledby="appearance-label"
+          aria-labelledby={appearanceId}
           value={scheme}
           onChange={(value) => setColorScheme(value === 'light' ? 'light' : 'dark')}
           data={[

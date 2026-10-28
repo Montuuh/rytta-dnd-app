@@ -30,17 +30,17 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      testIgnore: '**/identity.spec.ts',
+      testIgnore: '**/{identity,characters}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
-      testIgnore: '**/identity.spec.ts',
+      testIgnore: '**/{identity,characters}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
-      testIgnore: '**/identity.spec.ts',
+      testIgnore: '**/{identity,characters}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     ...[
@@ -49,7 +49,7 @@ export default defineConfig({
       { name: 'identity-mobile', viewport: { width: 390, height: 844 } },
     ].map(({ name, viewport }) => ({
       name,
-      testMatch: '**/identity.spec.ts',
+      testMatch: '**/{identity,characters}.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
         viewport,

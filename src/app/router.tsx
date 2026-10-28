@@ -8,6 +8,10 @@ import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
 import { CampaignPage } from '@/pages/campaign-page'
 
+const CharacterParty = lazy(() =>
+  import('@/features/characters').then((module) => ({ default: module.CharacterParty })),
+)
+
 const CampPage = lazy(() =>
   import('@/pages/camp-page').then((module) => ({ default: module.CampPage })),
 )
@@ -26,6 +30,7 @@ export function AppRouter() {
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           <Route element={<Layout />}>
+            <Route path="settings" element={<SettingsPage />} />
             {live && state.status !== 'signed-in' ? (
               <Route
                 path="*"
@@ -34,10 +39,11 @@ export function AppRouter() {
             ) : (
               <>
                 <Route index element={live ? <CampaignHub /> : <CampPage />} />
-                <Route path="settings" element={<SettingsPage />} />
+
                 {live && (
                   <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
                     <Route index element={<CampaignPage />} />
+                    <Route path="party" element={<CharacterParty />} />
                     <Route path="members" element={<CampaignMembers />} />
                     <Route path="*" element={<ModulePage />} />
                   </Route>

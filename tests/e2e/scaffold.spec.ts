@@ -38,10 +38,9 @@ test('responsive layout and accessible overview', async ({ page }) => {
   expect(result.violations).toEqual([])
 })
 
-test('mobile drawer supports Escape and returns focus', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'Mobile drawer only')
+test('account drawer supports Escape and returns focus', async ({ page }) => {
   await page.goto('./')
-  const menu = page.getByRole('button', { name: 'Open navigation' })
+  const menu = page.getByRole('button', { name: 'Open account and settings menu' })
   await menu.click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')

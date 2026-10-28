@@ -16,8 +16,8 @@ and forest accents (#304923 for primary buttons). Focus uses #796329. Both palet
 preserve the same hierarchy; the palette is a product choice verified with contrast tests.
 
 Semantic tokens live in src/app/styles.css and feed Mantine variables. Avoid hardcoded
-light backgrounds or white text on pale dark-mode accents. Header controls offer quick
-language/theme access; Settings provides explicitly labelled controls. All controls have
+light backgrounds or white text on pale dark-mode accents. A single header menu exposes the account-home link and labelled language/theme
+preferences before campaign navigation. The account home owns campaign selection and logout. All controls have
 44px targets. Preferences persist locally and remain usable in memory if storage is blocked.
 
 Spanish is the first-visit language even on English browsers. English is selectable.

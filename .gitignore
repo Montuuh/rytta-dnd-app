@@ -33,3 +33,6 @@ supabase/.branches/
 *.njsproj
 *.sln
 *.sw?
+
+# Local validation runtimes and databases
+.tmp/

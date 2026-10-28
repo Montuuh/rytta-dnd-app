@@ -1,6 +1,8 @@
+import { charactersEn } from './characters-en'
 import { identityEn } from './identity-en'
 export const en = {
   ...identityEn,
+  ...charactersEn,
   'module.camp': 'Camp',
   'module.party': 'Party',
   'module.inventory': 'Inventory',

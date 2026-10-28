@@ -1,0 +1,40 @@
+import type { charactersEn } from './characters-en'
+export const charactersEs = {
+  'account.home': 'Mi cuenta',
+  'account.menu': 'Abrir menú de cuenta y ajustes',
+  'account.exit': 'Volver a mi cuenta',
+  'account.settings': 'Preferencias',
+  'characters.title': 'Personajes y recursos',
+  'characters.intro': 'Crea un personaje e invita a su jugador. El DM gestiona los recursos.',
+  'characters.playerIntro': 'Tu personaje y sus recursos. Pide a tu DM los cambios que necesites.',
+  'characters.rules': 'Homebrew · Oro entero, raciones de comida y agua · Agotamiento manual',
+  'characters.create': 'Crear personaje',
+  'characters.name': 'Nombre del personaje',
+  'characters.empty': 'Todavía no hay personajes.',
+  'characters.emptyPlayer': 'Tu DM todavía no te ha asignado un personaje.',
+  'characters.unassigned': 'Sin jugador',
+  'characters.assigned': 'Asignado a un jugador',
+  'characters.you': 'Tu personaje',
+  'characters.invite': 'Invitar jugador',
+  'characters.inviteHint':
+    'Invita un correo de Google a este personaje. Se acepta desde Mi cuenta. No se envía un email. Una nueva invitación cancela la anterior.',
+  'characters.invited': 'Invitación creada. Puedes gestionarla en Miembros e invitaciones.',
+  'characters.edit': 'Editar recursos',
+  'characters.gold': 'Oro',
+  'characters.water_units': 'Raciones de agua',
+  'characters.rations': 'Raciones de comida',
+  'characters.exhaustion': 'Agotamiento',
+  'characters.save': 'Guardar recursos',
+  'characters.saved': 'Recursos guardados.',
+  'characters.invalid': 'Introduce un número entero dentro del rango permitido.',
+  'characters.stale':
+    'Otro DM ha actualizado estos recursos. Cierra y vuelve a abrir el editor para cargar los valores actuales antes de guardar.',
+  'characters.unavailable':
+    'No se pudo completar la acción. Actualiza y revisa el personaje, la asignación y la conexión antes de reintentar.',
+  'characters.unassign': 'Desvincular jugador',
+  'characters.unassignHint':
+    '¿Desvincular al jugador de {{name}}? Perderá el acceso a este personaje. Se conservan su membresía y los recursos. Después podrás invitar a otro jugador.',
+  'characters.invitation': 'Personaje: {{name}}',
+  'characters.manageHint': 'Crea personajes e invita a sus jugadores desde Personajes y recursos.',
+  'characters.updated': 'Última consulta: {{time}}',
+} satisfies Record<keyof typeof charactersEn, string>

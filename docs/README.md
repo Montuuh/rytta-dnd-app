@@ -16,7 +16,9 @@
 13. [Google and Supabase setup](setup-google-supabase.md) and
     [ADR 003: identity and campaign membership](decisions/003-identity-campaign-membership.md).
 14. [ADR 004: DM-created characters and player assignment](decisions/004-player-character-assignment.md)
-    records the accepted RYT-003 requirement; it is not implemented yet.
+    records the RYT-003 character assignment contract.
+15. [ADR 005: resources and account home](decisions/005-homebrew-resources-account-home.md)
+    and [RYT-003 verification](evidence/RYT-003/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

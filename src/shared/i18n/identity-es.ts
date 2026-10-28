@@ -61,7 +61,7 @@ export const identityEs = {
   'members.promote': 'Nombrar DM',
   'members.demote': 'Cambiar a Player',
   'members.remove': 'Retirar miembro',
-  'members.leave': 'Salir de la campaña',
+  'members.leave': 'Abandonar campaña',
   'members.lastDm':
     'La campaña siempre necesita un DM. Nombra a otro miembro DM antes de dejar el rol o salir.',
   'members.playerHint': 'Tu DM gestiona los miembros y las invitaciones.',

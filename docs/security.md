@@ -30,16 +30,24 @@ Shared HP/initiative later needs a deliberate public projection, not broad acces
 
 ## Constraints and planned operations
 
-Characters require membership in the same campaign. Resources use a composite
-campaign/character FK. Money uses integer copper; quantities/balances cannot be negative.
-Exhaustion upper bound awaits the campaign ruleset. Bigint values must stay within
-JavaScript safe bounds or be transported as decimal strings before economy ships.
+Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite
+campaign/character FK. Money uses whole gold; water and food use whole rations. Exhaustion is a manual
+homebrew counter, without edition effects or a gameplay cap. SQL integers bound rations
+and exhaustion to 0..2147483647; gold/revision stay within JavaScript safe integers.
 
-The revision column is reserved, not an active concurrency protocol. Current DM writes
-are foundation APIs without a UI. RYT-003 must revoke direct resource updates and add
-revision-checked RPCs and audit history before exposing an editor.
+RYT-003 revokes all client character/resource writes. `create_character`,
+`unassign_character`, `invite_character_player` and `set_character_resources` lock the
+campaign first, then check active DM membership. Resource edits compare expected revision,
+validate constraints, increment revision and append immutable audit history atomically.
+Request IDs deduplicate identical resource retries; a different payload/actor is rejected.
+Triggers audit character creation/assignment/unlinking and every resource insert/update.
+Only active campaign DMs can read audit history; Players cannot read former-owner history.
 
-- adjust_resources: DM permission, expected revision, bounded delta, actor and audit event.
+The pending migration converts existing copper balances to gold only when exactly divisible
+by 100, otherwise aborts without rounding. Existing duplicate assignments also require
+explicit resolution. Old pending untargeted invitations are revoked and must be reissued.
+These are deployment prerequisites, not permission to modify hosted data.
+
 - purchase_item: ownership, merchant visibility, server price, money/stock checks, locks,
   inventory update and event in one transaction. Idempotency key returns the original outcome.
 - sell_item: resale policy, quantity, equipped/quest restrictions and atomic credit.

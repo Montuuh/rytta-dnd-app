@@ -25,7 +25,7 @@ import { ActionFeedback, QueryFeedback } from './feedback'
 
 export function CampaignHub() {
   const { t, i18n } = useTranslation()
-  const { state } = useAuth()
+  const { state, controller } = useAuth()
   const user = state.user!
   const campaigns = useQuery(campaignsQuery(user.id))
   const invitations = useQuery(invitationsQuery(user.id))
@@ -47,6 +47,19 @@ export function CampaignHub() {
   }
   return (
     <Stack gap="xl">
+      <Paper p="lg">
+        <Group justify="space-between">
+          <div>
+            <Text fw={600}>{t('account.home')}</Text>
+            <Text size="sm" c="dimmed" className="user-copy">
+              {user.email}
+            </Text>
+          </div>
+          <Button variant="subtle" onClick={() => void controller?.signOut()}>
+            {t('auth.signOut')}
+          </Button>
+        </Group>
+      </Paper>
       <Group justify="space-between" align="flex-start">
         <div>
           <Text className="eyebrow">RYTTA</Text>
@@ -133,6 +146,7 @@ export function CampaignHub() {
                 <Paper key={invite.id} p="lg">
                   <Stack>
                     <Title order={3}>{invite.campaign_name}</Title>
+                    <Text>{t('characters.invitation', { name: invite.character_name })}</Text>
                     <Text size="sm" c="dimmed">
                       {t('hub.expires', {
                         date: new Date(invite.expires_at).toLocaleDateString(i18n.language),

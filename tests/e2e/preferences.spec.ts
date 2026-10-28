@@ -16,8 +16,14 @@ test('theme and language persist across navigation and reload and can be changed
   page,
 }) => {
   await page.goto('./')
-  await page.getByRole('button', { name: 'Cambiar a modo claro' }).click()
-  await page.locator('header').getByRole('combobox', { name: 'Idioma' }).selectOption('en')
+  await page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' }).click()
+  await page
+    .getByRole('dialog')
+    .locator('label')
+    .filter({ hasText: /^Claro$/ })
+    .click()
+  await page.getByRole('dialog').getByRole('combobox', { name: 'Idioma' }).selectOption('en')
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('heading', { name: /Every adventure starts/ })).toBeVisible()
   await page.getByRole('link', { name: 'Explore the party' }).click()
   await page.reload()
@@ -35,7 +41,7 @@ test('theme and language persist across navigation and reload and can be changed
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Ajustes', exact: true })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'dark')
-  await expect(page.locator('header').getByRole('combobox', { name: 'Idioma' })).toHaveValue('es')
+  await expect(page.locator('main').getByRole('combobox', { name: 'Idioma' })).toHaveValue('es')
 })
 
 for (const language of ['es', 'en'] as const) {
@@ -75,7 +81,7 @@ for (const language of ['es', 'en'] as const) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       )
-      const languageTextFits = await page.locator('header select').evaluate((select) => {
+      const languageTextFits = await page.locator('main select').evaluate((select) => {
         const input = select as HTMLSelectElement
         const style = getComputedStyle(input)
         const context = document.createElement('canvas').getContext('2d')!
@@ -114,8 +120,14 @@ test('blocked storage does not prevent changing language or theme', async ({ pag
   })
   await page.goto('./')
   await expect(page.getByRole('heading', { name: /Toda aventura/ })).toBeVisible()
-  await page.getByRole('button', { name: 'Cambiar a modo claro' }).click()
-  await page.locator('header').getByRole('combobox', { name: 'Idioma' }).selectOption('en')
+  await page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' }).click()
+  await page
+    .getByRole('dialog')
+    .locator('label')
+    .filter({ hasText: /^Claro$/ })
+    .click()
+  await page.getByRole('dialog').getByRole('combobox', { name: 'Idioma' }).selectOption('en')
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('heading', { name: /Every adventure/ })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
 })

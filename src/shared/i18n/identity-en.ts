@@ -59,7 +59,7 @@ export const identityEn = {
   'members.promote': 'Make DM',
   'members.demote': 'Make Player',
   'members.remove': 'Remove member',
-  'members.leave': 'Leave campaign',
+  'members.leave': 'Leave membership',
   'members.lastDm':
     'A campaign always needs a DM. Make another member a DM before stepping down or leaving.',
   'members.playerHint': 'Your DM manages members and invitations.',

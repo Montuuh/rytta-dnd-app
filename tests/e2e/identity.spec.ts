@@ -87,6 +87,7 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Volver a mi cuenta', exact: true }).click()
   await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Our new table' })).toHaveCount(0)
@@ -99,12 +100,16 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
-  await expect(
-    page.getByRole('button', { name: 'Salir de la campaña', exact: true }),
-  ).toBeDisabled()
-  await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
+  await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeDisabled()
+  await page.getByRole('link', { name: 'Personajes y recursos', exact: true }).click()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
+  await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Invitar jugador', exact: true })
+    .click()
   await expect(page.getByText('Invitación creada.', { exact: false })).toBeVisible()
+  await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByText('new@example.com', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Cancelar invitación', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
@@ -114,11 +119,11 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await expect(page.getByRole('button', { name: 'Nombrar DM', exact: true })).toBeFocused()
   await page.keyboard.press('Enter')
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Salir de la campaña', exact: true })).toBeEnabled()
-  await page.getByRole('link', { name: 'Cambiar de campaña', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeEnabled()
+  await page.getByRole('link', { name: 'Volver a mi cuenta', exact: true }).click()
   await page.getByRole('link', { name: 'Abrir campaña: Winter at the Keep' }).click()
   expect(page.url()).toContain(otherCampaignId)
-  const mobileMenu = page.getByRole('button', { name: 'Abrir navegación' })
+  const mobileMenu = page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' })
   const drawer = await mobileMenu.isVisible()
   if (drawer) await mobileMenu.click()
   const currentNav = drawer
@@ -130,7 +135,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   )
   if (drawer) await page.keyboard.press('Escape')
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await page.getByRole('button', { name: 'Salir de la campaña', exact: true }).click()
+  await page.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
   expect(
@@ -167,7 +172,9 @@ test('account change and session expiry remove the previous private screen', asy
     },
     { key: storageKey, value: next },
   )
+  await page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' }).click()
   await expect(page.getByText('Sesión de player@example.com')).toBeVisible()
+  await page.keyboard.press('Escape')
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByText('dm@example.com', { exact: true })).toHaveCount(0)
   // SDK event is real, backend identity switching is covered in SQL; end session across tabs.
@@ -188,12 +195,20 @@ test('self-demotion clears management views and offline actions are not queued',
   const f = await identityFixture(page, { twoDms: true })
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await context.setOffline(true)
   await page.getByLabel('Correo de la cuenta de Google').fill('offline@example.com')
-  await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('No se pudo completar la acción')
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Invitar jugador', exact: true })
+    .click()
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText(
+    'No se pudo completar la acción',
+  )
   await context.setOffline(false)
-  expect(f.calls.filter((c) => c.method === 'invite_campaign_member')).toHaveLength(0)
+  expect(f.calls.filter((c) => c.method === 'invite_character_player')).toHaveLength(0)
+  await page.goto(`./#/campaign/${campaignId}/members`)
   const self = page
     .locator('.mantine-Paper-root')
     .filter({ has: page.getByText('Table DM · Tú', { exact: true }) })
@@ -261,6 +276,12 @@ for (const language of ['es', 'en'] as const)
           scale: 'css',
         })
       }
+      await page
+        .getByRole('link', {
+          name: language === 'es' ? 'Volver a mi cuenta' : 'Back to my account',
+          exact: true,
+        })
+        .click()
       await page
         .getByRole('button', {
           name: language === 'es' ? 'Cerrar sesión' : 'Sign out',

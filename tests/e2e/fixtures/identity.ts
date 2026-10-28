@@ -4,6 +4,7 @@ export const playerId = '10000000-0000-4000-8000-000000000002'
 export const campaignId = '20000000-0000-4000-8000-000000000001'
 export const otherCampaignId = '20000000-0000-4000-8000-000000000002'
 export const inviteId = '30000000-0000-4000-8000-000000000001'
+export const characterId = '40000000-0000-4000-8000-000000000001'
 export const storageKey = 'sb-rytta-test-auth-token'
 export function session(id = dmId) {
   const email = id === dmId ? 'dm@example.com' : 'player@example.com'
@@ -69,6 +70,8 @@ export async function identityFixture(
       id: inviteId,
       campaign_id: '20000000-0000-4000-8000-000000000003',
       campaign_name: 'The Amber Road',
+      character_id: characterId,
+      character_name: 'Amber scout',
       email: options.player ? 'player@example.com' : 'dm@example.com',
       expires_at: '2099-10-27T00:00:00Z',
     },
@@ -82,6 +85,17 @@ export async function identityFixture(
       display_name: 'Arin',
     },
   ]
+  let characters = options.empty
+    ? []
+    : [
+        {
+          id: characterId,
+          campaign_id: campaignId,
+          user_id: options.player ? playerId : (null as string | null),
+          name: 'Arin',
+          character_resources: { gold: 25, water_units: 3, rations: 4, exhaustion: 0, revision: 0 },
+        },
+      ]
   let sent: { id: string; email: string; expires_at: string }[] = []
   const calls: { method: string; body: Record<string, unknown> }[] = []
   let failList = false
@@ -158,9 +172,45 @@ export async function identityFixture(
       pending = []
       return respond(target.campaign_id)
     }
+    if (method === 'characters')
+      return respond(
+        characters
+          .filter((c) => c.campaign_id === url.searchParams.get('campaign_id')?.replace('eq.', ''))
+          .map((c) => ({ ...c, character_resources: [c.character_resources] })),
+      )
+    if (method === 'create_character') {
+      const id = '40000000-0000-4000-8000-' + String(characters.length + 2).padStart(12, '0')
+      characters.push({
+        id,
+        campaign_id: String(body.target_campaign),
+        user_id: null,
+        name: String(body.character_name),
+        character_resources: { gold: 0, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
+      })
+      return respond(id)
+    }
+    if (method === 'set_character_resources') {
+      const target = characters.find((c) => c.id === body.target_character)!
+      if (target.character_resources.revision !== body.expected_revision)
+        return respond({ message: 'Stale revision' }, 400)
+      target.character_resources = {
+        gold: Number(body.new_gold),
+        water_units: Number(body.new_water),
+        rations: Number(body.new_rations),
+        exhaustion: Number(body.new_exhaustion),
+        revision: target.character_resources.revision + 1,
+      }
+      return respond(target.character_resources.revision)
+    }
+    if (method === 'unassign_character') {
+      characters = characters.map((c) =>
+        c.id === body.target_character ? { ...c, user_id: null } : c,
+      )
+      return respond(null)
+    }
     if (method === 'list_campaign_members') return respond(members)
     if (method === 'campaign_invitations') return respond(sent)
-    if (method === 'invite_campaign_member') {
+    if (method === 'invite_character_player') {
       sent.push({
         id: inviteId,
         email: String(body.invite_email),
@@ -190,6 +240,19 @@ export async function identityFixture(
   })
   return {
     calls,
+    maxResources: () => {
+      characters[0]!.character_resources = {
+        gold: Number.MAX_SAFE_INTEGER,
+        water_units: 2147483647,
+        rations: 2147483647,
+        exhaustion: 2147483647,
+        revision: 0,
+      }
+    },
+    staleResources: () => {
+      characters[0]!.character_resources.revision += 1
+      characters[0]!.character_resources.gold = 70
+    },
     failCampaigns: () => {
       failList = true
     },

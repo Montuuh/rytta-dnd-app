@@ -367,3 +367,30 @@ main h3 {
     animation-duration: 0.01ms !important;
   }
 }
+
+.account-layout .sidebar {
+  display: none;
+}
+.account-layout .workspace {
+  margin-left: 0;
+}
+.account-layout main {
+  max-width: 1000px;
+}
+.topbar-tools {
+  width: auto;
+}
+.character-card {
+  min-width: 0;
+}
+
+.resource-cell {
+  min-width: 0;
+}
+.resource-cell-wide {
+  grid-column: 1 / -1;
+}
+.resource-value {
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}

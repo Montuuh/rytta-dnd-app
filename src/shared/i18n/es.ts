@@ -1,8 +1,10 @@
+import { charactersEs } from './characters-es'
 import type { en } from './en'
 import { identityEs } from './identity-es'
 
 export const es = {
   ...identityEs,
+  ...charactersEs,
   'module.camp': 'Campamento',
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',

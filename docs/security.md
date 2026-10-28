@@ -43,7 +43,7 @@ Request IDs deduplicate identical resource retries; a different payload/actor is
 Triggers audit character creation/assignment/unlinking and every resource insert/update.
 Only active campaign DMs can read audit history; Players cannot read former-owner history.
 
-The pending migration converts existing copper balances to gold only when exactly divisible
+The RYT-003 migration converts existing copper balances to gold only when exactly divisible
 by 100, otherwise aborts without rounding. Existing duplicate assignments also require
 explicit resolution. Old pending untargeted invitations are revoked and must be reissued.
 These are deployment prerequisites, not permission to modify hosted data.

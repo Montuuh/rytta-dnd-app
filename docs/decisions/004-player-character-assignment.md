@@ -1,6 +1,6 @@
 # ADR 004: DM-created characters and player assignment
 
-Date: 2026-10-27. Status: implemented in the RYT-003 source delivery; production migration pending.
+Date: 2026-10-27. Status: implemented in the RYT-003 source delivery; production migration applied 2026-10-28.
 
 ## Context
 
@@ -40,7 +40,7 @@ assignment until a DM explicitly unlinks it; returning Players also use this del
 unlink/reinvite flow. Existing untargeted pending invitations are revoked by the migration
 and must be reissued for a character. See ADR 005 for homebrew units and account navigation.
 
-The migration is verified locally and has not been applied to the hosted project.
+The migration was verified locally and applied to the hosted project on 2026-10-28.
 
 Module-specific Player/DM permissions remain separate requirements. The character link
 does not grant DM privileges or access to another Player's private character data.

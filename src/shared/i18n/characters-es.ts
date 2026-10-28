@@ -1,7 +1,15 @@
 import type { charactersEn } from './characters-en'
 export const charactersEs = {
+  'shell.menu': 'Menú',
+  'shell.playerView': 'Vista Player',
+  'shell.dmView': 'Volver a DM',
+  'shell.link': 'Vincular personaje',
+  'shell.choosePlayer': 'Jugador existente',
+  'shell.chooseCharacter': 'Personaje',
+  'shell.noCharacter': 'Sin personaje',
+  'shell.linked': 'Personaje: {{name}}',
   'account.home': 'Mi cuenta',
-  'account.menu': 'Abrir menú de cuenta y ajustes',
+  'account.menu': 'Abrir menú de ajustes',
   'account.exit': 'Volver a mi cuenta',
   'account.settings': 'Preferencias',
   'characters.title': 'Personajes y recursos',

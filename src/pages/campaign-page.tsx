@@ -1,4 +1,5 @@
-import { Button, Group, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core'
+import { ModuleCard } from '@/app/module-card'
+import { Button, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useCampaign } from '@/features/campaigns'
@@ -22,13 +23,7 @@ export function CampaignPage() {
       </Group>
       <SimpleGrid cols={{ base: 1, sm: 2 }}>
         {modules.slice(1).map(({ path, label, icon: Icon }) => (
-          <Paper
-            component={Link}
-            to={`/campaign/${campaign.id}${path}`}
-            key={path}
-            p="lg"
-            className="module-card"
-          >
+          <ModuleCard to={`/campaign/${campaign.id}${path}`} enabled={path === '/party'} key={path}>
             <Group>
               <Icon size={22} aria-hidden="true" />
               <div>
@@ -38,7 +33,7 @@ export function CampaignPage() {
                 </Text>
               </div>
             </Group>
-          </Paper>
+          </ModuleCard>
         ))}
       </SimpleGrid>
     </Stack>

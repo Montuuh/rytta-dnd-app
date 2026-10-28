@@ -76,6 +76,7 @@ export const en = {
   'error.help': 'Reload to try again. If this continues, check the app configuration.',
   'error.reload': 'Reload',
   'preferences.title': 'Make it yours',
+  'preferences.close': 'Close settings',
   'preferences.theme': 'Appearance',
   'preferences.dark': 'Dark',
   'preferences.light': 'Light',

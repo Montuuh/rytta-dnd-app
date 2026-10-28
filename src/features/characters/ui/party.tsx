@@ -22,15 +22,14 @@ import { charactersQuery, useCharacterAction } from '../api'
 import { resourceSchema, type Character } from '../domain/character'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
-type Editor =
-  { kind: 'create' } | { kind: 'resources' | 'invite' | 'unassign'; character: Character }
+type Editor = { kind: 'create' } | { kind: 'resources'; character: Character }
 
 export function CharacterParty() {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const campaign = useCampaign()
   const dm = campaign.role === 'dm'
-  const query = useQuery(charactersQuery(state.user!.id, campaign.id))
+  const query = useQuery(charactersQuery(state.user!.id, campaign.id, !dm))
   const opener = useRef<HTMLElement | null>(null)
   const open = (next: Editor, target: HTMLElement) => {
     opener.current = target
@@ -47,9 +46,6 @@ export function CharacterParty() {
       <Group justify="space-between" align="start">
         <div>
           <Title order={1}>{t('characters.title')}</Title>
-          <Text c="dimmed" mt="sm">
-            {t(dm ? 'characters.intro' : 'characters.playerIntro')}
-          </Text>
         </div>
         {dm && (
           <Button onClick={(event) => open({ kind: 'create' }, event.currentTarget)}>
@@ -57,9 +53,6 @@ export function CharacterParty() {
           </Button>
         )}
       </Group>
-      <Text size="sm" c="dimmed">
-        {t('characters.rules')}
-      </Text>
       <Group justify="space-between">
         <Text size="xs" c="dimmed">
           {query.dataUpdatedAt > 0 &&
@@ -130,17 +123,6 @@ export function CharacterParty() {
                     >
                       {t('characters.edit')}
                     </Button>
-                    <Button
-                      variant="subtle"
-                      onClick={(event) =>
-                        open(
-                          { kind: character.user_id ? 'unassign' : 'invite', character },
-                          event.currentTarget,
-                        )
-                      }
-                    >
-                      {t(character.user_id ? 'characters.unassign' : 'characters.invite')}
-                    </Button>
                   </Group>
                 )}
               </Stack>
@@ -155,13 +137,7 @@ export function CharacterParty() {
           close={close}
           complete={(kind) => {
             close()
-            setNotice(
-              kind === 'resources'
-                ? 'characters.saved'
-                : kind === 'invite'
-                  ? 'characters.invited'
-                  : null,
-            )
+            setNotice(kind === 'resources' ? 'characters.saved' : null)
           }}
         />
       )}
@@ -204,15 +180,7 @@ function CharacterEditor({
       ),
     },
   })
-  const title = t(
-    editor.kind === 'create'
-      ? 'characters.create'
-      : editor.kind === 'invite'
-        ? 'characters.invite'
-        : editor.kind === 'unassign'
-          ? 'characters.unassign'
-          : 'characters.edit',
-  )
+  const title = t(editor.kind === 'create' ? 'characters.create' : 'characters.edit')
   return (
     <Modal
       opened
@@ -228,20 +196,6 @@ function CharacterEditor({
           const options = { onSuccess: () => complete(editor.kind) }
           if (editor.kind === 'create')
             action.mutate({ kind: 'create', name: values.name }, options)
-          else if (editor.kind === 'invite')
-            action.mutate(
-              { kind: 'invite', characterId: editor.character.id, email: values.email },
-              options,
-            )
-          else if (editor.kind === 'unassign')
-            action.mutate(
-              {
-                kind: 'unassign',
-                characterId: editor.character.id,
-                expectedUser: editor.character.user_id!,
-              },
-              options,
-            )
           else
             action.mutate(
               { kind: 'resources', characterId: editor.character.id, values, requestId },
@@ -263,24 +217,6 @@ function CharacterEditor({
               maxLength={100}
               {...form.getInputProps('name')}
             />
-          )}
-          {editor.kind === 'invite' && (
-            <>
-              <Text size="sm" c="dimmed">
-                {t('characters.inviteHint')}
-              </Text>
-              <TextInput
-                data-autofocus
-                required
-                type="email"
-                maxLength={254}
-                label={t('members.email')}
-                {...form.getInputProps('email')}
-              />
-            </>
-          )}
-          {editor.kind === 'unassign' && (
-            <Text>{t('characters.unassignHint', { name: editor.character.name })}</Text>
           )}
           {editor.kind === 'resources' &&
             fields.map((field, index) => (
@@ -310,11 +246,7 @@ function CharacterEditor({
               loading={action.isPending}
               disabled={action.error?.message === 'stale'}
             >
-              {editor.kind === 'resources'
-                ? t('characters.save')
-                : editor.kind === 'unassign'
-                  ? t('action.confirm')
-                  : title}
+              {editor.kind === 'resources' ? t('characters.save') : title}
             </Button>
           </Group>
         </Stack>

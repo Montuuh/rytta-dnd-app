@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { lazy, useRef, useState } from 'react'
 import { Badge, Button, Group, Modal, Paper, Stack, Text, Title } from '@mantine/core'
-import { Link } from 'react-router'
+const CharacterAssignments = lazy(() =>
+  import('@/features/characters').then((module) => ({ default: module.CharacterAssignments })),
+)
+import { useCampaignView } from '../view-context'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
@@ -13,14 +16,24 @@ export function CampaignMembers() {
   const { state } = useAuth()
   const user = state.user!
   const campaign = useCampaign()
+  const { playerPreview } = useCampaignView()
   const dm = campaign.role === 'dm'
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
   const invitations = useQuery({ ...sentInvitationsQuery(user.id, campaign.id), enabled: dm })
   const action = useCampaignAction()
+  const trigger = useRef<HTMLElement | null>(null)
   const [confirmation, setConfirmation] = useState<{
     action: CampaignAction
     message: string
   } | null>(null)
+  const openConfirmation = (
+    next: { action: CampaignAction; message: string },
+    target: HTMLElement,
+  ) => {
+    trigger.current = target
+    setConfirmation(next)
+  }
+  const closeConfirmation = () => setConfirmation(null)
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
@@ -35,14 +48,9 @@ export function CampaignMembers() {
       <ActionFeedback error={action.error} />
       {dm && (
         <>
-          <Paper p="lg">
-            <Stack>
-              <Text>{t('characters.manageHint')}</Text>
-              <Button component={Link} to={`/campaign/${campaign.id}/party`} variant="light">
-                {t('characters.title')}
-              </Button>
-            </Stack>
-          </Paper>
+          {members.data && !members.isError && (
+            <CharacterAssignments campaignId={campaign.id} members={members.data} />
+          )}
           <section aria-labelledby="members-heading">
             <Stack>
               <Group justify="space-between">
@@ -85,20 +93,23 @@ export function CampaignMembers() {
                         <Button
                           variant="light"
                           disabled={action.isPending || (member.role === 'dm' && lastDm)}
-                          onClick={() => {
+                          onClick={(event) => {
                             const role = member.role === 'dm' ? 'player' : 'dm'
-                            setConfirmation({
-                              action: {
-                                kind: 'member',
-                                campaignId: campaign.id,
-                                userId: member.user_id,
-                                role,
+                            openConfirmation(
+                              {
+                                action: {
+                                  kind: 'member',
+                                  campaignId: campaign.id,
+                                  userId: member.user_id,
+                                  role,
+                                },
+                                message: t('members.confirmRole', {
+                                  name: member.display_name,
+                                  role: t(`campaign.role.${role}`),
+                                }),
                               },
-                              message: t('members.confirmRole', {
-                                name: member.display_name,
-                                role: t(`campaign.role.${role}`),
-                              }),
-                            })
+                              event.currentTarget,
+                            )
                           }}
                         >
                           {t(member.role === 'dm' ? 'members.demote' : 'members.promote')}
@@ -107,16 +118,21 @@ export function CampaignMembers() {
                           <Button
                             variant="subtle"
                             disabled={action.isPending || (member.role === 'dm' && lastDm)}
-                            onClick={() =>
-                              setConfirmation({
-                                action: {
-                                  kind: 'member',
-                                  campaignId: campaign.id,
-                                  userId: member.user_id,
-                                  role: null,
+                            onClick={(event) =>
+                              openConfirmation(
+                                {
+                                  action: {
+                                    kind: 'member',
+                                    campaignId: campaign.id,
+                                    userId: member.user_id,
+                                    role: null,
+                                  },
+                                  message: t('members.confirmRemove', {
+                                    name: member.display_name,
+                                  }),
                                 },
-                                message: t('members.confirmRemove', { name: member.display_name }),
-                              })
+                                event.currentTarget,
+                              )
                             }
                           >
                             {t('members.remove')}
@@ -154,11 +170,14 @@ export function CampaignMembers() {
                           w="fit-content"
                           variant="subtle"
                           disabled={action.isPending}
-                          onClick={() =>
-                            setConfirmation({
-                              action: { kind: 'revoke', invitationId: item.id },
-                              message: t('members.confirmRevoke', { email: item.email }),
-                            })
+                          onClick={(event) =>
+                            openConfirmation(
+                              {
+                                action: { kind: 'revoke', invitationId: item.id },
+                                message: t('members.confirmRevoke', { email: item.email }),
+                              },
+                              event.currentTarget,
+                            )
                           }
                         >
                           {t('members.revoke')}
@@ -173,45 +192,56 @@ export function CampaignMembers() {
           </section>
         </>
       )}
-      <Paper p="lg">
-        <Stack>
-          {lastDm && (
-            <Text size="sm" c="dimmed">
-              {t('members.lastDm')}
-            </Text>
-          )}
-          <Button
-            variant="outline"
-            disabled={lastDm || action.isPending}
-            w="fit-content"
-            onClick={() =>
-              setConfirmation({
-                action: { kind: 'member', campaignId: campaign.id, userId: user.id, role: null },
-                message: t('members.confirmLeave'),
-              })
-            }
-          >
-            {t('members.leave')}
-          </Button>
-        </Stack>
-      </Paper>
+      {!playerPreview && (
+        <Paper p="lg">
+          <Stack>
+            {lastDm && (
+              <Text size="sm" c="dimmed">
+                {t('members.lastDm')}
+              </Text>
+            )}
+            <Button
+              variant="outline"
+              disabled={lastDm || action.isPending}
+              w="fit-content"
+              onClick={(event) =>
+                openConfirmation(
+                  {
+                    action: {
+                      kind: 'member',
+                      campaignId: campaign.id,
+                      userId: user.id,
+                      role: null,
+                    },
+                    message: t('members.confirmLeave'),
+                  },
+                  event.currentTarget,
+                )
+              }
+            >
+              {t('members.leave')}
+            </Button>
+          </Stack>
+        </Paper>
+      )}
       <Modal
         opened={!!confirmation}
-        onClose={() => setConfirmation(null)}
+        onClose={closeConfirmation}
         title={t('members.confirm')}
-        returnFocus
+        returnFocus={false}
+        onExitTransitionEnd={() => trigger.current?.focus()}
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
         <Stack>
           <Text>{confirmation?.message}</Text>
           <Group justify="flex-end">
-            <Button variant="subtle" onClick={() => setConfirmation(null)}>
+            <Button variant="subtle" onClick={closeConfirmation}>
               {t('action.cancel')}
             </Button>
             <Button
               onClick={() => {
                 if (confirmation) action.mutate(confirmation.action)
-                setConfirmation(null)
+                closeConfirmation()
               }}
             >
               {t('action.confirm')}

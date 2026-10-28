@@ -23,9 +23,12 @@ export const identityEs = {
   'hub.emptyHint': 'Crea una campaña o pide a tu DM que invite al correo de tu cuenta de Google.',
   'hub.open': 'Abrir campaña',
   'hub.invitations': 'Unirse a una campaña',
-  'hub.inviteHint':
-    'Aquí aparecen las invitaciones para {{email}}. Si te invitaron a otro correo, cierra sesión y elige esa cuenta de Google.',
+  'hub.inviteHint': 'Invitaciones para: {{email}}',
+  'hub.joinHint': 'Acepta una invitación de tu DM para unirte a su mesa.',
+  'hub.pendingCount': 'Invitaciones pendientes: {{count}}',
   'hub.noInvitations': 'No tienes invitaciones pendientes.',
+  'hub.noInvitationsHint':
+    'Pide a tu DM que te invite con el correo de abajo. La invitación aparecerá aquí.',
   'hub.accept': 'Aceptar invitación',
   'hub.decline': 'Rechazar',
   'hub.expires': 'Caduca el {{date}}',

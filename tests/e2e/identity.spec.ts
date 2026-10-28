@@ -87,8 +87,10 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
-  await page.getByRole('link', { name: 'Volver a mi cuenta', exact: true }).click()
-  await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click()
+  await page.getByRole('button', { name: /Sesión de/ }).click()
+  await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
+  await page.getByRole('button', { name: 'Sesión de dm@example.com' }).click()
+  await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Our new table' })).toHaveCount(0)
   expect(errors).toEqual([])
@@ -101,14 +103,13 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeDisabled()
-  await page.getByRole('link', { name: 'Personajes y recursos', exact: true }).click()
-  await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
+  await page.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
   await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
   await page
     .getByRole('dialog')
     .getByRole('button', { name: 'Invitar jugador', exact: true })
     .click()
-  await expect(page.getByText('Invitación creada.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByText('new@example.com', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Cancelar invitación', exact: true }).click()
@@ -120,18 +121,19 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.keyboard.press('Enter')
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeEnabled()
-  await page.getByRole('link', { name: 'Volver a mi cuenta', exact: true }).click()
+  await page.getByRole('button', { name: /Sesión de/ }).click()
+  await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
   await page.getByRole('link', { name: 'Abrir campaña: Winter at the Keep' }).click()
   expect(page.url()).toContain(otherCampaignId)
-  const mobileMenu = page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' })
+  const mobileMenu = page.getByRole('button', { name: 'Abrir navegación' })
   const drawer = await mobileMenu.isVisible()
   if (drawer) await mobileMenu.click()
   const currentNav = drawer
     ? page.getByRole('dialog').getByRole('navigation')
     : page.locator('.sidebar nav')
-  await expect(currentNav.getByRole('link', { name: 'Inventario', exact: true })).toHaveAttribute(
-    'href',
-    `#/campaign/${otherCampaignId}/inventory`,
+  await expect(currentNav.getByText('Inventario', { exact: false })).toHaveAttribute(
+    'aria-disabled',
+    'true',
   )
   if (drawer) await page.keyboard.press('Escape')
   await page.goto(`./#/campaign/${campaignId}/members`)
@@ -161,7 +163,7 @@ test('Player has no management payload or controls; revoked campaign fails close
 test('account change and session expiry remove the previous private screen', async ({ page }) => {
   await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await expect(page.getByText('dm@example.com', { exact: true })).toBeVisible()
+  await expect(page.locator('main').getByText('dm@example.com', { exact: true })).toBeVisible()
   const next = session(playerId)
   await page.evaluate(
     ({ key, value }) => {
@@ -172,8 +174,7 @@ test('account change and session expiry remove the previous private screen', asy
     },
     { key: storageKey, value: next },
   )
-  await page.getByRole('button', { name: 'Abrir menú de cuenta y ajustes' }).click()
-  await expect(page.getByText('Sesión de player@example.com')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sesión de player@example.com' })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByText('dm@example.com', { exact: true })).toHaveCount(0)
@@ -195,8 +196,7 @@ test('self-demotion clears management views and offline actions are not queued',
   const f = await identityFixture(page, { twoDms: true })
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/party`)
-  await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
+  await page.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
   await context.setOffline(true)
   await page.getByLabel('Correo de la cuenta de Google').fill('offline@example.com')
   await page
@@ -208,6 +208,7 @@ test('self-demotion clears management views and offline actions are not queued',
   )
   await context.setOffline(false)
   expect(f.calls.filter((c) => c.method === 'invite_character_player')).toHaveLength(0)
+  await page.keyboard.press('Escape')
   await page.goto(`./#/campaign/${campaignId}/members`)
   const self = page
     .locator('.mantine-Paper-root')
@@ -227,6 +228,85 @@ test('failed refresh hides cached campaign content and offers recovery', async (
   await expect(page.getByRole('alert').first()).toContainText('No se pudo cargar')
   await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeEnabled()
+})
+
+test('home uses a compact settings menu and accessible theme icons', async ({ page }, info) => {
+  await identityFixture(page)
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'Mis campañas', exact: true })).toBeVisible()
+  await expect(page.locator('main').getByText('Mi cuenta', { exact: true })).toHaveCount(0)
+  await expect(page.locator('main').getByRole('button', { name: 'Cerrar sesión' })).toHaveCount(0)
+  const trigger = page.getByRole('button', { name: 'Abrir menú de ajustes' })
+  await trigger.focus()
+  await trigger.press('Enter')
+  const settings = page.getByRole('menuitem', { name: 'Ajustes', exact: true })
+  await expect(settings).toBeFocused()
+  await expect(page.getByRole('menuitem')).toHaveCount(1)
+  const bounds = await page.getByRole('menu').boundingBox()
+  expect(bounds!.height).toBeLessThan(180)
+  expect(bounds!.width).toBeLessThanOrEqual(240)
+  await page.screenshot({ path: info.outputPath('compact-settings-menu.png'), fullPage: true })
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
+  await trigger.click()
+  await page.getByRole('heading', { name: 'Mis campañas', exact: true }).click()
+  await expect(page.getByRole('menu')).not.toBeVisible()
+  await trigger.click()
+  await settings.click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByRole('button', { name: 'Cerrar ajustes', exact: true })).toBeVisible()
+  await expect(dialog.getByRole('radio', { name: 'Oscuro', exact: true })).toBeChecked()
+  await expect(dialog.getByRole('radio', { name: 'Claro', exact: true })).not.toBeChecked()
+  const choices = dialog.getByRole('radiogroup', { name: 'Apariencia' }).locator('label')
+  for (const choice of await choices.all()) {
+    const box = await choice.boundingBox()
+    expect(box!.width).toBeGreaterThanOrEqual(44)
+    expect(box!.height).toBeGreaterThanOrEqual(44)
+  }
+  await choices.filter({ hasText: /^Claro$/ }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
+  await expect(dialog.getByRole('radio', { name: 'Claro', exact: true })).toBeChecked()
+  await page.screenshot({ path: info.outputPath('icon-theme-preferences.png'), fullPage: true })
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
+})
+
+test('invitation panel distinguishes loading, empty and failed refresh with recovery', async ({
+  page,
+}, info) => {
+  await identityFixture(page)
+  let fail = false
+  let release: () => void = () => {}
+  const pending = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route(
+    'https://rytta-test.supabase.co/rest/v1/rpc/list_my_invitations',
+    async (route) => {
+      await pending
+      await route.fulfill({
+        status: fail ? 503 : 200,
+        contentType: 'application/json',
+        body: JSON.stringify(fail ? { message: 'Unavailable' } : []),
+      })
+    },
+  )
+  await page.goto('./')
+  const panel = page.getByRole('region', { name: 'Unirse a una campaña' })
+  await expect(panel.getByRole('status')).toBeVisible()
+  await expect(panel.getByText('No tienes invitaciones pendientes.')).toHaveCount(0)
+  release()
+  await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
+  await expect(panel.getByText('Invitaciones para: dm@example.com')).toBeVisible()
+  await page.screenshot({ path: info.outputPath('invitations-empty.png'), fullPage: true })
+  fail = true
+  await panel.getByRole('button', { name: 'Actualizar', exact: true }).click()
+  await expect(panel.getByRole('alert')).toBeVisible()
+  await expect(panel.getByText('No tienes invitaciones pendientes.')).toHaveCount(0)
+  fail = false
+  await panel.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
+  await expect(panel.getByRole('alert')).toHaveCount(0)
 })
 
 for (const language of ['es', 'en'] as const)
@@ -250,7 +330,7 @@ for (const language of ['es', 'en'] as const)
         await page.goto(route)
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
         await expect(
-          page.getByText(screen === 'hub' ? 'The Sunken Coast' : 'Arin', { exact: true }),
+          page.getByText(screen === 'hub' ? 'The Sunken Coast' : 'Arin', { exact: true }).first(),
         ).toBeVisible()
         await page.screenshot({
           path: testInfo.outputPath(`${screen}-${language}-${scheme}-100.png`),
@@ -276,14 +356,14 @@ for (const language of ['es', 'en'] as const)
           scale: 'css',
         })
       }
+      await page.goto('./')
       await page
-        .getByRole('link', {
-          name: language === 'es' ? 'Volver a mi cuenta' : 'Back to my account',
-          exact: true,
+        .getByRole('button', {
+          name: language === 'es' ? 'Sesión de dm@example.com' : 'Signed in as dm@example.com',
         })
         .click()
       await page
-        .getByRole('button', {
+        .getByRole('menuitem', {
           name: language === 'es' ? 'Cerrar sesión' : 'Sign out',
           exact: true,
         })

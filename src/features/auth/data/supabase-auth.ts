@@ -1,6 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
-import type { Database } from '@/shared/api/database.types'
+import type { AppSupabaseClient } from '@/shared/api/database.types'
 import { AuthFailure, type AuthAdapter } from '../domain/auth'
 
 const identitySchema = z.object({ id: z.uuid(), email: z.email() })
@@ -20,7 +19,7 @@ export function consumeCallback(url: URL, replace: (cleanUrl: string) => void) {
   return { code, failed: failed || implicit, ...(flowId ? { flowId } : {}) }
 }
 
-export function createAuthAdapter(client: SupabaseClient<Database>): AuthAdapter {
+export function createAuthAdapter(client: AppSupabaseClient): AuthAdapter {
   return {
     async initialize() {
       const callback = consumeCallback(new URL(window.location.href), (url) =>

@@ -76,3 +76,14 @@ through MCP; the initially empty Rytta project now has both migrations and has p
 SQL role/RLS checks and anonymous REST denial probes. See the
 [connection report](evidence/RYT-001-002/supabase-connection.md) for the remaining boundaries
 and reviewed SECURITY DEFINER advisories.
+
+## Shared-project PRE isolation
+
+Local SDK traffic uses pre, production uses public. This is schema/routing isolation within
+one Supabase project, not an independent Auth/security/compute boundary. The same logged-in
+user can have legitimate access to both copies. All cloned functions, policies, triggers,
+constraints and defaults must target pre/pre_private; Auth references remain shared.
+Maintenance in pre_admin is owner-only (not an application RPC). Refresh never writes PROD
+rows, requires explicit PRE replacement and preserves the prior complete schemas as a
+backup with application-role schema usage revoked. Backup restore also retains current PRE.
+The API exposes public and pre; pre_private/pre_admin/backups must remain unexposed.

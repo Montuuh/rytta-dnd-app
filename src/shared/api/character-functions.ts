@@ -1,6 +1,10 @@
 // Reviewed SQL contract for the pending RYT-003 migration. Regenerate from local
 // Supabase when the stack is available; do not label this as generated output.
 export type CharacterFunctions = {
+  assign_character: {
+    Args: { target_campaign: string; target_character: string; target_user: string }
+    Returns: undefined
+  }
   create_character: { Args: { target_campaign: string; character_name: string }; Returns: string }
   unassign_character: {
     Args: { target_campaign: string; target_character: string; expected_user: string }

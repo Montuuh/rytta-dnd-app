@@ -176,7 +176,16 @@ export async function identityFixture(
       return respond(
         characters
           .filter((c) => c.campaign_id === url.searchParams.get('campaign_id')?.replace('eq.', ''))
-          .map((c) => ({ ...c, character_resources: [c.character_resources] })),
+          .filter(
+            (c) =>
+              !url.searchParams.get('user_id') ||
+              c.user_id === url.searchParams.get('user_id')?.replace('eq.', ''),
+          )
+          .map((c) =>
+            url.searchParams.get('select')?.includes('character_resources')
+              ? { ...c, character_resources: [c.character_resources] }
+              : { id: c.id, name: c.name, user_id: c.user_id },
+          ),
       )
     if (method === 'create_character') {
       const id = '40000000-0000-4000-8000-' + String(characters.length + 2).padStart(12, '0')
@@ -201,6 +210,12 @@ export async function identityFixture(
         revision: target.character_resources.revision + 1,
       }
       return respond(target.character_resources.revision)
+    }
+    if (method === 'assign_character') {
+      characters = characters.map((c) =>
+        c.id === body.target_character ? { ...c, user_id: String(body.target_user) } : c,
+      )
+      return respond(null)
     }
     if (method === 'unassign_character') {
       characters = characters.map((c) =>

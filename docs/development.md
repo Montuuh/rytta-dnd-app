@@ -8,7 +8,19 @@ Use modern sb_publishable_ keys; legacy JWT and secret keys are rejected.
 VITE_BASE_PATH is read from the environment or .env.local; for a one-off build use
 `npm run build -- --base=/rytta-dnd-app/`.
 
-## Local backend
+## Shared-project PRE backend
+
+The normal localhost backend is the existing Rytta Supabase project with schema `pre`.
+Use the public URL/key in ignored `.env.local` and `VITE_DATA_MODE=supabase`; `npm run dev`
+uses PRE automatically. Hosted production uses `public`. A built preview on localhost also
+uses PRE. There is no editable VITE_ schema override. Auth and accounts are shared: Google
+sign-in is still required, and allowed local callback URLs must be configured for the port.
+
+See [PRE workflow](pre-environment.md) for the one-way ETL, backups and restore. Docker is
+not required for this shared-project setup. The optional local container stack below remains
+useful for offline schema rehearsals; it is not the active PRE environment.
+
+## Optional local backend
 
 Install Docker and the supported [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started).
 
@@ -34,7 +46,10 @@ Google accounts before real campaign use. The Rytta backend is now connected; se
 [hosted connection report](evidence/RYT-001-002/supabase-connection.md).
 
 `npm run check:supabase` checks the configured real public URL/key, Auth settings, Google
-authorization redirect and anonymous REST denials. It does not create accounts or campaign
+authorization redirect, accepted localhost/production callback URLs and anonymous REST denials.
+Pass a different callback base as `npm run check:supabase -- http://localhost:5174/`.
+The allowlist probe uses an intentionally invalid token without completing a session.
+It does not create accounts or campaign
 data; the authorization preflight can create temporary Auth flow state. It is optional and
 is not part of offline CI. `supabase/tests/membership-hosted.sql` is a separate transactional
 role/RLS probe intended only for a user-authorized staging project; all fixtures roll back.

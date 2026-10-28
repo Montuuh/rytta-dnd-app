@@ -11,11 +11,12 @@ import {
   Text,
   Textarea,
   TextInput,
+  ThemeIcon,
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight, Inbox, Mail, Plus, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
@@ -25,7 +26,7 @@ import { ActionFeedback, QueryFeedback } from './feedback'
 
 export function CampaignHub() {
   const { t, i18n } = useTranslation()
-  const { state, controller } = useAuth()
+  const { state } = useAuth()
   const user = state.user!
   const campaigns = useQuery(campaignsQuery(user.id))
   const invitations = useQuery(invitationsQuery(user.id))
@@ -47,19 +48,6 @@ export function CampaignHub() {
   }
   return (
     <Stack gap="xl">
-      <Paper p="lg">
-        <Group justify="space-between">
-          <div>
-            <Text fw={600}>{t('account.home')}</Text>
-            <Text size="sm" c="dimmed" className="user-copy">
-              {user.email}
-            </Text>
-          </div>
-          <Button variant="subtle" onClick={() => void controller?.signOut()}>
-            {t('auth.signOut')}
-          </Button>
-        </Group>
-      </Paper>
       <Group justify="space-between" align="flex-start">
         <div>
           <Text className="eyebrow">RYTTA</Text>
@@ -116,23 +104,41 @@ export function CampaignHub() {
             </Text>
           </Paper>
         ))}
-      <section aria-labelledby="invitations-heading">
-        <Stack>
-          <Group justify="space-between">
-            <Title order={2} id="invitations-heading">
-              {t('hub.invitations')}
-            </Title>
+      <Paper component="section" aria-labelledby="invitations-heading" p={{ base: 'md', sm: 'xl' }}>
+        <Stack gap="lg">
+          <Group justify="space-between" align="flex-start">
+            <Group gap="sm" wrap="nowrap" align="flex-start" className="invitations-heading">
+              <ThemeIcon size={44} radius="xl" variant="light">
+                <Mail size={22} aria-hidden="true" />
+              </ThemeIcon>
+              <div>
+                <Group gap="xs">
+                  <Title order={2} id="invitations-heading">
+                    {t('hub.invitations')}
+                  </Title>
+                  {!!invitations.data?.length && !invitations.isError && (
+                    <Badge
+                      variant="light"
+                      aria-label={t('hub.pendingCount', { count: invitations.data.length })}
+                    >
+                      {invitations.data.length}
+                    </Badge>
+                  )}
+                </Group>
+                <Text size="sm" c="dimmed" mt={4}>
+                  {t('hub.joinHint')}
+                </Text>
+              </div>
+            </Group>
             <Button
-              variant="subtle"
+              variant="default"
+              leftSection={<RefreshCw size={16} aria-hidden="true" />}
               onClick={refresh}
               loading={invitations.isFetching || campaigns.isFetching}
             >
               {t('hub.refresh')}
             </Button>
           </Group>
-          <Text size="sm" c="dimmed" className="user-copy">
-            {t('hub.inviteHint', { email: user.email })}
-          </Text>
           <ActionFeedback error={action.error} />
           <QueryFeedback
             pending={invitations.isPending}
@@ -143,7 +149,7 @@ export function CampaignHub() {
             invitations.data &&
             (invitations.data.length ? (
               invitations.data.map((invite) => (
-                <Paper key={invite.id} p="lg">
+                <Paper key={invite.id} p="lg" className="invitation-card">
                   <Stack>
                     <Title order={3}>{invite.campaign_name}</Title>
                     <Text>{t('characters.invitation', { name: invite.character_name })}</Text>
@@ -173,10 +179,23 @@ export function CampaignHub() {
                 </Paper>
               ))
             ) : (
-              <Text c="dimmed">{t('hub.noInvitations')}</Text>
+              <Stack gap="xs" align="center" py="lg" className="invitation-empty">
+                <ThemeIcon size={52} radius="xl" variant="light">
+                  <Inbox size={26} aria-hidden="true" />
+                </ThemeIcon>
+                <Text fw={600} ta="center">
+                  {t('hub.noInvitations')}
+                </Text>
+                <Text size="sm" c="dimmed" ta="center" maw={400}>
+                  {t('hub.noInvitationsHint')}
+                </Text>
+              </Stack>
             ))}
+          <Text size="sm" c="dimmed" className="invitation-account user-copy">
+            {t('hub.inviteHint', { email: user.email })}
+          </Text>
         </Stack>
-      </section>
+      </Paper>
       <Modal
         opened={opened}
         onClose={() => {

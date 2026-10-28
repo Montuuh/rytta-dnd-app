@@ -9,20 +9,21 @@ configured. Production Auth URLs are also configured. See the
 [configuration follow-up](evidence/RYT-001-002/production-configuration.md). The initial
 frontend is published at https://montuuh.github.io/rytta-dnd-app/ with a verified Google
 callback and session reload; see [deployment evidence](evidence/RYT-001-002/pages-deployment.md).
-The second-account test is deferred by the user. Future publications still require explicit
-authorization and public verification. The steps below also serve as setup instructions for new environments.
+The second-account test is deferred by the user. Pushes to main trigger publication automatically;
+verify public behavior after each deployment and review backend compatibility before pushing.
+The steps below also serve as setup instructions for new environments.
 
 1. Create/connect a GitHub repo and push only when requested.
 2. Settings → Pages: choose GitHub Actions.
 3. Keep VITE_DATA_MODE=demo for the architecture preview. For future live data, set
    repository variables VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY and
    VITE_DATA_MODE=supabase. Never use secret/service-role keys.
-4. Explicitly dispatch Publish Pages on the intended revision. Quality checks run first.
+4. Push the intended revision to main to trigger Publish Pages, or dispatch it manually. Quality checks run first.
 5. The workflow takes base_path from configure-pages, builds dist and publishes it.
 6. Verify public assets/favicon, refreshed /#/inventory, mobile navigation and browser errors.
    Real-data releases additionally require staging Auth/RLS tests.
 
-No database migration runs from the Pages workflow. The workflow is manual and defaults
+No database migration runs from the Pages workflow. The workflow also permits manual dispatch and defaults
 to demo. Hosted two-account authentication/invitation tests must pass before live campaign use.
 
 ## Supabase production

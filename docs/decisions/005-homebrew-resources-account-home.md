@@ -1,6 +1,6 @@
 # ADR 005: Homebrew resources and account home
 
-Date: 2026-10-28. Status: accepted and implemented in source; hosted migration pending.
+Date: 2026-10-28. Status: accepted and implemented in source; hosted migration applied 2026-10-28.
 
 ## Decisions
 

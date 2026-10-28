@@ -26,6 +26,7 @@
     [ADR 007](decisions/007-shared-project-pre.md) and
     [RYT-017 verification](evidence/RYT-017/validation.md).
 18. [ADR 008: campaign home and compact settings](decisions/008-campaign-home-compact-settings.md)
+19. [ADR 009: member cards, membership invites and Player POV](decisions/009-member-cards-membership-invite-preview.md)
     and [RYT-019 verification](evidence/RYT-019/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is

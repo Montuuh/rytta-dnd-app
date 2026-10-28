@@ -18,7 +18,7 @@ import { modules } from './modules'
 import { config } from '@/shared/lib/config'
 import { PreferencesControls } from '@/shared/ui/preferences-controls'
 import { useQuery } from '@tanstack/react-query'
-import { CampaignViewContext, campaignsQuery } from '@/features/campaigns'
+import { CampaignViewContext, campaignsQuery, membersQuery } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 
 function Navigation({ close }: { close?: () => void }) {
@@ -81,6 +81,8 @@ export function Layout() {
   const [settingsOpened, setSettingsOpened] = useState(false)
   const [navigationOpened, setNavigationOpened] = useState(false)
   const [previewScope, setPreviewScope] = useState<string | null>(null)
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null)
+  const [previewLabel, setPreviewLabel] = useState<string | null>(null)
   const pendingSettings = useRef(false)
   const [opened, { open, close }] = useDisclosure(false)
   const menuButton = useRef<HTMLButtonElement>(null)
@@ -94,6 +96,14 @@ export function Layout() {
   const campaign = !campaigns.isError ? campaigns.data?.find((c) => c.id === campaignId) : undefined
   const scope = `${state.user?.id}:${campaignId}`
   const playerPreview = campaign?.role === 'dm' && previewScope === scope
+  const members = useQuery({
+    ...membersQuery(state.user?.id ?? '', campaignId ?? ''),
+    enabled: live && !!state.user && !!campaignId && campaign?.role === 'dm',
+  })
+  const previewPlayers =
+    !members.isError && members.data
+      ? members.data.filter((member) => member.role === 'player')
+      : []
   const mainRef = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
   useEffect(() => {
@@ -115,7 +125,13 @@ export function Layout() {
     document.title = `${t(key)} · Rytta`
   }, [pathname, t, live, state.status])
   return (
-    <CampaignViewContext.Provider value={{ playerPreview }}>
+    <CampaignViewContext.Provider
+      value={{
+        playerPreview,
+        previewUserId: playerPreview ? previewUserId : null,
+        previewLabel: playerPreview ? previewLabel : null,
+      }}
+    >
       <div
         className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''}`}
       >
@@ -165,15 +181,48 @@ export function Layout() {
               )}
             </Group>
             <Group gap="xs" wrap="nowrap" className="header-actions">
-              {campaign?.role === 'dm' && (
-                <Button
-                  variant="light"
-                  aria-pressed={playerPreview}
-                  onClick={() => setPreviewScope(playerPreview ? null : scope)}
-                >
-                  {t(playerPreview ? 'shell.dmView' : 'shell.playerView')}
-                </Button>
-              )}
+              {campaign?.role === 'dm' &&
+                (playerPreview ? (
+                  <Button
+                    variant="light"
+                    aria-pressed
+                    onClick={() => {
+                      setPreviewScope(null)
+                      setPreviewUserId(null)
+                      setPreviewLabel(null)
+                    }}
+                  >
+                    {t('shell.dmView')}
+                  </Button>
+                ) : (
+                  <AccountMenu position="bottom-end" withinPortal withInitialFocusPlaceholder={false}>
+                    <AccountMenu.Target>
+                      <Button variant="light" aria-haspopup="menu" aria-pressed={false}>
+                        {t('shell.playerView')}
+                      </Button>
+                    </AccountMenu.Target>
+                    <AccountMenu.Dropdown maw="calc(100vw - 32px)">
+                      <AccountMenu.Label>{t('shell.choosePlayerView')}</AccountMenu.Label>
+                      {previewPlayers.length === 0 ? (
+                        <AccountMenu.Item disabled>{t('shell.noPlayers')}</AccountMenu.Item>
+                      ) : (
+                        previewPlayers.map((member) => (
+                          <AccountMenu.Item
+                            key={member.user_id}
+                            className="user-copy"
+                            onClick={() => {
+                              setPreviewUserId(member.user_id)
+                              setPreviewLabel(member.display_name)
+                              setPreviewScope(scope)
+                            }}
+                          >
+                            {member.display_name}
+                          </AccountMenu.Item>
+                        ))
+                      )}
+                    </AccountMenu.Dropdown>
+                  </AccountMenu>
+                ))}
               <Group gap="xs" wrap="nowrap" className="account-controls">
                 {state.user && (
                   <AccountMenu

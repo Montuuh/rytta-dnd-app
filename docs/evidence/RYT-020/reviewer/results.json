@@ -1,0 +1,383 @@
+{
+  "sourceDigest": "518f19194bc0dd6b0b49edcb091da5f716a75dcb7dce73e26307f4d85713db79",
+  "matrix": [
+    {
+      "tag": "390-es-dark",
+      "captures": [
+        {
+          "name": "members-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "invite-modal-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "link-modal-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "members-linked-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "player-view-menu-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "party-preview-empty-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "members-150-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "inviteTarget": {
+            "width": 153.375,
+            "height": 44
+          },
+          "linkTarget": {
+            "width": 180.484375,
+            "height": 44
+          }
+        },
+        {
+          "unlinkTarget": {
+            "width": 190.84375,
+            "height": 44
+          }
+        },
+        {
+          "playerViewTarget": {
+            "width": 130.203125,
+            "height": 44
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "tag": "390-en-light",
+      "captures": [
+        {
+          "name": "members-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "invite-modal-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "link-modal-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "members-linked-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "player-view-menu-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "party-preview-empty-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "members-150-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "inviteTarget": {
+            "width": 135.5,
+            "height": 44
+          },
+          "linkTarget": {
+            "width": 147.234375,
+            "height": 44
+          }
+        },
+        {
+          "unlinkTarget": {
+            "width": 141.40625,
+            "height": 44
+          }
+        },
+        {
+          "playerViewTarget": {
+            "width": 127.625,
+            "height": 44
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "tag": "820-es-light",
+      "captures": [
+        {
+          "name": "members-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "invite-modal-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "link-modal-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "members-linked-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "player-view-menu-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "party-preview-empty-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "members-150-820-es-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "inviteTarget": {
+            "width": 153.375,
+            "height": 44
+          },
+          "linkTarget": {
+            "width": 180.484375,
+            "height": 44
+          }
+        },
+        {
+          "unlinkTarget": {
+            "width": 190.84375,
+            "height": 44
+          }
+        },
+        {
+          "playerViewTarget": {
+            "width": 130.203125,
+            "height": 44
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "tag": "820-en-dark",
+      "captures": [
+        {
+          "name": "members-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "invite-modal-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "link-modal-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "members-linked-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "player-view-menu-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "party-preview-empty-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "members-150-820-en-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": [
+        {
+          "inviteTarget": {
+            "width": 135.5,
+            "height": 44
+          },
+          "linkTarget": {
+            "width": 147.234375,
+            "height": 44
+          }
+        },
+        {
+          "unlinkTarget": {
+            "width": 141.40625,
+            "height": 44
+          }
+        },
+        {
+          "playerViewTarget": {
+            "width": 127.625,
+            "height": 44
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "interaction": {
+    "linkedPreviewShowsCharacter": true,
+    "dmActionsHidden": true,
+    "assignCalls": 1,
+    "noMembershipMutations": true,
+    "captures": [
+      {
+        "name": "party-preview-linked-390-es-dark",
+        "overflow": {
+          "viewport": 390,
+          "document": 390
+        },
+        "axe": []
+      },
+      {
+        "name": "party-preview-linked-refresh-390-es-dark",
+        "overflow": {
+          "viewport": 390,
+          "document": 390
+        },
+        "axe": []
+      },
+      {
+        "name": "hub-membership-copy-390-es-dark",
+        "overflow": {
+          "viewport": 390,
+          "document": 390
+        },
+        "axe": []
+      }
+    ],
+    "filteredRequest": "https://rytta-test.supabase.co/rest/v1/characters?select=id%2Ccampaign_id%2Cuser_id%2Cname%2Ccharacter_resources%28gold%2Cwater_units%2Crations%2Cexhaustion%2Crevision%29&campaign_id=eq.20000000-0000-4000-8000-000000000001&order=created_at.asc&user_id=eq.10000000-0000-4000-8000-000000000002"
+  },
+  "failure": null
+}

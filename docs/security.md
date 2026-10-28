@@ -17,12 +17,14 @@ have empty search_path and use auth.uid(), never caller-supplied identity.
 - Membership mutation: direct table writes are unavailable to clients. RPCs serialize on the
   campaign row. Bootstrap creates the campaign and first DM atomically. Active DMs may invite,
   revoke, promote, demote and remove; members may leave. At least one active DM must remain.
-- Revocation sets membership inactive without deleting characters/resources. Membership and
-  role helpers check active status. Creator attribution (`owner_id`) remains immutable but
-  gives no privileges after stepping down or leaving.
+- Revocation sets membership inactive without deleting characters/resources, and unlinks any
+  characters owned by that member in the campaign. Membership and role helpers check active
+  status. Creator attribution (`owner_id`) remains immutable but gives no privileges after
+  stepping down or leaving.
 - Invitations use the recipient's confirmed `auth.users.email`, not caller-controlled metadata.
-  Acceptance is atomic, always activates Player membership and cannot replay expired,
-  declined or cancelled invitations. Inviting an address does not send an email.
+  Acceptance is atomic. Membership-only invites activate Player membership; character-targeted
+  invites also link the character. Neither path can replay expired, declined or cancelled
+  invitations. Inviting an address does not send an email.
 - Google registration is open. Creating an account never grants access to existing campaigns.
 
 Characters contain no DM notes. Other players' private resources are hidden.

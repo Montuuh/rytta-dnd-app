@@ -152,7 +152,11 @@ export function CampaignHub() {
                 <Paper key={invite.id} p="lg" className="invitation-card">
                   <Stack>
                     <Title order={3}>{invite.campaign_name}</Title>
-                    <Text>{t('characters.invitation', { name: invite.character_name })}</Text>
+                    <Text>
+                      {invite.character_name
+                        ? t('characters.invitation', { name: invite.character_name })
+                        : t('members.membershipInvite')}
+                    </Text>
                     <Text size="sm" c="dimmed">
                       {t('hub.expires', {
                         date: new Date(invite.expires_at).toLocaleDateString(i18n.language),

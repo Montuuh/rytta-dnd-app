@@ -72,9 +72,13 @@ export const identityEs = {
   'members.confirmRole':
     '¿Cambiar a {{name}} al rol {{role}}? Los DMs pueden gestionar todo el contenido, los miembros y los roles de la campaña.',
   'members.confirmRemove':
-    '¿Retirar a {{name}} de esta campaña? Perderá el acceso; se conservarán sus personajes y recursos.',
+    '¿Retirar a {{name}} de esta campaña? Perderá el acceso y se desvincularán sus personajes; los recursos se conservan.',
   'members.confirmLeave':
-    '¿Salir de esta campaña? Se conservarán tus personajes y recursos. Necesitarás otra invitación para volver.',
+    '¿Salir de esta campaña? Se desvincularán tus personajes y se conservarán los recursos. Necesitarás otra invitación para volver.',
+  'members.characters': 'Personajes',
+  'members.unassigned': 'Personajes sin jugador',
+  'members.noneCharacters': 'Sin personaje vinculado.',
+  'members.membershipInvite': 'Sin personaje asignado',
   'members.confirmRevoke': '¿Cancelar la invitación para {{email}}?',
   'members.confirmDecline': '¿Rechazar la invitación a {{name}}? Tu DM podrá invitarte de nuevo.',
   'action.confirm': 'Confirmar',

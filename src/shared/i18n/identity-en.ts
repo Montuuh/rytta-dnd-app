@@ -70,9 +70,13 @@ export const identityEn = {
   'members.confirmRole':
     'Change {{name}} to {{role}}? DMs can manage all campaign content, members and roles.',
   'members.confirmRemove':
-    'Remove {{name}} from this campaign? Their access will end; their characters and resources will be preserved.',
+    'Remove {{name}} from this campaign? Their access will end and their characters will be unlinked; resources are preserved.',
   'members.confirmLeave':
-    'Leave this campaign? Your characters and resources will be preserved. You will need a new invitation to return.',
+    'Leave this campaign? Your characters will be unlinked and resources preserved. You will need a new invitation to return.',
+  'members.characters': 'Characters',
+  'members.unassigned': 'Unassigned characters',
+  'members.noneCharacters': 'No linked character.',
+  'members.membershipInvite': 'No character assigned',
   'members.confirmRevoke': 'Cancel the invitation for {{email}}?',
   'members.confirmDecline': 'Decline the invitation to {{name}}? Your DM can invite you again.',
   'action.confirm': 'Confirm',

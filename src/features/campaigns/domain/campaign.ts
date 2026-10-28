@@ -23,8 +23,8 @@ export const invitationSchema = z.object({
   id: z.uuid(),
   campaign_id: z.uuid(),
   campaign_name: z.string(),
-  character_id: z.uuid(),
-  character_name: z.string(),
+  character_id: z.uuid().nullable(),
+  character_name: z.string().nullable(),
   email: z.email(),
   expires_at: z.iso.datetime({ offset: true }),
 })

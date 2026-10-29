@@ -97,8 +97,7 @@ export function CampaignMembers() {
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
-  const unassigned =
-    assignments.data?.filter((character) => character.user_id === null) ?? []
+  const unassigned = assignments.data?.filter((character) => character.user_id === null) ?? []
   const charactersFor = (userId: string) =>
     assignments.data?.filter((character) => character.user_id === userId) ?? []
   return (
@@ -470,9 +469,7 @@ export function CampaignMembers() {
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
         <Stack>
-          <Text>
-            {t('characters.unassignHint', { name: unlinkTarget?.characterName ?? '' })}
-          </Text>
+          <Text>{t('characters.unassignHint', { name: unlinkTarget?.characterName ?? '' })}</Text>
           {characterAction.isError && (
             <Alert role="alert" color="red">
               {t('characters.unavailable')}

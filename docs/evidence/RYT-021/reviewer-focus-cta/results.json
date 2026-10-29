@@ -1,6 +1,6 @@
 {
-  "sourceDigest": "bb26f4ed3aa460f12178188e37ed69b9f04640bc132118ed4af72fc246713d5c",
-  "preview": "http://127.0.0.1:4184/rytta-dnd-app/",
+  "sourceDigest": "b6b66e7960ed8319303f2ce28684130441b299a115d3d32d3a120ecb5fcfd666",
+  "preview": "http://127.0.0.1:4185/rytta-dnd-app/",
   "matrix": [
     {
       "tag": "390-es-dark",
@@ -335,6 +335,88 @@
       "errors": []
     }
   ],
+  "playerMatrix": [
+    {
+      "tag": "player-390-es-dark",
+      "captures": [
+        {
+          "name": "party-player-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "playerYouBadge": true,
+        "notStuckOnLoading": true,
+        "createAbsent": true,
+        "editAbsent": true
+      },
+      "errors": []
+    },
+    {
+      "tag": "player-390-en-light",
+      "captures": [
+        {
+          "name": "party-player-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "playerYouBadge": true,
+        "notStuckOnLoading": true,
+        "createAbsent": true,
+        "editAbsent": true
+      },
+      "errors": []
+    },
+    {
+      "tag": "player-820-es-dark",
+      "captures": [
+        {
+          "name": "party-player-820-es-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "playerYouBadge": true,
+        "notStuckOnLoading": true,
+        "createAbsent": true,
+        "editAbsent": true
+      },
+      "errors": []
+    },
+    {
+      "tag": "player-820-en-light",
+      "captures": [
+        {
+          "name": "party-player-820-en-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "playerYouBadge": true,
+        "notStuckOnLoading": true,
+        "createAbsent": true,
+        "editAbsent": true
+      },
+      "errors": []
+    }
+  ],
   "interaction": {
     "noPlayersDialog": true,
     "manageMembersVisible": true,
@@ -349,5 +431,5 @@
     "errors": []
   },
   "failure": null,
-  "finalDigest": "bb26f4ed3aa460f12178188e37ed69b9f04640bc132118ed4af72fc246713d5c"
+  "finalDigest": "b6b66e7960ed8319303f2ce28684130441b299a115d3d32d3a120ecb5fcfd666"
 }

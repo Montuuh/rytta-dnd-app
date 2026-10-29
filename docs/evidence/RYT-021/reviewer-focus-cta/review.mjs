@@ -11,7 +11,7 @@ const digest = execFileSync(process.execPath, ['scripts/check-ui-review.mjs', '-
   encoding: 'utf8',
 }).trim()
 
-const base = 'http://127.0.0.1:4184/rytta-dnd-app/'
+const base = 'http://127.0.0.1:4185/rytta-dnd-app/'
 const removedToMembersEs = 'Ir a Miembros e invitaciones'
 const removedToMembersEn = 'Go to Members & invitations'
 const removedToPartyEs = 'Gestionar personajes en Grupo'
@@ -19,12 +19,16 @@ const removedToPartyEn = 'Manage characters in Party'
 /** Former campaign.refreshing copy — must not reappear as background-fetch UI. */
 const refreshingEs = 'Actualizando…'
 const refreshingEn = 'Updating…'
+/** common.loading — Party must not stick here for Players after boundary cache clear. */
+const loadingEs = 'Abriendo tu compañero de aventuras…'
+const loadingEn = 'Opening your companion…'
 
 const browser = await chromium.launch()
 const results = {
   sourceDigest: digest,
   preview: base,
   matrix: [],
+  playerMatrix: [],
   interaction: null,
   failure: null,
 }
@@ -170,6 +174,56 @@ try {
 
     expect(errors).toEqual([])
     results.matrix.push(row)
+    await context.close()
+  }
+
+  // Player POV: CampaignBoundary must keep characters cache; Party must leave common.loading
+  // and show the "Tu personaje" / "Your character" badge without Create/Edit DM actions.
+  for (const [width, language, scheme] of [
+    [390, 'es', 'dark'],
+    [390, 'en', 'light'],
+    [820, 'es', 'dark'],
+    [820, 'en', 'light'],
+  ]) {
+    const es = language === 'es'
+    const youBadge = es ? 'Tu personaje' : 'Your character'
+    const createLabel = es ? 'Crear personaje' : 'Create character'
+    const editLabel = es ? 'Editar recursos' : 'Edit resources'
+    const loadingCopy = es ? loadingEs : loadingEn
+    const context = await browser.newContext({
+      viewport: { width, height: 1000 },
+      hasTouch: true,
+      reducedMotion: 'reduce',
+    })
+    const page = await context.newPage()
+    const errors = []
+    page.on('pageerror', (e) => errors.push(e.message))
+    await page.addInitScript(
+      ({ language, scheme }) => {
+        localStorage.setItem('rytta-language', language)
+        localStorage.setItem('rytta-color-scheme', scheme)
+      },
+      { language, scheme },
+    )
+    await identityFixture(page, { player: true })
+    await page.goto(`${base}#/campaign/${campaignId}/party`)
+    const tag = `player-${width}-${language}-${scheme}`
+    const row = { tag, captures: [], checks: {}, errors }
+
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    // Must resolve past pending — not stuck on common.loading from cancelled characters query.
+    await expect(page.getByText(youBadge, { exact: true })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText(loadingCopy, { exact: true })).toHaveCount(0)
+    await expect(page.getByRole('status').filter({ hasText: loadingCopy })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: createLabel, exact: true })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: editLabel, exact: true })).toHaveCount(0)
+    row.checks.playerYouBadge = true
+    row.checks.notStuckOnLoading = true
+    row.checks.createAbsent = true
+    row.checks.editAbsent = true
+    row.captures.push(await capture(page, `party-${tag}`))
+    expect(errors).toEqual([])
+    results.playerMatrix.push(row)
     await context.close()
   }
 

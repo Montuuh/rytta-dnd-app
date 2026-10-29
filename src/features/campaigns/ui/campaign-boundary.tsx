@@ -16,10 +16,13 @@ export function CampaignBoundary() {
   const client = useQueryClient()
   const query = useQuery(campaignsQuery(userId))
   const campaign = !query.isError ? query.data?.find((item) => item.id === campaignId) : undefined
+  // Players still need characters; only drop DM-only campaign caches when the role is not DM.
   useEffect(() => {
-    if (campaign?.role !== 'dm') {
-      void client.cancelQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
-      client.removeQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+    if (campaign?.role === 'dm') return
+    for (const leaf of ['members', 'sent-invitations', 'assignments'] as const) {
+      const queryKey = ['private', userId, 'campaign', campaignId, leaf]
+      void client.cancelQueries({ queryKey })
+      client.removeQueries({ queryKey })
     }
   }, [client, userId, campaignId, campaign?.role])
   useEffect(

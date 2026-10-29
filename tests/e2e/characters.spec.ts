@@ -44,12 +44,7 @@ for (const language of ['es', 'en'] as const)
             .click()
         if (screen === 'members') {
           await page.keyboard.press('Escape')
-          await page
-            .getByRole('link', {
-              name: es ? 'Ir a Miembros e invitaciones' : 'Go to Members & invitations',
-              exact: true,
-            })
-            .click()
+          await page.goto(`./#/campaign/${campaignId}/members`)
           await expect(page.getByRole('heading', { level: 1 })).toHaveText(
             es ? 'Miembros e invitaciones' : 'Members & invitations',
           )
@@ -308,7 +303,13 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   await expect(page.getByRole('heading', { name: 'Personajes sin jugador' })).toHaveCount(0)
   await expect(page.getByText('Oro', { exact: true })).toHaveCount(0)
   expect(f.calls.filter((c) => c.method === 'characters')).toHaveLength(0)
-  await page.getByRole('link', { name: 'Gestionar personajes en Grupo' }).click()
+  if ((page.viewportSize()?.width ?? 1440) <= 768) {
+    await page.getByRole('button', { name: 'Abrir navegación' }).click()
+    await page.getByRole('dialog').getByRole('link', { name: 'Grupo', exact: true }).click()
+  } else {
+    await page.locator('.sidebar').getByRole('link', { name: 'Grupo', exact: true }).click()
+  }
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   const card = page
     .locator('.character-card')
     .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })

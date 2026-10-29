@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Alert, Button, Stack, Text } from '@mantine/core'
+import { Alert, Button, Stack } from '@mantine/core'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -48,14 +48,7 @@ export function CampaignBoundary() {
     )
   return (
     <CampaignContext.Provider value={campaign}>
-      <Stack gap="xl">
-        {query.isFetching && (
-          <Text size="sm" c="dimmed" role="status">
-            {t('campaign.refreshing')}
-          </Text>
-        )}
-        <Outlet key={`${userId}:${campaign.id}:${campaign.role}`} />
-      </Stack>
+      <Outlet key={`${userId}:${campaign.id}:${campaign.role}`} />
     </CampaignContext.Provider>
   )
 }

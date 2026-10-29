@@ -15,7 +15,6 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { Link } from 'react-router'
 import { membersQuery, sentInvitationsQuery, useCampaignAction, type CampaignAction } from '../api'
 import { useCampaign } from '../campaign-context'
 import { inviteEmailSchema } from '../domain/campaign'
@@ -83,11 +82,6 @@ export function CampaignMembers() {
         <Text c="dimmed" mt="sm">
           {t(dm ? 'members.intro' : 'members.playerHint')}
         </Text>
-        {dm && (
-          <Button component={Link} to={`/campaign/${campaign.id}/party`} variant="subtle" mt="xs">
-            {t('characters.goToParty')}
-          </Button>
-        )}
       </div>
       <ActionFeedback error={action.error} />
       {dm && (
@@ -105,7 +99,6 @@ export function CampaignMembers() {
                       void members.refetch()
                       void invitations.refetch()
                     }}
-                    loading={members.isFetching || invitations.isFetching}
                   >
                     {t('hub.refresh')}
                   </Button>

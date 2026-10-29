@@ -16,7 +16,6 @@ import {
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { charactersQuery, useCharacterAction } from '../api'
@@ -74,16 +73,6 @@ export function CharacterParty() {
           </Button>
         )}
       </Group>
-      {dm && (
-        <Button
-          component={Link}
-          to={`/campaign/${campaign.id}/members`}
-          variant="subtle"
-          w="fit-content"
-        >
-          {t('characters.manageMembers')}
-        </Button>
-      )}
       <Group justify="space-between">
         <Text size="xs" c="dimmed">
           {query.dataUpdatedAt > 0 &&
@@ -91,7 +80,7 @@ export function CharacterParty() {
               time: new Date(query.dataUpdatedAt).toLocaleTimeString(i18n.language),
             })}
         </Text>
-        <Button variant="subtle" loading={query.isFetching} onClick={() => void query.refetch()}>
+        <Button variant="subtle" onClick={() => void query.refetch()}>
           {t('hub.refresh')}
         </Button>
       </Group>

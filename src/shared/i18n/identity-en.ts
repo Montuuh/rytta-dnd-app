@@ -45,7 +45,6 @@ export const identityEn = {
     'Your campaign is ready. Gameplay modules will be added in upcoming deliveries.',
   'campaign.offline':
     'You are offline. Information may be out of date; reconnect before making changes.',
-  'campaign.refreshing': 'Updating…',
   'members.title': 'Members & invitations',
   'members.intro':
     'Manage campaign access and roles. Invitations grant the Player role; characters are managed in Party.',

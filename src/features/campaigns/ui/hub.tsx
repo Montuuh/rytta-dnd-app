@@ -134,7 +134,6 @@ export function CampaignHub() {
               variant="default"
               leftSection={<RefreshCw size={16} aria-hidden="true" />}
               onClick={refresh}
-              loading={invitations.isFetching || campaigns.isFetching}
             >
               {t('hub.refresh')}
             </Button>

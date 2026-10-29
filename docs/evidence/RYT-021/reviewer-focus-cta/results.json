@@ -1,0 +1,353 @@
+{
+  "sourceDigest": "bb26f4ed3aa460f12178188e37ed69b9f04640bc132118ed4af72fc246713d5c",
+  "preview": "http://127.0.0.1:4184/rytta-dnd-app/",
+  "matrix": [
+    {
+      "tag": "390-es-dark",
+      "captures": [
+        {
+          "name": "party-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "link-dialog-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "members-390-es-dark",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "createTarget": {
+          "width": 159.875,
+          "height": 44
+        },
+        "removedCtaAbsentOnParty": true,
+        "refreshTarget": {
+          "width": 117.796875,
+          "height": 44
+        },
+        "silentBackgroundRefetch": {
+          "refreshPresent": true,
+          "refreshingCopyAbsent": true,
+          "refreshNotBusyAfterWait": true,
+          "busySamples": [
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            }
+          ]
+        },
+        "linkTarget": {
+          "width": 166.125,
+          "height": 44
+        },
+        "manageMembersInDialog": true,
+        "manageLinkTarget": {
+          "width": 317,
+          "height": 44
+        },
+        "removedCtaAbsentOnMembers": true,
+        "membersRefreshSilent": true
+      },
+      "errors": []
+    },
+    {
+      "tag": "390-en-light",
+      "captures": [
+        {
+          "name": "party-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "link-dialog-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        },
+        {
+          "name": "members-390-en-light",
+          "overflow": {
+            "viewport": 390,
+            "document": 390
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "createTarget": {
+          "width": 164.25,
+          "height": 44
+        },
+        "removedCtaAbsentOnParty": true,
+        "refreshTarget": {
+          "width": 100.046875,
+          "height": 44
+        },
+        "silentBackgroundRefetch": {
+          "refreshPresent": true,
+          "refreshingCopyAbsent": true,
+          "refreshNotBusyAfterWait": true,
+          "busySamples": [
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            }
+          ]
+        },
+        "linkTarget": {
+          "width": 124.453125,
+          "height": 44
+        },
+        "manageMembersInDialog": true,
+        "manageLinkTarget": {
+          "width": 317,
+          "height": 44
+        },
+        "removedCtaAbsentOnMembers": true,
+        "membersRefreshSilent": true
+      },
+      "errors": []
+    },
+    {
+      "tag": "820-es-dark",
+      "captures": [
+        {
+          "name": "party-820-es-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "link-dialog-820-es-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "members-820-es-dark",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "createTarget": {
+          "width": 159.875,
+          "height": 44
+        },
+        "removedCtaAbsentOnParty": true,
+        "refreshTarget": {
+          "width": 117.796875,
+          "height": 44
+        },
+        "silentBackgroundRefetch": {
+          "refreshPresent": true,
+          "refreshingCopyAbsent": true,
+          "refreshNotBusyAfterWait": true,
+          "busySamples": [
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            }
+          ]
+        },
+        "linkTarget": {
+          "width": 166.125,
+          "height": 44
+        },
+        "manageMembersInDialog": true,
+        "manageLinkTarget": {
+          "width": 406,
+          "height": 44
+        },
+        "removedCtaAbsentOnMembers": true,
+        "membersRefreshSilent": true
+      },
+      "errors": []
+    },
+    {
+      "tag": "820-en-light",
+      "captures": [
+        {
+          "name": "party-820-en-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "link-dialog-820-en-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        },
+        {
+          "name": "members-820-en-light",
+          "overflow": {
+            "viewport": 820,
+            "document": 820
+          },
+          "axe": []
+        }
+      ],
+      "checks": {
+        "createTarget": {
+          "width": 164.25,
+          "height": 44
+        },
+        "removedCtaAbsentOnParty": true,
+        "refreshTarget": {
+          "width": 100.046875,
+          "height": 44
+        },
+        "silentBackgroundRefetch": {
+          "refreshPresent": true,
+          "refreshingCopyAbsent": true,
+          "refreshNotBusyAfterWait": true,
+          "busySamples": [
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            },
+            {
+              "ariaBusy": null,
+              "dataLoading": null
+            }
+          ]
+        },
+        "linkTarget": {
+          "width": 124.453125,
+          "height": 44
+        },
+        "manageMembersInDialog": true,
+        "manageLinkTarget": {
+          "width": 406,
+          "height": 44
+        },
+        "removedCtaAbsentOnMembers": true,
+        "membersRefreshSilent": true
+      },
+      "errors": []
+    }
+  ],
+  "interaction": {
+    "noPlayersDialog": true,
+    "manageMembersVisible": true,
+    "capture": {
+      "name": "link-dialog-no-players-390-es-dark",
+      "overflow": {
+        "viewport": 390,
+        "document": 390
+      },
+      "axe": []
+    },
+    "errors": []
+  },
+  "failure": null,
+  "finalDigest": "bb26f4ed3aa460f12178188e37ed69b9f04640bc132118ed4af72fc246713d5c"
+}

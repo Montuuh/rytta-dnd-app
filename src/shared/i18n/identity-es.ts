@@ -46,7 +46,6 @@ export const identityEs = {
     'Tu campaña está preparada. Los módulos de juego llegarán en las próximas entregas.',
   'campaign.offline':
     'Estás sin conexión. La información puede estar desactualizada; reconecta antes de hacer cambios.',
-  'campaign.refreshing': 'Actualizando…',
   'members.title': 'Miembros e invitaciones',
   'members.intro':
     'Gestiona quién entra en la campaña y sus permisos. Las invitaciones dan el rol Player; los personajes se gestionan en Grupo.',

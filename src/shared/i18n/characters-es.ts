@@ -54,7 +54,6 @@ export const charactersEs = {
   'characters.choosePlayer': 'Elige un jugador',
   'characters.playerName': 'Jugador: {{name}}',
   'characters.manageMembers': 'Ir a Miembros e invitaciones',
-  'characters.goToParty': 'Gestionar personajes en Grupo',
   'characters.noPlayers':
     'Todavía no hay miembros con rol Player. Invita a un jugador y espera a que acepte para vincularlo.',
   'characters.noAvailablePlayers':

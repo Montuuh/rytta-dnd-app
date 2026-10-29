@@ -54,7 +54,6 @@ export const charactersEn = {
   'characters.choosePlayer': 'Choose a Player',
   'characters.playerName': 'Player: {{name}}',
   'characters.manageMembers': 'Go to Members & invitations',
-  'characters.goToParty': 'Manage characters in Party',
   'characters.noPlayers':
     'There are no members with the Player role yet. Invite a Player and wait for them to accept before linking them.',
   'characters.noAvailablePlayers':

@@ -38,5 +38,6 @@ supabase/.branches/
 .tmp/
 dist-review-focus/
 dist-ryt020-review/
+dist-party-button-review/
 
 *.traineddata

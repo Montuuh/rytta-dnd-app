@@ -16,13 +16,16 @@ import {
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { useCampaign, useCampaignView } from '@/features/campaigns'
+import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { charactersQuery, useCharacterAction } from '../api'
 import { resourceSchema, type Character } from '../domain/character'
+import { PlayerAssignmentEditor } from './player-assignment'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 type Editor = { kind: 'create' } | { kind: 'resources'; character: Character }
+type PartyEditor = Editor | { kind: 'assignment'; character: Character }
 
 export function CharacterParty() {
   const { t, i18n } = useTranslation()
@@ -32,22 +35,33 @@ export function CharacterParty() {
   const dm = campaign.role === 'dm'
   const filterUserId = dm ? undefined : (previewUserId ?? state.user!.id)
   const query = useQuery(charactersQuery(state.user!.id, campaign.id, filterUserId))
+  const members = useQuery({ ...membersQuery(state.user!.id, campaign.id), enabled: dm })
   const opener = useRef<HTMLElement | null>(null)
-  const open = (next: Editor, target: HTMLElement) => {
+  const fallback = useRef<string | null>(null)
+  const open = (next: PartyEditor, target: HTMLElement) => {
     opener.current = target
+    fallback.current = 'character' in next ? `character-${next.character.id}` : null
     setEditor(next)
   }
   const close = () => {
     setEditor(null)
-    requestAnimationFrame(() => opener.current?.focus())
+    requestAnimationFrame(() => {
+      if (opener.current?.isConnected) opener.current.focus()
+      else if (fallback.current) document.getElementById(fallback.current)?.focus()
+    })
   }
-  const [editor, setEditor] = useState<Editor | null>(null)
-  const [notice, setNotice] = useState<'characters.saved' | 'characters.invited' | null>(null)
+  const [editor, setEditor] = useState<PartyEditor | null>(null)
+  const [notice, setNotice] = useState<
+    'characters.saved' | 'characters.assignmentSaved' | 'characters.created' | null
+  >(null)
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="start">
         <div>
           <Title order={1}>{t('characters.title')}</Title>
+          <Text c="dimmed" mt="sm">
+            {t(dm ? 'characters.intro' : 'characters.playerIntro')}
+          </Text>
           {playerPreview && previewLabel && (
             <Text c="dimmed" mt="xs">
               {t('shell.previewAs', { name: previewLabel })}
@@ -60,6 +74,16 @@ export function CharacterParty() {
           </Button>
         )}
       </Group>
+      {dm && (
+        <Button
+          component={Link}
+          to={`/campaign/${campaign.id}/members`}
+          variant="subtle"
+          w="fit-content"
+        >
+          {t('characters.manageMembers')}
+        </Button>
+      )}
       <Group justify="space-between">
         <Text size="xs" c="dimmed">
           {query.dataUpdatedAt > 0 &&
@@ -92,7 +116,12 @@ export function CharacterParty() {
             <Paper p="lg" key={character.id} className="character-card">
               <Stack>
                 <div>
-                  <Title order={2} className="user-copy">
+                  <Title
+                    order={2}
+                    className="user-copy"
+                    id={`character-${character.id}`}
+                    tabIndex={-1}
+                  >
                     {character.name}
                   </Title>
                   <Badge mt="sm" variant="light">
@@ -104,6 +133,15 @@ export function CharacterParty() {
                         : 'characters.unassigned',
                     )}
                   </Badge>
+                  {dm && character.user_id && members.data && !members.isError && (
+                    <Text size="sm" mt="xs" className="user-copy">
+                      {t('characters.playerName', {
+                        name:
+                          members.data.find((member) => member.user_id === character.user_id)
+                            ?.display_name ?? t('characters.assigned'),
+                      })}
+                    </Text>
+                  )}
                 </div>
                 <SimpleGrid cols={2}>
                   {fields.map((field) => (
@@ -130,6 +168,14 @@ export function CharacterParty() {
                     >
                       {t('characters.edit')}
                     </Button>
+                    <Button
+                      variant="subtle"
+                      onClick={(event) =>
+                        open({ kind: 'assignment', character }, event.currentTarget)
+                      }
+                    >
+                      {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
+                    </Button>
                   </Group>
                 )}
               </Stack>
@@ -137,14 +183,25 @@ export function CharacterParty() {
           ))}
         </SimpleGrid>
       )}
-      {editor && (
+      {editor?.kind === 'assignment' && (
+        <PlayerAssignmentEditor
+          character={editor.character}
+          campaignId={campaign.id}
+          close={close}
+          complete={() => {
+            close()
+            setNotice('characters.assignmentSaved')
+          }}
+        />
+      )}
+      {editor && editor.kind !== 'assignment' && (
         <CharacterEditor
           editor={editor}
           campaignId={campaign.id}
           close={close}
           complete={(kind) => {
             close()
-            setNotice(kind === 'resources' ? 'characters.saved' : null)
+            setNotice(kind === 'resources' ? 'characters.saved' : 'characters.created')
           }}
         />
       )}
@@ -169,7 +226,6 @@ function CharacterEditor({
   const form = useForm({
     initialValues: {
       name: '',
-      email: '',
       ...('character' in editor
         ? editor.character.character_resources
         : { gold: 0, water_units: 0, rations: 0, exhaustion: 0, revision: 0 }),

@@ -47,9 +47,9 @@ export const identityEs = {
   'campaign.offline':
     'Estás sin conexión. La información puede estar desactualizada; reconecta antes de hacer cambios.',
   'campaign.refreshing': 'Actualizando…',
-  'members.title': 'Tu mesa',
+  'members.title': 'Miembros e invitaciones',
   'members.intro':
-    'Los DMs comparten la gestión de la campaña. Las invitaciones siempre dan el rol Player.',
+    'Gestiona quién entra en la campaña y sus permisos. Las invitaciones dan el rol Player; los personajes se gestionan en Grupo.',
   'members.list': 'Miembros',
   'members.you': 'Tú',
   'members.invite': 'Invitar jugador',
@@ -78,7 +78,7 @@ export const identityEs = {
   'members.characters': 'Personajes',
   'members.unassigned': 'Personajes sin jugador',
   'members.noneCharacters': 'Sin personaje vinculado.',
-  'members.membershipInvite': 'Sin personaje asignado',
+  'members.membershipInvite': 'Cuando acepte, podrás vincularle un personaje desde Grupo.',
   'members.confirmRevoke': '¿Cancelar la invitación para {{email}}?',
   'members.confirmDecline': '¿Rechazar la invitación a {{name}}? Tu DM podrá invitarte de nuevo.',
   'action.confirm': 'Confirmar',

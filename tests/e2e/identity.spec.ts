@@ -101,7 +101,9 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
 }) => {
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Miembros e invitaciones', exact: true }),
+  ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
@@ -196,7 +198,9 @@ test('self-demotion clears management views and offline actions are not queued',
 }) => {
   const f = await identityFixture(page, { twoDms: true })
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await expect(page.getByRole('heading', { name: 'Tu mesa', exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Miembros e invitaciones', exact: true }),
+  ).toBeVisible()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await context.setOffline(true)
   await page.getByLabel('Correo de la cuenta de Google').fill('offline@example.com')

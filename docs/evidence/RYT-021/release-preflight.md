@@ -23,13 +23,11 @@ No database migrations, data changes or paid resources are needed for this UI re
 
 ## Deployment and rollback
 
-This report records readiness, not a completed deployment. After pushing, verify the exact
-commit's Publish Pages and Quality runs, then load the public site, inspect its asset responses,
-deep-route reload, and runtime schema selection. Keep live signed-out verification distinct
-from deployed-bundle checks with intercepted synthetic identity/data; neither proves a real
-two-account Auth/RLS round trip. Local post-deployment evidence belongs in
-`.tmp/ryt021-release/` and the final release response links the exact successful run.
+Pushed as `9df13044e944a1bb95c97f04eb49147b517edc48`. Quality run
+https://github.com/Montuuh/rytta-dnd-app/actions/runs/40881337760 and Publish Pages
+https://github.com/Montuuh/rytta-dnd-app/actions/runs/40881337718 both succeeded.
+Post-deploy public verification is recorded in [pages-deployment.md](pages-deployment.md);
+local smoke artifacts remain under ignored `.tmp/ryt021-release/`.
 
-Rollback: revert this frontend delivery commit and push the resulting restoration through
-the same quality/deployment checks, then verify the public URL. The previous known-good
-frontend is `a879f8e34eeba175d95fd2774ea7b3a64726d99c`; no database rollback is required.
+Rollback: restore `a879f8e34eeba175d95fd2774ea7b3a64726d99c` through the same
+quality/deployment checks, then re-verify the public URL. No database rollback is required.

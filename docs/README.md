@@ -29,5 +29,8 @@
 19. [ADR 009: member cards, membership invites and Player POV](decisions/009-member-cards-membership-invite-preview.md)
     and [RYT-019 verification](evidence/RYT-019/validation.md).
 
+20. [ADR 010: one home for character management](decisions/010-character-management-home.md)
+    and [RYT-021 verification](evidence/RYT-021/validation.md).
+
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

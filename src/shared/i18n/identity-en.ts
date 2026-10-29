@@ -46,8 +46,9 @@ export const identityEn = {
   'campaign.offline':
     'You are offline. Information may be out of date; reconnect before making changes.',
   'campaign.refreshing': 'Updating…',
-  'members.title': 'Your table',
-  'members.intro': 'DMs share campaign management. Invitations always start as Player.',
+  'members.title': 'Members & invitations',
+  'members.intro':
+    'Manage campaign access and roles. Invitations grant the Player role; characters are managed in Party.',
   'members.list': 'Members',
   'members.you': 'You',
   'members.invite': 'Invite player',
@@ -76,7 +77,7 @@ export const identityEn = {
   'members.characters': 'Characters',
   'members.unassigned': 'Unassigned characters',
   'members.noneCharacters': 'No linked character.',
-  'members.membershipInvite': 'No character assigned',
+  'members.membershipInvite': 'Once they accept, you can link a character to them from Party.',
   'members.confirmRevoke': 'Cancel the invitation for {{email}}?',
   'members.confirmDecline': 'Decline the invitation to {{name}}? Your DM can invite you again.',
   'action.confirm': 'Confirm',

@@ -14,9 +14,8 @@ export const charactersEn = {
   'account.menu': 'Open settings menu',
   'account.exit': 'Back to my account',
   'account.settings': 'Preferences',
-  'characters.title': 'Characters & resources',
-  'characters.intro':
-    'Create a character, then invite its Player. Resources are managed by the DM.',
+  'characters.title': 'Party',
+  'characters.intro': 'Create characters, link their Players and manage their resources.',
   'characters.playerIntro': 'Your character and resources. Ask your DM to make changes.',
   'characters.rules': 'Homebrew · Whole gold, food and water rations · Manual exhaustion',
   'characters.create': 'Create character',
@@ -44,9 +43,25 @@ export const charactersEn = {
     'Could not complete this action. Refresh and check the character, assignment and connection before retrying.',
   'characters.unassign': 'Unlink Player',
   'characters.unassignHint':
-    'Unlink the Player from {{name}}? They will lose access to this character. Membership and resources are preserved. You can then invite another Player.',
+    'Unlink the Player from {{name}}? They will lose access to this character. Membership and resources are preserved. You can then link another Player from Party.',
   'characters.invitation': 'Character: {{name}}',
   'characters.manageHint':
     'Create characters and invite their Players from Characters & resources.',
+  'characters.assign': 'Link Player',
+  'characters.assignHint':
+    'Choose a member with the Player role who has no character yet. Each Player can have one character per campaign.',
+  'characters.player': 'Player',
+  'characters.choosePlayer': 'Choose a Player',
+  'characters.playerName': 'Player: {{name}}',
+  'characters.manageMembers': 'Go to Members & invitations',
+  'characters.goToParty': 'Manage characters in Party',
+  'characters.noPlayers':
+    'There are no members with the Player role yet. Invite a Player and wait for them to accept before linking them.',
+  'characters.noAvailablePlayers':
+    'All Players already have a character. To change one, unlink them from their current card in Party first, or invite another Player.',
+  'characters.assignmentChanged':
+    'This link has changed. Close and reopen this dialog to see the current state.',
+  'characters.assignmentSaved': 'Player link updated.',
+  'characters.created': 'Character created. You can now link a Player or edit its resources.',
   'characters.updated': 'Last checked: {{time}}',
 } as const

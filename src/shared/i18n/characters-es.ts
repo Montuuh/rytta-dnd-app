@@ -15,8 +15,8 @@ export const charactersEs = {
   'account.menu': 'Abrir menú de ajustes',
   'account.exit': 'Volver a mi cuenta',
   'account.settings': 'Preferencias',
-  'characters.title': 'Personajes y recursos',
-  'characters.intro': 'Crea un personaje e invita a su jugador. El DM gestiona los recursos.',
+  'characters.title': 'Grupo',
+  'characters.intro': 'Crea personajes, vincula a sus jugadores y gestiona sus recursos.',
   'characters.playerIntro': 'Tu personaje y sus recursos. Pide a tu DM los cambios que necesites.',
   'characters.rules': 'Homebrew · Oro entero, raciones de comida y agua · Agotamiento manual',
   'characters.create': 'Crear personaje',
@@ -44,8 +44,24 @@ export const charactersEs = {
     'No se pudo completar la acción. Actualiza y revisa el personaje, la asignación y la conexión antes de reintentar.',
   'characters.unassign': 'Desvincular jugador',
   'characters.unassignHint':
-    '¿Desvincular al jugador de {{name}}? Perderá el acceso a este personaje. Se conservan su membresía y los recursos. Después podrás invitar a otro jugador.',
+    '¿Desvincular al jugador de {{name}}? Perderá el acceso a este personaje. Se conservan su membresía y los recursos. Después podrás vincular otro jugador desde Grupo.',
   'characters.invitation': 'Personaje: {{name}}',
   'characters.manageHint': 'Crea personajes e invita a sus jugadores desde Personajes y recursos.',
+  'characters.assign': 'Vincular jugador',
+  'characters.assignHint':
+    'Elige un miembro con rol Player que todavía no tenga personaje. Cada jugador puede tener un personaje por campaña.',
+  'characters.player': 'Jugador',
+  'characters.choosePlayer': 'Elige un jugador',
+  'characters.playerName': 'Jugador: {{name}}',
+  'characters.manageMembers': 'Ir a Miembros e invitaciones',
+  'characters.goToParty': 'Gestionar personajes en Grupo',
+  'characters.noPlayers':
+    'Todavía no hay miembros con rol Player. Invita a un jugador y espera a que acepte para vincularlo.',
+  'characters.noAvailablePlayers':
+    'Todos los jugadores ya tienen personaje. Para cambiar uno, desvincúlalo primero desde su ficha en Grupo, o invita a otro jugador.',
+  'characters.assignmentChanged':
+    'La vinculación ha cambiado. Cierra y vuelve a abrir este diálogo para ver el estado actual.',
+  'characters.assignmentSaved': 'Vinculación actualizada.',
+  'characters.created': 'Personaje creado. Ya puedes vincular un jugador o editar sus recursos.',
   'characters.updated': 'Última consulta: {{time}}',
 } satisfies Record<keyof typeof charactersEn, string>

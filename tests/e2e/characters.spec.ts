@@ -1,8 +1,156 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
+import { identityFixture, campaignId, playerId } from './fixtures/identity.ts'
 
-test('DM creates before assignment, invites, edits whole homebrew units and recovers from a stale editor', async ({
+for (const language of ['es', 'en'] as const)
+  for (const scheme of ['dark', 'light'] as const)
+    test(`${language} ${scheme} consolidated character management at 150%`, async ({
+      page,
+    }, info) => {
+      await page.addInitScript(
+        ({ language, scheme }) => {
+          localStorage.setItem('rytta-language', language)
+          localStorage.setItem('rytta-color-scheme', scheme)
+        },
+        { language, scheme },
+      )
+      await identityFixture(page)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(`./#/campaign/${campaignId}/party`)
+      await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+      await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+      const es = language === 'es'
+      for (const screen of ['party', 'link', 'assigned', 'unlink', 'members', 'invite']) {
+        if (screen === 'link')
+          await page
+            .getByRole('button', { name: es ? 'Vincular jugador' : 'Link Player', exact: true })
+            .click()
+        if (screen === 'assigned') {
+          await page.getByRole('combobox').selectOption(playerId)
+          await page
+            .getByRole('dialog')
+            .getByRole('button', { name: es ? 'Vincular jugador' : 'Link Player', exact: true })
+            .click()
+          await expect(
+            page.getByText(es ? 'Jugador: Arin' : 'Player: Arin', { exact: true }),
+          ).toBeVisible()
+        }
+        if (screen === 'unlink')
+          await page
+            .getByRole('button', {
+              name: es ? 'Desvincular jugador' : 'Unlink Player',
+              exact: true,
+            })
+            .click()
+        if (screen === 'members') {
+          await page.keyboard.press('Escape')
+          await page
+            .getByRole('link', {
+              name: es ? 'Ir a Miembros e invitaciones' : 'Go to Members & invitations',
+              exact: true,
+            })
+            .click()
+          await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+            es ? 'Miembros e invitaciones' : 'Members & invitations',
+          )
+          await expect(page.getByText('player@example.com', { exact: true })).toBeVisible()
+          await expect(
+            page.getByRole('button', { name: /Vincular|Desvincular|Link Player|Unlink Player/ }),
+          ).toHaveCount(0)
+        }
+        if (screen === 'invite')
+          await page
+            .getByRole('button', { name: es ? 'Invitar jugador' : 'Invite player', exact: true })
+            .click()
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        )
+        expect(
+          (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+            .violations,
+        ).toEqual([])
+        for (const control of await page
+          .locator(
+            'main button:visible, [role="dialog"] button:visible, [role="dialog"] select:visible',
+          )
+          .all()) {
+          const box = await control.boundingBox()
+          expect(box!.height).toBeGreaterThanOrEqual(44)
+        }
+        await page.screenshot({
+          path: info.outputPath(`${screen}-${language}-${scheme}-150.png`),
+          fullPage: true,
+        })
+      }
+    })
+
+test('assignment explains unavailable Players and recovers from failed member reads', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { twoDms: true })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await expect(
+    page.getByText('Todavía no hay miembros con rol Player.', { exact: false }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: 'Vincular jugador', exact: true }),
+  ).toBeDisabled()
+  await page.screenshot({ path: info.outputPath('no-players.png'), fullPage: true })
+  await page.keyboard.press('Escape')
+  let fail = true
+  await page.route('**/rest/v1/rpc/list_campaign_members', async (route) => {
+    if (fail)
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Unavailable' }),
+      })
+    else await route.fallback()
+  })
+  await page.reload()
+  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('No se pudo cargar')
+  await page.screenshot({ path: info.outputPath('assignment-error.png'), fullPage: true })
+  fail = false
+  await page.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  await expect(
+    page.getByText('Todavía no hay miembros con rol Player.', { exact: false }),
+  ).toBeVisible()
+  await page.getByRole('dialog').getByRole('link', { name: 'Ir a Miembros e invitaciones' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Miembros e invitaciones')
+})
+
+test('a Player already linked to another character is not offered again', async ({
+  page,
+}, info) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await page.getByRole('combobox').selectOption(playerId)
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Vincular jugador', exact: true })
+    .click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Crear personaje', exact: true }).click()
+  await page.getByLabel('Nombre del personaje').fill('Second hero')
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Crear personaje', exact: true })
+    .click()
+  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await expect(
+    page.getByText('Todos los jugadores ya tienen personaje.', { exact: false }),
+  ).toBeVisible()
+  await expect(page.getByRole('combobox')).toHaveCount(0)
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: 'Vincular jugador', exact: true }),
+  ).toBeDisabled()
+  await page.screenshot({ path: info.outputPath('all-players-linked.png'), fullPage: true })
+})
+
+test('DM creates before assignment, edits whole homebrew units and recovers from a stale editor', async ({
   page,
 }) => {
   const f = await identityFixture(page)
@@ -149,26 +297,37 @@ test('maximum valid resources remain readable within cards at 150% text', async 
   await page.screenshot({ path: info.outputPath('max-resources-150.png'), fullPage: true })
 })
 
-test('member assignment uses metadata only and Player preview hides DM actions', async ({
+test('Party owns character assignment and Player preview hides DM actions', async ({
   page,
 }, info) => {
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
-  const playerCard = page.locator('.mantine-Paper-root').filter({
-    has: page.getByText('player@example.com', { exact: true }),
-  })
-  await playerCard.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
-  const linkDialog = page.getByRole('dialog', { name: 'Vincular personaje' })
-  await linkDialog.getByLabel('Personaje', { exact: true }).selectOption(characterId)
-  await linkDialog.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
-  await expect(playerCard.getByText('Arin', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: /Vincular|Desvincular|Crear personaje/ }),
+  ).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Personajes sin jugador' })).toHaveCount(0)
   await expect(page.getByText('Oro', { exact: true })).toHaveCount(0)
-  const requests = f.calls.filter((c) => c.method === 'characters')
-  expect(requests.length).toBeGreaterThan(0)
-  await playerCard.getByRole('button', { name: 'Desvincular jugador', exact: true }).click()
+  expect(f.calls.filter((c) => c.method === 'characters')).toHaveLength(0)
+  await page.getByRole('link', { name: 'Gestionar personajes en Grupo' }).click()
+  const card = page
+    .locator('.character-card')
+    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  const link = card.getByRole('button', { name: 'Vincular jugador', exact: true })
+  await link.focus()
+  await link.press('Enter')
+  await expect(page.getByLabel('Jugador', { exact: true })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(link).toBeFocused()
+  await link.click()
+  const linkDialog = page.getByRole('dialog', { name: 'Vincular jugador' })
+  await linkDialog.getByLabel('Jugador', { exact: true }).selectOption(playerId)
+  await linkDialog.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await expect(card.getByText('Jugador: Arin', { exact: true })).toBeVisible()
+  await expect(card.getByRole('button', { name: 'Desvincular jugador', exact: true })).toBeFocused()
+  await card.getByRole('button', { name: 'Desvincular jugador', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
-  await expect(playerCard.getByText('Sin personaje vinculado.')).toBeVisible()
-  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(card.getByText('Sin jugador', { exact: true })).toBeVisible()
+  await expect(link).toBeFocused()
   await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toBeVisible()
   await expect(page.getByText('CAMPAÑA ACTUAL')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Volver a mi cuenta', exact: true })).toHaveCount(0)

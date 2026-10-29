@@ -5,7 +5,6 @@ import {
   Button,
   Group,
   Modal,
-  NativeSelect,
   Paper,
   Stack,
   Text,
@@ -16,7 +15,7 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { assignmentsQuery, useCharacterAction } from '@/features/characters'
+import { Link } from 'react-router'
 import { membersQuery, sentInvitationsQuery, useCampaignAction, type CampaignAction } from '../api'
 import { useCampaign } from '../campaign-context'
 import { inviteEmailSchema } from '../domain/campaign'
@@ -24,8 +23,6 @@ import { useCampaignView } from '../view-context'
 import { ActionFeedback, QueryFeedback } from './feedback'
 
 type Confirmation = { action: CampaignAction; message: string }
-type LinkTarget = { userId: string; name: string }
-type UnlinkTarget = { characterId: string; characterName: string; userId: string }
 
 export function CampaignMembers() {
   const { t, i18n } = useTranslation()
@@ -36,15 +33,10 @@ export function CampaignMembers() {
   const dm = campaign.role === 'dm'
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
   const invitations = useQuery({ ...sentInvitationsQuery(user.id, campaign.id), enabled: dm })
-  const assignments = useQuery({ ...assignmentsQuery(user.id, campaign.id), enabled: dm })
   const action = useCampaignAction()
-  const characterAction = useCharacterAction(campaign.id)
   const trigger = useRef<HTMLElement | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [linkTarget, setLinkTarget] = useState<LinkTarget | null>(null)
-  const [unlinkTarget, setUnlinkTarget] = useState<UnlinkTarget | null>(null)
-  const [characterId, setCharacterId] = useState('')
   const inviteForm = useForm({
     initialValues: { email: '' },
     validate: {
@@ -70,19 +62,6 @@ export function CampaignMembers() {
       restoreTriggerFocus()
     }
   }
-  const closeLink = () => {
-    if (!characterAction.isPending) {
-      setLinkTarget(null)
-      setCharacterId('')
-      restoreTriggerFocus()
-    }
-  }
-  const closeUnlink = () => {
-    if (!characterAction.isPending) {
-      setUnlinkTarget(null)
-      restoreTriggerFocus()
-    }
-  }
   const handleInviteSubmit = inviteForm.onSubmit((values) => {
     action.mutate(
       { kind: 'invite', campaignId: campaign.id, email: values.email },
@@ -97,9 +76,6 @@ export function CampaignMembers() {
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
-  const unassigned = assignments.data?.filter((character) => character.user_id === null) ?? []
-  const charactersFor = (userId: string) =>
-    assignments.data?.filter((character) => character.user_id === userId) ?? []
   return (
     <Stack gap="xl">
       <div>
@@ -107,8 +83,13 @@ export function CampaignMembers() {
         <Text c="dimmed" mt="sm">
           {t(dm ? 'members.intro' : 'members.playerHint')}
         </Text>
+        {dm && (
+          <Button component={Link} to={`/campaign/${campaign.id}/party`} variant="subtle" mt="xs">
+            {t('characters.goToParty')}
+          </Button>
+        )}
       </div>
-      <ActionFeedback error={action.error ?? characterAction.error} />
+      <ActionFeedback error={action.error} />
       {dm && (
         <>
           <section aria-labelledby="members-heading">
@@ -123,9 +104,8 @@ export function CampaignMembers() {
                     onClick={() => {
                       void members.refetch()
                       void invitations.refetch()
-                      void assignments.refetch()
                     }}
-                    loading={members.isFetching || assignments.isFetching}
+                    loading={members.isFetching || invitations.isFetching}
                   >
                     {t('hub.refresh')}
                   </Button>
@@ -142,18 +122,14 @@ export function CampaignMembers() {
                 </Group>
               </Group>
               <QueryFeedback
-                pending={members.isPending || assignments.isPending}
-                error={members.isError || assignments.isError}
+                pending={members.isPending}
+                error={members.isError}
                 retry={() => {
                   void members.refetch()
-                  void assignments.refetch()
                 }}
               />
               {!members.isError &&
-                !assignments.isError &&
                 members.data?.map((member) => {
-                  const linked = charactersFor(member.user_id)
-                  const canLink = member.role === 'player' && linked.length === 0
                   return (
                     <Paper key={member.user_id} p="lg">
                       <Stack>
@@ -169,55 +145,7 @@ export function CampaignMembers() {
                           </div>
                           <Badge variant="light">{t(`campaign.role.${member.role}`)}</Badge>
                         </Group>
-                        <Stack gap="xs">
-                          <Text size="sm" fw={600}>
-                            {t('members.characters')}
-                          </Text>
-                          {linked.length === 0 ? (
-                            <Text size="sm" c="dimmed">
-                              {t('members.noneCharacters')}
-                            </Text>
-                          ) : (
-                            linked.map((character) => (
-                              <Group key={character.id} justify="space-between">
-                                <Text className="user-copy">{character.name}</Text>
-                                <Button
-                                  variant="subtle"
-                                  disabled={characterAction.isPending}
-                                  onClick={(event) => {
-                                    trigger.current = event.currentTarget
-                                    characterAction.reset()
-                                    setUnlinkTarget({
-                                      characterId: character.id,
-                                      characterName: character.name,
-                                      userId: member.user_id,
-                                    })
-                                  }}
-                                >
-                                  {t('characters.unassign')}
-                                </Button>
-                              </Group>
-                            ))
-                          )}
-                        </Stack>
                         <Group>
-                          {canLink && (
-                            <Button
-                              variant="light"
-                              disabled={characterAction.isPending || unassigned.length === 0}
-                              onClick={(event) => {
-                                trigger.current = event.currentTarget
-                                characterAction.reset()
-                                setCharacterId('')
-                                setLinkTarget({
-                                  userId: member.user_id,
-                                  name: member.display_name,
-                                })
-                              }}
-                            >
-                              {t('shell.link')}
-                            </Button>
-                          )}
                           <Button
                             variant="light"
                             disabled={action.isPending || (member.role === 'dm' && lastDm)}
@@ -273,20 +201,6 @@ export function CampaignMembers() {
                 })}
             </Stack>
           </section>
-          {unassigned.length > 0 && (
-            <section aria-labelledby="unassigned-heading">
-              <Stack>
-                <Title order={2} id="unassigned-heading">
-                  {t('members.unassigned')}
-                </Title>
-                {unassigned.map((character) => (
-                  <Paper key={character.id} p="md">
-                    <Text className="user-copy">{character.name}</Text>
-                  </Paper>
-                ))}
-              </Stack>
-            </section>
-          )}
           <section aria-labelledby="sent-heading">
             <Stack>
               <Title order={2} id="sent-heading">
@@ -404,103 +318,6 @@ export function CampaignMembers() {
             </Group>
           </Stack>
         </form>
-      </Modal>
-      <Modal
-        opened={!!linkTarget}
-        onClose={closeLink}
-        title={t('shell.link')}
-        returnFocus={false}
-        onExitTransitionEnd={restoreTriggerFocus}
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-      >
-        <Stack>
-          <Text fw={600} className="user-copy">
-            {linkTarget?.name}
-          </Text>
-          <NativeSelect
-            label={t('shell.chooseCharacter')}
-            value={characterId}
-            data-autofocus
-            onChange={(event) => setCharacterId(event.currentTarget.value)}
-            data={[
-              { value: '', label: t('shell.chooseCharacter') },
-              ...unassigned.map((character) => ({
-                value: character.id,
-                label: character.name,
-              })),
-            ]}
-          />
-          {characterAction.isError && (
-            <Alert role="alert" color="red">
-              {t('characters.unavailable')}
-            </Alert>
-          )}
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={closeLink} disabled={characterAction.isPending}>
-              {t('action.cancel')}
-            </Button>
-            <Button
-              loading={characterAction.isPending}
-              disabled={!characterId || !linkTarget}
-              onClick={() => {
-                if (!linkTarget || !characterId) return
-                characterAction.mutate(
-                  { kind: 'assign', characterId, userId: linkTarget.userId },
-                  {
-                    onSuccess: () => {
-                      setLinkTarget(null)
-                      setCharacterId('')
-                    },
-                  },
-                )
-              }}
-            >
-              {t('shell.link')}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-      <Modal
-        opened={!!unlinkTarget}
-        onClose={closeUnlink}
-        title={t('characters.unassign')}
-        returnFocus={false}
-        onExitTransitionEnd={restoreTriggerFocus}
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-      >
-        <Stack>
-          <Text>{t('characters.unassignHint', { name: unlinkTarget?.characterName ?? '' })}</Text>
-          {characterAction.isError && (
-            <Alert role="alert" color="red">
-              {t('characters.unavailable')}
-            </Alert>
-          )}
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={closeUnlink} disabled={characterAction.isPending}>
-              {t('action.cancel')}
-            </Button>
-            <Button
-              loading={characterAction.isPending}
-              onClick={() => {
-                if (!unlinkTarget) return
-                characterAction.mutate(
-                  {
-                    kind: 'unassign',
-                    characterId: unlinkTarget.characterId,
-                    expectedUser: unlinkTarget.userId,
-                  },
-                  {
-                    onSuccess: () => {
-                      setUnlinkTarget(null)
-                    },
-                  },
-                )
-              }}
-            >
-              {t('action.confirm')}
-            </Button>
-          </Group>
-        </Stack>
       </Modal>
       <Modal
         opened={!!confirmation}

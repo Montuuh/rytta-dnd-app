@@ -606,6 +606,39 @@
         "docs/evidence/RYT-020/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-021",
+      "title": "Single home for character management",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-020"],
+      "sources": ["User: simplify the confusing split between Party and Members & invitations"],
+      "scope": "Keep character creation, resources and Player link/unlink in Party. Members owns access, roles and membership invitations with clear navigation between the two.",
+      "acceptance": [
+        "Party is the only screen with character creation, resource editing and Player link/unlink; each card shows assignment status and the linked Player name when available.",
+        "Members & invitations has no character assignment controls or orphan character list; it retains invitation, role, removal and leave behavior.",
+        "Assignment offers only existing Players without a character; explain missing and fully assigned Players, recover from query errors, and confirm unlink while preserving resources.",
+        "Player and DM Player preview remain read-only. Verify phone/tablet, both themes/languages, 150% text, keyboard/focus/Escape, reduced motion and independent UI review."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run format:check",
+        "npm run check:ui-review",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/010-character-management-home.md",
+        "docs/evidence/RYT-021/validation.md",
+        "docs/evidence/RYT-021/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

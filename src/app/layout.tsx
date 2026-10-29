@@ -195,7 +195,11 @@ export function Layout() {
                     {t('shell.dmView')}
                   </Button>
                 ) : (
-                  <AccountMenu position="bottom-end" withinPortal withInitialFocusPlaceholder={false}>
+                  <AccountMenu
+                    position="bottom-end"
+                    withinPortal
+                    withInitialFocusPlaceholder={false}
+                  >
                     <AccountMenu.Target>
                       <Button variant="light" aria-haspopup="menu" aria-pressed={false}>
                         {t('shell.playerView')}

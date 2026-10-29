@@ -6,7 +6,7 @@ Date: 2026-10-29. Ticket: member cards, membership invites and Player POV previe
 
 - Verdict: **PASS**
 - Reviewer: ui-ux
-- Source digest: `1ff6e2de5dc3e011606d7e6c427268d970da6d548d103562fc2256200755dbb6`
+- Source digest: `bf88a9898095d94d4fd6f812679180a70b03773a0481323d5a45b9617ed914e0`
 - Report: `docs/evidence/RYT-020/reviewer/review.md`
 - Evidence: `docs/evidence/RYT-020/reviewer/captures/`, `results.json`
 - Matrix: 390/820 × ES/EN × dark/light, reduced motion, 150% members text; invite/link/unlink

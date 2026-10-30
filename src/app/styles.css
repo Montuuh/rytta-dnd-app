@@ -1022,3 +1022,10 @@ main h3 {
   display: grid;
   place-items: center;
 }
+.character-sheet .mantine-Accordion-item {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+.character-sheet .mantine-Accordion-item[data-active] {
+  background: var(--app-raised);
+}

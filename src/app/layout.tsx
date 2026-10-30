@@ -204,8 +204,12 @@ export function Layout() {
           ? 'hub.title'
           : pathname.endsWith('/members')
             ? 'campaign.manage'
-            : (modules.find((m) => m.path === modulePath)?.label ??
-              (pathname === '/settings' ? 'nav.settings' : 'page.notFound'))
+            : /^\/party\/[^/]+\/create$/.test(modulePath)
+              ? 'sheet.createForCharacter'
+              : /^\/party\/[^/]+$/.test(modulePath)
+                ? 'sheet.title'
+                : (modules.find((m) => m.path === modulePath)?.label ??
+                  (pathname === '/settings' ? 'nav.settings' : 'page.notFound'))
     document.title = `${t(key)} · Rytta`
   }, [pathname, t, live, state.status])
   const currentLang = i18n.resolvedLanguage === 'en' ? 'en' : 'es'

@@ -88,6 +88,8 @@ export const es = {
   'preferences.toLight': 'Cambiar a modo claro',
   'preferences.toDark': 'Cambiar a modo oscuro',
   'preferences.language': 'Idioma',
+  'preferences.switchToEn': 'ES · Cambiar idioma a inglés',
+  'preferences.switchToEs': 'EN · Cambiar idioma a español',
   'preferences.saved':
     'Tus preferencias se guardan en este dispositivo. La primera visita empieza en español y modo oscuro.',
   'settings.eyebrow': 'BASE DE LA APLICACIÓN',

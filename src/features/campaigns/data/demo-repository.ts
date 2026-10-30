@@ -9,6 +9,7 @@ export const demoCampaignRepository: CampaignRepository = {
         description: 'An old debt. A missing captain. A coastline that keeps its secrets.',
         created_at: '2026-10-27T00:00:00Z',
         role: 'dm',
+        player_modules: ['party'],
       },
     ]
   },
@@ -19,6 +20,12 @@ export const demoCampaignRepository: CampaignRepository = {
     return []
   },
   async sentInvitations() {
+    return []
+  },
+  async revelations() {
+    return []
+  },
+  async auditEvents() {
     return []
   },
   async create() {
@@ -34,6 +41,15 @@ export const demoCampaignRepository: CampaignRepository = {
     throw new Error('Read-only demo')
   },
   async changeMember() {
+    throw new Error('Read-only demo')
+  },
+  async setModules() {
+    throw new Error('Read-only demo')
+  },
+  async createRevelation() {
+    throw new Error('Read-only demo')
+  },
+  async setRevelationVisibility() {
     throw new Error('Read-only demo')
   },
 }

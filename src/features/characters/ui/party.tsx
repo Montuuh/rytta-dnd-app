@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -15,6 +16,7 @@ import {
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
+import { Coins, Droplets, Flame, Minus, Plus, Utensils } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
@@ -23,6 +25,12 @@ import { resourceSchema, type Character } from '../domain/character'
 import { PlayerAssignmentEditor } from './player-assignment'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
+const resourceIcons = {
+  gold: Coins,
+  water_units: Droplets,
+  rations: Utensils,
+  exhaustion: Flame,
+} as const
 type Editor = { kind: 'create' } | { kind: 'resources'; character: Character }
 type PartyEditor = Editor | { kind: 'assignment'; character: Character }
 
@@ -53,6 +61,7 @@ export function CharacterParty() {
   const [notice, setNotice] = useState<
     'characters.saved' | 'characters.assignmentSaved' | 'characters.created' | null
   >(null)
+  const quickResourceAction = useCharacterAction(campaign.id)
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="start">
@@ -104,7 +113,7 @@ export function CharacterParty() {
           {query.data?.map((character) => (
             <Paper p="lg" key={character.id} className="character-card">
               <Stack>
-                <div>
+                <Stack gap="sm">
                   <Title
                     order={2}
                     className="user-copy"
@@ -113,39 +122,107 @@ export function CharacterParty() {
                   >
                     {character.name}
                   </Title>
-                  <Badge mt="sm" variant="light">
-                    {t(
-                      character.user_id
-                        ? dm
-                          ? 'characters.assigned'
-                          : 'characters.you'
-                        : 'characters.unassigned',
-                    )}
-                  </Badge>
-                  {dm && character.user_id && members.data && !members.isError && (
-                    <Text size="sm" mt="xs" className="user-copy">
-                      {t('characters.playerName', {
-                        name:
-                          members.data.find((member) => member.user_id === character.user_id)
-                            ?.display_name ?? t('characters.assigned'),
-                      })}
-                    </Text>
-                  )}
-                </div>
-                <SimpleGrid cols={2}>
-                  {fields.map((field) => (
-                    <div
-                      key={field}
-                      className={`resource-cell ${character.character_resources[field] >= 1_000_000_000 ? 'resource-cell-wide' : ''}`}
-                    >
-                      <Text size="sm" c="dimmed">
-                        {t(`characters.${field}`)}
-                      </Text>
-                      <Text fw={600} size="xl" className="resource-value">
-                        {character.character_resources[field].toLocaleString(i18n.language)}
-                      </Text>
+                  <div
+                    className={`character-owner-bar ${character.user_id ? 'is-assigned' : 'is-unassigned'}`}
+                  >
+                    <div className="character-owner-info">
+                      <Badge variant={character.user_id ? 'filled' : 'outline'}>
+                        {t(
+                          character.user_id
+                            ? dm
+                              ? 'characters.assigned'
+                              : 'characters.you'
+                            : 'characters.unassigned',
+                        )}
+                      </Badge>
+                      {dm && character.user_id && members.data && !members.isError && (
+                        <Text size="sm" fw={600} className="user-copy">
+                          {t('characters.playerName', {
+                            name:
+                              members.data.find((member) => member.user_id === character.user_id)
+                                ?.display_name ?? t('characters.assigned'),
+                          })}
+                        </Text>
+                      )}
                     </div>
-                  ))}
+                    {dm && (
+                      <Button
+                        variant={character.user_id ? 'subtle' : 'light'}
+                        onClick={(event) =>
+                          open({ kind: 'assignment', character }, event.currentTarget)
+                        }
+                      >
+                        {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
+                      </Button>
+                    )}
+                  </div>
+                </Stack>
+                <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                  {fields.map((field) => {
+                    const Icon = resourceIcons[field]
+                    const maxVal = field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
+                    const currentVal = character.character_resources[field]
+                    const label = t(`characters.${field}`)
+                    const stepInline = (delta: number) => {
+                      const next = Math.min(maxVal, Math.max(0, currentVal + delta))
+                      if (next === currentVal) return
+                      quickResourceAction.mutate(
+                        {
+                          kind: 'resources',
+                          characterId: character.id,
+                          values: { ...character.character_resources, [field]: next },
+                          requestId: crypto.randomUUID(),
+                        },
+                        { onSuccess: () => setNotice('characters.saved') },
+                      )
+                    }
+                    return (
+                      <div
+                        key={field}
+                        className={`resource-cell resource-cell-${field} ${currentVal >= 1_000_000_000 ? 'resource-cell-wide' : ''}`}
+                      >
+                        <div className="resource-cell-header">
+                          <span className="resource-icon" aria-hidden="true">
+                            <Icon size={16} />
+                          </span>
+                          <Text size="sm" c="dimmed" className="resource-label">
+                            {label}
+                          </Text>
+                        </div>
+                        <div className="resource-cell-body">
+                          <Text fw={700} size="xl" className="resource-value">
+                            {currentVal.toLocaleString(i18n.language)}
+                          </Text>
+                          {dm && (
+                            <div className="resource-inline-steppers">
+                              <ActionIcon
+                                type="button"
+                                variant="default"
+                                size={44}
+                                className="stepper-btn"
+                                aria-label={`${t('characters.decrease', { field: label })} · ${character.name}`}
+                                disabled={quickResourceAction.isPending || currentVal <= 0}
+                                onClick={() => stepInline(-1)}
+                              >
+                                <Minus size={16} aria-hidden="true" />
+                              </ActionIcon>
+                              <ActionIcon
+                                type="button"
+                                variant="default"
+                                size={44}
+                                className="stepper-btn"
+                                aria-label={`${t('characters.increase', { field: label })} · ${character.name}`}
+                                disabled={quickResourceAction.isPending || currentVal >= maxVal}
+                                onClick={() => stepInline(1)}
+                              >
+                                <Plus size={16} aria-hidden="true" />
+                              </ActionIcon>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </SimpleGrid>
                 {dm && (
                   <Group>
@@ -156,14 +233,6 @@ export function CharacterParty() {
                       }
                     >
                       {t('characters.edit')}
-                    </Button>
-                    <Button
-                      variant="subtle"
-                      onClick={(event) =>
-                        open({ kind: 'assignment', character }, event.currentTarget)
-                      }
-                    >
-                      {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
                     </Button>
                   </Group>
                 )}
@@ -240,6 +309,7 @@ function CharacterEditor({
         if (!action.isPending) close()
       }}
       title={title}
+      yOffset="2dvh"
       returnFocus
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
@@ -255,7 +325,7 @@ function CharacterEditor({
             )
         })}
       >
-        <Stack>
+        <Stack gap="xs">
           {'character' in editor && (
             <Text fw={600} className="user-copy">
               {editor.character.name}
@@ -271,19 +341,55 @@ function CharacterEditor({
             />
           )}
           {editor.kind === 'resources' &&
-            fields.map((field, index) => (
-              <NumberInput
-                key={field}
-                data-autofocus={index === 0 || undefined}
-                label={t(`characters.${field}`)}
-                required
-                min={0}
-                max={field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647}
-                allowDecimal={false}
-                hideControls
-                {...form.getInputProps(field)}
-              />
-            ))}
+            fields.map((field, index) => {
+              const maxVal = field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
+              const label = t(`characters.${field}`)
+              const step = (delta: number) => {
+                const raw = Number(form.values[field])
+                const current = Number.isFinite(raw) ? Math.trunc(raw) : 0
+                const next = Math.min(maxVal, Math.max(0, current + delta))
+                form.setFieldValue(field, next)
+              }
+              return (
+                <div key={field} className="resource-stepper-row">
+                  <NumberInput
+                    data-autofocus={index === 0 || undefined}
+                    label={label}
+                    required
+                    min={0}
+                    max={maxVal}
+                    allowDecimal={false}
+                    hideControls
+                    className="resource-stepper-input"
+                    {...form.getInputProps(field)}
+                  />
+                  <div className="resource-stepper-buttons">
+                    <ActionIcon
+                      type="button"
+                      variant="default"
+                      size={44}
+                      className="stepper-btn"
+                      aria-label={t('characters.decrease', { field: label })}
+                      disabled={action.isPending || Number(form.values[field]) <= 0}
+                      onClick={() => step(-1)}
+                    >
+                      <Minus size={18} aria-hidden="true" />
+                    </ActionIcon>
+                    <ActionIcon
+                      type="button"
+                      variant="default"
+                      size={44}
+                      className="stepper-btn"
+                      aria-label={t('characters.increase', { field: label })}
+                      disabled={action.isPending || Number(form.values[field]) >= maxVal}
+                      onClick={() => step(1)}
+                    >
+                      <Plus size={18} aria-hidden="true" />
+                    </ActionIcon>
+                  </div>
+                </div>
+              )
+            })}
           {action.isError && (
             <Alert role="alert" color="red">
               {t(action.error.message === 'stale' ? 'characters.stale' : 'characters.unavailable')}

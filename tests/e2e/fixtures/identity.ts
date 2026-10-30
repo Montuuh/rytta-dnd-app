@@ -56,6 +56,7 @@ export async function identityFixture(
           description: 'A coastline that keeps its secrets.',
           created_at: '2026-10-27T00:00:00Z',
           role: options.player ? 'player' : 'dm',
+          player_modules: ['party'],
         },
         {
           id: otherCampaignId,
@@ -63,6 +64,7 @@ export async function identityFixture(
           description: '',
           created_at: '2026-10-26T00:00:00Z',
           role: 'player',
+          player_modules: ['party'],
         },
       ]
   let pending = [
@@ -97,6 +99,68 @@ export async function identityFixture(
         },
       ]
   let sent: { id: string; email: string; expires_at: string }[] = []
+  let revelations: {
+    id: string
+    campaign_id: string
+    category: string
+    title: string
+    summary: string
+    visibility: string
+    created_at: string
+    updated_at: string
+  }[] = [
+    {
+      id: '50000000-0000-4000-8000-000000000001',
+      campaign_id: campaignId,
+      category: 'shop',
+      title: 'El Yunque de Ámbar',
+      summary: 'Herrería enana que acepta encargos.',
+      visibility: 'party',
+      created_at: '2026-10-27T00:00:00Z',
+      updated_at: '2026-10-27T00:00:00Z',
+    },
+    {
+      id: '50000000-0000-4000-8000-000000000002',
+      campaign_id: campaignId,
+      category: 'quest',
+      title: 'El faro sumergido',
+      summary: 'Señal oculta tras la niebla.',
+      visibility: 'dm_only',
+      created_at: '2026-10-27T01:00:00Z',
+      updated_at: '2026-10-27T01:00:00Z',
+    },
+  ]
+  const characterEvents: {
+    id: string
+    campaign_id: string
+    character_id: string
+    actor_id: string
+    kind: string
+    before_value: Record<string, unknown> | null
+    after_value: Record<string, unknown>
+    created_at: string
+  }[] = [
+    {
+      id: '60000000-0000-4000-8000-000000000002',
+      campaign_id: campaignId,
+      character_id: characterId,
+      actor_id: dmId,
+      kind: 'character_resources:UPDATE',
+      before_value: { gold: 15, water_units: 3, rations: 2, exhaustion: 0, revision: 0 },
+      after_value: { gold: 25, water_units: 3, rations: 4, exhaustion: 0, revision: 1 },
+      created_at: '2026-10-27T00:30:00Z',
+    },
+    {
+      id: '60000000-0000-4000-8000-000000000001',
+      campaign_id: campaignId,
+      character_id: characterId,
+      actor_id: dmId,
+      kind: 'characters:INSERT',
+      before_value: null,
+      after_value: { name: 'Arin' },
+      created_at: '2026-10-27T00:00:00Z',
+    },
+  ]
   const calls: { method: string; body: Record<string, unknown> }[] = []
   let failList = false
   await page.route('https://rytta-test.supabase.co/**', async (route) => {
@@ -155,6 +219,7 @@ export async function identityFixture(
           description: String(body.campaign_description),
           created_at: '2026-10-27T00:00:00Z',
           role: 'dm',
+          player_modules: ['party'],
         },
       ]
       return respond(id)
@@ -168,6 +233,7 @@ export async function identityFixture(
           description: '',
           created_at: '2026-10-27T00:00:00Z',
           role: 'player',
+          player_modules: ['party'],
         })
       pending = []
       return respond(target.campaign_id)
@@ -189,12 +255,24 @@ export async function identityFixture(
       )
     if (method === 'create_character') {
       const id = '40000000-0000-4000-8000-' + String(characters.length + 2).padStart(12, '0')
+      const name = String(body.character_name)
+      const targetCampaign = String(body.target_campaign)
       characters.push({
         id,
-        campaign_id: String(body.target_campaign),
+        campaign_id: targetCampaign,
         user_id: null,
-        name: String(body.character_name),
+        name,
         character_resources: { gold: 0, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
+      })
+      characterEvents.unshift({
+        id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
+        campaign_id: targetCampaign,
+        character_id: id,
+        actor_id: actor,
+        kind: 'characters:INSERT',
+        before_value: null,
+        after_value: { id, campaign_id: targetCampaign, name, user_id: null },
+        created_at: '2026-10-27T01:00:00Z',
       })
       return respond(id)
     }
@@ -202,6 +280,7 @@ export async function identityFixture(
       const target = characters.find((c) => c.id === body.target_character)!
       if (target.character_resources.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
+      const prev = { ...target.character_resources }
       target.character_resources = {
         gold: Number(body.new_gold),
         water_units: Number(body.new_water),
@@ -209,18 +288,54 @@ export async function identityFixture(
         exhaustion: Number(body.new_exhaustion),
         revision: target.character_resources.revision + 1,
       }
+      characterEvents.unshift({
+        id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
+        campaign_id: target.campaign_id,
+        character_id: target.id,
+        actor_id: actor,
+        kind: 'character_resources:UPDATE',
+        before_value: prev,
+        after_value: { ...target.character_resources },
+        created_at: '2026-10-27T01:05:00Z',
+      })
       return respond(target.character_resources.revision)
     }
     if (method === 'assign_character') {
+      const target = characters.find((c) => c.id === body.target_character)
       characters = characters.map((c) =>
         c.id === body.target_character ? { ...c, user_id: String(body.target_user) } : c,
       )
+      if (target) {
+        characterEvents.unshift({
+          id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
+          campaign_id: target.campaign_id,
+          character_id: target.id,
+          actor_id: actor,
+          kind: 'characters:UPDATE',
+          before_value: { name: target.name, user_id: target.user_id },
+          after_value: { name: target.name, user_id: String(body.target_user) },
+          created_at: '2026-10-27T01:10:00Z',
+        })
+      }
       return respond(null)
     }
     if (method === 'unassign_character') {
+      const target = characters.find((c) => c.id === body.target_character)
       characters = characters.map((c) =>
         c.id === body.target_character ? { ...c, user_id: null } : c,
       )
+      if (target) {
+        characterEvents.unshift({
+          id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
+          campaign_id: target.campaign_id,
+          character_id: target.id,
+          actor_id: actor,
+          kind: 'characters:UPDATE',
+          before_value: { name: target.name, user_id: target.user_id },
+          after_value: { name: target.name, user_id: null },
+          created_at: '2026-10-27T01:15:00Z',
+        })
+      }
       return respond(null)
     }
     if (method === 'list_campaign_members') return respond(members)
@@ -236,6 +351,50 @@ export async function identityFixture(
     if (method === 'revoke_campaign_invitation') {
       sent = []
       return respond(null)
+    }
+    if (method === 'set_campaign_modules') {
+      const nextModules = Array.isArray(body.modules) ? body.modules.map(String) : ['party']
+      campaigns = campaigns.map((c) =>
+        c.id === body.target_campaign ? { ...c, player_modules: nextModules } : c,
+      )
+      return respond(nextModules)
+    }
+    if (method === 'campaign_revelations') {
+      const targetCampaign = url.searchParams.get('campaign_id')?.replace('eq.', '')
+      const targetRole =
+        campaigns.find((c) => c.id === targetCampaign)?.role ?? (options.player ? 'player' : 'dm')
+      return respond(
+        revelations
+          .filter((r) => r.campaign_id === targetCampaign)
+          .filter((r) => targetRole === 'dm' || r.visibility === 'party'),
+      )
+    }
+    if (method === 'create_campaign_revelation') {
+      const id = '50000000-0000-4000-8000-' + String(revelations.length + 1).padStart(12, '0')
+      revelations = [
+        {
+          id,
+          campaign_id: String(body.target_campaign),
+          category: String(body.item_category),
+          title: String(body.item_title),
+          summary: String(body.item_summary ?? ''),
+          visibility: String(body.item_visibility ?? 'dm_only'),
+          created_at: '2026-10-27T02:00:00Z',
+          updated_at: '2026-10-27T02:00:00Z',
+        },
+        ...revelations,
+      ]
+      return respond(id)
+    }
+    if (method === 'set_revelation_visibility') {
+      revelations = revelations.map((r) =>
+        r.id === body.target_revelation ? { ...r, visibility: String(body.new_visibility) } : r,
+      )
+      return respond(null)
+    }
+    if (method === 'character_events') {
+      const targetCampaign = url.searchParams.get('campaign_id')?.replace('eq.', '')
+      return respond(characterEvents.filter((e) => e.campaign_id === targetCampaign))
     }
     if (method === 'change_campaign_member') {
       if (!body.new_role) {

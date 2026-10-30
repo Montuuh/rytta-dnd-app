@@ -27,4 +27,37 @@ export type CharacterFunctions = {
     }
     Returns: number
   }
+  set_campaign_modules: {
+    Args: { target_campaign: string; modules: string[] }
+    Returns: string[]
+  }
+  list_my_campaigns_with_modules: {
+    Args: Record<PropertyKey, never>
+    Returns: {
+      id: string
+      name: string
+      description: string
+      created_at: string
+      role: string
+      player_modules: string[]
+    }[]
+  }
+  create_campaign_revelation: {
+    Args: {
+      target_campaign: string
+      item_title: string
+      item_category: string
+      item_summary?: string
+      item_visibility?: string
+    }
+    Returns: string
+  }
+  set_revelation_visibility: {
+    Args: {
+      target_campaign: string
+      target_revelation: string
+      new_visibility: string
+    }
+    Returns: undefined
+  }
 }

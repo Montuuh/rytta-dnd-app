@@ -169,8 +169,11 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
   const arin = page
     .locator('.character-card')
     .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  await arin.getByRole('button', { name: 'Aumentar Oro · Arin', exact: true }).click()
+  await expect(arin.getByText('26', { exact: true })).toBeVisible()
   await arin.getByRole('button', { name: 'Editar recursos' }).click()
-  await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('99')
+  await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('98')
+  await page.getByRole('button', { name: 'Aumentar Oro', exact: true }).click()
   await page.getByRole('textbox', { name: 'Agotamiento', exact: true }).fill('12')
   await page.getByRole('button', { name: 'Guardar recursos' }).click()
   await expect(arin.getByText('99', { exact: true })).toBeVisible()
@@ -193,17 +196,17 @@ test('Player sees own resources read-only; account menu returns home without lea
   await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Editar recursos' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Crear personaje' })).toHaveCount(0)
-  const menu = page.getByRole('button', { name: 'Abrir menú de ajustes' })
+  const menu = page.getByRole('button', { name: /Sesión de player@example.com/ })
   await menu.click()
   await page.keyboard.press('Escape')
   await expect(menu).toBeFocused()
   await menu.press('Enter')
   await page.keyboard.press('Escape')
-  await page.getByRole('button', { name: 'Sesión de player@example.com' }).click()
+  await page.getByRole('button', { name: /Sesión de player@example.com/ }).click()
   await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Mis campañas', exact: true })).toBeVisible()
   expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
-  await page.getByRole('button', { name: 'Sesión de player@example.com' }).click()
+  await page.getByRole('button', { name: /Sesión de player@example.com/ }).click()
   await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
 })
@@ -240,7 +243,7 @@ for (const language of ['es', 'en'] as const)
           await page.keyboard.press('Escape')
           await page
             .getByRole('button', {
-              name: language === 'es' ? 'Abrir menú de ajustes' : 'Open settings menu',
+              name: language === 'es' ? /Sesión de dm@example.com/ : /Signed in as dm@example.com/,
             })
             .click()
         }
@@ -255,7 +258,7 @@ for (const language of ['es', 'en'] as const)
           await page.keyboard.press('Escape')
           await page
             .getByRole('button', {
-              name: language === 'es' ? 'Sesión de dm@example.com' : 'Signed in as dm@example.com',
+              name: language === 'es' ? /Sesión de dm@example.com/ : /Signed in as dm@example.com/,
             })
             .click()
         }
@@ -303,12 +306,10 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   await expect(page.getByRole('heading', { name: 'Personajes sin jugador' })).toHaveCount(0)
   await expect(page.getByText('Oro', { exact: true })).toHaveCount(0)
   expect(f.calls.filter((c) => c.method === 'characters')).toHaveLength(0)
-  if ((page.viewportSize()?.width ?? 1440) <= 768) {
-    await page.getByRole('button', { name: 'Abrir navegación' }).click()
-    await page.getByRole('dialog').getByRole('link', { name: 'Grupo', exact: true }).click()
-  } else {
-    await page.locator('.sidebar').getByRole('link', { name: 'Grupo', exact: true }).click()
-  }
+  await page
+    .getByRole('navigation', { name: 'Navegación principal' })
+    .getByRole('link', { name: 'Grupo', exact: true })
+    .click()
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   const card = page
     .locator('.character-card')
@@ -358,7 +359,7 @@ test('long account email stays within the viewport and supports keyboard dismiss
   }, email)
   await page.goto('./')
   await page.addStyleTag({ content: 'html { font-size: 150%; }' })
-  const account = page.getByRole('button', { name: `Sesión de ${email}` })
+  const account = page.getByRole('button', { name: new RegExp(`Sesión de ${email}`) })
   await account.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('menuitem', { name: 'Mis campañas', exact: true })).toBeFocused()

@@ -296,4 +296,67 @@ describe('RYT-003 complete migration chain', () => {
       db.query('select public.assign_character($1,$2,$3)', [c, other.ch, player]),
     ).rejects.toThrow(/Character unavailable/)
   })
+  it('enforces DM authority for module toggles and revelations queue across all actors', async () => {
+    const { c } = await setup()
+    await db.exec('reset role')
+    await db.query(
+      "insert into public.campaign_members(campaign_id,user_id,role) values ($1,$2,'player')",
+      [c, player],
+    )
+    await asUser(dm)
+    const revId = await scalar(
+      "select public.create_campaign_revelation($1, 'El Yunque Roto', 'shop', 'Herrería enana', 'dm_only') result",
+      [c],
+    )
+    await db.query("select public.set_campaign_modules($1, array['party', 'shops'])", [c])
+    expect(
+      (
+        await db.query(
+          'select player_modules from public.list_my_campaigns_with_modules() where id=$1',
+          [c],
+        )
+      ).rows,
+    ).toEqual([{ player_modules: ['party', 'shops'] }])
+    await asUser(player)
+    expect(
+      (await db.query('select * from public.campaign_revelations where campaign_id=$1', [c])).rows,
+    ).toHaveLength(0)
+    for (const actor of [player, outsider]) {
+      await asUser(actor)
+      if (actor === outsider) await scalar("select public.create_campaign('Other') result")
+      await expect(
+        db.query("select public.set_campaign_modules($1, array['party'])", [c]),
+      ).rejects.toThrow(/Forbidden/)
+      await expect(
+        db.query(
+          "select public.create_campaign_revelation($1, 'Secret', 'quest', 'Note', 'dm_only')",
+          [c],
+        ),
+      ).rejects.toThrow(/Forbidden/)
+      await expect(
+        db.query("select public.set_revelation_visibility($1, $2, 'party')", [c, revId]),
+      ).rejects.toThrow(/Forbidden/)
+    }
+    await db.exec('reset role; set role anon')
+    await expect(
+      db.query("select public.set_campaign_modules($1, array['party'])", [c]),
+    ).rejects.toThrow(/permission denied/)
+    await expect(db.query('select * from public.campaign_revelations')).rejects.toThrow(
+      /permission denied/,
+    )
+    await asUser(dm)
+    await db.query("select public.set_revelation_visibility($1, $2, 'party')", [c, revId])
+    await asUser(player)
+    expect(
+      (
+        await db.query('select title, visibility from public.campaign_revelations where id=$1', [
+          revId,
+        ])
+      ).rows,
+    ).toEqual([{ title: 'El Yunque Roto', visibility: 'party' }])
+    await asUser(outsider)
+    expect(
+      (await db.query('select * from public.campaign_revelations where id=$1', [revId])).rows,
+    ).toHaveLength(0)
+  })
 })

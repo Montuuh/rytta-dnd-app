@@ -1,7 +1,11 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
-import type { CampaignRepository } from './domain/campaign'
+import type {
+  CampaignRepository,
+  RevelationCategory,
+  RevelationVisibility,
+} from './domain/campaign'
 
 async function repository(): Promise<CampaignRepository> {
   if (config.VITE_DATA_MODE === 'demo')
@@ -39,12 +43,39 @@ export const sentInvitationsQuery = (userId: string, campaignId: string) =>
     queryFn: async ({ signal }) => (await repository()).sentInvitations(campaignId, signal),
     refetchInterval: 30_000,
   })
+export const revelationsQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'revelations'],
+    queryFn: async ({ signal }) => (await repository()).revelations(campaignId, signal),
+    refetchInterval: 20_000,
+  })
+export const auditEventsQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'audit-events'],
+    queryFn: async ({ signal }) => (await repository()).auditEvents(campaignId, signal),
+    refetchInterval: 20_000,
+  })
 export type CampaignAction =
   | { kind: 'create'; name: string; description: string }
   | { kind: 'invite'; campaignId: string; email: string }
   | { kind: 'respond'; invitationId: string; accept: boolean }
   | { kind: 'revoke'; invitationId: string }
   | { kind: 'member'; campaignId: string; userId: string; role: 'dm' | 'player' | null }
+  | { kind: 'modules'; campaignId: string; modules: string[] }
+  | {
+      kind: 'createRevelation'
+      campaignId: string
+      title: string
+      category: RevelationCategory
+      summary: string
+      visibility: RevelationVisibility
+    }
+  | {
+      kind: 'revelationVisibility'
+      campaignId: string
+      revelationId: string
+      visibility: RevelationVisibility
+    }
 
 export function useCampaignAction() {
   const { state, controller } = useAuth()
@@ -70,6 +101,21 @@ export function useCampaignAction() {
           return repo.revoke(action.invitationId)
         case 'member':
           return repo.changeMember(action.campaignId, action.userId, action.role)
+        case 'modules':
+          return repo.setModules(action.campaignId, action.modules)
+        case 'createRevelation':
+          return repo.createRevelation(action.campaignId, {
+            title: action.title,
+            category: action.category,
+            summary: action.summary,
+            visibility: action.visibility,
+          })
+        case 'revelationVisibility':
+          return repo.setRevelationVisibility(
+            action.campaignId,
+            action.revelationId,
+            action.visibility,
+          )
       }
     },
     onSuccess: async () => {

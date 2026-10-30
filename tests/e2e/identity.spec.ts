@@ -90,7 +90,7 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
   await page.getByRole('button', { name: /Sesión de/ }).click()
   await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
-  await page.getByRole('button', { name: 'Sesión de dm@example.com' }).click()
+  await page.getByRole('button', { name: /Sesión de dm@example.com/ }).click()
   await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Our new table' })).toHaveCount(0)
@@ -129,17 +129,11 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
   await page.getByRole('link', { name: 'Abrir campaña: Winter at the Keep' }).click()
   expect(page.url()).toContain(otherCampaignId)
-  const mobileMenu = page.getByRole('button', { name: 'Abrir navegación' })
-  const drawer = await mobileMenu.isVisible()
-  if (drawer) await mobileMenu.click()
-  const currentNav = drawer
-    ? page.getByRole('dialog').getByRole('navigation')
-    : page.locator('.sidebar nav')
-  await expect(currentNav.getByText('Inventario', { exact: false })).toHaveAttribute(
-    'aria-disabled',
-    'true',
-  )
-  if (drawer) await page.keyboard.press('Escape')
+  const currentNav = page.getByRole('navigation', { name: 'Navegación principal' })
+  await expect(currentNav.getByRole('link', { name: 'Campamento', exact: true })).toBeVisible()
+  await expect(currentNav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
+  await expect(currentNav.getByText('Inventario', { exact: false })).toHaveCount(0)
+  await expect(currentNav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/members`)
   await page.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
@@ -157,11 +151,88 @@ test('Player has no management payload or controls; revoked campaign fails close
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
   expect(
-    f.calls.filter((c) => ['list_campaign_members', 'campaign_invitations'].includes(c.method)),
+    f.calls.filter((c) =>
+      [
+        'list_campaign_members',
+        'campaign_invitations',
+        'campaign_revelations',
+        'character_events',
+      ].includes(c.method),
+    ),
   ).toEqual([])
   f.revokeAccess()
   await page.reload()
   await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
+})
+
+test('DM command center manages module visibility, revelations queue, audit log and player preview mode', async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const f = await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
+  await expect(mainNav.getByRole('link').nth(0)).toHaveText('Campamento')
+  await expect(mainNav.getByRole('link').nth(1)).toHaveText('Centro de mando DM')
+  await expect(mainNav.getByRole('link').nth(2)).toHaveText('Grupo')
+  await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Control de módulos activos', exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Cola rápida de revelaciones', exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Registro de auditoría', exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText('Recursos actualizados', { exact: true })).toBeVisible()
+  await expect(page.getByText('Personaje creado', { exact: true })).toBeVisible()
+  await expect(page.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
+  await expect(page.getByText('Raciones de comida: 2 → 4 (+2)', { exact: true })).toBeVisible()
+  await expect(page.getByText('Por Table DM', { exact: false }).first()).toBeVisible()
+  await page.getByRole('button', { name: 'Recursos', exact: true }).click()
+  await expect(page.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Todos', exact: true }).click()
+
+  await page.getByRole('button', { name: 'Mostrar a jugadores: Tiendas', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: 'Ocultar a jugadores: Tiendas', exact: true }),
+  ).toBeVisible()
+  expect(f.calls.some((c) => c.method === 'set_campaign_modules')).toBe(true)
+
+  await page.getByRole('button', { name: 'Nueva revelación', exact: true }).click()
+  await page.getByLabel('Título de la revelación').fill('Gremio de Cartógrafos')
+  await page.getByLabel('Descripción para la mesa').fill('Mapas antiguos de la costa.')
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Nueva revelación', exact: true })
+    .click()
+  await expect(page.getByRole('dialog')).not.toBeVisible()
+  await expect(page.getByText('Gremio de Cartógrafos', { exact: true })).toBeVisible()
+  expect(f.calls.some((c) => c.method === 'create_campaign_revelation')).toBe(true)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.screenshot({ path: info.outputPath('dm-command-center.png'), fullPage: true })
+
+  const draftCard = page
+    .locator('.revelation-card')
+    .filter({ has: page.getByText('Gremio de Cartógrafos', { exact: true }) })
+  await draftCard.getByRole('button', { name: 'Revelar a la mesa', exact: true }).click()
+  await expect(
+    draftCard.getByRole('button', { name: 'Ocultar a la mesa', exact: true }),
+  ).toBeVisible()
+  expect(f.calls.some((c) => c.method === 'set_revelation_visibility')).toBe(true)
+
+  await page.getByRole('button', { name: 'Vista Player', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Arin', exact: true }).click()
+  await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
+  const nav = page.getByRole('navigation', { name: 'Navegación principal' })
+  await expect(nav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
+  await expect(nav.getByText('Tiendas', { exact: false })).toBeVisible()
+  await expect(nav.getByText('Inventario', { exact: false })).toHaveCount(0)
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.screenshot({ path: info.outputPath('dm-player-preview-mode.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Volver a DM', exact: true }).click()
+  await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
 })
 
 test('account change and session expiry remove the previous private screen', async ({ page }) => {
@@ -178,7 +249,7 @@ test('account change and session expiry remove the previous private screen', asy
     },
     { key: storageKey, value: next },
   )
-  await expect(page.getByRole('button', { name: 'Sesión de player@example.com' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Sesión de player@example.com/ })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByText('dm@example.com', { exact: true })).toHaveCount(0)
@@ -242,15 +313,16 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   await expect(page.getByRole('heading', { name: 'Mis campañas', exact: true })).toBeVisible()
   await expect(page.locator('main').getByText('Mi cuenta', { exact: true })).toHaveCount(0)
   await expect(page.locator('main').getByRole('button', { name: 'Cerrar sesión' })).toHaveCount(0)
-  const trigger = page.getByRole('button', { name: 'Abrir menú de ajustes' })
+  const trigger = page.getByRole('button', { name: /Sesión de dm@example.com/ })
   await trigger.focus()
   await trigger.press('Enter')
+  const campaignsItem = page.getByRole('menuitem', { name: 'Mis campañas', exact: true })
   const settings = page.getByRole('menuitem', { name: 'Ajustes', exact: true })
-  await expect(settings).toBeFocused()
-  await expect(page.getByRole('menuitem')).toHaveCount(1)
+  await expect(campaignsItem).toBeFocused()
+  await expect(page.getByRole('menuitem')).toHaveCount(3)
   const bounds = await page.getByRole('menu').boundingBox()
-  expect(bounds!.height).toBeLessThan(180)
-  expect(bounds!.width).toBeLessThanOrEqual(240)
+  expect(bounds!.height).toBeLessThan(260)
+  expect(bounds!.width).toBeLessThanOrEqual(260)
   await page.screenshot({ path: info.outputPath('compact-settings-menu.png'), fullPage: true })
   await page.keyboard.press('Escape')
   await expect(trigger).toBeFocused()
@@ -365,7 +437,7 @@ for (const language of ['es', 'en'] as const)
       await page.goto('./')
       await page
         .getByRole('button', {
-          name: language === 'es' ? 'Sesión de dm@example.com' : 'Signed in as dm@example.com',
+          name: language === 'es' ? /Sesión de dm@example.com/ : /Signed in as dm@example.com/,
         })
         .click()
       await page

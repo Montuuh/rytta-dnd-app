@@ -83,6 +83,8 @@ export const en = {
   'preferences.toLight': 'Switch to light mode',
   'preferences.toDark': 'Switch to dark mode',
   'preferences.language': 'Language',
+  'preferences.switchToEn': 'ES · Switch language to English',
+  'preferences.switchToEs': 'EN · Switch language to Spanish',
   'preferences.saved':
     'Your choices are saved on this device. New visits start in Spanish and dark mode.',
   'settings.eyebrow': 'COMPANION FOUNDATION',

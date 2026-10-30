@@ -31,6 +31,10 @@
 
 20. [ADR 010: one home for character management](decisions/010-character-management-home.md)
     and [RYT-021 verification](evidence/RYT-021/validation.md).
+21. [ADR 011: warm dark palette, stacked navbar and resource ergonomics](decisions/011-warm-dark-stacked-navbar.md)
+    and [RYT-022 verification](evidence/RYT-022/validation.md).
+22. [ADR 012: DM Command Center, active module visibility and quick revelations queue](decisions/012-dm-command-center-and-module-visibility.md)
+    and [RYT-023 verification](evidence/RYT-023/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

@@ -19,7 +19,7 @@ export function CampaignBoundary() {
   // Players still need characters; only drop DM-only campaign caches when the role is not DM.
   useEffect(() => {
     if (campaign?.role === 'dm') return
-    for (const leaf of ['members', 'sent-invitations', 'assignments'] as const) {
+    for (const leaf of ['members', 'sent-invitations', 'assignments', 'audit-events'] as const) {
       const queryKey = ['private', userId, 'campaign', campaignId, leaf]
       void client.cancelQueries({ queryKey })
       client.removeQueries({ queryKey })

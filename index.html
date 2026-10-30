@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#121a17" />
+    <meta name="theme-color" content="#140f0b" />
     <meta name="description" content="Rytta, tu compañero para campañas de rol presenciales." />
     <title>Rytta · Tu compañero de mesa</title>
     <script>
@@ -15,20 +15,20 @@
         document.documentElement.lang =
           localStorage.getItem('rytta-language') === 'en' ? 'en' : 'es'
         document.querySelector('meta[name="theme-color"]').content =
-          scheme === 'dark' ? '#121a17' : '#f7f7f2'
+          scheme === 'dark' ? '#140f0b' : '#f7efe2'
       } catch {
         /* Spanish and dark are already set on the document. */
       }
     </script>
     <style>
       html {
-        background: #121a17;
-        color: #f0efdf;
+        background: #140f0b;
+        color: #f5ebd6;
         color-scheme: dark;
       }
       html[data-mantine-color-scheme='light'] {
-        background: #f7f7f2;
-        color: #292f27;
+        background: #f7efe2;
+        color: #2a1c11;
         color-scheme: light;
       }
     </style>

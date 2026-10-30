@@ -21,7 +21,7 @@ export function PreferencesControls({ compact = false }: { compact?: boolean }) 
   useEffect(() => {
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', scheme === 'dark' ? '#121a17' : '#f7f7f2')
+      ?.setAttribute('content', scheme === 'dark' ? '#140f0b' : '#f7efe2')
   }, [scheme])
   const language = (
     <NativeSelect

@@ -639,6 +639,78 @@
         "docs/evidence/RYT-021/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-022",
+      "title": "Stacked mobile navbar, warm dark palette and resource ergonomics",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-016", "RYT-019", "RYT-021"],
+      "sources": [
+        "User: stacked 2-row top navbar without left sidebar; direct ES/EN and theme toggles; unified Profile menu; warm dark brown/orange/yellow palette; D&D Sync UX/UI reference"
+      ],
+      "scope": "Replace the left sidebar and mobile drawer with a 2-row top header (brand + direct language/theme toggles + unified Profile menu on row 1, horizontal scrollable module tabs on row 2), adopt a warm hearth dark palette with brown/orange/gold accents, and add D&D Sync-inspired resource tiles and touch steppers in Party.",
+      "acceptance": [
+        "No left sidebar or side drawer exists; navigation uses a 2-row top header across mobile, tablet and desktop.",
+        "Row 1 shows the logo and RYTTA brand on the left, and Player POV (for DMs), direct ES/EN toggle, direct dark/light toggle and unified Profile menu (My campaigns, App setup, Sign out) on the right.",
+        "Row 2 renders campaign/demo modules as a horizontal row of columns/tabs without horizontal page overflow at 100% or 150% text.",
+        "Dark mode uses a warm charcoal-brown surface palette with amber/orange/gold accents and passes WCAG AA contrast.",
+        "Party character cards display semantic resource tiles with icons, and the DM resource editor includes 44px touch steppers alongside numeric inputs."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run format:check",
+        "npm run check:ui-review",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/011-warm-dark-stacked-navbar.md",
+        "docs/evidence/RYT-022/validation.md",
+        "docs/evidence/RYT-022/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-023",
+      "title": "DM Command Center, active module visibility and quick revelations queue",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-022"],
+      "sources": [
+        "User: DM Command Center with members/invitations, active module toggles, enriched audit log with diffs/filters, and quick revelations queue; DM-only access; Players only see Basecamp and active modules; single topbar Player POV switcher; responsive laptop (DM) and scaled mobile (Player) design"
+      ],
+      "scope": "Upgrade the DM management route into a DM Command Center with four integrated panels (Members & invitations, Active module controls, Quick revelations queue, Enriched audit log with category filters and before/after diffs), enforce module and revelation visibility in PostgreSQL RLS/RPCs, filter Player navigation and Basecamp to Basecamp + active campaign modules, add inline quick resource steppers and unified player assignment bar on Party cards, and scale down content density cleanly on smaller mobile/tablet resolutions.",
+      "acceptance": [
+        "Only DMs in Manager mode see and access the DM Command Center tab (placed 2nd after Basecamp) and its four panels (Members & invitations, Active module controls, Quick revelations queue, Enriched audit log).",
+        "Players and DMs in Player View mode only see Basecamp and the campaign's activated player_modules in the wrapping pill navbar and Basecamp module grid, controlled exclusively via the topbar Player POV selector.",
+        "Audit log displays filterable event categories (All, Characters, Resources), actor attribution, character names, assignment changes, and before/after resource diff badges.",
+        "DM Command Center uses a responsive multi-column layout on laptop (>= 62em) and scaled-down typography, paddings, and cards on mobile/tablet so more content fits while preserving 44px touch targets.",
+        "PostgreSQL RLS and RPCs enforce DM-only writes and Player visibility for campaign_revelations and player_modules."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run format:check",
+        "npm run check:ui-review",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/012-dm-command-center-and-module-visibility.md",
+        "docs/evidence/RYT-023/validation.md",
+        "docs/evidence/RYT-023/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

@@ -40,7 +40,8 @@ test('responsive layout and accessible overview', async ({ page }) => {
 
 test('compact settings menu supports Escape, keyboard and returns focus', async ({ page }) => {
   await page.goto('./')
-  const menu = page.getByRole('button', { name: 'Open settings menu' })
+  await expect(page.locator('.sidebar')).toHaveCount(0)
+  const menu = page.getByRole('button', { name: /Open settings menu/ })
   await menu.click()
   await expect(page.getByRole('menu')).toBeVisible()
   await expect(page.getByRole('menuitem')).toHaveCount(1)

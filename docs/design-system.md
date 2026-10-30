@@ -6,24 +6,23 @@ foundation, not final design approval for every gameplay screen.
 
 ## Appearance and language
 
-Dark is the first-visit default, regardless of the OS preference. The night-forest palette
-uses background #121A17, surface #1B2722, raised surface #24362D, ivory text #F0EFDF,
-secondary text #B1BCAE and sage accents #B8D18C. Gold #D9BC78 is the focus indicator.
-Filled sage controls use deep-green text #14241D, including their hover state.
+Dark is the first-visit default, regardless of the OS preference. The warm hearth palette
+uses background #140F0B, surface #1E1610, raised surface #2A1F16, warm cream text #F5EBD6,
+secondary sand text #CBB699 and amber/orange accents #EDA145. Warm gold #F6C478 is the focus
+indicator. Filled amber controls use deep espresso text #181009, including their hover state.
 
-Light mode uses warm paper #F7F7F2, surface #FFFEFA, text #292F27, secondary text #626B5B
-and forest accents (#304923 for primary buttons). Focus uses #796329. Both palettes
+Light mode uses warm parchment #F7EFE2, surface #FFFDF9, text #2A1C11, secondary text #664F3A
+and roasted chestnut accents (#6E3410 for primary buttons). Focus uses #844112. Both palettes
 preserve the same hierarchy; the palette is a product choice verified with contrast tests.
 
 Semantic tokens live in src/app/styles.css and feed Mantine variables. Avoid hardcoded
-light backgrounds or white text on pale dark-mode accents. The header shows the campaign name and right-aligned account/settings actions. The account
-menu owns campaign-home and logout; campaign home has no duplicate account/logout block.
-The hamburger opens a compact menu anchored below the right-hand trigger, containing one
-Settings action that opens a centered large preferences dialog. Moon/sun choices retain
-localized radio labels and selected states without visible text labels. Campaign invitations
-use a distinct panel with clear recipient, pending actions, empty guidance and query recovery.
-Mobile campaign navigation has its own control. All controls have
-44px targets. Preferences persist locally and remain usable in memory if storage is blocked.
+light backgrounds or white text on pale dark-mode accents. The header uses a stacked two-row
+layout without a left sidebar: Row 1 shows the logo, RYTTA brand and campaign name on the left,
+and right-aligned DM Player POV, direct ES/EN language toggle, direct dark/light theme toggle
+and a unified Profile menu (My campaigns, App setup, Sign out). Row 2 shows module navigation
+as a horizontal scrollable row of tabs. Campaign home has no duplicate account/logout block.
+All controls have 44px targets. Preferences persist locally and remain usable in memory if
+storage is blocked.
 
 Spanish is the first-visit language even on English browsers. English is selectable.
 Use src/shared/i18n catalogs and typed keys for visible text, accessible names, loading,

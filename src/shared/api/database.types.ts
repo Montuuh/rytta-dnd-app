@@ -24,6 +24,50 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       campaign_invitations: Omit<Tables['campaign_invitations'], 'Row'> & {
         Row: Tables['campaign_invitations']['Row'] & { character_id: string | null }
       }
+      campaign_revelations: {
+        Row: {
+          id: string
+          campaign_id: string
+          title: string
+          category: string
+          summary: string
+          visibility: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          title: string
+          category: string
+          summary?: string
+          visibility?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          visibility?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      character_events: {
+        Row: {
+          id: string
+          campaign_id: string
+          character_id: string
+          actor_id: string | null
+          kind: string
+          before_value: Record<string, unknown> | null
+          after_value: Record<string, unknown>
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Functions: Omit<Functions, 'change_campaign_member' | 'list_my_invitations'> &
       CharacterFunctions & {

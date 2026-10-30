@@ -35,6 +35,8 @@
     and [RYT-022 verification](evidence/RYT-022/validation.md).
 22. [ADR 012: DM Command Center, active module visibility and quick revelations queue](decisions/012-dm-command-center-and-module-visibility.md)
     and [RYT-023 verification](evidence/RYT-023/validation.md).
+23. [ADR 013: character creation wizard and 5.5e character sheet](decisions/013-character-sheet-and-creation.md)
+    and [RYT-024 verification](evidence/RYT-024/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

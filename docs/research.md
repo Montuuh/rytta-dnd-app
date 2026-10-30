@@ -25,6 +25,22 @@ Combat summaries can follow a stable event model. Signed-in workflows, accessibi
 backend behavior were not verified. An open-source IR-touch extension does not establish
 the license of the entire product. No code, rules text or art was copied.
 
+Character sheet follow-up (2026-10-30, RYT-024): the `sheet.html?id=39` page requires
+sign-in, so only the public screenshots were reviewed (character sheet, class features,
+spellbook, inventory, GM view). Observed patterns: large HP current/max/temp with
+steppers, ability tiles with save proficiency, a two-column skill list, tappable use and
+slot circles, and collapsible feature/spell rows. Rytta adapts the information
+architecture with its own palette, sentence-case labels, text alternatives for status,
+and no copied text or art.
+
+## SRD 5.2
+
+Source: [System Reference Document 5.2](https://www.dndbeyond.com/srd) by Wizards of the
+Coast, licensed [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+RYT-024 encodes class hit dice, saves and skill choices, species speed and trait names,
+background abilities/skills/feats, point-buy costs and spell slot progressions, with
+attribution in code and on screen. Rules prose and spell descriptions are not bundled.
+
 ## Owlbear Rodeo
 
 Sources: [site](https://www.owlbear.rodeo/) and

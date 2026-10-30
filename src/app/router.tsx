@@ -12,6 +12,13 @@ const CharacterParty = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterParty })),
 )
 
+const CharacterSheetPage = lazy(() =>
+  import('@/features/characters').then((module) => ({ default: module.CharacterSheetPage })),
+)
+const CharacterCreationPage = lazy(() =>
+  import('@/features/characters').then((module) => ({ default: module.CharacterCreationPage })),
+)
+
 const CampPage = lazy(() =>
   import('@/pages/camp-page').then((module) => ({ default: module.CampPage })),
 )
@@ -44,6 +51,8 @@ export function AppRouter() {
                   <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
                     <Route index element={<CampaignPage />} />
                     <Route path="party" element={<CharacterParty />} />
+                    <Route path="party/:characterId" element={<CharacterSheetPage />} />
+                    <Route path="party/:characterId/create" element={<CharacterCreationPage />} />
                     <Route path="members" element={<CampaignMembers />} />
                     <Route path="*" element={<ModulePage />} />
                   </Route>

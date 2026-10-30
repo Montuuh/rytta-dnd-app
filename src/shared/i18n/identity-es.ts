@@ -135,6 +135,8 @@ export const identityEs = {
   'dm.auditEvent.characters_UPDATE': 'Asignación de personaje actualizada',
   'dm.auditEvent.character_resources_INSERT': 'Recursos iniciales creados',
   'dm.auditEvent.character_resources_UPDATE': 'Recursos actualizados',
+  'dm.auditEvent.character_sheets_UPDATE': 'Ficha actualizada',
+  'dm.auditEvent.character_vitals_UPDATE': 'Estado de juego actualizado',
   'dm.auditEvent.character_created': 'Personaje creado',
   'dm.auditEvent.character_assigned': 'Personaje asignado',
   'dm.auditEvent.character_unassigned': 'Personaje desvinculado',

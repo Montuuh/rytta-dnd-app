@@ -194,7 +194,7 @@ export async function identityFixture(
       if (method === 'authorize')
         return route.fulfill({ contentType: 'text/html', body: '<p>OAuth provider fixture</p>' })
     }
-    if (method === 'list_my_campaigns')
+    if (method === 'list_my_campaigns' || method === 'list_my_campaigns_with_modules')
       return failList
         ? respond({ message: 'Unavailable' }, 503)
         : respond(

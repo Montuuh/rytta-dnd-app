@@ -37,7 +37,7 @@ Character creation wizard and 5.5e + homebrew character sheet (ADR 013):
   play-state recovery, rest dialog Escape, DM Party summaries, edit-mode step navigation and
   not-found characters, on 1440px, 820px and 390px.
 
-E2E result: _pending final run_.
+E2E result: **150 passed** (6.9 min) across desktop, tablet, mobile and the three identity projects, including 18 new RYT-024 cases.
 
 ## Hosted Supabase (`ekscdsmniukuxqjixapu`)
 

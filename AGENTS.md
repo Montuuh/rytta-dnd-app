@@ -58,3 +58,7 @@ This repository is a foundation; planned modules are not implemented features.
 
 Repo skills live in `.agents/skills/`. Codex role definitions live in `.codex/agents/`.
 See `docs/ai-workflow.md` for invocation, hooks, runtime trust and handoff templates.
+
+
+
+Author commits as Montuuh <dmontufo@gmail.com>. Do not add Co-Authored-By or other Claude attribution trailers.

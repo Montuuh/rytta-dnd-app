@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Accordion,
   Badge,
@@ -250,6 +250,16 @@ export function FeaturesTab({
 }: SheetProps & { onRest: (values: Vitals) => void }) {
   const { t } = useTranslation()
   const [rest, setRest] = useState<'short' | 'long' | null>(null)
+  const restOpener = useRef<HTMLElement | null>(null)
+  const openRest = (kind: 'short' | 'long', target: HTMLElement) => {
+    restOpener.current = target
+    setRest(kind)
+  }
+  // The dialog unmounts on close, so return focus to its opener explicitly.
+  const closeRest = () => {
+    setRest(null)
+    requestAnimationFrame(() => restOpener.current?.focus())
+  }
   return (
     <Stack gap="md">
       {canEdit && (
@@ -258,7 +268,7 @@ export function FeaturesTab({
             variant="default"
             leftSection={<Sunset size={16} aria-hidden="true" />}
             disabled={pending}
-            onClick={() => setRest('short')}
+            onClick={(event) => openRest('short', event.currentTarget)}
           >
             {t('sheet.shortRest')}
           </Button>
@@ -266,7 +276,7 @@ export function FeaturesTab({
             variant="default"
             leftSection={<Moon size={16} aria-hidden="true" />}
             disabled={pending}
-            onClick={() => setRest('long')}
+            onClick={(event) => openRest('long', event.currentTarget)}
           >
             {t('sheet.longRest')}
           </Button>
@@ -351,21 +361,21 @@ export function FeaturesTab({
       {rest && (
         <Modal
           opened
-          onClose={() => setRest(null)}
+          onClose={closeRest}
           title={t(rest === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}
           closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
         >
           <Stack>
             <Text>{t(`sheet.restConfirm.${rest}`)}</Text>
             <Group justify="flex-end">
-              <Button variant="subtle" onClick={() => setRest(null)}>
+              <Button variant="subtle" onClick={closeRest}>
                 {t('action.cancel')}
               </Button>
               <Button
                 data-autofocus
                 onClick={() => {
                   onRest(applyRest(vitals, build, sheet.max_hp, rest))
-                  setRest(null)
+                  closeRest()
                 }}
               >
                 {t(rest === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}

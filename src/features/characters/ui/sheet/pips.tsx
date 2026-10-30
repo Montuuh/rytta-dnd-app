@@ -30,7 +30,11 @@ export function Pips({
             className="pip"
             data-available={available || undefined}
             disabled={disabled}
-            aria-label={available ? spendLabel : restoreLabel}
+            aria-label={
+              disabled
+                ? `${countLabel} (${index + 1}/${max})`
+                : `${available ? spendLabel : restoreLabel} (${index + 1}/${max})`
+            }
             onClick={() => onChange(available ? used + 1 : used - 1)}
           >
             <span className="pip-mark" aria-hidden="true" />

@@ -48,14 +48,32 @@ export function CharacterCreationPage() {
       {t('sheet.title')}
     </Button>
   )
-  if (query.isPending) return <Text role="status">{t('common.loading')}</Text>
-  if (query.isError || !query.data)
+  if (query.isPending)
+    return (
+      <Stack>
+        {back}
+        <Text role="status">{t('common.loading')}</Text>
+      </Stack>
+    )
+  if (query.isError)
     return (
       <Stack>
         {back}
         <Alert color="red" role="alert">
-          {t(query.isError ? 'query.error' : 'sheet.notFound')}
+          {t('query.error')}{' '}
+          <Button variant="subtle" onClick={() => void query.refetch()}>
+            {t('common.retry')}
+          </Button>
         </Alert>
+      </Stack>
+    )
+  if (!query.data)
+    return (
+      <Stack>
+        {back}
+        <Paper p="xl">
+          <Text>{t('sheet.notFound')}</Text>
+        </Paper>
       </Stack>
     )
   const canEdit =
@@ -97,7 +115,14 @@ function Wizard({
   const action = useSheetAction(campaign.id)
   const [draft, setDraft] = useState(() => fromRow(sheet))
   const [revision, setRevision] = useState(sheet.revision)
-  const [index, setIndex] = useState(0)
+  // Resume a draft at the first step that still needs input.
+  const [index, setIndex] = useState(() => {
+    if (sheet.status === 'complete' || !sheet.build) return 0
+    const initial = fromRow(sheet)
+    const steps = creationSteps.filter((step) => stepApplies(step, initial.build))
+    const pending = steps.findIndex((step) => validateStep(step, initial).length > 0)
+    return pending === -1 ? steps.length - 1 : pending
+  })
   const [issues, setIssues] = useState<string[]>([])
   const [savedNotice, setSavedNotice] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -111,8 +136,13 @@ function Wizard({
     if (issues.length > 0) issuesRef.current?.scrollIntoView({ block: 'nearest' })
   }, [issues])
 
-  const save = (complete: boolean, then: () => void) => {
-    const found = complete ? validateAll(draft) : validateStep(current, draft)
+  const save = (complete: boolean, then: () => void, exiting = false) => {
+    // Leaving keeps an incomplete draft; only what the server would reject blocks it.
+    const found = complete
+      ? validateAll(draft)
+      : validateStep(current, draft).filter(
+          (issue) => !exiting || issue === 'emptyName' || issue === 'tooLarge',
+        )
     setIssues(found)
     setSavedNotice(false)
     if (found.length > 0) return
@@ -149,7 +179,7 @@ function Wizard({
           <Button
             variant="subtle"
             disabled={action.isPending}
-            onClick={() => save(false, () => void navigate(sheetPath))}
+            onClick={() => save(false, () => void navigate(sheetPath), true)}
           >
             {t('wizard.exit')}
           </Button>

@@ -711,6 +711,44 @@
         "docs/evidence/RYT-023/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-024",
+      "title": "Character creation wizard and 5.5e character sheet",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "review",
+      "dependsOn": ["RYT-003", "RYT-017"],
+      "sources": [
+        "User 2026-10-30: design and implement character creation and the character sheet, using the D&D Sync sheet as reference",
+        "User 2026-10-30: 5.5e + homebrew rules; core sheet, features and resources, spells, conditions and inspiration; the Player creates their sheet",
+        "D&D Sync public screenshots: character sheet, class features, spellbook, inventory and GM view",
+        "docs/decisions/013-character-sheet-and-creation.md"
+      ],
+      "scope": "Per-character build and play-state records with revision-checked, idempotent RPCs for the assigned Player and campaign DMs; a seven-step creation wizard using SRD 5.2 classes, species and backgrounds plus homebrew; and a touch-first character sheet with HP, abilities, saves, skills, limited-use trackers, rests, spell slots, spells, conditions, heroic inspiration and death saves. Inventory and equipment remain RYT-004.",
+      "acceptance": [
+        "Every existing and new character has exactly one draft sheet and play state; RLS lets only the assigned active Player and campaign DMs read them.",
+        "The assigned Player and campaign DMs save the build and play state only through RPCs with revision checks, idempotent request ids, bounded values and audit events; anon, outsiders, other Players, cross-campaign DMs and inactive members are denied.",
+        "The wizard covers class and level, origin with 2024 background increases, standard array/point buy/manual abilities, class skills and expertise, HP/AC/speed, spells for casters and details; drafts can be resumed.",
+        "The sheet derives modifiers, saves, skills, passive Perception, initiative, spell DC/attack and full/half/pact slots, and supports damage/heal/temp HP, hit dice, death saves, inspiration, conditions, use counters and short/long rests.",
+        "SRD 5.2 data is attributed (CC-BY-4.0); no unlicensed rules text is bundled; Players still cannot change DM resources.",
+        "Spanish and English, dark and light, 390px/820px/1440px, 150% text, axe and 44px targets pass; Player POV preview is read-only."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:db character sheet actor matrix",
+        "npm run test:e2e",
+        "Hosted migration and PRE refresh",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/013-character-sheet-and-creation.md",
+        "docs/evidence/RYT-024/validation.md"
+      ]
     }
   ]
 }

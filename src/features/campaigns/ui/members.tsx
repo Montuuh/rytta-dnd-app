@@ -618,6 +618,8 @@ export function CampaignMembers() {
                             | 'dm.auditEvent.characters_UPDATE'
                             | 'dm.auditEvent.character_resources_INSERT'
                             | 'dm.auditEvent.character_resources_UPDATE'
+                            | 'dm.auditEvent.character_sheets_UPDATE'
+                            | 'dm.auditEvent.character_vitals_UPDATE'
                           const characterName =
                             (typeof event.after_value.name === 'string'
                               ? event.after_value.name

@@ -79,6 +79,10 @@ Player views never offer writes. Realtime remains RYT-013. Campaign exit only na
 home and clears scoped queries; leaving membership is a separate confirmed action.
 The account home is the default signed-in landing route; deep links remain reloadable.
 
+RYT-024 adds character_sheets (build) and character_vitals (play state) with independent
+revisions. The assigned Player and campaign DMs write them only through idempotent,
+revision-checked RPCs; derived 5.5e values are pure domain functions. See ADR 013.
+
 Future domains: item definitions, inventory, equipment, merchants/stock, quests,
 encounters/participants, glossary, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.

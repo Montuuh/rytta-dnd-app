@@ -701,3 +701,324 @@ main h3 {
     animation-duration: 0.01ms !important;
   }
 }
+/* RYT-024 character sheet and creation wizard */
+.visually-hidden,
+.visually-hidden-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.preserve-lines {
+  white-space: pre-line;
+}
+.sheet-back {
+  min-height: 44px;
+  padding-inline: 8px;
+}
+.sheet-identity h1 {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  line-height: 1.15;
+}
+.sheet-block,
+.sheet-draft {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+.hp-panel {
+  background: var(--app-raised);
+  border-color: var(--app-border);
+  border-left: 4px solid var(--hp-tone);
+  --hp-tone: var(--success);
+}
+.hp-wounded {
+  --hp-tone: var(--warn);
+}
+.hp-critical {
+  --hp-tone: var(--danger);
+}
+.hp-value {
+  font-family: Georgia, Cambria, serif;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.hp-current {
+  font-size: clamp(2.75rem, 12vw, 3.5rem);
+  color: var(--app-text);
+}
+.hp-max {
+  font-size: 1.25rem;
+  color: var(--app-muted);
+}
+.hp-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.hp-temp {
+  color: var(--info);
+  min-height: 1.4em;
+}
+.hp-bar .mantine-Progress-section,
+.hp-bar.mantine-Progress-root .mantine-Progress-section {
+  background: var(--hp-tone, var(--success));
+}
+.hp-panel .hp-bar,
+.sheet-summary .hp-bar {
+  background: var(--app-bg);
+}
+.sheet-summary .hp-bar.hp-healthy {
+  --hp-tone: var(--success);
+}
+.sheet-summary .hp-bar.hp-wounded {
+  --hp-tone: var(--warn);
+}
+.sheet-summary .hp-bar.hp-critical {
+  --hp-tone: var(--danger);
+}
+.sheet-exhaustion {
+  color: var(--exhaustion-accent);
+}
+.sheet-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.sheet-stats-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sheet-stat {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  min-width: 0;
+}
+.sheet-stat dt {
+  font-size: 0.8rem;
+  color: var(--app-muted);
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.sheet-stat dd {
+  margin: 2px 0 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.sheet-tabs .mantine-Tabs-tab {
+  min-height: 44px;
+}
+.sheet-columns {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 48em) {
+  .sheet-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.ability-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  text-align: center;
+  min-width: 0;
+}
+.ability-tile[data-proficient] {
+  border-color: var(--app-accent);
+}
+.ability-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ability-name abbr {
+  text-decoration: none;
+}
+.ability-mod {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.ability-save {
+  color: var(--app-muted);
+}
+.ability-tile[data-proficient] .ability-save {
+  color: var(--app-accent);
+}
+.skill-list,
+.skill-picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.skill-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto 3ch;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--app-border);
+}
+.skill-marker {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid var(--app-border);
+}
+.skill-row[data-level='proficient'] .skill-marker {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.skill-row[data-level='expertise'] .skill-marker {
+  background: var(--gold-accent);
+  border-color: var(--gold-accent);
+  color: var(--app-on-accent);
+}
+.skill-name {
+  overflow-wrap: anywhere;
+}
+.skill-ability {
+  font-size: 0.75rem;
+  color: var(--app-muted);
+}
+.skill-bonus {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.skill-picker {
+  display: grid;
+  gap: 10px;
+}
+@media (min-width: 36em) {
+  .skill-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.skill-picker li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+}
+.pips {
+  min-width: 0;
+}
+.pip {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.pip:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: -2px;
+}
+.pip:disabled {
+  cursor: default;
+}
+.pip-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--app-muted);
+}
+.pip[data-available] .pip-mark {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+}
+.pip-count {
+  font-variant-numeric: tabular-nums;
+}
+.condition-badge {
+  height: auto;
+  min-height: 44px;
+  padding-right: 4px;
+  text-transform: none;
+}
+.sheet-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--app-raised);
+  border: 1px solid var(--app-border);
+}
+.sheet-summary-info {
+  flex: 1 1 180px;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.choice-card {
+  min-height: 44px;
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+.choice-card[data-checked] {
+  border-color: var(--app-accent);
+  background: var(--app-raised);
+}
+.plain-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.grow-input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.wizard-steps {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 4px;
+}
+.wizard-steps .mantine-Button-root {
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.wizard-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 10px 0;
+  background: var(--app-bg);
+  border-top: 1px solid var(--app-border);
+  z-index: 2;
+}
+.creation-wizard .mantine-Checkbox-body,
+.character-sheet .mantine-Checkbox-body {
+  min-height: 44px;
+  align-items: center;
+}
+.creation-wizard .mantine-SegmentedControl-label {
+  white-space: normal;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+}

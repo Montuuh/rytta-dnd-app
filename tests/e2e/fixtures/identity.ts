@@ -39,6 +39,7 @@ export async function identityFixture(
     player?: boolean
     callbackError?: boolean
     twoDms?: boolean
+    sheet?: 'draft' | 'complete'
   } = {},
 ) {
   const currentId = options.player ? playerId : dmId
@@ -98,6 +99,46 @@ export async function identityFixture(
           character_resources: { gold: 25, water_units: 3, rations: 4, exhaustion: 0, revision: 0 },
         },
       ]
+  type SheetRow = {
+    status: string
+    level: number
+    max_hp: number
+    armor_class: number
+    build: Record<string, unknown>
+    revision: number
+  }
+  type VitalsRow = Record<string, unknown> & { revision: number }
+  const blankSheet = (): SheetRow => ({
+    status: 'draft',
+    level: 1,
+    max_hp: 1,
+    armor_class: 10,
+    build: {},
+    revision: 0,
+  })
+  const blankVitals = (): VitalsRow => ({
+    current_hp: 1,
+    temp_hp: 0,
+    hit_dice_spent: 0,
+    death_successes: 0,
+    death_failures: 0,
+    heroic_inspiration: false,
+    conditions: [],
+    slots_used: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    tracker_uses: {},
+    revision: 0,
+  })
+  const sheets = new Map<string, SheetRow>(
+    characters.map((c) => [c.id, options.sheet === 'complete' ? sampleSheet() : blankSheet()]),
+  )
+  const vitals = new Map<string, VitalsRow>(
+    characters.map((c) => [
+      c.id,
+      options.sheet === 'complete'
+        ? { ...blankVitals(), current_hp: 30, temp_hp: 5, slots_used: [1, 0, 0, 0, 0, 0, 0, 0, 0] }
+        : blankVitals(),
+    ]),
+  )
   let sent: { id: string; email: string; expires_at: string }[] = []
   let revelations: {
     id: string
@@ -238,10 +279,73 @@ export async function identityFixture(
       pending = []
       return respond(target.campaign_id)
     }
+    const eq = (name: string) => url.searchParams.get(name)?.replace('eq.', '')
+    if (method === 'character_sheets' || method === 'character_vitals') {
+      const visible = characters.filter(
+        (c) =>
+          c.campaign_id === eq('campaign_id') &&
+          (!eq('character_id') || c.id === eq('character_id')) &&
+          (members.find((m) => m.user_id === actor)?.role === 'dm' || c.user_id === actor),
+      )
+      if (method === 'character_vitals')
+        return respond(visible.map((c) => ({ character_id: c.id, ...vitals.get(c.id)! })))
+      return respond(
+        visible.map((c) => {
+          const row = sheets.get(c.id)!
+          return url.searchParams.get('select')?.includes('class_label')
+            ? {
+                character_id: c.id,
+                status: row.status,
+                level: row.level,
+                max_hp: row.max_hp,
+                armor_class: row.armor_class,
+                class_key: (row.build.classKey as string | undefined) ?? null,
+                class_label: (row.build.classLabel as string | undefined) ?? null,
+              }
+            : { character_id: c.id, campaign_id: c.campaign_id, ...row }
+        }),
+      )
+    }
+    if (method === 'save_character_sheet') {
+      const row = sheets.get(String(body.target_character))!
+      if (row.revision !== body.expected_revision)
+        return respond({ message: 'Stale revision' }, 400)
+      const completing = row.status === 'draft' && body.mark_complete === true
+      Object.assign(row, {
+        level: Number(body.new_level),
+        max_hp: Number(body.new_max_hp),
+        armor_class: Number(body.new_armor_class),
+        build: body.new_build as Record<string, unknown>,
+        status: body.mark_complete || row.status === 'complete' ? 'complete' : 'draft',
+        revision: row.revision + 1,
+      })
+      const state = vitals.get(String(body.target_character))!
+      if (completing) state.current_hp = row.max_hp
+      return respond(row.revision)
+    }
+    if (method === 'set_character_vitals') {
+      const state = vitals.get(String(body.target_character))!
+      if (state.revision !== body.expected_revision)
+        return respond({ message: 'Stale revision' }, 400)
+      Object.assign(state, {
+        current_hp: body.new_current_hp,
+        temp_hp: body.new_temp_hp,
+        hit_dice_spent: body.new_hit_dice_spent,
+        death_successes: body.new_death_successes,
+        death_failures: body.new_death_failures,
+        heroic_inspiration: body.new_heroic_inspiration,
+        conditions: body.new_conditions,
+        slots_used: body.new_slots_used,
+        tracker_uses: body.new_tracker_uses,
+        revision: state.revision + 1,
+      })
+      return respond(state.revision)
+    }
     if (method === 'characters')
       return respond(
         characters
-          .filter((c) => c.campaign_id === url.searchParams.get('campaign_id')?.replace('eq.', ''))
+          .filter((c) => c.campaign_id === eq('campaign_id'))
+          .filter((c) => !eq('id') || c.id === eq('id'))
           .filter(
             (c) =>
               !url.searchParams.get('user_id') ||
@@ -264,6 +368,8 @@ export async function identityFixture(
         name,
         character_resources: { gold: 0, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
       })
+      sheets.set(id, blankSheet())
+      vitals.set(id, blankVitals())
       characterEvents.unshift({
         id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
         campaign_id: targetCampaign,
@@ -428,6 +534,9 @@ export async function identityFixture(
         revision: 0,
       }
     },
+    staleVitals: () => {
+      vitals.get(characterId)!.revision += 1
+    },
     staleResources: () => {
       characters[0]!.character_resources.revision += 1
       characters[0]!.character_resources.gold = 70
@@ -437,6 +546,82 @@ export async function identityFixture(
     },
     revokeAccess: () => {
       campaigns = []
+    },
+  }
+}
+
+/** A complete level 5 bard used to render the sheet without walking the wizard. */
+export function sampleSheet() {
+  return {
+    status: 'complete',
+    level: 5,
+    max_hp: 38,
+    armor_class: 14,
+    revision: 3,
+    build: {
+      classKey: 'bard',
+      classLabel: 'Bardo',
+      subclass: 'Colegio del Saber',
+      speciesKey: 'elf',
+      speciesLabel: 'Elfo',
+      backgroundKey: 'sage',
+      backgroundLabel: 'Sabio',
+      alignment: 'Neutral bueno',
+      abilityMethod: 'standard',
+      baseAbilities: { str: 8, dex: 14, con: 13, int: 12, wis: 10, cha: 15 },
+      bonuses: { str: 0, dex: 0, con: 1, int: 0, wis: 0, cha: 0 },
+      saves: ['dex', 'cha'],
+      skills: {
+        arcana: 'proficient',
+        history: 'proficient',
+        performance: 'expertise',
+        persuasion: 'proficient',
+        perception: 'proficient',
+      },
+      hitDie: 8,
+      speed: 30,
+      acOverride: 14,
+      casterKind: 'full',
+      spellAbility: 'cha',
+      languages: 'Común, élfico, dracónico',
+      proficiencies: 'Armadura ligera, laúd',
+      appearance: '',
+      notes: 'Busca el faro sumergido.',
+      features: [
+        {
+          id: 'species-darkvision',
+          name: 'Visión en la oscuridad',
+          source: 'species',
+          description: '',
+        },
+        {
+          id: 'class-1',
+          name: 'Inspiración bárdica',
+          source: 'class',
+          description: 'Un dado de inspiración para un aliado.',
+        },
+      ],
+      trackers: [{ id: 'tracker-1', name: 'Inspiración bárdica', max: 3, reset: 'short' }],
+      spells: [
+        {
+          id: 'spell-1',
+          name: 'Mano de mago',
+          level: 0,
+          concentration: false,
+          ritual: false,
+          prepared: true,
+          notes: '',
+        },
+        {
+          id: 'spell-2',
+          name: 'Palabra sanadora',
+          level: 1,
+          concentration: false,
+          ritual: false,
+          prepared: true,
+          notes: 'Acción adicional, 18 m.',
+        },
+      ],
     },
   }
 }

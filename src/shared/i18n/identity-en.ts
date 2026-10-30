@@ -133,6 +133,8 @@ export const identityEn = {
   'dm.auditEvent.characters_UPDATE': 'Character assignment updated',
   'dm.auditEvent.character_resources_INSERT': 'Initial resources created',
   'dm.auditEvent.character_resources_UPDATE': 'Resources updated',
+  'dm.auditEvent.character_sheets_UPDATE': 'Sheet updated',
+  'dm.auditEvent.character_vitals_UPDATE': 'Play state updated',
   'dm.auditEvent.character_created': 'Character created',
   'dm.auditEvent.character_assigned': 'Character assigned',
   'dm.auditEvent.character_unassigned': 'Character unassigned',

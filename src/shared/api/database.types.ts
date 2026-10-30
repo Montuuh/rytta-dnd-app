@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database as GeneratedDatabase } from './database.generated'
+import type { Database as GeneratedDatabase, Json } from './database.generated'
 import type { CharacterFunctions } from './character-functions'
 
 type Functions = GeneratedDatabase['public']['Functions']
@@ -51,6 +51,41 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           visibility?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      character_sheets: {
+        Row: {
+          character_id: string
+          campaign_id: string
+          status: string
+          level: number
+          max_hp: number
+          armor_class: number
+          build: Json
+          revision: number
+          updated_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      character_vitals: {
+        Row: {
+          character_id: string
+          campaign_id: string
+          current_hp: number
+          temp_hp: number
+          hit_dice_spent: number
+          death_successes: number
+          death_failures: number
+          heroic_inspiration: boolean
+          conditions: string[]
+          slots_used: number[]
+          tracker_uses: Json
+          revision: number
+        }
+        Insert: never
+        Update: never
         Relationships: []
       }
       character_events: {

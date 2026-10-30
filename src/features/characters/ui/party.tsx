@@ -8,6 +8,7 @@ import {
   Modal,
   NumberInput,
   Paper,
+  Progress,
   SimpleGrid,
   Stack,
   Text,
@@ -20,8 +21,11 @@ import { Coins, Droplets, Flame, Minus, Plus, Utensils } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
-import { charactersQuery, useCharacterAction } from '../api'
+import { Link } from 'react-router'
+import { charactersQuery, sheetSummariesQuery, useCharacterAction } from '../api'
+import { isClassKey } from '../domain/rules'
 import { resourceSchema, type Character } from '../domain/character'
+import type { SheetSummary } from '../domain/sheet'
 import { PlayerAssignmentEditor } from './player-assignment'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
@@ -43,6 +47,7 @@ export function CharacterParty() {
   const filterUserId = dm ? undefined : (previewUserId ?? state.user!.id)
   const query = useQuery(charactersQuery(state.user!.id, campaign.id, filterUserId))
   const members = useQuery({ ...membersQuery(state.user!.id, campaign.id), enabled: dm })
+  const summaries = useQuery(sheetSummariesQuery(state.user!.id, campaign.id))
   const opener = useRef<HTMLElement | null>(null)
   const fallback = useRef<string | null>(null)
   const open = (next: PartyEditor, target: HTMLElement) => {
@@ -157,6 +162,13 @@ export function CharacterParty() {
                     )}
                   </div>
                 </Stack>
+                <SheetSummaryBar
+                  character={character}
+                  summary={summaries.data?.find((item) => item.character_id === character.id)}
+                  canCreate={!playerPreview && (dm || character.user_id === state.user!.id)}
+                  own={!playerPreview && character.user_id === state.user!.id}
+                  path={`/campaign/${campaign.id}/party/${character.id}`}
+                />
                 <SimpleGrid cols={{ base: 1, sm: 2 }}>
                   {fields.map((field) => {
                     const Icon = resourceIcons[field]
@@ -264,6 +276,89 @@ export function CharacterParty() {
         />
       )}
     </Stack>
+  )
+}
+
+function SheetSummaryBar({
+  character,
+  summary,
+  canCreate,
+  own,
+  path,
+}: {
+  character: Character
+  summary: SheetSummary | undefined
+  canCreate: boolean
+  own: boolean
+  path: string
+}) {
+  const { t } = useTranslation()
+  if (!summary) return null
+  if (summary.status === 'draft')
+    return (
+      <div className="sheet-summary is-draft">
+        <Badge variant="outline">{t('sheet.draft')}</Badge>
+        {canCreate ? (
+          <Button
+            component={Link}
+            to={`${path}/create`}
+            aria-describedby={`character-${character.id}`}
+          >
+            {t(
+              summary.class_label
+                ? 'sheet.continueCta'
+                : own
+                  ? 'sheet.createCta'
+                  : 'sheet.createForCharacter',
+            )}
+          </Button>
+        ) : (
+          <Button
+            component={Link}
+            to={path}
+            variant="subtle"
+            aria-describedby={`character-${character.id}`}
+          >
+            {t('sheet.view')}
+          </Button>
+        )}
+      </div>
+    )
+  const className =
+    summary.class_key && isClassKey(summary.class_key)
+      ? t(`srd.class.${summary.class_key}`)
+      : (summary.class_label ?? '')
+  const ratio = Math.round((summary.current_hp / Math.max(1, summary.max_hp)) * 100)
+  return (
+    <div className="sheet-summary">
+      <div className="sheet-summary-info">
+        <Text size="sm" fw={600} className="user-copy">
+          {t('sheet.classLevel', { class: className, level: summary.level })}
+        </Text>
+        <Group gap="md">
+          <Text size="sm">
+            {t('sheet.hpSummary', {
+              value: `${summary.current_hp}/${summary.max_hp}${summary.temp_hp ? ` +${summary.temp_hp}` : ''}`,
+            })}
+          </Text>
+          <Text size="sm">{t('sheet.acSummary', { value: summary.armor_class })}</Text>
+        </Group>
+        <Progress
+          value={ratio}
+          size="sm"
+          className={`hp-bar hp-${ratio > 50 ? 'healthy' : ratio > 25 ? 'wounded' : 'critical'}`}
+          aria-label={t('sheet.hpValue', { current: summary.current_hp, max: summary.max_hp })}
+        />
+      </div>
+      <Button
+        component={Link}
+        to={path}
+        variant="light"
+        aria-describedby={`character-${character.id}`}
+      >
+        {t('sheet.view')}
+      </Button>
+    </div>
   )
 }
 

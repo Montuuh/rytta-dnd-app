@@ -1,3 +1,4 @@
+import type { Json } from './database.generated'
 // Reviewed SQL contract for the pending RYT-003 migration. Regenerate from local
 // Supabase when the stack is available; do not label this as generated output.
 export type CharacterFunctions = {
@@ -59,5 +60,37 @@ export type CharacterFunctions = {
       new_visibility: string
     }
     Returns: undefined
+  }
+  save_character_sheet: {
+    Args: {
+      target_campaign: string
+      target_character: string
+      expected_revision: number
+      new_level: number
+      new_max_hp: number
+      new_armor_class: number
+      new_build: Json
+      mark_complete: boolean
+      request_id: string
+    }
+    Returns: number
+  }
+  set_character_vitals: {
+    Args: {
+      target_campaign: string
+      target_character: string
+      expected_revision: number
+      new_current_hp: number
+      new_temp_hp: number
+      new_hit_dice_spent: number
+      new_death_successes: number
+      new_death_failures: number
+      new_heroic_inspiration: boolean
+      new_conditions: string[]
+      new_slots_used: number[]
+      new_tracker_uses: Json
+      request_id: string
+    }
+    Returns: number
   }
 }

@@ -721,7 +721,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-003", "RYT-017"],
       "sources": [
         "User 2026-10-30: design and implement character creation and the character sheet, using the D&D Sync sheet as reference",
@@ -747,7 +747,9 @@
       ],
       "evidence": [
         "docs/decisions/013-character-sheet-and-creation.md",
-        "docs/evidence/RYT-024/validation.md"
+        "docs/evidence/RYT-024/validation.md",
+        "docs/evidence/RYT-024/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

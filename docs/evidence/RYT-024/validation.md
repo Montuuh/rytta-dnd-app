@@ -63,4 +63,17 @@ E2E result: **150 passed** (6.9 min) across desktop, tablet, mobile and the thre
 
 ## UI review
 
-Pending the independent `ui-ux` verdict.
+Independent `ui-ux` review (report: `reviewer/review.md`, screenshots alongside):
+
+1. Initial review: CHANGES_REQUIRED with three majors (rest dialog focus loss, nested route
+   titles reading "page not found", Save and exit blocked by step validation) and minors.
+2. Re-review 1: CHANGES_REQUIRED; confirming a rest still dropped focus because the opener
+   was disabled while saving. New minor: editor route titled "Create sheet".
+3. Re-review 2: **PASS** for source fingerprint
+   `2fa0a6314bfbf62d2d2540fe1dd5d7a5ec642228b3ce5b1b44fbb53d8c12bf9d`, recorded in
+   `docs/evidence/ui-review-current.json`.
+
+Accepted follow-ups (non-blocking): rest buttons have no visual dimming while a save is
+pending (aria-disabled only); the step count grows when a spellcasting class is chosen;
+hyphenated stat labels at 390px with 150% text; Mantine forces `inputmode="decimal"` on
+the HP amount field. The reviewer did not re-test 1440px after the fixes (covered by e2e).

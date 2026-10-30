@@ -263,20 +263,25 @@ export function FeaturesTab({
   return (
     <Stack gap="md">
       {canEdit && (
+        // aria-disabled (not disabled) keeps the openers focusable while a rest saves.
         <Group gap="xs" grow>
           <Button
             variant="default"
             leftSection={<Sunset size={16} aria-hidden="true" />}
-            disabled={pending}
-            onClick={(event) => openRest('short', event.currentTarget)}
+            aria-disabled={pending || undefined}
+            onClick={(event) => {
+              if (!pending) openRest('short', event.currentTarget)
+            }}
           >
             {t('sheet.shortRest')}
           </Button>
           <Button
             variant="default"
             leftSection={<Moon size={16} aria-hidden="true" />}
-            disabled={pending}
-            onClick={(event) => openRest('long', event.currentTarget)}
+            aria-disabled={pending || undefined}
+            onClick={(event) => {
+              if (!pending) openRest('long', event.currentTarget)
+            }}
           >
             {t('sheet.longRest')}
           </Button>
@@ -373,6 +378,7 @@ export function FeaturesTab({
               </Button>
               <Button
                 data-autofocus
+                disabled={pending}
                 onClick={() => {
                   onRest(applyRest(vitals, build, sheet.max_hp, rest))
                   closeRest()

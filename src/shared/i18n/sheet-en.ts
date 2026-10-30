@@ -226,6 +226,7 @@ export const sheetEn = {
   'sheet.forbidden': 'You cannot edit this sheet.',
   'sheet.hpSummary': 'HP {{value}}',
   'sheet.acSummary': 'AC {{value}}',
+  'wizard.editorTitle': 'Sheet editor',
   'wizard.title': 'Create {{name}}',
   'wizard.editTitle': 'Edit {{name}}',
   'wizard.progress': 'Step {{current}} of {{total}}',

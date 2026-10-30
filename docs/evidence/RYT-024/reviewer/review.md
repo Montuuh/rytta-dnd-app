@@ -174,3 +174,88 @@ Raw logs are in the reviewer's scratchpad and are not committed.
 - No hosted Supabase. Mobile Chromium emulation does not verify iOS Safari or real touch
   hardware. Contrast in dim light was judged from screenshots, and axe found no contrast
   violations.
+
+---
+
+## Re-review 1 (2026-10-30)
+
+- Source fingerprint, taken before and after the run:
+  `886e0190523862aa6dea5832a60c6975073f491a5e5769c23f5172aada912a63`
+- Scope: the fixes the coordinator reported for findings 1–4 and 7–9, plus a check of the
+  areas those fixes touch.
+- Method: real Chromium against a fresh supabase-mode build served from the scratchpad on port
+  4199, using `identityFixture`, at 390x844 and 820x1180 with touch.
+
+### Re-review verdict
+
+**CHANGES_REQUIRED.** Finding 1 is only partly fixed: focus is still lost after confirming
+a rest. Every other fix I re-tested is confirmed.
+
+### Status of the original findings
+
+| # | Status | Browser evidence |
+|---|--------|------------------|
+| 1 Rest dialog focus | **Partially fixed. Major, still open.** | Escape and Cancel return focus to "Descanso corto" and "Descanso largo". **Confirming a short or long rest still leaves focus on `<body>`** (390px and 820px, Spanish, dark). |
+| 2 Document title | Fixed | Sheet: "Ficha de personaje · Rytta" and "Character sheet · Rytta". Wizard: "Crear ficha · Rytta". Wizard not-found in English: "Create sheet · Rytta". |
+| 3 Save and exit | Fixed | "Guardar y salir" works with nothing chosen on step 1, and on Origen with only a species chosen. No alert appears, it returns to the sheet's draft view, and focus goes to `main`. |
+| 4 Resume step | Fixed | After exiting on Origen, "Continuar ficha" reopens Origen with the species (elf) kept. "Anterior" goes back to "Clase y nivel". |
+| 5 Step count | Kept on purpose | Accepted. It shows "Paso 2 de 7" for Mago. |
+| 6 Wrapping at 150% | Kept on purpose | Accepted as minor. There is no overflow. |
+| 7 Accordion surfaces | Fixed | Light: `rgb(255,253,249)` closed and `rgb(253,250,244)` open. Dark: `rgb(30,22,16)`. These are warm tokens. Axe found 0 violations in both themes (`rereview-mobile-spells-en-light.png`). |
+| 8 Read-only pips | Fixed | In POV the pips read "0/3 (1/3)" … "0/3 (3/3)". Pips you can edit read, for example, "Spend a level 1 slot (1/4)" and "Restore a level 1 slot (4/4)". Every name is unique. |
+| 9 Wizard states | Fixed | Not-found shows a neutral panel with no `role=alert`. On a fresh load with an HTTP 500, it shows the error, a "Reintentar" (retry) button and a "Ficha de personaje" back link. Axe found 0 violations. |
+| 10 inputmode | Kept on purpose | Accepted. |
+
+### Remaining and new findings
+
+1. **Major (finding 1, still open): the rest confirm path does not return focus.**
+   `src/features/characters/ui/sheet/sections.tsx:266-281` together with `:375-379`.
+   - Cause: the confirm handler calls `onRest(...)` and then `closeRest()`. The mutation
+     starts at once, so `pending` is true when `requestAnimationFrame` runs. Both rest buttons
+     have `disabled={pending}`, and calling `focus()` on a disabled button does nothing, so
+     focus falls to `<body>`.
+   - Escape and Cancel work only because nothing is pending at that point. The new e2e
+     assertion (`tests/e2e/character-sheet.spec.ts:136-141`) only covers Escape.
+   - Impact: after confirming a rest, which is the main path, keyboard and screen-reader users
+     are sent back to the top of the document.
+   - Fix options:
+     - Keep the opener focusable while pending (`aria-disabled` plus a guarded click, or
+       Mantine `loading` on the clicked button only).
+     - Or refocus once the mutation settles.
+     - Add an e2e assertion for the confirm path.
+2. **Minor (new): editing a completed sheet is titled "Crear ficha · Rytta" / "Create sheet ·
+   Rytta".**
+   - Source: `src/app/layout.tsx` maps the `/create` route to `sheet.createForCharacter`
+     whatever the sheet's status.
+   - The page heading in that case says the sheet is being edited
+     (`wizard.editTitle`), so the title and heading disagree. Low impact, because the route
+     cannot see the sheet status. A neutral title such as "Ficha: editor" / "Sheet editor"
+     would avoid the mismatch.
+
+### Re-tested scenarios (browser)
+
+- **Rest dialogs:** short and long rest, each closed with Escape, with Cancel and by confirming
+  (390px and 820px). I checked the active element after each.
+- **Titles:** on the sheet, the wizard (create and edit) and wizard not-found, in Spanish and
+  English.
+- **Save and exit:** from an empty step 1 and from a partly filled Origen. Then resumed from
+  the sheet's draft view, checked the restored values, and used "Anterior".
+- **Wizard error:** on a fresh load with HTTP 500 on `character_sheets`. Wizard not-found was
+  also checked.
+- **Spells tab in light and dark:** accordion surfaces, pip names, axe and overflow.
+- **Player POV preview:** read-only pip names, and only the 4 tabs enabled.
+- **Axe** (wcag2a/2aa/21aa/22aa): 0 violations and no overflow on every probed screen:
+  Spells in light and dark, the resumed Origen step at 150% text, and the wizard error state.
+
+### Evidence added
+
+- `rereview-mobile-spells-en-light.png`
+- `rereview-mobile-wizard-resume-origin-150.png`
+
+### Limitations
+
+- I re-ran only the changed and adjacent behaviour; I did not re-run desktop at 1440px. The
+  first review's untested states still apply.
+- My first attempt at the wizard error test was invalid because of a warm TanStack Query
+  cache during hash navigation. I repeated it on a fresh page load, and that result is the
+  one reported above.

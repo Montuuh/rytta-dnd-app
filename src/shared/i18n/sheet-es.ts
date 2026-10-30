@@ -228,6 +228,7 @@ export const sheetEs = {
   'sheet.forbidden': 'No puedes editar esta ficha.',
   'sheet.hpSummary': 'PG {{value}}',
   'sheet.acSummary': 'CA {{value}}',
+  'wizard.editorTitle': 'Editor de ficha',
   'wizard.title': 'Crear a {{name}}',
   'wizard.editTitle': 'Editar a {{name}}',
   'wizard.progress': 'Paso {{current}} de {{total}}',

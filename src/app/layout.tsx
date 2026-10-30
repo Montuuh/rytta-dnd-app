@@ -205,7 +205,7 @@ export function Layout() {
           : pathname.endsWith('/members')
             ? 'campaign.manage'
             : /^\/party\/[^/]+\/create$/.test(modulePath)
-              ? 'sheet.createForCharacter'
+              ? 'wizard.editorTitle'
               : /^\/party\/[^/]+$/.test(modulePath)
                 ? 'sheet.title'
                 : (modules.find((m) => m.path === modulePath)?.label ??

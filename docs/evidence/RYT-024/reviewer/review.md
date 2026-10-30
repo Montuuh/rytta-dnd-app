@@ -259,3 +259,54 @@ a rest. Every other fix I re-tested is confirmed.
 - My first attempt at the wizard error test was invalid because of a warm TanStack Query
   cache during hash navigation. I repeated it on a fresh page load, and that result is the
   one reported above.
+
+---
+
+## Re-review 2 (2026-10-30)
+
+- **Source fingerprint**, taken before and after the run:
+  `2fa0a6314bfbf62d2d2540fe1dd5d7a5ec642228b3ce5b1b44fbb53d8c12bf9d`
+- **Scope:**
+  - the rest of major finding 1 (focus after confirming a rest);
+  - the minor finding from re-review 1 about the editor route's title;
+  - a re-check of the titles and Spells-tab surfaces around them.
+- **Method:** a fresh supabase-mode build served on scratch port 4199, run in Chromium with
+  `identityFixture` at 390x844 and 820x1180 with touch, in Spanish and dark mode. The title
+  and Spells checks also ran in English, in light and dark.
+
+### Re-review 2 verdict
+
+**PASS** (for this source fingerprint only). There are no blocking or major findings. Minors
+5, 6 and 10 were left unchanged on purpose and are accepted.
+
+### Results (browser-tested)
+
+- **Major 1: fixed.** I checked short and long rest, each closed with Escape, with Cancel and
+  by confirming. Focus returned to "Descanso corto" or "Descanso largo" every time, at both
+  sizes.
+  - After a long rest, hit points read 38 / 38. After a short rest they stay at 30 / 38,
+    because hit dice are spent separately. The live region announces "Descanso aplicado.".
+- **Pending window.** I delayed the vitals save by 1.5 s to test the moment while a rest is
+  saving.
+  - The opener has `aria-disabled="true"` and keeps focus.
+  - Pressing Enter on it does not open a dialog (0 dialogs).
+  - Once the save finishes, `aria-disabled` is removed and focus stays on the opener.
+- **Editor title: fixed.** The editor shows "Editor de ficha · Rytta" / "Sheet editor ·
+  Rytta". The sheet still shows "Ficha de personaje · Rytta" / "Character sheet · Rytta".
+- **Spells tab in light and dark (English):** axe (wcag2a/2aa/21aa/22aa) found 0 violations,
+  with no overflow.
+
+### Remaining minor (non-blocking)
+
+- While a rest is saving, the rest buttons look fully active (opacity 1, pointer cursor).
+  Assistive technology is told they are disabled, but sighted users see no cue. The window is
+  short, a press does nothing, and the live region reports progress, so this is cosmetic.
+  `src/features/characters/ui/sheet/sections.tsx:266-285`. An optional fix is a
+  `[aria-disabled='true']` style that dims the buttons.
+
+### Limitations
+
+- I did not re-run desktop at 1440px for this re-review; I relied on the implementer's
+  reported 18/18 e2e run for that size.
+- The untested states from the first review still apply.
+- This approval applies only to the fingerprint above.

@@ -37,7 +37,10 @@ Inventory, equipment, use/undo and portraits (ADR 014):
   through the card and paper doll with AC and attack updates and picker focus return;
   hold-to-use needing a sustained press; DM forge from an SRD template with give-to;
   hidden module for Players; portrait upload. 21/21 pass on 1440, 820 and 390 px.
-- Full gates: _pending final run_.
+- Full gates: `npm run check` passes (typecheck, lint, architecture, docs, AI contracts, 14
+  unit/SQL files with 83 tests, build); `prettier --check` passes; `npm run test:e2e` passes
+  171/171 (7.5 min) across desktop, tablet, mobile and the identity projects, run with the
+  preinstalled Chromium through a local config shim.
 
 ## Hosted Supabase (`ekscdsmniukuxqjixapu`)
 

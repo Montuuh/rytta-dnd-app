@@ -14,8 +14,12 @@ const asUser = async (id: string) => {
 const one = async <T = Record<string, unknown>>(sql: string, args: unknown[] = []) =>
   (await db.query<T>(sql, args)).rows[0]!
 const result = async (sql: string, args: unknown[] = []) =>
-  (await one<{ result: { item_id: string; event_id: string; revision: number; id: string } }>(sql, args))
-    .result
+  (
+    await one<{ result: { item_id: string; event_id: string; revision: number; id: string } }>(
+      sql,
+      args,
+    )
+  ).result
 const define = (c: string, item: Record<string, unknown>, key = randomUUID()) =>
   result('select public.save_item_definition($1, null, null, $2, $3) result', [
     c,
@@ -31,8 +35,11 @@ const equip = (c: string, item: string, rev: number, slot: string) =>
 const undo = (c: string, event: string) =>
   result('select public.undo_inventory_event($1,$2,$3) result', [c, event, randomUUID()])
 const quantity = async (item: string) =>
-  (await one<{ quantity: number }>('select quantity from public.inventory_items where id=$1', [item]))
-    .quantity
+  (
+    await one<{ quantity: number }>('select quantity from public.inventory_items where id=$1', [
+      item,
+    ])
+  ).quantity
 const potion = { name: 'Poción de curación', category: 'consumable', icon: 'flask-conical' }
 
 async function setup() {
@@ -88,7 +95,8 @@ describe('RYT-004 inventory', () => {
     const granted = await grant(c, ch, def, 3)
     await asUser(player)
     expect(
-      (await db.query('select name, value_gp from public.item_definitions where id=$1', [def])).rows,
+      (await db.query('select name, value_gp from public.item_definitions where id=$1', [def]))
+        .rows,
     ).toEqual([{ name: 'Poción de curación', value_gp: 50 }])
     const key = randomUUID()
     const used = await use(c, granted.item_id, granted.revision, 1, key)
@@ -103,9 +111,10 @@ describe('RYT-004 inventory', () => {
     await expect(undo(c, granted.event_id)).rejects.toThrow(/Forbidden/)
     const late = await use(c, granted.item_id, used.revision + 1)
     await db.exec('reset role')
-    await db.query("update public.inventory_events set created_at = now() - interval '11 minutes' where id=$1", [
-      late.event_id,
-    ])
+    await db.query(
+      "update public.inventory_events set created_at = now() - interval '11 minutes' where id=$1",
+      [late.event_id],
+    )
     await asUser(player)
     await expect(undo(c, late.event_id)).rejects.toThrow(/Forbidden/)
     await asUser(dm)
@@ -128,7 +137,9 @@ describe('RYT-004 inventory', () => {
     await asUser(player)
     await expect(define(c, { ...potion, value_gp: 5 })).rejects.toThrow(/Forbidden/)
     await expect(grant(c, ch, def, 10)).rejects.toThrow(/Forbidden/)
-    const own = (await define(c, { name: 'Amuleto de la abuela', category: 'treasure', origin: 'dm' })).id
+    const own = (
+      await define(c, { name: 'Amuleto de la abuela', category: 'treasure', origin: 'dm' })
+    ).id
     expect(
       await one('select origin, value_gp from public.item_definitions where id=$1', [own]),
     ).toEqual({ origin: 'player', value_gp: null })
@@ -176,9 +187,9 @@ describe('RYT-004 inventory', () => {
     await expect(grant(c, ch, otherDef)).rejects.toThrow(/unavailable/)
     for (const table of ['item_definitions', 'inventory_items', 'inventory_events']) {
       await expect(db.query(`delete from public.${table}`)).rejects.toThrow(/permission denied/)
-      await expect(db.query(`update public.${table} set campaign_id = campaign_id`)).rejects.toThrow(
-        /permission denied/,
-      )
+      await expect(
+        db.query(`update public.${table} set campaign_id = campaign_id`),
+      ).rejects.toThrow(/permission denied/)
     }
     await db.query('select public.change_campaign_member($1,$2,null)', [c, player])
     await asUser(player)
@@ -209,36 +220,66 @@ describe('RYT-004 inventory', () => {
       randomUUID(),
     ])
     const ac = async () =>
-      (await one<{ armor_class: number }>('select armor_class from public.character_sheets where character_id=$1', [ch]))
-        .armor_class
+      (
+        await one<{ armor_class: number }>(
+          'select armor_class from public.character_sheets where character_id=$1',
+          [ch],
+        )
+      ).armor_class
     expect(await ac()).toBe(13)
     await asUser(dm)
     const armor = (
-      await define(c, { name: 'Cota de escamas', category: 'armor', slot_kind: 'body', properties: { base: 14, dexCap: 2 } })
+      await define(c, {
+        name: 'Cota de escamas',
+        category: 'armor',
+        slot_kind: 'body',
+        properties: { base: 14, dexCap: 2 },
+      })
     ).id
-    const shield = (await define(c, { name: 'Escudo', category: 'shield', slot_kind: 'shield', properties: { acBonus: 2 } })).id
-    const greatsword = (await define(c, { name: 'Mandoble', category: 'weapon', slot_kind: 'two_hands' })).id
+    const shield = (
+      await define(c, {
+        name: 'Escudo',
+        category: 'shield',
+        slot_kind: 'shield',
+        properties: { acBonus: 2 },
+      })
+    ).id
+    const greatsword = (
+      await define(c, { name: 'Mandoble', category: 'weapon', slot_kind: 'two_hands' })
+    ).id
     const a = await grant(c, ch, armor)
     const s = await grant(c, ch, shield)
     const g = await grant(c, ch, greatsword)
     const potionStack = await grant(c, ch, def, 2)
     await asUser(player)
-    await expect(equip(c, potionStack.item_id, potionStack.revision, 'main_hand')).rejects.toThrow(/Wrong slot/)
+    await expect(equip(c, potionStack.item_id, potionStack.revision, 'main_hand')).rejects.toThrow(
+      /Wrong slot/,
+    )
     await expect(equip(c, a.item_id, a.revision, 'head')).rejects.toThrow(/Wrong slot/)
     const worn = await equip(c, a.item_id, a.revision, 'body')
     expect(await ac()).toBe(16)
     const held = await equip(c, s.item_id, s.revision, 'off_hand')
     expect(await ac()).toBe(18)
     await expect(equip(c, g.item_id, g.revision, 'main_hand')).rejects.toThrow(/Slot occupied/)
-    await result('select public.unequip_item($1,$2,$3,$4) result', [c, held.item_id, held.revision, randomUUID()])
+    await result('select public.unequip_item($1,$2,$3,$4) result', [
+      c,
+      held.item_id,
+      held.revision,
+      randomUUID(),
+    ])
     expect(await ac()).toBe(16)
     await equip(c, g.item_id, g.revision, 'main_hand')
     const s2 = await one<{ id: string; revision: number }>(
-      "select id, revision from public.inventory_items where definition_id=$1 and quantity=1",
+      'select id, revision from public.inventory_items where definition_id=$1 and quantity=1',
       [shield],
     )
     await expect(equip(c, s2.id, s2.revision, 'off_hand')).rejects.toThrow(/Slot occupied/)
-    await result('select public.unequip_item($1,$2,$3,$4) result', [c, worn.item_id, worn.revision, randomUUID()])
+    await result('select public.unequip_item($1,$2,$3,$4) result', [
+      c,
+      worn.item_id,
+      worn.revision,
+      randomUUID(),
+    ])
     expect(await ac()).toBe(13)
   })
 

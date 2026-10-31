@@ -37,6 +37,8 @@
     and [RYT-023 verification](evidence/RYT-023/validation.md).
 23. [ADR 013: character creation wizard and 5.5e character sheet](decisions/013-character-sheet-and-creation.md)
     and [RYT-024 verification](evidence/RYT-024/validation.md).
+24. [ADR 014: inventory, equipment, use/undo and portraits](decisions/014-inventory-equipment.md)
+    and [RYT-004 verification](evidence/RYT-004/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is
 evidence for decisions, not authorization to expand a delivery.

@@ -83,7 +83,11 @@ RYT-024 adds character_sheets (build) and character_vitals (play state) with ind
 revisions. The assigned Player and campaign DMs write them only through idempotent,
 revision-checked RPCs; derived 5.5e values are pure domain functions. See ADR 013.
 
-Future domains: item definitions, inventory, equipment, merchants/stock, quests,
+RYT-004 adds item_definitions, inventory_items and inventory_events with idempotent,
+revision-checked RPCs, compensating undo, equipment-derived AC and a private portrait
+bucket authorized by prefix (ADR 014).
+
+Future domains: merchants/stock, quests,
 encounters/participants, glossary, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

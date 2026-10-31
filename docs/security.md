@@ -53,9 +53,14 @@ These are deployment prerequisites, not permission to modify hosted data.
 - purchase_item: ownership, merchant visibility, server price, money/stock checks, locks,
   inventory update and event in one transaction. Idempotency key returns the original outcome.
 - sell_item: resale policy, quantity, equipped/quest restrictions and atomic credit.
-- use_item: ownership, quantity/revision, authorized effect and durable event.
-- undo_event: authorized, once-only compensating event linked to its original; reject
-  conflicting changes rather than overwriting an old state snapshot.
+- use_item (RYT-004, implemented): ownership, consumable/ammo category, quantity and
+  revision checks, idempotent request id and a ledger event in one transaction.
+- undo_inventory_event (RYT-004, implemented): once-only compensating event linked to its
+  original; Players only their own events within 10 minutes, DMs any; rejected when the
+  stack revision moved after the event instead of restoring a snapshot.
+- Player-created item definitions carry no price and land in `source = player` stacks so
+  future resale cannot mint gold. Portrait objects are private and authorized per
+  character through `private.can_access_portrait`.
 
 Test simultaneous buys, double taps, retries, stale writes and insufficient funds.
 

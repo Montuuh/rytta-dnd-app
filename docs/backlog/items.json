@@ -195,22 +195,34 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-003", "RYT-017"],
-      "sources": ["Drive: items, equipment, encumbrance"],
-      "scope": "Item definitions, stacks, equipment slots, item use and compensating undo.",
+      "sources": [
+        "Drive: items, equipment, encumbrance",
+        "Drive: Aplicación Rol › Objetos / Equipo (icons, use and undo, encumbrance bar, equipment slots, character picture)",
+        "User 2026-10-31: 5e variant encumbrance; DM and Player add items; 10-minute Player undo; equipment AC, weapon attacks, SRD 5.2 templates and portraits; unique widgets",
+        "docs/decisions/014-inventory-equipment.md"
+      ],
+      "scope": "Campaign item catalog, character stacks, equipment slots, use/discard/grant with compensating undo, 5e variant encumbrance, equipment-derived AC and attacks, SRD 5.2 templates and private character portraits.",
       "acceptance": [
-        "Choose encumbrance variant and undo conflict/time policy.",
-        "Item icons have accessible pressable details, quantity and weight.",
-        "Use and undo are authorized/idempotent transactions, not snapshot restores.",
-        "Equipment constraints, empty inventory, retries and concurrent edits are covered."
+        "Encumbrance uses the 5e variant (STR×5/×10/×15) and undo allows Players their own grant/use/remove events for 10 minutes when the stack is unchanged; DMs undo any quantity event.",
+        "Item tiles show icon, quantity and rarity with accessible pressable details, weight and properties; the card uses a hold-to-use seal with an immediate keyboard path.",
+        "Use, discard, grant, equip, unequip and undo are authorized, idempotent, revision-checked RPC transactions with an immutable ledger, not snapshot restores.",
+        "Players add only price-free items into player-sourced stacks; anon, outsiders, other Players, cross-campaign DMs and inactive members are denied.",
+        "Equipment enforces slot kinds, ring slots, one item per slot and two-handed weapons; equipped armor and shield recompute sheet AC and weapons yield attack lines.",
+        "Empty satchel, filters, retries, stale and conflicting edits, portraits and es/en dark/light at 390/820/1440 and 150% text are covered."
       ],
       "validation": [
-        "Domain weight/equipment tests",
-        "SQL double-use/undo denial and race tests",
-        "Phone/tablet inventory e2e"
+        "npm run check",
+        "npm run test:db inventory actor matrix",
+        "npm run test:e2e",
+        "Hosted PRE probe, PROD migration and storage policies",
+        "Independent rendered ui-ux review"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/decisions/014-inventory-equipment.md",
+        "docs/evidence/RYT-004/validation.md"
+      ]
     },
     {
       "id": "RYT-005",

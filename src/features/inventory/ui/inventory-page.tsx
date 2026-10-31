@@ -60,16 +60,27 @@ export function InventoryPage() {
   const [forge, setForge] = useState<{ definition: ItemDefinition | null } | null>(null)
   const [fuse, setFuse] = useState<(FuseEntry & { characterId: string }) | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const opener = useRef<HTMLElement | null>(null)
-  const restoreFocus = () =>
-    requestAnimationFrame(() => opener.current?.isConnected && opener.current.focus())
+  const heading = useRef<HTMLHeadingElement>(null)
+  // The opener can vanish (an equipped or emptied stack leaves the satchel); fall back
+  // to the page heading so focus never drops to the document body.
+  const restoreFocus = (openerLeaves = false) =>
+    requestAnimationFrame(() =>
+      opener.current?.isConnected && !openerLeaves
+        ? opener.current.focus()
+        : heading.current?.focus(),
+    )
   const dismissFuse = useCallback(() => setFuse(null), [])
 
   if (!dm && !enabled)
     return (
-      <Paper p="xl">
-        <Text>{t('inventory.hidden')}</Text>
-      </Paper>
+      <Stack>
+        <Title order={1}>{t('module.inventory')}</Title>
+        <Paper p="xl">
+          <Text>{t('inventory.hidden')}</Text>
+        </Paper>
+      </Stack>
     )
   if (roster.isPending) return <Text role="status">{t('common.loading')}</Text>
   if (roster.isError)
@@ -123,9 +134,10 @@ export function InventoryPage() {
     done?: (result: Awaited<ReturnType<typeof action.mutateAsync>>) => void,
   ) => {
     setNotice(null)
+    setError(null)
     action.mutate(request, {
       onSuccess: done,
-      onError: (error) => setNotice(errorText(error.message)),
+      onError: (failure) => setError(errorText(failure.message)),
     })
   }
   const withFuse =
@@ -138,6 +150,11 @@ export function InventoryPage() {
           characterId: character.id,
         })
     }
+  const openForge = (definition: ItemDefinition | null) => {
+    action.reset()
+    setError(null)
+    setForge({ definition })
+  }
   const nameOf = (stack: ItemStack) => definitions.get(stack.definition_id)?.name ?? ''
   const equip = (stack: ItemStack, slot?: ItemStack['equipped_slot']) => {
     const definition = definitions.get(stack.definition_id)
@@ -157,7 +174,7 @@ export function InventoryPage() {
       setNotice(
         t('inventory.equipped', { name: definition.name, slot: t(`inventory.slot.${target}`) }),
       )
-      restoreFocus()
+      if (!slot) restoreFocus(stack.quantity === 1)
     })
   }
   const actorName = (id: string | null) =>
@@ -174,7 +191,7 @@ export function InventoryPage() {
         draft,
       },
       {
-        onError: (error) => setNotice(errorText(error.message)),
+        onError: (failure) => setError(errorText(failure.message)),
         onSuccess: async (result) => {
           const definitionId = 'definitionId' in result ? result.definitionId : definition!.id
           for (const target of give.characterIds)
@@ -205,7 +222,9 @@ export function InventoryPage() {
       <header className="inventory-head">
         {portrait(72, canEdit)}
         <div>
-          <Title order={1}>{t('module.inventory')}</Title>
+          <Title order={1} ref={heading} tabIndex={-1}>
+            {t('module.inventory')}
+          </Title>
           <Text c="dimmed" className="user-copy">
             {character.name}
           </Text>
@@ -259,6 +278,11 @@ export function InventoryPage() {
       <div aria-live="polite" className="inventory-notice">
         {notice && <Text size="sm">{notice}</Text>}
       </div>
+      {error && !openStack && !forge && (
+        <Alert color="red" role="alert">
+          {error}
+        </Alert>
+      )}
       {inventory.isPending && <Text role="status">{t('common.loading')}</Text>}
       {inventory.isError && (
         <Alert color="red" role="alert">
@@ -280,7 +304,7 @@ export function InventoryPage() {
           }}
           onAdd={(target) => {
             opener.current = target
-            setForge({ definition: null })
+            openForge(null)
           }}
         />
       )}
@@ -323,7 +347,7 @@ export function InventoryPage() {
               className="item-tile item-tile-add"
               onClick={(event) => {
                 opener.current = event.currentTarget
-                setForge({ definition: null })
+                openForge(null)
               }}
             >
               <span className="item-tile-icon">
@@ -344,7 +368,7 @@ export function InventoryPage() {
                   })}
                   onClick={(event) => {
                     opener.current = event.currentTarget
-                    setForge({ definition })
+                    openForge(definition)
                   }}
                 >
                   <span className="item-tile-icon">
@@ -366,8 +390,22 @@ export function InventoryPage() {
           canEdit={canEdit}
           dm={dm && !playerPreview}
           pending={action.isPending}
+          error={error}
+          undo={
+            fuse && fuse.characterId === character.id && canEdit
+              ? {
+                  message: fuse.message,
+                  onUndo: () =>
+                    run({ kind: 'undo', eventId: fuse.eventId }, () => {
+                      setFuse(null)
+                      setNotice(t('inventory.undo.done'))
+                    }),
+                }
+              : null
+          }
           onClose={() => {
             setCard(null)
+            setError(null)
             restoreFocus()
           }}
           actions={{
@@ -391,7 +429,10 @@ export function InventoryPage() {
                 },
                 (result) => {
                   withFuse(t('inventory.fuse.removed', { name: nameOf(openStack), amount }))(result)
-                  if (amount >= openStack.quantity) setCard(null)
+                  if (amount >= openStack.quantity) {
+                    setCard(null)
+                    restoreFocus(true)
+                  }
                 },
               ),
             equip: () => equip(openStack),
@@ -407,7 +448,7 @@ export function InventoryPage() {
               ),
             edit: () => {
               setCard(null)
-              setForge({ definition: definitions.get(openStack.definition_id)! })
+              openForge(definitions.get(openStack.definition_id)!)
             },
           }}
         />
@@ -430,7 +471,7 @@ export function InventoryPage() {
             ),
           }))}
           pending={action.isPending}
-          error={action.isError ? errorText(action.error.message) : null}
+          error={error}
           onSave={save}
           onClose={() => {
             setForge(null)
@@ -438,7 +479,7 @@ export function InventoryPage() {
           }}
         />
       )}
-      {fuse && fuse.characterId === character.id && canEdit && (
+      {fuse && fuse.characterId === character.id && canEdit && !openStack && !forge && (
         <UndoFuse
           entry={fuse}
           pending={action.isPending}

@@ -118,7 +118,9 @@ export function Forge({
             <Select
               searchable
               label={t('inventory.forge.template')}
-              description={t('inventory.forge.templateHint')}
+              description={t(
+                dm ? 'inventory.forge.templateHint' : 'inventory.forge.templateHintPlayer',
+              )}
               data={srdEquipment.map((item) => ({
                 value: item.key,
                 label: t(`srdItem.${item.key}` as 'srdItem.dagger'),
@@ -177,7 +179,9 @@ export function Forge({
                   key={icon}
                   type="button"
                   aria-pressed={draft.icon === icon}
-                  aria-label={t('inventory.forge.iconLabel', { icon })}
+                  aria-label={t('inventory.forge.iconLabel', {
+                    icon: t(`inventory.icon.${icon}` as 'inventory.icon.package'),
+                  })}
                   className="icon-choice"
                   onClick={() => set({ icon })}
                 >

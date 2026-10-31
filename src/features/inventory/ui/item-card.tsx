@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Drawer, Group, NumberInput, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Alert, Drawer, Group, NumberInput, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import { Gift, Hand, Pencil, Trash2 } from 'lucide-react'
+import { Gift, Hand, Pencil, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatPounds } from '../domain/encumbrance'
 import { slotsFor } from '../domain/equipment'
@@ -25,6 +25,8 @@ export function ItemCard({
   dm,
   pending,
   actions,
+  error,
+  undo,
   onClose,
 }: {
   stack: ItemStack
@@ -33,6 +35,8 @@ export function ItemCard({
   dm: boolean
   pending: boolean
   actions: CardActions
+  error: string | null
+  undo: { message: string; onUndo: () => void } | null
   onClose: () => void
 }) {
   const { t, i18n } = useTranslation()
@@ -86,9 +90,9 @@ export function ItemCard({
             <ItemIcon icon={definition.icon} size={40} />
           </span>
           <div>
-            <h2 id="item-card-name" className="item-card-name user-copy">
+            <h3 id="item-card-name" className="item-card-name user-copy">
               {definition.name}
-            </h2>
+            </h3>
             <Text size="sm" className="item-card-rarity">
               {t(`inventory.rarity.${definition.rarity}`)} · ×{stack.quantity}
             </Text>
@@ -107,6 +111,22 @@ export function ItemCard({
             {definition.description}
           </Text>
         )}
+        {error && (
+          <Alert color="red" role="alert" mb="sm">
+            {error}
+          </Alert>
+        )}
+        {undo && (
+          <div className="card-undo" role="status">
+            <Text size="sm" className="user-copy">
+              {undo.message}
+            </Text>
+            <UnstyledButton className="undo-seal small" disabled={pending} onClick={undo.onUndo}>
+              <Undo2 size={16} aria-hidden="true" />
+              {t('inventory.undo.action')}
+            </UnstyledButton>
+          </div>
+        )}
         {canEdit && (
           <Stack gap="md" className="item-card-actions">
             <Group justify="center" gap="xl">
@@ -117,6 +137,7 @@ export function ItemCard({
                     left: stack.quantity - 1,
                   })}
                   hint={t('inventory.card.holdToUse')}
+                  confirmLabel={t('inventory.card.useNow')}
                   disabled={pending}
                   onConfirm={actions.use}
                 >

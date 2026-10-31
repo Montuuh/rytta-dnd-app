@@ -281,7 +281,7 @@ export const sheetEn = {
   'wizard.suggested': 'Suggested: {{value}} (fixed average)',
   'wizard.useSuggested': 'Use suggested',
   'wizard.ac': 'Armor Class',
-  'wizard.acAuto': 'Unarmored: 10 + DEX ({{value}})',
+  'wizard.acAuto': 'Automatic from equipment (unarmored: 10 + DEX = {{value}})',
   'wizard.acManual': 'Set manually (armor, shield, features)',
   'wizard.speed': 'Speed (ft)',
   'wizard.spellsHint': 'Write your spells in your own words. Slots follow your class and level.',

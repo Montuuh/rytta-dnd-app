@@ -116,8 +116,8 @@ function Navigation({ campaign, playerPreview }: { campaign?: Campaign; playerPr
         <PartyIcon size={17} aria-hidden="true" />
         {t(partyModule.label)}
       </NavLink>
-      {secondaryModules.map(({ path, label, icon: Icon }) =>
-        isModuleEnabled(path) ? (
+      {secondaryModules.map(({ path, label, icon: Icon, ...module }) =>
+        isModuleEnabled(path) || ('implemented' in module && module.implemented) ? (
           <NavLink
             key={path}
             to={`${prefix}${path}`}

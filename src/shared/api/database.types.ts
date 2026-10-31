@@ -64,6 +64,7 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           build: Json
           revision: number
           updated_at: string
+          portrait_path: string | null
         }
         Insert: never
         Update: never
@@ -83,6 +84,66 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           slots_used: number[]
           tracker_uses: Json
           revision: number
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      item_definitions: {
+        Row: {
+          id: string
+          campaign_id: string
+          name: string
+          category: string
+          icon: string
+          rarity: string
+          weight_tenths: number
+          value_gp: number | null
+          description: string
+          slot_kind: string
+          properties: Json
+          origin: string
+          archived: boolean
+          created_by: string | null
+          revision: number
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          id: string
+          campaign_id: string
+          character_id: string
+          definition_id: string
+          quantity: number
+          equipped_slot: string | null
+          source: string
+          notes: string
+          revision: number
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      inventory_events: {
+        Row: {
+          id: string
+          campaign_id: string
+          character_id: string
+          item_id: string
+          actor_id: string | null
+          kind: string
+          quantity_delta: number
+          before_value: Json | null
+          after_value: Json
+          request_id: string
+          undo_of: string | null
+          undone_by: string | null
+          created_at: string
         }
         Insert: never
         Update: never

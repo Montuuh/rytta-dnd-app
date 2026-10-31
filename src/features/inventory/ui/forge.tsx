@@ -117,7 +117,6 @@ export function Forge({
           {!definition && (
             <Select
               searchable
-              clearable
               label={t('inventory.forge.template')}
               description={t('inventory.forge.templateHint')}
               data={srdEquipment.map((item) => ({

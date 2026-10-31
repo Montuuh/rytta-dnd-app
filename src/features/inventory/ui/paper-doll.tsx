@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Shield } from 'lucide-react'
@@ -112,6 +112,12 @@ export function PaperDoll({
   const { t } = useTranslation()
   const phone = useMediaQuery('(max-width: 48em)')
   const [picking, setPicking] = useState<EquipmentSlot | null>(null)
+  const opener = useRef<HTMLElement | null>(null)
+  // The picker unmounts on close, so return focus to the socket explicitly.
+  const closePicker = () => {
+    setPicking(null)
+    requestAnimationFrame(() => opener.current?.isConnected && opener.current.focus())
+  }
   const equipped = equippedBySlot(stacks, definitions)
   const twoHanded = equipped.get('main_hand')?.definition.slot_kind === 'two_hands'
   const candidates = picking
@@ -149,7 +155,10 @@ export function PaperDoll({
                       ? t('inventory.socket.blocked', { slot: label })
                       : t('inventory.socket.empty', { slot: label })
                 }
-                onClick={() => setPicking(slot)}
+                onClick={(event) => {
+                  opener.current = event.currentTarget
+                  setPicking(slot)
+                }}
               >
                 <ItemIcon
                   icon={entry ? entry.definition.icon : blocked ? 'swords' : slotIcons[slot]}
@@ -166,6 +175,7 @@ export function PaperDoll({
       <div className="doll-stats">
         <div
           className="ac-medallion"
+          role="img"
           aria-label={t('inventory.ac', { value: armorClass(dexterity, equipped) })}
         >
           <Shield size={56} aria-hidden="true" strokeWidth={1.2} />
@@ -187,7 +197,7 @@ export function PaperDoll({
       {picking && (
         <Drawer
           opened
-          onClose={() => setPicking(null)}
+          onClose={closePicker}
           position={phone ? 'bottom' : 'right'}
           size={phone ? 'auto' : 380}
           title={t(`inventory.slot.${picking}`)}
@@ -200,7 +210,7 @@ export function PaperDoll({
                 disabled={pending}
                 onClick={() => {
                   onUnequip(current.stack)
-                  setPicking(null)
+                  closePicker()
                 }}
               >
                 <ItemIcon icon={current.definition.icon} size={22} />
@@ -219,7 +229,7 @@ export function PaperDoll({
                     disabled={pending}
                     onClick={() => {
                       onEquip(stack, picking)
-                      setPicking(null)
+                      closePicker()
                     }}
                   >
                     <ItemIcon icon={definition.icon} size={22} />

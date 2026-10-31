@@ -1152,6 +1152,15 @@ html[data-mantine-color-scheme='light'] {
 }
 .view-switch .mantine-SegmentedControl-label {
   white-space: normal;
+  padding-inline: 4px;
+}
+@media (max-width: 48em) {
+  .view-switch .view-switch-label {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
 }
 .inventory-notice {
   min-height: 1.4em;

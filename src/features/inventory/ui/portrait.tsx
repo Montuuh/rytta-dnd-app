@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { Text } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { Camera } from 'lucide-react'
@@ -62,6 +62,7 @@ export function CharacterPortrait({
   const inputId = useId()
   const url = useQuery(portraitQuery(state.user!.id, path))
   const upload = usePortraitUpload(campaignId, characterId)
+  const [unreadable, setUnreadable] = useState(false)
   return (
     <div className="portrait" style={{ width: size, height: size }}>
       <div className="portrait-medallion" aria-hidden={!url.data}>
@@ -85,10 +86,11 @@ export function CharacterPortrait({
               const file = event.currentTarget.files?.[0]
               event.currentTarget.value = ''
               if (!file) return
+              setUnreadable(false)
               try {
                 upload.mutate(await toPortrait(file))
               } catch {
-                upload.reset()
+                setUnreadable(true)
               }
             }}
           />
@@ -102,7 +104,7 @@ export function CharacterPortrait({
           </label>
         </>
       )}
-      {upload.isError && (
+      {(upload.isError || unreadable) && (
         <Text size="xs" role="alert" className="portrait-error">
           {t('inventory.portrait.error')}
         </Text>

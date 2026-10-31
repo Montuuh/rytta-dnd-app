@@ -40,7 +40,8 @@ Inventory, equipment, use/undo and portraits (ADR 014):
 - Full gates: `npm run check` passes (typecheck, lint, architecture, docs, AI contracts, 14
   unit/SQL files with 83 tests, build); `prettier --check` passes; `npm run test:e2e` passes
   171/171 (7.5 min) across desktop, tablet, mobile and the identity projects, run with the
-  preinstalled Chromium through a local config shim.
+  preinstalled Chromium through a local config shim. Re-run on the final reviewed source
+  (`0b4e011`): `npm run check` 83/83 and E2E 171/171 again.
 
 ## Hosted Supabase (`ekscdsmniukuxqjixapu`)
 

@@ -87,6 +87,7 @@ export const sheetRowSchema = z.object({
   armor_class: z.number().int().min(0).max(99),
   build: storedBuild,
   revision: safeRevision,
+  portrait_path: z.string().max(200).nullable().optional(),
 })
 export type SheetRow = z.infer<typeof sheetRowSchema>
 export const vitalsSchema = z.object({

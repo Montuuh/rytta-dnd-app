@@ -40,13 +40,14 @@ export function CampaignPage() {
         )}
       </Group>
       <SimpleGrid cols={{ base: 1, sm: 2, lg: effectiveDm ? 3 : 2 }}>
-        {visibleModules.map(({ path, label, summary, icon: Icon }) => {
+        {visibleModules.map(({ path, label, summary, icon: Icon, ...module }) => {
           const key = path.replace(/^\//, '')
           const activeForPlayers = enabledKeys.has(key)
+          const implemented = 'implemented' in module && module.implemented === true
           return (
             <ModuleCard
               to={`/campaign/${campaign.id}${path}`}
-              enabled={path === '/party' || activeForPlayers}
+              enabled={path === '/party' || activeForPlayers || (effectiveDm && implemented)}
               key={path}
             >
               <Stack gap="xs">
@@ -73,7 +74,11 @@ export function CampaignPage() {
                   )}
                 </Group>
                 <Text size="sm" c="dimmed">
-                  {t(path === '/party' || activeForPlayers ? summary : 'common.planned')}
+                  {t(
+                    path === '/party' || activeForPlayers || implemented
+                      ? summary
+                      : 'common.planned',
+                  )}
                 </Text>
               </Stack>
             </ModuleCard>

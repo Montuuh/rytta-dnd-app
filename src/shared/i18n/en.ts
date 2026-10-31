@@ -1,10 +1,12 @@
 import { charactersEn } from './characters-en'
 import { sheetEn } from './sheet-en'
+import { inventoryEn } from './inventory-en'
 import { identityEn } from './identity-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
   ...sheetEn,
+  ...inventoryEn,
   'module.camp': 'Camp',
   'module.party': 'Party',
   'module.inventory': 'Inventory',

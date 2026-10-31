@@ -121,7 +121,11 @@ export function ItemCard({
             <Text size="sm" className="user-copy">
               {undo.message}
             </Text>
-            <UnstyledButton className="undo-seal small" disabled={pending} onClick={undo.onUndo}>
+            <UnstyledButton
+              className="undo-seal small"
+              aria-disabled={pending || undefined}
+              onClick={() => !pending && undo.onUndo()}
+            >
               <Undo2 size={16} aria-hidden="true" />
               {t('inventory.undo.action')}
             </UnstyledButton>
@@ -148,8 +152,8 @@ export function ItemCard({
               {equippable && (
                 <UnstyledButton
                   className="socket-action"
-                  disabled={pending}
-                  onClick={actions.equip}
+                  aria-disabled={pending || undefined}
+                  onClick={() => !pending && actions.equip()}
                 >
                   <span className="socket-ring" aria-hidden="true">
                     <Hand size={22} />
@@ -173,8 +177,8 @@ export function ItemCard({
             <Group justify="space-between" gap="xs" className="item-card-links">
               <UnstyledButton
                 className="quiet-link danger"
-                disabled={pending || count > stack.quantity}
-                onClick={() => actions.remove(count)}
+                aria-disabled={pending || count > stack.quantity || undefined}
+                onClick={() => !pending && count <= stack.quantity && actions.remove(count)}
               >
                 <Trash2 size={16} aria-hidden="true" />
                 {t('inventory.card.discard', { amount: count })}
@@ -182,8 +186,8 @@ export function ItemCard({
               {dm && (
                 <UnstyledButton
                   className="quiet-link"
-                  disabled={pending}
-                  onClick={() => actions.grant(count)}
+                  aria-disabled={pending || undefined}
+                  onClick={() => !pending && actions.grant(count)}
                 >
                   <Gift size={16} aria-hidden="true" />
                   {t('inventory.card.giveMore', { amount: count })}

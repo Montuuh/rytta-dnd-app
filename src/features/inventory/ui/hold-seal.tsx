@@ -30,6 +30,8 @@ export function HoldSeal({
   const frame = useRef<number | null>(null)
   const started = useRef(0)
   const holding = useRef(false)
+  const pressed = useRef(false)
+  const seal = useRef<HTMLButtonElement>(null)
   const stop = () => {
     if (frame.current !== null) cancelAnimationFrame(frame.current)
     frame.current = null
@@ -52,14 +54,16 @@ export function HoldSeal({
   return (
     <div className="hold-seal-wrap">
       <UnstyledButton
+        ref={seal}
         className="hold-seal"
         aria-label={label}
         aria-describedby={hintId}
-        disabled={disabled}
+        aria-disabled={disabled || undefined}
         style={{ '--seal-progress': `${progress * 360}deg` } as React.CSSProperties}
         onPointerDown={(event) => {
           if (disabled || event.button !== 0) return
           event.currentTarget.setPointerCapture(event.pointerId)
+          pressed.current = true
           holding.current = true
           started.current = event.timeStamp
           frame.current = requestAnimationFrame(tick)
@@ -82,7 +86,11 @@ export function HoldSeal({
         onPointerCancel={stop}
         onContextMenu={(event) => event.preventDefault()}
         onClick={(event) => {
-          if (event.detail === 0 && !disabled) confirm()
+          // Keyboard clicks (detail 0) and synthetic clicks without a prior press, such as
+          // some switch or screen-reader activations, confirm immediately.
+          const unpressed = !pressed.current
+          pressed.current = false
+          if (!disabled && (event.detail === 0 || unpressed)) confirm()
         }}
       >
         <span className="hold-seal-ring" aria-hidden="true" />
@@ -93,7 +101,16 @@ export function HoldSeal({
       </span>
       <div aria-live="polite">
         {armed && (
-          <UnstyledButton className="quiet-link seal-confirm" disabled={disabled} onClick={confirm}>
+          <UnstyledButton
+            className="quiet-link seal-confirm"
+            aria-disabled={disabled || undefined}
+            onClick={() => {
+              if (disabled) return
+              confirm()
+              // The "use now" link unmounts; keep focus on the seal it came from.
+              requestAnimationFrame(() => seal.current?.focus())
+            }}
+          >
             {confirmLabel}
           </UnstyledButton>
         )}

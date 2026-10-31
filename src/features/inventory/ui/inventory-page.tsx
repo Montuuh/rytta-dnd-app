@@ -275,9 +275,15 @@ export function InventoryPage() {
           }
         })}
       />
-      <div aria-live="polite" className="inventory-notice">
-        {notice && <Text size="sm">{notice}</Text>}
+      {/* Announce through an out-of-flow live region; show the text only when present. */}
+      <div aria-live="polite" className="visually-hidden-live">
+        {notice}
       </div>
+      {notice && (
+        <Text size="sm" aria-hidden="true" className="inventory-notice">
+          {notice}
+        </Text>
+      )}
       {error && !openStack && !forge && (
         <Alert color="red" role="alert">
           {error}
@@ -417,7 +423,14 @@ export function InventoryPage() {
                   expectedRevision: openStack.revision,
                   amount: 1,
                 },
-                withFuse(t('inventory.fuse.used', { name: nameOf(openStack) })),
+                (result) => {
+                  withFuse(t('inventory.fuse.used', { name: nameOf(openStack) }))(result)
+                  // The last unit leaves the satchel with its card; keep focus on the page.
+                  if (openStack.quantity === 1) {
+                    setCard(null)
+                    restoreFocus(true)
+                  }
+                },
               ),
             remove: (amount) =>
               run(

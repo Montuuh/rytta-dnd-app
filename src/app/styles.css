@@ -1531,8 +1531,13 @@ html[data-mantine-color-scheme='light'] {
 .quiet-link.danger {
   color: var(--danger);
 }
-.quiet-link:disabled {
+.quiet-link:disabled,
+.quiet-link[aria-disabled='true'],
+.socket-action[aria-disabled='true'],
+.undo-seal[aria-disabled='true'],
+.hold-seal[aria-disabled='true'] {
   opacity: 0.5;
+  cursor: progress;
 }
 /* Undo fuse */
 .undo-fuse {

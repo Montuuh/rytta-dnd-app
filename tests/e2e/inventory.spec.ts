@@ -92,7 +92,9 @@ test('equipping through the card and the paper doll updates AC and attacks', asy
   await page.goto(url)
   await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Equipar' }).click()
-  await expect(page.getByText('Espada larga equipado en Mano principal.')).toBeVisible()
+  await expect(page.locator('.inventory-notice')).toHaveText(
+    'Espada larga equipado en Mano principal.',
+  )
   await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeFocused()
   await page.locator('.view-switch').getByText('Equipo', { exact: true }).click()
   await expect(page.locator('.attack-lines')).toContainText('Espada larga')
@@ -126,6 +128,10 @@ test('hold-to-use needs a sustained press; a tap does nothing', async ({ page })
   await page.waitForTimeout(800)
   await page.mouse.up()
   await expect(page.getByText('×1')).toBeVisible()
+  await page.getByRole('button', { name: /Usar 1 × Poción/ }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeFocused()
 })
 
 test('the DM forges from an SRD template, gives it out and sees the hidden-module note', async ({
@@ -145,7 +151,7 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await page.getByRole('button', { name: 'Arin', exact: true }).click()
   await audit(page, info.outputPath('forge.png'))
   await page.getByRole('dialog').getByRole('button', { name: 'Forjar objeto' }).click()
-  await expect(page.getByText('Daga forjado.')).toBeVisible()
+  await expect(page.locator('.inventory-notice')).toHaveText('Daga forjado.')
   await page.locator('.view-switch').getByText('Mochila', { exact: true }).click()
   await expect(page.getByRole('button', { name: /Daga, (cantidad|quantity) 1/ })).toBeVisible()
 })

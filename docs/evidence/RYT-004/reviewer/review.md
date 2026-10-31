@@ -209,3 +209,126 @@ All screenshots are in `docs/evidence/RYT-004/reviewer/`:
   template selection (that one is covered by the repository's own e2e test, not repeated here).
 - **Not checked at 1440:** the card or the forge.
 - **No hosted Supabase.** All data came from the mocked HTTP fixture.
+
+---
+
+## Re-review 1
+
+- Reviewed at: 2026-10-31, HEAD `5342501`
+- Source fingerprint (`node scripts/check-ui-review.mjs --fingerprint`, checked at start and end):
+  `43114a4394c6c690c4fc214f4abb74a9f7caf26c4774138ef64af39064fb6c70`
+- Method: fresh scratch build on port 4199 with the mocked Supabase fixture and Chromium; diff
+  `fb11181..5342501` inspected. The findings above are kept as originally written.
+
+### Verdict
+
+**CHANGES_REQUIRED**
+
+B1, M2, M3 and M4 are fixed. M1 is only partly fixed: focus still falls to `<body>` when the
+item card closes because the last unit was used. Using the last potion is a primary table flow,
+and it is the same defect as M1. The fix is small and narrow.
+
+### Status of the original findings
+
+- **B1: resolved (browser-verified).**
+  - Setup: 390px, 150% text, DM, es light, after "Dar 1 más".
+  - No `.undo-fuse` is rendered while the card is open.
+  - An in-card `.card-undo` strip with `role="status"` appears inside the focus trap.
+  - Hit tests on Deshacer, Cantidad, Descartar 1, Dar 1 más and Editar objeto all reach the
+    control itself; axe and 44px checks pass.
+  - Undo from the strip restores ×3 and removes the strip.
+  - Closing the card shows the page fuse and returns focus to the tile.
+  - Evidence: `rr1-01-card-undo-390-es-light-150.png`.
+- **M1: partly resolved.** Browser-verified at 390 es dark, Player.
+  - Fixed:
+    - Equip from the card (single unit): focus goes to `h1` "Inventario".
+    - Discard the last unit: focus goes to `h1`.
+    - Equip through the picker: focus goes to "Mano secundaria: Escudo".
+    - Unequip through the picker: focus goes to "Mano secundaria: vacío".
+    - Sockets are no longer `disabled`.
+  - **Still open (major):** using the last unit closes the card and drops focus to `body`.
+    - This happens through keyboard Enter on the seal, "Usar ahora" or a hold.
+    - Reproduction: Player opens the potion card and uses it three times. The dialog unmounts
+      and `document.activeElement` is `body`; the fuse appears.
+    - Path: `inventory-page.tsx:413-421`. The `use` action never calls `restoreFocus(true)`
+      when `quantity` reaches 0; only the discard path (`:430-435`) does.
+    - Suggested fix: call `restoreFocus(true)` on success when `openStack.quantity === 1`.
+      Alternatively, restore focus generically whenever the open stack disappears.
+- **M2: resolved (browser-verified).**
+  - Setup: 390 es dark, with the fixture's `staleItem`.
+  - The stale message renders as `role="alert"` inside the card and is visible; axe passes.
+  - After closing the card, no leftover page alert remains.
+  - Opening the forge afterwards shows no error.
+  - Evidence: `rr1-02-stale-in-card-390-es-dark.png`.
+- **M3: resolved for keyboard and pointer (browser-verified). Real screen readers were not
+  tested.**
+  - `aria-describedby` now points to the visible "Mantén para usar".
+  - A quick touch tap reveals "Usar ahora" (44px, polite live region) and keeps focus on the
+    seal; activating it uses the item.
+  - Keyboard Enter uses the item immediately.
+  - Sliding off cancels the hold.
+  - A full 800ms hold uses the item.
+  - Evidence: `rr1-03-use-now-390-es-dark.png`.
+  - Residual risk: a synthetic `click` with `detail: 1` and no pointer events does nothing and
+    reveals nothing. An assistive technology that dispatches only a click (some TalkBack and
+    Switch Access paths) would still get a silent no-op. The fix would be to treat a click that
+    had no preceding `pointerdown` as an immediate confirm, then verify on a device.
+- **M4: resolved (browser-verified).**
+  - es: "Icono Paquete", "Icono Espada", "Icono Espadas cruzadas", …
+  - en: "Icon Package", "Icon Bow", …
+  - No raw keys remain among the 44 icons.
+
+### Status of the minor findings
+
+- **m1, m2 and m6: resolved.**
+  - m1: pips measure 17.3px at 150% (0.72rem).
+  - m2: no clipped tile names at 820/150% (`rr1-04-satchel-820-en-light-150.png`).
+  - m6: the copy now reads "Usar 1 × …" and "cantidad 3".
+- **m3: partly resolved.** The reserved height is gone. Two Stack gaps around the now-empty
+  `.inventory-notice` still leave a band of about 48px at 820/150% (`rr1-04`). Render the notice
+  only when it has text.
+- **m4: resolved.** The light-mode view switch now uses warm tokens.
+- **m5: resolved.** The hidden-module screen has an `h1` "Inventario", and the empty attacks text
+  reads "Ningún arma equipada." / "No weapon equipped."
+- **m7: resolved.** Sliding off the seal cancels the hold.
+- **m8: resolved (code-inspected).** The card name is now an `h3`.
+- **m9: accepted** with the coordinator's rationale.
+- **m10: resolved.** The forge resets the shared mutation state on open.
+
+### New minor finding
+
+- **n1. Focus falls to `body` inside the open card after in-card actions.** This happens after
+  the seal, "Dar 1 más", the in-card Deshacer and "Usar ahora".
+  - Cause: these controls become `disabled` while pending (`item-card.tsx:124,141,151,176,185`),
+    and "Usar ahora" unmounts.
+  - In Chromium the next Tab still lands inside the dialog, so the trap holds. A screen-reader
+    virtual cursor may still lose its place.
+  - Suggested direction: use `aria-disabled` with a guarded click, as the sockets now do, and
+    send focus back to the seal after "Usar ahora".
+
+### Tested in this pass
+
+- **390 touch:**
+  - DM card in es light at 150%: in-card undo, hit tests, axe, 44px checks, undo and close.
+  - Player in es dark: focus after equipping from the card, after discarding the last unit,
+    after equipping and unequipping through the picker, and after using the last unit.
+  - Stale error inside the card, then the forge afterwards.
+  - Hold seal: tap → "Usar ahora", keyboard, hold, slide-off, synthetic click.
+  - Keyboard Enter on the in-card controls, with the Tab that follows.
+- **820, en light, 150%, DM:** satchel (axe passes, no overflow, no clipped names), forge icon
+  names and DM template hint, empty attacks text.
+- **820, es dark:** forge icon names.
+- **820, Player with the module hidden:** `h1` present.
+
+Evidence added:
+- `rr1-01-card-undo-390-es-light-150.png`
+- `rr1-02-stale-in-card-390-es-dark.png`
+- `rr1-03-use-now-390-es-dark.png`
+- `rr1-04-satchel-820-en-light-150.png`
+
+### Limitations
+
+- Same as the first review: no real screen reader or device, no iOS Safari, and Player POV
+  read-only is not browser-testable with this fixture.
+- Not repeated in this pass: the 1440 and reduced-motion checks.
+- m8 was checked in the diff only.

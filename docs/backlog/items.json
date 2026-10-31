@@ -195,7 +195,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-003", "RYT-017"],
       "sources": [
         "Drive: items, equipment, encumbrance",
@@ -221,7 +221,9 @@
       ],
       "evidence": [
         "docs/decisions/014-inventory-equipment.md",
-        "docs/evidence/RYT-004/validation.md"
+        "docs/evidence/RYT-004/validation.md",
+        "docs/evidence/RYT-004/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {

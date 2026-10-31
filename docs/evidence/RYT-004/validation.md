@@ -63,4 +63,20 @@ Inventory, equipment, use/undo and portraits (ADR 014):
 
 ## UI review
 
-Pending the independent `ui-ux` verdict.
+Independent `ui-ux` review (report: `reviewer/review.md`, screenshots alongside):
+
+1. Initial review: CHANGES_REQUIRED. Blocker: the undo fuse covered item-card controls at
+   150% text. Majors: focus dropped to the body after some actions, action errors were
+   hidden behind open drawers, the hold-to-use seal lacked an announced hint and a touch
+   fallback, and forge icon names were untranslated keys. Plus minors.
+2. Re-review 1: CHANGES_REQUIRED; blocker and three majors resolved, focus still dropped
+   after using the last unit. New minor: controls disabled while pending lost focus.
+3. Re-review 2: **PASS** for source fingerprint
+   `e76b77ede18426bee14338dbfdae2d51c1e28a488aba8745621181f6b0dee435`, recorded in
+   `docs/evidence/ui-review-current.json`.
+
+Accepted follow-ups (non-blocking): after an in-card undo the strip disappears and focus
+falls to the body (Tab stays inside the dialog); the in-card undo strip pushes the seal
+down after the first use, so a repeated tap in the same place misses; the DM header lists
+every planned module on 390 px phones (shared layout, outside RYT-004). The reviewer did
+not use a real screen reader, a physical device or the Player-POV read-only fixture.

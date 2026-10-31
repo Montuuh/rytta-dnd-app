@@ -332,3 +332,79 @@ Evidence added:
   read-only is not browser-testable with this fixture.
 - Not repeated in this pass: the 1440 and reduced-motion checks.
 - m8 was checked in the diff only.
+
+---
+
+## Re-review 2
+
+- Reviewed at: 2026-10-31, HEAD `0b4e011`
+- Source fingerprint (`node scripts/check-ui-review.mjs --fingerprint`, checked at start and end):
+  `e76b77ede18426bee14338dbfdae2d51c1e28a488aba8745621181f6b0dee435`
+- Method: diff `5342501..0b4e011` inspected; fresh scratch build on port 4199 with the mocked
+  Supabase fixture and Chromium; focused Playwright checks at 390px touch and 820px. The
+  findings above are kept as written.
+
+### Verdict
+
+**PASS**
+
+No blocker or major finding remains. The remaining items are minor and listed below. This
+approval covers only the fingerprint above.
+
+### Status of the open items
+
+- **M1 (last-unit use): resolved, browser-verified at 390 es dark.**
+  - Using the last potion through each path closes the card, focuses `h1` "Inventario" and
+    shows the page fuse:
+    - keyboard Enter on the seal, three times;
+    - "Usar ahora", reached by tap and then activated with Enter or a click;
+    - a pointer hold, three times.
+  - On the earlier uses, focus stays on the seal.
+- **M3 residual (synthetic activation): resolved, browser-verified.**
+  - A `click` with `detail: 1` and no `pointerdown` now uses the item immediately (×3 → ×2).
+  - A completed hold uses the item exactly once (×2 → ×1, no double use from the trailing click).
+  - Sliding off cancels the hold without revealing "Usar ahora".
+  - A quick mouse click or tap reveals "Usar ahora" without using the item.
+  - A real VoiceOver/TalkBack device was still not tested.
+- **n1 (pending states): resolved for the main case.**
+  - Setup: 390, DM, with the `grant_item` response delayed by 800ms.
+  - While pending, "Dar 1 más" and the seal carry `aria-disabled="true"` and a progress cursor,
+    and focus stays on "Dar 1 más".
+  - A second Enter during pending is ignored: the stack ends at ×4, not ×5.
+  - After "Usar ahora", focus returns to the seal.
+  - axe passes on the card.
+  - Evidence: `rr2-01-pending-390-es-dark.png`.
+- **m3: resolved.**
+  - With no notice, the gap between the view switch and the Balanza is 24px at 820/150%, which
+    is just the Stack gap.
+  - With a notice, there are 12px on each side.
+  - The notice text appears in both the visible element and the out-of-flow live region.
+  - axe passes.
+  - Evidence: `rr2-02-notice-390-es-dark.png`.
+
+### Remaining minor findings (not blocking)
+
+- **n1-residual.** After the in-card Deshacer succeeds, the strip unmounts and focus falls to
+  `body` inside the dialog. In Chromium the next Tab stays inside the dialog. Suggested fix:
+  focus the seal or the card heading after undo (`item-card.tsx` `.card-undo`).
+- **n2 (new). The seal jumps 74px after a use.** The first use inserts the `.card-undo` strip
+  above the seal and pushes it down (y 297 → 371 at 390px). Someone tapping repeatedly to use a
+  second potion lands their press where the seal used to be (verified: the second press at the
+  old spot missed). Suggested fix: place the strip below the actions, or reserve its space.
+- **Observation (outside the RYT-004 widgets).** At 390px the DM header lists every planned
+  module as a vertical chip list, which pushes the inventory about 600px down
+  (`rr2-02-notice-390-es-dark.png`). This comes from the shared shell; it is worth tracking but
+  was not part of this delivery's review scope.
+
+### Limitations
+
+- No real screen reader, physical device or iOS Safari was used.
+- Player POV read-only is still not browser-testable with the fixture; it was checked in code
+  only.
+- The 1440 and reduced-motion checks were last run in the first review, and the CSS changes in
+  later commits do not touch motion rules.
+- PGlite and fixture tests are not hosted Supabase.
+
+Evidence added:
+- `rr2-01-pending-390-es-dark.png`
+- `rr2-02-notice-390-es-dark.png`

@@ -2,6 +2,7 @@ import type { EquipmentSlot, ItemDefinition, ItemStack, SlotKind } from './item'
 
 export type Abilities = { str: number; dex: number }
 const modifier = (score: number) => Math.floor((score - 10) / 2)
+export const proficiencyBonus = (level: number) => 2 + Math.floor((Math.max(1, level) - 1) / 4)
 
 /** Slots an item of this kind may occupy. */
 export function slotsFor(kind: SlotKind): EquipmentSlot[] {
@@ -64,7 +65,7 @@ export type Attack = {
   attack: number
   dice: string
   damageBonus: number
-  damageType: string | null
+  damageType: 'bludgeoning' | 'piercing' | 'slashing' | null
   versatileDice: string | null
   range: string | null
 }

@@ -285,7 +285,7 @@ export const sheetEs = {
   'wizard.suggested': 'Sugerido: {{value}} (media fija)',
   'wizard.useSuggested': 'Usar sugerido',
   'wizard.ac': 'Clase de Armadura',
-  'wizard.acAuto': 'Sin armadura: 10 + DES ({{value}})',
+  'wizard.acAuto': 'Automática según el equipo (sin armadura: 10 + DES = {{value}})',
   'wizard.acManual': 'Fijar a mano (armadura, escudo, rasgos)',
   'wizard.speed': 'Velocidad (pies)',
   'wizard.spellsHint':

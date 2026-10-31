@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView } from '@/features/campaigns'
+import { CharacterPortrait, SheetAttacks } from '@/features/inventory'
 import { charactersQuery, sheetQuery, useSheetAction } from '../../api'
 import type { Vitals } from '../../domain/sheet'
 import { useCharacterLabels } from '../labels'
@@ -122,19 +123,29 @@ export function CharacterSheetPage() {
         )}
       </Group>
       <header className="sheet-identity">
-        <Title order={1} className="user-copy">
-          {character.name}
-        </Title>
-        <Text c="dimmed" className="user-copy">
-          {t('sheet.classLevel', { class: labels.className(build), level: sheet.level })}
-          {build.subclass ? ` (${build.subclass})` : ''}. {labels.speciesName(build)},{' '}
-          {labels.backgroundName(build)}.
-        </Text>
-        {!canEdit && (
-          <Text size="sm" c="dimmed">
-            {t('sheet.readOnly')}
+        <CharacterPortrait
+          campaignId={campaign.id}
+          characterId={character.id}
+          name={character.name}
+          path={sheet.portrait_path ?? null}
+          size={72}
+          editable={canEdit}
+        />
+        <div className="sheet-identity-text">
+          <Title order={1} className="user-copy">
+            {character.name}
+          </Title>
+          <Text c="dimmed" className="user-copy">
+            {t('sheet.classLevel', { class: labels.className(build), level: sheet.level })}
+            {build.subclass ? ` (${build.subclass})` : ''}. {labels.speciesName(build)},{' '}
+            {labels.backgroundName(build)}.
           </Text>
-        )}
+          {!canEdit && (
+            <Text size="sm" c="dimmed">
+              {t('sheet.readOnly')}
+            </Text>
+          )}
+        </div>
       </header>
       {action.isError && (
         <Alert color="red" role="alert">
@@ -151,6 +162,12 @@ export function CharacterSheetPage() {
         {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
       </div>
       <VitalsPanel {...shared} exhaustion={exhaustion} />
+      <section aria-labelledby="sheet-attacks" className="sheet-attacks">
+        <Title order={2} size="h4" id="sheet-attacks" mb={4}>
+          {t('inventory.attacks.title')}
+        </Title>
+        <SheetAttacks campaignId={campaign.id} characterId={character.id} />
+      </section>
       <Text size="xs" c="dimmed">
         {t('characters.updated', {
           time: new Date(query.dataUpdatedAt).toLocaleTimeString(i18n.language),

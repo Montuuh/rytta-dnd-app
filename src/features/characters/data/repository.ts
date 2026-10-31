@@ -96,7 +96,7 @@ export async function changeCharacter(campaignId: string, action: CharacterActio
 }
 
 const sheetColumns =
-  'character_id, campaign_id, status, level, max_hp, armor_class, build, revision'
+  'character_id, campaign_id, status, level, max_hp, armor_class, build, revision, portrait_path'
 const vitalsColumns =
   'character_id, current_hp, temp_hp, hit_dice_spent, death_successes, death_failures, heroic_inspiration, conditions, slots_used, tracker_uses, revision'
 export async function getSheet(campaignId: string, characterId: string, signal: AbortSignal) {

@@ -20,3 +20,7 @@ export function getSupabase(url: string, publishableKey: string) {
   })
   return client
 }
+
+/** The schema this deployment reads and writes; storage paths are prefixed with it. */
+export const activeSchema = () =>
+  databaseSchema({ development: import.meta.env.DEV, hostname: window.location.hostname })

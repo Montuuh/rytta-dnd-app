@@ -93,4 +93,71 @@ export type CharacterFunctions = {
     }
     Returns: number
   }
+  save_item_definition: {
+    Args: {
+      target_campaign: string
+      target_definition: string | null
+      expected_revision: number | null
+      item: Json
+      request_id: string
+    }
+    Returns: Json
+  }
+  grant_item: {
+    Args: {
+      target_campaign: string
+      target_character: string
+      target_definition: string
+      amount: number
+      request_id: string
+    }
+    Returns: Json
+  }
+  use_item: {
+    Args: {
+      target_campaign: string
+      target_item: string
+      expected_revision: number
+      amount: number
+      request_id: string
+    }
+    Returns: Json
+  }
+  remove_item: {
+    Args: {
+      target_campaign: string
+      target_item: string
+      expected_revision: number
+      amount: number
+      request_id: string
+    }
+    Returns: Json
+  }
+  equip_item: {
+    Args: {
+      target_campaign: string
+      target_item: string
+      expected_revision: number
+      target_slot: string
+      request_id: string
+    }
+    Returns: Json
+  }
+  unequip_item: {
+    Args: {
+      target_campaign: string
+      target_item: string
+      expected_revision: number
+      request_id: string
+    }
+    Returns: Json
+  }
+  undo_inventory_event: {
+    Args: { target_campaign: string; target_event: string; request_id: string }
+    Returns: Json
+  }
+  set_character_portrait: {
+    Args: { target_campaign: string; target_character: string; new_path: string | null }
+    Returns: undefined
+  }
 }

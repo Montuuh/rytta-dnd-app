@@ -19,6 +19,7 @@ export const modules = [
     summary: 'summary.party',
     icon: Users,
     ticket: 'RYT-003',
+    implemented: true,
   },
   {
     path: '/inventory',
@@ -26,6 +27,7 @@ export const modules = [
     summary: 'summary.inventory',
     icon: Backpack,
     ticket: 'RYT-004',
+    implemented: true,
   },
   {
     path: '/shops',

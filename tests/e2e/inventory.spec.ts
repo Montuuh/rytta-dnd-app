@@ -39,7 +39,7 @@ for (const [language, scheme] of [
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(url)
     const es = language === 'es'
-    const potion = page.getByRole('button', { name: /Poción de curación, 3/ })
+    const potion = page.getByRole('button', { name: /Poción de curación, (cantidad|quantity) 3/ })
     await expect(potion).toBeVisible()
     await page.addStyleTag({ content: 'html { font-size: 150%; }' })
     await expect(page.getByRole('meter')).toHaveAttribute('aria-valuemax', '210')
@@ -47,20 +47,28 @@ for (const [language, scheme] of [
     await potion.click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await audit(page, info.outputPath(`card-${language}-${scheme}-150.png`))
-    const seal = page.getByRole('button', { name: es ? /Usar un Poción/ : /Use one Poción/ })
+    const seal = page.getByRole('button', { name: es ? /Usar 1 × Poción/ : /Use 1 × Poción/ })
     await seal.focus()
     await page.keyboard.press('Enter')
-    await expect(page.locator('.undo-fuse')).toContainText(es ? 'Has usado' : 'You used')
+    await expect(page.getByRole('dialog').locator('.card-undo')).toContainText(
+      es ? 'Has usado' : 'You used',
+    )
+    await expect(page.locator('.undo-fuse')).toHaveCount(0)
     await expect(page.getByText('×2')).toBeVisible()
     await page.keyboard.press('Escape')
+    await expect(page.locator('.undo-fuse')).toContainText(es ? 'Has usado' : 'You used')
     await expect(page.getByRole('dialog')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /Poción de curación, 2/ })).toBeFocused()
+    await expect(
+      page.getByRole('button', { name: /Poción de curación, (cantidad|quantity) 2/ }),
+    ).toBeFocused()
     await audit(page, info.outputPath(`fuse-${language}-${scheme}-150.png`))
     await page
       .locator('.undo-fuse')
       .getByRole('button', { name: es ? /Deshacer/ : /Undo/ })
       .click()
-    await expect(page.getByRole('button', { name: /Poción de curación, 3/ })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: /Poción de curación, (cantidad|quantity) 3/ }),
+    ).toBeVisible()
     await page
       .locator('.view-switch')
       .getByText(es ? 'Equipo' : 'Equipment', { exact: true })
@@ -82,14 +90,16 @@ test('equipping through the card and the paper doll updates AC and attacks', asy
 }, info) => {
   await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
   await page.goto(url)
-  await page.getByRole('button', { name: /Espada larga, 1/ }).click()
+  await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Equipar' }).click()
   await expect(page.getByText('Espada larga equipado en Mano principal.')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeFocused()
   await page.locator('.view-switch').getByText('Equipo', { exact: true }).click()
   await expect(page.locator('.attack-lines')).toContainText('Espada larga')
   await expect(page.locator('.attack-lines')).toContainText('+5')
   await page.getByRole('button', { name: 'Mano secundaria: vacío' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Escudo' }).click()
+  await expect(page.getByRole('button', { name: 'Mano secundaria: Escudo' })).toBeFocused()
   await expect(page.getByRole('img', { name: 'Clase de Armadura 16' })).toBeVisible()
   await expect(page.locator('.attack-lines')).not.toContainText('a dos manos')
   await page.getByRole('button', { name: 'Anillo izquierdo: vacío' }).click()
@@ -104,16 +114,18 @@ test('equipping through the card and the paper doll updates AC and attacks', asy
 test('hold-to-use needs a sustained press; a tap does nothing', async ({ page }) => {
   await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
   await page.goto(url)
-  await page.getByRole('button', { name: /Poción de curación, 3/ }).click()
-  const seal = page.getByRole('button', { name: /Usar un Poción/ })
+  await page.getByRole('button', { name: /Poción de curación, (cantidad|quantity) 3/ }).click()
+  const seal = page.getByRole('button', { name: /Usar 1 × Poción/ })
   await seal.click()
   await expect(page.getByText('×3')).toBeVisible()
+  await page.getByRole('button', { name: 'Usar ahora' }).click()
+  await expect(page.getByText('×2')).toBeVisible()
   const box = (await seal.boundingBox())!
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.down()
   await page.waitForTimeout(800)
   await page.mouse.up()
-  await expect(page.getByText('×2')).toBeVisible()
+  await expect(page.getByText('×1')).toBeVisible()
 })
 
 test('the DM forges from an SRD template, gives it out and sees the hidden-module note', async ({
@@ -135,7 +147,7 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await page.getByRole('dialog').getByRole('button', { name: 'Forjar objeto' }).click()
   await expect(page.getByText('Daga forjado.')).toBeVisible()
   await page.locator('.view-switch').getByText('Mochila', { exact: true }).click()
-  await expect(page.getByRole('button', { name: /Daga, 1/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Daga, (cantidad|quantity) 1/ })).toBeVisible()
 })
 
 test('Players cannot open the module until the DM turns it on', async ({ page }) => {

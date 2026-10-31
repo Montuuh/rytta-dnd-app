@@ -1162,9 +1162,6 @@ html[data-mantine-color-scheme='light'] {
     line-height: 1.15;
   }
 }
-.inventory-notice {
-  min-height: 1.4em;
-}
 /* Balance: carried weight on a track notched at STR×5/×10/×15. */
 .balance {
   padding: 12px 14px 22px;
@@ -1336,12 +1333,12 @@ html[data-mantine-color-scheme='light'] {
   line-height: 1.2;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .item-rarity-pips {
-  font-size: 0.5rem;
+  font-size: 0.72rem;
   letter-spacing: 1px;
   color: var(--rarity);
 }
@@ -1540,7 +1537,7 @@ html[data-mantine-color-scheme='light'] {
 /* Undo fuse */
 .undo-fuse {
   position: fixed;
-  z-index: 300;
+  z-index: 150;
   left: 50%;
   bottom: max(12px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
@@ -1822,4 +1819,25 @@ html[data-mantine-color-scheme='light'] {
   .item-tile:active {
     transform: none;
   }
+}
+.card-undo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--app-accent);
+  background: var(--app-bg);
+}
+.seal-confirm {
+  font-weight: 700;
+  color: var(--app-accent);
+}
+html[data-mantine-color-scheme='light'] .view-switch {
+  background: var(--app-raised);
+}
+html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-indicator {
+  background: var(--app-surface);
 }

@@ -147,7 +147,8 @@ export function PaperDoll({
                 className="socket"
                 data-filled={entry ? true : undefined}
                 data-blocked={blocked || undefined}
-                disabled={!canEdit || pending || blocked}
+                disabled={!canEdit || blocked}
+                aria-disabled={pending || undefined}
                 aria-label={
                   entry
                     ? t('inventory.socket.filled', { slot: label, name: entry.definition.name })
@@ -156,6 +157,7 @@ export function PaperDoll({
                       : t('inventory.socket.empty', { slot: label })
                 }
                 onClick={(event) => {
+                  if (pending) return
                   opener.current = event.currentTarget
                   setPicking(slot)
                 }}

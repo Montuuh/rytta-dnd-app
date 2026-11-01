@@ -47,8 +47,8 @@ Captures from the production build against the e2e Supabase HTTP fixture (dark u
 
 - Real iOS Safari and Android devices: pull-to-refresh, long press ×5 and safe-area insets were
   checked only with Chromium touch emulation and code review.
-- The `More` drawer appears only with more than five reachable destinations. No current
-  fixture enables that many modules, so it has code and keyboard review but no e2e assertion.
+- The `More` drawer appears only with more than five reachable destinations. The e2e
+  regression test reaches it by enabling two planned modules (phone project only).
 - Hosted Supabase was not exercised. No database or RLS changes are part of this ticket.
 
 ## Independent UI/UX review
@@ -72,4 +72,12 @@ The full e2e run after the fixes found one intermittent axe `aria-required-child
 Mantine focus placeholder inside the card `More actions` menu while it closed. It was fixed
 with `withInitialFocusPlaceholder={false}`, and the affected specs passed twice in a row (36/36).
 
-Round 2: pending a focused re-review.
+Round 2 (source `71e3b89`): `CHANGES_REQUIRED`. Six findings were fixed, but the revelation
+switch still lost focus because `useCampaignAction` removed every cached campaign query
+before refetching, which remounted the list. Visibility toggles (`revelationVisibility`,
+`modules`) now only invalidate. Membership and role actions still remove private campaign
+data first. The keyboard focus regression test now also toggles a revelation twice by
+keyboard. Results: `npm run check` and format pass. E2E: characters and identity 102/102;
+sheet, inventory, scaffold and preferences 78/78.
+
+Round 3: pending a focused re-review.

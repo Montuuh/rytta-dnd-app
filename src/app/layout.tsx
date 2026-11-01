@@ -117,6 +117,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
   const { pathname } = useLocation()
   const [opened, { open, close }] = useDisclosure(false)
   const moreButton = useRef<HTMLButtonElement>(null)
+  const navigated = useRef(false)
   const overflow = entries.length > bottomSlots
   const primary = overflow ? entries.slice(0, bottomSlots - 1) : entries
   const rest = overflow ? entries.slice(bottomSlots - 1) : []
@@ -163,7 +164,10 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
         title={t('nav.moreTitle')}
         className="more-drawer"
         closeButtonProps={{ 'aria-label': t('nav.close'), size: 44 }}
-        onExitTransitionEnd={() => moreButton.current?.focus()}
+        onExitTransitionEnd={() => {
+          if (!navigated.current) moreButton.current?.focus()
+          navigated.current = false
+        }}
         returnFocus={false}
       >
         <Stack gap={6} pb="md">
@@ -172,6 +176,11 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
               key={to}
               end={end}
               to={to}
+              // Choosing a destination lets the route change focus main content instead.
+              onClick={() => {
+                navigated.current = to !== pathname
+                close()
+              }}
               className={({ isActive }) =>
                 `more-drawer-item ${dm ? 'is-dm' : ''} ${isActive ? 'active' : ''}`
               }
@@ -271,6 +280,8 @@ export function Layout() {
     setPreviewScope(null)
     setPreviewUserId(null)
     setPreviewLabel(null)
+    // The banner that may hold focus unmounts; keep the keyboard user on the switch.
+    requestAnimationFrame(() => previewSwitch.current?.focus())
   }
   const togglePreview = (checked: boolean) => {
     if (!checked) return exitPreview()

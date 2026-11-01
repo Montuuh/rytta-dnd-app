@@ -15,7 +15,7 @@ export const designEn = {
   'campaign.comingSoonCount_one': '{{count}} module in preparation',
   'campaign.comingSoonCount_other': '{{count}} modules in preparation',
   'campaign.comingSoonHint':
-    'These modules are not available yet. When they arrive you can enable them for your table.',
+    'These modules are in preparation. You can show them to Players from Active modules; until they ship, Players see a preview page.',
   'campaign.openModule': 'Open',
   'common.refreshing': 'Refreshing…',
   'common.checkedAgo': 'Updated {{time}}',

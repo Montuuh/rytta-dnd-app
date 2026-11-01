@@ -53,4 +53,23 @@ Captures from the production build against the e2e Supabase HTTP fixture (dark u
 
 ## Independent UI/UX review
 
-Pending: see `reviewer/review.md` once the independent ui-ux review completes.
+Round 1 (source `3872bd3`): `CHANGES_REQUIRED`, recorded in `reviewer/review.md`. Fixes:
+
+1. Blocker, focus lost: steppers, exhaustion pips and the module and revelation switches now
+   use `aria-disabled` plus a handler guard instead of native `disabled` while the RPC runs.
+   `Back to DM view` returns focus to the `Player view` switch. Regression test: `RYT-025
+   keyboard focus stays on steppers, preview switch and More drawer choices`.
+2. Major, full-screen More drawer: the sheet now sizes to its content (max 70dvh, full width)
+   and sits flush at the bottom. The test asserts its geometry.
+3. Phone rules use `max-width: 47.99em`, so a 768px tablet keeps the top row.
+4. Choosing a destination in the More drawer focuses main content. Escape still returns focus
+   to `More`.
+5. Bottom bar labels wrap to two hyphenated lines at 150% text instead of truncating.
+6. The Coming soon copy now says DMs can show planned modules as a preview page.
+7. The tablet and laptop nav row has an edge fade with trailing padding.
+
+The full e2e run after the fixes found one intermittent axe `aria-required-children`: the
+Mantine focus placeholder inside the card `More actions` menu while it closed. It was fixed
+with `withInitialFocusPlaceholder={false}`, and the affected specs passed twice in a row (36/36).
+
+Round 2: pending a focused re-review.

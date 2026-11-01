@@ -253,7 +253,7 @@ function CharacterMenu({
   const trigger = useRef<HTMLButtonElement>(null)
   if (!dm) return null
   return (
-    <Menu position="bottom-end" withinPortal>
+    <Menu position="bottom-end" withinPortal withInitialFocusPlaceholder={false}>
       <Menu.Target>
         <ActionIcon
           ref={trigger}
@@ -308,9 +308,10 @@ function StepButton({
   step: (amount: number) => void
 }) {
   const { t } = useTranslation()
+  // aria-disabled (not native disabled) keeps keyboard focus on the control while the RPC runs.
   const press = useLongPress(
-    () => step(delta),
-    () => step(delta * 5),
+    () => !disabled && step(delta),
+    () => !disabled && step(delta * 5),
   )
   return (
     <ActionIcon
@@ -320,7 +321,8 @@ function StepButton({
       className="stepper-btn"
       aria-label={label}
       title={t('characters.holdHint')}
-      disabled={disabled}
+      aria-disabled={disabled || undefined}
+      data-inert={disabled || undefined}
       {...press}
     >
       {delta < 0 ? <Minus size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
@@ -384,10 +386,10 @@ function ResourceTile({
                   type="button"
                   className="exhaustion-pip"
                   data-filled={filled || undefined}
-                  disabled={pending}
+                  aria-disabled={pending || undefined}
                   aria-pressed={filled}
                   aria-label={`${t('characters.exhaustionPip', { level })} · ${character.name}`}
-                  onClick={() => commit(target)}
+                  onClick={() => !pending && commit(target)}
                 >
                   <span aria-hidden="true">{level}</span>
                 </button>

@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   Group,
+  Menu,
   Modal,
   NumberInput,
   Paper,
@@ -17,7 +18,22 @@ import {
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import { Coins, Droplets, Flame, Minus, Plus, Utensils } from 'lucide-react'
+import {
+  Coins,
+  Droplets,
+  Ellipsis,
+  Flame,
+  Link2,
+  Minus,
+  Pencil,
+  Plus,
+  ScrollText,
+  Unlink,
+  Utensils,
+} from 'lucide-react'
+import { RefreshControl } from '@/shared/ui/refresh-control'
+import { PullToRefresh } from '@/shared/ui/pull-to-refresh'
+import { useLongPress } from '@/shared/ui/use-long-press'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
@@ -29,6 +45,8 @@ import type { SheetSummary } from '../domain/sheet'
 import { PlayerAssignmentEditor } from './player-assignment'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
+type ResourceField = (typeof fields)[number]
+const exhaustionLevels = 6
 const resourceIcons = {
   gold: Coins,
   water_units: Droplets,
@@ -39,7 +57,7 @@ type Editor = { kind: 'create' } | { kind: 'resources'; character: Character }
 type PartyEditor = Editor | { kind: 'assignment'; character: Character }
 
 export function CharacterParty() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { state } = useAuth()
   const campaign = useCampaign()
   const { playerPreview, previewUserId, previewLabel } = useCampaignView()
@@ -87,16 +105,13 @@ export function CharacterParty() {
           </Button>
         )}
       </Group>
-      <Group justify="space-between">
-        <Text size="xs" c="dimmed">
-          {query.dataUpdatedAt > 0 &&
-            t('characters.updated', {
-              time: new Date(query.dataUpdatedAt).toLocaleTimeString(i18n.language),
-            })}
-        </Text>
-        <Button variant="subtle" onClick={() => void query.refetch()}>
-          {t('hub.refresh')}
-        </Button>
+      <PullToRefresh onRefresh={() => void query.refetch()} />
+      <Group justify="flex-end">
+        <RefreshControl
+          onRefresh={() => void query.refetch()}
+          fetching={query.isFetching}
+          updatedAt={query.dataUpdatedAt}
+        />
       </Group>
       {notice && <Alert role="status">{t(notice)}</Alert>}
       {query.isPending && <Text role="status">{t('common.loading')}</Text>}
@@ -119,14 +134,23 @@ export function CharacterParty() {
             <Paper p="lg" key={character.id} className="character-card">
               <Stack>
                 <Stack gap="sm">
-                  <Title
-                    order={2}
-                    className="user-copy"
-                    id={`character-${character.id}`}
-                    tabIndex={-1}
-                  >
-                    {character.name}
-                  </Title>
+                  <Group justify="space-between" wrap="nowrap" align="flex-start" gap="xs">
+                    <Title
+                      order={2}
+                      className="user-copy"
+                      id={`character-${character.id}`}
+                      tabIndex={-1}
+                    >
+                      {character.name}
+                    </Title>
+                    <CharacterMenu
+                      character={character}
+                      dm={dm}
+                      sheetPath={`/campaign/${campaign.id}/party/${character.id}`}
+                      onAssign={(target) => open({ kind: 'assignment', character }, target)}
+                      onResources={(target) => open({ kind: 'resources', character }, target)}
+                    />
+                  </Group>
                   <div
                     className={`character-owner-bar ${character.user_id ? 'is-assigned' : 'is-unassigned'}`}
                   >
@@ -150,16 +174,6 @@ export function CharacterParty() {
                         </Text>
                       )}
                     </div>
-                    {dm && (
-                      <Button
-                        variant={character.user_id ? 'subtle' : 'light'}
-                        onClick={(event) =>
-                          open({ kind: 'assignment', character }, event.currentTarget)
-                        }
-                      >
-                        {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
-                      </Button>
-                    )}
                   </div>
                 </Stack>
                 <SheetSummaryBar
@@ -169,85 +183,28 @@ export function CharacterParty() {
                   own={!playerPreview && character.user_id === state.user!.id}
                   path={`/campaign/${campaign.id}/party/${character.id}`}
                 />
-                <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                  {fields.map((field) => {
-                    const Icon = resourceIcons[field]
-                    const maxVal = field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
-                    const currentVal = character.character_resources[field]
-                    const label = t(`characters.${field}`)
-                    const stepInline = (delta: number) => {
-                      const next = Math.min(maxVal, Math.max(0, currentVal + delta))
-                      if (next === currentVal) return
-                      quickResourceAction.mutate(
-                        {
-                          kind: 'resources',
-                          characterId: character.id,
-                          values: { ...character.character_resources, [field]: next },
-                          requestId: crypto.randomUUID(),
-                        },
-                        { onSuccess: () => setNotice('characters.saved') },
-                      )
-                    }
-                    return (
-                      <div
-                        key={field}
-                        className={`resource-cell resource-cell-${field} ${currentVal >= 1_000_000_000 ? 'resource-cell-wide' : ''}`}
-                      >
-                        <div className="resource-cell-header">
-                          <span className="resource-icon" aria-hidden="true">
-                            <Icon size={16} />
-                          </span>
-                          <Text size="sm" c="dimmed" className="resource-label">
-                            {label}
-                          </Text>
-                        </div>
-                        <div className="resource-cell-body">
-                          <Text fw={700} size="xl" className="resource-value">
-                            {currentVal.toLocaleString(i18n.language)}
-                          </Text>
-                          {dm && (
-                            <div className="resource-inline-steppers">
-                              <ActionIcon
-                                type="button"
-                                variant="default"
-                                size={44}
-                                className="stepper-btn"
-                                aria-label={`${t('characters.decrease', { field: label })} · ${character.name}`}
-                                disabled={quickResourceAction.isPending || currentVal <= 0}
-                                onClick={() => stepInline(-1)}
-                              >
-                                <Minus size={16} aria-hidden="true" />
-                              </ActionIcon>
-                              <ActionIcon
-                                type="button"
-                                variant="default"
-                                size={44}
-                                className="stepper-btn"
-                                aria-label={`${t('characters.increase', { field: label })} · ${character.name}`}
-                                disabled={quickResourceAction.isPending || currentVal >= maxVal}
-                                onClick={() => stepInline(1)}
-                              >
-                                <Plus size={16} aria-hidden="true" />
-                              </ActionIcon>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </SimpleGrid>
-                {dm && (
-                  <Group>
-                    <Button
-                      variant="light"
-                      onClick={(event) =>
-                        open({ kind: 'resources', character }, event.currentTarget)
+                <div className="resource-grid">
+                  {fields.map((field) => (
+                    <ResourceTile
+                      key={field}
+                      field={field}
+                      character={character}
+                      dm={dm}
+                      pending={quickResourceAction.isPending}
+                      commit={(next) =>
+                        quickResourceAction.mutate(
+                          {
+                            kind: 'resources',
+                            characterId: character.id,
+                            values: { ...character.character_resources, [field]: next },
+                            requestId: crypto.randomUUID(),
+                          },
+                          { onSuccess: () => setNotice('characters.saved') },
+                        )
                       }
-                    >
-                      {t('characters.edit')}
-                    </Button>
-                  </Group>
-                )}
+                    />
+                  ))}
+                </div>
               </Stack>
             </Paper>
           ))}
@@ -276,6 +233,201 @@ export function CharacterParty() {
         />
       )}
     </Stack>
+  )
+}
+
+function CharacterMenu({
+  character,
+  dm,
+  sheetPath,
+  onAssign,
+  onResources,
+}: {
+  character: Character
+  dm: boolean
+  sheetPath: string
+  onAssign: (target: HTMLElement) => void
+  onResources: (target: HTMLElement) => void
+}) {
+  const { t } = useTranslation()
+  const trigger = useRef<HTMLButtonElement>(null)
+  if (!dm) return null
+  return (
+    <Menu position="bottom-end" withinPortal>
+      <Menu.Target>
+        <ActionIcon
+          ref={trigger}
+          variant="subtle"
+          size={44}
+          aria-label={t('characters.moreFor', { name: character.name })}
+          title={t('common.moreActions')}
+        >
+          <Ellipsis size={20} aria-hidden="true" />
+        </ActionIcon>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Item
+          component={Link}
+          to={sheetPath}
+          leftSection={<ScrollText size={18} aria-hidden="true" />}
+        >
+          {t('sheet.view')}
+        </Menu.Item>
+        <Menu.Item
+          leftSection={<Pencil size={18} aria-hidden="true" />}
+          onClick={() => trigger.current && onResources(trigger.current)}
+        >
+          {t('characters.edit')}
+        </Menu.Item>
+        <Menu.Item
+          leftSection={
+            character.user_id ? (
+              <Unlink size={18} aria-hidden="true" />
+            ) : (
+              <Link2 size={18} aria-hidden="true" />
+            )
+          }
+          onClick={() => trigger.current && onAssign(trigger.current)}
+        >
+          {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
+        </Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
+  )
+}
+
+function StepButton({
+  delta,
+  label,
+  disabled,
+  step,
+}: {
+  delta: 1 | -1
+  label: string
+  disabled: boolean
+  step: (amount: number) => void
+}) {
+  const { t } = useTranslation()
+  const press = useLongPress(
+    () => step(delta),
+    () => step(delta * 5),
+  )
+  return (
+    <ActionIcon
+      type="button"
+      variant="default"
+      size={44}
+      className="stepper-btn"
+      aria-label={label}
+      title={t('characters.holdHint')}
+      disabled={disabled}
+      {...press}
+    >
+      {delta < 0 ? <Minus size={18} aria-hidden="true" /> : <Plus size={18} aria-hidden="true" />}
+    </ActionIcon>
+  )
+}
+
+function ResourceTile({
+  field,
+  character,
+  dm,
+  pending,
+  commit,
+}: {
+  field: ResourceField
+  character: Character
+  dm: boolean
+  pending: boolean
+  commit: (next: number) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const Icon = resourceIcons[field]
+  const maxVal = field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
+  const currentVal = character.character_resources[field]
+  const label = t(`characters.${field}`)
+  const step = (delta: number) => {
+    const next = Math.min(maxVal, Math.max(0, currentVal + delta))
+    if (next !== currentVal) commit(next)
+  }
+  const pipMode = field === 'exhaustion' && currentVal <= exhaustionLevels
+  return (
+    <div
+      className={`resource-cell resource-cell-${field} ${pipMode ? 'resource-cell-wide' : ''} ${currentVal >= 1_000_000_000 ? 'resource-cell-wide' : ''}`}
+    >
+      <div className="resource-cell-header">
+        <span className="resource-icon" aria-hidden="true">
+          <Icon size={18} />
+        </span>
+        <Text size="sm" c="dimmed" className="resource-label">
+          {label}
+        </Text>
+      </div>
+      {pipMode ? (
+        <div className="exhaustion-track">
+          <Text fw={700} className="resource-value">
+            {currentVal}
+            <span className="resource-value-max">/{exhaustionLevels}</span>
+          </Text>
+          <div
+            className="exhaustion-pips"
+            role="group"
+            aria-label={t('characters.exhaustionLevel', { level: currentVal })}
+          >
+            {Array.from({ length: exhaustionLevels }, (_, index) => {
+              const level = index + 1
+              const filled = level <= currentVal
+              const target = level === currentVal ? level - 1 : level
+              return dm ? (
+                <button
+                  key={level}
+                  type="button"
+                  className="exhaustion-pip"
+                  data-filled={filled || undefined}
+                  disabled={pending}
+                  aria-pressed={filled}
+                  aria-label={`${t('characters.exhaustionPip', { level })} · ${character.name}`}
+                  onClick={() => commit(target)}
+                >
+                  <span aria-hidden="true">{level}</span>
+                </button>
+              ) : (
+                <span
+                  key={level}
+                  className="exhaustion-pip"
+                  data-filled={filled || undefined}
+                  aria-hidden="true"
+                >
+                  <span>{level}</span>
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="resource-cell-body">
+          <Text fw={700} className="resource-value">
+            {currentVal.toLocaleString(i18n.language)}
+          </Text>
+          {dm && (
+            <div className="resource-inline-steppers">
+              <StepButton
+                delta={-1}
+                label={`${t('characters.decrease', { field: label })} · ${character.name}`}
+                disabled={pending || currentVal <= 0}
+                step={step}
+              />
+              <StepButton
+                delta={1}
+                label={`${t('characters.increase', { field: label })} · ${character.name}`}
+                disabled={pending || currentVal >= maxVal}
+                step={step}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -1,18 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import {
-  ActionIcon,
   Alert,
   Button,
-  Group,
-  Stack,
-  Text,
+  Drawer,
+  Menu,
   Modal,
-  Menu as AccountMenu,
+  Popover,
+  Stack,
+  Switch,
+  Text,
+  UnstyledButton,
   useComputedColorScheme,
   useMantineColorScheme,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Compass, LogOut, Moon, Settings, Shield, Sun, UserRound } from 'lucide-react'
+import {
+  Compass,
+  Eye,
+  Languages,
+  LogOut,
+  Menu as MenuIcon,
+  Moon,
+  Settings,
+  Shield,
+  Sun,
+  UserRound,
+} from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { modules } from './modules'
@@ -28,117 +41,148 @@ import {
 import { useAuth } from '@/features/auth'
 
 const defaultActivePaths = new Set(['/', '/party'])
+/** Phones show this many destinations before folding the rest into "More". */
+const bottomSlots = 5
 
-function Navigation({ campaign, playerPreview }: { campaign?: Campaign; playerPreview?: boolean }) {
+type NavEntry = {
+  to: string
+  end?: boolean
+  label: string
+  /** Shorter bottom-bar label; it must stay contained in the full accessible label. */
+  short?: string
+  icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' }>
+  dm?: boolean
+}
+
+/** Only reachable destinations appear in navigation. Planned modules live on the campaign
+ * home "Coming soon" card and in the DM module controls instead of crowding the bar. */
+function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): NavEntry[] {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const live = config.VITE_DATA_MODE === 'supabase'
-  const prefix = live ? pathname.match(/^\/campaign\/[^/]+/)?.[0] : undefined
-
-  if (!live) {
-    const activeModules = modules.filter(({ path }) => defaultActivePaths.has(path))
-    const plannedModules = modules.filter(({ path }) => !defaultActivePaths.has(path))
-    return (
-      <nav aria-label={t('nav.main')} className="nav-tabs">
-        {activeModules.map(({ path, label, icon: Icon }) => (
-          <NavLink
-            end={path === '/'}
-            key={path}
-            to={path}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <Icon size={17} aria-hidden="true" />
-            {t(label)}
-          </NavLink>
-        ))}
-        {plannedModules.map(({ path, label, icon: Icon }) => (
-          <Text
-            component="span"
-            key={path}
-            className="nav-item disabled-module"
-            aria-disabled="true"
-          >
-            <Icon size={16} aria-hidden="true" />
-            {t(label)} <span className="planned-label">{t('common.planned')}</span>
-          </Text>
-        ))}
-      </nav>
-    )
-  }
-
-  if (!prefix || !campaign) return null
+  if (!live)
+    return modules
+      .filter(({ path }) => defaultActivePaths.has(path))
+      .map(({ path, label, icon }) => ({ to: path, end: path === '/', label: t(label), icon }))
+  const prefix = pathname.match(/^\/campaign\/[^/]+/)?.[0]
+  if (!prefix || !campaign) return []
   const effectiveDm = campaign.role === 'dm' && !playerPreview
   const enabledKeys = new Set(campaign.player_modules ?? ['party'])
-  const isModuleEnabled = (path: string) => path === '/' || enabledKeys.has(path.replace(/^\//, ''))
+  const reachable = modules.filter(
+    ({ path, ...module }) =>
+      path === '/' ||
+      enabledKeys.has(path.replace(/^\//, '')) ||
+      (effectiveDm && 'implemented' in module && module.implemented),
+  )
+  const entries: NavEntry[] = reachable.map(({ path, label, icon }) => ({
+    to: path === '/' ? prefix : `${prefix}${path}`,
+    end: path === '/',
+    label: t(label),
+    icon,
+  }))
+  if (effectiveDm)
+    entries.splice(1, 0, {
+      to: `${prefix}/members`,
+      label: t('campaign.manage'),
+      short: t('nav.dmShort'),
+      icon: Shield,
+      dm: true,
+    })
+  return entries
+}
 
-  if (!effectiveDm) {
-    const visiblePlayerModules = modules.filter(({ path }) => isModuleEnabled(path))
-    return (
-      <nav aria-label={t('nav.main')} className="nav-tabs">
-        {visiblePlayerModules.map(({ path, label, icon: Icon }) => (
-          <NavLink
-            end={path === '/'}
-            key={path}
-            to={`${prefix}${path === '/' ? '' : path}`}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <Icon size={17} aria-hidden="true" />
-            {t(label)}
-          </NavLink>
-        ))}
-      </nav>
-    )
-  }
-
-  const campModule = modules[0]!
-  const partyModule = modules[1]!
-  const secondaryModules = modules.slice(2)
-  const CampIcon = campModule.icon
-  const PartyIcon = partyModule.icon
-
+function TopNavigation({ entries }: { entries: NavEntry[] }) {
+  const { t } = useTranslation()
   return (
     <nav aria-label={t('nav.main')} className="nav-tabs">
-      <NavLink end to={prefix} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <CampIcon size={17} aria-hidden="true" />
-        {t(campModule.label)}
-      </NavLink>
-      <NavLink
-        to={`${prefix}/members`}
-        className={({ isActive }) => `nav-item nav-item-dm ${isActive ? 'active' : ''}`}
-      >
-        <Shield size={17} aria-hidden="true" />
-        {t('campaign.manage')}
-      </NavLink>
-      <NavLink
-        to={`${prefix}${partyModule.path}`}
-        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-      >
-        <PartyIcon size={17} aria-hidden="true" />
-        {t(partyModule.label)}
-      </NavLink>
-      {secondaryModules.map(({ path, label, icon: Icon, ...module }) =>
-        isModuleEnabled(path) || ('implemented' in module && module.implemented) ? (
-          <NavLink
-            key={path}
-            to={`${prefix}${path}`}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <Icon size={17} aria-hidden="true" />
-            {t(label)}
-          </NavLink>
-        ) : (
-          <Text
-            component="span"
-            key={path}
-            className="nav-item disabled-module"
-            aria-disabled="true"
-          >
-            <Icon size={16} aria-hidden="true" />
-            {t(label)} <span className="planned-label">{t('common.planned')}</span>
-          </Text>
-        ),
-      )}
+      {entries.map(({ to, end, label, icon: Icon, dm }) => (
+        <NavLink
+          key={to}
+          end={end}
+          to={to}
+          className={({ isActive }) =>
+            `nav-item ${dm ? 'nav-item-dm' : ''} ${isActive ? 'active' : ''}`
+          }
+        >
+          <Icon size={18} aria-hidden="true" />
+          {label}
+        </NavLink>
+      ))}
     </nav>
+  )
+}
+
+function BottomNavigation({ entries }: { entries: NavEntry[] }) {
+  const { t } = useTranslation()
+  const { pathname } = useLocation()
+  const [opened, { open, close }] = useDisclosure(false)
+  const moreButton = useRef<HTMLButtonElement>(null)
+  const overflow = entries.length > bottomSlots
+  const primary = overflow ? entries.slice(0, bottomSlots - 1) : entries
+  const rest = overflow ? entries.slice(bottomSlots - 1) : []
+  const moreActive = rest.some(({ to, end }) =>
+    end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`),
+  )
+  useEffect(close, [pathname, close])
+  return (
+    <>
+      <nav aria-label={t('nav.main')} className="bottom-nav">
+        {primary.map(({ to, end, label, short, icon: Icon, dm }) => (
+          <NavLink
+            key={to}
+            end={end}
+            to={to}
+            aria-label={short ? label : undefined}
+            className={({ isActive }) =>
+              `bottom-nav-item ${dm ? 'is-dm' : ''} ${isActive ? 'active' : ''}`
+            }
+          >
+            <Icon size={22} aria-hidden="true" />
+            <span className="bottom-nav-label">{short ?? label}</span>
+          </NavLink>
+        ))}
+        {overflow && (
+          <UnstyledButton
+            ref={moreButton}
+            className={`bottom-nav-item ${moreActive ? 'active' : ''}`}
+            aria-haspopup="dialog"
+            aria-expanded={opened}
+            aria-label={t('nav.moreOpen')}
+            onClick={open}
+          >
+            <MenuIcon size={22} aria-hidden="true" />
+            <span className="bottom-nav-label">{t('nav.more')}</span>
+          </UnstyledButton>
+        )}
+      </nav>
+      <Drawer
+        opened={opened}
+        onClose={close}
+        position="bottom"
+        size="auto"
+        title={t('nav.moreTitle')}
+        className="more-drawer"
+        closeButtonProps={{ 'aria-label': t('nav.close'), size: 44 }}
+        onExitTransitionEnd={() => moreButton.current?.focus()}
+        returnFocus={false}
+      >
+        <Stack gap={6} pb="md">
+          {rest.map(({ to, end, label, icon: Icon, dm }) => (
+            <NavLink
+              key={to}
+              end={end}
+              to={to}
+              className={({ isActive }) =>
+                `more-drawer-item ${dm ? 'is-dm' : ''} ${isActive ? 'active' : ''}`
+              }
+            >
+              <Icon size={20} aria-hidden="true" />
+              {label}
+            </NavLink>
+          ))}
+        </Stack>
+      </Drawer>
+    </>
   )
 }
 
@@ -167,9 +211,11 @@ export function Layout() {
   const [previewScope, setPreviewScope] = useState<string | null>(null)
   const [previewUserId, setPreviewUserId] = useState<string | null>(null)
   const [previewLabel, setPreviewLabel] = useState<string | null>(null)
+  const [pickerOpened, setPickerOpened] = useState(false)
   const pendingSettings = useRef(false)
   const [opened, { open, close }] = useDisclosure(false)
   const menuButton = useRef<HTMLButtonElement>(null)
+  const previewSwitch = useRef<HTMLInputElement>(null)
   const restoreMenuFocus = useRef(false)
   const { pathname } = useLocation()
   const campaignId = pathname.match(/^\/campaign\/([^/]+)/)?.[1]
@@ -188,6 +234,8 @@ export function Layout() {
     !members.isError && members.data
       ? members.data.filter((member) => member.role === 'player')
       : []
+  const entries = useNavEntries(campaign, playerPreview)
+  const showNav = (!live || !!campaign) && entries.length > 0
   const mainRef = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
   useEffect(() => {
@@ -217,11 +265,18 @@ export function Layout() {
     setPreviewUserId(userId)
     setPreviewLabel(label)
     setPreviewScope(scope)
+    setPickerOpened(false)
   }
   const exitPreview = () => {
     setPreviewScope(null)
     setPreviewUserId(null)
     setPreviewLabel(null)
+  }
+  const togglePreview = (checked: boolean) => {
+    if (!checked) return exitPreview()
+    const only = previewPlayers.length === 1 ? previewPlayers[0] : undefined
+    if (only) enterPreview(only.user_id, only.display_name)
+    else setPickerOpened(true)
   }
   return (
     <CampaignViewContext.Provider
@@ -234,7 +289,7 @@ export function Layout() {
       }}
     >
       <div
-        className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''}`}
+        className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
       >
         <a
           className="skip-link"
@@ -264,69 +319,62 @@ export function Layout() {
                   )}
                 </div>
               </div>
-              <Group gap={6} wrap="nowrap" className="header-actions">
-                {campaign?.role === 'dm' &&
-                  (playerPreview ? (
-                    <Button variant="light" aria-pressed onClick={exitPreview}>
-                      {t('shell.dmView')}
-                    </Button>
-                  ) : (
-                    <AccountMenu
-                      position="bottom-end"
-                      withinPortal
-                      withInitialFocusPlaceholder={false}
+              <div className="header-actions">
+                {campaign?.role === 'dm' && (
+                  <Popover
+                    opened={pickerOpened}
+                    onDismiss={() => setPickerOpened(false)}
+                    position="bottom-end"
+                    withinPortal
+                    withRoles={false}
+                    trapFocus
+                    returnFocus={false}
+                    onExitTransitionEnd={() => previewSwitch.current?.focus()}
+                  >
+                    <Popover.Target>
+                      <div className="preview-switch">
+                        <Switch
+                          ref={previewSwitch}
+                          size="md"
+                          checked={playerPreview}
+                          onChange={(event) => togglePreview(event.currentTarget.checked)}
+                          label={t('shell.playerSwitch')}
+                          title={t('shell.playerSwitchHint')}
+                          thumbIcon={<Eye size={12} aria-hidden="true" />}
+                        />
+                      </div>
+                    </Popover.Target>
+                    <Popover.Dropdown
+                      maw="calc(100vw - 32px)"
+                      role="dialog"
+                      aria-label={t('shell.choosePlayerView')}
                     >
-                      <AccountMenu.Target>
-                        <Button variant="light" aria-haspopup="menu" aria-pressed={false}>
-                          {t('shell.playerView')}
-                        </Button>
-                      </AccountMenu.Target>
-                      <AccountMenu.Dropdown maw="calc(100vw - 32px)">
-                        <AccountMenu.Label>{t('shell.choosePlayerView')}</AccountMenu.Label>
+                      <Stack gap={4}>
+                        <Text size="sm" fw={600}>
+                          {t('shell.choosePlayerView')}
+                        </Text>
                         {previewPlayers.length === 0 ? (
-                          <AccountMenu.Item disabled>{t('shell.noPlayers')}</AccountMenu.Item>
+                          <Text size="sm" c="dimmed">
+                            {t('shell.noPlayers')}
+                          </Text>
                         ) : (
                           previewPlayers.map((member) => (
-                            <AccountMenu.Item
+                            <Button
                               key={member.user_id}
+                              variant="subtle"
+                              justify="flex-start"
                               className="user-copy"
                               onClick={() => enterPreview(member.user_id, member.display_name)}
                             >
                               {member.display_name}
-                            </AccountMenu.Item>
+                            </Button>
                           ))
                         )}
-                      </AccountMenu.Dropdown>
-                    </AccountMenu>
-                  ))}
-                <Button
-                  variant="subtle"
-                  className="lang-toggle-btn"
-                  aria-label={t(
-                    currentLang === 'es' ? 'preferences.switchToEn' : 'preferences.switchToEs',
-                  )}
-                  title={t(
-                    currentLang === 'es' ? 'preferences.switchToEn' : 'preferences.switchToEs',
-                  )}
-                  onClick={() => void i18n.changeLanguage(currentLang === 'es' ? 'en' : 'es')}
-                >
-                  {currentLang.toUpperCase()}
-                </Button>
-                <ActionIcon
-                  variant="subtle"
-                  size={44}
-                  className="theme-toggle-btn"
-                  aria-label={t(scheme === 'dark' ? 'preferences.toLight' : 'preferences.toDark')}
-                  title={t(scheme === 'dark' ? 'preferences.toLight' : 'preferences.toDark')}
-                  onClick={() => setColorScheme(scheme === 'dark' ? 'light' : 'dark')}
-                >
-                  {scheme === 'dark' ? (
-                    <Sun size={20} aria-hidden="true" />
-                  ) : (
-                    <Moon size={20} aria-hidden="true" />
-                  )}
-                </ActionIcon>
-                <AccountMenu
+                      </Stack>
+                    </Popover.Dropdown>
+                  </Popover>
+                )}
+                <Menu
                   opened={opened}
                   onChange={(value) => {
                     if (value) {
@@ -335,7 +383,7 @@ export function Layout() {
                     } else close()
                   }}
                   position="bottom-end"
-                  width={236}
+                  width={260}
                   withinPortal
                   withInitialFocusPlaceholder={false}
                   returnFocus={false}
@@ -346,7 +394,7 @@ export function Layout() {
                     } else if (restoreMenuFocus.current) menuButton.current?.focus()
                   }}
                 >
-                  <AccountMenu.Target>
+                  <Menu.Target>
                     <Button
                       ref={menuButton}
                       variant="subtle"
@@ -360,23 +408,64 @@ export function Layout() {
                     >
                       <span className="profile-label">{t('account.profile')}</span>
                     </Button>
-                  </AccountMenu.Target>
-                  <AccountMenu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
+                  </Menu.Target>
+                  <Menu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
                     {state.user && (
                       <>
-                        <AccountMenu.Label className="user-copy">
-                          {state.user.email}
-                        </AccountMenu.Label>
-                        <AccountMenu.Item
+                        <Menu.Label className="user-copy">{state.user.email}</Menu.Label>
+                        <Menu.Item
                           component={NavLink}
                           to="/"
                           leftSection={<Compass size={18} aria-hidden="true" />}
                         >
                           {t('hub.title')}
-                        </AccountMenu.Item>
+                        </Menu.Item>
+                        <Menu.Divider />
                       </>
                     )}
-                    <AccountMenu.Item
+                    <Menu.Item
+                      closeMenuOnClick={false}
+                      leftSection={
+                        scheme === 'dark' ? (
+                          <Moon size={18} aria-hidden="true" />
+                        ) : (
+                          <Sun size={18} aria-hidden="true" />
+                        )
+                      }
+                      rightSection={
+                        <span className="menu-toggle-pill" aria-hidden="true">
+                          <span data-on={scheme === 'dark' || undefined}>
+                            <Moon size={14} />
+                          </span>
+                          <span data-on={scheme === 'light' || undefined}>
+                            <Sun size={14} />
+                          </span>
+                        </span>
+                      }
+                      aria-label={t(
+                        scheme === 'dark' ? 'preferences.toLight' : 'preferences.toDark',
+                      )}
+                      onClick={() => setColorScheme(scheme === 'dark' ? 'light' : 'dark')}
+                    >
+                      {t('preferences.themeShort')}
+                    </Menu.Item>
+                    <Menu.Item
+                      closeMenuOnClick={false}
+                      leftSection={<Languages size={18} aria-hidden="true" />}
+                      rightSection={
+                        <span className="menu-toggle-pill" aria-hidden="true">
+                          <span data-on={currentLang === 'es' || undefined}>ES</span>
+                          <span data-on={currentLang === 'en' || undefined}>EN</span>
+                        </span>
+                      }
+                      aria-label={t(
+                        currentLang === 'es' ? 'preferences.switchToEn' : 'preferences.switchToEs',
+                      )}
+                      onClick={() => void i18n.changeLanguage(currentLang === 'es' ? 'en' : 'es')}
+                    >
+                      {t('preferences.languageShort')}
+                    </Menu.Item>
+                    <Menu.Item
                       leftSection={<Settings size={18} aria-hidden="true" />}
                       onClick={() => {
                         pendingSettings.current = true
@@ -384,28 +473,41 @@ export function Layout() {
                       }}
                     >
                       {t('nav.settings')}
-                    </AccountMenu.Item>
+                    </Menu.Item>
                     {state.user && (
                       <>
-                        <AccountMenu.Divider />
-                        <AccountMenu.Item
+                        <Menu.Divider />
+                        <Menu.Item
                           leftSection={<LogOut size={18} aria-hidden="true" />}
                           onClick={() => void controller?.signOut()}
                         >
                           {t('auth.signOut')}
-                        </AccountMenu.Item>
+                        </Menu.Item>
                       </>
                     )}
-                  </AccountMenu.Dropdown>
-                </AccountMenu>
-              </Group>
+                  </Menu.Dropdown>
+                </Menu>
+              </div>
             </div>
-            {(!live || campaign) && (
+            {showNav && (
               <div className="nav-tabs-row">
-                <Navigation campaign={campaign} playerPreview={playerPreview} />
+                <TopNavigation entries={entries} />
               </div>
             )}
           </header>
+          {playerPreview && (
+            <div className="preview-banner" role="status">
+              <Eye size={18} aria-hidden="true" />
+              <Text size="sm" fw={600} className="user-copy preview-banner-text">
+                {previewLabel
+                  ? t('shell.previewBanner', { name: previewLabel })
+                  : t('shell.previewBannerGeneric')}
+              </Text>
+              <Button size="compact-md" variant="filled" onClick={exitPreview}>
+                {t('shell.exitPreview')}
+              </Button>
+            </div>
+          )}
           <main id="main-content" ref={mainRef} tabIndex={-1}>
             {live && !online && (
               <Alert role="status" mb="lg">
@@ -416,6 +518,7 @@ export function Layout() {
           </main>
           <footer className="page-footer">{t('brand.footer')}</footer>
         </div>
+        {showNav && <BottomNavigation entries={entries} />}
         <Modal
           opened={settingsOpened}
           onClose={() => setSettingsOpened(false)}

@@ -168,3 +168,52 @@ test('DM sees every sheet and Party summaries; unknown characters are not found'
   await page.goto(`./#/campaign/${campaignId}/party/40000000-0000-4000-8000-000000000099`)
   await expect(page.getByText('Este personaje no existe o no tienes acceso.')).toBeVisible()
 })
+
+test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await expect(page.locator('.hp-current')).toHaveText('30')
+  await expect(page.getByRole('img', { name: '30 de 38 puntos de golpe' })).toBeVisible()
+  const damage = page.getByRole('button', { name: 'Daño', exact: true })
+  await damage.click()
+  const dialog = page.getByRole('dialog')
+  const pad = dialog.getByRole('group', { name: 'Teclado numérico' })
+  await pad.getByRole('button', { name: '1', exact: true }).click()
+  await pad.getByRole('button', { name: '2', exact: true }).click()
+  await expect(dialog.getByRole('textbox')).toHaveValue('12')
+  await expect(dialog.getByText('Quedará en 23/38 PG')).toBeVisible()
+  await dialog
+    .getByRole('group', { name: 'Cantidades rápidas' })
+    .getByRole('button', { name: '−5' })
+    .click()
+  await expect(dialog.getByRole('textbox')).toHaveValue('17')
+  await pad.getByRole('button', { name: 'Borrar último dígito' }).click()
+  await expect(dialog.getByRole('textbox')).toHaveValue('1')
+  await dialog
+    .locator('.hp-mode label')
+    .filter({ hasText: /^Curar$/ })
+    .click()
+  await pad.getByRole('button', { name: 'Borrar', exact: true }).click()
+  await pad.getByRole('button', { name: '5', exact: true }).click()
+  await expect(dialog.getByText('Quedará en 35/38 PG')).toBeVisible()
+  await page.screenshot({ path: info.outputPath('hp-keypad.png'), fullPage: true })
+  await dialog.getByRole('button', { name: 'Aplicar', exact: true }).click()
+  await expect(page.locator('.hp-current')).toHaveText('35')
+  await expect(damage).toBeFocused()
+
+  await page.getByRole('button', { name: 'Gastar un dado de golpe (1/5)' }).click()
+  await expect(page.locator('.pip-count').first()).toHaveText('4/5')
+  await page.getByRole('button', { name: 'Recuperar un dado de golpe (5/5)' }).click()
+  await expect(page.locator('.pip-count').first()).toHaveText('5/5')
+
+  const poisoned = page.getByRole('checkbox', { name: 'Envenenado', exact: true })
+  await page
+    .locator('.condition-chip label')
+    .filter({ hasText: /^Envenenado$/ })
+    .click()
+  await expect(poisoned).toBeChecked()
+  await expect(page.getByText('Toca una condición para activarla o quitarla.')).toBeVisible()
+})

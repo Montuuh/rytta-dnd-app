@@ -41,4 +41,5 @@
     and [RYT-004 verification](evidence/RYT-004/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is
-evidence for decisions, not authorization to expand a delivery.
+evidence for decisions, not authorization to expand a delivery. 25. [ADR 015: bottom navigation, folded planned modules and table widgets](decisions/015-design-critique-navigation-widgets.md)
+and [RYT-025 verification](evidence/RYT-025/validation.md).

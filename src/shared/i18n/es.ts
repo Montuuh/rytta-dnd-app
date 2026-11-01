@@ -3,12 +3,14 @@ import { sheetEs } from './sheet-es'
 import { inventoryEs } from './inventory-es'
 import type { en } from './en'
 import { identityEs } from './identity-es'
+import { designEs } from './design-es'
 
 export const es = {
   ...identityEs,
   ...charactersEs,
   ...sheetEs,
   ...inventoryEs,
+  ...designEs,
   'module.camp': 'Campamento',
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',

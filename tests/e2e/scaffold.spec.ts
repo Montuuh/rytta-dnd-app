@@ -44,9 +44,10 @@ test('compact settings menu supports Escape, keyboard and returns focus', async 
   const menu = page.getByRole('button', { name: /Open settings menu/ })
   await menu.click()
   await expect(page.getByRole('menu')).toBeVisible()
-  await expect(page.getByRole('menuitem')).toHaveCount(1)
+  // Appearance and language toggles plus App setup (RYT-025 moved the header toggles here).
+  await expect(page.getByRole('menuitem')).toHaveCount(3)
   const bounds = await page.getByRole('menu').boundingBox()
-  expect(bounds!.height).toBeLessThan(180)
+  expect(bounds!.height).toBeLessThan(260)
   expect(bounds!.y).toBeGreaterThan(0)
   await page.keyboard.press('Escape')
   await expect(page.getByRole('menu')).not.toBeVisible()

@@ -16,15 +16,16 @@ test('theme and language persist across navigation and reload and can be changed
   page,
 }) => {
   await page.goto('./')
-  await page.getByRole('button', { name: /ES · Cambiar idioma a inglés/ }).click()
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-  await page.getByRole('button', { name: /EN · Switch language to Spanish/ }).click()
-  await expect(page.locator('html')).toHaveAttribute('lang', 'es')
-  await page.getByRole('button', { name: 'Cambiar a modo claro' }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
-  await page.getByRole('button', { name: 'Cambiar a modo oscuro' }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'dark')
+  // Quick toggles live in the Profile menu and keep it open while switching.
   await page.getByRole('button', { name: /Abrir menú de ajustes/ }).click()
+  await page.getByRole('menuitem', { name: /ES · Cambiar idioma a inglés/ }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await page.getByRole('menuitem', { name: /EN · Switch language to Spanish/ }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es')
+  await page.getByRole('menuitem', { name: 'Cambiar a modo claro' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
+  await page.getByRole('menuitem', { name: 'Cambiar a modo oscuro' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'dark')
   await page.getByRole('menuitem', { name: 'Ajustes', exact: true }).click()
   await page
     .getByRole('dialog')

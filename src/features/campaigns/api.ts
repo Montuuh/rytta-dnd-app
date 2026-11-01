@@ -118,13 +118,17 @@ export function useCampaignAction() {
           )
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, action) => {
       if (controller?.getSnapshot().user?.id !== userId) return
       await client.cancelQueries({ queryKey: ['private', userId] })
-      client.removeQueries({
-        predicate: (q) =>
-          q.queryKey[0] === 'private' && q.queryKey[1] === userId && q.queryKey[2] === 'campaign',
-      })
+      // Visibility toggles never change who may read the campaign, so cached rows can stay
+      // mounted (keeping keyboard focus on the toggled switch) while they refetch. Membership
+      // and role changes still drop private campaign data before refetching.
+      if (action.kind !== 'revelationVisibility' && action.kind !== 'modules')
+        client.removeQueries({
+          predicate: (q) =>
+            q.queryKey[0] === 'private' && q.queryKey[1] === userId && q.queryKey[2] === 'campaign',
+        })
       await client.invalidateQueries({ queryKey: ['private', userId] })
     },
   })

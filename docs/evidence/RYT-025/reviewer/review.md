@@ -2,10 +2,12 @@
 
 - Ticket: `RYT-025` (Design critique: bottom navigation, folded planned modules and table widgets)
 - Reviewer: `ui-ux` (role `.codex/agents/ui-ux.toml`, independent subagent; implementation read-only)
-- Source reviewed: commit `3872bd3fe300c8b0cfa2b2b4da0c81345a504db6` (branch `claude/ecstatic-clarke-dz03w7`)
+- Source reviewed: round 1 `3872bd3fe300c8b0cfa2b2b4da0c81345a504db6`; round 2 `71e3b89f9dbb54e3dd68da898a00a1078ec5fca6` (branch `claude/ecstatic-clarke-dz03w7`)
 - Date: 2026-11-01
 
 Verdict: CHANGES_REQUIRED
+
+The verdict above applies to round 2 (`71e3b89`). The round 1 content below is kept as history.
 
 Most of the delivery works well. Phones reach campaign content at once. Planned modules are
 folded away, the DM tabs show one panel at a time, the HP pad works and axe was clean on all
@@ -153,3 +155,83 @@ and `.../scratchpad/review/int/*.png`, with logs in `int/log*.txt`.
 - Hosted Supabase was not exercised. All data came from the HTTP fixture.
 - Approval applies only to source `3872bd3`. Re-review the affected behaviour (findings 1–2,
   plus any of 3–7 that are fixed) after the changes.
+
+## Round 2 (71e3b89)
+
+Focused re-review of the fixes claimed under "Round 1" in `../validation.md`. I rebuilt the
+mocked-live bundle from `71e3b89` (`--base=/rytta-dnd-app/`) and served it with `vite preview`
+on 127.0.0.1:4190. The checks ran in real Chromium (`/opt/pw-browsers/chromium`) with temporary
+Playwright specs, which I deleted afterwards. The data came from the `identity.ts` HTTP fixture.
+
+Round 2 verdict: CHANGES_REQUIRED. Part of finding 1 is still unresolved: the revelation
+switch still drops keyboard focus.
+
+### Status of round 1 findings
+
+| # | Round 1 severity | Status | Evidence (390x844 and 1440x1000 unless noted) |
+| - | ---------------- | ------ | --------------------------------------------- |
+| 1 | Blocker | Partly fixed, still open | Fixed for: the steppers (focus stays on `Aumentar Oro · Arin`/`Reducir Oro · Arin`; `aria-disabled=true` while pending; 3 consecutive Enter presses gave 26→29; a second Space while pending is ignored), the exhaustion pips (focus stays and `aria-pressed=true`; Tab then Enter moves to level 3), the module switches (focus stays on `Tiendas: visible para jugadores`, repeated Space toggles it) and `Volver a vista DM` (focus goes to the `Vista jugador` switch for both keyboard and click, on `/members` and `/party`). **Still failing: the revelation switch.** See R2-1. |
+| 2 | Major | Fixed | `.mantine-Drawer-content` is `{x:0,y:624,w:390,h:220}`, a bottom sheet with rounded top corners and the page dimmed behind it (`r2/drawer-m.png`, also light). On open (Enter, Space, click) focus goes to `Cerrar navegación`. Escape returns focus to `Abrir más secciones`. Axe was clean in dark and light. |
+| 3 | Minor | Fixed | At 767px the bottom bar shows. At 768, 769, 820 and 1024px the top row shows and the bottom bar is hidden. No horizontal overflow at any width. At 768px `main` still uses the 16px phone padding from the remaining `max-width: 48em` blocks. It is harmless, so I note it without a finding. |
+| 4 | Minor | Fixed | Choosing `Tiendas` by keyboard in the drawer navigates and focuses `MAIN`, and the drawer closes. Choosing the already active item closes the drawer and returns focus to `Más`, which is reasonable. |
+| 5 | Minor | Fixed | At 150% text (390px, es and en, dark and light) the labels wrap to at most 2 lines with no clipping (`scrollHeight == height`): `Campa-mento`, `Mando DM`, `Inventa-rio`, `DM Command`. The bar grows to 79px and there is no horizontal overflow (`r2/page-150-light.png`, `r2/bottom-150-*.png`). |
+| 6 | Minor | Fixed | es: "Estos módulos están en preparación. Puedes mostrarlos a los jugadores desde Módulos activos; hasta que lleguen, verán una página de vista previa." en: "These modules are in preparation. You can show them to Players from Active modules; until they ship, Players see a preview page." The accordion is DM-only (absent for the Player fixture), so the DM-directed copy fits. Axe was clean. |
+| 7 | Minor | Fixed | At 768/820px the row fades at its right edge (`r2/bp-768.png`). Scrolled to the end, the last pill `Misiones` is fully legible thanks to the trailing padding (`r2/nav-820-scrolled-end.png`). A keyboard-focused last link sits at x 654–771 in an 820px row, clear of the 40px fade. At 1440px the row does not overflow and the last pill ends well before the fade. |
+| — | Card `Más acciones` placeholder change | Verified | Enter opens the menu with focus on `Ver ficha`, and ArrowDown moves to `Editar recursos`. Escape returns focus to `Más acciones para Arin`. Axe was clean while open and immediately after Escape (during the close transition) at 390 and 1440. |
+
+### New and remaining findings
+
+#### R2-1. Blocker (remaining part of finding 1): the revelation switch still loses focus after toggling
+
+- Paths: `src/features/campaigns/api.ts:124-127` (`onSuccess` runs `removeQueries` for every
+  `['private', userId, 'campaign', …]` query before invalidating) and
+  `src/features/campaigns/ui/members.tsx:488-495` (the list renders only while `revelations.data` is set).
+  The `aria-disabled` change at `members.tsx:534` is in place, but it does not help here.
+- Viewport/theme/language: 390px and 1440px, dark, es.
+- Reproduction: DM Command Center, `Cola de revelaciones` tab. Focus
+  `Visible para el grupo: El Yunque de Ámbar` and press Space. At +20ms focus is on the switch
+  and both switches show `aria-disabled`. At +100ms the original input node is detached
+  (`isConnected=false`) and `document.activeElement` is `BODY`. The switches re-render
+  with the new value. A second Space press does nothing, so the switch cannot be toggled back from the keyboard.
+- Impact: the same impact as round 1 finding 1, on the DM's quick revelations queue. Keyboard
+  users lose their place after each reveal or hide. The list also briefly unmounts (a loading flash).
+- Suggested fix: do not remove the revelations query on success. Use `invalidateQueries` only, or
+  write the new visibility with `setQueryData`, so the list and its switch stay mounted. As an alternative,
+  restore focus to the switch for `item.id` after the refetch. Add the revelation switch to the
+  `RYT-025 keyboard focus …` e2e regression.
+
+No other new findings.
+
+### Round 2 tested scenarios
+
+Real browser (Chromium, mocked-live build of `71e3b89`):
+
+- Keyboard focus after steppers (Space, Enter, minus), exhaustion pips, module switches,
+  revelation switches and `Volver a vista DM`, at 390x844 and 1440x1000 (dark, es). I recorded `activeElement` at
+  20–900ms. Pointer hold of 700ms on + still adds 5 (28→33).
+- More drawer at 390x844 with 6 destinations (after enabling Tiendas and Misiones through
+  the DM switches): geometry, initial focus for Enter, Space and click, Escape focus, keyboard choice of a
+  destination, choosing the active route, light theme.
+- Breakpoints 767/768/769/820/1024px: nav visibility, horizontal overflow, edge fade, last link while focused.
+- Bottom labels at 150% root text at 390px, es and en, dark and light.
+- Coming soon copy, es and en (DM), and the Player view of the campaign home (accordion absent).
+- Axe (wcag2a/2aa/21aa): clean on party (390, 1440), the card menu open and closing, the
+  modules tab, the revelations tab, the More drawer (dark and light) and Coming soon (es and en).
+
+Screenshot inspection (by me): `r2/drawer-m.png`, `r2/drawer-m-light.png`,
+`r2/page-150-light.png`, `r2/bottom-150-es.png`, `r2/bottom-150-en.png`, `r2/bp-767..1024.png`,
+`r2/nav-820-scrolled-end.png`, `r2/nav-820-last-focused.png`, `r2/coming-soon-*.png`. Files are under
+`/tmp/claude-0/-home-user-rytta-dnd-app/77331370-f6e6-5e1e-9571-bcb8422725b4/scratchpad/review/r2/`
+(scratch, not committed). The logs are `r2/log-*.txt`.
+
+### Round 2 limitations
+
+- In one run with three modules enabled, focus read `Abrir más secciones` 1s after opening the
+  drawer. A dedicated re-test (Enter, Space, click; 50/300/1000ms) always put focus on
+  `Cerrar navegación`. I could not reproduce it again and do not report it as a finding.
+- Screen reader announcement of `aria-disabled` pending states was not checked with real AT.
+  The pending visual (50% opacity) was not inspected in a screenshot.
+- Real iOS Safari/Android, the multi-Player preview picker, error/offline states and hosted
+  Supabase remain untested, as in round 1. I did not repeat the full 58-capture sweep. Only the touched screens were re-tested.
+- Approval would apply only to the reviewed source snapshot. After the R2-1 fix, re-test the
+  revelation switch, and the module switches too, since they share the mutation.

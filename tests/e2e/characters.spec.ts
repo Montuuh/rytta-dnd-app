@@ -477,6 +477,21 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await expect(preview).toBeFocused()
   await expect(preview).not.toBeChecked()
 
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.getByRole('tab', { name: 'Cola de revelaciones', exact: true }).click()
+  const reveal = page.getByRole('switch', {
+    name: 'Visible para el grupo: El Yunque de Ámbar',
+    exact: true,
+  })
+  await expect(reveal).toBeChecked()
+  await reveal.focus()
+  await page.keyboard.press('Space')
+  await expect(reveal).not.toBeChecked()
+  await expect(reveal).toBeFocused()
+  await page.keyboard.press('Space')
+  await expect(reveal).toBeChecked()
+  await expect(reveal).toBeFocused()
+
   if ((page.viewportSize()?.width ?? 1024) >= 768) return
   // Phones: enabling two planned modules overflows the bar into the More bottom sheet.
   await page.goto(`./#/campaign/${campaignId}/members`)

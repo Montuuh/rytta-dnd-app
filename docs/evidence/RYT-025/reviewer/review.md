@@ -2,12 +2,12 @@
 
 - Ticket: `RYT-025` (Design critique: bottom navigation, folded planned modules and table widgets)
 - Reviewer: `ui-ux` (role `.codex/agents/ui-ux.toml`, independent subagent; implementation read-only)
-- Source reviewed: round 1 `3872bd3fe300c8b0cfa2b2b4da0c81345a504db6`; round 2 `71e3b89f9dbb54e3dd68da898a00a1078ec5fca6` (branch `claude/ecstatic-clarke-dz03w7`)
+- Source reviewed: round 1 `3872bd3fe300c8b0cfa2b2b4da0c81345a504db6`; round 2 `71e3b89f9dbb54e3dd68da898a00a1078ec5fca6`; round 3 `5cd1e1bd675df5e8b80b1b47b30ccffe8a9f54b4` (branch `claude/ecstatic-clarke-dz03w7`)
 - Date: 2026-11-01
 
-Verdict: CHANGES_REQUIRED
+Verdict: PASS
 
-The verdict above applies to round 2 (`71e3b89`). The round 1 content below is kept as history.
+The verdict above applies to round 3 (`5cd1e1b`). Rounds 1 and 2 (both CHANGES_REQUIRED) are kept below as history.
 
 Most of the delivery works well. Phones reach campaign content at once. Planned modules are
 folded away, the DM tabs show one panel at a time, the HP pad works and axe was clean on all
@@ -235,3 +235,55 @@ Screenshot inspection (by me): `r2/drawer-m.png`, `r2/drawer-m-light.png`,
   Supabase remain untested, as in round 1. I did not repeat the full 58-capture sweep. Only the touched screens were re-tested.
 - Approval would apply only to the reviewed source snapshot. After the R2-1 fix, re-test the
   revelation switch, and the module switches too, since they share the mutation.
+
+## Round 3 (5cd1e1b)
+
+Focused re-review of the R2-1 fix. `src/features/campaigns/api.ts` now skips `removeQueries`
+for the `revelationVisibility` and `modules` actions and only invalidates. Every other action
+still removes private campaign data first. I rebuilt the mocked-live bundle from `5cd1e1b`,
+served it at 127.0.0.1:4190 under `/rytta-dnd-app/` and tested in real Chromium
+(`/opt/pw-browsers/chromium`) with the `identity.ts` HTTP fixture. I deleted the temporary specs afterwards.
+
+Round 3 verdict: PASS. No blocking findings remain and I found no new ones.
+
+### Status
+
+| Finding | Status | Evidence |
+| ------- | ------ | -------- |
+| R2-1 (remaining part of finding 1) | Fixed | At 390x844 and 1440x1000 (dark, es), I pressed Space twice on `Visible para el grupo: El Yunque de Ámbar`. Both presses toggled it (true→false→true). At every sample (+20/80/200/600ms) `document.activeElement` was the original input node (`isConnected` and identical). `aria-disabled=true` showed only while pending. A MutationObserver saw the switch count stay at 2 the whole time, so the list never unmounted and there was no loading flash. At 390 a busy spinner briefly appeared, and I take it to be the refresh control's own indicator. The visibility badge updated to `Público (Grupo)`. Two Space presses 10ms apart gave a single toggle and focus stayed put. |
+| Module switches | Still fixed | `Tiendas: visible para jugadores`: Space twice toggled true→false with focus kept, at 390 and 1440. The navigation updated after each toggle. |
+| Findings 2–7 (round 2) | Not regressed (spot check) | The source diff touches only `api.ts`. Party stepper Enter kept focus (25→26). The card `Más acciones` menu: Enter focuses `Ver ficha` and Escape returns focus to the trigger. There were no page errors. |
+
+### Role and membership flows (390x844, dark, es)
+
+- Revelation toggled to public, then the Player view switch: the banner persists across
+  navigation to campaign home, and the newly public revelation shows there, so the
+  invalidated data reached the preview. `Volver a vista DM` returns focus to the `Vista jugador` switch.
+- `Nombrar DM` on Arin: a confirmation dialog, then Arin is listed as DM (this path still removes the private cache).
+- `Cambiar a Jugador` on the signed-in DM: after confirming, the page shows the Player members
+  view. The `Vista jugador` switch and the DM tabs are gone, and the bottom bar shrinks to
+  `Campamento, Grupo`. Role-dependent UI and navigation update correctly after the
+  remove-and-refetch path.
+
+### Axe (wcag2a/2aa/21aa)
+
+Clean on the Revelations tab (390, 1440), the Modules tab (390, 1440), Party, campaign home and
+the members page after demotion.
+
+### Screenshots inspected
+
+`r3/rev-m.png` (visible focus ring on the toggled switch, badge `Público (Grupo)`),
+`r3/rev-d.png`, `r3/modules-m.png`, `r3/modules-d.png`, `r3/after-promote.png`,
+`r3/after-demote.png`, `r3/preview-home.png` under
+`/tmp/claude-0/-home-user-rytta-dnd-app/77331370-f6e6-5e1e-9571-bcb8422725b4/scratchpad/review/r3/`
+(scratch, not committed). The logs are `r3/log-*.txt`.
+
+### Round 3 limitations
+
+- Only the touched behaviour and a spot check were re-tested, not the full round 1 sweep. Light theme
+  and English were not repeated in this round. The diff changes no UI strings or styles.
+- Invite, revoke, remove member and leave campaign were not exercised. They keep the
+  unchanged remove-and-refetch path.
+- Real iOS Safari/Android, screen reader output, the multi-Player picker, error/offline states and hosted
+  Supabase remain untested, as recorded in rounds 1 and 2.
+- This PASS applies only to source `5cd1e1b`. Any later UI source change needs a new review.

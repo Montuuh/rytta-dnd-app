@@ -10,7 +10,7 @@ Date: 2026-11-01. Source: branch `claude/ecstatic-clarke-dz03w7`. Decision recor
 | `npm run check` (typecheck, lint, contracts, unit, build) | Pass                                                     |
 | `npm run format:check`                                   | Pass                                                     |
 | `npm run test:e2e` (desktop, tablet, mobile, identity-*) | 177 passed with 2 workers                                |
-| `npm run check:ui-review`                                | Pending the independent ui-ux verdict (see below)        |
+| `npm run check:ui-review`                                | Pass (round 3 PASS, see below)                           |
 
 The first full e2e run (6 workers on a 4-CPU container) had 70 failures. Most came from
 selectors bound to the replaced controls: header language/theme buttons, `Mostrar a
@@ -80,4 +80,6 @@ data first. The keyboard focus regression test now also toggles a revelation twi
 keyboard. Results: `npm run check` and format pass. E2E: characters and identity 102/102;
 sheet, inventory, scaffold and preferences 78/78.
 
-Round 3: pending a focused re-review.
+Round 3 (source `5cd1e1b`): independent `PASS` with no open blocking findings. The manifest
+`docs/evidence/ui-review-current.json` records source digest
+`a6dfe28349858da28c527bf09587fcdb2c2cea84deaf105b34b7d26330bb1547`.

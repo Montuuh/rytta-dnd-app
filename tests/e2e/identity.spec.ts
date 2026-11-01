@@ -208,7 +208,8 @@ test('DM command center manages module visibility, revelations queue, audit log 
   ).toBeVisible()
   const shops = page.getByRole('switch', { name: 'Tiendas: visible para jugadores', exact: true })
   await expect(shops).not.toBeChecked()
-  await shops.click({ force: true })
+  await shops.focus()
+  await page.keyboard.press('Space')
   await expect(shops).toBeChecked()
   expect(f.calls.some((c) => c.method === 'set_campaign_modules')).toBe(true)
 
@@ -238,11 +239,13 @@ test('DM command center manages module visibility, revelations queue, audit log 
     exact: true,
   })
   await expect(reveal).not.toBeChecked()
-  await reveal.click({ force: true })
+  await reveal.focus()
+  await page.keyboard.press('Space')
   await expect(reveal).toBeChecked()
   expect(f.calls.some((c) => c.method === 'set_revelation_visibility')).toBe(true)
 
-  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click({ force: true })
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).focus()
+  await page.keyboard.press('Space')
   await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   const nav = page.getByRole('navigation', { name: 'Navegación principal' })

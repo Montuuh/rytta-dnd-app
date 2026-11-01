@@ -498,7 +498,8 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
   for (const module of ['Tiendas', 'Misiones']) {
     const toggle = page.getByRole('switch', { name: `${module}: visible para jugadores` })
-    await toggle.click({ force: true })
+    await toggle.focus()
+    await page.keyboard.press('Space')
     await expect(toggle).toBeChecked()
   }
   const more = page.getByRole('button', { name: 'Abrir más secciones', exact: true })

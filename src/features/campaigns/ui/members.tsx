@@ -435,11 +435,12 @@ export function CampaignMembers() {
                               <Switch
                                 size="lg"
                                 checked={active}
-                                disabled={action.isPending}
+                                aria-disabled={action.isPending || undefined}
                                 aria-label={t('dm.moduleSwitch', { module: t(label) })}
                                 onLabel={<Eye size={14} aria-hidden="true" />}
                                 offLabel={<Lock size={14} aria-hidden="true" />}
                                 onChange={() => {
+                                  if (action.isPending) return
                                   const next = new Set(enabledModules)
                                   if (active) next.delete(key)
                                   else next.add(key)
@@ -530,12 +531,13 @@ export function CampaignMembers() {
                                     size="lg"
                                     className="reveal-switch"
                                     checked={isPublic}
-                                    disabled={action.isPending}
+                                    aria-disabled={action.isPending || undefined}
                                     label={t('dm.revealSwitchLabel')}
                                     aria-label={t('dm.revealSwitch', { title: item.title })}
                                     onLabel={<Eye size={14} aria-hidden="true" />}
                                     offLabel={<Lock size={14} aria-hidden="true" />}
                                     onChange={() =>
+                                      !action.isPending &&
                                       action.mutate({
                                         kind: 'revelationVisibility',
                                         campaignId: campaign.id,

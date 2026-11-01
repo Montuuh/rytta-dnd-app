@@ -17,7 +17,7 @@ export const designEs = {
   'campaign.comingSoonCount_one': '{{count}} módulo en preparación',
   'campaign.comingSoonCount_other': '{{count}} módulos en preparación',
   'campaign.comingSoonHint':
-    'Estos módulos aún no están disponibles. Cuando lleguen podrás activarlos para tu mesa.',
+    'Estos módulos están en preparación. Puedes mostrarlos a los jugadores desde Módulos activos; hasta que lleguen, verán una página de vista previa.',
   'campaign.openModule': 'Abrir',
   'common.refreshing': 'Actualizando…',
   'common.checkedAgo': 'Actualizado {{time}}',

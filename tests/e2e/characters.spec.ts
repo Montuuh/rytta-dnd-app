@@ -445,3 +445,63 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
   await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(1)
   await page.screenshot({ path: info.outputPath('ryt-025-party.png'), fullPage: true })
 })
+
+test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer choices', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const arin = page
+    .locator('.character-card')
+    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  const plus = arin.getByRole('button', { name: 'Aumentar Oro · Arin', exact: true })
+  await plus.focus()
+  await page.keyboard.press('Enter')
+  await expect(arin.getByText('26', { exact: true })).toBeVisible()
+  await expect(plus).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(arin.getByText('27', { exact: true })).toBeVisible()
+  await expect(plus).toBeFocused()
+  const pip = arin.getByRole('button', { name: 'Agotamiento nivel 1 · Arin', exact: true })
+  await pip.focus()
+  await page.keyboard.press('Space')
+  await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(1)
+  await expect(pip).toBeFocused()
+
+  const preview = page.getByRole('switch', { name: 'Vista jugador', exact: true })
+  await preview.focus()
+  await page.keyboard.press('Space')
+  const exit = page.getByRole('button', { name: 'Volver a vista DM', exact: true })
+  await exit.focus()
+  await page.keyboard.press('Enter')
+  await expect(preview).toBeFocused()
+  await expect(preview).not.toBeChecked()
+
+  if ((page.viewportSize()?.width ?? 1024) >= 768) return
+  // Phones: enabling two planned modules overflows the bar into the More bottom sheet.
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
+  for (const module of ['Tiendas', 'Misiones']) {
+    const toggle = page.getByRole('switch', { name: `${module}: visible para jugadores` })
+    await toggle.click({ force: true })
+    await expect(toggle).toBeChecked()
+  }
+  const more = page.getByRole('button', { name: 'Abrir más secciones', exact: true })
+  await more.click()
+  const sheet = page.locator('.more-drawer .mantine-Drawer-content')
+  await expect(sheet).toBeVisible()
+  const height = page.viewportSize()!.height
+  // Wait for the slide-in transition, then the sheet must sit flush at the bottom.
+  await expect
+    .poll(async () => {
+      const box = await sheet.boundingBox()
+      return Math.round(box!.y + box!.height)
+    })
+    .toBe(height)
+  expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(height * 0.7 + 1)
+  await page.keyboard.press('Escape')
+  await expect(more).toBeFocused()
+  await more.click()
+  await page.getByRole('dialog').getByRole('link', { name: 'Misiones' }).click()
+  await expect(page.locator('main')).toBeFocused()
+})

@@ -279,6 +279,12 @@ h2[tabindex='-1']:focus {
   flex-shrink: 0;
   white-space: nowrap;
 }
+/* Edge fade hints that the row scrolls; trailing padding keeps the last pill readable. */
+.nav-tabs-row .nav-tabs {
+  padding-right: 48px;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
 .dm-layout .nav-tabs,
 .dm-layout .topbar {
   max-width: 1360px;
@@ -702,9 +708,6 @@ main h3 {
   }
   .brand-title {
     font-size: 1.05rem;
-  }
-  .nav-tabs-row {
-    display: none;
   }
   main {
     padding: 16px;
@@ -1941,10 +1944,20 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
 .bottom-nav-label {
   max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .more-drawer .mantine-Drawer-content {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 70dvh;
+  margin-top: auto;
   border-radius: 18px 18px 0 0;
   background: var(--app-surface);
   padding-bottom: env(safe-area-inset-bottom);
@@ -1992,7 +2005,11 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
 .pull-indicator[data-ready] {
   color: var(--app-accent);
 }
-@media (max-width: 48em) {
+/* Phones only: 47.99em so a 768px tablet keeps the top row (min-width: 48em rules). */
+@media (max-width: 47.99em) {
+  .nav-tabs-row {
+    display: none;
+  }
   .has-bottom-nav .bottom-nav {
     position: fixed;
     z-index: 120;
@@ -2498,4 +2515,10 @@ button.exhaustion-pip:disabled {
 .dm-tabs[data-orientation='vertical'] .mantine-Tabs-tabLabel {
   flex: 1;
   text-align: start;
+}
+/* Pending controls keep focus (aria-disabled) but read as unavailable. */
+.stepper-btn[data-inert],
+.exhaustion-pip[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

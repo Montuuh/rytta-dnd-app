@@ -2007,6 +2007,10 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
 }
 /* Phones only: 47.99em so a 768px tablet keeps the top row (min-width: 48em rules). */
 @media (max-width: 47.99em) {
+  /* Focused or scrolled-to controls must not hide behind the fixed bottom bar (WCAG 2.4.11). */
+  html:has(.has-bottom-nav) {
+    scroll-padding-bottom: calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom));
+  }
   .nav-tabs-row {
     display: none;
   }

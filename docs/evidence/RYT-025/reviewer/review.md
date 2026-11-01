@@ -2,12 +2,12 @@
 
 - Ticket: `RYT-025` (Design critique: bottom navigation, folded planned modules and table widgets)
 - Reviewer: `ui-ux` (role `.codex/agents/ui-ux.toml`, independent subagent; implementation read-only)
-- Source reviewed: round 1 `3872bd3fe300c8b0cfa2b2b4da0c81345a504db6`; round 2 `71e3b89f9dbb54e3dd68da898a00a1078ec5fca6`; round 3 `5cd1e1bd675df5e8b80b1b47b30ccffe8a9f54b4` (branch `claude/ecstatic-clarke-dz03w7`)
+- Source reviewed: round 1 `3872bd3fe300c8b0cfa2b2b4da0c81345a504db6`; round 2 `71e3b89f9dbb54e3dd68da898a00a1078ec5fca6`; round 3 `5cd1e1bd675df5e8b80b1b47b30ccffe8a9f54b4` (branch `claude/ecstatic-clarke-dz03w7`); round 4 working tree on `main` `d0d177e` plus the uncommitted `src/app/styles.css` scroll-padding change
 - Date: 2026-11-01
 
 Verdict: PASS
 
-The verdict above applies to round 3 (`5cd1e1b`). Rounds 1 and 2 (both CHANGES_REQUIRED) are kept below as history.
+The verdict above applies to round 4 (working tree on `d0d177e` plus the scroll-padding change in `src/app/styles.css`). Round 3 (`5cd1e1b`) was PASS. Rounds 1 and 2 (both CHANGES_REQUIRED) are kept below as history.
 
 Most of the delivery works well. Phones reach campaign content at once. Planned modules are
 folded away, the DM tabs show one panel at a time, the HP pad works and axe was clean on all
@@ -287,3 +287,60 @@ the members page after demotion.
 - Real iOS Safari/Android, screen reader output, the multi-Player picker, error/offline states and hosted
   Supabase remain untested, as recorded in rounds 1 and 2.
 - This PASS applies only to source `5cd1e1b`. Any later UI source change needs a new review.
+
+## Round 4 (working tree on d0d177e + scroll padding)
+
+Scope: `main` at `d0d177e` (the e2e switches now toggle by keyboard; test-only) plus one
+uncommitted UI change in `src/app/styles.css`, inside `@media (max-width: 47.99em)`:
+`html:has(.has-bottom-nav) { scroll-padding-bottom: calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom)) }`.
+`git diff 5cd1e1b HEAD -- src index.html package-lock.json` is empty, so this CSS rule is the
+only UI source difference from the round 3 PASS. I rebuilt the mocked-live bundle from the working
+tree (the built CSS contains the rule), served it at 127.0.0.1:4190 under `/rytta-dnd-app/`,
+and tested in real Chromium with the `identity.ts` HTTP fixture. I deleted the temporary specs afterwards.
+
+Round 4 verdict: PASS. The rule fixes a real Focus Not Obscured (WCAG 2.4.11) defect on phones.
+It has no effect at 768px and up, and I found no regressions.
+
+### Result: with the rule vs without it (390x844, dark, es)
+
+For every Tab and Shift+Tab stop I compared the focused control's visible box (the switch
+root for switch inputs) with the top of the fixed `.bottom-nav`.
+
+| Sweep | Rule disabled (`scroll-padding-bottom: 0` injected) | With the rule (computed 80px) |
+| ----- | --------------------------------------------------- | ----------------------------- |
+| Members, Modules tab: Tab ×25 | 3 obscured stops: `Combate` switch [776–820] and `Atlas` switch [800–844] under navTop 779 | 0 obscured |
+| Members, Modules tab: Shift+Tab ×25 | 0 | 0 |
+| Members, Revelations tab: Tab ×15 | 0 | 0 |
+| Party: Tab ×25 (steppers and exhaustion pips) | 2 obscured: `Reducir`/`Aumentar Raciones de comida · Arin` [801–845] under navTop 778 | 0 obscured |
+| Party: Shift+Tab ×25 | 0 | 0 |
+
+No stop sat under the header and none was off screen in either sweep. Toggling the low
+`Taller` switch and the `Agotamiento nivel 4` pip with the keyboard left each control fully visible above the bar.
+
+### Scope and side effects
+
+- Computed `scroll-padding-bottom` was 80px at 390 and 767px, and `auto` at 768, 820 and 1440px. It was also
+  `auto` on the 390px hub, which has no bottom bar (`.has-bottom-nav` absent). The rule applies only when the bar is shown.
+- Horizontal overflow was 0 at 390, 767, 768, 820 and 1440px and on Party.
+- Scrolling: `scrollTo` end reached the maximum (573/573). The footer clears the bar. A route change
+  through the bottom bar resets to scrollY 0. Wheel scrolling behaves normally.
+- Axe (wcag2a/2aa/21aa): clean on Members (Modules tab) and Party at 390px.
+
+### Observations (not findings)
+
+- The padding is 80px and the bar measures about 66px at 100% text. At 150% text the bar reached
+  79px in round 2, so the margin there is about 1px. It is adequate, but it would be tighter at larger text sizes.
+- With 5 bottom items at 100% text, `Campamento` wraps to two hyphenated lines
+  (`r4/party-end-fix.png`). This is the round 2 label-wrapping behaviour, not part of this change.
+
+### Round 4 limitations
+
+- My skip-link check was invalid: after the route change, focus was on `main`, so the first Tab
+  reached `Crear personaje`, not the skip link. The `#main-content` anchor behaviour under
+  this rule was not verified.
+- Only 390x844 phone height was swept. Shorter phones, landscape and real iOS safe-area insets
+  (the `env()` term) were not tested. Chromium does not emulate `env(safe-area-inset-bottom)`.
+- I did not exercise screen reader virtual cursor behaviour or `scrollIntoView` calls from app code.
+- Evidence: `/tmp/claude-0/-home-user-rytta-dnd-app/77331370-f6e6-5e1e-9571-bcb8422725b4/scratchpad/review/r4/`
+  (`log-*.txt`, `modules-low-*.png`, `rev-*.png`, `party-end-*.png`, `members-end-fix.png`; scratch, not committed).
+- This PASS applies only to this working tree snapshot. Commit the CSS change unchanged, or have it re-reviewed.

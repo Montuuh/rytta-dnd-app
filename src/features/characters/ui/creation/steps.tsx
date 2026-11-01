@@ -16,7 +16,24 @@ import {
   Textarea,
   Title,
 } from '@mantine/core'
-import { Plus, Trash2 } from 'lucide-react'
+import {
+  Axe,
+  Crosshair,
+  Flame,
+  Guitar,
+  HandFist,
+  Leaf,
+  PenTool,
+  Plus,
+  ShieldHalf,
+  Skull,
+  Sun,
+  Swords,
+  Trash2,
+  VenetianMask,
+  WandSparkles,
+  type LucideIcon,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   chooseBackground,
@@ -55,6 +72,21 @@ import {
   type Skill,
 } from '../../domain/srd'
 import { useCharacterLabels } from '../labels'
+
+const classIcons: Record<string, LucideIcon> = {
+  barbarian: Axe,
+  bard: Guitar,
+  cleric: Sun,
+  druid: Leaf,
+  fighter: Swords,
+  monk: HandFist,
+  paladin: ShieldHalf,
+  ranger: Crosshair,
+  rogue: VenetianMask,
+  sorcerer: Flame,
+  warlock: Skull,
+  wizard: WandSparkles,
+}
 
 type StepProps = { draft: SheetDraft; setDraft: Dispatch<SetStateAction<SheetDraft>> }
 const newId = () => crypto.randomUUID()
@@ -108,28 +140,49 @@ function ClassStep(props: StepProps) {
           )
         }
       >
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 3 }} spacing="xs" mt="xs">
-          {classKeys.map((key) => (
-            <Radio.Card key={key} value={key} p="sm" className="choice-card">
-              <Group wrap="nowrap" align="flex-start" gap="sm">
-                <Radio.Indicator />
-                <div>
-                  <Text fw={600}>{t(`srd.class.${key}`)}</Text>
-                  <Text size="sm" c="dimmed">
-                    {t('wizard.classCard', {
-                      die: classes[key].hitDie,
-                      saves: shortSaves(classes[key].saves),
-                    })}
-                  </Text>
-                </div>
-              </Group>
-            </Radio.Card>
-          ))}
-          <Radio.Card value="custom" p="sm" className="choice-card">
-            <Group wrap="nowrap" align="flex-start" gap="sm">
-              <Radio.Indicator />
-              <Text fw={600}>{t('srd.custom')}</Text>
-            </Group>
+        <SimpleGrid cols={{ base: 2, sm: 3, lg: 4 }} spacing="xs" mt="xs" className="class-grid">
+          {classKeys.map((key) => {
+            const Icon = classIcons[key] ?? PenTool
+            return (
+              <Radio.Card
+                key={key}
+                value={key}
+                p="sm"
+                className="choice-card class-card"
+                aria-label={`${t(`srd.class.${key}`)}, ${t('wizard.classCard', {
+                  die: classes[key].hitDie,
+                  saves: shortSaves(classes[key].saves),
+                })}`}
+              >
+                <Radio.Indicator className="class-card-indicator" />
+                <span className="class-card-icon" aria-hidden="true">
+                  <Icon size={26} />
+                </span>
+                <Text fw={700} className="class-card-name">
+                  {t(`srd.class.${key}`)}
+                </Text>
+                <span className="class-card-die" aria-hidden="true">
+                  {t('wizard.hitDieShort', { die: classes[key].hitDie })}
+                </span>
+                <Text size="xs" c="dimmed" aria-hidden="true">
+                  {t('wizard.savesShort', { saves: shortSaves(classes[key].saves) })}
+                </Text>
+              </Radio.Card>
+            )
+          })}
+          <Radio.Card
+            value="custom"
+            p="sm"
+            className="choice-card class-card"
+            aria-label={t('srd.custom')}
+          >
+            <Radio.Indicator className="class-card-indicator" />
+            <span className="class-card-icon" aria-hidden="true">
+              <PenTool size={26} />
+            </span>
+            <Text fw={700} className="class-card-name">
+              {t('srd.custom')}
+            </Text>
           </Radio.Card>
         </SimpleGrid>
       </Radio.Group>

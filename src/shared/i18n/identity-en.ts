@@ -102,7 +102,8 @@ export const identityEn = {
   'dm.moduleHidden': 'Hidden from Players',
   'dm.toggleModule': 'Show to Players',
   'dm.hideModule': 'Hide from Players',
-  'dm.activeCount': '{{count}} modules active for Players',
+  'dm.activeCount_one': '{{count}} module active for Players',
+  'dm.activeCount_other': '{{count}} modules active for Players',
   'dm.revelationsTitle': 'Quick revelations queue',
   'dm.revelationsHint':
     'Prepare shops, quests, locations or NPCs as drafts and reveal them to the table in one click.',

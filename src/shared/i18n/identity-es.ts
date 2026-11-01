@@ -36,7 +36,7 @@ export const identityEs = {
   'hub.invalidName': 'Escribe un nombre de entre 1 y 100 caracteres.',
   'hub.invalidDescription': 'Usa un máximo de 2000 caracteres.',
   'campaign.role.dm': 'DM',
-  'campaign.role.player': 'Player',
+  'campaign.role.player': 'Jugador',
   'campaign.current': 'CAMPAÑA ACTUAL',
   'campaign.switch': 'Cambiar de campaña',
   'campaign.manage': 'Centro de mando DM',
@@ -48,7 +48,7 @@ export const identityEs = {
     'Estás sin conexión. La información puede estar desactualizada; reconecta antes de hacer cambios.',
   'members.title': 'Miembros e invitaciones',
   'members.intro':
-    'Gestiona quién entra en la campaña y sus permisos. Las invitaciones dan el rol Player; los personajes se gestionan en Grupo.',
+    'Gestiona quién entra en la campaña y sus permisos. Las invitaciones dan el rol Jugador; los personajes se gestionan en Grupo.',
   'members.list': 'Miembros',
   'members.you': 'Tú',
   'members.invite': 'Invitar jugador',
@@ -61,7 +61,7 @@ export const identityEs = {
   'members.noneSent': 'No hay invitaciones pendientes para esta campaña.',
   'members.revoke': 'Cancelar invitación',
   'members.promote': 'Nombrar DM',
-  'members.demote': 'Cambiar a Player',
+  'members.demote': 'Cambiar a Jugador',
   'members.remove': 'Retirar miembro',
   'members.leave': 'Abandonar campaña',
   'members.lastDm':
@@ -104,7 +104,8 @@ export const identityEs = {
   'dm.moduleHidden': 'Oculto para jugadores',
   'dm.toggleModule': 'Mostrar a jugadores',
   'dm.hideModule': 'Ocultar a jugadores',
-  'dm.activeCount': '{{count}} módulos activos para jugadores',
+  'dm.activeCount_one': '{{count}} módulo activo para jugadores',
+  'dm.activeCount_other': '{{count}} módulos activos para jugadores',
   'dm.revelationsTitle': 'Cola rápida de revelaciones',
   'dm.revelationsHint':
     'Prepara tiendas, misiones, lugares o PNJs en borrador y revélalos a la mesa en un clic.',

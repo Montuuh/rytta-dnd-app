@@ -16,13 +16,26 @@ and roasted chestnut accents (#6E3410 for primary buttons). Focus uses #844112. 
 preserve the same hierarchy; the palette is a product choice verified with contrast tests.
 
 Semantic tokens live in src/app/styles.css and feed Mantine variables. Avoid hardcoded
-light backgrounds or white text on pale dark-mode accents. The header uses a stacked two-row
-layout without a left sidebar: Row 1 shows the logo, RYTTA brand and campaign name on the left,
-and right-aligned DM Player POV, direct ES/EN language toggle, direct dark/light theme toggle
-and a unified Profile menu (My campaigns, App setup, Sign out). Row 2 shows module navigation
-as a horizontal scrollable row of tabs. Campaign home has no duplicate account/logout block.
-All controls have 44px targets. Preferences persist locally and remain usable in memory if
-storage is blocked.
+light backgrounds or white text on pale dark-mode accents. The header has no left sidebar.
+Row 1 shows the logo, the RYTTA brand and the campaign name, plus a DM `Player view` switch
+and a unified Profile menu (My campaigns, appearance toggle, language toggle, App setup,
+Sign out). Tablets and laptops show reachable modules in a second row: one non-wrapping,
+scrollable line. Phones (< 48em) use a fixed bottom bar with up to five destinations; when
+there are more, the extras go in a `More` drawer. Planned modules are never navigation items.
+They fold into the campaign home `Coming soon` accordion and the DM module switch list. A
+sticky banner marks the Player preview. All controls have 44px targets. Preferences persist
+locally and remain usable in memory if storage is blocked (ADR 015).
+
+## Type scale and layout
+
+Use the fluid tokens instead of literal sizes: `--fs-display` (HP), `--fs-h1..h3`,
+`--fs-stat` (stat values), `--fs-body` (16px; never shrink body copy on phones),
+`--fs-meta` (14px) and `--fs-tag` (12px minimum for badges and labels). Badges are sentence
+case. Content width is `--content-max` (1280px); DM layouts use 1360px. Reuse
+`RefreshControl` for refresh actions (icon button plus a visible relative timestamp),
+`PullToRefresh` as a touch-only addition, `useLongPress` for ×5 steppers, `Switch` for
+visibility toggles, `Chip` for multi-select states, pips for spendable uses and `Tabs` for
+panels that are shown one at a time.
 
 Spanish is the first-visit language even on English browsers. English is selectable.
 Use src/shared/i18n catalogs and typed keys for visible text, accessible names, loading,

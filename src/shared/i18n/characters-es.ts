@@ -1,7 +1,7 @@
 import type { charactersEn } from './characters-en'
 export const charactersEs = {
   'shell.menu': 'Menú',
-  'shell.playerView': 'Vista Player',
+  'shell.playerView': 'Vista jugador',
   'shell.dmView': 'Volver a DM',
   'shell.choosePlayerView': 'Ver como jugador',
   'shell.noPlayers': 'No hay jugadores en la mesa.',
@@ -52,13 +52,13 @@ export const charactersEs = {
   'characters.manageHint': 'Crea personajes e invita a sus jugadores desde Personajes y recursos.',
   'characters.assign': 'Vincular jugador',
   'characters.assignHint':
-    'Elige un miembro con rol Player que todavía no tenga personaje. Cada jugador puede tener un personaje por campaña.',
+    'Elige un miembro con rol Jugador que todavía no tenga personaje. Cada jugador puede tener un personaje por campaña.',
   'characters.player': 'Jugador',
   'characters.choosePlayer': 'Elige un jugador',
   'characters.playerName': 'Jugador: {{name}}',
   'characters.manageMembers': 'Ir a Miembros e invitaciones',
   'characters.noPlayers':
-    'Todavía no hay miembros con rol Player. Invita a un jugador y espera a que acepte para vincularlo.',
+    'Todavía no hay miembros con rol Jugador. Invita a un jugador y espera a que acepte para vincularlo.',
   'characters.noAvailablePlayers':
     'Todos los jugadores ya tienen personaje. Para cambiar uno, desvincúlalo primero desde su ficha en Grupo, o invita a otro jugador.',
   'characters.assignmentChanged':

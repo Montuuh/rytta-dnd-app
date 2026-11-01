@@ -775,7 +775,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-022", "RYT-023", "RYT-024", "RYT-004"],
       "sources": [
         "User 2026-11-01: design critique roast of the deployed app; implement every proposal (widgets instead of plain buttons, mobile and laptop rescaling)."
@@ -798,7 +798,9 @@
       ],
       "evidence": [
         "docs/decisions/015-design-critique-navigation-widgets.md",
-        "docs/evidence/RYT-025/validation.md"
+        "docs/evidence/RYT-025/validation.md",
+        "docs/evidence/RYT-025/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

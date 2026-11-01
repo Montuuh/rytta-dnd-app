@@ -1,6 +1,15 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, playerId } from './fixtures/identity.ts'
+import type { Page } from '@playwright/test'
+
+/** RYT-025 moved secondary character actions into a per-card "More actions" menu. */
+async function characterAction(page: Page, name: string, item: string, es = true) {
+  await page
+    .getByRole('button', { name: es ? `Más acciones para ${name}` : `More actions for ${name}` })
+    .click()
+  await page.getByRole('menuitem', { name: item, exact: true }).click()
+}
 
 for (const language of ['es', 'en'] as const)
   for (const scheme of ['dark', 'light'] as const)
@@ -22,9 +31,7 @@ for (const language of ['es', 'en'] as const)
       const es = language === 'es'
       for (const screen of ['party', 'link', 'assigned', 'unlink', 'members', 'invite']) {
         if (screen === 'link')
-          await page
-            .getByRole('button', { name: es ? 'Vincular jugador' : 'Link Player', exact: true })
-            .click()
+          await characterAction(page, 'Arin', es ? 'Vincular jugador' : 'Link Player', es)
         if (screen === 'assigned') {
           await page.getByRole('combobox').selectOption(playerId)
           await page
@@ -36,12 +43,7 @@ for (const language of ['es', 'en'] as const)
           ).toBeVisible()
         }
         if (screen === 'unlink')
-          await page
-            .getByRole('button', {
-              name: es ? 'Desvincular jugador' : 'Unlink Player',
-              exact: true,
-            })
-            .click()
+          await characterAction(page, 'Arin', es ? 'Desvincular jugador' : 'Unlink Player', es)
         if (screen === 'members') {
           await page.keyboard.press('Escape')
           await page.goto(`./#/campaign/${campaignId}/members`)
@@ -84,9 +86,9 @@ test('assignment explains unavailable Players and recovers from failed member re
 }, info) => {
   await identityFixture(page, { twoDms: true })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await characterAction(page, 'Arin', 'Vincular jugador')
   await expect(
-    page.getByText('Todavía no hay miembros con rol Player.', { exact: false }),
+    page.getByText('Todavía no hay miembros con rol Jugador.', { exact: false }),
   ).toBeVisible()
   await expect(
     page.getByRole('dialog').getByRole('button', { name: 'Vincular jugador', exact: true }),
@@ -104,13 +106,13 @@ test('assignment explains unavailable Players and recovers from failed member re
     else await route.fallback()
   })
   await page.reload()
-  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await characterAction(page, 'Arin', 'Vincular jugador')
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('No se pudo cargar')
   await page.screenshot({ path: info.outputPath('assignment-error.png'), fullPage: true })
   fail = false
   await page.getByRole('button', { name: 'Reintentar', exact: true }).click()
   await expect(
-    page.getByText('Todavía no hay miembros con rol Player.', { exact: false }),
+    page.getByText('Todavía no hay miembros con rol Jugador.', { exact: false }),
   ).toBeVisible()
   await page.getByRole('dialog').getByRole('link', { name: 'Ir a Miembros e invitaciones' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Miembros e invitaciones')
@@ -121,7 +123,7 @@ test('a Player already linked to another character is not offered again', async 
 }, info) => {
   await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/party`)
-  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await characterAction(page, 'Arin', 'Vincular jugador')
   await page.getByRole('combobox').selectOption(playerId)
   await page
     .getByRole('dialog')
@@ -134,7 +136,7 @@ test('a Player already linked to another character is not offered again', async 
     .getByRole('dialog')
     .getByRole('button', { name: 'Crear personaje', exact: true })
     .click()
-  await page.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
+  await characterAction(page, 'Second hero', 'Vincular jugador')
   await expect(
     page.getByText('Todos los jugadores ya tienen personaje.', { exact: false }),
   ).toBeVisible()
@@ -171,13 +173,13 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
     .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
   await arin.getByRole('button', { name: 'Aumentar Oro · Arin', exact: true }).click()
   await expect(arin.getByText('26', { exact: true })).toBeVisible()
-  await arin.getByRole('button', { name: 'Editar recursos' }).click()
+  await characterAction(page, 'Arin', 'Editar recursos')
   await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('98')
   await page.getByRole('button', { name: 'Aumentar Oro', exact: true }).click()
   await page.getByRole('textbox', { name: 'Agotamiento', exact: true }).fill('12')
   await page.getByRole('button', { name: 'Guardar recursos' }).click()
   await expect(arin.getByText('99', { exact: true })).toBeVisible()
-  await arin.getByRole('button', { name: 'Editar recursos' }).click()
+  await characterAction(page, 'Arin', 'Editar recursos')
   f.staleResources()
   await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('100')
   await page.getByRole('button', { name: 'Guardar recursos' }).click()
@@ -194,7 +196,7 @@ test('Player sees own resources read-only; account menu returns home without lea
   const f = await identityFixture(page, { player: true })
   await page.goto(`./#/campaign/${campaignId}/party`)
   await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Editar recursos' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Crear personaje' })).toHaveCount(0)
   const menu = page.getByRole('button', { name: /Sesión de player@example.com/ })
   await menu.click()
@@ -236,9 +238,12 @@ for (const language of ['es', 'en'] as const)
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
       for (const screen of ['party', 'editor', 'menu', 'settings', 'account']) {
         if (screen === 'editor')
-          await page
-            .getByRole('button', { name: language === 'es' ? 'Editar recursos' : 'Edit resources' })
-            .click()
+          await characterAction(
+            page,
+            'Arin',
+            language === 'es' ? 'Editar recursos' : 'Edit resources',
+            language === 'es',
+          )
         if (screen === 'menu') {
           await page.keyboard.press('Escape')
           await page
@@ -314,36 +319,42 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   const card = page
     .locator('.character-card')
     .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
-  const link = card.getByRole('button', { name: 'Vincular jugador', exact: true })
-  await link.focus()
-  await link.press('Enter')
+  // Keyboard: open the card menu, pick the action, Escape returns focus to the menu trigger.
+  const more = card.getByRole('button', { name: 'Más acciones para Arin', exact: true })
+  await more.focus()
+  await more.press('Enter')
+  await page.getByRole('menuitem', { name: 'Vincular jugador', exact: true }).press('Enter')
   await expect(page.getByLabel('Jugador', { exact: true })).toBeFocused()
   await page.keyboard.press('Escape')
-  await expect(link).toBeFocused()
-  await link.click()
+  await expect(more).toBeFocused()
+  await characterAction(page, 'Arin', 'Vincular jugador')
   const linkDialog = page.getByRole('dialog', { name: 'Vincular jugador' })
   await linkDialog.getByLabel('Jugador', { exact: true }).selectOption(playerId)
   await linkDialog.getByRole('button', { name: 'Vincular jugador', exact: true }).click()
   await expect(card.getByText('Jugador: Arin', { exact: true })).toBeVisible()
-  await expect(card.getByRole('button', { name: 'Desvincular jugador', exact: true })).toBeFocused()
-  await card.getByRole('button', { name: 'Desvincular jugador', exact: true }).click()
+  await expect(more).toBeFocused()
+  await characterAction(page, 'Arin', 'Desvincular jugador')
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(card.getByText('Sin jugador', { exact: true })).toBeVisible()
-  await expect(link).toBeFocused()
+  await expect(more).toBeFocused()
   await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toBeVisible()
   await expect(page.getByText('CAMPAÑA ACTUAL')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Volver a mi cuenta', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Invitar jugador', exact: true })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Vista Player', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Arin', exact: true }).click()
+  // A single Player enters the preview directly; the banner makes the mode unmistakable.
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Estás viendo la mesa como Arin' }),
+  ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Editar recursos', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByText('Vista de Arin')).toBeVisible()
   await expect(page.getByText('Tu DM todavía no te ha asignado un personaje.')).toBeVisible()
   await page.screenshot({ path: info.outputPath('player-preview.png'), fullPage: true })
   expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
-  await page.getByRole('button', { name: 'Volver a DM', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Editar recursos', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Volver a vista DM', exact: true }).click()
+  await expect(page.getByRole('switch', { name: 'Vista jugador', exact: true })).not.toBeChecked()
+  await expect(page.getByRole('button', { name: 'Más acciones para Arin' })).toBeVisible()
 })
 
 test('long account email stays within the viewport and supports keyboard dismissal', async ({
@@ -397,4 +408,40 @@ test('localhost sends all REST reads and RPC writes to the PRE schema', async ({
   expect(profiles.some((p) => p.method === 'GET')).toBe(true)
   expect(profiles.some((p) => p.method === 'POST')).toBe(true)
   expect(profiles.every((p) => p.schema === 'pre')).toBe(true)
+})
+
+test('RYT-025 navigation and exhaustion track adapt to phones and laptops', async ({
+  page,
+}, info) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+  const phone = (page.viewportSize()?.width ?? 1024) < 768
+  const nav = page.getByRole('navigation', { name: 'Navegación principal' })
+  await expect(nav).toHaveCount(1)
+  if (phone) {
+    await expect(page.locator('.bottom-nav')).toBeVisible()
+    await expect(page.locator('.nav-tabs-row')).toBeHidden()
+    const box = await page.locator('.bottom-nav').boundingBox()
+    expect(box!.y + box!.height).toBeCloseTo(page.viewportSize()!.height, 0)
+  } else {
+    await expect(page.locator('.bottom-nav')).toBeHidden()
+    // A single row of reachable modules; planned modules are not navigation items.
+    const row = await page.locator('.nav-tabs').boundingBox()
+    expect(row!.height).toBeLessThan(80)
+  }
+  await expect(nav.getByText('Tiendas', { exact: false })).toHaveCount(0)
+  await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  )
+  const arin = page
+    .locator('.character-card')
+    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  await arin.getByRole('button', { name: 'Agotamiento nivel 2 · Arin', exact: true }).click()
+  await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(2)
+  // Pressing the current top level steps down one level.
+  await arin.getByRole('button', { name: 'Agotamiento nivel 2 · Arin', exact: true }).click()
+  await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(1)
+  await page.screenshot({ path: info.outputPath('ryt-025-party.png'), fullPage: true })
 })

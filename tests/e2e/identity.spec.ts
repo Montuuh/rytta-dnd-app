@@ -172,33 +172,50 @@ test('DM command center manages module visibility, revelations queue, audit log 
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  await expect(mainNav.getByRole('link').nth(0)).toHaveText('Campamento')
-  await expect(mainNav.getByRole('link').nth(1)).toHaveText('Centro de mando DM')
-  await expect(mainNav.getByRole('link').nth(2)).toHaveText('Grupo')
+  // Phones show the short "Mando DM" label; the accessible name stays complete.
+  await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Campamento')
+  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Centro de mando DM')
+  await expect(mainNav.getByRole('link').nth(2)).toHaveAccessibleName('Grupo')
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
+  // RYT-025: one panel at a time behind real tabs; members is the default.
+  const tabs = page.getByRole('tablist', { name: 'Centro de mando DM' })
+  await expect(tabs.getByRole('tab', { name: 'Miembros', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
   await expect(
     page.getByRole('heading', { name: 'Control de módulos activos', exact: true }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: 'Cola rápida de revelaciones', exact: true }),
-  ).toBeVisible()
+  ).toHaveCount(0)
+  await tabs.getByRole('tab', { name: 'Auditoría', exact: true }).click()
   await expect(
     page.getByRole('heading', { name: 'Registro de auditoría', exact: true }),
   ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Miembros', exact: true })).toHaveCount(0)
   await expect(page.getByText('Recursos actualizados', { exact: true })).toBeVisible()
   await expect(page.getByText('Personaje creado', { exact: true })).toBeVisible()
   await expect(page.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
   await expect(page.getByText('Raciones de comida: 2 → 4 (+2)', { exact: true })).toBeVisible()
   await expect(page.getByText('Por Table DM', { exact: false }).first()).toBeVisible()
-  await page.getByRole('button', { name: 'Recursos', exact: true }).click()
+  const auditFilter = page.locator('.audit-filter label')
+  await auditFilter.filter({ hasText: /^Recursos$/ }).click()
   await expect(page.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Todos', exact: true }).click()
+  await expect(page.getByText('Personaje creado', { exact: true })).toHaveCount(0)
+  await auditFilter.filter({ hasText: /^Todos$/ }).click()
 
-  await page.getByRole('button', { name: 'Mostrar a jugadores: Tiendas', exact: true }).click()
+  await tabs.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
   await expect(
-    page.getByRole('button', { name: 'Ocultar a jugadores: Tiendas', exact: true }),
+    page.getByRole('heading', { name: 'Control de módulos activos', exact: true }),
   ).toBeVisible()
+  const shops = page.getByRole('switch', { name: 'Tiendas: visible para jugadores', exact: true })
+  await expect(shops).not.toBeChecked()
+  await shops.click({ force: true })
+  await expect(shops).toBeChecked()
   expect(f.calls.some((c) => c.method === 'set_campaign_modules')).toBe(true)
+
+  await tabs.getByRole('tab', { name: 'Cola de revelaciones', exact: true }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Cola rápida de revelaciones', exact: true }),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: 'Nueva revelación', exact: true }).click()
   await page.getByLabel('Título de la revelación').fill('Gremio de Cartógrafos')
@@ -216,14 +233,17 @@ test('DM command center manages module visibility, revelations queue, audit log 
   const draftCard = page
     .locator('.revelation-card')
     .filter({ has: page.getByText('Gremio de Cartógrafos', { exact: true }) })
-  await draftCard.getByRole('button', { name: 'Revelar a la mesa', exact: true }).click()
-  await expect(
-    draftCard.getByRole('button', { name: 'Ocultar a la mesa', exact: true }),
-  ).toBeVisible()
+  const reveal = draftCard.getByRole('switch', {
+    name: 'Visible para el grupo: Gremio de Cartógrafos',
+    exact: true,
+  })
+  await expect(reveal).not.toBeChecked()
+  await reveal.click({ force: true })
+  await expect(reveal).toBeChecked()
   expect(f.calls.some((c) => c.method === 'set_revelation_visibility')).toBe(true)
 
-  await page.getByRole('button', { name: 'Vista Player', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Arin', exact: true }).click()
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click({ force: true })
+  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   const nav = page.getByRole('navigation', { name: 'Navegación principal' })
   await expect(nav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
@@ -231,7 +251,7 @@ test('DM command center manages module visibility, revelations queue, audit log 
   await expect(nav.getByText('Inventario', { exact: false })).toHaveCount(0)
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.screenshot({ path: info.outputPath('dm-player-preview-mode.png'), fullPage: true })
-  await page.getByRole('button', { name: 'Volver a DM', exact: true }).click()
+  await page.getByRole('button', { name: 'Volver a vista DM', exact: true }).click()
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
 })
 
@@ -290,7 +310,7 @@ test('self-demotion clears management views and offline actions are not queued',
   const self = page
     .locator('.mantine-Paper-root')
     .filter({ has: page.getByText('Table DM · Tú', { exact: true }) })
-  await self.getByRole('button', { name: 'Cambiar a Player', exact: true }).click()
+  await self.getByRole('button', { name: 'Cambiar a Jugador', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
@@ -319,9 +339,10 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   const campaignsItem = page.getByRole('menuitem', { name: 'Mis campañas', exact: true })
   const settings = page.getByRole('menuitem', { name: 'Ajustes', exact: true })
   await expect(campaignsItem).toBeFocused()
-  await expect(page.getByRole('menuitem')).toHaveCount(3)
+  // My campaigns, appearance, language, App setup and Sign out (RYT-025).
+  await expect(page.getByRole('menuitem')).toHaveCount(5)
   const bounds = await page.getByRole('menu').boundingBox()
-  expect(bounds!.height).toBeLessThan(260)
+  expect(bounds!.height).toBeLessThan(380)
   expect(bounds!.width).toBeLessThanOrEqual(260)
   await page.screenshot({ path: info.outputPath('compact-settings-menu.png'), fullPage: true })
   await page.keyboard.press('Escape')

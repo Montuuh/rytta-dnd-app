@@ -65,9 +65,11 @@ export function CampPage() {
             <Text size="sm" c="dimmed" mt="xs">
               {t(summary)}
             </Text>
-            <Text size="xs" mt="lg" fw={600}>
-              {t('common.planned')}
-            </Text>
+            {path !== '/party' && (
+              <Badge variant="outline" className="visibility-badge" mt="md">
+                {t('common.comingSoonTag')}
+              </Badge>
+            )}
           </ModuleCard>
         ))}
       </SimpleGrid>

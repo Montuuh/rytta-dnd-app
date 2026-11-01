@@ -4,10 +4,9 @@ import {
   Badge,
   Button,
   Checkbox,
-  CloseButton,
+  Chip,
   Group,
   Modal,
-  NativeSelect,
   Paper,
   SimpleGrid,
   Stack,
@@ -35,7 +34,6 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
   const { t } = useTranslation()
   const scores = finalAbilities(build)
   const hitDiceLeft = sheet.level - vitals.hit_dice_spent
-  const available = conditionKeys.filter((key) => !vitals.conditions.includes(key))
   return (
     <div className="sheet-columns">
       <Stack gap="md">
@@ -85,27 +83,17 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
                   })}
                 </Text>
               </div>
-              {canEdit && (
-                <Group gap="xs">
-                  <Button
-                    variant="default"
-                    aria-label={t('sheet.spendHitDieLabel')}
-                    disabled={pending || hitDiceLeft <= 0}
-                    onClick={() => commit({ ...vitals, hit_dice_spent: vitals.hit_dice_spent + 1 })}
-                  >
-                    {t('sheet.spendHitDie')}
-                  </Button>
-                  <Button
-                    variant="subtle"
-                    aria-label={t('sheet.recoverHitDieLabel')}
-                    disabled={pending || vitals.hit_dice_spent <= 0}
-                    onClick={() => commit({ ...vitals, hit_dice_spent: vitals.hit_dice_spent - 1 })}
-                  >
-                    {t('sheet.recoverHitDie')}
-                  </Button>
-                </Group>
-              )}
             </Group>
+            <Pips
+              max={sheet.level}
+              used={vitals.hit_dice_spent}
+              disabled={!canEdit || pending}
+              spendLabel={t('sheet.spendHitDieLabel')}
+              restoreLabel={t('sheet.recoverHitDieLabel')}
+              countLabel={`${hitDiceLeft}/${sheet.level}`}
+              glyph={`d${build.hitDie}`}
+              onChange={(used) => commit({ ...vitals, hit_dice_spent: used })}
+            />
             {canEdit && (
               <Text size="xs" c="dimmed">
                 {t('sheet.spendHint')}
@@ -148,56 +136,47 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
                 commit({ ...vitals, heroic_inspiration: event.currentTarget.checked })
               }
             />
-            <Text fw={600}>{t('sheet.conditions')}</Text>
-            {vitals.conditions.length === 0 ? (
+            <Text fw={600} id="conditions-title">
+              {t('sheet.conditions')}
+            </Text>
+            {canEdit ? (
+              <>
+                <Text size="sm" c="dimmed">
+                  {vitals.conditions.length === 0
+                    ? t('sheet.noConditions')
+                    : t('sheet.conditionsHint')}
+                </Text>
+                <Chip.Group
+                  multiple
+                  value={[...vitals.conditions]}
+                  onChange={(next) =>
+                    commit({
+                      ...vitals,
+                      conditions: conditionKeys.filter((key) => next.includes(key)),
+                    })
+                  }
+                >
+                  <div className="condition-chips" role="group" aria-labelledby="conditions-title">
+                    {conditionKeys.map((key) => (
+                      <Chip key={key} value={key} disabled={pending} className="condition-chip">
+                        {t(`srd.condition.${key}`)}
+                      </Chip>
+                    ))}
+                  </div>
+                </Chip.Group>
+              </>
+            ) : vitals.conditions.length === 0 ? (
               <Text size="sm" c="dimmed">
                 {t('sheet.noConditions')}
               </Text>
             ) : (
               <Group gap="xs">
                 {vitals.conditions.map((key) => (
-                  <Badge
-                    key={key}
-                    size="lg"
-                    variant="outline"
-                    className="condition-badge"
-                    rightSection={
-                      canEdit ? (
-                        <CloseButton
-                          size={36}
-                          aria-label={t('sheet.removeCondition', {
-                            name: t(`srd.condition.${key}`),
-                          })}
-                          disabled={pending}
-                          onClick={() =>
-                            commit({
-                              ...vitals,
-                              conditions: vitals.conditions.filter((item) => item !== key),
-                            })
-                          }
-                        />
-                      ) : undefined
-                    }
-                  >
+                  <Badge key={key} size="lg" variant="outline" className="condition-badge">
                     {t(`srd.condition.${key}`)}
                   </Badge>
                 ))}
               </Group>
-            )}
-            {canEdit && available.length > 0 && (
-              <NativeSelect
-                label={t('sheet.addCondition')}
-                value=""
-                disabled={pending}
-                data={[
-                  { value: '', label: '—' },
-                  ...available.map((key) => ({ value: key, label: t(`srd.condition.${key}`) })),
-                ]}
-                onChange={(event) => {
-                  const key = event.currentTarget.value as (typeof conditionKeys)[number]
-                  if (key) commit({ ...vitals, conditions: [...vitals.conditions, key] })
-                }}
-              />
             )}
           </Stack>
         </Paper>

@@ -10,6 +10,7 @@ export function Pips({
   restoreLabel,
   onChange,
   countLabel,
+  glyph,
 }: {
   max: number
   used: number
@@ -18,6 +19,8 @@ export function Pips({
   restoreLabel: string
   onChange: (used: number) => void
   countLabel: string
+  /** Optional short text drawn inside each pip, such as the hit die size. */
+  glyph?: string
 }) {
   const left = Math.max(0, max - used)
   return (
@@ -37,7 +40,9 @@ export function Pips({
             }
             onClick={() => onChange(available ? used + 1 : used - 1)}
           >
-            <span className="pip-mark" aria-hidden="true" />
+            <span className="pip-mark" data-glyph={glyph ? true : undefined} aria-hidden="true">
+              {glyph}
+            </span>
           </UnstyledButton>
         )
       })}

@@ -12,11 +12,12 @@ import type { Vitals } from '../../domain/sheet'
 import { useCharacterLabels } from '../labels'
 import { FeaturesTab, NotesTab, SpellsTab, SummaryTab } from './sections'
 import { VitalsPanel } from './vitals-panel'
+import { RefreshControl } from '@/shared/ui/refresh-control'
 
 const tabs = ['summary', 'features', 'spells', 'notes'] as const
 
 export function CharacterSheetPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { characterId = '' } = useParams()
   const { state } = useAuth()
   const campaign = useCampaign()
@@ -161,40 +162,48 @@ export function CharacterSheetPage() {
       <div aria-live="polite" className="visually-hidden-live">
         {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
       </div>
-      <VitalsPanel {...shared} exhaustion={exhaustion} />
-      <section aria-labelledby="sheet-attacks" className="sheet-attacks">
-        <Title order={2} size="h4" id="sheet-attacks" mb={4}>
-          {t('inventory.attacks.title')}
-        </Title>
-        <SheetAttacks campaignId={campaign.id} characterId={character.id} />
-      </section>
-      <Text size="xs" c="dimmed">
-        {t('characters.updated', {
-          time: new Date(query.dataUpdatedAt).toLocaleTimeString(i18n.language),
-        })}
-      </Text>
-      <Tabs defaultValue="summary" keepMounted={false} className="sheet-tabs">
-        <Tabs.List aria-label={t('sheet.tabs')} grow>
-          {tabs.map((tab) => (
-            <Tabs.Tab key={tab} value={tab}>
-              {t(`sheet.tab.${tab}`)}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-        <Tabs.Panel value="summary" pt="md">
-          <SummaryTab {...shared} />
-        </Tabs.Panel>
-        <Tabs.Panel value="features" pt="md">
-          <FeaturesTab {...shared} onRest={(values) => commit(values, 'sheet.restDone')} />
-        </Tabs.Panel>
-        <Tabs.Panel value="spells" pt="md">
-          <SpellsTab {...shared} />
-        </Tabs.Panel>
-        <Tabs.Panel value="notes" pt="md">
-          <NotesTab {...shared} />
-        </Tabs.Panel>
-      </Tabs>
-      <Text size="xs" c="dimmed">
+      <div className="sheet-layout">
+        <div className="sheet-side">
+          <VitalsPanel {...shared} exhaustion={exhaustion} />
+          <section aria-labelledby="sheet-attacks" className="sheet-attacks">
+            <Title order={2} size="h4" id="sheet-attacks" mb={4}>
+              {t('inventory.attacks.title')}
+            </Title>
+            <SheetAttacks campaignId={campaign.id} characterId={character.id} />
+          </section>
+          <Group justify="flex-end">
+            <RefreshControl
+              onRefresh={() => void query.refetch()}
+              fetching={query.isFetching}
+              updatedAt={query.dataUpdatedAt}
+            />
+          </Group>
+        </div>
+        <div className="sheet-main">
+          <Tabs defaultValue="summary" keepMounted={false} className="sheet-tabs">
+            <Tabs.List aria-label={t('sheet.tabs')} grow>
+              {tabs.map((tab) => (
+                <Tabs.Tab key={tab} value={tab}>
+                  {t(`sheet.tab.${tab}`)}
+                </Tabs.Tab>
+              ))}
+            </Tabs.List>
+            <Tabs.Panel value="summary" pt="md">
+              <SummaryTab {...shared} />
+            </Tabs.Panel>
+            <Tabs.Panel value="features" pt="md">
+              <FeaturesTab {...shared} onRest={(values) => commit(values, 'sheet.restDone')} />
+            </Tabs.Panel>
+            <Tabs.Panel value="spells" pt="md">
+              <SpellsTab {...shared} />
+            </Tabs.Panel>
+            <Tabs.Panel value="notes" pt="md">
+              <NotesTab {...shared} />
+            </Tabs.Panel>
+          </Tabs>
+        </div>
+      </div>
+      <Text size="sm" c="dimmed" className="srd-license">
         {t('srd.license')}
       </Text>
     </Stack>

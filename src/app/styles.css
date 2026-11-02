@@ -381,6 +381,18 @@ h2[tabindex='-1']:focus {
   max-width: 100%;
   height: auto;
 }
+/* Busy submits stay focusable (aria-disabled) but must read as unavailable; the spinner
+   follows the label colour so it stays visible on filled accent buttons. */
+.mantine-Button-root[aria-disabled='true']:not(:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.mantine-Button-root[aria-busy='true'] {
+  cursor: progress;
+}
+.mantine-Button-root[aria-busy='true'] .mantine-Loader-root {
+  --loader-color: currentColor;
+}
 .mantine-Button-label {
   white-space: normal;
   padding-block: 8px;
@@ -2976,6 +2988,10 @@ button.exhaustion-pip:disabled {
   border-radius: 50%;
   background: var(--app-accent);
   color: var(--app-on-accent);
+}
+.pick-tile:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 .pick-dock {
   position: sticky;

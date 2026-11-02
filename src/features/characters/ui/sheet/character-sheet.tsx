@@ -123,6 +123,14 @@ export function CharacterSheetPage() {
           </Button>
         )}
       </Group>
+      <Button
+        component={Link}
+        variant="light"
+        w="fit-content"
+        to={`/campaign/${campaign.id}/inventory?character=${character.id}&view=equipment`}
+      >
+        {t('catalogue.openEquipment')}
+      </Button>
       <header className="sheet-identity">
         <CharacterPortrait
           campaignId={campaign.id}

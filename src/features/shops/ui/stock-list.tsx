@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import {
+  Alert,
   ActionIcon,
   Badge,
   Button,
+  Loader,
   Collapse,
   Drawer,
   Group,
@@ -26,10 +28,9 @@ import {
   Trash2,
   Users,
 } from 'lucide-react'
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useLongPress } from '@/shared/ui/use-long-press'
-import { itemCategories, type ItemCategory } from '@/features/inventory'
+import { DefinitionEditor, itemCategories, type ItemCategory } from '@/features/inventory'
 import type {
   AdminItem,
   AdminListing,
@@ -161,7 +162,7 @@ function ListingRow({
           onToggle()
         }}
       >
-        <ItemGlyph icon={item.icon} rarity={item.rarity} />
+        <ItemGlyph imagePath={item.image_path} icon={item.icon} rarity={item.rarity} />
         <span className="stock-row-body">
           <span className="stock-row-name user-copy">{item.name}</span>
           <span className="stock-row-meta">
@@ -397,7 +398,8 @@ export function AddItemsDrawer({
   opened,
   shop,
   items,
-  forgeHref,
+  campaignId,
+  error,
   busy,
   onClose,
   onAdd,
@@ -405,18 +407,21 @@ export function AddItemsDrawer({
   opened: boolean
   shop: AdminShop
   items: AdminItem[]
-  forgeHref: string
+  campaignId: string
+  error: string | null
   busy: boolean
   onClose: () => void
   onAdd: (items: AdminItem[]) => void
 }) {
   const { t } = useTranslation()
   const phone = useMediaQuery('(max-width: 48em)')
+  const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<ItemCategory | 'all'>('all')
   const taken = new Set(shop.listings.map((l) => l.definition_id))
   const available = items.filter((i) => !taken.has(i.id))
+  const selection = available.filter((item) => picked.includes(item.id))
   const needle = search.trim().toLocaleLowerCase()
   const visible = available.filter(
     (i) =>
@@ -424,10 +429,25 @@ export function AddItemsDrawer({
       (!needle || i.name.toLocaleLowerCase().includes(needle)),
   )
   const close = () => {
+    if (busy) return
     setPicked([])
     setSearch('')
     onClose()
   }
+  if (creating)
+    return (
+      <DefinitionEditor
+        campaignId={campaignId}
+        definition={null}
+        onClose={() => setCreating(false)}
+        onSaved={(item) => {
+          setCreating(false)
+          setSearch('')
+          setCategory('all')
+          setPicked((ids) => [...ids, item.id])
+        }}
+      />
+    )
   return (
     <Drawer
       opened={opened}
@@ -471,11 +491,17 @@ export function AddItemsDrawer({
                     key={item.id}
                     className="pick-tile"
                     aria-pressed={on}
+                    disabled={busy}
                     onClick={() =>
                       setPicked(on ? picked.filter((id) => id !== item.id) : [...picked, item.id])
                     }
                   >
-                    <ItemGlyph icon={item.icon} rarity={item.rarity} size={24} />
+                    <ItemGlyph
+                      imagePath={item.image_path}
+                      icon={item.icon}
+                      rarity={item.rarity}
+                      size={24}
+                    />
                     <span className="pick-tile-name user-copy">{item.name}</span>
                     <span className="pick-tile-value">
                       {item.value_gp === null
@@ -495,8 +521,8 @@ export function AddItemsDrawer({
           </>
         )}
         <Button
-          component={Link}
-          to={forgeHref}
+          disabled={busy}
+          onClick={() => setCreating(true)}
           variant="subtle"
           leftSection={<Hammer size={16} aria-hidden="true" />}
           w="fit-content"
@@ -504,19 +530,26 @@ export function AddItemsDrawer({
           {t('admin.listing.toForge')}
         </Button>
         <div className="pick-dock">
+          {/* Inside the sticky dock so the failure stays visible above the retry action. */}
+          {error && (
+            <Alert color="red" role="alert" mb="xs">
+              {error}
+            </Alert>
+          )}
           <Button
             size="lg"
             fullWidth
-            disabled={picked.length === 0}
-            loading={busy}
+            disabled={selection.length === 0 && !busy}
+            aria-disabled={busy || selection.length === 0}
+            aria-busy={busy}
+            leftSection={busy ? <Loader size={16} /> : undefined}
             onClick={() => {
-              onAdd(available.filter((i) => picked.includes(i.id)))
-              setPicked([])
+              if (!busy && selection.length > 0) onAdd(selection)
             }}
           >
-            {picked.length === 0
+            {selection.length === 0
               ? t('admin.listing.pickNone')
-              : t('admin.listing.pickAdd', { count: picked.length })}
+              : t('admin.listing.pickAdd', { count: selection.length })}
           </Button>
           <Text size="xs" c="dimmed" ta="center" mt={4}>
             {t('admin.listing.pickHelp')}

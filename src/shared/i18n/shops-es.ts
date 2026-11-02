@@ -230,7 +230,7 @@ export const shopsEs = {
   'shop.itemMeta': '{{rarity}}, {{weight}} lb',
   'shop.weightEach': '{{weight}} lb cada uno',
   'admin.listing.noValue': 'Este objeto no tiene valor del DM',
-  'admin.listing.toForge': 'Crear objetos en la forja del inventario',
+  'admin.listing.toForge': 'Crear objeto',
   'admin.hiddenFromPlayers':
     'Los jugadores aún no ven Tiendas. Activa el módulo en el Centro de mando DM.',
   'shop.seeInInventory': 'Ver en el inventario',

@@ -1,0 +1,5 @@
+{
+  "tag": "BODY",
+  "aria": null,
+  "text": "\n    :root, :host{--mantine-cursor-type: pointer;--mantine-font-family: Inter, ui-sans-serif, system-ui, sans-serif;--ma"
+}

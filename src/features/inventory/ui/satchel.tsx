@@ -101,7 +101,7 @@ export function Satchel({
                 onClick={(event) => onOpen(stack, event.currentTarget)}
               >
                 <span className="item-tile-icon">
-                  <ItemIcon icon={definition.icon} />
+                  <ItemIcon icon={definition.icon} imagePath={definition.image_path} />
                 </span>
                 <span className="item-tile-name">{definition.name}</span>
                 <span className="item-rarity-pips" aria-hidden="true">

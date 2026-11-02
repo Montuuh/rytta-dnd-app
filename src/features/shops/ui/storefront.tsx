@@ -519,7 +519,11 @@ function SellPanel({
       <Stack gap="xs">
         {rows.map(({ definition, available }) => (
           <div className="sell-row" key={definition.id}>
-            <ItemGlyph icon={definition.icon} rarity={definition.rarity} />
+            <ItemGlyph
+              imagePath={definition.image_path}
+              icon={definition.icon}
+              rarity={definition.rarity}
+            />
             <div className="sell-row-body">
               <Text fw={600} className="user-copy">
                 {definition.name}

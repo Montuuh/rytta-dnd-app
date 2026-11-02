@@ -69,6 +69,14 @@ export function CampaignPage() {
           </Badge>
         )}
       </Group>
+      {effectiveDm && (
+        <ModuleCard to={`/campaign/${campaign.id}/items`} enabled>
+          <Stack gap="xs" p="md">
+            <Title order={2}>{t('catalogue.title')}</Title>
+            <Text>{t('catalogue.intro')}</Text>
+          </Stack>
+        </ModuleCard>
+      )}
       <SimpleGrid
         cols={{ base: 1, xs: 2, lg: effectiveDm ? 3 : 2 }}
         className={effectiveDm ? 'module-grid' : 'module-grid is-player'}

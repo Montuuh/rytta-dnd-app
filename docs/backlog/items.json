@@ -199,13 +199,13 @@
       "dependsOn": ["RYT-003", "RYT-017"],
       "sources": [
         "Drive: items, equipment, encumbrance",
-        "Drive: Aplicación Rol › Objetos / Equipo (icons, use and undo, encumbrance bar, equipment slots, character picture)",
+        "Drive: AplicaciÃ³n Rol â€º Objetos / Equipo (icons, use and undo, encumbrance bar, equipment slots, character picture)",
         "User 2026-10-31: 5e variant encumbrance; DM and Player add items; 10-minute Player undo; equipment AC, weapon attacks, SRD 5.2 templates and portraits; unique widgets",
         "docs/decisions/014-inventory-equipment.md"
       ],
       "scope": "Campaign item catalog, character stacks, equipment slots, use/discard/grant with compensating undo, 5e variant encumbrance, equipment-derived AC and attacks, SRD 5.2 templates and private character portraits.",
       "acceptance": [
-        "Encumbrance uses the 5e variant (STR×5/×10/×15) and undo allows Players their own grant/use/remove events for 10 minutes when the stack is unchanged; DMs undo any quantity event.",
+        "Encumbrance uses the 5e variant (STRÃ—5/Ã—10/Ã—15) and undo allows Players their own grant/use/remove events for 10 minutes when the stack is unchanged; DMs undo any quantity event.",
         "Item tiles show icon, quantity and rarity with accessible pressable details, weight and properties; the card uses a hold-to-use seal with an immediate keyboard path.",
         "Use, discard, grant, equip, unequip and undo are authorized, idempotent, revision-checked RPC transactions with an immutable ledger, not snapshot restores.",
         "Players add only price-free items into player-sourced stacks; anon, outsiders, other Players, cross-campaign DMs and inactive members are denied.",
@@ -795,12 +795,12 @@
       ],
       "scope": "Replace wrapping module pills with a phone bottom bar and single-row desktop tabs, fold planned modules, move preferences into Profile, add a Player view switch and banner, split the DM Command Center into real tabs with switches and a timeline, and upgrade Party, sheet, wizard and inventory controls to touch widgets on a fluid type scale.",
       "acceptance": [
-        "At 390px the first screen shows campaign content: navigation is a fixed bottom bar with ≤5 reachable items plus a More drawer (Escape returns focus); 820px and 1440px show one non-wrapping row; planned modules never appear as navigation items.",
+        "At 390px the first screen shows campaign content: navigation is a fixed bottom bar with â‰¤5 reachable items plus a More drawer (Escape returns focus); 820px and 1440px show one non-wrapping row; planned modules never appear as navigation items.",
         "Theme and language toggles live in the Profile menu; DMs use a Player view switch and a sticky preview banner with an exit action.",
         "Campaign home folds planned modules into a Coming soon accordion, uses one visibility badge shape, pluralises counts and shows larger Player tiles; Spanish role labels read Jugador.",
         "The DM Command Center shows one panel per tab (vertical tabs on laptops), module and revelation visibility are switches, the audit log is a timeline with a segmented filter, and refresh sits outside the tablist.",
-        "Party cards have one primary action plus a More actions menu, larger resource values, hold-for-×5 steppers and a 0–6 exhaustion track; the sheet has an HP ring, number pad with quick chips and preview, hit-die pips, condition chips and a three-column summary at ≥1200px.",
-        "Type sizes come from fluid tokens with 12px minimum labels and 16px body on phones; all controls stay ≥44px with no horizontal overflow at 150% text, axe AA clean in both themes and languages."
+        "Party cards have one primary action plus a More actions menu, larger resource values, hold-for-Ã—5 steppers and a 0â€“6 exhaustion track; the sheet has an HP ring, number pad with quick chips and preview, hit-die pips, condition chips and a three-column summary at â‰¥1200px.",
+        "Type sizes come from fluid tokens with 12px minimum labels and 16px body on phones; all controls stay â‰¥44px with no horizontal overflow at 150% text, axe AA clean in both themes and languages."
       ],
       "validation": [
         "npm run check",
@@ -815,6 +815,35 @@
         "docs/evidence/RYT-025/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-026",
+      "title": "Campaign item catalogue, private images and character controls",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-004", "RYT-005"],
+      "sources": [
+        "User 2026-11-02: approved campaign items, uploaded images, direct gold editing and Player equipment plan."
+      ],
+      "scope": "Independent DM catalogue, shared item editor and private images, shop and grant integration, direct gold entry and consistent equipment sheet values.",
+      "acceptance": [
+        "DM creates campaign definitions without characters and reuses them in shops and grants.",
+        "Private images respect environment, campaign, inventory and storefront visibility.",
+        "DM sets whole gold directly with revision conflict protection.",
+        "Assigned Players equip and unequip with consistent AC and attacks; preview stays read-only."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Hosted PRE and production migration verification",
+        "Independent ui-ux review"
+      ],
+      "evidence": ["docs/decisions/017-campaign-items.md", "docs/evidence/RYT-026/validation.md"]
     }
   ]
 }

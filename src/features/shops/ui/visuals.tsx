@@ -16,16 +16,18 @@ export function GoldAmount({ value, size = 'md' }: { value: number; size?: 'sm' 
 /** The RYT-004 item icon in a small frame tinted by rarity, matching satchel tiles. */
 export function ItemGlyph({
   icon,
+  imagePath,
   rarity,
   size = 22,
 }: {
   icon: string
+  imagePath?: string | null
   rarity: Rarity
   size?: number
 }) {
   return (
     <span className={`shop-glyph rarity-${rarity}`} aria-hidden="true">
-      <ItemIcon icon={icon} size={size} />
+      <ItemIcon imagePath={imagePath} icon={icon} size={size} />
     </span>
   )
 }

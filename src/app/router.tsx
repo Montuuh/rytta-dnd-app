@@ -22,6 +22,9 @@ const CharacterCreationPage = lazy(() =>
 const InventoryPage = lazy(() =>
   import('@/features/inventory').then((module) => ({ default: module.InventoryPage })),
 )
+const ShopsPage = lazy(() =>
+  import('@/features/shops').then((module) => ({ default: module.ShopsPage })),
+)
 
 const CampPage = lazy(() =>
   import('@/pages/camp-page').then((module) => ({ default: module.CampPage })),
@@ -59,6 +62,7 @@ export function AppRouter() {
                     <Route path="party/:characterId/create" element={<CharacterCreationPage />} />
                     <Route path="members" element={<CampaignMembers />} />
                     <Route path="inventory" element={<InventoryPage />} />
+                    <Route path="shops" element={<ShopsPage />} />
                     <Route path="*" element={<ModulePage />} />
                   </Route>
                 )}

@@ -118,6 +118,10 @@ export const inventoryEn = {
   'inventory.ledger.equip': '{{actor}} equipped {{name}}',
   'inventory.ledger.unequip': '{{actor}} took off {{name}}',
   'inventory.ledger.undo': '{{actor}} undid a change to {{name}}',
+  'inventory.ledger.purchase': '{{actor}}: bought {{amount}} × {{name}}',
+  'inventory.ledger.sale': '{{actor}}: sold {{amount}} × {{name}}',
+  'inventory.ledger.revert':
+    '{{actor}}: the DM reverted {{amount}} × {{name}} from a purchase or sale',
   'inventory.ledger.undone': 'undone',
   'inventory.ledger.undoTimed': 'Undo the change to {{name}}, {{minutes}} min left',
   'inventory.ledger.undoAny': 'Undo the change to {{name}}',

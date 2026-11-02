@@ -78,10 +78,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   const [sort, setSort] = useState<Sort>('name')
   const [view, setViewState] = useState<View>(savedView)
   const [editor, setEditor] = useState<{ item: ItemDefinition | null; give?: string[] } | null>(
-    () => {
-      const target = params.get('create')
-      return target ? { item: null, give: [target] } : null
-    },
+    null,
   )
   const [give, setGive] = useState<ItemDefinition | null>(null)
   const [shop, setShop] = useState<ItemDefinition | null>(null)
@@ -98,6 +95,14 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     )
   const remember = (target: HTMLElement | null) => {
     trigger.current = target
+  }
+  // `?create=<characterId>` opens "new item for" on load and whenever the link changes while the
+  // storeroom is already mounted (RYT-027 R2-2). Closing the editor removes the parameter.
+  const createFor = params.get('create')
+  const [seenCreate, setSeenCreate] = useState<string | null>(null)
+  if (createFor !== seenCreate) {
+    setSeenCreate(createFor)
+    if (createFor) setEditor({ item: null, give: [createFor] })
   }
   const setView = (next: View) => {
     setViewState(next)
@@ -135,6 +140,8 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   }, [all, category, search, sort, i18n.language])
   const closeEditor = () => {
     setEditor(null)
+    // A `?create=` link has no visible opener; fall back to "New item".
+    if (params.has('create')) trigger.current = null
     returnFocus()
     if (params.has('create'))
       setParams(
@@ -349,8 +356,18 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                     <VisuallyHidden>{t('catalogue.edit')}: </VisuallyHidden>
                     {item.name}
                   </span>
-                  <span className="store-row-meta">
-                    {phone ? `${meta(item)} · ${value(item)}` : meta(item)}
+                  {/* Phones keep the price beside, not inside, the ellipsized meta line, so it
+                      never hides and the name keeps the full width (RYT-027 R2-1, R3-1). */}
+                  <span className="store-row-line">
+                    <span className="store-row-meta">{meta(item)}</span>
+                    {phone && (
+                      <span
+                        className="store-value"
+                        data-empty={item.value_gp === null || undefined}
+                      >
+                        {value(item)}
+                      </span>
+                    )}
                   </span>
                 </span>
                 {!phone && (
@@ -431,6 +448,9 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
               : undefined
           }
           initialGive={editor.give?.filter((id) => roster.data?.some((c) => c.id === id) ?? true)}
+          // The storeroom returns focus itself: to the visible trigger, or to "New item" after a
+          // `?create=` link, whatever had focus before the link (RYT-027 R3-2).
+          returnFocusToOpener={false}
           onClose={closeEditor}
           onSaved={saved}
         />

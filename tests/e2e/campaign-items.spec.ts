@@ -342,6 +342,69 @@ test('RYT-027 storeroom filters, sorts and switches between list and grid', asyn
   await expect(page.locator('.store-grid .store-tile')).toHaveCount(6)
 })
 
+test('RYT-027 R2-1 phone list rows keep the price visible at 100% and 150% text', async ({
+  page,
+}, info) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await page.goto(url)
+  const potion = page.locator('.store-row').filter({ hasText: 'Poción de curación' })
+  for (const scale of ['100%', '150%']) {
+    await page.addStyleTag({ content: `html { font-size: ${scale}; }` })
+    await expect(potion.locator('.store-row-meta')).not.toContainText('po')
+    const price = potion.locator('.store-value')
+    await expect(price).toHaveText('50 po')
+    // Not clipped by its own box, and fully inside the row before the ⋯ button.
+    expect(await price.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+    const box = (await price.boundingBox())!
+    const menu = (await potion
+      .getByRole('button', { name: 'Acciones para Poción de curación', exact: true })
+      .boundingBox())!
+    expect(box.x + box.width).toBeLessThanOrEqual(menu.x)
+    // R3-1: the price sits on the meta line, so every name keeps the full row width.
+    for (const row of await page.locator('.store-row').all()) {
+      const name = (await row.locator('.store-row-name').boundingBox())!
+      const body = (await row.locator('.store-row-body').boundingBox())!
+      expect(name.width).toBeGreaterThanOrEqual(body.width - 1)
+      expect((await row.locator('.store-value').boundingBox())!.y).toBeGreaterThanOrEqual(
+        name.y + name.height - 1,
+      )
+    }
+    await expect(
+      page.locator('.store-row').filter({ hasText: 'Escudo' }).locator('.store-value'),
+    ).toHaveAttribute('data-empty', 'true')
+    await audit(page, info.outputPath(`storeroom-phone-${scale.replace('%', '')}.png`))
+  }
+})
+
+test('RYT-027 R2-2 a ?create= link followed inside the storeroom opens "new item for"', async ({
+  page,
+}) => {
+  await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await expect(page.locator('.store-row').first()).toBeVisible()
+  for (let round = 0; round < 2; round++) {
+    // R3-2: whatever had focus before the link, closing lands on "Nuevo objeto".
+    await page.getByRole('textbox', { name: 'Buscar objetos' }).focus()
+    await page.evaluate(
+      ({ campaignId, characterId }) => {
+        location.hash = `#/campaign/${campaignId}/members?panel=items&create=${characterId}`
+      },
+      { campaignId, characterId },
+    )
+    const editor = page.getByRole('dialog', { name: 'Nuevo objeto para Arin' })
+    await expect(editor).toBeVisible()
+    await expect(editor.getByRole('button', { name: 'Arin', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page).not.toHaveURL(/create=/)
+    await expect(page.getByRole('button', { name: 'Nuevo objeto', exact: true })).toBeFocused()
+  }
+})
+
 test('RYT-027 a shop listing opens the shared item editor', async ({ page }) => {
   const f = await identityFixture(page, {
     inventory: true,

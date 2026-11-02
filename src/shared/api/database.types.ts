@@ -25,35 +25,6 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       campaign_invitations: Omit<Tables['campaign_invitations'], 'Row'> & {
         Row: Tables['campaign_invitations']['Row'] & { character_id: string | null }
       }
-      campaign_revelations: {
-        Row: {
-          id: string
-          campaign_id: string
-          title: string
-          category: string
-          summary: string
-          visibility: string
-          created_by: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          campaign_id: string
-          title: string
-          category: string
-          summary?: string
-          visibility?: string
-          created_by?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          visibility?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       character_sheets: {
         Row: {
           character_id: string

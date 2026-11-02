@@ -486,10 +486,10 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await expect(preview).not.toBeChecked()
 
   if ((page.viewportSize()?.width ?? 1024) >= 768) return
-  // Phones: enabling two planned modules overflows the bar into the More bottom sheet.
+  // Phones: enabling planned modules pushes the bar past five destinations into the bar into the More bottom sheet.
   await page.goto(`./#/campaign/${campaignId}/members`)
   await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
-  for (const module of ['Tiendas', 'Misiones']) {
+  for (const module of ['Tiendas', 'Misiones', 'Combate']) {
     const toggle = page.getByRole('switch', { name: `${module}: visible para jugadores` })
     await toggle.focus()
     await page.keyboard.press('Space')

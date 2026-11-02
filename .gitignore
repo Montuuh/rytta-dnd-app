@@ -41,3 +41,4 @@ dist-ryt020-review/
 dist-party-button-review/
 
 *.traineddata
+.claude/worktrees/

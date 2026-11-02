@@ -13,12 +13,6 @@ export const designEs = {
   'shell.exitPreview': 'Volver a vista DM',
   'preferences.languageShort': 'Idioma',
   'preferences.themeShort': 'Apariencia',
-  'campaign.comingSoon': 'Próximamente',
-  'campaign.comingSoonCount_one': '{{count}} módulo en preparación',
-  'campaign.comingSoonCount_other': '{{count}} módulos en preparación',
-  'campaign.comingSoonHint':
-    'Estos módulos están en preparación. Puedes mostrarlos a los jugadores desde Módulos activos; hasta que lleguen, verán una página de vista previa.',
-  'campaign.openModule': 'Abrir',
   'common.refreshing': 'Actualizando…',
   'common.checkedAgo': 'Actualizado {{time}}',
   'common.justNow': 'ahora mismo',

@@ -162,37 +162,6 @@ export async function identityFixture(
   )
   let portraitPath: string | null = null
   let sent: { id: string; email: string; expires_at: string }[] = []
-  let revelations: {
-    id: string
-    campaign_id: string
-    category: string
-    title: string
-    summary: string
-    visibility: string
-    created_at: string
-    updated_at: string
-  }[] = [
-    {
-      id: '50000000-0000-4000-8000-000000000001',
-      campaign_id: campaignId,
-      category: 'shop',
-      title: 'El Yunque de Ámbar',
-      summary: 'Herrería enana que acepta encargos.',
-      visibility: 'party',
-      created_at: '2026-10-27T00:00:00Z',
-      updated_at: '2026-10-27T00:00:00Z',
-    },
-    {
-      id: '50000000-0000-4000-8000-000000000002',
-      campaign_id: campaignId,
-      category: 'quest',
-      title: 'El faro sumergido',
-      summary: 'Señal oculta tras la niebla.',
-      visibility: 'dm_only',
-      created_at: '2026-10-27T01:00:00Z',
-      updated_at: '2026-10-27T01:00:00Z',
-    },
-  ]
   const characterEvents: {
     id: string
     campaign_id: string
@@ -527,39 +496,6 @@ export async function identityFixture(
         c.id === body.target_campaign ? { ...c, player_modules: nextModules } : c,
       )
       return respond(nextModules)
-    }
-    if (method === 'campaign_revelations') {
-      const targetCampaign = url.searchParams.get('campaign_id')?.replace('eq.', '')
-      const targetRole =
-        campaigns.find((c) => c.id === targetCampaign)?.role ?? (options.player ? 'player' : 'dm')
-      return respond(
-        revelations
-          .filter((r) => r.campaign_id === targetCampaign)
-          .filter((r) => targetRole === 'dm' || r.visibility === 'party'),
-      )
-    }
-    if (method === 'create_campaign_revelation') {
-      const id = '50000000-0000-4000-8000-' + String(revelations.length + 1).padStart(12, '0')
-      revelations = [
-        {
-          id,
-          campaign_id: String(body.target_campaign),
-          category: String(body.item_category),
-          title: String(body.item_title),
-          summary: String(body.item_summary ?? ''),
-          visibility: String(body.item_visibility ?? 'dm_only'),
-          created_at: '2026-10-27T02:00:00Z',
-          updated_at: '2026-10-27T02:00:00Z',
-        },
-        ...revelations,
-      ]
-      return respond(id)
-    }
-    if (method === 'set_revelation_visibility') {
-      revelations = revelations.map((r) =>
-        r.id === body.target_revelation ? { ...r, visibility: String(body.new_visibility) } : r,
-      )
-      return respond(null)
     }
     if (method === 'character_events') {
       const targetCampaign = url.searchParams.get('campaign_id')?.replace('eq.', '')

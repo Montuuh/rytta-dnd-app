@@ -35,6 +35,7 @@ export const modules = [
     summary: 'summary.shops',
     icon: Store,
     ticket: 'RYT-005',
+    implemented: true,
   },
   {
     path: '/quests',

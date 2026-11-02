@@ -50,9 +50,17 @@ by 100, otherwise aborts without rounding. Existing duplicate assignments also r
 explicit resolution. Old pending untargeted invitations are revoked and must be reissued.
 These are deployment prerequisites, not permission to modify hosted data.
 
-- purchase_item: ownership, merchant visibility, server price, money/stock checks, locks,
-  inventory update and event in one transaction. Idempotency key returns the original outcome.
-- sell_item: resale policy, quantity, equipped/quest restrictions and atomic credit.
+- checkout (RYT-005, implemented): character authorization, shop and listing visibility,
+  server price with the per-character modifier, gold and stock checks under the campaign lock,
+  `source = shop` stack update and `purchase` events in one transaction. Approval shops store a
+  pending order and re-validate gold and stock when the DM approves or the Player accepts a
+  counter-offer. Request ids return the original outcome; a different payload is rejected.
+- sell_to_shop (RYT-005, implemented): only loose `dm`/`shop` units, resale rounded down from
+  the shop's list price or the DM value, atomic credit and `sale` events.
+- revert_order (RYT-005, implemented, DMs only): purchases take back the shop units still held
+  (unequipping and recomputing AC) and refund them; sales return items and recover gold or
+  fail. Shop events are never undoable from the inventory. Shop tables have no client grants;
+  hidden shops/listings and `value_gp` never reach Players.
 - use_item (RYT-004, implemented): ownership, consumable/ammo category, quantity and
   revision checks, idempotent request id and a ledger event in one transaction.
 - undo_inventory_event (RYT-004, implemented): once-only compensating event linked to its

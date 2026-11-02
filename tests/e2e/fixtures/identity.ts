@@ -41,6 +41,7 @@ export async function identityFixture(
     twoDms?: boolean
     sheet?: 'draft' | 'complete'
     inventory?: boolean
+    modules?: string[]
   } = {},
 ) {
   const currentId = options.player ? playerId : dmId
@@ -58,7 +59,8 @@ export async function identityFixture(
           description: 'A coastline that keeps its secrets.',
           created_at: '2026-10-27T00:00:00Z',
           role: options.player ? 'player' : 'dm',
-          player_modules: options.inventory ? ['party', 'inventory'] : ['party'],
+          player_modules:
+            options.modules ?? (options.inventory ? ['party', 'inventory'] : ['party']),
         },
         {
           id: otherCampaignId,
@@ -834,6 +836,8 @@ function inventoryState(characterIds: string[], seeded: boolean) {
   }
   return {
     stacks,
+    definitions,
+    events,
     handle(
       method: string,
       body: Record<string, unknown>,

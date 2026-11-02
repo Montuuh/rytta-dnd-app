@@ -221,6 +221,19 @@ export const effectiveLinePrice = (line: OrderLine) =>
 export const isOpenOrder = (order: Pick<Order, 'status'>) =>
   order.status === 'pending' || order.status === 'countered'
 
+/**
+ * How the ledger draws an order: a purchase (the character pays), a sale (the character is
+ * paid) or a live counter-offer from the DM waiting on the Player.
+ */
+export type OrderVariant = 'purchase' | 'sale' | 'counter'
+export const orderVariant = (order: Pick<Order, 'kind' | 'status'>): OrderVariant =>
+  order.status === 'countered' ? 'counter' : order.kind
+
+/** What the Player asked for before the DM countered: their offer, or the list price. */
+export const askedLinePrice = (line: OrderLine) => line.offered_price ?? line.unit_price
+export const askedTotal = (order: Pick<Order, 'lines'>) =>
+  order.lines.reduce((sum, line) => sum + askedLinePrice(line) * line.quantity, 0)
+
 export function filterListings(
   listings: Listing[],
   search: string,

@@ -12,11 +12,16 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import {
+  ArrowDownLeft,
+  ArrowRight,
+  ArrowUpRight,
   Ban,
   CheckCircle2,
   Clock,
   Handshake,
+  HandCoins,
   RotateCcw,
+  ShoppingBag,
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
@@ -24,8 +29,11 @@ import { useTranslation } from 'react-i18next'
 import { HoldSeal } from '@/features/inventory'
 import { GoldAmount, ItemGlyph } from './visuals'
 import {
+  askedLinePrice,
+  askedTotal,
   effectiveLinePrice,
   isOpenOrder,
+  orderVariant,
   type Order,
   type OrderLine,
   type OrderStatus,
@@ -41,7 +49,19 @@ const statusIcons: Record<OrderStatus, LucideIcon> = {
   reverted: RotateCcw,
 }
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
+type Role = 'dm' | 'player' | 'viewer'
+
+/** Open statuses read from the viewer's side of the table: whose move it is. */
+const statusKey = (status: OrderStatus, role: Role) =>
+  status === 'pending' && role === 'dm'
+    ? 'order.status.pendingDm'
+    : status === 'countered'
+      ? role === 'player'
+        ? 'order.status.counteredPlayer'
+        : 'order.status.counteredDm'
+      : (`order.status.${status}` as const)
+
+export function OrderStatusBadge({ status, role }: { status: OrderStatus; role: Role }) {
   const { t } = useTranslation()
   const Icon = statusIcons[status]
   return (
@@ -50,12 +70,69 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
       className={`order-status status-${status}`}
       leftSection={<Icon size={14} aria-hidden="true" />}
     >
-      {t(`order.status.${status}`)}
+      {t(statusKey(status, role))}
     </Badge>
   )
 }
 
-type Role = 'dm' | 'player' | 'viewer'
+/** The unit price a line moved away from (asked before a counter, list before an offer). */
+const wasPrice = (line: OrderLine) => {
+  const was = line.countered_price !== null ? askedLinePrice(line) : line.unit_price
+  return was === effectiveLinePrice(line) ? null : was
+}
+
+const variantIcons = { purchase: ShoppingBag, sale: HandCoins, counter: Handshake } as const
+
+/**
+ * Which way the gold goes, from the character's side: a purchase leaves their purse, a sale
+ * fills it. Closed orders that never moved gold say so instead of showing a phantom charge.
+ */
+function GoldFlow({ order, role }: { order: Order; role: Role }) {
+  const { t } = useTranslation()
+  const moved = order.status !== 'rejected' && order.status !== 'cancelled'
+  const tense = isOpenOrder(order) ? 'open' : 'done'
+  const voice = role === 'player' ? 'player' : 'dm'
+  const Icon = order.kind === 'purchase' ? ArrowUpRight : ArrowDownLeft
+  return (
+    <div className={`order-flow flow-${order.kind}${moved ? '' : ' is-void'}`}>
+      <span className="order-flow-icon" aria-hidden="true">
+        <Icon size={18} />
+      </span>
+      <Text fw={600} className="order-flow-label user-copy">
+        {moved
+          ? t(`order.flow.${order.kind}.${tense}.${voice}`, { character: order.character.name })
+          : t('order.flow.none')}
+      </Text>
+      <GoldAmount value={order.total} />
+    </div>
+  )
+}
+
+/** A live counter-offer: what the Player asked against what the DM now proposes. */
+function CounterCompare({ order }: { order: Order }) {
+  const { t } = useTranslation()
+  return (
+    <dl className="price-compare">
+      <div className="price-compare-was">
+        <dt>{t('order.compare.asked')}</dt>
+        <dd>
+          <del>
+            <GoldAmount value={askedTotal(order)} size="sm" />
+          </del>
+        </dd>
+      </div>
+      <span className="price-compare-arrow" aria-hidden="true">
+        <ArrowRight size={18} />
+      </span>
+      <div className="price-compare-now">
+        <dt>{t('order.compare.countered')}</dt>
+        <dd>
+          <GoldAmount value={order.total} size="lg" />
+        </dd>
+      </div>
+    </dl>
+  )
+}
 type Panel = 'counter' | 'revert' | null
 
 /** Price chips for a counter-offer line: the Player's offer, the list price and the middle. */
@@ -201,30 +278,43 @@ export function OrderCard({
       note: '',
       requestId: key(),
     })
+  const variant = orderVariant(order)
+  const VariantIcon = variantIcons[variant]
+  const variantLabel =
+    variant === 'counter'
+      ? t(order.kind === 'purchase' ? 'order.kind.counterPurchase' : 'order.kind.counterSale')
+      : t(`order.kind.${variant}`)
   return (
     <Paper
       p="md"
-      className={`order-card ${isOpenOrder(order) ? 'is-open' : ''}`}
+      pl="calc(var(--mantine-spacing-md) + 6px)"
+      className={`order-card order-${variant} ${isOpenOrder(order) ? 'is-open' : 'is-closed'}${
+        order.status === 'rejected' || order.status === 'cancelled' ? ' status-void' : ''
+      }`}
       component="article"
       ref={card}
       tabIndex={-1}
-      aria-labelledby={`order-${order.id}`}
+      aria-labelledby={`order-kind-${order.id} order-${order.id}`}
     >
       <Stack gap="sm">
-        <Group justify="space-between" align="start" gap="xs">
-          <div className="order-heading">
-            <Title order={3} size="h4" className="user-copy" id={`order-${order.id}`}>
-              {t(titleKey, { character: order.character.name, shop: order.shop.name })}
-            </Title>
-            <Text size="xs" c="dimmed">
-              {new Date(order.created_at).toLocaleString(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}
-            </Text>
-          </div>
-          <OrderStatusBadge status={order.status} />
+        <Group justify="space-between" align="center" gap="xs">
+          <span className="order-kind" id={`order-kind-${order.id}`}>
+            <VariantIcon size={16} aria-hidden="true" />
+            {variantLabel}
+          </span>
+          <OrderStatusBadge status={order.status} role={role} />
         </Group>
+        <div className="order-heading">
+          <Title order={3} size="h4" className="user-copy" id={`order-${order.id}`}>
+            {t(titleKey, { character: order.character.name, shop: order.shop.name })}
+          </Title>
+          <Text size="xs" c="dimmed">
+            {new Date(order.created_at).toLocaleString(i18n.language, {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })}
+          </Text>
+        </div>
         <ul className="order-lines">
           {order.lines.map((line) => (
             <li key={line.id}>
@@ -232,20 +322,25 @@ export function OrderCard({
                 {t('order.lineItem', { name: line.item_name, count: line.quantity })}
               </span>
               <span className="order-line-price">
-                {(line.countered_price !== null || line.offered_price !== null) &&
-                  line.final_price === null && (
-                    <Text span size="xs" c="dimmed" mr={6}>
+                {line.final_price === null && wasPrice(line) !== null && (
+                  <>
+                    {/* The struck price is visual; the sentence carries it for screen readers. */}
+                    <span className="visually-hidden">
                       {line.countered_price !== null
                         ? t('order.counterHint', {
-                            asked: line.offered_price ?? line.unit_price,
+                            asked: askedLinePrice(line),
                             value: line.countered_price,
                           })
                         : t('order.offerHint', {
                             list: line.unit_price,
-                            value: line.offered_price ?? line.unit_price,
+                            value: askedLinePrice(line),
                           })}
-                    </Text>
-                  )}
+                    </span>
+                    <del className="order-line-was" aria-hidden="true">
+                      {t('gold.amount', { value: (wasPrice(line) ?? 0) * line.quantity })}
+                    </del>
+                  </>
+                )}
                 <GoldAmount value={effectiveLinePrice(line) * line.quantity} size="sm" />
               </span>
               {line.reverted_quantity > 0 && (
@@ -256,12 +351,8 @@ export function OrderCard({
             </li>
           ))}
         </ul>
-        <Group justify="space-between">
-          <Text fw={600}>
-            {t(order.kind === 'purchase' ? 'order.totalPay' : 'order.totalReceive')}
-          </Text>
-          <GoldAmount value={order.total} />
-        </Group>
+        {variant === 'counter' && <CounterCompare order={order} />}
+        <GoldFlow order={order} role={role} />
         {order.status === 'reverted' && (
           <Text size="sm">
             {t(order.kind === 'purchase' ? 'order.refunded' : 'order.recovered', {
@@ -398,9 +489,6 @@ export function OrderCard({
 
         {role === 'dm' && order.status === 'countered' && (
           <Group gap="xs">
-            <Text size="sm" c="dimmed">
-              {t('order.awaitingPlayer')}
-            </Text>
             <Button variant="subtle" color="red" loading={busy} onClick={() => respond('reject')}>
               {t('order.withdraw')}
             </Button>
@@ -466,9 +554,6 @@ export function OrderCard({
 
         {role === 'player' && order.status === 'pending' && (
           <Group gap="xs">
-            <Text size="sm" c="dimmed">
-              {t('order.awaitingDm')}
-            </Text>
             <Button
               variant="subtle"
               color="red"

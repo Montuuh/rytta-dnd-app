@@ -41,9 +41,30 @@ test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory
   await page.goto(shops)
   await expect(page.getByRole('heading', { level: 1, name: 'Tiendas' })).toBeVisible()
   await expect(page.locator('.purse-bar')).toContainText('120 po')
-  const switcher = page.getByRole('navigation', { name: 'Tiendas' })
-  await expect(switcher.getByRole('button', { name: 'El Yunque de Ámbar' })).toBeVisible()
+  // The shop name is the picker: a select-only combobox with every visible merchant.
+  const picker = page.getByRole('combobox', { name: /Cambiar de tienda, 2 disponibles/ })
+  await expect(picker).toContainText('Mercado del puerto')
+  await picker.click()
+  await expect(page.getByRole('option', { name: /El Yunque de Ámbar/ })).toBeVisible()
+  await expect(page.getByRole('option', { name: /Mercado del puerto/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('option')).toHaveCount(0)
+  await expect(picker).toBeFocused()
   await expect(page.getByText('Bóveda del contrabandista')).toHaveCount(0)
+  // The mode help is a tooltip on the badge (focusable), not a paragraph under the header.
+  await expect(page.locator('.shop-header p', { hasText: 'Las compras se completan' })).toHaveCount(
+    0,
+  )
+  await expect(page.locator('.mode-hint')).toHaveAccessibleDescription(
+    /Las compras se completan al momento/,
+  )
+  await page.locator('.mode-hint').focus()
+  await expect(page.getByRole('tooltip')).toContainText('Las compras se completan al momento')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
   await expect(page.getByText('20 % de descuento para ti')).toBeVisible()
   const potion = page.locator('.listing-card', { hasText: 'Poción de curación' })
   await expect(potion).toContainText('40 po')
@@ -111,6 +132,15 @@ test('a Player negotiates with an approval shop and sells to it', async ({ page 
   await audit(page, info.outputPath('sell.png'))
   await page.getByRole('button', { name: 'Proponer venta al DM' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Propuesta de venta' })).toBeVisible()
+
+  // My orders now hold a sale, a purchase request and the accepted counter-offer, each in
+  // its own visual language; the gold direction is phrased for the Player.
+  await page.getByRole('tab', { name: /Mis pedidos/ }).click()
+  const sale = page.locator('.order-card.order-sale').first()
+  await expect(sale.locator('.order-kind')).toHaveText('Venta')
+  await expect(sale.locator('.order-flow')).toContainText('Recibirás')
+  await expect(page.locator('.order-card.order-purchase').first()).toBeVisible()
+  await audit(page, info.outputPath('orders-mixed.png'))
 })
 
 test('a Player without the shops module sees why', async ({ page }) => {
@@ -205,23 +235,29 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await expect(page.getByRole('heading', { level: 2, name: 'Herbolario de Mara' })).toBeVisible()
 
   await list.getByRole('button', { name: /Bóveda del contrabandista/ }).click()
-  await page.getByRole('button', { name: 'Archivar Bóveda del contrabandista' }).click()
-  const archive = page.getByRole('dialog', { name: '¿Archivar Bóveda del contrabandista?' })
+  const remove = page.getByRole('button', { name: 'Eliminar tienda Bóveda del contrabandista' })
+  await remove.click()
+  const archive = page.getByRole('dialog', { name: '¿Eliminar Bóveda del contrabandista?' })
   await expect(archive.getByRole('button', { name: 'Cancelar' })).toBeFocused()
   await page.keyboard.press('Escape')
-  await expect(
-    page.getByRole('button', { name: 'Archivar Bóveda del contrabandista' }),
-  ).toBeFocused()
-  await page.getByRole('button', { name: 'Archivar Bóveda del contrabandista' }).click()
-  await archive.getByRole('button', { name: 'Archivar' }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'archivada' })).toBeVisible()
+  await expect(remove).toBeFocused()
+  await remove.click()
+  await archive.getByRole('button', { name: 'Eliminar' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'eliminada' })).toBeVisible()
   await expect(list.getByRole('button', { name: /Bóveda del contrabandista/ })).toHaveCount(0)
   await expect(page.getByRole('heading', { level: 1, name: 'Tiendas' })).toBeFocused()
 
   // Ledger: inline counter-offer with price chips, then hold-to-revert from history.
   await page.getByRole('tab', { name: /Bitácora/ }).click()
   await expect(page.getByText('Por responder (1)')).toBeVisible()
+  // Manual refresh next to the freshness stamp; polling every 5 s covers the rest.
+  await page.getByRole('button', { name: 'Actualizar bitácora' }).click()
+  await expect(page.locator('.refresh-stamp')).toContainText('Actualizado')
   const pending = page.locator('.order-card', { hasText: 'Para el viaje al faro.' })
+  // Each order type reads differently: kind label, stripe tone and gold direction.
+  await expect(pending.locator('.order-kind')).toHaveText('Compra')
+  await expect(pending).toHaveClass(/order-purchase/)
+  await expect(pending.locator('.order-flow')).toContainText('Arin pagará')
   await pending.getByRole('button', { name: 'Rechazar' }).click()
   await expect(pending.getByRole('button', { name: 'No', exact: true })).toBeFocused()
   await audit(page, info.outputPath('reject-confirm.png'))
@@ -240,6 +276,11 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await pending.getByRole('button', { name: 'Contraofertar 36 po' }).click()
   await expect(pending).toBeFocused()
   await expect(page.getByRole('status').filter({ hasText: 'Contraoferta enviada' })).toBeVisible()
+  // The countered order stays in view as a counter-offer: asked total struck, new total shown.
+  await expect(pending).toHaveClass(/order-counter/)
+  await expect(pending.locator('.order-kind')).toHaveText('Contraoferta de compra')
+  await expect(pending.locator('.price-compare')).toContainText('36 po')
+  await audit(page, info.outputPath('ledger-counter.png'))
   await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY')
 
   await page.getByText(/^Historial/).click()

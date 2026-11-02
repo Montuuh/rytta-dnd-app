@@ -24,6 +24,12 @@ export const ordersQuery = (userId: string, campaignId: string, characterId: str
     queryFn: ({ signal }) => listOrders(campaignId, characterId, signal),
     refetchInterval: 20_000,
   })
+/**
+ * Negotiations move on the other side of the table, so an order list that is on screen (the
+ * DM ledger, a Player's "My orders") polls faster. Observers only poll while mounted, and
+ * never in a hidden tab; the slower default above covers everything else.
+ */
+export const liveOrders = { refetchInterval: 5_000, refetchIntervalInBackground: false } as const
 
 /** Every shop mutation refreshes campaign-scoped data: gold, stock and inventory move together. */
 export function useShopAction(campaignId: string) {

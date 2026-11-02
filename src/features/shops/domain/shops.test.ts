@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  askedTotal,
   cartTenths,
   cartTotal,
   effectiveLinePrice,
   filterListings,
   maxPurchasable,
   modifiedPrice,
+  orderVariant,
   ownership,
   reconcileCart,
   sellableUnits,
@@ -98,6 +100,15 @@ describe('shop pricing', () => {
     }
     expect(effectiveLinePrice(line)).toBe(9)
     expect(effectiveLinePrice({ ...line, countered_price: null })).toBe(8)
+  })
+  it('tells purchases, sales and live counter-offers apart and keeps the asked total', () => {
+    expect(orderVariant({ kind: 'purchase', status: 'pending' })).toBe('purchase')
+    expect(orderVariant({ kind: 'sale', status: 'completed' })).toBe('sale')
+    expect(orderVariant({ kind: 'sale', status: 'countered' })).toBe('counter')
+    expect(orderVariant({ kind: 'purchase', status: 'countered' })).toBe('counter')
+    const line = (unit_price: number, offered_price: number | null, quantity: number) =>
+      ({ unit_price, offered_price, quantity }) as OrderLine
+    expect(askedTotal({ lines: [line(10, 8, 2), line(5, null, 3)] })).toBe(31)
   })
   it('filters listings by name and category', () => {
     const items = [listing(), listing({}, { name: 'Longsword', category: 'weapon' })]

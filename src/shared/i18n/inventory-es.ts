@@ -30,9 +30,6 @@ export const inventoryEs = {
   'catalogue.hiddenListing': 'Se añadirá oculto. Podrás revisar su visibilidad desde Tiendas.',
   'catalogue.noShops': 'No hay tiendas disponibles o este objeto ya está en todas ellas.',
   'catalogue.character': 'Personaje',
-  'catalogue.equipmentHelp':
-    'Toca una ranura vacía para equipar. Puedes quitar tu equipo en cualquier momento.',
-  'catalogue.openEquipment': 'Ver y cambiar equipo',
   'catalogue.editGold': 'Editar oro de {{name}}: {{value}}',
   'catalogue.goldTitle': 'Oro de {{name}}',
 

@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   Alert,
@@ -98,6 +98,12 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
       { replace: true },
     )
   const wide = useMediaQuery('(min-width: 62em)')
+  // Keep the selected tab visible in the horizontally scrolling phone tab rail (deep links).
+  useEffect(() => {
+    document
+      .querySelector('.dm-tabs-list [data-active]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [activePanel, wide])
   const [auditFilter, setAuditFilter] = useState<AuditFilter>('all')
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
   const invitations = useQuery({ ...sentInvitationsQuery(user.id, campaign.id), enabled: dm })

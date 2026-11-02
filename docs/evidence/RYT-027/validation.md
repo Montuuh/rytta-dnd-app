@@ -52,4 +52,27 @@ Members.
 
 ## Independent UI/UX review
 
-Pending.
+Round 1 (source `70f8fe8`): `CHANGES_REQUIRED`, recorded in `reviewer/review.md`. Fixes:
+
+- F1 (blocking): focus was lost after overlays opened from a ⋯ menu. Menu actions now run
+  after the menu has closed and returned focus to its button. The storeroom also remembers the
+  visible trigger and returns focus there when Give, Edit or Add to shop closes. A regression
+  test opens Give from a grid tile menu, presses Escape and expects the ⋯ button to be focused.
+- F2: Clear search is 44px and returns focus to the search box.
+- F3: the selected Command Center tab scrolls into view on phones (deep links).
+- F4: giving an existing item now says "Entregado a …" instead of "creado", in neutral wording.
+- F5: the give drawer names the characters it could not serve and marks served chips with a
+  check.
+- F6: "New item for Arin" is the drawer title and the preselected recipients appear first.
+  Closing returns focus to the visible trigger, or to New item when the opener (a Party menu
+  item) no longer exists.
+- F7:
+  - Phone rows include the price in the meta line.
+  - Names wrap to two lines instead of being cut.
+  - The gold value has a gap before its pencil.
+  - Unused `party.*` keys are removed.
+  - The documented row height now says 64px.
+  - Not done (pre-existing, outside RYT-027): Shops "New shop" is 39px tall on phones.
+
+After the fixes: `npm run check` passes, and campaign items plus inventory pass 126/126 (run
+twice). Round 2: pending a focused re-review.

@@ -21,6 +21,7 @@ import { useMediaQuery } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowUpDown,
+  Check,
   Ellipsis,
   Gift,
   LayoutGrid,
@@ -86,6 +87,18 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   const [shop, setShop] = useState<ItemDefinition | null>(null)
   const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null)
   const phone = useMediaQuery('(max-width: 47.99em)')
+  // Overlays opened from a ⋯ menu would otherwise "restore" focus to a menu item that no
+  // longer exists. Remember the visible trigger and return focus there (RYT-027 F1).
+  const trigger = useRef<HTMLElement | null>(null)
+  const newButton = useRef<HTMLButtonElement>(null)
+  const searchInput = useRef<HTMLInputElement>(null)
+  const returnFocus = () =>
+    requestAnimationFrame(() =>
+      (trigger.current?.isConnected ? trigger.current : newButton.current)?.focus(),
+    )
+  const remember = (target: HTMLElement | null) => {
+    trigger.current = target
+  }
   const setView = (next: View) => {
     setViewState(next)
     try {
@@ -122,6 +135,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   }, [all, category, search, sort, i18n.language])
   const closeEditor = () => {
     setEditor(null)
+    returnFocus()
     if (params.has('create'))
       setParams(
         (current) => {
@@ -177,8 +191,12 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           </Text>
         </div>
         <Button
+          ref={newButton}
           leftSection={<Plus size={18} aria-hidden="true" />}
-          onClick={() => setEditor({ item: null })}
+          onClick={(event) => {
+            remember(event.currentTarget)
+            setEditor({ item: null })
+          }}
         >
           {t('catalogue.create')}
         </Button>
@@ -187,8 +205,10 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
       <div className="store-toolbar">
         <TextInput
           className="store-search"
+          ref={searchInput}
           aria-label={t('catalogue.search')}
           placeholder={t('catalogue.search')}
+          rightSectionWidth={48}
           leftSection={<Search size={16} aria-hidden="true" />}
           value={search}
           onChange={(event) => setSearch(event.currentTarget.value)}
@@ -196,9 +216,12 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             search ? (
               <ActionIcon
                 variant="subtle"
-                size={36}
+                size={44}
                 aria-label={t('store.clearSearch')}
-                onClick={() => setSearch('')}
+                onClick={() => {
+                  setSearch('')
+                  searchInput.current?.focus()
+                }}
               >
                 <X size={16} aria-hidden="true" />
               </ActionIcon>
@@ -312,7 +335,10 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             <li key={item.id} className="store-row">
               <UnstyledButton
                 className="store-row-main"
-                onClick={() => setEditor({ item })}
+                onClick={(event) => {
+                  remember(event.currentTarget)
+                  setEditor({ item })
+                }}
                 title={t('store.editItem', { name: item.name })}
               >
                 <span className={`store-glyph rarity-${item.rarity}`} aria-hidden="true">
@@ -323,7 +349,9 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                     <VisuallyHidden>{t('catalogue.edit')}: </VisuallyHidden>
                     {item.name}
                   </span>
-                  <span className="store-row-meta">{meta(item)}</span>
+                  <span className="store-row-meta">
+                    {phone ? `${meta(item)} · ${value(item)}` : meta(item)}
+                  </span>
                 </span>
                 {!phone && (
                   <span className="store-row-side">
@@ -337,6 +365,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
               <ItemActions
                 item={item}
                 compact={phone}
+                onTrigger={remember}
                 onEdit={() => setEditor({ item })}
                 onGive={() => setGive(item)}
                 onShop={() => setShop(item)}
@@ -351,7 +380,10 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             <li key={item.id} className={`store-tile rarity-${item.rarity}`}>
               <UnstyledButton
                 className="store-tile-main"
-                onClick={() => setEditor({ item })}
+                onClick={(event) => {
+                  remember(event.currentTarget)
+                  setEditor({ item })
+                }}
                 title={t('store.editItem', { name: item.name })}
               >
                 <span className="store-tile-icon" aria-hidden="true">
@@ -372,6 +404,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                 <ItemActions
                   item={item}
                   compact
+                  onTrigger={remember}
                   onEdit={() => setEditor({ item })}
                   onGive={() => setGive(item)}
                   onShop={() => setShop(item)}
@@ -387,6 +420,16 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           campaignId={campaignId}
           definition={editor.item}
           allowGive
+          title={
+            editor.give?.length
+              ? t('store.createFor', {
+                  name: editor.give
+                    .map((id) => roster.data?.find((c) => c.id === id)?.name)
+                    .filter(Boolean)
+                    .join(', '),
+                })
+              : undefined
+          }
           initialGive={editor.give?.filter((id) => roster.data?.some((c) => c.id === id) ?? true)}
           onClose={closeEditor}
           onSaved={saved}
@@ -396,15 +439,26 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         <GiveItem
           campaignId={campaignId}
           item={give}
-          onClose={() => setGive(null)}
+          onClose={() => {
+            setGive(null)
+            returnFocus()
+          }}
           onDone={(names) => {
             setGive(null)
-            setNotice({ tone: 'ok', text: t('store.createdFor', { name: give.name, names }) })
+            setNotice({ tone: 'ok', text: t('store.givenTo', { name: give.name, names }) })
+            returnFocus()
           }}
         />
       )}
       {shop && (
-        <CatalogueShopPicker campaignId={campaignId} item={shop} onClose={() => setShop(null)} />
+        <CatalogueShopPicker
+          campaignId={campaignId}
+          item={shop}
+          onClose={() => {
+            setShop(null)
+            returnFocus()
+          }}
+        />
       )}
     </section>
   )
@@ -414,18 +468,27 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
 function ItemActions({
   item,
   compact,
+  onTrigger,
   onEdit,
   onGive,
   onShop,
 }: {
   item: ItemDefinition
   compact: boolean
+  onTrigger: (target: HTMLElement | null) => void
   onEdit: () => void
   onGive: () => void
   onShop: () => void
 }) {
   const { t } = useTranslation()
   const shopable = item.origin !== 'player'
+  const menuButton = useRef<HTMLButtonElement>(null)
+  // Run the chosen action only after the menu has closed and returned focus to its ⋯ button,
+  // so the overlay that opens next remembers a real element (RYT-027 review F1).
+  const pending = useRef<(() => void) | null>(null)
+  const choose = (run: () => void) => () => {
+    pending.current = run
+  }
   if (!compact)
     return (
       <div className="store-row-actions">
@@ -434,7 +497,10 @@ function ItemActions({
           size={44}
           aria-label={t('store.giveItem', { name: item.name })}
           title={t('catalogue.give')}
-          onClick={onGive}
+          onClick={(event) => {
+            onTrigger(event.currentTarget)
+            onGive()
+          }}
         >
           <Gift size={19} aria-hidden="true" />
         </ActionIcon>
@@ -444,7 +510,10 @@ function ItemActions({
             size={44}
             aria-label={t('store.shopItem', { name: item.name })}
             title={t('catalogue.addToShop')}
-            onClick={onShop}
+            onClick={(event) => {
+              onTrigger(event.currentTarget)
+              onShop()
+            }}
           >
             <Store size={19} aria-hidden="true" />
           </ActionIcon>
@@ -452,11 +521,22 @@ function ItemActions({
       </div>
     )
   return (
-    <Menu position="bottom-end" withinPortal withInitialFocusPlaceholder={false}>
+    <Menu
+      position="bottom-end"
+      withinPortal
+      withInitialFocusPlaceholder={false}
+      onExitTransitionEnd={() => {
+        const run = pending.current
+        pending.current = null
+        run?.()
+      }}
+    >
       <Menu.Target>
         <ActionIcon
+          ref={menuButton}
           variant="subtle"
           size={44}
+          onClick={() => onTrigger(menuButton.current)}
           aria-label={t('store.actionsFor', { name: item.name })}
           title={t('common.moreActions')}
         >
@@ -464,14 +544,14 @@ function ItemActions({
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Item leftSection={<Pencil size={18} aria-hidden="true" />} onClick={onEdit}>
+        <Menu.Item leftSection={<Pencil size={18} aria-hidden="true" />} onClick={choose(onEdit)}>
           {t('catalogue.edit')}
         </Menu.Item>
-        <Menu.Item leftSection={<Gift size={18} aria-hidden="true" />} onClick={onGive}>
+        <Menu.Item leftSection={<Gift size={18} aria-hidden="true" />} onClick={choose(onGive)}>
           {t('catalogue.give')}
         </Menu.Item>
         {shopable && (
-          <Menu.Item leftSection={<Store size={18} aria-hidden="true" />} onClick={onShop}>
+          <Menu.Item leftSection={<Store size={18} aria-hidden="true" />} onClick={choose(onShop)}>
             {t('catalogue.addToShop')}
           </Menu.Item>
         )}
@@ -501,7 +581,7 @@ function GiveItem({
   const [given, setGiven] = useState<string[]>([])
   const [amount, setAmount] = useState(1)
   const [pending, setPending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<string[]>([])
   const requests = useRef(new Map<string, string>())
   const opener = useRef(document.activeElement as HTMLElement | null)
   const phone = useMediaQuery('(max-width: 47.99em)')
@@ -514,8 +594,9 @@ function GiveItem({
   const submit = async () => {
     if (pending || selected.length === 0) return
     setPending(true)
-    setFailed(false)
+    setFailed([])
     const done = [...given]
+    const missed: string[] = []
     for (const characterId of selected.filter((id) => !given.includes(id))) {
       if (!requests.current.has(characterId)) requests.current.set(characterId, crypto.randomUUID())
       try {
@@ -528,9 +609,10 @@ function GiveItem({
         })
         done.push(characterId)
       } catch {
-        setFailed(true)
+        missed.push(characterId)
       }
     }
+    setFailed(missed)
     setGiven(done)
     setPending(false)
     if (done.length === selected.length) {
@@ -606,6 +688,12 @@ function GiveItem({
                     size={40}
                   />
                   <span className="user-copy">{c.name}</span>
+                  {given.includes(c.id) && (
+                    <span className="give-served">
+                      <Check size={16} aria-hidden="true" />
+                      <VisuallyHidden>{t('store.served')}</VisuallyHidden>
+                    </span>
+                  )}
                 </UnstyledButton>
               ))}
             </div>
@@ -648,9 +736,14 @@ function GiveItem({
             ))}
           </Group>
         </div>
-        {failed && (
+        {failed.length > 0 && (
           <Alert role="alert" color="red">
-            {t('catalogue.operationError')}
+            {t('store.giveFailed', {
+              names: failed
+                .map((id) => roster.data?.find((c) => c.id === id)?.name ?? '')
+                .filter(Boolean)
+                .join(', '),
+            })}
           </Alert>
         )}
         <Button
@@ -659,7 +752,7 @@ function GiveItem({
           aria-disabled={pending || selected.length === 0 || undefined}
           onClick={() => void submit()}
         >
-          {t(failed ? 'common.retry' : 'catalogue.give')}
+          {t(failed.length ? 'common.retry' : 'catalogue.give')}
         </Button>
       </Stack>
     </Drawer>

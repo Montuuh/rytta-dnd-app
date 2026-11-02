@@ -7,6 +7,9 @@ This repository is a foundation; planned modules are not implemented features.
 ## Working agreement
 
 - Talk to the user in Spanish. Keep code, documentation and identifiers in English.
+- Before anything else, run `git fetch` and `git pull --ff-only` on the working branch (back up
+  local changes first). Then compare the backlog, migrations in `supabase/migrations` and the
+  hosted migration history: merged work may already cover the request. Never plan on a stale base.
 - Inspect `git status` and existing changes before editing. Own a named ticket and paths.
 - The producer maintains priority, dependencies, acceptance criteria and evidence.
 - Work on the requested delivery only. The user authorizes necessary Supabase changes and

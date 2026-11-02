@@ -1,6 +1,7 @@
 import { charactersEs } from './characters-es'
 import { sheetEs } from './sheet-es'
 import { inventoryEs } from './inventory-es'
+import { shopsEs } from './shops-es'
 import type { en } from './en'
 import { identityEs } from './identity-es'
 import { designEs } from './design-es'
@@ -10,6 +11,7 @@ export const es = {
   ...charactersEs,
   ...sheetEs,
   ...inventoryEs,
+  ...shopsEs,
   ...designEs,
   'module.camp': 'Campamento',
   'module.party': 'Grupo',

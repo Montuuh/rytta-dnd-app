@@ -235,22 +235,35 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-004"],
-      "sources": ["Drive: shops, prices, per-player visibility"],
-      "scope": "DM merchants/stock/pricing and player transactions.",
+      "sources": [
+        "Drive: shops, prices, per-player visibility",
+        "User 2026-11-02: several shops, hidden shops and listings, character-only listings, per-shop auto or DM approval with counter-offers, DM revert, sales, limited stock, per-character discounts, multi-item cart, whole gold; keep the RYT-004 inventory",
+        "docs/decisions/016-shops-merchants.md"
+      ],
+      "scope": "DM shops with visibility, stock, pricing and per-character modifiers over the RYT-004 catalog; Player storefront with cart, sales and orders; approval with counter-offers and a revertible order ledger feeding RYT-004 stacks.",
       "acceptance": [
-        "Hidden merchants are absent from API responses for unauthorized players.",
-        "Prices and resale rates are server-derived; reject insufficient funds/stock.",
-        "Lock related records atomically and honor idempotency keys.",
-        "Simultaneous last-item purchases cannot double-spend; show actionable retry feedback."
+        "Hidden shops, hidden listings and other characters' exclusives are absent from Player responses; the DM-only item value never reaches Players.",
+        "Prices, modifiers and resale are server-derived; insufficient gold or stock rejects the whole order.",
+        "Every mutation locks the campaign, honors idempotency keys and audits in the same transaction; the last unit cannot be sold twice.",
+        "Approval shops move nothing until the DM approves or the Player accepts a counter-offer; DMs revert completed orders and refunds cover the units still held.",
+        "Purchases land in source = shop stacks with purchase events that the inventory undo never compensates; only dm/shop units can be sold.",
+        "Storefront, cart, sell, orders and the DM panel cover empty, closed, hidden-module and error states at 390/820/1440 with 44px targets and es/en."
       ],
       "validation": [
-        "Postgres concurrency integration",
-        "Price spoofing/visibility tests",
-        "Two-account purchase/sale e2e"
+        "npm run check",
+        "npm run test:db shops actor matrix",
+        "npm run test:e2e",
+        "Hosted PRE probe and PROD migration",
+        "Independent rendered ui-ux review"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/decisions/016-shops-merchants.md",
+        "docs/evidence/RYT-005/validation.md",
+        "docs/evidence/RYT-005/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     },
     {
       "id": "RYT-006",

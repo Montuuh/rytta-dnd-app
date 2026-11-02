@@ -46,6 +46,9 @@ duplicate it in markdown tables. Use docs/templates/delivery.md. Run npm run che
 
 - .codex/hooks.json: SessionStart reads local backlog and emits context. No repository
   writes, prompt logging, network traffic or follow-up loops.
+- .claude/settings.json: SessionStart runs .claude/hooks/git-sync.mjs, which fetches origin and
+  tells the agent to `git pull --ff-only` first when the branch is behind. It never pulls,
+  merges or writes the working tree; agents still follow the AGENTS.md sync rule.
 - .husky/pre-commit: types, lint and architecture/documentation contracts.
 - .husky/pre-push: full local check including SQL tests/build.
 - CI repeats checks and adds browser/axe/format verification.

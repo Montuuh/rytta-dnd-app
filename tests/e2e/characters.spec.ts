@@ -200,6 +200,8 @@ test('Player sees own resources read-only; account menu returns home without lea
   await expect(page.getByRole('button', { name: 'Crear personaje' })).toHaveCount(0)
   const menu = page.getByRole('button', { name: /Sesión de player@example.com/ })
   await menu.click()
+  // Wait for the dropdown before Escape; pressing it mid-transition left the menu open in CI.
+  await expect(page.getByRole('menu')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(menu).toBeFocused()
   await menu.press('Enter')
@@ -430,7 +432,7 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
     const row = await page.locator('.nav-tabs').boundingBox()
     expect(row!.height).toBeLessThan(80)
   }
-  await expect(nav.getByText('Tiendas', { exact: false })).toHaveCount(0)
+  await expect(nav.getByText('Misiones', { exact: false })).toHaveCount(0)
   await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toHaveAttribute(
     'aria-current',
     'page',

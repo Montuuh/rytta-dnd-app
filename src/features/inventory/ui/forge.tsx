@@ -69,6 +69,7 @@ export function Forge({
   dm,
   targets,
   initialGive,
+  title,
   pending,
   error,
   onSave,
@@ -80,6 +81,7 @@ export function Forge({
   targets: ForgeTarget[]
   /** Characters preselected to receive a new item (for example "New item for Arin"). */
   initialGive?: string[]
+  title?: string
   pending: boolean
   error: string | null
   onSave: (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => void
@@ -100,6 +102,42 @@ export function Forge({
     setDraft((current) => ({ ...current, properties: { ...current.properties, ...change } }))
   const valid = draft.name.trim().length > 0
   const p = draft.properties
+  const giveBlock = dm && targets.length > 0 && (
+    <fieldset className="plain-fieldset">
+      <legend>
+        <Text fw={600} size="sm">
+          {t('inventory.forge.giveTo')}
+        </Text>
+        {!definition && (
+          <Text size="sm" c="dimmed">
+            {t('store.giveHint')}
+          </Text>
+        )}
+      </legend>
+      <div className="give-roster" role="group">
+        {targets.map((target) => (
+          <UnstyledButton
+            key={target.id}
+            type="button"
+            aria-pressed={give.includes(target.id)}
+            className="give-target"
+            onClick={() =>
+              setGive((current) =>
+                current.includes(target.id)
+                  ? current.filter((id) => id !== target.id)
+                  : [...current, target.id],
+              )
+            }
+          >
+            {target.portrait}
+            <span className="user-copy">{target.name}</span>
+          </UnstyledButton>
+        ))}
+      </div>
+    </fieldset>
+  )
+  // A preselected recipient ("New item for Arin") is shown first so the target is obvious.
+  const giveFirst = Boolean(initialGive?.length)
   return (
     <Drawer
       returnFocus={false}
@@ -107,7 +145,7 @@ export function Forge({
       onClose={onClose}
       position={phone ? 'bottom' : 'right'}
       size={phone ? '92%' : 480}
-      title={t(definition ? 'inventory.forge.editTitle' : 'inventory.forge.title')}
+      title={title ?? t(definition ? 'inventory.forge.editTitle' : 'inventory.forge.title')}
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
       <form
@@ -121,6 +159,7 @@ export function Forge({
         }}
       >
         <Stack gap="md">
+          {giveFirst && giveBlock}
           {media}
           {!definition && (
             <Select
@@ -333,40 +372,7 @@ export function Forge({
             value={draft.description}
             onChange={(event) => set({ description: event.currentTarget.value })}
           />
-          {dm && targets.length > 0 && (
-            <fieldset className="plain-fieldset">
-              <legend>
-                <Text fw={600} size="sm">
-                  {t('inventory.forge.giveTo')}
-                </Text>
-                {!definition && (
-                  <Text size="sm" c="dimmed">
-                    {t('store.giveHint')}
-                  </Text>
-                )}
-              </legend>
-              <div className="give-roster" role="group">
-                {targets.map((target) => (
-                  <UnstyledButton
-                    key={target.id}
-                    type="button"
-                    aria-pressed={give.includes(target.id)}
-                    className="give-target"
-                    onClick={() =>
-                      setGive((current) =>
-                        current.includes(target.id)
-                          ? current.filter((id) => id !== target.id)
-                          : [...current, target.id],
-                      )
-                    }
-                  >
-                    {target.portrait}
-                    <span className="user-copy">{target.name}</span>
-                  </UnstyledButton>
-                ))}
-              </div>
-            </fieldset>
-          )}
+          {!giveFirst && giveBlock}
           {give.length > 0 && (
             <NumberInput
               label={t('inventory.card.amount')}

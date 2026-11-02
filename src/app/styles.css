@@ -3517,3 +3517,19 @@ button.exhaustion-pip:disabled {
   min-width: 44px;
   min-height: 44px;
 }
+.give-served {
+  display: inline-grid;
+  place-items: center;
+  color: var(--success);
+}
+/* Long names wrap to two lines instead of being cut (150% text on phones). */
+.store-row-name {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.resource-cell .resource-value.mantine-Button-root .mantine-Button-label {
+  gap: 6px;
+}

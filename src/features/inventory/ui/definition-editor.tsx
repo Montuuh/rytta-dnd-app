@@ -46,6 +46,7 @@ export function DefinitionEditor({
   onClose,
   allowGive = false,
   initialGive,
+  title,
 }: {
   campaignId: string
   definition: ItemDefinition | null
@@ -55,6 +56,8 @@ export function DefinitionEditor({
   /** Offer "Give to" roster chips so a new item can be created for characters (RYT-027). */
   allowGive?: boolean
   initialGive?: string[]
+  /** Drawer title override, e.g. "New item for Arin". */
+  title?: string
 }) {
   const { t } = useTranslation()
   const { state, controller } = useAuth()
@@ -243,6 +246,7 @@ export function DefinitionEditor({
           : []
       }
       initialGive={initialGive}
+      title={title}
       pending={busy}
       error={error}
       onSave={(draft, give) => void save(draft, give)}

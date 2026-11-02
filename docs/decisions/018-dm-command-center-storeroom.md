@@ -34,7 +34,7 @@ The user asked for these changes:
   - A toolbar with search (and a clear button), sort (name, category, rarity, value) and a
     list/grid view switch whose choice is remembered per device.
   - Category chips with counts.
-  - List view: 56px rows with a rarity-tinted icon, name, meta line (category · rarity ·
+  - List view: 64px rows with a rarity-tinted icon, name, meta line (category · rarity ·
     weight), origin and value. Give and Add to shop are icon buttons; on phones they fold into
     one ⋯ menu.
   - Grid view: compact 112–136px tiles, each with a ⋯ menu.

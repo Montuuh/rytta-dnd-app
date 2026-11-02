@@ -69,7 +69,7 @@ Every interface change requires the independent ui-ux verdict described in [UI r
 ## DM tools and item lists (RYT-027)
 
 DM-only tools live in the DM Command Center tabs (`?panel=` deep links), not in separate
-navigation items. Item collections use dense 56px rows (rarity-tinted icon, name, one meta
+navigation items. Item collections use dense 64px rows (rarity-tinted icon, name, one meta
 line, icon actions) with an optional compact grid. Actions that fit stay as 44px icon buttons
 with accessible names; on phones they fold into one ⋯ menu. Avoid stacks of plain text
 buttons on cards. Campaign pages share one width for every role.

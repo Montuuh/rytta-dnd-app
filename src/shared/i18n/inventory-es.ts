@@ -1,5 +1,41 @@
 import type { inventoryEn } from './inventory-en'
 export const inventoryEs = {
+  'catalogue.search': 'Buscar objetos',
+  'catalogue.title': 'Objetos de campaña',
+  'catalogue.create': 'Crear objeto',
+  'catalogue.intro':
+    'Prepara objetos para tu campaña y después entrégalos o añádelos a una tienda.',
+  'catalogue.edit': 'Editar',
+  'catalogue.give': 'Dar a personajes',
+  'catalogue.addToShop': 'Añadir a tienda',
+  'catalogue.empty': 'No hay objetos que mostrar. Crea uno o cambia los filtros.',
+  'catalogue.savedName': 'Objeto guardado: {{name}}.',
+  'catalogue.saved': 'Objeto guardado',
+  'catalogue.image': 'Imagen del objeto',
+  'catalogue.imageHelp': 'JPG, PNG o WebP. Se ajustará sin recortes a 1024 px y un máximo de 1 MB.',
+  'catalogue.removeImage': 'Quitar imagen',
+  'catalogue.imagePreview': 'Vista previa de la imagen',
+  'catalogue.imageInvalid':
+    'No se pudo preparar la imagen. Elige un JPG, PNG o WebP de hasta 20 MB.',
+  'catalogue.saveError': 'No se pudo completar el guardado. Puedes reintentar.',
+  'catalogue.mediaPending':
+    'El objeto ya está guardado. Falta completar el cambio de imagen; reintentar no creará otro objeto.',
+  'catalogue.cleanupError':
+    'No se pudo comprobar la subida pendiente. Recupera la conexión y vuelve a cerrar.',
+  'catalogue.operationError':
+    'No se pudo completar la operación. Reintenta sin duplicar los cambios ya guardados.',
+  'catalogue.shop': 'Tienda',
+  'catalogue.price': 'Precio en oro',
+  'catalogue.stock': 'Unidades disponibles',
+  'catalogue.hiddenListing': 'Se añadirá oculto. Podrás revisar su visibilidad desde Tiendas.',
+  'catalogue.noShops': 'No hay tiendas disponibles o este objeto ya está en todas ellas.',
+  'catalogue.character': 'Personaje',
+  'catalogue.equipmentHelp':
+    'Toca una ranura vacía para equipar. Puedes quitar tu equipo en cualquier momento.',
+  'catalogue.openEquipment': 'Ver y cambiar equipo',
+  'catalogue.editGold': 'Editar oro de {{name}}: {{value}}',
+  'catalogue.goldTitle': 'Oro de {{name}}',
+
   'inventory.category.all': 'Todo',
   'inventory.category.weapon': 'Armas',
   'inventory.category.armor': 'Armaduras',

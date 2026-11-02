@@ -1,0 +1,50 @@
+[
+  {
+    "width": 390,
+    "unequipFailureFocus": true,
+    "unequipSuccessSocketFocus": true
+  },
+  {
+    "width": 390,
+    "partialRecovery": true,
+    "first": "Espada larga15 po",
+    "second": "Armadura de cueroSin valor",
+    "selected": [
+      "Armadura de cueroSin valor"
+    ],
+    "activeAfterFailure": {
+      "tag": "BODY",
+      "text": "\n    :root, :host{--mantine-cursor-type: pointer;--mantine-font-family: Inter, u"
+    },
+    "axe": [],
+    "requestIds": [
+      "4fc53fbf-d788-4094-bce5-0c8e8ea96f78",
+      "17f11d00-1721-44a3-b26f-d5c8b274085f",
+      "17f11d00-1721-44a3-b26f-d5c8b274085f"
+    ]
+  },
+  {
+    "width": 820,
+    "unequipFailureFocus": true,
+    "unequipSuccessSocketFocus": true
+  },
+  {
+    "width": 820,
+    "partialRecovery": true,
+    "first": "Espada larga15 po",
+    "second": "Armadura de cueroSin valor",
+    "selected": [
+      "Armadura de cueroSin valor"
+    ],
+    "activeAfterFailure": {
+      "tag": "BODY",
+      "text": "\n    :root, :host{--mantine-cursor-type: pointer;--mantine-font-family: Inter, u"
+    },
+    "axe": [],
+    "requestIds": [
+      "8bd9ab1f-6e17-46ce-86b3-326675b79149",
+      "44c3c67d-dfa0-443f-86f7-6f730729243d",
+      "44c3c67d-dfa0-443f-86f7-6f730729243d"
+    ]
+  }
+]

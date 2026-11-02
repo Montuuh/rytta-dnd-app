@@ -10,24 +10,25 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { Backpack, BookOpen, Hammer, Shirt } from 'lucide-react'
+import { Backpack, BookOpen, Shirt } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { inventoryQuery, rosterQuery, useInventoryAction } from '../api'
 import { canEquip, equippedBySlot, slotsFor } from '../domain/equipment'
 import type { DefinitionDraft, InventoryEvent, ItemDefinition, ItemStack } from '../domain/item'
+import { DefinitionEditor } from './definition-editor'
 import { Forge } from './forge'
 import { ItemCard } from './item-card'
-import { ItemIcon } from './item-icon'
 import { Ledger } from './ledger'
 import { PaperDoll } from './paper-doll'
 import { CharacterPortrait } from './portrait'
 import { Satchel } from './satchel'
 import { UndoFuse, type FuseEntry } from './undo-fuse'
 
-type View = 'satchel' | 'equipment' | 'ledger' | 'catalog'
-const viewIcons = { satchel: Backpack, equipment: Shirt, ledger: BookOpen, catalog: Hammer }
+type View = 'satchel' | 'equipment' | 'ledger'
+const viewIcons = { satchel: Backpack, equipment: Shirt, ledger: BookOpen }
 
 export function InventoryPage() {
   const { t } = useTranslation()
@@ -44,7 +45,8 @@ export function InventoryPage() {
     () => (roster.data ?? []).filter((c) => dm || c.user_id === ownerId),
     [roster.data, dm, ownerId],
   )
-  const [selected, setSelected] = useState<string | null>(null)
+  const [params] = useSearchParams()
+  const [selected, setSelected] = useState<string | null>(params.get('character'))
   const characterId =
     selected && visibleRoster.some((c) => c.id === selected)
       ? selected
@@ -55,7 +57,9 @@ export function InventoryPage() {
     enabled: Boolean(characterId),
   })
   const action = useInventoryAction(campaign.id)
-  const [view, setView] = useState<View>('satchel')
+  const [view, setView] = useState<View>(
+    params.get('view') === 'equipment' ? 'equipment' : 'satchel',
+  )
   const [card, setCard] = useState<string | null>(null)
   const [forge, setForge] = useState<{ definition: ItemDefinition | null } | null>(null)
   const [fuse, setFuse] = useState<(FuseEntry & { characterId: string }) | null>(null)
@@ -98,6 +102,11 @@ export function InventoryPage() {
         <Title order={1}>{t('module.inventory')}</Title>
         <Paper p="xl">
           <Text>{t(dm ? 'inventory.noCharacters' : 'characters.emptyPlayer')}</Text>
+          {dm && !playerPreview && (
+            <Button component={Link} to={`/campaign/${campaign.id}/items`}>
+              {t('catalogue.title')}
+            </Button>
+          )}
         </Paper>
       </Stack>
     )
@@ -213,9 +222,7 @@ export function InventoryPage() {
     )
   }
   const openStack = card ? stackById.get(card) : undefined
-  const views: View[] = dm
-    ? ['satchel', 'equipment', 'ledger', 'catalog']
-    : ['satchel', 'equipment', 'ledger']
+  const views: View[] = ['satchel', 'equipment', 'ledger']
 
   return (
     <Stack gap="md" className="inventory-page">
@@ -255,6 +262,11 @@ export function InventoryPage() {
         <Text size="sm" c="dimmed">
           {t('inventory.hiddenForPlayers')}
         </Text>
+      )}
+      {dm && !playerPreview && (
+        <Button component={Link} to={`/campaign/${campaign.id}/items`} variant="light">
+          {t('catalogue.title')}
+        </Button>
       )}
       <SegmentedControl
         fullWidth
@@ -318,6 +330,7 @@ export function InventoryPage() {
         <PaperDoll
           stacks={stacks}
           definitions={definitions}
+          effectiveAc={data.holder.armorClass}
           dexterity={data.holder.dex}
           strength={data.holder.str}
           level={data.holder.level}
@@ -325,10 +338,11 @@ export function InventoryPage() {
           pending={action.isPending}
           portrait={portrait(112)}
           onEquip={(stack, slot) => equip(stack, slot)}
-          onUnequip={(stack) =>
-            run({ kind: 'unequip', itemId: stack.id, expectedRevision: stack.revision }, () =>
-              setNotice(t('inventory.unequipped', { name: nameOf(stack) })),
-            )
+          onUnequip={(stack, done) =>
+            run({ kind: 'unequip', itemId: stack.id, expectedRevision: stack.revision }, () => {
+              setNotice(t('inventory.unequipped', { name: nameOf(stack) }))
+              done?.()
+            })
           }
         />
       )}
@@ -345,49 +359,6 @@ export function InventoryPage() {
             run({ kind: 'undo', eventId: event.id }, () => setNotice(t('inventory.undo.done')))
           }
         />
-      )}
-      {data && view === 'catalog' && dm && (
-        <ul className="satchel-grid catalog-grid" aria-label={t('inventory.view.catalog')}>
-          <li>
-            <UnstyledButton
-              className="item-tile item-tile-add"
-              onClick={(event) => {
-                opener.current = event.currentTarget
-                openForge(null)
-              }}
-            >
-              <span className="item-tile-icon">
-                <Hammer size={26} aria-hidden="true" />
-              </span>
-              <span className="item-tile-name">{t('inventory.forge.title')}</span>
-            </UnstyledButton>
-          </li>
-          {data.definitions
-            .filter((d) => !d.archived)
-            .map((definition) => (
-              <li key={definition.id}>
-                <UnstyledButton
-                  className={`item-tile rarity-${definition.rarity}`}
-                  aria-label={t('inventory.catalogLabel', {
-                    name: definition.name,
-                    rarity: t(`inventory.rarity.${definition.rarity}`),
-                  })}
-                  onClick={(event) => {
-                    opener.current = event.currentTarget
-                    openForge(definition)
-                  }}
-                >
-                  <span className="item-tile-icon">
-                    <ItemIcon icon={definition.icon} />
-                  </span>
-                  <span className="item-tile-name">{definition.name}</span>
-                  {definition.origin === 'player' && (
-                    <span className="item-origin">{t('inventory.origin.player')}</span>
-                  )}
-                </UnstyledButton>
-              </li>
-            ))}
-        </ul>
       )}
       {openStack && definitions.get(openStack.definition_id) && (
         <ItemCard
@@ -466,7 +437,22 @@ export function InventoryPage() {
           }}
         />
       )}
-      {forge && (
+      {forge && dm && !playerPreview && (
+        <DefinitionEditor
+          campaignId={campaign.id}
+          definition={forge.definition}
+          onClose={() => {
+            setForge(null)
+            restoreFocus()
+          }}
+          onSaved={(item) => {
+            setForge(null)
+            setNotice(t('catalogue.savedName', { name: item.name }))
+            restoreFocus()
+          }}
+        />
+      )}
+      {forge && !dm && (
         <Forge
           definition={forge.definition}
           dm={dm && !playerPreview}

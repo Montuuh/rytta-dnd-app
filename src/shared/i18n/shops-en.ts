@@ -227,7 +227,7 @@ export const shopsEn = {
   'shop.itemMeta': '{{rarity}}, {{weight}} lb',
   'shop.weightEach': '{{weight}} lb each',
   'admin.listing.noValue': 'No DM value set for this item',
-  'admin.listing.toForge': 'Create items in the inventory forge',
+  'admin.listing.toForge': 'Create item',
   'admin.hiddenFromPlayers':
     'Players do not see Shops yet. Activate the module in the DM Command Center.',
   'shop.seeInInventory': 'See in inventory',

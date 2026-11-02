@@ -1,0 +1,425 @@
+[
+  {
+    "flow": "shop-add",
+    "width": 390,
+    "scale": 1,
+    "busy": {
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 16,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    },
+    "tiles": [
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      }
+    ],
+    "geo": {
+      "alert": {
+        "top": 505.609375,
+        "bottom": 582.984375,
+        "inViewport": true
+      },
+      "alertHit": true,
+      "dock": {
+        "top": 495.609375,
+        "bottom": 678.578125,
+        "height": 182.96875
+      },
+      "drawer": {
+        "top": 67.53125,
+        "bottom": 844,
+        "height": 776.46875
+      },
+      "dockShareOfDrawer": 0.24,
+      "grid": [
+        {
+          "top": 293,
+          "bottom": 420
+        },
+        {
+          "top": 293,
+          "bottom": 420
+        }
+      ],
+      "active": "Añadir 1 objeto",
+      "alertText": "No se pudo completar. Revisa la conexión e inténtalo de nuevo."
+    },
+    "afterFailureButton": {
+      "text": "Añadir 1 objeto",
+      "ariaDisabled": "false",
+      "ariaBusy": "false",
+      "disabled": false,
+      "opacity": "1",
+      "cursor": "pointer",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": null
+    },
+    "axe": [],
+    "requests": 3
+  },
+  {
+    "flow": "shop-add",
+    "width": 390,
+    "scale": 1.5,
+    "busy": {
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 24,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    },
+    "tiles": [
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      }
+    ],
+    "geo": {
+      "alert": {
+        "top": 524.609375,
+        "bottom": 672.25,
+        "inViewport": true
+      },
+      "alertHit": true,
+      "dock": {
+        "top": 514.609375,
+        "bottom": 843,
+        "height": 328.390625
+      },
+      "drawer": {
+        "top": 67.53125,
+        "bottom": 844,
+        "height": 776.46875
+      },
+      "dockShareOfDrawer": 0.42,
+      "grid": [
+        {
+          "top": 370,
+          "bottom": 549
+        },
+        {
+          "top": 370,
+          "bottom": 549
+        }
+      ],
+      "active": "Añadir 1 objeto",
+      "alertText": "No se pudo completar. Revisa la conexión e inténtalo de nuevo."
+    },
+    "afterFailureButton": {
+      "text": "Añadir 1 objeto",
+      "ariaDisabled": "false",
+      "ariaBusy": "false",
+      "disabled": false,
+      "opacity": "1",
+      "cursor": "pointer",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": null
+    },
+    "axe": [],
+    "requests": 3
+  },
+  {
+    "flow": "shop-add",
+    "width": 820,
+    "scale": 1,
+    "busy": {
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 16,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    },
+    "tiles": [
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      }
+    ],
+    "geo": {
+      "alert": {
+        "top": 438.078125,
+        "bottom": 493.765625,
+        "inViewport": true
+      },
+      "alertHit": true,
+      "dock": {
+        "top": 428.078125,
+        "bottom": 589.359375,
+        "height": 161.28125
+      },
+      "drawer": {
+        "top": 0,
+        "bottom": 1180,
+        "height": 1180
+      },
+      "dockShareOfDrawer": 0.14,
+      "grid": [
+        {
+          "top": 226,
+          "bottom": 352
+        },
+        {
+          "top": 226,
+          "bottom": 352
+        }
+      ],
+      "active": "Añadir 1 objeto",
+      "alertText": "No se pudo completar. Revisa la conexión e inténtalo de nuevo."
+    },
+    "afterFailureButton": {
+      "text": "Añadir 1 objeto",
+      "ariaDisabled": "false",
+      "ariaBusy": "false",
+      "disabled": false,
+      "opacity": "1",
+      "cursor": "pointer",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": null
+    },
+    "axe": [],
+    "requests": 3
+  },
+  {
+    "flow": "shop-add",
+    "width": 820,
+    "scale": 1.5,
+    "busy": {
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 24,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    },
+    "tiles": [
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      }
+    ],
+    "geo": {
+      "alert": {
+        "top": 583.171875,
+        "bottom": 665.71875,
+        "inViewport": true
+      },
+      "alertHit": true,
+      "dock": {
+        "top": 573.171875,
+        "bottom": 786.09375,
+        "height": 212.921875
+      },
+      "drawer": {
+        "top": 0,
+        "bottom": 1180,
+        "height": 1180
+      },
+      "dockShareOfDrawer": 0.18,
+      "grid": [
+        {
+          "top": 302,
+          "bottom": 481
+        },
+        {
+          "top": 302,
+          "bottom": 481
+        }
+      ],
+      "active": "Añadir 1 objeto",
+      "alertText": "No se pudo completar. Revisa la conexión e inténtalo de nuevo."
+    },
+    "afterFailureButton": {
+      "text": "Añadir 1 objeto",
+      "ariaDisabled": "false",
+      "ariaBusy": "false",
+      "disabled": false,
+      "opacity": "1",
+      "cursor": "pointer",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": null
+    },
+    "axe": [],
+    "requests": 3
+  },
+  {
+    "flow": "shop-add",
+    "width": 1440,
+    "scale": 1,
+    "busy": {
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 16,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    },
+    "tiles": [
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      },
+      {
+        "disabled": true,
+        "opacity": "0.6"
+      }
+    ],
+    "geo": {
+      "alert": {
+        "top": 438.078125,
+        "bottom": 493.765625,
+        "inViewport": true
+      },
+      "alertHit": true,
+      "dock": {
+        "top": 428.078125,
+        "bottom": 589.359375,
+        "height": 161.28125
+      },
+      "drawer": {
+        "top": 0,
+        "bottom": 1180,
+        "height": 1180
+      },
+      "dockShareOfDrawer": 0.14,
+      "grid": [
+        {
+          "top": 226,
+          "bottom": 352
+        },
+        {
+          "top": 226,
+          "bottom": 352
+        }
+      ],
+      "active": "Añadir 1 objeto",
+      "alertText": "No se pudo completar. Revisa la conexión e inténtalo de nuevo."
+    },
+    "afterFailureButton": {
+      "text": "Añadir 1 objeto",
+      "ariaDisabled": "false",
+      "ariaBusy": "false",
+      "disabled": false,
+      "opacity": "1",
+      "cursor": "pointer",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": null
+    },
+    "axe": [],
+    "requests": 3
+  },
+  {
+    "flow": "p3-spot",
+    "giveBusy": {
+      "text": "Reintentar",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 16,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    },
+    "shopBusy": {
+      "text": "Reintentar",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "disabled": false,
+      "opacity": "0.6",
+      "cursor": "not-allowed",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "loader": {
+        "w": 16,
+        "var": "currentColor",
+        "color": "rgb(24, 16, 9)"
+      }
+    }
+  }
+]

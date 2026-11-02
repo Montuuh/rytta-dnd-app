@@ -1,0 +1,101 @@
+[
+  {
+    "width": 390,
+    "scale": 1.5,
+    "loader": {
+      "w": 24,
+      "h": 24,
+      "color": "rgb(24, 16, 9)",
+      "display": "block",
+      "visibility": "visible",
+      "loaderVar": "#eda145"
+    },
+    "tile": {
+      "disabled": true,
+      "opacity": "1"
+    },
+    "geo": {
+      "alert": {
+        "top": 640.703125,
+        "bottom": 788.34375
+      },
+      "dock": {
+        "top": 677.25,
+        "bottom": 843
+      },
+      "overlap": 111.09375,
+      "centerHitIsAlert": false,
+      "active": "Añadir 1 objeto"
+    },
+    "afterScroll": {
+      "alertTop": 640.703125,
+      "centerHitIsAlert": false
+    }
+  },
+  {
+    "width": 390,
+    "scale": 1,
+    "loader": {
+      "w": 16,
+      "h": 16,
+      "color": "rgb(24, 16, 9)",
+      "display": "block",
+      "visibility": "visible",
+      "loaderVar": "#eda145"
+    },
+    "tile": {
+      "disabled": true,
+      "opacity": "1"
+    },
+    "geo": {
+      "alert": {
+        "top": 495.609375,
+        "bottom": 572.984375
+      },
+      "dock": {
+        "top": 588.984375,
+        "bottom": 684.578125
+      },
+      "overlap": 0,
+      "centerHitIsAlert": true,
+      "active": "Añadir 1 objeto"
+    },
+    "afterScroll": {
+      "alertTop": 495.609375,
+      "centerHitIsAlert": true
+    }
+  },
+  {
+    "width": 820,
+    "scale": 1.5,
+    "loader": {
+      "w": 24,
+      "h": 24,
+      "color": "rgb(24, 16, 9)",
+      "display": "block",
+      "visibility": "visible",
+      "loaderVar": "#eda145"
+    },
+    "tile": {
+      "disabled": true,
+      "opacity": "1"
+    },
+    "geo": {
+      "alert": {
+        "top": 573.171875,
+        "bottom": 655.71875
+      },
+      "dock": {
+        "top": 679.71875,
+        "bottom": 795.09375
+      },
+      "overlap": 0,
+      "centerHitIsAlert": true,
+      "active": "Añadir 1 objeto"
+    },
+    "afterScroll": {
+      "alertTop": 573.171875,
+      "centerHitIsAlert": true
+    }
+  }
+]

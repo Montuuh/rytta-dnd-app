@@ -1,0 +1,152 @@
+[
+  {
+    "name": "390-es-dark-100-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-es-dark-100-editor",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-es-dark-100-catalogue",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-es-dark-100-give-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-es-dark-100",
+    "creationCount": 1,
+    "stackCount": 0,
+    "errors": []
+  },
+  {
+    "name": "390-en-light-150-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-en-light-150-editor",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-en-light-150-catalogue",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-en-light-150-give-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-en-light-150",
+    "creationCount": 1,
+    "stackCount": 0,
+    "errors": []
+  },
+  {
+    "name": "820-es-dark-150-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-es-dark-150-editor",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-es-dark-150-catalogue",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-es-dark-150-give-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-es-dark-150",
+    "creationCount": 1,
+    "stackCount": 0,
+    "errors": []
+  },
+  {
+    "name": "820-en-light-100-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-en-light-100-editor",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-en-light-100-catalogue",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-en-light-100-give-empty",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-en-light-100",
+    "creationCount": 1,
+    "stackCount": 0,
+    "errors": []
+  },
+  {
+    "name": "390-shop-drawer",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-give-drawer",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "390-gold",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-player-equipment",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  },
+  {
+    "name": "820-player-unequipped",
+    "overflow": false,
+    "axe": [],
+    "small": []
+  }
+]

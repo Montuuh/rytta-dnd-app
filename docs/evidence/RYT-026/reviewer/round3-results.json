@@ -1,0 +1,119 @@
+[
+  {
+    "width": 390,
+    "unequipFailureFocus": true,
+    "unequipSuccessSocketFocus": true
+  },
+  {
+    "width": 390,
+    "partialRecovery": true,
+    "busyState": {
+      "tag": "BUTTON",
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "nativeDisabled": false,
+      "opacity": "1",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "cursor": "pointer",
+      "spinner": true
+    },
+    "requestsDuringBusy": 1,
+    "errorToasts": 0,
+    "pills": [],
+    "first": "Espada larga15 po",
+    "second": "Armadura de cueroSin valor",
+    "selected": [
+      "Armadura de cueroSin valor"
+    ],
+    "activeAfterFailure": {
+      "tag": "BUTTON",
+      "text": "Añadir 1 objeto"
+    },
+    "axe": [],
+    "requestIds": [
+      "fa8ff10e-4625-4998-8474-0862634f1b44",
+      "30816197-814a-4289-bcfc-27ff0b45ea90",
+      "30816197-814a-4289-bcfc-27ff0b45ea90"
+    ]
+  },
+  {
+    "width": 820,
+    "unequipFailureFocus": true,
+    "unequipSuccessSocketFocus": true
+  },
+  {
+    "width": 820,
+    "partialRecovery": true,
+    "busyState": {
+      "tag": "BUTTON",
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "nativeDisabled": false,
+      "opacity": "1",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "cursor": "pointer",
+      "spinner": true
+    },
+    "requestsDuringBusy": 1,
+    "errorToasts": 0,
+    "pills": [],
+    "first": "Espada larga15 po",
+    "second": "Armadura de cueroSin valor",
+    "selected": [
+      "Armadura de cueroSin valor"
+    ],
+    "activeAfterFailure": {
+      "tag": "BUTTON",
+      "text": "Añadir 1 objeto"
+    },
+    "axe": [],
+    "requestIds": [
+      "1f883fce-6a7e-4c4b-8115-0da371a93405",
+      "6625ed67-66da-470c-840f-1d13e45e0f15",
+      "6625ed67-66da-470c-840f-1d13e45e0f15"
+    ]
+  },
+  {
+    "width": 1440,
+    "unequipFailureFocus": true,
+    "unequipSuccessSocketFocus": true
+  },
+  {
+    "width": 1440,
+    "partialRecovery": true,
+    "busyState": {
+      "tag": "BUTTON",
+      "text": "Añadir 2 objetos",
+      "ariaDisabled": "true",
+      "ariaBusy": "true",
+      "nativeDisabled": false,
+      "opacity": "1",
+      "bg": "rgb(237, 161, 69)",
+      "color": "rgb(24, 16, 9)",
+      "cursor": "pointer",
+      "spinner": true
+    },
+    "requestsDuringBusy": 1,
+    "errorToasts": 0,
+    "pills": [],
+    "first": "Espada larga15 po",
+    "second": "Armadura de cueroSin valor",
+    "selected": [
+      "Armadura de cueroSin valor"
+    ],
+    "activeAfterFailure": {
+      "tag": "BUTTON",
+      "text": "Añadir 1 objeto"
+    },
+    "axe": [],
+    "requestIds": [
+      "ab38c067-627c-421c-b8fe-05690ffc4f96",
+      "8b62de0b-4b03-4922-aecc-41b466952266",
+      "8b62de0b-4b03-4922-aecc-41b466952266"
+    ]
+  }
+]

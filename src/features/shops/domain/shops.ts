@@ -20,6 +20,7 @@ export const shopItemSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1).max(100),
   category: z.enum(itemCategories),
+  image_path: z.string().nullable().optional(),
   icon: z.string().regex(/^[a-z0-9-]{1,40}$/),
   rarity: z.enum(rarities),
   weight_tenths: z.number().int().min(0).max(100000),

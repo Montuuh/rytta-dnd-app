@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-02",
+  "updatedAt": "2026-11-03",
   "items": [
     {
       "id": "RYT-000",
@@ -881,6 +881,217 @@
         "docs/evidence/RYT-027/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-028",
+      "title": "Equipment and sheet quick fixes",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-027"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "Remove the equipped list under the paper doll, make DM player preview editable, remove the storeroom and \"Ver y cambiar equipo\" redirect buttons, stop the layout width jump between modules.",
+      "acceptance": [
+        "Unequip only lives in the slot drawer; no equipped list below the doll.",
+        "A DM in player preview can equip and unequip.",
+        "No storeroom redirect in DM inventory and no equipment redirect on the sheet.",
+        "Switching DM modules does not shift page width."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-029",
+      "title": "Remove campaign discoveries and the Camp module",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-027"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "Drop campaign revelations from DB and web; remove the Camp module so Party is the player landing page.",
+      "acceptance": [
+        "No campaign_revelations table, policies, RPCs, UI, i18n or types remain in public and pre.",
+        "Camp nav entry and page are gone; the campaign index lands on Party; DM entry points formerly on the home live in the DM Command Center."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-030",
+      "title": "Shops ledger clarity and storefront UX",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-027"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "Differentiate purchase offers, sale offers and counter-offers in the ledger, add refresh and faster polling, shop delete affordance, remove admin intro, rework the player shop selector and mode badges.",
+      "acceptance": [
+        "Ledger entries show distinct type treatment for purchase, sale and counter-offer.",
+        "Ledger has a refresh control and polls every 5s while visible.",
+        "Shop removal uses a trash icon labelled Eliminar.",
+        "Admin intro text removed.",
+        "Storefront shop selector is not a button/pill row; mode badge has a tooltip and sits beside the shop name when it fits, otherwise below."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-031",
+      "title": "Party live sharing and sheet audit",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-028", "RYT-029"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "DM per-character live-sharing toggle (default on); players see HP, AC, exhaustion and conditions of shared teammates only; DM sheet shows a per-character audit timeline.",
+      "acceptance": [
+        "Players never receive gold, water or rations of other characters.",
+        "Non-shared characters are not visible to other players.",
+        "The DM toggles sharing per character.",
+        "The DM sheet shows that character's audit events."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-032",
+      "title": "Storeroom item delete, price sync and editor rework",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-028", "RYT-030"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "Delete items from the storeroom, offer to sync linked listing prices on value change, right-side add-to-shop drawer, modern item editor, DM add existing item to a character.",
+      "acceptance": [
+        "Items can be deleted with an impact summary; linked listings are archived.",
+        "Changing value prompts to update linked shop prices transactionally.",
+        "Add-to-shop drawer opens right (bottom on phone).",
+        "Editor uses modern widgets with a live preview.",
+        "DM Añadir objeto lets choosing an existing item or creating one, and grants it to the character."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-033",
+      "title": "Settings rework and class themes",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-029"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "Single settings home for appearance, language and theme; twelve class themes plus default for light and dark.",
+      "acceptance": [
+        "Appearance and language toggles exist only in settings.",
+        "Twelve class themes plus default apply in light and dark and persist.",
+        "Every theme and scheme passes WCAG AA contrast in a unit test."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-034",
+      "title": "Player trade window",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "planned",
+      "dependsOn": ["RYT-031", "RYT-032"],
+      "sources": [
+        "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
+      ],
+      "scope": "WoW-style trades: invite, centered accept popup, two-sided item and gold offers, double confirmation, atomic swap, ledger entries.",
+      "acceptance": [
+        "A player invites a party member; the receiver gets a centered popup.",
+        "Both sides place items and gold; any change resets confirmations.",
+        "Completion is atomic and idempotent; both sides and the DM see ledger entries.",
+        "Denials for non-party, insufficient gold/items, equipped items and stale revisions."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration",
+        "two-browser end-to-end trade"
+      ],
+      "evidence": []
     }
   ]
 }

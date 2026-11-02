@@ -92,6 +92,7 @@ export const definitionSchema = z.object({
   slot_kind: z.enum(slotKinds),
   properties: itemPropertiesSchema.catch({}),
   origin: z.enum(['dm', 'player', 'srd']),
+  image_path: z.string().nullable().optional(),
   archived: z.boolean(),
   created_by: z.uuid().nullable(),
   revision: safeRevision,
@@ -158,11 +159,12 @@ export type DefinitionDraft = {
 export type InventoryAction =
   | {
       kind: 'define'
+      requestId?: string
       definitionId: string | null
       expectedRevision: number | null
       draft: DefinitionDraft
     }
-  | { kind: 'grant'; characterId: string; definitionId: string; amount: number }
+  | { kind: 'grant'; characterId: string; definitionId: string; amount: number; requestId?: string }
   | { kind: 'use' | 'remove'; itemId: string; expectedRevision: number; amount: number }
   | { kind: 'equip'; itemId: string; expectedRevision: number; slot: EquipmentSlot }
   | { kind: 'unequip'; itemId: string; expectedRevision: number }

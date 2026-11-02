@@ -64,12 +64,18 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
     })
   const setNotice = (text: string | null) => report(text ? { kind: 'saved', text } : null)
   const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
+  const listingRequests = useRef(new Map<string, Extract<ShopAction, { kind: 'saveListing' }>>())
   const opener = useRef<HTMLElement | null>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const toHeading = useRef(false)
   // Dialogs return focus to the control that opened them, or to the heading when that
   // control is gone (an archived row), so focus never drops to the body.
   const setDialog = (next: Dialog) => {
+    if (next?.kind === 'add') {
+      setAddError(null)
+      listingRequests.current.clear()
+    }
     if (next) opener.current = document.activeElement as HTMLElement | null
     setDialogState(next)
     if (!next)
@@ -257,32 +263,40 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
       {data && dialog?.kind === 'add' && (
         <AddItemsDrawer
           opened
-          shop={dialog.shop}
+          shop={data.shops.find((shop) => shop.id === dialog.shop.id) ?? dialog.shop}
+          error={addError}
           items={data.items}
-          forgeHref={`/campaign/${campaign.id}/inventory`}
+          campaignId={campaign.id}
           busy={adding}
           onClose={() => setDialog(null)}
           onAdd={async (items) => {
             // One idempotent request per item; stop at the first failure and report it.
             setAdding(true)
+            setAddError(null)
             setNotice(null)
             try {
-              for (const item of items)
-                await action.mutateAsync({
-                  kind: 'saveListing',
-                  shopId: dialog.shop.id,
-                  listingId: null,
-                  revision: null,
-                  draft: {
-                    definition_id: item.id,
-                    price: item.value_gp ?? 0,
-                    stock: null,
-                    // Without a DM value the item would sell for 0 gp: it enters hidden.
-                    visibility: item.value_gp === null ? 'hidden' : 'shop',
-                    access: [],
-                  },
-                  requestId: key(),
-                })
+              for (const item of items) {
+                const requestKey = `${dialog.shop.id}/${item.id}`
+                const request =
+                  listingRequests.current.get(requestKey) ??
+                  ({
+                    kind: 'saveListing',
+                    shopId: dialog.shop.id,
+                    listingId: null,
+                    revision: null,
+                    draft: {
+                      definition_id: item.id,
+                      price: item.value_gp ?? 0,
+                      stock: null,
+                      // Without a DM value the item would sell for 0 gp: it enters hidden.
+                      visibility: item.value_gp === null ? 'hidden' : 'shop',
+                      access: [],
+                    },
+                    requestId: key(),
+                  } satisfies Extract<ShopAction, { kind: 'saveListing' }>)
+                listingRequests.current.set(requestKey, request)
+                await action.mutateAsync(request)
+              }
               const hidden = items.filter((i) => i.value_gp === null).length
               setNotice(
                 hidden > 0
@@ -291,7 +305,9 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
               )
               setDialog(null)
             } catch (error) {
-              reportError(error)
+              setAddError(
+                t(`commerce.error.${error instanceof ShopError ? error.code : 'unavailable'}`),
+              )
             } finally {
               setAdding(false)
             }

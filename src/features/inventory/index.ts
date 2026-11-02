@@ -7,3 +7,6 @@ export { carriedTenths, encumbrance, formatPounds } from './domain/encumbrance'
 export { itemCategories, itemPropertiesSchema, rarities, slotKinds } from './domain/item'
 export type { ItemCategory, ItemDefinition, ItemStack, Rarity } from './domain/item'
 export { HoldSeal } from './ui/hold-seal'
+
+export { catalogueQuery, rosterQuery, useInventoryAction } from './api'
+export { DefinitionEditor } from './ui/definition-editor'

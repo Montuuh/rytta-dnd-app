@@ -15,7 +15,7 @@ async function client() {
 }
 
 const definitionColumns =
-  'id, campaign_id, name, category, icon, rarity, weight_tenths, value_gp, description, slot_kind, properties, origin, archived, created_by, revision'
+  'id, campaign_id, name, category, icon, rarity, weight_tenths, value_gp, description, slot_kind, properties, origin, archived, created_by, revision, image_path'
 const stackColumns =
   'id, campaign_id, character_id, definition_id, quantity, equipped_slot, source, notes, revision'
 const eventColumns =
@@ -23,6 +23,7 @@ const eventColumns =
 
 // Only what equipment math needs from the sheet; the characters feature owns the rest.
 const holderSchema = z.object({
+  armor_class: z.number().int().optional(),
   level: z.number().int().min(1).max(20),
   portrait_path: z.string().nullable(),
   str: z.coerce.number().int().nullable(),
@@ -30,7 +31,13 @@ const holderSchema = z.object({
   str_bonus: z.coerce.number().int().nullable(),
   dex_bonus: z.coerce.number().int().nullable(),
 })
-export type Holder = { level: number; portraitPath: string | null; str: number; dex: number }
+export type Holder = {
+  armorClass?: number
+  level: number
+  portraitPath: string | null
+  str: number
+  dex: number
+}
 
 export async function loadInventory(campaignId: string, characterId: string, signal: AbortSignal) {
   const db = await client()
@@ -62,7 +69,7 @@ export async function loadInventory(campaignId: string, characterId: string, sig
     db
       .from('character_sheets')
       .select(
-        'level, portrait_path, str:build->baseAbilities->>str, dex:build->baseAbilities->>dex, str_bonus:build->bonuses->>str, dex_bonus:build->bonuses->>dex',
+        'level, armor_class, portrait_path, str:build->baseAbilities->>str, dex:build->baseAbilities->>dex, str_bonus:build->bonuses->>str, dex_bonus:build->bonuses->>dex',
       )
       .eq('campaign_id', campaign)
       .eq('character_id', character)
@@ -77,6 +84,7 @@ export async function loadInventory(campaignId: string, characterId: string, sig
     definitions: definitionSchema.array().parse(definitions.data),
     events: eventSchema.array().parse(events.data),
     holder: {
+      armorClass: h.armor_class,
       level: h.level,
       portraitPath: h.portrait_path,
       str: Math.min(30, (h.str ?? 10) + (h.str_bonus ?? 0)),
@@ -97,7 +105,8 @@ const errorCode = (message: string) =>
 export async function changeInventory(campaignId: string, action: InventoryAction) {
   const db = await client()
   const target_campaign = z.uuid().parse(campaignId)
-  const request_id = crypto.randomUUID()
+  const request_id =
+    'requestId' in action ? (action.requestId ?? crypto.randomUUID()) : crypto.randomUUID()
   let result
   switch (action.kind) {
     case 'define':
@@ -214,4 +223,62 @@ export async function listRoster(campaignId: string, signal: AbortSignal) {
     .array()
     .parse(characters.data)
     .map((row) => ({ ...row, portraitPath: portraits.get(row.id) ?? null }))
+}
+
+export async function loadCatalogue(campaignId: string, signal?: AbortSignal) {
+  const db = await client()
+  let query = db
+    .from('item_definitions')
+    .select(definitionColumns)
+    .eq('campaign_id', z.uuid().parse(campaignId))
+    .order('name')
+  if (signal) query = query.abortSignal(signal)
+  const result = await query
+  if (result.error) throw result.error
+  return definitionSchema.array().parse(result.data)
+}
+
+export async function itemImageUrl(path: string) {
+  const { activeSchema } = await import('@/shared/api/supabase')
+  if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
+  const db = await client()
+  const result = await db.storage.from('item-images').createSignedUrl(path, 300)
+  if (result.error) throw result.error
+  return z.url().parse(result.data.signedUrl)
+}
+export async function uploadItemImage(campaignId: string, definitionId: string, image: Blob) {
+  if (image.type !== 'image/webp' || image.size > 1_048_576) throw new Error('invalid')
+  const db = await client()
+  const { activeSchema } = await import('@/shared/api/supabase')
+  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(definitionId)}/${crypto.randomUUID()}.webp`
+  const result = await db.storage
+    .from('item-images')
+    .upload(path, image, { contentType: image.type })
+  if (result.error) throw new Error('unavailable')
+  return path
+}
+export async function attachItemImage(
+  campaignId: string,
+  definitionId: string,
+  revision: number,
+  path: string | null,
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('set_item_image', {
+    target_campaign: campaignId,
+    target_definition: definitionId,
+    expected_revision: revision,
+    new_path: path,
+    request_id: requestId,
+  })
+  if (result.error) throw new Error(errorCode(result.error.message))
+}
+/** Only clean an unreferenced object, including after an ambiguous network outcome. */
+export async function discardItemUpload(campaignId: string, path: string) {
+  const definitions = await loadCatalogue(campaignId)
+  if (definitions.some((item) => item.image_path === path)) return
+  const db = await client()
+  const result = await db.storage.from('item-images').remove([path])
+  if (result.error) throw result.error
 }

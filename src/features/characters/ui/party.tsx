@@ -4,6 +4,7 @@ import {
   Alert,
   Badge,
   Button,
+  Loader,
   Group,
   Menu,
   Modal,
@@ -352,6 +353,12 @@ function ResourceTile({
     const next = Math.min(maxVal, Math.max(0, currentVal + delta))
     if (next !== currentVal) commit(next)
   }
+  const [goldEditor, setGoldEditor] = useState<Character | null>(null)
+  const goldButton = useRef<HTMLButtonElement>(null)
+  const closeGold = () => {
+    setGoldEditor(null)
+    requestAnimationFrame(() => goldButton.current?.focus())
+  }
   const pipMode = field === 'exhaustion' && currentVal <= exhaustionLevels
   return (
     <div
@@ -365,7 +372,20 @@ function ResourceTile({
           {label}
         </Text>
       </div>
-      {pipMode ? (
+      {field === 'gold' && dm ? (
+        <div className="resource-cell-body">
+          <Button
+            ref={goldButton}
+            variant="subtle"
+            className="resource-value"
+            onClick={() => setGoldEditor(character)}
+            aria-label={t('catalogue.editGold', { name: character.name, value: currentVal })}
+          >
+            {currentVal.toLocaleString(i18n.language)} <Pencil size={16} aria-hidden="true" />
+          </Button>
+          {goldEditor && <GoldEditor character={goldEditor} onClose={closeGold} />}
+        </div>
+      ) : pipMode ? (
         <div className="exhaustion-track">
           <Text fw={700} className="resource-value">
             {currentVal}
@@ -654,6 +674,81 @@ function CharacterEditor({
               disabled={action.error?.message === 'stale'}
             >
               {editor.kind === 'resources' ? t('characters.save') : title}
+            </Button>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
+  )
+}
+
+function GoldEditor({ character, onClose }: { character: Character; onClose: () => void }) {
+  const { t } = useTranslation()
+  const campaign = useCampaign()
+  const action = useCharacterAction(campaign.id)
+  const [gold, setGold] = useState<number | string>(character.character_resources.gold)
+  const [attempted, setAttempted] = useState(false)
+  const errorMessage = useRef<HTMLDivElement>(null)
+  const request = useRef(crypto.randomUUID())
+  const valid = typeof gold === 'number' && Number.isSafeInteger(gold) && gold >= 0
+  return (
+    <Modal
+      opened
+      onClose={() => !action.isPending && onClose()}
+      title={t('catalogue.goldTitle', { name: character.name })}
+      closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (!valid || action.isPending) return
+          setAttempted(true)
+          action.mutate(
+            {
+              kind: 'resources',
+              characterId: character.id,
+              values: { ...character.character_resources, gold: gold as number },
+              requestId: request.current,
+            },
+            {
+              onSuccess: onClose,
+              onError: () => requestAnimationFrame(() => errorMessage.current?.focus()),
+            },
+          )
+        }}
+      >
+        <Stack>
+          <NumberInput
+            data-autofocus
+            label={t('characters.gold')}
+            value={gold}
+            onChange={setGold}
+            min={0}
+            max={Number.MAX_SAFE_INTEGER}
+            allowDecimal={false}
+            allowNegative={false}
+            hideControls
+            readOnly={attempted}
+          />
+          {action.isError && (
+            <Alert ref={errorMessage} tabIndex={-1} color="red" role="alert">
+              {t(
+                action.error.message === 'stale' ? 'characters.stale' : 'catalogue.operationError',
+              )}
+            </Alert>
+          )}
+          <Group justify="flex-end">
+            <Button variant="subtle" disabled={action.isPending} onClick={onClose}>
+              {t('action.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              aria-disabled={action.isPending || undefined}
+              aria-busy={action.isPending}
+              leftSection={action.isPending ? <Loader size={16} /> : undefined}
+              disabled={!valid || action.error?.message === 'stale'}
+            >
+              {t(attempted ? 'common.retry' : 'characters.save')}
             </Button>
           </Group>
         </Stack>

@@ -156,6 +156,16 @@ export type CharacterFunctions = {
     Args: { target_campaign: string; target_event: string; request_id: string }
     Returns: Json
   }
+  set_item_image: {
+    Args: {
+      target_campaign: string
+      target_definition: string
+      expected_revision: number
+      new_path: string | null
+      request_id: string
+    }
+    Returns: Json
+  }
   set_character_portrait: {
     Args: { target_campaign: string; target_character: string; new_path: string | null }
     Returns: undefined

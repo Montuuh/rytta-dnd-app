@@ -2,6 +2,8 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { useAuth } from '@/features/auth'
 import {
   changeInventory,
+  loadCatalogue,
+  itemImageUrl,
   listRoster,
   loadInventory,
   portraitUrl,
@@ -55,7 +57,7 @@ export function useInventoryAction(campaignId: string) {
       // Equipment moves AC on the sheet, so refresh the whole campaign character scope.
       await Promise.all([
         cache.invalidateQueries({
-          queryKey: ['private', userId, 'campaign', campaignId, 'inventory'],
+          queryKey: ['private', userId, 'campaign', campaignId],
         }),
         cache.invalidateQueries({
           queryKey: ['private', userId, 'campaign', campaignId, 'characters'],
@@ -80,3 +82,19 @@ export function usePortraitUpload(campaignId: string, characterId: string) {
     },
   })
 }
+
+export const catalogueQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'catalogue'],
+    queryFn: ({ signal }) => loadCatalogue(campaignId, signal),
+    refetchInterval: 20_000,
+  })
+export const itemImageQuery = (userId: string | undefined, path?: string | null) =>
+  queryOptions({
+    queryKey: ['private', userId, 'item-image', path],
+    queryFn: () => itemImageUrl(path!),
+    enabled: Boolean(userId && path),
+    staleTime: 240_000,
+    refetchInterval: 240_000,
+    retry: false,
+  })

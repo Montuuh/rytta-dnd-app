@@ -16,6 +16,7 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import {
   Compass,
+  Package,
   Eye,
   Languages,
   LogOut,
@@ -88,6 +89,8 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
       icon: Shield,
       dm: true,
     })
+  if (effectiveDm)
+    entries.push({ to: `${prefix}/items`, label: t('catalogue.title'), icon: Package, dm: true })
   return entries
 }
 

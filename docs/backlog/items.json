@@ -854,7 +854,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-025", "RYT-026", "RYT-005"],
       "sources": [
         "User 2026-11-02: rename the items panel to catálogo/almacén de objetos, unify DM panels, improve the item manager, create items for a character, compact list/grid with icons, DM Command Center first, drop the revelations queue, edit items from shop listings, improve Party for DM and Player and fix the narrower Player width."
@@ -877,7 +877,9 @@
       ],
       "evidence": [
         "docs/decisions/018-dm-command-center-storeroom.md",
-        "docs/evidence/RYT-027/validation.md"
+        "docs/evidence/RYT-027/validation.md",
+        "docs/evidence/RYT-027/reviewer/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

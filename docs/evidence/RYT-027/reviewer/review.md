@@ -2,12 +2,17 @@
 
 - Ticket: RYT-027 (DM Command Center storeroom, item manager UX, shop item editing and Party redesign)
 - Reviewer: `ui-ux` (independent; role `.codex/agents/ui-ux.toml`)
-- Source commit: `70f8fe8` (branch `claude/ecstatic-clarke-dz03w7`)
+- Source commits: round 1 `70f8fe8`; round 2 `79c32c5` (branch `claude/ecstatic-clarke-dz03w7`)
 - Reviewed: 2026-11-02
 
-Verdict: CHANGES_REQUIRED
+Verdict: PASS
 
-## Summary
+The verdict line applies to the current source, `79c32c5` (round 2). Round 1 on `70f8fe8` was
+CHANGES_REQUIRED and is kept below as history.
+
+## Round 1 (70f8fe8): CHANGES_REQUIRED
+
+### Summary
 
 Most of the delivery works well. Nav order, `?panel=` deep links, the `/items` redirect, removal of the
 revelations tab, the dense storeroom list and grid, the remembered view, category counts, the shop
@@ -19,9 +24,9 @@ One blocking issue remains. Every overlay opened from a ⋯ menu loses keyboard 
 That covers every phone list row and every grid tile at all sizes. It breaks the repo rule "Focus
 trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller issues follow.
 
-## Findings
+### Findings
 
-### F1 — Major (blocking): focus is lost after closing an overlay opened from a ⋯ menu
+#### F1 — Major (blocking): focus is lost after closing an overlay opened from a ⋯ menu
 - Paths: `src/pages/item-store.tsx:506` (GiveItem `opener = document.activeElement`),
   `src/features/inventory/ui/definition-editor.tsx:79`, `src/features/shops/ui/catalogue-shop-picker.tsx:25`;
   the menu is in `src/pages/item-store.tsx:454-479`.
@@ -39,7 +44,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
   `CharacterMenu` already does with `trigger.current`. Or save the row's trigger in `ItemStore` state
   and focus it on close. Add an e2e assertion for grid view and for the phone menu.
 
-### F2 — Minor: the clear-search button is 36×36px and clearing drops focus
+#### F2 — Minor: the clear-search button is 36×36px and clearing drops focus
 - Path: `src/pages/item-store.tsx:197-204` (`size={36}`).
 - Where: all viewports when search has text. Seen at 1440px, es, dark.
 - Reproduction: type `zzz` in "Buscar objetos" and activate "Limpiar búsqueda". The button measures
@@ -47,7 +52,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
 - Impact: this is below the repo's 44px minimum, and keyboard users lose their place.
 - Fix: use `size={44}` (or a 44px hit area) and refocus the search input after clearing.
 
-### F3 — Minor: the active Command Center tab is off-screen on phones
+#### F3 — Minor: the active Command Center tab is off-screen on phones
 - Paths: `src/features/campaigns/ui/members.tsx` (Tabs.List, about line 186) and `src/app/styles.css:2157`.
 - Where: 390px, es and en.
 - Reproduction: open `members?panel=items`, or use Party ⋯ "Nuevo objeto para Arin". The tab list
@@ -59,7 +64,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
 - Fix: on mount and whenever `activePanel` changes, call `scrollIntoView({ inline: 'nearest' })` on the
   selected tab, and/or add an edge fade so users can tell the strip scrolls.
 
-### F4 — Minor: wrong success message after giving an existing item (es grammar too)
+#### F4 — Minor: wrong success message after giving an existing item (es grammar too)
 - Path: `src/pages/item-store.tsx:402` uses `store.createdFor`.
 - Where: the give drawer at any size. Seen at 390px, es.
 - Reproduction: give "Poción de curación" to Arin. The status reads "Poción de curación creado y
@@ -67,7 +72,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
 - Fix: add a `store.given` key ("Entregado: {{name}} → {{names}}" / "{{name}} given to {{names}}") and
   use phrasing without gender.
 
-### F5 — Minor: partial failures in the give drawer are not named
+#### F5 — Minor: partial failures in the give drawer are not named
 - Path: `src/pages/item-store.tsx:530-532, 651-655`.
 - Where: the give drawer at 1440px, es (fixture `grant_item` 503 on the first call).
 - Reproduction: a failed grant shows only the generic "No se pudo completar la operación…". Characters
@@ -78,7 +83,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
 - Fix: list the failed names, as the create flow does with `store.givePartial`, and add a check icon
   or "Entregado" label to the chips already given.
 
-### F6 — Minor: create-for-character shows no target at the top of the form
+#### F6 — Minor: create-for-character shows no target at the top of the form
 - Path: `src/features/inventory/ui/definition-editor.tsx` and `forge.tsx` (title stays "Forjar objeto").
 - Where: 390px, es, from Party ⋯ "Nuevo objeto para Arin".
 - Reproduction: the drawer opens as a generic "Forjar objeto". The preselected "Dar a: Arin" chip
@@ -87,7 +92,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
 - Fix: when `initialGive` is set, title the drawer "Nuevo objeto para Arin" (`store.createFor`). On
   close, focus the "Nuevo objeto" button or the storeroom heading.
 
-### F7 — Nit / polish
+#### F7 — Nit / polish
 - On phones the list rows hide value and origin (`item-store.tsx:328`). Prices are visible only in
   the grid. Consider showing the value on the right before the ⋯ menu.
 - Rows measure 64–66px, not the 56px in ADR 018 and design-system.md. The `min-height` is 56, but the
@@ -100,7 +105,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
   `party.noSheet`, `party.openSheet`, `party.count_*` (`src/shared/i18n/store-*.ts`).
 - Existing issue, not from RYT-027: on Shops at 390px, the "Nueva tienda" control measured 39×70.
 
-## Acceptance criteria check
+### Acceptance criteria check
 
 1. The Command Center is first (desktop nav "Centro de mando DM", phone bottom bar "Mando DM"). It has
    four tabs kept in `?panel=` and survives a reload. `/items` redirects to `members?panel=items`.
@@ -115,7 +120,7 @@ trapping, Escape and return focus for overlays" and WCAG 2.4.3. A few smaller is
 6. Party shows the portrait, class and level, HP/AC chips and compact resources. DM and Player
    `main` are both 1360px at 1440px, with 1304px cards. **Met.**
 
-## Tested scenarios
+### Tested scenarios
 
 Real browser checks used Chromium (Playwright, `/opt/pw-browsers/chromium`) against a production
 build with base `/rytta-dnd-app/`, served by `vite preview` on port 4191, with the identity and shops
@@ -151,7 +156,7 @@ Read-only code inspection: `item-store.tsx`, `members.tsx`, `party.tsx`, `defini
 `forge.tsx`, `satchel.tsx`, `admin-panel.tsx`, `stock-list.tsx`, `router.tsx`, `layout.tsx`, the store
 i18n catalogs and the storeroom CSS.
 
-## Limitations
+### Limitations
 
 - Fixture data only, with one character (Arin) and six items. The roster with many chips and long
   catalogues (scalability beyond about 6 rows) was judged from the CSS, not rendered.
@@ -163,3 +168,128 @@ i18n catalogs and the storeroom CSS.
 - Hosted Supabase was not tested. I did not run `npm run check` or the repo e2e suite; that is the
   implementer's evidence.
 - This approval and these findings apply only to source commit `70f8fe8`.
+
+## Round 2 (79c32c5)
+
+Round 2 was a focused re-review of the fixes for F1–F7, listed under "Round 1" in
+`docs/evidence/RYT-027/validation.md`. I rebuilt the mocked-live bundle from `79c32c5`
+(`VITE_DATA_MODE=supabase`, base `/rytta-dnd-app/`), served it with `vite preview` on port 4191 and
+tested it in real Chromium. Round 2 result: **PASS**. The blocking F1 is resolved, and so are F2–F6.
+F7 is only partly resolved, and one new nit was found. Both are non-blocking.
+
+### Per-finding status
+
+- **F1: resolved.**
+  - Covered: 390px list, 390px grid and 1440px grid, each with normal motion and with
+    `prefers-reduced-motion: reduce`. Each case was opened from ⋯ "Acciones para Escudo".
+  - Escape: after Give, Edit and Add to shop, focus returns to `BUTTON Acciones para Escudo` in every
+    case.
+  - Completing the action: giving to Arin, saving the edit and adding the item to a shop all return
+    focus to the same ⋯ button.
+  - Keyboard only: Enter opens the menu with focus on "Editar". ArrowDown, then Enter, opens Give with
+    focus on the drawer's Close button.
+  - Desktop list icon buttons: they still return focus to themselves ("Dar Escudo a personajes" after
+    a retry).
+  - Observation, not a defect: the action now starts only after the menu's exit transition. A script
+    that presses Enter, ArrowDown and Enter within the same instant does not open the dialog. With
+    realistic keyboard timing it opens.
+- **F2: resolved.** "Limpiar búsqueda" is 44×44px at 390 and 1440px. Clicking it, or reaching it with
+  Tab and pressing Enter, clears the value and puts focus in "Buscar objetos".
+- **F3: resolved.** On a 390px `?panel=items` load the tab rail scrolls itself (`scrollLeft` 153). The
+  selected "Almacén de objetos" tab spans x=178–374 inside the rail's 16–374, so it is fully visible.
+  Switching to Auditoría also keeps the selected tab in view (x=198–374).
+  - Caveat: when I injected 150% text after the page had loaded, the rail did not scroll again. The
+    effect runs only when the panel changes. This was a test artifact; a page loaded at 150% runs the
+    same mount logic.
+- **F4: resolved.**
+  - es: "Entregado a Arin: Escudo." and, with two characters, "Entregado a Arin, Bryn Valtera de las
+    Mareas: Escudo."
+  - en: "Given to Arin: Escudo."
+  - The wording no longer implies the item was created and avoids gender agreement. The
+    create-for-character notice is "Nuevo objeto en el almacén y entregado a Arin: Perla." It is
+    neutral, though a little long.
+- **F5: resolved.** Setup: a second roster entry, "Bryn Valtera de las Mareas", was routed into the
+  roster, and `grant_item` failed once for Bryn. Checked at 390 and 1440px:
+  - The alert reads "No se pudo entregar a Bryn Valtera de las Mareas. Puedes reintentarlo."
+  - Arin's chip shows a green check plus the hidden text "entregado". Its accessible text is
+    "Arin entregado", and it is `aria-disabled`, so a forced click does not toggle it.
+  - Focus stays on "Reintentar". Retrying grants only to Bryn, and the notice names both characters.
+- **F6: resolved.** Opened from Party ⋯ "Nuevo objeto para Arin" at 390 and 1440px:
+  - The drawer title and accessible name are "Nuevo objeto para Arin" (en: "New item for Arin").
+  - "Dar a" is the first block, with Arin pressed and Bryn not.
+  - On Escape, the URL drops `create` and focus goes to "Nuevo objeto". Forging the item grants it
+    only to Arin, and focus then goes to "Nuevo objeto".
+  - The plain "Nuevo objeto" button keeps the "Forjar objeto" title and returns focus to itself.
+- **F7: partly resolved (Minor, non-blocking).**
+  - Done: names now wrap to two lines. At 150% text a very long name is still clamped at two lines,
+    which is acceptable.
+  - Done: the gold value has its gap, the unused keys are gone and the documented row height is
+    updated.
+  - Still open: the phone price. See R2-1.
+
+### New or remaining findings
+
+#### R2-1: Minor, the phone price is cut off by the meta ellipsis (remainder of F7)
+- Paths: `src/pages/item-store.tsx:353` and `src/app/styles.css:3209` (`.store-row-meta` uses
+  `white-space: nowrap; text-overflow: ellipsis`).
+- Where: 390px, es, dark. Also likely in en, which was not captured separately.
+- Reproduction: at 100% text, open the storeroom list at 390px.
+  - "Escudos · Común · 6 lb · Sin pre…" and "Consumibles · Poco común · 0,5…" end in an ellipsis, so
+    the 50 po price of Poción de curación is hidden. Only short rows such as "Armas · Común · 3 lb ·
+    15 po" show the price.
+  - At 150% text, all seven meta lines are clipped and no price is visible.
+- Impact: the claimed fix works only for short meta lines. The grid and the edit drawer still show
+  the price, so this does not block.
+- Fix: show the value as its own right-aligned element before the ⋯ button, with
+  `flex-shrink: 0`. Or put the value first in the meta line, or drop weight from the phone meta.
+
+#### R2-2: Nit, a `?create=` link opened inside the storeroom does not open the editor
+- Path: `src/pages/item-store.tsx:80`. The editor state comes from `?create=` only in the `useState`
+  initializer.
+- Reproduction: while already on `members?panel=items`, navigate to
+  `members?panel=items&create=<characterId>`. No dialog opens; a reload opens it.
+- Impact: the Party menu path is unaffected, because it remounts the page. Only a manual URL change
+  or an in-app link while already in the storeroom is affected.
+- Fix: run an effect when the `create` parameter changes.
+
+#### Existing issue, unchanged
+On Shops at 390px, "Nueva tienda" is 39px tall. This predates RYT-027 and is out of scope, as the
+validation notes say.
+
+### Axe and overflow on the touched states
+Rules run: wcag2a, wcag2aa, wcag21aa and wcag22aa. Every state below had 0 violations and 0
+horizontal overflow:
+- storeroom list at 390px (es dark, en light) and at 1440px;
+- search with a value at 390px, and no results at 1440px;
+- the shop picker opened from the ⋯ menu (390px list, 390px grid, 1440px grid, both motion settings);
+- the give drawer with two characters, its partial-failure state and its done state, at 390 and
+  1440px;
+- the give done state at 390px in en light;
+- create-for "Nuevo objeto para Arin" at 390 and 1440px, and at 390px en light;
+- storeroom at 150% text at 390px.
+
+### Round 2 tested scenarios
+- **Real browser checks** (Playwright scripts with assertions and measurements): everything listed
+  per finding above, plus:
+  - reduced motion for F1;
+  - the keyboard-only menu path;
+  - focus after each action is completed;
+  - the shop picker add, through its "Tienda" select and "Añadir a tienda";
+  - the same-document `?create=` navigation.
+- **Screenshots inspected by eye** (scratch only, not committed):
+  - the F3 tab rail at 390px;
+  - the shop picker at 390px;
+  - the give drawer failure state at 390px;
+  - "Nuevo objeto para Arin" at 390px;
+  - the storeroom at 150% text at 390px.
+- **Code inspection:** the `79c32c5` diff of `item-store.tsx`, `members.tsx`, `forge.tsx`,
+  `definition-editor.tsx`, `styles.css` and the store i18n catalogs.
+
+### Round 2 limitations
+- Bryn is a second roster entry routed into the roster for the drawer tests, not real fixture
+  data. Grants for Bryn were handled by the fixture's `grant_item`.
+- Not re-tested in round 2: 820px; Party, Shops "Editar objeto" and the satchel (none changed since
+  round 1); a complete en/light matrix (spot-checked only).
+- Still not covered: real iOS or Android, a screen reader, and hosted Supabase. I did not run
+  `npm run check` or the repo e2e suite; that is the implementer's evidence.
+- This approval applies only to source commit `79c32c5`.

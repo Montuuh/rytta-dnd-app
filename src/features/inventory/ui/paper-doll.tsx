@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Button, Drawer, Group, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Shield } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -115,7 +115,6 @@ export function PaperDoll({
   const phone = useMediaQuery('(max-width: 48em)')
   const [picking, setPicking] = useState<EquipmentSlot | null>(null)
   const opener = useRef<HTMLElement | null>(null)
-  const sockets = useRef(new Map<EquipmentSlot, HTMLButtonElement>())
   // The picker unmounts on close, so return focus to the socket explicitly.
   const closePicker = () => {
     setPicking(null)
@@ -147,10 +146,6 @@ export function PaperDoll({
           return (
             <div role="listitem" key={slot} className={`doll-socket socket-${slot}`}>
               <UnstyledButton
-                ref={(node) => {
-                  if (node) sockets.current.set(slot, node)
-                  else sockets.current.delete(slot)
-                }}
                 className="socket"
                 data-filled={entry ? true : undefined}
                 data-blocked={blocked || undefined}
@@ -204,32 +199,6 @@ export function PaperDoll({
           />
         </div>
       </div>
-      <Stack gap="xs" mt="md">
-        <Text size="sm" c="dimmed">
-          {t('catalogue.equipmentHelp')}
-        </Text>
-        {[...equipped.entries()].map(([slot, entry]) => (
-          <Group key={slot} justify="space-between" wrap="wrap">
-            <Text className="user-copy">
-              {t(`inventory.slot.${slot}`)} · {entry.definition.name}
-            </Text>
-            {canEdit && (
-              <Button
-                variant="light"
-                aria-disabled={pending || undefined}
-                onClick={() => {
-                  if (!pending)
-                    onUnequip(entry.stack, () =>
-                      requestAnimationFrame(() => sockets.current.get(slot)?.focus()),
-                    )
-                }}
-              >
-                {t('inventory.socket.unequip', { name: entry.definition.name })}
-              </Button>
-            )}
-          </Group>
-        ))}
-      </Stack>
       {picking && (
         <Drawer
           opened

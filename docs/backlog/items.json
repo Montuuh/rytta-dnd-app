@@ -881,6 +881,38 @@
         "docs/evidence/RYT-027/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-028",
+      "title": "Equipment view cleanup, editable Player preview and stable page width",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "review",
+      "dependsOn": [
+        "RYT-027"
+      ],
+      "sources": [
+        "User 2026-11-03: remove the equipped-items list under the paper doll, make the DM Player preview editable, remove the storeroom and equipment redirect buttons and fix page width jumping between DM modules."
+      ],
+      "scope": "Remove the equipped list below the paper doll (unequip stays in the slot drawer); make the Player preview editable in the satchel and character sheet (supersedes the RYT-026 read-only preview note); drop the satchel storeroom button and the sheet equipment link; add scrollbar-gutter: stable.",
+      "acceptance": [
+        "No equipped-items list or help text renders under the paper doll and unequip works from the slot drawer.",
+        "In the DM Player preview the satchel and character sheet are editable.",
+        "The satchel and character sheet show no storeroom or equipment redirect buttons.",
+        "Page width does not change between modules with and without a vertical scrollbar."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-028/validation.md"
+      ]
     }
   ]
 }

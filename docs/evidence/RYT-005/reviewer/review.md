@@ -522,3 +522,52 @@ R1-R4 are resolved in the browser. No blocking findings remain from any DM redes
 - `docs/evidence/RYT-005/reviewer/run-dm-rereview2-focus/**`
 - `docs/evidence/RYT-005/reviewer/reviewer-dm-rereview.spec.ts` (adds the No-button and in-flight focus
   probes)
+
+## CI fix check (2026-11-02)
+
+This checks the CI fix `.touch-slider { padding-inline: 18px; }` (`src/app/styles.css:2870-2874`) on the
+current uncommitted tree (branch `ryt-005-shops`). I used an isolated build (port 4184) at 390 and
+820 px with 150% text and injected `* { font-family: Verdana, "DejaVu Sans", sans-serif }` to mimic
+Linux metrics, in ES dark and EN light. Probe: `reviewer-dm-ci.spec.ts`, 4/4.
+
+### Verdict
+
+**PASS**
+
+### Evidence
+
+- **Overflow:** `scrollWidth − innerWidth` is 0 in all four runs (phone/tablet × dark/light).
+- **End-mark labels:**
+  - Phone resale: labels span 50-352 inside the card (16-374).
+  - Phone discount: labels span 18-375. That is at the content edge (1 px past the section, still
+    inside the 16 px page gutter of the 390 viewport).
+  - Tablet: resale 314-782, discount 282-805, inside the 820 viewport.
+- **Alignment:** both tracks are inset by the same 18 px from their headings (resale: heading 47 →
+  track 65; discount: heading 16 → track 34). The first/last mark labels are centred under the track
+  ends, and the result reads as intentional alignment with the card content (`controls-*.png`,
+  `modifiers-*.png`).
+- **Hit area and labels:**
+  - Thumbs measure 48×48 with a 60 px `::before` hit area.
+  - `aria-label` is "Compra objetos al" / "Precio para Arin" ("Buys items at" / "Price for Arin").
+  - `aria-valuetext` is "Paga el 50 %" / "20 % de descuento para ti". ArrowRight updates it
+    ("15 % de descuento para ti").
+- **Axe:** 0 violations in all four runs.
+
+### Notes (non-blocking, not caused by this change)
+
+- With the injected Verdana at 150% on a 390 px phone, the segmented labels and the long shop title
+  wrap mid-word ("Hidd/en", "Som/e char/acter/s", "Merca/do"). This comes from the existing wrap rules
+  under an extreme font stress. System fonts at 150% wrap at word boundaries, as earlier rounds showed.
+  Consider `overflow-wrap: break-word` with `hyphens: auto` on `.wrap-segments` if this shows up on
+  real Linux or Android devices.
+- The `characters.spec.ts` change is test-only and was not reviewed as UI.
+
+### Limits
+
+- Font metrics were simulated with Verdana/DejaVu on Windows Chromium, not a Linux CI runner.
+- I did not run the CI suite or `tests/e2e/shops.spec.ts` myself.
+
+### Evidence paths
+
+- `docs/evidence/RYT-005/reviewer/run-ci-fix/**`
+- `docs/evidence/RYT-005/reviewer/reviewer-dm-ci.spec.ts`

@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test'
 const out = 'C:/Users/dmont/AppData/Local/Temp/claude/C--Users-dmont-Desktop-CODE---Proyectos-rytta-dnd-app/ba0218f7-890c-4c1e-a6ea-5549d699d53c/scratchpad/dist-reviewer'
 export default defineConfig({
   testDir: '.',
-  testMatch: /reviewer-dm(-overflow|-rereview)?\.spec\.ts/,
+  testMatch: /reviewer-dm(-overflow|-rereview|-ci)?\.spec\.ts/,
   reporter: [['list']],
   webServer: {
     command: `npm run build -- --base=/rytta-dnd-app/ --outDir="${out}" --emptyOutDir && npm run preview -- --host 127.0.0.1 --port 4184 --strictPort --base=/rytta-dnd-app/ --outDir="${out}"`,

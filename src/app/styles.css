@@ -2869,6 +2869,8 @@ button.exhaustion-pip:disabled {
 }
 .touch-slider {
   padding-block: 10px;
+  /* Room for the centred end-mark labels (+50, 100%) so they never overflow the page. */
+  padding-inline: 18px;
 }
 .touch-slider .mantine-Slider-markLabel {
   font-size: var(--fs-tag);

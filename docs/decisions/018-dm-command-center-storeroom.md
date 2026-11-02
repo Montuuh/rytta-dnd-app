@@ -1,7 +1,8 @@
 # ADR 018: One DM Command Center with the item storeroom, and a Party redesign
 
 Status: accepted for `RYT-027`. Replaces the standalone `/items` page from ADR 017 and the
-revelations queue tab from ADR 012/015 inside the DM Command Center.
+revelations queue tab from ADR 012/015 inside the DM Command Center. The remaining revelations data,
+RPCs and campaign home list were removed by [ADR 019](019-remove-revelations-and-camp.md).
 
 ## Context
 

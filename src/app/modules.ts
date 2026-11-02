@@ -1,7 +1,6 @@
 import {
   Backpack,
   BookOpen,
-  Compass,
   Gem,
   ScrollText,
   Shield,
@@ -12,7 +11,6 @@ import {
   Landmark,
 } from 'lucide-react'
 export const modules = [
-  { path: '/', label: 'module.camp', summary: 'summary.camp', icon: Compass, ticket: 'RYT-000' },
   {
     path: '/party',
     label: 'module.party',

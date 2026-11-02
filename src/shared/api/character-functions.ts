@@ -43,24 +43,6 @@ export type CharacterFunctions = {
       player_modules: string[]
     }[]
   }
-  create_campaign_revelation: {
-    Args: {
-      target_campaign: string
-      item_title: string
-      item_category: string
-      item_summary?: string
-      item_visibility?: string
-    }
-    Returns: string
-  }
-  set_revelation_visibility: {
-    Args: {
-      target_campaign: string
-      target_revelation: string
-      new_visibility: string
-    }
-    Returns: undefined
-  }
   save_character_sheet: {
     Args: {
       target_campaign: string

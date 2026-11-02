@@ -22,9 +22,6 @@ export const demoCampaignRepository: CampaignRepository = {
   async sentInvitations() {
     return []
   },
-  async revelations() {
-    return []
-  },
   async auditEvents() {
     return []
   },
@@ -44,12 +41,6 @@ export const demoCampaignRepository: CampaignRepository = {
     throw new Error('Read-only demo')
   },
   async setModules() {
-    throw new Error('Read-only demo')
-  },
-  async createRevelation() {
-    throw new Error('Read-only demo')
-  },
-  async setRevelationVisibility() {
     throw new Error('Read-only demo')
   },
 }

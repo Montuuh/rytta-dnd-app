@@ -3,20 +3,11 @@ export {
   campaignsQuery,
   invitationsQuery,
   membersQuery,
-  revelationsQuery,
   sentInvitationsQuery,
   useCampaignAction,
 } from './api'
 export { CampaignAccessError } from './domain/errors'
-export type {
-  AuditEvent,
-  Campaign,
-  CampaignModuleKey,
-  CampaignRepository,
-  Revelation,
-  RevelationCategory,
-  RevelationVisibility,
-} from './domain/campaign'
+export type { AuditEvent, Campaign, CampaignModuleKey, CampaignRepository } from './domain/campaign'
 export { campaignModuleKeys, MembershipError } from './domain/campaign'
 export { CampaignHub } from './ui/hub'
 export { CampaignBoundary } from './ui/campaign-boundary'

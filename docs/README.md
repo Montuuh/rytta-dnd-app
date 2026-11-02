@@ -49,3 +49,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-026 verification](evidence/RYT-026/validation.md).
 28. [ADR 018: DM Command Center storeroom and Party redesign](decisions/018-dm-command-center-storeroom.md)
     and [RYT-027 verification](evidence/RYT-027/validation.md).
+29. [ADR 019: remove campaign revelations and the Camp module](decisions/019-remove-revelations-and-camp.md)
+    and [RYT-029 verification](evidence/RYT-029/validation.md).

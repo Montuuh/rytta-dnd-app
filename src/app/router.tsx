@@ -6,7 +6,7 @@ import { CampaignBoundary, CampaignHub } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
-import { CampaignPage } from '@/pages/campaign-page'
+import { CampaignLanding } from '@/pages/campaign-landing'
 
 const CharacterParty = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterParty })),
@@ -30,9 +30,6 @@ const ShopsPage = lazy(() =>
   import('@/features/shops').then((module) => ({ default: module.ShopsPage })),
 )
 
-const CampPage = lazy(() =>
-  import('@/pages/camp-page').then((module) => ({ default: module.CampPage })),
-)
 const ModulePage = lazy(() =>
   import('@/pages/module-page').then((module) => ({ default: module.ModulePage })),
 )
@@ -56,11 +53,11 @@ export function AppRouter() {
               />
             ) : (
               <>
-                <Route index element={live ? <CampaignHub /> : <CampPage />} />
+                <Route index element={live ? <CampaignHub /> : <Navigate to="/party" replace />} />
 
                 {live && (
                   <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
-                    <Route index element={<CampaignPage />} />
+                    <Route index element={<CampaignLanding />} />
                     <Route path="party" element={<CharacterParty />} />
                     <Route path="party/:characterId" element={<CharacterSheetPage />} />
                     <Route path="party/:characterId/create" element={<CharacterCreationPage />} />

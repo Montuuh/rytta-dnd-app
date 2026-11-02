@@ -1,11 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
-import type {
-  CampaignRepository,
-  RevelationCategory,
-  RevelationVisibility,
-} from './domain/campaign'
+import type { CampaignRepository } from './domain/campaign'
 
 async function repository(): Promise<CampaignRepository> {
   if (config.VITE_DATA_MODE === 'demo')
@@ -43,12 +39,6 @@ export const sentInvitationsQuery = (userId: string, campaignId: string) =>
     queryFn: async ({ signal }) => (await repository()).sentInvitations(campaignId, signal),
     refetchInterval: 30_000,
   })
-export const revelationsQuery = (userId: string, campaignId: string) =>
-  queryOptions({
-    queryKey: ['private', userId, 'campaign', campaignId, 'revelations'],
-    queryFn: async ({ signal }) => (await repository()).revelations(campaignId, signal),
-    refetchInterval: 20_000,
-  })
 export const auditEventsQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'audit-events'],
@@ -62,20 +52,6 @@ export type CampaignAction =
   | { kind: 'revoke'; invitationId: string }
   | { kind: 'member'; campaignId: string; userId: string; role: 'dm' | 'player' | null }
   | { kind: 'modules'; campaignId: string; modules: string[] }
-  | {
-      kind: 'createRevelation'
-      campaignId: string
-      title: string
-      category: RevelationCategory
-      summary: string
-      visibility: RevelationVisibility
-    }
-  | {
-      kind: 'revelationVisibility'
-      campaignId: string
-      revelationId: string
-      visibility: RevelationVisibility
-    }
 
 export function useCampaignAction() {
   const { state, controller } = useAuth()
@@ -103,28 +79,15 @@ export function useCampaignAction() {
           return repo.changeMember(action.campaignId, action.userId, action.role)
         case 'modules':
           return repo.setModules(action.campaignId, action.modules)
-        case 'createRevelation':
-          return repo.createRevelation(action.campaignId, {
-            title: action.title,
-            category: action.category,
-            summary: action.summary,
-            visibility: action.visibility,
-          })
-        case 'revelationVisibility':
-          return repo.setRevelationVisibility(
-            action.campaignId,
-            action.revelationId,
-            action.visibility,
-          )
       }
     },
     onSuccess: async (_result, action) => {
       if (controller?.getSnapshot().user?.id !== userId) return
       await client.cancelQueries({ queryKey: ['private', userId] })
-      // Visibility toggles never change who may read the campaign, so cached rows can stay
+      // Module toggles never change who may read the campaign, so cached rows can stay
       // mounted (keeping keyboard focus on the toggled switch) while they refetch. Membership
       // and role changes still drop private campaign data before refetching.
-      if (action.kind !== 'revelationVisibility' && action.kind !== 'modules')
+      if (action.kind !== 'modules')
         client.removeQueries({
           predicate: (q) =>
             q.queryKey[0] === 'private' && q.queryKey[1] === userId && q.queryKey[2] === 'campaign',

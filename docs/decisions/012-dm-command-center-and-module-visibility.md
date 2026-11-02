@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for `RYT-023`.
+Accepted for `RYT-023`. Revelations and the Camp home were later removed by [ADR 019](019-remove-revelations-and-camp.md).
 
 ## Context
 

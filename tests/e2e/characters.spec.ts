@@ -430,7 +430,7 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
     const row = await page.locator('.nav-tabs').boundingBox()
     expect(row!.height).toBeLessThan(80)
   }
-  await expect(nav.getByText('Tiendas', { exact: false })).toHaveCount(0)
+  await expect(nav.getByText('Misiones', { exact: false })).toHaveCount(0)
   await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toHaveAttribute(
     'aria-current',
     'page',

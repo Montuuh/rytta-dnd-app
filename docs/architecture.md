@@ -87,7 +87,12 @@ RYT-004 adds item_definitions, inventory_items and inventory_events with idempot
 revision-checked RPCs, compensating undo, equipment-derived AC and a private portrait
 bucket authorized by prefix (ADR 014).
 
-Future domains: merchants/stock, quests,
+RYT-005 adds shops, listings, per-character access and price modifiers, and a purchase/sale
+order ledger. Reads are security definer RPCs that return only what the caller may see;
+checkout, sale, approval, counter-offer and revert are campaign-locked, idempotent
+transactions that move gold, stock and RYT-004 `source = shop` stacks together (ADR 016).
+
+Future domains: quests,
 encounters/participants, glossary, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

@@ -200,6 +200,8 @@ test('Player sees own resources read-only; account menu returns home without lea
   await expect(page.getByRole('button', { name: 'Crear personaje' })).toHaveCount(0)
   const menu = page.getByRole('button', { name: /Sesión de player@example.com/ })
   await menu.click()
+  // Wait for the dropdown before Escape; pressing it mid-transition left the menu open in CI.
+  await expect(page.getByRole('menu')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(menu).toBeFocused()
   await menu.press('Enter')

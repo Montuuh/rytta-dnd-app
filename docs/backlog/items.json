@@ -891,7 +891,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-027"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -907,9 +907,10 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS"
+        "independent ui-ux PASS",
+        "Independent rendered ui-ux review"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-028/validation.md"]
     },
     {
       "id": "RYT-029",

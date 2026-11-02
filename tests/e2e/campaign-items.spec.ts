@@ -145,7 +145,7 @@ test('direct gold accepts zero, Escape cancels and stale edits cannot overwrite 
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeDisabled()
 })
 
-test('Players cannot access the DM catalogue and sheet links directly to their equipment', async ({
+test('Players cannot access the DM catalogue and unequip from the slot drawer', async ({
   page,
 }) => {
   await identityFixture(page, { player: true, inventory: true, sheet: 'complete' })
@@ -154,10 +154,11 @@ test('Players cannot access the DM catalogue and sheet links directly to their e
   await expect(page.getByRole('heading', { name: 'Almacén de objetos' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Nuevo objeto' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
-  await page.getByRole('link', { name: 'Ver y cambiar equipo' }).click()
-  await expect(
-    page.getByRole('button', { name: 'Quitar Armadura de cuero', exact: true }),
-  ).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Ver y cambiar equipo' })).toHaveCount(0)
+  await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
+  // The equipped-items list is gone: unequip lives in the slot drawer only.
+  await expect(page.getByRole('button', { name: 'Quitar Armadura de cuero' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true }).click()
   await page.getByRole('button', { name: 'Quitar Armadura de cuero', exact: true }).click()
   await expect(page.getByRole('img', { name: 'Clase de Armadura 13' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Torso: vacío', exact: true })).toBeFocused()
@@ -249,12 +250,16 @@ test('equipment displays the authoritative manual AC override and retains focus 
   })
   await page.goto(`./#/campaign/${campaignId}/inventory?view=equipment`)
   await expect(page.getByRole('img', { name: 'Clase de Armadura 23' })).toBeVisible()
+  const torso = page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true })
+  await torso.focus()
+  await page.keyboard.press('Enter')
   const remove = page.getByRole('button', { name: 'Quitar Armadura de cuero', exact: true })
   await remove.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('alert')).toBeVisible()
-  await expect(remove).toBeFocused()
+  await expect(torso).toBeFocused()
   await page.keyboard.press('Enter')
+  await page.getByRole('button', { name: 'Quitar Armadura de cuero', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Torso: vacío', exact: true })).toBeFocused()
   await expect(page.getByRole('img', { name: 'Clase de Armadura 23' })).toBeVisible()
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)

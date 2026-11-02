@@ -2,13 +2,20 @@
 
 - Ticket: RYT-027 (DM Command Center storeroom, item manager UX, shop item editing and Party redesign)
 - Reviewer: `ui-ux` (independent; role `.codex/agents/ui-ux.toml`)
-- Source commits: round 1 `70f8fe8`; round 2 `79c32c5` (branch `claude/ecstatic-clarke-dz03w7`)
+- Source commits: round 1 `70f8fe8`; round 2 `79c32c5`; round 3 `44af4fd` plus uncommitted
+  working-tree changes, UI fingerprint `1a53992e2877a64a94d6b7f995d367cbf52983ebfb3c2489916516b6e4eedfcf`;
+  round 4 `44af4fd` plus uncommitted working-tree changes, UI fingerprint
+  `467fd49cad05275dd983de3f56163545eba0608cf85237f723cd2afd0002a459`
+  (branch `claude/ecstatic-clarke-dz03w7`)
 - Reviewed: 2026-11-02
 
 Verdict: PASS
 
-The verdict line applies to the current source, `79c32c5` (round 2). Round 1 on `70f8fe8` was
-CHANGES_REQUIRED and is kept below as history.
+The verdict line applies to the current source: the round 4 snapshot (`44af4fd` plus the
+uncommitted R2-1/R2-2/R3-1/R3-2 changes, fingerprint
+`467fd49cad05275dd983de3f56163545eba0608cf85237f723cd2afd0002a459`). Earlier rounds are kept below as
+history: round 1 on `70f8fe8` was CHANGES_REQUIRED, round 2 on `79c32c5` was PASS, and round 3
+(fingerprint `1a53992e…edfcf`) was CHANGES_REQUIRED.
 
 ## Round 1 (70f8fe8): CHANGES_REQUIRED
 
@@ -293,3 +300,251 @@ horizontal overflow:
 - Still not covered: real iOS or Android, a screen reader, and hosted Supabase. I did not run
   `npm run check` or the repo e2e suite; that is the implementer's evidence.
 - This approval applies only to source commit `79c32c5`.
+
+## Round 3 (44af4fd + working tree, fingerprint 1a53992e…edfcf): CHANGES_REQUIRED
+
+Round 3 was a focused re-review of the fixes for R2-1 and R2-2. The snapshot is `44af4fd` plus the
+uncommitted changes to `src/pages/item-store.tsx`, `src/app/styles.css` and
+`tests/e2e/campaign-items.spec.ts`. I checked the fingerprint with
+`node scripts/check-ui-review.mjs --fingerprint` before and after testing. Both times it was
+`1a53992e2877a64a94d6b7f995d367cbf52983ebfb3c2489916516b6e4eedfcf`, which matches the requested
+fingerprint.
+
+Setup: I rebuilt the mocked-live bundle (`VITE_DATA_MODE=supabase`, base `/rytta-dnd-app/`) into an
+isolated scratch directory. I served it with `vite preview` on port 4197 and drove it with a separate
+Playwright config and output directory, using the repo's `identityFixture`
+(`inventory: true, sheet: 'complete'`). For the R2-1 checks I renamed the first fixture item to a long
+name, "Capa élfica del caminante nocturno de las Tierras Altas de Valdemar".
+
+Result: R2-2 is resolved. R2-1 is resolved at 100% text, but at 150% text on phones the new price
+column takes the width the item name needs. Names are cut and split in the middle of words. This
+undoes the round 2 F7 fix ("names wrap to two lines"), so the round is CHANGES_REQUIRED.
+
+### Per-finding status
+
+- **R2-1: resolved at 100% text, regressed at 150% text (see R3-1).**
+  - 390px, es dark and en light, 100% and 150% text, all six rows:
+    - each row has its own `.store-value` element ("50 po", "15 po", "Sin precio"; en "50 gp",
+      "No price");
+    - the value is not clipped (`scrollWidth <= clientWidth`);
+    - it sits right-aligned, 10px from the edit button's right edge, and ends before the ⋯ button;
+    - the meta line no longer contains the price and still ellipsizes;
+    - `.store-row-side` is absent.
+  - Empty prices use `data-empty` and are muted:
+    - es dark: `rgb(203,182,153)` against the gold `rgb(246,196,120)`;
+    - en light: `rgb(102,79,58)` against `rgb(122,75,6)`.
+  - Every state had 0 page overflow and 0 axe violations (wcag2a, wcag2aa, wcag21aa, wcag22aa).
+    Row buttons measured at least 44px (66px at 150%).
+  - Accessible name on phones: "Editar: Anillo de la marea Tesoros · Raro · 0 lb Sin precio" (en
+    "Edit: … No price"). This is acceptable. The meta line was already part of the name, and the
+    desktop button name already ends with the origin and value. Tab goes from the row button to
+    "Acciones para …" as expected.
+  - 820px and 1440px (es dark), and 820px at 150% text (en light), are unchanged:
+    - there is no direct `.store-value` child;
+    - `.store-row-side` holds the origin and the value ("Homebrew" with "Sin precio" or "50 po");
+    - rows are 65–66px tall (87–88px at 150%) and buttons at least 44px;
+    - 0 overflow and 0 axe violations.
+- **R2-2: resolved.** Checked at 390px and 1440px, es dark.
+  - Setup: from `members?panel=items`, I added `&create=<Arin>` to `location.hash`.
+  - "Nuevo objeto para Arin" opens with Arin `aria-pressed="true"`, and focus starts in the form.
+  - Escape closes it, the URL drops `create`, and focus moves to "Nuevo objeto". A second time
+    behaves the same.
+  - Forging "Perla R3" through this path made exactly one `grant_item` call, targeting Arin, and
+    produced one stack for Arin only. The notice read "Nuevo objeto en el almacén y entregado a Arin:
+    Perla R3."
+  - Party ⋯ "Nuevo objeto para Arin" still opens the editor with Arin preselected. Escape moves focus
+    to "Nuevo objeto", and Back returns to Party.
+  - Loading the page fresh with `?create=` opens the editor (0 axe violations). Escape moves focus to
+    "Nuevo objeto".
+  - Plain "Nuevo objeto" opens "Forjar objeto", and Escape returns focus to it.
+  - F1 shows no regression. At 390px, ⋯ "Dar a personajes" then Escape focuses "Acciones para
+    Escudo". After a link-opened editor, ⋯ "Editar" then Escape also focuses the ⋯ button.
+  - A row edit after a link-opened editor returns focus to that row's button, so the trigger reset
+    does not leak.
+
+### New findings
+
+#### R3-1 — Major (blocking): at 150% text on phones the price column hides item names
+- Paths:
+  - `src/pages/item-store.tsx:361-366`: the phone `.store-value` is a sibling of `.store-row-body`
+    inside `.store-row-main`;
+  - `src/app/styles.css:3229-3235`: `.store-value { flex-shrink: 0; white-space: nowrap }`;
+  - `src/app/styles.css:3526-3533`: `.store-row-name` has a two-line clamp and
+    `overflow-wrap: anywhere`.
+- Where: 390px, 150% text, es dark and en light. 100% text is fine.
+- Reproduction: load `members?panel=items` at 390px with `html { font-size: 150% }` applied before
+  the first paint, in list view. The name column is about 85px wide, and "Sin precio" / "No price"
+  take about 105px.
+  - es dark:
+    - "Anillo / de la…";
+    - "Armad / ura d…", split inside the word;
+    - "Capa élfica / del…";
+    - "Espada / larga";
+    - meta is cut to "Tesoros…", "Escudo…", "Munici…".
+  - en light:
+    - "Armadur / a de…";
+    - "Anillo de / la marea";
+    - meta is cut to "Armor · …".
+  - Five of six rows grow to 125px for a two-line clamp of a short name. In round 2 the same names
+    wrapped across the full row width.
+- Impact: the item name is the primary identifier at the table. At large text it is now unreadable
+  for most rows, even three-word names. Words are broken mid-syllable. The muted "Sin precio" empty
+  state takes more space than real prices and pushes names aside. This undoes the F7 large-text fix,
+  and 150% text on 390px phones is a required review condition.
+- Possible fixes, pick one:
+  - Move the phone value into the second line: name across the full width on top, then meta
+    (ellipsized, `min-width: 0`) and the value (`flex-shrink: 0`) on one line. A two-column grid
+    inside `.store-row-body` works.
+  - Or keep the side value but drop it below the name when the width is tight (flex-wrap or a
+    container query).
+  - Also consider a compact empty state on phones ("—" with VisuallyHidden "Sin precio").
+  - Use `overflow-wrap: break-word` instead of `anywhere` for `.store-row-name`, so short words are
+    not split.
+  - Add an e2e assertion that "Armadura de cuero" is fully visible at 150%, and measure the name, not
+    only the price.
+
+#### R3-2 — Nit: after a `?create=` link, focus can return to the element focused before the link
+- Paths: `src/features/inventory/ui/definition-editor.tsx:82-86` (the opener is captured at mount,
+  and its `restoreFocus` rAF runs after ItemStore's) and `src/pages/item-store.tsx:144`.
+- Reproduction (390 and 1440px, es):
+  1. Edit a row and press Escape, so focus is on "Editar: Anillo de la marea…".
+  2. Follow `&create=<Arin>`.
+  3. Forge the item, or press Escape. Focus goes back to the Anillo row button, not "Nuevo objeto".
+- The "Nuevo objeto" fallback applies only when nothing was focused (or the opener has gone, as with
+  the Party path). Returning to the element focused before the dialog is valid behaviour, so this
+  does not block. The repo test passes only because focus starts on the body. Choose one behaviour
+  and assert it.
+- Related, existing behaviour (not introduced here): pressing Back while a link-opened editor is open
+  removes `create` from the URL, but the drawer stays open. Forward then shows it again.
+
+### Round 3 tested scenarios
+- **Real browser checks** (Chromium through Playwright, scripted assertions and measurements, 10
+  tests, all run to completion):
+  - R2-1 at 390px for {es dark, en light} × {100%, 150%}: the row metrics above, overflow, axe with
+    wcag22aa, the button names and the Tab order;
+  - R2-1 at 820px and 1440px (es dark), and at 820px with 150% text (en light);
+  - R2-2 at 390px and 1440px: the hash link twice, Escape, the forge-and-grant check through the
+    fixture's calls and stacks, a row edit afterwards, and Back/Forward while the editor is open;
+  - the Party ⋯ path, a fresh load with `?create=`, plain "Nuevo objeto", and F1 (Give and Edit from
+    ⋯ with Escape).
+- **Screenshots inspected by eye** (scratch only, not committed):
+  - storeroom list at 390px: es dark 100%, es dark 150%, en light 100%, en light 150%;
+  - storeroom list at 820px, en light, 150%;
+  - "Nuevo objeto para Arin" opened from the hash link at 390px.
+- **Code inspection:** the working-tree diff (`item-store.tsx`, `styles.css`, the two new e2e tests),
+  plus `definition-editor.tsx` for focus restore.
+
+### Round 3 limitations
+- Fixture data only, with one character, so "granted only to Arin" means one `grant_item` call and
+  one stack for Arin.
+- The 150% text was injected as a stylesheet at DOMContentLoaded, not set through a browser
+  font-size setting.
+- Not re-tested: grid view, reduced motion, Shops, satchel and Party layout (all unchanged in this
+  round).
+- Still not covered: real iOS or Android, a screen reader, and hosted Supabase. I did not run
+  `npm run check` or the repo e2e suite; those results are the implementer's evidence.
+- This verdict applies only to the snapshot with fingerprint
+  `1a53992e2877a64a94d6b7f995d367cbf52983ebfb3c2489916516b6e4eedfcf`.
+
+## Round 4 (44af4fd + working tree, fingerprint 467fd49c…a459): PASS
+
+Round 4 was a focused re-review of the fixes for R3-1 and R3-2. The snapshot is `44af4fd` plus the
+uncommitted changes to `src/pages/item-store.tsx`, `src/app/styles.css`,
+`src/features/inventory/ui/definition-editor.tsx` and `tests/e2e/campaign-items.spec.ts`. I checked
+the fingerprint with `node scripts/check-ui-review.mjs --fingerprint` before and after testing. Both
+times it was `467fd49cad05275dd983de3f56163545eba0608cf85237f723cd2afd0002a459`, which matches the
+fingerprint the coordinator gave.
+
+Setup: same method as round 3. I built a fresh mocked-live bundle into an isolated scratch
+directory, served it with `vite preview` on port 4197, and used a separate Playwright config and
+output directory with the repo's `identityFixture` (plus `shopsFixture` for Shops). For the phone
+checks the first item was again renamed to "Capa élfica del caminante nocturno de las Tierras Altas
+de Valdemar".
+
+Result: R3-1 and R3-2 are both resolved. I found no blocking issue, so the verdict is PASS.
+
+### Per-finding status
+
+- **R3-1: resolved.** Checked at 390px for es dark and en light, at 100% and 150% text, on all six
+  rows:
+  - The name now uses the full body width (`.store-row-name` width equals `.store-row-body` width:
+    228px at 100%, 206px at 150%).
+  - At 150% text, "Armadura de cuero" wraps as "Armadura de / cuero" without being clamped.
+    "Anillo de la marea", "Escudo", "Espada larga" and "Flecha" each fit on one line. No word is
+    split. Only the very long test name is clamped at two lines ("Capa élfica del / caminante…"),
+    which is the accepted behaviour from round 2.
+  - The price is on the second line, after the meta text:
+    - it is below the name and right-aligned to the body edge (0px gap);
+    - it is inside the body box and is never clipped;
+    - it uses the meta font size (14px, or 21px at 150%).
+  - The meta text still ellipsizes. At 150% it shrinks to a short start ("Tesoros · …"). This is
+    acceptable for secondary data, because the grid and the editor show the full text.
+  - Empty prices are muted, as before: es dark `rgb(203,182,153)` and en light `rgb(102,79,58)`. Real
+    prices stay gold: `rgb(246,196,120)` and `rgb(122,75,6)`.
+  - In every state: 0 page overflow, 0 axe violations (wcag2a, wcag2aa, wcag21aa, wcag22aa), and
+    buttons at least 44px (66px at 150%). Rows are 63–64px tall at 100% (89px for the two-line
+    name). At 150% they are 87–88px, and 125px for the two-line names.
+  - The phone button names are unchanged from round 3 ("Editar: Anillo de la marea Tesoros · Raro ·
+    0 lb Sin precio").
+  - 820px and 1440px (es dark), and 820px at 150% text (en light), are unchanged:
+    - there is no value in the body;
+    - `.store-row-side` holds the origin and the value;
+    - meta lines are not ellipsized;
+    - rows are 65–66px tall (87–88px at 150%) and buttons at least 44px;
+    - 0 overflow and 0 axe violations.
+- **R3-2: resolved.** Checked at 390px and 1440px, es dark.
+  - Focus on "Buscar objetos", then the `&create=<Arin>` link, then Escape: focus goes to "Nuevo
+    objeto".
+  - Focus on a row's edit button (after editing it and pressing Escape), then the link, then Escape:
+    focus goes to "Nuevo objeto".
+  - Focus on a row, then the link, then forging "Perla R4": focus goes to "Nuevo objeto". One stack
+    was created, for Arin only.
+  - No regression in the storeroom's own focus return:
+    - editing a row and saving returns focus to that row's edit button;
+    - plain "Nuevo objeto" then Escape returns focus to it;
+    - ⋯ "Acciones para Flecha" → "Editar" → Escape returns focus to the ⋯ button, at 390px (list
+      menu) and at 1440px (grid). Saving the edit from there also returns focus to the ⋯ button,
+      now named "Acciones para Flecha R4".
+  - Party ⋯ "Nuevo objeto para Arin" then Escape, and a fresh load with `?create=` then Escape, both
+    put focus on "Nuevo objeto". The fresh load had 0 axe violations.
+  - Shops at 390px, which keep `returnFocusToOpener` at its default: "Editar objeto: Poción de
+    curación" then Escape returns focus to that button. Saving a rename to "Poción mayor" returns
+    focus to the renamed "Editar objeto: Poción mayor".
+
+### Non-blocking notes
+- At 150% text on phones the meta line keeps only its first word or two. The muted "Sin precio" /
+  "No price" still takes about 95px of that line. A shorter empty state on phones, such as "—" with
+  visually hidden text, would leave more room for the meta. This is optional polish.
+- Unchanged and out of scope: pressing Back while a link-opened editor is open removes `create` from
+  the URL but keeps the drawer open (round 3 note). On Shops at 390px, "Nueva tienda" is 39px tall
+  (predates RYT-027).
+
+### Round 4 tested scenarios
+- **Real browser checks** (Chromium through Playwright, scripted assertions and measurements, 11
+  tests, all passing):
+  - R3-1 at 390px for {es dark, en light} × {100%, 150%}: the row metrics above, overflow, axe with
+    wcag22aa, and the button names;
+  - 820px and 1440px (es dark), and 820px at 150% text (en light);
+  - R3-2 at 390px and 1440px, with three different starting focus states, forge and grant,
+    row edit and save, plain "Nuevo objeto", and ⋯ "Editar" with Escape and with save (list menu at
+    390px, grid at 1440px);
+  - the Party ⋯ path and a fresh load with `?create=`;
+  - Shops "Editar objeto" with Escape and with save.
+- **Test harness note:** at 1440px my script switched to the grid by calling `click()` on the
+  "Cuadrícula" radio, because Playwright reports Mantine's hidden radio input as outside the
+  viewport. This is a harness limitation, not a product issue. The view switch was tested by mouse
+  and keyboard in round 1.
+- **Screenshots inspected by eye** (scratch only, not committed): storeroom list at 390px for es dark
+  100%, es dark 150% and en light 150%, and at 820px for en light 150%.
+- **Code inspection:** the working-tree diff of `item-store.tsx`, `styles.css`,
+  `definition-editor.tsx` (`returnFocusToOpener`) and the e2e spec.
+
+### Round 4 limitations
+- Fixture data only, with one character.
+- The 150% text was injected as a stylesheet at DOMContentLoaded.
+- Not re-tested: grid layout at 150% text, reduced motion, Party layout and the satchel (none
+  changed in this round).
+- Still not covered: real iOS or Android, a screen reader, and hosted Supabase. I did not run
+  `npm run check` or the repo e2e suite; those results are the implementer's evidence.
+- This approval applies only to the snapshot with fingerprint
+  `467fd49cad05275dd983de3f56163545eba0608cf85237f723cd2afd0002a459`.

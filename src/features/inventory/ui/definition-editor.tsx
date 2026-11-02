@@ -47,6 +47,7 @@ export function DefinitionEditor({
   allowGive = false,
   initialGive,
   title,
+  returnFocusToOpener = true,
 }: {
   campaignId: string
   definition: ItemDefinition | null
@@ -58,6 +59,8 @@ export function DefinitionEditor({
   initialGive?: string[]
   /** Drawer title override, e.g. "New item for Arin". */
   title?: string
+  /** Set to false when the caller returns focus itself (e.g. editors opened from a link). */
+  returnFocusToOpener?: boolean
 }) {
   const { t } = useTranslation()
   const { state, controller } = useAuth()
@@ -82,7 +85,7 @@ export function DefinitionEditor({
   const opener = useRef(document.activeElement as HTMLElement | null)
   const restoreFocus = () =>
     requestAnimationFrame(() => {
-      if (opener.current?.isConnected) opener.current.focus()
+      if (returnFocusToOpener && opener.current?.isConnected) opener.current.focus()
     })
   const upload = useRef<string | null>(null)
   const requestId = useRef(crypto.randomUUID())

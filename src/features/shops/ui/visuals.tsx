@@ -1,4 +1,6 @@
-import { Coins } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Text } from '@mantine/core'
+import { Coins, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ItemIcon, type Rarity } from '@/features/inventory'
 
@@ -10,6 +12,18 @@ export function GoldAmount({ value, size = 'md' }: { value: number; size?: 'sm' 
       <Coins size={size === 'lg' ? 22 : size === 'md' ? 18 : 15} aria-hidden="true" />
       <span>{t('gold.amount', { value: value.toLocaleString(i18n.language) })}</span>
     </span>
+  )
+}
+
+/** A quiet empty shelf: an icon and one sentence saying what is (not) here and why. */
+export function EmptyNote({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <div className="shop-empty">
+      <span className="shop-empty-icon" aria-hidden="true">
+        <Icon size={20} />
+      </span>
+      <Text c="dimmed">{children}</Text>
+    </div>
   )
 }
 

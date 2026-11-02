@@ -958,7 +958,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-027"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -975,9 +975,19 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS"
+        "independent ui-ux PASS",
+        "Independent rendered ui-ux review"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-030/validation.md",
+        "docs/evidence/RYT-030/storefront-mobile.png",
+        "docs/evidence/RYT-030/storefront-tablet.png",
+        "docs/evidence/RYT-030/ledger-counter-mobile.png",
+        "docs/evidence/RYT-030/ledger-counter-tablet.png",
+        "docs/evidence/RYT-030/player-orders-mobile.png",
+        "docs/evidence/RYT-030/player-orders-tablet.png",
+        "docs/decisions/016-shops-merchants.md"
+      ]
     },
     {
       "id": "RYT-031",

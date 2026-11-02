@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import {
+  Alert,
   Badge,
   Button,
   CloseButton,
@@ -17,6 +18,7 @@ import { AlertTriangle, Check, EyeOff, Lock, Plus, Users } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { catalogueQuery, DefinitionEditor } from '@/features/inventory'
 import { QueryFeedback, useCampaign } from '@/features/campaigns'
 import { shopAdminQuery, useShopAction } from '../api'
 import {
@@ -38,6 +40,7 @@ type Dialog =
   | { kind: 'create' }
   | { kind: 'rename'; shop: AdminShop }
   | { kind: 'add'; shop: AdminShop }
+  | { kind: 'editItem'; definitionId: string }
   | { kind: 'archive'; target: 'shop' | 'listing'; id: string; name: string }
   | null
 
@@ -190,6 +193,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
                 setDialog({ kind: 'archive', target: 'shop', id: shop.id, name: shop.name })
               }
               onAddItems={(shop) => setDialog({ kind: 'add', shop })}
+              onEditItem={(definitionId) => setDialog({ kind: 'editItem', definitionId })}
               saveAsync={saveAsync}
               onAction={perform}
               onRemoveListing={(id, name) =>
@@ -258,6 +262,17 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
               t('admin.notice.shopSaved', { name }),
             )
           }
+        />
+      )}
+      {dialog?.kind === 'editItem' && (
+        <ShopItemEditor
+          campaignId={campaign.id}
+          definitionId={dialog.definitionId}
+          onClose={() => setDialog(null)}
+          onSaved={(name) => {
+            setDialog(null)
+            setNotice(t('catalogue.savedName', { name }))
+          }}
         />
       )}
       {data && dialog?.kind === 'add' && (
@@ -348,6 +363,7 @@ function ShopsTab({
   onRename,
   onArchiveShop,
   onAddItems,
+  onEditItem,
   saveAsync,
   onAction,
   onRemoveListing,
@@ -360,6 +376,7 @@ function ShopsTab({
   onRename: (shop: AdminShop) => void
   onArchiveShop: (shop: AdminShop) => void
   onAddItems: (shop: AdminShop) => void
+  onEditItem: (definitionId: string) => void
   saveAsync: (action: ShopAction, message: string) => Promise<unknown>
   onAction: (action: ShopAction, message: string, onDone?: () => void) => void
   onRemoveListing: (listingId: string, name: string) => void
@@ -449,6 +466,7 @@ function ShopsTab({
           data={data}
           busy={busy}
           onAdd={() => onAddItems(shop)}
+          onEditItem={onEditItem}
           onSave={(listing, draft, name, done) =>
             onAction(
               {
@@ -477,6 +495,40 @@ function ShopsTab({
         />
       </section>
     </div>
+  )
+}
+
+/** RYT-027: edit the listed item in place. The editor needs the full definition, so it reads
+ * the DM catalogue; changes reach every satchel, shop and the storeroom. */
+function ShopItemEditor({
+  campaignId,
+  definitionId,
+  onClose,
+  onSaved,
+}: {
+  campaignId: string
+  definitionId: string
+  onClose: () => void
+  onSaved: (name: string) => void
+}) {
+  const { t } = useTranslation()
+  const { state } = useAuth()
+  const catalogue = useQuery(catalogueQuery(state.user!.id, campaignId))
+  const definition = catalogue.data?.find((item) => item.id === definitionId)
+  if (catalogue.isError)
+    return (
+      <Alert color="red" role="alert" withCloseButton onClose={onClose}>
+        {t('query.error')}
+      </Alert>
+    )
+  if (!definition) return null
+  return (
+    <DefinitionEditor
+      campaignId={campaignId}
+      definition={definition}
+      onClose={onClose}
+      onSaved={(item) => onSaved(item.name)}
+    />
   )
 }
 

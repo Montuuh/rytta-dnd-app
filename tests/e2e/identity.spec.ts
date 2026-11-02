@@ -102,9 +102,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
 }) => {
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await expect(
-    page.getByRole('heading', { name: 'Miembros e invitaciones', exact: true }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Centro de mando DM', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
@@ -165,17 +163,18 @@ test('Player has no management payload or controls; revoked campaign fails close
   await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
 })
 
-test('DM command center manages module visibility, revelations queue, audit log and player preview mode', async ({
+test('DM command center manages modules, the item storeroom, audit log and player preview mode', async ({
   page,
 }, info) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  // Phones show the short "Mando DM" label; the accessible name stays complete.
-  await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Campamento')
-  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Centro de mando DM')
+  // RYT-027: the DM Command Center comes first; phones show the short "Mando DM" label.
+  await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Centro de mando DM')
+  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Campamento')
   await expect(mainNav.getByRole('link').nth(2)).toHaveAccessibleName('Grupo')
+  await expect(mainNav.getByRole('link', { name: /Almacén|Objetos de campaña/ })).toHaveCount(0)
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
   // RYT-025: one panel at a time behind real tabs; members is the default.
   const tabs = page.getByRole('tablist', { name: 'Centro de mando DM' })
@@ -213,36 +212,21 @@ test('DM command center manages module visibility, revelations queue, audit log 
   await expect(shops).toBeChecked()
   expect(f.calls.some((c) => c.method === 'set_campaign_modules')).toBe(true)
 
-  await tabs.getByRole('tab', { name: 'Cola de revelaciones', exact: true }).click()
-  await expect(
-    page.getByRole('heading', { name: 'Cola rápida de revelaciones', exact: true }),
-  ).toBeVisible()
-
-  await page.getByRole('button', { name: 'Nueva revelación', exact: true }).click()
-  await page.getByLabel('Título de la revelación').fill('Gremio de Cartógrafos')
-  await page.getByLabel('Descripción para la mesa').fill('Mapas antiguos de la costa.')
-  await page
-    .getByRole('dialog')
-    .getByRole('button', { name: 'Nueva revelación', exact: true })
-    .click()
-  await expect(page.getByRole('dialog')).not.toBeVisible()
-  await expect(page.getByText('Gremio de Cartógrafos', { exact: true })).toBeVisible()
-  expect(f.calls.some((c) => c.method === 'create_campaign_revelation')).toBe(true)
+  // The revelations queue is gone; the item storeroom is a tab with a deep link.
+  await expect(tabs.getByRole('tab', { name: /revelaciones/i })).toHaveCount(0)
+  await tabs.getByRole('tab', { name: 'Almacén de objetos', exact: true }).click()
+  await expect(page).toHaveURL(/panel=items/)
+  await expect(page.getByRole('heading', { name: 'Almacén de objetos', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Abandonar campaña' })).toHaveCount(0)
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.screenshot({ path: info.outputPath('dm-command-center.png'), fullPage: true })
-
-  const draftCard = page
-    .locator('.revelation-card')
-    .filter({ has: page.getByText('Gremio de Cartógrafos', { exact: true }) })
-  const reveal = draftCard.getByRole('switch', {
-    name: 'Visible para el grupo: Gremio de Cartógrafos',
-    exact: true,
-  })
-  await expect(reveal).not.toBeChecked()
-  await reveal.focus()
-  await page.keyboard.press('Space')
-  await expect(reveal).toBeChecked()
-  expect(f.calls.some((c) => c.method === 'set_revelation_visibility')).toBe(true)
+  await page.reload()
+  await expect(
+    page.getByRole('tablist', { name: 'Centro de mando DM' }).getByRole('tab', {
+      name: 'Almacén de objetos',
+      exact: true,
+    }),
+  ).toHaveAttribute('aria-selected', 'true')
 
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).focus()
   await page.keyboard.press('Space')
@@ -293,9 +277,7 @@ test('self-demotion clears management views and offline actions are not queued',
 }) => {
   const f = await identityFixture(page, { twoDms: true })
   await page.goto(`./#/campaign/${campaignId}/members`)
-  await expect(
-    page.getByRole('heading', { name: 'Miembros e invitaciones', exact: true }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Centro de mando DM', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await context.setOffline(true)
   await page.getByLabel('Correo de la cuenta de Google').fill('offline@example.com')

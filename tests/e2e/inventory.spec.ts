@@ -142,8 +142,8 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await expect(
     page.getByText('Los jugadores todavía no ven este módulo.', { exact: false }),
   ).toBeVisible()
-  await page.locator('main').getByRole('link', { name: 'Objetos de campaña' }).click()
-  await page.getByRole('button', { name: 'Crear objeto', exact: true }).click()
+  await page.locator('main').getByRole('link', { name: 'Almacén de objetos' }).click()
+  await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
   await page.getByRole('combobox', { name: 'Partir de una plantilla del SRD' }).click()
   await page.getByRole('option', { name: 'Daga' }).click()
   await expect(page.getByLabel('Nombre')).toHaveValue('Daga')
@@ -151,12 +151,14 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await audit(page, info.outputPath('forge.png'))
   await page.getByRole('dialog').getByRole('button', { name: 'Forjar objeto' }).click()
   await expect(page.getByRole('status')).toContainText('Objeto guardado: Daga')
-  const card = page
-    .locator('.mantine-Paper-root')
-    .filter({ has: page.getByRole('heading', { name: 'Daga', exact: true }) })
-  await card.getByRole('button', { name: 'Dar a personajes' }).click()
-  await page.getByRole('combobox', { name: 'Personaje', exact: true }).click()
-  await page.getByRole('option', { name: 'Arin', exact: true }).click()
+  const row = page.locator('.store-row').filter({ hasText: 'Daga' })
+  const give = row.getByRole('button', { name: 'Dar Daga a personajes', exact: true })
+  if (await give.count()) await give.click()
+  else {
+    await row.getByRole('button', { name: 'Acciones para Daga', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Dar a personajes', exact: true }).click()
+  }
+  await page.getByRole('dialog').getByRole('button', { name: 'Arin', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Dar a personajes' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.goto(url)

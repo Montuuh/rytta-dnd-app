@@ -285,8 +285,8 @@ h2[tabindex='-1']:focus {
   mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
   -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
 }
-.dm-layout .nav-tabs,
-.dm-layout .topbar {
+.campaign-layout .nav-tabs,
+.campaign-layout .topbar {
   max-width: 1360px;
 }
 .nav-item {
@@ -414,7 +414,7 @@ main {
 .account-layout main {
   max-width: 1040px;
 }
-.dm-layout main {
+.campaign-layout main {
   max-width: 1360px;
 }
 .dm-panel-tabs {
@@ -1300,8 +1300,12 @@ html[data-mantine-color-scheme='light'] {
 }
 .satchel-tools {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   margin: 14px 0 12px;
+}
+.satchel-tools .category-rail {
+  grid-column: 1 / -1;
 }
 .category-rail {
   display: flex;
@@ -1336,7 +1340,7 @@ html[data-mantine-color-scheme='light'] {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 22vw, 140px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(clamp(88px, 20vw, 120px), 1fr));
   gap: clamp(10px, 1vw, 14px);
 }
 .item-tile {
@@ -2515,11 +2519,11 @@ button.exhaustion-pip:disabled {
   line-height: 1.1;
 }
 .item-tile-icon svg {
-  width: clamp(24px, 2.4vw, 36px);
-  height: clamp(24px, 2.4vw, 36px);
+  width: clamp(22px, 2vw, 30px);
+  height: clamp(22px, 2vw, 30px);
 }
 .satchel-grid .item-tile {
-  min-height: clamp(112px, 12vw, 148px);
+  min-height: clamp(100px, 10vw, 124px);
 }
 @media (max-width: 48em) {
   .category-rail:not(.wrap) {
@@ -3106,4 +3110,426 @@ button.exhaustion-pip:disabled {
   .save-pill-region {
     bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
   }
+}
+/* RYT-027 item storeroom: dense rows or a compact grid with icon actions. */
+.item-store {
+  min-width: 0;
+}
+.store-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 13rem) auto;
+  gap: 8px;
+  align-items: center;
+}
+.store-view .view-option {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  min-height: 36px;
+}
+.store-rail {
+  margin: 10px 0 4px;
+}
+.chip-count {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--app-bg);
+  color: var(--app-muted);
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  text-align: center;
+}
+.category-chip[aria-pressed='true'] .chip-count {
+  background: color-mix(in srgb, var(--app-on-accent) 18%, transparent);
+  color: var(--app-on-accent);
+}
+.store-glyph {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--app-raised);
+  color: var(--app-accent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rarity) 60%, transparent);
+  --rarity: var(--rarity-common);
+}
+.store-glyph img {
+  border-radius: 8px;
+}
+.store-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  overflow: hidden;
+}
+.store-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-bottom: 1px solid var(--app-border);
+}
+.store-row:last-child {
+  border-bottom: 0;
+}
+.store-row:hover {
+  background: var(--app-raised);
+}
+.store-row-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 10px;
+}
+.store-row-main:focus-visible {
+  outline-offset: -3px;
+}
+.store-row-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.store-row-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.store-row-meta {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.store-row-side {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.store-origin {
+  font-size: var(--fs-tag);
+  color: var(--app-muted);
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--app-border);
+}
+.store-value {
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--gold-accent);
+  font-variant-numeric: tabular-nums;
+}
+.store-row-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.store-grid {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(112px, 26vw, 136px), 1fr));
+  gap: 8px;
+}
+.store-tile {
+  position: relative;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 30%, var(--app-raised), var(--app-surface) 75%);
+  border: 1px solid var(--app-border);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rarity) 50%, transparent);
+  --rarity: var(--rarity-common);
+}
+.store-tile-main {
+  width: 100%;
+  min-height: 124px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 8px 10px;
+  text-align: center;
+  border-radius: 14px;
+}
+.store-tile-icon {
+  color: var(--app-accent);
+  display: grid;
+  place-items: center;
+}
+.store-tile-name {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.store-tile-meta {
+  font-size: var(--fs-tag);
+  color: var(--gold-accent);
+  font-weight: 700;
+}
+.store-tile-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.store-empty {
+  border: 1px dashed var(--app-border);
+  border-radius: 12px;
+  margin-top: 8px;
+  color: var(--app-muted);
+}
+.give-roster.wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.give-target[aria-disabled='true'] {
+  opacity: 0.6;
+}
+.give-amount {
+  min-width: 3ch;
+  text-align: center;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 47.99em) {
+  .store-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .store-toolbar .store-search {
+    grid-column: 1 / -1;
+  }
+}
+.store-value[data-empty],
+.store-tile-meta[data-empty] {
+  color: var(--app-muted);
+  font-weight: 500;
+}
+.stock-item-link {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--app-border);
+}
+.satchel-qty {
+  flex-shrink: 0;
+  min-width: 3ch;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-accent);
+}
+.satchel-add-row {
+  color: var(--app-muted);
+}
+/* RYT-027 Party: same width for DM and Players, hero card, compact resources. */
+.party-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 62em) {
+  .party-grid.is-many {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 90em) {
+  .party-grid.is-many {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.character-card {
+  container-type: inline-size;
+}
+.character-card.is-own {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+  background: linear-gradient(160deg, var(--app-hero), var(--app-surface) 60%);
+}
+.character-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.character-head-text {
+  flex: 1;
+  min-width: 0;
+}
+.character-head-text .eyebrow {
+  margin-bottom: 2px;
+}
+.character-body {
+  display: grid;
+  gap: 12px;
+}
+@container (min-width: 44rem) {
+  .character-body {
+    grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}
+.sheet-summary {
+  align-items: stretch;
+}
+.sheet-summary-info {
+  gap: 8px;
+}
+.sheet-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.vital-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.vital-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  font-weight: 600;
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.vital-chip svg {
+  color: var(--app-accent);
+}
+.vital-chip.is-hp svg {
+  color: var(--hp-tone, var(--success));
+}
+.sheet-summary.hp-healthy {
+  --hp-tone: var(--success);
+}
+.sheet-summary.hp-wounded {
+  --hp-tone: var(--warn);
+}
+.sheet-summary.hp-critical {
+  --hp-tone: var(--danger);
+}
+/* Compact resource tiles: icon | label over value | steppers, on one 64px band. */
+.resource-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 8px;
+}
+.resource-cell {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 0;
+  align-items: center;
+  padding: 8px 10px;
+}
+.resource-cell .resource-cell-header,
+.resource-cell .resource-cell-body {
+  display: contents;
+}
+.resource-cell .resource-icon {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+.resource-cell .resource-label {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: var(--fs-tag);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* DM tiles carry steppers, so they need a wider minimum to keep the label on one line. */
+.resource-grid:has(.resource-inline-steppers) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+.character-owner-info {
+  margin: 2px 0;
+}
+.resource-cell .resource-value {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+}
+.resource-cell .resource-inline-steppers {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+.resource-cell .exhaustion-track {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  gap: 6px 10px;
+}
+.resource-cell .exhaustion-pip {
+  width: 40px;
+  height: 40px;
+}
+.resource-cell button.exhaustion-pip {
+  width: 44px;
+  height: 44px;
+}
+/* Read-only exhaustion for Players: a quiet meter, not something that looks pressable. */
+.resource-cell span.exhaustion-pip {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border-width: 1px;
+  font-size: 0;
+}
+.resource-cell span.exhaustion-pip span {
+  display: none;
+}
+.resource-cell .resource-value.mantine-Button-root {
+  padding-inline: 4px;
+  min-height: 44px;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h2);
+  font-weight: 500;
+}
+.item-store .mantine-Alert-closeButton {
+  min-width: 44px;
+  min-height: 44px;
+}
+.give-served {
+  display: inline-grid;
+  place-items: center;
+  color: var(--success);
+}
+/* Long names wrap to two lines instead of being cut (150% text on phones). */
+.store-row-name {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.resource-cell .resource-value.mantine-Button-root .mantine-Button-label {
+  gap: 6px;
 }

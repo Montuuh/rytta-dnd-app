@@ -5,6 +5,7 @@ import { shopsEs } from './shops-es'
 import type { en } from './en'
 import { identityEs } from './identity-es'
 import { designEs } from './design-es'
+import { storeEs } from './store-es'
 
 export const es = {
   ...identityEs,
@@ -13,6 +14,7 @@ export const es = {
   ...inventoryEs,
   ...shopsEs,
   ...designEs,
+  ...storeEs,
   'module.camp': 'Campamento',
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',

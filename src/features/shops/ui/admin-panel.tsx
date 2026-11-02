@@ -14,7 +14,7 @@ import {
   Title,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Check, EyeOff, Lock, Plus, Users } from 'lucide-react'
+import { AlertTriangle, Check, EyeOff, Lock, Plus, Trash2, Users } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
@@ -136,14 +136,9 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
 
   return (
     <Stack gap="lg" className="shop-admin">
-      <div>
-        <Title order={1} ref={heading} tabIndex={-1}>
-          {t('admin.title')}
-        </Title>
-        <Text c="dimmed" mt="sm">
-          {t('admin.intro')}
-        </Text>
-      </div>
+      <Title order={1} ref={heading} tabIndex={-1}>
+        {t('admin.title')}
+      </Title>
       {!playersSeeShops && (
         <Text size="sm" c="dimmed">
           {t('admin.hiddenFromPlayers')}
@@ -341,7 +336,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
             return dialog.target === 'shop'
               ? perform(
                   { kind: 'archiveShop', shopId: dialog.id },
-                  t('admin.notice.shopArchived', { name: dialog.name }),
+                  t('admin.notice.shopDeleted', { name: dialog.name }),
                 )
               : perform(
                   { kind: 'archiveListing', listingId: dialog.id },
@@ -550,19 +545,24 @@ function ConfirmArchive({
     <Modal
       opened
       onClose={onClose}
-      title={t(target === 'shop' ? 'admin.archive.shopTitle' : 'admin.archive.listingTitle', {
+      title={t(target === 'shop' ? 'admin.delete.shopTitle' : 'admin.archive.listingTitle', {
         name,
       })}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
       <Stack>
-        <Text>{t(target === 'shop' ? 'admin.archive.shopHelp' : 'admin.archive.listingHelp')}</Text>
+        <Text>{t(target === 'shop' ? 'admin.delete.shopHelp' : 'admin.archive.listingHelp')}</Text>
         <Group justify="end">
           <Button variant="subtle" onClick={onClose} data-autofocus>
             {t('common.cancel')}
           </Button>
-          <Button color="red" loading={busy} onClick={onConfirm}>
-            {t(target === 'shop' ? 'admin.shop.archive' : 'admin.archive.listingConfirm')}
+          <Button
+            color="red"
+            loading={busy}
+            onClick={onConfirm}
+            leftSection={target === 'shop' ? <Trash2 size={16} aria-hidden="true" /> : null}
+          >
+            {t(target === 'shop' ? 'admin.shop.delete' : 'admin.archive.listingConfirm')}
           </Button>
         </Group>
       </Stack>

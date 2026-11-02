@@ -881,6 +881,41 @@
         "docs/evidence/RYT-027/reviewer/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-030",
+      "title": "Shops ledger order variants, live refresh, delete wording and storefront UX pass",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "review",
+      "dependsOn": ["RYT-005", "RYT-027"],
+      "sources": [
+        "User 2026-11-03: purchase, sale and counter-offer orders look the same in the ledger; add a refresh with an updated indicator and faster polling; Archivar becomes Eliminar with a trash icon; drop the DM intro text; replace the player shop switcher, move the mode help into a tooltip on the badge next to the shop name; general player shop UX pass. No standard buttons, no pill abuse, modern widgets."
+      ],
+      "scope": "Frontend only in src/features/shops, shops i18n and shop CSS. Order card variants with stripe, icon, type label, gold direction and counter-offer comparison; 5 s polling for on-screen order lists with the shared refresh control; Trash2 delete wording over the soft archive RPC; remove admin.intro; storefront shop picker combobox in the shop sign, mode tooltip badge, closed-shop note, hidden empty cart, conditional search/chips and icon empty states.",
+      "acceptance": [
+        "Ledger and My orders cards distinguish purchase, sale and live counter-offer by stripe, icon and label; a gold-flow row states who pays or receives; a counter-offer shows the asked total struck against the countered total.",
+        "The ledger has a 44px refresh icon with an updated stamp that spins only on manual refresh; order lists on screen poll every 5 s and never in a hidden tab; other shop queries keep 20 s.",
+        "The DM shop action is a Trash2 icon with tooltip and aria 'Eliminar tienda', and the confirm modal says Eliminar; the backend remains the soft archive.",
+        "The DM shops panel has no intro paragraph and the admin.intro keys are gone.",
+        "The Player storefront has no switcher row: the shop name is a keyboard-operable combobox when several shops are visible; the mode badge sits beside the name and wraps below on narrow screens, and its help is a focusable tooltip with Escape and an accessible description.",
+        "Storefront tabs fit one row at 390px, empty states use icon notes and axe/44px audits pass at 390px and tablet."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "Independent rendered ui-ux review"],
+      "evidence": [
+        "docs/evidence/RYT-030/validation.md",
+        "docs/evidence/RYT-030/storefront-mobile.png",
+        "docs/evidence/RYT-030/storefront-tablet.png",
+        "docs/evidence/RYT-030/ledger-counter-mobile.png",
+        "docs/evidence/RYT-030/ledger-counter-tablet.png",
+        "docs/evidence/RYT-030/player-orders-mobile.png",
+        "docs/evidence/RYT-030/player-orders-tablet.png",
+        "docs/decisions/016-shops-merchants.md"
+      ]
     }
   ]
 }

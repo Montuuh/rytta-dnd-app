@@ -10,8 +10,9 @@ import {
   Switch,
   Text,
   Title,
+  Tooltip,
 } from '@mantine/core'
-import { Archive, Pencil } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   draftOf,
@@ -99,23 +100,27 @@ export function ShopControls({
             )}
           </div>
           <Group gap={4} wrap="nowrap">
-            <ActionIcon
-              variant="subtle"
-              size={44}
-              aria-label={t('admin.shop.renameNamed', { name: shop.name })}
-              onClick={onRename}
-            >
-              <Pencil size={18} />
-            </ActionIcon>
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              size={44}
-              aria-label={t('admin.shop.archiveNamed', { name: shop.name })}
-              onClick={onArchive}
-            >
-              <Archive size={18} />
-            </ActionIcon>
+            <Tooltip label={t('admin.shop.renameTooltip')} openDelay={300}>
+              <ActionIcon
+                variant="subtle"
+                size={44}
+                aria-label={t('admin.shop.renameNamed', { name: shop.name })}
+                onClick={onRename}
+              >
+                <Pencil size={18} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={t('admin.shop.deleteTooltip')} openDelay={300}>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                size={44}
+                aria-label={t('admin.shop.deleteNamed', { name: shop.name })}
+                onClick={onArchive}
+              >
+                <Trash2 size={18} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
           </Group>
         </Group>
         <Text size="xs" c="dimmed">

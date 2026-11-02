@@ -84,3 +84,28 @@ bought what and undo it. Decisions recorded with the user on 2026-11-02:
   resale), so the satchel can show two tiles for one item.
 - Deferred: realtime notifications of new requests (RYT-013; polling every 20 s), shop
   images, bulk listing import, multiple currencies and haggling rounds after a counter-offer.
+
+## Amendment: RYT-030 ledger and storefront clarity (2026-11-03)
+
+- **Order variants.** Every order card carries one of three visual languages, derived by
+  `orderVariant`: purchase (gold stripe, bag icon, "Compra"), sale (water-blue stripe,
+  hand-with-coins icon, "Venta") and live counter-offer (hatched violet stripe, handshake,
+  "Contraoferta de compra/venta"). A gold-flow row states the direction from the character's
+  side ("Arin pagará / recibió", "Pagarás / Recibiste"; "Sin movimiento de oro" when rejected or
+  cancelled). A counter-offer shows the asked total struck against the countered total, and
+  lines strike the price they moved away from. Open-status badges say whose move it is
+  ("Por responder", "Esperando al jugador", "Te toca responder").
+- **Freshness.** Order lists on screen (DM ledger, a Player's "My orders" tab) poll every 5 s
+  through `liveOrders`. Observers only poll while mounted and never in a hidden tab; other
+  shop queries keep 20 s. The ledger reuses the shared `RefreshControl`. Only a manual refresh
+  spins the icon, so background polls add no motion.
+- **Delete wording.** The DM's shop action reads "Eliminar tienda" with a trash icon. The
+  backend is still the soft `archive_shop`, so the ledger and inventories are untouched.
+- **Storefront.** The shop switcher row is gone. When several shops are visible, the shop name
+  in the header is a select-only combobox (wax-seal initial, mode or closed state per option).
+  The mode badge sits beside the name and wraps below it when there is no room. Its help text
+  is a focusable tooltip and the badge's accessible description, not a paragraph. Closed
+  shops explain themselves in the header. The empty cart button is removed. Search appears
+  only for more than six listings, and category chips only for more than one kind. Empty
+  shelves use an icon note.
+- The DM intro paragraph on the shops panel is removed.

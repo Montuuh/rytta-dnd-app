@@ -1,3 +1,7 @@
+html {
+  scrollbar-gutter: stable;
+}
+
 :root {
   --app-bg: #140f0b;
   --app-surface: #1e1610;

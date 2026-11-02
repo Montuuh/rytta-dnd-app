@@ -73,7 +73,7 @@ export function CharacterSheetPage() {
       </Stack>
     )
   const { character, sheet, vitals } = query.data
-  const canEdit = !playerPreview && (campaign.role === 'dm' || character.user_id === userId)
+  const canEdit = campaign.role === 'dm' || character.user_id === userId
   const editPath = `${party}/${character.id}/create`
   if (sheet.status === 'draft' || !sheet.build)
     return (
@@ -123,14 +123,6 @@ export function CharacterSheetPage() {
           </Button>
         )}
       </Group>
-      <Button
-        component={Link}
-        variant="light"
-        w="fit-content"
-        to={`/campaign/${campaign.id}/inventory?character=${character.id}&view=equipment`}
-      >
-        {t('catalogue.openEquipment')}
-      </Button>
       <header className="sheet-identity">
         <CharacterPortrait
           campaignId={campaign.id}

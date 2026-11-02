@@ -11,7 +11,7 @@ import {
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { Backpack, BookOpen, Shirt } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
@@ -102,16 +102,11 @@ export function InventoryPage() {
         <Title order={1}>{t('module.inventory')}</Title>
         <Paper p="xl">
           <Text>{t(dm ? 'inventory.noCharacters' : 'characters.emptyPlayer')}</Text>
-          {dm && !playerPreview && (
-            <Button component={Link} to={`/campaign/${campaign.id}/items`}>
-              {t('catalogue.title')}
-            </Button>
-          )}
         </Paper>
       </Stack>
     )
 
-  const canEdit = !playerPreview && (dm || character.user_id === userId)
+  const canEdit = dm || character.user_id === userId
   const data = inventory.data
   const definitions = new Map((data?.definitions ?? []).map((d) => [d.id, d]))
   const stacks = data?.stacks ?? []
@@ -262,11 +257,6 @@ export function InventoryPage() {
         <Text size="sm" c="dimmed">
           {t('inventory.hiddenForPlayers')}
         </Text>
-      )}
-      {dm && !playerPreview && (
-        <Button component={Link} to={`/campaign/${campaign.id}/items`} variant="light">
-          {t('catalogue.title')}
-        </Button>
       )}
       <SegmentedControl
         fullWidth

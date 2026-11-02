@@ -26,9 +26,6 @@ export const inventoryEn = {
   'catalogue.hiddenListing': 'Added hidden. You can review its visibility in Shops.',
   'catalogue.noShops': 'No shops are available, or every shop already has this item.',
   'catalogue.character': 'Character',
-  'catalogue.equipmentHelp':
-    'Choose an empty slot to equip. You can unequip your items at any time.',
-  'catalogue.openEquipment': 'View and change equipment',
   'catalogue.editGold': 'Edit gold for {{name}}: {{value}}',
   'catalogue.goldTitle': 'Gold for {{name}}',
 

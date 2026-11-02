@@ -142,7 +142,9 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await expect(
     page.getByText('Los jugadores todavía no ven este módulo.', { exact: false }),
   ).toBeVisible()
-  await page.locator('main').getByRole('link', { name: 'Almacén de objetos' }).click()
+  // The inventory page no longer links to the storeroom; the DM opens it from the Command Center.
+  await expect(page.getByRole('link', { name: 'Almacén de objetos' })).toHaveCount(0)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
   await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
   await page.getByRole('combobox', { name: 'Partir de una plantilla del SRD' }).click()
   await page.getByRole('option', { name: 'Daga' }).click()

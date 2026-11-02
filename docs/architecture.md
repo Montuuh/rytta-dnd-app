@@ -87,6 +87,14 @@ RYT-004 adds item_definitions, inventory_items and inventory_events with idempot
 revision-checked RPCs, compensating undo, equipment-derived AC and a private portrait
 bucket authorized by prefix (ADR 014).
 
+RYT-026 exposes the DM catalogue independently of characters through `/items`. A shared
+inventory-owned definition editor serves catalogue, inventory and shop selection. Private
+item images use a revision-checked attachment RPC and Storage policies based on carried
+items or visible shop listings. Signed URLs last five minutes and the client rejects paths
+from the other environment (a PRE refresh retains icon fallback for copied PROD images).
+Gold edits keep the resource revision captured when editing starts. Equipment displays the
+server's effective AC, including manual overrides.
+
 RYT-005 adds shops, listings, per-character access and price modifiers, and a purchase/sale
 order ledger. Reads are security definer RPCs that return only what the caller may see;
 checkout, sale, approval, counter-offer and revert are campaign-locked, idempotent

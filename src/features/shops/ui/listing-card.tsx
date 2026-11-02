@@ -39,7 +39,11 @@ export function ListingCard({
         className="listing-main"
         onClick={(event) => onOpen(event.currentTarget)}
       >
-        <ItemGlyph icon={listing.item.icon} rarity={listing.item.rarity} />
+        <ItemGlyph
+          imagePath={listing.item.image_path}
+          icon={listing.item.icon}
+          rarity={listing.item.rarity}
+        />
         <span className="listing-body">
           <span className="listing-name user-copy">{listing.item.name}</span>
           <span className="listing-meta">
@@ -127,7 +131,12 @@ export function ListingDrawer({
       {listing && (
         <Stack>
           <Group gap="sm" wrap="nowrap">
-            <ItemGlyph icon={listing.item.icon} rarity={listing.item.rarity} size={26} />
+            <ItemGlyph
+              imagePath={listing.item.image_path}
+              icon={listing.item.icon}
+              rarity={listing.item.rarity}
+              size={26}
+            />
             <Stack gap={0}>
               <Text fw={600}>{t(`inventory.category.${listing.item.category}`)}</Text>
               <Text size="sm" c="dimmed">

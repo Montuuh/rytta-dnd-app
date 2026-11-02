@@ -96,6 +96,7 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           campaign_id: string
           name: string
           category: string
+          image_path: string | null
           icon: string
           rarity: string
           weight_tenths: number

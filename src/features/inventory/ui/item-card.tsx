@@ -87,7 +87,7 @@ export function ItemCard({
       <article className={`item-card rarity-${definition.rarity}`} aria-labelledby="item-card-name">
         <header className="item-card-head">
           <span className="item-card-icon">
-            <ItemIcon icon={definition.icon} size={40} />
+            <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={40} />
           </span>
           <div>
             <h3 id="item-card-name" className="item-card-name user-copy">
@@ -145,7 +145,7 @@ export function ItemCard({
                   disabled={pending}
                   onConfirm={actions.use}
                 >
-                  <ItemIcon icon={definition.icon} size={26} />
+                  <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={26} />
                   <span>{t('inventory.card.use')}</span>
                 </HoldSeal>
               )}

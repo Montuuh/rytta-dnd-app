@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Button, Drawer, Group, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Shield } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -90,6 +90,7 @@ export function PaperDoll({
   stacks,
   definitions,
   dexterity,
+  effectiveAc,
   strength,
   level,
   canEdit,
@@ -101,18 +102,20 @@ export function PaperDoll({
   stacks: ItemStack[]
   definitions: Map<string, ItemDefinition>
   dexterity: number
+  effectiveAc?: number
   strength: number
   level: number
   canEdit: boolean
   pending: boolean
   portrait: React.ReactNode
   onEquip: (stack: ItemStack, slot: EquipmentSlot) => void
-  onUnequip: (stack: ItemStack) => void
+  onUnequip: (stack: ItemStack, done?: () => void) => void
 }) {
   const { t } = useTranslation()
   const phone = useMediaQuery('(max-width: 48em)')
   const [picking, setPicking] = useState<EquipmentSlot | null>(null)
   const opener = useRef<HTMLElement | null>(null)
+  const sockets = useRef(new Map<EquipmentSlot, HTMLButtonElement>())
   // The picker unmounts on close, so return focus to the socket explicitly.
   const closePicker = () => {
     setPicking(null)
@@ -144,6 +147,10 @@ export function PaperDoll({
           return (
             <div role="listitem" key={slot} className={`doll-socket socket-${slot}`}>
               <UnstyledButton
+                ref={(node) => {
+                  if (node) sockets.current.set(slot, node)
+                  else sockets.current.delete(slot)
+                }}
                 className="socket"
                 data-filled={entry ? true : undefined}
                 data-blocked={blocked || undefined}
@@ -164,6 +171,7 @@ export function PaperDoll({
               >
                 <ItemIcon
                   icon={entry ? entry.definition.icon : blocked ? 'swords' : slotIcons[slot]}
+                  imagePath={entry?.definition.image_path}
                   size={24}
                 />
               </UnstyledButton>
@@ -178,10 +186,10 @@ export function PaperDoll({
         <div
           className="ac-medallion"
           role="img"
-          aria-label={t('inventory.ac', { value: armorClass(dexterity, equipped) })}
+          aria-label={t('inventory.ac', { value: effectiveAc ?? armorClass(dexterity, equipped) })}
         >
           <Shield size={56} aria-hidden="true" strokeWidth={1.2} />
-          <span aria-hidden="true">{armorClass(dexterity, equipped)}</span>
+          <span aria-hidden="true">{effectiveAc ?? armorClass(dexterity, equipped)}</span>
         </div>
         <div className="doll-attacks">
           <Text fw={600} mb={4}>
@@ -196,6 +204,32 @@ export function PaperDoll({
           />
         </div>
       </div>
+      <Stack gap="xs" mt="md">
+        <Text size="sm" c="dimmed">
+          {t('catalogue.equipmentHelp')}
+        </Text>
+        {[...equipped.entries()].map(([slot, entry]) => (
+          <Group key={slot} justify="space-between" wrap="wrap">
+            <Text className="user-copy">
+              {t(`inventory.slot.${slot}`)} · {entry.definition.name}
+            </Text>
+            {canEdit && (
+              <Button
+                variant="light"
+                aria-disabled={pending || undefined}
+                onClick={() => {
+                  if (!pending)
+                    onUnequip(entry.stack, () =>
+                      requestAnimationFrame(() => sockets.current.get(slot)?.focus()),
+                    )
+                }}
+              >
+                {t('inventory.socket.unequip', { name: entry.definition.name })}
+              </Button>
+            )}
+          </Group>
+        ))}
+      </Stack>
       {picking && (
         <Drawer
           opened
@@ -215,7 +249,11 @@ export function PaperDoll({
                   closePicker()
                 }}
               >
-                <ItemIcon icon={current.definition.icon} size={22} />
+                <ItemIcon
+                  icon={current.definition.icon}
+                  imagePath={current.definition.image_path}
+                  size={22}
+                />
                 <span className="user-copy">
                   {t('inventory.socket.unequip', { name: current.definition.name })}
                 </span>
@@ -234,7 +272,7 @@ export function PaperDoll({
                       closePicker()
                     }}
                   >
-                    <ItemIcon icon={definition.icon} size={22} />
+                    <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={22} />
                     <span className="user-copy">{definition.name}</span>
                     {stack.quantity > 1 && <span className="picker-count">×{stack.quantity}</span>}
                   </UnstyledButton>

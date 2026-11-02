@@ -179,6 +179,12 @@ beforeAll(async () => {
       id,
       email,
     ])
+  await db.exec(`create schema storage;
+    create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+    create table storage.objects(id uuid default gen_random_uuid(), bucket_id text, name text);
+    alter table storage.objects enable row level security;
+    grant usage on schema storage to authenticated, anon;
+    grant select, insert, delete on storage.objects to authenticated;`)
   for (const file of readdirSync('supabase/migrations')
     .filter((f) => f.endsWith('.sql'))
     .sort())
@@ -505,5 +511,124 @@ describe('RYT-005 sales and revert', () => {
     expect(
       (await storefront(s.c, s.ch)).shops[0]!.listings.find((x) => x.id === s.potionListing)!.stock,
     ).toBe(1)
+  })
+})
+
+describe('RYT-026 private item images', () => {
+  async function image(c: string, id: string) {
+    const path = `public/${c}/${id}/${randomUUID()}.webp`
+    await asUser(dm)
+    await db.query("insert into storage.objects(bucket_id,name) values ('item-images',$1)", [path])
+    await db.query('select public.set_item_image($1,$2,0,$3,$4)', [c, id, path, randomUUID()])
+    return path
+  }
+  it('allows a DM to create without characters and attach, replay, replace and remove an image', async () => {
+    await asUser(dm)
+    const c = await one<string>("select public.create_campaign('Empty catalogue') result")
+    const id = await definition(c, { name: 'Unassigned sword', category: 'weapon' })
+    const path = `public/${c}/${id}/${randomUUID()}.webp`
+    await db.query("insert into storage.objects(bucket_id,name) values ('item-images',$1)", [path])
+    const key = randomUUID()
+    const call = () => one('select public.set_item_image($1,$2,0,$3,$4) result', [c, id, path, key])
+    expect(await call()).toEqual({ id, revision: 1 })
+    expect(await call()).toEqual({ id, revision: 1 })
+    await expect(
+      db.query('select public.set_item_image($1,$2,0,null,$3)', [c, id, randomUUID()]),
+    ).rejects.toThrow(/Stale revision/)
+    await expect(
+      db.query('select public.set_item_image($1,$2,1,$3,$4)', [
+        c,
+        id,
+        path.replace('public/', 'pre/'),
+        randomUUID(),
+      ]),
+    ).rejects.toThrow(/Invalid image path/)
+    await expect(
+      db.query('select public.set_item_image($1,$2,1,$3,$4)', [
+        c,
+        id,
+        `public/${c}/${id}/${randomUUID()}.webp`,
+        randomUUID(),
+      ]),
+    ).rejects.toThrow(/Image unavailable/)
+    await db.query('select public.set_item_image($1,$2,1,null,$3)', [c, id, randomUUID()])
+    expect(
+      await one('select image_path result from public.item_definitions where id=$1', [id]),
+    ).toBeNull()
+  })
+  it('matches selected storefront visibility and never exposes unattached or foreign images', async () => {
+    const { c, ch, peerCh, ring } = await setup()
+    const path = await image(c, ring)
+    const pending = `public/${c}/${ring}/${randomUUID()}.webp`
+    await db.query("insert into storage.objects(bucket_id,name) values ('item-images',$1)", [
+      pending,
+    ])
+    await asUser(otherDm)
+    await one("select public.create_campaign('Other image DM') result")
+    for (const user of [peer, outsider, otherDm]) {
+      await asUser(user)
+      expect(
+        (
+          await db.query(
+            "select name from storage.objects where bucket_id='item-images' and name=$1",
+            [path],
+          )
+        ).rows,
+      ).toEqual([])
+      await expect(
+        db.query('select public.set_item_image($1,$2,1,null,$3)', [c, ring, randomUUID()]),
+      ).rejects.toThrow(/Forbidden/)
+      await expect(
+        db.query("insert into storage.objects(bucket_id,name) values ('item-images',$1)", [
+          pending,
+        ]),
+      ).rejects.toThrow(/row-level security/)
+    }
+    await asUser(player)
+    expect((await db.query('select name from storage.objects where name=$1', [path])).rows).toEqual(
+      [{ name: path }],
+    )
+    expect(
+      (await db.query('select name from storage.objects where name=$1', [pending])).rows,
+    ).toEqual([])
+    expect(
+      (await storefront(c, ch)).shops.flatMap((s) => s.listings).find((l) => l.item.id === ring)
+        ?.item.image_path,
+    ).toBe(path)
+    await asUser(peer)
+    expect(
+      (await storefront(c, peerCh)).shops
+        .flatMap((s) => s.listings)
+        .some((l) => l.item.id === ring),
+    ).toBe(false)
+    await asAnon()
+    await expect(
+      db.query('select public.set_item_image($1,$2,1,null,$3)', [c, ring, randomUUID()]),
+    ).rejects.toThrow(/permission denied/)
+    await expect(db.query('select private.item_image_access($1,false)', [path])).rejects.toThrow(
+      /permission denied/,
+    )
+  })
+  it('allows carried images independently of shops, but not after the last unit is gone', async () => {
+    const { c, ch } = await setup()
+    const id = await definition(c, { name: 'Secret gift', category: 'gear' })
+    const path = await image(c, id)
+    const granted = await one<{ item_id: string; revision: number }>(
+      'select public.grant_item($1,$2,$3,1,$4) result',
+      [c, ch, id, randomUUID()],
+    )
+    await asUser(player)
+    expect(
+      (await db.query('select name from storage.objects where name=$1', [path])).rows,
+    ).toHaveLength(1)
+    await db.query('select public.remove_item($1,$2,$3,1,$4)', [
+      c,
+      granted.item_id,
+      granted.revision,
+      randomUUID(),
+    ])
+    expect(
+      (await db.query('select name from storage.objects where name=$1', [path])).rows,
+    ).toHaveLength(0)
   })
 })

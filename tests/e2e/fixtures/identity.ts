@@ -36,6 +36,8 @@ export async function identityFixture(
   options: {
     signedIn?: boolean
     empty?: boolean
+    noCharacters?: boolean
+    armorClassOverride?: number
     player?: boolean
     callbackError?: boolean
     twoDms?: boolean
@@ -91,17 +93,24 @@ export async function identityFixture(
       display_name: 'Arin',
     },
   ]
-  let characters = options.empty
-    ? []
-    : [
-        {
-          id: characterId,
-          campaign_id: campaignId,
-          user_id: options.player ? playerId : (null as string | null),
-          name: 'Arin',
-          character_resources: { gold: 25, water_units: 3, rations: 4, exhaustion: 0, revision: 0 },
-        },
-      ]
+  let characters =
+    options.empty || options.noCharacters
+      ? []
+      : [
+          {
+            id: characterId,
+            campaign_id: campaignId,
+            user_id: options.player ? playerId : (null as string | null),
+            name: 'Arin',
+            character_resources: {
+              gold: 25,
+              water_units: 3,
+              rations: 4,
+              exhaustion: 0,
+              revision: 0,
+            },
+          },
+        ]
   type SheetRow = {
     status: string
     level: number
@@ -134,6 +143,11 @@ export async function identityFixture(
   const sheets = new Map<string, SheetRow>(
     characters.map((c) => [c.id, options.sheet === 'complete' ? sampleSheet() : blankSheet()]),
   )
+  if (options.armorClassOverride !== undefined)
+    for (const sheet of sheets.values()) {
+      sheet.armor_class = options.armorClassOverride
+      sheet.build = { ...sheet.build, acOverride: options.armorClassOverride }
+    }
   const vitals = new Map<string, VitalsRow>(
     characters.map((c) => [
       c.id,
@@ -292,7 +306,10 @@ export async function identityFixture(
       return respond({ signedURL: '/object/public-test/portrait.png?token=fixture' })
     if (url.pathname.includes('/storage/v1/object/public-test/'))
       return route.fulfill({ status: 200, contentType: 'image/png', body: tinyPng })
-    if (url.pathname.includes('/storage/v1/object/character-portraits/'))
+    if (
+      url.pathname.includes('/storage/v1/object/character-portraits/') ||
+      url.pathname.includes('/storage/v1/object/item-images/')
+    )
       return respond({ Key: url.pathname.split('/object/')[1] })
     if (method === 'set_character_portrait') {
       portraitPath = (body.new_path as string | null) ?? null
@@ -312,6 +329,7 @@ export async function identityFixture(
             .filter((c) => c.id === eq('character_id'))
             .map(() => ({
               level: 5,
+              armor_class: options.armorClassOverride,
               portrait_path: portraitPath,
               str: '14',
               dex: '16',
@@ -850,6 +868,14 @@ function inventoryState(characterIds: string[], seeded: boolean) {
         return stacks.filter((row) => row.character_id === eq('character_id') && row.quantity > 0)
       if (method === 'inventory_events')
         return events.filter((event) => event.character_id === eq('character_id'))
+      if (method === 'set_item_image') {
+        const item = definitions.find((d) => d.id === body.target_definition)
+        if (!dm || !item) return new Error('Forbidden')
+        if (item.revision !== body.expected_revision) return new Error('Stale revision')
+        item.image_path = body.new_path
+        item.revision += 1
+        return { id: item.id, revision: item.revision }
+      }
       if (method === 'save_item_definition') {
         const item = body.item as Record<string, unknown>
         if (!dm && item.value_gp !== null && item.value_gp !== undefined)

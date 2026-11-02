@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   Alert,
   Button,
+  Loader,
   Checkbox,
   Drawer,
   Group,
@@ -64,6 +65,7 @@ const num = (value: number | string) =>
 /** The forge: create or edit an item, optionally from an SRD template, then hand it out. */
 export function Forge({
   definition,
+  media,
   dm,
   targets,
   pending,
@@ -72,6 +74,7 @@ export function Forge({
   onClose,
 }: {
   definition: ItemDefinition | null
+  media?: React.ReactNode
   dm: boolean
   targets: ForgeTarget[]
   pending: boolean
@@ -96,6 +99,7 @@ export function Forge({
   const p = draft.properties
   return (
     <Drawer
+      returnFocus={false}
       opened
       onClose={onClose}
       position={phone ? 'bottom' : 'right'}
@@ -114,6 +118,7 @@ export function Forge({
         }}
       >
         <Stack gap="md">
+          {media}
           {!definition && (
             <Select
               searchable
@@ -372,7 +377,13 @@ export function Forge({
             </Alert>
           )}
           <Group justify="flex-end">
-            <Button type="submit" loading={pending} disabled={!valid}>
+            <Button
+              type="submit"
+              aria-disabled={pending || !valid}
+              aria-busy={pending}
+              leftSection={pending ? <Loader size={16} /> : undefined}
+              disabled={!valid && !pending}
+            >
               {t(definition ? 'inventory.forge.save' : 'inventory.forge.create')}
             </Button>
           </Group>

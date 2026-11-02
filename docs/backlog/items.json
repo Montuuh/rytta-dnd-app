@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-01",
+  "updatedAt": "2026-11-02",
   "items": [
     {
       "id": "RYT-000",
@@ -844,6 +844,41 @@
         "Independent ui-ux review"
       ],
       "evidence": ["docs/decisions/017-campaign-items.md", "docs/evidence/RYT-026/validation.md"]
+    },
+    {
+      "id": "RYT-027",
+      "title": "DM Command Center storeroom, item manager UX, shop item editing and Party redesign",
+      "priority": "P0",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "review",
+      "dependsOn": ["RYT-025", "RYT-026", "RYT-005"],
+      "sources": [
+        "User 2026-11-02: rename the items panel to catálogo/almacén de objetos, unify DM panels, improve the item manager, create items for a character, compact list/grid with icons, DM Command Center first, drop the revelations queue, edit items from shop listings, improve Party for DM and Player and fix the narrower Player width."
+      ],
+      "scope": "Move the item catalogue into the DM Command Center as the Item storeroom with a dense list/grid, icon actions, filters and create-for-character; remove the revelations tab; put the Command Center first; edit shop listing items in place; add a satchel list view; redesign Party cards with equal DM/Player width.",
+      "acceptance": [
+        "The DM Command Center is the first DM destination and has Members, Active modules, Item storeroom and Audit tabs kept in ?panel=; /items redirects there; no revelations tab remains.",
+        "The storeroom lists items as 56px rows or compact tiles with search, sort, category chips with counts, a remembered list/grid view and icon or menu actions with 44px targets.",
+        "A new item can be created for one or more characters from the storeroom or from a Party card; grants are idempotent per character and partial failures are reported by name.",
+        "An expanded shop stock row opens the shared item editor for that item.",
+        "The satchel offers a compact list view next to the grid.",
+        "Party cards show portrait, class and level, HP/AC chips, compact resources and role-appropriate actions; DM and Player share the same page width at 1440px."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "npm run format:check",
+        "npm run check:ui-review",
+        "Independent rendered ui-ux review"
+      ],
+      "evidence": [
+        "docs/decisions/018-dm-command-center-storeroom.md",
+        "docs/evidence/RYT-027/validation.md"
+      ]
     }
   ]
 }

@@ -65,3 +65,11 @@ Playwright covers 1440px desktop, 820px tablet and a 390px touch phone profile.
 Inspect captures and exercise keyboard, drawer/Escape, direct links, 150% text and reduced motion.
 Axe supplements visual/touch review; mobile Chromium emulation does not verify iOS Safari.
 Every interface change requires the independent ui-ux verdict described in [UI review](ui-review.md).
+
+## DM tools and item lists (RYT-027)
+
+DM-only tools live in the DM Command Center tabs (`?panel=` deep links), not in separate
+navigation items. Item collections use dense 56px rows (rarity-tinted icon, name, one meta
+line, icon actions) with an optional compact grid. Actions that fit stay as 44px icon buttons
+with accessible names; on phones they fold into one ⋯ menu. Avoid stacks of plain text
+buttons on cards. Campaign pages share one width for every role.

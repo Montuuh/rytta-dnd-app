@@ -16,7 +16,6 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import {
   Compass,
-  Package,
   Eye,
   Languages,
   LogOut,
@@ -81,16 +80,15 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
     label: t(label),
     icon,
   }))
+  // The DM Command Center is the DM's first destination (RYT-027); it also holds the storeroom.
   if (effectiveDm)
-    entries.splice(1, 0, {
+    entries.unshift({
       to: `${prefix}/members`,
       label: t('campaign.manage'),
       short: t('nav.dmShort'),
       icon: Shield,
       dm: true,
     })
-  if (effectiveDm)
-    entries.push({ to: `${prefix}/items`, label: t('catalogue.title'), icon: Package, dm: true })
   return entries
 }
 
@@ -303,7 +301,7 @@ export function Layout() {
       }}
     >
       <div
-        className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
+        className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
       >
         <a
           className="skip-link"

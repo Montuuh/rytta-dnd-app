@@ -48,7 +48,7 @@ for (const language of ['es', 'en'] as const)
           await page.keyboard.press('Escape')
           await page.goto(`./#/campaign/${campaignId}/members`)
           await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-            es ? 'Miembros e invitaciones' : 'Members & invitations',
+            es ? 'Centro de mando DM' : 'DM Command Center',
           )
           await expect(page.getByText('player@example.com', { exact: true })).toBeVisible()
           await expect(
@@ -115,7 +115,7 @@ test('assignment explains unavailable Players and recovers from failed member re
     page.getByText('Todavía no hay miembros con rol Jugador.', { exact: false }),
   ).toBeVisible()
   await page.getByRole('dialog').getByRole('link', { name: 'Ir a Miembros e invitaciones' }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Miembros e invitaciones')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Centro de mando DM')
 })
 
 test('a Player already linked to another character is not offered again', async ({
@@ -484,21 +484,6 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await page.keyboard.press('Enter')
   await expect(preview).toBeFocused()
   await expect(preview).not.toBeChecked()
-
-  await page.goto(`./#/campaign/${campaignId}/members`)
-  await page.getByRole('tab', { name: 'Cola de revelaciones', exact: true }).click()
-  const reveal = page.getByRole('switch', {
-    name: 'Visible para el grupo: El Yunque de Ámbar',
-    exact: true,
-  })
-  await expect(reveal).toBeChecked()
-  await reveal.focus()
-  await page.keyboard.press('Space')
-  await expect(reveal).not.toBeChecked()
-  await expect(reveal).toBeFocused()
-  await page.keyboard.press('Space')
-  await expect(reveal).toBeChecked()
-  await expect(reveal).toBeFocused()
 
   if ((page.viewportSize()?.width ?? 1024) >= 768) return
   // Phones: enabling two planned modules overflows the bar into the More bottom sheet.

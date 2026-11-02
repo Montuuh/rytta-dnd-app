@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Chip, Group, SegmentedControl, Stack, Text } from '@mantine/core'
+import { Chip, Group, SegmentedControl, Stack } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
+import { ScrollText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { QueryFeedback, useCampaign } from '@/features/campaigns'
-import { ordersQuery } from '../api'
+import { RefreshControl } from '@/shared/ui/refresh-control'
+import { liveOrders, ordersQuery } from '../api'
 import { isOpenOrder, type ShopAction, type ShopAdmin } from '../domain/shops'
 import { OrderCard } from './orders'
+import { EmptyNote } from './visuals'
 
 type View = 'needs' | 'awaiting' | 'history'
 
@@ -26,7 +29,13 @@ export function Ledger({
   const { t } = useTranslation()
   const { state } = useAuth()
   const campaign = useCampaign()
-  const orders = useQuery(ordersQuery(state.user!.id, campaign.id, null))
+  const orders = useQuery({ ...ordersQuery(state.user!.id, campaign.id, null), ...liveOrders })
+  // Only a refresh the DM asked for spins the icon; the 5 s background polls stay still.
+  const [refreshing, setRefreshing] = useState(false)
+  const refresh = () => {
+    setRefreshing(true)
+    void orders.refetch().finally(() => setRefreshing(false))
+  }
   const [character, setCharacter] = useState('all')
   const [shop, setShop] = useState('all')
   const filtered = (orders.data ?? []).filter(
@@ -57,6 +66,14 @@ export function Ledger({
   )
   return (
     <Stack gap="md">
+      <div className="ledger-toolbar">
+        <RefreshControl
+          onRefresh={refresh}
+          fetching={refreshing}
+          updatedAt={orders.dataUpdatedAt}
+          label={t('admin.ledger.refresh')}
+        />
+      </div>
       <SegmentedControl
         fullWidth
         value={view}
@@ -103,7 +120,7 @@ export function Ledger({
         retry={() => void orders.refetch()}
       />
       {orders.data && list.length === 0 && (
-        <Text c="dimmed">{t(`admin.ledger.empty.${view}`)}</Text>
+        <EmptyNote icon={ScrollText}>{t(`admin.ledger.empty.${view}`)}</EmptyNote>
       )}
       <div className="order-grid" aria-live="polite">
         {list.map((order) => (

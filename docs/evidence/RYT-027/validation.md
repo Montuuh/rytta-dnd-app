@@ -10,7 +10,7 @@ Date: 2026-11-02. Branch `claude/ecstatic-clarke-dz03w7`, rebased on `main` at `
 | --- | --- |
 | `npm run check` (typecheck, lint, contracts, unit tests, build) | Pass |
 | `npm run test:e2e` (all projects, 2 workers) | 237 passed |
-| `npm run check:ui-review` | Pending the independent ui-ux verdict |
+| `npm run check:ui-review` | Pass (round 2 PASS) |
 
 The first focused run (campaign items, identity, characters, inventory, shops) had 17 failures.
 All were selectors bound to the replaced UI:
@@ -75,4 +75,7 @@ Round 1 (source `70f8fe8`): `CHANGES_REQUIRED`, recorded in `reviewer/review.md`
   - Not done (pre-existing, outside RYT-027): Shops "New shop" is 39px tall on phones.
 
 After the fixes: `npm run check` passes, and campaign items plus inventory pass 126/126 (run
-twice). Round 2: pending a focused re-review.
+twice). Round 2 (source `79c32c5`): independent `PASS`. Follow-ups that don't block, left open:
+R2-1, phone list rows can still truncate the price at the end of the meta line (grid and editor
+show it); R2-2, a `?create=` link followed while already on the storeroom does not reopen the
+editor (the Party menu path works). The manifest records source digest `2318ddec7b37988537525bcf42ad6447a101b5be9b1b21c21062c77f4d163638`.

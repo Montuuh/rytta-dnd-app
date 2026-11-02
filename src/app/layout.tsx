@@ -40,13 +40,12 @@ import {
 } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 
-const defaultActivePaths = new Set(['/', '/party'])
+const defaultActivePaths = new Set(['/party'])
 /** Phones show this many destinations before folding the rest into "More". */
 const bottomSlots = 5
 
 type NavEntry = {
   to: string
-  end?: boolean
   label: string
   /** Shorter bottom-bar label; it must stay contained in the full accessible label. */
   short?: string
@@ -54,8 +53,8 @@ type NavEntry = {
   dm?: boolean
 }
 
-/** Only reachable destinations appear in navigation. Planned modules live on the campaign
- * home "Coming soon" card and in the DM module controls instead of crowding the bar. */
+/** Only reachable destinations appear in navigation. Planned modules live in the DM module
+ * controls (DM Command Center) instead of crowding the bar. */
 function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): NavEntry[] {
   const { t } = useTranslation()
   const { pathname } = useLocation()
@@ -63,20 +62,18 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   if (!live)
     return modules
       .filter(({ path }) => defaultActivePaths.has(path))
-      .map(({ path, label, icon }) => ({ to: path, end: path === '/', label: t(label), icon }))
+      .map(({ path, label, icon }) => ({ to: path, label: t(label), icon }))
   const prefix = pathname.match(/^\/campaign\/[^/]+/)?.[0]
   if (!prefix || !campaign) return []
   const effectiveDm = campaign.role === 'dm' && !playerPreview
   const enabledKeys = new Set(campaign.player_modules ?? ['party'])
   const reachable = modules.filter(
     ({ path, ...module }) =>
-      path === '/' ||
       enabledKeys.has(path.replace(/^\//, '')) ||
       (effectiveDm && 'implemented' in module && module.implemented),
   )
   const entries: NavEntry[] = reachable.map(({ path, label, icon }) => ({
-    to: path === '/' ? prefix : `${prefix}${path}`,
-    end: path === '/',
+    to: `${prefix}${path}`,
     label: t(label),
     icon,
   }))
@@ -96,10 +93,9 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
   const { t } = useTranslation()
   return (
     <nav aria-label={t('nav.main')} className="nav-tabs">
-      {entries.map(({ to, end, label, icon: Icon, dm }) => (
+      {entries.map(({ to, label, icon: Icon, dm }) => (
         <NavLink
           key={to}
-          end={end}
           to={to}
           className={({ isActive }) =>
             `nav-item ${dm ? 'nav-item-dm' : ''} ${isActive ? 'active' : ''}`
@@ -122,17 +118,14 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
   const overflow = entries.length > bottomSlots
   const primary = overflow ? entries.slice(0, bottomSlots - 1) : entries
   const rest = overflow ? entries.slice(bottomSlots - 1) : []
-  const moreActive = rest.some(({ to, end }) =>
-    end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`),
-  )
+  const moreActive = rest.some(({ to }) => pathname === to || pathname.startsWith(`${to}/`))
   useEffect(close, [pathname, close])
   return (
     <>
       <nav aria-label={t('nav.main')} className="bottom-nav">
-        {primary.map(({ to, end, label, short, icon: Icon, dm }) => (
+        {primary.map(({ to, label, short, icon: Icon, dm }) => (
           <NavLink
             key={to}
-            end={end}
             to={to}
             aria-label={short ? label : undefined}
             className={({ isActive }) =>
@@ -172,10 +165,9 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
         returnFocus={false}
       >
         <Stack gap={6} pb="md">
-          {rest.map(({ to, end, label, icon: Icon, dm }) => (
+          {rest.map(({ to, label, icon: Icon, dm }) => (
             <NavLink
               key={to}
-              end={end}
               to={to}
               // Choosing a destination lets the route change focus main content instead.
               onClick={() => {

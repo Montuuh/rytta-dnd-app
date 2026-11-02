@@ -920,7 +920,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-027"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -938,7 +938,15 @@
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/decisions/019-remove-revelations-and-camp.md",
+        "docs/evidence/RYT-029/validation.md",
+        "supabase/migrations/20261103120000_drop_campaign_revelations.sql",
+        "docs/evidence/RYT-029/player-mobile.png",
+        "docs/evidence/RYT-029/player-tablet.png",
+        "docs/evidence/RYT-029/dm-mobile.png",
+        "docs/evidence/RYT-029/dm-tablet.png"
+      ]
     },
     {
       "id": "RYT-030",

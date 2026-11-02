@@ -85,9 +85,9 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(page.getByRole('button', { name: 'Aceptar invitación' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'The Amber Road', level: 2 })).toBeVisible()
   await page.getByRole('link', { name: 'Abrir campaña: Our new table' }).click()
-  await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
+  await expect(page.locator('header').getByText('Our new table', { exact: true })).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Our new table', exact: true })).toBeVisible()
+  await expect(page.locator('header').getByText('Our new table', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: /Sesión de/ }).click()
   await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
   await page.getByRole('button', { name: /Sesión de dm@example.com/ }).click()
@@ -128,7 +128,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.getByRole('link', { name: 'Abrir campaña: Winter at the Keep' }).click()
   expect(page.url()).toContain(otherCampaignId)
   const currentNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  await expect(currentNav.getByRole('link', { name: 'Campamento', exact: true })).toBeVisible()
+  await expect(currentNav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
   await expect(currentNav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
   await expect(currentNav.getByText('Inventario', { exact: false })).toHaveCount(0)
   await expect(currentNav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
@@ -141,6 +141,30 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   ).toBe(true)
 })
 
+test('RYT-029: the campaign index lands the DM on the command center and Players on Party', async ({
+  page,
+}, info) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}`)
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/members$`))
+  await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
+  await page.screenshot({ path: info.outputPath('landing-dm.png'), fullPage: true })
+})
+
+test('RYT-029: Players land on Party with no Camp entry and no discoveries section', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true })
+  await page.goto(`./#/campaign/${campaignId}`)
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/party$`))
+  const nav = page.getByRole('navigation', { name: 'Navegación principal' })
+  await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
+  await expect(page.getByText('Descubrimientos de la campaña')).toHaveCount(0)
+  await page.screenshot({ path: info.outputPath('landing-player.png'), fullPage: true })
+})
+
 test('Player has no management payload or controls; revoked campaign fails closed', async ({
   page,
 }) => {
@@ -150,12 +174,7 @@ test('Player has no management payload or controls; revoked campaign fails close
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
   expect(
     f.calls.filter((c) =>
-      [
-        'list_campaign_members',
-        'campaign_invitations',
-        'campaign_revelations',
-        'character_events',
-      ].includes(c.method),
+      ['list_campaign_members', 'campaign_invitations', 'character_events'].includes(c.method),
     ),
   ).toEqual([])
   f.revokeAccess()
@@ -172,8 +191,8 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
   // RYT-027: the DM Command Center comes first; phones show the short "Mando DM" label.
   await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Centro de mando DM')
-  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Campamento')
-  await expect(mainNav.getByRole('link').nth(2)).toHaveAccessibleName('Grupo')
+  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Grupo')
+  await expect(mainNav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
   await expect(mainNav.getByRole('link', { name: /Almacén|Objetos de campaña/ })).toHaveCount(0)
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
   // RYT-025: one panel at a time behind real tabs; members is the default.
@@ -212,7 +231,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   await expect(shops).toBeChecked()
   expect(f.calls.some((c) => c.method === 'set_campaign_modules')).toBe(true)
 
-  // The revelations queue is gone; the item storeroom is a tab with a deep link.
+  // RYT-029: the revelations queue is gone; the item storeroom is a tab with a deep link.
   await expect(tabs.getByRole('tab', { name: /revelaciones/i })).toHaveCount(0)
   await tabs.getByRole('tab', { name: 'Almacén de objetos', exact: true }).click()
   await expect(page).toHaveURL(/panel=items/)

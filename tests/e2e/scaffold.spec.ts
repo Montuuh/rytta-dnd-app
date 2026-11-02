@@ -15,10 +15,9 @@ test('preview loads without a backend and routes survive a Pages reload', async 
     if (request.url().includes('supabase')) requests.push(request.url())
   })
   await page.goto('./')
-  await expect(page.getByRole('heading', { name: /Every adventure starts/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await expect(page.locator('header')).not.toContainText('Preview · sample data')
-  await page.screenshot({ path: testInfo.outputPath('camp.png'), fullPage: true })
-  await page.getByRole('link', { name: 'Explore the party' }).click()
+  await page.screenshot({ path: testInfo.outputPath('party.png'), fullPage: true })
   await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByText('RYT-003')).toBeVisible()
@@ -28,7 +27,7 @@ test('preview loads without a backend and routes survive a Pages reload', async 
 
 test('responsive layout and accessible overview', async ({ page }) => {
   await page.goto('./')
-  await expect(page.getByRole('heading', { name: /Every adventure starts/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   )
@@ -67,6 +66,6 @@ test('large text and reduced motion retain usable navigation', async ({ page }) 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   )
-  await page.getByRole('link', { name: 'Back to camp' }).click()
-  await expect(page.getByRole('heading', { name: /Every adventure starts/ })).toBeVisible()
+  await page.getByRole('link', { name: 'Back' }).click()
+  await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
 })

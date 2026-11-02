@@ -6,10 +6,8 @@ test('fresh visits default to Spanish and dark despite browser preferences', asy
   await page.goto('./')
   await expect(page.locator('html')).toHaveAttribute('lang', 'es')
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'dark')
-  await expect(
-    page.getByRole('heading', { name: 'Toda aventura empieza alrededor de una mesa.' }),
-  ).toBeVisible()
-  await expect(page).toHaveTitle('Campamento · Rytta')
+  await expect(page.getByRole('heading', { name: 'Grupo', exact: true })).toBeVisible()
+  await expect(page).toHaveTitle('Grupo · Rytta')
 })
 
 test('theme and language persist across navigation and reload and can be changed back', async ({
@@ -34,8 +32,7 @@ test('theme and language persist across navigation and reload and can be changed
     .click()
   await page.getByRole('dialog').getByRole('combobox', { name: 'Idioma' }).selectOption('en')
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('heading', { name: /Every adventure starts/ })).toBeVisible()
-  await page.getByRole('link', { name: 'Explore the party' }).click()
+  await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
@@ -82,7 +79,7 @@ for (const language of ['es', 'en'] as const) {
           })),
         ).toEqual([])
         await page.screenshot({
-          path: testInfo.outputPath(`${language}-${scheme}-${route ? 'settings' : 'camp'}.png`),
+          path: testInfo.outputPath(`${language}-${scheme}-${route ? 'settings' : 'party'}.png`),
           fullPage: true,
           scale: 'css',
         })
@@ -129,7 +126,7 @@ test('blocked storage does not prevent changing language or theme', async ({ pag
     }
   })
   await page.goto('./')
-  await expect(page.getByRole('heading', { name: /Toda aventura/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Grupo', exact: true })).toBeVisible()
   await page.getByRole('button', { name: /Abrir menú de ajustes/ }).click()
   await page.getByRole('menuitem', { name: 'Ajustes', exact: true }).click()
   await page
@@ -139,6 +136,6 @@ test('blocked storage does not prevent changing language or theme', async ({ pag
     .click()
   await page.getByRole('dialog').getByRole('combobox', { name: 'Idioma' }).selectOption('en')
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('heading', { name: /Every adventure/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
 })

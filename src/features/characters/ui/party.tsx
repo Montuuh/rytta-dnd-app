@@ -11,7 +11,6 @@ import {
   NumberInput,
   Paper,
   Progress,
-  SimpleGrid,
   Stack,
   Text,
   TextInput,
@@ -20,12 +19,16 @@ import {
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import {
+  Backpack,
   Coins,
+  Heart,
+  Shield,
   Droplets,
   Ellipsis,
   Flame,
   Link2,
   Minus,
+  PackagePlus,
   Pencil,
   Plus,
   ScrollText,
@@ -44,6 +47,7 @@ import { isClassKey } from '../domain/rules'
 import { resourceSchema, type Character } from '../domain/character'
 import type { SheetSummary } from '../domain/sheet'
 import { PlayerAssignmentEditor } from './player-assignment'
+import { CharacterPortrait } from '@/features/inventory'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 type ResourceField = (typeof fields)[number]
@@ -130,86 +134,128 @@ export function CharacterParty() {
         </Paper>
       )}
       {!query.isError && (
-        <SimpleGrid cols={{ base: 1, lg: 2 }}>
-          {query.data?.map((character) => (
-            <Paper p="lg" key={character.id} className="character-card">
-              <Stack>
-                <Stack gap="sm">
-                  <Group justify="space-between" wrap="nowrap" align="flex-start" gap="xs">
-                    <Title
-                      order={2}
-                      className="user-copy"
-                      id={`character-${character.id}`}
-                      tabIndex={-1}
-                    >
-                      {character.name}
-                    </Title>
-                    <CharacterMenu
-                      character={character}
-                      dm={dm}
-                      sheetPath={`/campaign/${campaign.id}/party/${character.id}`}
-                      onAssign={(target) => open({ kind: 'assignment', character }, target)}
-                      onResources={(target) => open({ kind: 'resources', character }, target)}
-                    />
-                  </Group>
-                  <div
-                    className={`character-owner-bar ${character.user_id ? 'is-assigned' : 'is-unassigned'}`}
-                  >
-                    <div className="character-owner-info">
-                      <Badge variant={character.user_id ? 'filled' : 'outline'}>
-                        {t(
-                          character.user_id
-                            ? dm
-                              ? 'characters.assigned'
-                              : 'characters.you'
-                            : 'characters.unassigned',
+        <div className={`party-grid ${(query.data?.length ?? 0) > 1 ? 'is-many' : 'is-single'}`}>
+          {query.data?.map((character) => {
+            const own = !playerPreview && character.user_id === state.user!.id
+            const summary = summaries.data?.find((item) => item.character_id === character.id)
+            return (
+              <Paper
+                p="lg"
+                key={character.id}
+                className={`character-card ${own || (!dm && character.user_id) ? 'is-own' : ''}`}
+                component="article"
+                aria-labelledby={`character-${character.id}`}
+              >
+                <Stack gap="md">
+                  <Stack gap="sm">
+                    <header className="character-head">
+                      <CharacterPortrait
+                        campaignId={campaign.id}
+                        characterId={character.id}
+                        name={character.name}
+                        path={null}
+                        size={own || !dm ? 64 : 52}
+                      />
+                      <div className="character-head-text">
+                        {!dm && (
+                          <Text className="eyebrow" mb={2}>
+                            {t('party.hero')}
+                          </Text>
                         )}
-                      </Badge>
-                      {dm && character.user_id && members.data && !members.isError && (
-                        <Text size="sm" fw={600} className="user-copy">
-                          {t('characters.playerName', {
-                            name:
-                              members.data.find((member) => member.user_id === character.user_id)
-                                ?.display_name ?? t('characters.assigned'),
-                          })}
-                        </Text>
-                      )}
-                    </div>
-                  </div>
-                </Stack>
-                <SheetSummaryBar
-                  character={character}
-                  summary={summaries.data?.find((item) => item.character_id === character.id)}
-                  canCreate={!playerPreview && (dm || character.user_id === state.user!.id)}
-                  own={!playerPreview && character.user_id === state.user!.id}
-                  path={`/campaign/${campaign.id}/party/${character.id}`}
-                />
-                <div className="resource-grid">
-                  {fields.map((field) => (
-                    <ResourceTile
-                      key={field}
-                      field={field}
+                        <Title
+                          order={2}
+                          className="user-copy"
+                          id={`character-${character.id}`}
+                          tabIndex={-1}
+                        >
+                          {character.name}
+                        </Title>
+                        {dm && (
+                          <div className="character-owner-info">
+                            <Badge variant={character.user_id ? 'light' : 'outline'}>
+                              {t(
+                                character.user_id ? 'characters.assigned' : 'characters.unassigned',
+                              )}
+                            </Badge>
+                            {character.user_id && members.data && !members.isError && (
+                              <Text size="sm" fw={600} className="user-copy">
+                                {t('characters.playerName', {
+                                  name:
+                                    members.data.find(
+                                      (member) => member.user_id === character.user_id,
+                                    )?.display_name ?? t('characters.assigned'),
+                                })}
+                              </Text>
+                            )}
+                          </div>
+                        )}
+                        {summary && summary.status === 'complete' && (
+                          <Text size="sm" c="dimmed" className="user-copy">
+                            {t('sheet.classLevel', {
+                              class:
+                                summary.class_key && isClassKey(summary.class_key)
+                                  ? t(`srd.class.${summary.class_key}`)
+                                  : (summary.class_label ?? ''),
+                              level: summary.level,
+                            })}
+                          </Text>
+                        )}
+                      </div>
+                      <CharacterMenu
+                        character={character}
+                        dm={dm}
+                        sheetPath={`/campaign/${campaign.id}/party/${character.id}`}
+                        itemPath={`/campaign/${campaign.id}/members?panel=items&create=${character.id}`}
+                        inventoryPath={`/campaign/${campaign.id}/inventory?character=${character.id}`}
+                        onAssign={(target) => open({ kind: 'assignment', character }, target)}
+                        onResources={(target) => open({ kind: 'resources', character }, target)}
+                      />
+                    </header>
+                  </Stack>
+                  <div className="character-body">
+                    <SheetSummaryBar
                       character={character}
-                      dm={dm}
-                      pending={quickResourceAction.isPending}
-                      commit={(next) =>
-                        quickResourceAction.mutate(
-                          {
-                            kind: 'resources',
-                            characterId: character.id,
-                            values: { ...character.character_resources, [field]: next },
-                            requestId: crypto.randomUUID(),
-                          },
-                          { onSuccess: () => setNotice('characters.saved') },
-                        )
+                      summary={summary}
+                      canCreate={!playerPreview && (dm || character.user_id === state.user!.id)}
+                      own={own}
+                      path={`/campaign/${campaign.id}/party/${character.id}`}
+                      inventoryPath={
+                        !dm && (campaign.player_modules ?? []).includes('inventory')
+                          ? `/campaign/${campaign.id}/inventory`
+                          : undefined
                       }
                     />
-                  ))}
-                </div>
-              </Stack>
-            </Paper>
-          ))}
-        </SimpleGrid>
+                    <section
+                      className="resource-grid"
+                      aria-label={`${t('party.resources')} · ${character.name}`}
+                    >
+                      {fields.map((field) => (
+                        <ResourceTile
+                          key={field}
+                          field={field}
+                          character={character}
+                          dm={dm}
+                          pending={quickResourceAction.isPending}
+                          commit={(next) =>
+                            quickResourceAction.mutate(
+                              {
+                                kind: 'resources',
+                                characterId: character.id,
+                                values: { ...character.character_resources, [field]: next },
+                                requestId: crypto.randomUUID(),
+                              },
+                              { onSuccess: () => setNotice('characters.saved') },
+                            )
+                          }
+                        />
+                      ))}
+                    </section>
+                  </div>
+                </Stack>
+              </Paper>
+            )
+          })}
+        </div>
       )}
       {editor?.kind === 'assignment' && (
         <PlayerAssignmentEditor
@@ -241,12 +287,16 @@ function CharacterMenu({
   character,
   dm,
   sheetPath,
+  itemPath,
+  inventoryPath,
   onAssign,
   onResources,
 }: {
   character: Character
   dm: boolean
   sheetPath: string
+  itemPath: string
+  inventoryPath: string
   onAssign: (target: HTMLElement) => void
   onResources: (target: HTMLElement) => void
 }) {
@@ -274,6 +324,21 @@ function CharacterMenu({
         >
           {t('sheet.view')}
         </Menu.Item>
+        <Menu.Item
+          component={Link}
+          to={inventoryPath}
+          leftSection={<Backpack size={18} aria-hidden="true" />}
+        >
+          {t('party.openInventory')}
+        </Menu.Item>
+        <Menu.Item
+          component={Link}
+          to={itemPath}
+          leftSection={<PackagePlus size={18} aria-hidden="true" />}
+        >
+          {t('store.createFor', { name: character.name })}
+        </Menu.Item>
+        <Menu.Divider />
         <Menu.Item
           leftSection={<Pencil size={18} aria-hidden="true" />}
           onClick={() => trigger.current && onResources(trigger.current)}
@@ -459,12 +524,14 @@ function SheetSummaryBar({
   canCreate,
   own,
   path,
+  inventoryPath,
 }: {
   character: Character
   summary: SheetSummary | undefined
   canCreate: boolean
   own: boolean
   path: string
+  inventoryPath?: string
 }) {
   const { t } = useTranslation()
   if (!summary) return null
@@ -498,40 +565,53 @@ function SheetSummaryBar({
         )}
       </div>
     )
-  const className =
-    summary.class_key && isClassKey(summary.class_key)
-      ? t(`srd.class.${summary.class_key}`)
-      : (summary.class_label ?? '')
   const ratio = Math.round((summary.current_hp / Math.max(1, summary.max_hp)) * 100)
+  const tone = ratio > 50 ? 'healthy' : ratio > 25 ? 'wounded' : 'critical'
   return (
-    <div className="sheet-summary">
+    <div className={`sheet-summary hp-${tone}`}>
       <div className="sheet-summary-info">
-        <Text size="sm" fw={600} className="user-copy">
-          {t('sheet.classLevel', { class: className, level: summary.level })}
-        </Text>
-        <Group gap="md">
-          <Text size="sm">
-            {t('sheet.hpSummary', {
-              value: `${summary.current_hp}/${summary.max_hp}${summary.temp_hp ? ` +${summary.temp_hp}` : ''}`,
-            })}
-          </Text>
-          <Text size="sm">{t('sheet.acSummary', { value: summary.armor_class })}</Text>
-        </Group>
+        <div className="vital-chips">
+          <span className="vital-chip is-hp">
+            <Heart size={16} aria-hidden="true" />
+            <span>
+              {t('sheet.hpSummary', {
+                value: `${summary.current_hp}/${summary.max_hp}${summary.temp_hp ? ` +${summary.temp_hp}` : ''}`,
+              })}
+            </span>
+          </span>
+          <span className="vital-chip">
+            <Shield size={16} aria-hidden="true" />
+            <span>{t('sheet.acSummary', { value: summary.armor_class })}</span>
+          </span>
+        </div>
         <Progress
           value={ratio}
-          size="sm"
-          className={`hp-bar hp-${ratio > 50 ? 'healthy' : ratio > 25 ? 'wounded' : 'critical'}`}
+          size="md"
+          className={`hp-bar hp-${tone}`}
           aria-label={t('sheet.hpValue', { current: summary.current_hp, max: summary.max_hp })}
         />
       </div>
-      <Button
-        component={Link}
-        to={path}
-        variant="light"
-        aria-describedby={`character-${character.id}`}
-      >
-        {t('sheet.view')}
-      </Button>
+      <div className="sheet-summary-actions">
+        <Button
+          component={Link}
+          to={path}
+          variant="light"
+          leftSection={<ScrollText size={16} aria-hidden="true" />}
+          aria-describedby={`character-${character.id}`}
+        >
+          {t('sheet.view')}
+        </Button>
+        {inventoryPath && (
+          <Button
+            component={Link}
+            to={inventoryPath}
+            variant="default"
+            leftSection={<Backpack size={16} aria-hidden="true" />}
+          >
+            {t('party.openInventory')}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

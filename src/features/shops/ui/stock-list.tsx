@@ -23,6 +23,7 @@ import {
   EyeOff,
   Hammer,
   Minus,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -122,6 +123,7 @@ function ListingRow({
   onToggle,
   onSave,
   onRemove,
+  onEditItem,
 }: {
   shop: AdminShop
   listing: AdminListing
@@ -132,6 +134,7 @@ function ListingRow({
   onToggle: () => void
   onSave: (draft: ListingDraft) => void
   onRemove: () => void
+  onEditItem?: () => void
 }) {
   const { t } = useTranslation()
   const initial: ListingDraft = {
@@ -201,6 +204,21 @@ function ListingRow({
       <Collapse expanded={expanded} id={panelId}>
         {expanded && (
           <Stack gap="md" className="stock-row-editor">
+            {onEditItem && (
+              <div className="stock-item-link">
+                <Button
+                  variant="light"
+                  leftSection={<Pencil size={16} aria-hidden="true" />}
+                  onClick={onEditItem}
+                  aria-label={`${t('shop.editItem')}: ${item.name}`}
+                >
+                  {t('shop.editItem')}
+                </Button>
+                <Text size="sm" c="dimmed">
+                  {t('shop.editItemHint')}
+                </Text>
+              </div>
+            )}
             <Group align="start" gap="xl" wrap="wrap">
               <Stepper
                 label={t('shop.price')}
@@ -338,11 +356,13 @@ export function StockList({
   onAdd,
   onSave,
   onRemove,
+  onEditItem,
 }: {
   shop: AdminShop
   data: ShopAdmin
   busy: boolean
   onAdd: () => void
+  onEditItem?: (definitionId: string) => void
   onSave: (listing: AdminListing, draft: ListingDraft, name: string, done: () => void) => void
   onRemove: (listing: AdminListing, name: string) => void
 }) {
@@ -384,6 +404,7 @@ export function StockList({
                   })
                 }
                 onRemove={() => onRemove(listing, item.name)}
+                onEditItem={onEditItem ? () => onEditItem(listing.definition_id) : undefined}
               />
             )
           })}

@@ -68,6 +68,7 @@ export function Forge({
   media,
   dm,
   targets,
+  initialGive,
   pending,
   error,
   onSave,
@@ -77,6 +78,8 @@ export function Forge({
   media?: React.ReactNode
   dm: boolean
   targets: ForgeTarget[]
+  /** Characters preselected to receive a new item (for example "New item for Arin"). */
+  initialGive?: string[]
   pending: boolean
   error: string | null
   onSave: (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => void
@@ -87,8 +90,8 @@ export function Forge({
   const [draft, setDraft] = useState<DefinitionDraft>(() =>
     definition ? fromDefinition(definition) : emptyDraft(),
   )
-  const [give, setGive] = useState<string[]>(() =>
-    !dm && !definition && targets[0] ? [targets[0].id] : [],
+  const [give, setGive] = useState<string[]>(
+    () => initialGive ?? (!dm && !definition && targets[0] ? [targets[0].id] : []),
   )
   const [amount, setAmount] = useState<number | string>(1)
   const set = (change: Partial<DefinitionDraft>) =>
@@ -336,6 +339,11 @@ export function Forge({
                 <Text fw={600} size="sm">
                   {t('inventory.forge.giveTo')}
                 </Text>
+                {!definition && (
+                  <Text size="sm" c="dimmed">
+                    {t('store.giveHint')}
+                  </Text>
+                )}
               </legend>
               <div className="give-roster" role="group">
                 {targets.map((target) => (

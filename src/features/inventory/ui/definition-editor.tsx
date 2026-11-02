@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Loader, Drawer, FileInput, Group, Stack, Text } from '@mantine/core'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { useInventoryAction } from '../api'
+import { rosterQuery, useInventoryAction } from '../api'
 import { attachItemImage, discardItemUpload, uploadItemImage } from '../data/repository'
 import type { DefinitionDraft, ItemDefinition } from '../domain/item'
 import { Forge } from './forge'
 import { ItemIcon } from './item-icon'
+import { CharacterPortrait } from './portrait'
+
+export type GiveOutcome = { given: string[]; failed: string[] }
 
 /** Decode and re-encode: never upload arbitrary bytes or crop an item illustration. */
 async function toItemImage(file: File) {
@@ -41,17 +44,32 @@ export function DefinitionEditor({
   definition,
   onSaved,
   onClose,
+  allowGive = false,
+  initialGive,
 }: {
   campaignId: string
   definition: ItemDefinition | null
-  onSaved: (item: ItemDefinition) => void
+  /** `outcome` lists the character names that received (or failed to receive) the new item. */
+  onSaved: (item: ItemDefinition, outcome?: GiveOutcome) => void
   onClose: () => void
+  /** Offer "Give to" roster chips so a new item can be created for characters (RYT-027). */
+  allowGive?: boolean
+  initialGive?: string[]
 }) {
   const { t } = useTranslation()
   const { state, controller } = useAuth()
   const userId = state.user!.id
   const cache = useQueryClient()
   const action = useInventoryAction(campaignId)
+  const roster = useQuery({
+    ...rosterQuery(userId, campaignId),
+    enabled: allowGive && !definition,
+  })
+  const pendingGive = useRef<{ characterIds: string[]; amount: number }>({
+    characterIds: [],
+    amount: 1,
+  })
+  const grantRequests = useRef(new Map<string, string>())
   const [file, setFile] = useState<File | null>(null)
   const [image, setImage] = useState<Blob | null | undefined>(undefined)
   const [preview, setPreview] = useState<string | null>(null)
@@ -87,11 +105,36 @@ export function DefinitionEditor({
       path = image ? upload.current : null
       await attachItemImage(campaignId, item.id, item.revision, path, requestId.current)
     }
+    // Grants run after the definition exists; each target keeps a stable idempotency key so a
+    // retry after a partial failure never doubles an already granted stack.
+    const outcome: GiveOutcome = { given: [], failed: [] }
+    const nameOf = (id: string) => roster.data?.find((c) => c.id === id)?.name ?? id
+    for (const characterId of pendingGive.current.characterIds) {
+      const key = `${item.id}:${characterId}`
+      if (!grantRequests.current.has(key)) grantRequests.current.set(key, crypto.randomUUID())
+      try {
+        await action.mutateAsync({
+          kind: 'grant',
+          characterId,
+          definitionId: item.id,
+          amount: pendingGive.current.amount,
+          requestId: grantRequests.current.get(key),
+        })
+        outcome.given.push(nameOf(characterId))
+      } catch {
+        outcome.failed.push(nameOf(characterId))
+      }
+    }
+    pendingGive.current = { characterIds: [], amount: 1 }
     await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
-    onSaved({ ...item, image_path: path, revision: item.revision + (image !== undefined ? 1 : 0) })
+    onSaved(
+      { ...item, image_path: path, revision: item.revision + (image !== undefined ? 1 : 0) },
+      outcome.given.length || outcome.failed.length ? outcome : undefined,
+    )
     restoreFocus()
   }
-  const save = async (draft: DefinitionDraft) => {
+  const save = async (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => {
+    pendingGive.current = definition ? { characterIds: [], amount: 1 } : give
     setError(null)
     setBusy(true)
     try {
@@ -182,10 +225,27 @@ export function DefinitionEditor({
     <Forge
       definition={definition}
       dm
-      targets={[]}
+      targets={
+        allowGive && !definition
+          ? (roster.data ?? []).map((c) => ({
+              id: c.id,
+              name: c.name,
+              portrait: (
+                <CharacterPortrait
+                  campaignId={campaignId}
+                  characterId={c.id}
+                  name={c.name}
+                  path={null}
+                  size={40}
+                />
+              ),
+            }))
+          : []
+      }
+      initialGive={initialGive}
       pending={busy}
       error={error}
-      onSave={(draft) => void save(draft)}
+      onSave={(draft, give) => void save(draft, give)}
       onClose={() => void close()}
       media={
         <Stack gap="xs">

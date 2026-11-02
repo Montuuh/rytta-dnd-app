@@ -1,8 +1,8 @@
-import { HashRouter, Route, Routes } from 'react-router'
+import { HashRouter, Navigate, Route, Routes } from 'react-router'
 import { lazy, Suspense } from 'react'
 import { LoadingScreen } from '@/shared/ui/loading-screen'
 import { Layout } from './layout'
-import { CampaignBoundary, CampaignHub, CampaignMembers } from '@/features/campaigns'
+import { CampaignBoundary, CampaignHub } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
@@ -19,8 +19,8 @@ const CharacterCreationPage = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterCreationPage })),
 )
 
-const CampaignItemsPage = lazy(() =>
-  import('@/pages/campaign-items-page').then((module) => ({ default: module.CampaignItemsPage })),
+const DmCenterPage = lazy(() =>
+  import('@/pages/dm-center-page').then((module) => ({ default: module.DmCenterPage })),
 )
 
 const InventoryPage = lazy(() =>
@@ -64,8 +64,12 @@ export function AppRouter() {
                     <Route path="party" element={<CharacterParty />} />
                     <Route path="party/:characterId" element={<CharacterSheetPage />} />
                     <Route path="party/:characterId/create" element={<CharacterCreationPage />} />
-                    <Route path="members" element={<CampaignMembers />} />
-                    <Route path="items" element={<CampaignItemsPage />} />
+                    <Route path="members" element={<DmCenterPage />} />
+                    {/* RYT-027: the storeroom moved into the DM Command Center. */}
+                    <Route
+                      path="items"
+                      element={<Navigate to="../members?panel=items" relative="path" replace />}
+                    />
                     <Route path="inventory" element={<InventoryPage />} />
                     <Route path="shops" element={<ShopsPage />} />
                     <Route path="*" element={<ModulePage />} />

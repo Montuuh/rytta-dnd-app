@@ -91,7 +91,7 @@ export const identityEs = {
   'query.error': 'No se pudo cargar esta información.',
   'dm.commandCenter': 'Centro de mando DM',
   'dm.commandIntro':
-    'Controla los módulos activos para jugadores, la cola rápida de revelaciones, miembros e invitaciones y el registro de auditoría.',
+    'Gestiona miembros, módulos visibles, el almacén de objetos y el historial de cambios de tu campaña.',
   'dm.panelAll': 'Todos los paneles',
   'dm.panelMembers': 'Miembros',
   'dm.panelModules': 'Módulos activos',

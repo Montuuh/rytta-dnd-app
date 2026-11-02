@@ -1,8 +1,8 @@
 import type { inventoryEn } from './inventory-en'
 export const inventoryEs = {
   'catalogue.search': 'Buscar objetos',
-  'catalogue.title': 'Objetos de campaña',
-  'catalogue.create': 'Crear objeto',
+  'catalogue.title': 'Almacén de objetos',
+  'catalogue.create': 'Nuevo objeto',
   'catalogue.intro':
     'Prepara objetos para tu campaña y después entrégalos o añádelos a una tienda.',
   'catalogue.edit': 'Editar',

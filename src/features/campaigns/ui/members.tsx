@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router'
 import {
   Alert,
   Badge,
   Button,
   Group,
   Modal,
-  NativeSelect,
   Paper,
   SegmentedControl,
   Stack,
@@ -29,10 +29,9 @@ import {
   Image,
   Landmark,
   Lock,
-  Plus,
   ScrollText,
   Shield,
-  Sparkles,
+  Package,
   Store,
   Swords,
   UserRound,
@@ -43,25 +42,20 @@ import { useAuth } from '@/features/auth'
 import {
   auditEventsQuery,
   membersQuery,
-  revelationsQuery,
   sentInvitationsQuery,
   useCampaignAction,
   type CampaignAction,
 } from '../api'
 import { useCampaign } from '../campaign-context'
-import {
-  createRevelationSchema,
-  inviteEmailSchema,
-  type RevelationCategory,
-  type RevelationVisibility,
-} from '../domain/campaign'
+import { inviteEmailSchema } from '../domain/campaign'
 import { useCampaignView } from '../view-context'
 import { ActionFeedback, QueryFeedback } from './feedback'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { relativeTime } from '@/shared/lib/relative-time'
 
 type Confirmation = { action: CampaignAction; message: string }
-type DmPanel = 'members' | 'modules' | 'revelations' | 'audit'
+type DmPanel = 'members' | 'modules' | 'items' | 'audit'
+const dmPanels: DmPanel[] = ['members', 'modules', 'items', 'audit']
 type AuditFilter = 'all' | 'characters' | 'resources'
 const auditResourceKeys = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 
@@ -78,25 +72,46 @@ const campaignModules = [
   { key: 'workshop', label: 'module.workshop', icon: Gem },
 ] as const
 
-export function CampaignMembers() {
+/** The DM Command Center. `itemsPanel` is composed by the page so the campaigns feature does
+ * not depend on inventory or shops (ADR 016). The active tab lives in `?panel=` for links. */
+export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {}) {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const user = state.user!
   const campaign = useCampaign()
   const { playerPreview } = useCampaignView()
   const dm = campaign.role === 'dm' && !playerPreview
-  const [activePanel, setActivePanel] = useState<DmPanel>('members')
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('panel') as DmPanel | null
+  const activePanel: DmPanel =
+    requested && dmPanels.includes(requested) && (requested !== 'items' || itemsPanel)
+      ? requested
+      : 'members'
+  const setActivePanel = (panel: DmPanel) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        if (panel === 'members') next.delete('panel')
+        else next.set('panel', panel)
+        return next
+      },
+      { replace: true },
+    )
   const wide = useMediaQuery('(min-width: 62em)')
+  // Keep the selected tab visible in the horizontally scrolling phone tab rail (deep links).
+  useEffect(() => {
+    document
+      .querySelector('.dm-tabs-list [data-active]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [activePanel, wide])
   const [auditFilter, setAuditFilter] = useState<AuditFilter>('all')
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
   const invitations = useQuery({ ...sentInvitationsQuery(user.id, campaign.id), enabled: dm })
-  const revelations = useQuery({ ...revelationsQuery(user.id, campaign.id), enabled: dm })
   const auditEvents = useQuery({ ...auditEventsQuery(user.id, campaign.id), enabled: dm })
   const action = useCampaignAction()
   const trigger = useRef<HTMLElement | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [revelationOpen, setRevelationOpen] = useState(false)
   const inviteForm = useForm({
     initialValues: { email: '' },
     validate: {
@@ -104,23 +119,6 @@ export function CampaignMembers() {
         inviteEmailSchema.safeParse(value.trim().toLowerCase()).success
           ? null
           : t('members.invalidEmail'),
-    },
-  })
-  const revelationForm = useForm<{
-    title: string
-    category: RevelationCategory
-    summary: string
-    visibility: RevelationVisibility
-  }>({
-    initialValues: {
-      title: '',
-      category: 'shop',
-      summary: '',
-      visibility: 'dm_only',
-    },
-    validate: {
-      title: (value) =>
-        createRevelationSchema.shape.title.safeParse(value).success ? null : t('hub.invalidName'),
     },
   })
   const openConfirmation = (next: Confirmation, target: HTMLElement) => {
@@ -139,13 +137,6 @@ export function CampaignMembers() {
       restoreTriggerFocus()
     }
   }
-  const closeRevelation = () => {
-    if (!action.isPending) {
-      setRevelationOpen(false)
-      revelationForm.reset()
-      restoreTriggerFocus()
-    }
-  }
   const handleInviteSubmit = inviteForm.onSubmit((values) => {
     action.mutate(
       { kind: 'invite', campaignId: campaign.id, email: values.email },
@@ -157,52 +148,30 @@ export function CampaignMembers() {
       },
     )
   })
-  const handleRevelationSubmit = revelationForm.onSubmit((values) => {
-    action.mutate(
-      {
-        kind: 'createRevelation',
-        campaignId: campaign.id,
-        title: values.title,
-        category: values.category,
-        summary: values.summary,
-        visibility: values.visibility,
-      },
-      {
-        onSuccess: () => {
-          setRevelationOpen(false)
-          revelationForm.reset()
-        },
-      },
-    )
-  })
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
   const enabledModules = new Set(campaign.player_modules ?? ['party'])
   const showMembers = activePanel === 'members'
   const showModules = activePanel === 'modules'
-  const showRevelations = activePanel === 'revelations'
+  const showItems = activePanel === 'items' && !!itemsPanel
   const showAudit = activePanel === 'audit'
   const refreshAll = () => {
     void members.refetch()
     void invitations.refetch()
-    void revelations.refetch()
     void auditEvents.refetch()
   }
-  const fetching =
-    members.isFetching || invitations.isFetching || revelations.isFetching || auditEvents.isFetching
+  const fetching = members.isFetching || invitations.isFetching || auditEvents.isFetching
   const updatedAt = Math.max(
     members.dataUpdatedAt,
     invitations.dataUpdatedAt,
-    revelations.dataUpdatedAt,
     auditEvents.dataUpdatedAt,
   )
 
   return (
     <Stack gap="xl">
       <div>
-        {dm && <Text className="eyebrow">{t('dm.commandCenter')}</Text>}
-        <Title order={1}>{t('members.title')}</Title>
+        <Title order={1}>{t(dm ? 'campaign.manage' : 'members.title')}</Title>
         <Text c="dimmed" mt="sm">
           {t(dm ? 'dm.commandIntro' : 'members.playerHint')}
         </Text>
@@ -226,14 +195,20 @@ export function CampaignMembers() {
                 [
                   ['members', 'dm.panelMembers', Users],
                   ['modules', 'dm.panelModules', Shield],
-                  ['revelations', 'dm.panelRevelations', Sparkles],
+                  ['items', 'dm.panelItems', Package],
                   ['audit', 'dm.panelAudit', History],
                 ] as const
-              ).map(([key, label, Icon]) => (
-                <Tabs.Tab key={key} value={key} leftSection={<Icon size={18} aria-hidden="true" />}>
-                  {t(label)}
-                </Tabs.Tab>
-              ))}
+              )
+                .filter(([key]) => key !== 'items' || itemsPanel)
+                .map(([key, label, Icon]) => (
+                  <Tabs.Tab
+                    key={key}
+                    value={key}
+                    leftSection={<Icon size={18} aria-hidden="true" />}
+                  >
+                    {t(label)}
+                  </Tabs.Tab>
+                ))}
             </Tabs.List>
             <Tabs.Panel value={activePanel} className="dm-tabs-panel">
               <Stack gap="xl">
@@ -458,107 +433,7 @@ export function CampaignMembers() {
                     </Stack>
                   </section>
                 )}
-                {showRevelations && (
-                  <section aria-labelledby="revelations-heading">
-                    <Stack>
-                      <Group justify="space-between" align="flex-start">
-                        <div>
-                          <Group gap="xs">
-                            <Sparkles size={20} className="feature-icon" aria-hidden="true" />
-                            <Title order={2} id="revelations-heading">
-                              {t('dm.revelationsTitle')}
-                            </Title>
-                          </Group>
-                          <Text size="sm" c="dimmed" mt={4}>
-                            {t('dm.revelationsHint')}
-                          </Text>
-                        </div>
-                        <Button
-                          leftSection={<Plus size={18} aria-hidden="true" />}
-                          onClick={(event) => {
-                            trigger.current = event.currentTarget
-                            action.reset()
-                            revelationForm.reset()
-                            setRevelationOpen(true)
-                          }}
-                        >
-                          {t('dm.createRevelation')}
-                        </Button>
-                      </Group>
-                      <QueryFeedback
-                        pending={revelations.isPending}
-                        error={revelations.isError}
-                        retry={() => void revelations.refetch()}
-                      />
-                      {!revelations.isError &&
-                        revelations.data &&
-                        (revelations.data.length ? (
-                          revelations.data.map((item) => {
-                            const isPublic = item.visibility === 'party'
-                            return (
-                              <Paper
-                                key={item.id}
-                                p="lg"
-                                className={`revelation-card ${isPublic ? '' : 'revelation-card-draft'}`}
-                              >
-                                <Stack gap="sm">
-                                  <Group justify="space-between" align="flex-start">
-                                    <Badge variant="light">
-                                      {t(`dm.category.${item.category}`)}
-                                    </Badge>
-                                    <Badge
-                                      variant={isPublic ? 'filled' : 'outline'}
-                                      leftSection={
-                                        isPublic ? (
-                                          <Eye size={12} aria-hidden="true" />
-                                        ) : (
-                                          <Lock size={12} aria-hidden="true" />
-                                        )
-                                      }
-                                    >
-                                      {t(isPublic ? 'dm.visibilityParty' : 'dm.visibilityDmOnly')}
-                                    </Badge>
-                                  </Group>
-                                  <Title order={3} className="user-copy">
-                                    {item.title}
-                                  </Title>
-                                  {item.summary && (
-                                    <Text size="sm" c="dimmed" className="user-copy">
-                                      {item.summary}
-                                    </Text>
-                                  )}
-                                  <Switch
-                                    size="lg"
-                                    className="reveal-switch"
-                                    checked={isPublic}
-                                    aria-disabled={action.isPending || undefined}
-                                    label={t('dm.revealSwitchLabel')}
-                                    aria-label={t('dm.revealSwitch', { title: item.title })}
-                                    onLabel={<Eye size={14} aria-hidden="true" />}
-                                    offLabel={<Lock size={14} aria-hidden="true" />}
-                                    onChange={() =>
-                                      !action.isPending &&
-                                      action.mutate({
-                                        kind: 'revelationVisibility',
-                                        campaignId: campaign.id,
-                                        revelationId: item.id,
-                                        visibility: isPublic ? 'dm_only' : 'party',
-                                      })
-                                    }
-                                  />
-                                </Stack>
-                              </Paper>
-                            )
-                          })
-                        ) : (
-                          <Paper p="lg">
-                            <Text c="dimmed">{t('dm.noRevelations')}</Text>
-                          </Paper>
-                        ))}
-                    </Stack>
-                  </section>
-                )}
-
+                {showItems && itemsPanel}
                 {showAudit && (
                   <section aria-labelledby="audit-heading">
                     <Stack>
@@ -754,7 +629,7 @@ export function CampaignMembers() {
           </Tabs>
         </>
       )}
-      {!playerPreview && (
+      {!playerPreview && (!dm || showMembers) && (
         <Paper p="lg">
           <Stack>
             {lastDm && (
@@ -819,63 +694,6 @@ export function CampaignMembers() {
               </Button>
               <Button type="submit" loading={action.isPending}>
                 {t('members.invite')}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
-      <Modal
-        opened={revelationOpen}
-        onClose={closeRevelation}
-        title={t('dm.createRevelation')}
-        returnFocus={false}
-        onExitTransitionEnd={restoreTriggerFocus}
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-      >
-        <form onSubmit={handleRevelationSubmit}>
-          <Stack>
-            <TextInput
-              label={t('dm.revelationTitle')}
-              required
-              data-autofocus
-              maxLength={120}
-              {...revelationForm.getInputProps('title')}
-            />
-            <NativeSelect
-              label={t('dm.revelationCategory')}
-              data={[
-                { value: 'shop', label: t('dm.category.shop') },
-                { value: 'quest', label: t('dm.category.quest') },
-                { value: 'atlas', label: t('dm.category.atlas') },
-                { value: 'glossary', label: t('dm.category.glossary') },
-                { value: 'npc', label: t('dm.category.npc') },
-              ]}
-              {...revelationForm.getInputProps('category')}
-            />
-            <TextInput
-              label={t('dm.revelationSummary')}
-              maxLength={1000}
-              {...revelationForm.getInputProps('summary')}
-            />
-            <NativeSelect
-              label={t('dm.revelationVisibility')}
-              data={[
-                { value: 'dm_only', label: t('dm.visibilityDmOnly') },
-                { value: 'party', label: t('dm.visibilityParty') },
-              ]}
-              {...revelationForm.getInputProps('visibility')}
-            />
-            {action.isError && (
-              <Alert role="alert" color="red">
-                {t('characters.unavailable')}
-              </Alert>
-            )}
-            <Group justify="flex-end">
-              <Button variant="subtle" onClick={closeRevelation} disabled={action.isPending}>
-                {t('action.cancel')}
-              </Button>
-              <Button type="submit" loading={action.isPending}>
-                {t('dm.createRevelation')}
               </Button>
             </Group>
           </Stack>

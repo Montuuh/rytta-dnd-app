@@ -166,7 +166,8 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await expect(resale).toHaveAttribute('aria-valuetext', 'Paga el 65 %')
 
   // Inline stock editing: price stepper and limited stock.
-  const potionRow = page.getByRole('button', { name: /Poción de curación/ })
+  // The expanded row also offers 'Editar objeto: …' (RYT-027); anchor on the row button.
+  const potionRow = page.getByRole('button', { name: /^Poción de curación/ })
   await potionRow.click()
   await expect(potionRow).toHaveAttribute('aria-expanded', 'true')
   await page.getByRole('button', { name: 'Subir Precio' }).click()

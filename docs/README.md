@@ -47,3 +47,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 
 27. [ADR 017: campaign items and private images](decisions/017-campaign-items.md)
     and [RYT-026 verification](evidence/RYT-026/validation.md).
+28. [ADR 018: DM Command Center storeroom and Party redesign](decisions/018-dm-command-center-storeroom.md)
+    and [RYT-027 verification](evidence/RYT-027/validation.md).

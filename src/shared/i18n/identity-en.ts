@@ -89,7 +89,7 @@ export const identityEn = {
   'query.error': 'We could not load this information.',
   'dm.commandCenter': 'DM command center',
   'dm.commandIntro':
-    'Control active player modules, the quick revelations queue, members & invitations and the campaign audit log.',
+    "Manage members, visible modules, the item storeroom and your campaign's change history.",
   'dm.panelAll': 'All panels',
   'dm.panelMembers': 'Members',
   'dm.panelModules': 'Active modules',

@@ -9,4 +9,5 @@ export type { ItemCategory, ItemDefinition, ItemStack, Rarity } from './domain/i
 export { HoldSeal } from './ui/hold-seal'
 
 export { catalogueQuery, rosterQuery, useInventoryAction } from './api'
-export { DefinitionEditor } from './ui/definition-editor'
+export { DefinitionEditor, type GiveOutcome } from './ui/definition-editor'
+export { categoryIcons, rarityPips } from './ui/item-visuals'

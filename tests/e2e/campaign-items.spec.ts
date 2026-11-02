@@ -2,7 +2,18 @@ import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
 import { shopsFixture } from './fixtures/shops.ts'
+// RYT-027: /items redirects into the DM Command Center storeroom tab.
 const url = `./#/campaign/${campaignId}/items`
+
+/** Row actions are icon buttons on wide screens and fold into one menu on phones. */
+async function rowAction(page: Page, name: string, label: string, item: string) {
+  const row = page.locator('.store-row').filter({ hasText: name })
+  await expect(row).toBeVisible()
+  const direct = row.getByRole('button', { name: label, exact: true })
+  if (await direct.count()) return direct.click()
+  await row.getByRole('button', { name: `Acciones para ${name}`, exact: true }).click()
+  await page.getByRole('menuitem', { name: item, exact: true }).click()
+}
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
   'base64',
@@ -41,10 +52,10 @@ for (const language of ['es', 'en'] as const)
       await page.goto(url)
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
       await expect(
-        page.getByRole('heading', { name: es ? 'Objetos de campaña' : 'Campaign items' }),
+        page.getByRole('heading', { name: es ? 'Almacén de objetos' : 'Item storeroom' }),
       ).toBeVisible()
       const create = page.getByRole('button', {
-        name: es ? 'Crear objeto' : 'Create item',
+        name: es ? 'Nuevo objeto' : 'New item',
         exact: true,
       })
       await create.click()
@@ -63,15 +74,17 @@ for (const language of ['es', 'en'] as const)
         .getByRole('button', { name: es ? 'Forjar objeto' : 'Forge item', exact: true })
         .click()
       await expect(page.getByRole('dialog')).toHaveCount(0)
-      await expect(page.getByRole('heading', { name: 'Moonstone' })).toBeVisible()
+      await expect(page.locator('.store-row').filter({ hasText: 'Moonstone' })).toBeVisible()
       expect(fixture.inventory.definitions).toHaveLength(1)
       expect(fixture.inventory.stacks).toHaveLength(0)
       expect(fixture.inventory.definitions[0]!.image_path).toMatch(/^pre\//)
       await expect(page.locator('main img')).toBeVisible()
       await audit(page, info.outputPath('catalogue.png'))
       await page.reload()
-      await expect(page.getByRole('heading', { name: 'Moonstone' })).toBeVisible()
-      const edit = page.getByRole('button', { name: es ? 'Editar' : 'Edit', exact: true })
+      await expect(page.locator('.store-row').filter({ hasText: 'Moonstone' })).toBeVisible()
+      const edit = page.getByRole('button', {
+        name: es ? /^Editar: Moonstone/ : /^Edit: Moonstone/,
+      })
       await edit.click()
       await page.keyboard.press('Escape')
       await expect(edit).toBeFocused()
@@ -88,7 +101,7 @@ test('image attachment failure retries without creating another item', async ({ 
     return route.fallback()
   })
   await page.goto(url)
-  await page.getByRole('button', { name: 'Crear objeto', exact: true }).click()
+  await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Retry stone')
   await page
     .locator('input[type=file]')
@@ -101,7 +114,7 @@ test('image attachment failure retries without creating another item', async ({ 
   await expect(page.getByRole('dialog')).toHaveCount(0)
   expect(f.inventory.definitions).toHaveLength(1)
   expect(new Set(keys).size).toBe(1)
-  await page.getByRole('button', { name: 'Editar', exact: true }).click()
+  await page.getByRole('button', { name: /^Editar: Retry stone/ }).click()
   await page.getByRole('button', { name: 'Quitar imagen' }).click()
   await page.getByRole('button', { name: 'Guardar cambios', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -137,8 +150,9 @@ test('Players cannot access the DM catalogue and sheet links directly to their e
 }) => {
   await identityFixture(page, { player: true, inventory: true, sheet: 'complete' })
   await page.goto(url)
-  await expect(page.getByRole('alert')).toContainText('No puedes hacer eso')
-  await expect(page.getByRole('button', { name: 'Crear objeto' })).toHaveCount(0)
+  await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Almacén de objetos' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Nuevo objeto' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
   await page.getByRole('link', { name: 'Ver y cambiar equipo' }).click()
   await expect(
@@ -184,17 +198,14 @@ test('one campaign definition is gifted and reused across two shops', async ({ p
     return route.fallback()
   })
   await page.goto(url)
-  await page.getByRole('button', { name: 'Crear objeto', exact: true }).click()
+  await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('General charm')
   await page.getByRole('button', { name: 'Forjar objeto', exact: true }).click()
-  const card = page
-    .locator('.mantine-Paper-root')
-    .filter({ has: page.getByRole('heading', { name: 'General charm', exact: true }) })
-  await card.getByRole('button', { name: 'Dar a personajes' }).click()
-  await page.getByRole('combobox', { name: 'Personaje', exact: true }).click()
-  await page.getByRole('option', { name: 'Arin', exact: true }).click()
-  await page.getByRole('textbox', { name: 'Cantidad', exact: true }).fill('2')
-  await page.getByRole('dialog').getByRole('button', { name: 'Dar a personajes' }).click()
+  await rowAction(page, 'General charm', 'Dar General charm a personajes', 'Dar a personajes')
+  const drawer = page.getByRole('dialog')
+  await drawer.getByRole('button', { name: 'Arin', exact: true }).click()
+  await drawer.getByRole('button', { name: 'Aumentar Cantidad', exact: true }).click()
+  await drawer.getByRole('button', { name: 'Dar a personajes' }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible()
   await page.getByRole('button', { name: 'Reintentar', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -206,7 +217,7 @@ test('one campaign definition is gifted and reused across two shops', async ({ p
       .reduce((n, s) => n + s.quantity, 0),
   ).toBe(2)
   for (const shop of ['Mercado del puerto', 'El Yunque de Ámbar']) {
-    await card.getByRole('button', { name: 'Añadir a tienda' }).click()
+    await rowAction(page, 'General charm', 'Añadir General charm a una tienda', 'Añadir a tienda')
     await page.getByRole('combobox', { name: 'Tienda', exact: true }).click()
     await page.getByRole('option', { name: shop, exact: true }).click()
     await page.getByRole('textbox', { name: 'Precio en oro' }).fill('25')
@@ -277,4 +288,79 @@ test('a partial shop bulk-add keeps only unfinished selections and reuses its re
   expect(keys).toHaveLength(3)
   expect(keys[1]).toBe(keys[2])
   expect(keys[0]).not.toBe(keys[1])
+})
+
+test('RYT-027 a new item created for a character from Party lands in that satchel', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Más acciones para Arin', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Nuevo objeto para Arin', exact: true }).click()
+  await expect(page).toHaveURL(/panel=items/)
+  const forge = page.getByRole('dialog')
+  await expect(forge.getByRole('button', { name: 'Arin', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await forge.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Moon charm')
+  await audit(page, info.outputPath('create-for-character.png'))
+  await forge.getByRole('button', { name: 'Forjar objeto', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Moon charm' })).toContainText(
+    'entregado a Arin',
+  )
+  await expect(page).not.toHaveURL(/create=/)
+  const item = f.inventory.definitions.find((d) => d.name === 'Moon charm')!
+  expect(f.inventory.stacks.some((s) => s.definition_id === item.id)).toBe(true)
+})
+
+test('RYT-027 storeroom filters, sorts and switches between list and grid', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await page.goto(url)
+  const list = page.locator('.store-list')
+  await expect(list.locator('.store-row')).toHaveCount(6)
+  await page.getByRole('button', { name: /^Armas/ }).click()
+  await expect(list.locator('.store-row')).toHaveCount(1)
+  await page.getByRole('button', { name: /^Todo/ }).click()
+  await page.getByRole('textbox', { name: 'Buscar objetos' }).fill('zzz')
+  await expect(page.getByText('Ningún objeto coincide con estos filtros.')).toBeVisible()
+  await page.getByRole('button', { name: 'Quitar filtros', exact: true }).click()
+  await page.locator('.store-view label').filter({ hasText: 'Cuadrícula' }).click()
+  await expect(page.locator('.store-grid .store-tile')).toHaveCount(6)
+  await audit(page, info.outputPath('storeroom-grid.png'))
+  // F1: closing an overlay opened from a tile menu returns focus to that ⋯ button.
+  const menu = page.getByRole('button', { name: 'Acciones para Escudo', exact: true })
+  await menu.click()
+  await page.getByRole('menuitem', { name: 'Dar a personajes', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(menu).toBeFocused()
+  await page.reload()
+  await expect(page.locator('.store-grid .store-tile')).toHaveCount(6)
+})
+
+test('RYT-027 a shop listing opens the shared item editor', async ({ page }) => {
+  const f = await identityFixture(page, {
+    inventory: true,
+    sheet: 'complete',
+    modules: ['party', 'inventory', 'shops'],
+  })
+  await shopsFixture(page, f)
+  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await page
+    .getByRole('button', { name: /Poción de curación/ })
+    .first()
+    .click()
+  await page.getByRole('button', { name: 'Editar objeto: Poción de curación', exact: true }).click()
+  const editor = page.getByRole('dialog')
+  await expect(editor.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue(
+    'Poción de curación',
+  )
+  await editor.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Poción mayor')
+  await editor.getByRole('button', { name: 'Guardar cambios', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(f.inventory.definitions.some((d) => d.name === 'Poción mayor')).toBe(true)
 })

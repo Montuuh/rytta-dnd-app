@@ -1,5 +1,17 @@
 import { useState } from 'react'
-import { Alert, Badge, Button, Group, Paper, Stack, Tabs, Text, Title } from '@mantine/core'
+import {
+  ActionIcon,
+  Alert,
+  Badge,
+  Button,
+  Group,
+  Paper,
+  Stack,
+  Tabs,
+  Text,
+  Title,
+  Tooltip,
+} from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -118,7 +130,7 @@ export function CharacterSheetPage() {
   const shared = { build, sheet, vitals, canEdit, pending: action.isPending, commit }
   return (
     <Stack gap="md" className="character-sheet">
-      <Group justify="space-between" wrap="nowrap" gap="xs">
+      <Group justify="space-between" wrap="nowrap" gap="xs" className="sheet-header">
         {back}
         <Group gap="xs" wrap="nowrap" className="sheet-header-actions">
           {showHistory && (
@@ -129,14 +141,32 @@ export function CharacterSheetPage() {
             />
           )}
           {canEdit && (
-            <Button
-              component={Link}
-              to={editPath}
-              variant="light"
-              leftSection={<Pencil size={16} aria-hidden="true" />}
-            >
-              {t('sheet.editBuild')}
-            </Button>
+            <>
+              <Button
+                component={Link}
+                to={editPath}
+                visibleFrom="sm"
+                className="sheet-tool is-primary"
+                leftSection={<Pencil size={16} aria-hidden="true" />}
+              >
+                {t('sheet.editBuild')}
+              </Button>
+              <Tooltip
+                label={t('sheet.editBuild')}
+                events={{ hover: true, focus: true, touch: true }}
+              >
+                <ActionIcon
+                  component={Link}
+                  to={editPath}
+                  hiddenFrom="sm"
+                  size={44}
+                  className="sheet-tool is-primary"
+                  aria-label={t('sheet.editBuild')}
+                >
+                  <Pencil size={20} aria-hidden="true" />
+                </ActionIcon>
+              </Tooltip>
+            </>
           )}
         </Group>
       </Group>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Drawer, Paper, Stack, Text } from '@mantine/core'
+import { ActionIcon, Button, Drawer, Paper, Stack, Text, Tooltip } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { History } from 'lucide-react'
@@ -33,13 +33,26 @@ export function SheetHistory({
   return (
     <>
       <Button
-        variant="default"
+        visibleFrom="sm"
+        className="sheet-tool"
         leftSection={<History size={16} aria-hidden="true" />}
         aria-haspopup="dialog"
         onClick={() => setOpened(true)}
       >
         {t('audit.open')}
       </Button>
+      <Tooltip label={t('audit.open')} events={{ hover: true, focus: true, touch: true }}>
+        <ActionIcon
+          hiddenFrom="sm"
+          size={44}
+          className="sheet-tool"
+          aria-label={t('audit.open')}
+          aria-haspopup="dialog"
+          onClick={() => setOpened(true)}
+        >
+          <History size={20} aria-hidden="true" />
+        </ActionIcon>
+      </Tooltip>
       <Drawer
         opened={opened}
         onClose={() => setOpened(false)}

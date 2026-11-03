@@ -218,6 +218,18 @@ export function CharacterParty() {
                                 {t('party.shareOff')}
                               </Text>
                             )}
+                            {live && (
+                              <span className="character-owner-share">
+                                <LiveShareToggle
+                                  campaignId={campaign.id}
+                                  characterId={character.id}
+                                  name={character.name}
+                                  shared={live.shares_live}
+                                  onError={() => setShareError(true)}
+                                  onSuccess={() => setShareError(false)}
+                                />
+                              </span>
+                            )}
                           </div>
                         )}
                         {summary && summary.status === 'complete' && (
@@ -232,16 +244,6 @@ export function CharacterParty() {
                           </Text>
                         )}
                       </div>
-                      {dm && live && (
-                        <LiveShareToggle
-                          campaignId={campaign.id}
-                          characterId={character.id}
-                          name={character.name}
-                          shared={live.shares_live}
-                          onError={() => setShareError(true)}
-                          onSuccess={() => setShareError(false)}
-                        />
-                      )}
                       <CharacterMenu
                         character={character}
                         dm={dm}

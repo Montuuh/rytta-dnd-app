@@ -61,12 +61,16 @@ test('keyboard search finds a condition in either language and shows its quick f
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
   await expect(search).toBeFocused()
   // English name in a Spanish interface.
-  await search.fill('grappled')
+  // Real typing on the 550-entry "All" tab must keep every keystroke (ui-ux F1).
+  await search.pressSequentially('grappled', { delay: 40 })
+  await expect(search).toHaveValue('grappled')
   await expect(page.getByText('1 entrada', { exact: true })).toBeVisible()
   await search.press('Enter')
   await expect(page).toHaveURL(/glossary\/condition\.grappled/)
   const headword = page.getByRole('heading', { name: 'Agarrado', exact: true })
   await expect(headword).toBeVisible()
+  // Enter moves focus to the opened headword (ui-ux F6).
+  await expect(headword).toBeFocused()
   await expect(page.getByText('Inglés:')).toBeVisible()
   const facts = page.getByRole('region', { name: 'De un vistazo' })
   await expect(facts).toContainText('Escapar')
@@ -78,9 +82,18 @@ test('keyboard search finds a condition in either language and shows its quick f
   await audit(page)
   await evidence(page, info.project.name, 'entry-grappled')
   // Search by alias, empty state and category tabs.
-  if (narrow(page)) await page.getByRole('link', { name: 'Todas las entradas' }).click()
+  if (narrow(page)) {
+    // Back from the reader returns to the same row of the index (ui-ux F4).
+    await page.getByRole('link', { name: 'Todas las entradas' }).click()
+    await expect(page.getByRole('link', { name: /^Agarrado/ })).toBeFocused()
+  }
   await search.fill('agotamiento')
   await expect(page.getByRole('link', { name: /Cansancio/ })).toBeVisible()
+  // Arrow keys move between the search field and the results (ui-ux F5).
+  await search.press('ArrowDown')
+  await expect(page.getByRole('link', { name: /Cansancio/ })).toBeFocused()
+  await page.keyboard.press('ArrowUp')
+  await expect(search).toBeFocused()
   await search.fill('zzzz')
   await expect(page.getByText('Ninguna entrada coincide con «zzzz».')).toBeVisible()
   await search.press('Escape')
@@ -117,11 +130,15 @@ test('a rules term on the character sheet opens its definition in place', async 
     .getByRole('dialog', { name: /Clase de armadura/i })
     .getByRole('button', { name: 'tirada de ataque: ver definición' })
     .click()
-  await expect(page.getByRole('heading', { name: 'Tirada de ataque', exact: true })).toBeFocused()
+  const headword = page.locator('.gl-sheet-headword')
+  await expect(headword).toHaveText('Tirada de ataque')
+  await expect(headword).toBeFocused()
   await audit(page)
   await evidence(page, info.project.name, 'sheet-reference')
   await page.getByRole('button', { name: /^Volver a Clase de armadura$/i }).click()
-  await expect(page.getByRole('heading', { name: /^Clase de armadura$/i })).toBeVisible()
+  // Going back keeps keyboard focus on the restored headword (ui-ux F3).
+  await expect(headword).toHaveText(/^Clase de armadura$/i)
+  await expect(headword).toBeFocused()
   // With the module off for Players there is no page link, but definitions still work.
   await expect(page.getByRole('link', { name: 'Abrir en el glosario' })).toHaveCount(0)
   await page.keyboard.press('Escape')
@@ -167,6 +184,8 @@ test('a Player creates, edits and deletes campaign homebrew; house rules join SR
   await evidence(page, info.project.name, 'homebrew-editor')
   await editor.getByRole('button', { name: 'Guardar entrada' }).click()
   await expect(page.getByRole('heading', { name: 'Mano Hundida' })).toBeVisible()
+  // Saving moves focus to the saved headword (ui-ux F6).
+  await expect(page.getByRole('heading', { name: 'Mano Hundida' })).toBeFocused()
   // User text is plain and still links rules terms.
   await expect(
     page.locator('article.gl-entry').getByRole('button', { name: 'agarrado: ver definición' }),

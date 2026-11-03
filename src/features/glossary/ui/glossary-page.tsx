@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useHomebrewAction } from '../api'
 import type { GlossaryEntry } from '../domain/catalog'
 import { GlossaryError, homebrewEntryId, type HomebrewEntry } from '../domain/homebrew'
@@ -61,6 +61,15 @@ const conditionsAtTheTable = [
   'condition.exhaustion',
 ]
 
+/** The entry last read on its own (phone) route; the index returns focus to its row. */
+let lastReaderEntry: string | null = null
+/**
+ * Set by Enter in search and by saving homebrew to the entry about to open: it takes focus on
+ * its headword. Module state, because the navigation can remount the page, and an id, because
+ * the old entry can re-render before the (transitioned) navigation commits.
+ */
+let focusHeadwordOf: string | null = null
+
 /** RYT-008 glossary: search, categories, alphabetical index and a reader for one entry. */
 export function GlossaryPage() {
   const { t } = useTranslation()
@@ -69,16 +78,38 @@ export function GlossaryPage() {
   const entryId = rawEntryId ? decodeURIComponent(rawEntryId) : null
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const wide = useMediaQuery('(min-width: 62em)', false)
   const searchRef = useRef<HTMLInputElement>(null)
   const indexRef = useRef<HTMLDivElement>(null)
   const readerHeading = useRef<HTMLHeadingElement>(null)
   const [filters, setFilters] = useState<SpellFilters>(noSpellFilters)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [editor, setEditor] = useState<EditorTarget | null>(null)
+  const [editor, setEditorState] = useState<EditorTarget | null>(null)
+  const [editorReturnFocus, setEditorReturnFocus] = useState(true)
+  const setEditor = (target: EditorTarget | null) => {
+    if (target) setEditorReturnFocus(true)
+    setEditorState(target)
+  }
   const [deleting, setDeleting] = useState<HomebrewEntry | null>(null)
-  const query = params.get('q') ?? ''
+  // The field owns what is typed; the URL only mirrors it for deep links. Driving the input
+  // from the URL dropped keystrokes while the 550-row list re-rendered (ui-ux F1).
+  const [query, setQuery] = useState(() => params.get('q') ?? '')
   const deferredQuery = useDeferredValue(query)
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          if (query.trim()) next.set('q', query)
+          else next.delete('q')
+          return next
+        },
+        { replace: true },
+      )
+    }, 300)
+    return () => window.clearTimeout(handle)
+  }, [query, setParams])
   const tab: GlossaryTab = isGlossaryTab(params.get('cat'))
     ? (params.get('cat') as GlossaryTab)
     : 'all'
@@ -91,13 +122,36 @@ export function GlossaryPage() {
   useEffect(() => {
     if (entryId && catalog?.byId.has(entryId)) remember?.(entryId)
   }, [entryId, catalog, remember])
-  const focusReader = useRef(false)
   useEffect(() => {
-    // A new entry on its own (phone) route, or a just saved entry, moves focus to its headword.
-    if (entryId && (!wide || focusReader.current) && readerHeading.current) {
+    // A new entry on its own (phone) route, or one opened with Enter or just saved, moves focus
+    // to its headword. The next frame runs after the layout's own route-change focus.
+    if (!entryId || !(!wide || focusHeadwordOf === entryId)) return
+    const frame = requestAnimationFrame(() => {
+      if (!readerHeading.current) return
       readerHeading.current.focus()
-      focusReader.current = false
+      if (focusHeadwordOf === entryId) focusHeadwordOf = null
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [entryId, wide, catalog])
+  useEffect(() => {
+    if (wide) return
+    if (entryId) {
+      lastReaderEntry = entryId
+      return
     }
+    // Back on the index: keep the reader's place by focusing the row it came from (after the
+    // layout's route-change scroll and focus, hence the next frame).
+    if (!lastReaderEntry || !catalog) return
+    const frame = requestAnimationFrame(() => {
+      const row = indexRef.current?.querySelector<HTMLAnchorElement>(
+        `[data-entry-id="${CSS.escape(lastReaderEntry ?? '')}"]`,
+      )
+      if (!row) return
+      row.scrollIntoView({ block: 'center' })
+      row.focus({ preventScroll: true })
+      lastReaderEntry = null
+    })
+    return () => cancelAnimationFrame(frame)
   }, [entryId, wide, catalog])
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -114,22 +168,27 @@ export function GlossaryPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const rows = useMemo<IndexRowData[]>(() => {
+  const matches = useMemo<IndexRowData[]>(() => {
     if (!catalog) return []
     const summaries = bodies
       ? Object.fromEntries(Object.entries(bodies).map(([id, b]) => [id, b.summary]))
       : undefined
-    const base: IndexRowData[] = deferredQuery.trim()
+    return deferredQuery.trim()
       ? searchGlossary(catalog, deferredQuery, { summaries }).map((hit) => ({
           entry: hit.entry,
           matched: hit.matched,
         }))
       : catalog.entries.map((entry) => ({ entry, matched: null }))
-    return base.filter(
-      ({ entry }) => inTab(entry, tab) && (tab !== 'spell' || matchesSpellFilters(entry, filters)),
-    )
-  }, [catalog, bodies, deferredQuery, tab, filters])
-
+  }, [catalog, bodies, deferredQuery])
+  const rows = useMemo(
+    () =>
+      matches.filter(
+        ({ entry }) =>
+          inTab(entry, tab) && (tab !== 'spell' || matchesSpellFilters(entry, filters)),
+      ),
+    [matches, tab, filters],
+  )
+  // Tab counts follow the current search, so a tab shows how many matches it holds.
   const counts = useMemo(() => {
     const out: Record<GlossaryTab, number> = {
       all: 0,
@@ -139,10 +198,11 @@ export function GlossaryPage() {
       spell: 0,
       homebrew: 0,
     }
-    for (const entry of catalog?.entries ?? [])
+    for (const { entry } of matches)
       for (const key of glossaryTabs) if (inTab(entry, key)) out[key]++
     return out
-  }, [catalog])
+  }, [matches])
+  const homebrewTotal = catalog?.entries.filter((e) => e.source === 'homebrew').length ?? 0
 
   if (!glossary) return null
   if (!glossary.pagePath)
@@ -153,16 +213,23 @@ export function GlossaryPage() {
       </Stack>
     )
   const pagePath = glossary.pagePath
-  const keep = params.toString()
+  const keepParams = new URLSearchParams()
+  if (query.trim()) keepParams.set('q', query)
+  if (tab !== 'all') keepParams.set('cat', tab)
+  const keep = keepParams.toString()
   const hrefFor = (id: string) => `${pagePath}/${encodeURIComponent(id)}${keep ? `?${keep}` : ''}`
   const indexHref = `${pagePath}${keep ? `?${keep}` : ''}`
 
-  const setParam = (key: string, value: string | null) => {
-    const next = new URLSearchParams(params)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    setParams(next, { replace: true })
-  }
+  const setParam = (key: string, value: string | null) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        if (value) next.set(key, value)
+        else next.delete(key)
+        return next
+      },
+      { replace: true },
+    )
 
   if (glossary.indexError)
     return (
@@ -194,7 +261,8 @@ export function GlossaryPage() {
       const best = searchGlossary(catalog, query).find(({ entry }) => inTab(entry, tab))
       if (!best) return
       event.preventDefault()
-      navigate(hrefFor(best.entry.id))
+      focusHeadwordOf = best.entry.id
+      navigate(hrefFor(best.entry.id), { state: { fromIndex: true } })
     } else if (event.key === 'ArrowDown') {
       const first = indexRef.current?.querySelector<HTMLAnchorElement>('[data-first-result]')
       if (first) {
@@ -203,7 +271,7 @@ export function GlossaryPage() {
       }
     } else if (event.key === 'Escape' && query) {
       event.preventDefault()
-      setParam('q', null)
+      setQuery('')
     }
   }
 
@@ -266,12 +334,23 @@ export function GlossaryPage() {
     <Welcome hrefFor={hrefFor} />
   )
 
-  const homebrewEmpty = tab === 'homebrew' && counts.homebrew === 0 && !query
+  const homebrewEmpty = tab === 'homebrew' && homebrewTotal === 0 && !query
 
   return (
     <div className="gl-page" data-reader-only={showReaderOnly || undefined}>
       {showReaderOnly ? (
-        <Anchor component={Link} to={indexHref} className="gl-back">
+        <Anchor
+          component={Link}
+          to={indexHref}
+          className="gl-back"
+          onClick={(event) => {
+            // Opened from the index: go back in history so the list keeps its place.
+            if ((location.state as { fromIndex?: boolean } | null)?.fromIndex) {
+              event.preventDefault()
+              navigate(-1)
+            }
+          }}
+        >
           <ChevronLeft size={18} aria-hidden="true" />
           {t('glossary.backToIndex')}
         </Anchor>
@@ -302,7 +381,7 @@ export function GlossaryPage() {
               type="search"
               size="lg"
               value={query}
-              onChange={(event) => setParam('q', event.currentTarget.value || null)}
+              onChange={(event) => setQuery(event.currentTarget.value)}
               onKeyDown={onSearchKey}
               aria-label={t('glossary.searchLabel')}
               placeholder={t('glossary.searchPlaceholder')}
@@ -313,7 +392,7 @@ export function GlossaryPage() {
                     size={44}
                     aria-label={t('glossary.clearSearch')}
                     onClick={() => {
-                      setParam('q', null)
+                      setQuery('')
                       searchRef.current?.focus()
                     }}
                   />
@@ -337,7 +416,7 @@ export function GlossaryPage() {
           >
             <Tabs.List aria-label={t('glossary.categories')}>
               {glossaryTabs
-                .filter((key) => key !== 'homebrew' || glossary.canEdit || counts.homebrew > 0)
+                .filter((key) => key !== 'homebrew' || glossary.canEdit || homebrewTotal > 0)
                 .map((key) => (
                   <Tabs.Tab key={key} value={key}>
                     {t(`glossary.tab.${key}`)}
@@ -385,6 +464,7 @@ export function GlossaryPage() {
             ) : (
               <EntryIndex
                 ref={indexRef}
+                onLeave={() => searchRef.current?.focus()}
                 rows={rows}
                 grouped={!deferredQuery.trim()}
                 query={deferredQuery.trim()}
@@ -419,15 +499,17 @@ export function GlossaryPage() {
             target={editor}
             campaignId={glossary.campaignId}
             catalog={catalog}
+            returnFocus={editorReturnFocus}
             onClose={() => setEditor(null)}
             onSaved={(saved) => {
+              // The saved headword takes focus; the closing drawer must not pull it back.
+              setEditorReturnFocus(false)
               setEditor(null)
-              focusReader.current = true
-              navigate(
-                hrefFor(
-                  saved.srd_ref && !editor?.entry ? saved.srd_ref : homebrewEntryId(saved.id),
-                ),
-              )
+              // A new house rule opens inside its SRD entry; anything else opens itself.
+              const target =
+                saved.srd_ref && !editor?.entry ? saved.srd_ref : homebrewEntryId(saved.id)
+              focusHeadwordOf = target
+              navigate(hrefFor(target))
             }}
           />
           <DeleteDialog
@@ -529,8 +611,9 @@ function SpellFilterSheet({
             onChange={(levels) => onChange({ ...filters, levels })}
             label={levelLabel}
             marks={[0, 3, 6, 9].map((value) => ({ value, label: String(value) }))}
-            thumbFromLabel={t('glossary.filter.level')}
-            thumbToLabel={t('glossary.filter.level')}
+            thumbFromLabel={t('glossary.filter.levelFrom')}
+            thumbToLabel={t('glossary.filter.levelTo')}
+            thumbSize={28}
             mb="lg"
             className="gl-level-slider"
           />
@@ -593,10 +676,14 @@ function DeleteDialog({
   const action = useHomebrewAction(campaignId)
   const error =
     action.error instanceof GlossaryError ? action.error.code : action.error ? 'unknown' : null
+  const close = () => {
+    action.reset()
+    onClose()
+  }
   return (
     <Modal
       opened={entry !== null}
-      onClose={onClose}
+      onClose={close}
       centered
       title={<span className="gl-editor-title">{t('glossary.hb.delete')}</span>}
       closeButtonProps={{ 'aria-label': t('glossary.hb.cancel'), size: 44 }}
@@ -606,11 +693,11 @@ function DeleteDialog({
           <Text>{t('glossary.hb.confirmDelete', { name: entry.name })}</Text>
           {error && (
             <Text c="red" role="alert">
-              {t(`glossary.hb.error.${error}`)}
+              {error === 'unknown' ? t('glossary.hb.deleteError') : t(`glossary.hb.error.${error}`)}
             </Text>
           )}
           <Group justify="flex-end">
-            <Button variant="subtle" onClick={onClose}>
+            <Button variant="subtle" onClick={close}>
               {t('glossary.hb.cancel')}
             </Button>
             <Button
@@ -621,6 +708,7 @@ function DeleteDialog({
                   { kind: 'delete', entryId: entry.id, revision: entry.revision },
                   {
                     onSuccess: () => {
+                      action.reset()
                       notifications.show({
                         message: t('glossary.hb.deleted'),
                         position: 'bottom-center',

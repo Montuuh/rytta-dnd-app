@@ -189,7 +189,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  // RYT-027: the DM Command Center comes first; phones show the short "Mando DM" label.
+  // RYT-027: the DM Command Center comes first; phones show the short "DM" label.
   await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Centro de mando DM')
   await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Grupo')
   await expect(mainNav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)

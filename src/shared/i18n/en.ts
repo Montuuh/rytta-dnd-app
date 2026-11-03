@@ -64,7 +64,7 @@ export const en = {
   'page.noPath': 'This path does not lead to a page.',
   'page.return': 'Go back to keep exploring the companion.',
   'page.planned':
-    'This foundation establishes the navigation and module boundary. Gameplay and saved campaign data will be added in the corresponding backlog delivery.',
+    'This module is not available yet. It will appear in the menu when your table can use it.',
   'campaigns.title': 'Your campaigns',
   'campaigns.next': 'Campaign creation and invitations arrive with RYT-002.',
   'campaigns.empty': 'No campaigns available for this account.',

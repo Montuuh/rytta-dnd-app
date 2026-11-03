@@ -429,14 +429,15 @@ function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId:
           )}
         </div>
         {ready && member.armor_class !== null && (
-          <div
-            className="ac-shield"
+          // Same "AC 14" chip as the Player's own card (RYT-035).
+          <span
+            className="vital-chip teammate-ac"
             role="img"
             aria-label={t('party.liveAc', { value: member.armor_class })}
           >
-            <Shield size={44} strokeWidth={1.6} aria-hidden="true" />
-            <span aria-hidden="true">{member.armor_class}</span>
-          </div>
+            <Shield size={16} aria-hidden="true" />
+            <span aria-hidden="true">{t('sheet.acSummary', { value: member.armor_class })}</span>
+          </span>
         )}
       </div>
       {ready ? (
@@ -1051,7 +1052,7 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
               leftSection={action.isPending ? <Loader size={16} /> : undefined}
               disabled={!valid || action.error?.message === 'stale'}
             >
-              {t(attempted ? 'common.retry' : 'characters.save')}
+              {t(attempted ? 'common.retry' : 'characters.saveGold')}
             </Button>
           </Group>
         </Stack>

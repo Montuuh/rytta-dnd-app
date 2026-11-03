@@ -3081,17 +3081,14 @@ html[data-mantine-color-scheme='light'] .order-counter {
   align-items: center;
 }
 .touch-slider {
-  padding-block: 10px;
-  /* Room for the centred end-mark labels (+50, 100%) so they never overflow the page. */
-  padding-inline: 18px;
+  /* Room for the centred end-mark labels (+50, 100) so they never overflow the page, and
+     below them so they never touch the help text. */
+  padding: 10px 18px 30px;
 }
 .touch-slider .mantine-Slider-markLabel {
   font-size: var(--fs-tag);
   /* Clear the 32px thumb so the mark under it stays readable. */
   margin-top: 14px;
-}
-.touch-slider {
-  padding-bottom: 18px;
 }
 .stock-list {
   list-style: none;
@@ -4678,4 +4675,133 @@ html[data-mantine-color-scheme='light'] .order-counter {
    bottom sheet full height. Bottom sheets now hug their content (and still scroll). */
 .mantine-Drawer-root {
   --drawer-size-auto: auto;
+}
+
+/* RYT-035 review round 2: phone shell and page heads stay compact at 150% text. */
+@media (max-width: 36em) {
+  .topbar,
+  .header-actions {
+    flex-wrap: nowrap;
+  }
+  .brand-bar {
+    flex: 1 1 0;
+  }
+  .brand-copy {
+    flex: 1 1 auto;
+  }
+  /* Inside a campaign the emblem is the brand; the campaign name takes the wordmark's place. */
+  .campaign-layout .brand-title {
+    display: none;
+  }
+  .brand-subtitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preview-switch .mantine-Switch-label {
+    white-space: nowrap;
+  }
+}
+.bottom-nav-label {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: unset;
+}
+@media (max-width: 47.99em) {
+  /* Title and refresh share the first row; the lede and primary action follow. */
+  .page-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px 8px;
+  }
+  .page-head-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .page-head-actions {
+    display: contents;
+  }
+  .page-head-actions > :not(.page-head-refresh) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .page-head-refresh {
+    grid-column: 2;
+    grid-row: 1;
+    margin: -4px -8px 0 0;
+  }
+  .page-head .refresh-stamp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+/* DM shop card: the title takes the free width and never breaks inside a word. */
+.shop-controls-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.shop-controls-title h2 {
+  overflow-wrap: break-word;
+}
+.shop-open-switch .mantine-Switch-label {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+/* Phone sheets that hug their content never cover the whole screen. */
+@media (max-width: 47.99em) {
+  .mantine-Drawer-content {
+    max-height: 92dvh;
+  }
+}
+/* Slider marks stay readable in light mode. */
+.touch-slider .mantine-Slider-markLabel {
+  color: var(--app-muted);
+}
+.balance {
+  padding-bottom: calc(12px + 1.5em);
+}
+.teammate-ac {
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+/* Party cards stack the sheet summary above the resources at every width: no empty column. */
+@container (min-width: 44rem) {
+  .character-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Sheet stat tiles: values line up at the bottom and phones use two columns, the odd last
+   tile spanning both, so no empty cell is left. */
+.sheet-stat {
+  display: flex;
+  flex-direction: column;
+}
+.sheet-stat dd {
+  margin-top: auto;
+}
+@media (max-width: 47.99em) {
+  .sheet-side .sheet-stats:not(.sheet-stats-3) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sheet-side .sheet-stats:not(.sheet-stats-3) > .sheet-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+.shop-controls-title {
+  flex: 1 1 12rem;
+}
+@media (max-width: 47.99em) {
+  .page-head-lede.is-wide-only {
+    display: none;
+  }
+  .dm-tabs:not([data-orientation='vertical']) .mantine-Tabs-tab {
+    padding-block: 6px;
+  }
 }

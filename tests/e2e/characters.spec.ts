@@ -173,7 +173,7 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
     .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
   await arin.getByRole('button', { name: /Editar oro de Arin/ }).click()
   await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('26')
-  await page.getByRole('button', { name: 'Guardar recursos' }).click()
+  await page.getByRole('button', { name: 'Guardar oro' }).click()
   await expect(arin.getByText('26', { exact: true })).toBeVisible()
   await characterAction(page, 'Arin', 'Editar recursos')
   await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('98')

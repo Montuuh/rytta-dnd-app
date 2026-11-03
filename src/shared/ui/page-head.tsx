@@ -11,6 +11,7 @@ export function PageHead({
   refresh,
   headingRef,
   titleClassName,
+  compactOnPhone,
   children,
 }: {
   title: ReactNode
@@ -20,6 +21,8 @@ export function PageHead({
   refresh?: ReactNode
   headingRef?: Ref<HTMLHeadingElement>
   titleClassName?: string
+  /** Hide the lede on phones when the page's own controls (tabs) already explain it. */
+  compactOnPhone?: boolean
   children?: ReactNode
 }) {
   return (
@@ -34,7 +37,11 @@ export function PageHead({
         >
           {title}
         </Title>
-        {description && <Text className="page-head-lede">{description}</Text>}
+        {description && (
+          <Text className={`page-head-lede${compactOnPhone ? ' is-wide-only' : ''}`}>
+            {description}
+          </Text>
+        )}
         {children}
       </div>
       {(actions || refresh) && (

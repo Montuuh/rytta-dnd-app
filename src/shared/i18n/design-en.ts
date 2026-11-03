@@ -1,6 +1,6 @@
 // RYT-025 navigation, compact controls and table widgets.
 export const designEn = {
-  'nav.dmShort': 'DM Command',
+  'nav.dmShort': 'DM',
   'nav.more': 'More',
   'nav.moreTitle': 'More sections',
   'nav.moreOpen': 'Open more sections',

@@ -91,6 +91,7 @@ export const identityEs = {
   'query.error': 'No se pudo cargar esta información.',
   'dm.commandCenter': 'Centro de mando DM',
   'dm.commandIntro': 'Miembros, módulos, almacén e historial de tu campaña.',
+  'dm.modulePlannedReason': 'aún no se puede mostrar a los jugadores',
   'dm.panelAll': 'Todos los paneles',
   'dm.panelMembers': 'Miembros',
   'dm.panelModules': 'Módulos activos',

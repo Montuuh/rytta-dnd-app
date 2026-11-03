@@ -57,7 +57,7 @@ export function CartDrawer(props: Props) {
       opened={opened}
       onClose={props.onClose}
       position={phone ? 'bottom' : 'right'}
-      size={phone ? '90%' : 'md'}
+      size={phone ? 'auto' : 'md'}
       title={t('cart.title', { shop: shop.name })}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >

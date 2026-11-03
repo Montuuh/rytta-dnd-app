@@ -89,6 +89,7 @@ export const identityEn = {
   'query.error': 'We could not load this information.',
   'dm.commandCenter': 'DM command center',
   'dm.commandIntro': 'Members, modules, storeroom and history of your campaign.',
+  'dm.modulePlannedReason': 'cannot be shown to Players yet',
   'dm.panelAll': 'All panels',
   'dm.panelMembers': 'Members',
   'dm.panelModules': 'Active modules',

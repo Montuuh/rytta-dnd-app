@@ -176,6 +176,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
       <PageHead
         title={t(dm ? 'campaign.manage' : 'members.title')}
         description={t(dm ? 'dm.commandIntro' : 'members.playerHint')}
+        compactOnPhone={dm}
         refresh={
           dm && <RefreshControl onRefresh={refreshAll} fetching={fetching} updatedAt={updatedAt} />
         }
@@ -417,8 +418,17 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                               <div className="module-switch-name">
                                 <Text fw={600}>{t(label)}</Text>
                                 {!ready && (
-                                  <Badge variant="outline" className="visibility-badge" size="sm">
+                                  <Badge
+                                    variant="outline"
+                                    className="visibility-badge"
+                                    size="sm"
+                                    id={`module-${key}-planned`}
+                                  >
                                     {t('common.comingSoonTag')}
+                                    <span className="visually-hidden">
+                                      {' · '}
+                                      {t('dm.modulePlannedReason')}
+                                    </span>
                                   </Badge>
                                 )}
                               </div>
@@ -426,6 +436,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                                 size="lg"
                                 checked={active}
                                 disabled={locked}
+                                aria-describedby={!ready ? `module-${key}-planned` : undefined}
                                 aria-disabled={action.isPending || undefined}
                                 aria-label={t('dm.moduleSwitch', { module: t(label) })}
                                 onLabel={<Eye size={14} aria-hidden="true" />}

@@ -699,3 +699,94 @@ These are in the session scratchpad and are not committed:
 - **Navigation and switch:** `*-module-switch.png`, `*-player-nav-*.png`
 - **Overlays:** `*-sheet-{reduce,no-preference}.png`
 - **Smoke:** `*-entry.png`, `*-editor.png`, `*-stack.png`
+
+---
+
+# Round 5 (minimal re-review: live-URL writes for `?q=` and `?cat=`)
+
+- Date: 2026-11-03.
+- Reviewed source: commit `b236f37`, UI fingerprint
+  `38782adfdbce7e73a16d704c9953ca262db958e9dbb42125fb70c6d9ef165885`.
+- The only source change since `c474ae8` is in `src/features/glossary/ui/glossary-page.tsx`.
+  The new `liveSearchParams()` helper reads `window.location.hash`, and both the search mirror
+  and `setParam` now build from it.
+- I extracted the commit with `git archive`; its `src/` is byte-identical to the working tree.
+  It was served as:
+  - A production build (supabase mode, mocked backend) on port 4178.
+  - A demo dev server from the same tree.
+- Viewports: 390×844 and 820×1180, both touch enabled.
+
+## Round 5 verdict: PASS
+
+The category no longer gets dropped. In every typing-then-tab sequence, both the URL and the
+selected tab keep `?cat=` together with `?q=`, at normal speed and with 6× CPU throttling.
+Deep links, history, the nav reset and Enter all behave correctly, and the round 4 smoke
+checks still pass.
+
+## Real browser checks
+
+### Typing then switching tabs quickly
+
+- **Delays tested:** 0, 100, 250 and 400 ms between the last key and the tap. The 300 ms
+  mirror fires before, during and after the tab change.
+- **Throttling:** CPU ×1 and ×6 (CDP), at both viewports.
+- **Mouse result:** "fuego" typed, then a tap on "Conjuros", always ends with
+  `?q=fuego&cat=spell` (parameter order varies). The selected tab is "Conjuros" with 16
+  results, and the field still reads "fuego". The failure seen in CI (the tab gets focus but
+  "Todo" stays selected) did not occur.
+- **Keyboard result:** typing "luz", pressing Tab twice (the clear button, then the tab list)
+  and ArrowRight four times ends with `?cat=spell&q=luz`. The selected and focused tab is
+  "Conjuros" (13 results), at ×1 and ×6.
+
+### Escape after typing, then a tab
+
+| Sequence | Result (×1 and ×6, both viewports) |
+| --- | --- |
+| Type "fuego", wait for the mirror, Escape, tap "Estados" | `?cat=condition`, empty field, 15 entries |
+| Type "agarr", Escape before the mirror fires, tap "Acciones" | `?cat=action`, empty field, 12 entries; the cancelled query is not written back |
+| Then "esconder" + Enter | Opens `action.hide?q=esconder&cat=action` |
+
+### Deep links, history, nav reset and Enter (both viewports)
+
+- **Deep link** `?q=fuego&cat=spell`: the field reads "fuego", the selected tab is
+  "Conjuros" with 16 results.
+- **Tab change and new search:** switching to "Reglas" gives `?q=fuego&cat=rule`. Typing
+  "luz" gives `?q=luz&cat=rule`.
+- **History:** opening "Luz tenue" and going back restores `?q=luz&cat=rule`, with the field
+  and tab intact. Going forward returns to the entry.
+- **Nav reset:** the "Glosario" nav item resets to the bare index: 550 entries, "Todo",
+  empty field.
+- **Hash change while the page is mounted** (`?q=prone&cat=condition`): the field reads
+  "prone" and the tab is "Estados" (1 result). Enter opens
+  `condition.prone?q=prone&cat=condition`, and the back link restores both parameters.
+- **Demo standalone:** `#/glossary?cat=condition` opens on "Estados" (15). Typing "fire" then
+  "Todo" gives `?q=fire` with 8 results.
+
+### Regression spot-check (round 4 checks re-run on `b236f37`)
+
+- Search typing and Enter work, with focus on the headword.
+- A Player creates a homebrew entry; focus lands on its headword and "cegado" is linked.
+- Item card Escape order: the definition closes first, then the card.
+- The glossary navigation and module switch work for the DM and for Players with the
+  module off and on.
+- On the first frame, the reference sheet, spell filters and editor all open as the correct
+  variant (bottom on phones, side at 820px).
+
+## Limitations (round 5)
+
+- No real devices or screen reader. CPU throttling was emulated.
+- I did not re-run the visual theme and zoom matrix, because there is no visual change.
+- I did not run `npm run check` or the repo e2e. The coordinator reports 27/27 glossary e2e
+  on six projects.
+- This approval applies only to fingerprint
+  `38782adfdbce7e73a16d704c9953ca262db958e9dbb42125fb70c6d9ef165885`.
+
+## Round 5 screenshots
+
+These are in the session scratchpad and are not committed:
+`/tmp/claude-0/-home-user-rytta-dnd-app/63bbd363-2400-5756-80a5-86a53f7c2ad4/scratchpad/ui-review/shots6/`
+
+- `{mobile,tablet}-type-tab-x{1,6}.png`
+- `{mobile,tablet}-deeplink.png`
+- `{mobile,tablet}-demo.png`
+- The smoke screenshots from the round 4 re-run

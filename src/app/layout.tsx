@@ -25,7 +25,7 @@ import {
 } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 
-const defaultActivePaths = new Set(['/party'])
+const defaultActivePaths = new Set(['/party', '/glossary'])
 /** Phones show this many destinations before folding the rest into "More". */
 const bottomSlots = 5
 

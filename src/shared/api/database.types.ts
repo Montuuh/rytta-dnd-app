@@ -5,6 +5,7 @@ import type { ShopFunctions } from './shop-functions'
 import type { ItemFunctions } from './item-functions'
 import type { TradeFunctions } from './trade-functions'
 import type { CombatFunctions } from './combat-functions'
+import type { GlossaryEntriesTable, GlossaryFunctions } from './glossary-functions'
 
 type Functions = GeneratedDatabase['public']['Functions']
 type Tables = GeneratedDatabase['public']['Tables']
@@ -125,6 +126,7 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
         Update: never
         Relationships: []
       }
+      glossary_entries: GlossaryEntriesTable
       character_events: {
         Row: {
           id: string
@@ -146,7 +148,8 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       ShopFunctions &
       ItemFunctions &
       TradeFunctions &
-      CombatFunctions & {
+      CombatFunctions &
+      GlossaryFunctions & {
         list_my_invitations: Omit<Functions['list_my_invitations'], 'Returns'> & {
           Returns: (Functions['list_my_invitations']['Returns'][number] & {
             character_id: string

@@ -42,3 +42,6 @@ dist-party-button-review/
 
 *.traineddata
 .claude/worktrees/
+
+# Python bytecode (scripts/glossary)
+__pycache__/

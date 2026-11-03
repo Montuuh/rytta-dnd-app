@@ -12,5 +12,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: env.VITE_BASE_PATH || '/',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+    // RYT-008: each language's SRD glossary text is one lazy chunk (~0.5 MB, ~120 kB gzip),
+    // loaded only when a definition is opened. App chunks stay far below this limit.
+    build: { chunkSizeWarningLimit: 600 },
   }
 })

@@ -1,3 +1,4 @@
+import { GlossaryText } from '@/features/glossary'
 import { useId, useRef, useState } from 'react'
 import {
   Alert,
@@ -625,7 +626,7 @@ function ShopHeader({
         </div>
         {shop.description && (
           <Text c="dimmed" className="user-copy shop-description">
-            {shop.description}
+            <GlossaryText text={shop.description} />
           </Text>
         )}
         {!shop.is_open && (

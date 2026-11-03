@@ -10,6 +10,7 @@ import { settingsEn } from './settings-en'
 import { lifecycleEn } from './lifecycle-en'
 import { tradesEn } from './trades-en'
 import { combatEn } from './combat-en'
+import { glossaryEn } from './glossary-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
@@ -23,6 +24,7 @@ export const en = {
   ...lifecycleEn,
   ...tradesEn,
   ...combatEn,
+  ...glossaryEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',
   'module.shops': 'Shops',

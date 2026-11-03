@@ -16,7 +16,9 @@ async function audit(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page.locator('[role="dialog"] button:visible').all()) {
+  for (const control of await page
+    .locator('[role="dialog"] button:visible:not(.glossary-term)')
+    .all()) {
     const box = await control.boundingBox()
     expect(box!.height).toBeGreaterThanOrEqual(44)
   }

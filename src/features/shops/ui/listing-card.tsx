@@ -1,3 +1,4 @@
+import { GlossaryText } from '@/features/glossary'
 import { Anchor, Badge, Button, Drawer, Group, NumberInput, Stack, Text } from '@mantine/core'
 import { Link } from 'react-router'
 import { useMediaQuery } from '@mantine/hooks'
@@ -145,7 +146,9 @@ export function ListingDrawer({
             </Stack>
           </Group>
           {listing.item.description && (
-            <Text className="user-copy item-description">{listing.item.description}</Text>
+            <Text className="user-copy item-description">
+              <GlossaryText text={listing.item.description} />
+            </Text>
           )}
           <dl className="fact-list">
             <dt>{t('shop.price')}</dt>

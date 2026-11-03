@@ -102,3 +102,14 @@ Maintenance in pre_admin is owner-only (not an application RPC). Refresh never w
 rows, requires explicit PRE replacement and preserves the prior complete schemas as a
 backup with application-role schema usage revoked. Backup restore also retains current PRE.
 The API exposes public and pre; pre_private/pre_admin/backups must remain unexposed.
+
+## Glossary homebrew (RYT-008)
+
+`glossary_entries` holds campaign homebrew text only. Reads are RLS-gated by
+`private.can_use_glossary`: the active DM, or an active member while the DM has enabled the
+glossary module for Players. There are no table write grants; `save_glossary_entry` and
+`delete_glossary_entry` (security definer, fixed search path, `authenticated` only) validate
+every field, check the revision and never move entries between campaigns. Clients render the
+text as plain React text (no HTML). Bundled SRD content is public and carries no private data.
+SQL tests cover anon, outsider, inactive member, Player with the module on and off, DM and a
+cross-campaign DM, plus the guarded PRE mirror.

@@ -790,3 +790,117 @@ These are in the session scratchpad and are not committed:
 - `{mobile,tablet}-deeplink.png`
 - `{mobile,tablet}-demo.png`
 - The smoke screenshots from the round 4 re-run
+
+---
+
+# Round 6 (merge with main: RYT-007 combat)
+
+- Date: 2026-11-03.
+- Reviewed source: `HEAD` = `5fd1964` (test-only change) on top of merge `d69a583`, UI
+  fingerprint `a1b57e8c26be2d5c6a478c726eb9de4b179a6f03904c81c658fa7a48e69fe7ee`.
+- Setup:
+  - The commit was extracted with `git archive`; its `src/` and `index.html` are
+    byte-identical to the clean working tree.
+  - A production build (supabase mode, mocked backends `tests/e2e/fixtures/identity.ts` and
+    `combat.ts`) was served on port 4179.
+  - Viewports: 390×844 and 820×1180, both touch enabled. Reduced motion emulated.
+
+## Round 6 verdict: PASS
+
+No regressions from wrapping combat in the glossary layer, and no catalogue or copy
+collisions. The round 5 glossary behaviour is unchanged.
+
+## Real browser checks
+
+### Navigation and module switches
+
+| Viewer and modules | 390px | 820px |
+| --- | --- | --- |
+| DM (party, combat, glossary) | Bottom bar shows DM, Grupo, Inventario, Tiendas, Más; "Más secciones" lists Combate and Glosario (tapping Glosario opens `/glossary`) | Top row shows Centro de mando DM, Grupo, Inventario, Tiendas, Combate, Glosario |
+| DM (party only) | Same entries | Same entries (the DM always browses) |
+| Player: all three | Grupo, Combate, Glosario | Grupo, Combate, Glosario |
+| Player: party | Grupo only | Grupo only |
+| Player: party + combat | Grupo, Combate | Grupo, Combate |
+| Player: party + glossary | Grupo, Glosario | Grupo, Glosario |
+
+In the DM Command Center, the switches "Combate: visible para jugadores" and "Glosario:
+visible para jugadores" are both present (initially off for Players). Screenshots:
+`*-nav-*.png`, `mobile-dm-more.png`, `*-module-switches.png`.
+
+### Combat pages inside the glossary layer (DM)
+
+I seeded an active encounter and checked the list, the encounter and the table view, each
+reached by in-app navigation from Grupo:
+
+- Each page renders its h1 ("Combate" / "Bridge ambush").
+- axe found no violations, there is no horizontal overflow and there were no page errors.
+- Focus after the route change goes to `main`, the app's standard route focus, which is
+  unchanged. Following the "Abrir …" link from the list does the same.
+
+Combat overlays and Escape:
+
+- The combatant detail drawer (Goblin 1) closes with Escape, and focus returns to its row
+  button.
+- The "Aplicar daño" dialog closes with Escape, and focus returns to "Daño".
+- The layer's capture-phase Escape listener stays inert when no definition is open.
+
+### Combat as a Player (en, light)
+
+- "Your turn!" view: axe found no violations.
+- Escape closes the "Damage" dialog and focus returns to "Damage".
+
+### Reference sheet over combat overlays
+
+Combat UI contains no glossary terms (0 `.glossary-term` on all three pages; the combat
+feature does not import the glossary). So a definition cannot be opened above a combat
+drawer, and the z-index question does not arise in practice. Combat sets no custom z-index
+(Mantine default 200), and the reference sheet is at 400. Code inspection only.
+
+### Glossary regression smoke (round 4/5 checks re-run on this build)
+
+- **Page head:** matches Grupo and Tiendas (es dark).
+- **Search:** "grappled" typed key by key is intact. Enter opens `condition.grappled` with
+  focus on the headword.
+- **Homebrew:** a Player creates "Niebla de Rytta"; focus lands on its headword and
+  "cegado" is linked.
+- **Item card Escape order:** the definition closes first (focus on "cortante"), then the
+  card.
+- **First paint:** the reference sheet, spell filters and editor show the correct variant
+  from the first frame (bottom on phones, side at 820px).
+- **Definition from a glossary entry (Player, en):** bottom sheet at 390px, side sheet at
+  820px, and Escape returns focus to the term.
+
+### Copy keys (code inspection)
+
+- `en.ts` and `es.ts` spread `combatEn`/`combatEs` before `glossaryEn`/`glossaryEs`.
+- Across every `*-en.ts`/`*-es.ts` catalogue and the base `en.ts`/`es.ts`, there are no
+  duplicate top-level keys (checked with `uniq -d` over all quoted keys in each language).
+- `combat-en.ts` and `combat-es.ts` have the same 276 keys.
+- The only glossary catalogue change is a comment (ADR number).
+
+## Observations (not findings)
+
+- Combat condition chips (for example "Derribado") are not linked to their glossary
+  definitions. That would be a natural follow-up for the combat/glossary owners, but it is
+  outside RYT-008's merge scope.
+
+## Limitations (round 6)
+
+- No real devices or screen reader.
+- I did not run the repo combat or glossary e2e suites. The coordinator's servers occupy
+  ports 4173 and 4174, and the e2e config starts its own servers there.
+- The combat UI itself was reviewed separately (RYT-007 re-review 10). Here I checked only
+  the integration with the glossary layer.
+- This approval applies only to fingerprint
+  `a1b57e8c26be2d5c6a478c726eb9de4b179a6f03904c81c658fa7a48e69fe7ee`.
+
+## Round 6 screenshots
+
+These are in the session scratchpad and are not committed:
+`/tmp/claude-0/-home-user-rytta-dnd-app/63bbd363-2400-5756-80a5-86a53f7c2ad4/scratchpad/ui-review/shots7/`
+
+- **Combat:** `{mobile,tablet}-combat-{list,encounter,table,detail}.png`,
+  `{mobile,tablet}-combat-player-en-light.png`
+- **Navigation:** `*-nav-*.png`, `mobile-dm-more.png`, `*-module-switches.png`
+- **Glossary smoke:** `*-head-*.png`, `*-entry.png`, `*-editor.png`, `*-stack.png`,
+  `*-sheet-reduce.png`

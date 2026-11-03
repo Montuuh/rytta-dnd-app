@@ -149,4 +149,14 @@ Round 5 (`b236f37`): **PASS** on fingerprint `38782adf…`. CI on `b40ff92` show
 the live address bar; the reviewer re-tested quick tab switches at normal speed and 6× CPU
 throttling, Escape, deep links, history, the nav reset and Enter, and re-ran the round 4 smoke.
 
-Manifest: `docs/evidence/ui-review-current.json` records the round 5 PASS.
+Round 6 (`5fd1964`, after merging `origin/main` with RYT-007 combat): **PASS** on fingerprint
+`a1b57e8c…`. Combat routes now render inside the campaign glossary layer; the reviewer checked
+navigation and module switches for DM and Players at 390px and 820px, the combat list,
+encounter and table pages (axe, overflow, route focus, Escape in combat drawers and dialogs),
+copy key collisions across catalogues, and re-ran the glossary smoke. Not tested: real devices
+and screen readers. Follow-up idea (not a finding): link combat condition chips to the glossary.
+After the merge `npm run check` passed (204 tests; one earlier run hit a flaky leak regex in
+`party-sharing.test.ts`, fixed in `5fd1964`) and `playwright test glossary combat
+character-sheet` passed 60/60.
+
+Manifest: `docs/evidence/ui-review-current.json` records the round 6 PASS.

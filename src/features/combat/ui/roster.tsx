@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Group, Menu, Modal, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { ActionIcon, Button, Menu, Modal, Stack, Text, VisuallyHidden } from '@mantine/core'
 import { Dice5, Ellipsis, Play, UserMinus, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { joinPlacement, type Combatant } from '../domain/combat'
@@ -29,6 +29,7 @@ export function RowActions({
     <Menu opened={opened} onChange={onChange} position="bottom-end" withinPortal>
       <Menu.Target>
         <ActionIcon
+          data-return-focus={`row-menu-${combatant.id}`}
           variant="subtle"
           size={44}
           className="combat-row-menu"
@@ -92,7 +93,7 @@ export function RemoveCombatantDialog({
           {t(combatant.kind === 'character' ? 'combat.remove.character' : 'combat.remove.npc')}
         </Text>
       </Stack>
-      <Group justify="flex-end" mt="md">
+      <div className="combat-dialog-actions">
         <Button variant="subtle" onClick={close}>
           {t('action.cancel')}
         </Button>
@@ -105,7 +106,7 @@ export function RemoveCombatantDialog({
         >
           {t('combat.row.remove')}
         </Button>
-      </Group>
+      </div>
     </Modal>
   )
 }

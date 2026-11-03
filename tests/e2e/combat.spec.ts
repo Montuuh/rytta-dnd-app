@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, identityFixture } from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
@@ -598,4 +598,149 @@ test('RYT-041 roster dialogs pass axe in English and light theme', async ({ page
   await expect(page.getByRole('menu')).toHaveCount(0)
   await audit(page)
   await evidence(page, info.project.name, 'remove-en-light', 'RYT-041')
+})
+
+test('RYT-041 dialogs from menus return focus to the menu; the sheet to its opener', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+  const options = page.getByRole('button', { name: 'Opciones de Goblin 1' })
+  // Removal and initiative, each cancelled with Escape and with the Cancel button.
+  for (const [item, dialogName] of [
+    ['Quitar del combate', '¿Quitar a Goblin 1 del combate?'],
+    ['Cambiar iniciativa', 'Iniciativa de Goblin 1'],
+  ] as const) {
+    for (const how of ['escape', 'cancel'] as const) {
+      await options.focus()
+      await page.keyboard.press('Enter')
+      await page.getByRole('menuitem', { name: item }).click()
+      const dialog = page.getByRole('dialog', { name: dialogName })
+      await expect(dialog).toBeVisible()
+      if (how === 'escape') await page.keyboard.press('Escape')
+      else
+        await dialog
+          .locator('.combat-dialog-actions')
+          .getByRole('button', { name: 'Cancelar' })
+          .click()
+      await expect(dialog).toBeHidden()
+      await expect(options).toBeFocused()
+    }
+  }
+  if (info.project.name === 'identity-desktop') {
+    // The detail's own DM menu has its own name and gets focus back too.
+    const more = page.getByRole('button', { name: 'Más controles del DM para Arin' })
+    await more.click()
+    await page.getByRole('menuitem', { name: 'Quitar del combate' }).click()
+    await page.keyboard.press('Escape')
+    await expect(more).toBeFocused()
+  } else {
+    // The sheet opened from the turn bar gives focus back to the turn bar.
+    const now = page.locator('#combat-turn-now')
+    await expect(now).toHaveAccessibleName('Ahora · Ronda 1, Arin, Después: Bea. Ver detalle')
+    await now.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.locator('.combat-drawer .mantine-Drawer-content')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.combat-drawer .mantine-Drawer-content')).toHaveCount(0)
+    await expect(now).toBeFocused()
+  }
+})
+
+test('RYT-041 a real touch long press keeps the row menu open after lifting the finger', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === 'identity-desktop', 'touch emulation runs on tablet and phone')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+  const bea = row(page, 'Bea').getByRole('button').first()
+  await bea.scrollIntoViewIfNeeded()
+  const box = (await bea.boundingBox())!
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  // Raw touch events, so Chromium also sends its compatibility mouse events on release.
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] })
+  await page.waitForTimeout(700)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await page.waitForTimeout(400)
+  await expect(page.getByRole('menu')).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Quitar del combate' })).toBeVisible()
+  // The long press did not also open the detail sheet.
+  await expect(page.locator('.combat-drawer .mantine-Drawer-content')).toHaveCount(0)
+  // A short tap still opens the detail.
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] })
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await expect(page.locator('.combat-detail-name')).toHaveText('Bea')
+})
+
+test('RYT-041 dialog actions share a row or stack full width, also with 150% text', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+  /** Either one row (same top) or stacked full width with the action above Cancel. */
+  const expectDeliberate = async (dialog: Locator, action: string) => {
+    const actions = dialog.locator('.combat-dialog-actions')
+    const cancel = (await actions.getByRole('button', { name: 'Cancelar' }).boundingBox())!
+    const primary = (await actions.getByRole('button', { name: action }).boundingBox())!
+    const row = (await actions.boundingBox())!
+    if (Math.abs(cancel.y - primary.y) > 1) {
+      expect(primary.y).toBeLessThan(cancel.y)
+      for (const box of [cancel, primary]) expect(Math.abs(box.width - row.width)).toBeLessThan(2)
+    }
+  }
+  for (const scale of ['', '150%']) {
+    await page.evaluate((size) => (document.documentElement.style.fontSize = size), scale)
+    const suffix = scale ? '-150' : ''
+    await page.getByRole('button', { name: 'Opciones de Goblin 1' }).click()
+    await page.getByRole('menuitem', { name: 'Quitar del combate' }).click()
+    const remove = page.getByRole('dialog', { name: '¿Quitar a Goblin 1 del combate?' })
+    await expect(page.getByRole('menu')).toHaveCount(0)
+    await expectDeliberate(remove, 'Quitar del combate')
+    await evidence(page, info.project.name, `remove-dialog${suffix}`, 'RYT-041')
+    await page.keyboard.press('Escape')
+    await page.getByRole('tab', { name: 'Añadir combatientes' }).click()
+    await page.getByRole('button', { name: 'Añadir a Cato' }).click()
+    const join = page.getByRole('dialog', { name: 'Cato entra en combate' })
+    await join.getByLabel('Total').fill('15')
+    await expectDeliberate(join, 'Añadir al combate')
+    // The total chips keep room around two digits.
+    for (const chip of await join.locator('.combat-join-init').all()) {
+      const fits = await chip.evaluate((node) => node.scrollWidth <= node.clientWidth)
+      expect(fits).toBe(true)
+    }
+    await evidence(page, info.project.name, `join-dialog${suffix}`, 'RYT-041')
+    await page.keyboard.press('Escape')
+    await expect(join).toBeHidden()
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })

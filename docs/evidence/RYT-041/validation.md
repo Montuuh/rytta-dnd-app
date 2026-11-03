@@ -116,20 +116,39 @@ Production migration: not applied (integrator applies it after merge). Recovery 
 ## Screenshots (inspected)
 
 `turn-focus`, `join`, `remove-active`, `after-roster`, `player-table`, `join-en-light`,
-`remove-en-light`, each at 390 px (`-mobile`) and 820 px (`-tablet`), captured with
-`RYT_EVIDENCE=1`.
+`remove-en-light`, `remove-dialog`, `remove-dialog-150`, `join-dialog`, `join-dialog-150`, each at
+390 px (`-mobile`) and 820 px (`-tablet`), captured with `RYT_EVIDENCE=1`. Refreshed after the
+review fixes.
 
 ## Untested layers
 
 - Real Supabase Auth/PostgREST/Realtime with two signed-in accounts (PGlite + SDK fixture + PRE
   SQL only). The hosted PRE check ran as SQL with role and JWT claims set, not through PostgREST.
 - Production schema (`public`) on the hosted project: intentionally not applied.
-- iOS Safari long press (Chromium emulation only); screen reader output was checked through the
-  live region text, not with a real screen reader.
+- Long press on real iOS Safari and Android Chrome devices: covered by Chromium emulation with raw
+  CDP touch events only. Screen reader output was checked through accessible names and the live
+  region text, not with a real screen reader.
 - The join placement preview mirrors the server order for a character without a tiebreak bonus;
   a DM-reordered tie (`order_key`) can differ, and the order shown after saving is the server's.
 
 ## Handoff and review
 
-Independent `ui-ux` review: pending (not requested by this delivery; see docs/ui-review.md).
-The ticket is set to `review`.
+First independent `ui-ux` review of `b3f5e50`: CHANGES_REQUIRED, report [ui-review.md](ui-review.md)
+(committed as delivered). Every finding is addressed in the follow-up commit:
+
+| Finding | Change | Test |
+| --- | --- | --- |
+| F1 major: cancelling a dialog opened from a row menu dropped focus to `<body>` | The console remembers which menu opened the dialog and refocuses that menu's button on Escape, Cancel or a saved initiative (`data-return-focus`, because Mantine's `Menu.Target` owns the trigger `id`). `useReturnFocus` now resolves an opener inside a menu to the menu's button; before, the keypad dialog refocused the closing menu's focus holder, which then vanished. The detail's DM menu returns focus to its own button. | e2e: removal and change initiative, each cancelled with Escape and with Cancelar, focus on "Opciones de Goblin 1"; laptop: detail menu |
+| F2 minor: a raw touch long press opened the menu and the compatibility `mousedown` on release closed it | After a long press, the row cancels the `touchend` default so Chromium sends no compatibility mouse events or click | e2e with CDP `Input.dispatchTouchEvent` (tablet, phone): menu still open 400 ms after release, no detail sheet; a short tap still opens the detail. Failed before the fix |
+| F3 minor: dialog actions wrapped with Cancelar alone | `.combat-dialog-actions` (removal and keypad dialogs): one row when both fit, otherwise full-width buttons with the action on top (`wrap-reverse`) | e2e at 390/820/1440 px and 150% text: same row, or stacked full width with the action above Cancelar |
+| F4 minor: the sheet opened from "Ahora" returned focus to the list row | The sheet remembers its opener (row or turn-bar button) | e2e (tablet, phone): Escape returns focus to the turn-bar button |
+| F5 minor: two menus named "Opciones de {name}" | Detail menu is "Más controles del DM para {name}" / "More DM controls for {name}" | e2e uses both names |
+| F6 nit: fixed 32 px preview chips | `min-width`/`min-height` 2.2em with padding | e2e checks no overflow at 150% |
+| F7 nit: redundant copy and a stray space | Removed the list hint and the keypad hint in the join dialog; the turn-bar button has one accessible name: "Ahora · Ronda 1, Arin, Después: Bea. Ver detalle" | e2e asserts that name |
+
+Follow-up verification: `npm run check` passed (29 files / 209 tests, build OK). Combat spec on
+spare ports: 35 passed, 1 skipped (the touch test skips the laptop project). `CI=1 npm run
+test:e2e` on the fixed ports: two attempts were refused because another worktree took 4173 first;
+the third run, with servers started by this run, passed 326, skipped 49, failed 0 (3.6 min).
+A focused ui-ux re-review is pending. The ticket
+stays in `review`.

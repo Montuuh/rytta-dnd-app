@@ -1,4 +1,4 @@
-import { useState, type MouseEvent, type ReactNode } from 'react'
+import { useRef, useState, type MouseEvent, type ReactNode, type TouchEvent } from 'react'
 import { ActionIcon, Checkbox, Group, Text, UnstyledButton } from '@mantine/core'
 import { ArrowDown, ArrowUp, Crown, Hourglass } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -156,9 +156,15 @@ function PickButton({
   onHold?: () => void
   children: ReactNode
 }) {
+  // After a long press by touch, the release must not produce the browser's compatibility mouse
+  // events: their mousedown lands outside the menu that just opened and would close it.
+  const held = useRef(false)
   const press = useLongPress(
     () => onPick(combatant),
-    () => onHold?.(),
+    () => {
+      held.current = true
+      onHold?.()
+    },
   )
   return (
     <UnstyledButton
@@ -168,6 +174,14 @@ function PickButton({
       {...(onHold
         ? {
             ...press,
+            onTouchStart: () => {
+              held.current = false
+            },
+            onTouchEnd: (event: TouchEvent) => {
+              if (!held.current) return
+              held.current = false
+              if (event.cancelable) event.preventDefault()
+            },
             onContextMenu: (event: MouseEvent) => {
               event.preventDefault()
               onHold()

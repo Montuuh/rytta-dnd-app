@@ -55,3 +55,6 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-033 verification](evidence/RYT-033/validation.md).
 31. [ADR 022: player trades with a two-sided offer and double confirmation](decisions/022-player-trades.md)
     and [RYT-034 verification](evidence/RYT-034/validation.md).
+32. [Combat design analysis](combat-design.md),
+    [ADR 023: shared combat, role projection and the table display](decisions/023-combat.md)
+    and [RYT-007 verification](evidence/RYT-007/validation.md).

@@ -1572,7 +1572,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-041"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1592,7 +1592,35 @@
         "independent ui-ux PASS",
         "SQL denial tests if RPCs change"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-042/validation.md",
+        "docs/combat-design.md",
+        "docs/decisions/024-combat.md",
+        "docs/security.md",
+        "supabase/migrations/20261106120000_combat_player_initiative.sql",
+        "docs/evidence/RYT-042/dm-console-mobile.png",
+        "docs/evidence/RYT-042/dm-console-tablet.png",
+        "docs/evidence/RYT-042/dm-switch-keyboard-mobile.png",
+        "docs/evidence/RYT-042/dm-switch-keyboard-tablet.png",
+        "docs/evidence/RYT-042/dm-table-mobile.png",
+        "docs/evidence/RYT-042/dm-table-tablet.png",
+        "docs/evidence/RYT-042/player-initiative-150-mobile.png",
+        "docs/evidence/RYT-042/player-initiative-150-tablet.png",
+        "docs/evidence/RYT-042/player-initiative-en-light-mobile.png",
+        "docs/evidence/RYT-042/player-initiative-en-light-tablet.png",
+        "docs/evidence/RYT-042/player-initiative-mobile.png",
+        "docs/evidence/RYT-042/player-initiative-tablet.png",
+        "docs/evidence/RYT-042/player-saved-mobile.png",
+        "docs/evidence/RYT-042/player-saved-tablet.png",
+        "docs/evidence/RYT-042/player-summary-mobile.png",
+        "docs/evidence/RYT-042/player-summary-tablet.png",
+        "docs/evidence/RYT-042/player-turn-mobile.png",
+        "docs/evidence/RYT-042/player-turn-tablet.png",
+        "docs/evidence/RYT-042/summary-en-light-mobile.png",
+        "docs/evidence/RYT-042/summary-en-light-tablet.png",
+        "docs/evidence/RYT-042/table-turn-en-light-mobile.png",
+        "docs/evidence/RYT-042/table-turn-en-light-tablet.png"
+      ]
     },
     {
       "id": "RYT-043",

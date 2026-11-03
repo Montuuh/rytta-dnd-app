@@ -385,3 +385,70 @@ The earlier rounds' fixes, except where these checks touched them:
 - The turn bar was unchanged.
 
 The untested list from round one still applies. Approval applies only to the fingerprint above.
+
+## Re-review 3 (focused on the N3 regression and duplicate note writes, after ed8fce0)
+
+- Reviewed source: `ed8fce0`
+- UI fingerprint: `a3385ecfb6c003d813014a84fa36e1f631da6820b6b80e702fddfc25ed9c328e` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml`, implementation read-only
+- Date: 2026-11-03
+- Setup: a fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px),
+  each at 100% and 150% text, English light. The scratch spec simulates failures by blocking routes.
+- Evidence: `docs/evidence/ui-review/combat/r4/*.png`
+
+### Verdict: PASS
+
+No blocker or major findings remain. N1–N3 and the duplicate write are fixed. Two minor items
+remain (below); they are non-blocking and can go to the backlog.
+
+### Results
+
+**Error inside a dialog** (Add effect fails, at m, t and w, 100% and 150%):
+- The alert renders inside the modal body below the actions. It is in view and on top.
+- "Add effect" stays visible and tappable.
+- axe reports no violations.
+- Escape closes only the dialog and returns focus to "Add effect". No alert is left behind.
+- Screenshot: `r4/z150-effect-error-m.png`.
+
+**Error inside the drawer** (death save fails, at m and t): the alert renders at the end of the
+drawer body and is scrolled into view (`r4/z100-deathsave-error-m.png`).
+
+**Error at w** (no drawer): it uses the top toast, which no longer overlaps a modal.
+
+**Console error with the turn bar visible** (m, "Next turn" fails):
+- The toast sits above the turn bar: toast 566–644px, bar from 691px. At 150%: toast 428–576px,
+  bar from 608px.
+- It does not cover the bar or the bottom navigation (`r4/z100-console-error-m.png`).
+
+**DM notes:** each exit now sends exactly one `update_combatant`. This covers the close button or
+row switch, and "Save notes" followed by Escape or a row switch.
+
+**Escape and focus behaviour is unchanged:**
+- Nested Escape closes only the dialog, with focus on "Heal". A second Escape (m/t) returns focus to the row.
+- After "Apply", focus returns to "Damage".
+
+**Delivery spec:** `tests/e2e/combat.spec.ts`, both tests, passes on identity-mobile and identity-tablet.
+
+### Remaining minor findings (non-blocking)
+
+1. **Drawer errors appear far from the control that failed.** In the drawer, the alert is appended
+   at the end of the body and scrolled into view. On m this scrolls the death-save buttons out of
+   view. The error sits near "Remove from encounter", not near "Success".
+   - Consider placing the inline error near the section that failed, or at the top of the drawer
+     body, using `parts.tsx` `topDialogBody`.
+2. **The floating toast stays until dismissed and covers page content beneath it.**
+   - At m it partly covers a log row's "Undo" (`r4/z100-console-error-m.png`).
+   - At w the top toast covers the "Select targets" and tabs row while it is shown.
+   - It can be dismissed with a 44px button. Consider auto-dismissing it after a few seconds.
+
+### Limitations
+
+I did not re-run the full first-round matrix; only the areas above were re-checked. The untested
+list from round one still applies:
+- The fixture has no success paths for effects or death saves.
+- Legendary actions, lair and hidden creatures.
+- Realtime.
+- Other class themes.
+- iOS/Safari and screen readers.
+
+This approval applies only to the fingerprint above.

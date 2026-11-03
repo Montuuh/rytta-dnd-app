@@ -97,8 +97,13 @@ not re-run here; only the combat spec was.
 - English and light: `player-turn-en-light-*`.
 - The independent `ui-ux` review is in [docs/evidence/ui-review/combat/review.md](../ui-review/combat/review.md):
   - Round 1: CHANGES_REQUIRED (B1–B3, M1–M4 and minors), all fixed.
-  - Round 2: CHANGES_REQUIRED (N1–N3), fixed.
-  - Round 3: see the report.
+  - Re-review 1: CHANGES_REQUIRED (N1–N3), fixed.
+  - Re-review 2: CHANGES_REQUIRED (the N3 toast covered the turn bar and dialog buttons on phones), fixed.
+  - Re-review 3: **PASS** for UI fingerprint `a3385ecf…c328e` (recorded in
+    `docs/evidence/ui-review-current.json`).
+- Non-blocking follow-ups from re-review 3:
+  - In the drawer, errors appear at the end of the body, far from the death-save buttons.
+  - The floating toast stays until dismissed and can cover a log row or the tabs.
 
 ## Not tested / limitations
 

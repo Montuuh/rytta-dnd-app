@@ -548,14 +548,21 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
   const { t } = useTranslation()
   const [notes, setNotes] = useState(combatant.dm_notes ?? '')
   // Closing the drawer (Escape included) flushes an unsaved note instead of dropping it.
+  const sent = useRef<string | null>(null)
   const latest = useRef({ notes, saved: combatant.dm_notes ?? '', run, id: combatant.id })
   useEffect(() => {
     latest.current = { notes, saved: combatant.dm_notes ?? '', run, id: combatant.id }
   })
+  const saveNotes = (text: string) => {
+    if (text === (combatant.dm_notes ?? '') || text === sent.current) return
+    sent.current = text
+    void run({ kind: 'update', combatantId: combatant.id, patch: { dm_notes: text } })
+  }
   useEffect(
     () => () => {
       const { notes: text, saved, run: save, id } = latest.current
-      if (text !== saved) void save({ kind: 'update', combatantId: id, patch: { dm_notes: text } })
+      if (text !== saved && text !== sent.current)
+        void save({ kind: 'update', combatantId: id, patch: { dm_notes: text } })
     },
     [],
   )
@@ -683,19 +690,14 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
           autosize
           minRows={2}
           onChange={(event) => setNotes(event.currentTarget.value)}
-          onBlur={() => {
-            // Leaving the field saves, so closing the drawer never drops a note silently.
-            if (notes !== (combatant.dm_notes ?? ''))
-              void run({ kind: 'update', combatantId: combatant.id, patch: { dm_notes: notes } })
-          }}
+          // Leaving the field saves, so closing the drawer never drops a note silently.
+          onBlur={() => saveNotes(notes)}
         />
         <Group justify="space-between">
           <Button
             variant="default"
             disabled={pending || notes === (combatant.dm_notes ?? '')}
-            onClick={() =>
-              void run({ kind: 'update', combatantId: combatant.id, patch: { dm_notes: notes } })
-            }
+            onClick={() => saveNotes(notes)}
           >
             {t('combat.dm.saveNotes')}
           </Button>

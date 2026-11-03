@@ -707,10 +707,17 @@ button.combat-row-main:focus-visible {
   }
 }
 
-/* Phones: errors sit above the bottom navigation so they never cover a dialog's title. */
+/* Phones: floating errors sit above the bottom navigation, and above the turn bar when one is
+   shown, so they never hide the controls. */
 @media (max-width: 48em) {
   .combat-toast {
     top: auto;
     bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
   }
+  :root:has(.combat-turn-bar) .combat-toast {
+    bottom: calc(var(--bottom-nav-h) + 8.5rem + env(safe-area-inset-bottom));
+  }
+}
+.combat-inline-error {
+  margin-top: 12px;
 }

@@ -586,6 +586,24 @@ export function combatServer() {
 
   return {
     encounters,
+    /** An active encounter with Arin acting first and two visible goblins. */
+    seedActive() {
+      const e = mutate(dmId, true, 'create_encounter', { encounter_name: 'Bridge ambush' }) as {
+        encounter_id: string
+      }
+      const id = e.encounter_id
+      mutate(dmId, true, 'add_combatants', {
+        target_encounter: id,
+        entries: [
+          { kind: 'character', character_id: characterId },
+          { kind: 'character', character_id: beaId },
+          { kind: 'npc', name: 'Goblin', count: 2, max_hp: 7, armor_class: 15 },
+        ],
+      })
+      const encounter = find(id)!
+      encounter.combatants.forEach((c, index) => (c.initiative = 20 - index))
+      mutate(dmId, true, 'set_encounter_status', { target_encounter: id, new_status: 'active' })
+    },
     async install(page: Page) {
       await page.routeWebSocket(/realtime\/v1\/websocket/, () => {
         /* Realtime unavailable: the combat screens fall back to polling. */

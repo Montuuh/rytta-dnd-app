@@ -103,3 +103,27 @@ export function eventText(t: TFunction, event: CombatEvent) {
       })
   }
 }
+
+/** Conditionally mounted dialogs lose Mantine's focus return: send focus back to the control that
+ * opened them when they unmount. */
+export function useReturnFocus() {
+  const [opener] = useState(() =>
+    document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+      ? document.activeElement
+      : null,
+  )
+  useEffect(
+    () => () => {
+      requestAnimationFrame(() => {
+        if (opener?.isConnected) opener.focus()
+      })
+    },
+    [opener],
+  )
+}
+
+/** A drawer must not close on the Escape meant for a dialog opened on top of it. */
+export const onlyTopDialog = (close: () => void) => () => {
+  if (document.querySelectorAll('[role="dialog"]').length > 1) return
+  close()
+}

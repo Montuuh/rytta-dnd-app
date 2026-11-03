@@ -40,7 +40,9 @@ export function CombatLog({
               return (
                 <li key={event.id} className={event.undone ? 'is-undone' : undefined}>
                   <span className="combat-log-round">
-                    {t('combat.log.round', { round: event.round })}
+                    {event.round > 0
+                      ? t('combat.log.round', { round: event.round })
+                      : t('combat.log.prep')}
                   </span>
                   <div className="combat-log-text">
                     <Text size="sm" td={event.undone ? 'line-through' : undefined}>

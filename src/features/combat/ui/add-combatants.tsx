@@ -57,6 +57,7 @@ export function AddCombatants({
       </Title>
       {notice !== null && (
         <Alert
+          className="combat-alert"
           role="status"
           withCloseButton
           closeButtonLabel={t('action.cancel')}
@@ -279,6 +280,7 @@ function CreatureForm({
             />
           </div>
           <Switch
+            className="combat-switch"
             size="md"
             label={t('combat.add.hidden')}
             checked={hidden}
@@ -286,6 +288,7 @@ function CreatureForm({
           />
           {total > 1 && (
             <Switch
+              className="combat-switch"
               size="md"
               label={t('combat.add.share')}
               checked={share}

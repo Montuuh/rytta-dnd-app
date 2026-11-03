@@ -28,7 +28,7 @@ import {
   type HpMode,
 } from '../domain/combat'
 import { AmountDialog } from './amount-dialog'
-import { sideLabel, type Run } from './helpers'
+import { sideLabel, useReturnFocus, type Run } from './helpers'
 import { HpMeter, Pips, SideIcon, StateBadge } from './parts'
 
 type Props = {
@@ -93,16 +93,16 @@ export function CombatantDetail(props: Props) {
           {canAct && (
             <Group gap="xs" mt="sm" grow>
               <Button
-                variant="light"
-                color="red"
+                variant="default"
+                className="combat-btn-damage"
                 leftSection={<Swords size={16} aria-hidden="true" />}
                 onClick={() => setHpMode('damage')}
               >
                 {t('sheet.damage')}
               </Button>
               <Button
-                variant="light"
-                color="green"
+                variant="default"
+                className="combat-btn-heal"
                 leftSection={<Heart size={16} aria-hidden="true" />}
                 onClick={() => setHpMode('heal')}
               >
@@ -188,7 +188,12 @@ function DeathSaves({ combatant, run, pending, canAct }: Props & { canAct: boole
             {(['success', 'failure', 'nat20', 'nat1'] as const).map((outcome) => (
               <Button
                 key={outcome}
-                variant={outcome === 'success' || outcome === 'nat20' ? 'light' : 'default'}
+                variant="default"
+                className={
+                  outcome === 'success' || outcome === 'nat20'
+                    ? 'combat-btn-heal'
+                    : 'combat-btn-damage'
+                }
                 disabled={pending}
                 onClick={() => void run({ kind: 'deathSave', combatantId: combatant.id, outcome })}
               >
@@ -425,6 +430,7 @@ function EffectDialog({
   }) => void
 }) {
   const { t } = useTranslation()
+  useReturnFocus()
   const [label, setLabel] = useState('')
   const [condition, setCondition] = useState<string | null>(null)
   const [rounds, setRounds] = useState<number | string>(1)
@@ -515,6 +521,7 @@ function EffectDialog({
           />
           {dm && (
             <Switch
+              className="combat-switch"
               size="md"
               label={t('combat.effects.visible')}
               checked={visible}
@@ -610,6 +617,7 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
           </Group>
         )}
         <Switch
+          className="combat-switch"
           size="md"
           label={t('combat.dm.hidden')}
           checked={combatant.hidden === true}
@@ -624,6 +632,7 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
         />
         {npc && (
           <Switch
+            className="combat-switch"
             size="md"
             label={t('combat.dm.hpRevealed')}
             checked={combatant.hp_revealed === true}
@@ -639,6 +648,7 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
         )}
         {combatant.kind !== 'lair' && (
           <Switch
+            className="combat-switch"
             size="md"
             label={t('combat.dm.defeated')}
             checked={combatant.defeated}
@@ -659,6 +669,11 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
           autosize
           minRows={2}
           onChange={(event) => setNotes(event.currentTarget.value)}
+          onBlur={() => {
+            // Leaving the field saves, so closing the drawer never drops a note silently.
+            if (notes !== (combatant.dm_notes ?? ''))
+              void run({ kind: 'update', combatantId: combatant.id, patch: { dm_notes: notes } })
+          }}
         />
         <Group justify="space-between">
           <Button
@@ -741,6 +756,7 @@ function StatsDialog({
   }) => void
 }) {
   const { t } = useTranslation()
+  useReturnFocus()
   const [name, setName] = useState(combatant.name)
   const [maxHp, setMaxHp] = useState<number | string>(combatant.hp?.max ?? 1)
   const [current, setCurrent] = useState<number | string>(combatant.hp?.current ?? 1)

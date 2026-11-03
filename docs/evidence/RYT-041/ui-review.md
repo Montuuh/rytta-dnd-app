@@ -317,3 +317,101 @@ neither blocks the delivery.
   that happens, Mantine has not yet moved focus into the dialog, and the Escape is ignored. With
   more realistic delays (450 ms or more) it never happened. I do not count it as a finding.
 - This verdict applies only to the fingerprint above.
+
+## Integration (merge of main into RYT-041, 86d04fb)
+
+- Date: 2026-11-03.
+- Snapshot: `86d04fb`, which merges `19d8ac9` (main, with RYT-040) into `3af987f`.
+- Combined fingerprint (`node scripts/check-ui-review.mjs --fingerprint`):
+  `02f8ca809fd15ca7eb95c42cb773803931ae410e8146b3c4fdb95a7faecf1aae`
+
+### Verdict: PASS (UI of the combined snapshot)
+
+The merge does not change any combat UI or any shared UI, and RYT-040's glossary changes do not
+affect combat. The e2e results below are reported separately: they are not green, but none of
+the failures was introduced by the merge.
+
+### What changed since the round 2 PASS (`git diff 77c477f..86d04fb`)
+
+- Under `src`: only `src/features/glossary/**` (`api.ts`, `entry-actions.tsx`,
+  `entry-article.tsx`, `glossary-context.ts`, `glossary-layer.tsx`, `glossary-page.tsx`,
+  `glossary.css`, `headword-focus.ts`, `homebrew-delete.tsx`, `homebrew-editor.tsx`,
+  `homebrew-manager.tsx`) and `src/shared/i18n/glossary-{es,en}.ts`.
+- Unchanged: `src/features/combat`, `src/shared/ui`, `src/app`, the combat i18n catalogs,
+  `index.html`, the lockfile, `tests/e2e/combat.spec.ts` and `tests/e2e/fixtures/combat.ts`.
+  The glossary public entry point `src/features/glossary/index.ts` is also unchanged.
+- How the glossary changes touch combat:
+  - Combat uses only `GlossaryTerm` and `glossaryIds` (`combatant-detail.tsx:35`).
+  - `GlossaryLayer` now also renders the homebrew manager, and adds `manage` to the context.
+  - The reference sheet's Escape guard now also defers to an open homebrew editor
+    (`sheetOpen.current = stack.length > 0 && !manager.busy`).
+  - None of this changes how a combat drawer and the definition sheet stack.
+- Tests: `tests/e2e/fixtures/identity.ts` gains RPC revision checks and the
+  `changeHomebrew`/`removeHomebrew` helpers (glossary only), and `tests/e2e/glossary.spec.ts`
+  changed.
+
+### Browser checks
+
+- Ports 4173/4174 were busy (4174 held by another process), so I did not use the standard
+  runner.
+- Instead I built `86d04fb` into `dist-review`, served it on 127.0.0.1:4238 in Supabase fixture
+  mode, and ran the repository's `tests/e2e/combat.spec.ts` and `tests/e2e/glossary.spec.ts`
+  with a scratch config outside the repository:
+  - identity-desktop 1440, identity-tablet 820 and identity-mobile 390, matching the
+    repository's projects
+  - `CI=1`, 4 workers, no retries
+- Result: 90 passed, 5 failed, 1 skipped.
+- Passed on all three sizes, including:
+  - RYT-039: condition terms in combat open their glossary definition, and removing an effect
+    clears its condition
+  - RYT-007 shared encounter
+  - EN/light combat
+  - action errors
+  - the RYT-041 Player table view
+  - RYT-041 roster dialogs in EN/light
+  - RYT-041 roster and turn focus on tablet and mobile
+  - all glossary homebrew edit, delete and conflict tests not listed below
+- To see whether the merge caused the failures, I exported `19d8ac9` (main) and `77c477f`
+  (RYT-041 before the merge) with `git archive`, built each, and ran the failing tests against
+  each on its own port.
+
+Failures, none introduced by the merge:
+
+1. **`combat.spec.ts:413` RYT-041 roster and turn focus, identity-desktop.**
+   - axe reports `color-contrast` 2.77:1 on "Siguiente turno" (#76624c on #2a1f16), from the
+     audit at line 543.
+   - It fails the same way on `77c477f` before the merge: 4 out of 4 runs there, versus 3 out
+     of 4 on the merged build.
+   - Cause: a race in the test, not a merge problem.
+     - Before the click, the turn bar already shows "Después: Cato", so
+       `await expect(bar).toContainText('Cato')` on line 541 passes at once.
+     - axe then runs during the brief pending state of the turn change. A probe measured it at
+       about 20 ms.
+     - In that state the button is `aria-disabled` and painted with Mantine's disabled colours.
+     - An inactive control is exempt from WCAG 1.4.3, and the same disabled appearance existed
+       before RYT-041. So this is not a UI defect.
+   - Required test fix: wait for `.combat-turn-name` to have the text "Cato" (or for the button
+     to lose `aria-disabled`) before the audit.
+2. **`glossary.spec.ts:342` editor footer at 150% (mobile and tablet; desktop flaky).**
+3. **`glossary.spec.ts:440` dirty editor discard (mobile).**
+4. **`glossary.spec.ts:479` homebrew delete (mobile; axe `aria-allowed-role` on a Mantine
+   `role="menu"` dropdown that was still on screen).**
+
+For items 2 to 4:
+
+- All three fail in the same way on main `19d8ac9` in this harness.
+- `--retries 1` does not change the result.
+- RYT-040's own report says the standard runner was green, so these look sensitive to timing or
+  the environment (drawer and menu transitions).
+- They come from RYT-040, not from this merge. They need confirmation with the standard
+  `CI=1 npm run test:e2e` once the ports are free.
+
+### Limitations
+
+- I did not run the standard runner on ports 4173/4174, or the full e2e suite. I ran only the
+  combat and glossary specs.
+- I did not do a new manual visual pass on the glossary screens. RYT-040's UI has its own
+  independent PASS; I relied on that plus the unchanged combat sources and the passing RYT-039
+  cross-feature tests.
+- The verdict covers the UI at the combined fingerprint above. Before main is published, the
+  e2e failures above must be fixed or shown to pass in the standard runner.

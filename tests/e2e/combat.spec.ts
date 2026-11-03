@@ -538,8 +538,10 @@ test('RYT-041 the DM changes the roster mid-combat and the detail follows the tu
 
   // 7. The newcomer acts this round.
   await next.click()
-  await expect(bar).toContainText('Cato')
+  // The bar already reads "Después: Cato"; wait for the turn itself before auditing.
+  await expect(bar.locator('.combat-turn-name')).toHaveText('Cato')
   await expect(bar).toContainText('Ronda 1')
+  await expect(next).not.toHaveAttribute('aria-disabled', 'true')
   await audit(page)
   await evidence(page, info.project.name, 'after-roster', 'RYT-041')
   expect(errors).toEqual([])

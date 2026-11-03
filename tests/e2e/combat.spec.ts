@@ -272,4 +272,14 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
   await page.keyboard.press('Enter')
   await expect(inline).toBeHidden()
   await expect(page.getByRole('checkbox', { name: 'Derribado' })).toBeFocused()
+  if (info.project.name !== 'identity-desktop') {
+    // A control brought into view upward (keyboard focus in browsers that scroll to the nearest
+    // edge, assistive tech) lands below the drawer's sticky header, not under it.
+    const drawer = page.locator('.mantine-Drawer-content')
+    await drawer.evaluate((node) => (node.scrollTop = node.scrollHeight))
+    const damage = drawer.getByRole('button', { name: 'Daño' })
+    await damage.evaluate((node) => node.scrollIntoView({ block: 'nearest' }))
+    const header = (await drawer.locator('.mantine-Drawer-header').boundingBox())!
+    expect((await damage.boundingBox())!.y).toBeGreaterThanOrEqual(header.y + header.height)
+  }
 })

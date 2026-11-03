@@ -21,7 +21,8 @@ if (typeof document !== 'undefined')
     'pointerdown',
     (event) => {
       const target = event.target instanceof Element ? event.target : null
-      lastPointerTarget = target?.closest<HTMLElement>('button, a, input, label, [role="button"]') ?? null
+      lastPointerTarget =
+        target?.closest<HTMLElement>('button, a, input, label, [role="button"]') ?? null
     },
     true,
   )

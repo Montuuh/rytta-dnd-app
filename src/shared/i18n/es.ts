@@ -66,7 +66,7 @@ export const es = {
   'page.noPath': 'Esta ruta no lleva a ninguna página.',
   'page.return': 'Vuelve atrás para seguir explorando.',
   'page.planned':
-    'Esta base define la navegación y el módulo. Las funciones de juego y los datos guardados de campaña llegarán en su entrega correspondiente.',
+    'Este módulo aún no está disponible. Aparecerá en el menú cuando tu mesa pueda usarlo.',
   'campaigns.title': 'Tus campañas',
   'campaigns.next': 'La creación de campañas y las invitaciones llegarán con RYT-002.',
   'campaigns.empty': 'No hay campañas disponibles para esta cuenta.',

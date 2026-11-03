@@ -7,6 +7,7 @@ import {
   stackSchema,
   type InventoryAction,
 } from '../domain/item'
+import { newRequestId } from '@/shared/lib/request-id'
 
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw new Error('Demo is read-only')
@@ -105,8 +106,7 @@ const errorCode = (message: string) =>
 export async function changeInventory(campaignId: string, action: InventoryAction) {
   const db = await client()
   const target_campaign = z.uuid().parse(campaignId)
-  const request_id =
-    'requestId' in action ? (action.requestId ?? crypto.randomUUID()) : crypto.randomUUID()
+  const request_id = 'requestId' in action ? (action.requestId ?? newRequestId()) : newRequestId()
   let result
   switch (action.kind) {
     case 'define':
@@ -175,7 +175,7 @@ export async function uploadPortrait(campaignId: string, characterId: string, im
   const db = await client()
   const { activeSchema } = await import('@/shared/api/supabase')
   const extension = image.type === 'image/jpeg' ? 'jpg' : image.type.split('/')[1]
-  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(characterId)}/${crypto.randomUUID()}.${extension}`
+  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(characterId)}/${newRequestId()}.${extension}`
   const upload = await db.storage.from(bucket).upload(path, image, { contentType: image.type })
   if (upload.error) throw new Error('unavailable')
   const saved = await db.rpc('set_character_portrait', {
@@ -250,7 +250,7 @@ export async function uploadItemImage(campaignId: string, definitionId: string, 
   if (image.type !== 'image/webp' || image.size > 1_048_576) throw new Error('invalid')
   const db = await client()
   const { activeSchema } = await import('@/shared/api/supabase')
-  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(definitionId)}/${crypto.randomUUID()}.webp`
+  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(definitionId)}/${newRequestId()}.webp`
   const result = await db.storage
     .from('item-images')
     .upload(path, image, { contentType: image.type })

@@ -16,7 +16,7 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import {
   Check,
   ChevronDown,
@@ -435,7 +435,7 @@ export function AddItemsDrawer({
   onAdd: (items: AdminItem[]) => void
 }) {
   const { t } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const [creating, setCreating] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [search, setSearch] = useState('')

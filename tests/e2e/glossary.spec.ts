@@ -364,6 +364,79 @@ test('the editor footer reflows at 150% text on a phone without clipping Save', 
   await evidence(page, info.project.name, 'editor-150', 'RYT-040')
 })
 
+for (const scale of [100, 150]) {
+  test(`focused fields stay clear of the sticky editor footer at ${scale}% text`, async ({
+    page,
+  }, info) => {
+    test.setTimeout(90_000)
+    await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(`${glossaryUrl}/rule.long-rest`)
+    if (scale !== 100) await page.addStyleTag({ content: `html { font-size: ${scale}% }` })
+    const house = page.getByRole('complementary', { name: 'Regla de la casa' })
+    await entryAction(page, house, 'Descanso duro', 'edit')
+    const editor = page.getByRole('dialog', { name: 'Editar entrada' })
+    await editor.getByRole('button', { name: 'Añadir un dato' }).click()
+    await editor.getByRole('button', { name: 'Añadir un dato' }).click()
+    // The footer keeps the trash beside Cancel: two rows at most, even at large text.
+    const footerHeight = await editor
+      .locator('.gl-editor-footer')
+      .evaluate((el) => el.getBoundingClientRect().height)
+    expect(footerHeight).toBeLessThanOrEqual(scale === 100 ? 90 : 150)
+    await editor.getByRole('textbox', { name: /^Nombre/ }).focus()
+    let checked = 0
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press('Tab')
+      const probe = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null
+        const footer = document.querySelector('.gl-editor-footer')
+        const drawer = document.querySelector('.gl-editor-drawer')
+        if (!el || !footer || !drawer?.contains(el) || footer.contains(el)) return null
+        const box = el.getBoundingClientRect()
+        const visible = Math.min(box.bottom, footer.getBoundingClientRect().top) - box.top
+        return {
+          name: el.getAttribute('aria-label') || el.id || el.tagName,
+          need: Math.min(box.height, 44),
+          visible,
+        }
+      })
+      if (!probe) continue
+      checked++
+      expect(probe.visible, `${probe.name} is under the footer`).toBeGreaterThanOrEqual(probe.need)
+    }
+    expect(checked).toBeGreaterThan(10)
+    // Focus the last control above the footer, then audit that state.
+    await editor.getByRole('button', { name: 'Añadir un dato' }).focus()
+    await audit(page)
+    await evidence(page, info.project.name, `editor-focus-${scale}`, 'RYT-040')
+  })
+}
+
+test('a failed "Guardar como nueva" shows why instead of staying silent', async ({ page }) => {
+  test.setTimeout(60_000)
+  const f = await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${glossaryUrl}/rule.long-rest`)
+  const house = page.getByRole('complementary', { name: 'Regla de la casa' })
+  await entryAction(page, house, 'Descanso duro', 'edit')
+  const editor = page.getByRole('dialog', { name: 'Editar entrada' })
+  f.removeHomebrew(houseRuleId)
+  await editor.getByLabel('Resumen').fill('Texto a rescatar.')
+  await editor.getByRole('button', { name: 'Guardar cambios' }).click()
+  const saveNew = editor.getByRole('button', { name: 'Guardar como nueva' })
+  await expect(saveNew).toBeVisible()
+  await page.context().setOffline(true)
+  await saveNew.click()
+  await expect(editor.getByRole('alert').filter({ hasText: 'No hay conexión' })).toBeVisible()
+  // The deleted notice stays, and the edits are kept for another try.
+  await expect(editor.getByText('Alguien eliminó esta entrada')).toBeVisible()
+  await expect(editor.getByLabel('Resumen')).toHaveValue('Texto a rescatar.')
+  await page.context().setOffline(false)
+  await saveNew.click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(house).toContainText('Texto a rescatar.')
+})
+
 test('closing a dirty editor asks before discarding the edits', async ({ page }) => {
   await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -386,6 +459,14 @@ test('closing a dirty editor asks before discarding the edits', async ({ page })
   await page.keyboard.press('Escape')
   await expect(ask).toBeVisible()
   await expect(ask.getByRole('button', { name: 'Seguir editando' })).toBeFocused()
+  if (phone(page)) {
+    // Phones share the delete confirmation's layout: two full-width rows (ui-ux N3).
+    const keep = (await ask.getByRole('button', { name: 'Seguir editando' }).boundingBox())!
+    const drop = (await ask.getByRole('button', { name: 'Descartar cambios' }).boundingBox())!
+    expect(Math.abs(keep.x - drop.x)).toBeLessThan(1)
+    expect(Math.abs(keep.width - drop.width)).toBeLessThan(1)
+    await evidence(page, 'identity-mobile', 'discard-confirm', 'RYT-040')
+  }
   await ask.getByRole('button', { name: 'Descartar cambios' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(

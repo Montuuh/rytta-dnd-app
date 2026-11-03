@@ -53,7 +53,8 @@ describe('public to pre bulk refresh', () => {
       'select pre_admin.refresh() result',
     )
     expect(report.rows[0]!.result.dryRun).toBe(true)
-    expect(report.rows[0]!.result.tables).toHaveLength(21)
+    // RYT-034 added trades and trade_offer_items.
+    expect(report.rows[0]!.result.tables).toHaveLength(23)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

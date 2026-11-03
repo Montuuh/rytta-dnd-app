@@ -544,14 +544,22 @@ button.combat-row-main:focus-visible {
 }
 
 /* Log and summary */
+.combat-log-scroll {
+  max-height: 480px;
+  overflow-y: auto;
+  border-radius: 10px;
+}
+.combat-log-scroll:focus-visible,
+.combat-table-wrap:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
 .combat-log-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   gap: 2px;
-  max-height: 480px;
-  overflow-y: auto;
 }
 .combat-log-list li {
   display: flex;

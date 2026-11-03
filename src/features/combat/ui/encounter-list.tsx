@@ -28,9 +28,9 @@ export function EncounterList({ campaignId }: { campaignId: string }) {
       }}
       keepMounted={false}
       variant="pills"
-      className="combat-tabs"
+      className="dm-tabs combat-tabs"
     >
-      <Tabs.List aria-label={t('combat.tabs')}>
+      <Tabs.List aria-label={t('combat.tabs')} className="dm-tabs-list">
         <Tabs.Tab value="encounters">{t('combat.tab.encounters')}</Tabs.Tab>
         <Tabs.Tab value="bestiary">{t('combat.tab.bestiary')}</Tabs.Tab>
       </Tabs.List>

@@ -130,6 +130,8 @@ export const combatEn = {
   'combat.detail.close': 'Close details',
   'combat.detail.readOnly': 'Only {{name}}’s player and the DM change this character.',
   'combat.conditions': 'Conditions',
+  'combat.conditionsEdit': 'Change',
+  'combat.conditionsDone': 'Done',
   'combat.conditionsNone': 'No conditions',
   'combat.concentration.label': 'Concentration',
   'combat.concentration.spell': 'Spell',

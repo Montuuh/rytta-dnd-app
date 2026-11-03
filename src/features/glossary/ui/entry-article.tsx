@@ -1,9 +1,10 @@
 import { Accordion, Table, Title } from '@mantine/core'
-import type { ReactNode, Ref } from 'react'
+import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GlossaryEntry } from '../domain/catalog'
 import { homebrewParagraphs, type HomebrewEntry } from '../domain/homebrew'
 import { factKeys, type Block, type EntryBody, type FactKey } from '../domain/types'
+import { EntryActions } from './entry-actions'
 import { useGlossary } from './glossary-context'
 import { customFactIcon, factIcons } from './icon-maps'
 import { CategoryIcon } from './icons'
@@ -185,10 +186,13 @@ function HouseRule({ rule }: { rule: HomebrewEntry }) {
   const { t } = useTranslation()
   return (
     <aside className="gl-house" aria-label={t('glossary.houseRule')}>
-      <p className="gl-house-title">
-        <ScrollIcon /> {t('glossary.houseRule')}:{' '}
-        <GlossaryTerm id={`homebrew.${rule.id}`}>{rule.name}</GlossaryTerm>
-      </p>
+      <div className="gl-house-head">
+        <p className="gl-house-title">
+          <ScrollIcon /> {t('glossary.houseRule')}:{' '}
+          <GlossaryTerm id={`homebrew.${rule.id}`}>{rule.name}</GlossaryTerm>
+        </p>
+        <EntryActions target={{ homebrew: rule }} />
+      </div>
       {rule.summary && (
         <p>
           <GlossaryText text={rule.summary} />
@@ -213,7 +217,6 @@ export type EntryArticleProps = {
   compact?: boolean
   /** The reference sheet shows the headword as its dialog title instead. */
   hideHeadword?: boolean
-  actions?: ReactNode
 }
 
 /** One dictionary entry: headword, gloss, quick facts, rules text, house rules and 2014 rule. */
@@ -225,7 +228,6 @@ export function EntryArticle({
   headingRef,
   compact,
   hideHeadword,
-  actions,
 }: EntryArticleProps) {
   const { t, i18n } = useTranslation()
   const glossary = useGlossary()
@@ -252,7 +254,14 @@ export function EntryArticle({
           {entry.edition === 'homebrew' && (
             <span className="gl-edition">{t('glossary.homebrewTag')}</span>
           )}
-          {actions && <div className="gl-entry-actions">{actions}</div>}
+          <div className="gl-entry-actions">
+            {homebrew ? (
+              <EntryActions target={{ homebrew }} />
+            ) : (
+              // The reference sheet is for quick reading: house rules start from the page.
+              !compact && <EntryActions target={{ srd: { id: entry.id, name: entry.name } }} />
+            )}
+          </div>
         </div>
         {!hideHeadword && (
           <Title order={headingLevel} className="gl-headword" ref={headingRef} tabIndex={-1}>

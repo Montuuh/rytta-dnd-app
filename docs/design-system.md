@@ -154,5 +154,14 @@ The glossary reads like a field dictionary: serif headwords and rules text, a qu
   up to 86dvh, side sheet from 48em, z-index above other drawers). The headword is the dialog
   title and takes focus on every move through nested terms. Never wrap a term inside another
   control.
-- Homebrew uses a side drawer form; entry actions live in a ⋯ menu. Saving moves focus to
-  the saved headword instead of showing a toast (top-right toasts would cover entry actions).
+- Homebrew uses a side drawer form (full-height sheet on phones) with a sticky footer: delete icon
+  at the left, Cancel and Save changes at the right. Entry actions are 44px icon buttons (pencil,
+  red trash, each with a tooltip and a named accessible label) on the kind line of a homebrew
+  entry and on the title row of a house rule inside an SRD entry; from phones (< 48em) they fold
+  into one ⋯ menu. An SRD entry offers a single "Add a house rule" icon. The reference sheet
+  shows edit and delete for homebrew definitions; the editor and the delete modal open above the
+  sheet (z-index 410), Escape closes only the topmost, and focus returns to the control that
+  opened them. Delete asks in a modal titled with the entry name, Cancel holds the initial focus
+  and the red `light` confirm names the action. A stale revision shows a recoverable conflict
+  alert (load the current version or save yours over it). Saving moves focus to the saved
+  headword instead of showing a toast (top-right toasts would cover entry actions).

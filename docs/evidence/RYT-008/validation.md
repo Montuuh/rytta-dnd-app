@@ -1,7 +1,7 @@
 # RYT-008 verification: SRD glossary, term references and homebrew
 
 Date: 2026-11-03. Branch `cl/gifted-bohr-6l74mn` on base `cdc7646`. Decision record:
-[ADR 024](../../decisions/024-glossary.md).
+[ADR 025](../../decisions/025-glossary.md).
 
 ## Scope delivered
 
@@ -137,7 +137,7 @@ Round 4 (`c474ae8`, after merging `origin/main` with RYT-035): **PASS** on finge
 `ac6407a5…`. The glossary adopts RYT-035's `PageHead`, the single module catalogue
 (`module-catalog.ts`, glossary `implemented: true`) and `usePhone`/`useWide`; the reviewer
 compared the page head with Grupo and Tiendas, checked navigation and the module switch for
-DM and Players, and sampled overlay first paint frame by frame. The ADR was renumbered to 024.
+DM and Players, and sampled overlay first paint frame by frame. The ADR was renumbered to 024, and to 025 after merging RYT-007 (combat took 024).
 
 Accepted minor items: F7 (overlapping 44 px inline hit areas in dense prose), F8 (slider
 thumb hit area at 20 px off centre; taps on the track still move the nearest thumb), and a

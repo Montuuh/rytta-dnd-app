@@ -1,4 +1,4 @@
-// RYT-008 glossary: interface copy. Rules text itself is bundled SRD content (ADR 024).
+// RYT-008 glossary: interface copy. Rules text itself is bundled SRD content (ADR 025).
 export const glossaryEn = {
   'glossary.intro':
     'Rules, conditions and spells from the 5.5e SRD, plus your campaign’s homebrew.',

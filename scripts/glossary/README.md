@@ -2,7 +2,7 @@
 
 The glossary bundles rules text from the System Reference Document 5.2.1 (and SRD 5.1 for the
 2014 blocks), English and Spanish editions, licensed CC-BY-4.0 by Wizards of the Coast LLC.
-See `docs/decisions/024-glossary.md` for attribution and adaptation notes.
+See `docs/decisions/025-glossary.md` for attribution and adaptation notes.
 
 The scripts run manually (not in CI) and need `pdfplumber` and `pdftotext`:
 

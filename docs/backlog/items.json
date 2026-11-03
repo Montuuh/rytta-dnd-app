@@ -295,22 +295,46 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-003", "RYT-013"],
-      "sources": ["Drive: HP and initiative", "D&D Sync: shared session visibility"],
-      "scope": "Read-only shared HP/initiative with DM encounter controls.",
+      "sources": [
+        "User 2026-11-03: design, UI, UX and feature analysis for a useful, accessible combat screen for DM and Players; full module in one delivery.",
+        "Drive: HP and initiative",
+        "D&D Sync: shared session visibility"
+      ],
+      "scope": "Encounters with initiative, turns and rounds; DM console and Player view; character HP, conditions and death saves through character_vitals; role projection and realtime invalidation.",
       "acceptance": [
         "Define public HP visibility separately from private character data.",
         "DM changes turn/order through authoritative operations.",
         "Reconnect restores current state; no stale turn presented as current.",
-        "Table projection contains no DM secrets."
+        "Table projection contains no DM secrets.",
+        "Players enter their own initiative and end only their own turn.",
+        "HP changes are server-side deltas shared with the character sheet."
       ],
       "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration",
         "Two-client encounter integration",
         "Public projection policy tests",
         "Tablet and table display review"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/combat-design.md",
+        "docs/decisions/024-combat.md",
+        "docs/evidence/RYT-007/validation.md",
+        "docs/evidence/ui-review/combat/review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-007/dm-active-mobile.png",
+        "docs/evidence/RYT-007/dm-active-tablet.png",
+        "docs/evidence/RYT-007/player-turn-mobile.png",
+        "docs/evidence/RYT-007/player-turn-tablet.png",
+        "docs/evidence/RYT-007/player-turn-en-light-mobile.png",
+        "docs/evidence/RYT-007/player-turn-en-light-tablet.png"
+      ]
     },
     {
       "id": "RYT-008",
@@ -348,7 +372,7 @@
       ],
       "evidence": [
         "docs/evidence/RYT-008/validation.md",
-        "docs/decisions/024-glossary.md",
+        "docs/decisions/025-glossary.md",
         "docs/evidence/RYT-008/ui-review.md",
         "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-008/entry-grappled-mobile.png",
@@ -1268,6 +1292,118 @@
         "docs/evidence/RYT-035/settings-laptop.png",
         "docs/evidence/ui-review/RYT-035/review.md",
         "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-036",
+      "title": "Encounter preparation and homebrew bestiary",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-007"],
+      "sources": [
+        "User 2026-11-03: design, UI, UX and feature analysis for a useful, accessible combat screen for DM and Players; full module in one delivery."
+      ],
+      "scope": "Prepared draft encounters, the whole party in one tap, numbered creature batches with shared initiative, hidden reinforcements, a lair and reusable homebrew templates.",
+      "acceptance": [
+        "Drafts are invisible to Players.",
+        "Batches are numbered and may share one initiative roll.",
+        "Hidden combatants never reach Players until revealed.",
+        "Templates are DM-only and bundle no licensed stat blocks."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-007/validation.md",
+        "docs/evidence/ui-review/combat/review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-007/dm-prepare-mobile.png",
+        "docs/evidence/RYT-007/dm-prepare-tablet.png"
+      ]
+    },
+    {
+      "id": "RYT-037",
+      "title": "Combat tools: effects, concentration, death saves, area damage and undo",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-007"],
+      "sources": [
+        "User 2026-11-03: design, UI, UX and feature analysis for a useful, accessible combat screen for DM and Players; full module in one delivery."
+      ],
+      "scope": "Timed effects that tick at turn boundaries, concentration DC reminders, death saves, legendary actions, multi-target damage with half on a save, a typed combat log with compensating undo and an end-of-combat summary.",
+      "acceptance": [
+        "Effects expire server-side and clear the condition they granted.",
+        "Area damage is one transaction with per-target amounts.",
+        "Undo is refused when the target changed afterwards.",
+        "Players undo only their own changes on their own character."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-007/validation.md",
+        "docs/evidence/ui-review/combat/review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-007/dm-area-damage-mobile.png",
+        "docs/evidence/RYT-007/dm-area-damage-tablet.png",
+        "docs/evidence/RYT-007/dm-log-mobile.png",
+        "docs/evidence/RYT-007/dm-log-tablet.png",
+        "docs/evidence/RYT-007/summary-mobile.png",
+        "docs/evidence/RYT-007/summary-tablet.png"
+      ]
+    },
+    {
+      "id": "RYT-038",
+      "title": "Combat table display",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-007"],
+      "sources": [
+        "User 2026-11-03: design, UI, UX and feature analysis for a useful, accessible combat screen for DM and Players; full module in one delivery."
+      ],
+      "scope": "Read-only, large-type projection for the shared screen with round, current and next turn and descriptive status.",
+      "acceptance": [
+        "Uses the Player projection without own data, even when the DM opens it.",
+        "No write controls.",
+        "Readable at tablet and laptop sizes in both themes."
+      ],
+      "validation": [
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "Public projection policy tests"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-007/validation.md",
+        "docs/evidence/ui-review/combat/review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-007/table-mobile.png",
+        "docs/evidence/RYT-007/table-tablet.png"
       ]
     }
   ]

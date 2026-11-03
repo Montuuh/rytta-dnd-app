@@ -1,8 +1,11 @@
-# ADR 024: SRD 5.5e glossary, in-place term references and campaign homebrew
+# ADR 025: SRD 5.5e glossary, in-place term references and campaign homebrew
 
 Date: 2026-11-03. Status: accepted for `RYT-008`. Drafted as ADR 023 before RYT-035 took that
-number; the applied migration `20261104120000_glossary_homebrew.sql` still cites "ADR 023" in a
-comment (deployed migrations are append-only). Supersedes the "no rules prose is bundled"
+number and as ADR 024 before RYT-007 (combat) took that one; the applied migration
+`20261104110000_glossary_homebrew.sql` still cites "ADR 023" in a comment (deployed migrations
+are append-only). Its file was first named `20261104120000_…`, the same version as RYT-007's
+combat migration; before merging it was renamed to `20261104110000_…`, matching the hosted order
+(`glossary_homebrew` was applied before `combat`). Supersedes the "no rules prose is bundled"
 limit of ADR 013 and ADR 014 for the glossary only.
 
 ## Context
@@ -75,7 +78,7 @@ entry.
 
 ### Homebrew
 
-- `public.glossary_entries` (migration `20261104120000_glossary_homebrew.sql`): category, name
+- `public.glossary_entries` (migration `20261104110000_glossary_homebrew.sql`): category, name
   (unique per campaign, case-insensitive), aliases, summary, plain-text body, up to 8 custom
   facts, optional `srd_ref` (a house rule shown inside that SRD entry) and a revision.
 - Actor matrix: anon none; outsider, inactive member and cross-campaign DM see nothing and every

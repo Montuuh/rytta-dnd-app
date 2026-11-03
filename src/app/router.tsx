@@ -44,6 +44,16 @@ const ShopsPage = lazy(() =>
   import('@/features/shops').then((module) => ({ default: module.ShopsPage })),
 )
 
+const CombatPage = lazy(() =>
+  import('@/features/combat').then((module) => ({ default: module.CombatPage })),
+)
+const CombatEncounterPage = lazy(() =>
+  import('@/features/combat').then((module) => ({ default: module.CombatEncounterPage })),
+)
+const CombatTablePage = lazy(() =>
+  import('@/features/combat').then((module) => ({ default: module.CombatTablePage })),
+)
+
 const ModulePage = lazy(() =>
   import('@/pages/module-page').then((module) => ({ default: module.ModulePage })),
 )
@@ -88,6 +98,9 @@ export function AppRouter() {
                         />
                         <Route path="inventory" element={<InventoryPage />} />
                         <Route path="shops" element={<ShopsPage />} />
+                        <Route path="combat" element={<CombatPage />} />
+                        <Route path="combat/:encounterId" element={<CombatEncounterPage />} />
+                        <Route path="combat/:encounterId/table" element={<CombatTablePage />} />
                         <Route path="glossary" element={<GlossaryPage />} />
                         <Route path="glossary/:entryId" element={<GlossaryPage />} />
                         <Route path="*" element={<ModulePage />} />

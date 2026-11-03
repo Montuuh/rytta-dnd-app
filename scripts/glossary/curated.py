@@ -3,7 +3,7 @@
 Abilities, skills and damage types are transcribed from the SRD 5.2.1 tables ("Ability
 Descriptions", "Ability Check Examples", "Saving Throw Examples", "Skills", "Damage Types").
 Quick facts ("facts") are Rytta's own summaries of SRD 5.2.1 rules: an adaptation under
-CC-BY-4.0, recorded in docs/decisions/024-glossary.md. Each fact is (key, English, Spanish).
+CC-BY-4.0, recorded in docs/decisions/025-glossary.md. Each fact is (key, English, Spanish).
 Fact keys are rendered with localized labels and icons by src/features/glossary.
 """
 

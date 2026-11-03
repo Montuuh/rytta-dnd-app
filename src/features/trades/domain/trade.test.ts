@@ -35,6 +35,7 @@ describe('RYT-034 trade domain', () => {
     expect(tradeErrorCode('Stale revision')).toBe('stale')
     expect(tradeErrorCode('Partner busy')).toBe('partnerBusy')
     expect(tradeErrorCode('Insufficient gold')).toBe('gold')
+    expect(tradeErrorCode('Empty trade')).toBe('empty')
     expect(tradeErrorCode('quantity')).toBe('quantity')
     expect(tradeErrorCode('boom')).toBe('unavailable')
     expect(formatCountdown(119_001)).toBe('2:00')

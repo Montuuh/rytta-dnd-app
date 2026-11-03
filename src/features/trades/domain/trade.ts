@@ -109,6 +109,7 @@ export const tradeErrorCodes = [
   'busy',
   'partnerBusy',
   'closed',
+  'empty',
   'character',
   'forbidden',
   'unavailable',
@@ -124,6 +125,7 @@ export function tradeErrorCode(message: string): TradeErrorCode {
     ['Partner busy', 'partnerBusy'],
     ['Trade busy', 'busy'],
     ['Trade closed', 'closed'],
+    ['Empty trade', 'empty'],
     ['Character unavailable', 'character'],
     ['Forbidden', 'forbidden'],
   ]

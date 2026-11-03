@@ -998,7 +998,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-028", "RYT-029"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1018,7 +1018,16 @@
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-031/validation.md",
+        "docs/evidence/RYT-031/party-player-mobile.png",
+        "docs/evidence/RYT-031/party-player-tablet.png",
+        "docs/evidence/RYT-031/party-dm-mobile.png",
+        "docs/evidence/RYT-031/party-dm-tablet.png",
+        "docs/evidence/RYT-031/sheet-history-mobile.png",
+        "docs/evidence/RYT-031/sheet-history-tablet.png",
+        "docs/decisions/020-party-live-sharing.md"
+      ]
     },
     {
       "id": "RYT-032",

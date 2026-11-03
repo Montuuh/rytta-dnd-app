@@ -27,3 +27,4 @@ export type CharacterAction =
   | { kind: 'invite'; characterId: string; email: string }
   | { kind: 'unassign'; characterId: string; expectedUser: string }
   | { kind: 'resources'; characterId: string; values: Resources; requestId: string }
+  | { kind: 'liveSharing'; characterId: string; enabled: boolean }

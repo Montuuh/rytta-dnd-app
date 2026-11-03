@@ -1,0 +1,30 @@
+import type { partyEn } from './party-en'
+
+// RYT-031 party live sharing and per-character audit history.
+export const partyEs = {
+  'party.liveTitle': 'Compañeros',
+  'party.liveHint': 'Estado en vivo de los compañeros que comparte tu DM.',
+  'party.liveEmpty': 'Tu DM no está compartiendo ningún compañero ahora mismo.',
+  'party.liveDraft': 'Ficha en preparación',
+  'party.liveTemp': '+{{value}} temporales',
+  'party.liveAc': 'Clase de armadura {{value}}',
+  'party.liveConditions': 'Estados de {{name}}',
+  'party.liveNoSheet': 'Estado aún no disponible',
+  'party.shareOn': 'Visible para el grupo',
+  'party.shareOff': 'Oculto al grupo',
+  'party.shareToggle': 'Compartir el estado en vivo de {{name}} con el grupo',
+  'party.shareError': 'No se pudo cambiar la visibilidad para el grupo. Inténtalo de nuevo.',
+  'audit.open': 'Historial',
+  'audit.sheetTitle': 'Historial de {{name}}',
+  'audit.sheetHint': 'Últimos 40 cambios de este personaje, del más reciente al más antiguo.',
+  'audit.sheetEmpty': 'Aún no hay cambios registrados.',
+  'audit.liveSharingChanged': 'Visibilidad para el grupo cambiada',
+  'audit.liveSharingOn': 'Ahora visible para el grupo',
+  'audit.liveSharingOff': 'Ahora oculto al grupo',
+  'audit.field.current_hp': 'PG',
+  'audit.field.temp_hp': 'PG temporales',
+  'audit.field.hit_dice_spent': 'Dados de golpe gastados',
+  'audit.field.level': 'Nivel',
+  'audit.field.max_hp': 'PG máximos',
+  'audit.field.armor_class': 'CA',
+} satisfies Record<keyof typeof partyEn, string>

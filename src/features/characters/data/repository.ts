@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { config } from '@/shared/lib/config'
 import { characterSchema, resourceSchema, type CharacterAction } from '../domain/character'
+import { partyMemberSchema } from '../domain/party'
 import {
   buildSchema,
   sheetRowSchema,
@@ -28,6 +29,16 @@ export async function listCharacters(campaignId: string, signal: AbortSignal, pl
   const { data, error } = await query
   if (error) throw error
   return characterSchema.array().parse(data)
+}
+/** RYT-031: own + shared teammates for Players, every character (with sharing flag) for DMs. */
+export async function getPartyOverview(campaignId: string, signal: AbortSignal) {
+  const { data, error } = await (
+    await client()
+  )
+    .rpc('get_party_overview', { target_campaign: z.uuid().parse(campaignId) })
+    .abortSignal(signal)
+  if (error) throw error
+  return partyMemberSchema.array().parse(data)
 }
 export async function listAssignments(campaignId: string, signal: AbortSignal) {
   const { data, error } = await (
@@ -74,6 +85,13 @@ export async function changeCharacter(campaignId: string, action: CharacterActio
         target_campaign,
         target_character: z.uuid().parse(action.characterId),
         expected_user: z.uuid().parse(action.expectedUser),
+      })
+      break
+    case 'liveSharing':
+      result = await db.rpc('set_character_live_sharing', {
+        target_campaign,
+        target_character: z.uuid().parse(action.characterId),
+        enabled: z.boolean().parse(action.enabled),
       })
       break
     case 'resources': {

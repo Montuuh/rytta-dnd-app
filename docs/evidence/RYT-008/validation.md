@@ -130,4 +130,17 @@ fixed. Follow-up fixes:
 - Checked condition chips (outside RYT-008, fixed on request): on-accent text; e2e runs axe
   in dark/default, light/default, dark/warlock and light/druid; it failed before the fix.
 
-Round 3: focused re-review of R2-1 pending.
+Round 3 (`8b78b6f`): **PASS**. R2-1 fixed for the item card and the shop listing drawer
+(including a direct load), R2-2 and R2-3 confirmed.
+
+Round 4 (`c474ae8`, after merging `origin/main` with RYT-035): **PASS** on fingerprint
+`ac6407a5…`. The glossary adopts RYT-035's `PageHead`, the single module catalogue
+(`module-catalog.ts`, glossary `implemented: true`) and `usePhone`/`useWide`; the reviewer
+compared the page head with Grupo and Tiendas, checked navigation and the module switch for
+DM and Players, and sampled overlay first paint frame by frame. The ADR was renumbered to 024.
+
+Accepted minor items: F7 (overlapping 44 px inline hit areas in dense prose), F8 (slider
+thumb hit area at 20 px off centre; taps on the track still move the nearest thumb), and a
+Spanish quote that can wrap before "Romper objetos" in "Puntos de golpe".
+
+Manifest: `docs/evidence/ui-review-current.json` records the round 4 PASS.

@@ -321,7 +321,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "medium"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-002"],
       "sources": [
         "Drive: keyword glossary",
@@ -346,7 +346,26 @@
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
-      "evidence": ["docs/evidence/RYT-008/validation.md", "docs/decisions/024-glossary.md"]
+      "evidence": [
+        "docs/evidence/RYT-008/validation.md",
+        "docs/decisions/024-glossary.md",
+        "docs/evidence/RYT-008/ui-review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-008/entry-grappled-mobile.png",
+        "docs/evidence/RYT-008/entry-grappled-tablet.png",
+        "docs/evidence/RYT-008/homebrew-editor-mobile.png",
+        "docs/evidence/RYT-008/homebrew-editor-tablet.png",
+        "docs/evidence/RYT-008/house-rule-mobile.png",
+        "docs/evidence/RYT-008/house-rule-tablet.png",
+        "docs/evidence/RYT-008/index-mobile.png",
+        "docs/evidence/RYT-008/index-tablet.png",
+        "docs/evidence/RYT-008/sheet-reference-mobile.png",
+        "docs/evidence/RYT-008/sheet-reference-tablet.png",
+        "docs/evidence/RYT-008/spell-filters-mobile.png",
+        "docs/evidence/RYT-008/spell-filters-tablet.png",
+        "docs/evidence/RYT-008/spell-light-mobile.png",
+        "docs/evidence/RYT-008/spell-light-tablet.png"
+      ]
     },
     {
       "id": "RYT-009",

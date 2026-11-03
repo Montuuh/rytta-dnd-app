@@ -596,3 +596,106 @@ These are in the session scratchpad and are not committed:
 - `{mobile,tablet}-card-after-1st-escape.png`: card open, definition closed.
 - `{mobile,tablet}-shop-stack.png`
 - `{mobile,tablet}-nested-no-ring.png`
+
+---
+
+# Round 4 (re-review after merging origin/main / RYT-035)
+
+- Date: 2026-11-03.
+- Reviewed source: commit `c474ae8`, which contains the merge `3c7adde`. The working tree was
+  clean, with UI fingerprint `ac6407a56827c5f7e6cd66877b7817a53b58f591522ed1190bcb563c9c0c3312`.
+  The commit was extracted with `git archive` into the session scratchpad; its `src/` is
+  byte-identical to the working tree.
+- Servers:
+  - Production build (supabase mode, mocked backends `tests/e2e/fixtures/identity.ts` and
+    `shops.ts`) on port 4177.
+  - Demo dev server from the same tree.
+- Viewports: 390×844 and 820×1180, both touch enabled.
+
+## Round 4 verdict: PASS
+
+The RYT-008 side of the merge integrates cleanly:
+
+- The `PageHead` masthead matches the other RYT-035 page heads.
+- The module catalogue drives both the navigation and the DM switch.
+- The `usePhone`/`useWide` overlays paint the correct variant from their first frame.
+
+The search, Escape-order and homebrew smoke flows still pass.
+
+## Real browser checks
+
+### Page head
+
+I compared Glosario with Grupo and Tiendas (DM fixture) in four variants: es dark, en light,
+es light at 150% and en dark at 150%.
+
+Glosario uses `.page-head` and matches Grupo:
+
+| Viewport | Head top | h1 (Georgia, weight 500) | Lede |
+| --- | --- | --- | --- |
+| 390px | 79 | 34px; 51px at 150% | Muted: `#cbb699` dark, `#664f3a` light |
+| 820px | 150 (167 at 150%) | 34px; 51px at 150% | Muted: `#cbb699` dark, `#664f3a` light |
+
+- **"Nueva entrada":** a 44px quiet action. On phones it sits below the lede (the actions
+  slot flows inline there, as on Grupo). At 820px it is right-aligned on the head band.
+- **Layout:** no horizontal overflow in any variant.
+- **axe:** no violations on the glossary page in all four variants.
+- **Difference from Grupo:** Grupo's primary action is filled, while the glossary's
+  "Nueva entrada" is a quiet text action. This is deliberate (homebrew is secondary to
+  lookup), and it sits in the same slot.
+- Screenshots: `cmp-{mobile,tablet}-{es-dark,es-light-150}.png` (side by side: Glosario,
+  Grupo, Tiendas) and `{mobile,tablet}-head-{glossary,party,shops}-*.png`.
+
+### Navigation and module switch
+
+| Viewer | Result |
+| --- | --- |
+| DM | "Glosario" is in the navigation |
+| DM, Command Center → modules | The "Glosario" switch starts off and turns on; its accessible name reads "Glosario: visible para jugadores" |
+| Player with `party` | No "Glosario" link |
+| Player with `party` + `glossary` | One "Glosario" link |
+
+All four rows hold at both viewports. Screenshots: `{mobile,tablet}-module-switch.png` and
+`{mobile,tablet}-player-nav-*.png`.
+
+### First paint of overlays
+
+I sampled the overlay's bounding box on every animation frame from the click, with reduced
+motion both on and off, and also on the first open after a fresh reload.
+
+- **Reference sheet at 390px:** every frame is the full-width bottom variant
+  (`0,844,375×…`), which slides up and ends anchored to the bottom.
+- **Reference sheet at 820px:** every frame is the 440px right side panel.
+- **No wrong-variant frame** appeared in any run.
+- **Spell filters:** bottom at 390px, 400px right at 820px.
+- **Homebrew editor:** full-width right at 390px, 520px right at 820px. This is by design.
+
+### Smoke
+
+- "grappled" typed at 60 ms per key is intact ("1 entrada"). Enter opens
+  `condition.grappled` with focus on the headword "Agarrado".
+- A Player with the module on created the homebrew entry "Niebla de Rytta". Focus lands on
+  its headword, and "cegado" in its text links to the SRD entry.
+- Item card → "cortante" → Escape closes only the definition, with focus on "cortante". A
+  second Escape closes the card, with focus on the "Espada larga" tile.
+
+## Limitations (round 4)
+
+- No real devices or screen reader.
+- I did not re-run the full theme/zoom matrix from rounds 1–3 for the unchanged glossary
+  internals.
+- I did not run `npm run check` or the repo e2e. The coordinator reports 190 unit tests plus
+  the build, and 57 e2e tests, passing on `3c7adde`.
+- Minor items F7, F8 and the content nit from round 3 remain as recorded there.
+- This approval applies only to fingerprint
+  `ac6407a56827c5f7e6cd66877b7817a53b58f591522ed1190bcb563c9c0c3312`.
+
+## Round 4 screenshots
+
+These are in the session scratchpad and are not committed:
+`/tmp/claude-0/-home-user-rytta-dnd-app/63bbd363-2400-5756-80a5-86a53f7c2ad4/scratchpad/ui-review/shots5/`
+
+- **Page heads:** `cmp-*.png`, `*-head-*.png`
+- **Navigation and switch:** `*-module-switch.png`, `*-player-nav-*.png`
+- **Overlays:** `*-sheet-{reduce,no-preference}.png`
+- **Smoke:** `*-entry.png`, `*-editor.png`, `*-stack.png`

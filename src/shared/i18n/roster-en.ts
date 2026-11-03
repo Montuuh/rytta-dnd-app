@@ -33,6 +33,9 @@ export const rosterEn = {
   'roster.welcomeText':
     'Create your character to join the party. You can keep up to four and switch between them.',
   'roster.welcomeCta': 'Create my character',
+  'roster.welcomeArchived': 'Your characters are archived. Restore one or create a new one.',
+  'roster.welcomeCtaNew': 'Create a new character',
+  'roster.welcomeArchivedLink': 'See archived characters',
   'roster.manage': 'My characters',
   'roster.manageDm': 'Players’ characters',
   'roster.manageCount': '{{label}}, {{count}} in total',

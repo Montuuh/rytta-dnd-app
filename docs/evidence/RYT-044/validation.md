@@ -195,13 +195,62 @@ PRE (only PRE; production untouched):
   - Counts afterwards were unchanged: 2 characters, 0 archived. The PostgREST schema cache was
     reloaded.
 
+## Round 3: review round 2 findings
+
+The review's "Round 2" section is committed unedited. It covers snapshot `35d3fa2`, which
+includes the merge of `main` (RYT-040, RYT-041).
+
+- **N1:**
+  - "Sin hueco libre" moved under the meta line of the archived row.
+  - The row actions wrap (`flex-wrap`, `min-width: 0`, `max-width: 100%`).
+  - The e2e test opens the archived section with a full roster at 150% text and asserts
+    `scrollWidth <= innerWidth`.
+- **N2:** after archiving from the Party card menu, focus moves to the "… está archivado." status
+  (`tabIndex=-1`). Closing that status returns focus to the roster link. The e2e test asserts the
+  focused status.
+- **N3:** closing an error notice returns focus to the control that started the action
+  (Restore), else to the active character's radio. The blocked-switch e2e test asserts the
+  radio is focused.
+- **N4:**
+  - On the active character, "Archivar personaje" stays reachable by arrow keys:
+    `aria-disabled` is set on the element and `disabled` is not used, because Mantine's
+    `disabled` removes the item from arrow-key navigation.
+  - The item is described by the reason through `aria-describedby`; Enter does nothing.
+  - The e2e test checks focus with ArrowDown, `aria-disabled="true"`, the accessible
+    description and that no dialog opens.
+- **N5:** the card reserves a top band for the ⋯ menu (`calc(2.75rem + 6px)`, because Mantine
+  sizes the 44px ActionIcon in rem). The e2e test asserts that the menu and the medallion do not
+  overlap at 150%.
+- **N6:**
+  - With only archived characters, Party's welcome reads "Tus personajes están archivados.
+    Restaura uno o crea otro nuevo." and offers "Crear un personaje nuevo" and "Ver personajes
+    archivados".
+  - The roster page shows that welcome instead of an empty radio group, with the Archived
+    section open.
+  - The e2e test covers restoring the character, which then becomes the active one.
+- **Nit:** the archive confirmation gives initial focus to "Cancelar" (asserted).
+- **Also fixed:** at 150% on phones the card footer label could clip; it now wraps instead.
+
+Round 3 commands:
+
+| Check | Result |
+| --- | --- |
+| `CI=1 npx playwright test roster` (3 identity projects), first run | 5 failed. Mantine overwrote `aria-disabled` (fixed by setting it on the element), and the ⋯ button overlapped the medallion at 150% because its size is in rem (fixed with a rem-based band) |
+| same, after fixes | 33 passed |
+| `npm run check` | passed: 31 files, 227 tests, build OK |
+| `CI=1 RYT_EVIDENCE=1 npm run test:e2e` | 393 passed, 49 skipped, 1 flaky and 1 failed, both in `glossary.spec.ts` (RYT-040, merged from `main`, files not touched here) |
+| `glossary.spec.ts:342` and `:479` alone, 3 repeats each | 5 passed, 1 failed: the editor footer check measured x=725 at 390 px. Intermittent; looks like a measurement during the drawer's slide-in. Left to RYT-040 |
+
+Evidence runs overwrite other tickets' screenshots; those were restored with `git checkout`.
+
 ## Screenshots
 
 Captured with `RYT_EVIDENCE=1` at 390 px (`-mobile`) and 820 px (`-tablet`), all inspected:
 
 - `onboarding`, `create-dialog`, `party-entry`, `roster-en-light`
 - `roster`, `roster-full`, `roster-switched`, `switch-blocked`
-- `roster-archive-full`, `archive-dialog`, `roster-archived`
+- `roster-archive-full`, `archive-dialog`, `roster-archived`, `roster-archive-150`,
+  `onboarding-archived`
 - `dm-rosters`, `dm-archived`
 
 ## Not verified

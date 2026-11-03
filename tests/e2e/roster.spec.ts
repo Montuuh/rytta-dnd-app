@@ -175,6 +175,8 @@ test('a blocked switch explains why in view and keeps the active character', asy
   await evidence(page, info.project.name, 'switch-blocked')
   await alert.getByRole('button', { name: 'Cerrar' }).click()
   await expect(alert).toHaveCount(0)
+  // Closing the message returns focus to the active character's radio, not the document.
+  await expect(group.getByRole('radio', { name: 'Arin' })).toBeFocused()
 })
 
 test('archiving frees a slot; restoring needs one', async ({ page }, info) => {
@@ -195,14 +197,20 @@ test('archiving frees a slot; restoring needs one', async ({ page }, info) => {
   await expect(page.getByText('Sin hueco libre')).toBeVisible()
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'roster-archive-full')
-  // The active character cannot be archived from its menu.
-  await page.getByRole('button', { name: 'Más acciones para Arin' }).click()
-  await expect(
-    page
-      .getByRole('menu', { name: 'Más acciones para Arin' })
-      .getByRole('menuitem', { name: 'Archivar personaje' }),
-  ).toBeDisabled()
-  await expect(page.getByText('Activa otro personaje para poder archivar este.')).toBeVisible()
+  // The active character cannot be archived; keyboard and screen readers reach the reason.
+  await page.getByRole('button', { name: 'Más acciones para Arin' }).focus()
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('ArrowDown')
+  const blocked = page
+    .getByRole('menu', { name: 'Más acciones para Arin' })
+    .getByRole('menuitem', { name: 'Archivar personaje' })
+  await expect(blocked).toBeFocused()
+  await expect(blocked).toHaveAttribute('aria-disabled', 'true')
+  await expect(blocked).toHaveAccessibleDescription(
+    'Activa otro personaje para poder archivar este.',
+  )
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.keyboard.press('Escape')
   // Archive a reserve character: the confirmation says it frees a slot.
   const bramMenu = page.getByRole('button', { name: 'Más acciones para Bram' })
@@ -213,6 +221,10 @@ test('archiving frees a slot; restoring needs one', async ({ page }, info) => {
     .click()
   const dialog = page.getByRole('dialog', { name: '¿Archivar a Bram?' })
   await expect(dialog).toContainText('Libera un hueco')
+  // The safe choice has initial focus.
+  await expect(
+    dialog.locator('.roster-dialog-actions').getByRole('button', { name: 'Cancelar' }),
+  ).toBeFocused()
   await evidence(page, info.project.name, 'archive-dialog')
   // Cancel returns focus to the card menu.
   await dialog.getByText('Cancelar', { exact: true }).click()
@@ -262,7 +274,8 @@ test('the DM archives an unassigned character from Party and restores it', async
   const dialog = page.getByRole('dialog', { name: '¿Archivar a Arin?' })
   await expect(dialog).toContainText('Sale de Grupo')
   await dialog.getByRole('button', { name: 'Archivar' }).click()
-  await expect(page.getByText('Arin está archivado.')).toBeVisible()
+  // The card is gone; focus lands on the outcome message instead of the document body.
+  await expect(page.getByRole('status').filter({ hasText: 'Arin está archivado.' })).toBeFocused()
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: 'Personajes de los jugadores' }).click()
   await page.getByRole('button', { name: /Archivados/ }).click()
@@ -332,4 +345,60 @@ test('the DM sees every Player roster with active and reserve characters', async
   await expect(page.locator('.roster-slot.is-empty')).toHaveCount(0)
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'dm-rosters')
+})
+
+test('a full roster with archived characters fits at 150% text', async ({ page }, info) => {
+  await identityFixture(page, {
+    player: true,
+    reserve: ['Bram', 'Cora', 'Dax'],
+    archived: ['Old'],
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(rosterPath)
+  await expect(page.getByRole('radio', { name: 'Arin' })).toBeChecked()
+  await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+  await page.getByRole('button', { name: /Archivados/ }).click()
+  await expect(page.getByRole('button', { name: 'Restaurar a Old' })).toBeVisible()
+  await expect(page.getByText('Sin hueco libre')).toBeVisible()
+  // No sideways scroll, even with "No free slot" and a disabled Restore in one row.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  )
+  // The corner menu never covers the medallion.
+  const card = page
+    .locator('.roster-slot')
+    .filter({ has: page.getByRole('radio', { name: 'Arin' }) })
+  const menu = (await card.getByRole('button', { name: 'Más acciones para Arin' }).boundingBox())!
+  const medallion = (await card.locator('.portrait-medallion').boundingBox())!
+  const overlap =
+    menu.x < medallion.x + medallion.width &&
+    medallion.x < menu.x + menu.width &&
+    menu.y < medallion.y + medallion.height &&
+    medallion.y < menu.y + menu.height
+  expect(overlap).toBe(false)
+  await evidence(page, info.project.name, 'roster-archive-150')
+})
+
+test('a Player with only archived characters can restore one or create another', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { player: true, noCharacters: true, archived: ['Old'] })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const welcome = page.getByRole('region', { name: '¿Con quién vas a jugar?' })
+  await expect(welcome).toContainText('Tus personajes están archivados.')
+  await expect(welcome.getByRole('button', { name: 'Crear un personaje nuevo' })).toBeVisible()
+  await evidence(page, info.project.name, 'onboarding-archived')
+  await welcome.getByRole('link', { name: 'Ver personajes archivados' }).click()
+  // No empty radio group; the archived section is already open.
+  await expect(page.getByRole('radiogroup')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Archivados/ })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
+  await axeAndTargets(page)
+  await page.getByRole('button', { name: 'Restaurar a Old' }).click()
+  await expect(page.getByText('Old vuelve al plantel.')).toBeVisible()
+  // With no other character, the restored one becomes the active one.
+  await expect(page.getByRole('radio', { name: 'Old' })).toBeChecked()
+  expect(f.calls.filter((c) => c.method === 'restore_character')).toHaveLength(1)
 })

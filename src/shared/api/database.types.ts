@@ -4,6 +4,7 @@ import type { CharacterFunctions } from './character-functions'
 import type { ShopFunctions } from './shop-functions'
 import type { ItemFunctions } from './item-functions'
 import type { TradeFunctions } from './trade-functions'
+import type { CombatFunctions } from './combat-functions'
 import type { GlossaryEntriesTable, GlossaryFunctions } from './glossary-functions'
 
 type Functions = GeneratedDatabase['public']['Functions']
@@ -147,6 +148,7 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       ShopFunctions &
       ItemFunctions &
       TradeFunctions &
+      CombatFunctions &
       GlossaryFunctions & {
         list_my_invitations: Omit<Functions['list_my_invitations'], 'Returns'> & {
           Returns: (Functions['list_my_invitations']['Returns'][number] & {

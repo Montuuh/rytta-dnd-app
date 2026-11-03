@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { etlCommand, withExposureSql } from '../../scripts/lib/pre-etl.mts'
 
-const migration = '20261104120000_glossary_homebrew.sql'
+const migration = '20261104110000_glossary_homebrew.sql'
 const db = new PGlite()
 const dm = randomUUID(),
   player = randomUUID(),

@@ -28,7 +28,12 @@ have empty search_path and use auth.uid(), never caller-supplied identity.
 - Google registration is open. Creating an account never grants access to existing campaigns.
 
 Characters contain no DM notes. Other players' private resources are hidden.
-Shared HP/initiative later needs a deliberate public projection, not broad access here.
+Shared HP/initiative uses a deliberate projection (RYT-007, ADR 024): `get_combat_state`
+returns the own character in full, teammates per `shares_live`, enemy HP only as a descriptive
+status unless the DM reveals it, and never hidden combatants, NPC AC, DM notes, secret effects or
+private log entries. Members read only the secret-free `encounters` row directly (the realtime
+signal); combatants, effects, events and templates are DM-only tables. The table display uses
+the Player projection without own data, even for the DM.
 
 ## Constraints and planned operations
 

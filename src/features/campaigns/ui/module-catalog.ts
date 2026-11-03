@@ -58,7 +58,7 @@ export const campaignModules = [
     summary: 'summary.combat',
     icon: Swords,
     ticket: 'RYT-007',
-    implemented: false,
+    implemented: true,
   },
   {
     key: 'atlas',

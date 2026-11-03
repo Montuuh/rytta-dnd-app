@@ -56,7 +56,11 @@ export async function loadTemplates(campaignId: string, signal: AbortSignal) {
 }
 
 const entrySchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('character'), character_id: z.uuid() }),
+  z.object({
+    kind: z.literal('character'),
+    character_id: z.uuid(),
+    initiative: z.number().int().min(-20).max(99).optional(),
+  }),
   z.object({
     kind: z.literal('lair'),
     name: z.string().max(80).optional(),

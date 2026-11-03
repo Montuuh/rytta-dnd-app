@@ -12,6 +12,7 @@ import {
   Text,
   TextInput,
   Title,
+  UnstyledButton,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { Castle, UserPlus, Users } from 'lucide-react'
@@ -19,20 +20,27 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { charactersQuery } from '@/features/characters'
 import { templatesQuery } from '../api'
-import type { Combatant, CombatantTemplate, NpcEntry } from '../domain/combat'
+import type { Combatant, CombatantTemplate, EncounterStatus, NpcEntry } from '../domain/combat'
+import { InitiativeDialog } from './amount-dialog'
 import type { Run } from './helpers'
+import { JoinPreview } from './roster'
 
-/** DM panel: the party in one tap, creatures in batches (custom or from the bestiary), a lair. */
+/** DM panel: the party in one tap, creatures in batches (custom or from the bestiary), a lair.
+ * Once the fight runs, a character joins with its initiative total and a preview of its place. */
 export function AddCombatants({
   campaignId,
   encounterId,
   combatants,
+  status,
+  round,
   run,
   pending,
 }: {
   campaignId: string
   encounterId: string
   combatants: Combatant[]
+  status: EncounterStatus
+  round: number
   run: Run
   pending: boolean
 }) {
@@ -44,10 +52,36 @@ export function AddCombatants({
   const present = new Set(combatants.map((c) => c.character_id).filter(Boolean))
   const missing = (characters.data ?? []).filter((c) => !present.has(c.id))
   const assignedMissing = missing.filter((c) => c.user_id)
+  const running = status === 'active'
+  const [joining, setJoining] = useState<{ id: string; name: string } | null>(null)
   const [notice, setNotice] = useState<number | null>(null)
   const added = async (count: number, ok: boolean) => {
     if (ok) setNotice(count)
     return ok
+  }
+  /** The added character leaves the list: keep the keyboard on the next one (or the title). */
+  const keepPlace = (id: string) => {
+    const index = missing.findIndex((c) => c.id === id)
+    const next = missing[index + 1] ?? missing[index - 1]
+    requestAnimationFrame(() =>
+      (
+        (next && document.getElementById(`bench-${next.id}`)) ||
+        document.getElementById('combat-add-characters')
+      )?.focus(),
+    )
+  }
+  const addNow = async (character: { id: string }) => {
+    if (
+      await added(
+        1,
+        await run({
+          kind: 'add',
+          encounterId,
+          entries: [{ kind: 'character', character_id: character.id }],
+        }),
+      )
+    )
+      keepPlace(character.id)
   }
   const hasLair = combatants.some((c) => c.kind === 'lair')
   return (
@@ -67,7 +101,7 @@ export function AddCombatants({
         </Alert>
       )}
       <Paper className="combat-panel" p="sm">
-        <Title order={4} className="combat-panel-title">
+        <Title order={4} className="combat-panel-title" id="combat-add-characters" tabIndex={-1}>
           {t('combat.add.characters')}
         </Title>
         {missing.length === 0 ? (
@@ -76,7 +110,12 @@ export function AddCombatants({
           </Text>
         ) : (
           <Stack gap="xs" mt={6}>
-            {assignedMissing.length > 0 && (
+            {running && (
+              <Text size="sm" c="dimmed">
+                {t('combat.join.hint')}
+              </Text>
+            )}
+            {!running && assignedMissing.length > 0 && (
               <Button
                 leftSection={<Users size={16} aria-hidden="true" />}
                 disabled={pending}
@@ -97,31 +136,56 @@ export function AddCombatants({
                 {t('combat.add.party')}
               </Button>
             )}
-            <Group gap="xs">
+            <ul className="combat-bench" aria-labelledby="combat-add-characters">
               {missing.map((character) => (
-                <Button
-                  key={character.id}
-                  variant="default"
-                  leftSection={<UserPlus size={16} aria-hidden="true" />}
-                  disabled={pending}
-                  onClick={async () =>
-                    void added(
-                      1,
-                      await run({
-                        kind: 'add',
-                        encounterId,
-                        entries: [{ kind: 'character', character_id: character.id }],
-                      }),
-                    )
-                  }
-                >
-                  {t('combat.add.character', { name: character.name })}
-                </Button>
+                <li key={character.id}>
+                  <UnstyledButton
+                    id={`bench-${character.id}`}
+                    className="combat-bench-row"
+                    disabled={pending}
+                    aria-label={t('combat.add.character', { name: character.name })}
+                    onClick={() =>
+                      running
+                        ? setJoining({ id: character.id, name: character.name })
+                        : void addNow(character)
+                    }
+                  >
+                    <span className="combat-bench-name">{character.name}</span>
+                    <span className="combat-bench-add" aria-hidden="true">
+                      <UserPlus size={18} />
+                    </span>
+                  </UnstyledButton>
+                </li>
               ))}
-            </Group>
+            </ul>
           </Stack>
         )}
       </Paper>
+      {joining && (
+        <InitiativeDialog
+          name={joining.name}
+          bonus={null}
+          dm
+          pending={pending}
+          title={t('combat.join.title', { name: joining.name })}
+          submitLabel={t('combat.join.submit')}
+          close={() => setJoining(null)}
+          preview={(total) => (
+            <JoinPreview combatants={combatants} name={joining.name} total={total} round={round} />
+          )}
+          save={async (total) => {
+            const ok = await run({
+              kind: 'add',
+              encounterId,
+              entries: [{ kind: 'character', character_id: joining.id, initiative: total }],
+            })
+            if (await added(1, ok)) {
+              setJoining(null)
+              keepPlace(joining.id)
+            }
+          }}
+        />
+      )}
       <CreatureForm
         templates={templates.data ?? []}
         pending={pending}

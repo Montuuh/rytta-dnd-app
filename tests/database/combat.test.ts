@@ -75,7 +75,7 @@ function api(schema = 'public') {
       call('add_combatants', [c, e, JSON.stringify(entries), key]),
     update: (c: string, id: string, patch: Json) =>
       call('update_combatant', [c, id, JSON.stringify(patch), randomUUID()]),
-    remove: (c: string, id: string) => call('remove_combatant', [c, id, randomUUID()]),
+    remove: (c: string, id: string, key = randomUUID()) => call('remove_combatant', [c, id, key]),
     initiative: (c: string, id: string, total: number, bonus: number | null = null) =>
       call('set_initiative', [c, id, total, bonus, randomUUID()]),
     roll: (c: string, e: string) => call('roll_npc_initiative', [c, e, randomUUID()]),
@@ -760,6 +760,154 @@ describe('RYT-007 shared combat', () => {
         expect(view.combatants.find((c) => c.name === 'Dara')).toMatchObject({ is_own: false })
       }
     }
+  })
+
+  it('RYT-041 adds and removes characters mid-combat and keeps the turn consistent', async () => {
+    const s = await setup()
+    const x = await prepared(s)
+    const dara = (await one<{ id: string }>(`select public.create_character($1,'Dara') id`, [s.c]))
+      .id
+    await pub.initiative(s.c, x.arin, 20)
+    await pub.initiative(s.c, x.bea, 15)
+    await pub.initiative(s.c, x.cato, 10)
+    await pub.initiative(s.c, x.gob1, 5)
+    await pub.status(s.c, x.e, 'active')
+    await pub.turn(s.c, x.e, 1, x.arin)
+    // Bea acts. Cato leaves (not the active one): the turn stays with Bea.
+    expect(await pub.remove(s.c, x.cato)).toMatchObject({ active_combatant: x.bea, round: 1 })
+    // Dara joins at 18 (already passed this round), Cato rejoins at 12 (still to act).
+    const key = randomUUID()
+    const join = [
+      { kind: 'character', character_id: dara, initiative: 18 },
+      { kind: 'character', character_id: s.Cato, initiative: 12 },
+    ]
+    expect(await pub.add(s.c, x.e, join, key)).toMatchObject({ added: 2 })
+    expect(await pub.add(s.c, x.e, join, key)).toMatchObject({ added: 2 })
+    let st = await pub.state(s.c, x.e)
+    expect(st.combatants.map((c) => c.name)).toEqual([
+      'Arin',
+      'Dara',
+      'Bea',
+      'Cato',
+      'Goblin 1',
+      'Goblin 2',
+      'Ogre',
+    ])
+    expect(st.events.filter((e) => e.kind === 'join' && e.target_name === 'Dara')).toHaveLength(1)
+    const newCato = st.combatants.find((c) => c.name === 'Cato')!.id
+    const daraRow = st.combatants.find((c) => c.name === 'Dara')!.id
+    expect(await pub.turn(s.c, x.e, 1, x.bea)).toMatchObject({ active_combatant: newCato })
+    await pub.turn(s.c, x.e, 1, newCato)
+    // Removing the active combatant passes the turn forward in the same round and starts it.
+    await pub.update(s.c, x.gob2, { legendary_max: 2, legendary_used: 2 })
+    await pub.effect(s.c, x.e, {
+      target_combatant: x.gob2,
+      label: 'Haste',
+      rounds: 3,
+      ticks_on: 'start',
+    })
+    const removeKey = randomUUID()
+    expect(await pub.remove(s.c, x.gob1, removeKey)).toMatchObject({
+      active_combatant: x.gob2,
+      round: 1,
+    })
+    // A retried removal replays instead of failing on the missing combatant.
+    expect(await pub.remove(s.c, x.gob1, removeKey)).toMatchObject({ active_combatant: x.gob2 })
+    st = await pub.state(s.c, x.e)
+    expect(st.combatants.find((c) => c.id === x.gob2)).toMatchObject({
+      is_active: true,
+      legendary: { max: 2, used: 0 },
+    })
+    expect(st.effects.find((f) => f.label === 'Haste')!.remaining_rounds).toBe(2)
+    expect(st.events.find((e) => e.kind === 'turn')).toMatchObject({ target_name: 'Goblin 2' })
+    // Effects on a leaving character end and clear the condition they granted on the sheet.
+    await pub.effect(s.c, x.e, { target_combatant: daraRow, label: 'Web', condition: 'restrained' })
+    expect(await vitals(dara)).toMatchObject({ conditions: ['restrained'] })
+    await asUser(dm)
+    await pub.remove(s.c, daraRow)
+    expect(await vitals(dara)).toMatchObject({ conditions: [] })
+    await asUser(dm)
+    // The last combatant of the round leaves: the turn wraps to the top and the round advances.
+    expect(await pub.remove(s.c, x.gob2)).toMatchObject({ active_combatant: x.arin, round: 2 })
+    expect((await pub.state(s.c, x.e)).events.find((e) => e.kind === 'round')).toMatchObject({
+      round: 2,
+      target_name: 'Arin',
+    })
+    // Everyone leaves: no active turn. A new arrival resumes the fight with its turn.
+    for (const id of [x.arin, x.bea, newCato]) await pub.remove(s.c, id)
+    st = await pub.state(s.c, x.e)
+    expect(st.encounter).toMatchObject({ status: 'active', active_combatant: null })
+    await pub.add(s.c, x.e, [{ kind: 'character', character_id: s.Bea, initiative: 9 }])
+    st = await pub.state(s.c, x.e)
+    expect(st.combatants.find((c) => c.name === 'Bea')).toMatchObject({
+      is_active: true,
+      initiative: 9,
+    })
+    // Initiative must be a whole number within the SQL range.
+    for (const initiative of [100, -21, 1.5, '12'])
+      await expect(
+        pub.add(s.c, x.e, [{ kind: 'character', character_id: s.Arin, initiative }]),
+      ).rejects.toThrow(/Invalid request/)
+  })
+
+  it('RYT-041 denies roster changes to anon, outsiders, Players and other DMs', async () => {
+    const s = await setup()
+    const x = await prepared(s)
+    const { active_combatant: first } = await pub.status(s.c, x.e, 'active')
+    const add = [{ kind: 'character', character_id: s.Cato, initiative: 3 }]
+    await asUser(player)
+    await expect(pub.remove(s.c, x.arin)).rejects.toThrow(/Forbidden/)
+    await expect(pub.remove(s.c, x.bea)).rejects.toThrow(/Forbidden/)
+    await expect(pub.add(s.c, x.e, add)).rejects.toThrow(/Forbidden/)
+    await asUser(outsider)
+    await expect(pub.remove(s.c, x.arin)).rejects.toThrow(/Forbidden/)
+    await expect(pub.add(s.c, x.e, add)).rejects.toThrow(/Forbidden/)
+    // A DM of another campaign cannot reach this encounter through its own campaign id.
+    const other = (await one<{ id: string }>("select public.create_campaign('Elsewhere') id")).id
+    await expect(pub.remove(other, x.arin)).rejects.toThrow(/Combatant unavailable/)
+    await expect(pub.add(other, x.e, add)).rejects.toThrow(/Encounter unavailable/)
+    // Nor add a character of this campaign to an encounter of its own.
+    const { encounter_id: own } = (await pub.create(other, 'Mine')) as { encounter_id: string }
+    await expect(pub.add(other, own, add)).rejects.toThrow(/Character unavailable/)
+    await db.exec('reset role; set role anon')
+    await expect(pub.remove(s.c, x.arin)).rejects.toThrow(/permission denied/)
+    await expect(pub.add(s.c, x.e, add)).rejects.toThrow(/permission denied/)
+    await db.exec('reset role')
+    await asUser(dm)
+    const st = await pub.state(s.c, x.e)
+    expect(st.combatants).toHaveLength(6)
+    expect(st.encounter).toMatchObject({ active_combatant: first })
+    // The private start-of-turn helper is not callable by clients.
+    await asUser(dm)
+    await expect(
+      db.query('select private.combat_start_turn(null::public.encounters, $1)', [x.arin]),
+    ).rejects.toThrow(/permission denied/)
+    await db.exec('reset role')
+  })
+
+  it('RYT-041 runs the roster RPCs in a PRE copied before the migration', async () => {
+    const pre = api('pre')
+    const s = await setup('pre')
+    const x = await prepared(s, 'pre')
+    await pre.initiative(s.c, x.arin, 20)
+    await pre.initiative(s.c, x.bea, 15)
+    await pre.initiative(s.c, x.cato, 10)
+    await pre.initiative(s.c, x.gob1, 5)
+    await pre.status(s.c, x.e, 'active')
+    expect(await pre.remove(s.c, x.arin)).toMatchObject({ active_combatant: x.bea, round: 1 })
+    await pre.add(s.c, x.e, [{ kind: 'character', character_id: s.Arin, initiative: 11 }])
+    const st = await pre.state(s.c, x.e)
+    expect(st.combatants.map((c) => c.name).slice(0, 3)).toEqual(['Bea', 'Arin', 'Cato'])
+    await asUser(player)
+    await expect(pre.remove(s.c, x.bea)).rejects.toThrow(/Forbidden/)
+    await db.exec('reset role')
+    const helpers = (
+      await db.query<{ src: string }>(
+        "select prosrc src from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='pre_private' and p.proname='combat_start_turn'",
+      )
+    ).rows
+    expect(helpers).toHaveLength(1)
+    expect(helpers[0]!.src).not.toMatch(/\bpublic\.|\bprivate\./)
   })
 
   it('mirrors tables, triggers and RPCs into a PRE copied before the migration', async () => {

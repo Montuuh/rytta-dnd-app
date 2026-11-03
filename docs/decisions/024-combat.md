@@ -44,11 +44,20 @@ with no DM secrets. Character play state already lives in `character_vitals`; th
 - **PRE.** The migration mirrors itself into an existing PRE with `pre_admin.remap`. Helpers with
   row-typed parameters are remapped with an empty search path so their types point to PRE.
 
+- **Roster changes (RYT-041, `20261105100000_combat_roster.sql`).** `add_combatants` accepts an
+  optional initiative total for character entries; `remove_combatant` passes the turn forward
+  when the active combatant leaves (round wrap, legendary reset and start-of-turn ticks through
+  the shared `private.combat_start_turn`) and ends effects on the leaving combatant with
+  `combat_drop_effect`. Turns stay positional: no per-round "has acted" state is stored. Both
+  remain DM-only, campaign-locked and idempotent; signatures and grants are unchanged.
+
 ## Consequences
 
 - The sheet and the combat screen always agree; an HP change from either bumps the encounter.
 - The campaign lock serializes combat with inventory, shops and trades; acceptable for one table.
 - No grid, attack resolution or bundled monsters. Exhaustion remains a DM resource.
+- A removed combatant leaves the end-of-combat summary (it is built from the current roster);
+  its log entries stay but can no longer be undone.
 - Hosted realtime delivery is verified separately from the PGlite and fixture tests (see the
   RYT-007 validation report).
 

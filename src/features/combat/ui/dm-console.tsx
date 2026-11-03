@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, type FocusEvent } from 'react'
 import {
   Badge,
   Button,
@@ -12,8 +12,10 @@ import {
   TextInput,
   Title,
   ActionIcon,
+  UnstyledButton,
+  VisuallyHidden,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import {
   ArrowLeft,
   ChevronLeft,
@@ -46,6 +48,7 @@ import { CombatantDetail } from './combatant-detail'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
 import { NetworkState, RunnerError } from './parts'
+import { RemoveCombatantDialog, RowActions } from './roster'
 
 type Panel = 'detail' | 'log' | 'add'
 
@@ -66,8 +69,36 @@ export function DmConsole({
   const wide = useMediaQuery('(min-width: 62em)')
   const navigate = useNavigate()
   const encounter = state.encounter!
+  const reduceMotion = useReducedMotion()
   const { run, pending, error, trigger, clear } = useRunner(campaignId)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const activeId = encounter.active_combatant ?? null
+  // The detail follows the turn: a row the DM picks stays shown only during the turn it was
+  // picked in, so starting the fight and every turn change show whoever acts.
+  const [picked, setPicked] = useState<{ id: string; turn: string | null } | null>(null)
+  const selectedId =
+    picked && picked.turn === activeId ? picked.id : (activeId ?? picked?.id ?? null)
+  // Focus (also inside the detail's dialogs, which bubble through portals) means the DM is using
+  // the detail: a turn change then keeps it on the same combatant instead of swapping it away.
+  const [detailBusy, setDetailBusy] = useState(false)
+  const [announcement, setAnnouncement] = useState('')
+  const [seenActive, setSeenActive] = useState(activeId)
+  if (seenActive !== activeId) {
+    setSeenActive(activeId)
+    const shown =
+      picked && picked.turn === seenActive ? picked.id : (seenActive ?? picked?.id ?? null)
+    if (detailBusy && shown) setPicked({ id: shown, turn: activeId })
+    const name = state.combatants.find((c) => c.id === activeId)?.name
+    // Screen readers hear the turn change; keyboard focus stays on the control the DM used.
+    if (name) setAnnouncement(t('combat.turn.announce', { name, round: encounter.round }))
+  }
+  const followsTurn = activeId !== null && selectedId === activeId
+  // Turn buttons stay focusable while a turn change is saving (a disabled button drops focus).
+  const atFirstTurn =
+    encounter.round <= 1 && state.combatants.find((c) => c.in_turn_order)?.is_active === true
+  const prevBlocked = pending || atFirstTurn
+  // Phones show the detail in a sheet that opens only when the DM asks for it.
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [removing, setRemoving] = useState<Combatant | null>(null)
   const [multi, setMulti] = useState<ReadonlySet<string> | null>(null)
   const [multiMode, setMultiMode] = useState<HpMode | null>(null)
   const [initiativeFor, setInitiativeFor] = useState<Combatant | null>(null)
@@ -81,20 +112,55 @@ export function DmConsole({
   const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
   const [rename, setRename] = useState(encounter.name)
   const combatants = state.combatants
-  const selected = combatants.find((c) => c.id === selectedId) ?? null
   const active = combatants.find((c) => c.is_active) ?? null
+  // A removed selection falls back to whoever is acting.
+  const selected = combatants.find((c) => c.id === selectedId) ?? (wide ? active : null)
   const upNext = nextUp(combatants)
   const missing = missingInitiative(combatants)
   const status = encounter.status
-  const activeId = encounter.active_combatant ?? null
+  // Keep the acting row in view when the turn moves (without moving keyboard focus).
+  useEffect(() => {
+    if (!activeId || !followsTurn) return
+    document
+      .getElementById(`combatant-${activeId}`)
+      ?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' })
+  }, [activeId, followsTurn, reduceMotion])
   // While collecting initiative, a row without a total opens the initiative keypad directly.
   const pick = (combatant: Combatant) => {
     if (status === 'initiative' && combatant.initiative === undefined) {
       setInitiativeFor(combatant)
       return
     }
-    setSelectedId(combatant.id)
+    setPicked({ id: combatant.id, turn: activeId })
     if (wide) setPanel('detail')
+    else setSheetOpen(true)
+  }
+  const showActive = () => {
+    if (!active) return
+    setPicked(null)
+    if (wide) setPanel('detail')
+    else setSheetOpen(true)
+  }
+  const removeNow = async () => {
+    if (!removing) return
+    const index = combatants.findIndex((c) => c.id === removing.id)
+    const neighbour = combatants[index + 1] ?? combatants[index - 1] ?? null
+    if (await run({ kind: 'remove', combatantId: removing.id })) {
+      setRemoving(null)
+      if (selectedId === removing.id) setSheetOpen(false)
+      // The row is gone: focus lands on its neighbour in the order (or on the list title).
+      requestAnimationFrame(() => {
+        const row = neighbour && document.getElementById(`combatant-${neighbour.id}`)
+        ;(row ?? document.getElementById('combat-order-title'))?.focus()
+      })
+    }
+  }
+  const detailFocus = {
+    onFocus: () => setDetailBusy(true),
+    onBlur: (event: FocusEvent<HTMLDivElement>) => {
+      const next = event.relatedTarget
+      if (!(next instanceof Node && event.currentTarget.contains(next))) setDetailBusy(false)
+    },
   }
   const detail = selected && (
     <CombatantDetail
@@ -109,12 +175,13 @@ export function DmConsole({
       run={run}
       pending={pending}
       onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
+      onRemove={status !== 'ended' ? () => setRemoving(selected) : undefined}
     />
   )
   const rail = (
     <section className="combat-rail-section" aria-labelledby="combat-order-title">
       <Group justify="space-between" mb="xs">
-        <Title order={2} id="combat-order-title" className="combat-section-title">
+        <Title order={2} id="combat-order-title" className="combat-section-title" tabIndex={-1}>
           {t('combat.order.title')}
         </Title>
         {status === 'active' || status === 'initiative' ? (
@@ -143,7 +210,33 @@ export function DmConsole({
                   setMulti(next)
                 },
               }
-            : { kind: 'pick', selectedId, onPick: pick }
+            : { kind: 'pick', selectedId: selected?.id ?? null, onPick: pick }
+        }
+        rowMenu={
+          status !== 'ended'
+            ? (combatant, control) => (
+                <RowActions
+                  combatant={combatant}
+                  {...control}
+                  onJump={
+                    status === 'active' &&
+                    !combatant.is_active &&
+                    !combatant.hidden &&
+                    !combatant.defeated
+                      ? () =>
+                          void run({
+                            kind: 'jump',
+                            encounterId: encounter.id,
+                            target: combatant.id,
+                            expected: activeId,
+                          })
+                      : undefined
+                  }
+                  onInitiative={() => setInitiativeFor(combatant)}
+                  onRemove={() => setRemoving(combatant)}
+                />
+              )
+            : undefined
         }
         reorder={
           status !== 'ended'
@@ -196,11 +289,17 @@ export function DmConsole({
       </Tabs.List>
       {wide && (
         <Tabs.Panel value="detail" pt="md">
-          {detail ?? <Text c="dimmed">{t('combat.detail.empty')}</Text>}
+          <div {...detailFocus}>{detail ?? <Text c="dimmed">{t('combat.detail.empty')}</Text>}</div>
         </Tabs.Panel>
       )}
       <Tabs.Panel value="log" pt="md">
-        <CombatLog events={state.events} run={run} pending={pending} canUndo />
+        <CombatLog
+          events={state.events}
+          run={run}
+          pending={pending}
+          canUndo
+          present={new Set(combatants.map((c) => c.id))}
+        />
       </Tabs.Panel>
       {status !== 'ended' && (
         <Tabs.Panel value="add" pt="md">
@@ -208,6 +307,8 @@ export function DmConsole({
             campaignId={campaignId}
             encounterId={encounter.id}
             combatants={combatants}
+            status={status}
+            round={encounter.round}
             run={run}
             pending={pending}
           />
@@ -217,6 +318,7 @@ export function DmConsole({
   )
   return (
     <Stack gap="md" className={`combat-console${status === 'active' ? ' has-turn-bar' : ''}`}>
+      <VisuallyHidden aria-live="polite">{announcement}</VisuallyHidden>
       <header className="combat-header">
         <Button
           component={Link}
@@ -393,10 +495,10 @@ export function DmConsole({
           {rail}
           {side}
           <Drawer
-            opened={selected !== null && !initiativeFor && multi === null}
+            opened={sheetOpen && selected !== null && !initiativeFor && !removing && multi === null}
             onClose={onlyTopDialog(() => {
-              const id = selectedId
-              setSelectedId(null)
+              const id = selected?.id
+              setSheetOpen(false)
               requestAnimationFrame(() => document.getElementById(`combatant-${id}`)?.focus())
             })}
             position="bottom"
@@ -405,7 +507,7 @@ export function DmConsole({
             closeButtonProps={{ 'aria-label': t('combat.detail.close'), size: 44 }}
             className="combat-drawer"
           >
-            {detail}
+            <div {...detailFocus}>{detail}</div>
           </Drawer>
         </>
       )}
@@ -416,56 +518,68 @@ export function DmConsole({
             variant="default"
             size={52}
             aria-label={t('combat.turn.prev')}
-            disabled={
-              pending ||
-              (encounter.round <= 1 && combatants.find((c) => c.in_turn_order)?.is_active === true)
-            }
-            onClick={() =>
-              void run({
-                kind: 'turn',
-                encounterId: encounter.id,
-                direction: -1,
-                expected: activeId,
-              })
-            }
+            data-disabled={prevBlocked || undefined}
+            aria-disabled={prevBlocked || undefined}
+            onClick={() => {
+              if (!prevBlocked)
+                void run({
+                  kind: 'turn',
+                  encounterId: encounter.id,
+                  direction: -1,
+                  expected: activeId,
+                })
+            }}
           >
             <ChevronLeft size={24} aria-hidden="true" />
           </ActionIcon>
-          <div className="combat-turn-now" aria-live="polite">
-            <Text size="xs" c="dimmed">
+          <UnstyledButton className="combat-turn-now" onClick={showActive} disabled={!active}>
+            <Text size="xs" c="dimmed" component="span" display="block">
               {t('combat.turn.now')} · {t('combat.round', { round: encounter.round })}
             </Text>
-            <Text fw={800} className="combat-turn-name">
+            <Text fw={800} className="combat-turn-name" component="span" display="block">
               {active?.name ?? '—'}
             </Text>
             {upNext && (
-              <Text size="xs" c="dimmed">
+              <Text size="xs" c="dimmed" component="span" display="block">
                 {t('combat.turn.upNext')}: {upNext.name}
               </Text>
             )}
-          </div>
+            {active && <VisuallyHidden>{t('combat.turn.show')}</VisuallyHidden>}
+          </UnstyledButton>
           <Button
             size="lg"
             className="combat-turn-next"
             rightSection={<ChevronRight size={20} aria-hidden="true" />}
-            disabled={pending}
-            onClick={() =>
-              void run({
-                kind: 'turn',
-                encounterId: encounter.id,
-                direction: 1,
-                expected: activeId,
-              })
-            }
+            data-disabled={pending || undefined}
+            aria-disabled={pending || undefined}
+            onClick={() => {
+              if (!pending)
+                void run({
+                  kind: 'turn',
+                  encounterId: encounter.id,
+                  direction: 1,
+                  expected: activeId,
+                })
+            }}
           >
             {t('combat.turn.next')}
           </Button>
         </div>
       )}
 
+      {removing && (
+        <RemoveCombatantDialog
+          combatant={removing}
+          next={removing.is_active ? nextUp(combatants) : null}
+          pending={pending}
+          close={() => setRemoving(null)}
+          confirm={() => void removeNow()}
+        />
+      )}
       {initiativeFor && (
         <InitiativeDialog
-          combatant={initiativeFor}
+          name={initiativeFor.name}
+          initial={initiativeFor.initiative}
           bonus={null}
           dm
           pending={pending}

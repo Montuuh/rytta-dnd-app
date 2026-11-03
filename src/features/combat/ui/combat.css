@@ -275,6 +275,18 @@ button.combat-row-main:focus-visible {
   justify-content: center;
   border-left: 1px solid var(--app-border);
 }
+/* RYT-041 row menu: same quiet column as the tie arrows; long press and right click open it too. */
+.combat-row-actions {
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  border-left: 1px solid var(--app-border);
+}
+.combat-row:has(.combat-row-actions) button.combat-row-main {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
 .combat-legendary-mini {
   display: inline-flex;
   align-items: center;
@@ -380,7 +392,18 @@ button.combat-row-main:focus-visible {
 .combat-turn-now {
   flex: 1 1 6rem;
   min-width: 0;
+  min-height: 44px;
+  padding: 2px 6px;
+  border-radius: 12px;
   text-align: center;
+  color: inherit;
+}
+.combat-turn-now:not(:disabled):hover {
+  background: var(--app-hover);
+}
+.combat-turn-now:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
 }
 .combat-turn-next {
   flex: 1 1 9.5rem;
@@ -734,4 +757,105 @@ button.combat-row-main:focus-visible {
   z-index: 3;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   border-radius: 12px;
+}
+
+/* RYT-041 adding characters: a bench of party members not yet in the fight. */
+.combat-bench {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.combat-bench-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 8px 6px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-bg);
+  color: inherit;
+}
+.combat-bench-row:not(:disabled):hover {
+  background: var(--app-hover);
+}
+.combat-bench-row:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.combat-bench-row:disabled {
+  opacity: 0.6;
+}
+.combat-bench-name {
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.combat-bench-add {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--app-accent);
+  color: var(--app-accent);
+}
+
+/* Where a joining character lands: its neighbours in the order, the new slot marked like the
+   active row (accent bar + text), and when it acts. */
+.combat-join {
+  display: grid;
+  gap: 8px;
+}
+.combat-join-order {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.combat-join-order li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 10px 4px 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  color: var(--app-muted);
+}
+.combat-join-order li.is-new {
+  color: var(--app-text);
+  font-weight: 800;
+  border-color: var(--app-accent);
+  background: var(--app-raised);
+  box-shadow: inset 4px 0 0 var(--app-accent);
+}
+.combat-join-init {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--app-border);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.combat-join-order li.is-new .combat-join-init {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.combat-join-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

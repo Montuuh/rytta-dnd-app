@@ -1483,7 +1483,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-007", "RYT-037", "RYT-038"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1503,7 +1503,26 @@
         "independent ui-ux PASS",
         "SQL denial tests"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-041/validation.md",
+        "docs/combat-design.md",
+        "docs/decisions/024-combat.md",
+        "supabase/migrations/20261105100000_combat_roster.sql",
+        "docs/evidence/RYT-041/turn-focus-mobile.png",
+        "docs/evidence/RYT-041/turn-focus-tablet.png",
+        "docs/evidence/RYT-041/join-mobile.png",
+        "docs/evidence/RYT-041/join-tablet.png",
+        "docs/evidence/RYT-041/remove-active-mobile.png",
+        "docs/evidence/RYT-041/remove-active-tablet.png",
+        "docs/evidence/RYT-041/after-roster-mobile.png",
+        "docs/evidence/RYT-041/after-roster-tablet.png",
+        "docs/evidence/RYT-041/player-table-mobile.png",
+        "docs/evidence/RYT-041/player-table-tablet.png",
+        "docs/evidence/RYT-041/join-en-light-mobile.png",
+        "docs/evidence/RYT-041/join-en-light-tablet.png",
+        "docs/evidence/RYT-041/remove-en-light-mobile.png",
+        "docs/evidence/RYT-041/remove-en-light-tablet.png"
+      ]
     },
     {
       "id": "RYT-042",

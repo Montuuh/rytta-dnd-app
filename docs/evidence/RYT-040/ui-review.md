@@ -296,3 +296,65 @@ then. There are also two minor findings.
 
 N1 (Tab through the editor at 390 and 820, at 100% and 150%, ES and EN, with axe), N2 (offline
 "Guardar como nueva") and N3 (discard question at 390px).
+
+## Round 3: focused re-review of commit `5b012b9`
+
+- Date: 2026-11-03
+- Reviewed source: `5b012b9` (on top of `000098d`), same worktree and branch.
+- Source fingerprint (`node scripts/check-ui-review.mjs --fingerprint`):
+  `f178570d28e884cbec3f46f8b51eda18b286c3eabe1ce410e3b7024ff8040982`
+
+### Verdict: PASS
+
+N1, N2 and N3 are fixed and verified in the browser. No round-1 or round-2 behaviour regressed.
+No unresolved blocking finding remains. One non-blocking axe advisory and one nit are recorded
+below.
+
+### Round-2 findings
+
+| Finding | Status | Browser evidence |
+| --- | --- | --- |
+| N1 Major: focus hidden behind the sticky footer | Fixed | Tabbing through 15 form controls showed every focused control fully above the footer, with no exceptions. Checked at 390, 820 and 1440 in ES (dark) and EN (light), at 100% and 150%, for the edit form, a new house rule at 150% and Shift+Tab back up. The scroll padding follows the footer: 85px at 100%, 163px for the 147px footer at 150% on 390px, 107px at 150% on 820px. At 150% on 390px the footer is `[trash][Cancelar]` over a full-width Guardar (147px, down from 209px). The new-entry and deleted-meanwhile footers are Cancelar over Guardar (125px). No footer overflow anywhere. |
+| N2 Minor: failed "Guardar como nueva" was silent | Fixed | Offline "Guardar como nueva" shows "No hay conexión. Inténtalo de nuevo al reconectar." under the deleted-entry notice, keeps the edits, and the retry after reconnecting saves them (390, 820, 1440). A duplicate name in the deleted state (820) and on a new entry (all sizes) shows "Ya hay otra entrada con este nombre." |
+| N3 Minor: ragged discard buttons | Fixed | On 390px, the discard question and the delete confirmation both show two full-width 44px rows (302px at 100%, 286px at 150%, ES and EN). From 48em they sit side by side. The safe action keeps the initial focus in both, and Escape on the delete dialog returns focus to its opener. |
+
+### Regression checks (browser-tested on `5b012b9`)
+
+The round-2 scenario suite was rerun at 390, 820 and 1440. Every result matches round 2:
+
+- conflict focus on the alert, Tab to "Cargar la actual" and Nombre after loading
+- the deleted-meanwhile state, "Guardar como nueva" and focus on the headword
+- the labelled "+ Regla de la casa" action
+- the focus fallback to the headword
+- discard on Escape, X and Cancelar, with Escape stacking over the reference sheet
+- quoted accessible names
+- delete from the page and over the sheet (Cancelar focused, Escape returns to the opener, second Escape closes the sheet, confirm returns focus to `main`)
+- 44px targets and no page overflow
+
+F1 was not retimed, because `glossary-page.tsx` did not change since round 2. Axe
+(wcag2a/2aa/21aa/22aa): 83 of 90 runs clean. The 7 remaining runs are the advisory below.
+
+### Non-blocking notes
+
+- Advisory (axe `target-size`, 390px at 100%, ES and EN, editor and discard question): at the
+  initial scroll position "Añadir un dato" rests mostly under the sticky footer. Axe calls it
+  "partially obscured". This is not a WCAG failure: content scrolling under a sticky bar shows
+  the same thing at some scroll position, and it is fully visible once scrolled. It is also fully
+  visible when focused (N1). No change is required. A future tweak could add bottom padding to the
+  form so the last field sits clear of the footer at rest.
+- Nit: in the deleted state with a failed save, two red boxes stack: the titled conflict notice
+  and an untitled error box. This is readable and clear; folding the error into the notice
+  would be tidier.
+
+### Round 3 limitations
+
+- Served with `vite preview` on 127.0.0.1:5293 (identity mode, route-mocked RPCs).
+- The official e2e suite was not rerun by the reviewer; the implementer reports it passing.
+- Chromium emulation only. No iOS Safari, real on-screen keyboard or screen reader.
+- Captures and logs (not committed):
+  `C:\Users\dmont\AppData\Local\Temp\claude\C--Users-dmont--claude-spares-spare-4QdntX\77848685-adcc-4fea-bde2-0c6bcfb5bc65\scratchpad\review\r3\`
+  (`shots/phone-02-after-tabs-es-150.png` for N1, `shots/phone-11-gone-offline-150.png` for N2,
+  `shots/phone-20-discard-es-100.png` for N3; measurements in `n.jsonl` and `log.jsonl`).
+
+This PASS applies only to fingerprint `f178570d…0982`. Any later change to the fingerprinted UI
+source makes it stale.

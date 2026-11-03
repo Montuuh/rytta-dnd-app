@@ -143,4 +143,10 @@ Accepted minor items: F7 (overlapping 44 px inline hit areas in dense prose), F8
 thumb hit area at 20 px off centre; taps on the track still move the nearest thumb), and a
 Spanish quote that can wrap before "Romper objetos" in "Puntos de golpe".
 
-Manifest: `docs/evidence/ui-review-current.json` records the round 4 PASS.
+Round 5 (`b236f37`): **PASS** on fingerprint `38782adf…`. CI on `b40ff92` showed the delayed
+`?q=` write dropping `?cat=` while a tab change was still rendering (React Router's functional
+`setSearchParams` updater uses the params of its own render). Both URL writers now start from
+the live address bar; the reviewer re-tested quick tab switches at normal speed and 6× CPU
+throttling, Escape, deep links, history, the nav reset and Enter, and re-ran the round 4 smoke.
+
+Manifest: `docs/evidence/ui-review-current.json` records the round 5 PASS.

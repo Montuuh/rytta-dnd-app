@@ -47,6 +47,17 @@ type Event = {
 type Snapshot = Pick<Row, 'current_hp' | 'temp_hp' | 'conditions' | 'defeated' | 'ds' | 'df'> & {
   concentration?: string
 }
+/** A timed effect (public.encounter_effects). Turn ticking and expiry are not simulated. */
+type Fx = {
+  id: string
+  target: string
+  source: string | null
+  label: string
+  condition: string | null
+  remaining_rounds: number | null
+  ticks_on: 'start' | 'end'
+  visible: boolean
+}
 type Encounter = {
   id: string
   name: string
@@ -56,9 +67,26 @@ type Encounter = {
   revision: number
   combatants: Row[]
   events: Event[]
+  effects: Fx[]
   summary: Record<string, unknown> | null
   updated: number
 }
+const srdConditions = [
+  'blinded',
+  'charmed',
+  'deafened',
+  'frightened',
+  'grappled',
+  'incapacitated',
+  'invisible',
+  'paralyzed',
+  'petrified',
+  'poisoned',
+  'prone',
+  'restrained',
+  'stunned',
+  'unconscious',
+]
 
 const owners: Record<string, string> = {
   [characterId]: playerId,
@@ -196,7 +224,27 @@ export function combatServer() {
         summary: e.summary,
       },
       combatants,
-      effects: [],
+      // Same projection as public.get_combat_state: the DM sees every effect, others only
+      // visible effects on visible targets; Players remove effects on their own character.
+      effects: e.effects
+        .filter((f) => full || (f.visible && !e.combatants.find((c) => c.id === f.target)?.hidden))
+        .map((f) => {
+          const target = e.combatants.find((c) => c.id === f.target)
+          const source = e.combatants.find((c) => c.id === f.source)
+          return {
+            id: f.id,
+            target_combatant: f.target,
+            source_combatant: full || !source?.hidden ? f.source : null,
+            label: f.label,
+            condition: f.condition,
+            remaining_rounds: f.remaining_rounds,
+            ticks_on: f.ticks_on,
+            visible: f.visible,
+            can_remove:
+              full ||
+              (!table && target?.kind === 'character' && owners[target.character_id!] === actor),
+          }
+        }),
       events: e.events
         .filter((x) => full || x.visible)
         .slice(0, 60)
@@ -305,6 +353,7 @@ export function combatServer() {
         revision: 0,
         combatants: [],
         events: [],
+        effects: [],
         summary: null,
         updated: Date.now(),
       }
@@ -320,7 +369,8 @@ export function combatServer() {
     const e =
       find(body.target_encounter) ??
       owning(body.target_combatant) ??
-      encounters.find((x) => x.events.some((ev) => ev.id === body.target_event))
+      encounters.find((x) => x.events.some((ev) => ev.id === body.target_event)) ??
+      encounters.find((x) => x.effects.some((f) => f.id === body.target_effect))
     if (!e) return fail('Encounter unavailable')
     const target = e.combatants.find((c) => c.id === body.target_combatant)
     switch (method) {
@@ -566,6 +616,54 @@ export function combatServer() {
         target.concentration = (body.spell as string | null) ?? undefined
         log(e, actor, 'concentration', target, { detail: { spell: body.spell } })
         break
+      case 'add_combat_effect': {
+        // Mirrors public.add_combat_effect: the target's condition is applied with the effect.
+        const fx = (body.effect ?? {}) as Record<string, unknown>
+        const c = e.combatants.find((x) => x.id === fx.target_combatant)
+        if (!c) return fail('Combatant unavailable')
+        if (!canAct(actor, c)) return fail('Forbidden')
+        const label = String(fx.label ?? '').trim()
+        const condition = (fx.condition as string | null | undefined) ?? null
+        if (c.kind === 'lair' || !label || label.length > 60) return fail('Invalid request')
+        if (condition !== null && !srdConditions.includes(condition)) return fail('Invalid request')
+        const effect: Fx = {
+          id: uuid('e3000000'),
+          target: c.id,
+          source: (fx.source_combatant as string | null | undefined) ?? null,
+          label,
+          condition,
+          remaining_rounds: (fx.rounds as number | null | undefined) ?? null,
+          ticks_on: fx.ticks_on === 'start' ? 'start' : 'end',
+          visible: !dm || fx.visible !== false,
+        }
+        e.effects.push(effect)
+        if (condition) c.conditions = [...new Set([...c.conditions, condition])]
+        log(e, actor, 'effect_on', c, {
+          amount: effect.remaining_rounds ?? undefined,
+          detail: { label, condition },
+          visible: effect.visible,
+        })
+        bump(e)
+        return result(e, { effect_id: effect.id })
+      }
+      case 'remove_combat_effect': {
+        // Mirrors private.combat_drop_effect: the condition stays while another effect grants it.
+        const effect = e.effects.find((f) => f.id === body.target_effect)
+        const c = e.combatants.find((x) => x.id === effect?.target)
+        if (!effect || !c) return fail('Effect unavailable')
+        if (!canAct(actor, c) || (!effect.visible && !dm)) return fail('Effect unavailable')
+        e.effects.splice(e.effects.indexOf(effect), 1)
+        if (
+          effect.condition &&
+          !e.effects.some((f) => f.target === c.id && f.condition === effect.condition)
+        )
+          c.conditions = c.conditions.filter((x) => x !== effect.condition)
+        log(e, actor, 'effect_off', c, {
+          detail: { label: effect.label, condition: effect.condition },
+          visible: effect.visible,
+        })
+        break
+      }
       case 'undo_combat_event': {
         const event = e.events.find((x) => x.id === body.target_event)
         if (!event?.before || !event.after) return fail('Not undoable')

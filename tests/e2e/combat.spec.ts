@@ -362,3 +362,52 @@ test('RYT-039 combat conditions open their glossary definition in place', async 
   }
   expect(errors).toEqual([])
 })
+
+test("RYT-039 an effect's condition opens its definition and removing the effect clears it", async ({
+  page,
+}) => {
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+
+  // The DM adds a web that restrains Goblin 1.
+  await row(page, 'Goblin 1').getByRole('button').first().click()
+  await page.getByRole('button', { name: 'Añadir efecto' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Añadir efecto: Goblin 1' })
+  await dialog.getByRole('textbox', { name: 'Efecto' }).fill('Telaraña')
+  await dialog.getByRole('combobox', { name: 'Aplica el estado' }).click()
+  await page.getByRole('option', { name: 'Apresado' }).click()
+  await dialog.getByRole('button', { name: 'Añadir efecto' }).click()
+  await expect(dialog).toBeHidden()
+
+  // The effect line names the condition as a reference; the condition list shows it too.
+  const effects = page.locator('.combat-effects')
+  await expect(effects).toContainText('Telaraña')
+  const term = effects.getByRole('button', { name: 'Apresado: ver definición' })
+  await expect(term).toBeVisible()
+  await expect(page.locator('.combat-tag', { hasText: 'Apresado' })).toBeVisible()
+
+  await term.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.gl-sheet-headword')).toHaveText('Apresado')
+  await audit(page)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.gl-sheet-headword')).toHaveCount(0)
+  await expect(term).toBeFocused()
+
+  // Removing the effect ends the condition it granted.
+  await effects.getByRole('button', { name: 'Quitar Telaraña' }).click()
+  await expect(effects).toHaveCount(0)
+  await expect(page.locator('.combat-tag', { hasText: 'Apresado' })).toHaveCount(0)
+  expect(errors).toEqual([])
+})

@@ -193,13 +193,20 @@ export function HpMeter({
   const tone = statusTone(status)
   const hp = combatant.hp
   const ratio = hp ? Math.round((hp.current / Math.max(1, hp.max)) * 100) : null
+  // A defeated creature or a dead character says so in the status word itself (one word, icon +
+  // text, full contrast) instead of "Down" plus a separate pill (RYT-042 F2).
+  const word = combatant.defeated
+    ? t(combatant.kind === 'character' ? 'combat.dead' : 'combat.defeated')
+    : t(`combat.hp.${status}`)
   const label = hp
     ? `${t('combat.hp.value', { current: hp.current, max: hp.max })}${
         hp.temp > 0 ? ` ${t('combat.hp.temp', { temp: hp.temp })}` : ''
       }`
-    : t(`combat.hp.${status}`)
+    : word
   return (
-    <div className={`combat-hp tone-${tone}${compact ? ' is-compact' : ''}`}>
+    <div
+      className={`combat-hp tone-${combatant.defeated ? 'down' : tone}${compact ? ' is-compact' : ''}`}
+    >
       <div className="combat-hp-bar" aria-hidden="true">
         <span
           style={{
@@ -208,11 +215,12 @@ export function HpMeter({
         />
       </div>
       <Text component="span" className="combat-hp-text">
+        {combatant.defeated && <Skull size={14} aria-hidden="true" className="combat-hp-icon" />}
         {label}
-        {hp && status !== 'unknown' && (
+        {hp && (status !== 'unknown' || combatant.defeated) && (
           <Text component="span" className="combat-hp-status">
             {' · '}
-            {t(`combat.hp.${status}`)}
+            {word}
           </Text>
         )}
       </Text>
@@ -248,13 +256,8 @@ export function ConditionBadges({ combatant, limit }: { combatant: Combatant; li
 
 export function StateBadge({ combatant }: { combatant: Combatant }): ReactNode {
   const { t } = useTranslation()
+  // Defeat is carried by the hit point status word (HpMeter), not by a pill.
   const dying = combatant.kind === 'character' && combatant.hp?.current === 0 && !combatant.defeated
-  if (combatant.defeated)
-    return (
-      <Badge color="gray" variant="filled" size="sm">
-        {t(combatant.kind === 'character' ? 'combat.dead' : 'combat.defeated')}
-      </Badge>
-    )
   if (dying && (combatant.death_saves?.successes ?? 0) >= 3)
     return (
       <Badge color="green" variant="light" size="sm">

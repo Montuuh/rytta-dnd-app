@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ActionIcon, Group, Stack, Text, Title, VisuallyHidden } from '@mantine/core'
-import { Pencil } from 'lucide-react'
+import { Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   canEnterInitiative,
@@ -98,20 +98,26 @@ export function TableDisplay({
       )}
 
       {status === 'active' && (
+        // The Player's own status is the dominant line (RYT-042 F3): on the own turn "Your turn!"
+        // replaces the (already known) own name at display size; while waiting, the countdown
+        // has its own full-width band, not a line under "Up next".
         <div className={`combat-table-now${yours ? ' is-yours' : ''}`}>
           <div>
-            <Text className="combat-table-label">
-              {t(yours ? 'combat.turn.yours' : 'combat.turn.now')}
+            <Text className="combat-table-label">{t('combat.turn.now')}</Text>
+            <Text className="combat-table-active">
+              {yours ? t('combat.turn.yours') : (active?.name ?? '—')}
             </Text>
-            <Text className="combat-table-active">{active?.name ?? '—'}</Text>
           </div>
           <div>
             <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
             <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
-            {ownInOrder && !yours && until !== null && (
-              <Text className="combat-table-until">{t('combat.turn.in', { count: until })}</Text>
-            )}
           </div>
+          {ownInOrder && !yours && until !== null && (
+            <p className="combat-table-countdown">
+              <Hourglass size={28} aria-hidden="true" />
+              <span>{t('combat.turn.in', { count: until })}</span>
+            </p>
+          )}
         </div>
       )}
 

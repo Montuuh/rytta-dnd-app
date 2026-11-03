@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { Encounter, SummaryRow } from '../domain/combat'
 
 const sides = ['party', 'ally', 'enemy'] as const
+const stats = ['dealt', 'taken', 'healed'] as const
 type Fate = 'standing' | 'downed' | 'defeated' | 'dead'
 
 const fateOf = (row: SummaryRow): Fate =>
@@ -71,6 +72,16 @@ export function CombatSummary({
             <Title order={3} id={titleId} className="combat-recap-side-title">
               {t(`combat.summary.side.${side}`)}
             </Title>
+            {/* From 40em the rows form a ledger with one header per side; each row keeps its own
+                (visually hidden there) labels for assistive tech. */}
+            <div className="combat-recap-cols" aria-hidden="true">
+              <span />
+              <span className="combat-recap-cols-stats">
+                {stats.map((stat) => (
+                  <span key={stat}>{t(`combat.summary.${stat}`)}</span>
+                ))}
+              </span>
+            </div>
             <ul className="combat-recap-list">
               {group.map((row) => {
                 const fate = fateOf(row)
@@ -86,7 +97,7 @@ export function CombatSummary({
                       </span>
                     </div>
                     <dl className="combat-recap-stats">
-                      {(['dealt', 'taken', 'healed'] as const).map((stat) => {
+                      {stats.map((stat) => {
                         const amount =
                           stat === 'dealt'
                             ? row.damage_dealt

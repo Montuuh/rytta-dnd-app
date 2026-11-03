@@ -164,3 +164,35 @@ focus ring, and a reopened entry scrolls fully into view above the phone's botto
   record death saves or undo from the combat screen (the scope makes the table view their only
   panel). HP and conditions remain editable on the character sheet; the DM runs turns.
 - The independent `ui-ux` review is pending (not self-approved); the ticket is in `review`.
+
+## Review round 1 fixes
+
+The first independent `ui-ux` review of `bda9674` returned CHANGES_REQUIRED
+([ui-review.md](ui-review.md), committed as delivered). Every finding is addressed:
+
+| Finding | Change | Test |
+| --- | --- | --- |
+| F1 major: target selection survived the end of the fight (bar, checkboxes, a damage dialog on a closed encounter) | `dm-console.tsx`: when the status leaves `initiative`/`active`, the selection and any open damage/heal dialog are cleared (render-phase, so it also happens while the console is hidden behind the table view) | e2e: targets chosen, then ended from the console (two-context test) and ended behind the table view (DM test): no checkbox, no `.combat-multi-bar`, no Daño/Curar |
+| F2 major: grey "Derrotado" pill at 1.27:1 inside a 0.72-opacity row, duplicating "Caído" | The pill is gone; the hit point status word says "Derrotado"/"Muerto" with a skull icon (replacing "Caído"). Defeated rows drop the opacity: dashed transparent card, name struck through in the muted token, dashed empty initiative well | axe with a defeated goblin: Player table view dark/ES (phone, tablet, laptop), Player table view light/EN, DM table view and console; the row contains "Derrotado" once and no "Caído" |
+| F3 major: the Player's own status was the smallest text in the banner | Own turn: "¡Te toca!" is the display line (the own name is dropped; only it is in accent). Waiting: "Te toca dentro de N turnos" has its own full-width band across the banner at heading size with an hourglass, separated by a dashed rule, no longer under "Después" | e2e: `.combat-table-active` is "¡Te toca!" / "Your turn!"; `.combat-table-countdown` reads "Te toca dentro de 2 turnos" after the turn moves; screenshots `player-turn`, `player-waiting` |
+| F4 minor: old-style "7" crossing the die's edge | The total uses the body face with lining tabular figures; the die is larger (10.5rem) with a larger face (apex 16, base 76); three characters use a smaller size | screenshots `player-initiative`, `player-initiative-range` (150 fits inside the face) |
+| F5 minor: 150 silently clamped to 99 | `clampBehavior="none"`; an out-of-range total marks the field invalid and the hint under the die becomes "Escribe un total entre −20 y 99." (polite live region, `aria-describedby`); Save stays disabled | e2e: typing 150 keeps 150 after blur, `aria-invalid="true"`, hint shown, axe passes |
+| F6 minor: repeated column labels, Segoe UI Black names, misaligned fate | From 40em one aligned header per side ("Hecho / Recibido / Curado") over a fixed 21rem number column; row labels stay for assistive tech (visually hidden there) and stay visible on phones; names at weight 700 like the order; fate centred on the name; ledger capped at 52rem | screenshots `player-summary`, `summary-en-light`, `dm-ended-console` |
+| F7 minor: Mantine grey disabled Save in light theme | The entry scopes Mantine's disabled tokens to the palette (accent tint on the surface, muted text, accent border) | screenshots `player-initiative-range`, `player-initiative-en-light` |
+| F8 minor: "0 de 4 / listos" wrapping beside the pips at 390 | Below 40em the count uses the h1 size and the pips sit under it | screenshot `player-saved-mobile` |
+| N1 note: fixture recap leaked hidden combatants | The fixture filters hidden combatants out of the summary for Player and table projections, like `get_combat_state` | e2e: a hidden "Ogro secreto" is absent from the Player recap and its `get_combat_state` response and from the DM table view recap, and present in the DM console recap |
+
+The pending product decision on which combat actions Players keep (death saves, end turn) is
+not changed here.
+
+Verification of the fixes:
+
+| Check | Result |
+| --- | --- |
+| Combat spec on a spare port (local uncommitted config) | first run: 6 failed (the RYT-041 Player test still expected the own name on the own turn, an intended F3 change; `aria-invalid` was overridden by Mantine, so the field now uses a boolean `error`); then 44 passed, 1 skipped |
+| `npm run check` | passed: 31 files / 229 tests, build OK |
+| `CI=1 npm run test:e2e` (fixed ports, servers started by the run) | 403 passed, 49 skipped, 1 flaky (`roster.spec.ts:266` phone, RYT-044, not touched), 0 failed |
+
+Screenshots refreshed (390/820) and inspected: all of the earlier ones plus `player-waiting`,
+`player-initiative-range`, `defeated-en-light`, `dm-ended-console`. Only RYT-042 tests ran with
+evidence on; no other ticket's screenshots changed. A focused re-review is pending.

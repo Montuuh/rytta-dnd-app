@@ -42,6 +42,8 @@ export function InitiativeEntry({
   const [amount, setAmount] = useState<number | string>(combatant.initiative ?? '')
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = isInitiativeTotal(value)
+  const outOfRange = typeof amount === 'number' && !valid
+  const hintId = useId()
   // Bring the whole entry into view once when it opens, above the phone's bottom bar. Focus is not
   // moved into the field (that would raise the phone keyboard over the keypad); a reopened entry
   // focuses its heading instead (the table view does that).
@@ -82,20 +84,35 @@ export function InitiativeEntry({
               hideControls
               variant="unstyled"
               aria-label={t('combat.initiative.totalFor', { name: combatant.name })}
+              // A boolean error marks the field invalid (aria-invalid) without Mantine's message;
+              // the explanation is the hint under the die.
+              error={outOfRange}
+              aria-describedby={hintId}
               min={-20}
               max={99}
+              // Out-of-range totals stay as typed and are explained below (RYT-042 F5).
+              clampBehavior="none"
               allowDecimal={false}
               inputMode="numeric"
               placeholder="?"
               value={amount}
               onChange={setAmount}
               className="combat-d20-input"
+              data-length={String(amount).length > 2 ? 'long' : undefined}
             />
           </div>
-          <Text className="combat-entry-formula">
-            {bonus === null
-              ? t('combat.initiative.rollPlain')
-              : t('combat.initiative.roll', { bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}` })}
+          <Text
+            id={hintId}
+            className={`combat-entry-formula${outOfRange ? ' is-invalid' : ''}`}
+            aria-live="polite"
+          >
+            {outOfRange
+              ? t('combat.initiative.range')
+              : bonus === null
+                ? t('combat.initiative.rollPlain')
+                : t('combat.initiative.roll', {
+                    bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+                  })}
           </Text>
         </div>
         <div className="combat-entry-keys">
@@ -127,10 +144,11 @@ function D20() {
   return (
     <svg className="combat-d20-shape" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
       <polygon className="combat-d20-outline" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" />
-      <polygon className="combat-d20-face" points="50,24 77,70 23,70" />
+      {/* A large face so a three-character total fits inside it. */}
+      <polygon className="combat-d20-face" points="50,16 85,76 15,76" />
       <path
         className="combat-d20-edges"
-        d="M50 3 50 24M9 26.5 50 24 91 26.5M9 26.5 23 70M91 26.5 77 70M9 73.5 23 70 50 97 77 70 91 73.5"
+        d="M50 3 50 16M9 26.5 50 16 91 26.5M9 26.5 15 76M91 26.5 85 76M9 73.5 15 76 50 97 85 76 91 73.5"
       />
     </svg>
   )

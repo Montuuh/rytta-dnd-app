@@ -147,8 +147,11 @@ status, readable across the room. No full screen control (browsers and casting d
 provide one). The banner follows the phase:
 
 - Initiative: "Roll initiative" with "N of M ready" and one pip per combatant.
-- Active: Now / Up next; on a Player's own turn the label reads "Your turn!" (pulses twice
-  without reduced motion, vibrates where supported) and otherwise "You act in N turns".
+- Active: Now / Up next. On a Player's own turn the display line is "Your turn!" instead of the
+  own name (pulses twice without reduced motion, vibrates where supported); otherwise the
+  Player's "You act in N turns" has its own full-width band at heading size.
+- Defeated combatants: the status word reads "Defeated"/"Dead" with a skull (no separate pill);
+  the row is a dashed, transparent card with the name struck through, at full text contrast.
 - Ended: the summary replaces banner and order (see below).
 
 **Own initiative entry (RYT-042)**: while initiative is collected, the Player's own row opens

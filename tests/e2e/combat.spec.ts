@@ -168,11 +168,17 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await audit(dm)
   await view(dm, 'Consola del DM')
 
-  // 9. Ending the combat stores a summary that both sides see in the table view.
+  // 9. Ending the combat stores a summary that both sides see in the table view. Targets still
+  // chosen when it ends leave with the fight (RYT-042 F1).
+  await dm.getByRole('button', { name: 'Elegir objetivos' }).click()
+  await dm.getByRole('checkbox', { name: 'Elegir a Goblin 1' }).check()
   await dm.getByRole('button', { name: 'Terminar combate' }).click()
   const end = dm.getByRole('dialog', { name: '¿Terminar este combate?' })
   await end.getByRole('button', { name: 'Terminar combate' }).click()
   await expect(dm.getByRole('heading', { name: 'Resumen del combate' })).toBeVisible()
+  await expect(dm.getByRole('checkbox')).toHaveCount(0)
+  await expect(dm.locator('.combat-multi-bar')).toHaveCount(0)
+  await expect(dm.getByRole('button', { name: /^Daño$|^Curar$/ })).toHaveCount(0)
   await audit(dm)
   await view(dm, 'Mesa')
   await expect(dm.getByRole('heading', { name: 'Resumen del combate' })).toBeVisible()
@@ -577,7 +583,8 @@ test('RYT-041 Players stay on the table view: no exit and no full screen', async
   await server.install(page)
   server.seedActive()
   await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}/table`)
-  await expect(page.locator('.combat-table-active')).toHaveText('Arin')
+  // RYT-042 F3: on the Player's own turn the display line is the turn itself.
+  await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!')
   await expect(page.getByRole('link', { name: 'Salir de la vista de mesa' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Pantalla completa' })).toHaveCount(0)
   await audit(page)
@@ -820,6 +827,15 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   await entry.getByRole('button', { name: 'Borrar último dígito' }).click()
   await entry.getByRole('button', { name: '7', exact: true }).click()
   await expect(total).toHaveValue('97')
+  // A typed total out of range is explained, not silently clamped (RYT-042 F5).
+  await total.fill('150')
+  await total.blur()
+  await expect(total).toHaveValue('150')
+  await expect(total).toHaveAttribute('aria-invalid', 'true')
+  await expect(entry).toContainText('Escribe un total entre −20 y 99.')
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
+  await audit(page)
+  await evidence(page, info.project.name, 'player-initiative-range', 'RYT-042')
   // Escape clears an unsaved entry; the keyboard types directly.
   await total.focus()
   await page.keyboard.press('Escape')
@@ -870,24 +886,55 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   // The fight starts: the own total is locked and the turn banner takes over.
   dmSets(server, { Bea: 15, 'Goblin 1': 12 })
   server.act('set_encounter_status', { target_encounter: id, new_status: 'active' })
-  await expect(banner).toContainText('¡Te toca!', { timeout: 15_000 })
+  // RYT-042 F3: the own turn is the display line, not the own name under a small label.
+  await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!', { timeout: 15_000 })
+  await expect(page.locator('.combat-table-countdown')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Editar la iniciativa de Arin' })).toHaveCount(0)
   await expect(entry).toHaveCount(0)
   expect(request(combatantId(server, 'Arin'), 'r3')).toEqual({ error: 'Initiative closed' })
   await audit(page)
   await evidence(page, info.project.name, 'player-turn', 'RYT-042')
 
-  // The DM ends the fight: the same screen becomes the summary.
+  // Goblin 1 falls on Arin's turn; a hidden ogre joins (the DM's secret). The defeated row reads
+  // "Derrotado" once, at full contrast (F2), and the turn moves on: the countdown has its own band.
   server.act('apply_combat_hp', {
     target_encounter: id,
     hp_mode: 'damage',
     hits: [{ combatant_id: combatantId(server, 'Goblin 1'), amount: 7 }],
     request_id: 'hit',
   })
+  server.act('add_combatants', {
+    target_encounter: id,
+    entries: [{ kind: 'npc', name: 'Ogro secreto', max_hp: 30, armor_class: 12, hidden: true }],
+  })
+  server.act('advance_turn', {
+    target_encounter: id,
+    direction: 1,
+    expected_active: combatantId(server, 'Arin'),
+    request_id: 'next',
+  })
+  const countdown = page.locator('.combat-table-countdown')
+  await expect(countdown).toHaveText('Te toca dentro de 2 turnos', { timeout: 15_000 })
+  await expect(row(page, 'Goblin 1')).toContainText('Derrotado')
+  await expect(row(page, 'Goblin 1').getByText('Derrotado')).toHaveCount(1)
+  await expect(row(page, 'Goblin 1')).not.toContainText('Caído')
+  await expect(page.getByText('Ogro secreto')).toHaveCount(0)
+  await audit(page)
+  await evidence(page, info.project.name, 'player-waiting', 'RYT-042')
+
+  // The DM ends the fight: the same screen becomes the summary, still without the hidden ogre.
   server.act('set_encounter_status', { target_encounter: id, new_status: 'ended' })
   const recap = page.getByRole('region', { name: 'Resumen del combate' })
   await expect(recap).toBeVisible({ timeout: 15_000 })
   await expect(recap).toContainText('Más daño hecho: Arin, 7')
+  await expect(recap).not.toContainText('Ogro secreto')
+  expect(
+    (
+      server.act('get_combat_state', { target_encounter: id }, playerId) as {
+        encounter: { summary: { combatants: { name: string }[] } }
+      }
+    ).encounter.summary.combatants.map((c) => c.name),
+  ).not.toContain('Ogro secreto')
   await expect(recap.getByRole('region', { name: 'Grupo' })).toContainText('Arin')
   await expect(recap.getByRole('region', { name: 'Enemigos' })).toContainText('Goblin 1')
   await expect(page.locator('.combat-rail')).toHaveCount(0)
@@ -919,14 +966,22 @@ test('RYT-042 the DM opens the table view and switches to the console without lo
   await server.install(page)
   server.seedActive()
   const id = server.encounters[0]!.id
+  // Goblin 1 is already down: both views are audited with a defeated combatant (F2).
+  server.act('apply_combat_hp', {
+    target_encounter: id,
+    hp_mode: 'damage',
+    hits: [{ combatant_id: combatantId(server, 'Goblin 1'), amount: 7 }],
+    request_id: 'dm-hit',
+  })
   await page.goto(`./#/campaign/${campaignId}/combat/${id}`)
   // The table view is the default: the table projection, no console controls.
   const tableRadio = page.getByRole('radio', { name: 'Mesa' })
   const consoleRadio = page.getByRole('radio', { name: 'Consola del DM' })
   await expect(tableRadio).toBeChecked()
   await expect(page.locator('.combat-table-active')).toHaveText('Arin')
-  await expect(row(page, 'Goblin 1')).toContainText('Ileso')
-  await expect(row(page, 'Goblin 1')).not.toContainText('PG')
+  await expect(row(page, 'Goblin 2')).toContainText('Ileso')
+  await expect(row(page, 'Goblin 2')).not.toContainText('PG')
+  await expect(row(page, 'Goblin 1')).toContainText('Derrotado')
   await expect(page.getByRole('button', { name: 'Siguiente turno' })).toHaveCount(0)
   await expectTouchTargets(page, '.combat-view-switch label')
   await audit(page)
@@ -963,6 +1018,27 @@ test('RYT-042 the DM opens the table view and switches to the console without lo
   await page.reload()
   await expect(consoleRadio).toBeChecked()
   await expect(next).toBeVisible()
+
+  // F1: targets chosen in the console while the fight ends behind the table view leave with it.
+  // A hidden ogre is in the console recap only; the table recap never shows it (N1).
+  server.act('add_combatants', {
+    target_encounter: id,
+    entries: [{ kind: 'npc', name: 'Ogro secreto', max_hp: 30, armor_class: 12, hidden: true }],
+  })
+  await page.getByRole('button', { name: 'Elegir objetivos' }).click()
+  await page.getByRole('checkbox', { name: 'Elegir a Goblin 2' }).check()
+  await view(page, 'Mesa')
+  server.act('set_encounter_status', { target_encounter: id, new_status: 'ended' })
+  const recap = page.getByRole('region', { name: 'Resumen del combate' })
+  await expect(recap).toBeVisible({ timeout: 20_000 })
+  await expect(recap).not.toContainText('Ogro secreto')
+  await audit(page)
+  await view(page, 'Consola del DM')
+  await expect(recap).toContainText('Ogro secreto', { timeout: 20_000 })
+  await expect(page.getByRole('checkbox')).toHaveCount(0)
+  await expect(page.locator('.combat-multi-bar')).toHaveCount(0)
+  await audit(page)
+  await evidence(page, info.project.name, 'dm-ended-console', 'RYT-042')
   expect(errors).toEqual([])
 })
 
@@ -994,7 +1070,17 @@ test('RYT-042 table view entry and summary pass axe in English and light theme',
   await evidence(page, info.project.name, 'player-initiative-en-light', 'RYT-042')
   dmSets(server, { Arin: 14, Bea: 10, 'Goblin 1': 8 })
   server.act('set_encounter_status', { target_encounter: id, new_status: 'active' })
-  await expect(page.locator('.combat-table-now')).toContainText('Your turn!', { timeout: 15_000 })
+  await expect(page.locator('.combat-table-active')).toHaveText('Your turn!', { timeout: 15_000 })
+  // A defeated creature in the light theme (RYT-042 F2).
+  server.act('apply_combat_hp', {
+    target_encounter: id,
+    hp_mode: 'damage',
+    hits: [{ combatant_id: combatantId(server, 'Goblin 1'), amount: 7 }],
+    request_id: 'en-hit',
+  })
+  await expect(row(page, 'Goblin 1')).toContainText('Defeated', { timeout: 15_000 })
+  await audit(page)
+  await evidence(page, info.project.name, 'defeated-en-light', 'RYT-042')
   server.act('set_encounter_status', { target_encounter: id, new_status: 'ended' })
   const recap = page.getByRole('region', { name: 'Combat summary' })
   await expect(recap).toBeVisible({ timeout: 15_000 })

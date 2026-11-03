@@ -685,17 +685,31 @@
   z-index: 1;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin: auto -16px -16px;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--app-border);
   background: var(--app-surface);
 }
-.gl-editor-footer .mantine-Button-label {
-  white-space: nowrap;
+/* At large text the footer reflows: delete stays left, Cancel and Save share the rest and wrap. */
+.gl-editor-footer-actions {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
-.gl-editor-footer .mantine-Button-root {
+.gl-editor-footer-actions .mantine-Button-root {
+  flex: 1 1 auto;
   padding-inline: 14px;
+}
+@media (min-width: 48em) {
+  .gl-editor-footer-actions .mantine-Button-root {
+    flex: 0 0 auto;
+  }
+}
+.gl-add-house {
+  color: var(--app-accent);
+  padding-inline: 10px;
 }
 .gl-conflict-text {
   margin: 0;

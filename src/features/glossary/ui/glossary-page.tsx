@@ -123,14 +123,24 @@ export function GlossaryPage() {
   useEffect(() => {
     if (entryId && catalog?.byId.has(entryId)) remember?.(entryId)
   }, [entryId, catalog, remember])
+  // The entry whose headword already took focus on its own route (phones).
+  const focusedEntry = useRef<string | null>(null)
   useEffect(() => {
     // A new entry on its own (phone) route, or one opened with Enter or just saved, moves focus
-    // to its headword. The next frame runs after the layout's own route-change focus.
-    if (!entryId || !(!wide || headwordFocus.id === entryId)) return
+    // to its headword. The next frame runs after the layout's own route-change focus. A data
+    // refresh of the same entry (the homebrew refetch, a failed save) never moves focus again:
+    // it would pull the cursor out of an open editor.
+    if (!entryId) {
+      focusedEntry.current = null
+      return
+    }
+    const requested = headwordFocus.id === entryId
+    if (!requested && (wide || focusedEntry.current === entryId)) return
     const frame = requestAnimationFrame(() => {
       if (!readerHeading.current) return
       readerHeading.current.focus()
-      if (headwordFocus.id === entryId) headwordFocus.id = null
+      focusedEntry.current = entryId
+      if (requested) headwordFocus.id = null
     })
     return () => cancelAnimationFrame(frame)
   }, [entryId, wide, catalog])

@@ -25,7 +25,7 @@ const phone = (page: Page) => page.viewportSize()!.width < 768
 /** Edit and delete are icon buttons from 48em; on phones they live in the entry's menu. */
 async function entryAction(page: Page, scope: Locator, name: string, action: 'edit' | 'delete') {
   if (phone(page)) {
-    await scope.getByRole('button', { name: `Acciones de ${name}` }).click()
+    await scope.getByRole('button', { name: `Acciones de «${name}»` }).click()
     await page
       .getByRole('menuitem', { name: action === 'edit' ? 'Editar entrada' : 'Eliminar entrada' })
       .click()
@@ -37,7 +37,7 @@ async function entryAction(page: Page, scope: Locator, name: string, action: 'ed
 /** Where focus returns after an entry action's overlay closes. */
 const actionTrigger = (page: Page, scope: Locator, name: string, action: 'edit' | 'delete') =>
   phone(page)
-    ? scope.getByRole('button', { name: `Acciones de ${name}` })
+    ? scope.getByRole('button', { name: `Acciones de «${name}»` })
     : scope.getByRole('button', {
         name: `${action === 'edit' ? 'Editar' : 'Eliminar'} «${name}»`,
       })
@@ -236,9 +236,12 @@ test('the DM edits a house rule where it appears and recovers from a stale revis
   await expect(house).toContainText('Un descanso largo dura una semana')
   await evidence(page, info.project.name, 'house-rule-actions', 'RYT-040')
   // The SRD entry itself only offers a new house rule; the house rule offers edit and delete.
-  await expect(
-    page.getByRole('button', { name: 'Añadir una regla de la casa a «Descanso largo»' }),
-  ).toBeVisible()
+  const addRule = page.getByRole('button', {
+    name: 'Añadir una regla de la casa a «Descanso largo»',
+  })
+  await expect(addRule).toBeVisible()
+  // A visible label, not a bare glyph (ui-ux F5).
+  await expect(addRule).toContainText('Regla de la casa')
   await entryAction(page, house, 'Descanso duro', 'edit')
   const editor = page.getByRole('dialog', { name: 'Editar entrada' })
   await expect(editor.getByRole('textbox', { name: /^Nombre/ })).toHaveValue('Descanso duro')
@@ -250,11 +253,15 @@ test('the DM edits a house rule where it appears and recovers from a stale revis
   await editor.getByRole('button', { name: 'Guardar cambios' }).click()
   const conflict = editor.getByRole('alert')
   await expect(conflict).toContainText('Esta entrada ha cambiado')
+  // The conflict takes focus so its recovery actions are reachable (ui-ux F2), not body or H1.
+  await expect(conflict).toBeFocused()
   await audit(page)
   await evidence(page, info.project.name, 'edit-conflict', 'RYT-040')
   await conflict.getByRole('button', { name: 'Cargar la actual' }).click()
   await expect(editor.getByLabel('Resumen')).toHaveValue('Cambiado por otra persona.')
   await expect(editor.getByRole('alert')).toHaveCount(0)
+  // After loading the current version focus continues in the form.
+  await expect(editor.getByRole('textbox', { name: /^Nombre/ })).toBeFocused()
   // A second conflict, this time saving over the other version.
   await editor.getByLabel('Resumen').fill('Una semana, en un lugar seguro.')
   f.changeHomebrew(houseRuleId, { body: 'Otro cambio.' })
@@ -267,18 +274,125 @@ test('the DM edits a house rule where it appears and recovers from a stale revis
   await expect(page.getByRole('heading', { name: 'Descanso largo', exact: true })).toBeFocused()
   const saves = f.calls.filter((call) => call.method === 'save_glossary_entry')
   expect(saves.map((call) => call.body.expected_revision)).toEqual([1, 2, 3])
-  // Deleted by someone else while editing: the form says so instead of recreating it.
+  // Deleted by someone else while editing: the form says so and offers a way out (F4).
   await entryAction(page, house, 'Descanso duro', 'edit')
   f.removeHomebrew(houseRuleId)
   await editor.getByLabel('Resumen').fill('Ya no existe.')
   await editor.getByRole('button', { name: 'Guardar cambios' }).click()
-  await editor.getByRole('button', { name: 'Cargar la actual' }).click()
-  await expect(editor.getByRole('alert')).toContainText(
-    'Alguien eliminó esta entrada mientras la editabas.',
-  )
-  await page.keyboard.press('Escape')
+  const gone = editor.getByRole('alert')
+  await expect(gone).toContainText('Alguien eliminó esta entrada mientras la editabas.')
+  await expect(gone).toBeFocused()
+  await expect(editor.getByRole('button', { name: 'Eliminar entrada' })).toHaveCount(0)
+  await expect(editor.getByRole('button', { name: 'Guardar cambios' })).toHaveCount(0)
+  await audit(page)
+  await evidence(page, info.project.name, 'edit-gone', 'RYT-040')
+  // Closing discards (after asking, the form is dirty); focus falls back to the headword (F6).
+  await editor.getByRole('button', { name: 'Cancelar' }).click()
+  await page.getByRole('dialog', { name: '¿Descartar los cambios?' }).waitFor()
+  await page.getByRole('button', { name: 'Descartar cambios' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(house).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Descanso largo', exact: true })).toBeFocused()
+})
+
+test('a deleted entry being edited can be saved as a new one', async ({ page }) => {
+  test.setTimeout(60_000)
+  const f = await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${glossaryUrl}/rule.long-rest`)
+  const house = page.getByRole('complementary', { name: 'Regla de la casa' })
+  await entryAction(page, house, 'Descanso duro', 'edit')
+  const editor = page.getByRole('dialog', { name: 'Editar entrada' })
+  f.removeHomebrew(houseRuleId)
+  await editor.getByLabel('Resumen').fill('Recuperada como nueva.')
+  await editor.getByRole('button', { name: 'Guardar cambios' }).click()
+  await editor.getByRole('button', { name: 'Guardar como nueva' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(house).toContainText('Recuperada como nueva.')
+  const saves = f.calls.filter((call) => call.method === 'save_glossary_entry')
+  expect(saves.at(-1)?.body.expected_revision).toBeNull()
+  expect(saves.at(-1)?.body.entry_id).not.toBe(houseRuleId)
+})
+
+test('background refreshes keep focus and typed text in the open editor', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.clock.install()
+  const f = await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${glossaryUrl}/rule.long-rest`)
+  const house = page.getByRole('complementary', { name: 'Regla de la casa' })
+  await entryAction(page, house, 'Descanso duro', 'edit')
+  const editor = page.getByRole('dialog', { name: 'Editar entrada' })
+  const summary = editor.getByLabel('Resumen')
+  await summary.fill('')
+  await summary.pressSequentially('abc')
+  // Another member saves and the list refreshes (the 60 s poll or a refocused tab).
+  const before = f.calls.filter((call) => call.method === 'glossary_entries').length
+  f.changeHomebrew(houseRuleId, { body: 'Otro cambio.' })
+  await page.clock.fastForward(61_000)
+  await expect
+    .poll(() => f.calls.filter((call) => call.method === 'glossary_entries').length)
+    .toBeGreaterThan(before)
+  await page.waitForTimeout(400)
+  await expect(summary).toBeFocused()
+  await summary.pressSequentially('def')
+  await expect(summary).toHaveValue('abcdef')
+})
+
+test('the editor footer reflows at 150% text on a phone without clipping Save', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${glossaryUrl}/rule.long-rest`)
+  await page.addStyleTag({ content: 'html { font-size: 150% }' })
+  const house = page.getByRole('complementary', { name: 'Regla de la casa' })
+  await entryAction(page, house, 'Descanso duro', 'edit')
+  const editor = page.getByRole('dialog', { name: 'Editar entrada' })
+  const save = editor.getByRole('button', { name: 'Guardar cambios' })
+  await expect(save).toBeVisible()
+  const width = page.viewportSize()!.width
+  const box = (await save.boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(width)
+  expect(box.height).toBeGreaterThanOrEqual(44)
+  const overflow = await editor
+    .locator('.gl-editor-footer')
+    .evaluate((el) => el.scrollWidth - el.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+  await expect(editor.getByRole('button', { name: 'Eliminar entrada' })).toBeVisible()
+  await evidence(page, info.project.name, 'editor-150', 'RYT-040')
+})
+
+test('closing a dirty editor asks before discarding the edits', async ({ page }) => {
+  await identityFixture(page, { modules: ['party', 'glossary'], homebrew: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${glossaryUrl}/homebrew.${houseRuleId}`)
+  const article = page.locator('article.gl-entry')
+  await entryAction(page, article, 'Descanso duro', 'edit')
+  const editor = page.getByRole('dialog', { name: 'Editar entrada' })
+  // Untouched: closes at once.
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await entryAction(page, article, 'Descanso duro', 'edit')
+  await editor.getByLabel('Resumen').fill('Cambio sin guardar.')
+  await editor.getByRole('button', { name: 'Cancelar' }).click()
+  const ask = page.getByRole('dialog', { name: '¿Descartar los cambios?' })
+  await expect(ask.getByRole('button', { name: 'Seguir editando' })).toBeFocused()
+  // Escape closes only the question; the typed text is still there.
+  await page.keyboard.press('Escape')
+  await expect(ask).toHaveCount(0)
+  await expect(editor.getByLabel('Resumen')).toHaveValue('Cambio sin guardar.')
+  await page.keyboard.press('Escape')
+  await expect(ask).toBeVisible()
+  await expect(ask.getByRole('button', { name: 'Seguir editando' })).toBeFocused()
+  await ask.getByRole('button', { name: 'Descartar cambios' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(
+    phone(page)
+      ? article.getByRole('button', { name: 'Acciones de «Descanso duro»' })
+      : article.getByRole('button', { name: 'Editar «Descanso duro»' }),
+  ).toBeFocused()
 })
 
 test('deleting homebrew asks first, names the entry and removes it from the glossary', async ({
@@ -370,7 +484,7 @@ test('the edit and delete overlays read well in English and the light theme', as
   const article = page.locator('article.gl-entry')
   const act = async (action: 'Edit' | 'Delete') => {
     if (phone(page)) {
-      await article.getByRole('button', { name: 'Actions for Descanso duro' }).click()
+      await article.getByRole('button', { name: 'Actions for “Descanso duro”' }).click()
       await page.getByRole('menuitem', { name: `${action} entry` }).click()
       await expect(page.getByRole('menu')).toHaveCount(0)
     } else await article.getByRole('button', { name: `${action} “Descanso duro”` }).click()

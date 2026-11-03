@@ -4,16 +4,18 @@ import {
   Button,
   Drawer,
   Group,
+  Modal,
   Select,
   Stack,
   TextInput,
+  Text,
   Textarea,
   Tooltip,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Plus, Trash2, TriangleAlert, X } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useHomebrewAction, useLatestHomebrew } from '../api'
 import type { Catalog } from '../domain/catalog'
@@ -69,36 +71,77 @@ export function HomebrewEditor({
 }) {
   const wide = !usePhone()
   const { t } = useTranslation()
+  // The form reports whether it holds unsaved edits; closing then asks before discarding.
+  const dirty = useRef(false)
+  const [discarding, setDiscarding] = useState(false)
+  // Opened a tick later: when Escape asks, the question must not mount while that same key event
+  // is still travelling up to the window, where it would close the question at once.
+  const requestClose = () =>
+    dirty.current ? void window.setTimeout(() => setDiscarding(true), 0) : onClose()
   return (
-    <Drawer
-      opened={target !== null}
-      onClose={onClose}
-      // The manager returns focus to the control that opened the editor.
-      returnFocus={false}
-      // Above the reference sheet (400), which can be open underneath.
-      zIndex={410}
-      position="right"
-      size={wide ? 520 : '100%'}
-      classNames={{ content: 'gl-editor-drawer' }}
-      title={
-        <span className="gl-editor-title">
-          {t(target?.entry ? 'glossary.hb.edit' : 'glossary.hb.new')}
-        </span>
-      }
-      closeButtonProps={{ 'aria-label': t('glossary.hb.close'), size: 44 }}
-    >
-      {target && (
-        <EditorForm
-          key={target.entry?.id ?? `new-${target.srdRef ?? ''}`}
-          target={target}
-          campaignId={campaignId}
-          catalog={catalog}
-          onClose={onClose}
-          onSaved={onSaved}
-          onDelete={onDelete}
-        />
-      )}
-    </Drawer>
+    <>
+      <Drawer
+        opened={target !== null}
+        onClose={requestClose}
+        closeOnEscape={!discarding}
+        // The manager returns focus to the control that opened the editor.
+        returnFocus={false}
+        // Above the reference sheet (400), which can be open underneath.
+        zIndex={410}
+        position="right"
+        size={wide ? 520 : '100%'}
+        classNames={{ content: 'gl-editor-drawer' }}
+        title={
+          <span className="gl-editor-title">
+            {t(target?.entry ? 'glossary.hb.edit' : 'glossary.hb.new')}
+          </span>
+        }
+        closeButtonProps={{ 'aria-label': t('glossary.hb.close'), size: 44 }}
+      >
+        {target && (
+          <EditorForm
+            key={target.entry?.id ?? `new-${target.srdRef ?? ''}`}
+            target={target}
+            campaignId={campaignId}
+            catalog={catalog}
+            onDirtyChange={(value) => {
+              dirty.current = value
+            }}
+            onClose={requestClose}
+            onSaved={onSaved}
+            onDelete={onDelete}
+          />
+        )}
+      </Drawer>
+      <Modal
+        opened={discarding}
+        onClose={() => setDiscarding(false)}
+        centered
+        zIndex={420}
+        returnFocus
+        classNames={{ content: 'gl-delete-modal' }}
+        title={<span className="gl-editor-title">{t('glossary.hb.discardTitle')}</span>}
+        closeButtonProps={{ 'aria-label': t('glossary.hb.close'), size: 44 }}
+      >
+        <Text className="gl-delete-body">{t('glossary.hb.discardBody')}</Text>
+        <Group className="gl-delete-actions" justify="flex-end" gap="sm" mt="md">
+          <Button variant="default" onClick={() => setDiscarding(false)} data-autofocus>
+            {t('glossary.hb.keepEditing')}
+          </Button>
+          <Button
+            color="red"
+            variant="light"
+            onClick={() => {
+              setDiscarding(false)
+              dirty.current = false
+              onClose()
+            }}
+          >
+            {t('glossary.hb.discard')}
+          </Button>
+        </Group>
+      </Modal>
+    </>
   )
 }
 
@@ -106,6 +149,7 @@ function EditorForm({
   target,
   campaignId,
   catalog,
+  onDirtyChange,
   onClose,
   onSaved,
   onDelete,
@@ -113,6 +157,7 @@ function EditorForm({
   target: EditorTarget
   campaignId: string
   catalog: Catalog
+  onDirtyChange: (dirty: boolean) => void
   onClose: () => void
   onSaved: (entry: HomebrewEntry) => void
   onDelete: (entry: HomebrewEntry) => void
@@ -120,7 +165,8 @@ function EditorForm({
   const { t } = useTranslation()
   const action = useHomebrewAction(campaignId)
   const latestOf = useLatestHomebrew(campaignId)
-  const [entryId] = useState(() => target.entry?.id ?? crypto.randomUUID())
+  // A deleted entry can be saved again under a new id (the old one is gone).
+  const [entryId, setEntryId] = useState(() => target.entry?.id ?? crypto.randomUUID())
   // The revision this form is based on. Resolving a conflict moves it to the server's current one.
   const [revision, setRevision] = useState(target.entry?.revision ?? null)
   const [conflict, setConflict] = useState<'busy' | 'gone' | 'offline' | null>(null)
@@ -138,8 +184,11 @@ function EditorForm({
         .map((e) => ({ value: e.id, label: `${e.name} (${t(`glossary.cat.${e.category}`)})` })),
     [catalog, t],
   )
+  const isDirty = form.isDirty()
+  useEffect(() => onDirtyChange(isDirty))
   const error =
     action.error instanceof GlossaryError ? action.error.code : action.error ? 'unknown' : null
+  const alertRef = useRef<HTMLDivElement>(null)
 
   const nameId = useId()
   const toDraft = (values: FormValues): HomebrewDraft => ({
@@ -153,15 +202,22 @@ function EditorForm({
       .filter((f) => f.label && f.value),
     srd_ref: values.srd_ref,
   })
-  const save = (values: FormValues, baseRevision: number | null) => {
-    setConflict(null)
+  const save = (values: FormValues, baseRevision: number | null, id = entryId) => {
+    if (conflict !== 'gone') setConflict(null)
     action.mutate(
-      { kind: 'save', entryId, revision: baseRevision, draft: toDraft(values) },
+      { kind: 'save', entryId: id, revision: baseRevision, draft: toDraft(values) },
       { onSuccess: (saved) => saved && onSaved(saved) },
     )
   }
+  const gone = conflict === 'gone'
+  const saveAsNew = (values: FormValues) => {
+    const id = crypto.randomUUID()
+    setEntryId(id)
+    setRevision(null)
+    save(values, null, id)
+  }
   const submit = form.onSubmit(
-    (values) => save(values, revision),
+    (values) => (gone ? saveAsNew(values) : save(values, revision)),
     // A missing name moves focus to the field that explains it.
     () => document.getElementById(nameId)?.focus(),
   )
@@ -177,23 +233,43 @@ function EditorForm({
       if (mode === 'overwrite') return save(form.values, latest.revision)
       form.setValues(toFormValues(latest))
       form.resetDirty()
+      // The alert that held focus is gone: continue in the form.
+      requestAnimationFrame(() => document.getElementById(nameId)?.focus())
     } catch {
       setConflict('offline')
     }
   }
-  const staleEdit = error === 'stale' && target.entry !== null
+  const staleEdit = (error === 'stale' && target.entry !== null) || gone
+  // A conflict takes focus (announced and reachable); first check whether the entry still exists.
+  const conflictShown = staleEdit
+  useEffect(() => {
+    if (!conflictShown || gone) return
+    alertRef.current?.focus()
+    let live = true
+    latestOf(entryId)
+      .then((latest) => live && !latest && setConflict('gone'))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [conflictShown, gone, latestOf, entryId])
+  useEffect(() => {
+    if (gone) alertRef.current?.focus()
+  }, [gone])
 
   return (
     <form onSubmit={submit} noValidate>
       <Stack gap="md">
         {staleEdit ? (
           <Alert
+            ref={alertRef}
+            tabIndex={-1}
             color="red"
             role="alert"
             icon={<TriangleAlert size={18} aria-hidden="true" />}
             title={t('glossary.hb.conflict.title')}
           >
-            {conflict === 'gone' ? (
+            {gone ? (
               <p className="gl-conflict-text">{t('glossary.hb.conflict.gone')}</p>
             ) : (
               <>
@@ -315,7 +391,7 @@ function EditorForm({
           {...form.getInputProps('srd_ref')}
         />
         <div className="gl-editor-footer">
-          {target.entry && (
+          {target.entry && !gone && (
             <Tooltip label={t('glossary.hb.delete')} zIndex={500}>
               <ActionIcon
                 variant="subtle"
@@ -328,12 +404,18 @@ function EditorForm({
               </ActionIcon>
             </Tooltip>
           )}
-          <Group gap="sm" ml="auto" wrap="nowrap">
+          <Group className="gl-editor-footer-actions" gap="sm">
             <Button variant="default" onClick={onClose}>
               {t('glossary.hb.cancel')}
             </Button>
             <Button type="submit" loading={action.isPending}>
-              {t(target.entry ? 'glossary.hb.saveChanges' : 'glossary.hb.save')}
+              {t(
+                gone
+                  ? 'glossary.hb.conflict.saveNew'
+                  : target.entry
+                    ? 'glossary.hb.saveChanges'
+                    : 'glossary.hb.save',
+              )}
             </Button>
           </Group>
         </div>

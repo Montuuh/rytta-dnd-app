@@ -120,3 +120,26 @@ the RPCs; the PRE probe called the SQL functions directly with a simulated JWT, 
 PostgREST); real iOS Safari; 150% text and reduced-motion passes for the new overlays were
 reduced-motion only (no 150% text capture of the editor); the conflict flow with two real
 accounts. Independent ui-ux verdict: pending.
+
+## Round 2: independent ui-ux review (CHANGES_REQUIRED) fixes
+
+The review is in `docs/evidence/RYT-040/ui-review.md` (committed as written). Every finding was
+fixed; the focused re-review is pending.
+
+| Finding | Fix | Regression |
+| --- | --- | --- |
+| F1 blocker: refetch moved focus to the H1 below 62em and dropped typed text | The page's headword-focus effect now fires only when the entry identity changes or a focus was requested (saved entry), never on a catalog refresh | `background refreshes keep focus and typed text in the open editor` (clock advanced 61 s, refetch observed; fails on the old effect, verified at 390px) |
+| F2 major: conflict focus | The conflict alert (`tabIndex=-1`) takes focus when it appears; "Cargar la actual" moves focus to the Name field | focus asserted in the conflict test |
+| F3 major: footer clipped at 150% on 390px | Footer wraps; Cancel and Save share rows and grow to full width on phones; delete stays on the left | `the editor footer reflows at 150% text on a phone` (Save inside the viewport, 44px high, no overflow) |
+| F4 moderate: deleted-meanwhile dead end | After a stale save the form checks whether the entry still exists. If not, it says so, hides delete, and the primary action becomes "Guardar como nueva" (new id, revision null); Cancel closes | `the DM edits a house rule ... stale revision` (gone branch) and `a deleted entry being edited can be saved as a new one` |
+| F5 moderate: bare scroll icon | An SRD entry shows a labelled subtle button, "+ Regla de la casa" / "+ House rule", with the full accessible name "Añadir una regla de la casa a «X»" (no longer the lore glyph, works on touch) | label asserted in the house-rule test |
+| F6 minor: focus to body when the opener is gone | Falls back to the reference-sheet headword, the page headword, then `main` | gone branch asserts the headword is focused |
+| F7 minor: silent discard | A dirty form asks "¿Descartar los cambios?" (Seguir editando holds focus, Escape closes only the question); an untouched form closes at once. The question opens a tick after the key event, otherwise the same Escape would close it immediately | `closing a dirty editor asks before discarding the edits` |
+| F8 nit | Accessible names read `Acciones de «X»` / `Actions for “X”` | e2e helpers |
+
+New captures: `edit-gone-{mobile,tablet}.png`, `editor-150-{mobile,tablet}.png` (150% text);
+`house-rule-actions-*` now show the labelled add button. Other captures were regenerated.
+
+Round 2 results: `npm run check` exit 0 (205 unit/SQL tests, build); `CI=1 npm run test:e2e` exit 0,
+336 passed, 48 skipped. The e2e run was retried after other agents held ports 4173/4174 ("already
+used" fails fast); the passing run used its own servers.

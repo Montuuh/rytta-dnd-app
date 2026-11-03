@@ -1,0 +1,62 @@
+import {
+  Activity,
+  BellRing,
+  BookOpenText,
+  CircleDot,
+  CircleSlash,
+  Clock,
+  Dices,
+  DoorOpen,
+  Dumbbell,
+  Feather,
+  Flame,
+  Footprints,
+  HeartCrack,
+  Link2,
+  ScrollText,
+  Shapes,
+  Shield,
+  Smile,
+  Sword,
+  Swords,
+  Target,
+  TriangleAlert,
+  WandSparkles,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
+import type { GlossaryCategory } from '../domain/catalog'
+import type { FactKey } from '../domain/types'
+
+export const categoryIcons: Record<GlossaryCategory, LucideIcon> = {
+  condition: HeartCrack,
+  action: Zap,
+  rule: BookOpenText,
+  area: Shapes,
+  attitude: Smile,
+  hazard: TriangleAlert,
+  ability: Dumbbell,
+  skill: Target,
+  damage: Flame,
+  property: Sword,
+  mastery: Swords,
+  spell: WandSparkles,
+  lore: ScrollText,
+  other: Feather,
+}
+
+export const factIcons: Record<FactKey, LucideIcon> = {
+  action: Zap,
+  cause: Link2,
+  trigger: BellRing,
+  effect: CircleDot,
+  attack: Swords,
+  save: Shield,
+  check: Dices,
+  speed: Footprints,
+  damage: Flame,
+  duration: Clock,
+  escape: DoorOpen,
+  ends: CircleSlash,
+}
+export const customFactIcon = Activity

@@ -25,7 +25,9 @@ async function audit(page: Page, path: string) {
       .violations,
   ).toEqual([])
   for (const control of await page
-    .locator('main button:visible, [role="dialog"] button:visible')
+    .locator(
+      'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
+    )
     .all()) {
     expect(
       (await control.boundingBox())!.height,

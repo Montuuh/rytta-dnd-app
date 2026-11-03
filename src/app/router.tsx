@@ -12,6 +12,16 @@ import { CampaignLanding } from '@/pages/campaign-landing'
 const TradeLayer = lazy(() =>
   import('@/features/trades').then((module) => ({ default: module.TradeLayer })),
 )
+// RYT-008: the glossary layer makes rules terms clickable on every campaign page.
+const CampaignGlossaryLayer = lazy(() =>
+  import('@/features/glossary').then((module) => ({ default: module.CampaignGlossaryLayer })),
+)
+const StandaloneGlossaryLayer = lazy(() =>
+  import('@/features/glossary').then((module) => ({ default: module.StandaloneGlossaryLayer })),
+)
+const GlossaryPage = lazy(() =>
+  import('@/features/glossary').then((module) => ({ default: module.GlossaryPage })),
+)
 const CharacterParty = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterParty })),
 )
@@ -62,22 +72,34 @@ export function AppRouter() {
                 {live && (
                   <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
                     <Route element={<TradeLayer />}>
-                      <Route index element={<CampaignLanding />} />
-                      <Route path="party" element={<CharacterParty />} />
-                      <Route path="party/:characterId" element={<CharacterSheetPage />} />
-                      <Route path="party/:characterId/create" element={<CharacterCreationPage />} />
-                      <Route path="members" element={<DmCenterPage />} />
-                      {/* RYT-027: the storeroom moved into the DM Command Center. */}
-                      <Route
-                        path="items"
-                        element={<Navigate to="../members?panel=items" relative="path" replace />}
-                      />
-                      <Route path="inventory" element={<InventoryPage />} />
-                      <Route path="shops" element={<ShopsPage />} />
-                      <Route path="*" element={<ModulePage />} />
+                      <Route element={<CampaignGlossaryLayer />}>
+                        <Route index element={<CampaignLanding />} />
+                        <Route path="party" element={<CharacterParty />} />
+                        <Route path="party/:characterId" element={<CharacterSheetPage />} />
+                        <Route
+                          path="party/:characterId/create"
+                          element={<CharacterCreationPage />}
+                        />
+                        <Route path="members" element={<DmCenterPage />} />
+                        {/* RYT-027: the storeroom moved into the DM Command Center. */}
+                        <Route
+                          path="items"
+                          element={<Navigate to="../members?panel=items" relative="path" replace />}
+                        />
+                        <Route path="inventory" element={<InventoryPage />} />
+                        <Route path="shops" element={<ShopsPage />} />
+                        <Route path="glossary" element={<GlossaryPage />} />
+                        <Route path="glossary/:entryId" element={<GlossaryPage />} />
+                        <Route path="*" element={<ModulePage />} />
+                      </Route>
                     </Route>
                   </Route>
                 )}
+                {/* The SRD glossary also works outside a campaign (demo and account home). */}
+                <Route element={<StandaloneGlossaryLayer />}>
+                  <Route path="glossary" element={<GlossaryPage />} />
+                  <Route path="glossary/:entryId" element={<GlossaryPage />} />
+                </Route>
                 <Route path="*" element={<ModulePage />} />
               </>
             )}

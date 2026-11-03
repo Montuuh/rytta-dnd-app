@@ -68,7 +68,7 @@ for (const language of ['es', 'en'] as const)
         ).toEqual([])
         for (const control of await page
           .locator(
-            'main button:visible, [role="dialog"] button:visible, [role="dialog"] select:visible',
+            'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term), [role="dialog"] select:visible',
           )
           .all()) {
           const box = await control.boundingBox()
@@ -529,7 +529,9 @@ async function axeAndTargets(page: Page) {
       .violations,
   ).toEqual([])
   for (const control of await page
-    .locator('main button:visible, [role="dialog"] button:visible')
+    .locator(
+      'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
+    )
     .all()) {
     const box = await control.boundingBox()
     expect(box!.height).toBeGreaterThanOrEqual(44)

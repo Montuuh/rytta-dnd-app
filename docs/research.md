@@ -41,6 +41,12 @@ RYT-024 encodes class hit dice, saves and skill choices, species speed and trait
 background abilities/skills/feats, point-buy costs and spell slot progressions, with
 attribution in code and on screen. Rules prose and spell descriptions are not bundled.
 
+RYT-008 (2026-11-03) bundles SRD 5.2.1 rules prose and spells in English and in the official
+Spanish edition (`SP_SRD_CC_v5.2.1.pdf`), plus SRD 5.1 English/Spanish conditions and combat
+actions for the 2014 blocks. Provenance: PDFs downloaded from https://www.dndbeyond.com/srd on
+2026-11-03 (5.2.1 English last modified 2025-05-01), extracted with `scripts/glossary`, reviewed
+by content tests and spot checks. Attribution and adaptations are recorded in ADR 023.
+
 ## Owlbear Rodeo
 
 Sources: [site](https://www.owlbear.rodeo/) and

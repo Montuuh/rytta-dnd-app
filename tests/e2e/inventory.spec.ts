@@ -11,7 +11,7 @@ async function audit(page: Page, path: string) {
   ).toEqual([])
   for (const control of await page
     .locator(
-      'main button:visible, main label.portrait-edit:visible, [role="dialog"] button:visible, .undo-fuse button:visible',
+      'main button:visible:not(.glossary-term), main label.portrait-edit:visible, [role="dialog"] button:visible:not(.glossary-term), .undo-fuse button:visible',
     )
     .all()) {
     const box = await control.boundingBox()

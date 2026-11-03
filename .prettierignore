@@ -5,3 +5,5 @@ playwright-report
 test-results
 package-lock.json
 docs/evidence
+# Generated SRD content (scripts/glossary/build_content.py)
+src/features/glossary/content/

@@ -1,9 +1,9 @@
 import {
   Backpack,
+  BookMarked,
   BookOpen,
   Gem,
   ScrollText,
-  Shield,
   Store,
   Swords,
   Users,
@@ -60,8 +60,9 @@ export const modules = [
     path: '/glossary',
     label: 'module.glossary',
     summary: 'summary.glossary',
-    icon: Shield,
+    icon: BookMarked,
     ticket: 'RYT-008',
+    implemented: true,
   },
   {
     path: '/memories',

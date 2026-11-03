@@ -31,19 +31,19 @@ export default defineConfig({
     {
       name: 'desktop',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,glossary}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,glossary}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,glossary}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     ...[
@@ -53,7 +53,7 @@ export default defineConfig({
     ].map(({ name, viewport }) => ({
       name,
       testMatch:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,glossary}.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
         viewport,

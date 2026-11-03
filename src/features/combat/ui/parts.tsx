@@ -1,11 +1,20 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
 import { Castle, Radio, Shield, Skull, Users, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { Combatant, CombatErrorCode } from '../domain/combat'
 import { statusTone } from './helpers'
 
-/** Action errors float above dialogs and drawers so a failed write is never silent. */
+/** The body of the topmost open dialog or drawer, if any (nested ones portal last). */
+function topDialogBody() {
+  const bodies = document.querySelectorAll<HTMLElement>('.mantine-Modal-body, .mantine-Drawer-body')
+  return bodies[bodies.length - 1] ?? null
+}
+
+/**
+ * Action errors are never silent: inside an open dialog or drawer they appear next to its
+ * actions; otherwise they float (top on tablets, above the turn bar and navigation on phones).
+ */
 export function RunnerError({
   error,
   onClose,
@@ -14,21 +23,25 @@ export function RunnerError({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  // Resolved once per error: the dialog that was open when the write failed.
+  const host = useMemo(() => (error ? topDialogBody() : null), [error])
   if (!error) return null
+  const alert = (
+    <Alert
+      ref={(node) => node?.scrollIntoView?.({ block: 'nearest' })}
+      color="red"
+      role="alert"
+      withCloseButton
+      closeButtonLabel={t('action.cancel')}
+      onClose={onClose}
+      className="combat-alert"
+    >
+      {t(`combat.error.${error}`)}
+    </Alert>
+  )
   return (
-    <Portal>
-      <div className="combat-toast">
-        <Alert
-          color="red"
-          role="alert"
-          withCloseButton
-          closeButtonLabel={t('action.cancel')}
-          onClose={onClose}
-          className="combat-alert"
-        >
-          {t(`combat.error.${error}`)}
-        </Alert>
-      </div>
+    <Portal target={host ?? undefined}>
+      <div className={host ? 'combat-inline-error' : 'combat-toast'}>{alert}</div>
     </Portal>
   )
 }

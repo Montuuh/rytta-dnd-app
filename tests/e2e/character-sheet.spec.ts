@@ -216,4 +216,29 @@ test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', a
     .click()
   await expect(poisoned).toBeChecked()
   await expect(page.getByText('Toca una condición para activarla o quitarla.')).toBeVisible()
+  // A checked chip is filled with the accent and keeps AA text contrast in both schemes and in
+  // class themes (on-accent token).
+  for (const [scheme, theme] of [
+    ['dark', 'default'],
+    ['light', 'default'],
+    ['dark', 'warlock'],
+    ['light', 'druid'],
+  ] as const) {
+    await page.locator('html').evaluate(
+      (el, [s, t]) => {
+        el.setAttribute('data-mantine-color-scheme', s)
+        el.setAttribute('data-rytta-theme', t)
+      },
+      [scheme, theme] as const,
+    )
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .include('.condition-chips')
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+          .analyze()
+      ).violations,
+      `${scheme} ${theme}`,
+    ).toEqual([])
+  }
 })

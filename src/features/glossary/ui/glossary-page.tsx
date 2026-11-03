@@ -77,8 +77,8 @@ export function GlossaryPage() {
   const { entryId: rawEntryId } = useParams()
   const entryId = rawEntryId ? decodeURIComponent(rawEntryId) : null
   const [params, setParams] = useSearchParams()
-  const navigate = useNavigate()
   const location = useLocation()
+  const navigate = useNavigate()
   const wide = useMediaQuery('(min-width: 62em)', false)
   const searchRef = useRef<HTMLInputElement>(null)
   const indexRef = useRef<HTMLDivElement>(null)
@@ -96,7 +96,11 @@ export function GlossaryPage() {
   // from the URL dropped keystrokes while the 550-row list re-rendered (ui-ux F1).
   const [query, setQuery] = useState(() => params.get('q') ?? '')
   const deferredQuery = useDeferredValue(query)
+  const urlQuery = params.get('q') ?? ''
   useEffect(() => {
+    if ((query.trim() ? query : '') === urlQuery) return
+    // Tied to the current path: navigating (Enter, a row) cancels a pending mirror, which
+    // would otherwise replace the new entry URL with the index URL it was scheduled from.
     const handle = window.setTimeout(() => {
       setParams(
         (current) => {
@@ -109,7 +113,7 @@ export function GlossaryPage() {
       )
     }, 300)
     return () => window.clearTimeout(handle)
-  }, [query, setParams])
+  }, [query, urlQuery, setParams, location.pathname])
   const tab: GlossaryTab = isGlossaryTab(params.get('cat'))
     ? (params.get('cat') as GlossaryTab)
     : 'all'

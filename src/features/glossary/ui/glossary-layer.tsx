@@ -1,5 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -65,6 +73,27 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     },
     [remember],
   )
+  const back = useCallback(() => setStack((current) => current.slice(0, -1)), [])
+  const close = useCallback(() => setStack([]), [])
+  // The sheet often opens above another drawer (an item card, a shop listing). Mantine drawers
+  // each close on Escape from a window capture listener, in registration order, and only a
+  // Drawer.Stack coordinates them. This layer mounts before any page drawer, so its listener
+  // runs first: while a definition is open, Escape closes only the definition (ui-ux R2-1).
+  const sheetOpen = useRef(false)
+  useEffect(() => {
+    sheetOpen.current = stack.length > 0
+  }, [stack.length])
+  // A layout effect registers before every Mantine useEffect listener, even when this layer
+  // and a page drawer mount in the same commit (a direct load of a shop page).
+  useLayoutEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.isComposing || !sheetOpen.current) return
+      event.stopImmediatePropagation()
+      setStack([])
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [])
   const retry = useCallback(() => {
     void cache.invalidateQueries({ queryKey: ['glossary'] })
   }, [cache])
@@ -107,11 +136,7 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
   return (
     <GlossaryContext.Provider value={value}>
       {children}
-      <ReferenceSheet
-        stack={stack}
-        onBack={() => setStack((current) => current.slice(0, -1))}
-        onClose={() => setStack([])}
-      />
+      <ReferenceSheet stack={stack} onBack={back} onClose={close} />
     </GlossaryContext.Provider>
   )
 }

@@ -41,10 +41,13 @@ export function ReferenceSheet({
     depth.current = stack.length
   }, [stack.length])
 
+  const open = stack.length > 0
+
   return (
     <Drawer
-      opened={stack.length > 0}
+      opened={open}
       onClose={onClose}
+      closeOnEscape={false}
       position={wide ? 'right' : 'bottom'}
       size={wide ? 440 : 'auto'}
       transitionProps={{ duration: 180 }}

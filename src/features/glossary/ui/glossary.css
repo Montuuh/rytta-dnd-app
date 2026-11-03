@@ -605,6 +605,11 @@
   background: var(--app-surface);
   align-items: flex-start;
 }
+/* A programmatic focus target, like page headwords (h1/h2[tabindex='-1']): no ring. */
+.gl-sheet-headword:focus,
+.gl-sheet-headword:focus-visible {
+  outline: none;
+}
 .gl-sheet-title {
   min-width: 0;
 }

@@ -116,4 +116,18 @@ Round 1 (`b1c3af5`): independent `ui-ux` verdict **CHANGES_REQUIRED**, report
   exception traded for the 44 px rule; a smaller area would fail the repository rule.
 - The checked condition chip contrast flagged by axe on the sheet predates RYT-008.
 
-Round 2: focused re-review of F1–F3 pending.
+Round 2 (`0897a57`): **CHANGES_REQUIRED**; F1–F10 and the checked chip contrast confirmed
+fixed. Follow-up fixes:
+
+- R2-1 (major) Escape closed both the definition and the drawer it was opened from: the
+  glossary layer registers the first window capture listener (a layout effect, before any
+  Mantine drawer) and, while a definition is open, stops Escape after closing only the
+  definition. e2e: first Escape keeps the item card open with focus on the term.
+- R2-2 a `?q=` change the page did not write (nav item, link) resets the field; the URL
+  mirror skips writing when a navigation is still rendering. e2e covers the nav reset.
+- R2-3 the sheet headword has no focus ring as a programmatic focus target, like page
+  headwords.
+- Checked condition chips (outside RYT-008, fixed on request): on-accent text; e2e runs axe
+  in dark/default, light/default, dark/warlock and light/druid; it failed before the fix.
+
+Round 3: focused re-review of R2-1 pending.

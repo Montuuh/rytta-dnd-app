@@ -227,3 +227,39 @@ test('the DM reaches the glossary from navigation and the module switch lists it
   await audit(page)
   await evidence(page, info.project.name, 'spell-light')
 })
+
+test('Escape closes a definition opened from an item card before the card itself', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
+  const card = page.getByRole('dialog', { name: /Espada larga|Objeto/ }).first()
+  await expect(card).toBeVisible()
+  const term = page.getByRole('button', { name: 'cortante: ver definición' })
+  await term.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.gl-sheet-headword')).toHaveText('Cortante')
+  // First Escape closes only the definition and returns focus to the term (ui-ux R2-1).
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.gl-sheet-headword')).toHaveCount(0)
+  await expect(term).toBeVisible()
+  await expect(term).toBeFocused()
+  // The next Escape closes the card.
+  await page.keyboard.press('Escape')
+  await expect(term).toHaveCount(0)
+})
+
+test('a search change from outside the field (the nav item) resets the field', async ({ page }) => {
+  await identityFixture(page, { player: true, modules: ['party', 'glossary'] })
+  await page.goto(glossaryUrl)
+  const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
+  await search.pressSequentially('fire', { delay: 20 })
+  await expect(page).toHaveURL(/q=fire/)
+  // Tapping the active Glosario destination drops ?q= (ui-ux R2-2).
+  await page.goto(glossaryUrl)
+  await expect(search).toHaveValue('')
+  await page.waitForTimeout(500)
+  await expect(page).not.toHaveURL(/q=fire/)
+})

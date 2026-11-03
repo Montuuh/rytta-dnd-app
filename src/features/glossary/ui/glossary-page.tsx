@@ -94,18 +94,36 @@ export function GlossaryPage() {
   const [deleting, setDeleting] = useState<HomebrewEntry | null>(null)
   // The field owns what is typed; the URL only mirrors it for deep links. Driving the input
   // from the URL dropped keystrokes while the 550-row list re-rendered (ui-ux F1).
-  const [query, setQuery] = useState(() => params.get('q') ?? '')
-  const deferredQuery = useDeferredValue(query)
   const urlQuery = params.get('q') ?? ''
+  const [query, setQuery] = useState(urlQuery)
+  // What this page last wrote to ?q= and what it last saw there: a ?q= change it did not
+  // write (the nav item, a link) replaces the typed text (ui-ux R2-2).
+  const [writtenQuery, setWrittenQuery] = useState(urlQuery)
+  const [seenUrlQuery, setSeenUrlQuery] = useState(urlQuery)
+  if (urlQuery !== seenUrlQuery) {
+    setSeenUrlQuery(urlQuery)
+    if (urlQuery !== writtenQuery) {
+      setQuery(urlQuery)
+      setWrittenQuery(urlQuery)
+    }
+  }
+  const deferredQuery = useDeferredValue(query)
   useEffect(() => {
-    if ((query.trim() ? query : '') === urlQuery) return
+    const value = query.trim() ? query : ''
+    if (value === urlQuery) return
     // Tied to the current path: navigating (Enter, a row) cancels a pending mirror, which
     // would otherwise replace the new entry URL with the index URL it was scheduled from.
+    const scheduledPath = location.pathname
     const handle = window.setTimeout(() => {
+      // A navigation can still be rendering (router transitions): the address bar already
+      // shows the new path, and writing ?q= now would send it back to this page's path.
+      const currentPath = window.location.hash.replace(/^#/, '').split('?')[0]
+      if (currentPath !== scheduledPath) return
+      setWrittenQuery(value)
       setParams(
         (current) => {
           const next = new URLSearchParams(current)
-          if (query.trim()) next.set('q', query)
+          if (value) next.set('q', value)
           else next.delete('q')
           return next
         },

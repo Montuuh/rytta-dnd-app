@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth'
 import {
   changeCharacter,
   changeSheet,
+  getPartyOverview,
   getSheet,
   listAssignments,
   listCharacters,
@@ -40,6 +41,15 @@ export function useCharacterAction(campaignId: string) {
     },
   })
 }
+
+/** RYT-031 live party state; polls every 10s only while the tab is visible. */
+export const partyOverviewQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'characters', 'party-overview'],
+    queryFn: ({ signal }) => getPartyOverview(campaignId, signal),
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
+  })
 
 export const assignmentsQuery = (userId: string, campaignId: string) =>
   queryOptions({

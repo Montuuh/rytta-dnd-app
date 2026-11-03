@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, campaignId, playerId } from './fixtures/identity.ts'
+import { identityFixture, campaignId, characterId, playerId } from './fixtures/identity.ts'
 import type { Page } from '@playwright/test'
 
 /** RYT-025 moved secondary character actions into a per-card "More actions" menu. */
@@ -513,4 +513,123 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await more.click()
   await page.getByRole('dialog').getByRole('link', { name: 'Misiones' }).click()
   await expect(page.locator('main')).toBeFocused()
+})
+
+/** RYT-031: evidence screenshots for the 390px phone and 820px tablet projects only. */
+async function evidence(page: Page, project: string, name: string, fullPage = true) {
+  const size =
+    project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
+  if (size) await page.screenshot({ path: `docs/evidence/RYT-031/${name}-${size}.png`, fullPage })
+}
+async function axeAndTargets(page: Page) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+      .violations,
+  ).toEqual([])
+  for (const control of await page
+    .locator('main button:visible, [role="dialog"] button:visible')
+    .all()) {
+    const box = await control.boundingBox()
+    expect(box!.height).toBeGreaterThanOrEqual(44)
+  }
+}
+
+test('RYT-031 Player sees shared teammates live state without their resources', async ({
+  page,
+}, info) => {
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const f = await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+  const party = page.getByRole('region', { name: 'Compañeros', exact: true })
+  await expect(party).toBeVisible()
+  const bea = party.getByRole('article', { name: 'Bea' })
+  await expect(bea).toBeVisible()
+  await expect(bea.getByText('/24', { exact: true })).toBeVisible()
+  await expect(bea.getByText('+3 temporales', { exact: true })).toBeVisible()
+  await expect(bea.getByRole('img', { name: 'Clase de armadura 16' })).toBeVisible()
+  await expect(bea.getByRole('img', { name: 'Agotamiento: nivel 2 de 6' })).toBeVisible()
+  await expect(bea.getByRole('list', { name: 'Estados de Bea' })).toContainText('Envenenado')
+  await expect(bea.getByRole('progressbar', { name: '9 de 24 puntos de golpe' })).toBeVisible()
+  await expect(party.getByRole('article', { name: 'Cato' })).toHaveCount(0)
+  // Own card keeps resources; teammates never show gold, water or rations.
+  await expect(party.getByText('777')).toHaveCount(0)
+  await expect(page.getByText('Cato', { exact: true })).toHaveCount(0)
+  expect(f.calls.some((c) => c.method === 'get_party_overview')).toBe(true)
+  await axeAndTargets(page)
+  await evidence(page, info.project.name, 'party-player')
+  // Polls while visible: the overview is requested again after ~10s.
+  const before = f.calls.filter((c) => c.method === 'get_party_overview').length
+  await expect
+    .poll(() => f.calls.filter((c) => c.method === 'get_party_overview').length, {
+      timeout: 15_000,
+    })
+    .toBeGreaterThan(before)
+  expect(errors).toEqual([])
+})
+
+test('RYT-031 DM toggles live sharing per character with a labelled 44px control', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { party: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const cato = page.getByRole('button', {
+    name: 'Compartir el estado en vivo de Cato con el grupo',
+  })
+  await expect(cato).toHaveAttribute('aria-pressed', 'false')
+  await expect(
+    page
+      .locator('.character-card')
+      .filter({ has: page.getByRole('heading', { name: 'Cato', exact: true }) })
+      .getByText('Oculto al grupo', { exact: true }),
+  ).toBeVisible()
+  const bea = page.getByRole('button', { name: 'Compartir el estado en vivo de Bea con el grupo' })
+  await expect(bea).toHaveAttribute('aria-pressed', 'true')
+  await bea.focus()
+  await expect(page.getByRole('tooltip')).toHaveText('Visible para el grupo')
+  await page.keyboard.press('Enter')
+  await expect(bea).toHaveAttribute('aria-pressed', 'false')
+  await expect(bea).toBeFocused()
+  expect(f.calls.filter((c) => c.method === 'set_character_live_sharing').at(-1)?.body).toEqual({
+    target_campaign: campaignId,
+    target_character: expect.any(String),
+    enabled: false,
+  })
+  await cato.click()
+  await expect(cato).toHaveAttribute('aria-pressed', 'true')
+  await axeAndTargets(page)
+  await evidence(page, info.project.name, 'party-dm')
+})
+
+test('RYT-031 DM opens the per-character history from the sheet; Players do not get it', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { party: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page
+    .getByRole('button', { name: 'Compartir el estado en vivo de Arin con el grupo' })
+    .click()
+  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  const open = page.getByRole('button', { name: 'Historial', exact: true })
+  await open.click()
+  const drawer = page.getByRole('dialog', { name: 'Historial de Arin' })
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByText('Recursos actualizados', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('Ahora oculto al grupo', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('Bea', { exact: true })).toHaveCount(0)
+  await axeAndTargets(page)
+  await evidence(page, info.project.name, 'sheet-history', false)
+  await page.keyboard.press('Escape')
+  await expect(drawer).toHaveCount(0)
+  await expect(open).toBeFocused()
+})
+
+test('RYT-031 Player sheet has no history control', async ({ page }) => {
+  await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  await expect(page.getByRole('heading', { name: 'Arin', level: 1 })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Historial', exact: true })).toHaveCount(0)
 })

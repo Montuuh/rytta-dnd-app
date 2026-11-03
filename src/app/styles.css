@@ -3700,3 +3700,195 @@ html[data-mantine-color-scheme='light'] .order-counter {
 .resource-cell .resource-value.mantine-Button-root .mantine-Button-label {
   gap: 6px;
 }
+/* RYT-031 party live sharing: teammate live cards, DM share toggle, sheet history drawer. */
+.party-live {
+  display: grid;
+  gap: 12px;
+}
+.party-live-head {
+  display: grid;
+  gap: 2px;
+}
+.party-live-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+}
+.teammate-card {
+  --hp-tone: var(--app-border);
+  position: relative;
+  display: grid;
+  gap: 10px;
+  height: 100%;
+  padding: 14px 14px 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+/* The left edge is the HP tone, readable across the table at a glance. */
+.teammate-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--hp-tone);
+}
+.teammate-card.hp-healthy {
+  --hp-tone: var(--success);
+}
+.teammate-card.hp-wounded {
+  --hp-tone: var(--warn);
+}
+.teammate-card.hp-critical {
+  --hp-tone: var(--danger);
+}
+.teammate-card .hp-bar {
+  background: var(--app-bg);
+}
+.teammate-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.teammate-id {
+  flex: 1;
+  min-width: 0;
+}
+.teammate-name.mantine-Title-root {
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.ac-shield {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 48px;
+  color: var(--app-muted);
+}
+.ac-shield svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+.ac-shield span {
+  position: relative;
+  margin-top: -3px;
+  font-weight: 800;
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--app-text);
+}
+.teammate-hp {
+  display: grid;
+  gap: 6px;
+}
+.teammate-hp-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.teammate-hp-row svg {
+  align-self: center;
+  color: var(--hp-tone);
+}
+.teammate-hp-value {
+  font-weight: 800;
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+}
+.teammate-hp-max {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.teammate-temp {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--info);
+}
+.teammate-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.teammate-exhaustion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--app-muted);
+}
+.teammate-exhaustion[data-active] {
+  color: var(--exhaustion-accent);
+}
+.teammate-pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  border: 1.5px solid currentColor;
+  opacity: 0.55;
+}
+.teammate-pip[data-filled] {
+  background: var(--exhaustion-accent);
+  border-color: var(--exhaustion-accent);
+  opacity: 1;
+}
+.teammate-pip-more {
+  font-size: var(--fs-tag);
+  font-weight: 700;
+}
+.teammate-conditions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.teammate-conditions li {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border-inline-start: 3px solid var(--warn);
+  background: var(--warn-soft);
+  font-size: var(--fs-tag);
+  font-weight: 600;
+}
+.live-share-toggle {
+  flex-shrink: 0;
+}
+.live-share-toggle:not([data-on]) {
+  color: var(--app-muted);
+}
+.live-hidden-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.audit-diffs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.sheet-header-actions {
+  flex-shrink: 1;
+  min-width: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .teammate-card .hp-bar .mantine-Progress-section {
+    transition: width 400ms ease-out;
+  }
+}

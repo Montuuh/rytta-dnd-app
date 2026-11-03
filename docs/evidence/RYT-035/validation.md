@@ -58,7 +58,14 @@ name truncated in the DM header at 150%) is the accepted cost of a one-row heade
 ## Checks
 
 - `npm run check`: typecheck, lint, architecture, docs, AI contracts, 162 unit/SQL tests, build.
-- `npm run test:e2e` (all projects, chromium): see the delivery report for the final run.
+- `npm run test:e2e` (all 6 projects, Chromium 1243 via `executablePath`):
+  - Final run on the reviewed source: 309 passed, 2 skipped, 1 failed. The failure was a race in
+    the rewritten live-sharing test: it asserted the recorded RPC before the request landed. The
+    assertion now polls, and it passed 9/9 with `--repeat-each=3` on the three identity projects.
+  - Earlier runs while a second browser session loaded the container timed out in
+    `character-sheet.spec.ts` / `characters.spec.ts` at 150%. Those specs take about 13 s each on
+    `main` as well; rerun on their own, they pass (36/36).
+  - The demo scaffold test now expects the planned-module copy instead of a ticket id.
 - Review captures (92 screens and 32 variants, DM and Player, four viewports): no axe
   WCAG 2.1 AA violations, no horizontal overflow, no visible control under 44px, every screen
   has one h1.

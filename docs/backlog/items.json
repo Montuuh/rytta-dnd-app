@@ -1196,7 +1196,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-033", "RYT-034"],
       "sources": [
         "User 2026-11-03: full frontend and UI/UX review of every DM and Player screen at laptop, tablet and phone sizes; fix every bug found and improve the overall visuals."
@@ -1216,6 +1216,24 @@
         "npm run test:e2e",
         "390px, tablet and laptop screenshots for DM and Player",
         "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-035/validation.md",
+        "docs/decisions/023-review-fixes-visual-polish.md",
+        "docs/evidence/RYT-035/dm-center-mobile.png",
+        "docs/evidence/RYT-035/dm-items-tablet.png",
+        "docs/evidence/RYT-035/dm-modules-laptop.png",
+        "docs/evidence/RYT-035/dm-party-laptop.png",
+        "docs/evidence/RYT-035/dm-party-mobile.png",
+        "docs/evidence/RYT-035/dm-sheet-mobile.png",
+        "docs/evidence/RYT-035/item-sheet-mobile.png",
+        "docs/evidence/RYT-035/party-150-mobile.png",
+        "docs/evidence/RYT-035/player-inventory-tablet.png",
+        "docs/evidence/RYT-035/player-party-mobile.png",
+        "docs/evidence/RYT-035/player-shops-mobile.png",
+        "docs/evidence/RYT-035/settings-laptop.png",
+        "docs/evidence/ui-review/RYT-035/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

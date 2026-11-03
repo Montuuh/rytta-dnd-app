@@ -1,16 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Button, Loader, Drawer, FileInput, Group, Stack, Text } from '@mantine/core'
+import { Alert, Button, Loader, Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { ImageUp, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { rosterQuery, useInventoryAction } from '../api'
-import { attachItemImage, discardItemUpload, uploadItemImage } from '../data/repository'
+import {
+  attachItemImage,
+  discardItemUpload,
+  loadDefinitionImpact,
+  uploadItemImage,
+  type DefinitionImpact,
+} from '../data/repository'
 import type { DefinitionDraft, ItemDefinition } from '../domain/item'
 import { Forge } from './forge'
 import { ItemIcon } from './item-icon'
 import { CharacterPortrait } from './portrait'
+import { PriceSyncDialog } from './price-sync'
 
 export type GiveOutcome = { given: string[]; failed: string[] }
+type PendingSync = {
+  item: ItemDefinition
+  outcome?: GiveOutcome
+  listings: DefinitionImpact['listings']
+}
 
 /** Decode and re-encode: never upload arbitrary bytes or crop an item illustration. */
 async function toItemImage(file: File) {
@@ -51,8 +64,9 @@ export function DefinitionEditor({
 }: {
   campaignId: string
   definition: ItemDefinition | null
-  /** `outcome` lists the character names that received (or failed to receive) the new item. */
-  onSaved: (item: ItemDefinition, outcome?: GiveOutcome) => void
+  /** `outcome` lists the character names that received (or failed to receive) the new item;
+   * `repriced` counts shop listings moved to a changed value (RYT-032). */
+  onSaved: (item: ItemDefinition, outcome?: GiveOutcome, repriced?: number) => void
   onClose: () => void
   /** Offer "Give to" roster chips so a new item can be created for characters (RYT-027). */
   allowGive?: boolean
@@ -76,12 +90,13 @@ export function DefinitionEditor({
     amount: 1,
   })
   const grantRequests = useRef(new Map<string, string>())
-  const [file, setFile] = useState<File | null>(null)
   const [image, setImage] = useState<Blob | null | undefined>(undefined)
   const [preview, setPreview] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState<ItemDefinition | null>(null)
+  const [sync, setSync] = useState<PendingSync | null>(null)
+  const [dragging, setDragging] = useState(false)
   const opener = useRef(document.activeElement as HTMLElement | null)
   const restoreFocus = () =>
     requestAnimationFrame(() => {
@@ -133,11 +148,51 @@ export function DefinitionEditor({
     }
     pendingGive.current = { characterIds: [], amount: 1 }
     await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
-    onSaved(
-      { ...item, image_path: path, revision: item.revision + (image !== undefined ? 1 : 0) },
-      outcome.given.length || outcome.failed.length ? outcome : undefined,
-    )
+    const final = {
+      ...item,
+      image_path: path,
+      revision: item.revision + (image !== undefined ? 1 : 0),
+    }
+    const given = outcome.given.length || outcome.failed.length ? outcome : undefined
+    // A changed value offers to reprice the shops that still sell the item (RYT-032). A failed
+    // check never blocks the save that already happened.
+    if (definition && final.value_gp !== null && final.value_gp !== definition.value_gp) {
+      try {
+        const impact = await loadDefinitionImpact(campaignId, final.id)
+        const listings = impact.listings.filter((l) => l.price !== final.value_gp)
+        if (listings.length) {
+          setSync({ item: final, outcome: given, listings })
+          return
+        }
+      } catch {
+        /* Keep the prices; the DM can still edit listings in Shops. */
+      }
+    }
+    onSaved(final, given)
     restoreFocus()
+  }
+  const pick = async (next: File | null) => {
+    const token = ++generation.current
+    setError(null)
+    if (!next) {
+      setImage(undefined)
+      setPreview(null)
+      return
+    }
+    setBusy(true)
+    try {
+      const converted = await toItemImage(next)
+      if (token === generation.current) {
+        setImage(converted)
+        setPreview(URL.createObjectURL(converted))
+      }
+    } catch {
+      setImage(undefined)
+      setPreview(null)
+      setError(t('catalogue.imageInvalid'))
+    } finally {
+      if (token === generation.current) setBusy(false)
+    }
   }
   const save = async (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => {
     pendingGive.current = definition ? { characterIds: [], amount: 1 } : give
@@ -186,6 +241,20 @@ export function DefinitionEditor({
     onClose()
     restoreFocus()
   }
+  if (sync)
+    return (
+      <PriceSyncDialog
+        campaignId={campaignId}
+        definitionId={sync.item.id}
+        name={sync.item.name}
+        price={sync.item.value_gp ?? 0}
+        listings={sync.listings}
+        onDone={(repriced) => {
+          onSaved(sync.item, sync.outcome, repriced)
+          restoreFocus()
+        }}
+      />
+    )
   if (saved)
     return (
       <Drawer
@@ -254,72 +323,81 @@ export function DefinitionEditor({
       error={error}
       onSave={(draft, give) => void save(draft, give)}
       onClose={() => void close()}
+      image={image === null ? null : preview}
       media={
-        <Stack gap="xs">
-          <FileInput
-            label={t('catalogue.image')}
-            description={t('catalogue.imageHelp')}
-            accept="image/jpeg,image/png,image/webp"
-            value={file}
-            disabled={busy}
-            onChange={async (next) => {
-              const token = ++generation.current
-              setFile(next)
-              setError(null)
-              if (!next) {
-                setImage(undefined)
-                setPreview(null)
-                return
-              }
-              setBusy(true)
-              try {
-                const converted = await toItemImage(next)
-                if (token === generation.current) {
-                  setImage(converted)
-                  setPreview(URL.createObjectURL(converted))
-                }
-              } catch {
-                setFile(null)
-                setImage(undefined)
-                setPreview(null)
-                setError(t('catalogue.imageInvalid'))
-              } finally {
-                if (token === generation.current) setBusy(false)
-              }
+        <fieldset className="plain-fieldset">
+          <legend>
+            <Text fw={600} size="sm" mb={6}>
+              {t('catalogue.image')}
+            </Text>
+          </legend>
+          <div
+            className="forge-drop"
+            data-dragging={dragging || undefined}
+            onDragOver={(event) => {
+              event.preventDefault()
+              if (!busy) setDragging(true)
             }}
-          />
-          <Group>
-            {preview ? (
-              <img
-                src={preview}
-                alt={t('catalogue.imagePreview')}
-                width={128}
-                height={128}
-                style={{ objectFit: 'contain' }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault()
+              setDragging(false)
+              if (!busy) void pick(event.dataTransfer.files[0] ?? null)
+            }}
+          >
+            <label className="forge-drop-target">
+              <input
+                type="file"
+                className="forge-file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={busy}
+                aria-describedby={`${campaignId}-image-help`}
+                onChange={(event) => {
+                  const next = event.currentTarget.files?.[0] ?? null
+                  event.currentTarget.value = ''
+                  void pick(next)
+                }}
               />
-            ) : (
-              <ItemIcon
-                icon={definition?.icon ?? 'package'}
-                size={80}
-                imagePath={image === null ? null : definition?.image_path}
-              />
-            )}
-            {(image || definition?.image_path) && (
-              <Button
-                variant="subtle"
+              <span className="forge-drop-thumb">
+                {preview ? (
+                  <img src={preview} alt={t('catalogue.imagePreview')} width={64} height={64} />
+                ) : image !== null && definition?.image_path ? (
+                  <ItemIcon icon={definition.icon} size={56} imagePath={definition.image_path} />
+                ) : (
+                  <ImageUp size={26} aria-hidden="true" />
+                )}
+              </span>
+              <span className="forge-drop-copy">
+                <span className="forge-drop-title">
+                  {dragging
+                    ? t('forge.dropActive')
+                    : preview || (image !== null && definition?.image_path)
+                      ? t('forge.replaceImage')
+                      : t('forge.dropTitle')}
+                </span>
+                <span className="forge-drop-help" id={`${campaignId}-image-help`}>
+                  {t('catalogue.imageHelp')}
+                </span>
+              </span>
+            </label>
+            {image !== null && (image || definition?.image_path) && (
+              <UnstyledButton
+                type="button"
+                className="forge-drop-remove"
                 disabled={busy}
                 onClick={() => {
+                  generation.current++
                   setImage(null)
                   setPreview(null)
-                  setFile(null)
                   setError(null)
                 }}
               >
-                {t('catalogue.removeImage')}
-              </Button>
+                <Trash2 size={16} aria-hidden="true" />
+                <span>{t('catalogue.removeImage')}</span>
+              </UnstyledButton>
             )}
-          </Group>
-        </Stack>
+          </div>
+        </fieldset>
       }
     />
   )

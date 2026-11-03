@@ -1029,7 +1029,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-028", "RYT-030"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1050,7 +1050,24 @@
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-032/validation.md",
+        "docs/decisions/017-campaign-items.md",
+        "supabase/migrations/20261103140000_item_lifecycle.sql",
+        "tests/database/item-lifecycle.test.ts",
+        "docs/evidence/RYT-032/forge-mobile.png",
+        "docs/evidence/RYT-032/forge-tablet.png",
+        "docs/evidence/RYT-032/delete-impact-mobile.png",
+        "docs/evidence/RYT-032/delete-impact-tablet.png",
+        "docs/evidence/RYT-032/price-sync-mobile.png",
+        "docs/evidence/RYT-032/price-sync-tablet.png",
+        "docs/evidence/RYT-032/shop-picker-mobile.png",
+        "docs/evidence/RYT-032/shop-picker-tablet.png",
+        "docs/evidence/RYT-032/add-choose-mobile.png",
+        "docs/evidence/RYT-032/add-choose-tablet.png",
+        "docs/evidence/RYT-032/add-existing-mobile.png",
+        "docs/evidence/RYT-032/add-existing-tablet.png"
+      ]
     },
     {
       "id": "RYT-033",

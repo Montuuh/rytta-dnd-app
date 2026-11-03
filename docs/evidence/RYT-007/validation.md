@@ -132,3 +132,21 @@ not re-run here; only the combat spec was.
 - **DM Player-preview:** the projection is presentation-only (`previewAsPlayer`, unit tested).
 - **Not checked:** other class themes, iOS Safari and screen readers.
 - **Type generation:** `npm run db:types` was not run. `src/shared/api/combat-functions.ts` carries the reviewed RPC contract.
+
+## Post-release fix (2026-11-03): combat state failed to load in PROD
+
+- **Symptom:** the combat screen showed "We could not load this information" for a draft encounter in PROD.
+  Every combat RPC returned HTTP 200; the client's `combatStateSchema` rejected the payload.
+- **Cause:** `get_combat_state` built booleans from NULL comparisons that `jsonb_strip_nulls` then removed:
+  `is_active` while no turn is active (draft, initiative), `is_own`/`can_act` for characters without a
+  linked player, and `can_remove` (unstripped, JSON null) for Players on effects targeting NPCs.
+- **Fix:** `supabase/migrations/20261104130000_combat_state_booleans.sql` recreates only
+  `get_combat_state` with `coalesce(..., false)`; same signature, grants and projection, with the guarded PRE mirror.
+- **Tests:** new PGlite test parses public and PRE states with the client schema (draft and initiative;
+  DM, table and Player; unlinked character; NPC effect). It failed before the fix and passes after.
+  `npm run check`: 29 files, 205 tests passed.
+- **Hosted:** applied to production as `combat_state_booleans`. Checked as the PROD DM: the draft encounter now
+  returns `is_active: false` on every combatant. `anon` cannot execute public or PRE; `authenticated` can.
+  The PRE copy carries the fix and has no `public.` references.
+- **Not tested:** the e2e suite and the hosted Player/table views on PROD (that campaign has no non-draft encounter).
+  No UI change, so no `ui-ux` review applies.

@@ -1,4 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { useAuth } from '@/features/auth'
 import { loadGlossaryBodies, loadGlossaryIndex } from './data/content'
 import { deleteHomebrew, listHomebrew, saveHomebrew } from './data/repository'
@@ -26,6 +27,24 @@ export const homebrewQuery = (userId: string, campaignId: string) =>
     queryFn: ({ signal }) => (campaignId ? listHomebrew(campaignId, signal) : []),
     refetchInterval: 60_000,
   })
+
+/**
+ * Fetches the campaign's homebrew now (ignoring staleness) and returns one entry, or null when it
+ * no longer exists. The editor uses it to recover from a stale revision.
+ */
+export function useLatestHomebrew(campaignId: string) {
+  const { state } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  return useCallback(
+    async (entryId: string): Promise<HomebrewEntry | null> => {
+      if (!navigator.onLine || !userId) throw new GlossaryError('unavailable')
+      const list = await cache.fetchQuery({ ...homebrewQuery(userId, campaignId), staleTime: 0 })
+      return list.find((entry) => entry.id === entryId) ?? null
+    },
+    [cache, campaignId, userId],
+  )
+}
 
 export type HomebrewAction =
   | { kind: 'save'; entryId: string; revision: number | null; draft: HomebrewDraft }

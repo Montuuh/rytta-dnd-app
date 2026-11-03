@@ -428,6 +428,8 @@ export function combatServer() {
               character_id: id,
               side: 'party',
               name: pc.name,
+              // RYT-041: a character joining a running fight brings its initiative total.
+              initiative: typeof entry.initiative === 'number' ? entry.initiative : undefined,
               initiative_bonus: 0,
               order_key: 0,
               max_hp: pc.hp,
@@ -444,7 +446,7 @@ export function combatServer() {
               created: Date.now() + counter,
             }
             e.combatants.push(row)
-            log(e, actor, 'join', row)
+            log(e, actor, 'join', row, { amount: row.initiative })
           } else {
             const count = Number(entry.count ?? 1)
             const base = String(entry.name ?? 'Lair')
@@ -488,10 +490,34 @@ export function combatServer() {
         if (wasHidden && !target.hidden) log(e, actor, 'reveal', target)
         break
       }
-      case 'remove_combatant':
+      case 'remove_combatant': {
+        // Mirrors public.remove_combatant (RYT-041): the active combatant passes the turn forward
+        // from its slot (wrapping into the next round) and effects on it end.
         if (!target) return fail('Combatant unavailable')
+        const wasActive = e.status === 'active' && e.active === target.id
+        const all = order(e, false).map((c) => c.id)
+        const turns = order(e, true).filter((c) => c.id !== target.id)
+        let next = wasActive
+          ? turns.find((c) => all.indexOf(c.id) > all.indexOf(target.id))
+          : undefined
+        let wrapped = false
+        if (wasActive && !next && turns.length > 0) {
+          next = turns[0]
+          wrapped = true
+        }
+        for (const effect of e.effects.filter((f) => f.target === target.id)) {
+          e.effects.splice(e.effects.indexOf(effect), 1)
+          log(e, actor, 'effect_off', target, { detail: { label: effect.label } })
+        }
+        log(e, actor, 'leave', target)
         e.combatants.splice(e.combatants.indexOf(target), 1)
+        if (wasActive) {
+          if (wrapped) e.round += 1
+          e.active = next?.id
+          if (next) log(e, actor, wrapped ? 'round' : 'turn', next)
+        }
         break
+      }
       case 'set_initiative':
         if (!target) return fail('Combatant unavailable')
         if (!canAct(actor, target)) return fail('Forbidden')

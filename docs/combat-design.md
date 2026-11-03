@@ -54,6 +54,12 @@ decisions (what Rytta builds) and lists deliberate non-goals.
 5. **Turns**: next/previous, jump to a combatant, round counter. Hidden and defeated combatants
    are skipped; a character at 0 HP keeps its turn to roll death saves. Players may end their
    own turn. Double taps and two DMs are guarded by the expected active combatant.
+   **Roster changes during the fight (RYT-041)**: the DM adds a party character with its
+   initiative total and removes any combatant after a confirmation. Turns follow the order by
+   position, so a newcomer above the active slot acts from the next round and one below still
+   acts this round (the dialog previews its neighbours and says which). Removing the active
+   combatant passes the turn forward (wrapping into the next round) exactly like "next turn";
+   effects on the leaving combatant end and clear the conditions they granted on the sheet.
 6. **Hit points**: server-side deltas (damage, heal, temporary). Temporary HP absorb first and do
    not stack. A character at 0 falls unconscious and loses concentration; damage at 0 adds a
    death save failure; healing wakes and resets saves. NPCs at 0 are defeated. Multi-target
@@ -96,7 +102,7 @@ The table view uses the Player projection without "own" data.
 /combat                      DM: encounters (live, prepared, finished) | bestiary
                              Player: the live encounter, or "no fight now" + past fights
 /combat/:id                  DM console | Player view
-/combat/:id/table            Table display (read-only, full screen option)
+/combat/:id/table            Table display (read-only; only the DM has a way back to the console)
 ```
 
 **DM console — tablet/laptop (≥ 62em)**
@@ -124,13 +130,24 @@ toggle, concentration, effects, death saves when at 0), the shared order (tap fo
 details) and the visible log. The initiative keypad opens automatically when the DM asks.
 
 **Table display**: encounter name, round, a large "Now / Up next" banner and the order with
-descriptive status, readable across the room.
+descriptive status, readable across the room. No full screen control (browsers and casting
+devices already provide one); Players have no exit link (RYT-041, ahead of RYT-042).
 
 ## 6. Interaction and accessibility decisions
 
 - The order is an ordered list; the acting combatant has `aria-current="step"` plus the visible
   text "Acting now". Turn changes are announced through a live region; the own turn also vibrates
   the device where supported. The pulse animation respects `prefers-reduced-motion`.
+- The DM detail follows the turn (RYT-041): it shows the acting combatant when the fight starts
+  and after every next/previous turn; a row picked between turns stays until the turn moves.
+  It never swaps while the DM is using the detail (focus or a dialog inside it). Focus stays on
+  the control the DM pressed; a polite live region says "Turn of X. Round N.". On phones the
+  detail is a sheet opened from a row or from the "Now" name in the turn bar.
+- DM row actions (RYT-041): each row has an options button (44px) with "give the turn",
+  "change initiative" and "remove from combat"; holding the row or right-clicking opens the same
+  menu. Removal confirms in a dialog that names who takes the turn; afterwards focus moves to the
+  neighbouring row, and cancelling returns focus to the menu's button. Dialog actions share a row
+  when they fit and otherwise stack full width with the action on top.
 - HP is always text (numbers or a status word) next to the bar; unshared HP uses a hatched bar
   and the words "not shared". Side is an icon plus a hidden text label; never colour alone.
 - Every control is at least 44px; the turn buttons are 52px. Dialogs trap focus, close with

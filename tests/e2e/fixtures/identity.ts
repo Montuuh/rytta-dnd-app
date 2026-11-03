@@ -855,6 +855,9 @@ export async function identityFixture(
         return respond({ message: 'Duplicate name' }, 400)
       if (existing && existing.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
+      // The real RPC refuses to update an entry that was deleted meanwhile.
+      if (!existing && body.expected_revision !== null)
+        return respond({ message: 'Stale revision' }, 400)
       const saved = {
         id: String(body.entry_id),
         campaign_id: String(body.target_campaign),
@@ -875,6 +878,9 @@ export async function identityFixture(
     }
     if (method === 'delete_glossary_entry') {
       if (!glossaryAllowed()) return respond({ message: 'Forbidden' }, 403)
+      const existing = glossaryEntries.find((e) => e.id === body.entry_id)
+      if (existing && existing.revision !== body.expected_revision)
+        return respond({ message: 'Stale revision' }, 400)
       glossaryEntries = glossaryEntries.filter((e) => e.id !== body.entry_id)
       return respond({ id: body.entry_id, deleted: true })
     }
@@ -892,6 +898,16 @@ export async function identityFixture(
       }
     },
     inventory,
+    /** Another member saved the homebrew entry: its revision moves on. */
+    changeHomebrew: (id: string, patch: { summary?: string; body?: string }) => {
+      glossaryEntries = glossaryEntries.map((e) =>
+        e.id === id ? { ...e, ...patch, revision: e.revision + 1 } : e,
+      )
+    },
+    /** Another member deleted the homebrew entry. */
+    removeHomebrew: (id: string) => {
+      glossaryEntries = glossaryEntries.filter((e) => e.id !== id)
+    },
     staleItem: (index = 0) => {
       inventory.stacks[index]!.revision += 1
     },

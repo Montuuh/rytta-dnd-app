@@ -31,7 +31,9 @@ Characters contain no DM notes. Other players' private resources are hidden.
 Shared HP/initiative uses a deliberate projection (RYT-007, ADR 024): `get_combat_state`
 returns the own character in full, teammates per `shares_live`, enemy HP only as a descriptive
 status unless the DM reveals it, and never hidden combatants, NPC AC, DM notes, secret effects or
-private log entries. Members read only the secret-free `encounters` row directly (the realtime
+private log entries. Roster changes during a fight (`add_combatants` with an initiative total,
+`remove_combatant`, RYT-041) stay DM-only, campaign-locked and idempotent; SQL tests deny anon,
+outsiders, Players and DMs of another campaign. Members read only the secret-free `encounters` row directly (the realtime
 signal); combatants, effects, events and templates are DM-only tables. The table display uses
 the Player projection without own data, even for the DM.
 

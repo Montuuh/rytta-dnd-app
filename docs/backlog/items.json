@@ -1453,17 +1453,17 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "medium"
       },
-      "status": "ready",
+      "status": "done",
       "dependsOn": ["RYT-008"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
       ],
-      "scope": "Campaign DMs can edit and delete homebrew rules and house rules from the glossary using the existing revision-checked save/delete RPCs.",
+      "scope": "Campaign members allowed by ADR 025 can edit and delete homebrew rules and house rules from the glossary using the existing revision-checked save/delete RPCs.",
       "acceptance": [
         "A DM can open a homebrew entry, edit it in place and see the saved revision without reloading.",
         "A DM can delete a homebrew entry after an explicit confirmation; the entry disappears from index and search.",
         "Stale revisions show a recoverable conflict message.",
-        "Players never see edit or delete controls; RPC denial tests cover anon, outsider, player and cross-campaign DM."
+        "Edit and delete controls follow the ADR 025 permission model enforced by the existing RPCs (DM, and Players only when the DM enables homebrew editing); unauthorized users never see them."
       ],
       "validation": [
         "npm run check",
@@ -1472,7 +1472,36 @@
         "independent ui-ux PASS",
         "SQL denial tests if RPCs change"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-040/validation.md",
+        "docs/evidence/RYT-040/ui-review.md",
+        "docs/evidence/RYT-040/delete-confirm-light-en-mobile.png",
+        "docs/evidence/RYT-040/delete-confirm-light-en-tablet.png",
+        "docs/evidence/RYT-040/delete-confirm-mobile.png",
+        "docs/evidence/RYT-040/delete-confirm-tablet.png",
+        "docs/evidence/RYT-040/discard-confirm-mobile.png",
+        "docs/evidence/RYT-040/edit-conflict-mobile.png",
+        "docs/evidence/RYT-040/edit-conflict-tablet.png",
+        "docs/evidence/RYT-040/edit-gone-mobile.png",
+        "docs/evidence/RYT-040/edit-gone-tablet.png",
+        "docs/evidence/RYT-040/editor-150-mobile.png",
+        "docs/evidence/RYT-040/editor-150-tablet.png",
+        "docs/evidence/RYT-040/editor-edit-light-en-mobile.png",
+        "docs/evidence/RYT-040/editor-edit-light-en-tablet.png",
+        "docs/evidence/RYT-040/editor-edit-mobile.png",
+        "docs/evidence/RYT-040/editor-edit-tablet.png",
+        "docs/evidence/RYT-040/editor-focus-100-mobile.png",
+        "docs/evidence/RYT-040/editor-focus-100-tablet.png",
+        "docs/evidence/RYT-040/editor-focus-150-mobile.png",
+        "docs/evidence/RYT-040/editor-focus-150-tablet.png",
+        "docs/evidence/RYT-040/entry-homebrew-mobile.png",
+        "docs/evidence/RYT-040/entry-homebrew-tablet.png",
+        "docs/evidence/RYT-040/house-rule-actions-mobile.png",
+        "docs/evidence/RYT-040/house-rule-actions-tablet.png",
+        "docs/evidence/RYT-040/sheet-actions-mobile.png",
+        "docs/evidence/RYT-040/sheet-actions-tablet.png",
+        "docs/evidence/ui-review-current.json"
+      ]
     },
     {
       "id": "RYT-041",
@@ -1483,7 +1512,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "done",
       "dependsOn": ["RYT-007", "RYT-037", "RYT-038"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1503,7 +1532,36 @@
         "independent ui-ux PASS",
         "SQL denial tests"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-041/validation.md",
+        "docs/combat-design.md",
+        "docs/decisions/024-combat.md",
+        "supabase/migrations/20261105100000_combat_roster.sql",
+        "docs/evidence/RYT-041/turn-focus-mobile.png",
+        "docs/evidence/RYT-041/turn-focus-tablet.png",
+        "docs/evidence/RYT-041/join-mobile.png",
+        "docs/evidence/RYT-041/join-tablet.png",
+        "docs/evidence/RYT-041/remove-active-mobile.png",
+        "docs/evidence/RYT-041/remove-active-tablet.png",
+        "docs/evidence/RYT-041/after-roster-mobile.png",
+        "docs/evidence/RYT-041/after-roster-tablet.png",
+        "docs/evidence/RYT-041/player-table-mobile.png",
+        "docs/evidence/RYT-041/player-table-tablet.png",
+        "docs/evidence/RYT-041/join-en-light-mobile.png",
+        "docs/evidence/RYT-041/join-en-light-tablet.png",
+        "docs/evidence/RYT-041/remove-en-light-mobile.png",
+        "docs/evidence/RYT-041/remove-en-light-tablet.png",
+        "docs/evidence/RYT-041/ui-review.md",
+        "docs/evidence/RYT-041/remove-dialog-mobile.png",
+        "docs/evidence/RYT-041/remove-dialog-tablet.png",
+        "docs/evidence/RYT-041/remove-dialog-150-mobile.png",
+        "docs/evidence/RYT-041/remove-dialog-150-tablet.png",
+        "docs/evidence/RYT-041/join-dialog-mobile.png",
+        "docs/evidence/RYT-041/join-dialog-tablet.png",
+        "docs/evidence/RYT-041/join-dialog-150-mobile.png",
+        "docs/evidence/RYT-041/join-dialog-150-tablet.png",
+        "docs/evidence/ui-review-current.json"
+      ]
     },
     {
       "id": "RYT-042",

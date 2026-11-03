@@ -265,7 +265,8 @@ export function PlayerView({
 
       {initiativeOpen && own && (
         <InitiativeDialog
-          combatant={own}
+          name={own.name}
+          initial={own.initiative}
           bonus={bonus}
           dm={false}
           pending={pending}

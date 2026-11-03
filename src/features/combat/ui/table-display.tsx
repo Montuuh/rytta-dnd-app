@@ -15,11 +15,14 @@ export function TableDisplay({
   stale,
   connected,
   retry,
+  exit,
 }: {
   state: CombatState
   stale: boolean
   connected: boolean
   retry: () => void
+  /** Shows the way back to the DM console. */
+  exit: boolean
 }) {
   const { t } = useTranslation()
   const encounter = state.encounter!
@@ -41,15 +44,17 @@ export function TableDisplay({
             <NetworkState stale={stale} connected={connected} retry={retry} />
           </Group>
         </div>
-        <Button
-          component={Link}
-          to=".."
-          relative="path"
-          variant="default"
-          leftSection={<X size={16} aria-hidden="true" />}
-        >
-          {t('combat.tableExit')}
-        </Button>
+        {exit && (
+          <Button
+            component={Link}
+            to=".."
+            relative="path"
+            variant="default"
+            leftSection={<X size={16} aria-hidden="true" />}
+          >
+            {t('combat.tableExit')}
+          </Button>
+        )}
       </Group>
       {encounter.status === 'active' && (
         <div className="combat-table-now" aria-live="polite">

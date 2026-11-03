@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Button,
   Checkbox,
@@ -208,25 +208,35 @@ export function AmountDialog({
   )
 }
 
-/** Numeric initiative total with a large keypad; Players type their own d20 + bonus. */
+/** Numeric initiative total with a large keypad; Players type their own d20 + bonus. The DM also
+ * uses it to add a character mid-combat (`title`, `submitLabel` and a live `preview`). */
 export function InitiativeDialog({
-  combatant,
+  name,
+  initial,
   bonus,
   dm,
   pending,
   close,
   save,
+  title,
+  submitLabel,
+  preview,
 }: {
-  combatant: Combatant
+  name: string
+  initial?: number
   bonus: number | null
   dm: boolean
   pending: boolean
   close: () => void
   save: (total: number) => void
+  title?: string
+  submitLabel?: string
+  /** Renders below the keypad for the current valid total (null while invalid). */
+  preview?: (total: number | null) => ReactNode
 }) {
   const { t } = useTranslation()
   useReturnFocus()
-  const [amount, setAmount] = useState<number | string>(combatant.initiative ?? '')
+  const [amount, setAmount] = useState<number | string>(initial ?? '')
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = Number.isInteger(value) && value >= -20 && value <= 99
   const press = (digit: number) =>
@@ -239,7 +249,7 @@ export function InitiativeDialog({
     <Modal
       opened
       onClose={close}
-      title={t('combat.initiative.title', { name: combatant.name })}
+      title={title ?? t('combat.initiative.title', { name })}
       className="hp-dialog combat-initiative"
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
@@ -252,7 +262,7 @@ export function InitiativeDialog({
         <Stack gap="sm">
           <Text size="sm">
             {dm || bonus === null
-              ? t('combat.initiative.hintDm', { name: combatant.name })
+              ? t('combat.initiative.hintDm', { name })
               : t('combat.initiative.hint', { bonus: signedBonus })}
           </Text>
           <NumberInput
@@ -292,12 +302,13 @@ export function InitiativeDialog({
               <Delete size={20} aria-hidden="true" />
             </UnstyledButton>
           </div>
+          {preview?.(valid ? value : null)}
           <Group justify="flex-end">
             <Button variant="subtle" onClick={close}>
               {t('action.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || pending} loading={pending}>
-              {t('combat.initiative.save')}
+              {submitLabel ?? t('combat.initiative.save')}
             </Button>
           </Group>
         </Stack>

@@ -5,6 +5,7 @@ import {
   combatStateSchema,
   concentrationDc,
   halfDamage,
+  joinPlacement,
   missingInitiative,
   moveWithinTie,
   nextUp,
@@ -150,5 +151,29 @@ describe('combat rules', () => {
     expect(view.combatants[2]).toMatchObject({ hp_status: 'bloodied', can_act: false })
     expect(view.combatants[2]!.hp).toBeUndefined()
     expect(view.combatants[2]!.armor_class).toBeUndefined()
+  })
+  it('previews where a joining character lands in the current round', () => {
+    const order = [
+      base(1, { initiative: 18 }),
+      base(2, { initiative: 15, is_active: true }),
+      base(3, { initiative: 12, initiative_bonus: 2 }),
+      base(4, { initiative: 12, initiative_bonus: -1 }),
+      base(5, { hidden: true, in_turn_order: false }),
+    ]
+    // Above the active slot: it waits for the next round.
+    expect(joinPlacement(order, 20)).toMatchObject({ before: null, thisRound: false })
+    expect(joinPlacement(order, 16)).toMatchObject({ before: { id: id(1) }, thisRound: false })
+    // Equal to the active total with no bonus: after it, still this round.
+    expect(joinPlacement(order, 15)).toMatchObject({ before: { id: id(2) }, thisRound: true })
+    // Ties go after a non-negative bonus and before a negative one.
+    expect(joinPlacement(order, 12)).toMatchObject({
+      before: { id: id(3) },
+      after: { id: id(4) },
+      thisRound: true,
+    })
+    // Below everyone with a total: before those still without one.
+    expect(joinPlacement(order, -3)).toMatchObject({ before: { id: id(4) }, after: { id: id(5) } })
+    // Without an active turn nothing acts "this round".
+    expect(joinPlacement([base(1, { initiative: 3 })], 1).thisRound).toBe(false)
   })
 })

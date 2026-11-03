@@ -1,6 +1,8 @@
+import { useState, type MouseEvent, type ReactNode } from 'react'
 import { ActionIcon, Checkbox, Group, Text, UnstyledButton } from '@mantine/core'
 import { ArrowDown, ArrowUp, Crown, Hourglass } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useLongPress } from '@/shared/ui/use-long-press'
 import { moveWithinTie, type Combatant } from '../domain/combat'
 import { sideLabel } from './helpers'
 import { ConditionBadges, HpMeter, SideIcon, StateBadge } from './parts'
@@ -18,6 +20,13 @@ type RailMode =
       onToggle: (combatant: Combatant) => void
     }
 
+/** Renders a row's action menu (DM). The rail owns which menu is open so a long press or a right
+ * click on the row can open the same menu as its visible ⋯ button. */
+export type RowMenu = (
+  combatant: Combatant,
+  control: { opened: boolean; onChange: (opened: boolean) => void },
+) => ReactNode
+
 /**
  * Initiative order as an ordered list. The acting combatant carries aria-current="step" and a
  * visible "Acting now" label; status is always text + icon, never color alone.
@@ -26,15 +35,18 @@ export function InitiativeRail({
   combatants,
   mode,
   reorder,
+  rowMenu,
   large = false,
 }: {
   combatants: Combatant[]
   mode: RailMode
   /** DM tie reordering: receives the full new order of ids. */
   reorder?: (ids: string[]) => void
+  rowMenu?: RowMenu
   large?: boolean
 }) {
   const { t } = useTranslation()
+  const [menuFor, setMenuFor] = useState<string | null>(null)
   if (combatants.length === 0)
     return (
       <Text c="dimmed" className="combat-empty">
@@ -67,14 +79,14 @@ export function InitiativeRail({
             aria-current={combatant.is_active ? 'step' : undefined}
           >
             {mode.kind === 'pick' ? (
-              <UnstyledButton
-                className="combat-row-main"
-                onClick={() => mode.onPick(combatant)}
-                aria-pressed={selected}
-                id={`combatant-${combatant.id}`}
+              <PickButton
+                combatant={combatant}
+                selected={selected}
+                onPick={mode.onPick}
+                onHold={rowMenu ? () => setMenuFor(combatant.id) : undefined}
               >
                 {body}
-              </UnstyledButton>
+              </PickButton>
             ) : mode.kind === 'multi' ? (
               <label className="combat-row-main is-check">
                 <Checkbox
@@ -111,10 +123,60 @@ export function InitiativeRail({
                 </ActionIcon>
               </div>
             )}
+            {rowMenu && mode.kind === 'pick' && (
+              <div className="combat-row-actions">
+                {rowMenu(combatant, {
+                  opened: menuFor === combatant.id,
+                  onChange: (opened) =>
+                    setMenuFor((current) =>
+                      opened ? combatant.id : current === combatant.id ? null : current,
+                    ),
+                })}
+              </div>
+            )}
           </li>
         )
       })}
     </ol>
+  )
+}
+
+/** The row's main control. With a menu, holding it (touch) or right-clicking opens that menu;
+ * the visible ⋯ button stays the discoverable path. */
+function PickButton({
+  combatant,
+  selected,
+  onPick,
+  onHold,
+  children,
+}: {
+  combatant: Combatant
+  selected: boolean
+  onPick: (combatant: Combatant) => void
+  onHold?: () => void
+  children: ReactNode
+}) {
+  const press = useLongPress(
+    () => onPick(combatant),
+    () => onHold?.(),
+  )
+  return (
+    <UnstyledButton
+      className="combat-row-main"
+      aria-pressed={selected}
+      id={`combatant-${combatant.id}`}
+      {...(onHold
+        ? {
+            ...press,
+            onContextMenu: (event: MouseEvent) => {
+              event.preventDefault()
+              onHold()
+            },
+          }
+        : { onClick: () => onPick(combatant) })}
+    >
+      {children}
+    </UnstyledButton>
   )
 }
 

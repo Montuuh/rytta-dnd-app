@@ -512,3 +512,87 @@ These are in the session scratchpad and are not committed:
 
 Re-review needed after the fix: R2-1 (Escape order and focus return with the item card and the
 shop listing drawer).
+
+---
+
+# Round 3 (focused re-review of R2-1, spot checks of R2-2 and R2-3)
+
+- Date: 2026-11-03.
+- Reviewed source: commit `8b78b6f`, extracted with `git archive 8b78b6f` into the session
+  scratchpad and built there. UI fingerprint `75aab5b983137184ebfc390e616b3cf83a4c67394e4a520fc37be8ea80e95987`,
+  taken from the working tree before it changed.
+- Why the scratchpad: during this round the shared working tree went into an unrelated
+  merge with `origin/main`. It contains conflict markers (for example in
+  `src/app/modules.ts`), and a build from it fails. I did not touch that merge. Every result
+  below comes from the exact commit.
+- Servers:
+  - Production build (supabase mode, mocked backend `tests/e2e/fixtures/identity.ts`, plus
+    `tests/e2e/fixtures/shops.ts` for shops) on port 4176.
+  - Demo dev server from the same extracted tree.
+- Viewports: 390×844 and 820×1180, both touch enabled. Reduced motion emulated.
+
+## Round 3 verdict: PASS
+
+R2-1 is fixed for the item card, the shop listing drawer and pages without a host drawer.
+R2-2 and R2-3 are fixed. No blocker or major finding remains.
+
+## Real browser checks
+
+### R2-1, Escape order (390px and 820px)
+
+| Case | Escape | Result |
+| --- | --- | --- |
+| Inventario → Espada larga → Enter on "cortante" | 1st | Only the definition closes; the "Objeto" card stays open; focus on "cortante: ver definición" |
+| | 2nd | The card closes; focus on the "Espada larga, cantidad 1, Común" tile |
+| Nested from the card: "Versátil" → "dos manos" (focus on the "A dos manos" headword) | 1st | The whole sheet closes and the card stays; focus on "Versátil: ver definición" |
+| | 2nd | The card closes |
+| Shop listing drawer, direct load of `#/campaign/:id/shops` → "Poción de curación" → Enter on "PG" | 1st | Only the definition closes; focus on "PG: ver definición" |
+| | 2nd | The listing closes; focus on the "Poción de curación" listing button |
+| No host drawer: character sheet, Clase de armadura → nested "tirada de ataque" | 1st | Everything closes; focus returns to "Clase de Armadura: ver definición" |
+| | Extra | Nothing happens; no navigation |
+| Glossary page: a term in the Agarrado entry (`?q=agarr`) | 1st | The sheet closes; focus returns to "desventaja: ver definición"; the URL and query are kept |
+| Close button instead of Escape (item card) | — | Only the definition closes; focus on "cortante" (unchanged) |
+
+### R2-2, outside `?q=` changes
+
+- With "fire" typed, tapping the "Glosario" nav item clears the field and shows "550
+  entradas"; `q` is not written back.
+- A hash navigation to `?q=prone` while the page is mounted puts "prone" in the field.
+- Browser back to an entry without `q` empties the field.
+- Slow device: with 6× CPU throttling (CDP), "grappled" typed at 120 ms per key is intact.
+  "prone" plus an immediate Enter opens `condition.prone?q=prone` and stays there at
+  +300 ms, +900 ms and +2 s, so the mirror no longer pulls the URL back to the index.
+
+### R2-3
+
+The sheet headword (`.gl-sheet-headword`) receives focus after a nested move with
+`outline: none`, consistent with the page headwords (`mobile-nested-no-ring.png`).
+
+## Still open (minor, not blocking)
+
+- **F7:** inline hit areas overlap in dense prose. Accepted with the rationale in
+  `validation.md`.
+- **F8:** the slider thumbs are 28px and named, but `elementFromPoint` 20px from a thumb's
+  centre does not return the thumb. Taps on the track still move the nearest thumb.
+- **Content nit:** in the Spanish "Puntos de golpe" entry the opening quote before
+  "Romper objetos" can break onto the previous line ("Consulta también “ / Romper objetos”").
+  The text extraction places a space between the quote and the linked term. Cosmetic.
+
+## Limitations (round 3)
+
+- No real devices, soft keyboards or screen reader. Escape and typing used Playwright key
+  events; CPU throttling was emulated through CDP.
+- I did not run the repo e2e or `npm run check`. The coordinator reports 24/24 glossary e2e
+  on six projects.
+- This approval applies only to source `8b78b6f` with fingerprint
+  `75aab5b983137184ebfc390e616b3cf83a4c67394e4a520fc37be8ea80e95987`. The merge now in
+  progress in the shared working tree is not covered and needs its own check once resolved.
+
+## Round 3 screenshots
+
+These are in the session scratchpad and are not committed:
+`/tmp/claude-0/-home-user-rytta-dnd-app/63bbd363-2400-5756-80a5-86a53f7c2ad4/scratchpad/ui-review/shots4/`
+
+- `{mobile,tablet}-card-after-1st-escape.png`: card open, definition closed.
+- `{mobile,tablet}-shop-stack.png`
+- `{mobile,tablet}-nested-no-ring.png`

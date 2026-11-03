@@ -313,3 +313,75 @@ Round one's untested list still applies, unchanged:
 
 I did not re-run the light-theme axe on the table view or the summary at w. Approval applies only
 to the fingerprint above.
+
+## Re-review 2 (focused on N1-N3, after 45c58a5)
+
+- Reviewed source: `45c58a5`.
+- UI fingerprint: `756734e3e94bda8b53375a5e6bedae61b6847313bc3127f5b1fbaf672505555c` (recomputed, matches).
+- Reviewer role: `.codex/agents/ui-ux.toml`, read-only on implementation.
+- Date: 2026-11-03.
+- Evidence: screenshots in `docs/evidence/ui-review/combat/r3/*.png`.
+- Method: a fresh identity build in real Chromium at m (390px), t (820px) and w (1180px) with touch
+  emulation. The scratch spec covers N1-N3 only.
+
+### Verdict: CHANGES_REQUIRED
+
+N1 and N2 are fixed. The N3 change fixed the dialog-header overlap on phones, but it moved the
+error toast on top of the phone's primary controls.
+
+### N1: fixed
+
+The "When it counts down" control is now vertical in the effect dialog.
+
+- I checked EN and ES at 100% and 150% text on m, t and w, in light and dark.
+- Both options are 44px tall, wrap inside the modal and are never clipped.
+- The scroll width equals the client width.
+- The default "end" option is selected and readable.
+- ArrowUp switches the option.
+- axe is clean.
+- Evidence: `r3/en-150-effect-dialog-m.png` and `r3/es-150-effect-dialog-m.png`.
+
+### N2: fixed
+
+An unsaved private note is now saved on every exit:
+
+- Escape (m/t)
+- the close button and an overlay tap (m/t)
+- switching rows or tabs (w)
+
+There is no error toast in any of these cases.
+
+- When a note is still being edited, the close button, an overlay tap or a row switch sends two
+  identical `update_combatant` writes (once on blur, once on unmount). It is harmless but redundant.
+- Removing a combatant while its note is still being edited raised no error.
+
+### N3: not resolved, regression (major)
+
+On phones (≤48em), the error toast now sits fixed at the bottom with z-index 1000. It stays until
+the DM dismisses it, and it covers the phone's primary controls:
+
+- **Console:** after a failed write it completely hides the turn bar, including "Previous" and
+  "Next turn" (`r3/en-light-z100-toast-console-m.png`). The DM has to find and dismiss the toast
+  before advancing the turn.
+- **Dialogs:** at 100% text it overlaps the bottom of the dialog's "Cancel"/"Add effect" row
+  (`r3/en-light-z100-toast-dialog-m.png`). At 150% it covers both buttons, hiding the retry action.
+
+Code: `combat.css` `.combat-toast` and the `@media (max-width: 48em)` block; `parts.tsx` `RunnerError`.
+
+Suggested fix:
+
+- While a dialog or drawer is open, show the error inside it, for example next to its actions.
+- Otherwise, place the phone toast above the turn bar when one is present (the bottom offset
+  includes the bar height), and consider auto-dismissing it.
+
+Minor, unchanged on t/w: the top toast still overlaps the modal's close button and title while a
+dialog is open. It can be dismissed (44px) and Escape still works.
+
+### Not re-checked
+
+The earlier rounds' fixes, except where these checks touched them:
+
+- The effect dialog and console stayed axe-clean.
+- The turn bar was unchanged.
+
+The untested list from round one still applies. Approval applies only to the fingerprint above.

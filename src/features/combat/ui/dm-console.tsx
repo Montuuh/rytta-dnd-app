@@ -66,7 +66,7 @@ export function DmConsole({
   const wide = useMediaQuery('(min-width: 62em)')
   const navigate = useNavigate()
   const encounter = state.encounter!
-  const { run, pending, error, clear } = useRunner(campaignId)
+  const { run, pending, error, trigger, clear } = useRunner(campaignId)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [multi, setMulti] = useState<ReadonlySet<string> | null>(null)
   const [multiMode, setMultiMode] = useState<HpMode | null>(null)
@@ -312,7 +312,7 @@ export function DmConsole({
         </Group>
       </header>
 
-      <RunnerError error={error} onClose={clear} />
+      <RunnerError error={error} trigger={trigger} onClose={clear} />
 
       {status === 'draft' && (
         <div className="combat-flow">

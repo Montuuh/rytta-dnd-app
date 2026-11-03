@@ -28,7 +28,7 @@ export function Bestiary({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
   const { state } = useAuth()
   const query = useQuery(templatesQuery(state.user!.id, campaignId))
-  const { run, pending, error, clear } = useRunner(campaignId)
+  const { run, pending, error, trigger, clear } = useRunner(campaignId)
   const [editing, setEditing] = useState<CombatantTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<CombatantTemplate | null>(null)
   const [saved, setSaved] = useState(false)
@@ -50,7 +50,7 @@ export function Bestiary({ campaignId }: { campaignId: string }) {
           {t('combat.bestiary.new')}
         </Button>
       </Group>
-      <RunnerError error={error} onClose={clear} />
+      <RunnerError error={error} trigger={trigger} onClose={clear} />
       {saved && (
         <Alert
           className="combat-alert"

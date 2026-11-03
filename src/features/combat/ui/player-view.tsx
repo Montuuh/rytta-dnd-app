@@ -49,7 +49,7 @@ export function PlayerView({
   const own = combatants.find((c) => c.is_own) ?? null
   const active = combatants.find((c) => c.is_active) ?? null
   const upNext = nextUp(combatants)
-  const { run, pending, error, clear } = useRunner(campaignId)
+  const { run, pending, error, trigger, clear } = useRunner(campaignId)
   const sheet = useQuery({
     ...sheetQuery(auth.user!.id, campaignId, own?.character_id ?? 'none'),
     enabled: Boolean(own?.character_id),
@@ -145,7 +145,7 @@ export function PlayerView({
           )}
         </Group>
       </header>
-      <RunnerError error={error} onClose={clear} />
+      <RunnerError error={error} trigger={trigger} onClose={clear} />
 
       {needsInitiative && live && (
         <Paper className="combat-prompt" p="md" role="status">

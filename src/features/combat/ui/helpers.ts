@@ -14,26 +14,55 @@ import {
 
 export type Run = (action: CombatAction) => Promise<boolean>
 
-/** One mutation runner per screen: a shared pending flag and a visible, localized error. */
+// The last control a pointer touched: touch browsers do not always focus a tapped button.
+let lastPointerTarget: HTMLElement | null = null
+if (typeof document !== 'undefined')
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      const target = event.target instanceof Element ? event.target : null
+      lastPointerTarget = target?.closest<HTMLElement>('button, a, input, label, [role="button"]') ?? null
+    },
+    true,
+  )
+
+/** The control that started an action: the focused one, else the last one tapped. */
+function actionTrigger() {
+  const active = document.activeElement
+  return active instanceof HTMLElement && active !== document.body ? active : lastPointerTarget
+}
+
+/** One mutation runner per screen: a shared pending flag and a visible, localized error that
+ * remembers which control started the failed action (to keep it in view and return focus). */
 export function useRunner(campaignId: string) {
   const action = useCombatAction(campaignId)
-  const [error, setError] = useState<CombatErrorCode | null>(null)
+  const [failure, setFailure] = useState<{
+    code: CombatErrorCode
+    trigger: HTMLElement | null
+  } | null>(null)
   const { mutateAsync } = action
   const run = useCallback<Run>(
     async (next) => {
-      setError(null)
+      const trigger = actionTrigger()
+      setFailure(null)
       try {
         await mutateAsync(next)
         return true
-      } catch (failure) {
-        const code = failure instanceof Error ? failure.message : 'unavailable'
-        setError(isCombatErrorCode(code) ? code : 'unavailable')
+      } catch (error) {
+        const code = error instanceof Error ? error.message : 'unavailable'
+        setFailure({ code: isCombatErrorCode(code) ? code : 'unavailable', trigger })
         return false
       }
     },
     [mutateAsync],
   )
-  return { run, pending: action.isPending, error, clear: () => setError(null) }
+  return {
+    run,
+    pending: action.isPending,
+    error: failure?.code ?? null,
+    trigger: failure?.trigger ?? null,
+    clear: () => setFailure(null),
+  }
 }
 
 /** "Last known" state: offline, failing or older than the polling budget. */

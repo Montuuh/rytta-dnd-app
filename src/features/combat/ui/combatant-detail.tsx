@@ -45,6 +45,7 @@ import {
 import { AmountDialog } from './amount-dialog'
 import { sideLabel, useReturnFocus, type Run } from './helpers'
 import { HpMeter, Pips, SideIcon, StateBadge } from './parts'
+import { CombatantToken } from './token'
 
 type Props = {
   encounterId: string
@@ -73,20 +74,23 @@ export function CombatantDetail(props: Props) {
   return (
     <Stack gap="md" className="combat-detail">
       <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <div>
-          <Group gap={8} wrap="nowrap">
-            <SideIcon combatant={combatant} size={22} />
-            <Title order={3} className="combat-detail-name">
-              {combatant.name}
-            </Title>
-          </Group>
-          <Text size="sm" c="dimmed">
-            {sideLabel(t, combatant)}
-            {combatant.initiative !== undefined &&
-              ` · ${t('combat.initiative.label')} ${combatant.initiative}`}
-            {combatant.armor_class !== undefined &&
-              ` · ${t('combat.ac', { value: combatant.armor_class })}`}
-          </Text>
+        <div className="combat-detail-head">
+          <CombatantToken combatant={combatant} size={72} showActive={false} described />
+          <div>
+            <Group gap={8} wrap="nowrap">
+              <SideIcon combatant={combatant} size={22} />
+              <Title order={3} className="combat-detail-name">
+                {combatant.name}
+              </Title>
+            </Group>
+            <Text size="sm" c="dimmed">
+              {sideLabel(t, combatant)}
+              {combatant.initiative !== undefined &&
+                ` · ${t('combat.initiative.label')} ${combatant.initiative}`}
+              {combatant.armor_class !== undefined &&
+                ` · ${t('combat.ac', { value: combatant.armor_class })}`}
+            </Text>
+          </div>
         </div>
         <Group gap="xs" wrap="nowrap">
           <StateBadge combatant={combatant} />
@@ -155,7 +159,8 @@ export function CombatantDetail(props: Props) {
 
       {dm && <DmControls {...props} />}
 
-      {hpMode && (
+      {/* The end of the fight closes an open damage dialog (RYT-042 R2-2). */}
+      {hpMode && live && (
         <AmountDialog
           targets={[combatant]}
           initialMode={hpMode}

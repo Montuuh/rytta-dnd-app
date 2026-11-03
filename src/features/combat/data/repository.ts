@@ -260,9 +260,52 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
         target_template: uuid(action.templateId),
       })
       break
+    case 'templateImage':
+      result = await db.rpc('set_combatant_template_image', {
+        target_campaign,
+        target_template: uuid(action.templateId),
+        expected_revision: action.revision,
+        new_path: action.path,
+        request_id,
+      })
+      break
   }
   if (result.error) throw new Error(combatErrorCode(result.error.message))
   return mutationResultSchema.parse(result.data)
+}
+
+/**
+ * RYT-043 combat images live in private buckets: character portraits (RYT-004) and bestiary creature
+ * images. Signed URLs are short-lived; a path from the other environment (a PRE copy of PROD data) is
+ * refused so the monogram fallback shows instead of a broken image.
+ */
+export const imageBuckets = {
+  character: { bucket: 'character-portraits', seconds: 3600 },
+  creature: { bucket: 'creature-images', seconds: 300 },
+} as const
+export type ImageKind = keyof typeof imageBuckets
+
+export async function combatImageUrl(kind: ImageKind, path: string) {
+  const { activeSchema } = await import('@/shared/api/supabase')
+  if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
+  const db = await client()
+  const { bucket, seconds } = imageBuckets[kind]
+  const signed = await db.storage.from(bucket).createSignedUrl(path, seconds)
+  if (signed.error) throw new Error('unavailable')
+  return z.url().parse(signed.data.signedUrl)
+}
+
+/** Uploads a prepared WebP for a bestiary template; the attach RPC links it afterwards. */
+export async function uploadCreatureImage(campaignId: string, templateId: string, image: Blob) {
+  if (image.type !== 'image/webp' || image.size > 1_048_576) throw new Error('invalid')
+  const db = await client()
+  const { activeSchema } = await import('@/shared/api/supabase')
+  const path = `${activeSchema()}/${uuid(campaignId)}/${uuid(templateId)}/${crypto.randomUUID()}.webp`
+  const result = await db.storage
+    .from(imageBuckets.creature.bucket)
+    .upload(path, image, { contentType: image.type })
+  if (result.error) throw new Error('unavailable')
+  return path
 }
 
 /**

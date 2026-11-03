@@ -9,7 +9,6 @@ import {
   type CombatErrorCode,
   type CombatEvent,
   type Combatant,
-  type HpStatus,
 } from '../domain/combat'
 
 export type Run = (action: CombatAction) => Promise<boolean>
@@ -88,17 +87,6 @@ export function useFreshness(updatedAt: number, failing: boolean) {
 export function sideLabel(t: TFunction, combatant: Combatant) {
   return t(combatant.kind === 'lair' ? 'combat.side.lair' : `combat.side.${combatant.side}`)
 }
-
-export const statusTone = (status: HpStatus | undefined) =>
-  status === 'unhurt' || status === 'wounded'
-    ? status === 'unhurt'
-      ? 'healthy'
-      : 'wounded'
-    : status === 'bloodied'
-      ? 'critical'
-      : status === 'down'
-        ? 'down'
-        : 'unknown'
 
 /** Localized one-line description of a log event. */
 export function eventText(t: TFunction, event: CombatEvent) {

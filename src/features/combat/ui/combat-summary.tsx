@@ -1,7 +1,9 @@
+import { useId } from 'react'
 import { Text, Title } from '@mantine/core'
 import { HeartCrack, ShieldCheck, Skull, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { Encounter, SummaryRow } from '../domain/combat'
+import type { Combatant, Encounter, SummaryRow } from '../domain/combat'
+import { Token } from './token'
 
 const sides = ['party', 'ally', 'enemy'] as const
 const stats = ['dealt', 'taken', 'healed'] as const
@@ -28,14 +30,20 @@ const FateIcon = ({ fate }: { fate: Fate }) => {
  */
 export function CombatSummary({
   encounter,
+  combatants,
   large = false,
 }: {
   encounter: Encounter
+  /** The projection's combatants: their tokens sit beside the names (RYT-043). */
+  combatants: readonly Combatant[]
   large?: boolean
 }) {
   const { t } = useTranslation()
+  // Both views may be mounted at once (DM): ids stay unique per summary.
+  const baseId = useId()
   const summary = encounter.summary
   if (!summary) return null
+  const byId = new Map(combatants.map((c) => [c.id, c]))
   const rows = summary.combatants.filter((row) => row.kind !== 'lair')
   const top = rows
     .filter((row) => row.side !== 'enemy' && row.damage_dealt > 0)
@@ -46,10 +54,11 @@ export function CombatSummary({
   return (
     <section
       className={`combat-recap${large ? ' is-large' : ''}`}
-      aria-labelledby="combat-summary-title"
+      aria-labelledby={`${baseId}-title`}
     >
       <header className="combat-recap-head">
-        <Title order={2} id="combat-summary-title" className="combat-recap-title">
+        {/* Focus lands here when the fight ends while a dialog was open (RYT-042 R2-2). */}
+        <Title order={2} id={`${baseId}-title`} className="combat-recap-title" tabIndex={-1}>
           {t('combat.summary.title')}
         </Title>
         <p className="combat-recap-rounds">
@@ -66,7 +75,7 @@ export function CombatSummary({
       {sides.map((side) => {
         const group = rows.filter((row) => row.side === side)
         if (group.length === 0) return null
-        const titleId = `combat-recap-${side}`
+        const titleId = `${baseId}-${side}`
         return (
           <section key={side} className="combat-recap-side" aria-labelledby={titleId}>
             <Title order={3} id={titleId} className="combat-recap-side-title">
@@ -85,16 +94,26 @@ export function CombatSummary({
             <ul className="combat-recap-list">
               {group.map((row) => {
                 const fate = fateOf(row)
+                const combatant = byId.get(row.combatant_id)
                 return (
                   <li key={row.combatant_id} className={`combat-recap-row is-${fate}`}>
                     <div className="combat-recap-who">
-                      <Text component="span" className="combat-recap-name">
-                        {row.name}
-                      </Text>
-                      <span className="combat-recap-fate">
-                        <FateIcon fate={fate} />
-                        {t(`combat.summary.fate.${fate}`)}
-                      </span>
+                      <Token
+                        name={row.name}
+                        side={side}
+                        imageKind={row.kind === 'character' ? 'character' : 'creature'}
+                        path={combatant?.image_path}
+                        defeated={fate === 'dead' || fate === 'defeated'}
+                      />
+                      <div className="combat-recap-id">
+                        <Text component="span" className="combat-recap-name">
+                          {row.name}
+                        </Text>
+                        <span className="combat-recap-fate">
+                          <FateIcon fate={fate} />
+                          {t(`combat.summary.fate.${fate}`)}
+                        </span>
+                      </div>
                     </div>
                     <dl className="combat-recap-stats">
                       {stats.map((stat) => {

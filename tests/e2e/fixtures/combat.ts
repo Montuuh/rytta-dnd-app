@@ -8,6 +8,8 @@ type Row = {
   id: string
   kind: 'character' | 'npc' | 'lair'
   character_id?: string
+  /** RYT-043: the bestiary template an NPC came from (its image follows the template). */
+  template_id?: string
   side: 'party' | 'ally' | 'enemy'
   name: string
   initiative?: number
@@ -104,6 +106,8 @@ const uuid = (prefix: string) => `${prefix}-0000-4000-8000-${String(++counter).p
 export function combatServer() {
   const encounters: Encounter[] = []
   const templates: Record<string, unknown>[] = []
+  /** RYT-043: current portrait path per character (character_sheets.portrait_path). */
+  const portraits: Record<string, string> = {}
   const requests = new Map<string, unknown>()
   const find = (id: unknown) => encounters.find((e) => e.id === id)
   const owning = (id: unknown) => encounters.find((e) => e.combatants.some((c) => c.id === id))
@@ -164,6 +168,24 @@ export function combatServer() {
         : c.current_hp * 2 > c.max_hp
           ? 'wounded'
           : 'bloodied'
+  // RYT-043 (20261107120000_combat_media.sql): five named bands.
+  const band = (c: Row) =>
+    c.current_hp <= 0 || (c.defeated && c.kind !== 'character')
+      ? 'down'
+      : c.current_hp >= c.max_hp
+        ? 'unhurt'
+        : c.current_hp * 2 > c.max_hp
+          ? 'wounded'
+          : c.current_hp * 4 > c.max_hp
+            ? 'bloodied'
+            : 'critical'
+  const imageOf = (c: Row) =>
+    c.kind === 'character'
+      ? portraits[c.character_id!]
+      : c.kind === 'npc'
+        ? ((templates.find((t) => t.id === c.template_id)?.image_path as string | null) ??
+          undefined)
+        : undefined
 
   const project = (e: Encounter, actor: string, table: boolean) => {
     const full = actor === dmId && !table
@@ -193,8 +215,10 @@ export function combatServer() {
           hp_revealed: full ? c.hp_revealed : undefined,
           dm_notes: full ? c.dm_notes : undefined,
         }
+        row.image_path = imageOf(c)
         if (c.kind !== 'lair') {
           row.hp_status = c.kind === 'character' && !vitals ? 'unknown' : status(c)
+          row.hp_band = c.kind === 'character' && !vitals ? 'unknown' : band(c)
           if (vitals || (c.kind === 'npc' && c.hp_revealed))
             row.hp = { current: c.current_hp, max: c.max_hp, temp: c.temp_hp }
           if (vitals) row.armor_class = c.armor_class
@@ -352,6 +376,7 @@ export function combatServer() {
       'set_active_turn',
       'save_combatant_template',
       'delete_combatant_template',
+      'set_combatant_template_image',
     ])
     if (dmOnly.has(method) && !dm) return fail('Forbidden')
     if (method === 'create_encounter') {
@@ -372,9 +397,20 @@ export function combatServer() {
     }
     if (method === 'save_combatant_template') {
       const data = body.data as Record<string, unknown>
-      const row = { id: uuid('e2000000'), revision: 0, ...data }
+      const row = { id: uuid('e2000000'), revision: 0, image_path: null, ...data }
       templates.push(row)
       return { id: row.id, revision: 0 }
+    }
+    if (method === 'set_combatant_template_image') {
+      const row = templates.find((t) => t.id === body.target_template)
+      if (!row) return fail('Template unavailable')
+      if (row.revision !== body.expected_revision) return fail('Stale revision')
+      if (body.new_path !== null && !uploads.has(String(body.new_path)))
+        return fail('Image unavailable')
+      row.image_path = body.new_path
+      row.revision = Number(row.revision) + 1
+      for (const e of encounters) if (e.combatants.some((c) => c.template_id === row.id)) bump(e)
+      return { id: row.id, revision: row.revision, image_path: row.image_path }
     }
     const e =
       find(body.target_encounter) ??
@@ -465,6 +501,7 @@ export function combatServer() {
               const row: Row = {
                 id: uuid('e3000000'),
                 kind: entry.kind === 'lair' ? 'lair' : 'npc',
+                template_id: typeof entry.template_id === 'string' ? entry.template_id : undefined,
                 side: (entry.side as Row['side']) ?? 'enemy',
                 name: count > 1 ? `${base} ${i}` : base,
                 initiative: entry.kind === 'lair' ? 20 : undefined,
@@ -723,8 +760,18 @@ export function combatServer() {
     return result(e)
   }
 
+  /** Objects uploaded to the creature-images bucket (RYT-043). */
+  const uploads = new Set<string>()
+  /** Every bucket/path a page asked to sign (RYT-043 privacy checks). */
+  const signed: string[] = []
+  /** Which illustration a stored path shows: a part of the path (an id) to an artwork name. */
+  const art: Record<string, keyof typeof artwork> = {}
+
   return {
     encounters,
+    templates,
+    portraits,
+    uploads,
     /** Runs one RPC as `actor` (defaults to the DM), as the browser would. */
     act(method: string, body: Record<string, unknown>, actor = dmId) {
       return handle(actor, method, body)
@@ -766,12 +813,52 @@ export function combatServer() {
       encounter.combatants.forEach((c, index) => (c.initiative = 20 - index))
       mutate(dmId, true, 'set_encounter_status', { target_encounter: id, new_status: 'active' })
     },
+    /** RYT-043: signed URLs and image bytes for private combat images, plus creature uploads.
+     * Each stored path gets its own signed URL, so tests can tell which images a page asked for. */
+    signed,
+    art,
     async install(page: Page) {
+      await page.route(
+        /\/storage\/v1\/object\/sign\/(character-portraits|creature-images)\/(.+)$/,
+        async (route) => {
+          const path = decodeURIComponent(
+            new URL(route.request().url()).pathname.split('/sign/')[1]!,
+          )
+          signed.push(path)
+          const name = Object.entries(art).find(([part]) => path.includes(part))?.[1] ?? 'default'
+          return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              signedURL: `/object/public-test/art/${name}.svg?token=fixture`,
+            }),
+          })
+        },
+      )
+      await page.route(/\/storage\/v1\/object\/public-test\/art\/\w+\.svg/, (route) => {
+        const key = /art\/(\w+)\.svg/.exec(route.request().url())![1]!
+        return route.fulfill({
+          status: 200,
+          contentType: 'image/svg+xml',
+          body: (artwork as Record<string, string>)[key] ?? artwork.default,
+        })
+      })
+      await page.route(/\/storage\/v1\/object\/creature-images\/(.+)$/, async (route) => {
+        const path = decodeURIComponent(
+          new URL(route.request().url()).pathname.split('/creature-images/')[1]!,
+        )
+        uploads.add(path)
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ Key: `creature-images/${path}` }),
+        })
+      })
       await page.routeWebSocket(/realtime\/v1\/websocket/, () => {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template)$/,
+        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!
@@ -805,4 +892,35 @@ export function combatServer() {
       )
     },
   }
+}
+
+// Fixture-only illustrations (drawn for these tests, no external art) served as "stored" images.
+const frame = (body: string, from: string, to: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><radialGradient id="g" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></radialGradient></defs><rect width="120" height="120" fill="url(#g)"/>${body}</svg>`
+const artwork = {
+  default: frame(
+    '<circle cx="60" cy="48" r="20" fill="#cbb699"/><path d="M22 120c4-30 20-44 38-44s34 14 38 44z" fill="#cbb699"/>',
+    '#5b4a3a',
+    '#1e1610',
+  ),
+  ranger: frame(
+    '<path d="M60 18c-22 0-34 18-34 40 0 8 2 14 4 18h60c2-4 4-10 4-18 0-22-12-40-34-40z" fill="#1f4f5c"/><ellipse cx="60" cy="58" rx="17" ry="20" fill="#e2b48c"/><path d="M43 52c4-14 30-14 34 0-6-6-28-6-34 0z" fill="#1f4f5c"/><circle cx="53" cy="60" r="2.4" fill="#2a1c11"/><circle cx="67" cy="60" r="2.4" fill="#2a1c11"/><path d="M20 120c4-28 20-40 40-40s36 12 40 40z" fill="#2c6b7a"/><path d="M60 80l-8 40h16z" fill="#c9a24a"/>',
+    '#7ec8e8',
+    '#163440',
+  ),
+  cleric: frame(
+    '<circle cx="60" cy="56" r="19" fill="#d9a77c"/><path d="M38 54c0-20 44-20 44 0-4-12-40-12-44 0z" fill="#7a4b06"/><circle cx="53" cy="58" r="2.3" fill="#2a1c11"/><circle cx="67" cy="58" r="2.3" fill="#2a1c11"/><path d="M18 120c4-28 22-42 42-42s38 14 42 42z" fill="#f6c478"/><circle cx="60" cy="96" r="8" fill="none" stroke="#7a4b06" stroke-width="3"/>',
+    '#f6e2b0',
+    '#7a4b06',
+  ),
+  goblin: frame(
+    '<path d="M16 46l30 10-6 14zM104 46l-30 10 6 14z" fill="#5e8c3a"/><ellipse cx="60" cy="62" rx="24" ry="22" fill="#6f9e45"/><ellipse cx="50" cy="58" rx="5" ry="4" fill="#f6c478"/><ellipse cx="70" cy="58" rx="5" ry="4" fill="#f6c478"/><circle cx="50" cy="58" r="1.8" fill="#140f0b"/><circle cx="70" cy="58" r="1.8" fill="#140f0b"/><path d="M48 74q12 8 24 0" stroke="#140f0b" stroke-width="3" fill="none"/><path d="M53 75l2 5 2-4M63 75l2 5 2-5" fill="#f5ebd6"/><path d="M22 120c4-22 18-32 38-32s34 10 38 32z" fill="#4a3a26"/>',
+    '#9bbf6a',
+    '#1f2a12',
+  ),
+  ogre: frame(
+    '<ellipse cx="60" cy="60" rx="32" ry="30" fill="#8a6a4a"/><path d="M34 48q26-12 52 0" stroke="#4a3220" stroke-width="5" fill="none"/><circle cx="48" cy="58" r="3" fill="#140f0b"/><circle cx="72" cy="58" r="3" fill="#140f0b"/><path d="M44 78q16 6 32 0" stroke="#3a2516" stroke-width="4" fill="none"/><path d="M46 78l-2-10 6 8zM74 78l2-10-6 8z" fill="#f5ebd6"/><path d="M8 120c6-24 26-32 52-32s46 8 52 32z" fill="#5a4030"/>',
+    '#c08a5a',
+    '#2a1608',
+  ),
 }

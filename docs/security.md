@@ -42,6 +42,17 @@ initiative is collected, or later only while its total is missing (`Initiative c
 otherwise); SQL tests deny anon, outsiders, other Players' and creatures' totals, hidden
 combatants and DMs of another campaign.
 
+Combat images (RYT-043, ADR 027): the private `creature-images` bucket is readable, writable and
+deletable by the campaign DM under the campaign prefix; an active member reads only the image of a
+template that a visible combatant of a non-draft encounter was added from, so hidden combatants'
+images never reach Players (their rows are absent from the projection and the object is refused).
+`set_combatant_template_image` is DM-only, campaign-locked, idempotent and revision-checked, accepts
+only a path of its own environment, campaign and template, and requires the object to exist.
+`character-portraits` reads additionally allow an active member the current portrait of a character
+fighting visibly in a non-draft encounter; uploads and deletes stay owner or DM. SQL tests deny anon,
+outsiders, other Players' writes, Players before the fight starts and DMs of another campaign, and
+run the guarded PRE mirror; storage routers dispatch `pre/` objects to `pre_private` helpers.
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite

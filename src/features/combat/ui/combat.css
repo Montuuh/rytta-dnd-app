@@ -315,12 +315,13 @@ button.combat-row-main:focus-visible {
   flex-direction: column;
   gap: 4px;
 }
-.combat-hp.tone-healthy {
+.combat-hp.tone-unhurt {
   --tone: var(--success);
 }
 .combat-hp.tone-wounded {
   --tone: var(--warn);
 }
+.combat-hp.tone-bloodied,
 .combat-hp.tone-critical {
   --tone: var(--danger);
 }
@@ -336,9 +337,6 @@ button.combat-row-main:focus-visible {
 }
 .combat-hp.is-compact .combat-hp-bar {
   height: 6px;
-}
-.combat-hp.tone-unknown .combat-hp-bar span {
-  background: repeating-linear-gradient(45deg, var(--app-border) 0 6px, transparent 6px 12px);
 }
 .combat-hp-bar span {
   display: block;
@@ -410,6 +408,19 @@ button.combat-row-main:focus-visible {
   border-radius: 12px;
   text-align: center;
   color: inherit;
+  /* RYT-043: the acting combatant's token beside the lines. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.combat-turn-lines {
+  min-width: 0;
+}
+@media (max-width: 30em) {
+  .combat-turn-now .combat-token {
+    display: none;
+  }
 }
 .combat-turn-now:not(:disabled):hover {
   background: var(--app-hover);
@@ -1256,4 +1267,292 @@ button.combat-row-main:focus-visible {
 }
 .combat-recap.is-large .combat-recap-name {
   font-size: var(--fs-h3);
+}
+
+/* RYT-043 tokens: every combatant stands on a miniature's base. The base's shape says the side
+   (round party, rounded-square ally, hexagonal enemy, square keep for the lair) and its rim carries
+   the side's colour, so side never depends on colour alone. The acting combatant's rim turns to the
+   accent and lifts with a soft glow. Images are cropped to the shape; without one, an engraved
+   monogram in the heading face stands in. */
+.combat-token {
+  --token-size: 44px;
+  --ring-width: 2px;
+  --ring: var(--app-muted);
+  --shape: circle(50%);
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--token-size);
+  height: var(--token-size);
+}
+.combat-token.shape-party {
+  --ring: var(--info);
+}
+.combat-token.shape-ally {
+  --ring: var(--success);
+  --shape: inset(0 round 28%);
+}
+.combat-token.shape-enemy {
+  --ring: var(--danger);
+  --shape: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
+}
+.combat-token.shape-lair {
+  --shape: inset(0 round 10%);
+}
+.combat-token-ring,
+.combat-token-face {
+  position: absolute;
+  clip-path: var(--shape);
+}
+.combat-token-ring {
+  inset: 0;
+  background: var(--ring);
+}
+.combat-token-face {
+  inset: var(--ring-width);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 34% 28%,
+    color-mix(in srgb, var(--ring) 34%, var(--app-raised)),
+    color-mix(in srgb, var(--ring) 10%, var(--app-bg)) 78%
+  );
+}
+.combat-token-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.combat-token-monogram {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 700;
+  font-size: calc(var(--token-size) * 0.36);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums;
+  color: var(--app-text);
+  user-select: none;
+}
+.combat-token.is-active {
+  --ring: var(--app-accent);
+  --ring-width: 3px;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--app-accent) 55%, transparent));
+}
+/* Out of the fight: a grey rim and a faded, colourless image (the status word says why). */
+.combat-token.is-defeated {
+  --ring: var(--app-border);
+}
+.combat-token.is-defeated img {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+/* DM only: hidden from the table. A broken rim, like a token not yet on the map. */
+.combat-token.is-hidden .combat-token-ring {
+  background: repeating-conic-gradient(var(--app-muted) 0 12deg, transparent 12deg 24deg);
+}
+
+.combat-rail.is-large .combat-token {
+  --token-size: 60px;
+}
+/* Phones: initiative well and token share the row with the name, so both step down and a long
+   name (or 150% text) wraps instead of being cut. */
+@media (max-width: 40em) {
+  .combat-rail.is-large .combat-row-main {
+    gap: 10px;
+    padding: 10px;
+  }
+  .combat-rail.is-large .combat-init {
+    width: 46px;
+    height: 46px;
+    font-size: 1.3rem;
+  }
+  .combat-rail.is-large .combat-token {
+    --token-size: 44px;
+  }
+  .combat-rail.is-large .combat-row-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Health without numbers: a seal with the band's glyph, then its name. Exact hit points keep the
+   proportional bar above; the two never look alike. */
+.combat-band {
+  --tone: var(--app-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 28px;
+}
+.combat-band.band-unhurt {
+  --tone: var(--success);
+}
+.combat-band.band-wounded {
+  --tone: var(--warn);
+}
+.combat-band.band-bloodied,
+.combat-band.band-critical {
+  --tone: var(--danger);
+}
+.combat-band-seal {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--tone);
+}
+/* Near death is the one band that fills its seal: the moment the table should notice. */
+.combat-band.band-critical .combat-band-seal {
+  background: var(--tone);
+  color: var(--app-bg);
+}
+.combat-band.band-down .combat-band-seal,
+.combat-band.band-defeated .combat-band-seal,
+.combat-band.band-unknown .combat-band-seal {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--app-border);
+}
+.combat-band-word {
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+.combat-band.is-large .combat-band-seal {
+  width: 36px;
+  height: 36px;
+}
+.combat-band.is-large .combat-band-word {
+  font-family: var(--mantine-font-family-headings);
+  font-size: 1.25rem;
+}
+@media (max-width: 40em) {
+  .combat-band.is-large .combat-band-seal {
+    width: 32px;
+    height: 32px;
+  }
+  .combat-band.is-large .combat-band-word {
+    font-size: 1.1rem;
+  }
+}
+
+/* The table banner: who acts now stands on a large token, who is next on a small one. */
+.combat-table-now:not(.is-rolling) {
+  background: radial-gradient(
+    140% 160% at 0% 40%,
+    color-mix(in srgb, var(--app-accent) 9%, var(--app-raised)),
+    var(--app-raised) 55%
+  );
+}
+.combat-table-actor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  min-width: 0;
+}
+.combat-table-actor .combat-token {
+  --token-size: clamp(56px, 14vw, 104px);
+}
+/* The name keeps its line: with large text it moves under the token instead of breaking. */
+.combat-table-actor .combat-table-who {
+  flex: 1 1 11em;
+}
+.combat-table-actor.is-next {
+  gap: 12px;
+}
+.combat-table-actor.is-next .combat-token {
+  --token-size: clamp(40px, 7vw, 56px);
+}
+.combat-table-actor.is-next .combat-table-who {
+  flex-basis: 6em;
+}
+.combat-table-who {
+  min-width: 0;
+}
+
+/* The DM detail opens on the combatant's token. */
+.combat-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* Recap rows carry each combatant's token beside the name. */
+.combat-recap-who {
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+.combat-recap .combat-token {
+  --token-size: 36px;
+}
+.combat-recap.is-large .combat-token {
+  --token-size: 44px;
+}
+.combat-recap-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+/* Bestiary: the creature's token is its own image picker; a seal on the rim shows the action. */
+.combat-card.is-creature {
+  position: relative;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.combat-card.is-creature .combat-card-text {
+  flex: 1 1 8rem;
+}
+.combat-creature-image {
+  display: contents;
+}
+.combat-image-picker {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  padding: 2px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.combat-image-picker[data-pending] {
+  cursor: progress;
+}
+.combat-image-picker:hover .combat-token-face {
+  filter: brightness(1.1);
+}
+.combat-card:has(.combat-image-input:focus-visible) .combat-image-picker {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.combat-image-seal {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+  box-shadow: 0 0 0 2px var(--app-surface);
+}
+.combat-image-error {
+  order: 10;
+  flex: 1 1 100%;
+  color: var(--danger);
+  font-weight: 600;
 }

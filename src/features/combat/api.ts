@@ -3,10 +3,14 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { useAuth } from '@/features/auth'
 import {
   changeCombat,
+  combatImageUrl,
+  imageBuckets,
   loadCombatState,
   loadEncounters,
   loadTemplates,
   subscribeEncounters,
+  uploadCreatureImage,
+  type ImageKind,
 } from './data/repository'
 import { combatPollInterval, type CombatAction } from './domain/combat'
 
@@ -97,6 +101,47 @@ export function useCombatAction(campaignId: string) {
         await cache.invalidateQueries({
           queryKey: ['private', userId, 'campaign', campaignId, 'characters'],
         })
+    },
+  })
+}
+
+/** A signed URL for a combat image, cached a little under its lifetime (RYT-043). */
+export const combatImageQuery = (userId: string, kind: ImageKind, path: string | null) =>
+  queryOptions({
+    queryKey: ['private', userId, 'combat-image', kind, path],
+    queryFn: () => combatImageUrl(kind, path!),
+    enabled: Boolean(path),
+    staleTime: imageBuckets[kind].seconds * 800,
+    gcTime: imageBuckets[kind].seconds * 900,
+    retry: false,
+  })
+
+/** Uploads a prepared creature image and attaches it to its template in one user action. */
+export function useCreatureImageUpload(campaignId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  const current = () =>
+    navigator.onLine && Boolean(userId) && controller?.getSnapshot().user?.id === userId
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async ({
+      templateId,
+      revision,
+      image,
+    }: {
+      templateId: string
+      revision: number
+      image: Blob
+    }) => {
+      if (!current()) throw new Error('unavailable')
+      const path = await uploadCreatureImage(campaignId, templateId, image)
+      return changeCombat(campaignId, { kind: 'templateImage', templateId, revision, path })
+    },
+    onSettled: async () => {
+      if (!current() || !userId) return
+      await cache.invalidateQueries({ queryKey: combatScope(userId, campaignId) })
     },
   })
 }

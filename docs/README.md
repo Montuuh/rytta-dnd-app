@@ -65,3 +65,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     combat conditions linked in [RYT-039](evidence/RYT-039/validation.md).
 35. [ADR 026: Player character roster with one active character](decisions/026-player-character-roster.md)
     and [RYT-044 verification](evidence/RYT-044/validation.md).
+36. [ADR 027: combat tokens, private combat images and health bands](decisions/027-combat-art-and-health-bands.md)
+    and [RYT-043 verification](evidence/RYT-043/validation.md).

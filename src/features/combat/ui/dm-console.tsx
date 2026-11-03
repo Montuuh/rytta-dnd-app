@@ -49,6 +49,7 @@ import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
 import { NetworkState, RunnerError } from './parts'
 import { RemoveCombatantDialog, RowActions } from './roster'
+import { CombatantToken } from './token'
 
 type Panel = 'detail' | 'log' | 'add'
 
@@ -121,6 +122,7 @@ export function DmConsole({
   const [panel, setPanel] = useState<Panel>(encounter.status === 'draft' ? 'add' : 'detail')
   // Leaving preparation hands the side panel to the fight (render-phase adjustment).
   const [seenStatus, setSeenStatus] = useState(encounter.status)
+  const [recapFocus, setRecapFocus] = useState(0)
   if (seenStatus !== encounter.status) {
     setSeenStatus(encounter.status)
     if (seenStatus === 'draft' || encounter.status === 'ended') setPanel('detail')
@@ -130,7 +132,23 @@ export function DmConsole({
       setMulti(null)
       setMultiMode(null)
     }
+    // The fight ended (here or on another device) while the DM was inside it: a dialog that closes
+    // with it would drop focus to the page, so the recap heading takes it (RYT-042 R2-2).
+    if (isLive(seenStatus) && encounter.status === 'ended') setRecapFocus((n) => n + 1)
   }
+  const consoleRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (recapFocus === 0) return
+    const frame = requestAnimationFrame(() => {
+      const root = consoleRef.current
+      const focused = document.activeElement
+      // Only when focus was lost (never steal it, and never into a console hidden behind the table).
+      const lost = !focused || focused === document.body || !focused.isConnected
+      if (!root || !lost || root.closest('[hidden]')) return
+      root.querySelector<HTMLElement>('.combat-recap-title')?.focus()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [recapFocus])
   const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
   const [rename, setRename] = useState(encounter.name)
   const combatants = state.combatants
@@ -360,7 +378,11 @@ export function DmConsole({
     </Tabs>
   )
   return (
-    <Stack gap="md" className={`combat-console${status === 'active' ? ' has-turn-bar' : ''}`}>
+    <Stack
+      ref={consoleRef}
+      gap="md"
+      className={`combat-console${status === 'active' ? ' has-turn-bar' : ''}`}
+    >
       <VisuallyHidden aria-live="polite">{announcement}</VisuallyHidden>
       <header className="combat-header">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
@@ -493,7 +515,7 @@ export function DmConsole({
           </Button>
         </Group>
       )}
-      {status === 'ended' && <CombatSummary encounter={encounter} />}
+      {status === 'ended' && <CombatSummary encounter={encounter} combatants={state.combatants} />}
 
       {wide ? (
         <div className="combat-columns">
@@ -556,17 +578,20 @@ export function DmConsole({
                 : undefined
             }
           >
-            <Text size="xs" c="dimmed" component="span" display="block">
-              {t('combat.turn.now')} · {t('combat.round', { round: encounter.round })}
-            </Text>
-            <Text fw={800} className="combat-turn-name" component="span" display="block">
-              {active?.name ?? '—'}
-            </Text>
-            {upNext && (
+            {active && <CombatantToken combatant={active} size={36} />}
+            <span className="combat-turn-lines">
               <Text size="xs" c="dimmed" component="span" display="block">
-                {t('combat.turn.upNext')}: {upNext.name}
+                {t('combat.turn.now')} · {t('combat.round', { round: encounter.round })}
               </Text>
-            )}
+              <Text fw={800} className="combat-turn-name" component="span" display="block">
+                {active?.name ?? '—'}
+              </Text>
+              {upNext && (
+                <Text size="xs" c="dimmed" component="span" display="block">
+                  {t('combat.turn.upNext')}: {upNext.name}
+                </Text>
+              )}
+            </span>
           </UnstyledButton>
           <Button
             size="lg"

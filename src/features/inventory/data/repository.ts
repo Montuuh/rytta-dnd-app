@@ -282,3 +282,73 @@ export async function discardItemUpload(campaignId: string, path: string) {
   const result = await db.storage.from('item-images').remove([path])
   if (result.error) throw result.error
 }
+
+// RYT-032 item lifecycle: impact preview, soft delete and linked listing price sync (DM only).
+const impactSchema = z.object({
+  listings: z
+    .object({
+      id: z.uuid(),
+      shop_id: z.uuid(),
+      shop_name: z.string(),
+      price: z.number().int().min(0),
+      stock: z.number().int().nullable(),
+      revision: z.number().int(),
+    })
+    .array(),
+  holders: z.number().int().min(0),
+  units: z.number().int().min(0),
+  open_orders: z.number().int().min(0),
+})
+export type DefinitionImpact = z.infer<typeof impactSchema>
+const lifecycleError = (message: string) =>
+  message.includes('Open orders') ? 'openOrders' : errorCode(message)
+
+export async function loadDefinitionImpact(
+  campaignId: string,
+  definitionId: string,
+  signal?: AbortSignal,
+) {
+  const db = await client()
+  let call = db.rpc('item_definition_impact', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_definition: z.uuid().parse(definitionId),
+  })
+  if (signal) call = call.abortSignal(signal)
+  const result = await call
+  if (result.error) throw new Error(lifecycleError(result.error.message))
+  return impactSchema.parse(result.data)
+}
+export async function archiveDefinition(
+  campaignId: string,
+  definitionId: string,
+  revision: number,
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('archive_item_definition', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_definition: z.uuid().parse(definitionId),
+    expected_revision: z.number().int().min(0).parse(revision),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw new Error(lifecycleError(result.error.message))
+  return z.object({ id: z.uuid(), archived_listings: z.number().int() }).parse(result.data)
+}
+export async function syncListingPrices(
+  campaignId: string,
+  definitionId: string,
+  listingIds: string[],
+  price: number,
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('sync_listing_prices', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_definition: z.uuid().parse(definitionId),
+    listing_ids: z.uuid().array().min(1).max(200).parse(listingIds),
+    new_price: z.number().int().min(0).max(100_000_000).parse(price),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw new Error(lifecycleError(result.error.message))
+  return z.object({ updated: z.number().int() }).parse(result.data)
+}

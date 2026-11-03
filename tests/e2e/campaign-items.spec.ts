@@ -447,3 +447,209 @@ test('RYT-027 a shop listing opens the shared item editor', async ({ page }) => 
   await expect(page.getByRole('dialog')).toHaveCount(0)
   expect(f.inventory.definitions.some((d) => d.name === 'Poción mayor')).toBe(true)
 })
+
+// RYT-032 evidence screenshots land in docs/evidence when RYT_EVIDENCE is set.
+const evidence = async (page: Page, name: string, info: { project: { name: string } }) => {
+  if (!process.env.RYT_EVIDENCE) return
+  const size = info.project.name.replace('identity-', '')
+  await page.screenshot({ path: `docs/evidence/RYT-032/${name}-${size}.png` })
+}
+
+test('RYT-032 delete shows its impact, archives listings and keeps open orders safe', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await shopsFixture(page, f)
+  await page.goto(url)
+  await rowAction(page, 'Espada larga', 'Eliminar Espada larga', 'Eliminar')
+  const blocked = page.getByRole('dialog', { name: '¿Eliminar Espada larga?' })
+  await expect(blocked.getByRole('alert')).toContainText('2 pedidos abiertos')
+  await expect(blocked.getByRole('button', { name: 'Eliminar objeto' })).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(f.inventory.definitions.find((d) => d.name === 'Espada larga')!.archived).toBe(false)
+
+  await rowAction(page, 'Poción de curación', 'Eliminar Poción de curación', 'Eliminar')
+  const dialog = page.getByRole('dialog', { name: '¿Eliminar Poción de curación?' })
+  await expect(dialog).toContainText('Se retira de 2 tiendas:')
+  await expect(dialog).toContainText('Mercado del puerto')
+  await expect(dialog).toContainText('Bóveda del contrabandista')
+  await expect(dialog).toContainText('lo conserva en su mochila')
+  await expect(dialog.getByRole('button', { name: 'Conservar' })).toBeFocused()
+  await audit(page, info.outputPath('delete-impact.png'))
+  await evidence(page, 'delete-impact', info)
+  await dialog.getByRole('button', { name: 'Eliminar objeto' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('status').filter({ hasText: 'se eliminó' })).toBeVisible()
+  await expect(page.locator('.store-row').filter({ hasText: 'Poción de curación' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Nuevo objeto', exact: true })).toBeFocused()
+  expect(f.inventory.definitions.find((d) => d.name === 'Poción de curación')!.archived).toBe(true)
+  // Holdings stay; the item only leaves the storeroom and the shops.
+  expect(f.inventory.stacks.some((s) => s.quantity > 0)).toBe(true)
+})
+
+test('RYT-032 a changed value offers to update linked shop prices', async ({ page }, info) => {
+  const f = await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await shopsFixture(page, f)
+  const bodies: { listing_ids: string[]; new_price: number; request_id: string }[] = []
+  let attempts = 0
+  await page.route('**/rest/v1/rpc/sync_listing_prices', async (route) => {
+    bodies.push(route.request().postDataJSON())
+    if (++attempts === 1) return route.fulfill({ status: 503, json: { message: 'Unavailable' } })
+    return route.fallback()
+  })
+  await page.goto(url)
+  await page.getByRole('button', { name: /^Editar: Poción de curación/ }).click()
+  const editor = page.getByRole('dialog')
+  await expect(editor.getByRole('region', { name: 'Vista previa del objeto' })).toContainText(
+    '50 po',
+  )
+  await editor.getByRole('textbox', { name: 'Valor (po)', exact: true }).fill('60')
+  await expect(editor.getByRole('region', { name: 'Vista previa del objeto' })).toContainText(
+    '60 po',
+  )
+  await editor.getByRole('button', { name: 'Guardar cambios', exact: true }).click()
+  const sync = page.getByRole('dialog', { name: '¿Actualizar precios en tiendas?' })
+  await expect(sync.getByRole('checkbox')).toHaveCount(2)
+  await audit(page, info.outputPath('price-sync.png'))
+  await evidence(page, 'price-sync', info)
+  await sync.getByRole('checkbox', { name: /Bóveda del contrabandista/ }).click()
+  await sync.getByRole('button', { name: 'Actualizar 1 precio', exact: true }).click()
+  await expect(sync.getByRole('alert')).toBeVisible()
+  await sync.getByRole('button', { name: 'Actualizar 1 precio', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('status').filter({ hasText: '1 precio de tienda' })).toBeVisible()
+  expect(bodies).toHaveLength(2)
+  expect(bodies[0]!.request_id).toBe(bodies[1]!.request_id)
+  expect(bodies[1]!.listing_ids).toHaveLength(1)
+  expect(bodies[1]!.new_price).toBe(60)
+  expect(f.inventory.definitions.find((d) => d.name === 'Poción de curación')!.value_gp).toBe(60)
+})
+
+test('RYT-032 the add-to-shop drawer opens right on wide screens and bottom on phones', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await shopsFixture(page, f)
+  await page.goto(url)
+  await rowAction(page, 'Escudo', 'Añadir Escudo a una tienda', 'Añadir a tienda')
+  const content = page.locator('.mantine-Drawer-content')
+  await expect(content).toBeVisible()
+  await page.waitForTimeout(400)
+  const box = (await content.boundingBox())!
+  // The stable scrollbar gutter is outside the drawer, so measure against the client box.
+  const viewport = await page.evaluate(() => ({
+    width: document.documentElement.clientWidth,
+    height: innerHeight,
+  }))
+  if (viewport.width < 768) {
+    expect(Math.round(box.y + box.height)).toBeGreaterThanOrEqual(viewport.height - 1)
+    expect(Math.round(box.width)).toBeGreaterThanOrEqual(viewport.width - 20)
+  } else {
+    expect(Math.round(box.x + box.width)).toBeGreaterThanOrEqual(viewport.width - 20)
+    expect(box.x).toBeGreaterThan(viewport.width / 3)
+  }
+  await evidence(page, 'shop-picker', info)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('RYT-032 the forge shows a live preview and keyboard-selectable category and rarity', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { inventory: true, sheet: 'complete' })
+  await page.goto(url)
+  await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
+  const editor = page.getByRole('dialog')
+  const preview = editor.getByRole('region', { name: 'Vista previa del objeto' })
+  await expect(preview).toContainText('Objeto sin nombre')
+  await editor.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Hoja lunar')
+  await editor.getByRole('radio', { name: 'Armas', exact: true }).check()
+  await expect(editor.getByRole('textbox', { name: 'Dados de daño' })).toBeVisible()
+  await editor.getByRole('textbox', { name: 'Dados de daño' }).fill('1d6')
+  await editor.getByRole('radio', { name: 'Común', exact: true }).focus()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await expect(editor.getByRole('radio', { name: 'Raro', exact: true })).toBeChecked()
+  await editor.getByRole('button', { name: 'Aumentar Peso (lb)', exact: true }).click()
+  await editor.getByRole('button', { name: 'Aumentar Valor (po)', exact: true }).click()
+  await expect(preview).toContainText('Hoja lunar')
+  await expect(preview).toContainText('Raro')
+  await expect(preview).toContainText('1d6')
+  await expect(preview).toContainText('0,5 lb')
+  await expect(preview).toContainText('1 po')
+  await audit(page, info.outputPath('forge.png'))
+  await evidence(page, 'forge', info)
+  await editor.getByRole('button', { name: 'Forjar objeto', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('.store-row').filter({ hasText: 'Hoja lunar' })).toContainText('1 po')
+})
+
+test('RYT-032 the DM adds an existing storeroom item or a new one to a character', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { inventory: true, sheet: 'complete' })
+  const keys: string[] = []
+  let attempts = 0
+  await page.route('**/rest/v1/rpc/grant_item', async (route) => {
+    keys.push(route.request().postDataJSON().request_id)
+    if (++attempts === 1) return route.fulfill({ status: 503, json: { message: 'Unavailable' } })
+    return route.fallback()
+  })
+  await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}`)
+  const add = page.locator('main').getByRole('button', { name: 'Añadir objeto', exact: true })
+  await add.click()
+  const chooser = page.getByRole('dialog', { name: 'Añadir un objeto para Arin' })
+  await expect(chooser.getByRole('button', { name: /Objeto existente/ })).toBeFocused()
+  await audit(page, info.outputPath('add-choose.png'))
+  await evidence(page, 'add-choose', info)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(add).toBeFocused()
+
+  await add.click()
+  await chooser.getByRole('button', { name: /Objeto existente/ }).click()
+  await chooser.getByRole('textbox', { name: 'Buscar en el almacén' }).fill('anillo')
+  await chooser.getByRole('button', { name: /Anillo de la marea/ }).click()
+  await chooser.getByRole('button', { name: 'Aumentar Cantidad', exact: true }).click()
+  await audit(page, info.outputPath('add-existing.png'))
+  await evidence(page, 'add-existing', info)
+  await chooser.getByRole('button', { name: 'Dar 2 a Arin', exact: true }).click()
+  await expect(chooser.getByRole('alert')).toBeVisible()
+  await chooser.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(keys).toHaveLength(2)
+  expect(keys[0]).toBe(keys[1])
+  const ring = f.inventory.definitions.find((d) => d.name === 'Anillo de la marea')!
+  expect(
+    f.inventory.stacks
+      .filter((s) => s.definition_id === ring.id && s.character_id === characterId)
+      .reduce((n, s) => n + s.quantity, 0),
+  ).toBeGreaterThanOrEqual(2)
+
+  await add.click()
+  await chooser.getByRole('button', { name: /Crear nuevo/ }).click()
+  const forge = page.getByRole('dialog', { name: 'Nuevo objeto para Arin' })
+  await expect(forge.getByRole('button', { name: 'Arin', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await forge.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Brújula rota')
+  await forge.getByRole('button', { name: 'Forjar objeto', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  const compass = f.inventory.definitions.find((d) => d.name === 'Brújula rota')!
+  expect(
+    f.inventory.stacks.some(
+      (s) => s.definition_id === compass.id && s.character_id === characterId,
+    ),
+  ).toBe(true)
+})
+
+test('RYT-032 Players keep the direct forge from the satchel', async ({ page }) => {
+  await identityFixture(page, { player: true, inventory: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.locator('main').getByRole('button', { name: 'Añadir objeto', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: /Añadir un objeto para/ })).toHaveCount(0)
+  await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Nombre' })).toBeVisible()
+  await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Valor (po)' })).toHaveCount(0)
+})

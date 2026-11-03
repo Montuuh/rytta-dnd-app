@@ -546,6 +546,47 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
         if (index >= 0) listings.splice(index, 1)
         return respond(null)
       }
+      // RYT-032: listings follow the definition lifecycle; holdings stay in identityFixture.
+      case 'item_definition_impact': {
+        if (actor !== dmId) return fail('Forbidden')
+        const held = stacks.filter((s) => s.definition_id === body.target_definition)
+        return respond({
+          listings: listings
+            .filter((l) => l.definition_id === body.target_definition && !archived.has(l.shop_id))
+            .map((l) => ({
+              id: l.id,
+              shop_id: l.shop_id,
+              shop_name: shops.find((s) => s.id === l.shop_id)!.name,
+              price: l.price,
+              stock: l.stock,
+              revision: l.revision,
+            })),
+          holders: new Set(held.filter((s) => s.quantity > 0).map((s) => s.character_id)).size,
+          units: held.reduce((n, s) => n + s.quantity, 0),
+          open_orders: orders.filter(
+            (o) =>
+              ['pending', 'countered'].includes(o.status) &&
+              o.lines.some((l) => l.definition_id === body.target_definition),
+          ).length,
+        })
+      }
+      case 'archive_item_definition': {
+        for (let i = listings.length - 1; i >= 0; i--)
+          if (listings[i]!.definition_id === body.target_definition) listings.splice(i, 1)
+        return route.fallback()
+      }
+      case 'sync_listing_prices': {
+        if (actor !== dmId) return fail('Forbidden')
+        const ids = body.listing_ids as string[]
+        let updated = 0
+        for (const l of listings)
+          if (ids.includes(l.id) && l.price !== body.new_price) {
+            l.price = Number(body.new_price)
+            l.revision += 1
+            updated++
+          }
+        return respond({ updated })
+      }
       case 'set_shop_modifier': {
         const shop = shops.find((s) => s.id === body.target_shop)!
         shop.modifiers = [

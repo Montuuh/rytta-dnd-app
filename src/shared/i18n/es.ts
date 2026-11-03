@@ -8,6 +8,7 @@ import { designEs } from './design-es'
 import { storeEs } from './store-es'
 import { partyEs } from './party-es'
 import { settingsEs } from './settings-es'
+import { lifecycleEs } from './lifecycle-es'
 
 export const es = {
   ...identityEs,
@@ -19,6 +20,7 @@ export const es = {
   ...storeEs,
   ...partyEs,
   ...settingsEs,
+  ...lifecycleEs,
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
   'module.shops': 'Tiendas',

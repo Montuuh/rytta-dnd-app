@@ -7,6 +7,7 @@ import { designEn } from './design-en'
 import { storeEn } from './store-en'
 import { partyEn } from './party-en'
 import { settingsEn } from './settings-en'
+import { lifecycleEn } from './lifecycle-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
@@ -17,6 +18,7 @@ export const en = {
   ...storeEn,
   ...partyEn,
   ...settingsEn,
+  ...lifecycleEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',
   'module.shops': 'Shops',

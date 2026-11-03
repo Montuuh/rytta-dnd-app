@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useLongPress } from '@/shared/ui/use-long-press'
 import { moveWithinTie, type Combatant } from '../domain/combat'
 import { sideLabel } from './helpers'
-import { ConditionBadges, HpMeter, SideIcon, StateBadge } from './parts'
+import { ConditionBadges, HpMeter, StateBadge } from './parts'
 import { CombatantToken } from './token'
 
 type RailMode =
@@ -215,12 +215,12 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
           <Hourglass size={16} aria-label={t('combat.initiative.missing')} />
         )}
       </span>
+      {/* The token's shape and rim carry the side (RYT-043 F2: no extra side glyph, so the skull
+          only ever means defeated); the visually hidden line below names it. */}
       <CombatantToken combatant={combatant} />
       <span className="combat-row-text">
-        <Group gap={6} wrap="nowrap" className="combat-row-title">
-          <span className="combat-side-icon" title={sideLabel(t, combatant)}>
-            <SideIcon combatant={combatant} size={large ? 22 : 16} />
-          </span>
+        {/* With large text the AC moves under the name instead of cutting it short. */}
+        <Group gap={6} wrap="wrap" className="combat-row-title">
           <Text component="span" fw={700} className="combat-row-name">
             {combatant.name}
           </Text>
@@ -234,6 +234,11 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
               <Crown size={14} aria-hidden="true" />
               {combatant.legendary.max - combatant.legendary.used}
             </span>
+          )}
+          {/* AC ends the name line, so the hit point line and its bar get the row's full width
+              (RYT-043 F1: phones no longer wrap "2/8 PG · A punto de caer"). */}
+          {combatant.armor_class !== undefined && (
+            <span className="combat-ac">{t('combat.ac', { value: combatant.armor_class })}</span>
           )}
         </Group>
         <span className="visually-hidden">
@@ -251,9 +256,6 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
           <ConditionBadges combatant={combatant} limit={large ? undefined : 3} />
         </Group>
       </span>
-      {combatant.armor_class !== undefined && (
-        <span className="combat-ac">{t('combat.ac', { value: combatant.armor_class })}</span>
-      )}
     </>
   )
 }

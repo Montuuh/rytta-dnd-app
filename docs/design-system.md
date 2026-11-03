@@ -169,19 +169,24 @@ The glossary reads like a field dictionary: serif headwords and rules text, a qu
 ## Combat tokens and health bands (RYT-043)
 
 Combatants stand on tokens, the bases of tabletop miniatures (ADR 027). The shape carries the side:
-round party, rounded-square ally, hexagonal enemy, square keep for the lair; the rim uses the side's
-status colour (`--info`, `--success`, `--danger`, muted). The image (portrait or bestiary image) is
-cropped to the shape; without one, a monogram of up to two initials in the heading face sits on a
-radial wash of the rim colour and is decorative. The acting token's rim becomes `--app-accent` with a
+round party, rounded-square ally, hexagonal enemy, crenellated keep for the lair; the rim uses the
+side's status colour (`--info`, `--success`, `--danger`, muted). Rows carry no extra side glyph: the
+skull is reserved for defeated and dead. The image (portrait or bestiary image) is cropped to the
+shape; without one, a monogram of up to two initials in the heading face (a castle glyph for the
+lair) sits on a radial wash of the rim colour and is decorative. In order rows AC closes the name
+line and moves under the name when it needs the room; the hit point value and the band phrase never
+break inside, so the full-width bar keeps its length on phones. The acting token's rim becomes `--app-accent` with a
 soft glow; defeated tokens use a grey rim and a colourless image; tokens hidden from Players have a
-broken rim (DM only). Sizes come from `--token-size` set by the context: 44px in the console order,
+broken rim (DM only). Sizes come from `--token-size` set by the context: 44px in the console order
+(36px on phones),
 60px in the table order (44px on phones), 56–104px for "Now" in the table banner, 36px in the turn
 bar (hidden below 30em) and recap rows, 64px in the bestiary and 72px in the DM detail.
 
 Health without exact numbers is a band, never a bar: a 26px seal (36px in the table, 32px on
 phones) with one glyph per band (heart, heart minus, droplets, cracked heart, heart off, skull, eye
 off) and the band's name in `--app-text`. The seal ring and glyph take the band tone; near death is
-the only filled seal. Exact hit points keep the proportional bar, numbers and band word.
+the only filled seal. "Not shared" stays quiet (meta size, muted, small seal) because it marks
+missing information. Exact hit points keep the proportional bar, numbers and band word.
 
 The bestiary token is its own image picker: a visually hidden file input labelled "Add an image of
 …" / "Change the image of …", the token as its label, a camera seal on the rim and the focus ring

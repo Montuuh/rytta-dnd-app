@@ -193,9 +193,6 @@
   color: var(--app-muted);
   border-style: dashed;
 }
-.combat-row.is-defeated .combat-side-icon {
-  color: var(--app-muted);
-}
 .combat-row-main {
   display: flex;
   align-items: center;
@@ -245,17 +242,13 @@ button.combat-row-main:focus-visible {
 }
 .combat-row-title {
   min-width: 0;
+  row-gap: 0;
 }
 .combat-row-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-}
-.combat-side-icon {
-  color: var(--side, var(--app-muted));
-  display: inline-flex;
-  flex: none;
 }
 .combat-you {
   border: 1px solid var(--app-accent);
@@ -271,12 +264,15 @@ button.combat-row-main:focus-visible {
   letter-spacing: 0.04em;
   font-size: var(--fs-tag);
 }
+/* AC closes the name line (RYT-043 F1), right-aligned, never split from its value. */
 .combat-ac {
-  align-self: center;
   flex: none;
+  margin-left: auto;
+  padding-left: 8px;
   font-size: var(--fs-meta);
   color: var(--app-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .combat-row-tie {
   display: flex;
@@ -348,6 +344,10 @@ button.combat-row-main:focus-visible {
   font-size: var(--fs-meta);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.combat-hp-status,
+.combat-hp-value {
+  white-space: nowrap;
 }
 .combat-hp-status {
   color: var(--app-muted);
@@ -495,6 +495,19 @@ button.combat-row-main:focus-visible {
 .combat-detail-name {
   font-size: var(--fs-h2);
   overflow-wrap: anywhere;
+}
+/* Meta pairs ("Iniciativa 16", "CA 10") wrap as whole pairs, never label from value (RYT-043 F4). */
+.combat-meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.4em;
+}
+.combat-meta > span {
+  white-space: nowrap;
+}
+.combat-meta > span + span::before {
+  content: '·';
+  margin-right: 0.4em;
 }
 .combat-panel {
   border-radius: 14px;
@@ -1296,8 +1309,28 @@ button.combat-row-main:focus-visible {
   --ring: var(--danger);
   --shape: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
 }
+/* The lair is a keep: a square with battlements, unlike the ally's rounded square (RYT-043 F6). */
 .combat-token.shape-lair {
-  --shape: inset(0 round 10%);
+  --shape: polygon(
+    0 18%,
+    16% 18%,
+    16% 0,
+    34% 0,
+    34% 18%,
+    66% 18%,
+    66% 0,
+    84% 0,
+    84% 18%,
+    100% 18%,
+    100% 100%,
+    0 100%
+  );
+}
+.combat-token-glyph {
+  width: 52%;
+  height: 52%;
+  margin-top: 12%;
+  color: var(--app-text);
 }
 .combat-token-ring,
 .combat-token-face {
@@ -1355,6 +1388,17 @@ button.combat-row-main:focus-visible {
 
 .combat-rail.is-large .combat-token {
   --token-size: 60px;
+}
+/* The DM console on phones (RYT-043 F1): a smaller token and tighter gaps leave the hit point
+   line its full phrase and the bar a useful length. */
+@media (max-width: 40em) {
+  .combat-rail:not(.is-large) .combat-row-main {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .combat-rail:not(.is-large) .combat-token {
+    --token-size: 36px;
+  }
 }
 /* Phones: initiative well and token share the row with the name, so both step down and a long
    name (or 150% text) wraps instead of being cut. */
@@ -1443,6 +1487,17 @@ button.combat-row-main:focus-visible {
     font-size: 1.1rem;
   }
 }
+/* "Not shared" is missing information, not a state: always quiet, at meta size (RYT-043 F3). */
+.combat-band.band-unknown .combat-band-seal {
+  width: 26px;
+  height: 26px;
+}
+.combat-band.band-unknown .combat-band-word {
+  font-family: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--app-muted);
+}
 
 /* The table banner: who acts now stands on a large token, who is next on a small one. */
 .combat-table-now:not(.is-rolling) {
@@ -1452,31 +1507,71 @@ button.combat-row-main:focus-visible {
     var(--app-raised) 55%
   );
 }
+/* Token, label and name share one grid. The token stands beside both lines; when the banner is too
+   narrow for the name at the current text size (container query in em, so 150% text counts), the
+   name takes the full width below and the token stays beside the label (RYT-043 F7). */
 .combat-table-actor {
-  display: flex;
-  flex-wrap: wrap;
+  container: actor-now / inline-size;
+  min-width: 0;
+}
+.combat-table-actor.is-next {
+  container-name: actor-next;
+}
+.combat-table-actor-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'token label'
+    'token name';
   align-items: center;
-  gap: 10px 18px;
+  column-gap: 18px;
+}
+.combat-table-actor.is-next .combat-table-actor-grid {
+  column-gap: 12px;
+}
+.combat-table-actor-grid > .combat-token {
+  grid-area: token;
+}
+.combat-table-actor-grid > .combat-table-label {
+  grid-area: label;
+  align-self: end;
+}
+.combat-table-actor-grid > :last-child {
+  grid-area: name;
+  align-self: start;
   min-width: 0;
 }
 .combat-table-actor .combat-token {
   --token-size: clamp(56px, 14vw, 104px);
 }
-/* The name keeps its line: with large text it moves under the token instead of breaking. */
-.combat-table-actor .combat-table-who {
-  flex: 1 1 11em;
-}
-.combat-table-actor.is-next {
-  gap: 12px;
-}
 .combat-table-actor.is-next .combat-token {
   --token-size: clamp(40px, 7vw, 56px);
 }
-.combat-table-actor.is-next .combat-table-who {
-  flex-basis: 6em;
+@container actor-now (max-width: 17em) {
+  .combat-table-actor-grid {
+    grid-template-areas:
+      'token label'
+      'name name';
+    column-gap: 12px;
+    row-gap: 6px;
+  }
+  .combat-table-actor-grid > .combat-table-label {
+    align-self: center;
+  }
+  .combat-table-actor .combat-token {
+    --token-size: 44px;
+  }
 }
-.combat-table-who {
-  min-width: 0;
+@container actor-next (max-width: 10em) {
+  .combat-table-actor-grid {
+    grid-template-areas:
+      'token label'
+      'name name';
+    row-gap: 4px;
+  }
+  .combat-table-actor-grid > .combat-table-label {
+    align-self: center;
+  }
 }
 
 /* The DM detail opens on the combatant's token. */

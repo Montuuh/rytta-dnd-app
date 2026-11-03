@@ -44,7 +44,7 @@ import {
 } from '../domain/combat'
 import { AmountDialog } from './amount-dialog'
 import { sideLabel, useReturnFocus, type Run } from './helpers'
-import { HpMeter, Pips, SideIcon, StateBadge } from './parts'
+import { HpMeter, Pips, StateBadge } from './parts'
 import { CombatantToken } from './token'
 
 type Props = {
@@ -77,18 +77,20 @@ export function CombatantDetail(props: Props) {
         <div className="combat-detail-head">
           <CombatantToken combatant={combatant} size={72} showActive={false} described />
           <div>
-            <Group gap={8} wrap="nowrap">
-              <SideIcon combatant={combatant} size={22} />
-              <Title order={3} className="combat-detail-name">
-                {combatant.name}
-              </Title>
-            </Group>
-            <Text size="sm" c="dimmed">
-              {sideLabel(t, combatant)}
-              {combatant.initiative !== undefined &&
-                ` · ${t('combat.initiative.label')} ${combatant.initiative}`}
-              {combatant.armor_class !== undefined &&
-                ` · ${t('combat.ac', { value: combatant.armor_class })}`}
+            <Title order={3} className="combat-detail-name">
+              {combatant.name}
+            </Title>
+            {/* Each "label value" pair stays on one line (RYT-043 F4). */}
+            <Text size="sm" c="dimmed" className="combat-meta">
+              <span>{sideLabel(t, combatant)}</span>
+              {combatant.initiative !== undefined && (
+                <span>
+                  {t('combat.initiative.label')} {combatant.initiative}
+                </span>
+              )}
+              {combatant.armor_class !== undefined && (
+                <span>{t('combat.ac', { value: combatant.armor_class })}</span>
+              )}
             </Text>
           </div>
         </div>

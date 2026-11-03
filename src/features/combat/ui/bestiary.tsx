@@ -215,6 +215,8 @@ function CreatureImage({
         accept="image/webp,image/png,image/jpeg"
         className="visually-hidden combat-image-input"
         disabled={upload.isPending}
+        // One accessible name, on the control itself (RYT-043 F5); the label is the visual target.
+        aria-label={action}
         aria-describedby={failed ? errorId : undefined}
         onChange={async (event) => {
           const file = event.currentTarget.files?.[0]
@@ -259,7 +261,6 @@ function CreatureImage({
             )}
           </span>
         </Token>
-        <span className="visually-hidden">{action}</span>
       </label>
       <VisuallyHidden role="status">
         {upload.isPending

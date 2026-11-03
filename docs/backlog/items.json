@@ -1662,6 +1662,7 @@
       ],
       "evidence": [
         "docs/evidence/RYT-043/validation.md",
+        "docs/evidence/RYT-043/ui-review.md",
         "docs/decisions/027-combat-art-and-health-bands.md",
         "docs/combat-design.md",
         "docs/design-system.md",
@@ -1672,6 +1673,10 @@
         "docs/evidence/RYT-043/bestiary-empty-tablet.png",
         "docs/evidence/RYT-043/bestiary-mobile.png",
         "docs/evidence/RYT-043/bestiary-tablet.png",
+        "docs/evidence/RYT-043/dm-console-creatures-150-mobile.png",
+        "docs/evidence/RYT-043/dm-console-creatures-150-tablet.png",
+        "docs/evidence/RYT-043/dm-console-creatures-mobile.png",
+        "docs/evidence/RYT-043/dm-console-creatures-tablet.png",
         "docs/evidence/RYT-043/dm-console-mobile.png",
         "docs/evidence/RYT-043/dm-console-order-mobile.png",
         "docs/evidence/RYT-043/dm-console-order-tablet.png",

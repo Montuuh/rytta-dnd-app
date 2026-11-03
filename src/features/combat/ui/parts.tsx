@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
-import { Castle, Radio, Shield, Skull, Users, WifiOff } from 'lucide-react'
+import { Radio, Skull, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { healthBand, type Combatant, type CombatErrorCode } from '../domain/combat'
 import { BandMark } from './token'
@@ -167,18 +167,6 @@ export function NetworkState({
   )
 }
 
-export function SideIcon({ combatant, size = 18 }: { combatant: Combatant; size?: number }) {
-  const Icon =
-    combatant.kind === 'lair'
-      ? Castle
-      : combatant.side === 'party'
-        ? Shield
-        : combatant.side === 'ally'
-          ? Users
-          : Skull
-  return <Icon size={size} aria-hidden="true" />
-}
-
 /**
  * Hit points. Exact numbers (the DM, the own character, teammates who share, revealed creatures) get
  * a proportional bar with the numbers and the band word. Everyone else sees only the named band as a
@@ -216,10 +204,10 @@ export function HpMeter({
       </div>
       <Text component="span" className="combat-hp-text">
         {combatant.defeated && <Skull size={14} aria-hidden="true" className="combat-hp-icon" />}
-        {label}
+        <span className="combat-hp-value">{label}</span>{' '}
+        {/* The band phrase never splits; a narrow row wraps before the dot instead. */}
         <Text component="span" className="combat-hp-status">
-          {' · '}
-          {word}
+          · {word}
         </Text>
       </Text>
     </div>

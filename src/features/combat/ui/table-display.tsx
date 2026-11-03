@@ -103,9 +103,11 @@ export function TableDisplay({
         // replaces the (already known) own name at display size; while waiting, the countdown
         // has its own full-width band, not a line under "Up next".
         <div className={`combat-table-now${yours ? ' is-yours' : ''}`}>
+          {/* Token, label and name share one grid: when the name needs the full width (large
+              text, narrow banner) it moves under them and the token stays by the label (F7). */}
           <div className="combat-table-actor">
-            {active && <CombatantToken combatant={active} />}
-            <div className="combat-table-who">
+            <div className="combat-table-actor-grid">
+              {active && <CombatantToken combatant={active} />}
               <Text className="combat-table-label">{t('combat.turn.now')}</Text>
               <Text className="combat-table-active">
                 {yours ? t('combat.turn.yours') : (active?.name ?? '—')}
@@ -113,8 +115,8 @@ export function TableDisplay({
             </div>
           </div>
           <div className="combat-table-actor is-next">
-            {upNext && <CombatantToken combatant={upNext} showActive={false} />}
-            <div className="combat-table-who">
+            <div className="combat-table-actor-grid">
+              {upNext && <CombatantToken combatant={upNext} showActive={false} />}
               <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
               <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
             </div>

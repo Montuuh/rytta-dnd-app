@@ -1163,6 +1163,7 @@ function seedArt(server: ReturnType<typeof combatServer>) {
       { kind: 'character', character_id: catoId },
       { kind: 'npc', name: 'Goblin', template_id: goblin.id, count: 4, max_hp: 8 },
       { kind: 'npc', name: 'Ogre', template_id: ogre.id, max_hp: 59, hidden: true },
+      { kind: 'lair', name: 'Guarida' },
     ],
   })
   const encounter = server.encounters.find((e) => e.id === id)!
@@ -1229,6 +1230,21 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   await expect(row(page, 'Arin').locator('.combat-hp-bar')).toHaveCount(1)
   await expect(row(page, 'Arin')).toContainText('24/24 PG')
   await expect(row(page, 'Cato').locator('.combat-band')).toContainText('No compartido')
+  // ui-ux F3: "not shared" is quieter than the name (missing information, not a state).
+  const sizes = await row(page, 'Cato').evaluate((li) => ({
+    band: parseFloat(getComputedStyle(li.querySelector('.combat-band-word')!).fontSize),
+    name: parseFloat(getComputedStyle(li.querySelector('.combat-row-name')!).fontSize),
+  }))
+  expect(sizes.band).toBeLessThan(sizes.name)
+  // ui-ux F2: the skull means defeated only; side is the token's shape, not a skull.
+  for (const name of ['Goblin 1', 'Goblin 2', 'Goblin 3'])
+    await expect(row(page, name).locator('svg.lucide-skull')).toHaveCount(0)
+  await expect(row(page, 'Goblin 4').locator('svg.lucide-skull')).toHaveCount(1)
+  // ui-ux F6: the lair is a keep with a castle glyph, never a letter.
+  const lair = row(page, 'Guarida').locator('.combat-token')
+  await expect(lair).toHaveClass(/shape-lair/)
+  await expect(lair.locator('.combat-token-glyph')).toHaveCount(1)
+  await expect(lair.locator('.combat-token-monogram')).toHaveCount(0)
 
   // Tokens: the own portrait and the goblin art load; Bea and Cato have monograms by side.
   await expect(row(page, 'Arin').locator('.combat-token img')).toHaveAttribute('src', /ranger/)
@@ -1261,6 +1277,14 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   // 150% text: bands and tokens still fit.
   await page.evaluate(() => (document.documentElement.style.fontSize = '150%'))
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  // ui-ux F7: the "Now" token stays on a line with its label, never alone on its own row.
+  const banner = await page.evaluate(() => {
+    const actor = document.querySelector('.combat-table-actor:not(.is-next)')!
+    const token = actor.querySelector('.combat-token')!.getBoundingClientRect()
+    const label = actor.querySelector('.combat-table-label')!.getBoundingClientRect()
+    return { overlap: token.top < label.bottom && label.top < token.bottom }
+  })
+  expect(banner.overlap).toBe(true)
   await evidence(page, info.project.name, 'player-bands-150', 'RYT-043')
   await page.evaluate(() => (document.documentElement.style.fontSize = ''))
 
@@ -1302,12 +1326,55 @@ test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broke
   await expect(row(page, 'Goblin 3').locator('.combat-hp-bar')).toHaveCount(1)
   await expect(row(page, 'Ogre').locator('.combat-token')).toHaveClass(/is-hidden/)
   await expect(row(page, 'Ogre').locator('.combat-token img')).toHaveAttribute('src', /ogre/)
+  // ui-ux F1: the band phrase never breaks inside ("A / punto de caer") and the bar keeps most of
+  // the row, also on a 390px phone and with 150% text.
+  const hpLine = async () =>
+    page.locator('.combat-rail:visible .combat-row').evaluateAll((rows) =>
+      rows
+        .filter((li) => li.querySelector('.combat-hp-status'))
+        .map((li) => ({
+          name: li.querySelector('.combat-row-name')!.textContent,
+          // Line boxes the band phrase occupies (one rect per text run, so count distinct tops).
+          lines: new Set(
+            [...li.querySelector('.combat-hp-status')!.getClientRects()].map((r) =>
+              Math.round(r.top),
+            ),
+          ).size,
+          bar: li.querySelector('.combat-hp-bar')!.getBoundingClientRect().width,
+          row: li.getBoundingClientRect().width,
+        })),
+    )
+  for (const scale of ['', '150%']) {
+    await page.evaluate((size) => (document.documentElement.style.fontSize = size), scale)
+    const rows = await hpLine()
+    expect(rows.length).toBeGreaterThanOrEqual(7)
+    for (const line of rows) {
+      expect(line.lines, `${line.name} ${scale}`).toBe(1)
+      expect(line.bar / line.row, `${line.name} ${scale}`).toBeGreaterThan(0.4)
+    }
+    await row(page, 'Goblin 1').evaluate((el) => el.scrollIntoView({ block: 'start' }))
+    await evidence(
+      page,
+      info.project.name,
+      scale ? 'dm-console-creatures-150' : 'dm-console-creatures',
+      'RYT-043',
+    )
+  }
+  await page.evaluate(() => (document.documentElement.style.fontSize = ''))
   await audit(page)
   await evidence(page, info.project.name, 'dm-console-order', 'RYT-043')
   // The detail opens on the combatant's token, with its image described.
   await row(page, 'Goblin 2').locator('.combat-row-main').click()
   const detail = page.locator('.combat-detail:visible')
   await expect(detail.getByRole('img', { name: 'Imagen de Goblin 2' })).toBeVisible()
+  // ui-ux F4: "CA 10" and "Iniciativa 16" never split from their value.
+  for (const pair of await detail.locator('.combat-meta > span').all())
+    expect(
+      await pair.evaluate(
+        (el) => new Set([...el.getClientRects()].map((r) => Math.round(r.top))).size,
+      ),
+    ).toBe(1)
+  await expect(detail.locator('.combat-meta')).toContainText('CA 10')
   await audit(page)
   await evidence(page, info.project.name, 'dm-console', 'RYT-043')
 })
@@ -1354,6 +1421,10 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   ).toHaveClass(/shape-ally/)
   const picker = card.getByLabel('Añadir una imagen de Goblin')
   await expect(picker).toHaveAttribute('type', 'file')
+  // ui-ux F5: one accessible name, on the control; no loose duplicate text.
+  await expect(card.getByText('Añadir una imagen de Goblin')).toHaveCount(0)
+  // ui-ux F4: each stat keeps its label and value together.
+  expect(await card.locator('.combat-card-text p').nth(1).textContent()).toContain('CA 15')
   await expectTouchTargets(page, '.combat-image-picker')
   // Keyboard: the picker takes focus and shows the focus ring around the token.
   await picker.focus()

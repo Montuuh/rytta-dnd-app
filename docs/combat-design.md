@@ -188,8 +188,9 @@ and damage dealt, taken and healed as tabular numbers. Same component in the DM 
   band is a seal with its own glyph and the band's name, never a bar (RYT-043): unhurt, wounded
   (over half), bloodied (over a quarter), near death (a quarter or less, the only filled seal), down
   or defeated, and "not shared" for teammates who do not share. Side is the token's shape (round
-  party, rounded-square ally, hexagonal enemy, square lair) plus an icon and a hidden text label;
-  never colour alone.
+  party, rounded-square ally, hexagonal enemy, crenellated keep for the lair) plus a hidden text
+  label; never colour alone. Rows have no separate side glyph, so the skull only ever means
+  defeated or dead (RYT-043 review F2).
 - Tokens (RYT-043, ADR 027): portraits and bestiary images, cropped to the side's shape, in the
   order, the table banner (large for "Now", small for "Up next"), the DM turn bar, the detail and the
   recap. Without an image an engraved monogram stands in. The acting token's rim turns to the

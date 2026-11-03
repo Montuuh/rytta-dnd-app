@@ -79,6 +79,8 @@ Screenshots (Playwright, captured and inspected; `RYT_EVIDENCE=1`, RYT-043 tests
 - `summary-en-light-{mobile,tablet}.png` — recap rows with tokens.
 - `dm-table-{mobile,tablet}.png`, `dm-console-order-{mobile,tablet}.png`, `dm-console-{mobile,tablet}.png`
   — DM table view, console order with exact HP and the hidden ogre, and the detail with its token.
+- `dm-console-creatures-{mobile,tablet}.png` and `dm-console-creatures-150-{mobile,tablet}.png` —
+  the console's creature rows (bands, bars, hidden ogre, lair keep) at 100% and 150% text.
 - `bestiary-empty-{mobile,tablet}.png` (monograms, keyboard focus ring on the picker) and
   `bestiary-{mobile,tablet}.png` (image added).
 
@@ -127,4 +129,29 @@ Untested layers:
   PNG/JPEG/WebP only).
 - The DM "Vista jugador" preview of tokens (presentation transform; images follow the DM's access).
 
-Independent `ui-ux` review: pending (not run by the implementer).
+Independent `ui-ux` review: round 1 returned CHANGES_REQUIRED
+([report](ui-review.md), committed as received). Re-review pending.
+
+## Round 1 fixes (ui-ux CHANGES_REQUIRED)
+
+| Finding | Change | Evidence |
+| --- | --- | --- |
+| F1 Major: DM console at 390px wrapped "A / punto de caer" and shortened the bar | AC moved from its own column to the end of the name line (it wraps under the name when the name needs the room); console rail on phones uses a 36px token and tighter gaps; the HP value and the band phrase are `nowrap`, so a narrow row wraps before the dot, never inside the phrase | e2e (every project, 100% and 150% text): each band phrase occupies one line box and every bar is over 40% of its row. The same test run against the reviewed code fails (bar 31% of the row on 390px). `dm-console-creatures-{mobile,tablet}.png`, `dm-console-creatures-150-*.png`, `dm-console-order-*.png` |
+| F2 Major: Skull meant both "enemy" and "defeated" | The side glyph is gone from rows and the DM detail (side stays in the token's shape and rim, the visually hidden row label and the detail's "Enemigo" text); `SideIcon` was removed. Skull now appears only for defeated/dead | e2e: no skull in living goblins' rows, exactly one in Goblin 4's |
+| F3 Minor: "No compartido" louder than the name | The `unknown` band is always quiet: meta size, body face, muted colour, small seal | e2e: the band word's font size is smaller than the name's; `player-bands-tablet.png` |
+| F4 Minor: "CA / 15" split | `combat.ac` and `combat.bestiary.stats` use non-breaking spaces inside each pair; the detail meta line is a wrapping row of nowrap pairs | e2e: detail pairs on one line each, "CA 10" and "CA 15" with NBSP; `bestiary-mobile.png`, `dm-console-mobile.png` |
+| F5 Minor: picker name read twice | The file input carries `aria-label`; the label has no text of its own | e2e: `getByLabel` finds the input and no loose "Añadir una imagen de Goblin" text exists |
+| F6 Note: lair showed a "G" | The lair token shows a castle glyph and has a crenellated keep shape, distinct from the ally's rounded square at 44px | e2e: lair token has the glyph and no monogram; `dm-console-creatures-mobile.png` |
+| F7 Note: at 150% the "Now" token sat alone | Token, label and name share one grid; a container query in `em` moves only the name under the token and label when it needs the width, so the token stays beside its label | e2e: at 150% the token and the "Ahora" label overlap vertically; `player-bands-150-mobile.png` |
+
+Commands after the fixes:
+
+| Command | Result |
+| --- | --- |
+| `npm run typecheck` | first run failed: `rowGap` is not a Mantine `Group` prop; moved to CSS, then clean |
+| combat e2e, identity desktop/tablet/mobile | first run: 3 failures in the new F1 assertion, which counted one rect per text run (two runs on one line); it now counts distinct line tops. Then 59 passed, 1 skipped |
+| `npm run check` | passed (235 unit/SQL tests, build) |
+| `CI=1 npm run test:e2e` | 419 passed, 49 skipped, 0 failed |
+
+Visual note after the first fix pass: at 150% on 390px the console names were cut ("Gobl…") by the
+AC on the same line; the name line now wraps and AC moves under the name instead.

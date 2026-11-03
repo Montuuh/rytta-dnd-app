@@ -17,8 +17,9 @@ other Players could not read them, and bestiary creatures had no image at all.
 ### Tokens
 
 - Every combatant is drawn as a token, the base of a miniature: round for the party, a rounded
-  square for allies, a hexagon for enemies and a square keep for the lair. The rim takes the side's
-  colour; the shape keeps side readable without colour. The acting combatant's rim turns to the
+  square for allies, a hexagon for enemies and a crenellated keep (with a castle glyph) for the
+  lair. The rim takes the side's colour; the shape keeps side readable without colour, so rows carry
+  no extra side glyph and the skull only means defeated. The acting combatant's rim turns to the
   accent and glows; a defeated token turns grey; a token hidden from Players (DM only) has a broken
   rim.
 - The image is the character's portrait or the creature's bestiary image, cropped to the shape.

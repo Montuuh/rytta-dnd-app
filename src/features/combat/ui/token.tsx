@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
+  Castle,
   Droplets,
   EyeOff,
   Heart,
@@ -20,9 +21,9 @@ type TokenSide = 'party' | 'ally' | 'enemy' | 'lair'
 /**
  * A combatant's token (RYT-043): the portrait or creature image cut to the shape of its side, like a
  * miniature's base. Party tokens are round, allies are rounded squares, enemies are hexagons and the
- * lair is a square keep, so the side reads by shape as well as by the ring's colour. Without an image
- * (or when it cannot load) the token shows an engraved monogram. The image carries alt text; the
- * monogram is decorative because the name is always printed next to it.
+ * lair is a crenellated keep, so the side reads by shape as well as by the ring's colour. Without an
+ * image (or when it cannot load) the token shows an engraved monogram, or the keep glyph for the
+ * lair; both are decorative because the name is always printed next to the token.
  */
 export function Token({
   name,
@@ -88,6 +89,9 @@ export function Token({
             draggable={false}
             onError={() => setFailed(src)}
           />
+        ) : side === 'lair' ? (
+          // A place has no initials: the keep glyph (RYT-043 F6).
+          <Castle className="combat-token-glyph" aria-hidden="true" strokeWidth={2} />
         ) : (
           <span className="combat-token-monogram" aria-hidden="true">
             {monogram(name)}
@@ -156,7 +160,7 @@ export function BandMark({
   return (
     <span className={`combat-band band-${defeated ? 'defeated' : band}${large ? ' is-large' : ''}`}>
       <span className="combat-band-seal" aria-hidden="true">
-        <Icon size={large ? 22 : 16} strokeWidth={2.25} />
+        <Icon size={large && band !== 'unknown' ? 22 : 16} strokeWidth={2.25} />
       </span>
       <span className="combat-band-word">{word}</span>
     </span>

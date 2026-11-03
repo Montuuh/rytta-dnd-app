@@ -763,3 +763,64 @@ becomes taller (114px) because the title text scales, so focused controls can si
 
 Only the scope above was re-checked. The untested list from round one still applies. Approval
 covers only the fingerprint above.
+
+## Re-review 8 (focused on N7, after f2206a0)
+
+- Reviewed source: `f2206a0`
+- UI fingerprint: `3c8b922406dbe4e4d40474d0bfabaea083e30a1588f75b8c36f16ada150cb35d` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml`, read-only on implementation
+- Date: 2026-11-03
+- Method: fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px).
+  English light, 100% and 150% text.
+- Evidence: `docs/evidence/ui-review/combat/r9/*.png`
+
+### Verdict: PASS
+
+N7 is fixed. N4, N5 and N6 still hold. No findings remain open.
+
+### Results
+
+**N7, keyboard focus moving upward in the drawer.** I moved focus with Shift+Tab from "Remove from
+encounter" up to the drawer header, 12 steps each run. Runs covered m and t, a short name and a
+long name ("Ancient bandit captain of the Sunken Coast"), and a creature with legendary actions.
+
+| Text size | Header height | `scroll-padding-top` | Focused controls under the header |
+| --- | --- | --- | --- |
+| 100% | 76px | 88px | none |
+| 150% | 114px | 126px | none |
+
+In round 7 the 150% padding was 104px and three controls sat partly under the header.
+
+**Tablet 150% retap.** After a keyboard dismiss, the second tap reaches Success and the error
+appears again.
+
+**N4.** On m and t, at 100% and 150%:
+- Success and Failure stay above the sticky alert and remain tappable.
+  - m 100%: buttons at 548–592px, alert at 757px.
+  - m 150%: buttons at 627–671px, alert at 687px.
+  - t 150%: buttons at 701–745px, alert at 1077px.
+- A failing chip also stays above the alert.
+- axe reports no violations.
+
+**N5.**
+- The drawer error returns focus to Success, whether dismissed with Enter or a tap.
+- The toast returns focus to "Next turn", whether dismissed with Enter, Space or a tap.
+- Auto-dismiss leaves focus where it was.
+- In a modal, an error dismissed with Enter returns focus to "Add effect".
+- Escape on the drawer returns focus to the row and leaves no stray alert.
+
+**N6.** The drawer's scrollTop stayed fixed through 10 s at the end and 6 s at the top:
+- m: 642 at 100%, 1373 at 150%
+- t: 232 at 100%, 601 at 150%
+
+The modal stayed at 0.
+
+**Delivery spec.** `tests/e2e/combat.spec.ts` passes 9/9 on identity mobile, tablet and desktop.
+
+### Limitations
+
+- Only the scope above was re-checked.
+- I did not exercise the Player's right-side drawer at w with Shift+Tab. It uses the same
+  `.combat-drawer` rule.
+- The untested list from round one still applies.
+- This approval covers only the fingerprint above.

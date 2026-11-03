@@ -1,8 +1,8 @@
 {
-  "ticket": "RYT-035",
+  "ticket": "RYT-007, RYT-036, RYT-037, RYT-038 (merged with RYT-035)",
   "reviewer": "ui-ux",
   "verdict": "PASS",
   "reviewedAt": "2026-11-03",
-  "sourceDigest": "ee12b28ee283d10eaf3b78bbbccec8bddd9afa5cc6655c11bff1a7c737a1b050",
-  "report": "docs/evidence/ui-review/RYT-035/review.md"
+  "sourceDigest": "d6ab88f6c54b2de0314d9a853040e2bfde6f478f15aa447a973d5642eefd21d0",
+  "report": "docs/evidence/ui-review/combat/review.md"
 }

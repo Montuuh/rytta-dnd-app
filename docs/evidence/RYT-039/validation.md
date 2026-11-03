@@ -23,9 +23,9 @@ that already wraps the combat routes.
 
 | Check | Result |
 | --- | --- |
-| `npm run check` | see final run below |
+| `npm run check` (typecheck, lint, architecture, docs, AI contracts, unit + SQL, build) | passed, 204 tests |
 | `playwright test combat -g RYT-039` (identity desktop, tablet, mobile) | 3 passed |
-| `playwright test combat glossary character-sheet` | see final run below |
+| `playwright test combat glossary character-sheet` | 63 passed |
 
 The new e2e test sets "Derribado" on a goblin, checks the three links, opens the definition with
 the keyboard (dialog named "Derribado"), runs axe and the 44 px audit with the definition open,
@@ -46,4 +46,18 @@ override, as in RYT-008.
 
 ## UI/UX review
 
-Pending.
+Independent `ui-ux` verdict: **PASS** on fingerprint `4e3e321d…`, report
+[ui-review.md](ui-review.md). The reviewer checked DM and Player at 390 px, 820 px and 1280 px:
+title fonts and pill styling unchanged, no term hit area covering another control, keyboard and
+Escape order (drawer and wide layout), accessible names, axe with the definition open, stacking
+above the drawer, `onlyTopDialog`, and the sticky inline error.
+
+Accepted minor items:
+
+- M1: neighbouring term hit areas overlap (a tap just below "Estados" or between wrapped pill
+  rows opens the next term); taps on the text are always correct. Same trade-off as RYT-008 F7.
+- M2: the e2e test does not cover the effect-line link, because the combat fixture cannot add
+  effects; the reviewer verified it manually with injected state.
+
+Not tested: light and class themes, English and 150 % text for these pills (same component and
+tokens as RYT-008), real devices and screen readers.

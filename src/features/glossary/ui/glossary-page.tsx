@@ -62,6 +62,17 @@ const conditionsAtTheTable = [
   'condition.exhaustion',
 ]
 
+/**
+ * The address bar's current query. React Router's functional `setSearchParams` updater gets the
+ * params of the render it came from, so a delayed write (the search mirror) would drop a
+ * category chosen meanwhile; reading the live URL keeps both (`?q=` and `?cat=`).
+ */
+function liveSearchParams() {
+  const hash = window.location.hash
+  const at = hash.indexOf('?')
+  return new URLSearchParams(at === -1 ? '' : hash.slice(at + 1))
+}
+
 /** The entry last read on its own (phone) route; the index returns focus to its row. */
 let lastReaderEntry: string | null = null
 /**
@@ -121,15 +132,10 @@ export function GlossaryPage() {
       const currentPath = window.location.hash.replace(/^#/, '').split('?')[0]
       if (currentPath !== scheduledPath) return
       setWrittenQuery(value)
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          if (value) next.set('q', value)
-          else next.delete('q')
-          return next
-        },
-        { replace: true },
-      )
+      const next = liveSearchParams()
+      if (value) next.set('q', value)
+      else next.delete('q')
+      setParams(next, { replace: true })
     }, 300)
     return () => window.clearTimeout(handle)
   }, [query, urlQuery, setParams, location.pathname])
@@ -243,16 +249,12 @@ export function GlossaryPage() {
   const hrefFor = (id: string) => `${pagePath}/${encodeURIComponent(id)}${keep ? `?${keep}` : ''}`
   const indexHref = `${pagePath}${keep ? `?${keep}` : ''}`
 
-  const setParam = (key: string, value: string | null) =>
-    setParams(
-      (current) => {
-        const next = new URLSearchParams(current)
-        if (value) next.set(key, value)
-        else next.delete(key)
-        return next
-      },
-      { replace: true },
-    )
+  const setParam = (key: string, value: string | null) => {
+    const next = liveSearchParams()
+    if (value) next.set(key, value)
+    else next.delete(key)
+    setParams(next, { replace: true })
+  }
 
   if (glossary.indexError)
     return (

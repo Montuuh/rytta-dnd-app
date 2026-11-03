@@ -933,3 +933,73 @@ for DMs. I leave it to main's owner whether two-line labels at large text are pr
   screen readers.
 - The untested list from round one still applies.
 - This verdict applies only to the fingerprint above.
+
+## Re-review 10 (merged branch, I1 and I2, after 78193b6)
+
+- Reviewed source: `78193b6`
+- UI fingerprint: `d6ab88f6c54b2de0314d9a853040e2bfde6f478f15aa447a973d5642eefd21d0` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml`, implementation read-only
+- Date: 2026-11-03
+- Method: fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px).
+  Covered es-dark, en-light, and 150% text (en-light for I1, es-dark for I2).
+- Evidence: `docs/evidence/ui-review/combat/r11/*.png`
+
+### Verdict: PASS
+
+I1 and I2 are fixed. No blocker or major findings remain on the merged snapshot.
+
+### I1: fixed
+
+Setup: a Player with `player_modules = ['party']`, with a live encounter seeded so that any leak
+would be visible.
+
+- **All three routes are guarded.** `/combat`, `/combat/:id` and `/combat/:id/table` each show only
+  the `PageHead` "Combate" / "Combat", followed by "El DM todavía no ha abierto el combate." /
+  "Your DM has not opened combat yet."
+  - No rail, hero or table banner renders.
+  - The Player issues no combat RPC (`get_combat_state`, `list_encounters` or similar).
+- **It matches main's Shops state.** The h1 size, `PageHead` and copy pattern are the same: 34px at
+  100% and 51px at 150%. axe, overflow and the 44px checks are clean on m, t and w.
+- **The DM is unaffected.** With the module off, the DM still reaches the list and the live
+  console.
+- **A DM previewing as Player (Arin) follows the module setting.**
+  - With the module off, the DM sees the hidden state and no console.
+  - With the module on, the DM sees the Player view ("¡Te toca!", "Terminar mi turno") and no DM
+    turn bar.
+
+### I2: fixed
+
+- **DM list.** It now uses `PageHead` with `compactOnPhone`. The lede is hidden on m at 100% and
+  150%, so the tabs start at 143px (175px at 150%), where before the lede took 3–4 lines. On t and
+  w the lede shows.
+- **Player "no fight" page.** It uses `PageHead` with its lede.
+- Both pages are axe-clean, with no overflow and every target at least 44px.
+
+### Regression
+
+- **One run.** `tests/e2e/combat.spec.ts`, `characters.spec.ts` and `identity.spec.ts` on identity
+  mobile, tablet and desktop: 134 of 135 passed in that run.
+- **The one failure.** `identity.spec.ts` "DM invites, cancels and hands over before leaving" timed
+  out on tablet, with "Abandonar campaña" still disabled after 5 s. It is main's members flow and
+  not a combat file.
+- **Re-run in isolation.** With `--repeat-each=3` on all three projects it passed 9 of 9, and it
+  also passed in Re-review 9. I treat it as a load-dependent flake and report it for main's owner.
+- **Combat spec.** It passes in full, including the new "Players reach combat only when the DM
+  opened the module" test.
+
+### Remaining minor (non-blocking)
+
+- **Two-line Spanish lede on wider screens.** On t and w, the DM list's Spanish lede ("Prepara
+  encuentros, lleva la iniciativa y controla cada punto de golpe desde una sola pantalla.") wraps to
+  2 lines. RYT-035 asks for one-line ledes on laptops; the English one and Shops fit on one line.
+  Shortening the copy would fix it.
+- **Bottom-bar truncation at 150% text.** This belongs to main's RYT-035 and the coordinator is
+  reporting it separately as a follow-up.
+
+### Limitations
+
+- Only the scope above was re-checked.
+- The untested list from round one still applies: no success paths for effects or death saves in
+  the fixture, legendary/lair/hidden combatants, realtime, other class themes, the unreachable More
+  drawer, and iOS/Safari or screen readers.
+- This verdict covers only the fingerprint above.

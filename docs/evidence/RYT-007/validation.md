@@ -114,6 +114,15 @@ not re-run here; only the combat spec was.
   - N7, so that padding scales with text size. Re-review 8 **PASS** for fingerprint
     `3c8b9224…cb35d`, recorded in `docs/evidence/ui-review-current.json`.
   - No review findings remain open.
+- **Merge with main (RYT-035 review fixes):**
+  - Re-review 9 found I1, a major issue: Players could open combat by URL while the DM had the
+    module off. It also found I2, a minor one: the list did not use the compact phone page head.
+  - Both are fixed, with an e2e test for I1. Re-review 10: **PASS** for the merged fingerprint
+    `d6ab88f6…fd21d0`, recorded in `docs/evidence/ui-review-current.json`.
+- **Open follow-ups:**
+  - The Spanish DM-list lede wraps to two lines on tablet and wide.
+  - Main's 5-item bottom bar truncates its labels at 150% text (RYT-035 scope).
+  - The `identity.spec.ts` hand-over test failed once under load; it passed 9/9 in isolation.
 
 ## Not tested / limitations
 

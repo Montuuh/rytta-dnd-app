@@ -44,6 +44,17 @@ committed HTTP fixtures (`tests/e2e/fixtures`) against a Supabase-mode build.
 | Wizard "Save and exit" looked like text; SRD template field was empty    | Default button with icon; placeholder                                                    |
 | Party "Satchel" button vs "Inventory" navigation                         | Same name as the destination                                                             |
 
+## Independent ui-ux review
+
+[Report](../ui-review/RYT-035/review.md). The first round on `dd34abb` returned CHANGES_REQUIRED:
+two blocking findings (phone header and bottom bar wrapping at 150% text, and the DM Command
+Center head filling the first phone screen at 150%), two major (shop title breaking inside
+words, AC shown two ways) and minor items. All were fixed in `c9e651c`, and the focused re-review
+returned PASS for source fingerprint
+`ee12b28ee283d10eaf3b78bbbccec8bddd9afa5cc6655c11bff1a7c737a1b050`. Advisory note N1 (phone
+refresh stamp announced instead of shown) is recorded in `docs/design-system.md`; N2 (campaign
+name truncated in the DM header at 150%) is the accepted cost of a one-row header.
+
 ## Checks
 
 - `npm run check`: typecheck, lint, architecture, docs, AI contracts, 162 unit/SQL tests, build.

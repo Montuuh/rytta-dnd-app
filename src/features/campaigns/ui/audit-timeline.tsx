@@ -1,10 +1,10 @@
 import { Badge, Group, Stack, Text, Timeline } from '@mantine/core'
-import { Coins, HeartPulse, Radio, ScrollText, UserRound } from 'lucide-react'
+import { Coins, HeartPulse, Radio, ScrollText, UserRound, UsersRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { relativeTime } from '@/shared/lib/relative-time'
 import type { AuditEvent } from '../domain/campaign'
-import { auditFamily, sharingChanged } from '../domain/audit'
+import { activeChanged, auditFamily, sharingChanged } from '../domain/audit'
 
 type Numeric = { key: string; label: string }
 const resourceKeys = ['gold', 'water_units', 'rations', 'exhaustion'] as const
@@ -77,9 +77,12 @@ export function AuditTimeline({
       {events.map((event) => {
         const family = auditFamily(event)
         const sharing = sharingChanged(event)
+        const switched = activeChanged(event)
         const labelKey = sharing
           ? 'audit.liveSharingChanged'
-          : (`dm.auditEvent.${event.kind.replace(':', '_')}` as 'dm.auditEvent.characters_INSERT')
+          : switched
+            ? 'audit.activeChanged'
+            : (`dm.auditEvent.${event.kind.replace(':', '_')}` as 'dm.auditEvent.characters_INSERT')
         const characterName = showCharacter
           ? ((typeof event.after_value.name === 'string' ? event.after_value.name : null) ??
             characterNames.get(event.character_id) ??
@@ -114,13 +117,15 @@ export function AuditTimeline({
                 : []
         const Bullet = sharing
           ? Radio
-          : family === 'resources'
-            ? Coins
-            : family === 'vitals'
-              ? HeartPulse
-              : family === 'sheet'
-                ? ScrollText
-                : UserRound
+          : switched
+            ? UsersRound
+            : family === 'resources'
+              ? Coins
+              : family === 'vitals'
+                ? HeartPulse
+                : family === 'sheet'
+                  ? ScrollText
+                  : UserRound
         const created = new Date(event.created_at)
         return (
           <Timeline.Item
@@ -155,6 +160,11 @@ export function AuditTimeline({
                   {t(
                     event.after_value.shares_live ? 'audit.liveSharingOn' : 'audit.liveSharingOff',
                   )}
+                </Text>
+              )}
+              {switched && (
+                <Text size="sm">
+                  {t(event.after_value.is_active ? 'audit.activeOn' : 'audit.activeOff')}
                 </Text>
               )}
               {assignment && (

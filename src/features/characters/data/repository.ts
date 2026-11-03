@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { config } from '@/shared/lib/config'
 import { characterSchema, resourceSchema, type CharacterAction } from '../domain/character'
 import { partyMemberSchema } from '../domain/party'
+import { rosterEntrySchema, rosterError } from '../domain/roster'
 import {
   buildSchema,
   sheetRowSchema,
@@ -16,6 +17,7 @@ async function client() {
   const { getSupabase } = await import('@/shared/api/supabase')
   return getSupabase(config.VITE_SUPABASE_URL!, config.VITE_SUPABASE_PUBLISHABLE_KEY!)
 }
+/** Characters in play (RYT-044): active Player characters and the DM's unassigned ones. */
 export async function listCharacters(campaignId: string, signal: AbortSignal, playerId?: string) {
   let query = (await client())
     .from('characters')
@@ -23,12 +25,48 @@ export async function listCharacters(campaignId: string, signal: AbortSignal, pl
       'id, campaign_id, user_id, name, character_resources(gold, water_units, rations, exhaustion, revision)',
     )
     .eq('campaign_id', z.uuid().parse(campaignId))
+    .eq('is_active', true)
     .order('created_at')
     .abortSignal(signal)
   if (playerId) query = query.eq('user_id', playerId)
   const { data, error } = await query
   if (error) throw error
   return characterSchema.array().parse(data)
+}
+/** RYT-044: every character the caller may read, active or in reserve (RLS scopes it). */
+export async function listRoster(campaignId: string, signal: AbortSignal, playerId?: string) {
+  const db = await client()
+  const campaign = z.uuid().parse(campaignId)
+  let query = db
+    .from('characters')
+    .select('id, campaign_id, user_id, name, is_active, created_at')
+    .eq('campaign_id', campaign)
+    .not('user_id', 'is', null)
+    .order('created_at')
+    .order('id')
+    .abortSignal(signal)
+  if (playerId) query = query.eq('user_id', z.uuid().parse(playerId))
+  const [characters, sheets] = await Promise.all([
+    query,
+    db
+      .from('character_sheets')
+      .select('character_id, portrait_path')
+      .eq('campaign_id', campaign)
+      .abortSignal(signal),
+  ])
+  if (characters.error) throw characters.error
+  if (sheets.error) throw sheets.error
+  const portraits = new Map(
+    z
+      .object({ character_id: z.uuid(), portrait_path: z.string().nullable() })
+      .array()
+      .parse(sheets.data)
+      .map((row) => [row.character_id, row.portrait_path]),
+  )
+  return rosterEntrySchema
+    .array()
+    .parse(characters.data)
+    .map((entry) => ({ ...entry, portraitPath: portraits.get(entry.id) ?? null }))
 }
 /** RYT-031: own + shared teammates for Players, every character (with sharing flag) for DMs. */
 export async function getPartyOverview(campaignId: string, signal: AbortSignal) {
@@ -55,7 +93,10 @@ export async function listAssignments(campaignId: string, signal: AbortSignal) {
     .array()
     .parse(data)
 }
-export async function changeCharacter(campaignId: string, action: CharacterAction) {
+export async function changeCharacter(
+  campaignId: string,
+  action: CharacterAction,
+): Promise<string | null> {
   const db = await client()
   const target_campaign = z.uuid().parse(campaignId)
   let result
@@ -94,6 +135,19 @@ export async function changeCharacter(campaignId: string, action: CharacterActio
         enabled: z.boolean().parse(action.enabled),
       })
       break
+    case 'createOwn':
+      result = await db.rpc('create_own_character', {
+        target_campaign,
+        character_name: characterSchema.shape.name.parse(action.name),
+        request_id: z.uuid().parse(action.requestId),
+      })
+      break
+    case 'activate':
+      result = await db.rpc('set_active_character', {
+        target_campaign,
+        target_character: z.uuid().parse(action.characterId),
+      })
+      break
     case 'resources': {
       const v = resourceSchema.parse(action.values)
       result = await db.rpc('set_character_resources', {
@@ -109,8 +163,14 @@ export async function changeCharacter(campaignId: string, action: CharacterActio
       break
     }
   }
-  if (result.error)
-    throw new Error(result.error.message.includes('Stale revision') ? 'stale' : 'unavailable')
+  if (result.error) {
+    const message = result.error.message
+    if (message.includes('Stale revision')) throw new Error('stale')
+    throw new Error(rosterError(message))
+  }
+  return action.kind === 'createOwn' || action.kind === 'activate'
+    ? z.uuid().parse(result.data)
+    : null
 }
 
 const sheetColumns =

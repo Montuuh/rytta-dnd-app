@@ -1575,7 +1575,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-021", "RYT-024"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1595,7 +1595,29 @@
         "independent ui-ux PASS",
         "SQL denial tests"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/decisions/026-player-character-roster.md",
+        "docs/evidence/RYT-044/validation.md",
+        "supabase/migrations/20261105120000_character_roster.sql",
+        "tests/database/character-roster.test.ts",
+        "tests/e2e/roster.spec.ts",
+        "docs/evidence/RYT-044/onboarding-mobile.png",
+        "docs/evidence/RYT-044/onboarding-tablet.png",
+        "docs/evidence/RYT-044/create-dialog-mobile.png",
+        "docs/evidence/RYT-044/create-dialog-tablet.png",
+        "docs/evidence/RYT-044/roster-mobile.png",
+        "docs/evidence/RYT-044/roster-tablet.png",
+        "docs/evidence/RYT-044/roster-full-mobile.png",
+        "docs/evidence/RYT-044/roster-full-tablet.png",
+        "docs/evidence/RYT-044/roster-switched-mobile.png",
+        "docs/evidence/RYT-044/roster-switched-tablet.png",
+        "docs/evidence/RYT-044/roster-en-light-mobile.png",
+        "docs/evidence/RYT-044/roster-en-light-tablet.png",
+        "docs/evidence/RYT-044/party-entry-mobile.png",
+        "docs/evidence/RYT-044/party-entry-tablet.png",
+        "docs/evidence/RYT-044/dm-rosters-mobile.png",
+        "docs/evidence/RYT-044/dm-rosters-tablet.png"
+      ]
     }
   ]
 }

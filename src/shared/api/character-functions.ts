@@ -7,6 +7,15 @@ export type CharacterFunctions = {
     Returns: undefined
   }
   create_character: { Args: { target_campaign: string; character_name: string }; Returns: string }
+  // RYT-044 Player roster: own characters (limit 4) and the active one.
+  create_own_character: {
+    Args: { target_campaign: string; character_name: string; request_id: string }
+    Returns: string
+  }
+  set_active_character: {
+    Args: { target_campaign: string; target_character: string }
+    Returns: string
+  }
   unassign_character: {
     Args: { target_campaign: string; target_character: string; expected_user: string }
     Returns: undefined

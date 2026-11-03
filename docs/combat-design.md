@@ -2,7 +2,7 @@
 
 Tickets: RYT-007 (shared combat core), RYT-036 (encounter preparation and bestiary), RYT-037
 (combat tools), RYT-038 (table display), RYT-041 (roster changes), RYT-042 (single Player view),
-RYT-043 (tokens, images and health bands).
+RYT-043 (tokens, images and health bands), RYT-045 (Player death saves and end turn).
 Decision records: [ADR 024](decisions/024-combat.md), [ADR 027](decisions/027-combat-art-and-health-bands.md).
 This document is the design analysis behind the delivery. It separates observations (what the table needs) from
 decisions (what Rytta builds) and lists deliberate non-goals.
@@ -75,7 +75,8 @@ decisions (what Rytta builds) and lists deliberate non-goals.
 9. **Concentration**: a note of the spell; on damage the screen shows the Constitution save DC
    (max(10, half the damage), up to 30 — SRD 5.2, CC-BY-4.0, attributed on screen).
 10. **Death saves**: success, failure, natural 1 (two failures), natural 20 (regain 1 HP);
-    three successes show "Stable", three failures mark the character dead.
+    three successes show "Stable", three failures mark the character dead. A Player rolls the
+    own character's save on its own turn, once per round (RYT-045); the DM records any save.
 11. **Legendary actions**: a counter per creature, reset at the start of its turn.
 12. **Combat log**: typed events with round and attribution, private DM entries, and a
     compensating undo of HP, condition, concentration and death-save changes (refused when the
@@ -83,8 +84,8 @@ decisions (what Rytta builds) and lists deliberate non-goals.
 13. **Summary**: rounds, damage dealt (attributed to whoever held the turn), taken, healing,
     downed and defeated, kept with the encounter.
 14. **Table display**: a large projection that never carries DM secrets, even when the DM opens
-    it. It is the Players' only combat screen and the DM's default (RYT-042); its one write is
-    the Player's own initiative.
+    it. It is the Players' only combat screen and the DM's default (RYT-042); its writes are the
+    Player's own: initiative, and on the own turn the death save and ending the turn (RYT-045).
 
 ## 4. Visibility model
 
@@ -97,6 +98,7 @@ decisions (what Rytta builds) and lists deliberate non-goals.
 | AC                                                        | ✓   | ✓             | ✓               | —                 | —             | DM only    |
 | Conditions, concentration                                 | ✓   | ✓             | ✓               | —                 | ✓             | DM only    |
 | Death saves, exhaustion                                   | ✓   | ✓             | ✓               | —                 | n/a           | n/a        |
+| Death save outcome (stable, revived, dead; RYT-045)       | ✓   | ✓             | ✓               | ✓                 | n/a           | n/a        |
 | DM notes, secret effects, private log entries             | ✓   | —             | —               | —                 | —             | —          |
 
 The table view uses the Player projection without "own" data.
@@ -114,9 +116,23 @@ The table view uses the Player projection without "own" data.
 
 **RYT-042: one Player screen.** Players have no other combat panel: the table view is their
 screen. It adds, for them only, the own initiative entry and the own-turn banner; the end of
-the fight turns it into the summary. Hit points, conditions and death saves are kept on the
-character sheet (same `character_vitals`); ending the own turn and undoing own changes are no
-longer Player actions in combat (the DM runs the turn).
+the fight turns it into the summary. Hit points and conditions are kept on the character sheet
+(same `character_vitals`); undoing own changes is not a Player action in combat (the DM undoes
+from the console log).
+
+**RYT-045: the own turn.** On the own turn "Up next" becomes the hand-off: a wide, heavy tile
+"End my turn · Passes to X" with the next combatant's token (beside "Your turn!" on tablets, at
+the foot of the banner on phones and with large text). No confirmation: the server takes the
+expected active combatant, so a repeated tap never moves the turn twice; it is disabled on stale
+data; afterwards focus moves to the order's heading and the turn change is announced. At 0 hit
+points the death save sits between the two: two tracks of three notches (successes 10–19,
+failures 2–9) whose next empty notch is the control, and a d20 at the end of each track for the
+naturals (20 revives with 1 HP, 1 counts two failures). One roll per round: after it the tracks
+are read-only, "Success marked. The DM can undo a mistake." shows, and focus moves to the
+hand-off. Outcomes are for the whole table: every new save is announced (polite live region) on
+every screen; rows show the dying notches to those who see the character's vitals, and "Stable"
+or "Revived" (icon and word) to everyone, including the DM's table view; "Dead" stays the status
+word. Off the own turn the Player sees the notches in the own row and no control.
 
 **DM view switch.** Above both views, "All encounters" and a two-segment switch (Mesa / Consola
 del DM, radio group: arrows, Tab, tap). The DM lands on the table view; drafts have no table

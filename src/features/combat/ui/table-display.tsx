@@ -1,9 +1,20 @@
-import { useEffect, useState } from 'react'
-import { ActionIcon, Group, Stack, Text, Title, VisuallyHidden } from '@mantine/core'
-import { Hourglass, Pencil } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  ActionIcon,
+  Group,
+  Loader,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+  VisuallyHidden,
+} from '@mantine/core'
+import { ChevronsRight, Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
+  canEndTurn,
   canEnterInitiative,
+  deathState,
   initiativeProgress,
   nextUp,
   turnsUntil,
@@ -11,7 +22,8 @@ import {
   type Combatant,
 } from '../domain/combat'
 import { CombatSummary } from './combat-summary'
-import { useRunner } from './helpers'
+import { DeathSaveTracker } from './death-saves'
+import { useDeathSaveAnnouncements, useRunner } from './helpers'
 import { InitiativeEntry } from './initiative-entry'
 import { InitiativeRail } from './initiative-rail'
 import { NetworkState, Pips, RunnerError } from './parts'
@@ -21,7 +33,9 @@ import { CombatantToken } from './token'
  * The table view (RYT-038, RYT-042): the one combat screen Players have, and the DM's default.
  * Large type for a shared screen. The DM and the shared screen get the table projection (as_table,
  * never DM secrets); a Player gets the own Player projection, whose only extra is the own
- * character. Its one write is the own initiative while it is collected; the server enforces it.
+ * character. Its writes are the Player's own: initiative while it is collected (RYT-042), and on
+ * the own turn the death save at 0 hit points and ending the turn (RYT-045). The server enforces
+ * all three; the DM's table view never has them (the table projection has no own character).
  */
 export function TableDisplay({
   campaignId,
@@ -48,6 +62,10 @@ export function TableDisplay({
   const yours = status === 'active' && active?.is_own === true
   const { run, pending, error, trigger, clear } = useRunner(campaignId)
   const announcement = useTurnAnnouncement(state)
+  const deathNews = useDeathSaveAnnouncements(state)
+  // Ending the turn: a double tap inside one frame must not send twice (the server also refuses).
+  const endLock = useRef(false)
+  const [ending, setEnding] = useState(false)
   // Rows reopened over a saved total, and the last save to announce.
   const [editing, setEditing] = useState<ReadonlySet<string>>(new Set())
   const [saved, setSaved] = useState('')
@@ -68,6 +86,7 @@ export function TableDisplay({
     <Stack gap="lg" className={`combat-table-view${yours ? ' is-your-turn' : ''}`}>
       <VisuallyHidden aria-live="polite">{announcement.text}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{saved}</VisuallyHidden>
+      <VisuallyHidden aria-live="polite">{deathNews}</VisuallyHidden>
       <header>
         <Title order={1} className="combat-table-title">
           {encounter.name}
@@ -114,13 +133,54 @@ export function TableDisplay({
               </Text>
             </div>
           </div>
-          <div className="combat-table-actor is-next">
-            <div className="combat-table-actor-grid">
-              {upNext && <CombatantToken combatant={upNext} showActive={false} />}
-              <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
-              <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
+          {yours && active ? (
+            // RYT-045: on the own turn, "Up next" becomes the hand-off itself, and a character at
+            // 0 hit points rolls the death save between the two.
+            <>
+              {deathState(active) !== null && (
+                <div className="combat-table-saves">
+                  <DeathSaveTracker
+                    state={state}
+                    combatant={active}
+                    run={run}
+                    pending={pending}
+                    stale={stale}
+                    afterRoll={() => focusLater('#combat-end-turn')}
+                  />
+                </div>
+              )}
+              {canEndTurn(status, active) && (
+                <EndTurn
+                  upNext={upNext}
+                  disabled={pending || stale}
+                  pending={ending}
+                  end={async () => {
+                    if (endLock.current || pending || stale) return
+                    endLock.current = true
+                    setEnding(true)
+                    const ok = await run({
+                      kind: 'turn',
+                      encounterId: encounter.id,
+                      direction: 1,
+                      expected: encounter.active_combatant ?? null,
+                    })
+                    endLock.current = false
+                    setEnding(false)
+                    // The control leaves with the turn; the order's heading takes focus.
+                    if (ok) focusLater('#combat-table-order')
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <div className="combat-table-actor is-next">
+              <div className="combat-table-actor-grid">
+                {upNext && <CombatantToken combatant={upNext} showActive={false} />}
+                <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
+                <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
+              </div>
             </div>
-          </div>
+          )}
           {ownInOrder && !yours && until !== null && (
             <p className="combat-table-countdown">
               <Hourglass size={28} aria-hidden="true" />
@@ -189,6 +249,50 @@ export function TableDisplay({
         </section>
       )}
     </Stack>
+  )
+}
+
+/**
+ * RYT-045: the Player hands the turn on. A wide, heavy tile at the foot of the "Your turn!" banner
+ * (the side column on tablets) that names who acts next, readable and reachable from the table.
+ * No confirmation: the server takes the expected active combatant, so a repeated tap never moves
+ * the turn twice, and the DM can move it back from the console.
+ */
+function EndTurn({
+  upNext,
+  disabled,
+  pending,
+  end,
+}: {
+  upNext: Combatant | null
+  disabled: boolean
+  pending: boolean
+  end: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <UnstyledButton
+      id="combat-end-turn"
+      className="combat-handoff"
+      // aria-disabled keeps focus on the control while the turn is being passed.
+      aria-disabled={disabled || undefined}
+      aria-busy={pending || undefined}
+      onClick={() => {
+        if (!disabled) end()
+      }}
+    >
+      <span className="combat-handoff-label">{t('combat.turn.end')}</span>
+      {upNext && (
+        <span className="combat-handoff-next">
+          <CombatantToken combatant={upNext} showActive={false} size={32} />
+          <span>{t('combat.turn.handoff', { name: upNext.name })}</span>
+        </span>
+      )}
+      <span className="combat-handoff-icon" aria-hidden="true">
+        {pending ? <Loader size={22} color="currentColor" /> : <ChevronsRight size={30} />}
+      </span>
+      {pending && <VisuallyHidden>{t('combat.turn.ending')}</VisuallyHidden>}
+    </UnstyledButton>
   )
 }
 

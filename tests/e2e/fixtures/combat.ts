@@ -230,6 +230,16 @@ export function combatServer() {
             row.death_saves = { successes: c.ds, failures: c.df }
             row.exhaustion = 0
           }
+          // RYT-045 (20261108120000_combat_player_death_saves.sql): outcomes for everyone.
+          if (c.kind === 'character' && !c.defeated) {
+            const last = e.events.find(
+              (x) =>
+                x.kind === 'death_save' && x.target === c.id && x.round === e.round && !x.undone_by,
+            )
+            if (c.current_hp <= 0 && c.ds >= 3) row.death_state = 'stable'
+            else if (c.current_hp > 0 && e.status === 'active' && last?.detail.result === 'up')
+              row.death_state = 'revived'
+          }
         }
         return JSON.parse(JSON.stringify(row))
       })
@@ -663,6 +673,8 @@ export function combatServer() {
             if (c.current_hp === 0 && amount > 0) {
               c.conditions = c.conditions.filter((x) => x !== 'unconscious')
               c.defeated = false
+              c.ds = 0
+              c.df = 0
             }
             c.current_hp = Math.min(c.max_hp, c.current_hp + amount)
           } else c.temp_hp = Math.max(c.temp_hp, amount)
@@ -741,6 +753,59 @@ export function combatServer() {
           visible: effect.visible,
         })
         break
+      }
+      // RYT-045: a Player rolls the own death save on the own turn, once per round.
+      case 'record_death_save': {
+        if (!['initiative', 'active'].includes(e.status)) return fail('Encounter closed')
+        if (!target || (target.hidden && !dm)) return fail('Combatant unavailable')
+        if (!canAct(actor, target)) return fail('Forbidden')
+        const outcome = String(body.outcome)
+        if (
+          target.kind !== 'character' ||
+          !['success', 'failure', 'nat1', 'nat20'].includes(outcome)
+        )
+          return fail('Invalid request')
+        if (target.current_hp !== 0 || target.defeated || (!dm && target.ds >= 3))
+          return fail('Not dying')
+        if (!dm) {
+          if (e.status !== 'active' || e.active !== target.id) return fail('Not your turn')
+          if (
+            e.events.some(
+              (x) =>
+                x.kind === 'death_save' &&
+                x.target === target.id &&
+                x.round === e.round &&
+                !x.undone_by,
+            )
+          )
+            return fail('Already rolled')
+        }
+        const before = snap(target)
+        let outcomeResult: string | null = null
+        if (outcome === 'nat20') {
+          target.current_hp = 1
+          target.ds = 0
+          target.df = 0
+          target.conditions = target.conditions.filter((x) => x !== 'unconscious')
+          outcomeResult = 'up'
+        } else if (outcome === 'success') {
+          target.ds = Math.min(3, target.ds + 1)
+          if (target.ds >= 3) outcomeResult = 'stable'
+        } else {
+          target.df = Math.min(3, target.df + (outcome === 'nat1' ? 2 : 1))
+          if (target.df >= 3) {
+            outcomeResult = 'dead'
+            target.defeated = true
+          }
+        }
+        log(e, actor, 'death_save', target, {
+          detail: { outcome, result: outcomeResult },
+          before,
+          after: snap(target),
+        })
+        if (outcomeResult === 'dead') log(e, actor, 'defeated', target)
+        bump(e)
+        return result(e, { result: outcomeResult })
       }
       case 'undo_combat_event': {
         const event = e.events.find((x) => x.id === body.target_event)

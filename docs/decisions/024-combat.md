@@ -62,6 +62,18 @@ with no DM secrets. Character play state already lives in `character_vitals`; th
   The DM lands on the table view (`as_table = true`) and switches to the console with a
   two-segment control; both stay mounted so neither loses its state.
 
+- **Player turn and death saves (RYT-045, `20261108120000_combat_player_death_saves.sql`).** The
+  user decided that Players keep two combat actions in the table view: ending the own turn and
+  rolling the own death saves at 0 HP. HP, conditions and undo stay DM actions in combat.
+  `advance_turn` is unchanged (it already let a Player move only forward from the own active
+  character, guarded by the expected active combatant). `record_death_save` keeps its signature
+  and grants and adds Player rules: only on the own turn of an active encounter (`Not your turn`),
+  once per round unless that roll was undone (`Already rolled`, which also absorbs double taps
+  sent with new request ids) and never once stable (`Not dying`). The DM records any save at any
+  time and undoes a mistaken roll from the log; then the Player may roll again. `get_combat_state`
+  adds `death_state` (`stable`, or `revived` for the round of a natural 20) to every projection:
+  outcomes are table knowledge even where vitals are not shared; the counts keep ADR 020 sharing.
+
 ## Consequences
 
 - The sheet and the combat screen always agree; an HP change from either bumps the encounter.

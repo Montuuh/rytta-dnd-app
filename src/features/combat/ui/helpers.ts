@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useCombatAction } from '../api'
 import {
   isCombatErrorCode,
@@ -7,6 +8,7 @@ import {
   type CombatAction,
   type CombatCondition,
   type CombatErrorCode,
+  type CombatState,
   type CombatEvent,
   type Combatant,
 } from '../domain/combat'
@@ -63,6 +65,28 @@ export function useRunner(campaignId: string) {
     trigger: failure?.trigger ?? null,
     clear: () => setFailure(null),
   }
+}
+
+/** RYT-045: announces every new death save of the encounter (anyone's) once, with its outcome. */
+export function useDeathSaveAnnouncements(state: CombatState) {
+  const { t } = useTranslation()
+  const rolls = state.events.filter((e) => e.kind === 'death_save' && !e.undone)
+  const [seen, setSeen] = useState<ReadonlySet<string>>(() => new Set(rolls.map((e) => e.id)))
+  const [text, setText] = useState('')
+  const fresh = rolls.filter((e) => !seen.has(e.id))
+  if (fresh.length > 0) {
+    setSeen(new Set([...seen, ...fresh.map((e) => e.id)]))
+    // Events arrive newest first; one sentence per refresh is enough at the table.
+    const latest = fresh[0]!
+    const detail = latest.detail as { outcome?: string; result?: string | null }
+    const key = detail.result ?? detail.outcome ?? 'success'
+    const known = ['success', 'failure', 'nat1', 'stable', 'dead', 'up'] as const
+    const which = (known as readonly string[]).includes(key)
+      ? (key as (typeof known)[number])
+      : 'success'
+    setText(t(`combat.death.announce.${which}`, { name: latest.target_name ?? '' }))
+  }
+  return text
 }
 
 /** "Last known" state: offline, failing or older than the polling budget. */

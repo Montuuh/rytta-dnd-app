@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
-import { Radio, Skull, WifiOff } from 'lucide-react'
+import { HeartPulse, Radio, Skull, Sparkles, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { healthBand, type Combatant, type CombatErrorCode } from '../domain/combat'
+import { deathState, healthBand, type Combatant, type CombatErrorCode } from '../domain/combat'
 import { BandMark } from './token'
 
 /** The body of the topmost open dialog or drawer, if any (nested ones portal last). */
@@ -240,23 +240,73 @@ export function ConditionBadges({ combatant, limit }: { combatant: Combatant; li
   )
 }
 
-export function StateBadge({ combatant }: { combatant: Combatant }): ReactNode {
+export function StateBadge({
+  combatant,
+  notches = true,
+}: {
+  combatant: Combatant
+  /** The detail has its own death save panel. */
+  notches?: boolean
+}): ReactNode {
   const { t } = useTranslation()
-  // Defeat is carried by the hit point status word (HpMeter), not by a pill.
-  const dying = combatant.kind === 'character' && combatant.hp?.current === 0 && !combatant.defeated
-  if (dying && (combatant.death_saves?.successes ?? 0) >= 3)
+  // Defeat is carried by the hit point status word (HpMeter), not by a pill; stable, revived and
+  // the dying notches are the death line (RYT-045).
+  return (
+    <>
+      <DeathLine combatant={combatant} notches={notches} />
+      {combatant.hidden && (
+        <Badge color="gray" variant="outline" size="sm">
+          {t('combat.hidden')}
+        </Badge>
+      )}
+    </>
+  )
+}
+
+/**
+ * Where a character at 0 hit points stands (RYT-045), readable by the whole table: stable and
+ * revived as an icon and a word for everyone; while dying, the death save notches for those who see
+ * the character's vitals (the DM, the own Player, teammates who share). Dead is the HpMeter word.
+ */
+export function DeathLine({
+  combatant,
+  notches = true,
+}: {
+  combatant: Combatant
+  notches?: boolean
+}): ReactNode {
+  const { t } = useTranslation()
+  const state = deathState(combatant)
+  if (state === 'stable' || state === 'revived')
     return (
-      <Badge color="green" variant="light" size="sm">
-        {t('combat.stable')}
-      </Badge>
+      <span className={`combat-death-line is-${state}`}>
+        {state === 'stable' ? (
+          <HeartPulse size={16} aria-hidden="true" />
+        ) : (
+          <Sparkles size={16} aria-hidden="true" />
+        )}
+        {t(state === 'stable' ? 'combat.stable' : 'combat.death.revived')}
+      </span>
     )
-  if (combatant.hidden)
-    return (
-      <Badge color="gray" variant="outline" size="sm">
-        {t('combat.hidden')}
-      </Badge>
-    )
-  return null
+  const saves = combatant.death_saves
+  if (state !== 'dying' || !saves || !notches) return null
+  const row = (count: number, kind: 'success' | 'failure') =>
+    [0, 1, 2].map((index) => (
+      <span key={index} className={`is-${kind}${index < count ? ' is-filled' : ''}`} />
+    ))
+  return (
+    <span
+      className="combat-death-notches"
+      role="img"
+      aria-label={t('combat.death.marks', {
+        successes: saves.successes,
+        failures: saves.failures,
+      })}
+    >
+      <span>{row(saves.successes, 'success')}</span>
+      <span>{row(saves.failures, 'failure')}</span>
+    </span>
+  )
 }
 
 export function Pips({ filled, total, label }: { filled: number; total: number; label: string }) {

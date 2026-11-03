@@ -95,7 +95,7 @@ export function CombatantDetail(props: Props) {
           </div>
         </div>
         <Group gap="xs" wrap="nowrap">
-          <StateBadge combatant={combatant} />
+          <StateBadge combatant={combatant} notches={false} />
           {props.onInitiative && (combatant.can_act || dm) && (
             <Button
               size="sm"

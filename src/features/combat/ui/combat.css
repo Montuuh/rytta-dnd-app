@@ -1651,3 +1651,372 @@ button.combat-row-main:focus-visible {
   color: var(--danger);
   font-weight: 600;
 }
+
+/* RYT-045: the Player's own turn. "Up next" turns into the hand-off tile, and a character at 0 hit
+   points rolls the death save between the two. Tablets: the tile is the side column; phones: it
+   sits at the foot of the banner, under the thumb. */
+.combat-table-now.is-yours {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  grid-template-areas: 'actor handoff';
+}
+.combat-table-now.is-yours:has(> .combat-table-saves) {
+  grid-template-areas:
+    'actor handoff'
+    'saves saves';
+}
+.combat-table-now.is-yours > .combat-table-actor {
+  grid-area: actor;
+  align-self: center;
+}
+.combat-table-now.is-yours > .combat-table-saves {
+  grid-area: saves;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px dashed var(--app-border);
+}
+.combat-table-now.is-yours > .combat-handoff {
+  grid-area: handoff;
+}
+/* A container query in em, so 150% text on a tablet also stacks the banner instead of squeezing
+   "Your turn!" beside the hand-off. */
+.combat-table-view {
+  container: table-view / inline-size;
+}
+@container table-view (max-width: 46em) {
+  .combat-table-now.is-yours {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'actor'
+      'handoff';
+  }
+  .combat-table-now.is-yours:has(> .combat-table-saves) {
+    grid-template-areas:
+      'actor'
+      'saves'
+      'handoff';
+  }
+}
+
+/* The hand-off: a heavy key at table distance. Its lower edge is the key's depth; pressing sinks
+   it. Disabled (stale data, a write in flight) it stays in the palette as an outline. */
+.combat-handoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label label'
+    'next icon';
+  align-content: center;
+  gap: 8px 14px;
+  min-height: 92px;
+  padding: 16px 18px 18px 20px;
+  border-radius: 16px;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+  box-shadow:
+    inset 0 -5px 0 color-mix(in srgb, var(--app-on-accent) 24%, transparent),
+    0 10px 22px -12px var(--app-accent);
+  text-align: left;
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out;
+}
+.combat-handoff:hover:not([aria-disabled]) {
+  background: var(--mantine-primary-color-filled-hover, var(--app-accent));
+}
+.combat-handoff:active:not([aria-disabled]) {
+  transform: translateY(3px);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--app-on-accent) 24%, transparent);
+}
+.combat-handoff:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 3px;
+}
+.combat-handoff[aria-disabled] {
+  background: color-mix(in srgb, var(--app-accent) 12%, var(--app-surface));
+  color: var(--app-muted);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--app-accent) 45%, transparent);
+  cursor: not-allowed;
+}
+.combat-handoff[aria-busy] {
+  cursor: progress;
+}
+.combat-handoff-label {
+  grid-area: label;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h2);
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.combat-handoff-next {
+  grid-area: next;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.combat-handoff-next .combat-token {
+  flex: none;
+}
+.combat-handoff-icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--app-on-accent) 14%, transparent);
+}
+.combat-handoff[aria-disabled] .combat-handoff-icon {
+  background: transparent;
+}
+
+/* Death saves: two tracks of three notches, like the boxes on a paper sheet. The next empty notch
+   of each track and the die at its end are the controls; filled notches are stamped in. */
+.combat-saves {
+  container: saves / inline-size;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.combat-saves-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 14px;
+}
+.combat-saves-title {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.combat-saves-note {
+  margin: 0;
+  color: var(--app-muted);
+}
+.combat-saves-note.is-recorded {
+  color: var(--app-text);
+}
+.combat-saves-tracks {
+  display: grid;
+  gap: 10px 28px;
+}
+@container saves (min-width: 40em) {
+  .combat-saves-tracks {
+    grid-template-columns: repeat(2, max-content);
+  }
+}
+.combat-saves-track {
+  --tone: var(--success);
+  --tone-soft: var(--success-soft);
+  display: grid;
+  grid-template-columns: 6.5em auto auto;
+  grid-template-areas: 'name marks die';
+  justify-content: start;
+  align-items: center;
+  gap: 6px 12px;
+}
+.combat-saves-track.is-failure {
+  --tone: var(--danger);
+  --tone-soft: var(--danger-soft);
+}
+.combat-saves-name {
+  grid-area: name;
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  line-height: 1.2;
+}
+/* Narrow banners and large text: the track's name goes above its notches. */
+@container saves (max-width: 21em) {
+  .combat-saves-track {
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      'name name'
+      'marks die';
+  }
+  .combat-saves-name {
+    flex-direction: row;
+    gap: 8px;
+  }
+}
+.combat-saves-range {
+  color: var(--app-muted);
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.combat-saves-marks {
+  grid-area: marks;
+  display: flex;
+  gap: 8px;
+}
+.combat-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--tone) 50%, var(--app-border));
+  color: var(--tone);
+}
+.combat-mark svg {
+  width: 22px;
+  height: 22px;
+}
+.combat-mark.is-filled {
+  border: 2px solid var(--tone);
+  background: var(--tone);
+  color: var(--app-bg);
+}
+.combat-mark.is-next {
+  border: 2px solid var(--tone);
+  background: var(--tone-soft);
+  cursor: pointer;
+  transition: transform 90ms ease-out;
+}
+.combat-mark.is-next:hover:not([aria-disabled]) {
+  background: color-mix(in srgb, var(--tone) 26%, transparent);
+}
+.combat-mark.is-next:active:not([aria-disabled]) {
+  transform: scale(0.9);
+}
+.combat-mark.is-next:focus-visible,
+.combat-die:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.combat-mark[aria-disabled],
+.combat-die[aria-disabled] {
+  cursor: progress;
+}
+.combat-die {
+  grid-area: die;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  color: var(--app-text);
+  cursor: pointer;
+}
+.combat-die .combat-d20-outline {
+  fill: var(--tone-soft);
+  stroke: var(--tone);
+}
+.combat-die .combat-d20-face {
+  fill: var(--app-surface);
+  stroke: var(--tone);
+}
+.combat-die .combat-d20-edges {
+  stroke: var(--tone);
+}
+.combat-die:hover:not([aria-disabled]) .combat-d20-outline {
+  fill: color-mix(in srgb, var(--tone) 30%, transparent);
+}
+.combat-die-face {
+  position: relative;
+  /* The triangular face sits a little below the middle of the die. */
+  margin-top: 8px;
+  font-family: var(--mantine-font-family-headings);
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.combat-saves-outcome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+.combat-saves-outcome svg {
+  flex: none;
+}
+.combat-saves-outcome.is-stable svg,
+.combat-saves-outcome.is-stable strong {
+  color: var(--success);
+}
+.combat-saves-outcome.is-dead {
+  color: var(--danger);
+}
+.combat-saves.is-revived {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--gold-accent);
+  background: var(--gold-soft);
+}
+.combat-saves-outcome-icon {
+  flex: none;
+  color: var(--gold-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .combat-saves .combat-mark.is-filled {
+    animation: combat-stamp 260ms cubic-bezier(0.2, 1.5, 0.4, 1);
+  }
+  .combat-saves.is-revived {
+    animation: combat-revive 1.4s ease-out 1;
+  }
+}
+@keyframes combat-stamp {
+  0% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes combat-revive {
+  0% {
+    box-shadow: 0 0 0 0 var(--gold-accent);
+  }
+  100% {
+    box-shadow: 0 0 0 16px transparent;
+  }
+}
+
+/* The same state in the order, for the whole table: stable and revived as an icon and a word,
+   the dying notches for those who see the character's vitals. */
+.combat-death-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+.combat-death-line.is-stable {
+  color: var(--success);
+}
+.combat-death-line.is-revived {
+  color: var(--gold-accent);
+}
+.combat-death-notches {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.combat-death-notches > span {
+  display: inline-flex;
+  gap: 3px;
+}
+.combat-death-notches span span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--success);
+}
+.combat-death-notches span span.is-failure {
+  border-color: var(--danger);
+}
+.combat-death-notches span span.is-success.is-filled {
+  background: var(--success);
+}
+.combat-death-notches span span.is-failure.is-filled {
+  background: var(--danger);
+}

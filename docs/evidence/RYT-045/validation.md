@@ -202,3 +202,12 @@ tracks), `death-saves-marked` (primary after the roll; row check notch), `death-
 `death-saves-150`, `dead`, `revived`, `stable`. `end-turn` is unchanged (no tracker, side column
 kept). Only RYT-045 tests ran with evidence on; no other ticket's screenshots changed. A focused
 re-review is pending.
+
+## Integration (2026-11-04)
+
+- Independent ui-ux round 2 PASS at fingerprint `14cb1244…` (commit `b202c6f`); the branch
+  contains current main `f6e5ea0`.
+- Production: applied `combat_player_death_saves` via Supabase MCP. `public.record_death_save`
+  (Not your turn / Already rolled) and `public.get_combat_state` (death_state) carry the new
+  bodies; anon denied, authenticated allowed; private helpers not executable by anon; row counts
+  unchanged; normalized bodies match PRE. No hosted denial tests were run.

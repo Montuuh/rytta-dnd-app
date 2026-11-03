@@ -179,3 +179,107 @@ They include `{phone,tablet,desktop}-endturn-own|other|stale|after`,
 - I checked class themes on 4 of 13. Desktop 1440 ran in the default theme only.
 - I did not reach the in-flight (pending) state of the hand-off and marks with a slowed network.
   I verified the double-activation guard by event count instead.
+
+## Round 2 (focused re-review)
+
+- Date: 2026-11-04.
+- Source snapshot: commit `b202c6f` ("address ui-ux review F1-F4"), on top of `125fe8f`.
+- Fingerprint (`node scripts/check-ui-review.mjs --fingerprint`):
+  `14cb12444a09bfe7657f5d237de904fd13a324299017082c01c9f26344c058f2`
+- Method: a fresh supabase-mode build served by me on `127.0.0.1:4271`, driven by the same
+  throwaway Playwright scripts outside the repo (repo fixtures `combat.ts` and `identity.ts`).
+  I extended them to record `data-emphasis`, the hand-off and track geometry, DOM order,
+  `is-new` and animation names, and each row notch's `data-mark`, corner radius and glyph on
+  every capture.
+
+### Verdict: PASS
+
+Every Round 1 finding is resolved in the browser. Round 2 found no blocking or major issue.
+
+### Status of the Round 1 findings
+
+- **F1 (Major): resolved.**
+  - Order: at 0 HP the hand-off follows the tracks at every width. It is full width on phones
+    and end-aligned at 384px on tablets and laptops.
+  - DOM, Tab and visual order now agree. Tab goes success mark → d20 20 → failure mark →
+    d20 1 → "Terminar mi turno" at 390, 820 and 1440.
+  - Before the roll it is `data-emphasis="secondary"` and stays enabled: transparent, 2px accent
+    outline, smaller label, outlined chevron. Captures: `*-ds-initial`, `*-ds-after-undo` and
+    `*-ds-cato-two`.
+  - After the roll, nat 1, dead or stable it becomes the filled primary key, and focus lands on
+    it (polled; it settles within 150 ms at every width).
+  - Gap between the last control and the hand-off: 40px on phones (was 22px) and 32px on
+    tablets and laptops.
+  - It remains a clear key in every theme I checked: Hearth light and dark, Barbarian, Druid and
+    Rogue. With Barbarian the secondary outline also removes the red-on-red competition with the
+    failure track.
+  - Offline, the secondary key correctly falls back to the muted disabled style (light theme
+    checked), which differs visibly from the enabled secondary style.
+  - Without death saves the own-turn hand-off is unchanged: primary, side column on tablets and
+    laptops, focus to "Orden de iniciativa" after ending, and one turn event on a double tap.
+- **F2 (Medium): resolved.**
+  - Row notches are now 16px.
+  - Successes are round (`50%`) and failures square (`3px`).
+  - Filled notches carry a check or a cross glyph, and `data-mark` is `success`, `failure` or
+    `empty`.
+  - Verified in Arin's own row, in Bea's and Cato's views and in the DM's table, and legible in
+    light and dark.
+- **F3 (Minor): resolved.**
+  - With reduced motion off, a fresh roll stamps (`combat-stamp`), and only that one mark gets
+    `is-new`.
+  - After a reload and on the next own turn (remount) no mark animates (`animationName: none`).
+  - The "Reanimado" card glows (`combat-revive`) when the natural 20 is recorded on screen, and
+    does not glow after a reload.
+  - With reduced motion nothing animates.
+- **F4 (Minor): resolved.** "Tira un d20 y marca el resultado." and "Roll a d20 and mark the
+  result." are gone from the UI and from the catalogues. The remaining helper lines are the
+  justified ones listed in Round 1.
+
+### New observations (no change required)
+
+- Nit: when the DM undoes a natural 20 while the Player's tracker is on screen, the restored marks
+  count as new and stamp once (with motion allowed). It is a real change on screen, so this is
+  acceptable.
+- On laptops (1440) the end-aligned hand-off sits at the far right below the tracks. That is a
+  long eye path from the left-aligned tracks, but it is the natural "next" position, and it is
+  secondary until the roll is made. Acceptable.
+
+### Round 2 regression coverage
+
+All checks were browser-tested at 390 (touch), 820 (touch) and 1440 unless noted.
+
+- Own turn without death saves.
+- Not own turn (Bea).
+- Offline/stale.
+- Double tap of the hand-off.
+- Death saves: success, nat 1, nat 20 → Reanimado (Cato's and the DM's rows), DM console undo →
+  re-roll → third failure → Muerto, Player-rolled third success → Estable (Arin sees "Estable"
+  without counts).
+- Live announcements on Arin's, Bea's and Cato's screens.
+- Themes and languages (390 and 820 only): Hearth light ES, Barbarian dark EN, Druid light EN,
+  Rogue dark ES.
+- 150% text (390 and 820 only).
+- Keyboard (820): Space on a mark, focus ring on the hand-off.
+- Double activation of a mark (390): 1 event.
+- Reduced motion on and off.
+
+Results:
+
+- Axe (WCAG 2.0/2.1/2.2 A and AA): 0 violations in 34 runs.
+- No horizontal scroll.
+- No page or console errors.
+
+Screenshots I inspected (scratchpad, not committed):
+`C:\Users\dmont\AppData\Local\Temp\claude\C--Users-dmont--claude-spares-spare-4QdntX\77848685-adcc-4fea-bde2-0c6bcfb5bc65\scratchpad\ryt045-ui\shots2\`.
+
+### Round 2 limitations
+
+Same as Round 1:
+
+- SDK fixture, not real Supabase.
+- Chromium emulation only; no iOS Safari or Android hardware, and no screen reader.
+- 150% text simulated with the root font size.
+- 4 of 13 class themes, and 1440 in the default theme only.
+- The in-flight (pending) state was not reached with a slowed network.
+
+Approval applies only to fingerprint `14cb1244…58f2`.

@@ -18,6 +18,7 @@ import { buildCatalog } from '../domain/catalog'
 import { createLinker } from '../domain/linker'
 import type { GlossaryLanguage } from '../domain/types'
 import { GlossaryContext, type GlossaryContextValue } from './glossary-context'
+import { useHomebrewManager } from './homebrew-manager'
 import { pushRecent, readRecent, writeRecent } from './recent'
 import { ReferenceSheet } from './reference-sheet'
 import './glossary.css'
@@ -75,14 +76,27 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
   )
   const back = useCallback(() => setStack((current) => current.slice(0, -1)), [])
   const close = useCallback(() => setStack([]), [])
+  const closeDefinition = useCallback(
+    (id?: string) => setStack((current) => (id ? current.filter((item) => item !== id) : [])),
+    [],
+  )
+  const canEdit = live && Boolean(campaignId && canBrowse)
+  const manager = useHomebrewManager({
+    campaignId,
+    pagePath: canBrowse ? pagePath : null,
+    catalog,
+    enabled: canEdit,
+    closeDefinition,
+  })
   // The sheet often opens above another drawer (an item card, a shop listing). Mantine drawers
   // each close on Escape from a window capture listener, in registration order, and only a
   // Drawer.Stack coordinates them. This layer mounts before any page drawer, so its listener
   // runs first: while a definition is open, Escape closes only the definition (ui-ux R2-1).
   const sheetOpen = useRef(false)
+  // While the homebrew editor or delete confirmation is open above the sheet, Escape belongs to it.
   useEffect(() => {
-    sheetOpen.current = stack.length > 0
-  }, [stack.length])
+    sheetOpen.current = stack.length > 0 && !manager.busy
+  }, [stack.length, manager.busy])
   // A layout effect registers before every Mantine useEffect listener, even when this layer
   // and a page drawer mount in the same commit (a direct load of a shop page).
   useLayoutEffect(() => {
@@ -111,7 +125,8 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
       open,
       pagePath: canBrowse ? pagePath : null,
       campaignId,
-      canEdit: live && Boolean(campaignId && canBrowse),
+      canEdit,
+      manage: manager.manage,
       recent,
       remember,
     }),
@@ -128,7 +143,8 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
       canBrowse,
       pagePath,
       campaignId,
-      live,
+      canEdit,
+      manager.manage,
       recent,
       remember,
     ],
@@ -137,6 +153,7 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     <GlossaryContext.Provider value={value}>
       {children}
       <ReferenceSheet stack={stack} onBack={back} onClose={close} />
+      {manager.element}
     </GlossaryContext.Provider>
   )
 }

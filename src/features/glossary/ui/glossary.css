@@ -299,6 +299,12 @@
 .gl-entry-actions {
   margin-left: auto;
 }
+/* Entry actions: 44px icon buttons that sit on the right of the kind line or a house rule. */
+.gl-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
 .gl-headword {
   margin: 2px 0 4px;
   font-family: Georgia, Cambria, serif;
@@ -469,7 +475,18 @@
 .gl-house p {
   margin: 0 0 0.6em;
 }
+.gl-house-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  /* The 44px actions overhang the callout's padding instead of making it taller. */
+  margin: -6px -10px 0.2em 0;
+}
 .gl-house-title {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -643,6 +660,98 @@
   font-family: Georgia, Cambria, serif;
   font-size: var(--fs-h3);
   font-weight: 700;
+}
+.mantine-Drawer-content.gl-editor-drawer {
+  /* The editor is a full-height sheet on phones, not a content-hugging one. */
+  max-height: 100dvh;
+}
+.gl-editor-drawer .mantine-Drawer-body {
+  display: flex;
+  flex-direction: column;
+  /* The footer rests on the bottom edge even when the form is short. */
+  min-height: calc(100dvh - 76px);
+}
+.gl-editor-drawer .mantine-Drawer-body > form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.gl-editor-drawer .mantine-Drawer-body > form > .mantine-Stack-root {
+  flex: 1;
+}
+.gl-editor-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: auto -16px -16px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--app-border);
+  background: var(--app-surface);
+}
+/* The footer buttons are flex items of the footer itself, so at large text the row is
+   [trash][Cancel] with Save full width below, never a row for the trash alone. */
+.gl-editor-footer-actions {
+  display: contents;
+}
+.gl-editor-footer-actions .mantine-Button-root {
+  flex: 1 1 auto;
+  padding-inline: 14px;
+}
+@media (min-width: 48em) {
+  .gl-editor-footer-actions .mantine-Button-root {
+    flex: 0 0 auto;
+  }
+  .gl-editor-footer-actions .mantine-Button-root:first-child {
+    margin-left: auto;
+  }
+}
+.gl-add-house {
+  color: var(--app-accent);
+  padding-inline: 10px;
+}
+.gl-conflict-text {
+  margin: 0;
+}
+/* Delete confirmation: the entry is named in the title; the consequence sits beside a quiet mark. */
+.gl-delete {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 14px;
+  align-items: start;
+}
+.gl-delete-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.gl-delete-body {
+  margin: 0;
+  padding-top: 8px;
+}
+.gl-delete-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+.gl-delete .gl-dialog-actions {
+  grid-column: 1 / -1;
+}
+@media (max-width: 47.99em) {
+  /* Two long labels do not fit side by side on a phone: full-width, thumb-sized rows. Shared by
+     the delete confirmation and the discard question. */
+  .mantine-Modal-body .gl-dialog-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 .gl-editor-facts {
   margin: 0;

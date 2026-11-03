@@ -220,6 +220,7 @@ export function InitiativeDialog({
   save,
   title,
   submitLabel,
+  hideHint = false,
   preview,
 }: {
   name: string
@@ -231,6 +232,8 @@ export function InitiativeDialog({
   save: (total: number) => void
   title?: string
   submitLabel?: string
+  /** Hides the instruction line when the title and the field already say it. */
+  hideHint?: boolean
   /** Renders below the keypad for the current valid total (null while invalid). */
   preview?: (total: number | null) => ReactNode
 }) {
@@ -260,11 +263,13 @@ export function InitiativeDialog({
         }}
       >
         <Stack gap="sm">
-          <Text size="sm">
-            {dm || bonus === null
-              ? t('combat.initiative.hintDm', { name })
-              : t('combat.initiative.hint', { bonus: signedBonus })}
-          </Text>
+          {!hideHint && (
+            <Text size="sm">
+              {dm || bonus === null
+                ? t('combat.initiative.hintDm', { name })
+                : t('combat.initiative.hint', { bonus: signedBonus })}
+            </Text>
+          )}
           <NumberInput
             hideControls
             data-autofocus
@@ -303,14 +308,14 @@ export function InitiativeDialog({
             </UnstyledButton>
           </div>
           {preview?.(valid ? value : null)}
-          <Group justify="flex-end">
+          <div className="combat-dialog-actions">
             <Button variant="subtle" onClick={close}>
               {t('action.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || pending} loading={pending}>
               {submitLabel ?? t('combat.initiative.save')}
             </Button>
-          </Group>
+          </div>
         </Stack>
       </form>
     </Modal>

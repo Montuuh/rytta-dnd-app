@@ -606,9 +606,10 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId, on
           <Menu position="bottom-end">
             <Menu.Target>
               <ActionIcon
+                data-return-focus={`detail-menu-${combatant.id}`}
                 variant="subtle"
                 size={44}
-                aria-label={t('combat.row.menu', { name: combatant.name })}
+                aria-label={t('combat.dm.menu', { name: combatant.name })}
               >
                 <Ellipsis size={20} aria-hidden="true" />
               </ActionIcon>

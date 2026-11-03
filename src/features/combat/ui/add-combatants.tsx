@@ -110,11 +110,6 @@ export function AddCombatants({
           </Text>
         ) : (
           <Stack gap="xs" mt={6}>
-            {running && (
-              <Text size="sm" c="dimmed">
-                {t('combat.join.hint')}
-              </Text>
-            )}
             {!running && assignedMissing.length > 0 && (
               <Button
                 leftSection={<Users size={16} aria-hidden="true" />}
@@ -169,6 +164,7 @@ export function AddCombatants({
           pending={pending}
           title={t('combat.join.title', { name: joining.name })}
           submitLabel={t('combat.join.submit')}
+          hideHint
           close={() => setJoining(null)}
           preview={(total) => (
             <JoinPreview combatants={combatants} name={joining.name} total={total} round={round} />

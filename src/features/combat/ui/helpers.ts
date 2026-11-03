@@ -135,13 +135,15 @@ export function eventText(t: TFunction, event: CombatEvent) {
 }
 
 /** Conditionally mounted dialogs lose Mantine's focus return: send focus back to the control that
- * opened them when they unmount. */
+ * opened them when they unmount. A dialog opened from a menu item returns to the menu's button,
+ * since the item (and the menu's own focus holder) disappear with the menu. */
 export function useReturnFocus() {
-  const [opener] = useState(() =>
-    document.activeElement instanceof HTMLElement && document.activeElement !== document.body
-      ? document.activeElement
-      : null,
-  )
+  const [opener] = useState(() => {
+    const active = document.activeElement
+    if (!(active instanceof HTMLElement) || active === document.body) return null
+    const trigger = active.closest('[role="menu"]')?.getAttribute('aria-labelledby')
+    return (trigger && document.getElementById(trigger)) || active
+  })
   useEffect(
     () => () => {
       requestAnimationFrame(() => {

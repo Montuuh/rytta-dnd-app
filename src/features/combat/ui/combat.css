@@ -840,8 +840,10 @@ button.combat-row-main:focus-visible {
   display: grid;
   place-items: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  /* em-based: totals of two characters keep their padding at 150% text. */
+  min-width: 2.2em;
+  min-height: 2.2em;
+  padding: 0 0.35em;
   border-radius: 8px;
   border: 1px solid var(--app-border);
   font-weight: 800;
@@ -858,4 +860,16 @@ button.combat-row-main:focus-visible {
   gap: 6px;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* Dialog actions: one row when both fit (cancel left, action right); otherwise each takes the
+   full width and the action sits on top (wrap-reverse), never a lone right-aligned button. */
+.combat-dialog-actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  gap: 8px;
+  margin-top: var(--mantine-spacing-md);
+}
+.combat-dialog-actions > * {
+  flex: 1 1 auto;
 }

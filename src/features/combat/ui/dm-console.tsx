@@ -1,4 +1,4 @@
-import { useEffect, useState, type FocusEvent } from 'react'
+import { useEffect, useRef, useState, type FocusEvent } from 'react'
 import {
   Badge,
   Button,
@@ -99,6 +99,22 @@ export function DmConsole({
   // Phones show the detail in a sheet that opens only when the DM asks for it.
   const [sheetOpen, setSheetOpen] = useState(false)
   const [removing, setRemoving] = useState<Combatant | null>(null)
+  // Dialogs opened from a menu item lose their opener when the menu closes: they hand focus back
+  // to the menu's button instead. The sheet returns focus to whatever opened it.
+  const returnTo = useRef<string | null>(null)
+  const [sheetOpener, setSheetOpener] = useState<string | null>(null)
+  const restoreFocus = () => {
+    const id = returnTo.current
+    returnTo.current = null
+    if (id)
+      requestAnimationFrame(() =>
+        document.querySelector<HTMLElement>(`[data-return-focus="${id}"]`)?.focus(),
+      )
+  }
+  const fromMenu = (id: string, open: () => void) => {
+    returnTo.current = id
+    open()
+  }
   const [multi, setMulti] = useState<ReadonlySet<string> | null>(null)
   const [multiMode, setMultiMode] = useState<HpMode | null>(null)
   const [initiativeFor, setInitiativeFor] = useState<Combatant | null>(null)
@@ -133,19 +149,32 @@ export function DmConsole({
     }
     setPicked({ id: combatant.id, turn: activeId })
     if (wide) setPanel('detail')
-    else setSheetOpen(true)
+    else {
+      setSheetOpener(`combatant-${combatant.id}`)
+      setSheetOpen(true)
+    }
   }
   const showActive = () => {
     if (!active) return
     setPicked(null)
     if (wide) setPanel('detail')
-    else setSheetOpen(true)
+    else {
+      setSheetOpener('combat-turn-now')
+      setSheetOpen(true)
+    }
   }
+  // Closing the sheet hands focus back to what opened it (a row or the turn bar).
+  const closeSheet = onlyTopDialog(() => {
+    const id = sheetOpener ?? `combatant-${selectedId}`
+    setSheetOpen(false)
+    requestAnimationFrame(() => document.getElementById(id)?.focus())
+  })
   const removeNow = async () => {
     if (!removing) return
     const index = combatants.findIndex((c) => c.id === removing.id)
     const neighbour = combatants[index + 1] ?? combatants[index - 1] ?? null
     if (await run({ kind: 'remove', combatantId: removing.id })) {
+      returnTo.current = null
       setRemoving(null)
       if (selectedId === removing.id) setSheetOpen(false)
       // The row is gone: focus lands on its neighbour in the order (or on the list title).
@@ -175,7 +204,11 @@ export function DmConsole({
       run={run}
       pending={pending}
       onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
-      onRemove={status !== 'ended' ? () => setRemoving(selected) : undefined}
+      onRemove={
+        status !== 'ended'
+          ? () => fromMenu(`detail-menu-${selected.id}`, () => setRemoving(selected))
+          : undefined
+      }
     />
   )
   const rail = (
@@ -232,8 +265,12 @@ export function DmConsole({
                           })
                       : undefined
                   }
-                  onInitiative={() => setInitiativeFor(combatant)}
-                  onRemove={() => setRemoving(combatant)}
+                  onInitiative={() =>
+                    fromMenu(`row-menu-${combatant.id}`, () => setInitiativeFor(combatant))
+                  }
+                  onRemove={() =>
+                    fromMenu(`row-menu-${combatant.id}`, () => setRemoving(combatant))
+                  }
                 />
               )
             : undefined
@@ -496,11 +533,7 @@ export function DmConsole({
           {side}
           <Drawer
             opened={sheetOpen && selected !== null && !initiativeFor && !removing && multi === null}
-            onClose={onlyTopDialog(() => {
-              const id = selected?.id
-              setSheetOpen(false)
-              requestAnimationFrame(() => document.getElementById(`combatant-${id}`)?.focus())
-            })}
+            onClose={closeSheet}
             position="bottom"
             size="85%"
             title={selected?.name}
@@ -532,7 +565,24 @@ export function DmConsole({
           >
             <ChevronLeft size={24} aria-hidden="true" />
           </ActionIcon>
-          <UnstyledButton className="combat-turn-now" onClick={showActive} disabled={!active}>
+          <UnstyledButton
+            id="combat-turn-now"
+            className="combat-turn-now"
+            onClick={showActive}
+            disabled={!active}
+            // The visible lines plus the action, read as one sentence.
+            aria-label={
+              active
+                ? [
+                    `${t('combat.turn.now')} · ${t('combat.round', { round: encounter.round })}`,
+                    active.name,
+                    upNext ? `${t('combat.turn.upNext')}: ${upNext.name}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(', ') + `. ${t('combat.turn.show')}`
+                : undefined
+            }
+          >
             <Text size="xs" c="dimmed" component="span" display="block">
               {t('combat.turn.now')} · {t('combat.round', { round: encounter.round })}
             </Text>
@@ -544,7 +594,6 @@ export function DmConsole({
                 {t('combat.turn.upNext')}: {upNext.name}
               </Text>
             )}
-            {active && <VisuallyHidden>{t('combat.turn.show')}</VisuallyHidden>}
           </UnstyledButton>
           <Button
             size="lg"
@@ -572,7 +621,10 @@ export function DmConsole({
           combatant={removing}
           next={removing.is_active ? nextUp(combatants) : null}
           pending={pending}
-          close={() => setRemoving(null)}
+          close={() => {
+            setRemoving(null)
+            restoreFocus()
+          }}
           confirm={() => void removeNow()}
         />
       )}
@@ -583,12 +635,17 @@ export function DmConsole({
           bonus={null}
           dm
           pending={pending}
-          close={() => setInitiativeFor(null)}
+          close={() => {
+            setInitiativeFor(null)
+            restoreFocus()
+          }}
           save={async (total) => {
             if (
               await run({ kind: 'initiative', combatantId: initiativeFor.id, total, bonus: null })
-            )
+            ) {
               setInitiativeFor(null)
+              restoreFocus()
+            }
           }}
         />
       )}

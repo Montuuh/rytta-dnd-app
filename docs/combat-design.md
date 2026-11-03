@@ -146,7 +146,8 @@ devices already provide one); Players have no exit link (RYT-041, ahead of RYT-0
 - DM row actions (RYT-041): each row has an options button (44px) with "give the turn",
   "change initiative" and "remove from combat"; holding the row or right-clicking opens the same
   menu. Removal confirms in a dialog that names who takes the turn; afterwards focus moves to the
-  neighbouring row.
+  neighbouring row, and cancelling returns focus to the menu's button. Dialog actions share a row
+  when they fit and otherwise stack full width with the action on top.
 - HP is always text (numbers or a status word) next to the bar; unshared HP uses a hatched bar
   and the words "not shared". Side is an icon plus a hidden text label; never colour alone.
 - Every control is at least 44px; the turn buttons are 52px. Dialogs trap focus, close with

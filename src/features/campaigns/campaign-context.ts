@@ -8,3 +8,9 @@ export function useCampaign() {
   if (!campaign) throw new Error('CampaignBoundary is required')
   return playerPreview ? { ...campaign, role: 'player' as const } : campaign
 }
+/** True for the real DM, even while the DM previews the app as a player. Presentation only; RLS decides. */
+export function useIsRealDm() {
+  const campaign = useContext(CampaignContext)
+  if (!campaign) throw new Error('CampaignBoundary is required')
+  return campaign.role === 'dm'
+}

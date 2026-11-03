@@ -14,7 +14,7 @@ import { Backpack, BookOpen, Shirt } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
+import { membersQuery, useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { inventoryQuery, rosterQuery, useInventoryAction } from '../api'
 import { canEquip, equippedBySlot, slotsFor } from '../domain/equipment'
 import type { DefinitionDraft, InventoryEvent, ItemDefinition, ItemStack } from '../domain/item'
@@ -37,6 +37,7 @@ export function InventoryPage() {
   const campaign = useCampaign()
   const { playerPreview, previewUserId } = useCampaignView()
   const dm = campaign.role === 'dm'
+  const realDm = useIsRealDm()
   const enabled = (campaign.player_modules ?? []).includes('inventory')
   const roster = useQuery(rosterQuery(userId, campaign.id))
   const members = useQuery({ ...membersQuery(userId, campaign.id), enabled: dm })
@@ -106,7 +107,7 @@ export function InventoryPage() {
       </Stack>
     )
 
-  const canEdit = dm || character.user_id === userId
+  const canEdit = realDm || character.user_id === userId
   const data = inventory.data
   const definitions = new Map((data?.definitions ?? []).map((d) => [d.id, d]))
   const stacks = data?.stacks ?? []

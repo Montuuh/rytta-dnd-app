@@ -44,6 +44,8 @@ export async function identityFixture(
     noCharacters?: boolean
     armorClassOverride?: number
     player?: boolean
+    /** Keep the DM signed in but link Arin to the Player (for Player-view previews). */
+    linkedPlayer?: boolean
     callbackError?: boolean
     twoDms?: boolean
     sheet?: 'draft' | 'complete'
@@ -117,7 +119,7 @@ export async function identityFixture(
           {
             id: characterId,
             campaign_id: campaignId,
-            user_id: options.player ? playerId : (null as string | null),
+            user_id: options.player || options.linkedPlayer ? playerId : (null as string | null),
             name: 'Arin',
             character_resources: {
               gold: 25,

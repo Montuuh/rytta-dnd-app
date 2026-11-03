@@ -576,11 +576,10 @@ test('RYT-031 DM toggles live sharing per character with a labelled 44px control
   await page.keyboard.press('Space')
   await expect(bea).not.toBeChecked()
   await expect(bea).toBeFocused()
-  expect(f.calls.filter((c) => c.method === 'set_character_live_sharing').at(-1)?.body).toEqual({
-    target_campaign: campaignId,
-    target_character: expect.any(String),
-    enabled: false,
-  })
+  // The switch reflects the pending value at once; the RPC is recorded when the request lands.
+  await expect
+    .poll(() => f.calls.filter((c) => c.method === 'set_character_live_sharing').at(-1)?.body)
+    .toEqual({ target_campaign: campaignId, target_character: expect.any(String), enabled: false })
   await cato.click({ force: true })
   await expect(cato).toBeChecked()
   const box = await page

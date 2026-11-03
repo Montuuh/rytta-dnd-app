@@ -155,3 +155,14 @@ Commands after the fixes:
 
 Visual note after the first fix pass: at 150% on 390px the console names were cut ("Gobl…") by the
 AC on the same line; the name line now wraps and AC moves under the name instead.
+
+## Integration (2026-11-03)
+
+- Independent ui-ux round 2 PASS at fingerprint `e8304614…` (commit `de083d8`); the branch
+  contains current main `07ed4fb`.
+- Production: applied `combat_media` via Supabase MCP. Prechecks: no columns/bucket yet; 1 template,
+  11 combatants, 2 storage objects. Postchecks: columns, FK (ON DELETE SET NULL) and index present;
+  private bucket `creature-images` (1 MB; webp/png/jpeg) with read/insert/delete policies;
+  `portraits_read` now uses `private.portrait_read_access`; public RPCs deny `anon` and allow
+  `authenticated`; counts unchanged; function bodies match PRE except an expected `pre.%`
+  environment-detection literal. No hosted storage upload or denial tests were run.

@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, Inbox, Mail, Plus, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { PageHead } from '@/shared/ui/page-head'
 import { useAuth } from '@/features/auth'
 import { campaignsQuery, invitationsQuery, useCampaignAction } from '../api'
 import { createCampaignSchema, type Invitation } from '../domain/campaign'
@@ -48,24 +49,21 @@ export function CampaignHub() {
   }
   return (
     <Stack gap="xl">
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Text className="eyebrow">RYTTA</Text>
-          <Title order={1}>{t('hub.title')}</Title>
-          <Text c="dimmed" mt="sm">
-            {t('hub.intro')}
-          </Text>
-        </div>
-        <Button
-          leftSection={<Plus size={18} />}
-          onClick={() => {
-            create.reset()
-            setOpened(true)
-          }}
-        >
-          {t('hub.create')}
-        </Button>
-      </Group>
+      <PageHead
+        title={t('hub.title')}
+        description={t('hub.intro')}
+        actions={
+          <Button
+            leftSection={<Plus size={18} aria-hidden="true" />}
+            onClick={() => {
+              create.reset()
+              setOpened(true)
+            }}
+          >
+            {t('hub.create')}
+          </Button>
+        }
+      />
       <QueryFeedback pending={campaigns.isPending} error={campaigns.isError} retry={refresh} />
       {!campaigns.isError &&
         campaigns.data &&
@@ -73,7 +71,7 @@ export function CampaignHub() {
           <SimpleGrid cols={{ base: 1, md: 2 }}>
             {campaigns.data.map((campaign) => (
               <Paper key={campaign.id} p="lg" className="campaign-card">
-                <Stack>
+                <Stack h="100%">
                   <Badge w="fit-content" variant="light">
                     {t(`campaign.role.${campaign.role}`)}
                   </Badge>
@@ -112,7 +110,7 @@ export function CampaignHub() {
                 <Mail size={22} aria-hidden="true" />
               </ThemeIcon>
               <div>
-                <Group gap="xs">
+                <Group gap="xs" wrap="nowrap" align="center">
                   <Title order={2} id="invitations-heading">
                     {t('hub.invitations')}
                   </Title>
@@ -132,6 +130,7 @@ export function CampaignHub() {
             </Group>
             <Button
               variant="default"
+              className="invitations-refresh"
               leftSection={<RefreshCw size={16} aria-hidden="true" />}
               onClick={refresh}
             >
@@ -161,7 +160,7 @@ export function CampaignHub() {
                         date: new Date(invite.expires_at).toLocaleDateString(i18n.language),
                       })}
                     </Text>
-                    <Group>
+                    <Group className="invite-actions">
                       <Button
                         disabled={action.isPending}
                         onClick={() =>
@@ -172,6 +171,7 @@ export function CampaignHub() {
                       </Button>
                       <Button
                         variant="subtle"
+                        color="red"
                         disabled={action.isPending}
                         onClick={() => setDecline(invite)}
                       >

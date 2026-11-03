@@ -5,6 +5,7 @@ export const designEn = {
   'nav.moreTitle': 'More sections',
   'nav.moreOpen': 'Open more sections',
   'shell.playerSwitch': 'Player view',
+  'shell.playerSwitchShort': 'Player',
   'shell.playerSwitchHint': 'See the table as a Player sees it',
   'shell.previewBanner': 'You are viewing the table as {{name}}',
   'shell.previewBannerGeneric': 'You are viewing the table as a Player',

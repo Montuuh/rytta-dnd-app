@@ -1,5 +1,7 @@
 // RYT-031 party live sharing and per-character audit history.
 export const partyEn = {
+  'party.resourceStale':
+    'Another DM changed these resources at the same time. The current values are shown; repeat the change if needed.',
   'party.liveTitle': 'Teammates',
   'party.liveHint': 'Live status of the teammates your DM shares.',
   'party.liveEmpty': 'Your DM is not sharing any teammates right now.',
@@ -8,6 +10,7 @@ export const partyEn = {
   'party.liveAc': 'Armor class {{value}}',
   'party.liveConditions': 'Conditions of {{name}}',
   'party.liveNoSheet': 'Status not available yet',
+  'party.shareLabel': 'Shown to party',
   'party.shareOn': 'Visible to the party',
   'party.shareOff': 'Hidden from the party',
   'party.shareToggle': 'Share live status of {{name}} with the party',

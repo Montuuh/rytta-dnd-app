@@ -14,7 +14,7 @@ import {
   Textarea,
   UnstyledButton,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useTranslation } from 'react-i18next'
 import { formatPounds } from '../domain/encumbrance'
 import {
@@ -150,7 +150,7 @@ export function Forge({
   onClose: () => void
 }) {
   const { t } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const id = useId()
   const [draft, setDraft] = useState<DefinitionDraft>(() =>
     definition ? fromDefinition(definition) : emptyDraft(),
@@ -230,6 +230,7 @@ export function Forge({
           {!definition && (
             <Select
               searchable
+              placeholder={t('inventory.forge.templatePlaceholder')}
               label={t('inventory.forge.template')}
               description={t(
                 dm ? 'inventory.forge.templateHint' : 'inventory.forge.templateHintPlayer',

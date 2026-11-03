@@ -8,7 +8,7 @@ import {
   Text,
   Textarea,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { ArrowRight, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { encumbrance, formatPounds } from '@/features/inventory'
@@ -40,7 +40,7 @@ type Props = {
 export function CartDrawer(props: Props) {
   const { opened, shop, lines, note, gold, tenths, strength, busy } = props
   const { t, i18n } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const approval = shop.mode === 'approval'
   const total = cartTotal(lines, shop.listings, shop.mode)
   const after = gold - total

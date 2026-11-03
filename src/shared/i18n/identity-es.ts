@@ -59,7 +59,9 @@ export const identityEs = {
   'members.noneSent': 'No hay invitaciones pendientes para esta campaña.',
   'members.revoke': 'Cancelar invitación',
   'members.promote': 'Nombrar DM',
-  'members.demote': 'Cambiar a Jugador',
+  'members.demote': 'Cambiar a jugador',
+  'members.onlyDm': 'Es el único DM: nombra otro DM antes de cambiar este rol.',
+  'members.leaveHint': 'Dejarás de ver esta campaña y sus personajes.',
   'members.remove': 'Retirar miembro',
   'members.leave': 'Abandonar campaña',
   'members.lastDm':
@@ -88,8 +90,7 @@ export const identityEs = {
     'Comprueba tu conexión y actualiza. Tus permisos o esta invitación pueden haber cambiado. Revisa el resultado antes de repetir una acción.',
   'query.error': 'No se pudo cargar esta información.',
   'dm.commandCenter': 'Centro de mando DM',
-  'dm.commandIntro':
-    'Gestiona miembros, módulos visibles, el almacén de objetos y el historial de cambios de tu campaña.',
+  'dm.commandIntro': 'Miembros, módulos, almacén e historial de tu campaña.',
   'dm.panelAll': 'Todos los paneles',
   'dm.panelMembers': 'Miembros',
   'dm.panelModules': 'Módulos activos',

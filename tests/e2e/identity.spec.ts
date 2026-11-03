@@ -314,7 +314,7 @@ test('self-demotion clears management views and offline actions are not queued',
   const self = page
     .locator('.mantine-Paper-root')
     .filter({ has: page.getByText('Table DM · Tú', { exact: true }) })
-  await self.getByRole('button', { name: 'Cambiar a Jugador', exact: true }).click()
+  await self.getByRole('button', { name: 'Cambiar a jugador', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)

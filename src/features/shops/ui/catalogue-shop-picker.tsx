@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react'
 import { Alert, Button, Loader, Drawer, NumberInput, Select, Stack, Text } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import type { ItemDefinition } from '@/features/inventory'
 import { shopAdminQuery, useShopAction } from '../api'
+import { newRequestId } from '@/shared/lib/request-id'
 
 export function CatalogueShopPicker({
   campaignId,
@@ -21,7 +22,7 @@ export function CatalogueShopPicker({
   const data = useQuery(shopAdminQuery(state.user!.id, campaignId))
   const action = useShopAction(campaignId)
   // Same placement as the other storeroom drawers: right on wide screens, a bottom sheet on phones.
-  const phone = useMediaQuery('(max-width: 47.99em)')
+  const phone = usePhone()
   const [shop, setShop] = useState<string | null>(null)
   const [price, setPrice] = useState<number | string>(item.value_gp ?? 0)
   const [stock, setStock] = useState<number | string>(1)
@@ -32,7 +33,7 @@ export function CatalogueShopPicker({
       if (opener.current?.isConnected) opener.current.focus()
     })
   }
-  const request = useRef(crypto.randomUUID())
+  const request = useRef(newRequestId())
   const [attempted, setAttempted] = useState(false)
   const shops = (data.data?.shops ?? []).filter(
     (s) => !s.listings.some((l) => l.definition_id === item.id),

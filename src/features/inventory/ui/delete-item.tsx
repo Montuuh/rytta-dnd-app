@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Alert, Button, Group, Loader, Modal, Stack, Text } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { Backpack, Store, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth'
 import { definitionImpactQuery, useItemLifecycle } from '../api'
 import type { ItemDefinition } from '../domain/item'
 import { ItemIcon } from './item-icon'
+import { newRequestId } from '@/shared/lib/request-id'
 
 /** Confirm a storeroom delete (soft archive) with what it touches: shops lose the listing,
  * satchels keep their units, open orders block it (RYT-032). */
@@ -24,10 +25,10 @@ export function DeleteItemDialog({
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
-  const phone = useMediaQuery('(max-width: 47.99em)')
+  const phone = usePhone()
   const impact = useQuery(definitionImpactQuery(state.user!.id, campaignId, item.id))
   const { archive } = useItemLifecycle(campaignId)
-  const request = useRef(crypto.randomUUID())
+  const request = useRef(newRequestId())
   const data = impact.data
   const blocked = !data || data.open_orders > 0
   const failure =

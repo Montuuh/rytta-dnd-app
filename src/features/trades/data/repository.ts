@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { config } from '@/shared/lib/config'
 import { tradeErrorCode, tradeStateSchema, type TradeAction } from '../domain/trade'
+import { newRequestId } from '@/shared/lib/request-id'
 
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw new Error('unavailable')
@@ -33,7 +34,7 @@ const resultSchema = z.object({
 export async function changeTrade(campaignId: string, action: TradeAction) {
   const db = await client()
   const target_campaign = z.uuid().parse(campaignId)
-  const request_id = crypto.randomUUID()
+  const request_id = newRequestId()
   let result
   switch (action.kind) {
     case 'invite':

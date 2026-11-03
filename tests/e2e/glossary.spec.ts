@@ -385,11 +385,17 @@ for (const scale of [100, 150]) {
     const editor = page.getByRole('dialog', { name: 'Editar entrada' })
     await editor.getByRole('button', { name: 'Añadir un dato' }).click()
     await editor.getByRole('button', { name: 'Añadir un dato' }).click()
-    // The footer keeps the trash beside Cancel: two rows at most, even at large text.
-    const footerHeight = await editor
-      .locator('.gl-editor-footer')
-      .evaluate((el) => el.getBoundingClientRect().height)
-    expect(footerHeight).toBeLessThanOrEqual(scale === 100 ? 90 : 150)
+    // The footer keeps the trash beside Cancel: two rows at most, even at large text. Count rows
+    // by button centre (the row centres its items) rather than pixels: system fonts differ per
+    // platform and the Linux runner already wraps at 100%.
+    const footerRows = await editor.locator('.gl-editor-footer').evaluate((el) => {
+      const centres = [...el.querySelectorAll('button')].map((b) => {
+        const r = b.getBoundingClientRect()
+        return (r.top + r.bottom) / 2
+      })
+      return centres.filter((c, i) => centres.findIndex((o) => Math.abs(o - c) < 4) === i).length
+    })
+    expect(footerRows).toBeLessThanOrEqual(2)
     await editor.getByRole('textbox', { name: /^Nombre/ }).focus()
     let checked = 0
     for (let i = 0; i < 40; i++) {

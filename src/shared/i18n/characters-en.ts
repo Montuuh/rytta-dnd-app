@@ -38,6 +38,7 @@ export const charactersEn = {
   'characters.increase': 'Increase {{field}}',
   'characters.decrease': 'Decrease {{field}}',
   'characters.save': 'Save resources',
+  'characters.saveGold': 'Save gold',
   'characters.saved': 'Resources saved.',
   'characters.invalid': 'Enter a whole number within the allowed range.',
   'characters.stale':

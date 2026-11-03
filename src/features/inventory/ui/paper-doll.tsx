@@ -1,7 +1,7 @@
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { useRef, useState } from 'react'
 import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { Shield } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -120,7 +120,7 @@ export function PaperDoll({
   onUnequip: (stack: ItemStack, done?: () => void) => void
 }) {
   const { t } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const [picking, setPicking] = useState<EquipmentSlot | null>(null)
   const opener = useRef<HTMLElement | null>(null)
   // The picker unmounts on close, so return focus to the socket explicitly.

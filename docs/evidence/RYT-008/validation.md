@@ -1,7 +1,7 @@
 # RYT-008 verification: SRD glossary, term references and homebrew
 
 Date: 2026-11-03. Branch `cl/gifted-bohr-6l74mn` on base `cdc7646`. Decision record:
-[ADR 023](../../decisions/023-glossary.md).
+[ADR 024](../../decisions/024-glossary.md).
 
 ## Scope delivered
 

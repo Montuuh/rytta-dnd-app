@@ -37,5 +37,5 @@ export const storeEn = {
   'satchel.view': 'Satchel view',
   'party.hero': 'Your character',
   'party.resources': 'Resources',
-  'party.openInventory': 'Satchel',
+  'party.openInventory': 'Inventory',
 } as const

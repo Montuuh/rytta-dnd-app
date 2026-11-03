@@ -10,7 +10,7 @@ import {
   Textarea,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { Plus, X } from 'lucide-react'
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -55,7 +55,7 @@ export function HomebrewEditor({
   /** False after a save: the page moves focus to the saved headword instead. */
   returnFocus?: boolean
 }) {
-  const wide = useMediaQuery('(min-width: 48em)', false)
+  const wide = !usePhone()
   const { t } = useTranslation()
   return (
     <Drawer

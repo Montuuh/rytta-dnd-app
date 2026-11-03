@@ -1,4 +1,5 @@
-import { Paper, Stack, Text, Title } from '@mantine/core'
+import { Paper, Stack, Text } from '@mantine/core'
+import { PageHead } from '@/shared/ui/page-head'
 import { useTranslation } from 'react-i18next'
 import { useCampaign } from '@/features/campaigns'
 import { ShopAdminPanel } from './admin-panel'
@@ -13,7 +14,7 @@ export function ShopsPage() {
   if (!enabled)
     return (
       <Stack>
-        <Title order={1}>{t('module.shops')}</Title>
+        <PageHead title={t('module.shops')} />
         <Paper p="xl">
           <Text>{t('shop.hiddenModule')}</Text>
         </Paper>

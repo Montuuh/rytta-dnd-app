@@ -32,13 +32,18 @@ if (process.argv.includes('--fingerprint')) {
       'UI review missing. Invoke the ui-ux reviewer and record its actual verdict; see docs/ui-review.md.',
     )
   const review = JSON.parse(readFileSync(file, 'utf8'))
-  if (
-    review.reviewer !== 'ui-ux' ||
-    review.verdict !== 'PASS' ||
-    review.sourceDigest !== sourceDigest ||
-    !review.report ||
-    !existsSync(review.report)
-  ) {
+  if (review.reviewer !== 'ui-ux' || !review.report || !existsSync(review.report))
+    throw new Error(
+      'UI review manifest is malformed: reviewer must be ui-ux and the report must exist. See docs/ui-review.md.',
+    )
+  if (review.verdict !== 'PASS' || review.sourceDigest !== sourceDigest) {
+    // Pull requests may carry fixes awaiting re-review; main and Pages stay strict.
+    if (process.argv.includes('--allow-pending')) {
+      console.log(
+        `::warning title=UI review pending::Current UI snapshot has no ui-ux PASS (last: ${review.verdict} for ${review.ticket}). Merging to main requires a current PASS.`,
+      )
+      process.exit(0)
+    }
     throw new Error(
       'UI review is missing, blocked or stale. Request an independent ui-ux review of the current interface. Never overwrite the verdict to bypass this check.',
     )

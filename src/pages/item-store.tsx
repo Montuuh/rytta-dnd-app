@@ -18,7 +18,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowUpDown,
@@ -56,6 +56,7 @@ import {
   type ItemDefinition,
 } from '@/features/inventory'
 import { CatalogueShopPicker } from '@/features/shops'
+import { newRequestId } from '@/shared/lib/request-id'
 
 type View = 'list' | 'grid'
 type Sort = 'name' | 'category' | 'rarity' | 'value'
@@ -87,7 +88,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   const [shop, setShop] = useState<ItemDefinition | null>(null)
   const [removing, setRemoving] = useState<ItemDefinition | null>(null)
   const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null)
-  const phone = useMediaQuery('(max-width: 47.99em)')
+  const phone = usePhone()
   // Overlays opened from a ⋯ menu would otherwise "restore" focus to a menu item that no
   // longer exists. Remember the visible trigger and return focus there (RYT-027 F1).
   const trigger = useRef<HTMLElement | null>(null)
@@ -659,7 +660,7 @@ function GiveItem({
   const [failed, setFailed] = useState<string[]>([])
   const requests = useRef(new Map<string, string>())
   const opener = useRef(document.activeElement as HTMLElement | null)
-  const phone = useMediaQuery('(max-width: 47.99em)')
+  const phone = usePhone()
   const dismiss = () => {
     onClose()
     requestAnimationFrame(() => {
@@ -673,7 +674,7 @@ function GiveItem({
     const done = [...given]
     const missed: string[] = []
     for (const characterId of selected.filter((id) => !given.includes(id))) {
-      if (!requests.current.has(characterId)) requests.current.set(characterId, crypto.randomUUID())
+      if (!requests.current.has(characterId)) requests.current.set(characterId, newRequestId())
       try {
         await action.mutateAsync({
           kind: 'grant',

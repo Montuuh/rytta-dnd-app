@@ -1,5 +1,5 @@
 import { Anchor, Drawer, Loader, Text } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { ArrowUpRight, ChevronLeft } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -24,7 +24,7 @@ export function ReferenceSheet({
 }) {
   const { t } = useTranslation()
   const glossary = useGlossary()
-  const wide = useMediaQuery('(min-width: 48em)', false)
+  const wide = !usePhone()
   const heading = useRef<HTMLSpanElement>(null)
   const depth = useRef(0)
   const id = stack.at(-1)

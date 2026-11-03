@@ -18,7 +18,8 @@ import {
   TextInput,
   Title,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { PageHead } from '@/shared/ui/page-head'
+import { usePhone, useWide } from '@/shared/ui/use-viewport'
 import { notifications } from '@mantine/notifications'
 import {
   ChevronLeft,
@@ -79,7 +80,7 @@ export function GlossaryPage() {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const wide = useMediaQuery('(min-width: 62em)', false)
+  const wide = useWide()
   const searchRef = useRef<HTMLInputElement>(null)
   const indexRef = useRef<HTMLDivElement>(null)
   const readerHeading = useRef<HTMLHeadingElement>(null)
@@ -377,22 +378,22 @@ export function GlossaryPage() {
           {t('glossary.backToIndex')}
         </Anchor>
       ) : (
-        <header className="gl-masthead">
-          <div className="gl-masthead-text">
-            <Title order={1}>{t('module.glossary')}</Title>
-            <p className="gl-intro">{t('glossary.intro')}</p>
-          </div>
-          {glossary.canEdit && (
-            <button
-              type="button"
-              className="gl-new-entry"
-              onClick={() => setEditor({ entry: null, srdRef: null })}
-            >
-              <Plus size={18} aria-hidden="true" />
-              {t('glossary.hb.new')}
-            </button>
-          )}
-        </header>
+        <PageHead
+          title={t('module.glossary')}
+          description={t('glossary.intro')}
+          actions={
+            glossary.canEdit && (
+              <button
+                type="button"
+                className="gl-new-entry"
+                onClick={() => setEditor({ entry: null, srdRef: null })}
+              >
+                <Plus size={18} aria-hidden="true" />
+                {t('glossary.hb.new')}
+              </button>
+            )
+          }
+        />
       )}
 
       {!showReaderOnly && (
@@ -604,7 +605,7 @@ function SpellFilterSheet({
   count: number
 }) {
   const { t } = useTranslation()
-  const wide = useMediaQuery('(min-width: 48em)', false)
+  const wide = !usePhone()
   const levelLabel = (level: number) =>
     level === 0 ? t('glossary.spell.cantripShort') : t('glossary.spell.levelShort', { level })
   return (

@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 /**
  * Bundled SRD content (scripts/glossary → src/features/glossary/content). Content comes from the
- * System Reference Document 5.2.1 and 5.1 by Wizards of the Coast LLC, CC-BY-4.0 (ADR 023).
+ * System Reference Document 5.2.1 and 5.1 by Wizards of the Coast LLC, CC-BY-4.0 (ADR 024).
  * Text uses Rytta's inline mini-markup (`*em*`, `**strong**`) and is never rendered as HTML.
  */
 export type GlossaryLanguage = 'es' | 'en'

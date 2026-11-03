@@ -193,7 +193,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await page.keyboard.press('ArrowRight')
   await expect(saved).toBeVisible()
   await expect(resale).toHaveAttribute('aria-valuenow', '65')
-  await expect(resale).toHaveAttribute('aria-valuetext', 'Paga el 65 %')
+  await expect(resale).toHaveAttribute('aria-valuetext', 'Paga el 65\u00a0%')
 
   // Inline stock editing: price stepper and limited stock.
   // The expanded row also offers 'Editar objeto: …' (RYT-027); anchor on the row button.

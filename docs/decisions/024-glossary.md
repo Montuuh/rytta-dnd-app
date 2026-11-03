@@ -1,6 +1,8 @@
-# ADR 023: SRD 5.5e glossary, in-place term references and campaign homebrew
+# ADR 024: SRD 5.5e glossary, in-place term references and campaign homebrew
 
-Date: 2026-11-03. Status: accepted for `RYT-008`. Supersedes the "no rules prose is bundled"
+Date: 2026-11-03. Status: accepted for `RYT-008`. Drafted as ADR 023 before RYT-035 took that
+number; the applied migration `20261104120000_glossary_homebrew.sql` still cites "ADR 023" in a
+comment (deployed migrations are append-only). Supersedes the "no rules prose is bundled"
 limit of ADR 013 and ADR 014 for the glossary only.
 
 ## Context

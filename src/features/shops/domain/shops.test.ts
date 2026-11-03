@@ -15,15 +15,16 @@ import {
   type Listing,
   type OrderLine,
 } from './shops'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const listing = (over: Partial<Listing> = {}, item: Partial<Listing['item']> = {}): Listing => ({
-  id: crypto.randomUUID(),
+  id: newRequestId(),
   price: 50,
   unit_price: 40,
   stock: 2,
   exclusive: false,
   item: {
-    id: crypto.randomUUID(),
+    id: newRequestId(),
     name: 'Healing potion',
     category: 'consumable',
     icon: 'flask-round',
@@ -72,7 +73,7 @@ describe('shop pricing', () => {
       reconcileCart(
         [
           { listingId: potion.id, quantity: 3, offeredPrice: null },
-          { listingId: crypto.randomUUID(), quantity: 1, offeredPrice: null },
+          { listingId: newRequestId(), quantity: 1, offeredPrice: null },
         ],
         [potion],
       ),
@@ -87,8 +88,8 @@ describe('shop pricing', () => {
   })
   it('uses the final, countered, offered then list price', () => {
     const line: OrderLine = {
-      id: crypto.randomUUID(),
-      definition_id: crypto.randomUUID(),
+      id: newRequestId(),
+      definition_id: newRequestId(),
       item_name: 'Rope',
       icon: 'package',
       quantity: 1,
@@ -119,7 +120,7 @@ describe('shop pricing', () => {
 
 describe('holdings', () => {
   it('counts owned and equipped units across stacks', () => {
-    const sword = crypto.randomUUID()
+    const sword = newRequestId()
     expect(ownership([stack(sword, 2, 'shop'), stack(sword, 1, 'dm', 'main_hand')], sword)).toEqual(
       {
         owned: 3,
@@ -128,8 +129,8 @@ describe('holdings', () => {
     )
   })
   it('only sells loose units the DM or a shop provided', () => {
-    const potion = crypto.randomUUID()
-    const pebble = crypto.randomUUID()
+    const potion = newRequestId()
+    const pebble = newRequestId()
     const units = sellableUnits([
       stack(potion, 2, 'shop'),
       stack(potion, 1, 'dm'),

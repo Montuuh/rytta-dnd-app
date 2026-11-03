@@ -199,3 +199,92 @@ touch, and 1440×1000.
 After fixes: F1 (end with targets selected, both views), F2 (axe with a defeated combatant,
 both themes), F3 (own turn and waiting banners at 390/820/1440, ES/EN, 150%), and a visual
 pass on F4 to F8. A source change invalidates this fingerprint.
+
+## Round 2 (focused re-review)
+
+- Date: 2026-11-03.
+- Source snapshot: branch `worktree-agent-ab70fd5aa90f9a870`, head `1cc23a3` (fixes), after
+  `f6c8e0b` (round 1 report). Tracked tree clean.
+- Fingerprint (`node scripts/check-ui-review.mjs --fingerprint`):
+  `6a616378bcdc86c34d5178e9397aa9db817f0e5ac9da52a13cbb63cc48e8692f`
+
+### Verdict: PASS
+
+All three blocking findings and the five minor findings from round 1 are resolved in the browser,
+and N1 is resolved in the fixture. The regression pass found no blocking issue. Three new minor
+findings (R2-1 to R2-3) remain. None blocks approval, but they should be tracked or fixed in a
+follow-up.
+
+### Round 1 findings
+
+| Finding | Status | Evidence (browser, 390/820/1440) |
+| --- | --- | --- |
+| F1 target selection after end | Resolved | Path A: console with Goblin 2 chosen and the multi-target damage dialog open, then the fight ends: 0 dialogs, 0 checkboxes, no `.combat-multi-bar`. Path B (console hidden behind the table): clears once the console's projection refreshes (see R2-3). |
+| F2 "Derrotado" contrast | Resolved | No pill. The status word reads "Derrotado"/"Defeated" with a skull at full contrast, on a dashed transparent row with the name struck through in the muted token. Axe is clean with a defeated goblin for the Player (dark ES, light EN), the DM table (dark ES, light EN) and the DM console. |
+| F3 own-turn hierarchy | Resolved | Own turn: "Ahora" label, then "¡Te toca!"/"Your turn!" at display size (36/42.7/52px). Waiting: a full-width countdown band with an hourglass ("Te toca dentro de 1 turno", 20.8/23/26px), separate from "Después". The pulse appears only without reduced motion. |
+| F4 d20 total | Resolved | Inter with `lining-nums tabular-nums`. "17" sits inside the larger triangle in both themes; "150" and "-12" switch to the smaller size and stay inside. |
+| F5 out-of-range feedback | Resolved (see R2-1) | Typing 150 keeps 150 with `aria-invalid="true"`, shows the red hint "Escribe un total entre −20 y 99." (polite live region) and disables Save. There is no silent clamp on blur. "-12" is accepted. |
+| F6 recap ledger | Resolved | From 40em there is one header per side ("Hecho / Recibido / Curado"); the labels per row are visually hidden. Phones keep the labels per row. Names are weight 700, the fate is centred, and the recap is at most 832px wide at 1440. |
+| F7 disabled Save | Resolved | Warm tint in the palette: dark `color(srgb .23 .16 .09)` with #CBB699, light `color(srgb .92 .88 .85)` with #664F3A. |
+| F8 rolling banner on phones | Resolved | At 390 the count is 28px, the pips sit under it, and it no longer wraps ("0 de 4 listos" fits on one line, also at 150%). |
+| N1 fixture recap privacy | Resolved | "Ogro secreto" (hidden) is absent from the Player recap and the DM table recap, and present in the DM console recap. |
+
+### New findings
+
+#### R2-1 — Minor: the range hint is not linked to the field
+
+- Where: `src/features/combat/ui/initiative-entry.tsx:89-90`.
+- Reproduction: Player, ES, any viewport. Type 150. The input has `aria-invalid="true"` but no
+  `aria-describedby`. Mantine drops the passed id when `error` is set, and the measured attribute
+  is `null`.
+- Impact: the live region announces the hint once, but returning focus to the field reads
+  "invalid" without the reason.
+- Fix: pass the id through `errorProps`/`describedBy`, or set `aria-describedby` with
+  `wrapperProps`/`inputProps` so that it survives `error`. Then assert it in e2e.
+
+#### R2-2 — Minor: focus drops to `body` when the end of the fight closes an open dialog
+
+- Where: `src/features/combat/ui/dm-console.tsx:127-132`, the reset added for F1.
+- Reproduction: DM console, choose a target, open "Daño", then end the fight from elsewhere
+  (another device, or the fixture). The dialog closes and `document.activeElement` is `BODY` (390,
+  820 and 1440).
+- Impact: keyboard users lose their place. This case is rare: it needs an end from another
+  device while the dialog is open.
+- Fix: when the reset closes a dialog, move focus to the recap heading (`#combat-summary-title`).
+
+#### R2-3 — Minor: the console is stale after switching to it once the fight has ended
+
+- Where: `src/features/combat/ui/combat-page.tsx:210-217` (switching views does not refetch
+  the now-visible projection).
+- Reproduction: Realtime unavailable (polling fallback, as in the fixture). In the console,
+  choose a target, switch to Mesa, and end the fight. The table shows the recap. Switch back to
+  the console: for about 3 seconds (until the next poll) it shows "En curso", the turn bar with
+  "Siguiente turno" and the "Daño/Curar" bar. It then turns into the recap and clears the
+  selection.
+- Impact: live controls on a closed fight for up to one poll interval; the server refuses them.
+  With Realtime connected, invalidating the combat scope refetches both mounted projections, so
+  this is limited to the fallback path.
+- Fix: refetch (or invalidate) the target view's projection in `choose()`.
+
+### Regression scope (browser-tested)
+
+- Player initiative entry: keypad and typing; Escape clears; Enter saves; focus goes to the
+  pencil. On reopen, focus goes to the heading, and Escape returns it to the pencil.
+- Turn banners: initiative, waiting and own turn. The pulse is suppressed under reduced motion.
+- Recap: Player at 390/820/1440, DM table view and DM console.
+- DM view switch: arrows keep focus on the switch, and `?view=console` is set. A draft with
+  `?view=table` opens the console without the switch.
+- Privacy: no `NOTA-` and no hidden ogre in the Player DOM or in any Player `get_combat_state`
+  response, and the table projection hides it.
+- Themes and languages: ES dark and EN light.
+- Text at 150%: no horizontal scroll for the entry, own turn, recap or DM views.
+- Axe (`wcag2a/2aa/21aa/22aa`): 0 violations in every state above.
+- Page errors: 0.
+
+### Limitations (round 2)
+
+- Same as round 1: fixture mode in Chromium only, emulated touch, no hosted Supabase or Realtime,
+  no real devices or screen reader, and the DM "Vista jugador" preview not exercised.
+- R2-3 was observed only with the polling fallback. The Realtime path was reasoned from
+  `api.ts` (scope invalidation), not run.
+- Screenshots and measurements are in my scratch folder outside the repository (not committed).

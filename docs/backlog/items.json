@@ -1572,7 +1572,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-041"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1628,7 +1628,8 @@
         "docs/evidence/RYT-042/summary-en-light-mobile.png",
         "docs/evidence/RYT-042/summary-en-light-tablet.png",
         "docs/evidence/RYT-042/table-turn-en-light-mobile.png",
-        "docs/evidence/RYT-042/table-turn-en-light-tablet.png"
+        "docs/evidence/RYT-042/table-turn-en-light-tablet.png",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {

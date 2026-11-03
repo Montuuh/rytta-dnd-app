@@ -1061,7 +1061,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-029"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1078,7 +1078,12 @@
         "390px and tablet screenshots",
         "independent ui-ux PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-033/validation.md",
+        "docs/decisions/020-settings-class-themes.md",
+        "tests/unit/class-themes.test.ts",
+        "tests/e2e/preferences.spec.ts"
+      ]
     },
     {
       "id": "RYT-034",

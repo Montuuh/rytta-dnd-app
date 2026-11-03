@@ -343,10 +343,10 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   const campaignsItem = page.getByRole('menuitem', { name: 'Mis campañas', exact: true })
   const settings = page.getByRole('menuitem', { name: 'Ajustes', exact: true })
   await expect(campaignsItem).toBeFocused()
-  // My campaigns, appearance, language, App setup and Sign out (RYT-025).
-  await expect(page.getByRole('menuitem')).toHaveCount(5)
+  // My campaigns, App setup and Sign out; appearance and language live in Settings (RYT-033).
+  await expect(page.getByRole('menuitem')).toHaveCount(3)
   const bounds = await page.getByRole('menu').boundingBox()
-  expect(bounds!.height).toBeLessThan(380)
+  expect(bounds!.height).toBeLessThan(260)
   expect(bounds!.width).toBeLessThanOrEqual(260)
   await page.screenshot({ path: info.outputPath('compact-settings-menu.png'), fullPage: true })
   await page.keyboard.press('Escape')
@@ -356,22 +356,20 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   await expect(page.getByRole('menu')).not.toBeVisible()
   await trigger.click()
   await settings.click()
-  const dialog = page.getByRole('dialog')
-  await expect(dialog.getByRole('button', { name: 'Cerrar ajustes', exact: true })).toBeVisible()
-  await expect(dialog.getByRole('radio', { name: 'Oscuro', exact: true })).toBeChecked()
-  await expect(dialog.getByRole('radio', { name: 'Claro', exact: true })).not.toBeChecked()
-  const choices = dialog.getByRole('radiogroup', { name: 'Apariencia' }).locator('label')
-  for (const choice of await choices.all()) {
+  await expect(page.getByRole('heading', { name: 'Ajustes', level: 1 })).toBeVisible()
+  await expect(page.locator('main')).toBeFocused()
+  const appearance = page.getByRole('radiogroup', { name: 'Apariencia' })
+  await expect(appearance.getByRole('radio', { name: 'Oscuro', exact: true })).toBeChecked()
+  await expect(appearance.getByRole('radio', { name: 'Claro', exact: true })).not.toBeChecked()
+  for (const choice of await appearance.locator('label').all()) {
     const box = await choice.boundingBox()
     expect(box!.width).toBeGreaterThanOrEqual(44)
     expect(box!.height).toBeGreaterThanOrEqual(44)
   }
-  await choices.filter({ hasText: /^Claro$/ }).click()
+  await appearance.locator('label').filter({ hasText: 'Claro' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
-  await expect(dialog.getByRole('radio', { name: 'Claro', exact: true })).toBeChecked()
+  await expect(appearance.getByRole('radio', { name: 'Claro', exact: true })).toBeChecked()
   await page.screenshot({ path: info.outputPath('icon-theme-preferences.png'), fullPage: true })
-  await page.keyboard.press('Escape')
-  await expect(trigger).toBeFocused()
 })
 
 test('invitation panel distinguishes loading, empty and failed refresh with recovery', async ({

@@ -6,6 +6,7 @@ import type { en } from './en'
 import { identityEs } from './identity-es'
 import { designEs } from './design-es'
 import { storeEs } from './store-es'
+import { settingsEs } from './settings-es'
 
 export const es = {
   ...identityEs,
@@ -15,6 +16,7 @@ export const es = {
   ...shopsEs,
   ...designEs,
   ...storeEs,
+  ...settingsEs,
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
   'module.shops': 'Tiendas',
@@ -70,22 +72,14 @@ export const es = {
   'error.help':
     'Recarga para intentarlo de nuevo. Si el problema continúa, comprueba la configuración.',
   'error.reload': 'Recargar',
-  'preferences.title': 'A tu manera',
-  'preferences.close': 'Cerrar ajustes',
   'preferences.theme': 'Apariencia',
   'preferences.dark': 'Oscuro',
   'preferences.light': 'Claro',
-  'preferences.toLight': 'Cambiar a modo claro',
-  'preferences.toDark': 'Cambiar a modo oscuro',
   'preferences.language': 'Idioma',
-  'preferences.switchToEn': 'ES · Cambiar idioma a inglés',
-  'preferences.switchToEs': 'EN · Cambiar idioma a español',
   'preferences.saved':
     'Tus preferencias se guardan en este dispositivo. La primera visita empieza en español y modo oscuro.',
-  'settings.eyebrow': 'BASE DE LA APLICACIÓN',
   'settings.demo': 'Modo demo',
   'settings.backend': 'Modo Supabase',
-  'settings.honest': 'Un punto de partida claro',
   'settings.demoDescription':
     'El contenido de ejemplo es local y de solo lectura. No representa una cuenta, conexión ni progreso guardado.',
   'settings.backendDescription':

@@ -11,8 +11,6 @@ export const designEs = {
   'shell.previewBanner': 'Estás viendo la mesa como {{name}}',
   'shell.previewBannerGeneric': 'Estás viendo la mesa como jugador',
   'shell.exitPreview': 'Volver a vista DM',
-  'preferences.languageShort': 'Idioma',
-  'preferences.themeShort': 'Apariencia',
   'common.refreshing': 'Actualizando…',
   'common.checkedAgo': 'Actualizado {{time}}',
   'common.justNow': 'ahora mismo',

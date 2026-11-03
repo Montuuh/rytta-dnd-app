@@ -4,17 +4,20 @@ import {
   Button,
   Drawer,
   Group,
+  Modal,
   Select,
   Stack,
   TextInput,
+  Text,
   Textarea,
+  Tooltip,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { usePhone } from '@/shared/ui/use-viewport'
-import { Plus, X } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { Plus, Trash2, TriangleAlert, X } from 'lucide-react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useHomebrewAction } from '../api'
+import { useHomebrewAction, useLatestHomebrew } from '../api'
 import type { Catalog } from '../domain/catalog'
 import {
   emptyDraft,
@@ -23,6 +26,7 @@ import {
   homebrewLimits,
   parseAliases,
   type HomebrewCategory,
+  type HomebrewDraft,
   type HomebrewEntry,
 } from '../domain/homebrew'
 
@@ -38,6 +42,16 @@ type FormValues = {
 
 export type EditorTarget = { entry: HomebrewEntry | null; srdRef: string | null }
 
+const toFormValues = (entry: HomebrewEntry | HomebrewDraft): FormValues => ({
+  category: entry.category,
+  name: entry.name,
+  aliases: entry.aliases.join(', '),
+  summary: entry.summary,
+  body: entry.body,
+  facts: entry.facts.map((f) => ({ ...f })),
+  srd_ref: entry.srd_ref,
+})
+
 /** Create or edit a campaign homebrew entry. Every member with access can edit any entry. */
 export function HomebrewEditor({
   target,
@@ -45,43 +59,89 @@ export function HomebrewEditor({
   catalog,
   onClose,
   onSaved,
-  returnFocus = true,
+  onDelete,
 }: {
   target: EditorTarget | null
   campaignId: string
   catalog: Catalog
   onClose: () => void
   onSaved: (entry: HomebrewEntry) => void
-  /** False after a save: the page moves focus to the saved headword instead. */
-  returnFocus?: boolean
+  /** Offered while editing an existing entry. */
+  onDelete: (entry: HomebrewEntry) => void
 }) {
   const wide = !usePhone()
   const { t } = useTranslation()
+  // The form reports whether it holds unsaved edits; closing then asks before discarding.
+  const dirty = useRef(false)
+  const [discarding, setDiscarding] = useState(false)
+  // Opened a tick later: when Escape asks, the question must not mount while that same key event
+  // is still travelling up to the window, where it would close the question at once.
+  const requestClose = () =>
+    dirty.current ? void window.setTimeout(() => setDiscarding(true), 0) : onClose()
   return (
-    <Drawer
-      opened={target !== null}
-      onClose={onClose}
-      returnFocus={returnFocus}
-      position="right"
-      size={wide ? 520 : '100%'}
-      title={
-        <span className="gl-editor-title">
-          {t(target?.entry ? 'glossary.hb.edit' : 'glossary.hb.new')}
-        </span>
-      }
-      closeButtonProps={{ 'aria-label': t('glossary.hb.cancel'), size: 44 }}
-    >
-      {target && (
-        <EditorForm
-          key={target.entry?.id ?? `new-${target.srdRef ?? ''}`}
-          target={target}
-          campaignId={campaignId}
-          catalog={catalog}
-          onClose={onClose}
-          onSaved={onSaved}
-        />
-      )}
-    </Drawer>
+    <>
+      <Drawer
+        opened={target !== null}
+        onClose={requestClose}
+        closeOnEscape={!discarding}
+        // The manager returns focus to the control that opened the editor.
+        returnFocus={false}
+        // Above the reference sheet (400), which can be open underneath.
+        zIndex={410}
+        position="right"
+        size={wide ? 520 : '100%'}
+        classNames={{ content: 'gl-editor-drawer' }}
+        title={
+          <span className="gl-editor-title">
+            {t(target?.entry ? 'glossary.hb.edit' : 'glossary.hb.new')}
+          </span>
+        }
+        closeButtonProps={{ 'aria-label': t('glossary.hb.close'), size: 44 }}
+      >
+        {target && (
+          <EditorForm
+            key={target.entry?.id ?? `new-${target.srdRef ?? ''}`}
+            target={target}
+            campaignId={campaignId}
+            catalog={catalog}
+            onDirtyChange={(value) => {
+              dirty.current = value
+            }}
+            onClose={requestClose}
+            onSaved={onSaved}
+            onDelete={onDelete}
+          />
+        )}
+      </Drawer>
+      <Modal
+        opened={discarding}
+        onClose={() => setDiscarding(false)}
+        centered
+        zIndex={420}
+        returnFocus
+        classNames={{ content: 'gl-delete-modal' }}
+        title={<span className="gl-editor-title">{t('glossary.hb.discardTitle')}</span>}
+        closeButtonProps={{ 'aria-label': t('glossary.hb.close'), size: 44 }}
+      >
+        <Text className="gl-delete-body">{t('glossary.hb.discardBody')}</Text>
+        <Group className="gl-dialog-actions" justify="flex-end" gap="sm" mt="md">
+          <Button variant="default" onClick={() => setDiscarding(false)} data-autofocus>
+            {t('glossary.hb.keepEditing')}
+          </Button>
+          <Button
+            color="red"
+            variant="light"
+            onClick={() => {
+              setDiscarding(false)
+              dirty.current = false
+              onClose()
+            }}
+          >
+            {t('glossary.hb.discard')}
+          </Button>
+        </Group>
+      </Modal>
+    </>
   )
 }
 
@@ -89,29 +149,30 @@ function EditorForm({
   target,
   campaignId,
   catalog,
+  onDirtyChange,
   onClose,
   onSaved,
+  onDelete,
 }: {
   target: EditorTarget
   campaignId: string
   catalog: Catalog
+  onDirtyChange: (dirty: boolean) => void
   onClose: () => void
   onSaved: (entry: HomebrewEntry) => void
+  onDelete: (entry: HomebrewEntry) => void
 }) {
   const { t } = useTranslation()
   const action = useHomebrewAction(campaignId)
-  const [entryId] = useState(() => target.entry?.id ?? crypto.randomUUID())
+  const latestOf = useLatestHomebrew(campaignId)
+  // A deleted entry can be saved again under a new id (the old one is gone).
+  const [entryId, setEntryId] = useState(() => target.entry?.id ?? crypto.randomUUID())
+  // The revision this form is based on. Resolving a conflict moves it to the server's current one.
+  const [revision, setRevision] = useState(target.entry?.revision ?? null)
+  const [conflict, setConflict] = useState<'busy' | 'gone' | 'offline' | null>(null)
   const start = target.entry ?? { ...emptyDraft(target.srdRef), facts: [] }
   const form = useForm<FormValues>({
-    initialValues: {
-      category: start.category,
-      name: start.name,
-      aliases: start.aliases.join(', '),
-      summary: start.summary,
-      body: start.body,
-      facts: start.facts.map((f) => ({ ...f })),
-      srd_ref: start.srd_ref,
-    },
+    initialValues: toFormValues(start),
     validate: {
       name: (value) => (value.trim() ? null : t('glossary.hb.nameRequired')),
     },
@@ -123,47 +184,143 @@ function EditorForm({
         .map((e) => ({ value: e.id, label: `${e.name} (${t(`glossary.cat.${e.category}`)})` })),
     [catalog, t],
   )
+  const isDirty = form.isDirty()
+  useEffect(() => onDirtyChange(isDirty))
   const error =
     action.error instanceof GlossaryError ? action.error.code : action.error ? 'unknown' : null
+  const alertRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
+  // A focused field must never sit under the sticky footer (WCAG 2.2 SC 2.4.11): the drawer's
+  // scroll container keeps the footer's height (it grows with large text) as scroll padding.
+  useEffect(() => {
+    const footer = footerRef.current
+    const scroller = footer?.closest<HTMLElement>('.gl-editor-drawer')
+    if (!footer || !scroller) return
+    const sync = () => {
+      scroller.style.scrollPaddingBottom = `${footer.offsetHeight + 16}px`
+    }
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(footer)
+    return () => {
+      observer.disconnect()
+      scroller.style.scrollPaddingBottom = ''
+    }
+  }, [])
 
   const nameId = useId()
+  const toDraft = (values: FormValues): HomebrewDraft => ({
+    category: values.category,
+    name: values.name.trim(),
+    aliases: parseAliases(values.aliases).slice(0, homebrewLimits.aliases),
+    summary: values.summary.trim(),
+    body: values.body.trim(),
+    facts: values.facts
+      .map((f) => ({ label: f.label.trim(), value: f.value.trim() }))
+      .filter((f) => f.label && f.value),
+    srd_ref: values.srd_ref,
+  })
+  const save = (values: FormValues, baseRevision: number | null, id = entryId) => {
+    if (conflict !== 'gone') setConflict(null)
+    action.mutate(
+      { kind: 'save', entryId: id, revision: baseRevision, draft: toDraft(values) },
+      { onSuccess: (saved) => saved && onSaved(saved) },
+    )
+  }
+  const gone = conflict === 'gone'
+  const saveAsNew = (values: FormValues) => {
+    const id = crypto.randomUUID()
+    setEntryId(id)
+    setRevision(null)
+    save(values, null, id)
+  }
   const submit = form.onSubmit(
-    (values) => {
-      action.mutate(
-        {
-          kind: 'save',
-          entryId,
-          revision: target.entry?.revision ?? null,
-          draft: {
-            category: values.category,
-            name: values.name.trim(),
-            aliases: parseAliases(values.aliases).slice(0, homebrewLimits.aliases),
-            summary: values.summary.trim(),
-            body: values.body.trim(),
-            facts: values.facts
-              .map((f) => ({ label: f.label.trim(), value: f.value.trim() }))
-              .filter((f) => f.label && f.value),
-            srd_ref: values.srd_ref,
-          },
-        },
-        {
-          onSuccess: (saved) => {
-            if (!saved) return
-            onSaved(saved)
-          },
-        },
-      )
-    },
+    (values) => (gone ? saveAsNew(values) : save(values, revision)),
     // A missing name moves focus to the field that explains it.
     () => document.getElementById(nameId)?.focus(),
   )
+  /** Conflict recovery: fetch what the table sees now, then load it or save over it. */
+  const resolve = async (mode: 'load' | 'overwrite') => {
+    setConflict('busy')
+    try {
+      const latest = await latestOf(entryId)
+      if (!latest) return setConflict('gone')
+      setRevision(latest.revision)
+      setConflict(null)
+      action.reset()
+      if (mode === 'overwrite') return save(form.values, latest.revision)
+      form.setValues(toFormValues(latest))
+      form.resetDirty()
+      // The alert that held focus is gone: continue in the form.
+      requestAnimationFrame(() => document.getElementById(nameId)?.focus())
+    } catch {
+      setConflict('offline')
+    }
+  }
+  const staleEdit = (error === 'stale' && target.entry !== null) || gone
+  // A conflict takes focus (announced and reachable); first check whether the entry still exists.
+  const conflictShown = staleEdit
+  useEffect(() => {
+    if (!conflictShown || gone) return
+    alertRef.current?.focus()
+    let live = true
+    latestOf(entryId)
+      .then((latest) => live && !latest && setConflict('gone'))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [conflictShown, gone, latestOf, entryId])
+  useEffect(() => {
+    if (gone) alertRef.current?.focus()
+  }, [gone])
 
   return (
     <form onSubmit={submit} noValidate>
       <Stack gap="md">
-        {error && (
+        {staleEdit && (
+          <Alert
+            ref={alertRef}
+            tabIndex={-1}
+            color="red"
+            role="alert"
+            icon={<TriangleAlert size={18} aria-hidden="true" />}
+            title={t('glossary.hb.conflict.title')}
+          >
+            {gone ? (
+              <p className="gl-conflict-text">{t('glossary.hb.conflict.gone')}</p>
+            ) : (
+              <>
+                <p className="gl-conflict-text">
+                  {conflict === 'offline'
+                    ? t('glossary.hb.error.unavailable')
+                    : t('glossary.hb.conflict.body')}
+                </p>
+                <Group gap="xs" mt="xs">
+                  <Button
+                    variant="default"
+                    loading={conflict === 'busy'}
+                    onClick={() => void resolve('load')}
+                  >
+                    {t('glossary.hb.conflict.load')}
+                  </Button>
+                  <Button
+                    variant="light"
+                    color="red"
+                    disabled={conflict === 'busy'}
+                    onClick={() => void resolve('overwrite')}
+                  >
+                    {t('glossary.hb.conflict.overwrite')}
+                  </Button>
+                </Group>
+              </>
+            )}
+          </Alert>
+        )}
+        {/* A failed save (offline, duplicate name, invalid) is always shown, also after a deletion. */}
+        {error && !(staleEdit && error === 'stale') && (
           <Alert color="red" role="alert">
-            {t(`glossary.hb.error.${error}`)}
+            {t(`glossary.hb.error.${error === 'stale' ? 'unknown' : error}`)}
           </Alert>
         )}
         <TextInput
@@ -247,19 +404,39 @@ function EditorForm({
           placeholder={t('glossary.hb.attachPlaceholder')}
           data={srdOptions}
           searchable
-          clearable
           limit={40}
           nothingFoundMessage={t('glossary.noResultsHint')}
           {...form.getInputProps('srd_ref')}
         />
-        <Group justify="flex-end" gap="sm" mt="sm">
-          <Button variant="subtle" onClick={onClose}>
-            {t('glossary.hb.cancel')}
-          </Button>
-          <Button type="submit" loading={action.isPending}>
-            {t('glossary.hb.save')}
-          </Button>
-        </Group>
+        <div className="gl-editor-footer" ref={footerRef}>
+          {target.entry && !gone && (
+            <Tooltip label={t('glossary.hb.delete')} zIndex={500}>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                size={44}
+                aria-label={t('glossary.hb.delete')}
+                onClick={() => onDelete(target.entry!)}
+              >
+                <Trash2 size={20} aria-hidden="true" />
+              </ActionIcon>
+            </Tooltip>
+          )}
+          <Group className="gl-editor-footer-actions" gap="sm">
+            <Button variant="default" onClick={onClose}>
+              {t('glossary.hb.cancel')}
+            </Button>
+            <Button type="submit" loading={action.isPending}>
+              {t(
+                gone
+                  ? 'glossary.hb.conflict.saveNew'
+                  : target.entry
+                    ? 'glossary.hb.saveChanges'
+                    : 'glossary.hb.save',
+              )}
+            </Button>
+          </Group>
+        </div>
       </Stack>
     </form>
   )

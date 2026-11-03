@@ -203,8 +203,8 @@ export function ShopControls({
             max={100}
             step={5}
             value={view.resale_percent}
-            label={(value) => `${value} %`}
-            marks={[0, 25, 50, 75, 100].map((value) => ({ value, label: `${value}%` }))}
+            label={(value) => t('admin.modifier.mark', { value })}
+            marks={[0, 25, 50, 75, 100].map((value) => ({ value, label: `${value}` }))}
             onChange={(value) => change({ resale_percent: value }, 500)}
             className="touch-slider"
             thumbSize={32}

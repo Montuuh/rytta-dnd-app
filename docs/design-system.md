@@ -122,3 +122,12 @@ How it works:
   both schemes, before it ships.
 - Never hardcode a theme color in components. Use the tokens. Resource and status colors
   (gold, water, rations, danger, success, rarity) keep their meaning across themes.
+
+## Page heads, phone overlays and destructive actions (RYT-035)
+
+Every page starts with `PageHead`: the h1, one short lede, primary actions and the
+`RefreshControl` on one band (ADR 023). Keep ledes to one line on laptops. Overlays that mount on
+open use `usePhone`/`useWide` so phones never paint the desktop variant first. Destructive and
+dismissive actions (remove, reject, decline, leave) use `color="red"` with the subtle, light or
+outline variant; they map to `--danger`. Visibility toggles are labelled switches. Read-only
+exhaustion is a dot meter; the DM gets six 44px numbered pips on one row.

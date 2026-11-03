@@ -1186,6 +1186,37 @@
         "docs/evidence/ui-review/final-r2/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-035",
+      "title": "Full frontend and UI/UX review fixes and visual polish",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "in_progress",
+      "dependsOn": ["RYT-033", "RYT-034"],
+      "sources": [
+        "User 2026-11-03: full frontend and UI/UX review of every DM and Player screen at laptop, tablet and phone sizes; fix every bug found and improve the overall visuals."
+      ],
+      "scope": "Fix the review bugs (implemented module flags, planned modules in Player navigation, DM price-modifier copy, shared pending state, cache invalidation scope, insecure-context ids, missing headings) and polish layout, page heads, header, buttons and widgets that do not fit phone, tablet or laptop screens. No database changes.",
+      "acceptance": [
+        "Shops is shown as implemented and only implemented modules can be enabled or reached by Players.",
+        "DM price modifiers name the character, not \"you\".",
+        "Resource steppers of one character never block another character and update immediately.",
+        "Phone page heads leave the main content above the fold; header and bottom bar never wrap at 390px or 150% text.",
+        "Destructive and secondary actions are consistent; exhaustion and AC read the same everywhere.",
+        "Settings shows no developer-only setup text and offers a way back.",
+        "No axe violations, horizontal overflow or targets under 44px at 390px, 820px and 1366px."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px, tablet and laptop screenshots for DM and Player",
+        "independent ui-ux PASS"
+      ]
     }
   ]
 }

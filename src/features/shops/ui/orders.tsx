@@ -37,6 +37,7 @@ import {
   type OrderStatus,
   type ShopAction,
 } from '../domain/shops'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const statusIcons: Record<OrderStatus, LucideIcon> = {
   pending: Clock,
@@ -231,7 +232,7 @@ export function OrderCard({
       setPanel(null)
     }
   }
-  const key = () => crypto.randomUUID()
+  const key = () => newRequestId()
   const settled = order.status === 'completed' || order.status === 'reverted'
   const titleKey =
     order.kind === 'purchase'

@@ -485,34 +485,25 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await expect(preview).toBeFocused()
   await expect(preview).not.toBeChecked()
 
-  if ((page.viewportSize()?.width ?? 1024) >= 768) return
-  // Phones: enabling planned modules pushes the bar past five destinations into the bar into the More bottom sheet.
+  // RYT-035: planned modules cannot be enabled, so they never reach Player navigation.
   await page.goto(`./#/campaign/${campaignId}/members`)
   await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
-  for (const module of ['Tiendas', 'Misiones', 'Combate']) {
-    const toggle = page.getByRole('switch', { name: `${module}: visible para jugadores` })
-    await toggle.focus()
-    await page.keyboard.press('Space')
-    await expect(toggle).toBeChecked()
-  }
-  const more = page.getByRole('button', { name: 'Abrir más secciones', exact: true })
-  await more.click()
-  const sheet = page.locator('.more-drawer .mantine-Drawer-content')
-  await expect(sheet).toBeVisible()
-  const height = page.viewportSize()!.height
-  // Wait for the slide-in transition, then the sheet must sit flush at the bottom.
-  await expect
-    .poll(async () => {
-      const box = await sheet.boundingBox()
-      return Math.round(box!.y + box!.height)
-    })
-    .toBe(height)
-  expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(height * 0.7 + 1)
-  await page.keyboard.press('Escape')
-  await expect(more).toBeFocused()
-  await more.click()
-  await page.getByRole('dialog').getByRole('link', { name: 'Misiones' }).click()
-  await expect(page.locator('main')).toBeFocused()
+  await expect(page.getByRole('switch', { name: 'Tiendas: visible para jugadores' })).toBeEnabled()
+  for (const module of ['Misiones', 'Combate'])
+    await expect(
+      page.getByRole('switch', { name: `${module}: visible para jugadores` }),
+    ).toBeDisabled()
+})
+
+test('RYT-035 a planned module enabled by an old campaign row is not a destination', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true, modules: ['party', 'quests', 'combat'] })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const nav = page.getByRole('navigation', { name: /principal|Main/i }).first()
+  await expect(nav.getByRole('link', { name: 'Grupo' })).toHaveCount(1)
+  await expect(page.getByRole('link', { name: 'Misiones' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Combate' })).toHaveCount(0)
 })
 
 /** RYT-031: evidence screenshots (390px phone, 820px tablet) only when RYT_EVIDENCE is set. */
@@ -576,38 +567,28 @@ test('RYT-031 DM toggles live sharing per character with a labelled 44px control
 }, info) => {
   const f = await identityFixture(page, { party: true, sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  const cato = page.getByRole('button', {
-    name: 'Compartir el estado en vivo de Cato con el grupo',
-  })
-  await expect(cato).toHaveAttribute('aria-pressed', 'false')
-  await expect(
-    page
-      .locator('.character-card')
-      .filter({ has: page.getByRole('heading', { name: 'Cato', exact: true }) })
-      .getByText('Oculto al grupo', { exact: true }),
-  ).toBeVisible()
-  const bea = page.getByRole('button', { name: 'Compartir el estado en vivo de Bea con el grupo' })
-  await expect(bea).toHaveAttribute('aria-pressed', 'true')
+  // RYT-035: a labelled switch ("Visible al grupo") instead of an icon-only toggle.
+  const cato = page.getByRole('switch', { name: 'Visible al grupo · Cato', exact: true })
+  await expect(cato).not.toBeChecked()
+  const bea = page.getByRole('switch', { name: 'Visible al grupo · Bea', exact: true })
+  await expect(bea).toBeChecked()
   await bea.focus()
-  await expect(page.getByRole('tooltip')).toHaveText('Visible para el grupo')
-  await page.keyboard.press('Enter')
-  await expect(bea).toHaveAttribute('aria-pressed', 'false')
+  await page.keyboard.press('Space')
+  await expect(bea).not.toBeChecked()
   await expect(bea).toBeFocused()
   expect(f.calls.filter((c) => c.method === 'set_character_live_sharing').at(-1)?.body).toEqual({
     target_campaign: campaignId,
     target_character: expect.any(String),
     enabled: false,
   })
-  await cato.click()
-  await expect(cato).toHaveAttribute('aria-pressed', 'true')
-  // Axe must not sample the hover tooltip mid fade-in (blended colours read as low contrast).
-  await expect
-    .poll(() =>
-      page
-        .getByRole('tooltip')
-        .evaluateAll((tips) => tips.every((tip) => getComputedStyle(tip).opacity === '1')),
-    )
-    .toBe(true)
+  await cato.click({ force: true })
+  await expect(cato).toBeChecked()
+  const box = await page
+    .locator('.character-card')
+    .filter({ has: page.getByRole('heading', { name: 'Cato', exact: true }) })
+    .locator('.live-share-toggle')
+    .boundingBox()
+  expect(box!.height).toBeGreaterThanOrEqual(44)
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'party-dm')
 })
@@ -618,8 +599,8 @@ test('RYT-031 DM opens the per-character history from the sheet; Players do not 
   await identityFixture(page, { party: true, sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/party`)
   await page
-    .getByRole('button', { name: 'Compartir el estado en vivo de Arin con el grupo' })
-    .click()
+    .getByRole('switch', { name: 'Visible al grupo · Arin', exact: true })
+    .click({ force: true })
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
   const open = page.getByRole('button', { name: 'Historial', exact: true })
   await open.click()

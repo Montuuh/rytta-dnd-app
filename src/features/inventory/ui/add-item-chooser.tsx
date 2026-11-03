@@ -9,7 +9,7 @@ import {
   TextInput,
   UnstyledButton,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Check, Hammer, PackageSearch, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -19,6 +19,7 @@ import type { ItemDefinition } from '../domain/item'
 import { DefinitionEditor, type GiveOutcome } from './definition-editor'
 import { ItemIcon } from './item-icon'
 import { Stepper } from './stepper'
+import { newRequestId } from '@/shared/lib/request-id'
 
 type Step = 'choose' | 'existing' | 'create'
 
@@ -37,7 +38,7 @@ export function AddItemChooser({
 }) {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const [step, setStep] = useState<Step>('choose')
   const catalogue = useQuery({
     ...catalogueQuery(state.user!.id, campaignId),
@@ -60,7 +61,7 @@ export function AddItemChooser({
     if (!item || action.isPending) return
     const quantity = amount ?? 1
     const key = `${item.id}:${quantity}`
-    if (!requests.current.has(key)) requests.current.set(key, crypto.randomUUID())
+    if (!requests.current.has(key)) requests.current.set(key, newRequestId())
     setFailed(false)
     try {
       await action.mutateAsync({

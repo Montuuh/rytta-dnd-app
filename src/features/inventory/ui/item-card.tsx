@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Alert, Drawer, Group, NumberInput, Stack, Text, UnstyledButton } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { Gift, Hand, Pencil, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatPounds } from '../domain/encumbrance'
@@ -40,7 +40,7 @@ export function ItemCard({
   onClose: () => void
 }) {
   const { t, i18n } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const [amount, setAmount] = useState<number | string>(1)
   const count = typeof amount === 'number' && amount >= 1 ? Math.trunc(amount) : 1
   const props = definition.properties

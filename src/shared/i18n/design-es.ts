@@ -7,6 +7,7 @@ export const designEs = {
   'nav.moreTitle': 'Más secciones',
   'nav.moreOpen': 'Abrir más secciones',
   'shell.playerSwitch': 'Vista jugador',
+  'shell.playerSwitchShort': 'Jugador',
   'shell.playerSwitchHint': 'Mira la mesa como la ve un jugador',
   'shell.previewBanner': 'Estás viendo la mesa como {{name}}',
   'shell.previewBannerGeneric': 'Estás viendo la mesa como jugador',

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
-import { HeartPulse, Radio, Skull, Sparkles, WifiOff } from 'lucide-react'
+import { Check, HeartPulse, Radio, Skull, Sparkles, WifiOff, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { deathState, healthBand, type Combatant, type CombatErrorCode } from '../domain/combat'
 import { BandMark } from './token'
@@ -292,7 +292,18 @@ export function DeathLine({
   if (state !== 'dying' || !saves || !notches) return null
   const row = (count: number, kind: 'success' | 'failure') =>
     [0, 1, 2].map((index) => (
-      <span key={index} className={`is-${kind}${index < count ? ' is-filled' : ''}`} />
+      <span
+        key={index}
+        className={`combat-notch is-${kind}${index < count ? ' is-filled' : ''}`}
+        data-mark={index < count ? kind : 'empty'}
+      >
+        {index < count &&
+          (kind === 'success' ? (
+            <Check strokeWidth={4} aria-hidden="true" />
+          ) : (
+            <X strokeWidth={4} aria-hidden="true" />
+          ))}
+      </span>
     ))
   return (
     <span

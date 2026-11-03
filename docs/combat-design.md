@@ -125,14 +125,18 @@ from the console log).
 the foot of the banner on phones and with large text). No confirmation: the server takes the
 expected active combatant, so a repeated tap never moves the turn twice; it is disabled on stale
 data; afterwards focus moves to the order's heading and the turn change is announced. At 0 hit
-points the death save sits between the two: two tracks of three notches (successes 10–19,
-failures 2–9) whose next empty notch is the control, and a d20 at the end of each track for the
-naturals (20 revives with 1 HP, 1 counts two failures). One roll per round: after it the tracks
-are read-only, "Success marked. The DM can undo a mistake." shows, and focus moves to the
-hand-off. Outcomes are for the whole table: every new save is announced (polite live region) on
-every screen; rows show the dying notches to those who see the character's vitals, and "Stable"
-or "Revived" (icon and word) to everyone, including the DM's table view; "Dead" stays the status
-word. Off the own turn the Player sees the notches in the own row and no control.
+points the death save comes first: two tracks of three notches (successes 10–19, failures 2–9)
+whose next empty notch is the control, and a d20 at the end of each track for the naturals (20
+revives with 1 HP, 1 counts two failures). The hand-off then follows the tracks at every width
+(DOM, focus and visual order agree) and stays an outlined secondary key, still enabled, until
+this round's roll is recorded; then it becomes the filled key and takes focus. One roll per
+round: after it the tracks are read-only and "Success marked. The DM can undo a mistake." shows.
+Only marks recorded while the tracker is on screen are stamped in. Outcomes are for the whole
+table: every new save is announced (polite live region) on every screen; rows show the dying
+notches to those who see the character's vitals (round notches with a check for successes,
+square ones with a cross for failures, never colour alone), and "Stable" or "Revived" (icon and
+word) to everyone, including the DM's table view; "Dead" stays the status word. Off the own turn
+the Player sees the notches in the own row and no control.
 
 **DM view switch.** Above both views, "All encounters" and a two-segment switch (Mesa / Consola
 del DM, radio group: arrows, Tab, tap). The DM lands on the table view; drafts have no table

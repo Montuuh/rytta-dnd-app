@@ -172,3 +172,33 @@ query in em, so 150% text on a tablet no longer squeezes "Your turn!" beside the
   redesigned for the table view, with stricter server rules for death saves.
 - The independent `ui-ux` review is pending (not self-approved; `ui-review-current.json` not
   touched); the ticket is in `review`.
+
+## Review round 1 fixes
+
+The first independent `ui-ux` review of `d7f98ba` returned CHANGES_REQUIRED
+([ui-review.md](ui-review.md), committed as delivered in `125fe8f`). Every finding is addressed:
+
+| Finding | Change | Test |
+| --- | --- | --- |
+| F1 major: at 0 HP the filled end-turn key sat above-right of the unrolled death save on tablets/laptops; Tab order did not match the visual order; 22px from the "1" die on phones | Whenever the tracker shows, the hand-off follows the tracks at every width (grid `actor / saves / handoff`, end-aligned up to 24rem on wide banners, full width on phones), so DOM, focus and visual order agree. While this round's roll is pending (`canRollDeathSave`) it is the outlined secondary key (`data-emphasis="secondary"`: transparent, 2px accent outline, smaller label, still enabled; no confirmation); recording the roll makes it the filled primary key, where focus already goes. Extra space above it: 16px + grid gap on wide banners, 24px + gap on phones | e2e (phone, tablet, laptop): `data-emphasis` secondary and enabled before the roll, primary after; the "1" die precedes the hand-off in the DOM; the hand-off's top is at least 28px below the die's bottom; Tab from the "1" die lands on the hand-off |
+| F2 medium: row notches told successes from failures by colour only | Row notches are 16px; successes are round and filled ones carry a check, failures are square (3px radius) and filled ones carry a cross, matching the banner marks; `data-mark` names each state | e2e: after a success the own row has one `[data-mark="success"]` with a check glyph; after a natural 1, two `[data-mark="failure"]` with a cross; failure and success notches have different computed corner radii |
+| F3 minor: the stamp animation replayed on every mount | The tracker keeps the counts it mounted with (lowered if an undo removes marks); only marks filled after that get `is-new`, and only `is-new` animates. The revived card glows only if it appears while the tracker is on screen | e2e: after the roll exactly one `.is-new` mark; on the next own turn (remount) the earlier mark has no `is-new` |
+| F4 minor: "Tira un d20 y marca el resultado." repeated the tracks | Line and keys `combat.death.prompt` (ES/EN) removed | e2e: the tracker no longer contains the line |
+
+The observations (Barbarian accent close to the failure track, "¡Te toca!" on the turn a character
+died, capitalised outcome in the DM log) needed no change; the secondary hand-off also reduces
+the first one while a roll is pending.
+
+Verification of the fixes:
+
+| Check | Result |
+| --- | --- |
+| RYT-045 + RYT-007 combat e2e, 3 identity projects | 15 passed on the first run |
+| `npm run check` | passed: 32 files / 237 tests, build OK |
+| `CI=1 npm run test:e2e` (servers started by the run; `reuseExistingServer` is off, so a foreign server would have failed the start) | 427 passed, 49 skipped, 1 flaky (`roster.spec.ts:266` phone, RYT-044 archive focus, not touched; passed on retry), 0 failed |
+
+Screenshots refreshed (390/820) and inspected: `death-saves` (secondary hand-off under the
+tracks), `death-saves-marked` (primary after the roll; row check notch), `death-saves-en-light`,
+`death-saves-150`, `dead`, `revived`, `stable`. `end-turn` is unchanged (no tracker, side column
+kept). Only RYT-045 tests ran with evidence on; no other ticket's screenshots changed. A focused
+re-review is pending.

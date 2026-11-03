@@ -13,6 +13,7 @@ import { ChevronsRight, Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   canEndTurn,
+  canRollDeathSave,
   canEnterInitiative,
   deathState,
   initiativeProgress,
@@ -134,8 +135,9 @@ export function TableDisplay({
             </div>
           </div>
           {yours && active ? (
-            // RYT-045: on the own turn, "Up next" becomes the hand-off itself, and a character at
-            // 0 hit points rolls the death save between the two.
+            // RYT-045: on the own turn, "Up next" becomes the hand-off itself. A character at 0 hit
+            // points gets the death save first: the hand-off follows the tracks (DOM and visual
+            // order) and stays secondary until this round's roll is recorded (review F1).
             <>
               {deathState(active) !== null && (
                 <div className="combat-table-saves">
@@ -152,6 +154,7 @@ export function TableDisplay({
               {canEndTurn(status, active) && (
                 <EndTurn
                   upNext={upNext}
+                  secondary={canRollDeathSave(state, active)}
                   disabled={pending || stale}
                   pending={ending}
                   end={async () => {
@@ -256,15 +259,18 @@ export function TableDisplay({
  * RYT-045: the Player hands the turn on. A wide, heavy tile at the foot of the "Your turn!" banner
  * (the side column on tablets) that names who acts next, readable and reachable from the table.
  * No confirmation: the server takes the expected active combatant, so a repeated tap never moves
- * the turn twice, and the DM can move it back from the console.
+ * the turn twice, and the DM can move it back from the console. While this round's death save is
+ * still to roll, the key is the outlined secondary one (still enabled) so the roll leads.
  */
 function EndTurn({
   upNext,
+  secondary,
   disabled,
   pending,
   end,
 }: {
   upNext: Combatant | null
+  secondary: boolean
   disabled: boolean
   pending: boolean
   end: () => void
@@ -274,6 +280,7 @@ function EndTurn({
     <UnstyledButton
       id="combat-end-turn"
       className="combat-handoff"
+      data-emphasis={secondary ? 'secondary' : 'primary'}
       // aria-disabled keeps focus on the control while the turn is being passed.
       aria-disabled={disabled || undefined}
       aria-busy={pending || undefined}

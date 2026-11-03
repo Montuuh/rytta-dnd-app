@@ -1724,8 +1724,23 @@ test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the who
   const failure = saves.getByRole('button', { name: 'Marcar un fallo: sacaste de 2 a 9' })
   const nat20 = saves.getByRole('button', { name: '20 natural: vuelves con 1 punto de golpe' })
   const nat1 = saves.getByRole('button', { name: '1 natural: dos fallos' })
-  await expect(saves).toContainText('Tira un d20 y marca el resultado.')
+  const handoff = arin.getByRole('button', { name: /^Terminar mi turno/ })
   for (const control of [success, failure, nat20, nat1]) await expect(control).toBeVisible()
+  // Review F4: no helper line repeating what the tracks say.
+  await expect(saves).not.toContainText('Tira un d20')
+  // Review F1: while the roll is pending, the hand-off is the secondary key and follows the
+  // marks in DOM, focus and visual order (also on tablets), well clear of the "1" die.
+  await expect(handoff).toHaveAttribute('data-emphasis', 'secondary')
+  await expect(handoff).toBeEnabled()
+  expect(
+    await nat1.evaluate((die) => {
+      const key = document.getElementById('combat-end-turn')!
+      return Boolean(die.compareDocumentPosition(key) & Node.DOCUMENT_POSITION_FOLLOWING)
+    }),
+  ).toBe(true)
+  const dieBox = (await nat1.boundingBox())!
+  const keyBox = (await handoff.boundingBox())!
+  expect(keyBox.y).toBeGreaterThanOrEqual(dieBox.y + dieBox.height + 28)
   await expect(saves.getByRole('group', { name: '0 de 3 éxitos' })).toBeVisible()
   await expect(
     row(arin, 'Arin').getByRole('img', { name: /Salvaciones de muerte/ }),
@@ -1736,14 +1751,26 @@ test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the who
   await expectTouchTargets(arin, '.combat-saves button:visible')
   await audit(arin)
   await evidence(arin, info.project.name, 'death-saves', 'RYT-045')
+  // Focus order follows: the "1" die, then the hand-off.
+  await nat1.focus()
+  await arin.keyboard.press('Tab')
+  await expect(handoff).toBeFocused()
 
   // A success: stamped, announced, the roll locks for the round and focus moves to the hand-off.
   await success.click()
   await expect(saves.getByRole('group', { name: '1 de 3 éxitos' })).toBeVisible()
   await expect(saves.getByRole('button')).toHaveCount(0)
   await expect(saves).toContainText('Éxito marcado. El DM puede deshacer un error.')
-  await expect(arin.getByRole('button', { name: /^Terminar mi turno/ })).toBeFocused()
+  await expect(handoff).toBeFocused()
+  // Recorded: the hand-off becomes the filled primary key.
+  await expect(handoff).toHaveAttribute('data-emphasis', 'primary')
   await expect(arin.getByText('Arin supera una salvación de muerte.')).toBeAttached()
+  // Review F3: only the mark recorded on screen is stamped in.
+  await expect(saves.locator('.combat-mark.is-filled.is-new')).toHaveCount(1)
+  // Review F2: the row tells successes from failures without colour: a round notch with a check.
+  const arinNotches = row(arin, 'Arin').locator('.combat-death-notches')
+  await expect(arinNotches.locator('[data-mark="success"] svg.lucide-check')).toHaveCount(1)
+  await expect(arinNotches.locator('[data-mark="failure"]')).toHaveCount(0)
   // A second roll this round (a double tap with a new request) is refused by the server.
   expect(
     server.act(
@@ -1766,9 +1793,20 @@ test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the who
   await expect(arin.locator('.combat-table-active')).toHaveText('Bea')
   for (let i = 0; i < 3; i++) pass()
   await expect(nat1).toBeVisible({ timeout: 15_000 })
+  // The tracker came back for the new turn: earlier marks are not stamped again (F3).
+  await expect(saves.locator('.combat-mark.is-filled')).toHaveCount(1)
+  await expect(saves.locator('.combat-mark.is-new')).toHaveCount(0)
   await nat1.click()
   await expect(saves.getByRole('group', { name: '2 de 3 fallos' })).toBeVisible()
   await expect(arin.getByText('Arin saca un 1 natural: dos fallos.')).toBeAttached()
+  // F2: failures are square notches with a cross, successes round ones with a check.
+  await expect(arinNotches.locator('[data-mark="failure"] svg.lucide-x')).toHaveCount(2)
+  const radius = (selector: string) =>
+    arinNotches
+      .locator(selector)
+      .first()
+      .evaluate((notch) => getComputedStyle(notch).borderTopLeftRadius)
+  expect(await radius('.is-failure')).not.toBe(await radius('.is-success'))
 
   // Round 3: a natural 20 revives Arin with 1 HP, which the whole table sees.
   pass(playerId)

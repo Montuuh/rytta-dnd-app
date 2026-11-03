@@ -1652,17 +1652,25 @@ button.combat-row-main:focus-visible {
   font-weight: 600;
 }
 
-/* RYT-045: the Player's own turn. "Up next" turns into the hand-off tile, and a character at 0 hit
-   points rolls the death save between the two. Tablets: the tile is the side column; phones: it
-   sits at the foot of the banner, under the thumb. */
+/* RYT-045: the Player's own turn. "Up next" turns into the hand-off tile: the side column on
+   tablets, the foot of the banner on phones. At 0 hit points the death save comes first: the tile
+   follows the tracks at every width (reading, focus and DOM order agree; review F1), set apart
+   from the last notch, and aligned to the end on wide banners. */
 .combat-table-now.is-yours {
   grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
   grid-template-areas: 'actor handoff';
 }
 .combat-table-now.is-yours:has(> .combat-table-saves) {
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    'actor handoff'
-    'saves saves';
+    'actor'
+    'saves'
+    'handoff';
+}
+.combat-table-now.is-yours:has(> .combat-table-saves) > .combat-handoff {
+  justify-self: end;
+  width: min(100%, 24rem);
+  margin-top: 16px;
 }
 .combat-table-now.is-yours > .combat-table-actor {
   grid-area: actor;
@@ -1689,11 +1697,11 @@ button.combat-row-main:focus-visible {
       'actor'
       'handoff';
   }
-  .combat-table-now.is-yours:has(> .combat-table-saves) {
-    grid-template-areas:
-      'actor'
-      'saves'
-      'handoff';
+  /* Phones: full width, and well clear of the failure notches and the "1" die above it. */
+  .combat-table-now.is-yours:has(> .combat-table-saves) > .combat-handoff {
+    justify-self: stretch;
+    width: auto;
+    margin-top: 24px;
   }
 }
 
@@ -1730,6 +1738,28 @@ button.combat-row-main:focus-visible {
 .combat-handoff:focus-visible {
   outline: 3px solid var(--app-focus);
   outline-offset: 3px;
+}
+/* Secondary while the round's death save is still to roll (enabled, outlined, no depth): the
+   tracks lead. Recording the roll promotes it to the filled key, where focus also goes. */
+.combat-handoff[data-emphasis='secondary'] {
+  min-height: 76px;
+  background: transparent;
+  color: var(--app-text);
+  box-shadow: inset 0 0 0 2px var(--app-accent);
+}
+.combat-handoff[data-emphasis='secondary']:hover:not([aria-disabled]) {
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+}
+.combat-handoff[data-emphasis='secondary']:active:not([aria-disabled]) {
+  box-shadow: inset 0 0 0 2px var(--app-accent);
+}
+.combat-handoff[data-emphasis='secondary'] .combat-handoff-label {
+  font-size: var(--fs-h3);
+}
+.combat-handoff[data-emphasis='secondary'] .combat-handoff-icon {
+  background: transparent;
+  color: var(--app-accent);
+  box-shadow: inset 0 0 0 2px var(--app-accent);
 }
 .combat-handoff[aria-disabled] {
   background: color-mix(in srgb, var(--app-accent) 12%, var(--app-surface));
@@ -1771,6 +1801,8 @@ button.combat-row-main:focus-visible {
 }
 .combat-handoff[aria-disabled] .combat-handoff-icon {
   background: transparent;
+  color: inherit;
+  box-shadow: none;
 }
 
 /* Death saves: two tracks of three notches, like the boxes on a paper sheet. The next empty notch
@@ -1780,12 +1812,6 @@ button.combat-row-main:focus-visible {
   display: grid;
   gap: 12px;
   min-width: 0;
-}
-.combat-saves-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 14px;
 }
 .combat-saves-title {
   margin: 0;
@@ -1958,10 +1984,10 @@ button.combat-row-main:focus-visible {
   color: var(--gold-accent);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .combat-saves .combat-mark.is-filled {
+  .combat-saves .combat-mark.is-filled.is-new {
     animation: combat-stamp 260ms cubic-bezier(0.2, 1.5, 0.4, 1);
   }
-  .combat-saves.is-revived {
+  .combat-saves.is-revived.is-new {
     animation: combat-revive 1.4s ease-out 1;
   }
 }
@@ -2005,18 +2031,28 @@ button.combat-row-main:focus-visible {
   display: inline-flex;
   gap: 3px;
 }
-.combat-death-notches span span {
-  width: 12px;
-  height: 12px;
+/* Never colour alone (review F2): successes are round and filled ones carry a check; failures
+   are square and filled ones carry a cross, like the marks in the banner. */
+.combat-death-notches .combat-notch {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 2px solid var(--success);
+  color: var(--app-bg);
 }
-.combat-death-notches span span.is-failure {
+.combat-death-notches .combat-notch.is-failure {
+  border-radius: 3px;
   border-color: var(--danger);
 }
-.combat-death-notches span span.is-success.is-filled {
+.combat-death-notches .combat-notch.is-success.is-filled {
   background: var(--success);
 }
-.combat-death-notches span span.is-failure.is-filled {
+.combat-death-notches .combat-notch.is-failure.is-filled {
   background: var(--danger);
+}
+.combat-death-notches .combat-notch svg {
+  width: 11px;
+  height: 11px;
 }

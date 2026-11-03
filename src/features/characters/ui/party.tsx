@@ -125,6 +125,7 @@ export function CharacterParty() {
   // RYT-044: the DM archives unassigned characters from their card menu.
   const [archiving, setArchiving] = useState<Character | null>(null)
   const [archivedNotice, setArchivedNotice] = useState<string | null>(null)
+  const archivedNoticeRef = useRef<HTMLDivElement>(null)
   const onboarding = !dm && !playerPreview && query.data?.length === 0
   return (
     <Stack gap="lg">
@@ -174,10 +175,18 @@ export function CharacterParty() {
       {notice && <Alert role="status">{t(notice)}</Alert>}
       {archivedNotice && (
         <Alert
+          ref={archivedNoticeRef}
+          tabIndex={-1}
           role="status"
           withCloseButton
           closeButtonLabel={t('roster.dismiss')}
-          onClose={() => setArchivedNotice(null)}
+          onClose={() => {
+            setArchivedNotice(null)
+            // Back to the page's first action (the roster link) rather than the document body.
+            requestAnimationFrame(() =>
+              document.querySelector<HTMLElement>('.party-head-actions a, .roster-link')?.focus(),
+            )
+          }}
         >
           {archivedNotice}
         </Alert>
@@ -205,7 +214,7 @@ export function CharacterParty() {
         query.data?.length === 0 &&
         // RYT-044: a Player without characters is guided to create the first one.
         (!dm && !playerPreview ? (
-          <FirstCharacter />
+          <FirstCharacter withArchived={(own.roster?.archived.length ?? 0) > 0} archivedLink />
         ) : (
           <Paper p="xl">
             <Text>{t(dm ? 'characters.empty' : 'characters.emptyPlayer')}</Text>
@@ -383,6 +392,8 @@ export function CharacterParty() {
           onArchived={(text) => {
             setArchiving(null)
             setArchivedNotice(text)
+            // The card is gone; continue from the outcome message.
+            requestAnimationFrame(() => archivedNoticeRef.current?.focus())
           }}
         />
       )}

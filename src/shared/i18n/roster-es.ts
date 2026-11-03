@@ -36,6 +36,9 @@ export const rosterEs = {
   'roster.welcomeText':
     'Crea tu personaje para unirte al grupo. Puedes tener hasta cuatro y cambiar entre ellos.',
   'roster.welcomeCta': 'Crear mi personaje',
+  'roster.welcomeArchived': 'Tus personajes están archivados. Restaura uno o crea otro nuevo.',
+  'roster.welcomeCtaNew': 'Crear un personaje nuevo',
+  'roster.welcomeArchivedLink': 'Ver personajes archivados',
   'roster.manage': 'Mis personajes',
   'roster.manageDm': 'Personajes de los jugadores',
   'roster.manageCount': '{{label}}, {{count}} en total',

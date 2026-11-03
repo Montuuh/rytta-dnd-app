@@ -80,6 +80,12 @@
   padding: 18px 10px 12px;
   text-align: center;
 }
+/* The corner menu gets its own band above the medallion, so they never overlap at any text
+   size. */
+.roster-card:has(.roster-card-menu) .roster-choice {
+  /* The 44px ActionIcon is sized in rem, so it grows with the text size. */
+  padding-top: calc(2.75rem + 6px);
+}
 .roster-choice.is-choice {
   cursor: pointer;
 }
@@ -132,8 +138,10 @@
   top: 2px;
   right: 2px;
 }
+/* One line at normal text sizes; wraps (never clips) with large text on phones. */
 .roster-foot-link span {
-  white-space: nowrap;
+  min-width: 0;
+  text-align: center;
 }
 
 .roster-medallion {
@@ -309,9 +317,12 @@
 }
 .roster-row-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 4px;
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
   margin-left: auto;
 }
 .roster-row .portrait {
@@ -327,6 +338,11 @@
   max-width: 16rem;
   white-space: normal;
   text-transform: none;
+}
+/* aria-disabled (not disabled) keeps the item reachable; it still reads as unavailable. */
+.roster-menu-item[data-blocked] {
+  color: var(--app-muted);
+  cursor: not-allowed;
 }
 
 .roster-archived .roster-archived-title {
@@ -379,7 +395,11 @@
   max-width: 44ch;
   color: var(--app-muted);
 }
-.roster-welcome-cta {
+.roster-welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 12px;
   margin-top: 4px;
 }
 

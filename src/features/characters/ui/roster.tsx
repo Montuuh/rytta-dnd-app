@@ -52,7 +52,12 @@ import type { SheetSummary } from '../domain/sheet'
 import './roster.css'
 
 type Entry = RosterEntry & { portraitPath: string | null }
-type Notice = { tone: 'pending' | 'done' | 'error'; text: string }
+type Notice = {
+  tone: 'pending' | 'done' | 'error'
+  text: string
+  /** Where focus goes when the notice is closed (the control that started the action). */
+  returnTo?: () => HTMLElement | null
+}
 
 /**
  * RYT-044 character manager. A Player picks the active character from a radio-card roster,
@@ -116,7 +121,22 @@ export function CharacterRosterPage() {
           />
         }
       />
-      <RosterNotice notice={notice} noticeRef={noticeRef} onClose={() => setNotice(null)} />
+      <RosterNotice
+        notice={notice}
+        noticeRef={noticeRef}
+        onClose={() => {
+          // Back to the control that started the action, else the active character's radio.
+          const origin = notice?.returnTo?.()
+          setNotice(null)
+          requestAnimationFrame(() =>
+            (origin?.isConnected
+              ? origin
+              : (document.querySelector<HTMLElement>('.roster-page input[type="radio"]:checked') ??
+                document.querySelector<HTMLElement>('.roster-page .roster-back'))
+            )?.focus(),
+          )
+        }}
+      />
       {roster.isPending && roster.fetchStatus !== 'idle' && (
         <Text role="status">{t('common.loading')}</Text>
       )}
@@ -162,6 +182,7 @@ export function CharacterRosterPage() {
       {roster.data && !playerPreview && archived.length > 0 && (
         <ArchivedSection
           archived={archived}
+          defaultOpen={!dm && (own?.entries.length ?? 0) === 0}
           entries={entries}
           summaries={summaries.data}
           ownerName={dm ? ownerName : undefined}
@@ -240,7 +261,9 @@ function PlayerRoster({
   // The newest pending choice shows as selected until the server answers.
   const selected = activate.isPending ? activate.variables : serverActive?.id
   const nameOf = (id?: string) => entries.find((entry) => entry.id === id)?.name ?? ''
-  if (entries.length === 0 && !hasArchived) return <FirstCharacter />
+  // No character in the roster: no empty radio group. With archived ones, the welcome points
+  // to them (the Archived section below opens by default).
+  if (entries.length === 0) return <FirstCharacter withArchived={hasArchived} />
   return (
     <>
       <div role="radiogroup" aria-label={t('roster.choose')} aria-describedby={`${groupId}-count`}>
@@ -587,12 +610,15 @@ function RosterRow({
   summary,
   state,
   owner,
+  note,
   actions,
 }: {
   entry: Entry
   summary: SheetSummary | undefined
   state: 'active' | 'reserve' | 'archived'
   owner?: string
+  /** A short reason under the meta line (for example "No free slot"). */
+  note?: string
   actions: ReactNode
 }) {
   const { t } = useTranslation()
@@ -626,6 +652,7 @@ function RosterRow({
               {t(state === 'active' ? 'roster.active' : 'roster.reserve')}
             </span>
           )}
+          {note && <span className="roster-row-note">{note}</span>}
         </div>
       </div>
       <div className="roster-row-actions">
@@ -641,6 +668,7 @@ function CardMenu({ entry, onNotice, noticeRef }: { entry: Entry } & NoticeProps
   const { t } = useTranslation()
   const trigger = useRef<HTMLButtonElement>(null)
   const [archiving, setArchiving] = useState(false)
+  const hintId = useId()
   const blocked = Boolean(entry.user_id) && entry.is_active
   return (
     <>
@@ -658,15 +686,27 @@ function CardMenu({ entry, onNotice, noticeRef }: { entry: Entry } & NoticeProps
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>
+          {/* For the active character the item stays reachable by arrow keys (aria-disabled,
+              not disabled) and carries the reason as its description. */}
           <Menu.Item
             leftSection={<Archive size={18} aria-hidden="true" />}
-            disabled={blocked}
-            onClick={() => setArchiving(true)}
+            // Mantine derives aria-disabled from `disabled`, which would also drop the item from
+            // arrow-key navigation; set it on the element instead.
+            ref={(node: HTMLButtonElement | null) => {
+              if (node && blocked) node.setAttribute('aria-disabled', 'true')
+            }}
+            aria-describedby={blocked ? hintId : undefined}
+            data-blocked={blocked || undefined}
+            className="roster-menu-item"
+            closeMenuOnClick={!blocked}
+            onClick={() => !blocked && setArchiving(true)}
           >
             {t('roster.archive')}
           </Menu.Item>
           {blocked && (
-            <Menu.Label className="roster-menu-hint">{t('roster.archiveActiveHint')}</Menu.Label>
+            <Menu.Label id={hintId} className="roster-menu-hint">
+              {t('roster.archiveActiveHint')}
+            </Menu.Label>
           )}
         </Menu.Dropdown>
       </Menu>
@@ -729,13 +769,12 @@ export function ArchiveDialog({
           </Alert>
         )}
         <div className="roster-dialog-actions">
-          <Button variant="subtle" disabled={action.isPending} onClick={onClose}>
+          <Button variant="subtle" data-autofocus disabled={action.isPending} onClick={onClose}>
             {t('action.cancel')}
           </Button>
           <Button
             color="red"
             variant="light"
-            data-autofocus
             loading={action.isPending}
             leftSection={<Archive size={18} aria-hidden="true" />}
             onClick={() =>
@@ -763,6 +802,7 @@ export function ArchiveDialog({
 /** Collapsed list of archived characters: open the sheet or restore while a slot is free. */
 function ArchivedSection({
   archived,
+  defaultOpen,
   entries,
   summaries,
   ownerName,
@@ -770,6 +810,7 @@ function ArchivedSection({
   noticeRef,
 }: {
   archived: Entry[]
+  defaultOpen: boolean
   entries: Entry[]
   summaries: SheetSummary[] | undefined
   ownerName?: (entry: Entry) => string
@@ -777,7 +818,7 @@ function ArchivedSection({
   const { t } = useTranslation()
   const campaign = useCampaign()
   const action = useArchiveAction(campaign.id)
-  const restore = (entry: Entry) =>
+  const restore = (entry: Entry, origin: HTMLElement) =>
     action.mutate(
       { kind: 'restore', characterId: entry.id },
       {
@@ -792,11 +833,17 @@ function ArchivedSection({
               error.message === 'limit'
                 ? t('roster.errorRestoreLimit', { name: entry.name })
                 : t('roster.errorRestore'),
+            returnTo: () => origin,
           }),
       },
     )
   return (
-    <Accordion className="roster-archived" chevronPosition="right" variant="contained">
+    <Accordion
+      className="roster-archived"
+      chevronPosition="right"
+      variant="contained"
+      defaultValue={defaultOpen ? 'archived' : null}
+    >
       <Accordion.Item value="archived">
         <Accordion.Control icon={<Archive size={18} aria-hidden="true" />}>
           <span className="roster-archived-title">{t('roster.archived')}</span>
@@ -817,21 +864,19 @@ function ArchivedSection({
                   summary={find(summaries, entry)}
                   state="archived"
                   owner={ownerName?.(entry)}
+                  note={free ? undefined : t('roster.noSlot')}
                   actions={
-                    <>
-                      {!free && <span className="roster-row-note">{t('roster.noSlot')}</span>}
-                      <Button
-                        variant="light"
-                        className="roster-restore"
-                        leftSection={<ArchiveRestore size={18} aria-hidden="true" />}
-                        disabled={!free || (action.isPending && !pending)}
-                        loading={pending}
-                        aria-label={t('roster.restoreLabel', { name: entry.name })}
-                        onClick={() => restore(entry)}
-                      >
-                        {t('roster.restore')}
-                      </Button>
-                    </>
+                    <Button
+                      variant="light"
+                      className="roster-restore"
+                      leftSection={<ArchiveRestore size={18} aria-hidden="true" />}
+                      disabled={!free || (action.isPending && !pending)}
+                      loading={pending}
+                      aria-label={t('roster.restoreLabel', { name: entry.name })}
+                      onClick={(event) => restore(entry, event.currentTarget)}
+                    >
+                      {t('roster.restore')}
+                    </Button>
                   }
                 />
               )
@@ -848,11 +893,18 @@ function ArchivedSection({
 export function RosterWelcome({
   onCreate,
   ctaRef,
+  withArchived = false,
+  archivedLink = false,
 }: {
   onCreate: () => void
   ctaRef?: RefObject<HTMLButtonElement | null>
+  /** The Player only has archived characters: offer them alongside creating a new one. */
+  withArchived?: boolean
+  /** Show a link to the roster's Archived section (Party); on the roster it sits below. */
+  archivedLink?: boolean
 }) {
   const { t } = useTranslation()
+  const campaign = useCampaign()
   const id = useId()
   return (
     <section className="roster-welcome" aria-labelledby={`${id}-title`}>
@@ -864,28 +916,54 @@ export function RosterWelcome({
       <Title order={2} id={`${id}-title`} className="roster-welcome-title">
         {t('roster.welcomeTitle')}
       </Title>
-      <Text className="roster-welcome-text">{t('roster.welcomeText')}</Text>
-      <Button
-        ref={ctaRef}
-        size="lg"
-        leftSection={<Plus size={20} aria-hidden="true" />}
-        onClick={onCreate}
-        className="roster-welcome-cta"
-      >
-        {t('roster.welcomeCta')}
-      </Button>
+      <Text className="roster-welcome-text">
+        {t(withArchived ? 'roster.welcomeArchived' : 'roster.welcomeText')}
+      </Text>
+      <div className="roster-welcome-actions">
+        <Button
+          ref={ctaRef}
+          size="lg"
+          leftSection={<Plus size={20} aria-hidden="true" />}
+          onClick={onCreate}
+          className="roster-welcome-cta"
+        >
+          {t(withArchived ? 'roster.welcomeCtaNew' : 'roster.welcomeCta')}
+        </Button>
+        {withArchived && archivedLink && (
+          <Button
+            component={Link}
+            to={`/campaign/${campaign.id}/party/roster`}
+            size="lg"
+            variant="light"
+            leftSection={<ArchiveRestore size={20} aria-hidden="true" />}
+          >
+            {t('roster.welcomeArchivedLink')}
+          </Button>
+        )}
+      </div>
     </section>
   )
 }
 
-/** Onboarding for a Player with no characters: the welcome plus its dialog. Closing the
- * dialog returns focus to the call to action. */
-export function FirstCharacter() {
+/** Onboarding for a Player with no characters in the roster: the welcome plus its dialog.
+ * Closing the dialog returns focus to the call to action. */
+export function FirstCharacter({
+  withArchived = false,
+  archivedLink = false,
+}: {
+  withArchived?: boolean
+  archivedLink?: boolean
+}) {
   const [creating, setCreating] = useState(false)
   const cta = useRef<HTMLButtonElement>(null)
   return (
     <>
-      <RosterWelcome ctaRef={cta} onCreate={() => setCreating(true)} />
+      <RosterWelcome
+        ctaRef={cta}
+        withArchived={withArchived}
+        archivedLink={archivedLink}
+        onCreate={() => setCreating(true)}
+      />
       {creating && (
         <CreateCharacterDialog
           onClose={() => {

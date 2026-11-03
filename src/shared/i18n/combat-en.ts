@@ -321,7 +321,6 @@ export const combatEn = {
   'combat.turn.end': 'End my turn',
   'combat.turn.handoff': 'Passes to {{name}}',
   'combat.turn.ending': 'Ending your turn…',
-  'combat.death.prompt': 'Roll a d20 and mark the result.',
   'combat.death.track.success': 'Successes',
   'combat.death.track.failure': 'Failures',
   'combat.death.range.success': '10–19',

@@ -324,7 +324,6 @@ export const combatEs = {
   'combat.turn.end': 'Terminar mi turno',
   'combat.turn.handoff': 'Pasa a {{name}}',
   'combat.turn.ending': 'Terminando tu turno…',
-  'combat.death.prompt': 'Tira un d20 y marca el resultado.',
   'combat.death.track.success': 'Éxitos',
   'combat.death.track.failure': 'Fallos',
   'combat.death.range.success': '10–19',

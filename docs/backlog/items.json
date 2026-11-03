@@ -1798,6 +1798,7 @@
       ],
       "evidence": [
         "docs/evidence/RYT-045/validation.md",
+        "docs/evidence/RYT-045/ui-review.md",
         "docs/combat-design.md",
         "docs/decisions/024-combat.md",
         "docs/security.md",

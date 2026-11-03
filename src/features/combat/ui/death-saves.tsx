@@ -48,10 +48,26 @@ export function DeathSaveTracker({
   // A double tap inside one frame must not send two rolls: the pending flag arrives a render late.
   const lock = useRef(false)
   const [pressed, setPressed] = useState<DeathSaveOutcome | null>(null)
+  // Only what changes while the tracker is on screen is stamped in (review F3): marks already
+  // filled when it mounts (a reload, the next own turn) and a revival seen on arrival stay still.
+  const counts = {
+    success: combatant.death_saves?.successes ?? 0,
+    failure: combatant.death_saves?.failures ?? 0,
+  }
+  const [baseline, setBaseline] = useState(counts)
+  if (counts.success < baseline.success || counts.failure < baseline.failure)
+    setBaseline({
+      success: Math.min(counts.success, baseline.success),
+      failure: Math.min(counts.failure, baseline.failure),
+    })
+  const [mountedAs] = useState(status)
   if (status === null) return null
   if (status === 'revived')
     return (
-      <section className="combat-saves is-revived" aria-labelledby={titleId}>
+      <section
+        className={`combat-saves is-revived${mountedAs === 'revived' ? '' : ' is-new'}`}
+        aria-labelledby={titleId}
+      >
         <Sparkles className="combat-saves-outcome-icon" size={32} aria-hidden="true" />
         <div>
           <h3 id={titleId} className="combat-saves-title">
@@ -93,7 +109,11 @@ export function DeathSaveTracker({
           {[0, 1, 2].map((index) => {
             if (index < filled)
               return (
-                <span key={index} className="combat-mark is-filled" aria-hidden="true">
+                <span
+                  key={index}
+                  className={`combat-mark is-filled${index >= baseline[kind] ? ' is-new' : ''}`}
+                  aria-hidden="true"
+                >
                   {kind === 'success' ? <Check strokeWidth={3} /> : <X strokeWidth={3} />}
                 </span>
               )
@@ -140,12 +160,9 @@ export function DeathSaveTracker({
       aria-labelledby={titleId}
       aria-busy={busy || undefined}
     >
-      <div className="combat-saves-head">
-        <h3 id={titleId} className="combat-saves-title">
-          {t('combat.death.title')}
-        </h3>
-        {live && <p className="combat-saves-note">{t('combat.death.prompt')}</p>}
-      </div>
+      <h3 id={titleId} className="combat-saves-title">
+        {t('combat.death.title')}
+      </h3>
       <div className="combat-saves-tracks">
         {track('success')}
         {track('failure')}

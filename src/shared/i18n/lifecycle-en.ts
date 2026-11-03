@@ -26,7 +26,7 @@ export const lifecycleEn = {
   'lifecycle.syncBody':
     'The value of {{name}} is now {{value}} gp. These shops still sell it at another price.',
   'lifecycle.syncShops': 'Shops to update',
-  'lifecycle.syncCurrent': 'Now {{price}} gp',
+  'lifecycle.syncCurrent': 'Now',
   'lifecycle.syncApply_one': 'Update {{count}} price',
   'lifecycle.syncApply_other': 'Update {{count}} prices',
   'lifecycle.syncSkip': 'Keep current prices',

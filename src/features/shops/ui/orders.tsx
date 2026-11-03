@@ -13,7 +13,6 @@ import {
 } from '@mantine/core'
 import {
   ArrowDownLeft,
-  ArrowRight,
   ArrowUpRight,
   Ban,
   CheckCircle2,
@@ -30,7 +29,6 @@ import { HoldSeal } from '@/features/inventory'
 import { GoldAmount, ItemGlyph } from './visuals'
 import {
   askedLinePrice,
-  askedTotal,
   effectiveLinePrice,
   isOpenOrder,
   orderVariant,
@@ -87,16 +85,8 @@ const variantIcons = { purchase: ShoppingBag, sale: HandCoins, counter: Handshak
  * Which way the gold goes, from the character's side: a purchase leaves their purse, a sale
  * fills it. Closed orders that never moved gold say so instead of showing a phantom charge.
  */
-/** Where the gold goes; on a live counter-offer it also shows the struck asked total. */
-function GoldFlow({
-  order,
-  role,
-  counter = false,
-}: {
-  order: Order
-  role: Role
-  counter?: boolean
-}) {
+/** Where the gold goes. The price change of a counter-offer lives on its lines, shown once. */
+function GoldFlow({ order, role }: { order: Order; role: Role }) {
   const { t } = useTranslation()
   const moved = order.status !== 'rejected' && order.status !== 'cancelled'
   const tense = isOpenOrder(order) ? 'open' : 'done'
@@ -112,15 +102,6 @@ function GoldFlow({
           ? t(`order.flow.${order.kind}.${tense}.${voice}`, { character: order.character.name })
           : t('order.flow.none')}
       </Text>
-      {counter && (
-        <>
-          <span className="visually-hidden">{t('order.compare.asked')}</span>
-          <del className="order-flow-asked">
-            <GoldAmount value={askedTotal(order)} size="sm" />
-          </del>
-          <ArrowRight size={16} aria-hidden="true" className="order-flow-arrow" />
-        </>
-      )}
       <GoldAmount value={order.total} />
     </div>
   )
@@ -344,7 +325,7 @@ export function OrderCard({
             </li>
           ))}
         </ul>
-        <GoldFlow order={order} role={role} counter={variant === 'counter'} />
+        <GoldFlow order={order} role={role} />
         {order.status === 'reverted' && (
           <Text size="sm">
             {t(order.kind === 'purchase' ? 'order.refunded' : 'order.recovered', {

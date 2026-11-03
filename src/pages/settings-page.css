@@ -102,6 +102,8 @@
   color: var(--app-muted);
   font-size: var(--fs-meta);
   line-height: 1.3;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 .choice-check {
   display: grid;

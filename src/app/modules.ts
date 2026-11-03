@@ -48,6 +48,7 @@ export const modules = [
     summary: 'summary.combat',
     icon: Swords,
     ticket: 'RYT-007',
+    implemented: true,
   },
   {
     path: '/atlas',

@@ -537,7 +537,8 @@ function ShopPicker({
     <Combobox
       store={combobox}
       position="bottom-start"
-      width="target"
+      middlewares={{ flip: true, shift: { padding: 16 } }}
+      width="max-content"
       offset={6}
       onOptionSubmit={(id) => {
         onSelect(id)
@@ -550,7 +551,7 @@ function ShopPicker({
           aria-label={`${shop.name}. ${t('shop.picker.hint', { count: shops.length })}`}
           onClick={() => combobox.toggleDropdown()}
         >
-          <span className="user-copy">{shop.name}</span>
+          <span className="user-copy shop-picker-name">{shop.name}</span>
           <ChevronsUpDown size={20} aria-hidden="true" className="shop-picker-chevron" />
         </UnstyledButton>
       </Combobox.Target>

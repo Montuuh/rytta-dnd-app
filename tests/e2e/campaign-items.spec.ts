@@ -145,6 +145,21 @@ test('direct gold accepts zero, Escape cancels and stale edits cannot overwrite 
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeDisabled()
 })
 
+test('the DM in Player view can equip and unequip the previewed Player character', async ({
+  page,
+}) => {
+  await identityFixture(page, { linkedPlayer: true, inventory: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  const torso = page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true })
+  await expect(torso).toBeEnabled()
+  await torso.click()
+  await page.getByRole('button', { name: 'Quitar Armadura de cuero', exact: true }).click()
+  await expect(page.getByRole('img', { name: 'Clase de Armadura 13' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Torso: vacío', exact: true })).toBeFocused()
+})
+
 test('Players cannot access the DM catalogue and unequip from the slot drawer', async ({
   page,
 }) => {

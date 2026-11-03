@@ -430,6 +430,9 @@ button.combat-row-main:focus-visible {
   height: 44px;
   min-width: 44px;
 }
+.combat-segmented-wrap .mantine-SegmentedControl-label {
+  white-space: normal;
+}
 .combat-toast {
   position: fixed;
   top: calc(12px + env(safe-area-inset-top));
@@ -701,5 +704,13 @@ button.combat-row-main:focus-visible {
   }
   .combat-hero-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phones: errors sit above the bottom navigation so they never cover a dialog's title. */
+@media (max-width: 48em) {
+  .combat-toast {
+    top: auto;
+    bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
   }
 }

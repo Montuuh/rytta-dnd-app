@@ -19,7 +19,11 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
     // Pending migration overlay; database.generated.ts remains the last actual CLI output.
     Tables: Omit<Tables, 'characters' | 'character_resources' | 'campaign_invitations'> & {
       characters: Omit<Tables['characters'], 'Row'> & {
-        Row: Omit<Tables['characters']['Row'], 'user_id'> & { user_id: string | null }
+        Row: Omit<Tables['characters']['Row'], 'user_id'> & {
+          user_id: string | null
+          // RYT-044 roster: the Player's character in play.
+          is_active: boolean
+        }
       }
       character_resources: Omit<ResourceTable, 'Row' | 'Insert' | 'Update'> & {
         Row: GoldFields<ResourceTable['Row']>

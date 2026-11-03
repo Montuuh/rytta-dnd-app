@@ -26,6 +26,11 @@ const CharacterParty = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterParty })),
 )
 
+// RYT-044: the Player character manager (roster and active character).
+const CharacterRosterPage = lazy(() =>
+  import('@/features/characters').then((module) => ({ default: module.CharacterRosterPage })),
+)
+
 const CharacterSheetPage = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterSheetPage })),
 )
@@ -85,6 +90,7 @@ export function AppRouter() {
                       <Route element={<CampaignGlossaryLayer />}>
                         <Route index element={<CampaignLanding />} />
                         <Route path="party" element={<CharacterParty />} />
+                        <Route path="party/roster" element={<CharacterRosterPage />} />
                         <Route path="party/:characterId" element={<CharacterSheetPage />} />
                         <Route
                           path="party/:characterId/create"

@@ -48,7 +48,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { Link } from 'react-router'
+import { FirstCharacter, RosterLink } from './roster'
 import {
+  useOwnRoster,
+  characterRosterQuery,
   charactersQuery,
   partyOverviewQuery,
   sheetSummariesQuery,
@@ -87,10 +90,17 @@ export function CharacterParty() {
   const members = useQuery({ ...membersQuery(state.user!.id, campaign.id), enabled: dm })
   const summaries = useQuery(sheetSummariesQuery(state.user!.id, campaign.id))
   const overview = useQuery(partyOverviewQuery(state.user!.id, campaign.id))
+  // RYT-044: the Player's roster feeds the manager entry point; the DM's shows the reserve.
+  const own = useOwnRoster(campaign.id, dm ? null : (filterUserId ?? null))
+  const dmRoster = useQuery({ ...characterRosterQuery(state.user!.id, campaign.id), enabled: dm })
   // A DM previewing a Player acts as that Player; the server still authorizes as the DM.
   const viewerId = playerPreview ? previewUserId : state.user!.id
   const ownIds = new Set((query.data ?? []).map((character) => character.id))
-  const teammates = !dm && overview.data ? sharedTeammates(overview.data, ownIds) : null
+  // A Player still choosing a first character has no teammates panel yet (RYT-044 onboarding).
+  const teammates =
+    !dm && overview.data && (query.data?.length ?? 0) > 0
+      ? sharedTeammates(overview.data, ownIds)
+      : null
   const opener = useRef<HTMLElement | null>(null)
   const fallback = useRef<string | null>(null)
   const open = (next: PartyEditor, target: HTMLElement) => {
@@ -117,13 +127,20 @@ export function CharacterParty() {
         title={t('characters.title')}
         description={t(dm ? 'characters.intro' : 'characters.playerIntro')}
         actions={
-          dm && (
-            <Button
-              leftSection={<Plus size={18} aria-hidden="true" />}
-              onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
-            >
-              {t('characters.create')}
-            </Button>
+          dm ? (
+            // One wrapper: on phones each PageHead action takes the whole second row.
+            <div className="party-head-actions">
+              <RosterLink dm entries={(dmRoster.data ?? []).filter((entry) => !entry.is_active)} />
+              <Button
+                leftSection={<Plus size={18} aria-hidden="true" />}
+                onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
+              >
+                {t('characters.create')}
+              </Button>
+            </div>
+          ) : (
+            own.roster &&
+            own.roster.entries.length > 0 && <RosterLink dm={false} entries={own.roster.entries} />
           )
         }
         refresh={
@@ -164,11 +181,16 @@ export function CharacterParty() {
           </Button>
         </Alert>
       )}
-      {!query.isError && query.data?.length === 0 && (
-        <Paper p="xl">
-          <Text>{t(dm ? 'characters.empty' : 'characters.emptyPlayer')}</Text>
-        </Paper>
-      )}
+      {!query.isError &&
+        query.data?.length === 0 &&
+        // RYT-044: a Player without characters is guided to create the first one.
+        (!dm && !playerPreview ? (
+          <FirstCharacter />
+        ) : (
+          <Paper p="xl">
+            <Text>{t(dm ? 'characters.empty' : 'characters.emptyPlayer')}</Text>
+          </Paper>
+        ))}
       {!query.isError && (
         <div className={`party-grid ${(query.data?.length ?? 0) > 1 ? 'is-many' : 'is-single'}`}>
           {query.data?.map((character) => {

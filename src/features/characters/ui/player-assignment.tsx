@@ -5,8 +5,9 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery } from '@/features/campaigns'
-import { charactersQuery, useCharacterAction } from '../api'
+import { characterRosterQuery, charactersQuery, useCharacterAction } from '../api'
 import type { Character } from '../domain/character'
+import { playersWithFreeSlots } from '../domain/roster'
 
 export function PlayerAssignmentEditor({
   character,
@@ -22,19 +23,22 @@ export function PlayerAssignmentEditor({
   const { t } = useTranslation()
   const { state } = useAuth()
   const members = useQuery(membersQuery(state.user!.id, campaignId))
+  // Characters in play (unassigned included) plus every assigned character, active or in
+  // reserve, so the RYT-044 limit counts whole rosters. Party already keeps both cached.
   const characters = useQuery(charactersQuery(state.user!.id, campaignId))
+  const roster = useQuery(characterRosterQuery(state.user!.id, campaignId))
   const action = useCharacterAction(campaignId)
   const [userId, setUserId] = useState('')
   const unlink = character.user_id !== null
-  const unavailable =
-    members.isPending || members.isError || characters.isPending || characters.isError
+  const loaded =
+    !characters.isPending && !characters.isError && !roster.isPending && !roster.isError
+  const unavailable = members.isPending || members.isError || !loaded
   const players = members.data?.filter((member) => member.role === 'player') ?? []
-  const eligible = players.filter(
-    (member) => !characters.data?.some((item) => item.user_id === member.user_id),
-  )
-  const current = characters.data?.find((item) => item.id === character.id)
-  const changed =
-    !characters.isPending && !characters.isError && current?.user_id !== character.user_id
+  const eligible = playersWithFreeSlots(players, roster.data ?? [])
+  const current =
+    roster.data?.find((item) => item.id === character.id) ??
+    characters.data?.find((item) => item.id === character.id)
+  const changed = loaded && current?.user_id !== character.user_id
   const title = t(unlink ? 'characters.unassign' : 'characters.assign')
   return (
     <Modal
@@ -58,7 +62,7 @@ export function PlayerAssignmentEditor({
               {t('characters.assignHint')}
             </Text>
             {unavailable ? (
-              members.isError || characters.isError ? (
+              members.isError || characters.isError || roster.isError ? (
                 <Alert color="red" role="alert">
                   {t('query.error')}
                   <Button
@@ -66,6 +70,7 @@ export function PlayerAssignmentEditor({
                     onClick={() => {
                       void members.refetch()
                       void characters.refetch()
+                      void roster.refetch()
                     }}
                   >
                     {t('common.retry')}

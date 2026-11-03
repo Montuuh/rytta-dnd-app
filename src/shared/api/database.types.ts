@@ -21,8 +21,9 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       characters: Omit<Tables['characters'], 'Row'> & {
         Row: Omit<Tables['characters']['Row'], 'user_id'> & {
           user_id: string | null
-          // RYT-044 roster: the Player's character in play.
+          // RYT-044 roster: the Player's character in play, and archived characters.
           is_active: boolean
+          archived_at: string | null
         }
       }
       character_resources: Omit<ResourceTable, 'Row' | 'Insert' | 'Update'> & {

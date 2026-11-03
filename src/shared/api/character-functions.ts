@@ -16,6 +16,14 @@ export type CharacterFunctions = {
     Args: { target_campaign: string; target_character: string }
     Returns: string
   }
+  archive_character: {
+    Args: { target_campaign: string; target_character: string }
+    Returns: Json
+  }
+  restore_character: {
+    Args: { target_campaign: string; target_character: string }
+    Returns: Json
+  }
   unassign_character: {
     Args: { target_campaign: string; target_character: string; expected_user: string }
     Returns: undefined

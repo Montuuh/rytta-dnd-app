@@ -1,11 +1,32 @@
-/* RYT-044 character roster: four slots per Player, a medallion card per character and a
-   radio selection for the active one. Tokens only; both schemes and every class theme. */
+/* RYT-044 character roster: four slots per Player, a medallion card per character, a radio
+   selection for the active one, compact DM lists and an archive. Tokens only; both schemes
+   and every class theme. */
 .roster-page {
   max-width: 1040px;
 }
 .roster-back {
   align-self: flex-start;
   min-height: 44px;
+}
+
+/* Outcome of the last action, above the roster. Kept clear of the sticky header and the
+   phone bottom bar when it scrolls into view. */
+.roster-notice {
+  scroll-margin-top: 96px;
+  scroll-margin-bottom: 112px;
+  outline: none;
+}
+.roster-notice:empty,
+.roster-notice > div:empty {
+  display: none;
+}
+.roster-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.roster-done[data-tone='pending'] {
+  color: var(--app-muted);
 }
 
 .roster-grid {
@@ -22,47 +43,48 @@
     gap: 16px;
   }
 }
-
 .roster-slot {
   display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 4px;
   min-width: 0;
 }
 
-/* The card: medallion on top, serif name, one meta line and the state in words. */
+/* The card frame holds the choice area and a footer band with the card's actions. */
 .roster-card {
-  position: relative;
   display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 6px;
-  min-height: 196px;
-  padding: 18px 10px 12px;
+  grid-template-rows: 1fr auto;
+  min-height: 236px;
   border: 1px solid var(--app-border);
   border-radius: 16px;
   background: var(--app-surface);
   color: var(--app-text);
-  text-align: center;
-}
-.roster-card.is-choice {
-  cursor: pointer;
+  overflow: hidden;
   transition:
     border-color 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
-}
-.roster-card.is-choice:hover {
-  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+    box-shadow 150ms ease;
 }
 .roster-slot[data-active] .roster-card {
   border-color: var(--app-accent);
   box-shadow: inset 0 0 0 1px var(--app-accent);
   background: linear-gradient(180deg, var(--app-hero), var(--app-surface) 70%);
 }
-.roster-card.is-choice:has(.roster-input:focus-visible) {
+.roster-slot:has(.roster-input:focus-visible) .roster-card {
   outline: 3px solid var(--app-focus);
   outline-offset: 2px;
+}
+.roster-choice {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 18px 10px 12px;
+  text-align: center;
+}
+.roster-choice.is-choice {
+  cursor: pointer;
+}
+.roster-choice.is-choice:hover {
+  background: color-mix(in srgb, var(--app-accent) 6%, transparent);
 }
 .roster-input {
   position: absolute;
@@ -72,6 +94,47 @@
   opacity: 0;
   pointer-events: none;
 }
+.roster-card-foot {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--app-border);
+}
+.roster-foot-link {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--app-text);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  text-decoration: none;
+}
+.roster-foot-link[data-draft] {
+  color: var(--app-accent);
+}
+.roster-foot-link:hover {
+  background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+}
+.roster-foot-link:focus-visible,
+.roster-new:focus-visible,
+.roster-link:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+.roster-card {
+  position: relative;
+}
+.roster-card-menu {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+.roster-foot-link span {
+  white-space: nowrap;
+}
 
 .roster-medallion {
   position: relative;
@@ -79,8 +142,9 @@
   place-items: center;
   margin-bottom: 4px;
 }
-/* Reserve characters rest: the medallion dims, the text keeps full contrast. */
-.roster-slot:not([data-active]) .roster-medallion .portrait {
+/* Reserve and archived characters rest: the medallion dims, the text keeps full contrast. */
+.roster-slot:not([data-active]) .roster-medallion .portrait,
+.roster-row[data-state='archived'] .portrait {
   filter: saturate(0.35);
   opacity: 0.8;
 }
@@ -112,22 +176,21 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: auto;
-  padding-top: 6px;
   color: var(--app-muted);
   font-size: var(--fs-meta);
+  white-space: nowrap;
 }
-.roster-slot[data-active] .roster-state {
+.roster-choice .roster-state {
+  margin-top: auto;
+  padding-top: 6px;
+}
+.roster-slot[data-active] .roster-state,
+.roster-row[data-state='active'] .roster-state {
   color: var(--app-accent);
   font-weight: 700;
 }
 
-.roster-sheet {
-  justify-self: center;
-  min-height: 44px;
-}
-
-/* Free slots: an empty ring in a dashed frame; the first one creates a character. */
+/* Free slots: dashed rings. The new-slot tile stretches to its row like the cards. */
 .roster-ring {
   display: grid;
   place-items: center;
@@ -150,7 +213,8 @@
   justify-items: center;
   align-content: center;
   gap: 10px;
-  min-height: 196px;
+  height: 100%;
+  min-height: 236px;
   width: 100%;
   padding: 16px 10px;
   border: 1px dashed color-mix(in srgb, var(--app-accent) 60%, var(--app-border));
@@ -167,32 +231,126 @@
   border-color: var(--app-accent);
   background: color-mix(in srgb, var(--app-accent) 8%, transparent);
 }
-.roster-new:focus-visible {
-  outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
-}
 .roster-new-label {
   font-weight: 600;
 }
 
-.roster-feedback:empty {
-  display: none;
-}
-.roster-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
+/* DM lists and the archive: compact rows. */
 .roster-player {
   display: grid;
+  gap: 10px;
+}
+.roster-player-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 .roster-player-name {
   font-size: var(--fs-h3);
 }
+.slot-meter-rings {
+  display: inline-flex;
+  gap: 5px;
+}
+.slot-meter-ring {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--app-accent) 45%, var(--app-border));
+}
+.slot-meter-ring[data-used] {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+}
+.roster-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.roster-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  padding: 6px 6px 6px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.roster-row[data-state='active'] {
+  border-color: var(--app-accent);
+}
+.roster-row-main {
+  flex: 1 1 11rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.roster-row-text {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.roster-row-name {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+.roster-row-meta,
+.roster-row-note {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  line-height: 1.3;
+}
+.roster-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.roster-row .portrait {
+  flex-shrink: 0;
+}
+.roster-row-sheet[data-draft] {
+  color: var(--app-accent);
+}
+.roster-restore {
+  min-height: 44px;
+}
+.roster-menu-hint {
+  max-width: 16rem;
+  white-space: normal;
+  text-transform: none;
+}
 
-/* First-character onboarding on Party. */
+.roster-archived .roster-archived-title {
+  font-weight: 600;
+}
+.roster-archived .roster-archived-count {
+  margin-left: 8px;
+  color: var(--app-muted);
+}
+
+/* Dialog actions: one row from 36em; stacked full-width, primary first, on phones. */
+.roster-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+@media (max-width: 36em) {
+  .roster-dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+/* First-character onboarding on Party: four rings picture the slots; the button acts. */
 .roster-welcome {
   display: grid;
   justify-items: center;
@@ -210,16 +368,9 @@
   margin-bottom: 8px;
 }
 .roster-welcome-slots .roster-ring {
-  width: 44px;
-  height: 44px;
-  opacity: 0.55;
-}
-.roster-welcome-slots .roster-ring.is-first {
-  width: 84px;
-  height: 84px;
-  opacity: 1;
-  border-style: solid;
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  width: 40px;
+  height: 40px;
+  opacity: 0.7;
 }
 .roster-welcome-title {
   font-size: var(--fs-h2);
@@ -240,7 +391,7 @@
   gap: 8px 12px;
 }
 
-/* Party entry point: the roster's faces and a label, 44px tall. */
+/* Party entry point: the roster's faces (or an icon) and a label, 44px tall. */
 .roster-link {
   display: inline-flex;
   align-items: center;
@@ -257,10 +408,6 @@
 }
 .roster-link:hover {
   border-color: var(--app-accent);
-}
-.roster-link:focus-visible {
-  outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
 }
 .roster-link-faces {
   display: inline-flex;
@@ -287,9 +434,14 @@
 .roster-link-face.is-icon {
   color: var(--app-accent);
 }
+.roster-link-meta {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .roster-card.is-choice,
+  .roster-card,
   .roster-new,
   .roster-link {
     transition: none;

@@ -33,15 +33,18 @@ export async function listCharacters(campaignId: string, signal: AbortSignal, pl
   if (error) throw error
   return characterSchema.array().parse(data)
 }
-/** RYT-044: every character the caller may read, active or in reserve (RLS scopes it). */
+/**
+ * RYT-044: every character the caller may read in the roster sense: Player characters (active,
+ * in reserve or archived) and archived DM characters. RLS scopes the rows.
+ */
 export async function listRoster(campaignId: string, signal: AbortSignal, playerId?: string) {
   const db = await client()
   const campaign = z.uuid().parse(campaignId)
   let query = db
     .from('characters')
-    .select('id, campaign_id, user_id, name, is_active, created_at')
+    .select('id, campaign_id, user_id, name, is_active, archived_at, created_at')
     .eq('campaign_id', campaign)
-    .not('user_id', 'is', null)
+    .or('user_id.not.is.null,archived_at.not.is.null')
     .order('created_at')
     .order('id')
     .abortSignal(signal)
@@ -144,6 +147,13 @@ export async function changeCharacter(
       break
     case 'activate':
       result = await db.rpc('set_active_character', {
+        target_campaign,
+        target_character: z.uuid().parse(action.characterId),
+      })
+      break
+    case 'archive':
+    case 'restore':
+      result = await db.rpc(action.kind === 'archive' ? 'archive_character' : 'restore_character', {
         target_campaign,
         target_character: z.uuid().parse(action.characterId),
       })

@@ -1578,22 +1578,26 @@
       "status": "review",
       "dependsOn": ["RYT-021", "RYT-024"],
       "sources": [
-        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents.",
+        "User 2026-11-03: archive characters instead of deleting them (RYT-044 second round)."
       ],
-      "scope": "Each Player has a character manager in the campaign: create up to 4 characters with name and sheet, choose one active character; only active characters appear in Party and combat. A Player without characters is prompted to create one.",
+      "scope": "Each Player has a character manager in the campaign: create up to 4 characters with name and sheet, choose one active character, and archive or restore characters to free slots; only active characters appear in Party and combat. A Player without characters is prompted to create one.",
       "acceptance": [
         "A Player with no character in the campaign is guided to create one on entry.",
         "A Player can create characters with the existing wizard up to a server-enforced limit of 4 per campaign.",
         "Exactly one active character per Player and campaign is enforced in the database; switching is transactional.",
         "Party, combat roster and other campaign lists show only active characters; inactive characters stay editable by their owner and visible to the DM in the manager.",
-        "RLS and RPC denial tests cover anon, outsider, other player and cross-campaign DM."
+        "RLS and RPC denial tests cover anon, outsider, other player and cross-campaign DM.",
+        "Owners and campaign DMs archive and restore characters through transactional, idempotent RPCs; archived characters do not count towards the limit of 4, can be restored only while a slot is free, cannot be the active character, and archiving is refused during an open trade or a running encounter.",
+        "Archived characters are hidden from Party and every campaign list; the owner and DM see them in a collapsed Archived section of the roster with the sheet and Restore."
       ],
       "validation": [
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
         "independent ui-ux PASS",
-        "SQL denial tests"
+        "SQL denial tests",
+        "SQL archive invariants and denial tests"
       ],
       "evidence": [
         "docs/decisions/026-player-character-roster.md",
@@ -1616,7 +1620,19 @@
         "docs/evidence/RYT-044/party-entry-mobile.png",
         "docs/evidence/RYT-044/party-entry-tablet.png",
         "docs/evidence/RYT-044/dm-rosters-mobile.png",
-        "docs/evidence/RYT-044/dm-rosters-tablet.png"
+        "docs/evidence/RYT-044/dm-rosters-tablet.png",
+        "supabase/migrations/20261105130000_character_archive.sql",
+        "docs/evidence/RYT-044/ui-review.md",
+        "docs/evidence/RYT-044/switch-blocked-mobile.png",
+        "docs/evidence/RYT-044/switch-blocked-tablet.png",
+        "docs/evidence/RYT-044/roster-archive-full-mobile.png",
+        "docs/evidence/RYT-044/roster-archive-full-tablet.png",
+        "docs/evidence/RYT-044/archive-dialog-mobile.png",
+        "docs/evidence/RYT-044/archive-dialog-tablet.png",
+        "docs/evidence/RYT-044/roster-archived-mobile.png",
+        "docs/evidence/RYT-044/roster-archived-tablet.png",
+        "docs/evidence/RYT-044/dm-archived-mobile.png",
+        "docs/evidence/RYT-044/dm-archived-tablet.png"
       ]
     }
   ]

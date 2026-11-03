@@ -142,7 +142,7 @@ test('RYT-044 a linked Player can receive a second character, which waits in res
   // Arin stays active; the new character leaves Party for the reserve.
   await expect(page.getByRole('heading', { name: 'Second hero', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
-  await page.getByRole('link', { name: 'Personajes de los jugadores, 1 en total' }).click()
+  await page.getByRole('link', { name: 'Personajes de los jugadores, 1 en reserva' }).click()
   const arin = page.getByRole('region', { name: 'Arin' })
   await expect(arin.getByRole('group', { name: 'Arin' })).toContainText('Activo')
   await expect(arin.getByRole('group', { name: 'Second hero' })).toContainText('En reserva')

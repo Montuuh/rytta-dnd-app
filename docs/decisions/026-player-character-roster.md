@@ -80,26 +80,68 @@ campaign, so every existing assigned character becomes its Player's active chara
 unassigned character stays in play. The migration verifies the invariant afterwards and aborts if
 any Player ends with a number of active characters other than one. Nothing is deleted.
 
+### Archiving (user decision 2026-11-03: archive, not delete)
+
+Migration `20261105130000_character_archive.sql` resolves the earlier open question about
+retiring characters. Nothing is deleted, so sheets, inventory, orders, trades and combat
+history stay attached.
+
+- `characters.archived_at`. An archived character is never active
+  (`characters_archived_inactive`). An unassigned character is active unless it is archived
+  (`characters_unassigned_active` was redefined).
+- The roster trigger counts only non-archived characters for the four-character limit and for
+  the one-active rule, and it now also fires on `archived_at`. Archiving is how a Player frees
+  a slot.
+- `archive_character(campaign, character)` can be called by the owner or the campaign DM, and
+  works on unassigned DM characters too. It runs under the campaign lock, is idempotent and
+  revokes pending invitations to that character. It is refused for the active Player character
+  (`Active character`: activate another one first) and while the character has an open trade
+  or is in an encounter in initiative or active status (the shared `private.character_busy`
+  helper, also used by switching).
+- `restore_character` has the same actors and is also idempotent. A Player character needs a
+  free slot (`Character limit`) and returns in reserve, or as the active character when its
+  owner has none. An unassigned character returns active.
+- The other roster RPCs now count and pick only non-archived characters:
+  - creation, linking, invitations and acceptance count only non-archived characters;
+  - an archived character cannot be linked or invited until it is restored;
+  - unlinking or removing a member keeps archived characters archived.
+- Archived characters are excluded wherever `is_active` filters: Party, teammates, trades,
+  shop pickers, inventory and the combat roster. The owner and DMs still read them, including
+  their sheets.
+
 ### Interface
 
-- Party: a Player with no character sees "Who will you play?" with four empty slots and one
-  call to action that opens a name dialog and continues into the existing creation wizard.
-  Party shows the active character and active teammates only. A roster entry point (the
-  roster's initials plus "My characters"; "Players' characters" for the DM with the reserve's
-  initials) leads to `party/roster`.
-- `party/roster` (Player): a native radio group of medallion cards; the selected card is the
-  active character (accent border, check badge and the word "Active", never color alone).
-  Arrow keys move the selection and switch at once; switches run one at a time in order. Free
-  slots are drawn as dashed rings; the first one creates a character. The four-slot grid shows
-  the limit; the count is announced to assistive technology. Each card links to its sheet.
-- `party/roster` (DM): one read-only roster per Player with "Active" or "In reserve" in words.
-  The DM Player preview shows the previewed Player's roster read-only.
+- **Party:**
+  - A Player with no character sees "Who will you play?". Four decorative rings picture the
+    slots; the only action is the button, which opens a name dialog and continues into the
+    existing creation wizard. Closing the dialog returns focus to that button.
+  - The page lede is hidden in this state. Party shows the active character and active
+    teammates only.
+  - The roster entry point shows the Player's initials and "My characters". For the DM it
+    reads "Players' characters" and, in words, how many characters are in reserve.
+  - The DM card menu can archive unassigned characters.
+- **`party/roster` for a Player:**
+  - Each character is a card in a native radio group. The selected card is the active
+    character, shown by accent border, check badge and the word "Active", never by color alone.
+  - Arrow keys move the selection and switch at once; switches run one at a time, in order.
+  - Inside the card frame, a footer band holds the sheet action ("Sheet" or "Finish sheet").
+    A ⋯ menu in the corner, outside the radio label, offers "Archive character"; for the active
+    character the option is disabled with the reason.
+  - Free slots are dashed rings; the first one creates a character.
+  - Outcomes appear above the grid and are scrolled into view clear of the phone bottom bar:
+    progress and success as polite status text, failures as alerts with a "Close" action.
+  - A collapsed "Archived" section lists archived characters with their sheet and "Restore".
+    Restore is disabled with "No free slot" when the roster is full.
+  - The archive confirmation states that it frees a slot and can be undone.
+- **`party/roster` for the DM:** a compact list per Player, active character first, with a
+  four-ring slot meter instead of empty tiles. Every archived character, assigned or not, is in
+  the collapsed "Archived" section.
+- **DM Player preview:** shows the previewed Player's roster read-only.
 
 ## Consequences
 
-- Without delete or archive, a Player who reaches four characters cannot create more. Retiring
-  or deleting characters is a follow-up decision (it touches inventory, orders, trades and
-  combat history).
-- PRE received the change through the migration's guarded mirror block before production. The
-  production migration is applied by the integrator after merge.
+- PRE received both migrations through their guarded mirror blocks before production. The
+  production migrations are applied by the integrator after merge.
+- Editing the sheet of an archived character is not blocked on the server. The roster only
+  offers its sheet and Restore.
 - Hosted Auth/PostgREST two-account flows remain covered by PGlite and fixtures only.

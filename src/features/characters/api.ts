@@ -103,6 +103,29 @@ export function useCreateOwnCharacter(campaignId: string) {
 }
 
 /**
+ * RYT-044: archive or restore a character. The refresh is not awaited, so the caller's
+ * callbacks run before the character leaves (or rejoins) the list that rendered the control.
+ */
+export function useArchiveAction(campaignId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (action: { kind: 'archive' | 'restore'; characterId: string }) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new Error('unavailable')
+      return changeCharacter(campaignId, action)
+    },
+    onSuccess: () => {
+      if (controller?.getSnapshot().user?.id === userId)
+        void cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+    },
+  })
+}
+
+/**
  * RYT-044: switch the active character. Switches run one at a time (mutation scope), so
  * arrowing through the radio group sends them in order and the last choice wins.
  */

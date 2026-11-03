@@ -121,7 +121,8 @@ RYT-044 lets Players create up to four characters per campaign and play one of t
 one active character per Player; `create_own_character` (idempotent) and `set_active_character`
 (transactional, refused during an open trade or running combat) are the only Player writes.
 `charactersQuery` returns characters in play, so Party, combat, shops and inventory lists skip
-the reserve; `characterRosterQuery` feeds the `party/roster` manager (ADR 026).
+the reserve; `characterRosterQuery` feeds the `party/roster` manager (ADR 026). Archived
+characters (`archived_at`, archive/restore RPCs) free a slot and leave every campaign list.
 
 Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.

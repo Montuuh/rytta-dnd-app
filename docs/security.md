@@ -51,6 +51,9 @@ running encounter) are security definer RPCs for `authenticated` only. DMs keep 
 assignment and unlinking below the limit and do not switch a Player's active character.
 Other Players never read reserve characters; SQL tests cover anon, outsider, another Player,
 the campaign DM, a cross-campaign DM, a removed member and the guarded PRE mirror.
+Archiving (`archive_character` / `restore_character`, owner or campaign DM, idempotent, under
+the campaign lock) frees a slot without deleting data; archived characters are never active,
+do not count towards the limit and can be restored only while a slot is free.
 
 RYT-003 revokes all client character/resource writes. `create_character`,
 `unassign_character`, `invite_character_player` and `set_character_resources` lock the

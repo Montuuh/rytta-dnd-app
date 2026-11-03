@@ -1,6 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, campaignId, characterId, reserveIds } from './fixtures/identity.ts'
+import {
+  archivedIds,
+  identityFixture,
+  campaignId,
+  characterId,
+  reserveIds,
+} from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
 
 // RYT-044: Player character roster, first-character onboarding, limit of four and the
@@ -21,7 +27,7 @@ async function axeAndTargets(page: Page) {
   ).toEqual([])
   await expectTouchTargets(
     page,
-    'main button:visible:not(.glossary-term), main a.roster-link:visible, main a.roster-sheet:visible, [role="dialog"] button:visible',
+    'main button:visible:not(.glossary-term), main a.roster-link:visible, main a.roster-foot-link:visible, main a.roster-row-sheet:visible, [role="dialog"] button:visible',
   )
 }
 const rosterPath = `./#/campaign/${campaignId}/party/roster`
@@ -39,11 +45,21 @@ test('a Player without characters is guided to create the first one', async ({ p
   await expect(dialog.getByLabel('Nombre del personaje')).toBeFocused()
   await dialog.getByRole('button', { name: 'Crear y hacer la ficha' }).click()
   await expect(dialog.getByText('Escribe un nombre de entre 1 y 100 caracteres.')).toBeVisible()
-  // Escape closes without creating anything.
+  // Escape and Cancel close without creating anything and return focus to the call to action.
+  const cta = welcome.getByRole('button', { name: 'Crear mi personaje' })
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
+  await expect(cta).toBeFocused()
+  await page.keyboard.press('Enter')
+  await dialog.getByText('Cancelar', { exact: true }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(cta).toBeFocused()
   expect(f.calls.filter((c) => c.method === 'create_own_character')).toHaveLength(0)
-  await welcome.getByRole('button', { name: 'Crear mi personaje' }).click()
+  // The slot rings only picture the roster; the button is the one action.
+  await expect(welcome.getByRole('button')).toHaveCount(1)
+  // No lede that contradicts the onboarding.
+  await expect(page.getByText('Pide a tu DM', { exact: false })).toHaveCount(0)
+  await cta.click()
   await dialog.getByLabel('Nombre del personaje').fill('  Vex  ')
   await evidence(page, info.project.name, 'create-dialog')
   await dialog.getByLabel('Nombre del personaje').press('Enter')
@@ -78,7 +94,9 @@ test('a Player creates characters up to the limit of four', async ({ page }, inf
   await expect(group.getByRole('radio', { name: 'Dax' })).not.toBeChecked()
   await expect(group.getByRole('radio', { name: 'Arin' })).toBeChecked()
   await expect(page.getByRole('button', { name: /Crear un personaje/ })).toHaveCount(0)
-  await expect(page.getByText('Cuatro personajes es el máximo por campaña.')).toBeVisible()
+  await expect(
+    page.getByText('Los cuatro huecos están ocupados. Archiva un personaje para liberar uno.'),
+  ).toBeVisible()
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'roster-full')
   expect(f.calls.filter((c) => c.method === 'create_own_character')).toHaveLength(1)
@@ -122,8 +140,10 @@ test('switching the active character changes who appears in Party', async ({ pag
   await expect(page).toHaveURL(new RegExp(`/party/${characterId}$`))
 })
 
-test('a blocked switch explains why and keeps the active character', async ({ page }) => {
-  await identityFixture(page, { player: true, reserve: ['Bram'] })
+test('a blocked switch explains why in view and keeps the active character', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true, reserve: ['Bram', 'Cora'] })
   await page.route('**/rest/v1/rpc/set_active_character', (route) =>
     route.fulfill({
       status: 400,
@@ -133,9 +153,131 @@ test('a blocked switch explains why and keeps the active character', async ({ pa
   )
   await page.goto(rosterPath)
   const group = page.getByRole('radiogroup', { name: 'Personaje activo' })
-  await group.getByRole('radio', { name: 'Bram' }).check({ force: true })
-  await expect(page.getByRole('alert')).toContainText('Arin tiene un intercambio abierto')
+  // Tap the card in the second row, as a phone user would.
+  await page.getByText('Cora', { exact: true }).click()
+  const alert = page.getByRole('alert')
+  await expect(alert).toContainText('Arin tiene un intercambio abierto')
   await expect(group.getByRole('radio', { name: 'Arin' })).toBeChecked()
+  // The whole explanation is on screen and not under the phone bottom bar.
+  const box = (await alert.boundingBox())!
+  const viewport = page.viewportSize()!
+  const covered = await page.evaluate(
+    ({ x, top, bottom }) =>
+      [top + 2, bottom - 2].some((y) => {
+        const hit = document.elementFromPoint(x, y)
+        return !hit || !hit.closest('[role="alert"]')
+      }),
+    { x: box.x + box.width / 2, top: box.y, bottom: box.y + box.height },
+  )
+  expect(box.y).toBeGreaterThanOrEqual(0)
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
+  expect(covered).toBe(false)
+  await evidence(page, info.project.name, 'switch-blocked')
+  await alert.getByRole('button', { name: 'Cerrar' }).click()
+  await expect(alert).toHaveCount(0)
+})
+
+test('archiving frees a slot; restoring needs one', async ({ page }, info) => {
+  const f = await identityFixture(page, {
+    player: true,
+    reserve: ['Bram', 'Cora', 'Dax'],
+    archived: ['Old'],
+  })
+  await page.goto(rosterPath)
+  const group = page.getByRole('radiogroup', { name: 'Personaje activo' })
+  await expect(group.getByRole('radio')).toHaveCount(4)
+  // Archived characters wait in a collapsed section; with four in the roster none fits back.
+  const archive = page.getByRole('button', { name: /Archivados/ })
+  await expect(archive).toHaveAttribute('aria-expanded', 'false')
+  await archive.click()
+  const restoreOld = page.getByRole('button', { name: 'Restaurar a Old' })
+  await expect(restoreOld).toBeDisabled()
+  await expect(page.getByText('Sin hueco libre')).toBeVisible()
+  await axeAndTargets(page)
+  await evidence(page, info.project.name, 'roster-archive-full')
+  // The active character cannot be archived from its menu.
+  await page.getByRole('button', { name: 'Más acciones para Arin' }).click()
+  await expect(
+    page
+      .getByRole('menu', { name: 'Más acciones para Arin' })
+      .getByRole('menuitem', { name: 'Archivar personaje' }),
+  ).toBeDisabled()
+  await expect(page.getByText('Activa otro personaje para poder archivar este.')).toBeVisible()
+  await page.keyboard.press('Escape')
+  // Archive a reserve character: the confirmation says it frees a slot.
+  const bramMenu = page.getByRole('button', { name: 'Más acciones para Bram' })
+  await bramMenu.click()
+  await page
+    .getByRole('menu', { name: 'Más acciones para Bram' })
+    .getByRole('menuitem', { name: 'Archivar personaje' })
+    .click()
+  const dialog = page.getByRole('dialog', { name: '¿Archivar a Bram?' })
+  await expect(dialog).toContainText('Libera un hueco')
+  await evidence(page, info.project.name, 'archive-dialog')
+  // Cancel returns focus to the card menu.
+  await dialog.getByText('Cancelar', { exact: true }).click()
+  await expect(bramMenu).toBeFocused()
+  await bramMenu.click()
+  await page
+    .getByRole('menu', { name: 'Más acciones para Bram' })
+    .getByRole('menuitem', { name: 'Archivar personaje' })
+    .click()
+  await dialog.getByRole('button', { name: 'Archivar' }).click()
+  await expect(page.getByText('Bram está archivado. Queda un hueco libre.')).toBeVisible()
+  await expect(group.getByRole('radio')).toHaveCount(3)
+  await expect(
+    page.getByRole('button', { name: 'Crear un personaje (hueco 4 de 4)' }),
+  ).toBeVisible()
+  // Now Old fits back in the free slot and returns in reserve.
+  await expect(restoreOld).toBeEnabled()
+  await restoreOld.click()
+  await expect(page.getByText('Old vuelve al plantel.')).toBeVisible()
+  await expect(group.getByRole('radio', { name: 'Old' })).not.toBeChecked()
+  await expect(group.getByRole('radio', { name: 'Arin' })).toBeChecked()
+  await expect(page.getByRole('button', { name: 'Restaurar a Bram' })).toBeDisabled()
+  await evidence(page, info.project.name, 'roster-archived')
+  expect(f.calls.filter((c) => /archive_character|restore_character/.test(c.method))).toEqual([
+    {
+      method: 'archive_character',
+      body: { target_campaign: campaignId, target_character: reserveIds[0] },
+    },
+    {
+      method: 'restore_character',
+      body: { target_campaign: campaignId, target_character: archivedIds[0] },
+    },
+  ])
+  // Archived characters stay out of Party.
+  await page.getByRole('link', { name: 'Volver a Grupo' }).click()
+  await expect(page.getByRole('link', { name: 'Mis personajes, 4 en total' })).toBeVisible()
+})
+
+test('the DM archives an unassigned character from Party and restores it', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const more = page.getByRole('button', { name: 'Más acciones para Arin' })
+  await more.click()
+  await page.getByRole('menuitem', { name: 'Archivar personaje' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Archivar a Arin?' })
+  await expect(dialog).toContainText('Sale de Grupo')
+  await dialog.getByRole('button', { name: 'Archivar' }).click()
+  await expect(page.getByText('Arin está archivado.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toHaveCount(0)
+  await page.getByRole('link', { name: 'Personajes de los jugadores' }).click()
+  await page.getByRole('button', { name: /Archivados/ }).click()
+  const row = page.getByRole('group', { name: 'Arin' })
+  await expect(row).toContainText('Sin jugador')
+  // Let the accordion finish opening before the evidence capture.
+  await page.waitForTimeout(400)
+  await evidence(page, info.project.name, 'dm-archived')
+  await page.getByRole('button', { name: 'Restaurar a Arin' }).click()
+  await expect(page.getByText('Arin vuelve al plantel.')).toBeVisible()
+  await page.getByRole('link', { name: 'Volver a Grupo' }).click()
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+  expect(f.calls.filter((c) => /archive_character|restore_character/.test(c.method))).toHaveLength(
+    2,
+  )
 })
 
 test('English light roster', async ({ page }, info) => {
@@ -173,7 +315,10 @@ test('the DM sees every Player roster with active and reserve characters', async
   // Party lists characters in play only.
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Bram', exact: true })).toHaveCount(0)
-  await page.getByRole('link', { name: 'Personajes de los jugadores, 2 en total' }).click()
+  // The DM entry point counts the reserve, in words.
+  const link = page.getByRole('link', { name: 'Personajes de los jugadores, 2 en reserva' })
+  await expect(link).toContainText('2 en reserva')
+  await link.click()
   await expect(
     page.getByRole('heading', { level: 1, name: 'Personajes de los jugadores' }),
   ).toBeVisible()
@@ -181,7 +326,10 @@ test('the DM sees every Player roster with active and reserve characters', async
   await expect(arin.getByRole('group')).toHaveCount(3)
   await expect(arin.getByRole('group', { name: 'Arin' })).toContainText('Activo')
   await expect(arin.getByRole('group', { name: 'Cora' })).toContainText('En reserva')
+  await expect(arin.getByText('3 de 4 personajes')).toBeAttached()
   await expect(page.getByRole('region', { name: 'Bea P.' }).getByRole('group')).toHaveCount(1)
+  // Compact lists: no empty placeholder tiles for the DM.
+  await expect(page.locator('.roster-slot.is-empty')).toHaveCount(0)
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'dm-rosters')
 })

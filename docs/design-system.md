@@ -33,7 +33,7 @@ Use the fluid tokens instead of literal sizes: `--fs-display` (HP), `--fs-h1..h3
 `--fs-stat` (stat values), `--fs-body` (16px; never shrink body copy on phones),
 `--fs-meta` (14px) and `--fs-tag` (12px minimum for badges and labels). Badges are sentence
 case. Content width is `--content-max` (1280px); DM layouts use 1360px. Reuse
-`RefreshControl` for refresh actions (icon button plus a visible relative timestamp),
+`RefreshControl` for refresh actions (icon button plus a relative timestamp, visible on tablets and laptops and announced on phones),
 `PullToRefresh` as a touch-only addition, `useLongPress` for ×5 steppers, `Switch` for
 visibility toggles, `Chip` for multi-select states, pips for spendable uses and `Tabs` for
 panels that are shown one at a time.
@@ -126,7 +126,11 @@ How it works:
 ## Page heads, phone overlays and destructive actions (RYT-035)
 
 Every page starts with `PageHead`: the h1, one short lede, primary actions and the
-`RefreshControl` on one band (ADR 023). Keep ledes to one line on laptops. Overlays that mount on
+`RefreshControl` on one band (ADR 023). On phones the refresh button sits beside the h1 and its
+relative timestamp is announced through `aria-describedby` instead of a separate visible row;
+pages whose tabs already explain them (DM Command Center) hide the lede on phones. Inside a
+campaign the phone header drops the RYTTA wordmark for the campaign name, and bottom-bar labels
+stay on one line. Keep ledes to one line on laptops. Overlays that mount on
 open use `usePhone`/`useWide` so phones never paint the desktop variant first. Destructive and
 dismissive actions (remove, reject, decline, leave) use `color="red"` with the subtle, light or
 outline variant; they map to `--danger`. Visibility toggles are labelled switches. Read-only

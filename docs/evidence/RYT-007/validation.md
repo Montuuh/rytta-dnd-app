@@ -1,8 +1,8 @@
-# RYT-007 / RYT-035 / RYT-036 / RYT-037 verification
+# RYT-007 / RYT-036 / RYT-037 / RYT-038 verification
 
 Date: 2026-11-03. Branch `cl/eloquent-keller-w3cwpn` on top of `main` at `cdc7646`. Design:
 [combat design analysis](../../combat-design.md). Decision record:
-[ADR 023](../../decisions/023-combat.md).
+[ADR 024](../../decisions/024-combat.md).
 
 Migration: `supabase/migrations/20261104120000_combat.sql`. It is additive: five tables plus
 `private.combat_requests`, 24 RPCs, triggers on vitals, sheets and resources, a guarded

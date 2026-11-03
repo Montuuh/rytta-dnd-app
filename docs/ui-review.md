@@ -16,7 +16,10 @@ component states, navigation, responsive layout and interactions.
 5. After an actual independent PASS, record it in the delivery report and
    `docs/evidence/ui-review-current.json` using the exact reviewed source fingerprint from
    `node scripts/check-ui-review.mjs --fingerprint`.
-6. Run `npm run check:ui-review`. CI and release verification require a current PASS.
+6. Run `npm run check:ui-review`. Pushes to `main` and Pages publishing require a current PASS.
+   Pull request CI runs it last with `--allow-pending`: a stale or non-PASS verdict is a
+   warning, not a failure, so commits awaiting re-review do not fail CI. Do not treat that
+   warning as a CI failure to fix; do not merge until the PASS is recorded.
 
 The manifest includes ticket, reviewer (`ui-ux`), verdict, reviewedAt, sourceDigest and report.
 Fingerprinting covers UI components/styles, app composition, catalogs, index.html and the

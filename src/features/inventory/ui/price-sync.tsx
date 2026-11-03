@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { Alert, Button, Checkbox, Group, Loader, Modal, Stack, Text } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { Store } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useItemLifecycle } from '../api'
 import type { DefinitionImpact } from '../data/repository'
+import { newRequestId } from '@/shared/lib/request-id'
 
 /** After a value change, offer to carry the new price to the shops that still sell the item. */
 export function PriceSyncDialog({
@@ -24,15 +25,15 @@ export function PriceSyncDialog({
   onDone: (updated?: number) => void
 }) {
   const { t, i18n } = useTranslation()
-  const phone = useMediaQuery('(max-width: 47.99em)')
+  const phone = usePhone()
   const { syncPrices } = useItemLifecycle(campaignId)
   const [chosen, setChosen] = useState(() => listings.map((l) => l.id))
   // One key per selection, so a retry after a lost response replays instead of repeating.
-  const request = useRef({ ids: '', key: crypto.randomUUID() })
+  const request = useRef({ ids: '', key: newRequestId() })
   const apply = async () => {
     if (syncPrices.isPending || chosen.length === 0) return
     const ids = [...chosen].sort().join(',')
-    if (request.current.ids !== ids) request.current = { ids, key: crypto.randomUUID() }
+    if (request.current.ids !== ids) request.current = { ids, key: newRequestId() }
     try {
       const result = await syncPrices.mutateAsync({
         definitionId,

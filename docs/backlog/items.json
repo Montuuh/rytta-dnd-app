@@ -324,7 +324,7 @@
       ],
       "evidence": [
         "docs/combat-design.md",
-        "docs/decisions/023-combat.md",
+        "docs/decisions/024-combat.md",
         "docs/evidence/RYT-007/validation.md",
         "docs/evidence/ui-review/combat/review.md",
         "docs/evidence/ui-review-current.json",
@@ -1213,6 +1213,55 @@
     },
     {
       "id": "RYT-035",
+      "title": "Full frontend and UI/UX review fixes and visual polish",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-033", "RYT-034"],
+      "sources": [
+        "User 2026-11-03: full frontend and UI/UX review of every DM and Player screen at laptop, tablet and phone sizes; fix every bug found and improve the overall visuals."
+      ],
+      "scope": "Fix the review bugs (implemented module flags, planned modules in Player navigation, DM price-modifier copy, shared pending state, cache invalidation scope, insecure-context ids, missing headings) and polish layout, page heads, header, buttons and widgets that do not fit phone, tablet or laptop screens. No database changes.",
+      "acceptance": [
+        "Shops is shown as implemented and only implemented modules can be enabled or reached by Players.",
+        "DM price modifiers name the character, not \"you\".",
+        "Resource steppers of one character never block another character and update immediately.",
+        "Phone page heads leave the main content above the fold; header and bottom bar never wrap at 390px or 150% text.",
+        "Destructive and secondary actions are consistent; exhaustion and AC read the same everywhere.",
+        "Settings shows no developer-only setup text and offers a way back.",
+        "No axe violations, horizontal overflow or targets under 44px at 390px, 820px and 1366px."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px, tablet and laptop screenshots for DM and Player",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-035/validation.md",
+        "docs/decisions/023-review-fixes-visual-polish.md",
+        "docs/evidence/RYT-035/dm-center-mobile.png",
+        "docs/evidence/RYT-035/dm-items-tablet.png",
+        "docs/evidence/RYT-035/dm-modules-laptop.png",
+        "docs/evidence/RYT-035/dm-party-laptop.png",
+        "docs/evidence/RYT-035/dm-party-mobile.png",
+        "docs/evidence/RYT-035/dm-sheet-mobile.png",
+        "docs/evidence/RYT-035/item-sheet-mobile.png",
+        "docs/evidence/RYT-035/party-150-mobile.png",
+        "docs/evidence/RYT-035/player-inventory-tablet.png",
+        "docs/evidence/RYT-035/player-party-mobile.png",
+        "docs/evidence/RYT-035/player-shops-mobile.png",
+        "docs/evidence/RYT-035/settings-laptop.png",
+        "docs/evidence/ui-review/RYT-035/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-036",
       "title": "Encounter preparation and homebrew bestiary",
       "priority": "P1",
       "owner": "fullstack",
@@ -1249,7 +1298,7 @@
       ]
     },
     {
-      "id": "RYT-036",
+      "id": "RYT-037",
       "title": "Combat tools: effects, concentration, death saves, area damage and undo",
       "priority": "P1",
       "owner": "fullstack",
@@ -1290,7 +1339,7 @@
       ]
     },
     {
-      "id": "RYT-037",
+      "id": "RYT-038",
       "title": "Combat table display",
       "priority": "P2",
       "owner": "frontend",

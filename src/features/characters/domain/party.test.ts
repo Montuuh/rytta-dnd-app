@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { hpTone, partyMemberSchema, sharedTeammates, type PartyMember } from './party'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const row = (patch: Partial<PartyMember>): PartyMember =>
   partyMemberSchema.parse({
-    id: crypto.randomUUID(),
+    id: newRequestId(),
     name: 'Bea',
     is_own: false,
     is_assigned: true,

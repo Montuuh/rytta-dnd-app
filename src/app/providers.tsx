@@ -13,6 +13,16 @@ import { AuthProvider } from '@/features/auth'
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true } },
 })
+/** Red light, subtle and outline variants read the contrast-tested danger token in both schemes
+ * (Mantine's dark red-light text is near white and loses the destructive signal). */
+const dangerVariables = {
+  '--mantine-color-red-text': 'var(--danger)',
+  '--mantine-color-red-light-color': 'var(--danger)',
+  '--mantine-color-red-light': 'var(--danger-soft)',
+  '--mantine-color-red-light-hover': 'color-mix(in srgb, var(--danger) 22%, transparent)',
+  '--mantine-color-red-outline': 'var(--danger)',
+  '--mantine-color-red-outline-hover': 'var(--danger-soft)',
+}
 const storedScheme = localStorageColorSchemeManager({ key: 'rytta-color-scheme' })
 const colorSchemeManager = {
   ...storedScheme,
@@ -45,11 +55,13 @@ export function Providers({ children }: PropsWithChildren) {
           '--mantine-color-body': 'var(--app-bg)',
           '--mantine-color-text': 'var(--app-text)',
           '--mantine-color-dimmed': 'var(--app-muted)',
+          ...dangerVariables,
         },
         dark: {
           '--mantine-color-body': 'var(--app-bg)',
           '--mantine-color-text': 'var(--app-text)',
           '--mantine-color-dimmed': 'var(--app-muted)',
+          ...dangerVariables,
         },
       })}
     >

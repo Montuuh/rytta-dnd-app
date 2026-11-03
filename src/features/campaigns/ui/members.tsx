@@ -15,25 +15,10 @@ import {
   TextInput,
   Title,
 } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { useWide } from '@/shared/ui/use-viewport'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import {
-  Backpack,
-  BookOpen,
-  Eye,
-  Gem,
-  History,
-  Image,
-  Landmark,
-  Lock,
-  ScrollText,
-  Shield,
-  Package,
-  Store,
-  Swords,
-  Users,
-} from 'lucide-react'
+import { Eye, History, Lock, LogOut, Package, Shield, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
@@ -50,24 +35,13 @@ import { ActionFeedback, QueryFeedback } from './feedback'
 import { AuditTimeline } from './audit-timeline'
 import { auditFamily } from '../domain/audit'
 import { RefreshControl } from '@/shared/ui/refresh-control'
+import { PageHead } from '@/shared/ui/page-head'
+import { campaignModules, implementedModuleKeys } from './module-catalog'
 
 type Confirmation = { action: CampaignAction; message: string }
 type DmPanel = 'members' | 'modules' | 'items' | 'audit'
 const dmPanels: DmPanel[] = ['members', 'modules', 'items', 'audit']
 type AuditFilter = 'all' | 'characters' | 'resources'
-
-const campaignModules = [
-  { key: 'party', label: 'module.party', icon: Users, implemented: true },
-  { key: 'inventory', label: 'module.inventory', icon: Backpack, implemented: true },
-  { key: 'shops', label: 'module.shops', icon: Store },
-  { key: 'quests', label: 'module.quests', icon: ScrollText },
-  { key: 'combat', label: 'module.combat', icon: Swords, implemented: true },
-  { key: 'atlas', label: 'module.atlas', icon: BookOpen },
-  { key: 'glossary', label: 'module.glossary', icon: Shield },
-  { key: 'memories', label: 'module.memories', icon: Image },
-  { key: 'stronghold', label: 'module.stronghold', icon: Landmark },
-  { key: 'workshop', label: 'module.workshop', icon: Gem },
-] as const
 
 /** The DM Command Center. `itemsPanel` is composed by the page so the campaigns feature does
  * not depend on inventory or shops (ADR 016). The active tab lives in `?panel=` for links. */
@@ -94,7 +68,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
       },
       { replace: true },
     )
-  const wide = useMediaQuery('(min-width: 62em)')
+  const wide = useWide()
   // Keep the selected tab visible in the horizontally scrolling phone tab rail (deep links).
   useEffect(() => {
     document
@@ -165,20 +139,51 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
     auditEvents.dataUpdatedAt,
   )
 
+  const leaveBox = (
+    <Paper p="lg" className="leave-box">
+      <Group justify="space-between" align="center" gap="sm">
+        <Text size="sm" c="dimmed" className="leave-box-text">
+          {t(lastDm ? 'members.lastDm' : 'members.leaveHint')}
+        </Text>
+        <Button
+          variant="outline"
+          color="red"
+          leftSection={<LogOut size={18} aria-hidden="true" />}
+          disabled={lastDm || action.isPending}
+          onClick={(event) =>
+            openConfirmation(
+              {
+                action: {
+                  kind: 'member',
+                  campaignId: campaign.id,
+                  userId: user.id,
+                  role: null,
+                },
+                message: t('members.confirmLeave'),
+              },
+              event.currentTarget,
+            )
+          }
+        >
+          {t('members.leave')}
+        </Button>
+      </Group>
+    </Paper>
+  )
+
   return (
     <Stack gap="xl">
-      <div>
-        <Title order={1}>{t(dm ? 'campaign.manage' : 'members.title')}</Title>
-        <Text c="dimmed" mt="sm">
-          {t(dm ? 'dm.commandIntro' : 'members.playerHint')}
-        </Text>
-      </div>
+      <PageHead
+        title={t(dm ? 'campaign.manage' : 'members.title')}
+        description={t(dm ? 'dm.commandIntro' : 'members.playerHint')}
+        compactOnPhone={dm}
+        refresh={
+          dm && <RefreshControl onRefresh={refreshAll} fetching={fetching} updatedAt={updatedAt} />
+        }
+      />
       <ActionFeedback error={action.error} />
       {dm && (
         <>
-          <Group justify="flex-end" mb={-8}>
-            <RefreshControl onRefresh={refreshAll} fetching={fetching} updatedAt={updatedAt} />
-          </Group>
           <Tabs
             value={activePanel}
             onChange={(value) => value && setActivePanel(value as DmPanel)}
@@ -256,7 +261,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                                   </div>
                                   <Badge variant="light">{t(`campaign.role.${member.role}`)}</Badge>
                                 </Group>
-                                <Group>
+                                <Group className="invite-actions">
                                   <Button
                                     variant="light"
                                     disabled={action.isPending || (member.role === 'dm' && lastDm)}
@@ -284,6 +289,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                                   {member.user_id !== user.id && (
                                     <Button
                                       variant="subtle"
+                                      color="red"
                                       disabled={
                                         action.isPending || (member.role === 'dm' && lastDm)
                                       }
@@ -308,6 +314,11 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                                     </Button>
                                   )}
                                 </Group>
+                                {member.role === 'dm' && lastDm && (
+                                  <Text size="sm" c="dimmed">
+                                    {t('members.onlyDm')}
+                                  </Text>
+                                )}
                               </Stack>
                             </Paper>
                           ))}
@@ -340,6 +351,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                                   <Button
                                     w="fit-content"
                                     variant="subtle"
+                                    color="red"
                                     disabled={action.isPending}
                                     onClick={(event) =>
                                       openConfirmation(
@@ -363,6 +375,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                           ))}
                       </Stack>
                     </section>
+                    {!playerPreview && leaveBox}
                   </>
                 )}
 
@@ -382,13 +395,19 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                           </Text>
                         </div>
                         <Badge variant="light">
-                          {t('dm.activeCount', { count: enabledModules.size })}
+                          {t('dm.activeCount', {
+                            count: [...enabledModules].filter((key) =>
+                              implementedModuleKeys.has(key),
+                            ).length,
+                          })}
                         </Badge>
                       </Group>
                       <ul className="module-switch-list">
-                        {campaignModules.map(({ key, label, icon: Icon, ...module }) => {
+                        {campaignModules.map(({ key, label, icon: Icon, implemented: ready }) => {
                           const active = enabledModules.has(key)
-                          const ready = 'implemented' in module && module.implemented
+                          // Planned modules cannot be shown to Players; an old row can still
+                          // be switched off.
+                          const locked = !ready && !active
                           return (
                             <li
                               key={key}
@@ -399,20 +418,31 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                               <div className="module-switch-name">
                                 <Text fw={600}>{t(label)}</Text>
                                 {!ready && (
-                                  <Badge variant="outline" className="visibility-badge" size="sm">
+                                  <Badge
+                                    variant="outline"
+                                    className="visibility-badge"
+                                    size="sm"
+                                    id={`module-${key}-planned`}
+                                  >
                                     {t('common.comingSoonTag')}
+                                    <span className="visually-hidden">
+                                      {' · '}
+                                      {t('dm.modulePlannedReason')}
+                                    </span>
                                   </Badge>
                                 )}
                               </div>
                               <Switch
                                 size="lg"
                                 checked={active}
+                                disabled={locked}
+                                aria-describedby={!ready ? `module-${key}-planned` : undefined}
                                 aria-disabled={action.isPending || undefined}
                                 aria-label={t('dm.moduleSwitch', { module: t(label) })}
                                 onLabel={<Eye size={14} aria-hidden="true" />}
                                 offLabel={<Lock size={14} aria-hidden="true" />}
                                 onChange={() => {
-                                  if (action.isPending) return
+                                  if (action.isPending || locked) return
                                   const next = new Set(enabledModules)
                                   if (active) next.delete(key)
                                   else next.add(key)
@@ -499,38 +529,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
           </Tabs>
         </>
       )}
-      {!playerPreview && (!dm || showMembers) && (
-        <Paper p="lg">
-          <Stack>
-            {lastDm && (
-              <Text size="sm" c="dimmed">
-                {t('members.lastDm')}
-              </Text>
-            )}
-            <Button
-              variant="outline"
-              disabled={lastDm || action.isPending}
-              w="fit-content"
-              onClick={(event) =>
-                openConfirmation(
-                  {
-                    action: {
-                      kind: 'member',
-                      campaignId: campaign.id,
-                      userId: user.id,
-                      role: null,
-                    },
-                    message: t('members.confirmLeave'),
-                  },
-                  event.currentTarget,
-                )
-              }
-            >
-              {t('members.leave')}
-            </Button>
-          </Stack>
-        </Paper>
-      )}
+      {!playerPreview && !dm && leaveBox}
       <Modal
         opened={inviteOpen}
         onClose={closeInvite}

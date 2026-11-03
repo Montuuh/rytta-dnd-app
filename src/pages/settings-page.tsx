@@ -1,5 +1,13 @@
-import { Badge, Text, Title, useComputedColorScheme, useMantineColorScheme } from '@mantine/core'
 import {
+  Badge,
+  Button,
+  Text,
+  Title,
+  useComputedColorScheme,
+  useMantineColorScheme,
+} from '@mantine/core'
+import {
+  ArrowLeft,
   Axe,
   BowArrow,
   Check,
@@ -20,6 +28,7 @@ import {
 } from 'lucide-react'
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation, useNavigate } from 'react-router'
 import { config } from '@/shared/lib/config'
 import './settings-page.css'
 import {
@@ -262,9 +271,23 @@ function LanguagePicker({ labelledBy, describedBy }: { labelledBy: string; descr
 
 export function SettingsPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  // Settings is reached from the profile menu; offer the way back to where the user was.
+  const cameFromApp = useLocation().key !== 'default'
   const demo = config.VITE_DATA_MODE === 'demo'
   return (
     <div className="settings-page">
+      {cameFromApp && (
+        <Button
+          variant="subtle"
+          w="fit-content"
+          className="settings-back"
+          leftSection={<ArrowLeft size={18} aria-hidden="true" />}
+          onClick={() => void navigate(-1)}
+        >
+          {t('common.back')}
+        </Button>
+      )}
       <header className="settings-head">
         <Title order={1}>{t('nav.settings')}</Title>
         <Text className="settings-intro">{t('settings.intro')}</Text>
@@ -279,26 +302,19 @@ export function SettingsPage() {
         {(ids) => <LanguagePicker {...ids} />}
       </Section>
       <Text className="settings-saved">{t('preferences.saved')}</Text>
-      <Section title={t('settings.about')}>
-        {() => (
-          <div className="settings-about">
-            <Badge variant="light" w="fit-content">
-              {t(demo ? 'settings.demo' : 'settings.backend')}
-            </Badge>
-            <Text>{t(demo ? 'settings.demoDescription' : 'settings.backendDescription')}</Text>
-            <Text c="dimmed" size="sm">
-              {t('settings.connection', {
-                status: t(
-                  config.VITE_SUPABASE_URL && config.VITE_SUPABASE_PUBLISHABLE_KEY
-                    ? 'settings.provided'
-                    : 'settings.missing',
-                ),
-              })}{' '}
-              {t('settings.docs')}
-            </Text>
-          </div>
-        )}
-      </Section>
+      {/* Demo data must stay explicit; a live installation shows no setup internals. */}
+      {demo && (
+        <Section title={t('settings.about')}>
+          {() => (
+            <div className="settings-about">
+              <Badge variant="light" w="fit-content">
+                {t('settings.demo')}
+              </Badge>
+              <Text>{t('settings.demoDescription')}</Text>
+            </div>
+          )}
+        </Section>
+      )}
     </div>
   )
 }

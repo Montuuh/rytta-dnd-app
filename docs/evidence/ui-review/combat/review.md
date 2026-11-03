@@ -611,3 +611,81 @@ every re-render, which with polling means every few seconds.**
   recorded. Placement and the scroll-jump were measured separately for t.
 - Only the scope above was re-checked. The untested list from round one still applies.
 - This approval covers only the fingerprint above.
+
+## Re-review 6 (focused on N6, plus N4 and N5, after d3ef11d)
+
+- Reviewed source: `d3ef11d`
+- UI fingerprint: `e0b7fbc774813e789daccdd109d5b5c0067621c2a9bb1b5804450228759d164b` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml`, read-only on implementation
+- Date: 2026-11-03
+- Method: fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px).
+  English light, 100% and 150% text. Failures were simulated by blocking routes; taps used
+  `touchscreen.tap`.
+- Evidence: `docs/evidence/ui-review/combat/r7/*.png`
+
+### Verdict: PASS
+
+N6 is fixed, and N4 and N5 still hold. There are no blocker or major findings.
+
+### N6: fixed
+
+This repeats the round 5 measurement. A death save fails in the drawer. The drawer is then
+scrolled to the end and sampled once per second for 10 s, which covers at least two 4 s polls.
+After that it is scrolled to the top and sampled for 6 s.
+
+| Viewport | Before the fix (round 5) | Now, end samples | Now, top samples |
+| --- | --- | --- | --- |
+| m 100% | 642 → 420 | 642 every second | 0 every second |
+| m 150% | 1373 → 714 | 1373 every second | 0 every second |
+| t 100% | not affected | 232 every second | 0 every second |
+| t 150% | 601 → 523 | 601 every second | 0 every second |
+
+In the modal (effect dialog, m 150%), the content stayed at 0 throughout. Scroll padding is still
+applied while the error shows (102px, 172px at m 150%, 118px at t 150%) and is cleared after
+dismissal.
+
+### N4: still holds
+
+With the death-save row at the bottom edge, a failing tap on Success leaves Success and Failure
+above the sticky alert, in view and tappable:
+
+| Viewport | Buttons | Alert top |
+| --- | --- | --- |
+| m 100% | 548–592px | 757px |
+| t 100% | 551–595px | 1093px |
+| m 150% | 627–671px | 687px |
+| t 150% | 701–745px | 1077px |
+
+A failing chip at the bottom edge also stays above the alert (m and t at 100%, m at 150%), and
+axe reports no violations.
+
+### N5: still holds
+
+- **Inline drawer error:** dismissing with Enter or a tap returns focus to Success.
+- **Toast:** Enter, Space and tap all return focus to "Next turn".
+- **Auto-dismiss:** does not move focus.
+- **Modal inline error:** Enter returns focus to "Add effect" and the dialog stays open.
+- **Escape on the drawer while an error shows:** focus goes back to the row, with no stray alert.
+
+### Delivery spec
+
+`tests/e2e/combat.spec.ts` passes on identity mobile, tablet and desktop: 9 of 9, including the new
+scroll-stability assertion.
+
+### Observation (minor, pre-existing, not part of this delivery)
+
+At t 150%, Playwright's `scrollIntoViewIfNeeded` left Success under the drawer's sticky header
+(the Mantine `Drawer-header`). That made my scripted retap miss the button.
+
+The app's own placement does not hit this. The trigger scrolls with `block: nearest` toward the
+bottom, and the drawer's own focus restore is unaffected.
+
+The case could still occur for keyboard users moving focus upward inside a long drawer. A
+`scroll-padding-top` on `.mantine-Drawer-content` equal to the header height would prevent it.
+This is optional.
+
+### Limitations
+
+- Only the scope above was re-checked.
+- The untested list from round one still applies.
+- This approval applies only to the fingerprint above.

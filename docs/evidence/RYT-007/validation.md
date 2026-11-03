@@ -100,12 +100,17 @@ not re-run here; only the combat spec was.
   - Re-review 1: CHANGES_REQUIRED (N1–N3), fixed.
   - Re-review 2: CHANGES_REQUIRED (the N3 toast covered the turn bar and dialog buttons on phones), fixed.
   - Re-review 3: **PASS** for UI fingerprint `a3385ecf…c328e`.
-- Re-review 3's two minors (drawer error far from the control, toast never leaving) were fixed at the
-  user's request. Re-review 4: **PASS** for fingerprint `75aed879…7c90`, which is the fingerprint
-  recorded in `docs/evidence/ui-review-current.json`.
-- Non-blocking follow-ups from re-review 4:
-  - N4: at 150% text on a phone, the sticky drawer error can cover the button that just failed.
-  - N5: closing the toast with the keyboard leaves focus on `<body>`.
+- At the user's request, the follow-ups were fixed and re-reviewed:
+  - Re-review 3 minors (drawer error far from the control; a toast that never left): fixed.
+    Re-review 4 PASS.
+  - N4 (sticky error covering the failed button) and N5 (focus lost on dismiss): fixed.
+  - Re-review 5 found N6, a regression where polling scrolled the drawer back every 4 s. It is
+    fixed by applying placement once per error. An e2e assertion was added; it fails on the
+    previous code and passes on the fix.
+- Re-review 6: **PASS** for fingerprint `e0b7fbc7…d164b`, recorded in
+  `docs/evidence/ui-review-current.json`.
+- Optional observation from re-review 6: `scroll-padding-top` on the drawer would stop keyboard
+  focus moving upward from landing under the sticky drawer header.
 
 ## Not tested / limitations
 

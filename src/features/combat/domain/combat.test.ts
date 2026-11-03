@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canEnterInitiative,
   combatErrorCode,
+  initiativeProgress,
   combatPollInterval,
   combatStateSchema,
   concentrationDc,
@@ -75,6 +77,24 @@ describe('combat rules', () => {
     expect(combatErrorCode('Request mismatch')).toBe('invalid')
     expect(combatErrorCode('Forbidden')).toBe('forbidden')
     expect(combatErrorCode('boom')).toBe('unavailable')
+    expect(combatErrorCode('Initiative closed')).toBe('initiativeClosed')
+  })
+  it('opens the table initiative entry only for the own character while it is collected', () => {
+    const own = base(1, { kind: 'character', side: 'party', is_own: true, can_act: true })
+    expect(canEnterInitiative('initiative', own)).toBe(true)
+    expect(canEnterInitiative('initiative', { ...own, initiative: 14 })).toBe(true)
+    // During the fight only a missing total (a late joiner) can still be entered.
+    expect(canEnterInitiative('active', own)).toBe(true)
+    expect(canEnterInitiative('active', { ...own, initiative: 14 })).toBe(false)
+    expect(canEnterInitiative('ended', own)).toBe(false)
+    expect(canEnterInitiative('draft', own)).toBe(false)
+    // Never a teammate or a creature.
+    expect(canEnterInitiative('initiative', { ...own, is_own: false, can_act: false })).toBe(false)
+    expect(canEnterInitiative('initiative', { ...own, kind: 'npc' })).toBe(false)
+    expect(initiativeProgress([own, base(2, { initiative: 3 }), base(3)])).toEqual({
+      ready: 1,
+      total: 3,
+    })
   })
   it('polls fast only during a live fight', () => {
     const live = combatStateSchema.parse({

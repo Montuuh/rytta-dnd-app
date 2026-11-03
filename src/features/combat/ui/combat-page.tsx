@@ -1,19 +1,18 @@
-import { useMemo } from 'react'
-import { Alert, Button, Group, Paper, Stack, Text, Title } from '@mantine/core'
+import { useMemo, useState } from 'react'
+import { Alert, Button, Group, Paper, SegmentedControl, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Swords } from 'lucide-react'
+import { ArrowLeft, Monitor, SlidersHorizontal, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { PageHead } from '@/shared/ui/page-head'
 import { QueryFeedback, useCampaign, useCampaignView } from '@/features/campaigns'
 import { charactersQuery } from '@/features/characters'
 import { combatStateQuery, encountersQuery, useCombatRealtime } from '../api'
-import { isLive, previewAsPlayer, type CombatState } from '../domain/combat'
+import { isLive, previewAsPlayer, type CombatState, type EncounterStatus } from '../domain/combat'
 import { DmConsole } from './dm-console'
 import { EncounterGroup, EncounterList } from './encounter-list'
 import { useFreshness } from './helpers'
-import { PlayerView } from './player-view'
 import { TableDisplay } from './table-display'
 import './combat.css'
 
@@ -54,12 +53,12 @@ function HiddenCombat() {
   )
 }
 
-function useLiveState(encounterId: string | null, asTable = false) {
+/** One combat projection: the own role's (or the table's) state with its freshness. */
+function useCombatState(encounterId: string | null, asTable = false, enabled = true) {
   const { userId, campaignId, project } = useCombatViewer()
-  const query = useQuery(combatStateQuery(userId, campaignId, encounterId, asTable))
-  const connected = useCombatRealtime(campaignId, true)
+  const query = useQuery({ ...combatStateQuery(userId, campaignId, encounterId, asTable), enabled })
   const stale = useFreshness(query.dataUpdatedAt, query.isError && query.data !== undefined)
-  return { query, data: project(query.data), connected, stale, retry: () => void query.refetch() }
+  return { query, data: project(query.data), stale, retry: () => void query.refetch() }
 }
 
 export function CombatPage() {
@@ -79,23 +78,30 @@ export function CombatPage() {
   return <PlayerCombat />
 }
 
+/**
+ * Players have one combat screen: the table view of the live encounter. When the fight they were
+ * watching ends, the same screen turns into its summary until a new fight starts.
+ */
 function PlayerCombat() {
   const { t } = useTranslation()
   const { userId, campaignId } = useCombatViewer()
-  const { query, data, connected, stale, retry } = useLiveState(null)
+  const { query, data, stale, retry } = useCombatState(null)
+  const connected = useCombatRealtime(campaignId, true)
   const history = useQuery(encountersQuery(userId, campaignId))
-  const ended = (history.data ?? []).filter((e) => e.status === 'ended')
-  if (data?.encounter && isLive(data.encounter.status))
+  const encounter = data?.encounter
+  const [watched, setWatched] = useState<string | null>(null)
+  if (encounter && isLive(encounter.status) && watched !== encounter.id) setWatched(encounter.id)
+  if (data && encounter && (isLive(encounter.status) || encounter.id === watched))
     return (
-      <PlayerView
+      <TableDisplay
         campaignId={campaignId}
         state={data}
         stale={stale}
         connected={connected}
         retry={retry}
-        backLink={false}
       />
     )
+  const ended = (history.data ?? []).filter((e) => e.status === 'ended')
   return (
     <Stack gap="lg" className="combat-page">
       <PageHead title={t('combat.title')} description={t('combat.intro.player')} />
@@ -139,51 +145,154 @@ function NotFound() {
 export function CombatEncounterPage() {
   const { dm, enabled } = useCombatViewer()
   if (!dm && !enabled) return <HiddenCombat />
-  return <EncounterScreen />
+  return dm ? <DmEncounter /> : <PlayerEncounter />
 }
 
-function EncounterScreen() {
+/** A Player opening one encounter (a live link or a past fight) gets its table view. */
+function PlayerEncounter() {
   const { encounterId } = useParams()
-  const { dm, campaignId } = useCombatViewer()
-  const { query, data, connected, stale, retry } = useLiveState(encounterId ?? null)
+  const { campaignId } = useCombatViewer()
+  const { query, data, stale, retry } = useCombatState(encounterId ?? null)
+  const connected = useCombatRealtime(campaignId, true)
   if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
   if (!data?.encounter)
     return <QueryFeedback pending={query.isPending} error={query.isError} retry={retry} />
-  if (dm)
-    return (
-      <DmConsole
-        campaignId={campaignId}
-        state={data}
-        stale={stale}
-        connected={connected}
-        retry={retry}
-      />
-    )
   return (
-    <PlayerView
+    <TableDisplay
       campaignId={campaignId}
       state={data}
       stale={stale}
       connected={connected}
       retry={retry}
-      backLink
     />
   )
 }
 
+type DmView = 'table' | 'console'
+
+/** The DM opens the table view; the console is one switch away. */
+function DmEncounter() {
+  const { encounterId } = useParams()
+  const { query, data } = useCombatState(encounterId ?? null)
+  if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
+  if (!data?.encounter)
+    return (
+      <QueryFeedback
+        pending={query.isPending}
+        error={query.isError}
+        retry={() => void query.refetch()}
+      />
+    )
+  return <DmViews key={encounterId} encounterId={encounterId!} status={data.encounter.status} />
+}
+
+/**
+ * Both views stay mounted once opened and the hidden one keeps its state (selection, open tab,
+ * targets), so switching back and forth loses nothing. Drafts have no table view: Players and the
+ * shared screen never see them. The choice is kept in `?view=` for reloads.
+ */
+function DmViews({ encounterId, status }: { encounterId: string; status: EncounterStatus }) {
+  const { t } = useTranslation()
+  const { campaignId } = useCombatViewer()
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('view')
+  const [chosen, setChosen] = useState<DmView>(() =>
+    requested === 'console' || requested === 'table'
+      ? requested
+      : status === 'draft'
+        ? 'console'
+        : 'table',
+  )
+  const view: DmView = status === 'draft' ? 'console' : chosen
+  const [opened, setOpened] = useState<ReadonlySet<DmView>>(() => new Set([view]))
+  if (!opened.has(view)) setOpened(new Set([...opened, view]))
+  const connected = useCombatRealtime(campaignId, true)
+  const full = useCombatState(encounterId)
+  const table = useCombatState(encounterId, true, view === 'table')
+  const choose = (next: DmView) => {
+    setChosen(next)
+    const search = new URLSearchParams(params)
+    search.set('view', next)
+    setParams(search, { replace: true })
+  }
+  return (
+    <Stack gap="md" className="combat-dm-encounter">
+      <div className="combat-viewbar">
+        <Button
+          component={Link}
+          to=".."
+          relative="path"
+          variant="subtle"
+          leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+          className="combat-back"
+        >
+          {t('combat.back')}
+        </Button>
+        {status !== 'draft' && (
+          <SegmentedControl
+            value={view}
+            onChange={(next) => choose(next as DmView)}
+            aria-label={t('combat.view.label')}
+            className="combat-view-switch"
+            data={[
+              {
+                value: 'table',
+                label: (
+                  <span className="combat-view-option">
+                    <Monitor size={18} aria-hidden="true" />
+                    {t('combat.view.table')}
+                  </span>
+                ),
+              },
+              {
+                value: 'console',
+                label: (
+                  <span className="combat-view-option">
+                    <SlidersHorizontal size={18} aria-hidden="true" />
+                    {t('combat.view.console')}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        )}
+      </div>
+      <div hidden={view !== 'table'}>
+        {opened.has('table') &&
+          (table.data?.encounter ? (
+            <TableDisplay
+              campaignId={campaignId}
+              state={table.data}
+              stale={table.stale}
+              connected={connected}
+              retry={table.retry}
+            />
+          ) : (
+            <QueryFeedback
+              pending={table.query.isPending}
+              error={table.query.isError}
+              retry={table.retry}
+            />
+          ))}
+      </div>
+      <div hidden={view !== 'console'}>
+        {opened.has('console') && full.data?.encounter && (
+          <DmConsole
+            campaignId={campaignId}
+            state={full.data}
+            stale={full.stale}
+            connected={connected}
+            retry={full.retry}
+          />
+        )}
+      </div>
+    </Stack>
+  )
+}
+
+/** Old table links (RYT-038) land on the encounter, whose default is the table view. */
 export function CombatTablePage() {
   const { dm, enabled } = useCombatViewer()
   if (!dm && !enabled) return <HiddenCombat />
-  return <TableScreen />
-}
-
-function TableScreen() {
-  const { encounterId } = useParams()
-  const { dm } = useCombatViewer()
-  const { query, data, connected, stale, retry } = useLiveState(encounterId ?? null, true)
-  if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
-  if (!data?.encounter)
-    return <QueryFeedback pending={query.isPending} error={query.isError} retry={retry} />
-  // Players stay on the table view; only the DM has a console to go back to.
-  return <TableDisplay state={data} stale={stale} connected={connected} retry={retry} exit={dm} />
+  return <Navigate to=".." relative="path" replace />
 }

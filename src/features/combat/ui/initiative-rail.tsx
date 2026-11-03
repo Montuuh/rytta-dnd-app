@@ -36,6 +36,8 @@ export function InitiativeRail({
   mode,
   reorder,
   rowMenu,
+  rowAction,
+  rowExtra,
   large = false,
 }: {
   combatants: Combatant[]
@@ -43,6 +45,10 @@ export function InitiativeRail({
   /** DM tie reordering: receives the full new order of ids. */
   reorder?: (ids: string[]) => void
   rowMenu?: RowMenu
+  /** One trailing control for a row (the table view's "change my initiative"). */
+  rowAction?: (combatant: Combatant) => ReactNode
+  /** Full-width content under a row (the table view's own initiative entry). */
+  rowExtra?: (combatant: Combatant) => ReactNode
   large?: boolean
 }) {
   const { t } = useTranslation()
@@ -65,6 +71,8 @@ export function InitiativeRail({
               ? mode.selected.has(combatant.id)
               : false
         const body = <RowBody combatant={combatant} large={large} />
+        const action = rowAction?.(combatant)
+        const extra = rowExtra?.(combatant)
         return (
           <li
             key={combatant.id}
@@ -74,6 +82,7 @@ export function InitiativeRail({
               combatant.defeated ? 'is-defeated' : '',
               selected ? 'is-selected' : '',
               combatant.is_own ? 'is-own' : '',
+              extra ? 'has-extra' : '',
               `side-${combatant.kind === 'lair' ? 'lair' : combatant.side}`,
             ].join(' ')}
             aria-current={combatant.is_active ? 'step' : undefined}
@@ -134,6 +143,8 @@ export function InitiativeRail({
                 })}
               </div>
             )}
+            {action && <div className="combat-row-actions">{action}</div>}
+            {extra && <div className="combat-row-extra">{extra}</div>}
           </li>
         )
       })}

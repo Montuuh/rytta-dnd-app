@@ -301,6 +301,7 @@ export const combatErrorCodes = [
   'undoConflict',
   'undone',
   'notUndoable',
+  'initiativeClosed',
   'gone',
   'invalid',
   'forbidden',
@@ -321,6 +322,7 @@ export function combatErrorCode(message: string): CombatErrorCode {
     [/Undo conflict/, 'undoConflict'],
     [/Already undone/, 'undone'],
     [/Not undoable/, 'notUndoable'],
+    [/Initiative closed/, 'initiativeClosed'],
     [/(Encounter|Combatant|Effect|Event|Template|Character) unavailable/, 'gone'],
     [/Invalid request|Request mismatch/, 'invalid'],
     [/Forbidden/, 'forbidden'],
@@ -389,6 +391,28 @@ export function joinPlacement(combatants: readonly Combatant[], total: number) {
     before: combatants[index - 1] ?? null,
     after: combatants[index] ?? null,
     thisRound: active >= 0 && index > active,
+  }
+}
+
+/** Initiative totals the server accepts (set_initiative and add_combatants). */
+export const isInitiativeTotal = (value: number) =>
+  Number.isInteger(value) && value >= -20 && value <= 99
+
+/**
+ * Whether the viewer may enter this combatant's initiative from the table view (RYT-042): only the
+ * own character, while initiative is collected, or later only while its total is still missing.
+ * Presentation only; set_initiative enforces the same rule on the server.
+ */
+export function canEnterInitiative(status: EncounterStatus, combatant: Combatant) {
+  if (!combatant.is_own || !combatant.can_act || combatant.kind !== 'character') return false
+  return status === 'initiative' || (status === 'active' && combatant.initiative === undefined)
+}
+
+/** How many combatants on screen already have an initiative total. */
+export function initiativeProgress(combatants: readonly Combatant[]) {
+  return {
+    ready: combatants.filter((c) => c.initiative !== undefined).length,
+    total: combatants.length,
   }
 }
 

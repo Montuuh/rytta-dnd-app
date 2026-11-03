@@ -885,6 +885,69 @@ describe('RYT-007 shared combat', () => {
     await db.exec('reset role')
   })
 
+  it('RYT-042 Players enter only their own initiative and only while it is collected', async () => {
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const x = await prepared(s, schema)
+      await asUser(dm)
+      await a.status(s.c, x.e, 'initiative')
+      // The Player enters and corrects the own total while initiative is collected; retries replay.
+      await asUser(player)
+      const key = randomUUID()
+      const call = (total: number) =>
+        res(`select ${schema}.set_initiative($1,$2,$3,$4,$5) result`, [s.c, x.arin, total, 2, key])
+      await call(14)
+      expect(await call(14)).toMatchObject({ status: 'initiative' })
+      await a.initiative(s.c, x.arin, 17, 2)
+      // Never anyone else's: a teammate, a creature, a hidden creature.
+      await expect(a.initiative(s.c, x.bea, 12)).rejects.toThrow(/Forbidden/)
+      await expect(a.initiative(s.c, x.gob1, 12)).rejects.toThrow(/Forbidden/)
+      await expect(a.initiative(s.c, x.ogre, 12)).rejects.toThrow(/Combatant unavailable/)
+      // Outsiders and a DM of another campaign.
+      await asUser(outsider)
+      await expect(a.initiative(s.c, x.arin, 3)).rejects.toThrow(/Forbidden/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      await expect(a.initiative(other, x.arin, 3)).rejects.toThrow(/Combatant unavailable/)
+      await expect(a.initiative(other, x.gob1, 3)).rejects.toThrow(/Combatant unavailable/)
+      await db.exec('reset role; set role anon')
+      await expect(a.initiative(s.c, x.arin, 3)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
+      // The fight starts with Bea and Cato still missing.
+      await asUser(dm)
+      await a.status(s.c, x.e, 'active')
+      // A set total is closed to Players once the fight runs; a missing one can still be entered.
+      await asUser(player)
+      await expect(a.initiative(s.c, x.arin, 5)).rejects.toThrow(/Initiative closed/)
+      await asUser(peer)
+      await a.initiative(s.c, x.bea, 12, 1)
+      await expect(a.initiative(s.c, x.bea, 19)).rejects.toThrow(/Initiative closed/)
+      // The DM still changes any total mid-fight.
+      await asUser(dm)
+      await a.initiative(s.c, x.arin, 4)
+      let st = await a.state(s.c, x.e)
+      expect(st.combatants.find((c) => c.id === x.arin)!.initiative).toBe(4)
+      expect(st.combatants.find((c) => c.id === x.bea)!.initiative).toBe(12)
+      // Ended fights are closed to Players.
+      await a.status(s.c, x.e, 'ended')
+      await asUser(third)
+      await expect(a.initiative(s.c, x.cato, 9)).rejects.toThrow(/Encounter closed/)
+      await asUser(dm)
+      st = await a.state(s.c, x.e)
+      expect(st.combatants.find((c) => c.id === x.cato)!.initiative).toBeUndefined()
+    }
+    await db.exec('reset role')
+    const bodies = (
+      await db.query<{ src: string }>(
+        "select prosrc src from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='pre' and p.proname='set_initiative'",
+      )
+    ).rows
+    expect(bodies).toHaveLength(1)
+    expect(bodies[0]!.src).toContain('Initiative closed')
+    expect(bodies[0]!.src).not.toMatch(/\bpublic\.|\bprivate\./)
+  })
+
   it('RYT-041 runs the roster RPCs in a PRE copied before the migration', async () => {
     const pre = api('pre')
     const s = await setup('pre')

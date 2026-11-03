@@ -51,6 +51,17 @@ with no DM secrets. Character play state already lives in `character_vitals`; th
   `combat_drop_effect`. Turns stay positional: no per-round "has acted" state is stored. Both
   remain DM-only, campaign-locked and idempotent; signatures and grants are unchanged.
 
+- **Single Player view (RYT-042, `20261106120000_combat_player_initiative.sql`).** Players have
+  one combat screen, the table view, fed by their own Player projection (`as_table = false`;
+  the only extra over the table projection is their own character). The Player screen with
+  HP, condition, death save, end-turn and undo controls is removed; those stay on the character
+  sheet or with the DM. `set_initiative` keeps its signature and grants and adds one Player rule:
+  a total can be set while the encounter collects initiative, and during the fight only when the
+  character has none yet (`Initiative closed`). "Own" stays `characters.user_id = auth.uid()`,
+  which remains correct when RYT-044 restricts the roster to each Player's active character.
+  The DM lands on the table view (`as_table = true`) and switches to the console with a
+  two-segment control; both stay mounted so neither loses its state.
+
 ## Consequences
 
 - The sheet and the combat screen always agree; an HP change from either bumps the encounter.

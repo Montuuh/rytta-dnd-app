@@ -78,7 +78,10 @@ export function PriceSyncDialog({
                   <span className="sync-row-body">
                     <span className="sync-row-name user-copy">{listing.shop_name}</span>
                     <span className="sync-row-price">
-                      <s>{t('lifecycle.syncCurrent', { price: listing.price })}</s>
+                      <span>{t('lifecycle.syncCurrent')} </span>
+                      <s>
+                        {t('store.value', { value: listing.price.toLocaleString(i18n.language) })}
+                      </s>
                       <span aria-hidden="true"> → </span>
                       <strong>
                         {t('store.value', { value: price.toLocaleString(i18n.language) })}

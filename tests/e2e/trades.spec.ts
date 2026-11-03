@@ -7,7 +7,7 @@ const size = (project: string) =>
   project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
 async function evidence(page: Page, project: string, name: string) {
   const s = size(project)
-  if (s) await page.screenshot({ path: `docs/evidence/RYT-034/${name}-${s}.png` })
+  if (s && process.env.RYT_EVIDENCE) await page.screenshot({ path: `docs/evidence/RYT-034/${name}-${s}.png` })
 }
 async function audit(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

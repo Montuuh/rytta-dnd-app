@@ -1453,7 +1453,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "medium"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-008"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1499,7 +1499,8 @@
         "docs/evidence/RYT-040/house-rule-actions-mobile.png",
         "docs/evidence/RYT-040/house-rule-actions-tablet.png",
         "docs/evidence/RYT-040/sheet-actions-mobile.png",
-        "docs/evidence/RYT-040/sheet-actions-tablet.png"
+        "docs/evidence/RYT-040/sheet-actions-tablet.png",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {

@@ -211,6 +211,8 @@ export type EntryArticleProps = {
   headingLevel: 1 | 2
   headingRef?: Ref<HTMLHeadingElement>
   compact?: boolean
+  /** The reference sheet shows the headword as its dialog title instead. */
+  hideHeadword?: boolean
   actions?: ReactNode
 }
 
@@ -222,6 +224,7 @@ export function EntryArticle({
   headingLevel,
   headingRef,
   compact,
+  hideHeadword,
   actions,
 }: EntryArticleProps) {
   const { t, i18n } = useTranslation()
@@ -251,9 +254,11 @@ export function EntryArticle({
           )}
           {actions && <div className="gl-entry-actions">{actions}</div>}
         </div>
-        <Title order={headingLevel} className="gl-headword" ref={headingRef} tabIndex={-1}>
-          {entry.name}
-        </Title>
+        {!hideHeadword && (
+          <Title order={headingLevel} className="gl-headword" ref={headingRef} tabIndex={-1}>
+            {entry.name}
+          </Title>
+        )}
         {entry.otherName && entry.otherName !== entry.name && (
           <p className="gl-gloss">
             {t('glossary.otherName')} <span lang={otherLanguage}>{entry.otherName}</span>

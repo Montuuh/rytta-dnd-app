@@ -1,5 +1,5 @@
 import { Highlight } from '@mantine/core'
-import { forwardRef, useMemo } from 'react'
+import { forwardRef, useMemo, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { indexLetter, type GlossaryEntry } from '../domain/catalog'
@@ -33,7 +33,9 @@ function Row({
     <li>
       <Link
         to={href}
+        state={{ fromIndex: true }}
         className="gl-row"
+        data-entry-id={entry.id}
         aria-current={selected ? 'true' : undefined}
         data-first-result={first || undefined}
       >
@@ -70,6 +72,8 @@ function Row({
 }
 
 type EntryIndexProps = {
+  /** Escape, or ArrowUp from the first row, returns to the search field. */
+  onLeave: () => void
   rows: IndexRowData[]
   grouped: boolean
   query: string
@@ -80,10 +84,43 @@ type EntryIndexProps = {
 
 /** The dictionary column: alphabetical groups with a thumb index, or ranked search results. */
 export const EntryIndex = forwardRef<HTMLDivElement, EntryIndexProps>(function EntryIndex(
-  { rows, grouped, query, selectedId, hrefFor, bodies },
+  { rows, grouped, query, selectedId, hrefFor, bodies, onLeave },
   ref,
 ) {
   const { t } = useTranslation()
+  // Arrow keys move through the result rows; Escape goes back to the search field.
+  const onRowsKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const row = (event.target as HTMLElement).closest<HTMLAnchorElement>('.gl-row')
+    if (!row) return
+    const all = [...event.currentTarget.querySelectorAll<HTMLAnchorElement>('.gl-row')]
+    const at = all.indexOf(row)
+    if (event.key === 'ArrowDown' && at < all.length - 1) {
+      event.preventDefault()
+      all[at + 1]!.focus()
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      if (at > 0) all[at - 1]!.focus()
+      else onLeave()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      onLeave()
+    }
+  }
+  // The thumb index is one Tab stop; arrows move between letters (roving tabindex).
+  const onThumbsKey = (event: KeyboardEvent<HTMLElement>) => {
+    const thumbs = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('.gl-thumb')]
+    const at = thumbs.indexOf(event.target as HTMLButtonElement)
+    const go = (index: number) => {
+      event.preventDefault()
+      thumbs.forEach((thumb, i) => (thumb.tabIndex = i === index ? 0 : -1))
+      thumbs[index]!.focus()
+    }
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
+      go(Math.min(at + 1, thumbs.length - 1))
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') go(Math.max(at - 1, 0))
+    else if (event.key === 'Home') go(0)
+    else if (event.key === 'End') go(thumbs.length - 1)
+  }
   const groups = useMemo(() => {
     if (!grouped) return null
     const map = new Map<string, IndexRowData[]>()
@@ -102,7 +139,7 @@ export const EntryIndex = forwardRef<HTMLDivElement, EntryIndexProps>(function E
 
   if (!groups)
     return (
-      <div className="gl-index" ref={ref}>
+      <div className="gl-index" ref={ref} onKeyDown={onRowsKey}>
         <ol className="gl-rows" aria-label={t('glossary.entries')}>
           {rows.map((row, index) => (
             <Row
@@ -119,13 +156,14 @@ export const EntryIndex = forwardRef<HTMLDivElement, EntryIndexProps>(function E
       </div>
     )
   return (
-    <div className="gl-index" ref={ref}>
-      <nav className="gl-thumbs" aria-label={t('glossary.letters')}>
-        {groups.map(([letter]) => (
+    <div className="gl-index" ref={ref} onKeyDown={onRowsKey}>
+      <nav className="gl-thumbs" aria-label={t('glossary.letters')} onKeyDown={onThumbsKey}>
+        {groups.map(([letter], index) => (
           <button
             key={letter}
             type="button"
             className="gl-thumb"
+            tabIndex={index === 0 ? 0 : -1}
             onClick={() => {
               const target = document.getElementById(letterId(letter))
               target?.scrollIntoView({ block: 'start' })

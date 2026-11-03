@@ -579,26 +579,45 @@
   background: var(--app-surface);
 }
 @media (max-width: 47.99em) {
-  .gl-sheet-content {
+  /* Hug short definitions; long ones scroll inside 86% of the screen. */
+  .mantine-Drawer-content.gl-sheet-content {
+    height: auto;
     max-height: 86dvh;
     border-radius: 16px 16px 0 0;
   }
+  /* Drag-handle cue: decoration only, the sheet closes with its button or Escape. */
+  .gl-sheet-header::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: calc(50% - 20px);
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--app-border);
+  }
+  .gl-sheet-header {
+    padding-top: 20px;
+  }
 }
 .gl-sheet-header {
+  position: sticky;
   background: var(--app-surface);
+  align-items: flex-start;
 }
-.gl-sheet-handle {
+.gl-sheet-title {
+  min-width: 0;
+}
+.gl-sheet-headword {
   display: block;
-  width: 40px;
-  height: 4px;
-  margin: 0 auto 0 calc(50% - 20px);
-  border-radius: 2px;
-  background: var(--app-border);
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h1);
+  font-weight: 400;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
 }
-@media (min-width: 48em) {
-  .gl-sheet-handle {
-    display: none;
-  }
+.gl-sheet-body .gl-entry-head {
+  margin-top: -4px;
 }
 .gl-sheet-back {
   display: inline-flex;
@@ -667,4 +686,10 @@
   margin: 8px 0 0;
   color: var(--app-muted);
   font-size: var(--fs-meta);
+}
+/* RangeSlider thumbs are 28px; a pseudo-element extends their touch target to 44px. */
+.gl-level-slider .mantine-RangeSlider-thumb::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }

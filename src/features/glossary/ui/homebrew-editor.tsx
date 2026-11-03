@@ -6,14 +6,13 @@ import {
   Group,
   Select,
   Stack,
-  Text,
   TextInput,
   Textarea,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useMediaQuery } from '@mantine/hooks'
 import { Plus, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useHomebrewAction } from '../api'
 import type { Catalog } from '../domain/catalog'
@@ -46,12 +45,15 @@ export function HomebrewEditor({
   catalog,
   onClose,
   onSaved,
+  returnFocus = true,
 }: {
   target: EditorTarget | null
   campaignId: string
   catalog: Catalog
   onClose: () => void
   onSaved: (entry: HomebrewEntry) => void
+  /** False after a save: the page moves focus to the saved headword instead. */
+  returnFocus?: boolean
 }) {
   const wide = useMediaQuery('(min-width: 48em)', false)
   const { t } = useTranslation()
@@ -59,6 +61,7 @@ export function HomebrewEditor({
     <Drawer
       opened={target !== null}
       onClose={onClose}
+      returnFocus={returnFocus}
       position="right"
       size={wide ? 520 : '100%'}
       title={
@@ -110,7 +113,7 @@ function EditorForm({
       srd_ref: start.srd_ref,
     },
     validate: {
-      name: (value) => (value.trim() ? null : t('glossary.hb.error.invalid')),
+      name: (value) => (value.trim() ? null : t('glossary.hb.nameRequired')),
     },
   })
   const srdOptions = useMemo(
@@ -123,32 +126,37 @@ function EditorForm({
   const error =
     action.error instanceof GlossaryError ? action.error.code : action.error ? 'unknown' : null
 
-  const submit = form.onSubmit((values) => {
-    action.mutate(
-      {
-        kind: 'save',
-        entryId,
-        revision: target.entry?.revision ?? null,
-        draft: {
-          category: values.category,
-          name: values.name.trim(),
-          aliases: parseAliases(values.aliases).slice(0, homebrewLimits.aliases),
-          summary: values.summary.trim(),
-          body: values.body.trim(),
-          facts: values.facts
-            .map((f) => ({ label: f.label.trim(), value: f.value.trim() }))
-            .filter((f) => f.label && f.value),
-          srd_ref: values.srd_ref,
+  const nameId = useId()
+  const submit = form.onSubmit(
+    (values) => {
+      action.mutate(
+        {
+          kind: 'save',
+          entryId,
+          revision: target.entry?.revision ?? null,
+          draft: {
+            category: values.category,
+            name: values.name.trim(),
+            aliases: parseAliases(values.aliases).slice(0, homebrewLimits.aliases),
+            summary: values.summary.trim(),
+            body: values.body.trim(),
+            facts: values.facts
+              .map((f) => ({ label: f.label.trim(), value: f.value.trim() }))
+              .filter((f) => f.label && f.value),
+            srd_ref: values.srd_ref,
+          },
         },
-      },
-      {
-        onSuccess: (saved) => {
-          if (!saved) return
-          onSaved(saved)
+        {
+          onSuccess: (saved) => {
+            if (!saved) return
+            onSaved(saved)
+          },
         },
-      },
-    )
-  })
+      )
+    },
+    // A missing name moves focus to the field that explains it.
+    () => document.getElementById(nameId)?.focus(),
+  )
 
   return (
     <form onSubmit={submit} noValidate>
@@ -160,6 +168,7 @@ function EditorForm({
         )}
         <TextInput
           label={t('glossary.hb.name')}
+          id={nameId}
           required
           maxLength={homebrewLimits.name}
           data-autofocus
@@ -251,9 +260,6 @@ function EditorForm({
             {t('glossary.hb.save')}
           </Button>
         </Group>
-        <Text size="sm" c="dimmed">
-          {t('glossary.hb.emptyBody')}
-        </Text>
       </Stack>
     </form>
   )

@@ -92,4 +92,28 @@ see the PNG files in this folder.
 
 ## UI/UX review
 
-Pending the independent `ui-ux` verdict; recorded below when available.
+Round 1 (`b1c3af5`): independent `ui-ux` verdict **CHANGES_REQUIRED**, report
+[ui-review.md](ui-review.md). Fixes in the follow-up commit:
+
+- F1 (blocker) search dropped keystrokes: the field owns its value and mirrors it to the URL
+  after 300 ms; e2e now types with `pressSequentially` (40 ms per key) on the All tab.
+- F2 (major) phone sheet pinned to the top: back to the standard Mantine Drawer (the compound
+  API lost the bottom alignment wrapper); the sheet hugs its content up to 86dvh, with the
+  headword as the dialog title and a CSS handle cue.
+- F3 (major) focus lost when going back: every move through the sheet history focuses the
+  headword (asserted in e2e).
+- F4 back to the index on phones uses history and focuses the row it came from (asserted).
+- F5 thumb index is one Tab stop with arrow keys (roving tabindex); ArrowDown/ArrowUp move
+  through rows, ArrowUp from the first row or Escape returns to search (asserted).
+- F6 Enter and saving focus the opened headword after the layout's route focus; the editor
+  drawer does not return focus after a save (asserted).
+- F8 slider thumbs 28 px with a 44 px hit area and distinct names ("mínimo"/"máximo").
+- F9 duplicate help text removed under Save; a missing name has its own message and focuses
+  the field; a failed delete says so and the error clears when the dialog closes.
+- F10 tab counts follow the current search.
+- F7 (not changed): inline terms keep a 44 px hit area; in dense text neighbouring areas can
+  overlap, and the later element wins a tap between lines. This is the WCAG 2.5.8 inline
+  exception traded for the 44 px rule; a smaller area would fail the repository rule.
+- The checked condition chip contrast flagged by axe on the sheet predates RYT-008.
+
+Round 2: focused re-review of F1–F3 pending.

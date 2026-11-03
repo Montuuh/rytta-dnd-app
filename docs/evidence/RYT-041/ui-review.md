@@ -213,3 +213,107 @@ review scripts and captures were kept outside the repository and deleted afterwa
 - I did not test focus after cancelling a removal started from the detail's DM menu at 1440 px.
   It probably has the same cause as F1.
 - This verdict applies only to the source fingerprint above.
+
+## Round 2 (focused re-review of 77c477f)
+
+- Date: 2026-11-03.
+- Snapshot: commit `77c477f` (fixes for F1 to F7, on top of `b3f5e50`).
+- Source fingerprint (`node scripts/check-ui-review.mjs --fingerprint`):
+  `2f2d60d0dbc3508cc5dec69bf933c27819f9024545d97f09e951d8ec49d07429`
+
+### Verdict: PASS
+
+F1 to F7 are fixed in a real browser, and nothing regressed. Two small observations remain;
+neither blocks the delivery.
+
+### Status of each finding
+
+- **F1: resolved.**
+  - Removal from the row ⋯ menu, cancelled with Escape or with "Cancelar": focus returns to that
+    row's ⋯ button (390, 820 and 1440 px; ES dark and EN light).
+  - Keyboard path (Enter, ArrowDown ×3, Enter, Escape): same result. The next Tab moves on to
+    the panel tabs instead of the skip link.
+  - "Cambiar iniciativa": focus returns to the row's ⋯ after Escape and after saving.
+  - Right click, then remove, then Escape (1440 px): focus returns to the row's ⋯.
+  - Detail DM menu at 1440 px: after a removal (Escape) or "Editar valores" (Escape), focus
+    returns to "Más controles del DM para {name}".
+  - Confirming a removal still moves focus to the neighbouring row, and the turn announcement
+    still works ("Turno de Bea. Ronda 1.").
+  - Detail ⋯ at 390/820 px: after "Editar valores" and Escape, focus returns to the ⋯ in the
+    sheet. After a cancelled removal, the sheet reopens and focus goes to its close button (see
+    O1).
+- **F2: resolved at the touch-event level.**
+  - With CDP `Input.dispatchTouchEvent` (390 and 820 px), holding a row for 650 ms or 1200 ms
+    and releasing leaves the menu open, and the detail sheet does not open.
+  - Tapping a menu item by touch opens its dialog. Pressing Escape then returns focus to that
+    row's ⋯.
+  - A gesture-level long press (`synthesizeTapGesture`, 800 ms) also leaves the menu open.
+  - A short tap afterwards still opens the detail, so the hold flag resets correctly.
+  - Dragging (scrolling) from a row opens neither the menu nor the sheet.
+- **F3: resolved.** Both dialogs now use `.combat-dialog-actions`:
+  - At 820 and 1440 px, and for the join dialog at 390 px: one row, Cancel on the left and the
+    action on the right.
+  - Removal dialog at 390 px: the buttons stack at full width (302 px), with "Quitar del
+    combate" above "Cancelar". At 150% both dialogs stack this way.
+  - At 150% on a 390 px screen, the destructive label wraps onto two lines inside its full-width
+    button (66 px tall). This is acceptable at that text size.
+  - This looks deliberate, not like a leftover wrap.
+- **F4: resolved.** Closing the sheet with Escape after opening it from "Ahora …" (keyboard or
+  pointer) returns focus to `#combat-turn-now`. Opening it from a row returns focus to that row,
+  including when it is closed with "Cerrar el detalle".
+- **F5: resolved.** The detail button is named "Más controles del DM para {name}" in ES and
+  "More DM controls for {name}" in EN. "Opciones de Arin" is now unique on the 1440 px layout.
+- **F6: resolved.** The chips measure 35×35 at 100% and 53×53 at 150%; the content (33 and
+  51 px) stays inside the padding.
+- **F7: resolved.**
+  - The list of characters to add has no hint line.
+  - The join dialog goes straight from its title to "Total". The Player initiative dialog keeps
+    its hint, since `hideHint` defaults to false (checked in code).
+  - The turn-bar button's accessible name is now "Ahora · Ronda 1, Arin, Después: Bea. Ver
+    detalle". It contains the visible text in order, so the visible label is part of the name.
+
+### Regression checks (browser)
+
+- **Turn following (1440 px)**:
+  - The detail starts on Arin and follows "Siguiente turno".
+  - A row picked by hand is replaced at the next turn.
+  - Focus on "Curar" plus a turn change from a second DM session: the detail held for 1.5 s and
+    after the DM left it, while the announcement said "Turno de Goblin 2".
+  - The next turn then moves the detail to Arin.
+- **Join preview**: "esta ronda, justo después de Goblin 2" at 15, and "they act from round 2"
+  at 25 (EN). Escape returns focus to the character's row.
+- **Removing the acting combatant**: the dialog text is correct and the turn passes to Bea.
+- **Player**: the table view has no exit link and no full screen button; the Player console has
+  no row menus. The DM table view keeps the exit link and has no full screen button.
+- **Axe** (wcag2a/2aa/21aa): no violations. Checked:
+  - join dialog: ES dark and EN light at 390/820/1440 px
+  - removal dialog: EN light at 390/820/1440 px
+  - DM console at 1440 px
+  - Player table view and Player console at 390/820/1440 px
+- **Layout**: no horizontal overflow at 390, 820 or 1440 px, at 100% and at 150%.
+- **No new page errors.**
+
+### Observations (do not block)
+
+- **O1, nit**: on 390 and 820 px, cancelling a removal started from the ⋯ inside the detail
+  sheet reopens the sheet with focus on "Cerrar el detalle" rather than on that ⋯. Focus is not
+  lost: it stays at the start of the dialog the DM was using. The drawer's autofocus on reopen
+  takes precedence over `restoreFocus` (`dm-console.tsx`, Drawer `opened` includes
+  `!removing`).
+- **O2, pre-existing (present since `c9ed08f`)**: while the characters query is still loading,
+  "Añadir combatientes" briefly says "Todos los personajes ya están en este encuentro."
+  (`add-combatants.tsx`, `missing.length === 0`). This can be fixed separately with a loading
+  state.
+
+### Method and limitations
+
+- I built this worktree into `dist-review` and served it on 127.0.0.1:4237 in Supabase fixture
+  mode, then drove it with throwaway Playwright scripts outside the repository. Viewports:
+  390×844 with touch, 820×1180 with touch, 1440×1000.
+- Touch was emulated through CDP, so I have not verified on real iOS Safari or Android Chrome.
+  Chromium only; no real screen reader; only the Default class theme.
+- I did not re-run the repository's `npm run check` or e2e suite in this round.
+- Fast automation can press Escape within about 100 ms of a menu item opening a dialog. When
+  that happens, Mantine has not yet moved focus into the dialog, and the Escape is ignored. With
+  more realistic delays (450 ms or more) it never happened. I do not count it as a finding.
+- This verdict applies only to the fingerprint above.

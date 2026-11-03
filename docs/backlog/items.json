@@ -1777,7 +1777,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-042", "RYT-043"],
       "sources": [
         "User 2026-11-03: after RYT-042 removed Player combat actions, Players keep death saving throws and ending their own turn in the table view."
@@ -1820,7 +1820,8 @@
         "docs/evidence/RYT-045/revived-mobile.png",
         "docs/evidence/RYT-045/revived-tablet.png",
         "docs/evidence/RYT-045/stable-mobile.png",
-        "docs/evidence/RYT-045/stable-tablet.png"
+        "docs/evidence/RYT-045/stable-tablet.png",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

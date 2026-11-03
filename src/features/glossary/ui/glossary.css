@@ -692,11 +692,10 @@
   border-top: 1px solid var(--app-border);
   background: var(--app-surface);
 }
-/* At large text the footer reflows: delete stays left, Cancel and Save share the rest and wrap. */
+/* The footer buttons are flex items of the footer itself, so at large text the row is
+   [trash][Cancel] with Save full width below, never a row for the trash alone. */
 .gl-editor-footer-actions {
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: contents;
 }
 .gl-editor-footer-actions .mantine-Button-root {
   flex: 1 1 auto;
@@ -705,6 +704,9 @@
 @media (min-width: 48em) {
   .gl-editor-footer-actions .mantine-Button-root {
     flex: 0 0 auto;
+  }
+  .gl-editor-footer-actions .mantine-Button-root:first-child {
+    margin-left: auto;
   }
 }
 .gl-add-house {
@@ -740,12 +742,13 @@
   color: var(--danger);
   font-weight: 600;
 }
-.gl-delete-actions {
+.gl-delete .gl-dialog-actions {
   grid-column: 1 / -1;
 }
 @media (max-width: 47.99em) {
-  /* Two long labels do not fit side by side on a phone: full-width, thumb-sized rows. */
-  .gl-delete .gl-delete-actions {
+  /* Two long labels do not fit side by side on a phone: full-width, thumb-sized rows. Shared by
+     the delete confirmation and the discard question. */
+  .mantine-Modal-body .gl-dialog-actions {
     flex-direction: column;
     align-items: stretch;
   }

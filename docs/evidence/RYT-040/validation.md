@@ -143,3 +143,15 @@ New captures: `edit-gone-{mobile,tablet}.png`, `editor-150-{mobile,tablet}.png` 
 Round 2 results: `npm run check` exit 0 (205 unit/SQL tests, build); `CI=1 npm run test:e2e` exit 0,
 336 passed, 48 skipped. The e2e run was retried after other agents held ports 4173/4174 ("already
 used" fails fast); the passing run used its own servers.
+
+## Round 3: ui-ux round 2 findings (N1 to N3)
+
+The report is the "Round 2" section of `docs/evidence/RYT-040/ui-review.md` (committed as written).
+
+| Finding | Fix | Regression |
+| --- | --- | --- |
+| N1 major: focused fields hidden under the sticky footer | The drawer scroll container gets `scroll-padding-bottom` equal to the footer height plus 16px, kept in sync with a `ResizeObserver` (the footer grows with large text). The footer buttons are now flex items of the footer, so at large text the rows are [trash][Cancelar] and a full-width Guardar, never a row for the trash alone (150% ES footer is two rows) | `focused fields stay clear of the sticky editor footer at 100% / 150% text` (all sizes): Tab through more than 10 controls, each at least min(height, 44px) visible above the footer, footer height capped, then axe and the 44px audit with the last control focused. Fails with the padding removed (verified at 390px) |
+| N2 minor: failed "Guardar como nueva" silent | The save error alert renders in every state, so offline, duplicate-name and invalid errors show under the deleted notice; edits are kept for a retry | `a failed "Guardar como nueva" shows why` (offline shows the message, back online it saves) |
+| N3 minor: ragged discard buttons on phones | One shared `gl-dialog-actions` class for the delete confirmation and the discard question: two full-width rows below 48em | the dirty-editor test asserts equal x and width of both buttons at 390px |
+
+New or refreshed captures: `editor-focus-{100,150}-{mobile,tablet}.png`, `discard-confirm-mobile.png`, `editor-150-*`.

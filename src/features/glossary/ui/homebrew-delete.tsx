@@ -56,7 +56,7 @@ export function HomebrewDeleteDialog({
               {error === 'unknown' ? t('glossary.hb.deleteError') : t(`glossary.hb.error.${error}`)}
             </Text>
           )}
-          <Group className="gl-delete-actions" justify="flex-end" gap="sm">
+          <Group className="gl-dialog-actions" justify="flex-end" gap="sm">
             <Button variant="default" onClick={close} data-autofocus>
               {t('glossary.hb.cancel')}
             </Button>

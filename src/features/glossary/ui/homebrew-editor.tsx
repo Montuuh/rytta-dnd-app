@@ -124,7 +124,7 @@ export function HomebrewEditor({
         closeButtonProps={{ 'aria-label': t('glossary.hb.close'), size: 44 }}
       >
         <Text className="gl-delete-body">{t('glossary.hb.discardBody')}</Text>
-        <Group className="gl-delete-actions" justify="flex-end" gap="sm" mt="md">
+        <Group className="gl-dialog-actions" justify="flex-end" gap="sm" mt="md">
           <Button variant="default" onClick={() => setDiscarding(false)} data-autofocus>
             {t('glossary.hb.keepEditing')}
           </Button>
@@ -189,6 +189,24 @@ function EditorForm({
   const error =
     action.error instanceof GlossaryError ? action.error.code : action.error ? 'unknown' : null
   const alertRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
+  // A focused field must never sit under the sticky footer (WCAG 2.2 SC 2.4.11): the drawer's
+  // scroll container keeps the footer's height (it grows with large text) as scroll padding.
+  useEffect(() => {
+    const footer = footerRef.current
+    const scroller = footer?.closest<HTMLElement>('.gl-editor-drawer')
+    if (!footer || !scroller) return
+    const sync = () => {
+      scroller.style.scrollPaddingBottom = `${footer.offsetHeight + 16}px`
+    }
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(footer)
+    return () => {
+      observer.disconnect()
+      scroller.style.scrollPaddingBottom = ''
+    }
+  }, [])
 
   const nameId = useId()
   const toDraft = (values: FormValues): HomebrewDraft => ({
@@ -260,7 +278,7 @@ function EditorForm({
   return (
     <form onSubmit={submit} noValidate>
       <Stack gap="md">
-        {staleEdit ? (
+        {staleEdit && (
           <Alert
             ref={alertRef}
             tabIndex={-1}
@@ -298,12 +316,12 @@ function EditorForm({
               </>
             )}
           </Alert>
-        ) : (
-          error && (
-            <Alert color="red" role="alert">
-              {t(`glossary.hb.error.${error === 'stale' ? 'unknown' : error}`)}
-            </Alert>
-          )
+        )}
+        {/* A failed save (offline, duplicate name, invalid) is always shown, also after a deletion. */}
+        {error && !(staleEdit && error === 'stale') && (
+          <Alert color="red" role="alert">
+            {t(`glossary.hb.error.${error === 'stale' ? 'unknown' : error}`)}
+          </Alert>
         )}
         <TextInput
           label={t('glossary.hb.name')}
@@ -390,7 +408,7 @@ function EditorForm({
           nothingFoundMessage={t('glossary.noResultsHint')}
           {...form.getInputProps('srd_ref')}
         />
-        <div className="gl-editor-footer">
+        <div className="gl-editor-footer" ref={footerRef}>
           {target.entry && !gone && (
             <Tooltip label={t('glossary.hb.delete')} zIndex={500}>
               <ActionIcon

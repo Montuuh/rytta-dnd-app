@@ -13,7 +13,13 @@ import {
 import { Delete } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useReturnFocus } from './helpers'
-import { concentrationDc, halfDamage, type Combatant, type HpMode } from '../domain/combat'
+import {
+  concentrationDc,
+  halfDamage,
+  isInitiativeTotal,
+  type Combatant,
+  type HpMode,
+} from '../domain/combat'
 
 const quickAmounts = [1, 5, 10] as const
 const maxAmount = 9999
@@ -210,6 +216,53 @@ export function AmountDialog({
 
 /** Numeric initiative total with a large keypad; Players type their own d20 + bonus. The DM also
  * uses it to add a character mid-combat (`title`, `submitLabel` and a live `preview`). */
+/** Digits for an initiative total without the phone keyboard (the sheet's keypad pattern). */
+export function InitiativeKeypad({
+  onChange,
+  className,
+}: {
+  onChange: (update: (current: number | string) => number | string) => void
+  className?: string
+}) {
+  const { t } = useTranslation()
+  const press = (digit: number) =>
+    onChange((current) => {
+      const next = Number(`${typeof current === 'number' ? current : ''}${digit}`)
+      return next > 99 ? current : next
+    })
+  return (
+    <div
+      className={`keypad${className ? ` ${className}` : ''}`}
+      role="group"
+      aria-label={t('sheet.keypad')}
+    >
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+        <UnstyledButton key={digit} className="keypad-key" onClick={() => press(digit)}>
+          {digit}
+        </UnstyledButton>
+      ))}
+      <UnstyledButton className="keypad-key is-muted" onClick={() => onChange(() => '')}>
+        {t('sheet.keypadClear')}
+      </UnstyledButton>
+      <UnstyledButton className="keypad-key" onClick={() => press(0)}>
+        0
+      </UnstyledButton>
+      <UnstyledButton
+        className="keypad-key is-muted"
+        aria-label={t('sheet.keypadBackspace')}
+        onClick={() =>
+          onChange((current) => {
+            const text = typeof current === 'number' ? String(current).slice(0, -1) : ''
+            return text && text !== '-' ? Number(text) : ''
+          })
+        }
+      >
+        <Delete size={20} aria-hidden="true" />
+      </UnstyledButton>
+    </div>
+  )
+}
+
 export function InitiativeDialog({
   name,
   initial,
@@ -241,12 +294,7 @@ export function InitiativeDialog({
   useReturnFocus()
   const [amount, setAmount] = useState<number | string>(initial ?? '')
   const value = typeof amount === 'number' ? amount : Number.NaN
-  const valid = Number.isInteger(value) && value >= -20 && value <= 99
-  const press = (digit: number) =>
-    setAmount((current) => {
-      const next = Number(`${typeof current === 'number' ? current : ''}${digit}`)
-      return next > 99 ? current : next
-    })
+  const valid = isInitiativeTotal(value)
   const signedBonus = bonus === null ? '' : bonus >= 0 ? `+${bonus}` : String(bonus)
   return (
     <Modal
@@ -282,31 +330,7 @@ export function InitiativeDialog({
             onChange={setAmount}
             className="hp-amount"
           />
-          <div className="keypad" role="group" aria-label={t('sheet.keypad')}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-              <UnstyledButton key={digit} className="keypad-key" onClick={() => press(digit)}>
-                {digit}
-              </UnstyledButton>
-            ))}
-            <UnstyledButton className="keypad-key is-muted" onClick={() => setAmount('')}>
-              {t('sheet.keypadClear')}
-            </UnstyledButton>
-            <UnstyledButton className="keypad-key" onClick={() => press(0)}>
-              0
-            </UnstyledButton>
-            <UnstyledButton
-              className="keypad-key is-muted"
-              aria-label={t('sheet.keypadBackspace')}
-              onClick={() =>
-                setAmount((current) => {
-                  const text = typeof current === 'number' ? String(current).slice(0, -1) : ''
-                  return text && text !== '-' ? Number(text) : ''
-                })
-              }
-            >
-              <Delete size={20} aria-hidden="true" />
-            </UnstyledButton>
-          </div>
+          <InitiativeKeypad onChange={setAmount} />
           {preview?.(valid ? value : null)}
           <div className="combat-dialog-actions">
             <Button variant="subtle" onClick={close}>

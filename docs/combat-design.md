@@ -1,7 +1,8 @@
 # Combat module: design analysis
 
 Tickets: RYT-007 (shared combat core), RYT-036 (encounter preparation and bestiary), RYT-037
-(combat tools), RYT-038 (table display). Decision record: [ADR 024](decisions/024-combat.md).
+(combat tools), RYT-038 (table display), RYT-041 (roster changes), RYT-042 (single Player view).
+Decision record: [ADR 024](decisions/024-combat.md).
 This document is the design analysis behind the delivery. It separates observations (what the table needs) from
 decisions (what Rytta builds) and lists deliberate non-goals.
 
@@ -47,8 +48,9 @@ decisions (what Rytta builds) and lists deliberate non-goals.
    hidden for reveal later, and mid-fight reinforcements.
 3. **Bestiary** (homebrew templates, DM only): name, side, HP, AC, initiative bonus, legendary
    actions, notes. Rytta bundles no monster stat blocks (licensing).
-4. **Initiative**: each Player types the d20 total (the keypad shows the own bonus from the
-   sheet); the DM sees who is missing, types any value, or lets the server roll d20 + bonus for
+4. **Initiative**: each Player types the d20 total in the own row of the table view (the
+   keypad shows the own bonus from the sheet), while initiative is collected or, once the fight
+   runs, only while the total is missing (RYT-042); the DM sees who is missing, types any value, or lets the server roll d20 + bonus for
    creatures (one roll per group). Ties: higher bonus first, then a DM order adjusted with
    up/down buttons (no drag-only interaction).
 5. **Turns**: next/previous, jump to a combatant, round counter. Hidden and defeated combatants
@@ -79,8 +81,9 @@ decisions (what Rytta builds) and lists deliberate non-goals.
     target changed afterwards). Players undo their own changes on their own character.
 13. **Summary**: rounds, damage dealt (attributed to whoever held the turn), taken, healing,
     downed and defeated, kept with the encounter.
-14. **Table display**: a large read-only projection that never carries DM secrets, even when the
-    DM opens it.
+14. **Table display**: a large projection that never carries DM secrets, even when the DM opens
+    it. It is the Players' only combat screen and the DM's default (RYT-042); its one write is
+    the Player's own initiative.
 
 ## 4. Visibility model
 
@@ -100,15 +103,30 @@ The table view uses the Player projection without "own" data.
 
 ```
 /combat                      DM: encounters (live, prepared, finished) | bestiary
-                             Player: the live encounter, or "no fight now" + past fights
-/combat/:id                  DM console | Player view
-/combat/:id/table            Table display (read-only; only the DM has a way back to the console)
+                             Player: the table view of the live encounter (its summary once it
+                             ends), or "no fight now" + past fights
+/combat/:id                  DM: [Table | DM console] switch, table by default (?view=)
+                             Player: the table view of that encounter
+/combat/:id/table            Redirects to /combat/:id (RYT-038 links)
 ```
+
+**RYT-042: one Player screen.** Players have no other combat panel: the table view is their
+screen. It adds, for them only, the own initiative entry and the own-turn banner; the end of
+the fight turns it into the summary. Hit points, conditions and death saves are kept on the
+character sheet (same `character_vitals`); ending the own turn and undoing own changes are no
+longer Player actions in combat (the DM runs the turn).
+
+**DM view switch.** Above both views, "All encounters" and a two-segment switch (Mesa / Consola
+del DM, radio group: arrows, Tab, tap). The DM lands on the table view; drafts have no table
+view, so a draft opens the console and shows no switch. Both views stay mounted once opened,
+so selection, open tab and chosen targets survive a switch; only the visible view polls its
+projection (the console's full projection keeps the status current).
 
 **DM console — tablet/laptop (≥ 62em)**
 
 ```
-┌ Back · Encounter name · [status] Round 3 · live/polling ─── [Table view] [⋯] ┐
+┌ Back · [Table | DM console]                                                    ┐
+│ Encounter name · [status] Round 3 · live/polling ─────────────────────── [⋯] │
 │ flow strip: Ask for initiative / Roll for creatures / Start / End combat       │
 ├────────────── initiative order ─────────────┬──── Details | Log | Add ────────┤
 │ 18 ▣ Arin   ACTING NOW  24/24 HP · unhurt   │ Goblin 1 · Enemy · AC 15        │
@@ -124,14 +142,27 @@ The table view uses the Player projection without "own" data.
 sheet with the details; Log and Add are tabs under the list; the turn bar floats above the
 bottom navigation, so "Next turn" is always under the thumb.
 
-**Player view**: a hero card ("Your turn!" with "End my turn", or Now / Up next / "You act in
-N turns"), the own character panel (HP and quick damage/heal, conditions behind a "Change"
-toggle, concentration, effects, death saves when at 0), the shared order (tap for read-only
-details) and the visible log. The initiative keypad opens automatically when the DM asks.
+**Table display**: encounter name, round, a large banner and the order with descriptive
+status, readable across the room. No full screen control (browsers and casting devices already
+provide one). The banner follows the phase:
 
-**Table display**: encounter name, round, a large "Now / Up next" banner and the order with
-descriptive status, readable across the room. No full screen control (browsers and casting
-devices already provide one); Players have no exit link (RYT-041, ahead of RYT-042).
+- Initiative: "Roll initiative" with "N of M ready" and one pip per combatant.
+- Active: Now / Up next; on a Player's own turn the label reads "Your turn!" (pulses twice
+  without reduced motion, vibrates where supported) and otherwise "You act in N turns".
+- Ended: the summary replaces banner and order (see below).
+
+**Own initiative entry (RYT-042)**: while initiative is collected, the Player's own row opens
+in place into the entry: a d20 face holding the total (a numeric field that also takes typing),
+"Roll d20 + bonus" from the sheet, a 3×4 keypad (digits, Clear, backspace) and "Save
+initiative". It scrolls into view once when it opens, without taking focus (no phone keyboard
+over the keypad). Escape clears an unsaved total. After saving, the row shows the total and a
+44px pencil button reopens the entry (focus moves to its heading; Escape or Cancel keeps the
+saved total and returns focus to the pencil). Once the fight is active, only a missing total
+(a late joiner) opens the entry. Other rows never have controls.
+
+**Summary (recap)**: the rounds as one large figure, the hardest hitter of the party side, then
+Party / Allies / Enemies ledgers: name, fate (icon + word: standing, went down, defeated, dead)
+and damage dealt, taken and healed as tabular numbers. Same component in the DM console.
 
 ## 6. Interaction and accessibility decisions
 

@@ -1,7 +1,7 @@
-import { Badge, Button, Group, Table, Text, Title } from '@mantine/core'
+import { Badge, Button, Group, Text, Title } from '@mantine/core'
 import { Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { CombatEvent, Encounter } from '../domain/combat'
+import type { CombatEvent } from '../domain/combat'
 import { eventText, type Run } from './helpers'
 
 export function CombatLog({
@@ -106,68 +106,6 @@ export function CombatLog({
           </ol>
         </div>
       )}
-    </section>
-  )
-}
-
-export function CombatSummary({ encounter }: { encounter: Encounter }) {
-  const { t } = useTranslation()
-  const summary = encounter.summary
-  if (!summary) return null
-  return (
-    <section className="combat-summary" aria-labelledby="combat-summary-title">
-      <Group justify="space-between" align="baseline">
-        <Title order={2} id="combat-summary-title" className="combat-section-title">
-          {t('combat.summary.title')}
-        </Title>
-        <Text c="dimmed">{t('combat.summary.rounds', { count: summary.rounds })}</Text>
-      </Group>
-      <div
-        className="combat-table-wrap"
-        role="region"
-        tabIndex={0}
-        aria-labelledby="combat-summary-title"
-      >
-        <Table striped verticalSpacing="sm" className="combat-summary-table">
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th scope="col">{t('combat.summary.name')}</Table.Th>
-              <Table.Th scope="col">{t('combat.summary.dealt')}</Table.Th>
-              <Table.Th scope="col">{t('combat.summary.taken')}</Table.Th>
-              <Table.Th scope="col">{t('combat.summary.healed')}</Table.Th>
-              <Table.Th scope="col">{t('combat.summary.outcome')}</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {summary.combatants
-              .filter((row) => row.kind !== 'lair')
-              .map((row) => (
-                <Table.Tr key={row.combatant_id}>
-                  <Table.Th scope="row">
-                    {row.name}
-                    <Text component="span" size="xs" c="dimmed">
-                      {' · '}
-                      {t(`combat.side.${row.side as 'party'}`)}
-                    </Text>
-                  </Table.Th>
-                  <Table.Td>{row.damage_dealt}</Table.Td>
-                  <Table.Td>{row.damage_taken}</Table.Td>
-                  <Table.Td>{row.healing}</Table.Td>
-                  <Table.Td>
-                    {row.defeated
-                      ? t(row.kind === 'character' ? 'combat.dead' : 'combat.defeated')
-                      : row.downed
-                        ? t('combat.summary.downed')
-                        : t('combat.summary.standing')}
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-          </Table.Tbody>
-        </Table>
-      </div>
-      <Text size="xs" c="dimmed">
-        {t('combat.summary.attribution')}
-      </Text>
     </section>
   )
 }

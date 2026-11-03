@@ -521,6 +521,11 @@ export function combatServer() {
       case 'set_initiative':
         if (!target) return fail('Combatant unavailable')
         if (!canAct(actor, target)) return fail('Forbidden')
+        // RYT-042 (20261106120000): Players only while initiative is collected, or later only a
+        // missing total.
+        if (!dm && (e.status === 'ended' || e.status === 'draft')) return fail('Encounter closed')
+        if (!dm && e.status === 'active' && target.initiative !== undefined)
+          return fail('Initiative closed')
         for (const c of e.combatants)
           if (c.id === target.id || (target.group_key && c.group_key === target.group_key)) {
             c.initiative = Number(body.initiative_total)
@@ -710,6 +715,29 @@ export function combatServer() {
 
   return {
     encounters,
+    /** Runs one RPC as `actor` (defaults to the DM), as the browser would. */
+    act(method: string, body: Record<string, unknown>, actor = dmId) {
+      return handle(actor, method, body)
+    },
+    /** RYT-042: Arin, Bea and two goblins while the DM collects initiative (no totals yet). */
+    seedInitiative() {
+      const e = mutate(dmId, true, 'create_encounter', { encounter_name: 'Bridge ambush' }) as {
+        encounter_id: string
+      }
+      mutate(dmId, true, 'add_combatants', {
+        target_encounter: e.encounter_id,
+        entries: [
+          { kind: 'character', character_id: characterId },
+          { kind: 'character', character_id: beaId },
+          { kind: 'npc', name: 'Goblin', count: 2, max_hp: 7, armor_class: 15 },
+        ],
+      })
+      mutate(dmId, true, 'set_encounter_status', {
+        target_encounter: e.encounter_id,
+        new_status: 'initiative',
+      })
+      return e.encounter_id
+    },
     /** An active encounter with Arin acting first and two visible goblins. */
     seedActive() {
       const e = mutate(dmId, true, 'create_encounter', { encounter_name: 'Bridge ambush' }) as {

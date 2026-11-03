@@ -17,7 +17,6 @@ import {
 } from '@mantine/core'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Dice5,
@@ -25,7 +24,6 @@ import {
   Flag,
   Heart,
   ListChecks,
-  Monitor,
   Pencil,
   Play,
   Swords,
@@ -33,7 +31,7 @@ import {
   Undo2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import {
   missingInitiative,
   nextUp,
@@ -43,7 +41,8 @@ import {
 } from '../domain/combat'
 import { AddCombatants } from './add-combatants'
 import { AmountDialog, InitiativeDialog } from './amount-dialog'
-import { CombatLog, CombatSummary } from './combat-log'
+import { CombatLog } from './combat-log'
+import { CombatSummary } from './combat-summary'
 import { CombatantDetail } from './combatant-detail'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
@@ -357,17 +356,6 @@ export function DmConsole({
     <Stack gap="md" className={`combat-console${status === 'active' ? ' has-turn-bar' : ''}`}>
       <VisuallyHidden aria-live="polite">{announcement}</VisuallyHidden>
       <header className="combat-header">
-        <Button
-          component={Link}
-          to=".."
-          relative="path"
-          variant="subtle"
-          size="sm"
-          leftSection={<ArrowLeft size={16} aria-hidden="true" />}
-          className="combat-back"
-        >
-          {t('combat.back')}
-        </Button>
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <div>
             <Title order={1} className="combat-title">
@@ -388,18 +376,6 @@ export function DmConsole({
             </Group>
           </div>
           <Group gap="xs" wrap="nowrap">
-            {status !== 'draft' && (
-              <Button
-                component={Link}
-                to="table"
-                variant="default"
-                leftSection={<Monitor size={16} aria-hidden="true" />}
-                title={t('combat.tableViewHint')}
-                visibleFrom="sm"
-              >
-                {t('combat.tableView')}
-              </Button>
-            )}
             <Menu position="bottom-end">
               <Menu.Target>
                 <ActionIcon variant="default" size={44} aria-label={t('combat.menu')}>
@@ -407,16 +383,6 @@ export function DmConsole({
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {status !== 'draft' && (
-                  <Menu.Item
-                    component={Link}
-                    to="table"
-                    hiddenFrom="sm"
-                    leftSection={<Monitor size={16} aria-hidden="true" />}
-                  >
-                    {t('combat.tableView')}
-                  </Menu.Item>
-                )}
                 <Menu.Item
                   leftSection={<Pencil size={16} aria-hidden="true" />}
                   onClick={() => {

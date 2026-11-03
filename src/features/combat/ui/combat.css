@@ -3,7 +3,7 @@
 
 .combat-page,
 .combat-console,
-.combat-player {
+.combat-table-view {
   min-width: 0;
 }
 .combat-section-title {
@@ -125,9 +125,6 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
-}
-.combat-columns.is-player {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 .combat-side {
   position: sticky;
@@ -574,39 +571,9 @@ button.combat-row-main:focus-visible {
   overflow-wrap: anywhere;
 }
 
-/* Player hero and prompt */
-.combat-prompt {
-  border-color: var(--app-accent);
-  background: var(--app-raised);
-}
-.combat-hero {
-  border-radius: 16px;
-}
-.combat-hero.is-yours {
-  border: 2px solid var(--app-accent);
-  background: var(--app-raised);
-}
-.combat-hero-title {
-  font-family: var(--mantine-font-family-headings);
-  font-size: var(--fs-h2);
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-.combat-hero.is-yours .combat-hero-title {
-  color: var(--app-accent);
-  font-size: var(--fs-display);
-  line-height: 1.1;
-}
-.combat-hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px 16px;
-}
-.combat-hero-until {
-  grid-column: 1 / -1;
-}
+/* The Player's own turn: the banner pulses twice when it arrives (never with reduced motion). */
 @media (prefers-reduced-motion: no-preference) {
-  .combat-player.is-your-turn .combat-hero.is-yours {
+  .combat-table-view.is-your-turn .combat-table-now.is-yours {
     animation: combat-pulse 1.6s ease-out 2;
   }
 }
@@ -625,8 +592,7 @@ button.combat-row-main:focus-visible {
   overflow-y: auto;
   border-radius: 10px;
 }
-.combat-log-scroll:focus-visible,
-.combat-table-wrap:focus-visible {
+.combat-log-scroll:focus-visible {
   outline: 3px solid var(--app-focus);
   outline-offset: 2px;
 }
@@ -663,17 +629,6 @@ button.combat-row-main:focus-visible {
 .combat-undo {
   min-height: 44px;
   flex: none;
-}
-.combat-table-wrap {
-  overflow-x: auto;
-}
-.combat-summary-table th[scope='row'] {
-  font-weight: 700;
-}
-.combat-summary-table th,
-.combat-summary-table td {
-  padding-inline: 6px;
-  font-size: var(--fs-meta);
 }
 
 /* Table projection (RYT-038): large, high contrast, readable across the room. */
@@ -723,9 +678,6 @@ button.combat-row-main:focus-visible {
 }
 @media (max-width: 40em) {
   .combat-table-now {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .combat-hero-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -872,4 +824,354 @@ button.combat-row-main:focus-visible {
 }
 .combat-dialog-actions > * {
   flex: 1 1 auto;
+}
+
+/* RYT-042: the DM's view switch. A deliberate two-way control, not a link: both views stay
+   mounted, so switching keeps the console's selection and tabs. */
+.combat-viewbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.combat-viewbar .combat-back {
+  margin: 0 0 0 -10px;
+}
+.combat-view-switch {
+  padding: 4px;
+  border: 1px solid var(--app-border);
+  background: var(--app-bg);
+}
+.combat-view-switch .mantine-SegmentedControl-label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 16px;
+  font-weight: 700;
+  font-size: var(--fs-body);
+}
+/* The current view is a filled accent segment (shape and fill), the other one stays quiet. */
+.combat-view-switch .mantine-SegmentedControl-indicator {
+  background: var(--app-accent);
+}
+.combat-view-switch .mantine-SegmentedControl-label[data-active] {
+  color: var(--app-on-accent);
+}
+.combat-view-switch
+  .mantine-SegmentedControl-input:focus-visible
+  + .mantine-SegmentedControl-label {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.combat-view-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+@media (max-width: 30em) {
+  .combat-view-switch {
+    flex: 1 1 100%;
+  }
+}
+
+/* Table banners: initiative being collected, and the Player's own turn. */
+.combat-table-now.is-rolling {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-style: dashed;
+}
+.combat-table-now.is-rolling .combat-pips {
+  flex-wrap: wrap;
+}
+.combat-table-now.is-rolling .combat-pips span {
+  width: 20px;
+  height: 20px;
+  border-color: var(--app-accent);
+}
+.combat-table-now.is-rolling .combat-pips span.is-filled {
+  background: var(--app-accent);
+}
+.combat-table-now.is-yours {
+  border-width: 3px;
+}
+.combat-table-now.is-yours .combat-table-label {
+  color: var(--app-accent);
+}
+.combat-table-until {
+  margin-top: 6px;
+  font-weight: 700;
+}
+
+/* The Player's own row opens into the initiative entry: a d20 face holding the total, the
+   keypad beside it (stacked on phones) and one primary action. */
+.combat-row.has-extra {
+  flex-wrap: wrap;
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 1px var(--app-accent);
+}
+.combat-row-extra {
+  flex: 1 1 100%;
+  min-width: 0;
+  border-top: 1px dashed var(--app-border);
+}
+.combat-entry {
+  padding: 12px 16px 16px;
+  /* Scrolled into view above the phone's bottom bar. */
+  scroll-margin-top: 16px;
+  scroll-margin-bottom: calc(var(--bottom-nav-h, 0px) + 16px + env(safe-area-inset-bottom));
+}
+.combat-entry-form {
+  display: grid;
+  gap: 16px;
+  align-items: center;
+}
+@media (min-width: 34em) {
+  .combat-entry-form {
+    grid-template-columns: minmax(0, 13rem) minmax(0, 20rem);
+    justify-content: start;
+    gap: 24px;
+  }
+}
+.combat-entry-face {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.combat-entry-title {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  font-weight: 800;
+  margin: 0;
+}
+.combat-entry-title:focus {
+  outline: none;
+}
+.combat-entry-title:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.combat-entry-formula {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.combat-d20 {
+  position: relative;
+  width: 9.5rem;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.combat-d20-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.combat-d20-outline {
+  fill: var(--app-raised);
+  stroke: var(--app-accent);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.combat-d20-face {
+  fill: var(--app-surface);
+  stroke: var(--app-accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.combat-d20-edges {
+  fill: none;
+  stroke: var(--app-accent);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+.combat-d20-input {
+  position: relative;
+  /* Sits on the triangular face, whose centre is a little below the middle. */
+  margin-top: 1.4rem;
+  width: 5.2rem;
+}
+.combat-d20-input input {
+  height: 3.6rem;
+  min-height: 44px;
+  padding: 0;
+  text-align: center;
+  font-family: var(--mantine-font-family-headings);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--app-text);
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  border-radius: 10px;
+}
+.combat-d20-input input::placeholder {
+  color: var(--app-muted);
+  opacity: 1;
+}
+.combat-d20-input input:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 0;
+}
+.combat-entry-keys {
+  display: grid;
+  gap: 12px;
+}
+.combat-entry-actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  gap: 8px;
+}
+.combat-entry-actions > * {
+  flex: 1 1 auto;
+}
+
+/* End-of-combat recap: the rounds as one large figure, the hardest hitter, then each side as a
+   ledger. Fate is an icon plus a word; numbers are tabular so columns line up across rows. */
+.combat-recap {
+  display: grid;
+  gap: 16px;
+}
+.combat-recap-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--app-accent);
+}
+.combat-recap-title {
+  font-size: var(--fs-h2);
+  margin: 0;
+}
+.combat-recap-rounds {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--app-muted);
+  font-weight: 700;
+}
+.combat-recap-count {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-display);
+  line-height: 1;
+  color: var(--app-text);
+  font-variant-numeric: tabular-nums;
+}
+.combat-recap-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  color: var(--app-accent);
+  overflow-wrap: anywhere;
+}
+.combat-recap-side {
+  display: grid;
+  gap: 8px;
+}
+.combat-recap-side-title {
+  font-size: var(--fs-h3);
+  margin: 0;
+}
+.combat-recap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.combat-recap-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface);
+}
+@media (min-width: 40em) {
+  .combat-recap-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+.combat-recap-row.is-defeated,
+.combat-recap-row.is-dead {
+  background: transparent;
+}
+.combat-recap-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-width: 0;
+}
+.combat-recap-name {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.combat-recap-row.is-defeated .combat-recap-name,
+.combat-recap-row.is-dead .combat-recap-name {
+  text-decoration: line-through;
+}
+.combat-recap-fate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: var(--app-muted);
+}
+.combat-recap-row.is-standing .combat-recap-fate {
+  color: var(--success);
+}
+.combat-recap-row.is-downed .combat-recap-fate,
+.combat-recap-row.is-dead .combat-recap-fate {
+  color: var(--danger);
+}
+.combat-recap-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(4.5rem, auto));
+  gap: 4px 12px;
+  margin: 0;
+}
+.combat-recap-stats > div {
+  display: grid;
+  justify-items: start;
+}
+@media (min-width: 40em) {
+  .combat-recap-stats > div {
+    justify-items: end;
+  }
+}
+.combat-recap-stats dt {
+  font-size: var(--fs-tag);
+  color: var(--app-muted);
+}
+.combat-recap-stats dd {
+  margin: 0;
+  font-weight: 800;
+  font-size: var(--fs-h3);
+  font-variant-numeric: tabular-nums;
+}
+.combat-recap-stats .is-zero dd {
+  color: var(--app-muted);
+  font-weight: 600;
+}
+.combat-recap.is-large .combat-recap-title {
+  font-size: var(--fs-h1);
+}
+.combat-recap.is-large .combat-recap-name {
+  font-size: var(--fs-h3);
 }

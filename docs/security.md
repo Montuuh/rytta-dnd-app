@@ -35,7 +35,12 @@ private log entries. Roster changes during a fight (`add_combatants` with an ini
 `remove_combatant`, RYT-041) stay DM-only, campaign-locked and idempotent; SQL tests deny anon,
 outsiders, Players and DMs of another campaign. Members read only the secret-free `encounters` row directly (the realtime
 signal); combatants, effects, events and templates are DM-only tables. The table display uses
-the Player projection without own data, even for the DM.
+the Player projection without own data, even for the DM. Players see only the table view
+(RYT-042), fed by their own Player projection (the only extra is their own character). Their
+one combat write there is `set_initiative` for a character whose `user_id` is theirs, while
+initiative is collected, or later only while its total is missing (`Initiative closed`
+otherwise); SQL tests deny anon, outsiders, other Players' and creatures' totals, hidden
+combatants and DMs of another campaign.
 
 ## Constraints and planned operations
 

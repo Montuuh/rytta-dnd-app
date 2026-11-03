@@ -1458,12 +1458,12 @@
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
       ],
-      "scope": "Campaign DMs can edit and delete homebrew rules and house rules from the glossary using the existing revision-checked save/delete RPCs.",
+      "scope": "Campaign members allowed by ADR 025 can edit and delete homebrew rules and house rules from the glossary using the existing revision-checked save/delete RPCs.",
       "acceptance": [
         "A DM can open a homebrew entry, edit it in place and see the saved revision without reloading.",
         "A DM can delete a homebrew entry after an explicit confirmation; the entry disappears from index and search.",
         "Stale revisions show a recoverable conflict message.",
-        "Players never see edit or delete controls; RPC denial tests cover anon, outsider, player and cross-campaign DM."
+        "Edit and delete controls follow the ADR 025 permission model enforced by the existing RPCs (DM, and Players only when the DM enables homebrew editing); unauthorized users never see them."
       ],
       "validation": [
         "npm run check",

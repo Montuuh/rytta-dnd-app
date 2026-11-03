@@ -52,9 +52,11 @@ export async function identityFixture(
     inventory?: boolean
     modules?: string[]
     party?: boolean
+    /** RYT-034: sign in as another Player of the party fixture (for example peerId). */
+    as?: string
   } = {},
 ) {
-  const currentId = options.player ? playerId : dmId
+  const currentId = options.as ?? (options.player ? playerId : dmId)
   if (options.signedIn !== false)
     await page.addInitScript(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {
       key: storageKey,
@@ -285,6 +287,16 @@ export async function identityFixture(
               : campaigns,
           )
     if (method === 'list_my_invitations') return respond(pending)
+    // RYT-034 default: no trade activity. tests/e2e/fixtures/trades.ts overrides this route.
+    if (method === 'get_trade_state')
+      return respond({
+        character: null,
+        partners: [],
+        items: [],
+        trade: null,
+        recent: null,
+        history: [],
+      })
     if (method === 'create_campaign') {
       const id = '20000000-0000-4000-8000-000000000004'
       campaigns = [

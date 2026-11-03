@@ -3,6 +3,7 @@ import type { Database as GeneratedDatabase, Json } from './database.generated'
 import type { CharacterFunctions } from './character-functions'
 import type { ShopFunctions } from './shop-functions'
 import type { ItemFunctions } from './item-functions'
+import type { TradeFunctions } from './trade-functions'
 
 type Functions = GeneratedDatabase['public']['Functions']
 type Tables = GeneratedDatabase['public']['Tables']
@@ -142,7 +143,8 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
     Functions: Omit<Functions, 'change_campaign_member' | 'list_my_invitations'> &
       CharacterFunctions &
       ShopFunctions &
-      ItemFunctions & {
+      ItemFunctions &
+      TradeFunctions & {
         list_my_invitations: Omit<Functions['list_my_invitations'], 'Returns'> & {
           Returns: (Functions['list_my_invitations']['Returns'][number] & {
             character_id: string

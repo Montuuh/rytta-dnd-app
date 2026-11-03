@@ -100,6 +100,11 @@ order ledger. Reads are security definer RPCs that return only what the caller m
 checkout, sale, approval, counter-offer and revert are campaign-locked, idempotent
 transactions that move gold, stock and RYT-004 `source = shop` stacks together (ADR 016).
 
+RYT-034 adds player trades: an invitation, two-sided offers of item stacks and gold, a
+revision that clears both confirmations on any change and an atomic swap that writes inventory
+ledger rows and audit events for both characters. Realtime `postgres_changes` on `trades`
+invalidates the trade query, with polling as the fallback (ADR 022).
+
 Future domains: quests,
 encounters/participants, glossary, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.

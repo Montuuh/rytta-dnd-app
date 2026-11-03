@@ -515,11 +515,12 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await expect(page.locator('main')).toBeFocused()
 })
 
-/** RYT-031: evidence screenshots for the 390px phone and 820px tablet projects only. */
+/** RYT-031: evidence screenshots (390px phone, 820px tablet) only when RYT_EVIDENCE is set. */
 async function evidence(page: Page, project: string, name: string, fullPage = true) {
   const size =
     project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
-  if (size) await page.screenshot({ path: `docs/evidence/RYT-031/${name}-${size}.png`, fullPage })
+  if (size && process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-031/${name}-${size}.png`, fullPage })
 }
 async function axeAndTargets(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

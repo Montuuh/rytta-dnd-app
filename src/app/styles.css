@@ -669,6 +669,26 @@ main h3 {
 .sheet-back {
   min-height: 44px;
   padding-inline: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.sheet-tool.sheet-tool {
+  min-height: 44px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-raised);
+  color: var(--app-text);
+}
+.sheet-tool.sheet-tool:hover {
+  background: color-mix(in srgb, var(--app-raised) 82%, var(--app-text));
+}
+.sheet-tool.sheet-tool.is-primary {
+  border-color: transparent;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.sheet-tool.sheet-tool.is-primary:hover {
+  background: color-mix(in srgb, var(--app-accent) 86%, var(--app-text));
 }
 .sheet-identity h1 {
   font-size: var(--fs-h1);
@@ -2829,8 +2849,8 @@ html[data-mantine-color-scheme='light'] .order-counter {
   gap: 8px;
   min-height: 44px;
   max-width: 100%;
-  margin-left: -8px;
-  padding: 2px 8px;
+  min-width: 0;
+  padding: 2px 0;
   border-radius: 10px;
   color: inherit;
   font: inherit;
@@ -2842,7 +2862,8 @@ html[data-mantine-color-scheme='light'] .order-counter {
 }
 .shop-picker-name {
   /* Keep the name at its full single-line width; only a name wider than the row wraps. */
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: calc(100% - 28px);
 }
 .shop-picker-chevron {
@@ -2928,6 +2949,12 @@ html[data-mantine-color-scheme='light'] .order-counter {
 }
 .order-line-note {
   flex-basis: 100%;
+}
+.order-line-price {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 .admin-shops {
   display: grid;
@@ -3640,6 +3667,14 @@ html[data-mantine-color-scheme='light'] .order-counter {
 .character-owner-info {
   margin: 2px 0;
 }
+.character-owner-info .mantine-Badge-root {
+  flex-shrink: 0;
+  overflow: visible;
+}
+.character-owner-share {
+  margin-left: auto;
+  display: inline-flex;
+}
 .resource-cell .resource-value {
   grid-column: 2;
   grid-row: 2;
@@ -4171,6 +4206,13 @@ html[data-mantine-color-scheme='light'] .order-counter {
   --button-hover: color-mix(in srgb, var(--danger) 86%, var(--app-text));
   --button-color: var(--app-on-accent);
 }
+.danger-solid:disabled,
+.danger-solid[data-disabled] {
+  --button-bg: color-mix(in srgb, var(--danger) 16%, var(--app-raised));
+  --button-color: color-mix(in srgb, var(--danger) 60%, var(--app-muted));
+  --button-bd: 1px dashed color-mix(in srgb, var(--danger) 45%, var(--app-border));
+  cursor: not-allowed;
+}
 .add-choice {
   display: grid;
   gap: 10px;
@@ -4295,6 +4337,7 @@ html[data-mantine-color-scheme='light'] .order-counter {
 }
 .sync-row-price s {
   color: var(--app-muted);
+  text-decoration-thickness: 1.5px;
 }
 .sync-row-price strong {
   color: var(--gold-accent);

@@ -29,7 +29,7 @@ export const lifecycleEs = {
   'lifecycle.syncBody':
     'El valor de {{name}} ahora es {{value}} po. Estas tiendas lo venden a otro precio.',
   'lifecycle.syncShops': 'Tiendas que actualizar',
-  'lifecycle.syncCurrent': 'Ahora {{price}} po',
+  'lifecycle.syncCurrent': 'Ahora',
   'lifecycle.syncApply_one': 'Actualizar {{count}} precio',
   'lifecycle.syncApply_other': 'Actualizar {{count}} precios',
   'lifecycle.syncSkip': 'Mantener precios',

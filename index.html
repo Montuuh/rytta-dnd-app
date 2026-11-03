@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-mantine-color-scheme="dark">
+<html lang="es" data-mantine-color-scheme="dark" data-rytta-theme="default">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -14,6 +14,13 @@
         document.documentElement.dataset.mantineColorScheme = scheme
         document.documentElement.lang =
           localStorage.getItem('rytta-language') === 'en' ? 'en' : 'es'
+        // Class theme (RYT-033); keep this list in sync with src/shared/theme/class-themes.ts.
+        const theme = localStorage.getItem('rytta-theme')
+        const themes =
+          'barbarian bard cleric druid fighter monk paladin ranger rogue sorcerer warlock wizard'
+        document.documentElement.dataset.ryttaTheme = themes.split(' ').includes(theme)
+          ? theme
+          : 'default'
         document.querySelector('meta[name="theme-color"]').content =
           scheme === 'dark' ? '#140f0b' : '#f7efe2'
       } catch {

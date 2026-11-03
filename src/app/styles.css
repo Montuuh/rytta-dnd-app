@@ -6,6 +6,7 @@ html {
   --app-bg: #140f0b;
   --app-surface: #1e1610;
   --app-raised: #2a1f16;
+  --app-hover: #3a2a1e;
   --app-text: #f5ebd6;
   --app-muted: #cbb699;
   --app-accent: #eda145;
@@ -51,10 +52,11 @@ html[data-mantine-color-scheme='light'] {
   --app-bg: #f7efe2;
   --app-surface: #fffdf9;
   --app-raised: #efe3cf;
+  --app-hover: #e8d9c1;
   --app-text: #2a1c11;
   --app-muted: #664f3a;
   --app-accent: #6e3410;
-  --app-accent-secondary: #9e5114;
+  --app-accent-secondary: #974d13;
   --app-border: #d8c4a8;
   --app-hero: #ecdec6;
   --app-focus: #844112;
@@ -229,28 +231,6 @@ h2[tabindex='-1']:focus {
   flex: 1 1 12rem;
   min-width: 0;
 }
-.menu-toggle-pill {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  border: 1px solid var(--app-border);
-  font-size: var(--fs-tag);
-  font-weight: 700;
-  color: var(--app-muted);
-}
-.menu-toggle-pill span {
-  display: grid;
-  place-items: center;
-  min-width: 26px;
-  height: 22px;
-  padding: 0 4px;
-  border-radius: 999px;
-}
-.menu-toggle-pill span[data-on] {
-  background: var(--app-accent);
-  color: var(--app-on-accent);
-}
 .profile-trigger-btn {
   min-width: 44px;
   min-height: 44px;
@@ -350,9 +330,6 @@ h2[tabindex='-1']:focus {
   background: var(--app-raised);
   border: 1px solid var(--app-border);
   color: var(--app-muted);
-}
-.language-select {
-  max-width: 260px;
 }
 .loading-screen {
   padding: 24px;
@@ -612,13 +589,6 @@ main h3 {
 .account-dropdown .mantine-Menu-label {
   white-space: normal;
   overflow-wrap: anywhere;
-}
-.theme-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
 }
 .invitations-heading {
   min-width: 0;

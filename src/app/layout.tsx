@@ -4,33 +4,18 @@ import {
   Button,
   Drawer,
   Menu,
-  Modal,
   Popover,
   Stack,
   Switch,
   Text,
   UnstyledButton,
-  useComputedColorScheme,
-  useMantineColorScheme,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import {
-  Compass,
-  Eye,
-  Languages,
-  LogOut,
-  Menu as MenuIcon,
-  Moon,
-  Settings,
-  Shield,
-  Sun,
-  UserRound,
-} from 'lucide-react'
+import { Compass, Eye, LogOut, Menu as MenuIcon, Settings, Shield, UserRound } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { modules } from './modules'
 import { config } from '@/shared/lib/config'
-import { PreferencesControls } from '@/shared/ui/preferences-controls'
 import { useQuery } from '@tanstack/react-query'
 import {
   CampaignViewContext,
@@ -189,17 +174,10 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
 }
 
 export function Layout() {
-  const { t, i18n } = useTranslation()
-  const scheme = useComputedColorScheme('dark')
-  const { setColorScheme } = useMantineColorScheme()
+  const { t } = useTranslation()
   const { state, controller } = useAuth()
   const live = config.VITE_DATA_MODE === 'supabase'
   const [online, setOnline] = useState(navigator.onLine)
-  useEffect(() => {
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', scheme === 'dark' ? '#140f0b' : '#f7efe2')
-  }, [scheme])
   useEffect(() => {
     const update = () => setOnline(navigator.onLine)
     window.addEventListener('online', update)
@@ -209,12 +187,10 @@ export function Layout() {
       window.removeEventListener('offline', update)
     }
   }, [])
-  const [settingsOpened, setSettingsOpened] = useState(false)
   const [previewScope, setPreviewScope] = useState<string | null>(null)
   const [previewUserId, setPreviewUserId] = useState<string | null>(null)
   const [previewLabel, setPreviewLabel] = useState<string | null>(null)
   const [pickerOpened, setPickerOpened] = useState(false)
-  const pendingSettings = useRef(false)
   const [opened, { open, close }] = useDisclosure(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   const previewSwitch = useRef<HTMLInputElement>(null)
@@ -262,7 +238,6 @@ export function Layout() {
                   (pathname === '/settings' ? 'nav.settings' : 'page.notFound'))
     document.title = `${t(key)} · Rytta`
   }, [pathname, t, live, state.status])
-  const currentLang = i18n.resolvedLanguage === 'en' ? 'en' : 'es'
   const enterPreview = (userId: string | null, label: string | null) => {
     setPreviewUserId(userId)
     setPreviewLabel(label)
@@ -392,10 +367,7 @@ export function Layout() {
                   withInitialFocusPlaceholder={false}
                   returnFocus={false}
                   onExitTransitionEnd={() => {
-                    if (pendingSettings.current) {
-                      pendingSettings.current = false
-                      setSettingsOpened(true)
-                    } else if (restoreMenuFocus.current) menuButton.current?.focus()
+                    if (restoreMenuFocus.current) menuButton.current?.focus()
                   }}
                 >
                   <Menu.Target>
@@ -427,54 +399,13 @@ export function Layout() {
                         <Menu.Divider />
                       </>
                     )}
+                    {/* Appearance, language and class theme live only in Settings (RYT-033). */}
                     <Menu.Item
-                      closeMenuOnClick={false}
-                      leftSection={
-                        scheme === 'dark' ? (
-                          <Moon size={18} aria-hidden="true" />
-                        ) : (
-                          <Sun size={18} aria-hidden="true" />
-                        )
-                      }
-                      rightSection={
-                        <span className="menu-toggle-pill" aria-hidden="true">
-                          <span data-on={scheme === 'dark' || undefined}>
-                            <Moon size={14} />
-                          </span>
-                          <span data-on={scheme === 'light' || undefined}>
-                            <Sun size={14} />
-                          </span>
-                        </span>
-                      }
-                      aria-label={t(
-                        scheme === 'dark' ? 'preferences.toLight' : 'preferences.toDark',
-                      )}
-                      onClick={() => setColorScheme(scheme === 'dark' ? 'light' : 'dark')}
-                    >
-                      {t('preferences.themeShort')}
-                    </Menu.Item>
-                    <Menu.Item
-                      closeMenuOnClick={false}
-                      leftSection={<Languages size={18} aria-hidden="true" />}
-                      rightSection={
-                        <span className="menu-toggle-pill" aria-hidden="true">
-                          <span data-on={currentLang === 'es' || undefined}>ES</span>
-                          <span data-on={currentLang === 'en' || undefined}>EN</span>
-                        </span>
-                      }
-                      aria-label={t(
-                        currentLang === 'es' ? 'preferences.switchToEn' : 'preferences.switchToEs',
-                      )}
-                      onClick={() => void i18n.changeLanguage(currentLang === 'es' ? 'en' : 'es')}
-                    >
-                      {t('preferences.languageShort')}
-                    </Menu.Item>
-                    <Menu.Item
+                      component={NavLink}
+                      to="/settings"
                       leftSection={<Settings size={18} aria-hidden="true" />}
-                      onClick={() => {
-                        pendingSettings.current = true
-                        restoreMenuFocus.current = false
-                      }}
+                      // Navigation moves focus to the page content instead of the trigger.
+                      onClick={() => (restoreMenuFocus.current = pathname === '/settings')}
                     >
                       {t('nav.settings')}
                     </Menu.Item>
@@ -523,21 +454,6 @@ export function Layout() {
           <footer className="page-footer">{t('brand.footer')}</footer>
         </div>
         {showNav && <BottomNavigation entries={entries} />}
-        <Modal
-          opened={settingsOpened}
-          onClose={() => setSettingsOpened(false)}
-          centered
-          size="xl"
-          title={t('nav.settings')}
-          returnFocus={false}
-          onExitTransitionEnd={() => menuButton.current?.focus()}
-          closeButtonProps={{ 'aria-label': t('preferences.close'), size: 44 }}
-        >
-          <Stack p={{ base: 'xs', sm: 'xl' }}>
-            <Text fw={600}>{t('preferences.title')}</Text>
-            <PreferencesControls />
-          </Stack>
-        </Modal>
       </div>
     </CampaignViewContext.Provider>
   )

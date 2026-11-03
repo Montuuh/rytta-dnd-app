@@ -1,6 +1,7 @@
 # ADR 008: campaign home and compact global settings
 
-Date: 2026-10-28. Status: accepted for RYT-019.
+Date: 2026-10-28. Status: accepted for RYT-019. The preferences dialog was replaced by the
+Settings page in [ADR 020](021-settings-class-themes.md).
 
 The user's browser review requested a simpler campaign home, clearer join-campaign area,
 a hamburger menu sized to its one action, and conventional appearance icons.

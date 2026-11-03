@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 
 const html = (page: Page) => page.locator('html')
 
@@ -95,11 +96,7 @@ test('theme gallery is a keyboard radio group with visible focus', async ({ page
     .locator('.theme-card', { has: page.getByRole('radio', { name: 'Bárbaro' }) })
     .evaluate((card) => getComputedStyle(card).outlineStyle)
   expect(outline).toBe('solid')
-  for (const card of await gallery.locator('label').all()) {
-    const box = await card.boundingBox()
-    expect(box!.height).toBeGreaterThanOrEqual(44)
-    expect(box!.width).toBeGreaterThanOrEqual(44)
-  }
+  await expectTouchTargets(gallery, 'label', { height: 44, width: 44 })
   await page.keyboard.press('Tab')
   await expect(page.getByRole('radio', { name: 'Español' })).toBeFocused()
 })
@@ -110,6 +107,7 @@ for (const language of ['es', 'en'] as const) {
       test(`${language} ${scheme} ${theme} overview and settings are accessible and fit`, async ({
         page,
       }, testInfo) => {
+        limitMatrix(testInfo, language === 'es' && scheme === 'dark' && theme === 'default')
         await page.addInitScript(
           ({ language, scheme, theme }) => {
             localStorage.setItem('rytta-language', language)
@@ -134,23 +132,24 @@ for (const language of ['es', 'en'] as const) {
               nodes: v.nodes.map((n) => ({ target: n.target, failure: n.failureSummary })),
             })),
           ).toEqual([])
-          await page.screenshot({
-            path: testInfo.outputPath(
+          await capture(
+            page,
+            testInfo.outputPath(
               `${language}-${scheme}-${theme}-${route ? 'settings' : 'party'}.png`,
             ),
-            fullPage: true,
-            scale: 'css',
-          })
+            { scale: 'css' },
+          )
         }
         await page.addStyleTag({ content: 'html { font-size: 150%; }' })
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         )
-        for (const label of await page.locator('.choice-label').all())
-          expect(
-            await label.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
-            'Choice labels stay readable at 150% text',
-          ).toBe(true)
+        expect(
+          await page
+            .locator('.choice-label')
+            .evaluateAll((labels) => labels.every((el) => el.scrollWidth <= el.clientWidth + 1)),
+          'Choice labels stay readable at 150% text',
+        ).toBe(true)
       })
   }
 }
@@ -172,7 +171,8 @@ test('every class theme passes axe on the settings page in both schemes', async 
     for (const id of ids) {
       await page.locator('label.theme-card', { has: page.locator(`input[value="${id}"]`) }).click()
       await expect(html(page)).toHaveAttribute('data-rytta-theme', id)
-      const audit = await new AxeBuilder({ page }).withTags(['wcag2aa']).analyze()
+      // Themes only swap color tokens; the full rule set runs in the per-screen audits.
+      const audit = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze()
       expect(audit.violations.map((v) => `${scheme} ${id}: ${v.id}`)).toEqual([])
     }
   }

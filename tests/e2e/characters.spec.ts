@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId, playerId } from './fixtures/identity.ts'
+import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 import type { Page } from '@playwright/test'
 
 /** RYT-025 moved secondary character actions into a per-card "More actions" menu. */
@@ -16,6 +17,7 @@ for (const language of ['es', 'en'] as const)
     test(`${language} ${scheme} consolidated character management at 150%`, async ({
       page,
     }, info) => {
+      limitMatrix(info, language === 'es' && scheme === 'dark')
       await page.addInitScript(
         ({ language, scheme }) => {
           localStorage.setItem('rytta-language', language)
@@ -66,18 +68,11 @@ for (const language of ['es', 'en'] as const)
           (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
             .violations,
         ).toEqual([])
-        for (const control of await page
-          .locator(
-            'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term), [role="dialog"] select:visible',
-          )
-          .all()) {
-          const box = await control.boundingBox()
-          expect(box!.height).toBeGreaterThanOrEqual(44)
-        }
-        await page.screenshot({
-          path: info.outputPath(`${screen}-${language}-${scheme}-150.png`),
-          fullPage: true,
-        })
+        await expectTouchTargets(
+          page,
+          'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term), [role="dialog"] select:visible',
+        )
+        await capture(page, info.outputPath(`${screen}-${language}-${scheme}-150.png`))
       }
     })
 
@@ -93,7 +88,7 @@ test('assignment explains unavailable Players and recovers from failed member re
   await expect(
     page.getByRole('dialog').getByRole('button', { name: 'Vincular jugador', exact: true }),
   ).toBeDisabled()
-  await page.screenshot({ path: info.outputPath('no-players.png'), fullPage: true })
+  await capture(page, info.outputPath('no-players.png'))
   await page.keyboard.press('Escape')
   let fail = true
   await page.route('**/rest/v1/rpc/list_campaign_members', async (route) => {
@@ -108,7 +103,7 @@ test('assignment explains unavailable Players and recovers from failed member re
   await page.reload()
   await characterAction(page, 'Arin', 'Vincular jugador')
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('No se pudo cargar')
-  await page.screenshot({ path: info.outputPath('assignment-error.png'), fullPage: true })
+  await capture(page, info.outputPath('assignment-error.png'))
   fail = false
   await page.getByRole('button', { name: 'Reintentar', exact: true }).click()
   await expect(
@@ -144,7 +139,7 @@ test('a Player already linked to another character is not offered again', async 
   await expect(
     page.getByRole('dialog').getByRole('button', { name: 'Vincular jugador', exact: true }),
   ).toBeDisabled()
-  await page.screenshot({ path: info.outputPath('all-players-linked.png'), fullPage: true })
+  await capture(page, info.outputPath('all-players-linked.png'))
 })
 
 test('DM creates before assignment, edits whole homebrew units and recovers from a stale editor', async ({
@@ -222,6 +217,7 @@ for (const language of ['es', 'en'] as const)
     test(`${language} ${scheme} party, editor and account menu at 150% text`, async ({
       page,
     }, info) => {
+      limitMatrix(info, language === 'es' && scheme === 'dark')
       await page.addInitScript(
         ({ language, scheme }) => {
           localStorage.setItem('rytta-language', language)
@@ -235,10 +231,7 @@ for (const language of ['es', 'en'] as const)
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await page.goto(`./#/campaign/${campaignId}/party`)
       await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
-      await page.screenshot({
-        path: info.outputPath(`party-${language}-${scheme}-100.png`),
-        fullPage: true,
-      })
+      await capture(page, info.outputPath(`party-${language}-${scheme}-100.png`))
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
       for (const screen of ['party', 'editor', 'menu', 'settings', 'account']) {
         if (screen === 'editor')
@@ -278,10 +271,7 @@ for (const language of ['es', 'en'] as const)
           (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
             .violations,
         ).toEqual([])
-        await page.screenshot({
-          path: info.outputPath(`${screen}-${language}-${scheme}-150.png`),
-          fullPage: true,
-        })
+        await capture(page, info.outputPath(`${screen}-${language}-${scheme}-150.png`))
       }
       expect(errors).toEqual([])
     })
@@ -295,13 +285,15 @@ test('maximum valid resources remain readable within cards at 150% text', async 
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
   await page.addStyleTag({ content: 'html { font-size: 150%; }' })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  for (const cell of await page.locator('.resource-cell').all()) {
-    expect(await cell.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
-  }
+  expect(
+    await page
+      .locator('.resource-cell')
+      .evaluateAll((cells) => cells.every((el) => el.scrollWidth <= el.clientWidth)),
+  ).toBe(true)
   await expect(page.locator('.resource-value').first()).toHaveText(
     Number.MAX_SAFE_INTEGER.toLocaleString('es'),
   )
-  await page.screenshot({ path: info.outputPath('max-resources-150.png'), fullPage: true })
+  await capture(page, info.outputPath('max-resources-150.png'))
 })
 
 test('Party owns character assignment and Player preview hides DM actions', async ({
@@ -354,7 +346,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByText('Vista de Arin')).toBeVisible()
   await expect(page.getByText('Tu DM todavía no te ha asignado un personaje.')).toBeVisible()
-  await page.screenshot({ path: info.outputPath('player-preview.png'), fullPage: true })
+  await capture(page, info.outputPath('player-preview.png'))
   expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
   await page.getByRole('button', { name: 'Volver a vista DM', exact: true }).click()
   await expect(page.getByRole('switch', { name: 'Vista jugador', exact: true })).not.toBeChecked()
@@ -447,7 +439,7 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
   // Pressing the current top level steps down one level.
   await arin.getByRole('button', { name: 'Agotamiento nivel 2 · Arin', exact: true }).click()
   await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(1)
-  await page.screenshot({ path: info.outputPath('ryt-025-party.png'), fullPage: true })
+  await capture(page, info.outputPath('ryt-025-party.png'))
 })
 
 test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer choices', async ({
@@ -525,14 +517,10 @@ async function axeAndTargets(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator(
-      'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
-    )
-    .all()) {
-    const box = await control.boundingBox()
-    expect(box!.height).toBeGreaterThanOrEqual(44)
-  }
+  await expectTouchTargets(
+    page,
+    'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
+  )
 }
 
 test('RYT-031 Player sees shared teammates live state without their resources', async ({

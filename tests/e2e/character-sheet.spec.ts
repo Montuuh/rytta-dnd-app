@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
+import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 
 const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
 async function audit(page: Page, path: string) {
@@ -9,18 +10,11 @@ async function audit(page: Page, path: string) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator(
-      'main button:visible:not(.glossary-term), main a.mantine-Button-root:visible, [role="dialog"] button:visible:not(.glossary-term)',
-    )
-    .all()) {
-    const box = await control.boundingBox()
-    expect(
-      box!.height,
-      await control.evaluate((el) => el.outerHTML.slice(0, 300)),
-    ).toBeGreaterThanOrEqual(44)
-  }
-  await page.screenshot({ path, fullPage: true })
+  await expectTouchTargets(
+    page,
+    'main button:visible:not(.glossary-term), main a.mantine-Button-root:visible, [role="dialog"] button:visible:not(.glossary-term)',
+  )
+  await capture(page, path)
 }
 
 test('the assigned Player creates a 5.5e character through the wizard', async ({ page }, info) => {
@@ -90,6 +84,7 @@ test('the assigned Player creates a 5.5e character through the wizard', async ({
 for (const language of ['es', 'en'] as const)
   for (const scheme of ['dark', 'light'] as const)
     test(`${language} ${scheme} character sheet at 150%`, async ({ page }, info) => {
+      limitMatrix(info, language === 'es' && scheme === 'dark')
       await page.addInitScript(
         ({ language, scheme }) => {
           localStorage.setItem('rytta-language', language)
@@ -157,7 +152,7 @@ test('DM sees every sheet and Party summaries; unknown characters are not found'
   await page.goto(`./#/campaign/${campaignId}/party`)
   await expect(page.getByText('Bardo de nivel 5')).toBeVisible()
   await expect(page.getByText('PG 30/38 +5')).toBeVisible()
-  await page.screenshot({ path: info.outputPath('party-summary.png'), fullPage: true })
+  await capture(page, info.outputPath('party-summary.png'))
   await page.getByRole('link', { name: 'Ver ficha' }).click()
   await expect(page.getByRole('link', { name: 'Editar ficha' })).toBeVisible()
   await page.getByRole('link', { name: 'Editar ficha' }).click()
@@ -199,7 +194,7 @@ test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', a
   await pad.getByRole('button', { name: 'Borrar', exact: true }).click()
   await pad.getByRole('button', { name: '5', exact: true }).click()
   await expect(dialog.getByText('Quedará en 35/38 PG')).toBeVisible()
-  await page.screenshot({ path: info.outputPath('hp-keypad.png'), fullPage: true })
+  await capture(page, info.outputPath('hp-keypad.png'))
   await dialog.getByRole('button', { name: 'Aplicar', exact: true }).click()
   await expect(page.locator('.hp-current')).toHaveText('35')
   await expect(damage).toBeFocused()

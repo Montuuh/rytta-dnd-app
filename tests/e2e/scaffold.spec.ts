@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { capture } from './fixtures/audit.ts'
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('rytta-language', 'en'))
@@ -17,7 +18,7 @@ test('preview loads without a backend and routes survive a Pages reload', async 
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await expect(page.locator('header')).not.toContainText('Preview · sample data')
-  await page.screenshot({ path: testInfo.outputPath('party.png'), fullPage: true })
+  await capture(page, testInfo.outputPath('party.png'))
   await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await page.reload()
   // RYT-035: planned pages speak to the table, not in ticket ids.

@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
+import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 import { shopsFixture } from './fixtures/shops.ts'
 // RYT-027: /items redirects into the DM Command Center storeroom tab.
 const url = `./#/campaign/${campaignId}/items`
@@ -24,23 +25,18 @@ async function audit(page: Page, path: string) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator(
-      'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
-    )
-    .all()) {
-    expect(
-      (await control.boundingBox())!.height,
-      (await control.getAttribute('aria-label')) ?? (await control.textContent()) ?? '',
-    ).toBeGreaterThanOrEqual(44)
-  }
-  await page.screenshot({ path, fullPage: true })
+  await expectTouchTargets(
+    page,
+    'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
+  )
+  await capture(page, path)
 }
 for (const language of ['es', 'en'] as const)
   for (const theme of ['dark', 'light'] as const)
     test(`catalogue without characters: ${language} ${theme}, image and keyboard at 150%`, async ({
       page,
     }, info) => {
+      limitMatrix(info, language === 'es' && theme === 'dark')
       await page.addInitScript(
         ({ language, theme }) => {
           localStorage.setItem('rytta-language', language)

@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, identityFixture } from './fixtures/identity.ts'
+import { expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
 const size = (project: string) =>
@@ -16,12 +17,7 @@ async function audit(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator('[role="dialog"] button:visible:not(.glossary-term)')
-    .all()) {
-    const box = await control.boundingBox()
-    expect(box!.height).toBeGreaterThanOrEqual(44)
-  }
+  await expectTouchTargets(page, '[role="dialog"] button:visible:not(.glossary-term)')
 }
 const row = (page: Page, name: string) =>
   page.locator('.combat-rail .combat-row', { hasText: name }).first()

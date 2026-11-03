@@ -5,19 +5,22 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // Tests are CPU-bound (axe, layout); local machines have spare cores, CI keeps the default.
+  workers: process.env.CI ? undefined : '75%',
   reporter: [['list'], ['html', { open: 'never' }]],
   use: { baseURL: 'http://127.0.0.1:4173/rytta-dnd-app/', trace: 'retain-on-failure' },
+  // Bundles only: type checking is part of npm run check, not of every e2e start.
   webServer: [
     {
       command:
-        'npm run build -- --base=/rytta-dnd-app/ && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort --base=/rytta-dnd-app/',
+        'npx vite build --base=/rytta-dnd-app/ && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort --base=/rytta-dnd-app/',
       url: 'http://127.0.0.1:4173/rytta-dnd-app/',
       reuseExistingServer: false,
       env: { VITE_DATA_MODE: 'demo' },
     },
     {
       command:
-        'npm run build -- --base=/rytta-dnd-app/ --outDir=dist-identity && npm run preview -- --host 127.0.0.1 --port 4174 --strictPort --base=/rytta-dnd-app/ --outDir=dist-identity',
+        'npx vite build --base=/rytta-dnd-app/ --outDir=dist-identity && npm run preview -- --host 127.0.0.1 --port 4174 --strictPort --base=/rytta-dnd-app/ --outDir=dist-identity',
       url: 'http://127.0.0.1:4174/rytta-dnd-app/',
       reuseExistingServer: false,
       env: {

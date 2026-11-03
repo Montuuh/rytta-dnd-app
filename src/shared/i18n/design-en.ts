@@ -9,8 +9,6 @@ export const designEn = {
   'shell.previewBanner': 'You are viewing the table as {{name}}',
   'shell.previewBannerGeneric': 'You are viewing the table as a Player',
   'shell.exitPreview': 'Back to DM view',
-  'preferences.languageShort': 'Language',
-  'preferences.themeShort': 'Appearance',
   'common.refreshing': 'Refreshing…',
   'common.checkedAgo': 'Updated {{time}}',
   'common.justNow': 'just now',

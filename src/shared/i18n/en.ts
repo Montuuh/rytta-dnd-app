@@ -6,6 +6,7 @@ import { identityEn } from './identity-en'
 import { designEn } from './design-en'
 import { storeEn } from './store-en'
 import { partyEn } from './party-en'
+import { settingsEn } from './settings-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
@@ -15,6 +16,7 @@ export const en = {
   ...designEn,
   ...storeEn,
   ...partyEn,
+  ...settingsEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',
   'module.shops': 'Shops',
@@ -68,22 +70,14 @@ export const en = {
   'error.title': 'The companion could not open',
   'error.help': 'Reload to try again. If this continues, check the app configuration.',
   'error.reload': 'Reload',
-  'preferences.title': 'Make it yours',
-  'preferences.close': 'Close settings',
   'preferences.theme': 'Appearance',
   'preferences.dark': 'Dark',
   'preferences.light': 'Light',
-  'preferences.toLight': 'Switch to light mode',
-  'preferences.toDark': 'Switch to dark mode',
   'preferences.language': 'Language',
-  'preferences.switchToEn': 'ES · Switch language to English',
-  'preferences.switchToEs': 'EN · Switch language to Spanish',
   'preferences.saved':
     'Your choices are saved on this device. New visits start in Spanish and dark mode.',
-  'settings.eyebrow': 'COMPANION FOUNDATION',
   'settings.demo': 'Demo mode',
   'settings.backend': 'Supabase mode',
-  'settings.honest': 'An honest starting point',
   'settings.demoDescription':
     'Sample content is local and read-only. No account, connection or saved progress is implied.',
   'settings.backendDescription':

@@ -51,3 +51,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-027 verification](evidence/RYT-027/validation.md).
 29. [ADR 019: remove campaign revelations and the Camp module](decisions/019-remove-revelations-and-camp.md)
     and [RYT-029 verification](evidence/RYT-029/validation.md).
+30. [ADR 020: one settings home and class themes](decisions/021-settings-class-themes.md)
+    and [RYT-033 verification](evidence/RYT-033/validation.md).

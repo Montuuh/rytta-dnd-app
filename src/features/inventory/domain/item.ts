@@ -128,6 +128,9 @@ export const eventSchema = z.object({
     'purchase',
     'sale',
     'revert',
+    // RYT-034 trades: one row per stack on each side of a completed swap; never undone here.
+    'trade_in',
+    'trade_out',
   ]),
   quantity_delta: z.number().int(),
   after_value: z.record(z.string(), z.unknown()),

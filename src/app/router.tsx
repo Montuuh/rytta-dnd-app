@@ -8,6 +8,10 @@ import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
 import { CampaignLanding } from '@/pages/campaign-landing'
 
+// RYT-034: campaign pages render inside the trade layer (invitation popup, window, dock).
+const TradeLayer = lazy(() =>
+  import('@/features/trades').then((module) => ({ default: module.TradeLayer })),
+)
 const CharacterParty = lazy(() =>
   import('@/features/characters').then((module) => ({ default: module.CharacterParty })),
 )
@@ -57,19 +61,21 @@ export function AppRouter() {
 
                 {live && (
                   <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
-                    <Route index element={<CampaignLanding />} />
-                    <Route path="party" element={<CharacterParty />} />
-                    <Route path="party/:characterId" element={<CharacterSheetPage />} />
-                    <Route path="party/:characterId/create" element={<CharacterCreationPage />} />
-                    <Route path="members" element={<DmCenterPage />} />
-                    {/* RYT-027: the storeroom moved into the DM Command Center. */}
-                    <Route
-                      path="items"
-                      element={<Navigate to="../members?panel=items" relative="path" replace />}
-                    />
-                    <Route path="inventory" element={<InventoryPage />} />
-                    <Route path="shops" element={<ShopsPage />} />
-                    <Route path="*" element={<ModulePage />} />
+                    <Route element={<TradeLayer />}>
+                      <Route index element={<CampaignLanding />} />
+                      <Route path="party" element={<CharacterParty />} />
+                      <Route path="party/:characterId" element={<CharacterSheetPage />} />
+                      <Route path="party/:characterId/create" element={<CharacterCreationPage />} />
+                      <Route path="members" element={<DmCenterPage />} />
+                      {/* RYT-027: the storeroom moved into the DM Command Center. */}
+                      <Route
+                        path="items"
+                        element={<Navigate to="../members?panel=items" relative="path" replace />}
+                      />
+                      <Route path="inventory" element={<InventoryPage />} />
+                      <Route path="shops" element={<ShopsPage />} />
+                      <Route path="*" element={<ModulePage />} />
+                    </Route>
                   </Route>
                 )}
                 <Route path="*" element={<ModulePage />} />

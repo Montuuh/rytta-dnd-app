@@ -1,0 +1,510 @@
+/* RYT-034 trade window. Uses the app's semantic tokens only (both themes, all class themes). */
+
+.trade-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+.trade-window-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.trade-hint {
+  max-width: 70ch;
+}
+.trade-expiry {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Two offers facing each other across a seam that carries both seals. */
+.trade-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+}
+.trade-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.trade-side[data-own] {
+  background: var(--app-raised);
+}
+.trade-side[data-confirmed] {
+  border-color: var(--app-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
+}
+.trade-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.trade-side-title {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+}
+.trade-side-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.trade-side-state[data-confirmed] {
+  color: var(--app-accent);
+  font-weight: 700;
+}
+
+.trade-slots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.trade-slot {
+  position: relative;
+  width: 100%;
+  min-height: 84px;
+  height: 100%;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 4px;
+  text-align: center;
+  color: var(--app-text);
+}
+.trade-slot.empty {
+  border: 1px dashed var(--app-border);
+  color: var(--app-muted);
+}
+.trade-slot.add {
+  border-style: dashed;
+  border-color: var(--app-accent-secondary);
+  color: var(--app-accent-secondary);
+  cursor: pointer;
+}
+.trade-slot.filled {
+  background: color-mix(in srgb, var(--rarity) 10%, var(--app-bg));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rarity) 60%, transparent);
+}
+button.trade-slot.filled:hover,
+.trade-slot.add:hover {
+  background: var(--app-hover);
+}
+.trade-slot-icon {
+  color: var(--rarity);
+  display: grid;
+  place-items: center;
+}
+.trade-slot-qty {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.trade-slot-name {
+  font-size: var(--fs-tag);
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.trade-gold {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--app-border);
+}
+.trade-gold-icon {
+  color: var(--gold-accent);
+}
+.trade-gold-value {
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-accent);
+}
+.trade-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.trade-stepper-input {
+  width: 84px;
+  height: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* The seam: the memorable piece. Each seal locks when its side accepts. */
+.trade-seam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--app-muted);
+}
+.trade-seal {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--app-border);
+  background: var(--app-bg);
+  color: var(--app-muted);
+  transition:
+    background 200ms ease,
+    transform 200ms ease;
+}
+.trade-seal[data-on] {
+  border: 2px solid var(--app-accent);
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+  transform: scale(1.06);
+}
+
+.trade-status {
+  min-height: 1.5em;
+}
+.trade-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+.trade-accept {
+  min-width: min(100%, 260px);
+}
+
+/* Item picker. */
+.trade-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.trade-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.trade-picker-row {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+.trade-picker-row:hover {
+  background: var(--app-hover);
+}
+.trade-picker-row[aria-selected='true'] {
+  background: var(--app-raised);
+  box-shadow: inset 3px 0 0 var(--app-accent);
+}
+.trade-picker-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--rarity);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rarity) 55%, transparent);
+}
+.trade-picker-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.trade-picker-name {
+  font-weight: 600;
+}
+.trade-picker-meta {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.trade-picker-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+.trade-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Invitation: a handshake inside a ring that empties as the time to answer runs out. */
+.trade-invite-header .mantine-Modal-title,
+.trade-done .mantine-Modal-title {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+.trade-invite-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.trade-invite-clock {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--app-accent) var(--clock, 360deg), var(--app-border) 0);
+}
+.trade-invite-clock-face {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--app-raised);
+  color: var(--app-accent);
+}
+.trade-invite-expiry {
+  font-variant-numeric: tabular-nums;
+  color: var(--app-accent-secondary);
+}
+.trade-invite-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Floating dock while a trade waits. Sits above the phone bottom bar. */
+.trade-dock {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 190;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 32px);
+  padding: 4px 4px 4px 14px;
+  border-radius: 999px;
+  background: var(--app-raised);
+  border: 1px solid var(--app-accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+@media (max-width: 47.99em) {
+  .trade-dock {
+    bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
+  }
+}
+.trade-dock-label,
+.trade-dock-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-text);
+}
+.trade-dock:has(.trade-dock-button) {
+  padding: 0;
+}
+.trade-dock-button {
+  padding: 0 16px;
+  border-radius: 999px;
+}
+
+/* Completion. */
+.trade-done-stamp {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+  animation: trade-stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+@keyframes trade-stamp {
+  from {
+    transform: scale(1.6) rotate(-14deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.trade-done-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.trade-done-heading {
+  margin: 0 0 6px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  font-weight: 600;
+}
+.trade-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trade-summary-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.trade-summary-icon {
+  color: var(--rarity, var(--app-muted));
+  display: inline-grid;
+}
+.trade-summary-icon.gold {
+  color: var(--gold-accent);
+}
+
+/* Party entry points. */
+.teammate-trade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  width: 100%;
+  margin-top: 4px;
+  border-top: 1px solid var(--app-border);
+  color: var(--app-accent);
+  font-weight: 600;
+}
+.teammate-trade:hover:not(:disabled) {
+  background: var(--app-hover);
+}
+.teammate-trade:disabled {
+  color: var(--app-muted);
+  cursor: not-allowed;
+}
+.trade-menu-item {
+  min-height: 44px;
+}
+.trade-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.trade-history-title {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h2);
+}
+.trade-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trade-history-entry {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.trade-history-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.trade-history-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 47.99em) {
+  .trade-table {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .trade-seam {
+    flex-direction: row;
+  }
+  .trade-seam-arrows {
+    transform: rotate(90deg);
+  }
+  .trade-footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--mantine-color-body);
+    padding-bottom: 8px;
+  }
+  .trade-footer .trade-accept {
+    order: -1;
+    flex: 1 1 100%;
+  }
+  .trade-footer > :not(.trade-accept) {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trade-done-stamp {
+    animation: none;
+  }
+  .trade-seal,
+  .trade-side {
+    transition: none;
+  }
+  .trade-seal[data-on] {
+    transform: none;
+  }
+}

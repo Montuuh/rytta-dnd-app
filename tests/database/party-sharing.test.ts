@@ -144,7 +144,10 @@ describe('RYT-031 party live sharing', () => {
       exhaustion: 2,
       conditions: ['poisoned'],
     })
-    expect(JSON.stringify(rows)).not.toMatch(/gold|water|ration|secret plan|500/)
+    // Random UUIDs can contain "500"; check every value except the ids, and the gold amount
+    // only as a whole number.
+    const values = JSON.stringify(rows.map(({ id: _id, ...live }) => live))
+    expect(values).not.toMatch(/gold|water|ration|secret plan|\b500\b/)
     expect(rows.find((row) => row.id === Arin)!.is_own).toBe(true)
     // Base policies stay owner-only.
     expect(

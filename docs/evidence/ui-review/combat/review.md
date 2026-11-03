@@ -452,3 +452,83 @@ list from round one still applies:
 - iOS/Safari and screen readers.
 
 This approval applies only to the fingerprint above.
+
+## Re-review 4 (focused on the two Re-review 3 minors, after 731d89d)
+
+- Reviewed source: `731d89d` (the HEAD commits after it are screenshot commits only).
+- UI fingerprint: `75aed879820a113c284ce9257c5dfae060bbec3b452aba08cc7e6e9657f57c90`
+  (recomputed, matches).
+- Reviewer role: `.codex/agents/ui-ux.toml`, read-only on implementation.
+- Date: 2026-11-03.
+- Method: a fresh identity build in real Chromium with touch at m (390px), t (820px) and w
+  (1180px), English light, 100% and 150% text, with failures simulated by blocking routes.
+- Evidence: `docs/evidence/ui-review/combat/r5/*.png`.
+
+### Verdict: PASS
+
+There are no blocker or major findings. Both fixes work as described. Two new minor items remain
+(below); neither blocks the delivery.
+
+### Results
+
+**1. Sticky drawer error (m/t)**
+
+- The alert is `position: sticky` at the bottom of the drawer's visible area.
+- After a failed death save it is in view and on top. At 100% the Success button stays visible
+  and tappable (m and t).
+- When scrolled to the end, the alert sits in normal flow below "Remove from encounter", so
+  every control can be reached.
+- The 44px close button dismisses it and the drawer stays open.
+- axe reports no violations.
+- Screenshots: `r5/z100-drawer-deathsave-error-m.png`, `r5/z100-drawer-end-m.png`.
+
+**2. Floating toast**
+
+- It disappears on its own after about 8.05–8.1 s (m/t/w), and the 4 s polling does not reset
+  the timer.
+- Hovering keeps it visible for more than 11 s. It leaves about 8.3 s after the pointer leaves.
+- Keyboard focus on its close button keeps it visible for more than 11 s. It leaves about 8.4 s
+  after focus moves away.
+- Enter on the close button dismisses it.
+- It never overlaps the turn bar. On m the toast ends at 644px and the bar starts at 691px.
+- `role="alert"` is kept and axe reports no violations.
+
+**3. Delivery spec**
+
+`tests/e2e/combat.spec.ts` passes on identity-mobile, identity-tablet and identity-desktop
+(9/9), including the new "action errors stay in view" test.
+
+### Remaining minor findings (non-blocking)
+
+**N4. At 150% text on a phone, the sticky error can cover the control that just failed.**
+
+- Reproduce: in the drawer, scroll so the death-save buttons sit near the bottom edge, then tap
+  Success while the request fails.
+- The 148px-tall sticky alert then covers Success and Failure
+  (`r5/z150-drawer-deathsave-error-m.png`). At 100% it can similarly cover a row such as
+  "Change" or "Defeated".
+- The user can scroll or dismiss it.
+- Suggested fix: when the error appears, scroll the focused or failed control into view above
+  the alert, for example with `scroll-padding-bottom` on `.mantine-Drawer-content` equal to the
+  alert height. Another option is to stick it to the top of the drawer body instead.
+  - Relevant code: `combat.css` `.combat-inline-error.is-sticky`, `parts.tsx` `RunnerError`.
+
+**N5. Dismissing the floating toast with the keyboard sends focus to `<body>`.**
+
+- Pressing Enter on the toast's close button drops focus to `<body>`.
+- Suggested fix: return focus to the control that triggered the action, for example "Next turn".
+- Related accessibility note: on m the toast is 6 Tab stops after "Next turn" (after the bottom
+  navigation). Keyboard users reach it within the 8 s only if they head there directly; the error
+  is still announced through `role="alert"`.
+
+### Limitations
+
+Only the scope above was re-checked. The round-one untested list still applies:
+
+- the fixture's missing success paths
+- legendary, lair and hidden combatants
+- realtime
+- other class themes
+- iOS/Safari and screen readers
+
+This approval applies only to the fingerprint above.

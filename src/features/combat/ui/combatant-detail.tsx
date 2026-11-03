@@ -18,6 +18,7 @@ import {
 } from '@mantine/core'
 import { Brain, Crown, Dice5, Heart, Minus, Plus, Sparkles, Swords, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import {
   combatConditions,
   isLive,
@@ -220,7 +221,7 @@ function Conditions({ combatant, run, pending, canAct }: Props & { canAct: boole
     <section className="combat-panel-plain" aria-labelledby={titleId}>
       <Group justify="space-between">
         <Title order={4} className="combat-panel-title" id={titleId}>
-          {t('combat.conditions')}
+          <GlossaryTerm id="rule.condition">{t('combat.conditions')}</GlossaryTerm>
         </Title>
         {canAct && (
           <Button
@@ -264,7 +265,9 @@ function Conditions({ combatant, run, pending, canAct }: Props & { canAct: boole
         <Group gap={6} mt={6}>
           {active.map((key) => (
             <Text key={key} component="span" className="combat-tag">
-              {t(`srd.condition.${key}`)}
+              <GlossaryTerm id={glossaryIds.condition(key)}>
+                {t(`srd.condition.${key}`)}
+              </GlossaryTerm>
             </Text>
           ))}
         </Group>
@@ -284,7 +287,8 @@ function Concentration({ combatant, run, pending, canAct }: Props & { canAct: bo
   return (
     <section className="combat-panel-plain" aria-labelledby={`conc-${combatant.id}`}>
       <Title order={4} className="combat-panel-title" id={`conc-${combatant.id}`}>
-        <Brain size={16} aria-hidden="true" /> {t('combat.concentration.label')}
+        <Brain size={16} aria-hidden="true" />{' '}
+        <GlossaryTerm id="rule.concentration">{t('combat.concentration.label')}</GlossaryTerm>
       </Title>
       {combatant.concentration ? (
         <Group justify="space-between" mt={6}>
@@ -366,7 +370,14 @@ function Effects({
               <div>
                 <Text size="sm" fw={600}>
                   {effect.label}
-                  {effect.condition && ` · ${t(`srd.condition.${effect.condition}`)}`}
+                  {effect.condition && (
+                    <>
+                      {' · '}
+                      <GlossaryTerm id={glossaryIds.condition(effect.condition)}>
+                        {t(`srd.condition.${effect.condition}`)}
+                      </GlossaryTerm>
+                    </>
+                  )}
                 </Text>
                 <Text size="xs" c="dimmed">
                   {effect.remaining_rounds

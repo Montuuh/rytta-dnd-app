@@ -1405,6 +1405,42 @@
         "docs/evidence/RYT-007/table-mobile.png",
         "docs/evidence/RYT-007/table-tablet.png"
       ]
+    },
+    {
+      "id": "RYT-039",
+      "title": "Link combat conditions to the glossary",
+      "priority": "P3",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "medium"
+      },
+      "status": "review",
+      "dependsOn": ["RYT-007", "RYT-008"],
+      "sources": [
+        "RYT-008 ui-ux round 6 observation: combat condition labels such as \"Derribado\" do not open their glossary definition.",
+        "User 2026-11-03: do it as a separate change, directly on main without a PR."
+      ],
+      "scope": "In the combatant detail (DM and Players), the active condition tags, the Conditions and Concentration titles and the condition named by an effect open the glossary definition in place. The condition picker, effect form, initiative rail and table display stay unlinked.",
+      "acceptance": [
+        "Tapping or pressing Enter on an active condition opens its SRD definition above the combat drawer.",
+        "The first Escape closes only the definition and returns focus to the term; the next closes the drawer.",
+        "No nested interactive elements: rail rows and picker chips are not linked.",
+        "No axe violations with the definition open at 390px and tablet sizes."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (combat, glossary, character-sheet)",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-039/validation.md",
+        "docs/evidence/RYT-039/condition-terms-mobile.png",
+        "docs/evidence/RYT-039/condition-terms-tablet.png",
+        "docs/evidence/RYT-039/condition-definition-mobile.png",
+        "docs/evidence/RYT-039/condition-definition-tablet.png"
+      ]
     }
   ]
 }

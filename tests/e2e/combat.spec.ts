@@ -16,7 +16,9 @@ async function audit(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page.locator('[role="dialog"] button:visible').all()) {
+  for (const control of await page
+    .locator('[role="dialog"] button:visible:not(.glossary-term)')
+    .all()) {
     const box = await control.boundingBox()
     expect(box!.height).toBeGreaterThanOrEqual(44)
   }
@@ -304,4 +306,59 @@ test('RYT-007 Players reach combat only when the DM opened the module', async ({
     await expect(page.locator('.combat-rail')).toHaveCount(0)
   }
   await audit(page)
+})
+
+test('RYT-039 combat conditions open their glossary definition in place', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+
+  // The DM marks Goblin 1 as prone and closes the picker: the condition becomes a reference.
+  await row(page, 'Goblin 1').getByRole('button').first().click()
+  await page.getByRole('button', { name: 'Cambiar' }).click()
+  await page.getByText('Derribado', { exact: true }).click()
+  await expect(page.getByRole('checkbox', { name: 'Derribado' })).toBeChecked()
+  await page.getByRole('button', { name: 'Listo' }).click()
+  const term = page.getByRole('button', { name: 'Derribado: ver definición' })
+  await expect(term).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Estados: ver definición' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Concentración: ver definición' })).toBeVisible()
+  const s = size(info.project.name)
+  if (s && process.env.RYT_EVIDENCE) {
+    await term.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: `docs/evidence/RYT-039/condition-terms-${s}.png` })
+  }
+
+  // Keyboard: Enter opens the definition above the combatant drawer.
+  await term.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.gl-sheet-headword')).toHaveText('Derribado')
+  await expect(page.getByRole('dialog', { name: 'Derribado' })).toBeVisible()
+  await audit(page)
+  if (s && process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-039/condition-definition-${s}.png` })
+
+  // The first Escape closes only the definition and returns focus to the term.
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.gl-sheet-headword')).toHaveCount(0)
+  await expect(term).toBeFocused()
+  if (info.project.name !== 'identity-desktop') {
+    // On phones and tablets the combatant drawer stays open until the next Escape.
+    await expect(page.locator('.combat-drawer .mantine-Drawer-content')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(term).toHaveCount(0)
+  }
+  expect(errors).toEqual([])
 })

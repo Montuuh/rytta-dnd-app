@@ -215,7 +215,7 @@ export type NpcEntry = {
   dm_notes?: string
 }
 export type CombatantEntry =
-  | { kind: 'character'; character_id: string }
+  | { kind: 'character'; character_id: string; initiative?: number }
   | { kind: 'lair'; name?: string; hidden?: boolean }
   | NpcEntry
 
@@ -368,6 +368,28 @@ export function turnsUntil(combatants: readonly Combatant[], id: string) {
   const active = order.findIndex((c) => c.is_active)
   if (active < 0) return target
   return (target - active + order.length) % order.length
+}
+
+/**
+ * Where a character joining with `total` lands in the order (it has no tiebreak bonus, so it goes
+ * after equal totals with a bonus of 0 or more). `thisRound` tells whether it still acts in the
+ * current round: turns follow the order by position, so a slot above the active one waits for the
+ * next round. A preview only; the server orders the encounter.
+ */
+export function joinPlacement(combatants: readonly Combatant[], total: number) {
+  let index = combatants.findIndex(
+    (c) =>
+      c.initiative === undefined ||
+      c.initiative < total ||
+      (c.initiative === total && (c.initiative_bonus ?? 0) < 0),
+  )
+  if (index < 0) index = combatants.length
+  const active = combatants.findIndex((c) => c.is_active)
+  return {
+    before: combatants[index - 1] ?? null,
+    after: combatants[index] ?? null,
+    thisRound: active >= 0 && index > active,
+  }
 }
 
 /** Combatants that still need an initiative total (characters first for the DM checklist). */

@@ -9,11 +9,14 @@ export function CombatLog({
   run,
   pending,
   canUndo,
+  present,
 }: {
   events: CombatEvent[]
   run: Run
   pending: boolean
   canUndo: boolean
+  /** Combatants still in the encounter: changes to one that left cannot be undone (RYT-041). */
+  present?: ReadonlySet<string>
 }) {
   const { t } = useTranslation()
   return (
@@ -80,19 +83,23 @@ export function CombatLog({
                       )}
                     </Group>
                   </div>
-                  {canUndo && event.undoable && (
-                    <Button
-                      size="compact-md"
-                      variant="subtle"
-                      className="combat-undo"
-                      leftSection={<Undo2 size={16} aria-hidden="true" />}
-                      disabled={pending}
-                      aria-label={t('combat.log.undoLabel', { text })}
-                      onClick={() => void run({ kind: 'undo', eventId: event.id })}
-                    >
-                      {t('combat.log.undo')}
-                    </Button>
-                  )}
+                  {canUndo &&
+                    event.undoable &&
+                    (!present ||
+                      !event.target_combatant ||
+                      present.has(event.target_combatant)) && (
+                      <Button
+                        size="compact-md"
+                        variant="subtle"
+                        className="combat-undo"
+                        leftSection={<Undo2 size={16} aria-hidden="true" />}
+                        disabled={pending}
+                        aria-label={t('combat.log.undoLabel', { text })}
+                        onClick={() => void run({ kind: 'undo', eventId: event.id })}
+                      >
+                        {t('combat.log.undo')}
+                      </Button>
+                    )}
                 </li>
               )
             })}

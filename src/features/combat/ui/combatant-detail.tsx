@@ -4,6 +4,7 @@ import {
   Button,
   Chip,
   Group,
+  Menu,
   Modal,
   NumberInput,
   Paper,
@@ -16,7 +17,20 @@ import {
   Textarea,
   Title,
 } from '@mantine/core'
-import { Brain, Crown, Dice5, Heart, Minus, Plus, Sparkles, Swords, Trash2, X } from 'lucide-react'
+import {
+  Brain,
+  Crown,
+  Dice5,
+  Ellipsis,
+  Heart,
+  Minus,
+  Pencil,
+  Plus,
+  Sparkles,
+  Swords,
+  UserMinus,
+  X,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import {
@@ -44,6 +58,8 @@ type Props = {
   pending: boolean
   /** Opens the initiative dialog (DM for anyone, a Player for its own character). */
   onInitiative?: () => void
+  /** DM: asks to remove this combatant from the encounter (the caller confirms). */
+  onRemove?: () => void
 }
 
 /** Everything about one combatant. Writes appear only when the viewer can act on it. */
@@ -555,7 +571,7 @@ function EffectDialog({
   )
 }
 
-function DmControls({ combatant, run, pending, status, activeId, encounterId }: Props) {
+function DmControls({ combatant, run, pending, status, activeId, encounterId, onRemove }: Props) {
   const { t } = useTranslation()
   const [notes, setNotes] = useState(combatant.dm_notes ?? '')
   // Closing the drawer (Escape included) flushes an unsaved note instead of dropping it.
@@ -578,14 +594,49 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
     [],
   )
   const [editing, setEditing] = useState(false)
-  const [removing, setRemoving] = useState(false)
   const npc = combatant.kind === 'npc'
   const legendary = combatant.legendary
   return (
     <Paper className="combat-panel combat-dm" p="sm">
-      <Title order={4} className="combat-panel-title">
-        {t('combat.dm.title')}
-      </Title>
+      <Group justify="space-between" wrap="nowrap">
+        <Title order={4} className="combat-panel-title">
+          {t('combat.dm.title')}
+        </Title>
+        {(npc || onRemove) && (
+          <Menu position="bottom-end">
+            <Menu.Target>
+              <ActionIcon
+                data-return-focus={`detail-menu-${combatant.id}`}
+                variant="subtle"
+                size={44}
+                aria-label={t('combat.dm.menu', { name: combatant.name })}
+              >
+                <Ellipsis size={20} aria-hidden="true" />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown className="combat-menu">
+              {npc && (
+                <Menu.Item
+                  leftSection={<Pencil size={16} aria-hidden="true" />}
+                  onClick={() => setEditing(true)}
+                >
+                  {t('combat.dm.edit')}
+                </Menu.Item>
+              )}
+              {npc && onRemove && <Menu.Divider />}
+              {onRemove && (
+                <Menu.Item
+                  color="red"
+                  leftSection={<UserMinus size={16} aria-hidden="true" />}
+                  onClick={onRemove}
+                >
+                  {t('combat.row.remove')}
+                </Menu.Item>
+              )}
+            </Menu.Dropdown>
+          </Menu>
+        )}
+      </Group>
       <Stack gap="sm" mt="xs">
         {status === 'active' &&
           !combatant.is_active &&
@@ -704,7 +755,7 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
           // Leaving the field saves, so closing the drawer never drops a note silently.
           onBlur={() => saveNotes(notes)}
         />
-        <Group justify="space-between">
+        <Group justify="flex-end">
           <Button
             variant="default"
             disabled={pending || notes === (combatant.dm_notes ?? '')}
@@ -712,21 +763,6 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
           >
             {t('combat.dm.saveNotes')}
           </Button>
-          <Group gap="xs">
-            {npc && (
-              <Button variant="subtle" onClick={() => setEditing(true)}>
-                {t('combat.dm.edit')}
-              </Button>
-            )}
-            <Button
-              variant="subtle"
-              color="red"
-              leftSection={<Trash2 size={16} aria-hidden="true" />}
-              onClick={() => setRemoving(true)}
-            >
-              {t('combat.dm.remove')}
-            </Button>
-          </Group>
         </Group>
       </Stack>
       {editing && (
@@ -739,28 +775,6 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId }: 
           }}
         />
       )}
-      <Modal
-        opened={removing}
-        onClose={() => setRemoving(false)}
-        title={t('combat.dm.removeTitle', { name: combatant.name })}
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-      >
-        <Text>{t('combat.dm.removeBody')}</Text>
-        <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={() => setRemoving(false)}>
-            {t('action.cancel')}
-          </Button>
-          <Button
-            color="red"
-            loading={pending}
-            onClick={async () => {
-              if (await run({ kind: 'remove', combatantId: combatant.id })) setRemoving(false)
-            }}
-          >
-            {t('combat.dm.remove')}
-          </Button>
-        </Group>
-      </Modal>
     </Paper>
   )
 }

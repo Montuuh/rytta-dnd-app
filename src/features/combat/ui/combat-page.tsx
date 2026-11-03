@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Alert, Button, Group, Paper, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Maximize, Swords } from 'lucide-react'
+import { ArrowLeft, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -178,29 +178,12 @@ export function CombatTablePage() {
 }
 
 function TableScreen() {
-  const { t } = useTranslation()
   const { encounterId } = useParams()
+  const { dm } = useCombatViewer()
   const { query, data, connected, stale, retry } = useLiveState(encounterId ?? null, true)
   if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
   if (!data?.encounter)
     return <QueryFeedback pending={query.isPending} error={query.isError} retry={retry} />
-  return (
-    <Stack gap="sm">
-      {document.fullscreenEnabled && (
-        <Group justify="flex-end">
-          <Button
-            variant="subtle"
-            size="sm"
-            leftSection={<Maximize size={16} aria-hidden="true" />}
-            onClick={() =>
-              void document.documentElement.requestFullscreen?.().catch(() => undefined)
-            }
-          >
-            {t('combat.fullscreen')}
-          </Button>
-        </Group>
-      )}
-      <TableDisplay state={data} stale={stale} connected={connected} retry={retry} />
-    </Stack>
-  )
+  // Players stay on the table view; only the DM has a console to go back to.
+  return <TableDisplay state={data} stale={stale} connected={connected} retry={retry} exit={dm} />
 }

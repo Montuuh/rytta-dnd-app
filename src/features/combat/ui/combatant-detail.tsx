@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
   Button,
@@ -500,6 +500,8 @@ function EffectDialog({
             </Text>
             <SegmentedControl
               fullWidth
+              orientation="vertical"
+              className="combat-segmented-wrap"
               aria-labelledby="fx-ticks"
               value={ticks}
               onChange={(value) => setTicks(value as 'start' | 'end')}
@@ -545,6 +547,18 @@ function EffectDialog({
 function DmControls({ combatant, run, pending, status, activeId, encounterId }: Props) {
   const { t } = useTranslation()
   const [notes, setNotes] = useState(combatant.dm_notes ?? '')
+  // Closing the drawer (Escape included) flushes an unsaved note instead of dropping it.
+  const latest = useRef({ notes, saved: combatant.dm_notes ?? '', run, id: combatant.id })
+  useEffect(() => {
+    latest.current = { notes, saved: combatant.dm_notes ?? '', run, id: combatant.id }
+  })
+  useEffect(
+    () => () => {
+      const { notes: text, saved, run: save, id } = latest.current
+      if (text !== saved) void save({ kind: 'update', combatantId: id, patch: { dm_notes: text } })
+    },
+    [],
+  )
   const [editing, setEditing] = useState(false)
   const [removing, setRemoving] = useState(false)
   const npc = combatant.kind === 'npc'

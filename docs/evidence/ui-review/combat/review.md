@@ -212,3 +212,104 @@ repository in the reviewer's scratch directory.
   `--fs-tag` minimum was not measured.
 - **Scope:** this verdict applies only to the source fingerprint above. A focused re-review is
   needed after fixes, covering B1-B3, M1-M4 and a light-theme axe pass.
+
+## Re-review (focused, after 92e0ef7)
+
+- Reviewed source: `92e0ef7`
+- UI fingerprint: `d3b07efbd181b9171d7634d7b7f971cc6136d2fda5c256df00da3310eda92598`. I
+  recomputed it and it matches the coordinator's value.
+- Reviewer role: `.codex/agents/ui-ux.toml` (independent subagent, implementation read-only).
+- Date: 2026-11-03
+- Evidence: `docs/evidence/ui-review/combat/r2/*.png`. The file `r2/en-dark-wide-goblin2-carries-goblin1-notes-w.png`
+  keeps its round-1 name but now shows the **fixed** state: Goblin 2's notes are empty.
+
+### Verdict: CHANGES_REQUIRED
+
+All the blockers and majors from round one are fixed and verified in a real browser. Two items
+are still open:
+
+- One new major regression, caused by the copy change.
+- One minor that is only partly fixed.
+
+Both are small. A focused re-check of just these two is enough.
+
+### Verification of earlier findings
+
+| ID | Status | Real-browser evidence (m = 390, t = 820, w = 1180) |
+| --- | --- | --- |
+| B1 | Fixed | axe (wcag2a/2aa/21aa/22aa) is clean in EN light on every screen I re-ran on m/t/w: list, bestiary, prepare, active, detail, death saves, effect dialog, multi-target bar, Player initiative/turn/teammate/stale. The death-save buttons now use the same tones (`r2/en-light-death-saves-m.png`). The new e2e light test passes. |
+| B2 | Fixed | On w, after saving a note on Goblin 1 and typing "Bless", Goblin 2 shows empty notes, an empty spell and Save notes disabled. Clicking from Goblin 1 to Goblin 2 saved Goblin 1's note on blur, to the right combatant. |
+| B3 | Fixed | At m 150% the bar is 162px. "Arin" is visible (41px line) and does not overlap "Siguiente turno", which now sits on its own row (`r2/es-dark-z150-turnbar-m.png`). The last content clears the bar at scroll end at 100% and 150% on m/t/w. |
+| M1 | Fixed | The failed add effect, death save and multi-target damage show the toast on top (top 12px, above the modal/drawer) on m/t/w. Its close button is 44x44. Closing the toast leaves the dialog and drawer open. |
+| M2 | Fixed | Escape returns focus to the opener: Initiative → Bea's row, multi-target → Damage, Heal and Add effect in the detail → that button. This holds on m/t/w, and the End combat modal still works. |
+| M3 | Fixed | On m/t, Escape in Heal or Add effect closes only that dialog (one dialog left), with focus on the opener. A second Escape closes the drawer and returns focus to the row. |
+| M4 | Fixed | Chips, switch rows (DM controls, creature form, effect visibility), Damage/Heal and alert close buttons all measure 44px. The small-target scan of every re-run screen is empty. |
+| m1 | Fixed | Tabbing through the console at 100% and 150% on m leaves no focused element under the turn bar. |
+| m2 | Fixed | The accessible name is "Half (save): Goblin 1" / "Mitad (salvación): Goblin 2". |
+| m3 | Fixed | The summary table fits 390px (scrollWidth 343 = clientWidth). |
+| m4 | Fixed (copy) | The Spanish strings read well. However, the longer English labels introduced N1 below. |
+| m5, m6 | Fixed | The Player back link is hidden while live, and the log shows "Prep" / "Prep.". |
+| m7 | **Partly fixed** | See N2. |
+| m8 | Fixed | Code inspection only: Cancel now calls `restore()`. |
+| m9 | Not re-checked | The RYT-007 screenshots were regenerated, but I did not inspect them. |
+
+The delivery spec `tests/e2e/combat.spec.ts` (both tests) passes on identity-mobile and identity-tablet.
+
+### Remaining findings
+
+**N1 (major, new regression). The effect dialog's "When it counts down" segmented control is clipped.**
+- Code: `combat-en.ts:163-165` together with `combatant-detail.tsx:495-504`. The labels are
+  `white-space: nowrap` and the control is wider than the modal.
+- Where:
+  - m EN 100%: "When the turn ends" is cut at the edge.
+  - m EN and ES 150%: the second option, which is the **default, selected** one, shows only "Wh"
+    or "Al…" (`r2/en-150-effect-dialog-m.png`, `r2/es-150-effect-dialog-m.png`).
+  - ES 100% just fits.
+- Impact: at large text the DM cannot read the chosen option. This is a text-resize failure.
+- Fix (either works):
+  - Let the labels wrap (`white-space: normal`, as `.view-switch` already does), or
+  - Stack the control vertically below about 48em, or use shorter labels such as "Turn start" /
+    "Turn end" and "Al empezar" / "Al terminar".
+
+**N2 (minor, the rest of m7). Escape still drops an unsaved DM note on m/t.**
+- Code: `dm-console.tsx:395-408` with `combatant-detail.tsx:665-676`.
+- Reproduce: type a private note in the drawer, then press Escape. The server note stays empty.
+- The close button and overlay exits do save the note, and so does switching rows on w.
+- Impact: keyboard users lose the note silently.
+- Fix: flush the note in the drawer's `onClose` path, or save on change with a debounce.
+
+**N3 (minor, new). The error toast covers the dialog's title and close button on phones.**
+- Seen at m (`r2/en-light-effect-failure-toast-m.png`).
+- The toast is dismissable (44px), and Escape still closes the dialog, so this is not blocking.
+- Consider placing the toast at the bottom on phones, or auto-dismissing it.
+
+### Tested in this round
+
+**Real browser (local Chromium, a fresh identity build from `92e0ef7`):**
+- My round-one specs re-run on m/t/w (23 passed, 4 skipped by design), covering:
+  - DM, EN light: list, bestiary, prepare, active, detail, chips, the effect and death-save failure paths.
+  - Wide selection switch.
+  - Player, EN light, including the stale state.
+  - ES dark at 150%: DM, Player and table views.
+  - Keyboard: tab order, nested Escape, menus and tabs.
+  - Reduced motion.
+  - Focus return, summary and table.
+- New checks:
+  - Toast versus dialog/drawer.
+  - Notes saved through Escape, the close button, the overlay and a row switch.
+  - Turn-bar geometry and focus-under-bar at 100% and 150%.
+  - Segmented-control fit in the effect and amount dialogs, EN/ES at 100% and 150% (the amount dialog fits).
+
+**Code inspection:** the `92e0ef7` source diff.
+
+### Untested
+
+Round one's untested list still applies, unchanged:
+- The success paths for effects and death saves (the fixture does not implement them).
+- Legendary actions, lair and hidden creatures.
+- Realtime.
+- Other class themes.
+- iOS/Safari and screen readers.
+
+I did not re-run the light-theme axe on the table view or the summary at w. Approval applies only
+to the fingerprint above.

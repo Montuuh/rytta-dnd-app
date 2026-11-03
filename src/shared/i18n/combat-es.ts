@@ -132,6 +132,8 @@ export const combatEs = {
   'combat.detail.close': 'Cerrar el detalle',
   'combat.detail.readOnly': 'Solo el jugador de {{name}} y el DM cambian este personaje.',
   'combat.conditions': 'Estados',
+  'combat.conditionsEdit': 'Cambiar',
+  'combat.conditionsDone': 'Listo',
   'combat.conditionsNone': 'Sin estados',
   'combat.concentration.label': 'Concentración',
   'combat.concentration.spell': 'Conjuro',

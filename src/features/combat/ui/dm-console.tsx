@@ -72,6 +72,12 @@ export function DmConsole({
   const [multiMode, setMultiMode] = useState<HpMode | null>(null)
   const [initiativeFor, setInitiativeFor] = useState<Combatant | null>(null)
   const [panel, setPanel] = useState<Panel>(encounter.status === 'draft' ? 'add' : 'detail')
+  // Leaving preparation hands the side panel to the fight (render-phase adjustment).
+  const [seenStatus, setSeenStatus] = useState(encounter.status)
+  if (seenStatus !== encounter.status) {
+    setSeenStatus(encounter.status)
+    if (seenStatus === 'draft' || encounter.status === 'ended') setPanel('detail')
+  }
   const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
   const [rename, setRename] = useState(encounter.name)
   const combatants = state.combatants
@@ -81,10 +87,14 @@ export function DmConsole({
   const missing = missingInitiative(combatants)
   const status = encounter.status
   const activeId = encounter.active_combatant ?? null
+  // While collecting initiative, a row without a total opens the initiative keypad directly.
   const pick = (combatant: Combatant) => {
+    if (status === 'initiative' && combatant.initiative === undefined) {
+      setInitiativeFor(combatant)
+      return
+    }
     setSelectedId(combatant.id)
-    if (status === 'initiative' && combatant.initiative === undefined) setInitiativeFor(combatant)
-    else if (wide) setPanel('detail')
+    if (wide) setPanel('detail')
   }
   const detail = selected && (
     <CombatantDetail
@@ -176,8 +186,9 @@ export function DmConsole({
       onChange={(value) => setPanel((value as Panel) ?? 'detail')}
       variant="pills"
       keepMounted={false}
+      className="dm-tabs combat-tabs"
     >
-      <Tabs.List aria-label={t('combat.tabs')}>
+      <Tabs.List aria-label={t('combat.tabs')} className="dm-tabs-list">
         {wide && <Tabs.Tab value="detail">{t('combat.detail.title')}</Tabs.Tab>}
         <Tabs.Tab value="log">{t('combat.log.title')}</Tabs.Tab>
         {status !== 'ended' && <Tabs.Tab value="add">{t('combat.add.title')}</Tabs.Tab>}
@@ -231,7 +242,9 @@ export function DmConsole({
                   {t('combat.round', { round: encounter.round })}
                 </Text>
               )}
-              <NetworkState stale={stale} connected={connected} retry={retry} />
+              {status !== 'ended' && (
+                <NetworkState stale={stale} connected={connected} retry={retry} />
+              )}
             </Group>
           </div>
           <Group gap="xs" wrap="nowrap">

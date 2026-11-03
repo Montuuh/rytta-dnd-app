@@ -208,13 +208,34 @@ function DeathSaves({ combatant, run, pending, canAct }: Props & { canAct: boole
 function Conditions({ combatant, run, pending, canAct }: Props & { canAct: boolean }) {
   const { t } = useTranslation()
   const active = combatant.conditions ?? []
+  // The full SRD picker is long on phones: show active conditions, expand to edit.
+  const [editing, setEditing] = useState(false)
+  const titleId = `conditions-${combatant.id}`
   return (
-    <section className="combat-panel-plain" aria-labelledby={`conditions-${combatant.id}`}>
-      <Title order={4} className="combat-panel-title" id={`conditions-${combatant.id}`}>
-        {t('combat.conditions')}
-      </Title>
-      {canAct ? (
-        <div role="group" aria-labelledby={`conditions-${combatant.id}`} className="combat-chips">
+    <section className="combat-panel-plain" aria-labelledby={titleId}>
+      <Group justify="space-between">
+        <Title order={4} className="combat-panel-title" id={titleId}>
+          {t('combat.conditions')}
+        </Title>
+        {canAct && (
+          <Button
+            size="sm"
+            variant="subtle"
+            aria-expanded={editing}
+            aria-controls={`${titleId}-picker`}
+            onClick={() => setEditing(!editing)}
+          >
+            {t(editing ? 'combat.conditionsDone' : 'combat.conditionsEdit')}
+          </Button>
+        )}
+      </Group>
+      {canAct && editing ? (
+        <div
+          role="group"
+          aria-labelledby={titleId}
+          className="combat-chips"
+          id={`${titleId}-picker`}
+        >
           {combatConditions.map((key) => (
             <Chip
               key={key}

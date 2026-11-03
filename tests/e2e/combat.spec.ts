@@ -281,5 +281,12 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
     await damage.evaluate((node) => node.scrollIntoView({ block: 'nearest' }))
     const header = (await drawer.locator('.mantine-Drawer-header').boundingBox())!
     expect((await damage.boundingBox())!.y).toBeGreaterThanOrEqual(header.y + header.height)
+    // Also with 150% text, where the header grows with its title (N7).
+    await page.evaluate(() => (document.documentElement.style.fontSize = '150%'))
+    await drawer.evaluate((node) => (node.scrollTop = node.scrollHeight))
+    await damage.evaluate((node) => node.scrollIntoView({ block: 'nearest' }))
+    const large = (await drawer.locator('.mantine-Drawer-header').boundingBox())!
+    expect((await damage.boundingBox())!.y).toBeGreaterThanOrEqual(large.y + large.height)
+    await page.evaluate(() => (document.documentElement.style.fontSize = ''))
   }
 })

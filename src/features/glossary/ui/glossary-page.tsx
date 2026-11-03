@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Anchor,
   Button,
   Checkbox,
@@ -8,8 +7,6 @@ import {
   Group,
   Kbd,
   Loader,
-  Menu,
-  Modal,
   RangeSlider,
   Select,
   Stack,
@@ -20,29 +17,17 @@ import {
 } from '@mantine/core'
 import { PageHead } from '@/shared/ui/page-head'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
-import { notifications } from '@mantine/notifications'
-import {
-  ChevronLeft,
-  Ellipsis,
-  Pencil,
-  Plus,
-  ScrollText,
-  Search,
-  SlidersHorizontal,
-  Trash2,
-} from 'lucide-react'
+import { ChevronLeft, Plus, Search, SlidersHorizontal } from 'lucide-react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
-import { useHomebrewAction } from '../api'
 import type { GlossaryEntry } from '../domain/catalog'
-import { GlossaryError, homebrewEntryId, type HomebrewEntry } from '../domain/homebrew'
 import { searchGlossary } from '../domain/search'
 import { spellClasses, spellSchools, type SpellClass, type SpellSchool } from '../domain/types'
 import { EntryArticle } from './entry-article'
 import { EntryIndex, type IndexRowData } from './entry-index'
 import { useGlossary } from './glossary-context'
-import { HomebrewEditor, type EditorTarget } from './homebrew-editor'
+import { headwordFocus } from './headword-focus'
 import {
   activeFilterCount,
   matchesSpellFilters,
@@ -75,12 +60,6 @@ function liveSearchParams() {
 
 /** The entry last read on its own (phone) route; the index returns focus to its row. */
 let lastReaderEntry: string | null = null
-/**
- * Set by Enter in search and by saving homebrew to the entry about to open: it takes focus on
- * its headword. Module state, because the navigation can remount the page, and an id, because
- * the old entry can re-render before the (transitioned) navigation commits.
- */
-let focusHeadwordOf: string | null = null
 
 /** RYT-008 glossary: search, categories, alphabetical index and a reader for one entry. */
 export function GlossaryPage() {
@@ -97,13 +76,6 @@ export function GlossaryPage() {
   const readerHeading = useRef<HTMLHeadingElement>(null)
   const [filters, setFilters] = useState<SpellFilters>(noSpellFilters)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [editor, setEditorState] = useState<EditorTarget | null>(null)
-  const [editorReturnFocus, setEditorReturnFocus] = useState(true)
-  const setEditor = (target: EditorTarget | null) => {
-    if (target) setEditorReturnFocus(true)
-    setEditorState(target)
-  }
-  const [deleting, setDeleting] = useState<HomebrewEntry | null>(null)
   // The field owns what is typed; the URL only mirrors it for deep links. Driving the input
   // from the URL dropped keystrokes while the 550-row list re-rendered (ui-ux F1).
   const urlQuery = params.get('q') ?? ''
@@ -154,11 +126,11 @@ export function GlossaryPage() {
   useEffect(() => {
     // A new entry on its own (phone) route, or one opened with Enter or just saved, moves focus
     // to its headword. The next frame runs after the layout's own route-change focus.
-    if (!entryId || !(!wide || focusHeadwordOf === entryId)) return
+    if (!entryId || !(!wide || headwordFocus.id === entryId)) return
     const frame = requestAnimationFrame(() => {
       if (!readerHeading.current) return
       readerHeading.current.focus()
-      if (focusHeadwordOf === entryId) focusHeadwordOf = null
+      if (headwordFocus.id === entryId) headwordFocus.id = null
     })
     return () => cancelAnimationFrame(frame)
   }, [entryId, wide, catalog])
@@ -286,7 +258,7 @@ export function GlossaryPage() {
       const best = searchGlossary(catalog, query).find(({ entry }) => inTab(entry, tab))
       if (!best) return
       event.preventDefault()
-      focusHeadwordOf = best.entry.id
+      headwordFocus.id = best.entry.id
       navigate(hrefFor(best.entry.id), { state: { fromIndex: true } })
     } else if (event.key === 'ArrowDown') {
       const first = indexRef.current?.querySelector<HTMLAnchorElement>('[data-first-result]')
@@ -300,49 +272,6 @@ export function GlossaryPage() {
     }
   }
 
-  const entryActions = (entry: GlossaryEntry) => {
-    if (!glossary.canEdit) return null
-    return (
-      <Menu position="bottom-end" withinPortal>
-        <Menu.Target>
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            aria-label={t('glossary.hb.actions', { name: entry.name })}
-          >
-            <Ellipsis size={20} aria-hidden="true" />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown>
-          {entry.homebrew ? (
-            <>
-              <Menu.Item
-                leftSection={<Pencil size={16} aria-hidden="true" />}
-                onClick={() => setEditor({ entry: entry.homebrew!, srdRef: null })}
-              >
-                {t('glossary.hb.edit')}
-              </Menu.Item>
-              <Menu.Item
-                color="red"
-                leftSection={<Trash2 size={16} aria-hidden="true" />}
-                onClick={() => setDeleting(entry.homebrew!)}
-              >
-                {t('glossary.hb.delete')}
-              </Menu.Item>
-            </>
-          ) : (
-            <Menu.Item
-              leftSection={<ScrollText size={16} aria-hidden="true" />}
-              onClick={() => setEditor({ entry: null, srdRef: entry.id })}
-            >
-              {t('glossary.hb.addHouseRule')}
-            </Menu.Item>
-          )}
-        </Menu.Dropdown>
-      </Menu>
-    )
-  }
-
   const reader = selected ? (
     <EntryArticle
       key={selected.id}
@@ -351,7 +280,6 @@ export function GlossaryPage() {
       houseRules={catalog.houseRules.get(selected.id)}
       headingLevel={showReaderOnly ? 1 : 2}
       headingRef={readerHeading}
-      actions={entryActions(selected)}
     />
   ) : entryId ? (
     <p className="gl-quiet-note">{t('glossary.notFound')}</p>
@@ -388,7 +316,7 @@ export function GlossaryPage() {
               <button
                 type="button"
                 className="gl-new-entry"
-                onClick={() => setEditor({ entry: null, srdRef: null })}
+                onClick={() => glossary.manage?.create(null)}
               >
                 <Plus size={18} aria-hidden="true" />
                 {t('glossary.hb.new')}
@@ -518,36 +446,6 @@ export function GlossaryPage() {
         onChange={setFilters}
         count={rows.length}
       />
-      {glossary.campaignId && (
-        <>
-          <HomebrewEditor
-            target={editor}
-            campaignId={glossary.campaignId}
-            catalog={catalog}
-            returnFocus={editorReturnFocus}
-            onClose={() => setEditor(null)}
-            onSaved={(saved) => {
-              // The saved headword takes focus; the closing drawer must not pull it back.
-              setEditorReturnFocus(false)
-              setEditor(null)
-              // A new house rule opens inside its SRD entry; anything else opens itself.
-              const target =
-                saved.srd_ref && !editor?.entry ? saved.srd_ref : homebrewEntryId(saved.id)
-              focusHeadwordOf = target
-              navigate(hrefFor(target))
-            }}
-          />
-          <DeleteDialog
-            entry={deleting}
-            campaignId={glossary.campaignId}
-            onClose={() => setDeleting(null)}
-            onDeleted={() => {
-              setDeleting(null)
-              navigate(indexHref)
-            }}
-          />
-        </>
-      )}
     </div>
   )
 }
@@ -685,70 +583,3 @@ function SpellFilterSheet({
   )
 }
 const capitalize = (value: string) => value.charAt(0).toLocaleUpperCase() + value.slice(1)
-
-function DeleteDialog({
-  entry,
-  campaignId,
-  onClose,
-  onDeleted,
-}: {
-  entry: HomebrewEntry | null
-  campaignId: string
-  onClose: () => void
-  onDeleted: () => void
-}) {
-  const { t } = useTranslation()
-  const action = useHomebrewAction(campaignId)
-  const error =
-    action.error instanceof GlossaryError ? action.error.code : action.error ? 'unknown' : null
-  const close = () => {
-    action.reset()
-    onClose()
-  }
-  return (
-    <Modal
-      opened={entry !== null}
-      onClose={close}
-      centered
-      title={<span className="gl-editor-title">{t('glossary.hb.delete')}</span>}
-      closeButtonProps={{ 'aria-label': t('glossary.hb.cancel'), size: 44 }}
-    >
-      {entry && (
-        <Stack>
-          <Text>{t('glossary.hb.confirmDelete', { name: entry.name })}</Text>
-          {error && (
-            <Text c="red" role="alert">
-              {error === 'unknown' ? t('glossary.hb.deleteError') : t(`glossary.hb.error.${error}`)}
-            </Text>
-          )}
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={close}>
-              {t('glossary.hb.cancel')}
-            </Button>
-            <Button
-              color="red"
-              loading={action.isPending}
-              onClick={() =>
-                action.mutate(
-                  { kind: 'delete', entryId: entry.id, revision: entry.revision },
-                  {
-                    onSuccess: () => {
-                      action.reset()
-                      notifications.show({
-                        message: t('glossary.hb.deleted'),
-                        position: 'bottom-center',
-                      })
-                      onDeleted()
-                    },
-                  },
-                )
-              }
-            >
-              {t('glossary.hb.delete')}
-            </Button>
-          </Group>
-        </Stack>
-      )}
-    </Modal>
-  )
-}

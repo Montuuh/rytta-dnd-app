@@ -140,11 +140,23 @@ export const glossaryEs = {
   'glossary.hb.removeFact': 'Quitar el dato {{n}}',
   'glossary.hb.attach': 'Regla de la casa sobre una entrada del SRD',
   'glossary.hb.attachHint':
-    'Opcional. La entrada también aparece dentro de esa definición del SRD.',
+    'Opcional. La entrada también aparece dentro de esa definición del SRD. Para quitarla, vuelve a elegirla.',
   'glossary.hb.attachPlaceholder': 'Busca una entrada del SRD',
   'glossary.hb.save': 'Guardar entrada',
   'glossary.hb.deleted': 'Entrada eliminada',
-  'glossary.hb.confirmDelete': '«{{name}}» se eliminará para todo el mundo en esta campaña.',
+  'glossary.hb.confirmDelete': 'Se eliminará para todos en esta campaña. No se puede deshacer.',
+  'glossary.hb.editNamed': 'Editar «{{name}}»',
+  'glossary.hb.deleteNamed': 'Eliminar «{{name}}»',
+  'glossary.hb.addHouseRuleTo': 'Añadir una regla de la casa a «{{name}}»',
+  'glossary.hb.deleteTitle': '¿Eliminar «{{name}}»?',
+  'glossary.hb.saveChanges': 'Guardar cambios',
+  'glossary.hb.conflict.title': 'Esta entrada ha cambiado',
+  'glossary.hb.conflict.body':
+    'Alguien guardó otra versión mientras la editabas. Carga la actual o guarda la tuya encima.',
+  'glossary.hb.conflict.load': 'Cargar la actual',
+  'glossary.hb.conflict.overwrite': 'Guardar la mía',
+  'glossary.hb.conflict.gone': 'Alguien eliminó esta entrada mientras la editabas.',
+  'glossary.hb.close': 'Cerrar',
   'glossary.hb.cancel': 'Cancelar',
   'glossary.hb.emptyTitle': 'Aún no hay homebrew',
   'glossary.hb.emptyBody':
@@ -152,8 +164,7 @@ export const glossaryEs = {
   'glossary.hb.demo':
     'El homebrew se guarda en cada campaña. Abre una campaña para añadir entradas.',
   'glossary.hb.updatedBy': 'Editada {{when}}',
-  'glossary.hb.error.stale':
-    'Alguien ha cambiado esta entrada mientras tanto. Vuelve a abrirla para ver la última versión.',
+  'glossary.hb.error.stale': 'Alguien acaba de cambiar esta entrada. Inténtalo de nuevo.',
   'glossary.hb.error.duplicate': 'Ya hay otra entrada con este nombre.',
   'glossary.hb.error.forbidden': 'No puedes editar el glosario de esta campaña.',
   'glossary.hb.error.invalid': 'Revisa los campos: alguno está vacío o es demasiado largo.',

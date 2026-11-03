@@ -1453,7 +1453,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "medium"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-008"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1472,7 +1472,25 @@
         "independent ui-ux PASS",
         "SQL denial tests if RPCs change"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-040/validation.md",
+        "docs/evidence/RYT-040/delete-confirm-light-en-mobile.png",
+        "docs/evidence/RYT-040/delete-confirm-light-en-tablet.png",
+        "docs/evidence/RYT-040/delete-confirm-mobile.png",
+        "docs/evidence/RYT-040/delete-confirm-tablet.png",
+        "docs/evidence/RYT-040/edit-conflict-mobile.png",
+        "docs/evidence/RYT-040/edit-conflict-tablet.png",
+        "docs/evidence/RYT-040/editor-edit-light-en-mobile.png",
+        "docs/evidence/RYT-040/editor-edit-light-en-tablet.png",
+        "docs/evidence/RYT-040/editor-edit-mobile.png",
+        "docs/evidence/RYT-040/editor-edit-tablet.png",
+        "docs/evidence/RYT-040/entry-homebrew-mobile.png",
+        "docs/evidence/RYT-040/entry-homebrew-tablet.png",
+        "docs/evidence/RYT-040/house-rule-actions-mobile.png",
+        "docs/evidence/RYT-040/house-rule-actions-tablet.png",
+        "docs/evidence/RYT-040/sheet-actions-mobile.png",
+        "docs/evidence/RYT-040/sheet-actions-tablet.png"
+      ]
     },
     {
       "id": "RYT-041",

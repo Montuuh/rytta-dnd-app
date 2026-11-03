@@ -103,7 +103,7 @@
   font-size: var(--fs-meta);
   line-height: 1.3;
   overflow-wrap: anywhere;
-  hyphens: auto;
+  hyphens: manual;
 }
 .choice-check {
   display: grid;
@@ -194,7 +194,7 @@
 /* Class theme gallery: each medallion shows the theme's own background, accent and secondary. */
 .theme-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
   gap: 10px;
 }
 .theme-card {
@@ -248,4 +248,7 @@
   .choice-check {
     transition: none;
   }
+}
+.settings-back {
+  margin-bottom: 8px;
 }

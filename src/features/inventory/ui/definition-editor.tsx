@@ -17,6 +17,7 @@ import { Forge } from './forge'
 import { ItemIcon } from './item-icon'
 import { CharacterPortrait } from './portrait'
 import { PriceSyncDialog } from './price-sync'
+import { newRequestId } from '@/shared/lib/request-id'
 
 export type GiveOutcome = { given: string[]; failed: string[] }
 type PendingSync = {
@@ -103,9 +104,9 @@ export function DefinitionEditor({
       if (returnFocusToOpener && opener.current?.isConnected) opener.current.focus()
     })
   const upload = useRef<string | null>(null)
-  const requestId = useRef(crypto.randomUUID())
+  const requestId = useRef(newRequestId())
   const generation = useRef(0)
-  const definitionRequest = useRef({ payload: '', id: crypto.randomUUID() })
+  const definitionRequest = useRef({ payload: '', id: newRequestId() })
   useEffect(
     () => () => {
       if (preview) URL.revokeObjectURL(preview)
@@ -132,7 +133,7 @@ export function DefinitionEditor({
     const nameOf = (id: string) => roster.data?.find((c) => c.id === id)?.name ?? id
     for (const characterId of pendingGive.current.characterIds) {
       const key = `${item.id}:${characterId}`
-      if (!grantRequests.current.has(key)) grantRequests.current.set(key, crypto.randomUUID())
+      if (!grantRequests.current.has(key)) grantRequests.current.set(key, newRequestId())
       try {
         await action.mutateAsync({
           kind: 'grant',
@@ -201,7 +202,7 @@ export function DefinitionEditor({
     try {
       const payload = JSON.stringify(draft)
       if (definitionRequest.current.payload !== payload)
-        definitionRequest.current = { payload, id: crypto.randomUUID() }
+        definitionRequest.current = { payload, id: newRequestId() }
       const result = await action.mutateAsync({
         kind: 'define',
         requestId: definitionRequest.current.id,

@@ -26,6 +26,7 @@ import { FeaturesTab, NotesTab, SpellsTab, SummaryTab } from './sections'
 import { VitalsPanel } from './vitals-panel'
 import { SheetHistory } from './sheet-history'
 import { RefreshControl } from '@/shared/ui/refresh-control'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const tabs = ['summary', 'features', 'spells', 'notes'] as const
 
@@ -67,6 +68,7 @@ export function CharacterSheetPage() {
     return (
       <Stack>
         {back}
+        <Title order={1}>{t('sheet.title')}</Title>
         <Text role="status">{t('common.loading')}</Text>
       </Stack>
     )
@@ -74,6 +76,7 @@ export function CharacterSheetPage() {
     return (
       <Stack>
         {back}
+        <Title order={1}>{t('sheet.title')}</Title>
         <Alert color="red" role="alert">
           {t('query.error')}{' '}
           <Button variant="subtle" onClick={() => void query.refetch()}>
@@ -86,6 +89,7 @@ export function CharacterSheetPage() {
     return (
       <Stack>
         {back}
+        <Title order={1}>{t('sheet.title')}</Title>
         <Paper p="xl">
           <Text>{t('sheet.notFound')}</Text>
         </Paper>
@@ -123,7 +127,7 @@ export function CharacterSheetPage() {
   const commit = (values: Vitals, done?: 'sheet.restDone') => {
     setNotice(null)
     action.mutate(
-      { kind: 'vitals', characterId: character.id, values, requestId: crypto.randomUUID() },
+      { kind: 'vitals', characterId: character.id, values, requestId: newRequestId() },
       { onSuccess: () => setNotice(done ?? null) },
     )
   }
@@ -194,6 +198,13 @@ export function CharacterSheetPage() {
             </Text>
           )}
         </div>
+        <div className="sheet-identity-refresh">
+          <RefreshControl
+            onRefresh={() => void query.refetch()}
+            fetching={query.isFetching}
+            updatedAt={query.dataUpdatedAt}
+          />
+        </div>
       </header>
       {action.isError && (
         <Alert color="red" role="alert">
@@ -218,13 +229,6 @@ export function CharacterSheetPage() {
             </Title>
             <SheetAttacks campaignId={campaign.id} characterId={character.id} />
           </section>
-          <Group justify="flex-end">
-            <RefreshControl
-              onRefresh={() => void query.refetch()}
-              fetching={query.isFetching}
-              updatedAt={query.dataUpdatedAt}
-            />
-          </Group>
         </div>
         <div className="sheet-main">
           <Tabs defaultValue="summary" keepMounted={false} className="sheet-tabs">

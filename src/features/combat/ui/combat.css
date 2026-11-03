@@ -653,7 +653,7 @@ button.combat-row-main:focus-visible {
   font-size: var(--fs-meta);
 }
 
-/* Table projection (RYT-037): large, high contrast, readable across the room. */
+/* Table projection (RYT-038): large, high contrast, readable across the room. */
 .combat-table-view .combat-table-title {
   font-size: var(--fs-display);
 }

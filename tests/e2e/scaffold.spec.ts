@@ -20,7 +20,9 @@ test('preview loads without a backend and routes survive a Pages reload', async 
   await page.screenshot({ path: testInfo.outputPath('party.png'), fullPage: true })
   await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
   await page.reload()
-  await expect(page.getByText('RYT-003')).toBeVisible()
+  // RYT-035: planned pages speak to the table, not in ticket ids.
+  await expect(page.getByText('This module is not available yet.', { exact: false })).toBeVisible()
+  await expect(page.getByText('RYT-003')).toHaveCount(0)
   expect(errors).toEqual([])
   expect(requests).toEqual([])
 })

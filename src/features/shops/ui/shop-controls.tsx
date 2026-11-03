@@ -88,7 +88,7 @@ export function ShopControls({
   return (
     <Paper p="lg" className="shop-header shop-controls">
       <Stack gap="lg">
-        <Group justify="space-between" align="start" wrap="nowrap">
+        <Group justify="space-between" align="start" className="shop-controls-head">
           <div className="shop-controls-title">
             <Title order={2} id={`shop-${shop.id}`} className="user-copy">
               {shop.name}
@@ -128,7 +128,7 @@ export function ShopControls({
         </Text>
 
         <Switch
-          size="lg"
+          size="md"
           checked={view.is_open}
           label={t(view.is_open ? 'admin.shop.isOpen' : 'admin.shop.isClosed')}
           description={t('admin.shop.openHelp')}
@@ -203,8 +203,8 @@ export function ShopControls({
             max={100}
             step={5}
             value={view.resale_percent}
-            label={(value) => `${value} %`}
-            marks={[0, 25, 50, 75, 100].map((value) => ({ value, label: `${value}%` }))}
+            label={(value) => t('admin.modifier.mark', { value })}
+            marks={[0, 25, 50, 75, 100].map((value) => ({ value, label: `${value}` }))}
             onChange={(value) => change({ resale_percent: value }, 500)}
             className="touch-slider"
             thumbSize={32}

@@ -7,7 +7,7 @@ import { InitiativeRail } from './initiative-rail'
 import { NetworkState } from './parts'
 
 /**
- * RYT-037 table projection: large, read-only and fed by the Player projection without own data
+ * RYT-038 table projection: large, read-only and fed by the Player projection without own data
  * (as_table), so it never contains DM secrets even when the DM opens it.
  */
 export function TableDisplay({

@@ -1,4 +1,4 @@
-// RYT-007 / RYT-035 / RYT-036 / RYT-037 shared combat.
+// RYT-007 / RYT-036 / RYT-037 / RYT-038 shared combat.
 export const combatEn = {
   'combat.title': 'Combat',
   'combat.intro.dm':

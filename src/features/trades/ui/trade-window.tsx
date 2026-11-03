@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Ref } from 'react'
 import { Alert, Button, Modal, Text, UnstyledButton, VisuallyHidden } from '@mantine/core'
-import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
+import { useReducedMotion } from '@mantine/hooks'
 import {
   ArrowLeftRight,
   ChevronDown,
@@ -58,7 +59,7 @@ export function TradeWindow({
   onMinimize: () => void
 }) {
   const { t } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const action = useTradeAction(campaignId)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [error, setError] = useState<TradeErrorCode | null>(null)

@@ -2,11 +2,12 @@ import type { designEn } from './design-en'
 
 // RYT-025 navigation, compact controls and table widgets.
 export const designEs = {
-  'nav.dmShort': 'Mando DM',
+  'nav.dmShort': 'DM',
   'nav.more': 'Más',
   'nav.moreTitle': 'Más secciones',
   'nav.moreOpen': 'Abrir más secciones',
   'shell.playerSwitch': 'Vista jugador',
+  'shell.playerSwitchShort': 'Jugador',
   'shell.playerSwitchHint': 'Mira la mesa como la ve un jugador',
   'shell.previewBanner': 'Estás viendo la mesa como {{name}}',
   'shell.previewBannerGeneric': 'Estás viendo la mesa como jugador',

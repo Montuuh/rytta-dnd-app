@@ -16,6 +16,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Check, EyeOff, Lock, Plus, Trash2, Users } from 'lucide-react'
 import { useSearchParams } from 'react-router'
+import { PageHead } from '@/shared/ui/page-head'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { catalogueQuery, DefinitionEditor } from '@/features/inventory'
@@ -35,6 +36,7 @@ import { Ledger } from './ledger'
 import { PriceModifiers } from './price-modifiers'
 import { ShopControls } from './shop-controls'
 import { AddItemsDrawer, StockList } from './stock-list'
+import { newRequestId } from '@/shared/lib/request-id'
 
 type Dialog =
   | { kind: 'create' }
@@ -126,7 +128,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
       throw error
     }
   }
-  const key = () => crypto.randomUUID()
+  const key = () => newRequestId()
   const data = admin.data
   const saveShop = (shop: AdminShop, draft: ShopDraft, message: string) =>
     perform(
@@ -136,14 +138,11 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
 
   return (
     <Stack gap="lg" className="shop-admin">
-      <Title order={1} ref={heading} tabIndex={-1}>
-        {t('admin.title')}
-      </Title>
-      {!playersSeeShops && (
-        <Text size="sm" c="dimmed">
-          {t('admin.hiddenFromPlayers')}
-        </Text>
-      )}
+      <PageHead
+        title={t('admin.title')}
+        headingRef={heading}
+        description={!playersSeeShops ? t('admin.hiddenFromPlayers') : undefined}
+      />
       <QueryFeedback
         pending={admin.isPending}
         error={admin.isError}
@@ -448,7 +447,7 @@ function ShopsTab({
                 shopId: shop.id,
                 revision,
                 draft,
-                requestId: crypto.randomUUID(),
+                requestId: newRequestId(),
               },
               t('admin.notice.shopSettings', { name: draft.name }),
             )
@@ -470,7 +469,7 @@ function ShopsTab({
                 listingId: listing.id,
                 revision: listing.revision,
                 draft,
-                requestId: crypto.randomUUID(),
+                requestId: newRequestId(),
               },
               t('admin.notice.listingSaved', { name }),
               done,

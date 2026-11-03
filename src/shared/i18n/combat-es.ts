@@ -1,6 +1,6 @@
 import type { combatEn } from './combat-en'
 
-// RYT-007 / RYT-035 / RYT-036 / RYT-037 combate compartido.
+// RYT-007 / RYT-036 / RYT-037 / RYT-038 combate compartido.
 export const combatEs = {
   'combat.title': 'Combate',
   'combat.intro.dm':

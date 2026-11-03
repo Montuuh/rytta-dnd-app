@@ -1,7 +1,7 @@
 # Combat module: design analysis
 
-Tickets: RYT-007 (shared combat core), RYT-035 (encounter preparation and bestiary), RYT-036
-(combat tools), RYT-037 (table display). Decision record: [ADR 023](decisions/023-combat.md).
+Tickets: RYT-007 (shared combat core), RYT-036 (encounter preparation and bestiary), RYT-037
+(combat tools), RYT-038 (table display). Decision record: [ADR 024](decisions/024-combat.md).
 This document is the design analysis behind the delivery. It separates observations (what the table needs) from
 decisions (what Rytta builds) and lists deliberate non-goals.
 

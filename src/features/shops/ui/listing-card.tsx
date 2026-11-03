@@ -1,6 +1,6 @@
 import { Anchor, Badge, Button, Drawer, Group, NumberInput, Stack, Text } from '@mantine/core'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { Link } from 'react-router'
-import { useMediaQuery } from '@mantine/hooks'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -113,7 +113,7 @@ export function ListingDrawer({
   onAdd: (quantity: number) => void
 }) {
   const { t, i18n } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const [quantity, setQuantity] = useState(1)
   const max = listing ? maxPurchasable(listing) - inCart : 0
   return (

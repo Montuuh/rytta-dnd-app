@@ -109,7 +109,7 @@ RYT-007 adds encounters: characters join by reference (their HP, death saves and
 in `character_vitals`), NPCs and the lair keep combat state, and timed effects, a log with
 compensating undo and a summary live beside them. Players read the role projection
 `get_combat_state`; realtime publishes only the secret-free `encounters` row, whose revision
-moves on every combat or fighting-character change, with polling as the fallback (ADR 023).
+moves on every combat or fighting-character change, with polling as the fallback (ADR 024).
 
 Future domains: quests, glossary, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.

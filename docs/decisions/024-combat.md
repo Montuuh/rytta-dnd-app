@@ -1,6 +1,6 @@
-# ADR 023: shared combat, role projection and the table display
+# ADR 024: shared combat, role projection and the table display
 
-Date: 2026-11-03. Status: accepted for `RYT-007`, `RYT-035`, `RYT-036` and `RYT-037`. Builds on
+Date: 2026-11-03. Status: accepted for `RYT-007`, `RYT-036`, `RYT-037` and `RYT-038`. Builds on
 ADR 013 (character vitals), ADR 014 (idempotent RPCs and compensating undo) and ADR 020 (party
 live sharing). Analysis: [combat design](../combat-design.md).
 
@@ -51,3 +51,11 @@ with no DM secrets. Character play state already lives in `character_vitals`; th
 - No grid, attack resolution or bundled monsters. Exhaustion remains a DM resource.
 - Hosted realtime delivery is verified separately from the PGlite and fixture tests (see the
   RYT-007 validation report).
+
+## Numbering note
+
+This delivery first used the IDs RYT-035..037 and ADR 023. `main` assigned both to the review-fixes
+delivery in the meantime, so the combat tickets are now RYT-036..038 and this record is ADR 024.
+The migration `20261104120000_combat.sql` was already applied to PRE and production. Migrations are
+append-only after deployment, so its header and the table comments keep the provisional IDs: read
+RYT-035 as RYT-036 (bestiary), RYT-036 as RYT-037 (tools) and RYT-037 as RYT-038 (table display).

@@ -32,11 +32,6 @@ export function ModulePage() {
         <Stack>
           <Group>
             <Badge variant="light">{t(module ? 'common.planned' : 'page.unknown')}</Badge>
-            {module && (
-              <Text size="sm" c="dimmed">
-                {module.ticket}
-              </Text>
-            )}
           </Group>
           <Title order={2}>{t(module?.summary ?? 'page.noPath')}</Title>
           <Text c="dimmed">{t(module ? 'page.planned' : 'page.return')}</Text>

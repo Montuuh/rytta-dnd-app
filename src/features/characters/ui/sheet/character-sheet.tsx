@@ -5,7 +5,7 @@ import { ArrowLeft, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { useCampaign, useCampaignView } from '@/features/campaigns'
+import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { CharacterPortrait, SheetAttacks } from '@/features/inventory'
 import { charactersQuery, sheetQuery, useSheetAction } from '../../api'
 import type { Vitals } from '../../domain/sheet'
@@ -21,6 +21,7 @@ export function CharacterSheetPage() {
   const { characterId = '' } = useParams()
   const { state } = useAuth()
   const campaign = useCampaign()
+  const realDm = useIsRealDm()
   const { playerPreview } = useCampaignView()
   const userId = state.user!.id
   const query = useQuery(sheetQuery(userId, campaign.id, characterId))
@@ -73,7 +74,7 @@ export function CharacterSheetPage() {
       </Stack>
     )
   const { character, sheet, vitals } = query.data
-  const canEdit = campaign.role === 'dm' || character.user_id === userId
+  const canEdit = realDm || character.user_id === userId
   const editPath = `${party}/${character.id}/create`
   if (sheet.status === 'draft' || !sheet.build)
     return (

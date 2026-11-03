@@ -2738,6 +2738,18 @@ html[data-mantine-color-scheme='light'] .order-counter {
   color: var(--order-tone);
   font-weight: 700;
 }
+.order-flow-asked {
+  color: var(--app-muted);
+}
+.order-flow-asked .gold-amount {
+  color: var(--app-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+.order-flow-arrow {
+  flex: 0 0 auto;
+  color: var(--order-tone);
+}
 .order-line-was {
   margin-right: 8px;
   font-size: var(--fs-meta);
@@ -2802,9 +2814,21 @@ html[data-mantine-color-scheme='light'] .order-counter {
 }
 .shop-title {
   margin: 0;
+  /* Never shrink to make room for the badges: the badge group wraps below first. */
+  flex: 0 0 auto;
+  max-width: 100%;
   min-width: 0;
   font-size: var(--fs-h2);
   line-height: 1.2;
+}
+.shop-title-badges .mantine-Badge-root {
+  height: auto;
+  min-height: 22px;
+  padding-block: 2px;
+}
+.shop-title-badges .mantine-Badge-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .shop-title-badges {
   display: flex;
@@ -2846,12 +2870,18 @@ html[data-mantine-color-scheme='light'] .order-counter {
 .shop-picker-trigger[data-expanded] {
   background: var(--app-raised);
 }
+.shop-picker-name {
+  /* Keep the name at its full single-line width; only a name wider than the row wraps. */
+  flex: 0 0 auto;
+  max-width: calc(100% - 28px);
+}
 .shop-picker-chevron {
   flex: 0 0 auto;
   color: var(--app-accent);
 }
 .shop-picker-dropdown {
   min-width: min(320px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
   padding: 6px;
   background: var(--app-surface);
   border-color: var(--app-border);
@@ -3699,4 +3729,16 @@ html[data-mantine-color-scheme='light'] .order-counter {
 }
 .resource-cell .resource-value.mantine-Button-root .mantine-Button-label {
   gap: 6px;
+}
+
+/* Tooltips follow the warm-hearth tokens instead of Mantine's default grey/black. */
+.app-tooltip {
+  background: var(--app-raised);
+  color: var(--app-text);
+  border: 1px solid var(--app-border);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.app-tooltip .mantine-Tooltip-arrow {
+  background: var(--app-raised);
+  border-color: var(--app-border);
 }

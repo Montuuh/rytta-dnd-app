@@ -49,6 +49,7 @@ export const theme = createTheme({
         label: { minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' },
       },
     },
+    Tooltip: { classNames: { tooltip: 'app-tooltip' } },
     Paper: { defaultProps: { withBorder: true } },
   },
 })

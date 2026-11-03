@@ -891,7 +891,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-027"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -910,7 +910,12 @@
         "independent ui-ux PASS",
         "Independent rendered ui-ux review"
       ],
-      "evidence": ["docs/evidence/RYT-028/validation.md"]
+      "evidence": [
+        "docs/evidence/RYT-028/validation.md",
+        "docs/evidence/ui-review/RYT-028-030/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     },
     {
       "id": "RYT-029",
@@ -921,7 +926,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-027"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -946,7 +951,10 @@
         "docs/evidence/RYT-029/player-mobile.png",
         "docs/evidence/RYT-029/player-tablet.png",
         "docs/evidence/RYT-029/dm-mobile.png",
-        "docs/evidence/RYT-029/dm-tablet.png"
+        "docs/evidence/RYT-029/dm-tablet.png",
+        "docs/evidence/ui-review/RYT-028-030/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {
@@ -958,7 +966,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-027"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -986,7 +994,10 @@
         "docs/evidence/RYT-030/ledger-counter-tablet.png",
         "docs/evidence/RYT-030/player-orders-mobile.png",
         "docs/evidence/RYT-030/player-orders-tablet.png",
-        "docs/decisions/016-shops-merchants.md"
+        "docs/decisions/016-shops-merchants.md",
+        "docs/evidence/ui-review/RYT-028-030/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {
@@ -998,7 +1009,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-028", "RYT-029"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1026,7 +1037,10 @@
         "docs/evidence/RYT-031/party-dm-tablet.png",
         "docs/evidence/RYT-031/sheet-history-mobile.png",
         "docs/evidence/RYT-031/sheet-history-tablet.png",
-        "docs/decisions/020-party-live-sharing.md"
+        "docs/decisions/020-party-live-sharing.md",
+        "docs/evidence/ui-review/wave2/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {
@@ -1038,7 +1052,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-028", "RYT-030"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1075,7 +1089,10 @@
         "docs/evidence/RYT-032/add-choose-mobile.png",
         "docs/evidence/RYT-032/add-choose-tablet.png",
         "docs/evidence/RYT-032/add-existing-mobile.png",
-        "docs/evidence/RYT-032/add-existing-tablet.png"
+        "docs/evidence/RYT-032/add-existing-tablet.png",
+        "docs/evidence/ui-review/wave2/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {
@@ -1087,7 +1104,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-029"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1108,7 +1125,10 @@
         "docs/evidence/RYT-033/validation.md",
         "docs/decisions/021-settings-class-themes.md",
         "tests/unit/class-themes.test.ts",
-        "tests/e2e/preferences.spec.ts"
+        "tests/e2e/preferences.spec.ts",
+        "docs/evidence/ui-review/wave2/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     },
     {
@@ -1120,7 +1140,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-031", "RYT-032"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1161,7 +1181,10 @@
         "docs/evidence/RYT-034/done-mobile.png",
         "docs/evidence/RYT-034/done-tablet.png",
         "docs/evidence/RYT-034/history-mobile.png",
-        "docs/evidence/RYT-034/history-tablet.png"
+        "docs/evidence/RYT-034/history-tablet.png",
+        "docs/evidence/ui-review/final/review.md",
+        "docs/evidence/ui-review/final-r2/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

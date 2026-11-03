@@ -1,6 +1,6 @@
-import { ActionIcon, Menu, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Menu, Tooltip } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
-import { Ellipsis, Pencil, ScrollText, Trash2 } from 'lucide-react'
+import { Ellipsis, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { HomebrewEntry } from '../domain/homebrew'
@@ -13,7 +13,7 @@ export type EntryActionsTarget =
 
 /**
  * What the viewer can do with one entry. Homebrew shows edit and delete as labelled icon
- * buttons (they fold into one menu on phones); an SRD entry shows one icon to add a house rule.
+ * buttons (they fold into one menu on phones); an SRD entry shows a labelled button to add a house rule.
  * Renders nothing when the viewer cannot write, so Players without the module and the demo
  * never see a control.
  */
@@ -28,20 +28,15 @@ export function EntryActions({ target }: { target: EntryActionsTarget }) {
     const { id, name } = target.srd
     return (
       <div className="gl-actions">
-        <Tooltip
-          label={t('glossary.hb.addHouseRule')}
-          events={{ hover: true, focus: true, touch: false }}
-          zIndex={500}
+        <Button
+          className="gl-add-house"
+          variant="subtle"
+          leftSection={<Plus size={16} aria-hidden="true" />}
+          aria-label={t('glossary.hb.addHouseRuleTo', { name })}
+          onClick={(event) => manage.create(id, event.currentTarget)}
         >
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            aria-label={t('glossary.hb.addHouseRuleTo', { name })}
-            onClick={(event) => manage.create(id, event.currentTarget)}
-          >
-            <ScrollText size={20} aria-hidden="true" />
-          </ActionIcon>
-        </Tooltip>
+          {t('glossary.hb.addHouseRuleShort')}
+        </Button>
       </div>
     )
   }

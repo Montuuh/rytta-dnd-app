@@ -41,7 +41,14 @@ export function useHomebrewManager({
   const trigger = useRef<HTMLElement | null>(null)
   const restoreFocus = () =>
     requestAnimationFrame(() => {
-      if (trigger.current?.isConnected) trigger.current.focus()
+      if (trigger.current?.isConnected) return trigger.current.focus()
+      // The opener is gone (its entry was deleted): the open definition or entry headword,
+      // never <body>.
+      const fallback =
+        document.querySelector<HTMLElement>('.gl-sheet-headword') ??
+        document.querySelector<HTMLElement>('.gl-headword') ??
+        document.querySelector<HTMLElement>('main')
+      fallback?.focus({ preventScroll: true })
     })
   const onGlossaryPage = Boolean(
     pagePath && (location.pathname === pagePath || location.pathname.startsWith(`${pagePath}/`)),
@@ -85,7 +92,8 @@ export function useHomebrewManager({
             setDeleting(entry)
           }}
           onSaved={(saved) => {
-            const wasEdit = editor?.entry != null
+            // A deleted entry saved again gets a new id: that is a new entry, not an edit.
+            const wasEdit = editor?.entry?.id === saved.id
             setEditorState(null)
             if (!onGlossaryPage || !pagePath) return restoreFocus()
             // The saved headword takes focus. Editing stays on the entry being read (a house

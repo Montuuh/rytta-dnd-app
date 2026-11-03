@@ -7,7 +7,8 @@ const size = (project: string) =>
   project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
 async function evidence(page: Page, project: string, name: string) {
   const s = size(project)
-  if (s && process.env.RYT_EVIDENCE) await page.screenshot({ path: `docs/evidence/RYT-034/${name}-${s}.png` })
+  if (s && process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-034/${name}-${s}.png` })
 }
 async function audit(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -187,8 +188,23 @@ test('RYT-034 declined invitations and phone bottom-sheet picker', async ({ brow
   await expect(picker.getByRole('option', { name: /Gema de luna/ })).toBeVisible()
   await audit(arin)
   await evidence(arin, info.project.name, 'picker')
+  // The listbox is one Tab stop; arrows move focus and selection together.
+  const first = picker.getByRole('option', { name: /Poción de curación/ })
+  await first.focus()
+  await arin.keyboard.press('ArrowDown')
+  const second = picker.getByRole('option', { name: /Cuerda de seda/ })
+  await expect(second).toBeFocused()
+  await expect(second).toHaveAttribute('aria-selected', 'true')
+  await expect(first).toHaveAttribute('tabindex', '-1')
+  await arin.keyboard.press('End')
+  await expect(picker.getByRole('option', { name: /Gema de luna/ })).toBeFocused()
   await arin.keyboard.press('Escape')
   await expect(picker).toBeHidden()
+  // Focus returns to the slot that opened the picker.
+  await expect(arinWindow.getByRole('button', { name: 'Añadir un objeto' })).toBeFocused()
+  // Nothing on the table yet: accepting is blocked with a reason next to the button.
+  await expect(arinWindow.getByRole('button', { name: 'Aceptar el trato' })).toBeDisabled()
+  await expect(arinWindow.getByText('Añade un objeto u oro para poder aceptar.')).toBeVisible()
   await evidence(arin, info.project.name, 'window-empty')
   // Escape minimizes the window to the dock; the dock brings it back.
   await arin.keyboard.press('Escape')

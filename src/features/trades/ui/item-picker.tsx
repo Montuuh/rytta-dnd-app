@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { Button, Drawer, Modal, Text, UnstyledButton } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { X } from 'lucide-react'
@@ -32,13 +32,37 @@ export function ItemPicker({
     setSelected(item.item_id)
     setAmount(Math.min(item.quantity, offered.get(item.item_id) ?? 1))
   }
+  const list = useRef<HTMLUListElement>(null)
+  // Listbox keyboard contract: one Tab stop, arrows/Home/End move focus and selection together.
+  const roam = (event: KeyboardEvent<HTMLUListElement>) => {
+    const keys: Record<string, (index: number) => number> = {
+      ArrowDown: (index) => Math.min(items.length - 1, index + 1),
+      ArrowUp: (index) => Math.max(0, index - 1),
+      Home: () => 0,
+      End: () => items.length - 1,
+    }
+    const move = keys[event.key]
+    if (!move) return
+    event.preventDefault()
+    const index = items.findIndex((item) => item.item_id === selected)
+    const next = items[move(Math.max(0, index))]
+    if (!next) return
+    choose(next)
+    list.current?.querySelector<HTMLElement>(`[data-option="${CSS.escape(next.item_id)}"]`)?.focus()
+  }
   const body = (
     <div className="trade-picker">
       {items.length === 0 ? (
         <Text c="dimmed">{t('trade.picker.empty')}</Text>
       ) : (
         <>
-          <ul className="trade-picker-list" role="listbox" aria-label={t('trade.picker.title')}>
+          <ul
+            ref={list}
+            className="trade-picker-list"
+            role="listbox"
+            aria-label={t('trade.picker.title')}
+            onKeyDown={roam}
+          >
             {items.map((item) => {
               const inOffer = offered.get(item.item_id)
               return (
@@ -46,6 +70,8 @@ export function ItemPicker({
                   <UnstyledButton
                     role="option"
                     aria-selected={item.item_id === selected}
+                    tabIndex={item.item_id === selected ? 0 : -1}
+                    data-option={item.item_id}
                     className={`trade-picker-row rarity-${item.rarity}`}
                     onClick={() => choose(item)}
                   >
@@ -115,7 +141,8 @@ export function ItemPicker({
       size="auto"
       title={t('trade.picker.title')}
       closeButtonProps={close}
-      classNames={{ content: 'trade-picker-sheet' }}
+      returnFocus={false}
+      className="trade-picker-sheet"
     >
       {body}
     </Drawer>
@@ -126,6 +153,7 @@ export function ItemPicker({
       centered
       title={t('trade.picker.title')}
       closeButtonProps={close}
+      returnFocus={false}
     >
       {body}
     </Modal>

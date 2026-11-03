@@ -107,10 +107,13 @@ not re-run here; only the combat spec was.
   - Re-review 5 found N6, a regression where polling scrolled the drawer back every 4 s. It is
     fixed by applying placement once per error. An e2e assertion was added; it fails on the
     previous code and passes on the fix.
-- Re-review 6: **PASS** for fingerprint `e0b7fbc7…d164b`, recorded in
-  `docs/evidence/ui-review-current.json`.
-- Optional observation from re-review 6: `scroll-padding-top` on the drawer would stop keyboard
-  focus moving upward from landing under the sticky drawer header.
+- Re-review 6: **PASS** for fingerprint `e0b7fbc7…d164b`.
+- Also fixed at the user's request:
+  - `scroll-padding-top` on the drawer, from the optional observation in re-review 6. Re-review 7
+    PASS.
+  - N7, so that padding scales with text size. Re-review 8 **PASS** for fingerprint
+    `3c8b9224…cb35d`, recorded in `docs/evidence/ui-review-current.json`.
+  - No review findings remain open.
 
 ## Not tested / limitations
 

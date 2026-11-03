@@ -5,6 +5,7 @@ import { ArrowLeft, Maximize, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
+import { PageHead } from '@/shared/ui/page-head'
 import { QueryFeedback, useCampaign, useCampaignView } from '@/features/campaigns'
 import { charactersQuery } from '@/features/characters'
 import { combatStateQuery, encountersQuery, useCombatRealtime } from '../api'
@@ -35,7 +36,22 @@ function useCombatViewer() {
   /** A DM previewing a Player gets a presentation-only Player projection of the DM data. */
   const project = (data: CombatState | undefined) =>
     data && preview && data.viewer?.role === 'dm' ? previewAsPlayer(data, ownIds) : data
-  return { userId, campaignId: campaign.id, dm, project }
+  // Players (and a DM previewing one) reach combat only when the DM opened the module (ADR 012).
+  const enabled = (campaign.player_modules ?? []).includes('combat')
+  return { userId, campaignId: campaign.id, dm, enabled, project }
+}
+
+/** Same presentation as the other modules a DM has not opened yet. RLS still governs reads. */
+function HiddenCombat() {
+  const { t } = useTranslation()
+  return (
+    <Stack className="combat-page">
+      <PageHead title={t('module.combat')} />
+      <Paper p="xl">
+        <Text>{t('combat.hiddenModule')}</Text>
+      </Paper>
+    </Stack>
+  )
 }
 
 function useLiveState(encounterId: string | null, asTable = false) {
@@ -48,16 +64,12 @@ function useLiveState(encounterId: string | null, asTable = false) {
 
 export function CombatPage() {
   const { t } = useTranslation()
-  const { dm, campaignId } = useCombatViewer()
+  const { dm, enabled, campaignId } = useCombatViewer()
+  if (!dm && !enabled) return <HiddenCombat />
   if (dm)
     return (
       <Stack gap="lg" className="combat-page">
-        <div>
-          <Title order={1}>{t('combat.title')}</Title>
-          <Text c="dimmed" mt="sm">
-            {t('combat.intro.dm')}
-          </Text>
-        </div>
+        <PageHead title={t('combat.title')} description={t('combat.intro.dm')} compactOnPhone />
         <EncounterList campaignId={campaignId} />
         <Text size="xs" c="dimmed">
           {t('combat.srd')}
@@ -86,12 +98,7 @@ function PlayerCombat() {
     )
   return (
     <Stack gap="lg" className="combat-page">
-      <div>
-        <Title order={1}>{t('combat.title')}</Title>
-        <Text c="dimmed" mt="sm">
-          {t('combat.intro.player')}
-        </Text>
-      </div>
+      <PageHead title={t('combat.title')} description={t('combat.intro.player')} />
       <QueryFeedback pending={query.isPending} error={query.isError} retry={retry} />
       {query.data && (
         <Paper className="combat-empty-state" p="lg">
@@ -130,6 +137,12 @@ function NotFound() {
 }
 
 export function CombatEncounterPage() {
+  const { dm, enabled } = useCombatViewer()
+  if (!dm && !enabled) return <HiddenCombat />
+  return <EncounterScreen />
+}
+
+function EncounterScreen() {
   const { encounterId } = useParams()
   const { dm, campaignId } = useCombatViewer()
   const { query, data, connected, stale, retry } = useLiveState(encounterId ?? null)
@@ -159,6 +172,12 @@ export function CombatEncounterPage() {
 }
 
 export function CombatTablePage() {
+  const { dm, enabled } = useCombatViewer()
+  if (!dm && !enabled) return <HiddenCombat />
+  return <TableScreen />
+}
+
+function TableScreen() {
   const { t } = useTranslation()
   const { encounterId } = useParams()
   const { query, data, connected, stale, retry } = useLiveState(encounterId ?? null, true)

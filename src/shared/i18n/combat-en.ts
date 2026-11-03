@@ -7,6 +7,7 @@ export const combatEn = {
   'combat.none.title': 'No fight right now',
   'combat.none.body':
     'When the DM starts an encounter it appears here and you will be asked for your initiative.',
+  'combat.hiddenModule': 'Your DM has not opened combat yet.',
   'combat.notFound': 'This encounter is not available. It may have been deleted.',
   'combat.tab.encounters': 'Encounters',
   'combat.tab.bestiary': 'Bestiary',

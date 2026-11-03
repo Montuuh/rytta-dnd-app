@@ -290,3 +290,18 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
     await page.evaluate(() => (document.documentElement.style.fontSize = ''))
   }
 })
+
+test('RYT-007 Players reach combat only when the DM opened the module', async ({ page }) => {
+  const server = combatServer()
+  await identityFixture(page, { player: true, party: true, sheet: 'complete', modules: ['party'] })
+  await server.install(page)
+  server.seedActive()
+  const id = server.encounters[0]!.id
+  for (const path of ['combat', `combat/${id}`, `combat/${id}/table`]) {
+    await page.goto(`./#/campaign/${campaignId}/${path}`)
+    await expect(page.getByText('El DM todavía no ha abierto el combate.')).toBeVisible()
+    await expect(page.getByText('¡Te toca!')).toHaveCount(0)
+    await expect(page.locator('.combat-rail')).toHaveCount(0)
+  }
+  await audit(page)
+})

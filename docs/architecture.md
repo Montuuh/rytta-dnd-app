@@ -111,7 +111,12 @@ compensating undo and a summary live beside them. Players read the role projecti
 `get_combat_state`; realtime publishes only the secret-free `encounters` row, whose revision
 moves on every combat or fighting-character change, with polling as the fallback (ADR 024).
 
-Future domains: quests, glossary, media, maps/routes, strongholds and relationships.
+RYT-008 adds the glossary: bundled SRD 5.2.1/5.1 content (English and Spanish, CC-BY-4.0) as
+lazy JSON chunks, a `GlossaryLayer` that makes rules terms clickable on every campaign page
+through a reference sheet, and `glossary_entries` for campaign homebrew written through
+revision-checked RPCs and readable under the DM module switch (ADR 025).
+
+Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency
 keys, audit history and compensating undo. Never mutate whole-campaign JSON snapshots.

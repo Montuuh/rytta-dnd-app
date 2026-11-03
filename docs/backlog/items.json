@@ -338,24 +338,58 @@
     },
     {
       "id": "RYT-008",
-      "title": "Rules and homebrew glossary",
+      "title": "SRD 5.5e glossary, in-place term references and campaign homebrew",
       "priority": "P1",
-      "owner": "frontend",
+      "owner": "fullstack",
       "recommendedModel": {
         "id": "gpt-6.1-sol",
         "reasoningEffort": "medium"
       },
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-002"],
-      "sources": ["Drive: keyword glossary"],
-      "scope": "Searchable conditions, spells, items and homebrew references.",
+      "sources": [
+        "Drive: keyword glossary",
+        "User 2026-11-03: glossary as a D&D 5.5e bible, clickable terms everywhere, DM and Players share permissions, rules and spells, 2014 rules folded, homebrew editable, module switch respected."
+      ],
+      "scope": "Bundled SRD 5.2.1 rules glossary, abilities, skills, damage types, weapon properties/masteries and all spells in English and official Spanish, with SRD 5.1 (2014) blocks; search, categories, quick facts; inline term references across the app; campaign homebrew entries and house rules in Supabase.",
       "acceptance": [
         "Select licensed sources and record attribution before import.",
-        "Keyword search covers aliases and shows useful empty states.",
-        "Homebrew visibility is authorized and text is rendered safely."
+        "Keyword search covers aliases and both languages and shows useful empty states.",
+        "Every condition and action shows quick facts (action, save, check, effect, end) and the 2014 rule when it differs.",
+        "Rules terms on the sheet, party, inventory and shops open the same definition in place, with keyboard, Escape and focus return.",
+        "Homebrew visibility is authorized (DM, or Players with the module enabled; same permissions) and text is rendered safely."
       ],
-      "validation": ["Search/alias tests", "Content provenance review", "Keyboard search e2e"],
-      "evidence": []
+      "validation": [
+        "Search/alias tests",
+        "Content provenance review",
+        "Keyboard search e2e",
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests for anon, outsider, player and cross-campaign DM",
+        "PRE then reviewed production migration"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-008/validation.md",
+        "docs/decisions/025-glossary.md",
+        "docs/evidence/RYT-008/ui-review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-008/entry-grappled-mobile.png",
+        "docs/evidence/RYT-008/entry-grappled-tablet.png",
+        "docs/evidence/RYT-008/homebrew-editor-mobile.png",
+        "docs/evidence/RYT-008/homebrew-editor-tablet.png",
+        "docs/evidence/RYT-008/house-rule-mobile.png",
+        "docs/evidence/RYT-008/house-rule-tablet.png",
+        "docs/evidence/RYT-008/index-mobile.png",
+        "docs/evidence/RYT-008/index-tablet.png",
+        "docs/evidence/RYT-008/sheet-reference-mobile.png",
+        "docs/evidence/RYT-008/sheet-reference-tablet.png",
+        "docs/evidence/RYT-008/spell-filters-mobile.png",
+        "docs/evidence/RYT-008/spell-filters-tablet.png",
+        "docs/evidence/RYT-008/spell-light-mobile.png",
+        "docs/evidence/RYT-008/spell-light-tablet.png"
+      ]
     },
     {
       "id": "RYT-009",

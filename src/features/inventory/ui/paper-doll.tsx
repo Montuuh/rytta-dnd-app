@@ -1,3 +1,4 @@
+import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { useRef, useState } from 'react'
 import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -73,7 +74,14 @@ export function AttackLines({
           <span className="attack-damage">
             {line.dice}
             {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
-            {line.damageType ? ` ${t(`inventory.damage.${line.damageType}`)}` : ''}
+            {line.damageType && (
+              <>
+                {' '}
+                <GlossaryTerm id={glossaryIds.damage(line.damageType)}>
+                  {t(`inventory.damage.${line.damageType}`)}
+                </GlossaryTerm>
+              </>
+            )}
             {line.versatileDice
               ? ` · ${t('inventory.attacks.twoHands', { dice: line.versatileDice })}`
               : ''}

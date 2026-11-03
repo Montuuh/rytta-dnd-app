@@ -54,6 +54,8 @@ export async function identityFixture(
     party?: boolean
     /** RYT-034: sign in as another Player of the party fixture (for example peerId). */
     as?: string
+    /** RYT-008: seed one campaign homebrew house rule. */
+    homebrew?: boolean
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -241,6 +243,39 @@ export async function identityFixture(
   ]
   const calls: { method: string; body: Record<string, unknown> }[] = []
   let failList = false
+  let glossaryEntries: {
+    id: string
+    campaign_id: string
+    category: string
+    name: string
+    aliases: string[]
+    summary: string
+    body: string
+    facts: { label: string; value: string }[]
+    srd_ref: string | null
+    revision: number
+    created_by: string | null
+    updated_by: string | null
+    updated_at: string
+  }[] = options.homebrew
+    ? [
+        {
+          id: '50000000-0000-4000-8000-000000000001',
+          campaign_id: campaignId,
+          category: 'rule',
+          name: 'Descanso duro',
+          aliases: ['Gritty rest'],
+          summary: 'Un descanso largo dura una semana en un lugar seguro.',
+          body: 'Los descansos cortos duran 8 horas.\n\nEl agotamiento solo baja con un descanso duro.',
+          facts: [{ label: 'Duración', value: '7 días' }],
+          srd_ref: 'rule.long-rest',
+          revision: 1,
+          created_by: dmId,
+          updated_by: dmId,
+          updated_at: '2026-11-03T12:00:00Z',
+        },
+      ]
+    : []
   await page.route('https://rytta-test.supabase.co/**', async (route) => {
     const request = route.request()
     const url = new URL(request.url())
@@ -637,6 +672,54 @@ export async function identityFixture(
             )
           : campaigns.filter((c) => c.id !== body.target_campaign)
       return respond(null)
+    }
+    // RYT-008 homebrew glossary: RLS lets the DM, or a Player with the module on, read and write.
+    const glossaryAllowed = () => {
+      const campaign = campaigns.find((c) => c.id === campaignId)
+      return Boolean(
+        campaign && (campaign.role === 'dm' || campaign.player_modules.includes('glossary')),
+      )
+    }
+    if (method === 'glossary_entries')
+      return respond(
+        glossaryAllowed() ? glossaryEntries.filter((e) => e.campaign_id === eq('campaign_id')) : [],
+      )
+    if (method === 'save_glossary_entry') {
+      if (!glossaryAllowed()) return respond({ message: 'Forbidden' }, 403)
+      const payload = body.payload as Record<string, unknown>
+      const existing = glossaryEntries.find((e) => e.id === body.entry_id)
+      if (
+        glossaryEntries.some(
+          (e) =>
+            e.id !== body.entry_id &&
+            String(e.name).toLowerCase() === String(payload.name).toLowerCase(),
+        )
+      )
+        return respond({ message: 'Duplicate name' }, 400)
+      if (existing && existing.revision !== body.expected_revision)
+        return respond({ message: 'Stale revision' }, 400)
+      const saved = {
+        id: String(body.entry_id),
+        campaign_id: String(body.target_campaign),
+        category: String(payload.category),
+        name: String(payload.name),
+        aliases: (payload.aliases as string[]) ?? [],
+        summary: String(payload.summary ?? ''),
+        body: String(payload.body ?? ''),
+        facts: (payload.facts as { label: string; value: string }[]) ?? [],
+        srd_ref: (payload.srd_ref as string | null) ?? null,
+        revision: existing ? existing.revision + 1 : 1,
+        created_by: existing?.created_by ?? actor,
+        updated_by: actor,
+        updated_at: '2026-11-03T12:00:00Z',
+      }
+      glossaryEntries = [...glossaryEntries.filter((e) => e.id !== saved.id), saved]
+      return respond(saved)
+    }
+    if (method === 'delete_glossary_entry') {
+      if (!glossaryAllowed()) return respond({ message: 'Forbidden' }, 403)
+      glossaryEntries = glossaryEntries.filter((e) => e.id !== body.entry_id)
+      return respond({ id: body.entry_id, deleted: true })
     }
     return respond({ message: 'Unhandled test route' }, 500)
   })

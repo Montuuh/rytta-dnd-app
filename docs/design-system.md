@@ -135,3 +135,24 @@ open use `usePhone`/`useWide` so phones never paint the desktop variant first. D
 dismissive actions (remove, reject, decline, leave) use `color="red"` with the subtle, light or
 outline variant; they map to `--danger`. Visibility toggles are labelled switches. Read-only
 exhaustion is a dot meter; the DM gets six 44px numbered pips on one row.
+
+## Glossary (RYT-008)
+
+The glossary reads like a field dictionary: serif headwords and rules text, a quiet sans UI.
+
+- Search is the page's lead element: one large serif field (press `/`), Enter opens the best
+  match, ArrowDown/ArrowUp move through the results, Escape clears or returns to search. The
+  field owns its value and mirrors it to the URL (`?q=`) after a short pause. Categories are underlined `Tabs`
+  with counts. Results are ranked; without a query the index is alphabetical with a thumb index
+  (44px letter targets, one Tab stop with arrow keys) and sticky letter rules. No card grids or pills.
+- From 62em the index and the reader sit side by side; below, the reader is its own route with
+  a back link. Entries show category glyph, headword, the other language's name as a gloss,
+  a stat-block "At a glance" list (Lucide icons, ruled like a monster stat block), the rules
+  text, house rules in a gold callout, the 2014 rule in an Accordion and the SRD page.
+- Inline terms anywhere: dotted accent underline, no background, 44px hit area via a
+  pseudo-element. They open the reference sheet (bottom sheet on phones that hugs its content
+  up to 86dvh, side sheet from 48em, z-index above other drawers). The headword is the dialog
+  title and takes focus on every move through nested terms. Never wrap a term inside another
+  control.
+- Homebrew uses a side drawer form; entry actions live in a ⋯ menu. Saving moves focus to
+  the saved headword instead of showing a toast (top-right toasts would cover entry actions).

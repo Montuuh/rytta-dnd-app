@@ -27,6 +27,7 @@ import {
 } from '../../domain/rules'
 import { featureSources, type Vitals } from '../../domain/sheet'
 import { abilityKeys, conditionKeys, skillAbilities, skillKeys } from '../../domain/srd'
+import { GlossaryNameLink, GlossaryTerm, GlossaryText, glossaryIds } from '@/features/glossary'
 import { Pips } from './pips'
 import type { SheetProps } from './vitals-panel'
 
@@ -48,10 +49,12 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
               return (
                 <div key={key} className="ability-tile" data-proficient={proficient || undefined}>
                   <span className="ability-name">
-                    <abbr title={t(`srd.ability.${key}`)} aria-hidden="true">
-                      {t(`srd.abilityShort.${key}`)}
-                    </abbr>
-                    <span className="visually-hidden">{t(`srd.ability.${key}`)}</span>
+                    <GlossaryTerm id={glossaryIds.ability(key)}>
+                      <abbr title={t(`srd.ability.${key}`)} aria-hidden="true">
+                        {t(`srd.abilityShort.${key}`)}
+                      </abbr>
+                      <span className="visually-hidden">{t(`srd.ability.${key}`)}</span>
+                    </GlossaryTerm>
                   </span>
                   <span className="ability-mod">{signed(modifier(scores[key]))}</span>
                   <Text size="sm" c="dimmed">
@@ -74,7 +77,9 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
           <Stack gap="sm">
             <Group justify="space-between" wrap="wrap" gap="xs">
               <div>
-                <Text fw={600}>{t('sheet.hitDice')}</Text>
+                <Text fw={600}>
+                  <GlossaryTerm id="rule.hit-point-dice">{t('sheet.hitDice')}</GlossaryTerm>
+                </Text>
                 <Text size="sm" c="dimmed">
                   {t('sheet.hitDiceValue', {
                     left: hitDiceLeft,
@@ -103,7 +108,7 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
         </Paper>
         <Paper p="md" className="sheet-block">
           <Text fw={600} mb="xs">
-            {t('sheet.deathSaves')}
+            <GlossaryTerm id="rule.death-saving-throw">{t('sheet.deathSaves')}</GlossaryTerm>
           </Text>
           {(['death_successes', 'death_failures'] as const).map((field) => {
             const label = t(field === 'death_successes' ? 'sheet.successes' : 'sheet.failures')
@@ -137,7 +142,7 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
               }
             />
             <Text fw={600} id="conditions-title">
-              {t('sheet.conditions')}
+              <GlossaryTerm id="rule.condition">{t('sheet.conditions')}</GlossaryTerm>
             </Text>
             {canEdit ? (
               <>
@@ -146,6 +151,20 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
                     ? t('sheet.noConditions')
                     : t('sheet.conditionsHint')}
                 </Text>
+                {vitals.conditions.length > 0 && (
+                  // The chips toggle; the active conditions stay one tap from their rules.
+                  <Text size="sm" className="condition-links">
+                    {t('glossary.activeConditions')}{' '}
+                    {vitals.conditions.map((key, index) => (
+                      <span key={key}>
+                        {index > 0 && ', '}
+                        <GlossaryTerm id={glossaryIds.condition(key)}>
+                          {t(`srd.condition.${key}`)}
+                        </GlossaryTerm>
+                      </span>
+                    ))}
+                  </Text>
+                )}
                 <Chip.Group
                   multiple
                   value={[...vitals.conditions]}
@@ -173,7 +192,9 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
               <Group gap="xs">
                 {vitals.conditions.map((key) => (
                   <Badge key={key} size="lg" variant="outline" className="condition-badge">
-                    {t(`srd.condition.${key}`)}
+                    <GlossaryTerm id={glossaryIds.condition(key)}>
+                      {t(`srd.condition.${key}`)}
+                    </GlossaryTerm>
                   </Badge>
                 ))}
               </Group>
@@ -198,7 +219,9 @@ export function SummaryTab({ build, sheet, vitals, canEdit, pending, commit }: S
                       : ''}
                 </span>
                 <span className="skill-name">
-                  {t(`srd.skill.${skill}`)}
+                  <GlossaryTerm id={glossaryIds.skill(skill)}>
+                    {t(`srd.skill.${skill}`)}
+                  </GlossaryTerm>
                   {level && <span className="visually-hidden">, {t(`sheet.${level}`)}</span>}
                 </span>
                 <span className="skill-ability">
@@ -331,7 +354,11 @@ export function FeaturesTab({
                       <Accordion.Control className="user-copy">{feature.name}</Accordion.Control>
                       <Accordion.Panel>
                         <Text size="sm" className="user-copy preserve-lines">
-                          {feature.description || t('sheet.noDescription')}
+                          {feature.description ? (
+                            <GlossaryText text={feature.description} />
+                          ) : (
+                            t('sheet.noDescription')
+                          )}
                         </Text>
                       </Accordion.Panel>
                     </Accordion.Item>
@@ -383,11 +410,15 @@ export function SpellsTab({ build, sheet, vitals, canEdit, pending, commit }: Sh
       {casting ? (
         <dl className="sheet-stats sheet-stats-3">
           <div className="sheet-stat">
-            <dt>{t('sheet.spellDc')}</dt>
+            <dt>
+              <GlossaryTerm id="rule.difficulty-class">{t('sheet.spellDc')}</GlossaryTerm>
+            </dt>
             <dd>{casting.saveDc}</dd>
           </div>
           <div className="sheet-stat">
-            <dt>{t('sheet.spellAttack')}</dt>
+            <dt>
+              <GlossaryTerm id="rule.spell-attack">{t('sheet.spellAttack')}</GlossaryTerm>
+            </dt>
             <dd>{signed(casting.attack)}</dd>
           </div>
           <div className="sheet-stat">
@@ -470,8 +501,13 @@ export function SpellsTab({ build, sheet, vitals, canEdit, pending, commit }: Sh
                       </Accordion.Control>
                       <Accordion.Panel>
                         <Text size="sm" className="user-copy preserve-lines">
-                          {spell.notes || t('sheet.noDescription')}
+                          {spell.notes ? (
+                            <GlossaryText text={spell.notes} />
+                          ) : (
+                            t('sheet.noDescription')
+                          )}
                         </Text>
+                        <GlossaryNameLink name={spell.name} />
                       </Accordion.Panel>
                     </Accordion.Item>
                   ))}
@@ -497,7 +533,7 @@ export function NotesTab({ build }: SheetProps) {
         <section key={label}>
           <Text fw={600}>{t(label)}</Text>
           <Text size="sm" c={value ? undefined : 'dimmed'} className="user-copy preserve-lines">
-            {value || t('sheet.unset')}
+            {value ? <GlossaryText text={value} /> : t('sheet.unset')}
           </Text>
         </section>
       ))}

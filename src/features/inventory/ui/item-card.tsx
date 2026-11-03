@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+import { GlossaryTerm, GlossaryText, glossaryIds } from '@/features/glossary'
 import { useState } from 'react'
 import { Alert, Drawer, Group, NumberInput, Stack, Text, UnstyledButton } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -44,7 +46,7 @@ export function ItemCard({
   const [amount, setAmount] = useState<number | string>(1)
   const count = typeof amount === 'number' && amount >= 1 ? Math.trunc(amount) : 1
   const props = definition.properties
-  const facts: [string, string][] = [
+  const facts: [string, ReactNode][] = [
     [
       t('inventory.card.weight'),
       `${formatPounds(definition.weight_tenths / 10, i18n.language)} lb`,
@@ -64,12 +66,45 @@ export function ItemCard({
   if (props.dice)
     facts.push([
       t('inventory.card.damage'),
-      `${props.dice}${props.versatileDice ? ` (${props.versatileDice})` : ''}${props.damageType ? ` ${t(`inventory.damage.${props.damageType}`)}` : ''}`,
+      <>
+        {props.dice}
+        {props.versatileDice ? ` (${props.versatileDice})` : ''}
+        {props.damageType && (
+          <>
+            {' '}
+            <GlossaryTerm id={glossaryIds.damage(props.damageType)}>
+              {t(`inventory.damage.${props.damageType}`)}
+            </GlossaryTerm>
+          </>
+        )}
+      </>,
+    ])
+  // RYT-008: weapon properties link to their SRD rules.
+  const properties: [string, string][] = []
+  if (props.finesse) properties.push(['finesse', t('inventory.forge.finesse')])
+  if (props.thrown) properties.push(['thrown', t('glossary.property.thrown')])
+  if (props.versatileDice) properties.push(['versatile', t('glossary.property.versatile')])
+  if (definition.slot_kind === 'two_hands' && props.dice)
+    properties.push(['two-handed', t('glossary.property.twoHanded')])
+  if (properties.length)
+    facts.push([
+      t('glossary.weaponProperties'),
+      properties.map(([key, label], index) => (
+        <span key={key}>
+          {index > 0 && ', '}
+          <GlossaryTerm id={glossaryIds.property(key)}>{label}</GlossaryTerm>
+        </span>
+      )),
     ])
   if (props.range)
     facts.push([t('inventory.card.range'), `${props.range} ${t('inventory.card.feet')}`])
   if (props.stealthDisadvantage)
-    facts.push([t('inventory.card.stealth'), t('inventory.card.disadvantage')])
+    facts.push([
+      t('inventory.card.stealth'),
+      <GlossaryTerm key="stealth" id="rule.disadvantage">
+        {t('inventory.card.disadvantage')}
+      </GlossaryTerm>,
+    ])
   if (dm && definition.value_gp !== null)
     facts.push([t('inventory.card.value'), `${definition.value_gp} ${t('inventory.card.gp')}`])
   const equippable = slotsFor(definition.slot_kind).length > 0
@@ -108,7 +143,7 @@ export function ItemCard({
         </dl>
         {definition.description && (
           <Text size="sm" className="item-card-description user-copy preserve-lines">
-            {definition.description}
+            <GlossaryText text={definition.description} />
           </Text>
         )}
         {error && (

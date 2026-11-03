@@ -1,3 +1,4 @@
+import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
@@ -489,7 +490,11 @@ function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId:
             aria-label={t('party.liveConditions', { name: member.name })}
           >
             {conditions.map((condition) => (
-              <li key={condition}>{t(`srd.condition.${condition}`)}</li>
+              <li key={condition}>
+                <GlossaryTerm id={glossaryIds.condition(condition)}>
+                  {t(`srd.condition.${condition}`)}
+                </GlossaryTerm>
+              </li>
             ))}
           </ul>
         )}

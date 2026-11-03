@@ -1,3 +1,4 @@
+import { GlossaryTerm } from '@/features/glossary'
 import { useRef, useState } from 'react'
 import {
   ActionIcon,
@@ -56,12 +57,33 @@ export function VitalsPanel({
   const tempRatio = Math.min(100 - ratio, Math.round((vitals.temp_hp / sheet.max_hp) * 100))
   const tone = toneOf(vitals.current_hp, sheet.max_hp)
   const stats = [
-    { key: 'ac', label: t('sheet.acLong'), value: String(sheet.armor_class) },
-    { key: 'init', label: t('sheet.initiative'), value: signed(initiative(build)) },
-    { key: 'speed', label: t('sheet.speed'), value: t('sheet.speedValue', { value: build.speed }) },
-    { key: 'prof', label: t('sheet.proficiency'), value: signed(proficiencyBonus(sheet.level)) },
+    {
+      key: 'ac',
+      term: 'rule.armor-class',
+      label: t('sheet.acLong'),
+      value: String(sheet.armor_class),
+    },
+    {
+      key: 'init',
+      term: 'rule.initiative',
+      label: t('sheet.initiative'),
+      value: signed(initiative(build)),
+    },
+    {
+      key: 'speed',
+      term: 'rule.speed',
+      label: t('sheet.speed'),
+      value: t('sheet.speedValue', { value: build.speed }),
+    },
+    {
+      key: 'prof',
+      term: 'rule.proficiency',
+      label: t('sheet.proficiency'),
+      value: signed(proficiencyBonus(sheet.level)),
+    },
     {
       key: 'pp',
+      term: 'rule.passive-perception',
       label: t('sheet.passivePerception'),
       value: String(passivePerception(build, sheet.level)),
     },
@@ -97,14 +119,16 @@ export function VitalsPanel({
           />
           <div className="hp-meta">
             <Text size="sm" c="dimmed" id="hp-label">
-              {t('sheet.hp')}
+              <GlossaryTerm id="rule.hit-points">{t('sheet.hp')}</GlossaryTerm>
             </Text>
             <Text size="sm" className="hp-temp">
               {vitals.temp_hp > 0 ? t('sheet.tempValue', { value: vitals.temp_hp }) : ' '}
             </Text>
             {exhaustion !== undefined && exhaustion > 0 && (
               <Text size="sm" className="sheet-exhaustion">
-                {t('sheet.exhaustion', { value: exhaustion })}
+                <GlossaryTerm id="condition.exhaustion">
+                  {t('sheet.exhaustion', { value: exhaustion })}
+                </GlossaryTerm>
               </Text>
             )}
             {canEdit && (
@@ -163,7 +187,9 @@ export function VitalsPanel({
       <dl className="sheet-stats">
         {stats.map((stat) => (
           <div key={stat.key} className="sheet-stat">
-            <dt>{stat.label}</dt>
+            <dt>
+              <GlossaryTerm id={stat.term}>{stat.label}</GlossaryTerm>
+            </dt>
             <dd>{stat.value}</dd>
           </div>
         ))}

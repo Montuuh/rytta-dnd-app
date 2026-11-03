@@ -60,3 +60,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 33. [Combat design analysis](combat-design.md),
     [ADR 024: shared combat, role projection and the table display](decisions/024-combat.md)
     and [RYT-007 verification](evidence/RYT-007/validation.md).
+34. [ADR 025: SRD 5.5e glossary, term references and homebrew](decisions/025-glossary.md)
+    and [RYT-008 verification](evidence/RYT-008/validation.md).

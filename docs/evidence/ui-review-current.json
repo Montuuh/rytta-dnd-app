@@ -1,8 +1,8 @@
 {
-  "ticket": "RYT-007, RYT-036, RYT-037, RYT-038 (merged with RYT-035)",
+  "ticket": "RYT-008 (merged with RYT-007 combat)",
   "reviewer": "ui-ux",
   "verdict": "PASS",
   "reviewedAt": "2026-11-03",
-  "sourceDigest": "d6ab88f6c54b2de0314d9a853040e2bfde6f478f15aa447a973d5642eefd21d0",
-  "report": "docs/evidence/ui-review/combat/review.md"
+  "sourceDigest": "a1b57e8c26be2d5c6a478c726eb9de4b179a6f03904c81c658fa7a48e69fe7ee",
+  "report": "docs/evidence/RYT-008/ui-review.md"
 }

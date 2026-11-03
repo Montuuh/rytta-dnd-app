@@ -14,6 +14,7 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
@@ -31,6 +32,7 @@ import {
   Plus,
   Search,
   Store,
+  Trash2,
   X,
 } from 'lucide-react'
 import { useSearchParams } from 'react-router'
@@ -41,6 +43,7 @@ import {
   categoryIcons,
   CharacterPortrait,
   DefinitionEditor,
+  DeleteItemDialog,
   formatPounds,
   ItemIcon,
   itemCategories,
@@ -82,6 +85,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   )
   const [give, setGive] = useState<ItemDefinition | null>(null)
   const [shop, setShop] = useState<ItemDefinition | null>(null)
+  const [removing, setRemoving] = useState<ItemDefinition | null>(null)
   const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null)
   const phone = useMediaQuery('(max-width: 47.99em)')
   // Overlays opened from a ⋯ menu would otherwise "restore" focus to a menu item that no
@@ -153,9 +157,14 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         { replace: true },
       )
   }
-  const saved = (item: ItemDefinition, outcome?: GiveOutcome) => {
+  const saved = (item: ItemDefinition, outcome?: GiveOutcome, repriced?: number) => {
     closeEditor()
-    if (outcome?.failed.length)
+    if (repriced)
+      setNotice({
+        tone: 'ok',
+        text: t('lifecycle.syncDone', { name: item.name, count: repriced }),
+      })
+    else if (outcome?.failed.length)
       setNotice({
         tone: 'warn',
         text: t('store.givePartial', { name: item.name, names: outcome.failed.join(', ') }),
@@ -386,6 +395,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                 onEdit={() => setEditor({ item })}
                 onGive={() => setGive(item)}
                 onShop={() => setShop(item)}
+                onDelete={() => setRemoving(item)}
               />
             </li>
           ))}
@@ -425,6 +435,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                   onEdit={() => setEditor({ item })}
                   onGive={() => setGive(item)}
                   onShop={() => setShop(item)}
+                  onDelete={() => setRemoving(item)}
                 />
               </div>
             </li>
@@ -470,6 +481,23 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           }}
         />
       )}
+      {removing && (
+        <DeleteItemDialog
+          campaignId={campaignId}
+          item={removing}
+          onClose={() => {
+            setRemoving(null)
+            returnFocus()
+          }}
+          onDeleted={(item) => {
+            setRemoving(null)
+            // The row is gone: land on "New item" rather than a detached trigger.
+            trigger.current = null
+            setNotice({ tone: 'ok', text: t('lifecycle.deleted', { name: item.name }) })
+            returnFocus()
+          }}
+        />
+      )}
       {shop && (
         <CatalogueShopPicker
           campaignId={campaignId}
@@ -492,6 +520,7 @@ function ItemActions({
   onEdit,
   onGive,
   onShop,
+  onDelete,
 }: {
   item: ItemDefinition
   compact: boolean
@@ -499,6 +528,7 @@ function ItemActions({
   onEdit: () => void
   onGive: () => void
   onShop: () => void
+  onDelete: () => void
 }) {
   const { t } = useTranslation()
   const shopable = item.origin !== 'player'
@@ -512,32 +542,49 @@ function ItemActions({
   if (!compact)
     return (
       <div className="store-row-actions">
-        <ActionIcon
-          variant="subtle"
-          size={44}
-          aria-label={t('store.giveItem', { name: item.name })}
-          title={t('catalogue.give')}
-          onClick={(event) => {
-            onTrigger(event.currentTarget)
-            onGive()
-          }}
-        >
-          <Gift size={19} aria-hidden="true" />
-        </ActionIcon>
-        {shopable && (
+        <Tooltip label={t('catalogue.give')} openDelay={300} withinPortal>
           <ActionIcon
             variant="subtle"
             size={44}
-            aria-label={t('store.shopItem', { name: item.name })}
-            title={t('catalogue.addToShop')}
+            aria-label={t('store.giveItem', { name: item.name })}
             onClick={(event) => {
               onTrigger(event.currentTarget)
-              onShop()
+              onGive()
             }}
           >
-            <Store size={19} aria-hidden="true" />
+            <Gift size={19} aria-hidden="true" />
           </ActionIcon>
+        </Tooltip>
+        {shopable && (
+          <Tooltip label={t('catalogue.addToShop')} openDelay={300} withinPortal>
+            <ActionIcon
+              variant="subtle"
+              size={44}
+              aria-label={t('store.shopItem', { name: item.name })}
+              onClick={(event) => {
+                onTrigger(event.currentTarget)
+                onShop()
+              }}
+            >
+              <Store size={19} aria-hidden="true" />
+            </ActionIcon>
+          </Tooltip>
         )}
+        <Tooltip label={t('store.delete')} openDelay={300} withinPortal>
+          <ActionIcon
+            variant="subtle"
+            color="red"
+            size={44}
+            className="store-delete"
+            aria-label={t('store.deleteItem', { name: item.name })}
+            onClick={(event) => {
+              onTrigger(event.currentTarget)
+              onDelete()
+            }}
+          >
+            <Trash2 size={19} aria-hidden="true" />
+          </ActionIcon>
+        </Tooltip>
       </div>
     )
   return (
@@ -575,6 +622,14 @@ function ItemActions({
             {t('catalogue.addToShop')}
           </Menu.Item>
         )}
+        <Menu.Divider />
+        <Menu.Item
+          color="red"
+          leftSection={<Trash2 size={18} aria-hidden="true" />}
+          onClick={choose(onDelete)}
+        >
+          {t('store.delete')}
+        </Menu.Item>
       </Menu.Dropdown>
     </Menu>
   )

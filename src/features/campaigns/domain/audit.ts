@@ -9,6 +9,15 @@ export function auditFamily(event: AuditEvent): AuditEventFamily {
   return 'character'
 }
 
+/** True only when a characters:UPDATE row switched the RYT-044 active character flag
+ * without a change of owner (linking and unlinking keep their own wording). */
+export const activeChanged = (event: AuditEvent) =>
+  event.kind === 'characters:UPDATE' &&
+  typeof event.after_value.is_active === 'boolean' &&
+  typeof event.before_value?.is_active === 'boolean' &&
+  event.before_value.is_active !== event.after_value.is_active &&
+  (event.before_value.user_id ?? null) === (event.after_value.user_id ?? null)
+
 /** True only when a characters:UPDATE row flipped RYT-031 party live sharing. */
 export const sharingChanged = (event: AuditEvent) =>
   event.kind === 'characters:UPDATE' &&

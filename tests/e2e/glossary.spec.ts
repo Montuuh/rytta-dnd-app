@@ -352,6 +352,13 @@ test('the editor footer reflows at 150% text on a phone without clipping Save', 
   const save = editor.getByRole('button', { name: 'Guardar cambios' })
   await expect(save).toBeVisible()
   const width = page.viewportSize()!.width
+  // The drawer may still be sliding in; measure once it has settled inside the viewport.
+  await expect
+    .poll(async () => {
+      const b = await save.boundingBox()
+      return b ? b.x + b.width : Infinity
+    })
+    .toBeLessThanOrEqual(width)
   const box = (await save.boundingBox())!
   expect(box.x).toBeGreaterThanOrEqual(0)
   expect(box.x + box.width).toBeLessThanOrEqual(width)
@@ -491,6 +498,8 @@ test('deleting homebrew asks first, names the entry and removes it from the glos
   await expect(dialog).toContainText('No se puede deshacer')
   // Cancel holds the initial focus: Enter never deletes by accident.
   await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused()
+  // On phones the ⋯ menu closes behind the dialog; audit once it is gone.
+  await expect(page.getByRole('menu')).toHaveCount(0)
   await audit(page)
   await evidence(page, info.project.name, 'delete-confirm', 'RYT-040')
   await page.keyboard.press('Escape')

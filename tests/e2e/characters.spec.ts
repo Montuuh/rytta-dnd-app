@@ -113,7 +113,7 @@ test('assignment explains unavailable Players and recovers from failed member re
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Centro de mando DM')
 })
 
-test('a Player already linked to another character is not offered again', async ({
+test('RYT-044 a linked Player can receive a second character, which waits in reserve', async ({
   page,
 }, info) => {
   await identityFixture(page)
@@ -132,14 +132,21 @@ test('a Player already linked to another character is not offered again', async 
     .getByRole('button', { name: 'Crear personaje', exact: true })
     .click()
   await characterAction(page, 'Second hero', 'Vincular jugador')
-  await expect(
-    page.getByText('Todos los jugadores ya tienen personaje.', { exact: false }),
-  ).toBeVisible()
-  await expect(page.getByRole('combobox')).toHaveCount(0)
-  await expect(
-    page.getByRole('dialog').getByRole('button', { name: 'Vincular jugador', exact: true }),
-  ).toBeDisabled()
-  await capture(page, info.outputPath('all-players-linked.png'))
+  // Below the limit of four the linked Player is still offered.
+  await page.getByRole('combobox').selectOption(playerId)
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Vincular jugador', exact: true })
+    .click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  // Arin stays active; the new character leaves Party for the reserve.
+  await expect(page.getByRole('heading', { name: 'Second hero', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Personajes de los jugadores, 1 en reserva' }).click()
+  const arin = page.getByRole('region', { name: 'Arin' })
+  await expect(arin.getByRole('group', { name: 'Arin' })).toContainText('Activo')
+  await expect(arin.getByRole('group', { name: 'Second hero' })).toContainText('En reserva')
+  await capture(page, info.outputPath('dm-roster.png'))
 })
 
 test('DM creates before assignment, edits whole homebrew units and recovers from a stale editor', async ({
@@ -345,7 +352,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByText('Vista de Arin')).toBeVisible()
-  await expect(page.getByText('Tu DM todavía no te ha asignado un personaje.')).toBeVisible()
+  await expect(page.getByText('Este jugador todavía no tiene personaje.')).toBeVisible()
   await capture(page, info.outputPath('player-preview.png'))
   expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
   await page.getByRole('button', { name: 'Volver a vista DM', exact: true }).click()

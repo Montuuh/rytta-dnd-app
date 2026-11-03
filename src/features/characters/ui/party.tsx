@@ -21,6 +21,7 @@ import {
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import {
+  Archive,
   Backpack,
   Coins,
   Heart,
@@ -48,7 +49,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { Link } from 'react-router'
+import { ArchiveDialog, FirstCharacter, RosterLink } from './roster'
 import {
+  useOwnRoster,
+  characterRosterQuery,
   charactersQuery,
   partyOverviewQuery,
   sheetSummariesQuery,
@@ -87,10 +91,17 @@ export function CharacterParty() {
   const members = useQuery({ ...membersQuery(state.user!.id, campaign.id), enabled: dm })
   const summaries = useQuery(sheetSummariesQuery(state.user!.id, campaign.id))
   const overview = useQuery(partyOverviewQuery(state.user!.id, campaign.id))
+  // RYT-044: the Player's roster feeds the manager entry point; the DM's shows the reserve.
+  const own = useOwnRoster(campaign.id, dm ? null : (filterUserId ?? null))
+  const dmRoster = useQuery({ ...characterRosterQuery(state.user!.id, campaign.id), enabled: dm })
   // A DM previewing a Player acts as that Player; the server still authorizes as the DM.
   const viewerId = playerPreview ? previewUserId : state.user!.id
   const ownIds = new Set((query.data ?? []).map((character) => character.id))
-  const teammates = !dm && overview.data ? sharedTeammates(overview.data, ownIds) : null
+  // A Player still choosing a first character has no teammates panel yet (RYT-044 onboarding).
+  const teammates =
+    !dm && overview.data && (query.data?.length ?? 0) > 0
+      ? sharedTeammates(overview.data, ownIds)
+      : null
   const opener = useRef<HTMLElement | null>(null)
   const fallback = useRef<string | null>(null)
   const open = (next: PartyEditor, target: HTMLElement) => {
@@ -111,19 +122,36 @@ export function CharacterParty() {
   >(null)
   const [shareError, setShareError] = useState(false)
   const [resourceError, setResourceError] = useState<'stale' | 'unavailable' | null>(null)
+  // RYT-044: the DM archives unassigned characters from their card menu.
+  const [archiving, setArchiving] = useState<Character | null>(null)
+  const [archivedNotice, setArchivedNotice] = useState<string | null>(null)
+  const archivedNoticeRef = useRef<HTMLDivElement>(null)
+  const onboarding = !dm && !playerPreview && query.data?.length === 0
   return (
     <Stack gap="lg">
       <PageHead
         title={t('characters.title')}
-        description={t(dm ? 'characters.intro' : 'characters.playerIntro')}
+        description={onboarding ? undefined : t(dm ? 'characters.intro' : 'characters.playerIntro')}
         actions={
-          dm && (
-            <Button
-              leftSection={<Plus size={18} aria-hidden="true" />}
-              onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
-            >
-              {t('characters.create')}
-            </Button>
+          dm ? (
+            // One wrapper: on phones each PageHead action takes the whole second row.
+            <div className="party-head-actions">
+              <RosterLink
+                dm
+                entries={(dmRoster.data ?? []).filter(
+                  (entry) => entry.user_id && !entry.is_active && !entry.archived_at,
+                )}
+              />
+              <Button
+                leftSection={<Plus size={18} aria-hidden="true" />}
+                onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
+              >
+                {t('characters.create')}
+              </Button>
+            </div>
+          ) : (
+            own.roster &&
+            own.roster.entries.length > 0 && <RosterLink dm={false} entries={own.roster.entries} />
           )
         }
         refresh={
@@ -145,6 +173,24 @@ export function CharacterParty() {
       </PageHead>
       <PullToRefresh onRefresh={() => void query.refetch()} />
       {notice && <Alert role="status">{t(notice)}</Alert>}
+      {archivedNotice && (
+        <Alert
+          ref={archivedNoticeRef}
+          tabIndex={-1}
+          role="status"
+          withCloseButton
+          closeButtonLabel={t('roster.dismiss')}
+          onClose={() => {
+            setArchivedNotice(null)
+            // Back to the page's first action (the roster link) rather than the document body.
+            requestAnimationFrame(() =>
+              document.querySelector<HTMLElement>('.party-head-actions a, .roster-link')?.focus(),
+            )
+          }}
+        >
+          {archivedNotice}
+        </Alert>
+      )}
       {resourceError && (
         <Alert color="red" role="alert" withCloseButton onClose={() => setResourceError(null)}>
           {t(resourceError === 'stale' ? 'party.resourceStale' : 'characters.unavailable')}
@@ -164,11 +210,16 @@ export function CharacterParty() {
           </Button>
         </Alert>
       )}
-      {!query.isError && query.data?.length === 0 && (
-        <Paper p="xl">
-          <Text>{t(dm ? 'characters.empty' : 'characters.emptyPlayer')}</Text>
-        </Paper>
-      )}
+      {!query.isError &&
+        query.data?.length === 0 &&
+        // RYT-044: a Player without characters is guided to create the first one.
+        (!dm && !playerPreview ? (
+          <FirstCharacter withArchived={(own.roster?.archived.length ?? 0) > 0} archivedLink />
+        ) : (
+          <Paper p="xl">
+            <Text>{t(dm ? 'characters.empty' : 'characters.emptyPlayer')}</Text>
+          </Paper>
+        ))}
       {!query.isError && (
         <div className={`party-grid ${(query.data?.length ?? 0) > 1 ? 'is-many' : 'is-single'}`}>
           {query.data?.map((character) => {
@@ -261,6 +312,10 @@ export function CharacterParty() {
                         inventoryPath={`/campaign/${campaign.id}/inventory?character=${character.id}`}
                         onAssign={(target) => open({ kind: 'assignment', character }, target)}
                         onResources={(target) => open({ kind: 'resources', character }, target)}
+                        onArchive={(target) => {
+                          opener.current = target
+                          setArchiving(character)
+                        }}
                       />
                     </header>
                   </Stack>
@@ -327,6 +382,21 @@ export function CharacterParty() {
         </section>
       )}
       <TradeHistory />
+      {archiving && (
+        <ArchiveDialog
+          entry={archiving}
+          onClose={() => {
+            setArchiving(null)
+            requestAnimationFrame(() => opener.current?.focus())
+          }}
+          onArchived={(text) => {
+            setArchiving(null)
+            setArchivedNotice(text)
+            // The card is gone; continue from the outcome message.
+            requestAnimationFrame(() => archivedNoticeRef.current?.focus())
+          }}
+        />
+      )}
       {editor?.kind === 'assignment' && (
         <PlayerAssignmentEditor
           character={editor.character}
@@ -512,6 +582,7 @@ function CharacterMenu({
   inventoryPath,
   onAssign,
   onResources,
+  onArchive,
 }: {
   character: Character
   dm: boolean
@@ -520,6 +591,7 @@ function CharacterMenu({
   inventoryPath: string
   onAssign: (target: HTMLElement) => void
   onResources: (target: HTMLElement) => void
+  onArchive: (target: HTMLElement) => void
 }) {
   const { t } = useTranslation()
   const trigger = useRef<HTMLButtonElement>(null)
@@ -578,6 +650,16 @@ function CharacterMenu({
         >
           {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
         </Menu.Item>
+        {/* RYT-044: unassigned characters can be archived here; Player characters from the
+            roster manager. */}
+        {!character.user_id && (
+          <Menu.Item
+            leftSection={<Archive size={18} aria-hidden="true" />}
+            onClick={() => trigger.current && onArchive(trigger.current)}
+          >
+            {t('roster.archive')}
+          </Menu.Item>
+        )}
       </Menu.Dropdown>
     </Menu>
   )

@@ -28,3 +28,7 @@ export type CharacterAction =
   | { kind: 'unassign'; characterId: string; expectedUser: string }
   | { kind: 'resources'; characterId: string; values: Resources; requestId: string }
   | { kind: 'liveSharing'; characterId: string; enabled: boolean }
+  // RYT-044: a Player's own roster.
+  | { kind: 'createOwn'; name: string; requestId: string }
+  | { kind: 'activate'; characterId: string }
+  | { kind: 'archive' | 'restore'; characterId: string }

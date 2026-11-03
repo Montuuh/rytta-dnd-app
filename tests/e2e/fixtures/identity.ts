@@ -10,6 +10,17 @@ export const peerId = '10000000-0000-4000-8000-000000000003'
 export const hiddenPeerId = '10000000-0000-4000-8000-000000000004'
 export const beaId = '40000000-0000-4000-8000-0000000000b1'
 export const catoId = '40000000-0000-4000-8000-0000000000c1'
+/** RYT-044 reserve characters of the Player (fixture option `reserve`). */
+export const reserveIds = [
+  '40000000-0000-4000-8000-0000000000d1',
+  '40000000-0000-4000-8000-0000000000d2',
+  '40000000-0000-4000-8000-0000000000d3',
+]
+/** RYT-044 archived characters of the Player (fixture option `archived`). */
+export const archivedIds = [
+  '40000000-0000-4000-8000-0000000000f1',
+  '40000000-0000-4000-8000-0000000000f2',
+]
 export const storageKey = 'sb-rytta-test-auth-token'
 export function session(id = dmId) {
   const email = id === dmId ? 'dm@example.com' : 'player@example.com'
@@ -56,6 +67,10 @@ export async function identityFixture(
     as?: string
     /** RYT-008: seed one campaign homebrew house rule. */
     homebrew?: boolean
+    /** RYT-044: names of extra Player characters in reserve (up to three). */
+    reserve?: string[]
+    /** RYT-044: names of archived Player characters (up to two). */
+    archived?: string[]
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -116,15 +131,35 @@ export async function identityFixture(
         ]
       : []),
   ]
-  let characters =
+  type FixtureCharacter = {
+    id: string
+    campaign_id: string
+    user_id: string | null
+    name: string
+    /** RYT-044: the owner's character in play; unassigned characters are always active. */
+    is_active: boolean
+    /** RYT-044: archived characters leave the roster and every campaign list. */
+    archived_at?: string | null
+    created_at: string
+    character_resources: {
+      gold: number
+      water_units: number
+      rations: number
+      exhaustion: number
+      revision: number
+    }
+  }
+  let characters: FixtureCharacter[] =
     options.empty || options.noCharacters
       ? []
       : [
           {
             id: characterId,
             campaign_id: campaignId,
-            user_id: options.player || options.linkedPlayer ? playerId : (null as string | null),
+            user_id: options.player || options.linkedPlayer ? playerId : null,
             name: 'Arin',
+            is_active: true,
+            created_at: '2026-10-27T00:00:00Z',
             character_resources: {
               gold: 25,
               water_units: 3,
@@ -144,8 +179,33 @@ export async function identityFixture(
         campaign_id: campaignId,
         user_id,
         name,
+        is_active: true,
+        created_at: '2026-10-27T00:00:00Z',
         character_resources: { gold, water_units: 9, rations: 8, exhaustion: 0, revision: 0 },
       })
+  // RYT-044: extra characters of the Player waiting in reserve (Arin stays active).
+  for (const [index, name] of (options.reserve ?? []).entries())
+    characters.push({
+      id: reserveIds[index]!,
+      campaign_id: campaignId,
+      user_id: playerId,
+      name,
+      is_active: false,
+      created_at: `2026-10-28T0${index}:00:00Z`,
+      character_resources: { gold: 5, water_units: 1, rations: 1, exhaustion: 0, revision: 0 },
+    })
+  // RYT-044: archived characters of the Player.
+  for (const [index, name] of (options.archived ?? []).entries())
+    characters.push({
+      id: archivedIds[index]!,
+      campaign_id: campaignId,
+      user_id: playerId,
+      name,
+      is_active: false,
+      archived_at: '2026-11-01T00:00:00Z',
+      created_at: `2026-10-26T0${index}:00:00Z`,
+      character_resources: { gold: 1, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
+    })
   const sharesLive = new Map<string, boolean>(characters.map((c) => [c.id, c.id !== catoId]))
   type SheetRow = {
     status: string
@@ -464,22 +524,114 @@ export async function identityFixture(
       })
       return respond(state.revision)
     }
-    if (method === 'characters')
+    if (method === 'characters') {
+      // PostgREST filters used by the app: user_id=eq.X or user_id=not.is.null, is_active=eq.true.
+      const userFilters = url.searchParams.getAll('user_id')
+      const select = url.searchParams.get('select') ?? ''
       return respond(
         characters
           .filter((c) => c.campaign_id === eq('campaign_id'))
           .filter((c) => !eq('id') || c.id === eq('id'))
+          .filter((c) =>
+            userFilters.every((filter) =>
+              filter === 'not.is.null'
+                ? c.user_id !== null
+                : c.user_id === filter.replace('eq.', ''),
+            ),
+          )
+          .filter((c) => url.searchParams.get('is_active') !== 'eq.true' || c.is_active)
+          // or=(user_id.not.is.null,archived_at.not.is.null): Player or archived characters.
           .filter(
             (c) =>
-              !url.searchParams.get('user_id') ||
-              c.user_id === url.searchParams.get('user_id')?.replace('eq.', ''),
+              !url.searchParams.get('or')?.includes('archived_at') ||
+              c.user_id !== null ||
+              Boolean(c.archived_at),
           )
           .map((c) =>
-            url.searchParams.get('select')?.includes('character_resources')
-              ? { ...c, character_resources: [c.character_resources] }
-              : { id: c.id, name: c.name, user_id: c.user_id },
+            select.includes('character_resources')
+              ? {
+                  id: c.id,
+                  campaign_id: c.campaign_id,
+                  user_id: c.user_id,
+                  name: c.name,
+                  character_resources: [c.character_resources],
+                }
+              : select.includes('is_active')
+                ? {
+                    id: c.id,
+                    campaign_id: c.campaign_id,
+                    user_id: c.user_id,
+                    name: c.name,
+                    is_active: c.is_active,
+                    archived_at: c.archived_at ?? null,
+                    created_at: c.created_at,
+                  }
+                : { id: c.id, name: c.name, user_id: c.user_id },
           ),
       )
+    }
+    // RYT-044 archive: owner or DM; never the active Player character; restore needs a slot.
+    if (method === 'archive_character' || method === 'restore_character') {
+      const target = characters.find(
+        (c) => c.id === body.target_character && c.campaign_id === body.target_campaign,
+      )
+      const isDm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (!target || !(isDm || target.user_id === actor))
+        return respond({ message: 'Character unavailable' }, 403)
+      if (method === 'archive_character') {
+        if (target.user_id && target.is_active && !target.archived_at)
+          return respond({ message: 'Active character' }, 400)
+        target.is_active = false
+        target.archived_at ??= '2026-11-03T12:00:00Z'
+        return respond({ id: target.id, archived: true })
+      }
+      if (target.archived_at) {
+        const inRoster = characters.filter(
+          (c) =>
+            target.user_id &&
+            c.campaign_id === target.campaign_id &&
+            c.user_id === target.user_id &&
+            !c.archived_at,
+        )
+        if (target.user_id && inRoster.length >= 4)
+          return respond({ message: 'Character limit' }, 400)
+        target.archived_at = null
+        target.is_active = !target.user_id || !inRoster.some((c) => c.is_active)
+      }
+      return respond({ id: target.id, archived: false })
+    }
+    // RYT-044 roster RPCs: limit 4 per Player, exactly one active character.
+    if (method === 'create_own_character') {
+      const owned = characters.filter(
+        (c) => c.campaign_id === body.target_campaign && c.user_id === actor,
+      )
+      if (owned.filter((c) => !c.archived_at).length >= 4)
+        return respond({ message: 'Character limit' }, 400)
+      const id = '40000000-0000-4000-8000-0000000000e' + String(owned.length + 1)
+      characters.push({
+        id,
+        campaign_id: String(body.target_campaign),
+        user_id: actor,
+        name: String(body.character_name).trim(),
+        is_active: !owned.some((c) => c.is_active),
+        created_at: `2026-11-03T0${owned.length}:00:00Z`,
+        character_resources: { gold: 0, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
+      })
+      sheets.set(id, blankSheet())
+      vitals.set(id, blankVitals())
+      return respond(id)
+    }
+    if (method === 'set_active_character') {
+      const target = characters.find(
+        (c) => c.id === body.target_character && c.campaign_id === body.target_campaign,
+      )
+      if (!target || target.user_id !== actor)
+        return respond({ message: 'Character unavailable' }, 403)
+      for (const c of characters)
+        if (c.campaign_id === target.campaign_id && c.user_id === actor)
+          c.is_active = c.id === target.id
+      return respond(target.id)
+    }
     if (method === 'create_character') {
       const id = '40000000-0000-4000-8000-' + String(characters.length + 2).padStart(12, '0')
       const name = String(body.character_name)
@@ -489,6 +641,8 @@ export async function identityFixture(
         campaign_id: targetCampaign,
         user_id: null,
         name,
+        is_active: true,
+        created_at: '2026-10-27T01:00:00Z',
         character_resources: { gold: 0, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
       })
       sheets.set(id, blankSheet())
@@ -531,8 +685,11 @@ export async function identityFixture(
     }
     if (method === 'assign_character') {
       const target = characters.find((c) => c.id === body.target_character)
+      const playsOne = characters.some((c) => c.user_id === body.target_user && c.is_active)
       characters = characters.map((c) =>
-        c.id === body.target_character ? { ...c, user_id: String(body.target_user) } : c,
+        c.id === body.target_character
+          ? { ...c, user_id: String(body.target_user), is_active: !playsOne }
+          : c,
       )
       if (target) {
         characterEvents.unshift({
@@ -551,7 +708,7 @@ export async function identityFixture(
     if (method === 'unassign_character') {
       const target = characters.find((c) => c.id === body.target_character)
       characters = characters.map((c) =>
-        c.id === body.target_character ? { ...c, user_id: null } : c,
+        c.id === body.target_character ? { ...c, user_id: null, is_active: true } : c,
       )
       if (target) {
         characterEvents.unshift({
@@ -571,7 +728,7 @@ export async function identityFixture(
       const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
       return respond(
         characters
-          .filter((c) => c.campaign_id === body.target_campaign)
+          .filter((c) => c.campaign_id === body.target_campaign && c.is_active)
           .filter(
             (c) =>
               dm || c.user_id === actor || (c.user_id !== null && sharesLive.get(c.id) !== false),
@@ -657,7 +814,7 @@ export async function identityFixture(
     if (method === 'change_campaign_member') {
       if (!body.new_role) {
         characters = characters.map((c) =>
-          c.user_id === body.target_user ? { ...c, user_id: null } : c,
+          c.user_id === body.target_user ? { ...c, user_id: null, is_active: true } : c,
         )
       }
       members = body.new_role

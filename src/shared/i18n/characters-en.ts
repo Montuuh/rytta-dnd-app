@@ -17,7 +17,7 @@ export const charactersEn = {
   'account.settings': 'Preferences',
   'characters.title': 'Party',
   'characters.intro': 'Create characters, link their Players and manage their resources.',
-  'characters.playerIntro': 'Your character and resources. Ask your DM to make changes.',
+  'characters.playerIntro': 'Your active character, its resources and your tablemates.',
   'characters.rules': 'Homebrew · Whole gold, food and water rations · Manual exhaustion',
   'characters.create': 'Create character',
   'characters.name': 'Character name',

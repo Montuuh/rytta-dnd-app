@@ -21,6 +21,7 @@ import {
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import {
+  Archive,
   Backpack,
   Coins,
   Heart,
@@ -48,7 +49,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { Link } from 'react-router'
-import { FirstCharacter, RosterLink } from './roster'
+import { ArchiveDialog, FirstCharacter, RosterLink } from './roster'
 import {
   useOwnRoster,
   characterRosterQuery,
@@ -121,16 +122,25 @@ export function CharacterParty() {
   >(null)
   const [shareError, setShareError] = useState(false)
   const [resourceError, setResourceError] = useState<'stale' | 'unavailable' | null>(null)
+  // RYT-044: the DM archives unassigned characters from their card menu.
+  const [archiving, setArchiving] = useState<Character | null>(null)
+  const [archivedNotice, setArchivedNotice] = useState<string | null>(null)
+  const onboarding = !dm && !playerPreview && query.data?.length === 0
   return (
     <Stack gap="lg">
       <PageHead
         title={t('characters.title')}
-        description={t(dm ? 'characters.intro' : 'characters.playerIntro')}
+        description={onboarding ? undefined : t(dm ? 'characters.intro' : 'characters.playerIntro')}
         actions={
           dm ? (
             // One wrapper: on phones each PageHead action takes the whole second row.
             <div className="party-head-actions">
-              <RosterLink dm entries={(dmRoster.data ?? []).filter((entry) => !entry.is_active)} />
+              <RosterLink
+                dm
+                entries={(dmRoster.data ?? []).filter(
+                  (entry) => entry.user_id && !entry.is_active && !entry.archived_at,
+                )}
+              />
               <Button
                 leftSection={<Plus size={18} aria-hidden="true" />}
                 onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
@@ -162,6 +172,16 @@ export function CharacterParty() {
       </PageHead>
       <PullToRefresh onRefresh={() => void query.refetch()} />
       {notice && <Alert role="status">{t(notice)}</Alert>}
+      {archivedNotice && (
+        <Alert
+          role="status"
+          withCloseButton
+          closeButtonLabel={t('roster.dismiss')}
+          onClose={() => setArchivedNotice(null)}
+        >
+          {archivedNotice}
+        </Alert>
+      )}
       {resourceError && (
         <Alert color="red" role="alert" withCloseButton onClose={() => setResourceError(null)}>
           {t(resourceError === 'stale' ? 'party.resourceStale' : 'characters.unavailable')}
@@ -283,6 +303,10 @@ export function CharacterParty() {
                         inventoryPath={`/campaign/${campaign.id}/inventory?character=${character.id}`}
                         onAssign={(target) => open({ kind: 'assignment', character }, target)}
                         onResources={(target) => open({ kind: 'resources', character }, target)}
+                        onArchive={(target) => {
+                          opener.current = target
+                          setArchiving(character)
+                        }}
                       />
                     </header>
                   </Stack>
@@ -349,6 +373,19 @@ export function CharacterParty() {
         </section>
       )}
       <TradeHistory />
+      {archiving && (
+        <ArchiveDialog
+          entry={archiving}
+          onClose={() => {
+            setArchiving(null)
+            requestAnimationFrame(() => opener.current?.focus())
+          }}
+          onArchived={(text) => {
+            setArchiving(null)
+            setArchivedNotice(text)
+          }}
+        />
+      )}
       {editor?.kind === 'assignment' && (
         <PlayerAssignmentEditor
           character={editor.character}
@@ -534,6 +571,7 @@ function CharacterMenu({
   inventoryPath,
   onAssign,
   onResources,
+  onArchive,
 }: {
   character: Character
   dm: boolean
@@ -542,6 +580,7 @@ function CharacterMenu({
   inventoryPath: string
   onAssign: (target: HTMLElement) => void
   onResources: (target: HTMLElement) => void
+  onArchive: (target: HTMLElement) => void
 }) {
   const { t } = useTranslation()
   const trigger = useRef<HTMLButtonElement>(null)
@@ -600,6 +639,16 @@ function CharacterMenu({
         >
           {t(character.user_id ? 'characters.unassign' : 'characters.assign')}
         </Menu.Item>
+        {/* RYT-044: unassigned characters can be archived here; Player characters from the
+            roster manager. */}
+        {!character.user_id && (
+          <Menu.Item
+            leftSection={<Archive size={18} aria-hidden="true" />}
+            onClick={() => trigger.current && onArchive(trigger.current)}
+          >
+            {t('roster.archive')}
+          </Menu.Item>
+        )}
       </Menu.Dropdown>
     </Menu>
   )

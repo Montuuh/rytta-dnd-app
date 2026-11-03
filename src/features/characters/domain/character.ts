@@ -31,3 +31,4 @@ export type CharacterAction =
   // RYT-044: a Player's own roster.
   | { kind: 'createOwn'; name: string; requestId: string }
   | { kind: 'activate'; characterId: string }
+  | { kind: 'archive' | 'restore'; characterId: string }

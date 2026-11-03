@@ -27,8 +27,8 @@ Decision record: [ADR 026](../../decisions/026-player-character-roster.md).
   (`roster-*.ts`, updated `characters-*.ts`).
 - Not changed: `src/features/combat` (it inherits the filter through `charactersQuery`), combat
   SQL (`add_combatants` stays DM-authorized for any campaign character).
-- Non-goals: deleting or archiving characters (a Player at four cannot create more; follow-up),
-  DMs switching a Player's active character.
+- Non-goals: deleting characters (round 2 adds archiving instead) and DMs switching a Player's
+  active character.
 
 ## Data migration
 
@@ -110,17 +110,107 @@ reserve.
   permission denied. Row counts afterwards unchanged (2 characters, 1 campaign, 0 requests).
   PostgREST schema cache reloaded.
 
+## Round 2: review findings and archiving
+
+The independent review ([ui-review.md](ui-review.md), CHANGES_REQUIRED on `d9da43a`) is
+committed unedited. How each finding is addressed:
+
+- **F1:** the onboarding dialog returns focus to "Crear mi personaje" after Escape, Cancel or ×.
+  The e2e test asserts focus after both Escape and Cancel.
+- **F2:**
+  - Outcomes of switching, archiving and restoring now render above the grid and are scrolled
+    into view (`scroll-margin` clears the header and the bottom bar).
+  - Failures are alerts with a "Cerrar"/"Close" action. Progress and success are polite status
+    text.
+  - The e2e test taps the second-row card at 390 px and checks that the alert is inside the
+    viewport and not covered at its top and bottom edges (`elementFromPoint`).
+- **F3:**
+  - The sheet action sits inside the card frame as a footer band: "Ficha", or "Terminar ficha"
+    in the accent color for drafts. The duplicated "Ficha a medias" meta line was removed from
+    draft cards.
+  - The ⋯ card menu is a sibling of the radio label, pinned to the corner, so no interactive
+    element is nested.
+  - The new-slot tile stretches to the row height.
+- **F4:** the onboarding rings are purely decorative (no glyph, no fill). The section has one
+  button, which the e2e test asserts.
+- **F5:**
+  - The DM view is a compact list per Player, with the active character first and a four-ring
+    slot meter whose count is read out.
+  - It has no placeholder tiles; the e2e test asserts zero empty slots.
+- **F6:** the DM entry point reads "Personajes de los jugadores" with a visible "N en reserva"
+  and the accessible name "…, N en reserva". The faces were replaced by an icon.
+- **F7:**
+  - `characters.playerIntro` now reads "Tu personaje activo, sus recursos y tus compañeros de
+    mesa." / "Your active character, its resources and your tablemates.".
+  - The lede is hidden during onboarding (asserted).
+- **F8:** dialog actions share one row from 36em. On phones they stack full width with the
+  primary action first (create and archive dialogs).
+
+Archiving is added in migration `20261105130000_character_archive.sql`; see ADR 026.
+
+- **Player:** the card menu offers "Archivar personaje". It is disabled with the reason on the
+  active character. A confirmation says it frees a slot.
+- **Archived section:** a collapsed "Archivados" Accordion shows each character's sheet and
+  "Restaurar". Restore is disabled with "Sin hueco libre" when the roster is full.
+- **DM:** archives unassigned characters from the Party card menu and restores any character
+  from the Archived section, which lists all archived characters with their owner or
+  "Sin jugador".
+
+Round 2 commands:
+
+| Check | Result |
+| --- | --- |
+| `npx vitest run tests/database` | 105 passed (6 new archive tests, first run green) |
+| `CI=1 npx playwright test roster characters` (3 identity projects), first run | 6 failed: test locators (two "Cancelar" buttons, a closing menu still in the DOM) |
+| `CI=1 npx playwright test roster` after the locator fix | 3 failed: the archive success notice never appeared, because the dialog unmounted before the mutation callback ran. Fixed with `useArchiveAction`, which does not await the refresh |
+| same, after the fix | 27 passed |
+| `npm run check` | passed: 31 files, 223 tests, build OK |
+| `CI=1 RYT_EVIDENCE=1 npm run test:e2e` | 336 passed, 48 skipped, 0 failed (earlier attempts waited on busy ports 4173/4174) |
+
+Screenshot inspection also caught two layout problems at 390 px, both fixed before the final
+runs:
+
+- archived rows squeezed the name to one character per line;
+- "Terminar ficha" wrapped next to the card menu.
+
+PRE (only PRE; production untouched):
+
+- **Applied:** the archive mirror (same DDL through `pre_admin.remap`) through the trusted MCP
+  connection.
+- **Schema checks:**
+  - `pre.characters.archived_at` exists, and the PRE functions have no `public.`/`private.`
+    references.
+  - `anon` cannot execute the archive RPCs.
+  - `public.characters` has no `archived_at`, and `public.archive_character` does not exist.
+- **Rolled-back actor probe:**
+  - Archiving the active character was refused with `Active character`.
+  - Archiving a reserve character worked, and a second call returned the same result.
+  - A freed slot allowed a fourth character; restoring at four was refused with
+    `Character limit`.
+  - Restoring after archiving another character worked, and Party overview showed only the
+    active character.
+  - The DM archived and restored an unassigned character and archived a Player's reserve
+    character.
+  - Outsider: `Forbidden`. Cross-campaign DM: `Character unavailable`. Anon: permission denied.
+  - Counts afterwards were unchanged: 2 characters, 0 archived. The PostgREST schema cache was
+    reloaded.
+
 ## Screenshots
 
-Captured with `RYT_EVIDENCE=1` at 390 px (`-mobile`) and 820 px (`-tablet`), inspected:
-`onboarding`, `create-dialog`, `roster`, `roster-full`, `roster-switched`, `roster-en-light`,
-`party-entry`, `dm-rosters`.
+Captured with `RYT_EVIDENCE=1` at 390 px (`-mobile`) and 820 px (`-tablet`), all inspected:
+
+- `onboarding`, `create-dialog`, `party-entry`, `roster-en-light`
+- `roster`, `roster-full`, `roster-switched`, `switch-blocked`
+- `roster-archive-full`, `archive-dialog`, `roster-archived`
+- `dm-rosters`, `dm-archived`
 
 ## Not verified
 
-- Independent `ui-ux` review: pending (runs separately); `docs/evidence/ui-review-current.json`
-  not touched.
-- Production migration: pending, applied by the integrator after merge.
+- Independent `ui-ux` re-review of round 2: pending (runs separately);
+  `docs/evidence/ui-review-current.json` not touched.
+- Production migrations (both RYT-044 files): pending, applied by the integrator after merge.
+- The server does not block editing the sheet of an archived character; only the roster limits
+  what it offers.
 - Hosted Supabase Auth/PostgREST with two real Google accounts; Realtime (none used).
 - iOS Safari; screen-reader output was checked through the accessibility tree and axe only.
 - Concurrent switches from two devices are serialized by the campaign lock and covered by SQL

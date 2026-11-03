@@ -16,6 +16,11 @@ export const reserveIds = [
   '40000000-0000-4000-8000-0000000000d2',
   '40000000-0000-4000-8000-0000000000d3',
 ]
+/** RYT-044 archived characters of the Player (fixture option `archived`). */
+export const archivedIds = [
+  '40000000-0000-4000-8000-0000000000f1',
+  '40000000-0000-4000-8000-0000000000f2',
+]
 export const storageKey = 'sb-rytta-test-auth-token'
 export function session(id = dmId) {
   const email = id === dmId ? 'dm@example.com' : 'player@example.com'
@@ -64,6 +69,8 @@ export async function identityFixture(
     homebrew?: boolean
     /** RYT-044: names of extra Player characters in reserve (up to three). */
     reserve?: string[]
+    /** RYT-044: names of archived Player characters (up to two). */
+    archived?: string[]
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -131,6 +138,8 @@ export async function identityFixture(
     name: string
     /** RYT-044: the owner's character in play; unassigned characters are always active. */
     is_active: boolean
+    /** RYT-044: archived characters leave the roster and every campaign list. */
+    archived_at?: string | null
     created_at: string
     character_resources: {
       gold: number
@@ -184,6 +193,18 @@ export async function identityFixture(
       is_active: false,
       created_at: `2026-10-28T0${index}:00:00Z`,
       character_resources: { gold: 5, water_units: 1, rations: 1, exhaustion: 0, revision: 0 },
+    })
+  // RYT-044: archived characters of the Player.
+  for (const [index, name] of (options.archived ?? []).entries())
+    characters.push({
+      id: archivedIds[index]!,
+      campaign_id: campaignId,
+      user_id: playerId,
+      name,
+      is_active: false,
+      archived_at: '2026-11-01T00:00:00Z',
+      created_at: `2026-10-26T0${index}:00:00Z`,
+      character_resources: { gold: 1, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
     })
   const sharesLive = new Map<string, boolean>(characters.map((c) => [c.id, c.id !== catoId]))
   type SheetRow = {
@@ -519,6 +540,13 @@ export async function identityFixture(
             ),
           )
           .filter((c) => url.searchParams.get('is_active') !== 'eq.true' || c.is_active)
+          // or=(user_id.not.is.null,archived_at.not.is.null): Player or archived characters.
+          .filter(
+            (c) =>
+              !url.searchParams.get('or')?.includes('archived_at') ||
+              c.user_id !== null ||
+              Boolean(c.archived_at),
+          )
           .map((c) =>
             select.includes('character_resources')
               ? {
@@ -535,18 +563,50 @@ export async function identityFixture(
                     user_id: c.user_id,
                     name: c.name,
                     is_active: c.is_active,
+                    archived_at: c.archived_at ?? null,
                     created_at: c.created_at,
                   }
                 : { id: c.id, name: c.name, user_id: c.user_id },
           ),
       )
     }
+    // RYT-044 archive: owner or DM; never the active Player character; restore needs a slot.
+    if (method === 'archive_character' || method === 'restore_character') {
+      const target = characters.find(
+        (c) => c.id === body.target_character && c.campaign_id === body.target_campaign,
+      )
+      const isDm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (!target || !(isDm || target.user_id === actor))
+        return respond({ message: 'Character unavailable' }, 403)
+      if (method === 'archive_character') {
+        if (target.user_id && target.is_active && !target.archived_at)
+          return respond({ message: 'Active character' }, 400)
+        target.is_active = false
+        target.archived_at ??= '2026-11-03T12:00:00Z'
+        return respond({ id: target.id, archived: true })
+      }
+      if (target.archived_at) {
+        const inRoster = characters.filter(
+          (c) =>
+            target.user_id &&
+            c.campaign_id === target.campaign_id &&
+            c.user_id === target.user_id &&
+            !c.archived_at,
+        )
+        if (target.user_id && inRoster.length >= 4)
+          return respond({ message: 'Character limit' }, 400)
+        target.archived_at = null
+        target.is_active = !target.user_id || !inRoster.some((c) => c.is_active)
+      }
+      return respond({ id: target.id, archived: false })
+    }
     // RYT-044 roster RPCs: limit 4 per Player, exactly one active character.
     if (method === 'create_own_character') {
       const owned = characters.filter(
         (c) => c.campaign_id === body.target_campaign && c.user_id === actor,
       )
-      if (owned.length >= 4) return respond({ message: 'Character limit' }, 400)
+      if (owned.filter((c) => !c.archived_at).length >= 4)
+        return respond({ message: 'Character limit' }, 400)
       const id = '40000000-0000-4000-8000-0000000000e' + String(owned.length + 1)
       characters.push({
         id,

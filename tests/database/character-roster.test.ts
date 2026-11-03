@@ -49,6 +49,28 @@ function api(schema = 'public') {
       ).rows,
     overview: async (c: string) =>
       (await db.query<{ id: string }>(`select id from ${schema}.get_party_overview($1)`, [c])).rows,
+    archive: async (c: string, ch: string) =>
+      (
+        await db.query<{ result: { archived: boolean } }>(
+          `select ${schema}.archive_character($1,$2) result`,
+          [c, ch],
+        )
+      ).rows[0]!.result,
+    restore: async (c: string, ch: string) =>
+      (
+        await db.query<{ result: { archived: boolean } }>(
+          `select ${schema}.restore_character($1,$2) result`,
+          [c, ch],
+        )
+      ).rows[0]!.result,
+    state: async (c: string, user: string | null) =>
+      (
+        await db.query<{ name: string; is_active: boolean; archived: boolean }>(
+          `select name, is_active, archived_at is not null archived from ${schema}.characters
+            where campaign_id=$1 and user_id is not distinct from $2 order by created_at, id`,
+          [c, user],
+        )
+      ).rows.map((row) => [row.name, row.is_active, row.archived]),
   }
 }
 const pub = api()
@@ -427,6 +449,230 @@ describe('RYT-044 character roster', () => {
       'pre.set_active_character(uuid,uuid)',
       'pre.get_party_overview(uuid)',
       'pre.get_trade_state(uuid,uuid)',
+      'pre_private.check_character_roster()',
+    ])
+      expect(
+        (
+          await db.query<{ src: string }>(
+            'select prosrc src from pg_proc where oid=$1::regprocedure',
+            [fn],
+          )
+        ).rows[0]!.src,
+      ).not.toMatch(/\bpublic\.|\bprivate\./)
+  })
+})
+
+describe('RYT-044 character archive', () => {
+  it('frees a slot by archiving; restoring needs a free slot; the active one stays', async () => {
+    const c = await table()
+    await asUser(player)
+    const vex = await pub.create(c, 'Vex')
+    const bram = await pub.create(c, 'Bram')
+    const cora = await pub.create(c, 'Cora')
+    await pub.create(c, 'Dax')
+    await expect(pub.create(c, 'Eli')).rejects.toThrow(/Character limit/)
+    await expect(pub.archive(c, vex)).rejects.toThrow(/Active character/)
+    expect(await pub.archive(c, bram)).toEqual({ id: bram, archived: true })
+    // Idempotent: a second archive returns the same state without writing.
+    expect(await pub.archive(c, bram)).toEqual({ id: bram, archived: true })
+    await expect(pub.activate(c, bram)).rejects.toThrow(/Character unavailable/)
+    await pub.create(c, 'Eli')
+    await expect(pub.restore(c, bram)).rejects.toThrow(/Character limit/)
+    await pub.archive(c, cora)
+    expect(await pub.restore(c, bram)).toEqual({ id: bram, archived: false })
+    expect(await pub.restore(c, bram)).toEqual({ id: bram, archived: false })
+    expect(await pub.state(c, player)).toEqual([
+      ['Vex', true, false],
+      ['Bram', false, false],
+      ['Cora', false, true],
+      ['Dax', false, false],
+      ['Eli', false, false],
+    ])
+    // Archived characters stay out of every campaign list; the owner still reads them.
+    await asUser(dm)
+    expect((await pub.overview(c)).map((row) => row.id)).not.toContain(cora)
+    const admin = (
+      await db.query<{ result: { characters: { id: string }[] } }>(
+        'select public.get_shop_admin($1) result',
+        [c],
+      )
+    ).rows[0]!.result
+    expect(admin.characters.map((row) => row.id)).not.toContain(cora)
+    await asUser(player)
+    expect(
+      (await db.query('select 1 from public.characters where id=$1', [cora])).rows,
+    ).toHaveLength(1)
+    expect(
+      (await db.query('select 1 from public.character_sheets where character_id=$1', [cora])).rows,
+    ).toHaveLength(1)
+  })
+
+  it('refuses archiving during an open trade or a running encounter', async () => {
+    const c = await table()
+    await asUser(player)
+    await pub.create(c, 'Vex')
+    await asUser(peer)
+    const pip = await pub.create(c, 'Pip')
+    const quill = await pub.create(c, 'Quill')
+    // A trade starts with Pip active; once Quill is active, Pip may not be archived mid-trade.
+    await asUser(player)
+    const vex = (await pub.roster(c, player))[0]!.id
+    await db.query('select public.invite_trade($1,$2,$3,$4)', [c, vex, pip, randomUUID()])
+    const swap = (off: string, on: string) =>
+      db.exec(`reset role; begin;
+        update public.characters set is_active = false where id = '${off}';
+        update public.characters set is_active = true where id = '${on}';
+        commit;`)
+    await swap(pip, quill)
+    await asUser(peer)
+    await expect(pub.archive(c, pip)).rejects.toThrow(/Trade busy/)
+    await db.exec('reset role')
+    await db.query("update public.trades set status='cancelled' where campaign_id=$1", [c])
+    await swap(quill, pip)
+    // The DM may put a reserve character in combat; archiving waits until the combat ends.
+    await asUser(dm)
+    const encounter = (
+      await db.query<{ result: { encounter_id: string } }>(
+        'select public.create_encounter($1,$2,$3) result',
+        [c, 'Ambush', randomUUID()],
+      )
+    ).rows[0]!.result.encounter_id
+    await db.query('select public.add_combatants($1,$2,$3,$4)', [
+      c,
+      encounter,
+      JSON.stringify([{ kind: 'character', character_id: quill }]),
+      randomUUID(),
+    ])
+    await db.query('select public.set_encounter_status($1,$2,$3,$4)', [
+      c,
+      encounter,
+      'initiative',
+      randomUUID(),
+    ])
+    await asUser(peer)
+    await expect(pub.archive(c, quill)).rejects.toThrow(/Character in combat/)
+    await asUser(dm)
+    await db.query('select public.set_encounter_status($1,$2,$3,$4)', [
+      c,
+      encounter,
+      'ended',
+      randomUUID(),
+    ])
+    await asUser(peer)
+    expect(await pub.archive(c, quill)).toMatchObject({ archived: true })
+  })
+
+  it('lets the DM archive and restore any character, including unassigned ones', async () => {
+    const c = await table()
+    await asUser(player)
+    await pub.create(c, 'Vex')
+    const bram = await pub.create(c, 'Bram')
+    await asUser(dm)
+    const npc = await pub.dmCreate(c, 'Hireling')
+    const invitation = await pub.invite(c, npc, 'newcomer@example.com')
+    expect(await pub.archive(c, npc)).toMatchObject({ archived: true })
+    expect(await pub.archive(c, bram)).toMatchObject({ archived: true })
+    await db.exec('reset role')
+    expect(await pub.state(c, null)).toEqual([['Hireling', false, true]])
+    // Archiving revokes a pending invitation to that character.
+    expect(
+      (await db.query('select status from public.campaign_invitations where id=$1', [invitation]))
+        .rows,
+    ).toEqual([{ status: 'revoked' }])
+    // An archived character cannot be linked until it is restored.
+    await asUser(dm)
+    await expect(pub.assign(c, npc, player)).rejects.toThrow(/Character unavailable/)
+    await pub.restore(c, npc)
+    await db.exec('reset role')
+    expect(await pub.state(c, null)).toEqual([['Hireling', true, false]])
+    // Unlinking or removing a member keeps archived characters archived.
+    await asUser(dm)
+    await pub.unassign(c, bram, player)
+    await db.exec('reset role')
+    expect(await pub.state(c, null)).toEqual([
+      ['Bram', false, true],
+      ['Hireling', true, false],
+    ])
+    await asUser(dm)
+    await pub.restore(c, bram)
+    await pub.assign(c, bram, player)
+    await pub.archive(c, bram)
+    await pub.remove(c, player)
+    await db.exec('reset role')
+    expect(await pub.state(c, null)).toEqual([
+      ['Vex', true, false],
+      ['Bram', false, true],
+      ['Hireling', true, false],
+    ])
+  })
+
+  it('enforces the archive invariants in the database itself', async () => {
+    const c = await table()
+    await asUser(player)
+    const vex = await pub.create(c, 'Vex')
+    const bram = await pub.create(c, 'Bram')
+    await db.exec('reset role')
+    await expect(
+      db.query('update public.characters set archived_at=now() where id=$1', [vex]),
+    ).rejects.toThrow(/characters_archived_inactive/)
+    // Four in the roster plus archived ones is valid; a fifth in the roster is not.
+    await db.query('update public.characters set archived_at=now() where id=$1', [bram])
+    for (const name of ['Cora', 'Dax', 'Eli'])
+      await db.query(
+        'insert into public.characters(campaign_id, user_id, name, is_active) values ($1,$2,$3,false)',
+        [c, player, name],
+      )
+    await expect(
+      db.query('update public.characters set archived_at=null where id=$1', [bram]),
+    ).rejects.toThrow(/Character limit/)
+  })
+
+  it('denies anon, outsiders, other Players and cross-campaign DMs', async () => {
+    const c = await table()
+    await asUser(player)
+    await pub.create(c, 'Vex')
+    const bram = await pub.create(c, 'Bram')
+    await asUser(outsider)
+    const other = await pub.campaign('Other table')
+    const foreign = await pub.dmCreate(other, 'Foreign')
+    await expect(pub.archive(c, bram)).rejects.toThrow(/Forbidden/)
+    await expect(pub.restore(c, bram)).rejects.toThrow(/Forbidden/)
+    // A DM of another campaign cannot reach this character through their own campaign id.
+    await expect(pub.archive(other, bram)).rejects.toThrow(/Character unavailable/)
+    await asUser(peer)
+    await expect(pub.archive(c, bram)).rejects.toThrow(/Character unavailable/)
+    await asUser(dm)
+    await expect(pub.archive(c, foreign)).rejects.toThrow(/Character unavailable/)
+    for (const actor of [player, dm]) {
+      await asUser(actor)
+      await expect(
+        db.query('update public.characters set archived_at=now() where id=$1', [bram]),
+      ).rejects.toThrow(/permission denied/)
+    }
+    await asUser(player)
+    await pub.archive(c, bram)
+    await asUser(peer)
+    await expect(pub.restore(c, bram)).rejects.toThrow(/Character unavailable/)
+    await asAnon()
+    await expect(pub.archive(c, bram)).rejects.toThrow(/permission denied/)
+    await expect(pub.restore(c, bram)).rejects.toThrow(/permission denied/)
+    await db.exec('reset role')
+  })
+
+  it('mirrors archiving into a PRE copied before RYT-044', async () => {
+    const pre = api('pre')
+    const c = await table('pre')
+    await asUser(player)
+    await pre.create(c, 'Vex')
+    const bram = await pre.create(c, 'Bram')
+    expect(await pre.archive(c, bram)).toMatchObject({ archived: true })
+    expect(await pre.restore(c, bram)).toMatchObject({ archived: false })
+    await expect(pub.archive(c, bram)).rejects.toThrow(/Forbidden/)
+    await db.exec('reset role')
+    for (const fn of [
+      'pre.archive_character(uuid,uuid)',
+      'pre.restore_character(uuid,uuid)',
+      'pre_private.character_busy(uuid,uuid)',
       'pre_private.check_character_roster()',
     ])
       expect(

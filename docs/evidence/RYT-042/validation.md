@@ -196,3 +196,11 @@ Verification of the fixes:
 Screenshots refreshed (390/820) and inspected: all of the earlier ones plus `player-waiting`,
 `player-initiative-range`, `defeated-en-light`, `dm-ended-console`. Only RYT-042 tests ran with
 evidence on; no other ticket's screenshots changed. A focused re-review is pending.
+
+## Integration (2026-11-03)
+
+- Independent ui-ux round 2 PASS at fingerprint `6a616378…` (head `1cc23a3`); the branch already
+  contains main `75652dc`. Minor follow-ups R2-1..R2-3 from the review are carried into RYT-043.
+- Production: applied `combat_player_initiative` via Supabase MCP. Verified `public` and `pre`
+  `set_initiative` carry the new rule ("Initiative closed"), `anon` cannot execute and
+  `authenticated` can. No hosted denial tests were run.

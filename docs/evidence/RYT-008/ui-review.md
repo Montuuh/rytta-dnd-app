@@ -332,3 +332,183 @@ These are in the session scratchpad and are not committed:
 Re-review needed after the fixes: F1 (typing at 60–120 ms per key on the All tab, plus Enter),
 F2 (sheet geometry at 390px, for short and long entries at 150%) and F3 (focus after going
 back to the root entry).
+
+---
+
+# Round 2 (focused re-review)
+
+- Date: 2026-11-03.
+- Reviewed source: commit `0897a57` (on top of `c693b3c`), clean working tree.
+  UI source fingerprint (`node scripts/check-ui-review.mjs --fingerprint`):
+  `6231f9f0ef9e60534aa13b72d22f3dcdbb5c0523826184c7e900553dd0474926`.
+- The coordinator first asked for `c693b3c`. I probed it, then re-ran every check below on a
+  fresh production build of `0897a57`. All results here are from `0897a57`, except the
+  `c693b3c` note in R2-2.
+
+## Round 2 verdict: CHANGES_REQUIRED
+
+F1, F2 and F3 are fixed. F4, F5, F6, F9 and F10 are fixed, and the checked condition chip
+contrast is fixed. One major issue remains:
+
+- **R2-1:** Escape inside a definition opened from the item card closes both layers.
+
+Round 1 missed it. Its "What passed" section wrongly said that Escape in the stacked item card
+closes the definition first. My own round 1 log already showed both drawers closed after one
+Escape. That statement is withdrawn.
+
+## How round 2 was tested (real browser)
+
+Setup:
+
+- Chromium `/opt/pw-browsers/chromium` with Playwright scripts in the session scratchpad.
+- Production build of `0897a57` (supabase mode, mocked backend
+  `tests/e2e/fixtures/identity.ts`) served on port 4175.
+- Demo dev server restarted on the current tree, port 5299.
+- 390×844 and 820×1180, both touch enabled. Reduced motion emulated in the sheet and
+  homebrew flows.
+
+### F1 typing (production build and dev server, All tab)
+
+| Input | Result |
+| --- | --- |
+| "grappled" at 120, 60 and 30 ms per key | Intact every time |
+| Eight select-all, Backspace and retype rounds at 60 ms per key ("grappled" / "agarrado") | All intact |
+| Home, then insert "bola de " before "fuego" | `bola de fuego` |
+| Clear button, then type | Intact |
+| Escape, then type | Intact |
+| "/" then "prone" then an immediate Enter | Opens `condition.prone` with focus on the headword |
+
+- Back link: returns to `?q=prone` with focus on the Derribado row.
+- Browser back: keeps the query.
+- I saw one doubled value (`grappledgrappled`) once, on the `c693b3c` dev server only, and
+  never again in about 40 repetitions on `0897a57`.
+
+### F2 sheet geometry at 390px
+
+The sheet is anchored to the bottom (bottom = 844) in every case:
+
+| Content | Sheet height |
+| --- | --- |
+| Short (Armor Class, es dark) | 485px |
+| Item card term "Cortante" | 283px |
+| Item card term at 150% | 408px |
+| Long entries, or 150% text | Capped at 726px (86dvh); the content scrolls inside |
+
+- At 820px the sheet is a full-height side panel (440px wide; 660px at 150%).
+- Checked in es dark/default, en light/druid at 150% and es light/warlock at 150%.
+- axe: no violations in any of these.
+
+### F3 nested terms
+
+On open, focus starts on the close button. Every move forward or back focuses the headword
+(`span.gl-sheet-headword`), including going back to the root entry. The next Tab goes to the
+close button. Escape returns focus to the term on the character sheet. Checked at both
+viewports and in all three variants above.
+
+### Spot checks of the other fixes
+
+- **F4:** after M → Maleficio → "Todas las entradas", focus is on the Maleficio row and it is
+  in view (scroll about 9,000px).
+- **F5:**
+  - Tab from search goes to the tab list, then one thumb stop, then the rows.
+  - ArrowRight on the thumbs moves to C; Enter focuses the C heading.
+  - ArrowDown and ArrowUp move through the results. ArrowUp on the first row returns to
+    search, and Escape from a row returns to search with the query kept.
+- **F6:** Enter in search and a homebrew save both focus the H1 headword.
+- **F8:**
+  - Both thumbs are 28px and named "Nivel de conjuro mínimo" / "Nivel de conjuro máximo".
+  - The 44px `::before` is present. `elementFromPoint` 20px from a thumb's centre did not
+    return the thumb, but taps on the track still move the nearest thumb.
+- **F9:** submitting an empty name shows "Ponle un nombre a la entrada." and focuses the
+  field. The duplicate footer text is gone. The delete-specific message I checked in code only.
+- **F10:** with "fuego", the tabs read Todo 19, Estados 0, Acciones 0, Reglas 3,
+  Conjuros 16, Homebrew 0.
+- **Checked condition chip:** axe (wcag2aa) on `.condition-chip` found no violations in
+  dark/default, light/default, dark/warlock, light/druid, dark/barbarian and light/paladin.
+  The text now uses `--app-on-accent`, for example `#181009` on `#eda145` in the default
+  dark theme.
+- **F7:** unchanged, as stated. I accept the rationale: it is minor, and taps on the term
+  text itself always resolve correctly.
+
+## Round 2 findings
+
+### R2-1 (major): Escape in a definition opened from another drawer closes both drawers
+
+- **Where:**
+  - `src/features/glossary/ui/reference-sheet.tsx:45-108` (the reference `Drawer`).
+  - The item card drawer in `src/features/inventory/ui/item-card.tsx`.
+- **Cause:** in Mantine 9.7.4 every open Modal or Drawer adds its own window-level Escape
+  listener in the capture phase (`ModalBase/use-modal.mjs`). Independent drawers do not share
+  `handledEscapeEvents`, so one Escape closes every open drawer.
+- **When:** 390px and 820px. It is independent of theme and language. It was present in
+  `b1c3af5` and still is in `0897a57`.
+- **Reproduction:**
+  1. Open Inventory, then Espada larga.
+  2. Focus "cortante" and press Enter. The definition opens above the card; both are visible.
+  3. Press Escape.
+
+  Both drawers close, and focus lands on the inventory tile "Espada larga, cantidad 1, Común"
+  instead of the term in the card. With the "Cerrar definición" button only the definition
+  closes and focus returns to "cortante: ver definición", which is correct.
+- **Likely also affected (code inspection):** the shop listing drawer
+  (`src/features/shops/ui/listing-card.tsx`, which links its description) and any future
+  drawer containing terms.
+- **Impact:** keyboard users lose the item card they were reading. Focus does not return to
+  the term, which fails the acceptance criterion "with keyboard, Escape and focus return".
+  This is the same keyboard path F3 was about.
+- **Suggested fix (one option):**
+  - Expose "a reference sheet is open" from the glossary context.
+  - Give the host drawers `closeOnEscape={!sheetOpen}`, or handle Escape once in the
+    reference sheet and stop it from reaching the other drawers.
+  - Add an e2e test: item card → term → Escape leaves the card open with focus on the term,
+    and a second Escape closes the card.
+
+### R2-2 (minor): the search field ignores outside changes to `?q=`
+
+- **Where:** `glossary-page.tsx:97-116` (local query state and the URL mirror).
+- **Reproduction:**
+  - With "fire" typed, tap the active "Glosario" nav item: the URL briefly loses `q`, then the
+    mirror puts `?q=fire` back, and the field and its 8 results stay.
+  - In the same document, navigating to a URL with a different `?q=` loses it. On `c693b3c`,
+    a hash navigation to `/glossary/condition.prone?q=pro` followed by the back link returned
+    to an index with an empty search. I did not repeat this check on `0897a57`.
+- **Impact:** tapping the module's nav item does not reset the search, and deep links with
+  `q` into an open glossary page are ignored. Low impact at the table.
+- **Suggested fix:** when the URL `q` changes from outside, set the field to it (for example
+  when the location key changes and the value differs from the last mirrored one).
+
+### R2-3 (minor, cosmetic): the sheet headword shows a full focus ring when it receives focus
+
+- **Where:** `reference-sheet.tsx` (`span.gl-sheet-headword` with `tabIndex={-1}`) and
+  `src/app/styles.css:92-99`.
+- **Reproduction:** after moving to a nested term with the keyboard, the headword gets the
+  3px `--app-focus` outline (`*-sheet-nested-*.png`). Page headwords use `h1/h2[tabindex='-1']`
+  and are deliberately exempt. This is not an accessibility problem; it is only inconsistent
+  with the page headwords.
+
+## Untested states and limitations (round 2)
+
+- No real devices, soft keyboards or screen reader. Typing used Playwright key events.
+- The shop listing drawer was not opened in the browser. R2-1 there is inferred from code and
+  the Mantine mechanism.
+- The delete-error message was reviewed in code only.
+- The repo e2e and `npm run check` were not run by me. The coordinator reports 18/18 glossary
+  e2e on six projects.
+
+## Round 2 screenshots
+
+These are in the session scratchpad and are not committed:
+`/tmp/claude-0/-home-user-rytta-dnd-app/63bbd363-2400-5756-80a5-86a53f7c2ad4/scratchpad/ui-review/shots3/`
+
+- **Sheet:** `{mobile,tablet}-sheet-{speed,ac,nested,long,long-scrolled}-{es-dark-default,en-light-druid-150,es-light-warlock-150}.png`
+- **Item card stack:** `{mobile,tablet}-stack-*.png`
+- **R2-1:** `{mobile,tablet}-after-close-Escape.png` (both closed) and
+  `{mobile,tablet}-after-close-close-button.png` (card kept)
+- **Search, homebrew and filters:** `{mobile,tablet}-prod-enter-prone.png`,
+  `{mobile,tablet}-back-to-row.png`, `{mobile,tablet}-tabs-counts-fuego.png`,
+  `{mobile,tablet}-hb-validation.png`, `{mobile,tablet}-hb-saved.png`,
+  `{mobile,tablet}-filters.png`
+- **Chips:** `chip-{dark-default,light-default,dark-warlock,light-druid,dark-barbarian,light-paladin}.png`
+
+Re-review needed after the fix: R2-1 (Escape order and focus return with the item card and the
+shop listing drawer).

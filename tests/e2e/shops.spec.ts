@@ -279,7 +279,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   // The countered order stays in view as a counter-offer: asked total struck, new total shown.
   await expect(pending).toHaveClass(/order-counter/)
   await expect(pending.locator('.order-kind')).toHaveText('Contraoferta de compra')
-  await expect(pending.locator('.price-compare')).toContainText('36 po')
+  await expect(pending.locator('.order-flow')).toContainText('36 po')
   await audit(page, info.outputPath('ledger-counter.png'))
   await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY')
 

@@ -52,6 +52,7 @@ export function createAppTheme(classTheme: ClassThemeId = 'default') {
           label: { minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' },
         },
       },
+      Tooltip: { classNames: { tooltip: 'app-tooltip' } },
       Paper: { defaultProps: { withBorder: true } },
     },
   })

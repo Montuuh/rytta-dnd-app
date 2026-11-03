@@ -87,7 +87,16 @@ const variantIcons = { purchase: ShoppingBag, sale: HandCoins, counter: Handshak
  * Which way the gold goes, from the character's side: a purchase leaves their purse, a sale
  * fills it. Closed orders that never moved gold say so instead of showing a phantom charge.
  */
-function GoldFlow({ order, role }: { order: Order; role: Role }) {
+/** Where the gold goes; on a live counter-offer it also shows the struck asked total. */
+function GoldFlow({
+  order,
+  role,
+  counter = false,
+}: {
+  order: Order
+  role: Role
+  counter?: boolean
+}) {
   const { t } = useTranslation()
   const moved = order.status !== 'rejected' && order.status !== 'cancelled'
   const tense = isOpenOrder(order) ? 'open' : 'done'
@@ -103,36 +112,20 @@ function GoldFlow({ order, role }: { order: Order; role: Role }) {
           ? t(`order.flow.${order.kind}.${tense}.${voice}`, { character: order.character.name })
           : t('order.flow.none')}
       </Text>
+      {counter && (
+        <>
+          <span className="visually-hidden">{t('order.compare.asked')}</span>
+          <del className="order-flow-asked">
+            <GoldAmount value={askedTotal(order)} size="sm" />
+          </del>
+          <ArrowRight size={16} aria-hidden="true" className="order-flow-arrow" />
+        </>
+      )}
       <GoldAmount value={order.total} />
     </div>
   )
 }
 
-/** A live counter-offer: what the Player asked against what the DM now proposes. */
-function CounterCompare({ order }: { order: Order }) {
-  const { t } = useTranslation()
-  return (
-    <dl className="price-compare">
-      <div className="price-compare-was">
-        <dt>{t('order.compare.asked')}</dt>
-        <dd>
-          <del>
-            <GoldAmount value={askedTotal(order)} size="sm" />
-          </del>
-        </dd>
-      </div>
-      <span className="price-compare-arrow" aria-hidden="true">
-        <ArrowRight size={18} />
-      </span>
-      <div className="price-compare-now">
-        <dt>{t('order.compare.countered')}</dt>
-        <dd>
-          <GoldAmount value={order.total} size="lg" />
-        </dd>
-      </div>
-    </dl>
-  )
-}
 type Panel = 'counter' | 'revert' | null
 
 /** Price chips for a counter-offer line: the Player's offer, the list price and the middle. */
@@ -351,8 +344,7 @@ export function OrderCard({
             </li>
           ))}
         </ul>
-        {variant === 'counter' && <CounterCompare order={order} />}
-        <GoldFlow order={order} role={role} />
+        <GoldFlow order={order} role={role} counter={variant === 'counter'} />
         {order.status === 'reverted' && (
           <Text size="sm">
             {t(order.kind === 'purchase' ? 'order.refunded' : 'order.recovered', {

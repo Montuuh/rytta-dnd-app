@@ -5,7 +5,7 @@ import { ArrowLeft, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { useCampaign, useCampaignView } from '@/features/campaigns'
+import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { CharacterPortrait, SheetAttacks } from '@/features/inventory'
 import { charactersQuery, sheetQuery, useSheetAction } from '../../api'
 import type { Vitals } from '../../domain/sheet'
@@ -22,6 +22,7 @@ export function CharacterSheetPage() {
   const { characterId = '' } = useParams()
   const { state } = useAuth()
   const campaign = useCampaign()
+  const realDm = useIsRealDm()
   const { playerPreview, previewUserId } = useCampaignView()
   const userId = state.user!.id
   const query = useQuery(sheetQuery(userId, campaign.id, characterId))
@@ -34,7 +35,7 @@ export function CharacterSheetPage() {
     ),
   )
   // Only a real DM view (not the Player preview) shows the audit history.
-  const realDm = campaign.role === 'dm' && !playerPreview
+  const showHistory = campaign.role === 'dm' && !playerPreview
   const action = useSheetAction(campaign.id)
   const labels = useCharacterLabels()
   const [notice, setNotice] = useState<'sheet.saved' | 'sheet.restDone' | null>(null)
@@ -80,7 +81,7 @@ export function CharacterSheetPage() {
     )
   const { character, sheet, vitals } = query.data
   // RYT-028: a DM previewing a Player keeps DM write access; the RPCs still authorize server-side.
-  const canEdit = campaign.role === 'dm' || playerPreview || character.user_id === userId
+  const canEdit = realDm || character.user_id === userId
   const editPath = `${party}/${character.id}/create`
   if (sheet.status === 'draft' || !sheet.build)
     return (
@@ -120,7 +121,7 @@ export function CharacterSheetPage() {
       <Group justify="space-between" wrap="nowrap" gap="xs">
         {back}
         <Group gap="xs" wrap="nowrap" className="sheet-header-actions">
-          {realDm && (
+          {showHistory && (
             <SheetHistory
               campaignId={campaign.id}
               characterId={character.id}

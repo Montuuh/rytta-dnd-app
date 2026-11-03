@@ -11,7 +11,7 @@ export type { AuditEvent, Campaign, CampaignModuleKey, CampaignRepository } from
 export { campaignModuleKeys, MembershipError } from './domain/campaign'
 export { CampaignHub } from './ui/hub'
 export { CampaignBoundary } from './ui/campaign-boundary'
-export { useCampaign } from './campaign-context'
+export { useCampaign, useIsRealDm } from './campaign-context'
 export { CampaignMembers } from './ui/members'
 export { CampaignViewContext, useCampaignView } from './view-context'
 export { QueryFeedback } from './ui/feedback'

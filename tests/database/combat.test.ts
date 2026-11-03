@@ -731,6 +731,37 @@ describe('RYT-007 shared combat', () => {
     expect(gob.conditions!.sort()).toEqual([...combatConditions].sort())
   })
 
+  it('returns states the client schema accepts before any turn is active', async () => {
+    const { combatStateSchema } = await import('../../src/features/combat/domain/combat.ts')
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const x = await prepared(s, schema)
+      // A character without a linked player keeps is_own/can_act as booleans for Players.
+      const npcHero = (
+        await one<{ id: string }>(`select ${schema}.create_character($1,'Dara') id`, [s.c])
+      ).id
+      await a.add(s.c, x.e, [{ kind: 'character', character_id: npcHero }])
+      // Draft and initiative have no active combatant: is_active must still be a boolean.
+      const draft = await a.state(s.c, x.e)
+      expect(() => combatStateSchema.parse(draft)).not.toThrow()
+      expect(draft.combatants.every((c) => c.is_active === false)).toBe(true)
+      await a.status(s.c, x.e, 'initiative')
+      // A visible effect on an NPC: Players get can_remove false, not null.
+      await a.effect(s.c, x.e, { target_combatant: x.gob1, label: 'Marked' })
+      for (const [user, table] of [
+        [dm, false],
+        [dm, true],
+        [player, false],
+      ] as const) {
+        await asUser(user)
+        const view = await a.state(s.c, x.e, table)
+        expect(() => combatStateSchema.parse(view)).not.toThrow()
+        expect(view.combatants.find((c) => c.name === 'Dara')).toMatchObject({ is_own: false })
+      }
+    }
+  })
+
   it('mirrors tables, triggers and RPCs into a PRE copied before the migration', async () => {
     await db.exec('reset role')
     expect((await db.query("select to_regclass('pre.encounters') t")).rows[0]).toEqual({

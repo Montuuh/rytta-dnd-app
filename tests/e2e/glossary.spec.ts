@@ -263,3 +263,22 @@ test('a search change from outside the field (the nav item) resets the field', a
   await page.waitForTimeout(500)
   await expect(page).not.toHaveURL(/q=fire/)
 })
+
+// CI (slow renders) showed the delayed ?q= write dropping ?cat= while the tab change was still
+// rendering; the write now reads the live URL. Locally the race is rarely hit, so this test
+// pins the intended outcome rather than reproducing the timing.
+test('a category chosen right after typing survives the delayed ?q= update', async ({ page }) => {
+  await identityFixture(page, { player: true, modules: ['party', 'glossary'] })
+  await page.goto(glossaryUrl)
+  const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
+  await expect(page.getByText('550 entradas')).toBeVisible()
+  await search.fill('a')
+  await page.waitForTimeout(250)
+  // Choose a tab just before the 300 ms search mirror writes ?q= (it used to drop ?cat=).
+  await page.getByRole('tab', { name: /Conjuros/ }).click()
+  await page.waitForTimeout(1000)
+  await expect(page).toHaveURL(/cat=spell/)
+  await expect(page).toHaveURL(/q=a/)
+  await expect(page.getByRole('tab', { name: /Conjuros/ })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('button', { name: 'Filtros de conjuros' })).toBeVisible()
+})

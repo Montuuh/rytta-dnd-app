@@ -689,3 +689,77 @@ This is optional.
 - Only the scope above was re-checked.
 - The untested list from round one still applies.
 - This approval applies only to the fingerprint above.
+
+## Re-review 7 (focused on the drawer header scroll padding, after 4e7fce2)
+
+- Reviewed source: `4e7fce2`
+- UI fingerprint: `8460702d2fe5cd22fabe05331364e029d0a09f322e165e4ce746723bc60f5c3c` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml` (implementation read-only)
+- Date: 2026-11-03
+- Method: fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px).
+  English light, 100% and 150% text.
+- Evidence: `docs/evidence/ui-review/combat/r8/*.png`
+
+### Verdict: PASS
+
+The fix works at 100% text and fixes the tablet 150% retap case. One minor, non-blocking residue
+remains at 150% text (see below). N4, N5 and N6 still hold.
+
+### Results
+
+**Tablet 150% retap**
+- After a keyboard dismissal, `scrollIntoViewIfNeeded` now leaves Success clear of the sticky
+  header (top 281px).
+- The second tap reaches Success ("secondTapAt: Success"), and the error appears again.
+- In round 6 the same tap hit `Drawer-header`.
+
+**Keyboard focus moving upward in a long drawer**
+- Shift+Tab from "Remove from encounter" up to the header, 12 steps.
+- Tested on m and t, with a short name and with a long name ("Ancient bandit captain of the
+  Sunken Coast"), and with legendary actions so the drawer is longest.
+
+| Text size | Header height | `scroll-padding-top` | Focused controls under the header |
+| --- | --- | --- | --- |
+| 100% | 76px | 88px | none (m and t) |
+| 150% | 114px | 104px | yes, partly (m and t) |
+
+- At 150% the header is taller than the reserved space, so the top of some controls stays partly
+  under it, by about 10–12px of a 44px target:
+  - m: Spell input, "Change" and "Edit initiative of Goblin"
+  - t: "Change"
+
+**N4: holds**
+- On m and t at 100% and 150%, Success and Failure stay above the sticky alert and remain tappable
+  after a failing tap at the bottom edge.
+- A failing chip at the bottom edge also stays above the alert.
+- Bottom padding is 102px, 172px at m 150% and 118px at t 150%.
+- axe reports no violations.
+
+**N5: holds**
+- Dismissing the drawer error with Enter or a tap returns focus to Success.
+- Dismissing the toast with Enter, Space or a tap returns focus to "Next turn".
+- Auto-dismiss does not move focus.
+- Enter on a modal error returns focus to "Add effect".
+- Escape on the drawer returns focus to the row.
+
+**N6: holds**
+- Drawer scrollTop stays fixed for 10 s at the end and 6 s at the top, on m and t at 100% and 150%:
+  - m: 642 at 100%, 1373 at 150%
+  - t: 232 at 100%, 601 at 150%
+- The modal stays at 0.
+
+**Delivery spec:** `tests/e2e/combat.spec.ts` passes 9 of 9 on identity mobile, tablet and desktop.
+
+### Remaining minor (non-blocking)
+
+**N7.** `scroll-padding-top` is fixed at `44px + 2rem + 12px`. At 150% text the drawer header
+becomes taller (114px) because the title text scales, so focused controls can sit partly under it.
+- This is partial obscuring, so it passes WCAG 2.4.11 (AA) but not 2.4.12 (AAA).
+- Suggested fix: derive the padding from the rendered header, for example by setting a CSS
+  variable from the header's `offsetHeight` when the drawer opens. Alternatively, add a margin
+  that scales with text, such as `calc(2.75rem + 2rem + 12px)`.
+
+### Limitations
+
+Only the scope above was re-checked. The untested list from round one still applies. Approval
+covers only the fingerprint above.

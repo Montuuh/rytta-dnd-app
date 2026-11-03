@@ -1120,7 +1120,7 @@
         "id": "gpt-6.1-sol",
         "reasoningEffort": "high"
       },
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-031", "RYT-032"],
       "sources": [
         "User 2026-11-03: feedback list (shops ledger, storefront, equipment, sheet, party sharing, camp removal, DM width, storeroom, settings themes, discoveries removal, player trades)."
@@ -1141,7 +1141,28 @@
         "PRE then reviewed production migration",
         "two-browser end-to-end trade"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-034/validation.md",
+        "docs/decisions/022-player-trades.md",
+        "docs/evidence/RYT-034/invite-mobile.png",
+        "docs/evidence/RYT-034/invite-tablet.png",
+        "docs/evidence/RYT-034/invite-en-light-mobile.png",
+        "docs/evidence/RYT-034/invite-en-light-tablet.png",
+        "docs/evidence/RYT-034/window-empty-mobile.png",
+        "docs/evidence/RYT-034/window-empty-tablet.png",
+        "docs/evidence/RYT-034/window-en-light-mobile.png",
+        "docs/evidence/RYT-034/window-en-light-tablet.png",
+        "docs/evidence/RYT-034/picker-mobile.png",
+        "docs/evidence/RYT-034/picker-tablet.png",
+        "docs/evidence/RYT-034/window-partner-accepted-mobile.png",
+        "docs/evidence/RYT-034/window-partner-accepted-tablet.png",
+        "docs/evidence/RYT-034/window-unlocked-mobile.png",
+        "docs/evidence/RYT-034/window-unlocked-tablet.png",
+        "docs/evidence/RYT-034/done-mobile.png",
+        "docs/evidence/RYT-034/done-tablet.png",
+        "docs/evidence/RYT-034/history-mobile.png",
+        "docs/evidence/RYT-034/history-tablet.png"
+      ]
     }
   ]
 }

@@ -57,6 +57,7 @@ import type { SheetSummary } from '../domain/sheet'
 import { hpTone, sharedTeammates, type PartyMember } from '../domain/party'
 import { PlayerAssignmentEditor } from './player-assignment'
 import { CharacterPortrait } from '@/features/inventory'
+import { TradeButton, TradeHistory, TradeLauncher } from '@/features/trades'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 type ResourceField = (typeof fields)[number]
@@ -297,6 +298,10 @@ export function CharacterParty() {
           })}
         </div>
       )}
+      {/* RYT-034: start a trade with any assigned character (Player or Player preview). */}
+      <Group justify="flex-end">
+        <TradeLauncher />
+      </Group>
       {teammates && (
         <section className="party-live" aria-labelledby="party-live-heading">
           <div className="party-live-head">
@@ -320,6 +325,7 @@ export function CharacterParty() {
           )}
         </section>
       )}
+      <TradeHistory />
       {editor?.kind === 'assignment' && (
         <PlayerAssignmentEditor
           character={editor.character}
@@ -492,6 +498,7 @@ function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId:
           </ul>
         )}
       </div>
+      <TradeButton partnerId={member.id} name={member.name} />
     </article>
   )
 }

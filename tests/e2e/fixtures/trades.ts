@@ -231,6 +231,9 @@ export function tradeServer() {
           return { trade_id: row.id, status: row.status, revision: row.revision }
         if (row.status !== 'open') return fail('Trade closed')
         if (row.revision !== body.expected_revision) return fail('Stale revision')
+        const sides = [row.initiator, row.partner]
+        if (sides.every((side) => side.gold === 0 && side.items.length === 0))
+          return fail('Empty trade')
         sideOf(row, me).confirmed = true
         row.updated = Date.now()
         if (row.initiator.confirmed && row.partner.confirmed) complete(row)

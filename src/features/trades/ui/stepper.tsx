@@ -1,4 +1,4 @@
-import { ActionIcon, NumberInput } from '@mantine/core'
+import { NumberInput, UnstyledButton } from '@mantine/core'
 import { Minus, Plus } from 'lucide-react'
 import { useLongPress } from '@/shared/ui/use-long-press'
 
@@ -35,15 +35,14 @@ export function Stepper({
   )
   return (
     <div className="trade-stepper">
-      <ActionIcon
-        size={44}
-        variant="default"
+      <UnstyledButton
+        className="trade-step"
         aria-label={lessLabel}
         disabled={disabled || value <= min}
         {...less}
       >
         <Minus size={18} aria-hidden="true" />
-      </ActionIcon>
+      </UnstyledButton>
       <NumberInput
         aria-label={label}
         value={value}
@@ -58,15 +57,14 @@ export function Stepper({
         onChange={(next) => onChange(clamp(typeof next === 'number' ? next : min))}
         classNames={{ input: 'trade-stepper-input' }}
       />
-      <ActionIcon
-        size={44}
-        variant="default"
+      <UnstyledButton
+        className="trade-step"
         aria-label={moreLabel}
         disabled={disabled || value >= max}
         {...more}
       >
         <Plus size={18} aria-hidden="true" />
-      </ActionIcon>
+      </UnstyledButton>
     </div>
   )
 }

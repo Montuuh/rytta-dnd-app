@@ -9,6 +9,7 @@ import { partyEn } from './party-en'
 import { settingsEn } from './settings-en'
 import { lifecycleEn } from './lifecycle-en'
 import { tradesEn } from './trades-en'
+import { combatEn } from './combat-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
@@ -21,6 +22,7 @@ export const en = {
   ...settingsEn,
   ...lifecycleEn,
   ...tradesEn,
+  ...combatEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',
   'module.shops': 'Shops',

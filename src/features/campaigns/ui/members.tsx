@@ -61,7 +61,7 @@ const campaignModules = [
   { key: 'inventory', label: 'module.inventory', icon: Backpack, implemented: true },
   { key: 'shops', label: 'module.shops', icon: Store },
   { key: 'quests', label: 'module.quests', icon: ScrollText },
-  { key: 'combat', label: 'module.combat', icon: Swords },
+  { key: 'combat', label: 'module.combat', icon: Swords, implemented: true },
   { key: 'atlas', label: 'module.atlas', icon: BookOpen },
   { key: 'glossary', label: 'module.glossary', icon: Shield },
   { key: 'memories', label: 'module.memories', icon: Image },

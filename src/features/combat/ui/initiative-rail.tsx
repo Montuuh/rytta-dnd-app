@@ -6,6 +6,7 @@ import { useLongPress } from '@/shared/ui/use-long-press'
 import { moveWithinTie, type Combatant } from '../domain/combat'
 import { sideLabel } from './helpers'
 import { ConditionBadges, HpMeter, SideIcon, StateBadge } from './parts'
+import { CombatantToken } from './token'
 
 type RailMode =
   | { kind: 'read' }
@@ -214,6 +215,7 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
           <Hourglass size={16} aria-label={t('combat.initiative.missing')} />
         )}
       </span>
+      <CombatantToken combatant={combatant} />
       <span className="combat-row-text">
         <Group gap={6} wrap="nowrap" className="combat-row-title">
           <span className="combat-side-icon" title={sideLabel(t, combatant)}>
@@ -243,7 +245,7 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
             {t('combat.turn.current')}
           </Text>
         )}
-        <HpMeter combatant={combatant} compact={!large} />
+        <HpMeter combatant={combatant} compact={!large} large={large} />
         <Group gap={6} wrap="wrap">
           <StateBadge combatant={combatant} />
           <ConditionBadges combatant={combatant} limit={large ? undefined : 3} />

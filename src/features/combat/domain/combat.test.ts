@@ -7,7 +7,9 @@ import {
   combatStateSchema,
   concentrationDc,
   halfDamage,
+  healthBand,
   joinPlacement,
+  monogram,
   missingInitiative,
   moveWithinTie,
   nextUp,
@@ -195,5 +197,32 @@ describe('combat rules', () => {
     expect(joinPlacement(order, -3)).toMatchObject({ before: { id: id(4) }, after: { id: id(5) } })
     // Without an active turn nothing acts "this round".
     expect(joinPlacement([base(1, { initiative: 3 })], 1).thisRound).toBe(false)
+  })
+
+  it('RYT-043 names five health bands from exact or projected hit points', () => {
+    const hp = (current: number) => base(1, { hp: { current, max: 8, temp: 0 } })
+    expect([8, 5, 3, 2, 0].map((n) => healthBand(hp(n)))).toEqual([
+      'unhurt',
+      'wounded',
+      'bloodied',
+      'critical',
+      'down',
+    ])
+    // Without numbers the server's band wins; an old projection falls back to its status.
+    expect(healthBand(base(1, { hp_band: 'critical', hp_status: 'bloodied' }))).toBe('critical')
+    expect(healthBand(base(1, { hp_status: 'wounded' }))).toBe('wounded')
+    expect(healthBand(base(1, { kind: 'character', side: 'party' }))).toBe('unknown')
+    expect(healthBand(base(1, { defeated: true, hp_band: 'unhurt' }))).toBe('down')
+    expect(healthBand(base(1, { kind: 'lair' }))).toBeNull()
+    expect(monogram('Goblin 3')).toBe('G3')
+    expect(monogram('  arin   vale  the bold ')).toBe('AV')
+    expect(monogram('Ñandú')).toBe('Ñ')
+    // The projection accepts both new fields.
+    expect(
+      combatStateSchema.parse({
+        encounter: null,
+        combatants: [base(1, { hp_band: 'critical', image_path: 'pre/a/b/c.webp' })],
+      }).combatants[0],
+    ).toMatchObject({ hp_band: 'critical', image_path: 'pre/a/b/c.webp' })
   })
 })

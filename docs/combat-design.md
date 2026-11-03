@@ -1,8 +1,9 @@
 # Combat module: design analysis
 
 Tickets: RYT-007 (shared combat core), RYT-036 (encounter preparation and bestiary), RYT-037
-(combat tools), RYT-038 (table display), RYT-041 (roster changes), RYT-042 (single Player view).
-Decision record: [ADR 024](decisions/024-combat.md).
+(combat tools), RYT-038 (table display), RYT-041 (roster changes), RYT-042 (single Player view),
+RYT-043 (tokens, images and health bands).
+Decision records: [ADR 024](decisions/024-combat.md), [ADR 027](decisions/027-combat-art-and-health-bands.md).
 This document is the design analysis behind the delivery. It separates observations (what the table needs) from
 decisions (what Rytta builds) and lists deliberate non-goals.
 
@@ -87,15 +88,16 @@ decisions (what Rytta builds) and lists deliberate non-goals.
 
 ## 4. Visibility model
 
-| Data                                                 | DM  | Own character | Shared teammate | Unshared teammate | Visible NPC   | Hidden NPC |
-| ---------------------------------------------------- | --- | ------------- | --------------- | ----------------- | ------------- | ---------- |
-| Name, side, initiative, turn                         | ✓   | ✓             | ✓               | ✓                 | ✓             | DM only    |
-| Exact HP                                             | ✓   | ✓             | ✓               | —                 | when revealed | DM only    |
-| Descriptive status (unhurt, wounded, bloodied, down) | ✓   | ✓             | ✓               | "not shared"      | ✓             | DM only    |
-| AC                                                   | ✓   | ✓             | ✓               | —                 | —             | DM only    |
-| Conditions, concentration                            | ✓   | ✓             | ✓               | —                 | ✓             | DM only    |
-| Death saves, exhaustion                              | ✓   | ✓             | ✓               | —                 | n/a           | n/a        |
-| DM notes, secret effects, private log entries        | ✓   | —             | —               | —                 | —             | —          |
+| Data                                                      | DM  | Own character | Shared teammate | Unshared teammate | Visible NPC   | Hidden NPC |
+| --------------------------------------------------------- | --- | ------------- | --------------- | ----------------- | ------------- | ---------- |
+| Name, side, initiative, turn                              | ✓   | ✓             | ✓               | ✓                 | ✓             | DM only    |
+| Exact HP                                                  | ✓   | ✓             | ✓               | —                 | when revealed | DM only    |
+| Health band (unhurt, wounded, bloodied, near death, down) | ✓   | ✓             | ✓               | "not shared"      | ✓             | DM only    |
+| Token image (portrait / bestiary image, RYT-043)          | ✓   | ✓             | ✓               | ✓                 | ✓             | DM only    |
+| AC                                                        | ✓   | ✓             | ✓               | —                 | —             | DM only    |
+| Conditions, concentration                                 | ✓   | ✓             | ✓               | —                 | ✓             | DM only    |
+| Death saves, exhaustion                                   | ✓   | ✓             | ✓               | —                 | n/a           | n/a        |
+| DM notes, secret effects, private log entries             | ✓   | —             | —               | —                 | —             | —          |
 
 The table view uses the Player projection without "own" data.
 
@@ -182,8 +184,17 @@ and damage dealt, taken and healed as tabular numbers. Same component in the DM 
   menu. Removal confirms in a dialog that names who takes the turn; afterwards focus moves to the
   neighbouring row, and cancelling returns focus to the menu's button. Dialog actions share a row
   when they fit and otherwise stack full width with the action on top.
-- HP is always text (numbers or a status word) next to the bar; unshared HP uses a hatched bar
-  and the words "not shared". Side is an icon plus a hidden text label; never colour alone.
+- Exact HP is text (numbers and the band word) next to a proportional bar. Without exact HP the
+  band is a seal with its own glyph and the band's name, never a bar (RYT-043): unhurt, wounded
+  (over half), bloodied (over a quarter), near death (a quarter or less, the only filled seal), down
+  or defeated, and "not shared" for teammates who do not share. Side is the token's shape (round
+  party, rounded-square ally, hexagonal enemy, square lair) plus an icon and a hidden text label;
+  never colour alone.
+- Tokens (RYT-043, ADR 027): portraits and bestiary images, cropped to the side's shape, in the
+  order, the table banner (large for "Now", small for "Up next"), the DM turn bar, the detail and the
+  recap. Without an image an engraved monogram stands in. The acting token's rim turns to the
+  accent; defeated tokens go grey; hidden ones (DM only) have a broken rim. The DM adds or changes a
+  creature image by tapping its token in the bestiary.
 - Every control is at least 44px; the turn buttons are 52px. Dialogs trap focus, close with
   Escape and return focus; scrollable regions (log, summary) are focusable named regions.
 - Keypads (from the sheet) avoid the phone keyboard for numbers; quick chips add 1/5/10.

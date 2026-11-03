@@ -15,6 +15,7 @@ import { useRunner } from './helpers'
 import { InitiativeEntry } from './initiative-entry'
 import { InitiativeRail } from './initiative-rail'
 import { NetworkState, Pips, RunnerError } from './parts'
+import { CombatantToken } from './token'
 
 /**
  * The table view (RYT-038, RYT-042): the one combat screen Players have, and the DM's default.
@@ -102,15 +103,21 @@ export function TableDisplay({
         // replaces the (already known) own name at display size; while waiting, the countdown
         // has its own full-width band, not a line under "Up next".
         <div className={`combat-table-now${yours ? ' is-yours' : ''}`}>
-          <div>
-            <Text className="combat-table-label">{t('combat.turn.now')}</Text>
-            <Text className="combat-table-active">
-              {yours ? t('combat.turn.yours') : (active?.name ?? '—')}
-            </Text>
+          <div className="combat-table-actor">
+            {active && <CombatantToken combatant={active} />}
+            <div className="combat-table-who">
+              <Text className="combat-table-label">{t('combat.turn.now')}</Text>
+              <Text className="combat-table-active">
+                {yours ? t('combat.turn.yours') : (active?.name ?? '—')}
+              </Text>
+            </div>
           </div>
-          <div>
-            <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
-            <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
+          <div className="combat-table-actor is-next">
+            {upNext && <CombatantToken combatant={upNext} showActive={false} />}
+            <div className="combat-table-who">
+              <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
+              <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
+            </div>
           </div>
           {ownInOrder && !yours && until !== null && (
             <p className="combat-table-countdown">
@@ -122,7 +129,7 @@ export function TableDisplay({
       )}
 
       {status === 'ended' ? (
-        <CombatSummary encounter={encounter} large />
+        <CombatSummary encounter={encounter} combatants={combatants} large />
       ) : (
         <section aria-labelledby="combat-table-order">
           <Title order={2} id="combat-table-order" className="combat-section-title" tabIndex={-1}>

@@ -211,6 +211,9 @@ function DmViews({ encounterId, status }: { encounterId: string; status: Encount
   const table = useCombatState(encounterId, true, view === 'table')
   const choose = (next: DmView) => {
     setChosen(next)
+    // The view coming into sight refetches at once instead of waiting for the next poll, so a fight
+    // that ended (or moved on) behind it never shows its old state (RYT-042 R2-3).
+    if (next !== view) void (next === 'console' ? full : table).query.refetch()
     const search = new URLSearchParams(params)
     search.set('view', next)
     setParams(search, { replace: true })

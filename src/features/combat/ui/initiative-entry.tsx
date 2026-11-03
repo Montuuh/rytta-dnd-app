@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Button, NumberInput, Text } from '@mantine/core'
 import { useReducedMotion } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
@@ -44,6 +44,11 @@ export function InitiativeEntry({
   const valid = isInitiativeTotal(value)
   const outOfRange = typeof amount === 'number' && !valid
   const hintId = useId()
+  // React leaves the attribute alone afterwards: Mantine's own value stays undefined.
+  const describe = useCallback(
+    (input: HTMLInputElement | null) => input?.setAttribute('aria-describedby', hintId),
+    [hintId],
+  )
   // Bring the whole entry into view once when it opens, above the phone's bottom bar. Focus is not
   // moved into the field (that would raise the phone keyboard over the keypad); a reopened entry
   // focuses its heading instead (the table view does that).
@@ -85,9 +90,10 @@ export function InitiativeEntry({
               variant="unstyled"
               aria-label={t('combat.initiative.totalFor', { name: combatant.name })}
               // A boolean error marks the field invalid (aria-invalid) without Mantine's message;
-              // the explanation is the hint under the die.
+              // the explanation is the hint under the die. Mantine replaces aria-describedby with
+              // its own (empty) list, so the hint is linked on the element itself (RYT-042 R2-1).
               error={outOfRange}
-              aria-describedby={hintId}
+              ref={describe}
               min={-20}
               max={99}
               // Out-of-range totals stay as typed and are explained below (RYT-042 F5).

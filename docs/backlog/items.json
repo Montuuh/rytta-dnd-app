@@ -1641,7 +1641,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-042"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
@@ -1660,7 +1660,33 @@
         "independent ui-ux PASS",
         "Storage policy denial tests if storage changes"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-043/validation.md",
+        "docs/decisions/027-combat-art-and-health-bands.md",
+        "docs/combat-design.md",
+        "docs/design-system.md",
+        "docs/security.md",
+        "supabase/migrations/20261107120000_combat_media.sql",
+        "tests/database/combat-media.test.ts",
+        "docs/evidence/RYT-043/bestiary-empty-mobile.png",
+        "docs/evidence/RYT-043/bestiary-empty-tablet.png",
+        "docs/evidence/RYT-043/bestiary-mobile.png",
+        "docs/evidence/RYT-043/bestiary-tablet.png",
+        "docs/evidence/RYT-043/dm-console-mobile.png",
+        "docs/evidence/RYT-043/dm-console-order-mobile.png",
+        "docs/evidence/RYT-043/dm-console-order-tablet.png",
+        "docs/evidence/RYT-043/dm-console-tablet.png",
+        "docs/evidence/RYT-043/dm-table-mobile.png",
+        "docs/evidence/RYT-043/dm-table-tablet.png",
+        "docs/evidence/RYT-043/player-bands-150-mobile.png",
+        "docs/evidence/RYT-043/player-bands-150-tablet.png",
+        "docs/evidence/RYT-043/player-bands-en-light-mobile.png",
+        "docs/evidence/RYT-043/player-bands-en-light-tablet.png",
+        "docs/evidence/RYT-043/player-bands-mobile.png",
+        "docs/evidence/RYT-043/player-bands-tablet.png",
+        "docs/evidence/RYT-043/summary-en-light-mobile.png",
+        "docs/evidence/RYT-043/summary-en-light-tablet.png"
+      ]
     },
     {
       "id": "RYT-044",

@@ -1,6 +1,13 @@
 import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { campaignId, identityFixture, playerId } from './fixtures/identity.ts'
+import {
+  beaId,
+  campaignId,
+  catoId,
+  characterId,
+  identityFixture,
+  playerId,
+} from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
@@ -151,9 +158,11 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await audit(dm)
   await evidence(dm, info.project.name, 'dm-log')
 
-  // 7. Players see descriptive enemy hit points, never the numbers.
-  await expect(row(arin, 'Goblin 1')).toContainText('Malherido', { timeout: 15_000 })
+  // 7. Players see descriptive enemy hit points, never the numbers. RYT-043: 1 of 7 is the fifth
+  // band, "near death", shown as a seal and a word, never as a bar.
+  await expect(row(arin, 'Goblin 1')).toContainText('A punto de caer', { timeout: 15_000 })
   await expect(row(arin, 'Goblin 1')).not.toContainText('PG')
+  await expect(row(arin, 'Goblin 1').locator('.combat-hp-bar')).toHaveCount(0)
   await expect(row(arin, 'Cato')).toContainText('No compartido')
   await expect(row(arin, 'Bea')).toContainText('18/18 PG')
 
@@ -162,7 +171,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   // RYT-041: there is no full screen control for anyone.
   await expect(dm.getByRole('button', { name: 'Pantalla completa' })).toHaveCount(0)
   await expect(dm.locator('.combat-table-active')).toHaveText('Goblin 1')
-  await expect(row(dm, 'Goblin 1')).toContainText('Malherido')
+  await expect(row(dm, 'Goblin 1')).toContainText('A punto de caer')
   await expect(row(dm, 'Goblin 1')).not.toContainText('PG')
   await expect(dm.getByRole('button', { name: 'Siguiente turno' })).toHaveCount(0)
   await audit(dm)
@@ -833,6 +842,10 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   await expect(total).toHaveValue('150')
   await expect(total).toHaveAttribute('aria-invalid', 'true')
   await expect(entry).toContainText('Escribe un total entre −20 y 99.')
+  // RYT-042 R2-1: the explanation is linked to the field, so returning to it reads it again.
+  const hint = await total.getAttribute('aria-describedby')
+  expect(hint).toBeTruthy()
+  await expect(page.locator(`[id="${hint}"]`)).toHaveText('Escribe un total entre −20 y 99.')
   await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
   await audit(page)
   await evidence(page, info.project.name, 'player-initiative-range', 'RYT-042')
@@ -1087,4 +1100,381 @@ test('RYT-042 table view entry and summary pass axe in English and light theme',
   await expect(recap).toContainText('Standing')
   await audit(page)
   await evidence(page, info.project.name, 'summary-en-light', 'RYT-042')
+})
+
+// RYT-043 ------------------------------------------------------------------------------------
+
+/** An 8×8 PNG the browser can decode (the upload path crops it to WebP). */
+const png = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
+  'base64',
+)
+
+const object = (owner: string, n: number) =>
+  `pre/${campaignId}/${owner}/50000000-0000-4000-8000-${String(n).padStart(12, '0')}.webp`
+
+/**
+ * An active fight for the art: Arin has a portrait, Bea and Cato do not (monograms), four goblins
+ * from an illustrated template stand in every band (8 HP: 5 wounded, 3 bloodied, 2 near death,
+ * 0 defeated) and a hidden ogre comes from a template with its own image.
+ */
+function seedArt(server: ReturnType<typeof combatServer>) {
+  const template = (name: string, maxHp: number) =>
+    server.act('save_combatant_template', {
+      data: {
+        name,
+        side: 'enemy',
+        max_hp: maxHp,
+        armor_class: 13,
+        initiative_bonus: 1,
+        legendary_max: 0,
+        notes: '',
+      },
+    }) as { id: string }
+  const goblin = template('Goblin', 8)
+  const ogre = template('Ogre', 59)
+  const paths = { goblin: object(goblin.id, 1), ogre: object(ogre.id, 2) }
+  for (const [id, path] of [
+    [goblin.id, paths.goblin],
+    [ogre.id, paths.ogre],
+  ] as const) {
+    server.uploads.add(path)
+    server.act('set_combatant_template_image', {
+      target_template: id,
+      expected_revision: 0,
+      new_path: path,
+      request_id: `img-${id}`,
+    })
+  }
+  server.art[goblin.id] = 'goblin'
+  server.art[ogre.id] = 'ogre'
+  server.art[characterId] = 'ranger'
+  server.portraits[characterId] = object(characterId, 3)
+  const { encounter_id: id } = server.act('create_encounter', {
+    encounter_name: 'Gate of Teeth',
+  }) as {
+    encounter_id: string
+  }
+  server.act('add_combatants', {
+    target_encounter: id,
+    entries: [
+      { kind: 'character', character_id: characterId },
+      { kind: 'character', character_id: beaId },
+      { kind: 'character', character_id: catoId },
+      { kind: 'npc', name: 'Goblin', template_id: goblin.id, count: 4, max_hp: 8 },
+      { kind: 'npc', name: 'Ogre', template_id: ogre.id, max_hp: 59, hidden: true },
+    ],
+  })
+  const encounter = server.encounters.find((e) => e.id === id)!
+  encounter.combatants.forEach((c, index) => (c.initiative = 20 - index))
+  server.act('set_encounter_status', { target_encounter: id, new_status: 'active' })
+  const by = (name: string) => encounter.combatants.find((c) => c.name === name)!.id
+  server.act('apply_combat_hp', {
+    target_encounter: id,
+    hp_mode: 'damage',
+    hits: [
+      { combatant_id: by('Goblin 1'), amount: 3 },
+      { combatant_id: by('Goblin 2'), amount: 5 },
+      { combatant_id: by('Goblin 3'), amount: 6 },
+      { combatant_id: by('Goblin 4'), amount: 8 },
+    ],
+    request_id: 'art-hits',
+  })
+  return { id, goblin: goblin.id, ogre: ogre.id, paths }
+}
+
+test('RYT-043 Players read enemy health as named bands and see tokens, never numbers or secrets', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const projections: string[] = []
+  page.on('response', async (response) => {
+    if (response.url().includes('/rpc/get_combat_state')) projections.push(await response.text())
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  const art = seedArt(server)
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!', { timeout: 15_000 })
+
+  // Bands: a seal and a word for every creature, never a bar or a number.
+  for (const [name, word] of [
+    ['Goblin 1', 'Herido'],
+    ['Goblin 2', 'Malherido'],
+    ['Goblin 3', 'A punto de caer'],
+    ['Goblin 4', 'Derrotado'],
+  ] as const) {
+    const goblin = row(page, name)
+    await expect(goblin.locator('.combat-band')).toContainText(word)
+    await expect(goblin.locator('.combat-band-seal svg')).toHaveCount(1)
+    await expect(goblin.locator('.combat-hp-bar')).toHaveCount(0)
+    await expect(goblin).not.toContainText('/8')
+    await expect(goblin).not.toContainText('PG')
+  }
+  // Each band has its own glyph (never colour alone).
+  const glyphs = await page
+    .locator('.combat-rail .combat-band-seal svg')
+    .evaluateAll((icons) => icons.map((icon) => icon.getAttribute('class')))
+  expect(new Set(glyphs).size).toBe(glyphs.length)
+  // The own character keeps exact numbers on a bar; an unshared teammate is a band too.
+  await expect(row(page, 'Arin').locator('.combat-hp-bar')).toHaveCount(1)
+  await expect(row(page, 'Arin')).toContainText('24/24 PG')
+  await expect(row(page, 'Cato').locator('.combat-band')).toContainText('No compartido')
+
+  // Tokens: the own portrait and the goblin art load; Bea and Cato have monograms by side.
+  await expect(row(page, 'Arin').locator('.combat-token img')).toHaveAttribute('src', /ranger/)
+  await expect(row(page, 'Goblin 3').locator('.combat-token img')).toHaveAttribute('src', /goblin/)
+  await expect(row(page, 'Bea').locator('.combat-token img')).toHaveCount(0)
+  await expect(row(page, 'Bea').locator('.combat-token-monogram')).toHaveText('B')
+  await expect(row(page, 'Bea').locator('.combat-token-monogram')).toHaveAttribute(
+    'aria-hidden',
+    'true',
+  )
+  await expect(row(page, 'Goblin 1').locator('.combat-token')).toHaveClass(/shape-enemy/)
+  await expect(row(page, 'Bea').locator('.combat-token')).toHaveClass(/shape-party/)
+  // The acting combatant's token is the banner's lead image.
+  await expect(page.locator('.combat-table-actor:not(.is-next) .combat-token')).toHaveClass(
+    /is-active/,
+  )
+
+  // The hidden ogre's image never reaches the Player: not in any projection, never signed.
+  expect(projections.length).toBeGreaterThan(0)
+  for (const body of projections) {
+    expect(body).not.toContain(art.paths.ogre)
+    expect(body).not.toContain('Ogre')
+  }
+  expect(server.signed.some((path) => path.includes(art.ogre))).toBe(false)
+  expect(server.signed.some((path) => path.includes(art.goblin))).toBe(true)
+  await expect(page.getByText('Ogre')).toHaveCount(0)
+  await audit(page)
+  await evidence(page, info.project.name, 'player-bands', 'RYT-043')
+
+  // 150% text: bands and tokens still fit.
+  await page.evaluate(() => (document.documentElement.style.fontSize = '150%'))
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await evidence(page, info.project.name, 'player-bands-150', 'RYT-043')
+  await page.evaluate(() => (document.documentElement.style.fontSize = ''))
+
+  // An image that cannot load falls back to the monogram (no broken image).
+  await page.route(/\/art\/ranger\.svg/, (route) => route.fulfill({ status: 404, body: '' }))
+  await page.reload()
+  await expect(row(page, 'Arin').locator('.combat-token-monogram')).toHaveText('A', {
+    timeout: 15_000,
+  })
+  await expect(row(page, 'Arin').locator('.combat-token img')).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broken rim', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  const art = seedArt(server)
+  await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
+  // The table view: the same bands as the Players, without the hidden ogre.
+  await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
+  await expect(row(page, 'Goblin 3')).toContainText('A punto de caer')
+  await expect(row(page, 'Goblin 3').locator('.combat-hp-bar')).toHaveCount(0)
+  await expect(page.locator('.combat-rail:visible').getByText('Ogre')).toHaveCount(0)
+  await audit(page)
+  await evidence(page, info.project.name, 'dm-table', 'RYT-043')
+  // The console: exact numbers on a bar plus the band word, and the hidden ogre's token.
+  await view(page, 'Consola del DM')
+  await expect(row(page, 'Goblin 3')).toContainText('2/8 PG · A punto de caer')
+  await expect(row(page, 'Goblin 3').locator('.combat-hp-bar')).toHaveCount(1)
+  await expect(row(page, 'Ogre').locator('.combat-token')).toHaveClass(/is-hidden/)
+  await expect(row(page, 'Ogre').locator('.combat-token img')).toHaveAttribute('src', /ogre/)
+  await audit(page)
+  await evidence(page, info.project.name, 'dm-console-order', 'RYT-043')
+  // The detail opens on the combatant's token, with its image described.
+  await row(page, 'Goblin 2').locator('.combat-row-main').click()
+  const detail = page.locator('.combat-detail:visible')
+  await expect(detail.getByRole('img', { name: 'Imagen de Goblin 2' })).toBeVisible()
+  await audit(page)
+  await evidence(page, info.project.name, 'dm-console', 'RYT-043')
+})
+
+test('RYT-043 the DM adds and changes a creature image from its bestiary token', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  const goblin = server.act('save_combatant_template', {
+    data: {
+      name: 'Goblin',
+      side: 'enemy',
+      max_hp: 7,
+      armor_class: 15,
+      initiative_bonus: 2,
+      legendary_max: 0,
+      notes: '',
+    },
+  }) as { id: string }
+  server.art[goblin.id] = 'goblin'
+  server.act('save_combatant_template', {
+    data: {
+      name: 'Wolf',
+      side: 'ally',
+      max_hp: 11,
+      armor_class: 13,
+      initiative_bonus: 2,
+      legendary_max: 0,
+      notes: '',
+    },
+  })
+  await page.goto(`./#/campaign/${campaignId}/combat?tab=bestiary`)
+  const card = page.locator('.combat-card', { hasText: 'Goblin' })
+  // No image yet: a designed hexagonal monogram, and the token itself is the picker.
+  await expect(card.locator('.combat-token-monogram')).toHaveText('G', { timeout: 15_000 })
+  await expect(
+    page.locator('.combat-card', { hasText: 'Wolf' }).locator('.combat-token'),
+  ).toHaveClass(/shape-ally/)
+  const picker = card.getByLabel('Añadir una imagen de Goblin')
+  await expect(picker).toHaveAttribute('type', 'file')
+  await expectTouchTargets(page, '.combat-image-picker')
+  // Keyboard: the picker takes focus and shows the focus ring around the token.
+  await picker.focus()
+  await expect(card.locator('.combat-image-picker')).toHaveCSS('outline-style', 'solid')
+  await audit(page)
+  await evidence(page, info.project.name, 'bestiary-empty', 'RYT-043')
+
+  // An unreadable file is explained next to the token.
+  await picker.setInputFiles({ name: 'notes.png', mimeType: 'image/png', buffer: Buffer.from('x') })
+  await expect(card.getByRole('alert')).toHaveText(
+    'No se puede leer ese archivo. Elige una imagen PNG, JPG o WebP.',
+  )
+  expect(server.uploads.size).toBe(0)
+
+  // Add: the image is cropped to WebP, stored privately and attached with the revision.
+  await picker.setInputFiles({ name: 'goblin.png', mimeType: 'image/png', buffer: png })
+  await expect(card.locator('.combat-token img')).toHaveAttribute('src', /goblin/, {
+    timeout: 15_000,
+  })
+  await expect(card.getByRole('alert')).toHaveCount(0)
+  await expect(card.getByRole('status')).toHaveText('Imagen de Goblin guardada')
+  expect([...server.uploads]).toEqual([
+    expect.stringMatching(new RegExp(`^pre/${campaignId}/${goblin.id}/.+\\.webp$`)),
+  ])
+  const changer = card.getByLabel('Cambiar la imagen de Goblin')
+  await expect(changer).toBeAttached()
+  await audit(page)
+  await evidence(page, info.project.name, 'bestiary', 'RYT-043')
+
+  // Change: a second upload replaces it (revision 1 → 2).
+  await changer.setInputFiles({ name: 'goblin-2.png', mimeType: 'image/png', buffer: png })
+  await expect.poll(() => server.uploads.size).toBe(2)
+  await expect.poll(() => server.templates.find((t) => t.id === goblin.id)?.revision).toBe(2)
+  expect(server.templates.find((t) => t.id === goblin.id)?.image_path).toBe([...server.uploads][1])
+  expect(errors).toEqual([])
+})
+
+test('RYT-042 R2-2/R2-3: the end of a fight moves focus to the recap and refreshes the view', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  const first = server.encounters[0]!.id
+  // R2-2: the damage dialog is open when the fight ends elsewhere; focus lands on the recap.
+  await page.goto(`./#/campaign/${campaignId}/combat/${first}?view=console`)
+  await page.getByRole('button', { name: 'Elegir objetivos' }).click()
+  await page.getByRole('checkbox', { name: 'Elegir a Goblin 2' }).check()
+  await page.locator('.combat-multi-bar').getByRole('button', { name: 'Daño' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  server.act('set_encounter_status', { target_encounter: first, new_status: 'ended' })
+  await expect(dialog).toHaveCount(0, { timeout: 15_000 })
+  const recapTitle = page.locator('.combat-console .combat-recap-title')
+  await expect(recapTitle).toBeFocused()
+  await expect(recapTitle).toHaveText('Resumen del combate')
+
+  // R2-3: switching back to the console after the fight ended behind the table refetches at once.
+  server.seedActive()
+  const second = server.encounters[1]!.id
+  await page.goto(`./#/campaign/${campaignId}/combat/${second}?view=console`)
+  await expect(page.getByRole('button', { name: 'Siguiente turno' })).toBeVisible({
+    timeout: 15_000,
+  })
+  await view(page, 'Mesa')
+  server.act('set_encounter_status', { target_encounter: second, new_status: 'ended' })
+  await expect(page.getByRole('region', { name: 'Resumen del combate' })).toBeVisible({
+    timeout: 15_000,
+  })
+  const refetch = page.waitForRequest(
+    (request) =>
+      request.url().includes('/rpc/get_combat_state') &&
+      (request.postDataJSON() as { as_table?: boolean }).as_table === false,
+    { timeout: 1_000 },
+  )
+  await view(page, 'Consola del DM')
+  await refetch
+  await expect(page.locator('.combat-console').getByText('Terminado', { exact: true })).toBeVisible(
+    {
+      timeout: 1_500,
+    },
+  )
+  await expect(page.getByRole('button', { name: 'Siguiente turno' })).toHaveCount(0)
+})
+
+test('RYT-043 bands and tokens pass axe in English and light theme', async ({ page }, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.addInitScript(() => {
+    localStorage.setItem('rytta-language', 'en')
+    localStorage.setItem('rytta-color-scheme', 'light')
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  const art = seedArt(server)
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await expect(page.locator('.combat-table-active')).toHaveText('Your turn!', { timeout: 15_000 })
+  await expect(row(page, 'Goblin 1')).toContainText('Wounded')
+  await expect(row(page, 'Goblin 2')).toContainText('Bloodied')
+  await expect(row(page, 'Goblin 3')).toContainText('Near death')
+  await expect(row(page, 'Cato')).toContainText('Not shared')
+  await audit(page)
+  await evidence(page, info.project.name, 'player-bands-en-light', 'RYT-043')
+  server.act('set_encounter_status', { target_encounter: art.id, new_status: 'ended' })
+  const recap = page.getByRole('region', { name: 'Combat summary' })
+  await expect(recap).toBeVisible({ timeout: 15_000 })
+  await expect(recap.locator('.combat-token img').first()).toBeVisible()
+  await audit(page)
+  await evidence(page, info.project.name, 'summary-en-light', 'RYT-043')
 })

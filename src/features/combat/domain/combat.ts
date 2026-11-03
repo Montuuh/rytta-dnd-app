@@ -24,6 +24,9 @@ export const encounterStatuses = ['draft', 'initiative', 'active', 'ended'] as c
 export type EncounterStatus = (typeof encounterStatuses)[number]
 export const hpStatuses = ['unhurt', 'wounded', 'bloodied', 'down', 'unknown'] as const
 export type HpStatus = (typeof hpStatuses)[number]
+/** RYT-043: five named bands (plus unknown) that describe health without numbers. */
+export const hpBands = ['unhurt', 'wounded', 'bloodied', 'critical', 'down', 'unknown'] as const
+export type HpBand = (typeof hpBands)[number]
 export type Side = 'party' | 'ally' | 'enemy'
 export type HpMode = 'damage' | 'heal' | 'temp'
 export type DeathSaveOutcome = 'success' | 'failure' | 'nat1' | 'nat20'
@@ -55,6 +58,9 @@ export const combatantSchema = z.object({
   legendary: z.object({ max: z.number().int().min(0), used: z.number().int().min(0) }).optional(),
   hp: hpSchema.optional(),
   hp_status: z.enum(hpStatuses).optional(),
+  hp_band: z.enum(hpBands).optional(),
+  /** Private storage path of the portrait (characters) or bestiary image (creatures). */
+  image_path: z.string().max(300).optional(),
   armor_class: z.number().int().optional(),
   conditions: z.array(z.enum(combatConditions)).optional(),
   concentration: z.string().max(80).optional(),
@@ -180,6 +186,7 @@ export const templateSchema = z.object({
   initiative_bonus: z.number().int(),
   legendary_max: z.number().int(),
   notes: z.string(),
+  image_path: z.string().max(300).nullable().optional(),
   revision: z.number().int(),
 })
 export type CombatantTemplate = z.infer<typeof templateSchema>
@@ -287,6 +294,7 @@ export type CombatAction =
       data: TemplateInput
     }
   | { kind: 'deleteTemplate'; templateId: string }
+  | { kind: 'templateImage'; templateId: string; revision: number; path: string | null }
 
 export const combatErrorCodes = [
   'staleTurn',
@@ -331,6 +339,35 @@ export function combatErrorCode(message: string): CombatErrorCode {
 }
 export const isCombatErrorCode = (value: string): value is CombatErrorCode =>
   (combatErrorCodes as readonly string[]).includes(value)
+
+/**
+ * The band to show for a combatant (RYT-043). Exact hit points, when visible, decide it locally so the
+ * band always agrees with the numbers; otherwise the server's band (or its older four-value status).
+ */
+export function healthBand(combatant: Combatant): HpBand | null {
+  if (combatant.kind === 'lair') return null
+  if (combatant.defeated && combatant.kind !== 'character') return 'down'
+  const hp = combatant.hp
+  if (hp) {
+    if (hp.current <= 0) return 'down'
+    if (hp.current >= hp.max) return 'unhurt'
+    if (hp.current * 2 > hp.max) return 'wounded'
+    if (hp.current * 4 > hp.max) return 'bloodied'
+    return 'critical'
+  }
+  return combatant.hp_band ?? combatant.hp_status ?? 'unknown'
+}
+
+/** Up to two initials for a monogram: "Goblin 3" gives "G3", "Arin Vale" gives "AV". */
+export function monogram(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => Array.from(part)[0]!.toLocaleUpperCase())
+    .join('')
+}
 
 export const isLive = (status: EncounterStatus | undefined) =>
   status === 'initiative' || status === 'active'

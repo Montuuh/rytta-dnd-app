@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import {
   ActionIcon,
   Alert,
   Button,
   Group,
+  Loader,
   Modal,
   NumberInput,
   SegmentedControl,
@@ -11,16 +12,19 @@ import {
   Text,
   TextInput,
   Textarea,
+  VisuallyHidden,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Camera, ImagePlus, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { QueryFeedback } from '@/features/campaigns'
-import { templatesQuery } from '../api'
+import { templatesQuery, useCreatureImageUpload } from '../api'
 import type { CombatantTemplate, TemplateInput } from '../domain/combat'
 import { useRunner } from './helpers'
 import { RunnerError } from './parts'
+import { toSquareWebp } from './square-image'
+import { Token } from './token'
 
 const signed = (n: number) => (n >= 0 ? `+${n}` : String(n))
 
@@ -73,8 +77,9 @@ export function Bestiary({ campaignId }: { campaignId: string }) {
       {query.data && query.data.length > 0 && (
         <ul className="combat-cards">
           {query.data.map((template) => (
-            <li key={template.id} className="combat-card">
-              <div>
+            <li key={template.id} className="combat-card is-creature">
+              <CreatureImage campaignId={campaignId} template={template} />
+              <div className="combat-card-text">
                 <Text fw={700}>{template.name}</Text>
                 <Text size="sm" c="dimmed">
                   {t(`combat.side.${template.side}`)} ·{' '}
@@ -177,6 +182,98 @@ export function Bestiary({ campaignId }: { campaignId: string }) {
         </Group>
       </Modal>
     </Stack>
+  )
+}
+
+/**
+ * The creature's token is its own upload control (RYT-043): tapping it (or Enter/Space on its focus)
+ * opens the file picker; a camera seal on the rim says so. The image is cropped to a 512px WebP square,
+ * stored privately and attached with the template's revision. Progress, success and failure are
+ * announced; a failure stays next to the token until the next attempt.
+ */
+function CreatureImage({
+  campaignId,
+  template,
+}: {
+  campaignId: string
+  template: CombatantTemplate
+}) {
+  const { t } = useTranslation()
+  const inputId = useId()
+  const errorId = useId()
+  const upload = useCreatureImageUpload(campaignId)
+  const [unreadable, setUnreadable] = useState(false)
+  const [done, setDone] = useState(false)
+  const failed = unreadable || upload.isError
+  const has = Boolean(template.image_path)
+  const action = t(has ? 'combat.image.change' : 'combat.image.add', { name: template.name })
+  return (
+    <div className="combat-creature-image">
+      <input
+        id={inputId}
+        type="file"
+        accept="image/webp,image/png,image/jpeg"
+        className="visually-hidden combat-image-input"
+        disabled={upload.isPending}
+        aria-describedby={failed ? errorId : undefined}
+        onChange={async (event) => {
+          const file = event.currentTarget.files?.[0]
+          event.currentTarget.value = ''
+          if (!file) return
+          setUnreadable(false)
+          setDone(false)
+          upload.reset()
+          let image: Blob
+          try {
+            image = await toSquareWebp(file)
+          } catch {
+            setUnreadable(true)
+            return
+          }
+          upload.mutate(
+            { templateId: template.id, revision: template.revision, image },
+            { onSuccess: () => setDone(true) },
+          )
+        }}
+      />
+      <label
+        htmlFor={inputId}
+        className="combat-image-picker"
+        data-pending={upload.isPending || undefined}
+        title={action}
+      >
+        <Token
+          name={template.name}
+          side={template.side}
+          imageKind="creature"
+          path={template.image_path}
+          size={64}
+        >
+          <span className="combat-image-seal" aria-hidden="true">
+            {upload.isPending ? (
+              <Loader size={14} color="currentColor" />
+            ) : has ? (
+              <Camera size={16} strokeWidth={2.25} />
+            ) : (
+              <ImagePlus size={16} strokeWidth={2.25} />
+            )}
+          </span>
+        </Token>
+        <span className="visually-hidden">{action}</span>
+      </label>
+      <VisuallyHidden role="status">
+        {upload.isPending
+          ? t('combat.image.saving')
+          : done
+            ? t('combat.image.saved', { name: template.name })
+            : ''}
+      </VisuallyHidden>
+      {failed && (
+        <Text id={errorId} role="alert" size="sm" className="combat-image-error">
+          {t(unreadable ? 'combat.image.unreadable' : 'combat.image.failed')}
+        </Text>
+      )}
+    </div>
   )
 }
 

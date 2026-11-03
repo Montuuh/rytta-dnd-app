@@ -530,6 +530,26 @@ describe('RYT-034 player trades', () => {
     await db.exec('reset role')
   })
 
+  it('refuses to accept an empty trade until either side offers something', async () => {
+    for (const schema of ['public', 'pre']) {
+      const s = await setup(schema)
+      const a = api(schema)
+      const id = await openTrade(s, schema)
+      await asUser(player)
+      await expect(a.confirm(s.c, id, s.Arin, 1)).rejects.toThrow(/Empty trade/)
+      // Clearing a gold offer back to zero is empty again.
+      await a.offer(s.c, id, s.Arin, 1, [], 1)
+      await a.offer(s.c, id, s.Arin, 2, [], 0)
+      await asUser(peer)
+      await expect(a.confirm(s.c, id, s.Bea, 3)).rejects.toThrow(/Empty trade/)
+      // One gold piece on one side is a deal both can accept.
+      await a.offer(s.c, id, s.Bea, 3, [], 1)
+      expect(await a.confirm(s.c, id, s.Bea, 4)).toMatchObject({ status: 'open' })
+      await asUser(player)
+      expect(await a.confirm(s.c, id, s.Arin, 4)).toMatchObject({ status: 'completed' })
+    }
+  })
+
   it('mirrors tables, policies and RPCs into a PRE copied before the migration', async () => {
     await db.exec('reset role')
     expect((await db.query("select to_regclass('pre.trades') t")).rows[0]).toEqual({

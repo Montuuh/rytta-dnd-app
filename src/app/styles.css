@@ -666,11 +666,26 @@ main h3 {
 .preserve-lines {
   white-space: pre-line;
 }
+/* The back link gives way first: its label wraps to two lines before the actions shrink. */
 .sheet-back {
   min-height: 44px;
+  height: auto;
   padding-inline: 8px;
+  padding-block: 4px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.sheet-back .mantine-Button-inner {
+  justify-content: flex-start;
+}
+.sheet-back .mantine-Button-label {
+  white-space: normal;
+  overflow: visible;
+  text-align: start;
+  line-height: 1.2;
+}
+.sheet-header-actions {
   flex-shrink: 0;
-  white-space: nowrap;
 }
 .sheet-tool.sheet-tool {
   min-height: 44px;
@@ -3668,8 +3683,19 @@ html[data-mantine-color-scheme='light'] .order-counter {
   margin: 2px 0;
 }
 .character-owner-info .mantine-Badge-root {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  max-width: 100%;
+  height: auto;
+  min-height: var(--badge-height);
+  padding-block: 2px;
   overflow: visible;
+}
+/* Large text: the assignment badge wraps instead of truncating. */
+.character-owner-info .mantine-Badge-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
 }
 .character-owner-share {
   margin-left: auto;
@@ -4206,11 +4232,13 @@ html[data-mantine-color-scheme='light'] .order-counter {
   --button-hover: color-mix(in srgb, var(--danger) 86%, var(--app-text));
   --button-color: var(--app-on-accent);
 }
+/* Mantine paints disabled buttons with --mantine-color-disabled* directly, so the themed
+   disabled look sets the painted properties rather than the --button-* variables. */
 .danger-solid:disabled,
 .danger-solid[data-disabled] {
-  --button-bg: color-mix(in srgb, var(--danger) 16%, var(--app-raised));
-  --button-color: color-mix(in srgb, var(--danger) 60%, var(--app-muted));
-  --button-bd: 1px dashed color-mix(in srgb, var(--danger) 45%, var(--app-border));
+  background-color: color-mix(in srgb, var(--danger) 12%, var(--app-raised));
+  color: color-mix(in srgb, var(--danger) 70%, var(--app-text));
+  border: 1px dashed color-mix(in srgb, var(--danger) 55%, var(--app-border));
   cursor: not-allowed;
 }
 .add-choice {

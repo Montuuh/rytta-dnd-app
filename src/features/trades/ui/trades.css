@@ -76,7 +76,8 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* At most four per row; slots widen with the text size, so large text gets fewer, wider slots. */
+  grid-template-columns: repeat(auto-fill, minmax(max(4.5rem, calc((100% - 24px) / 4)), 1fr));
   gap: 8px;
 }
 .trade-slot {
@@ -87,11 +88,11 @@
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 4px;
-  text-align: center;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 6px;
+  text-align: start;
   color: var(--app-text);
 }
 .trade-slot.empty {
@@ -99,6 +100,9 @@
   color: var(--app-muted);
 }
 .trade-slot.add {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   border-style: dashed;
   border-color: var(--app-accent-secondary);
   color: var(--app-accent-secondary);
@@ -112,27 +116,48 @@ button.trade-slot.filled:hover,
 .trade-slot.add:hover {
   background: var(--app-hover);
 }
+/* Icon and quantity share the top row, so the quantity can never sit on the icon. */
+.trade-slot-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+}
 .trade-slot-icon {
   color: var(--rarity);
   display: grid;
   place-items: center;
+  flex-shrink: 0;
 }
 .trade-slot-qty {
-  position: absolute;
-  top: 4px;
-  right: 6px;
+  flex-shrink: 0;
+  min-width: 1.75em;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--rarity) 22%, var(--app-surface));
+  color: var(--app-text);
   font-size: var(--fs-tag);
   font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.trade-slot-name {
+.trade-slot-name,
+.trade-slot-name.user-copy {
   font-size: var(--fs-tag);
-  line-height: 1.2;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   max-width: 100%;
+  /* Break between words; only a single word longer than the slot is hyphenated. */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
+.trade-side-nothing {
+  display: none;
 }
 
 .trade-gold {
@@ -153,16 +178,60 @@ button.trade-slot.filled:hover,
   color: var(--gold-accent);
 }
 .trade-stepper {
+  --stepper-line: color-mix(in srgb, var(--app-muted) 40%, var(--app-border));
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  align-items: stretch;
+  border: 1px solid var(--stepper-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  transition: border-color 120ms ease;
 }
-.trade-stepper-input {
-  width: 84px;
-  height: 44px;
+.trade-stepper:focus-within {
+  border-color: var(--app-accent);
+}
+.trade-step {
+  display: grid;
+  place-items: center;
+  min-width: max(44px, 2.75rem);
+  min-height: 44px;
+  color: var(--app-accent);
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.trade-step:first-child {
+  border-radius: 11px 0 0 11px;
+}
+.trade-step:last-child {
+  border-radius: 0 11px 11px 0;
+}
+.trade-step:hover:not(:disabled) {
+  background: var(--app-hover);
+}
+.trade-step:active:not(:disabled) svg {
+  transform: scale(0.85);
+}
+.trade-step:disabled {
+  color: color-mix(in srgb, var(--app-muted) 55%, transparent);
+  cursor: not-allowed;
+}
+.trade-stepper .trade-stepper-input {
+  width: max(84px, 4.5rem);
+  height: 100%;
+  min-height: 44px;
+  border: 0;
+  border-inline: 1px solid var(--stepper-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--app-text);
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
+}
+.trade-stepper .trade-stepper-input:focus-visible {
+  outline-offset: -3px;
 }
 
 /* The seam: the memorable piece. Each seal locks when its side accepts. */
@@ -194,20 +263,121 @@ button.trade-slot.filled:hover,
   transform: scale(1.06);
 }
 
-.trade-status {
-  min-height: 1.5em;
-}
 .trade-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+.trade-footer-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding-top: 12px;
-  border-top: 1px solid var(--app-border);
 }
 .trade-accept {
   min-width: min(100%, 260px);
+}
+/* Mantine paints disabled buttons with its stock grey; keep the themed look instead.
+   Sealed (accepted, waiting) reads as a solid seal; blocked reads as a dashed outline. */
+.trade-accept:disabled:not([data-loading]),
+.trade-accept[data-disabled]:not([data-loading]) {
+  background-color: color-mix(in srgb, var(--app-accent) 12%, var(--app-raised));
+  color: color-mix(in srgb, var(--app-accent) 55%, var(--app-muted));
+  border: 1px dashed color-mix(in srgb, var(--app-accent) 45%, var(--app-border));
+}
+.trade-accept[data-sealed]:disabled:not([data-loading]) {
+  background-color: color-mix(in srgb, var(--app-accent) 22%, var(--app-surface));
+  color: var(--app-text);
+  border: 1px solid var(--app-accent);
+}
+/* The state line sits next to "Accept": what changed is visible where the decision is made. */
+.trade-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 1.5em;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.trade-status-icon {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+}
+.trade-status[data-tone='changed'] {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--app-accent-secondary) 16%, var(--app-surface));
+  color: var(--app-text);
+  font-weight: 600;
+  animation: trade-status-flash 900ms ease-out;
+}
+.trade-status[data-tone='changed'] .trade-status-icon {
+  color: var(--app-accent-secondary);
+}
+.trade-status[data-tone='saving'] .trade-status-icon {
+  animation: trade-spin 1s linear infinite;
+}
+@keyframes trade-status-flash {
+  from {
+    box-shadow: 0 0 0 3px var(--app-accent-secondary);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes trade-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Phones only: what the partner gives, one tap from the partner column. */
+.trade-peek {
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: var(--fs-meta);
+  text-align: start;
+}
+.trade-peek[data-confirmed] {
+  border-color: var(--app-accent);
+}
+.trade-peek:hover {
+  background: var(--app-hover);
+}
+.trade-peek-seal {
+  display: inline-grid;
+  color: var(--app-muted);
+}
+.trade-peek[data-confirmed] .trade-peek-seal {
+  color: var(--app-accent);
+}
+.trade-peek-who {
+  font-weight: 700;
+}
+.trade-peek-items {
+  color: var(--app-muted);
+}
+.trade-peek-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-accent);
+}
+.trade-peek-go {
+  margin-inline-start: auto;
+  color: var(--app-muted);
 }
 
 /* Item picker. */
@@ -225,6 +395,24 @@ button.trade-slot.filled:hover,
   gap: 4px;
   max-height: 46vh;
   overflow-y: auto;
+}
+/* Phone picker: a bottom sheet as tall as its content, the action in the thumb zone. */
+.trade-picker-sheet .mantine-Drawer-content {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 88dvh;
+  margin-top: auto;
+  border-radius: 18px 18px 0 0;
+  background: var(--app-surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.trade-picker-sheet .trade-picker-list {
+  max-height: 38dvh;
+}
+.trade-picker-sheet .trade-picker-actions > * {
+  flex: 1 1 10rem;
 }
 .trade-picker-row {
   width: 100%;
@@ -484,15 +672,27 @@ button.trade-slot.filled:hover,
   .trade-footer {
     position: sticky;
     bottom: 0;
+    z-index: 1;
+    gap: 8px;
     background: var(--mantine-color-body);
     padding-bottom: 8px;
+  }
+  .trade-peek {
+    display: flex;
   }
   .trade-footer .trade-accept {
     order: -1;
     flex: 1 1 100%;
   }
-  .trade-footer > :not(.trade-accept) {
+  .trade-footer-actions > :not(.trade-accept) {
     flex: 1 1 100%;
+  }
+  /* Stacked offers: no placeholder rows, only real items and the "add" slot. */
+  .trade-slots > li:has(> div.trade-slot.empty) {
+    display: none;
+  }
+  .trade-side-nothing {
+    display: block;
   }
 }
 
@@ -501,8 +701,13 @@ button.trade-slot.filled:hover,
     animation: none;
   }
   .trade-seal,
-  .trade-side {
+  .trade-side,
+  .trade-stepper {
     transition: none;
+  }
+  .trade-status[data-tone='changed'],
+  .trade-status[data-tone='saving'] .trade-status-icon {
+    animation: none;
   }
   .trade-seal[data-on] {
     transform: none;

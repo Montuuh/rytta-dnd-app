@@ -152,3 +152,14 @@ test:e2e` on the fixed ports: two attempts were refused because another worktree
 the third run, with servers started by this run, passed 326, skipped 49, failed 0 (3.6 min).
 A focused ui-ux re-review is pending. The ticket
 stays in `review`.
+
+## Integration (2026-11-03)
+
+- Merged main (RYT-040) into the branch; independent ui-ux integration PASS for the combined
+  snapshot `02f8ca80…` (see ui-review.md, "Integration").
+- Fixed a race in `tests/e2e/combat.spec.ts` (axe ran while "Siguiente turno" was still saving).
+  `CI=1 npx playwright test combat glossary`: 94 passed, 1 flaky on first run; combat 3×35 and
+  glossary 3×60 passed afterwards with `--retries=0`.
+- Production: applied `combat_roster` to the hosted project via Supabase MCP. Verified `public` and
+  `pre` `add_combatants`/`remove_combatant` and `private`/`pre_private.combat_start_turn` carry the
+  new bodies and `anon` cannot execute them.

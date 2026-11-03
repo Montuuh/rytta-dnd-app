@@ -39,10 +39,11 @@ export const sentInvitationsQuery = (userId: string, campaignId: string) =>
     queryFn: async ({ signal }) => (await repository()).sentInvitations(campaignId, signal),
     refetchInterval: 30_000,
   })
-export const auditEventsQuery = (userId: string, campaignId: string) =>
+export const auditEventsQuery = (userId: string, campaignId: string, characterId?: string) =>
   queryOptions({
-    queryKey: ['private', userId, 'campaign', campaignId, 'audit-events'],
-    queryFn: async ({ signal }) => (await repository()).auditEvents(campaignId, signal),
+    queryKey: ['private', userId, 'campaign', campaignId, 'audit-events', characterId ?? 'all'],
+    queryFn: async ({ signal }) =>
+      (await repository()).auditEvents(campaignId, signal, characterId),
     refetchInterval: 20_000,
   })
 export type CampaignAction =

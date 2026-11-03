@@ -12,6 +12,7 @@ import type { Vitals } from '../../domain/sheet'
 import { useCharacterLabels } from '../labels'
 import { FeaturesTab, NotesTab, SpellsTab, SummaryTab } from './sections'
 import { VitalsPanel } from './vitals-panel'
+import { SheetHistory } from './sheet-history'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 
 const tabs = ['summary', 'features', 'spells', 'notes'] as const
@@ -21,14 +22,19 @@ export function CharacterSheetPage() {
   const { characterId = '' } = useParams()
   const { state } = useAuth()
   const campaign = useCampaign()
-  const { playerPreview } = useCampaignView()
+  const { playerPreview, previewUserId } = useCampaignView()
   const userId = state.user!.id
   const query = useQuery(sheetQuery(userId, campaign.id, characterId))
   // Exhaustion stays a DM resource on characters; reuse the Party query for it.
-  const resources = useQuery({
-    ...charactersQuery(userId, campaign.id, campaign.role === 'dm' ? undefined : userId),
-    enabled: !playerPreview,
-  })
+  const resources = useQuery(
+    charactersQuery(
+      userId,
+      campaign.id,
+      campaign.role === 'dm' ? undefined : playerPreview ? (previewUserId ?? userId) : userId,
+    ),
+  )
+  // Only a real DM view (not the Player preview) shows the audit history.
+  const realDm = campaign.role === 'dm' && !playerPreview
   const action = useSheetAction(campaign.id)
   const labels = useCharacterLabels()
   const [notice, setNotice] = useState<'sheet.saved' | 'sheet.restDone' | null>(null)
@@ -73,7 +79,8 @@ export function CharacterSheetPage() {
       </Stack>
     )
   const { character, sheet, vitals } = query.data
-  const canEdit = campaign.role === 'dm' || character.user_id === userId
+  // RYT-028: a DM previewing a Player keeps DM write access; the RPCs still authorize server-side.
+  const canEdit = campaign.role === 'dm' || playerPreview || character.user_id === userId
   const editPath = `${party}/${character.id}/create`
   if (sheet.status === 'draft' || !sheet.build)
     return (
@@ -112,16 +119,25 @@ export function CharacterSheetPage() {
     <Stack gap="md" className="character-sheet">
       <Group justify="space-between" wrap="nowrap" gap="xs">
         {back}
-        {canEdit && (
-          <Button
-            component={Link}
-            to={editPath}
-            variant="light"
-            leftSection={<Pencil size={16} aria-hidden="true" />}
-          >
-            {t('sheet.editBuild')}
-          </Button>
-        )}
+        <Group gap="xs" wrap="nowrap" className="sheet-header-actions">
+          {realDm && (
+            <SheetHistory
+              campaignId={campaign.id}
+              characterId={character.id}
+              name={character.name}
+            />
+          )}
+          {canEdit && (
+            <Button
+              component={Link}
+              to={editPath}
+              variant="light"
+              leftSection={<Pencil size={16} aria-hidden="true" />}
+            >
+              {t('sheet.editBuild')}
+            </Button>
+          )}
+        </Group>
       </Group>
       <header className="sheet-identity">
         <CharacterPortrait

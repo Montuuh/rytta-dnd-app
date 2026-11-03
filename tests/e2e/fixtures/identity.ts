@@ -5,6 +5,11 @@ export const campaignId = '20000000-0000-4000-8000-000000000001'
 export const otherCampaignId = '20000000-0000-4000-8000-000000000002'
 export const inviteId = '30000000-0000-4000-8000-000000000001'
 export const characterId = '40000000-0000-4000-8000-000000000001'
+/** RYT-031 party fixture: a shared teammate (Bea) and a hidden one (Cato). */
+export const peerId = '10000000-0000-4000-8000-000000000003'
+export const hiddenPeerId = '10000000-0000-4000-8000-000000000004'
+export const beaId = '40000000-0000-4000-8000-0000000000b1'
+export const catoId = '40000000-0000-4000-8000-0000000000c1'
 export const storageKey = 'sb-rytta-test-auth-token'
 export function session(id = dmId) {
   const email = id === dmId ? 'dm@example.com' : 'player@example.com'
@@ -44,6 +49,7 @@ export async function identityFixture(
     sheet?: 'draft' | 'complete'
     inventory?: boolean
     modules?: string[]
+    party?: boolean
   } = {},
 ) {
   const currentId = options.player ? playerId : dmId
@@ -92,6 +98,17 @@ export async function identityFixture(
       email: 'player@example.com',
       display_name: 'Arin',
     },
+    ...(options.party
+      ? [
+          { user_id: peerId, role: 'player', email: 'bea@example.com', display_name: 'Bea P.' },
+          {
+            user_id: hiddenPeerId,
+            role: 'player',
+            email: 'cato@example.com',
+            display_name: 'Cato P.',
+          },
+        ]
+      : []),
   ]
   let characters =
     options.empty || options.noCharacters
@@ -111,6 +128,19 @@ export async function identityFixture(
             },
           },
         ]
+  if (options.party)
+    for (const [id, user_id, name, gold] of [
+      [beaId, peerId, 'Bea', 777],
+      [catoId, hiddenPeerId, 'Cato', 555],
+    ] as const)
+      characters.push({
+        id,
+        campaign_id: campaignId,
+        user_id,
+        name,
+        character_resources: { gold, water_units: 9, rations: 8, exhaustion: 0, revision: 0 },
+      })
+  const sharesLive = new Map<string, boolean>(characters.map((c) => [c.id, c.id !== catoId]))
   type SheetRow = {
     status: string
     level: number
@@ -156,6 +186,18 @@ export async function identityFixture(
         : blankVitals(),
     ]),
   )
+  if (options.party) {
+    sheets.set(beaId, { ...sampleSheet(), max_hp: 24, armor_class: 16 })
+    vitals.set(beaId, {
+      ...blankVitals(),
+      current_hp: 9,
+      temp_hp: 3,
+      conditions: ['poisoned', 'prone'],
+    })
+    characters.find((c) => c.id === beaId)!.character_resources.exhaustion = 2
+    sheets.set(catoId, { ...sampleSheet(), max_hp: 20 })
+    vitals.set(catoId, { ...blankVitals(), current_hp: 20 })
+  }
   const inventory = inventoryState(
     characters.map((c) => c.id),
     Boolean(options.inventory),
@@ -476,6 +518,61 @@ export async function identityFixture(
       }
       return respond(null)
     }
+    if (method === 'get_party_overview') {
+      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      return respond(
+        characters
+          .filter((c) => c.campaign_id === body.target_campaign)
+          .filter(
+            (c) =>
+              dm || c.user_id === actor || (c.user_id !== null && sharesLive.get(c.id) !== false),
+          )
+          .map((c) => {
+            const sheet = sheets.get(c.id)
+            const state = vitals.get(c.id)
+            return {
+              id: c.id,
+              name: c.name,
+              is_own: c.user_id === actor,
+              is_assigned: c.user_id !== null,
+              shares_live: sharesLive.get(c.id) !== false,
+              sheet_status: sheet?.status ?? null,
+              class_key: (sheet?.build.classKey as string | undefined) ?? null,
+              class_label: (sheet?.build.classLabel as string | undefined) ?? null,
+              level: sheet?.level ?? null,
+              current_hp: (state?.current_hp as number | undefined) ?? null,
+              max_hp: sheet?.max_hp ?? null,
+              temp_hp: (state?.temp_hp as number | undefined) ?? null,
+              armor_class: sheet?.armor_class ?? null,
+              exhaustion: c.character_resources.exhaustion,
+              conditions: (state?.conditions as string[] | undefined) ?? [],
+            }
+          }),
+      )
+    }
+    if (method === 'set_character_live_sharing') {
+      if (members.find((m) => m.user_id === actor)?.role !== 'dm')
+        return respond({ message: 'Forbidden' }, 403)
+      const target = characters.find((c) => c.id === body.target_character)!
+      const before = sharesLive.get(target.id) !== false
+      sharesLive.set(target.id, Boolean(body.enabled))
+      if (before !== Boolean(body.enabled))
+        characterEvents.unshift({
+          id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
+          campaign_id: target.campaign_id,
+          character_id: target.id,
+          actor_id: actor,
+          kind: 'characters:UPDATE',
+          before_value: { name: target.name, user_id: target.user_id, shares_live: before },
+          after_value: {
+            name: target.name,
+            user_id: target.user_id,
+            shares_live: Boolean(body.enabled),
+          },
+          created_at: '2026-10-27T01:20:00Z',
+        })
+      return respond(Boolean(body.enabled))
+    }
     if (method === 'list_campaign_members') return respond(members)
     if (method === 'campaign_invitations') return respond(sent)
     if (method === 'invite_character_player' || method === 'invite_campaign_member') {
@@ -499,7 +596,14 @@ export async function identityFixture(
     }
     if (method === 'character_events') {
       const targetCampaign = url.searchParams.get('campaign_id')?.replace('eq.', '')
-      return respond(characterEvents.filter((e) => e.campaign_id === targetCampaign))
+      const targetCharacter = url.searchParams.get('character_id')?.replace('eq.', '')
+      return respond(
+        characterEvents.filter(
+          (e) =>
+            e.campaign_id === targetCampaign &&
+            (!targetCharacter || e.character_id === targetCharacter),
+        ),
+      )
     }
     if (method === 'change_campaign_member') {
       if (!body.new_role) {

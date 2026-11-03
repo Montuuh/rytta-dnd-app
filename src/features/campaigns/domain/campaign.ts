@@ -41,7 +41,7 @@ export interface CampaignRepository {
   invitations(signal?: AbortSignal): Promise<Invitation[]>
   members(campaignId: string, signal?: AbortSignal): Promise<Member[]>
   sentInvitations(campaignId: string, signal?: AbortSignal): Promise<SentInvitation[]>
-  auditEvents(campaignId: string, signal?: AbortSignal): Promise<AuditEvent[]>
+  auditEvents(campaignId: string, signal?: AbortSignal, characterId?: string): Promise<AuditEvent[]>
   create(name: string, description: string): Promise<string>
   invite(campaignId: string, email: string): Promise<string>
   respond(invitationId: string, accept: boolean): Promise<string>

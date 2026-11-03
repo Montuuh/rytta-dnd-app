@@ -15,6 +15,7 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
@@ -25,12 +26,14 @@ import {
   Shield,
   Droplets,
   Ellipsis,
+  EyeOff,
   Flame,
   Link2,
   Minus,
   PackagePlus,
   Pencil,
   Plus,
+  Radio,
   ScrollText,
   Unlink,
   Utensils,
@@ -42,10 +45,16 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { Link } from 'react-router'
-import { charactersQuery, sheetSummariesQuery, useCharacterAction } from '../api'
+import {
+  charactersQuery,
+  partyOverviewQuery,
+  sheetSummariesQuery,
+  useCharacterAction,
+} from '../api'
 import { isClassKey } from '../domain/rules'
 import { resourceSchema, type Character } from '../domain/character'
 import type { SheetSummary } from '../domain/sheet'
+import { hpTone, sharedTeammates, type PartyMember } from '../domain/party'
 import { PlayerAssignmentEditor } from './player-assignment'
 import { CharacterPortrait } from '@/features/inventory'
 
@@ -71,6 +80,11 @@ export function CharacterParty() {
   const query = useQuery(charactersQuery(state.user!.id, campaign.id, filterUserId))
   const members = useQuery({ ...membersQuery(state.user!.id, campaign.id), enabled: dm })
   const summaries = useQuery(sheetSummariesQuery(state.user!.id, campaign.id))
+  const overview = useQuery(partyOverviewQuery(state.user!.id, campaign.id))
+  // A DM previewing a Player acts as that Player; the server still authorizes as the DM.
+  const viewerId = playerPreview ? previewUserId : state.user!.id
+  const ownIds = new Set((query.data ?? []).map((character) => character.id))
+  const teammates = !dm && overview.data ? sharedTeammates(overview.data, ownIds) : null
   const opener = useRef<HTMLElement | null>(null)
   const fallback = useRef<string | null>(null)
   const open = (next: PartyEditor, target: HTMLElement) => {
@@ -89,6 +103,7 @@ export function CharacterParty() {
   const [notice, setNotice] = useState<
     'characters.saved' | 'characters.assignmentSaved' | 'characters.created' | null
   >(null)
+  const [shareError, setShareError] = useState(false)
   const quickResourceAction = useCharacterAction(campaign.id)
   return (
     <Stack gap="lg">
@@ -113,12 +128,20 @@ export function CharacterParty() {
       <PullToRefresh onRefresh={() => void query.refetch()} />
       <Group justify="flex-end">
         <RefreshControl
-          onRefresh={() => void query.refetch()}
-          fetching={query.isFetching}
-          updatedAt={query.dataUpdatedAt}
+          onRefresh={() => {
+            void query.refetch()
+            void overview.refetch()
+          }}
+          fetching={query.isFetching || overview.isFetching}
+          updatedAt={Math.max(query.dataUpdatedAt, overview.dataUpdatedAt)}
         />
       </Group>
       {notice && <Alert role="status">{t(notice)}</Alert>}
+      {shareError && (
+        <Alert color="red" role="alert" withCloseButton onClose={() => setShareError(false)}>
+          {t('party.shareError')}
+        </Alert>
+      )}
       {query.isPending && <Text role="status">{t('common.loading')}</Text>}
       {query.isError && (
         <Alert color="red" role="alert">
@@ -136,8 +159,9 @@ export function CharacterParty() {
       {!query.isError && (
         <div className={`party-grid ${(query.data?.length ?? 0) > 1 ? 'is-many' : 'is-single'}`}>
           {query.data?.map((character) => {
-            const own = !playerPreview && character.user_id === state.user!.id
+            const own = !!viewerId && character.user_id === viewerId
             const summary = summaries.data?.find((item) => item.character_id === character.id)
+            const live = overview.data?.find((item) => item.id === character.id)
             return (
               <Paper
                 p="lg"
@@ -187,6 +211,12 @@ export function CharacterParty() {
                                 })}
                               </Text>
                             )}
+                            {live && !live.shares_live && (
+                              <Text size="sm" c="dimmed" className="live-hidden-note">
+                                <EyeOff size={14} aria-hidden="true" />
+                                {t('party.shareOff')}
+                              </Text>
+                            )}
                           </div>
                         )}
                         {summary && summary.status === 'complete' && (
@@ -201,6 +231,16 @@ export function CharacterParty() {
                           </Text>
                         )}
                       </div>
+                      {dm && live && (
+                        <LiveShareToggle
+                          campaignId={campaign.id}
+                          characterId={character.id}
+                          name={character.name}
+                          shared={live.shares_live}
+                          onError={() => setShareError(true)}
+                          onSuccess={() => setShareError(false)}
+                        />
+                      )}
                       <CharacterMenu
                         character={character}
                         dm={dm}
@@ -216,7 +256,7 @@ export function CharacterParty() {
                     <SheetSummaryBar
                       character={character}
                       summary={summary}
-                      canCreate={!playerPreview && (dm || character.user_id === state.user!.id)}
+                      canCreate={dm || own}
                       own={own}
                       path={`/campaign/${campaign.id}/party/${character.id}`}
                       inventoryPath={
@@ -257,6 +297,29 @@ export function CharacterParty() {
           })}
         </div>
       )}
+      {teammates && (
+        <section className="party-live" aria-labelledby="party-live-heading">
+          <div className="party-live-head">
+            <Title order={2} id="party-live-heading">
+              {t('party.liveTitle')}
+            </Title>
+            <Text size="sm" c="dimmed">
+              {t('party.liveHint')}
+            </Text>
+          </div>
+          {teammates.length > 0 ? (
+            <ul className="party-live-grid">
+              {teammates.map((member) => (
+                <li key={member.id}>
+                  <TeammateCard member={member} campaignId={campaign.id} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Text c="dimmed">{t('party.liveEmpty')}</Text>
+          )}
+        </section>
+      )}
       {editor?.kind === 'assignment' && (
         <PlayerAssignmentEditor
           character={editor.character}
@@ -280,6 +343,156 @@ export function CharacterParty() {
         />
       )}
     </Stack>
+  )
+}
+
+/** DM-only per-character switch for RYT-031 live sharing. Optimistic while the RPC runs. */
+function LiveShareToggle({
+  campaignId,
+  characterId,
+  name,
+  shared,
+  onError,
+  onSuccess,
+}: {
+  campaignId: string
+  characterId: string
+  name: string
+  shared: boolean
+  onError: () => void
+  onSuccess: () => void
+}) {
+  const { t } = useTranslation()
+  const action = useCharacterAction(campaignId)
+  const on =
+    action.isPending && action.variables?.kind === 'liveSharing' ? action.variables.enabled : shared
+  return (
+    <Tooltip
+      label={t(on ? 'party.shareOn' : 'party.shareOff')}
+      withArrow
+      events={{ hover: true, focus: true, touch: true }}
+    >
+      <ActionIcon
+        size={44}
+        variant={on ? 'light' : 'subtle'}
+        color={on ? undefined : 'gray'}
+        className="live-share-toggle"
+        data-on={on || undefined}
+        aria-label={t('party.shareToggle', { name })}
+        aria-pressed={on}
+        aria-busy={action.isPending || undefined}
+        onClick={() => {
+          if (action.isPending) return
+          action.mutate({ kind: 'liveSharing', characterId, enabled: !on }, { onError, onSuccess })
+        }}
+      >
+        {on ? <Radio size={20} aria-hidden="true" /> : <EyeOff size={20} aria-hidden="true" />}
+      </ActionIcon>
+    </Tooltip>
+  )
+}
+
+/** Compact live card of a shared teammate: only HP, AC, exhaustion and conditions. */
+function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId: string }) {
+  const { t } = useTranslation()
+  const ready =
+    member.sheet_status === 'complete' && member.current_hp !== null && member.max_hp !== null
+  const { ratio, tone } = hpTone(member.current_hp ?? 0, member.max_hp ?? 1)
+  const exhaustion = member.exhaustion ?? 0
+  const conditions = member.conditions ?? []
+  const headingId = `teammate-${member.id}`
+  return (
+    <article className={`teammate-card hp-${ready ? tone : 'none'}`} aria-labelledby={headingId}>
+      <div className="teammate-head">
+        <CharacterPortrait
+          campaignId={campaignId}
+          characterId={member.id}
+          name={member.name}
+          path={null}
+          size={40}
+        />
+        <div className="teammate-id">
+          <Title order={3} id={headingId} className="teammate-name user-copy">
+            {member.name}
+          </Title>
+          {ready && member.level !== null && (
+            <Text size="xs" c="dimmed" className="user-copy">
+              {t('sheet.classLevel', {
+                class:
+                  member.class_key && isClassKey(member.class_key)
+                    ? t(`srd.class.${member.class_key}`)
+                    : (member.class_label ?? ''),
+                level: member.level,
+              })}
+            </Text>
+          )}
+        </div>
+        {ready && member.armor_class !== null && (
+          <div
+            className="ac-shield"
+            role="img"
+            aria-label={t('party.liveAc', { value: member.armor_class })}
+          >
+            <Shield size={44} strokeWidth={1.6} aria-hidden="true" />
+            <span aria-hidden="true">{member.armor_class}</span>
+          </div>
+        )}
+      </div>
+      {ready ? (
+        <div className="teammate-hp">
+          <div className="teammate-hp-row">
+            <Heart size={16} aria-hidden="true" />
+            <span className="teammate-hp-value">
+              {member.current_hp}
+              <span className="teammate-hp-max">/{member.max_hp}</span>
+            </span>
+            {(member.temp_hp ?? 0) > 0 && (
+              <span className="teammate-temp">
+                {t('party.liveTemp', { value: member.temp_hp })}
+              </span>
+            )}
+          </div>
+          <Progress
+            value={ratio}
+            size="sm"
+            className={`hp-bar hp-${tone}`}
+            aria-label={t('sheet.hpValue', { current: member.current_hp, max: member.max_hp })}
+          />
+        </div>
+      ) : (
+        <Text size="sm" c="dimmed">
+          {t(member.sheet_status === 'draft' ? 'party.liveDraft' : 'party.liveNoSheet')}
+        </Text>
+      )}
+      <div className="teammate-foot">
+        <span
+          className="teammate-exhaustion"
+          role="img"
+          data-active={exhaustion > 0 || undefined}
+          aria-label={t('characters.exhaustionLevel', { level: exhaustion })}
+        >
+          <Flame size={14} aria-hidden="true" />
+          {Array.from({ length: exhaustionLevels }, (_, index) => (
+            <span
+              key={index}
+              className="teammate-pip"
+              data-filled={index < exhaustion || undefined}
+            />
+          ))}
+          {exhaustion > exhaustionLevels && <span className="teammate-pip-more">{exhaustion}</span>}
+        </span>
+        {conditions.length > 0 && (
+          <ul
+            className="teammate-conditions"
+            aria-label={t('party.liveConditions', { name: member.name })}
+          >
+            {conditions.map((condition) => (
+              <li key={condition}>{t(`srd.condition.${condition}`)}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </article>
   )
 }
 

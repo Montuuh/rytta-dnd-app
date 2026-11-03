@@ -1767,6 +1767,36 @@
         "docs/evidence/RYT-044/onboarding-archived-tablet.png",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-045",
+      "title": "Player death saves and end turn in the table view",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-042", "RYT-043"],
+      "sources": [
+        "User 2026-11-03: after RYT-042 removed Player combat actions, Players keep death saving throws and ending their own turn in the table view."
+      ],
+      "scope": "In the single Player table view, a Player can end their own turn while it is active and roll death saving throws for their own character at 0 HP. HP, conditions and undo stay DM actions; HP and conditions remain editable on the character sheet.",
+      "acceptance": [
+        "On their own turn a Player ends it from the table view; the control never appears on other turns or for other combatants.",
+        "A Player at 0 HP records death save successes and failures (including natural 1/20 rules) for their own character from the table view; outcomes (stable, dead, revived) show to the table.",
+        "Both actions are server-enforced, idempotent and denied for anon, outsider, other player and cross-campaign DM.",
+        "No DM-private data reaches the Player projection; RYT-042/043 behaviours keep passing."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests"
+      ],
+      "evidence": []
     }
   ]
 }

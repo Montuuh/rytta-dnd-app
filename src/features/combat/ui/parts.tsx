@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
 import { Castle, Radio, Shield, Skull, Users, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -11,9 +11,14 @@ function topDialogBody() {
   return bodies[bodies.length - 1] ?? null
 }
 
+/** Floating errors leave after this long unless the pointer or focus is on them. */
+const toastMs = 8_000
+
 /**
- * Action errors are never silent: inside an open dialog or drawer they appear next to its
- * actions; otherwise they float (top on tablets, above the turn bar and navigation on phones).
+ * Action errors are never silent. Inside an open dialog they appear next to its actions; inside a
+ * drawer they stick to the visible part of the drawer, so the control that failed stays in view;
+ * otherwise they float (top on tablets, above the turn bar and navigation on phones) and dismiss
+ * themselves after a while.
  */
 export function RunnerError({
   error,
@@ -39,10 +44,48 @@ export function RunnerError({
       {t(`combat.error.${error}`)}
     </Alert>
   )
+  if (host)
+    return (
+      <Portal target={host}>
+        <div
+          className={`combat-inline-error${host.matches('.mantine-Drawer-body') ? ' is-sticky' : ''}`}
+        >
+          {alert}
+        </div>
+      </Portal>
+    )
   return (
-    <Portal target={host ?? undefined}>
-      <div className={host ? 'combat-inline-error' : 'combat-toast'}>{alert}</div>
+    <Portal>
+      <FloatingError onClose={onClose}>{alert}</FloatingError>
     </Portal>
+  )
+}
+
+/** Auto-dismisses; hovering, touching or focusing the toast pauses the countdown. */
+function FloatingError({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const [paused, setPaused] = useState(false)
+  // The parent re-renders on every poll; keep the timer independent of its callback identity.
+  const close = useRef(onClose)
+  useEffect(() => {
+    close.current = onClose
+  })
+  useEffect(() => {
+    if (paused) return
+    const timer = window.setTimeout(() => close.current(), toastMs)
+    return () => window.clearTimeout(timer)
+  }, [paused])
+  return (
+    <div
+      className="combat-toast"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false)
+      }}
+    >
+      {children}
+    </div>
   )
 }
 

@@ -600,6 +600,14 @@ test('RYT-031 DM toggles live sharing per character with a labelled 44px control
   })
   await cato.click()
   await expect(cato).toHaveAttribute('aria-pressed', 'true')
+  // Axe must not sample the hover tooltip mid fade-in (blended colours read as low contrast).
+  await expect
+    .poll(() =>
+      page
+        .getByRole('tooltip')
+        .evaluateAll((tips) => tips.every((tip) => getComputedStyle(tip).opacity === '1')),
+    )
+    .toBe(true)
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'party-dm')
 })

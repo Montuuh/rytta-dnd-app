@@ -18,7 +18,7 @@ stay private.
   `characters_audit` trigger records each real change as `characters:UPDATE`; repeated calls with
   the same value write nothing.
 - `get_party_overview(target_campaign)` is a `security definer` read with a fixed search path,
-  executable by `authenticated` only. Players receive their own character plus other *assigned*
+  executable by `authenticated` only. Players receive their own character plus other _assigned_
   characters with `shares_live = true`, limited to: id, name, is_own, is_assigned, shares_live,
   sheet status, class key/label, level, current/max/temp HP, AC, exhaustion and conditions.
   It never returns gold, water, rations, user ids, the build, notes or other vitals. DMs receive

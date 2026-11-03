@@ -214,3 +214,145 @@ After fixes, re-check:
 - F5: the picker's accessibility snapshot.
 
 Then run axe again in ES dark and EN light.
+
+---
+
+## Round 2 — focused re-review
+
+- Date: 2026-11-03.
+- Source snapshot: commit `de083d8` ("address ui-ux review F1-F7"), on top of `aec6ebf`.
+- Fingerprint: `e83046146c48a1f64e5f7199b5f14a37b93f9a1afb985dd9ddef85a39ac6e560`.
+- Method:
+  - Fresh build (`vite build --base=/rytta-dnd-app/`, supabase mode, e2e fixture environment),
+    served by the reviewer on `127.0.0.1:4261`.
+  - Driven with throwaway Playwright scripts outside the repo, using the same fixtures as round 1.
+  - The fight includes a long-named ally ("Capitana Hobgoblin de la Guardia Carmesí"), a lair and
+    the hidden ogre.
+  - Captures were taken at 2× device scale. Measurements were made in the DOM: bar width as a share
+    of the row, line boxes of the band phrase, name truncation, skull count per row and AC position.
+
+### Verdict: PASS
+
+### Status of round 1 findings
+
+| Finding | Status | Browser evidence |
+| --- | --- | --- |
+| F1 Major — DM phone console splits the HP line | **Resolved** | See "F1 measurements" below |
+| F2 Major — skull means enemy and defeated | **Resolved** | See "F2 evidence" below |
+| F3 Minor — "No compartido" at display weight | **Resolved** | See "F3 evidence" below |
+| F4 Minor — "CA / 15" split | **Resolved** | See "F4 evidence" below |
+| F5 Minor — picker name read twice | **Resolved** | See "F5 evidence" below |
+| F6 Note — lair monogram | **Resolved** | See "F6 evidence" below |
+| F7 Note — "Now" token alone at 150% | **Resolved** | See "F7 evidence" below |
+
+**F1 measurements (DM console):**
+
+| Viewport | Text size | Mode | Band phrase lines | Bar width (share of row) |
+| --- | --- | --- | --- | --- |
+| 390px | 100% | normal | 1 | 51% |
+| 390px | 100% | multi-select | 1 | 56% |
+| 390px | 150% | normal | 1 | 45% |
+| 390px | 150% | multi-select | 1 | 53% |
+| 820px | 100% | normal | 1 | 72% |
+| 820px | 150% | normal | 1 | 73% |
+| 820px | 150% | multi-select | 1 | 76% |
+| 1440px | 100% and 150% | normal and multi-select | 1 | 69–74% |
+
+- At 390px, 100%, every row reads "2/8 PG · A punto de caer" on one line.
+- At 150%, the value and the phrase wrap only at the dot ("5/8 PG" / "· Herido").
+- The console token on phones is 36px.
+
+**F2 evidence:**
+
+- Living goblins have 0 skulls in their rows. Goblin 4 (defeated) has exactly 1, in the
+  table, console and Player views, in all three viewports.
+- The detail head has no side glyph and reads "Enemigo · Iniciativa 16 · CA 10".
+- The row's accessible name still states the side: "17 Goblin 1 CA 10 Enemigo 5/8 PG · Herido".
+
+**F3 evidence:**
+
+- The `unknown` band word is 14px, in the body face and muted (`rgb(86, 78, 102)` in Warlock
+  light).
+- At 820px the name is 18.4px and the Goblin 3 band word is 20px.
+- At 150% the unknown word is 21px, against a 26.4–28px name.
+- "Not shared" now reads as a quiet note under Cato.
+
+**F4 evidence:**
+
+- The detail meta pairs ("Enemigo", "Iniciativa 16", "CA 10") are one line each, at 100% and 150%
+  on 390px.
+- At 150% the pairs wrap as whole units with a leading "·".
+- The bestiary stat line breaks between "PG 7 ·" and "CA 15 · Inic. +2", never inside a pair.
+
+**F5 evidence:**
+
+- The card's accessibility snapshot shows a single `button "Añadir una imagen de Goblin"` and no
+  loose duplicate text.
+- The picker is still reached with Tab (6th stop), with the 3px focus ring around a 68×68 target.
+
+**F6 evidence:**
+
+- The lair token is a crenellated keep with the castle glyph and no letter.
+- It is clearly different from the ally's rounded square at 36, 44 and 60px.
+
+**F7 evidence:**
+
+- At 150% on 390px the 44px "Now" token sits beside the "NOW" label (token y 299–343, label
+  y 302).
+- "Your turn!" spans the full width below.
+- "Up next" keeps its token beside its label.
+- At 820px and 1440px, at 100% and 150%, the large token stays beside both lines.
+
+### Regression check (round 1 scenarios re-run on `de083d8`)
+
+- **Player table view:** bands, glyphs and tokens checked at 390, 820 and 1440px in ES dark
+  (Hearth), plus EN light Barbarian at 390 and 820, ES dark Druid at 390, and EN light Warlock at
+  390, 820 and 1440 (at 100% and 150%).
+- **Broken image:** a 404 goblin image falls back to the monogram (0 broken `img`).
+- **Privacy:** across every `get_combat_state` response, the Player projections never contain
+  "Ogre" or its path. The ogre path is never signed. Goblins have 0 HP bars and no "/8" text.
+- **DM:**
+  - Table view, console, turn bar and detail at all three widths.
+  - The hidden ogre keeps its broken rim and the "Oculto" badge.
+  - The recap with tokens works in EN light at 390px.
+- **Bestiary:**
+  - Monograms, keyboard access and touch target as above.
+  - A failed upload (storage 500) shows its alert.
+  - A successful upload then announces "Imagen de Goblin guardada".
+  - Layout checked at 390, 820 and 1440px and at 150%.
+- **R2-1:** `aria-describedby` points at "Escribe un total entre −20 y 99.", and `aria-invalid` is
+  true.
+- **R2-2:** focus moves to "Resumen del combate" after a remote end with the damage dialog open.
+- **R2-3:** the console shows "Terminado" 81 ms after switching back.
+- **Axe** (wcag2a/2aa/21aa/22aa): 0 violations in every run (about 40 runs across the matrix
+  above). No horizontal overflow.
+- **Reduced motion:**
+  - The only animations found were the app-wide 0.01ms transitions that `styles.css:648-652`
+    applies under `prefers-reduced-motion` when my script changed the root font size.
+  - No combat animation runs, and the active-token glow is static.
+
+### New observations (not blocking)
+
+- **N1 — Note:** at 150% on 390px in the DM console, AC drops to its own right-aligned line on the
+  goblin rows but stays on the name line for the short party names. Row heights vary (143 vs 175px)
+  and the band continues as "· Herido" on its own line. This is legible and never splits a phrase,
+  but it is a little uneven. Optional polish: always place AC under the name at that size.
+- **N2 — Note:** very long names are still cut with an ellipsis in the console at 390px
+  ("Capitana Hobgoblin …" at 100%, "Capitana H…" at 150%). This comes from row width, not AC. It is
+  the existing truncation design, and the full name is in the detail and the table view.
+- **N3 — Note:** with the side glyph removed, sighted users read side only from token shape and rim
+  colour (screen readers still get "Enemigo / Aliado / Grupo"). The shapes are distinct at every
+  size I checked. If testing at the table shows confusion, a one-time hint or a legend in the
+  glossary would help discovery. No change needed now.
+
+### Limitations (round 2)
+
+- Same as round 1: fixture SVG images through mocked signed URLs, with no real Supabase Storage.
+- No iOS Safari, and no NVDA or VoiceOver. Accessibility evidence is Playwright snapshots and axe.
+- Class themes covered: Hearth, Barbarian, Druid and Warlock (4 of 13).
+- R2-2 was verified through the multi-target damage dialog only.
+- Throwaway scripts and captures stay in the reviewer's scratchpad (`.../scratchpad/rv/shots2`).
+- Server `127.0.0.1:4261` and `dist-review2` were stopped and deleted by the reviewer.
+
+PASS applies only to source fingerprint
+`e83046146c48a1f64e5f7199b5f14a37b93f9a1afb985dd9ddef85a39ac6e560` (commit `de083d8`).

@@ -1,8 +1,8 @@
 {
-  "ticket": "RYT-042",
+  "ticket": "RYT-043",
   "reviewer": "ui-ux",
   "verdict": "PASS",
   "reviewedAt": "2026-11-03",
-  "sourceDigest": "6a616378bcdc86c34d5178e9397aa9db817f0e5ac9da52a13cbb63cc48e8692f",
-  "report": "docs/evidence/RYT-042/ui-review.md"
+  "sourceDigest": "e83046146c48a1f64e5f7199b5f14a37b93f9a1afb985dd9ddef85a39ac6e560",
+  "report": "docs/evidence/RYT-043/ui-review.md"
 }

@@ -59,7 +59,7 @@ export function createSupabaseCampaignRepository(client: AppSupabaseClient): Cam
       check(error)
       return sentInvitationSchema.array().parse(data)
     },
-    async auditEvents(campaignId, signal) {
+    async auditEvents(campaignId, signal, characterId) {
       let query = client
         .from('character_events')
         .select(
@@ -68,6 +68,7 @@ export function createSupabaseCampaignRepository(client: AppSupabaseClient): Cam
         .eq('campaign_id', campaignId)
         .order('created_at', { ascending: false })
         .limit(40)
+      if (characterId) query = query.eq('character_id', characterId)
       if (signal) query = query.abortSignal(signal)
       const { data, error } = await query
       check(error)

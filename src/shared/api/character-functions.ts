@@ -152,4 +152,29 @@ export type CharacterFunctions = {
     Args: { target_campaign: string; target_character: string; new_path: string | null }
     Returns: undefined
   }
+  // RYT-031 party live sharing.
+  set_character_live_sharing: {
+    Args: { target_campaign: string; target_character: string; enabled: boolean }
+    Returns: boolean
+  }
+  get_party_overview: {
+    Args: { target_campaign: string }
+    Returns: {
+      id: string
+      name: string
+      is_own: boolean
+      is_assigned: boolean
+      shares_live: boolean
+      sheet_status: string | null
+      class_key: string | null
+      class_label: string | null
+      level: number | null
+      current_hp: number | null
+      max_hp: number | null
+      temp_hp: number | null
+      armor_class: number | null
+      exhaustion: number | null
+      conditions: string[] | null
+    }[]
+  }
 }

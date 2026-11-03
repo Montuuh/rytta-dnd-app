@@ -13,7 +13,6 @@ import {
   Tabs,
   Text,
   TextInput,
-  Timeline,
   Title,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
@@ -22,7 +21,6 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Backpack,
   BookOpen,
-  Coins,
   Eye,
   Gem,
   History,
@@ -34,7 +32,6 @@ import {
   Package,
   Store,
   Swords,
-  UserRound,
   Users,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -50,14 +47,14 @@ import { useCampaign } from '../campaign-context'
 import { inviteEmailSchema } from '../domain/campaign'
 import { useCampaignView } from '../view-context'
 import { ActionFeedback, QueryFeedback } from './feedback'
+import { AuditTimeline } from './audit-timeline'
+import { auditFamily } from '../domain/audit'
 import { RefreshControl } from '@/shared/ui/refresh-control'
-import { relativeTime } from '@/shared/lib/relative-time'
 
 type Confirmation = { action: CampaignAction; message: string }
 type DmPanel = 'members' | 'modules' | 'items' | 'audit'
 const dmPanels: DmPanel[] = ['members', 'modules', 'items', 'audit']
 type AuditFilter = 'all' | 'characters' | 'resources'
-const auditResourceKeys = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 
 const campaignModules = [
   { key: 'party', label: 'module.party', icon: Users, implemented: true },
@@ -469,21 +466,12 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                       {!auditEvents.isError &&
                         auditEvents.data &&
                         (() => {
-                          const characterNames = new Map<string, string>()
-                          for (const item of auditEvents.data) {
-                            if (typeof item.after_value.name === 'string')
-                              characterNames.set(item.character_id, item.after_value.name)
-                            else if (typeof item.before_value?.name === 'string')
-                              characterNames.set(item.character_id, item.before_value.name)
-                          }
                           const memberNames = new Map<string, string>()
                           for (const member of members.data ?? []) {
                             memberNames.set(member.user_id, member.display_name || member.email)
                           }
                           const filteredEvents = auditEvents.data.filter((event) => {
-                            const isResourceEvent =
-                              event.kind.startsWith('character_resources') ||
-                              event.kind === 'resources_updated'
+                            const isResourceEvent = auditFamily(event) === 'resources'
                             if (auditFilter === 'resources') return isResourceEvent
                             if (auditFilter === 'characters') return !isResourceEvent
                             return true
@@ -494,131 +482,13 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                                 <Text c="dimmed">{t('dm.noAudit')}</Text>
                               </Paper>
                             )
-                          const now = auditEvents.dataUpdatedAt
                           return (
-                            <Timeline bulletSize={30} lineWidth={2} className="audit-timeline">
-                              {filteredEvents.map((event) => {
-                                const labelKey = `dm.auditEvent.${event.kind.replace(':', '_')}` as
-                                  | 'dm.auditEvent.characters_INSERT'
-                                  | 'dm.auditEvent.characters_UPDATE'
-                                  | 'dm.auditEvent.character_resources_INSERT'
-                                  | 'dm.auditEvent.character_resources_UPDATE'
-                                  | 'dm.auditEvent.character_sheets_UPDATE'
-                                  | 'dm.auditEvent.character_vitals_UPDATE'
-                                const characterName =
-                                  (typeof event.after_value.name === 'string'
-                                    ? event.after_value.name
-                                    : null) ??
-                                  characterNames.get(event.character_id) ??
-                                  null
-                                const actorName = event.actor_id
-                                  ? (memberNames.get(event.actor_id) ?? null)
-                                  : null
-                                const isResourceEvent =
-                                  event.kind.startsWith('character_resources') ||
-                                  event.kind === 'resources_updated'
-                                const isAssignmentEvent =
-                                  event.kind === 'characters:UPDATE' ||
-                                  event.kind === 'character_assigned' ||
-                                  event.kind === 'character_unassigned'
-                                const linkedUserId =
-                                  typeof event.after_value.user_id === 'string'
-                                    ? event.after_value.user_id
-                                    : null
-                                const linkedPlayerName = linkedUserId
-                                  ? (memberNames.get(linkedUserId) ?? linkedUserId)
-                                  : null
-                                const resourceDiffs = isResourceEvent
-                                  ? auditResourceKeys.flatMap((key) => {
-                                      const afterVal =
-                                        typeof event.after_value[key] === 'number'
-                                          ? event.after_value[key]
-                                          : null
-                                      const beforeVal =
-                                        event.before_value &&
-                                        typeof event.before_value[key] === 'number'
-                                          ? event.before_value[key]
-                                          : null
-                                      if (afterVal === null) return []
-                                      if (beforeVal !== null && beforeVal === afterVal) return []
-                                      if (beforeVal === null && afterVal === 0) return []
-                                      const delta =
-                                        beforeVal !== null ? afterVal - beforeVal : afterVal
-                                      const sign = delta > 0 ? `+${delta}` : `${delta}`
-                                      const text =
-                                        beforeVal !== null
-                                          ? `${t(`characters.${key}`)}: ${beforeVal.toLocaleString(i18n.language)} → ${afterVal.toLocaleString(i18n.language)} (${sign})`
-                                          : `${t(`characters.${key}`)}: ${afterVal.toLocaleString(i18n.language)}`
-                                      return [{ key, text, delta }]
-                                    })
-                                  : []
-                                const created = new Date(event.created_at)
-                                return (
-                                  <Timeline.Item
-                                    key={event.id}
-                                    bullet={
-                                      isResourceEvent ? (
-                                        <Coins size={15} aria-hidden="true" />
-                                      ) : (
-                                        <UserRound size={15} aria-hidden="true" />
-                                      )
-                                    }
-                                    className="audit-event"
-                                  >
-                                    <Stack gap={4}>
-                                      <Group justify="space-between" align="flex-start" gap="xs">
-                                        <Group gap="xs">
-                                          <Text fw={700} size="sm">
-                                            {t(labelKey)}
-                                          </Text>
-                                          {characterName && (
-                                            <Badge variant="light" className="user-copy">
-                                              {characterName}
-                                            </Badge>
-                                          )}
-                                        </Group>
-                                        <Text
-                                          size="xs"
-                                          c="dimmed"
-                                          component="time"
-                                          dateTime={event.created_at}
-                                          title={created.toLocaleString(i18n.language)}
-                                        >
-                                          {relativeTime(created.getTime(), now, i18n.language) ??
-                                            t('common.justNow')}
-                                        </Text>
-                                      </Group>
-                                      {isAssignmentEvent && (
-                                        <Text size="sm" className="user-copy">
-                                          {linkedPlayerName
-                                            ? t('dm.auditLinkedTo', { player: linkedPlayerName })
-                                            : t('dm.auditUnlinked')}
-                                        </Text>
-                                      )}
-                                      {isResourceEvent &&
-                                        (resourceDiffs.length > 0 ? (
-                                          <Group gap={6}>
-                                            {resourceDiffs.map((diff) => (
-                                              <Badge key={diff.key} variant="outline" size="sm">
-                                                {diff.text}
-                                              </Badge>
-                                            ))}
-                                          </Group>
-                                        ) : (
-                                          <Text size="xs" c="dimmed">
-                                            {t('dm.auditNoChanges')}
-                                          </Text>
-                                        ))}
-                                      {actorName && (
-                                        <Text size="xs" c="dimmed" className="user-copy">
-                                          {t('dm.auditBy', { actor: actorName })}
-                                        </Text>
-                                      )}
-                                    </Stack>
-                                  </Timeline.Item>
-                                )
-                              })}
-                            </Timeline>
+                            <AuditTimeline
+                              events={filteredEvents}
+                              context={auditEvents.data}
+                              memberNames={memberNames}
+                              now={auditEvents.dataUpdatedAt}
+                            />
                           )
                         })()}
                     </Stack>

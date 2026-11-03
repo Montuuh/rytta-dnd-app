@@ -68,6 +68,8 @@ export const combatantSchema = z.object({
     .object({ successes: z.number().int().min(0), failures: z.number().int().min(0) })
     .optional(),
   exhaustion: z.number().int().min(0).optional(),
+  /** RYT-045: a death save outcome the whole table knows, even without shared vitals. */
+  death_state: z.enum(['stable', 'revived']).optional(),
 })
 export type Combatant = z.infer<typeof combatantSchema>
 
@@ -310,6 +312,8 @@ export const combatErrorCodes = [
   'undone',
   'notUndoable',
   'initiativeClosed',
+  'notYourTurn',
+  'alreadyRolled',
   'gone',
   'invalid',
   'forbidden',
@@ -331,6 +335,8 @@ export function combatErrorCode(message: string): CombatErrorCode {
     [/Already undone/, 'undone'],
     [/Not undoable/, 'notUndoable'],
     [/Initiative closed/, 'initiativeClosed'],
+    [/Not your turn/, 'notYourTurn'],
+    [/Already rolled/, 'alreadyRolled'],
     [/(Encounter|Combatant|Effect|Event|Template|Character) unavailable/, 'gone'],
     [/Invalid request|Request mismatch/, 'invalid'],
     [/Forbidden/, 'forbidden'],
@@ -444,6 +450,55 @@ export function canEnterInitiative(status: EncounterStatus, combatant: Combatant
   if (!combatant.is_own || !combatant.can_act || combatant.kind !== 'character') return false
   return status === 'initiative' || (status === 'active' && combatant.initiative === undefined)
 }
+
+/** Where a character stands between life and death (RYT-045). Dead is the defeated flag; stable and
+ * revived come from the server for everyone; dying needs the character's own visible vitals. */
+export type DeathState = 'dying' | 'stable' | 'revived' | 'dead'
+export function deathState(combatant: Combatant): DeathState | null {
+  if (combatant.kind !== 'character') return null
+  if (combatant.defeated) return 'dead'
+  if (combatant.death_state) return combatant.death_state
+  if (combatant.hp?.current !== 0) return null
+  return (combatant.death_saves?.successes ?? 0) >= 3 ? 'stable' : 'dying'
+}
+
+/** The death save this combatant rolled in the current round and that was not undone, if any. */
+export function deathSaveThisRound(state: CombatState, combatantId: string) {
+  const round = state.encounter?.round
+  return (
+    state.events.find(
+      (e) =>
+        e.kind === 'death_save' &&
+        e.target_combatant === combatantId &&
+        e.round === round &&
+        !e.undone,
+    ) ?? null
+  )
+}
+
+/**
+ * Whether the viewer rolls this combatant's death save from the table view (RYT-045): the own
+ * character, dying, on its own turn, once per round. Presentation only; record_death_save
+ * enforces the same rules on the server.
+ */
+export function canRollDeathSave(state: CombatState, combatant: Combatant) {
+  return (
+    combatant.is_own &&
+    combatant.can_act &&
+    combatant.is_active &&
+    state.encounter?.status === 'active' &&
+    deathState(combatant) === 'dying' &&
+    deathSaveThisRound(state, combatant.id) === null
+  )
+}
+
+/** Whether the viewer ends the active turn from the table view: only the own active character. */
+export const canEndTurn = (status: EncounterStatus, active: Combatant | null) =>
+  status === 'active' &&
+  active !== null &&
+  active.is_own &&
+  active.can_act &&
+  active.kind === 'character'
 
 /** How many combatants on screen already have an initiative total. */
 export function initiativeProgress(combatants: readonly Combatant[]) {

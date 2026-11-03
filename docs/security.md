@@ -37,10 +37,15 @@ outsiders, Players and DMs of another campaign. Members read only the secret-fre
 signal); combatants, effects, events and templates are DM-only tables. The table display uses
 the Player projection without own data, even for the DM. Players see only the table view
 (RYT-042), fed by their own Player projection (the only extra is their own character). Their
-one combat write there is `set_initiative` for a character whose `user_id` is theirs, while
+combat writes there are all for a character whose `user_id` is theirs: `set_initiative` while
 initiative is collected, or later only while its total is missing (`Initiative closed`
-otherwise); SQL tests deny anon, outsiders, other Players' and creatures' totals, hidden
-combatants and DMs of another campaign.
+otherwise); and on that character's own turn (RYT-045) `advance_turn` forward with the expected
+active combatant, and `record_death_save` at 0 hit points once per round (`Not your turn`,
+`Already rolled`; a stable character rolls no more). The DM still records death saves at any time
+and undoes a mistaken roll. SQL tests deny anon, outsiders, other Players' characters and
+creatures, hidden combatants and DMs of another campaign. Death save outcomes (`death_state`:
+stable, revived) reach every projection, also for teammates who do not share live vitals; the
+success and failure counts keep the `shares_live` rule.
 
 Combat images (RYT-043, ADR 027): the private `creature-images` bucket is readable, writable and
 deletable by the campaign DM under the campaign prefix; an active member reads only the image of a

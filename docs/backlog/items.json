@@ -1777,7 +1777,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "ready",
+      "status": "review",
       "dependsOn": ["RYT-042", "RYT-043"],
       "sources": [
         "User 2026-11-03: after RYT-042 removed Player combat actions, Players keep death saving throws and ending their own turn in the table view."
@@ -1796,7 +1796,31 @@
         "independent ui-ux PASS",
         "SQL denial tests"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-045/validation.md",
+        "docs/combat-design.md",
+        "docs/decisions/024-combat.md",
+        "docs/security.md",
+        "supabase/migrations/20261108120000_combat_player_death_saves.sql",
+        "tests/database/combat.test.ts",
+        "tests/e2e/combat.spec.ts",
+        "docs/evidence/RYT-045/dead-mobile.png",
+        "docs/evidence/RYT-045/dead-tablet.png",
+        "docs/evidence/RYT-045/death-saves-150-mobile.png",
+        "docs/evidence/RYT-045/death-saves-150-tablet.png",
+        "docs/evidence/RYT-045/death-saves-en-light-mobile.png",
+        "docs/evidence/RYT-045/death-saves-en-light-tablet.png",
+        "docs/evidence/RYT-045/death-saves-marked-mobile.png",
+        "docs/evidence/RYT-045/death-saves-marked-tablet.png",
+        "docs/evidence/RYT-045/death-saves-mobile.png",
+        "docs/evidence/RYT-045/death-saves-tablet.png",
+        "docs/evidence/RYT-045/end-turn-mobile.png",
+        "docs/evidence/RYT-045/end-turn-tablet.png",
+        "docs/evidence/RYT-045/revived-mobile.png",
+        "docs/evidence/RYT-045/revived-tablet.png",
+        "docs/evidence/RYT-045/stable-mobile.png",
+        "docs/evidence/RYT-045/stable-tablet.png"
+      ]
     }
   ]
 }

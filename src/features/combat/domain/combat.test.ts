@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canEndTurn,
   canEnterInitiative,
+  canRollDeathSave,
   combatErrorCode,
   initiativeProgress,
   combatPollInterval,
   combatStateSchema,
   concentrationDc,
+  deathSaveThisRound,
+  deathState,
   halfDamage,
   healthBand,
   joinPlacement,
@@ -224,5 +228,71 @@ describe('combat rules', () => {
         combatants: [base(1, { hp_band: 'critical', image_path: 'pre/a/b/c.webp' })],
       }).combatants[0],
     ).toMatchObject({ hp_band: 'critical', image_path: 'pre/a/b/c.webp' })
+  })
+
+  it('RYT-045 tells death states and when the own Player rolls or ends the turn', () => {
+    const pc = (extra: Partial<Combatant> = {}) =>
+      base(1, {
+        kind: 'character',
+        side: 'party',
+        is_own: true,
+        can_act: true,
+        is_active: true,
+        hp: { current: 0, max: 20, temp: 0 },
+        death_saves: { successes: 1, failures: 0 },
+        ...extra,
+      })
+    const state = (c: Combatant, events: CombatState['events'] = []): CombatState => ({
+      encounter: { id: id(9), name: 'Fight', status: 'active', round: 2, revision: 1 },
+      combatants: [c],
+      effects: [],
+      events,
+    })
+    const roll = (round: number, undone = false): CombatState['events'][number] => ({
+      id: id(round + (undone ? 50 : 0)),
+      kind: 'death_save',
+      round,
+      target_combatant: id(1),
+      detail: { outcome: 'success' },
+      undone,
+      mine: true,
+      undoable: true,
+      created_at: '2026-11-03T00:00:00Z',
+    })
+    expect(deathState(pc())).toBe('dying')
+    expect(deathState(pc({ death_saves: { successes: 3, failures: 0 } }))).toBe('stable')
+    expect(deathState(pc({ defeated: true }))).toBe('dead')
+    // Without vitals the server's outcome still reads (teammates who do not share, the table).
+    expect(deathState(pc({ hp: undefined, death_saves: undefined, death_state: 'stable' }))).toBe(
+      'stable',
+    )
+    expect(deathState(pc({ hp: { current: 1, max: 20, temp: 0 }, death_state: 'revived' }))).toBe(
+      'revived',
+    )
+    expect(deathState(pc({ hp: { current: 5, max: 20, temp: 0 } }))).toBeNull()
+    expect(deathState(base(2, { hp: { current: 0, max: 7, temp: 0 } }))).toBeNull()
+
+    // Once per round, on the own turn, while dying; an undone roll frees the round again.
+    expect(canRollDeathSave(state(pc()), pc())).toBe(true)
+    expect(canRollDeathSave(state(pc(), [roll(1)]), pc())).toBe(true)
+    expect(canRollDeathSave(state(pc(), [roll(2)]), pc())).toBe(false)
+    expect(canRollDeathSave(state(pc(), [roll(2, true)]), pc())).toBe(true)
+    expect(deathSaveThisRound(state(pc(), [roll(2, true), roll(2)]), id(1))?.undone).toBe(false)
+    for (const other of [
+      pc({ is_active: false }),
+      pc({ is_own: false, can_act: false }),
+      pc({ death_saves: { successes: 3, failures: 1 } }),
+      pc({ defeated: true }),
+    ])
+      expect(canRollDeathSave(state(other), other)).toBe(false)
+
+    expect(canEndTurn('active', pc())).toBe(true)
+    expect(canEndTurn('active', pc({ defeated: true }))).toBe(true)
+    expect(canEndTurn('initiative', pc())).toBe(false)
+    expect(canEndTurn('active', pc({ is_own: false, can_act: false }))).toBe(false)
+    expect(canEndTurn('active', base(2, { is_active: true, can_act: true }))).toBe(false)
+    expect(canEndTurn('active', null)).toBe(false)
+    expect(combatErrorCode('Not your turn')).toBe('notYourTurn')
+    expect(combatErrorCode('Already rolled')).toBe('alreadyRolled')
   })
 })

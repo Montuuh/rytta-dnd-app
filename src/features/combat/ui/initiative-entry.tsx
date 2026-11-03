@@ -146,7 +146,7 @@ export function InitiativeEntry({
 }
 
 /** A d20 seen face-on: a hexagon around one triangular face. Decorative. */
-function D20() {
+export function D20() {
   return (
     <svg className="combat-d20-shape" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
       <polygon className="combat-d20-outline" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" />

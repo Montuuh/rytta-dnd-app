@@ -1,11 +1,21 @@
-import { test, expect, type Locator, type Page } from '@playwright/test'
+import {
+  test,
+  expect,
+  type Browser,
+  type Locator,
+  type Page,
+  type TestInfo,
+} from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import {
   beaId,
   campaignId,
   catoId,
   characterId,
+  dmId,
+  hiddenPeerId,
   identityFixture,
+  peerId,
   playerId,
 } from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
@@ -118,12 +128,15 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await audit(dm)
   await evidence(dm, info.project.name, 'dm-active')
 
-  // 4. The Player's table view says it is their turn; the turn itself belongs to the DM now.
+  // 4. The Player's table view says it is their turn and offers the hand-off (RYT-045); here the
+  // DM moves the turn from the console, and the Player's control leaves with it.
   await expect(arin.locator('.combat-table-now')).toContainText('¡Te toca!', { timeout: 15_000 })
-  await expect(arin.getByRole('button', { name: 'Terminar mi turno' })).toHaveCount(0)
+  const handoff = arin.getByRole('button', { name: /^Terminar mi turno/ })
+  await expect(handoff).toBeVisible()
   await audit(arin)
   await dm.getByRole('button', { name: 'Siguiente turno' }).click()
   await expect(arin.getByText('Te toca dentro de 4 turnos')).toBeVisible({ timeout: 15_000 })
+  await expect(handoff).toHaveCount(0)
   await expect(bar).toContainText('Goblin 1', { timeout: 15_000 })
 
   // 5. Area damage: both goblins, one saves for half. Switching to the table view and back in
@@ -220,9 +233,10 @@ test('RYT-007 Player combat screen passes axe in English and light theme', async
   server.seedActive()
   await page.goto(`./#/campaign/${campaignId}/combat`)
   await expect(page.locator('.combat-table-now')).toContainText('Your turn!', { timeout: 15_000 })
-  // RYT-042: the table view is the Player's only combat screen; it has no write controls here.
+  // RYT-042: the table view is the Player's only combat screen, without hit point controls;
+  // RYT-045: on the own turn it hands the turn on.
   await expect(page.getByRole('button', { name: 'Damage' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'End my turn' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^End my turn/ })).toBeVisible()
   await audit(page)
   await evidence(page, info.project.name, 'table-turn-en-light', 'RYT-042')
 })
@@ -1548,4 +1562,304 @@ test('RYT-043 bands and tokens pass axe in English and light theme', async ({ pa
   await expect(recap.locator('.combat-token img').first()).toBeVisible()
   await audit(page)
   await evidence(page, info.project.name, 'summary-en-light', 'RYT-043')
+})
+
+// RYT-045 ------------------------------------------------------------------------------------
+
+/** Arin (20), Bea (19), Cato (18, does not share vitals) and a goblin (17), fighting on Arin's
+ * turn. `down` drops those characters to 0 hit points first (the DM's damage). */
+function seedTurns(server: ReturnType<typeof combatServer>, down: string[] = []) {
+  const { encounter_id: id } = server.act('create_encounter', {
+    encounter_name: 'Bridge ambush',
+  }) as { encounter_id: string }
+  server.act('add_combatants', {
+    target_encounter: id,
+    entries: [
+      { kind: 'character', character_id: characterId },
+      { kind: 'character', character_id: beaId },
+      { kind: 'character', character_id: catoId },
+      { kind: 'npc', name: 'Goblin', max_hp: 7, armor_class: 15 },
+    ],
+  })
+  const encounter = server.encounters.find((e) => e.id === id)!
+  encounter.combatants.forEach((c, index) => (c.initiative = 20 - index))
+  server.act('set_encounter_status', { target_encounter: id, new_status: 'active' })
+  if (down.length)
+    server.act('apply_combat_hp', {
+      target_encounter: id,
+      hp_mode: 'damage',
+      hits: down.map((name) => ({ combatant_id: combatantId(server, name), amount: 99 })),
+      request_id: `down-${down.join('-')}`,
+    })
+  const pass = (actor = dmId) =>
+    server.act(
+      'advance_turn',
+      {
+        target_encounter: id,
+        direction: 1,
+        expected_active: encounter.active,
+        request_id: crypto.randomUUID(),
+      },
+      actor,
+    )
+  return { id, pass }
+}
+
+async function playerPage(
+  browser: Browser,
+  info: TestInfo,
+  server: ReturnType<typeof combatServer>,
+  as: string,
+  errors: string[],
+) {
+  const context = await browser.newContext({
+    viewport: info.project.use.viewport,
+    hasTouch: info.project.use.hasTouch,
+  })
+  const page = await context.newPage()
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+    as,
+  })
+  await server.install(page)
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Bridge ambush' })).toBeVisible({
+    timeout: 15_000,
+  })
+  return page
+}
+
+test('RYT-045 a Player ends only the own turn, from the banner, by touch or keyboard', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const server = combatServer()
+  const errors: string[] = []
+  const { id } = seedTurns(server)
+  const arin = await playerPage(browser, info, server, playerId, errors)
+  const bea = await playerPage(browser, info, server, peerId, errors)
+  const endArin = arin.getByRole('button', { name: /^Terminar mi turno/ })
+  const endBea = bea.getByRole('button', { name: /^Terminar mi turno/ })
+
+  // Arin's turn: "Up next" became the hand-off that names Bea; Bea has no control, only her wait.
+  await expect(arin.locator('.combat-table-active')).toHaveText('¡Te toca!')
+  await expect(endArin).toBeVisible()
+  await expect(endArin).toContainText('Pasa a Bea')
+  await expect(arin.locator('.combat-table-next')).toHaveCount(0)
+  await expect(arin.locator('.combat-saves')).toHaveCount(0)
+  await expect(bea.locator('.combat-table-active')).toHaveText('Arin')
+  await expect(endBea).toHaveCount(0)
+  await expect(bea.locator('.combat-table-countdown')).toHaveText('Te toca dentro de 1 turno')
+  // No row of the order has a control on a running fight.
+  await expect(arin.locator('.combat-rail button')).toHaveCount(0)
+  await expectTouchTargets(arin, '.combat-handoff:visible')
+  await audit(arin)
+  await evidence(arin, info.project.name, 'end-turn', 'RYT-045')
+
+  // The server refuses a Player who does not hold the turn (the SQL tests cover the real RPC).
+  expect(
+    server.act(
+      'advance_turn',
+      {
+        target_encounter: id,
+        direction: 1,
+        expected_active: combatantId(server, 'Arin'),
+        request_id: 'bea-steals',
+      },
+      peerId,
+    ),
+  ).toEqual({ error: 'Forbidden' })
+
+  // A tap passes the turn once; the order's heading takes focus and the control leaves.
+  await endArin.click()
+  await expect(endArin).toHaveCount(0)
+  await expect(arin.locator('#combat-table-order')).toBeFocused()
+  await expect(arin.locator('.combat-table-active')).toHaveText('Bea')
+  await expect(arin.locator('.combat-table-countdown')).toHaveText('Te toca dentro de 3 turnos')
+  expect(server.encounters[0]!.active).toBe(combatantId(server, 'Bea'))
+  expect(server.encounters[0]!.events.filter((e) => e.kind === 'turn')).toHaveLength(1)
+
+  // Bea's device: her turn arrives with the hand-off; the keyboard ends it.
+  await expect(endBea).toBeVisible({ timeout: 15_000 })
+  await expect(endBea).toContainText('Pasa a Cato')
+  await endBea.focus()
+  await bea.keyboard.press('Enter')
+  await expect(endBea).toHaveCount(0)
+  await expect(bea.locator('.combat-table-active')).toHaveText('Cato')
+  await expect(arin.locator('.combat-table-active')).toHaveText('Cato', { timeout: 15_000 })
+  await expect(arin.getByRole('button', { name: /^Terminar mi turno/ })).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the whole table', async ({
+  browser,
+}, info) => {
+  test.setTimeout(240_000)
+  const server = combatServer()
+  const errors: string[] = []
+  const { pass } = seedTurns(server, ['Arin'])
+  const arin = await playerPage(browser, info, server, playerId, errors)
+  const cato = await playerPage(browser, info, server, hiddenPeerId, errors)
+  const dmContext = await browser.newContext({
+    viewport: info.project.use.viewport,
+    hasTouch: info.project.use.hasTouch,
+  })
+  const dm = await dmContext.newPage()
+  dm.on('pageerror', (e) => errors.push(e.message))
+  await dm.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(dm, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(dm)
+  await dm.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+  await expect(dm.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
+
+  // Arin's own turn at 0 HP: two tracks of notches and the naturals, between "Your turn!" and
+  // the hand-off. Nothing is marked yet.
+  const saves = arin.getByRole('region', { name: 'Salvaciones de muerte' })
+  const success = saves.getByRole('button', { name: 'Marcar un éxito: sacaste de 10 a 19' })
+  const failure = saves.getByRole('button', { name: 'Marcar un fallo: sacaste de 2 a 9' })
+  const nat20 = saves.getByRole('button', { name: '20 natural: vuelves con 1 punto de golpe' })
+  const nat1 = saves.getByRole('button', { name: '1 natural: dos fallos' })
+  await expect(saves).toContainText('Tira un d20 y marca el resultado.')
+  for (const control of [success, failure, nat20, nat1]) await expect(control).toBeVisible()
+  await expect(saves.getByRole('group', { name: '0 de 3 éxitos' })).toBeVisible()
+  await expect(
+    row(arin, 'Arin').getByRole('img', { name: /Salvaciones de muerte/ }),
+  ).toHaveAccessibleName('Salvaciones de muerte: 0 de 3 éxitos, 0 de 3 fallos')
+  // Nobody else gets a control: not Cato, not the DM's table view.
+  await expect(cato.locator('.combat-saves, .combat-handoff')).toHaveCount(0)
+  await expect(dm.locator('.combat-saves, .combat-handoff')).toHaveCount(0)
+  await expectTouchTargets(arin, '.combat-saves button:visible')
+  await audit(arin)
+  await evidence(arin, info.project.name, 'death-saves', 'RYT-045')
+
+  // A success: stamped, announced, the roll locks for the round and focus moves to the hand-off.
+  await success.click()
+  await expect(saves.getByRole('group', { name: '1 de 3 éxitos' })).toBeVisible()
+  await expect(saves.getByRole('button')).toHaveCount(0)
+  await expect(saves).toContainText('Éxito marcado. El DM puede deshacer un error.')
+  await expect(arin.getByRole('button', { name: /^Terminar mi turno/ })).toBeFocused()
+  await expect(arin.getByText('Arin supera una salvación de muerte.')).toBeAttached()
+  // A second roll this round (a double tap with a new request) is refused by the server.
+  expect(
+    server.act(
+      'record_death_save',
+      { target_combatant: combatantId(server, 'Arin'), outcome: 'failure', request_id: 'again' },
+      playerId,
+    ),
+  ).toEqual({ error: 'Already rolled' })
+  // Cato sees the marks (Arin shares) and the announcement, with no control.
+  await expect(row(cato, 'Arin').getByRole('img', { name: /Salvaciones/ })).toHaveAccessibleName(
+    'Salvaciones de muerte: 1 de 3 éxitos, 0 de 3 fallos',
+    { timeout: 15_000 },
+  )
+  await expect(cato.getByText('Arin supera una salvación de muerte.')).toBeAttached()
+  await expect(row(cato, 'Arin').getByRole('button')).toHaveCount(0)
+  await evidence(arin, info.project.name, 'death-saves-marked', 'RYT-045')
+
+  // Round 2: a natural 1 counts two failures.
+  await arin.getByRole('button', { name: /^Terminar mi turno/ }).click()
+  await expect(arin.locator('.combat-table-active')).toHaveText('Bea')
+  for (let i = 0; i < 3; i++) pass()
+  await expect(nat1).toBeVisible({ timeout: 15_000 })
+  await nat1.click()
+  await expect(saves.getByRole('group', { name: '2 de 3 fallos' })).toBeVisible()
+  await expect(arin.getByText('Arin saca un 1 natural: dos fallos.')).toBeAttached()
+
+  // Round 3: a natural 20 revives Arin with 1 HP, which the whole table sees.
+  pass(playerId)
+  for (let i = 0; i < 3; i++) pass()
+  await expect(nat20).toBeVisible({ timeout: 15_000 })
+  await nat20.click()
+  const revived = arin.getByRole('region', { name: 'Reanimado' })
+  await expect(revived).toContainText('20 natural: vuelves con 1 punto de golpe.')
+  await expect(row(arin, 'Arin')).toContainText('1/24 PG')
+  for (const page of [cato, dm])
+    await expect(row(page, 'Arin')).toContainText('Reanimado', { timeout: 15_000 })
+  await audit(arin)
+  await evidence(arin, info.project.name, 'revived', 'RYT-045')
+
+  // Undo-safe: the DM undoes the natural 20 from the console log and Arin rolls again.
+  await view(dm, 'Consola del DM')
+  await dm.getByRole('tab', { name: 'Registro del combate' }).click()
+  await dm.getByRole('button', { name: 'Deshacer: Arin: salvación de muerte, 20 natural' }).click()
+  await expect(failure).toBeVisible({ timeout: 15_000 })
+  await expect(saves.getByRole('group', { name: '2 de 3 fallos' })).toBeVisible()
+  // The third failure: dead, for everyone; Arin can still pass the turn he died on.
+  await failure.click()
+  await expect(saves).toContainText('Muerto')
+  await expect(arin.getByText('Arin ha muerto.')).toBeAttached()
+  await expect(row(cato, 'Arin')).toContainText('Muerto', { timeout: 15_000 })
+  await evidence(arin, info.project.name, 'dead', 'RYT-045')
+  await arin.getByRole('button', { name: /^Terminar mi turno/ }).click()
+  await expect(arin.locator('.combat-table-active')).toHaveText('Bea')
+
+  // Stable: Cato falls and the DM records three successes. Arin (Cato does not share) reads
+  // "Stable" without the counts; on Cato's turn his own banner says he rolls no more.
+  server.act('apply_combat_hp', {
+    target_encounter: server.encounters[0]!.id,
+    hp_mode: 'damage',
+    hits: [{ combatant_id: combatantId(server, 'Cato'), amount: 99 }],
+    request_id: 'cato-down',
+  })
+  for (let i = 0; i < 3; i++)
+    server.act('record_death_save', {
+      target_combatant: combatantId(server, 'Cato'),
+      outcome: 'success',
+      request_id: `cato-${i}`,
+    })
+  await expect(row(arin, 'Cato')).toContainText('Estable', { timeout: 15_000 })
+  await expect(row(arin, 'Cato').getByRole('img', { name: /Salvaciones/ })).toHaveCount(0)
+  pass()
+  const catoSaves = cato.getByRole('region', { name: 'Salvaciones de muerte' })
+  await expect(catoSaves).toContainText('Estable Ya no tiras salvaciones de muerte.', {
+    timeout: 15_000,
+  })
+  await expect(catoSaves.getByRole('button')).toHaveCount(0)
+  await expect(cato.getByRole('button', { name: /^Terminar mi turno/ })).toBeVisible()
+  await audit(cato)
+  await evidence(cato, info.project.name, 'stable', 'RYT-045')
+  expect(errors).toEqual([])
+})
+
+test('RYT-045 death saves pass axe in English and light theme, and fit 150% text', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.addInitScript(() => {
+    localStorage.setItem('rytta-language', 'en')
+    localStorage.setItem('rytta-color-scheme', 'light')
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  seedTurns(server, ['Arin'])
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  const saves = page.getByRole('region', { name: 'Death saves' })
+  await expect(saves).toBeVisible({ timeout: 15_000 })
+  await expect(
+    saves.getByRole('button', { name: 'Natural 20: you are back with 1 hit point' }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: /^End my turn/ })).toContainText('Passes to Bea')
+  await audit(page)
+  await evidence(page, info.project.name, 'death-saves-en-light', 'RYT-045')
+  await saves.getByRole('button', { name: 'Mark a failure: you rolled 2 to 9' }).click()
+  await expect(saves).toContainText('Failure marked. The DM can undo a mistake.')
+  await expect(saves.getByRole('group', { name: '1 of 3 failures' })).toBeVisible()
+  await audit(page)
+  // 150% text: the tracks and the hand-off still fit the screen.
+  await page.evaluate(() => (document.documentElement.style.fontSize = '150%'))
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await expectTouchTargets(page, '.combat-handoff:visible')
+  await evidence(page, info.project.name, 'death-saves-150', 'RYT-045')
 })

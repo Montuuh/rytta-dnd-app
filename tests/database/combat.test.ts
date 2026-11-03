@@ -35,6 +35,8 @@ type Combatant = {
   dm_notes?: string
   hp?: { current: number; max: number; temp: number }
   hp_status?: string
+  hp_band?: string
+  death_state?: string
   armor_class?: number
   conditions?: string[]
   concentration?: string
@@ -91,8 +93,8 @@ function api(schema = 'public') {
       call('set_combat_condition', [c, id, key, on, randomUUID()]),
     concentrate: (c: string, id: string, spell: string | null) =>
       call('set_concentration', [c, id, spell, randomUUID()]),
-    deathSave: (c: string, id: string, outcome: string) =>
-      call('record_death_save', [c, id, outcome, randomUUID()]),
+    deathSave: (c: string, id: string, outcome: string, key = randomUUID()) =>
+      call('record_death_save', [c, id, outcome, key]),
     effect: (c: string, e: string, effect: Json) =>
       call('add_combat_effect', [c, e, JSON.stringify(effect), randomUUID()]),
     dropEffect: (c: string, id: string) => call('remove_combat_effect', [c, id, randomUUID()]),
@@ -371,7 +373,10 @@ describe('RYT-007 shared combat', () => {
     expect(multi.hits[0]).toMatchObject({ result: 'down', concentration_lost: true })
     expect(await vitals(s.Arin)).toMatchObject({ current_hp: 0, conditions: ['unconscious'] })
     expect(await vitals(s.Bea)).toMatchObject({ current_hp: 9 })
-    // Death saves: damage at 0 is a failure; nat1 counts two; three failures defeat.
+    // Death saves: damage at 0 is a failure; nat1 counts two; three failures defeat. A Player
+    // rolls on the own turn (RYT-045), so the DM gives Arin the turn first.
+    const acting = (await pub.state(s.c, x.e)).encounter!.active_combatant ?? null
+    if (acting !== x.arin) await pub.jump(s.c, x.e, x.arin, acting)
     await asUser(player)
     await pub.deathSave(s.c, x.arin, 'success')
     await pub.hp(s.c, x.e, 'damage', [{ combatant_id: x.arin, amount: 2 }])
@@ -385,14 +390,16 @@ describe('RYT-007 shared combat', () => {
       death_failures: 0,
     })
     await expect(pub.deathSave(s.c, x.arin, 'success')).rejects.toThrow(/Not dying/)
+    // RYT-045: a Player rolls once per round on the own turn; the DM records the rest here.
+    await expect(pub.deathSave(s.c, x.arin, 'failure')).rejects.toThrow(/Not dying/)
     await asUser(dm)
     await pub.hp(s.c, x.e, 'damage', [{ combatant_id: x.arin, amount: 4 }])
     await asUser(player)
+    await expect(pub.deathSave(s.c, x.arin, 'nat20')).rejects.toThrow(/Already rolled/)
+    await asUser(dm)
     await pub.deathSave(s.c, x.arin, 'nat20')
     expect(await vitals(s.Arin)).toMatchObject({ current_hp: 1, conditions: [] })
-    await asUser(dm)
     await pub.hp(s.c, x.e, 'damage', [{ combatant_id: x.arin, amount: 1 }])
-    await asUser(player)
     await pub.deathSave(s.c, x.arin, 'nat1')
     expect(await pub.deathSave(s.c, x.arin, 'failure')).toMatchObject({ result: 'dead' })
     let st = await pub.state(s.c, x.e)
@@ -946,6 +953,135 @@ describe('RYT-007 shared combat', () => {
     expect(bodies).toHaveLength(1)
     expect(bodies[0]!.src).toContain('Initiative closed')
     expect(bodies[0]!.src).not.toMatch(/\bpublic\.|\bprivate\./)
+  })
+
+  it('RYT-045 Players end their own turn and roll their own death saves once per round', async () => {
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const x = await prepared(s, schema)
+      const of = (st: State, id: string) => st.combatants.find((c) => c.id === id)!
+      await a.initiative(s.c, x.arin, 20)
+      await a.initiative(s.c, x.bea, 15)
+      await a.initiative(s.c, x.cato, 10)
+      await a.initiative(s.c, x.gob1, 5)
+      await a.status(s.c, x.e, 'active')
+      // Arin and Bea fall; Cato too. Arin acts first.
+      await a.hp(s.c, x.e, 'damage', [
+        { combatant_id: x.arin, amount: 40 },
+        { combatant_id: x.bea, amount: 40 },
+        { combatant_id: x.cato, amount: 40 },
+      ])
+
+      // Own turn: one roll, retries replay, a second roll (a double tap) is refused.
+      await asUser(player)
+      const key = randomUUID()
+      expect(await a.deathSave(s.c, x.arin, 'success', key)).toMatchObject({ result: null })
+      expect(await a.deathSave(s.c, x.arin, 'success', key)).toMatchObject({ result: null })
+      expect(await vitals(s.Arin, schema)).toMatchObject({ death_successes: 1, death_failures: 0 })
+      await asUser(player)
+      await expect(a.deathSave(s.c, x.arin, 'failure')).rejects.toThrow(/Already rolled/)
+      // Never for anyone else, never off the own turn.
+      await expect(a.deathSave(s.c, x.bea, 'success')).rejects.toThrow(/Forbidden/)
+      await expect(a.deathSave(s.c, x.gob1, 'success')).rejects.toThrow(/Forbidden/)
+      await expect(a.deathSave(s.c, x.ogre, 'success')).rejects.toThrow(/Combatant unavailable/)
+      await asUser(peer)
+      await expect(a.deathSave(s.c, x.bea, 'success')).rejects.toThrow(/Not your turn/)
+      await expect(a.deathSave(s.c, x.arin, 'success')).rejects.toThrow(/Forbidden/)
+      await expect(a.turn(s.c, x.e, 1, x.arin)).rejects.toThrow(/Forbidden/)
+      await asUser(outsider)
+      await expect(a.deathSave(s.c, x.arin, 'success')).rejects.toThrow(/Forbidden/)
+      await expect(a.turn(s.c, x.e, 1, x.arin)).rejects.toThrow(/Forbidden/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      await expect(a.deathSave(other, x.arin, 'success')).rejects.toThrow(/Combatant unavailable/)
+      await expect(a.turn(other, x.e, 1, x.arin)).rejects.toThrow(/Encounter unavailable/)
+      await db.exec('reset role; set role anon')
+      await expect(a.deathSave(s.c, x.arin, 'success')).rejects.toThrow(/permission denied/)
+      await expect(a.turn(s.c, x.e, 1, x.arin)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
+
+      // The Player ends the own turn: forward only, a retry replays, a double tap is stale.
+      await asUser(player)
+      await expect(a.turn(s.c, x.e, -1, x.arin)).rejects.toThrow(/Forbidden/)
+      const end = randomUUID()
+      expect(await a.turn(s.c, x.e, 1, x.arin, end)).toMatchObject({ active_combatant: x.bea })
+      expect(await a.turn(s.c, x.e, 1, x.arin, end)).toMatchObject({ active_combatant: x.bea })
+      // A late double tap (new request id) no longer holds the turn: refused, nothing moves.
+      await expect(a.turn(s.c, x.e, 1, x.arin)).rejects.toThrow(/Forbidden/)
+      await expect(a.turn(s.c, x.e, 1, x.bea)).rejects.toThrow(/Forbidden/)
+      expect((await a.state(s.c, x.e)).encounter).toMatchObject({ active_combatant: x.bea })
+      await expect(a.deathSave(s.c, x.arin, 'success')).rejects.toThrow(/Not your turn/)
+
+      // Bea: a natural 1 counts two failures; she passes her turn.
+      await asUser(peer)
+      await a.deathSave(s.c, x.bea, 'nat1')
+      expect(await vitals(s.Bea, schema)).toMatchObject({ death_failures: 2 })
+      await asUser(peer)
+      await a.turn(s.c, x.e, 1, x.bea)
+      // The DM records saves any time: Cato is stable with three successes and rolls no more.
+      await asUser(dm)
+      for (let i = 0; i < 3; i++) await a.deathSave(s.c, x.cato, 'success')
+      await asUser(third)
+      await expect(a.deathSave(s.c, x.cato, 'success')).rejects.toThrow(/Not dying/)
+      // Everyone sees "stable", also where Cato's vitals are not shared; counts stay private.
+      await asUser(peer)
+      let seen = await a.state(s.c, x.e)
+      expect(of(seen, x.cato)).toMatchObject({ death_state: 'stable', hp_band: 'unknown' })
+      expect(of(seen, x.cato).death_saves).toBeUndefined()
+      expect(of(seen, x.arin)).toMatchObject({ death_saves: { successes: 1, failures: 0 } })
+      expect(of(seen, x.arin).death_state).toBeUndefined()
+      await asUser(third)
+      await a.turn(s.c, x.e, 1, x.cato)
+      await asUser(dm)
+      await a.turn(s.c, x.e, 1, x.gob1)
+      await a.turn(s.c, x.e, 1, x.gob2)
+
+      // Round 2, Arin again: a natural 20 revives with 1 HP, announced to the whole table.
+      await asUser(player)
+      expect(await a.deathSave(s.c, x.arin, 'nat20')).toMatchObject({ result: 'up', round: 2 })
+      expect(await vitals(s.Arin, schema)).toMatchObject({
+        current_hp: 1,
+        death_successes: 0,
+        conditions: [],
+      })
+      await asUser(third)
+      expect(of(await a.state(s.c, x.e), x.arin)).toMatchObject({ death_state: 'revived' })
+      await asUser(dm)
+      expect(of(await a.state(s.c, x.e, true), x.arin)).toMatchObject({ death_state: 'revived' })
+      // A mistaken roll is undone by the DM; the Player can then roll again this round.
+      const st = await a.state(s.c, x.e)
+      const roll = st.events.find((e) => e.kind === 'death_save' && !e.undone)!
+      expect(roll).toMatchObject({ undoable: true, detail: { outcome: 'nat20', result: 'up' } })
+      await a.undo(s.c, roll.id)
+      expect(await vitals(s.Arin, schema)).toMatchObject({ current_hp: 0, death_successes: 1 })
+      await asUser(player)
+      expect(of(await a.state(s.c, x.e), x.arin).death_state).toBeUndefined()
+      await a.deathSave(s.c, x.arin, 'failure')
+      await a.turn(s.c, x.e, 1, x.arin)
+
+      // Bea's third failure: dead, and she can still pass the turn she died on.
+      await asUser(peer)
+      expect(await a.deathSave(s.c, x.bea, 'failure')).toMatchObject({ result: 'dead' })
+      expect(of(await a.state(s.c, x.e), x.bea)).toMatchObject({ defeated: true })
+      expect(await a.turn(s.c, x.e, 1, x.bea)).toMatchObject({ active_combatant: x.cato })
+
+      // Ended fights are closed.
+      await asUser(dm)
+      await a.status(s.c, x.e, 'ended')
+      await asUser(player)
+      await expect(a.deathSave(s.c, x.arin, 'success')).rejects.toThrow(/Encounter closed/)
+    }
+    await db.exec('reset role')
+    const bodies = (
+      await db.query<{ name: string; src: string }>(
+        "select p.proname name, prosrc src from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='pre' and p.proname in ('record_death_save','get_combat_state')",
+      )
+    ).rows
+    expect(bodies).toHaveLength(2)
+    expect(bodies.find((b) => b.name === 'record_death_save')!.src).toContain('Already rolled')
+    expect(bodies.find((b) => b.name === 'get_combat_state')!.src).toContain('death_state')
+    for (const { src } of bodies) expect(src).not.toMatch(/\bpublic\.|\bprivate\./)
   })
 
   it('RYT-041 runs the roster RPCs in a PRE copied before the migration', async () => {

@@ -192,3 +192,145 @@ roster-en-light, party-entry, dm-rosters), and the code review covered `roster.t
 - Only the Default and Wizard class themes were rendered. Other themes rely on shared tokens and
   `class-themes.test.ts`.
 - 150% text was emulated through the root font size, not browser zoom settings.
+
+## Round 2
+
+- Date: 2026-11-03.
+- Snapshot: `35d3fa2`. It contains `397dc0c`, `8e16b2b` (archive migration), `d3a4ea5` (fixes and
+  archive UI) and the merge of `main` (RYT-040 and RYT-041).
+- Fingerprint: `159a88a3747f2988c34ec3fd61d6bd1f801dbf2d2e92bf16ee7364fda1b44ad6`.
+- Method: my own fixture build (`VITE_DATA_MODE=supabase`, identity fixture) served on
+  127.0.0.1:4227, driven by throwaway Playwright Chromium scripts at 390×844 and 820×1180 with touch
+  enabled. I stopped the server and deleted the build afterwards.
+
+### Verdict: CHANGES_REQUIRED
+
+F1–F8 are all resolved. The new archive scope adds two blocking regressions of the same class
+reviewed in round 1:
+
+- at 150% text on a 390px phone, the archived section scrolls the page sideways;
+- archiving a character from Party drops keyboard focus to the document body.
+
+### Round 1 findings
+
+| Finding | Status | Browser evidence |
+| --- | --- | --- |
+| F1 focus return from onboarding | Resolved | Escape, Cancelar and × all return focus to "Crear mi personaje" (390 and 820) |
+| F2 blocked-switch notice | Resolved | Alert renders above the grid, at y 248–325 on 390 (bottom bar at 779) and y 307–363 on 820; close label "Cerrar"; selection kept on the server's active character. See N3 for a residual issue |
+| F3 detached sheet actions | Resolved | Sheet link is a footer band inside the card frame; ⋯ is a sibling of the radio label; all slots have equal height (242px / 243px) |
+| F4 decorative ring | Resolved | No ring is interactive or has a pointer cursor; the button is the only action |
+| F5 DM filler slots | Resolved | Compact rows per Player with a 4-ring meter and a spoken "N de 4 personajes"; 0 empty cards; page 1180px at 390 vs 1817px before |
+| F6 DM link count | Resolved | "Personajes de los jugadores, 2 en reserva"; visible meta "2 en reserva"; icon instead of initials |
+| F7 Party lede | Resolved | Lede hidden during onboarding; new lede "Tu personaje activo, sus recursos y tus compañeros de mesa." |
+| F8 dialog actions on phones | Resolved | 390px: primary "Crear y hacer la ficha" full width at y 223, Cancelar full width below; 820px: one row |
+
+### New findings
+
+#### N1 — Medium (blocking): archived row scrolls the page sideways at 150% on phones
+
+- Where: `src/features/characters/ui/roster.tsx:820-834` and `roster.css:273-325`
+  (`.roster-row-actions` has `flex-shrink: 0`).
+- Conditions: 390px, EN light (ES has the same structure), 150% root text.
+- Reproduction: Player with four characters in the roster and one archived (Zed). Open
+  "Archived": the row shows "No free slot" plus a disabled "Restore". At 150% the Restore button
+  extends to x≈406, `scrollWidth` exceeds the viewport by 16px, and the page scrolls horizontally.
+  At 100% and at 820px it fits. It also fits at 150% when restore is available, because there is no
+  note.
+- Impact: this breaks the no-horizontal-scroll rule at 150% text.
+- Fix: let the actions wrap, or move the "No free slot" note under the name or meta line so the
+  action group can shrink.
+
+#### N2 — Medium (blocking): archiving from Party loses focus
+
+- Where: `src/features/characters/ui/party.tsx:383-386` (`onArchived`).
+- Conditions: DM, ES light, 390px and 820px.
+- Reproduction: create an unassigned character (Grom), open ⋯, choose "Archivar personaje", then
+  "Archivar". The card and its trigger disappear, the status "Grom está archivado." appears at the
+  top, and `document.activeElement` is `BODY`. Cancel and Escape do return to the trigger. The
+  roster page handles the same case by focusing its notice; Party does not.
+- Fix: focus the archived notice (`tabIndex={-1}`), or a stable heading or next card, after a
+  successful archive.
+
+#### N3 — Low: closing an error notice drops focus
+
+- Where: `src/features/characters/ui/roster.tsx:201-210` and `:119` (`onClose={() => setNotice(null)}`).
+- Conditions: Player, ES dark, 390px and 820px.
+- Reproduction: trigger a blocked switch, then activate "Cerrar" on the alert. Focus goes to
+  `BODY`.
+- Fix: return focus to the checked radio, or to the notice container.
+
+#### N4 — Low: the disabled archive explanation is unreachable by keyboard
+
+- Where: `src/features/characters/ui/roster.tsx:660-671`.
+- Conditions: Player and DM, all viewports.
+- Reproduction: focus ⋯ on the active character and press Enter. The menu opens, but focus stays
+  on the trigger. ArrowDown does not move into the menu, because the only item is disabled. The
+  hint "Activa otro personaje para poder archivar este." is a `Menu.Label` not linked to the item
+  (`aria-describedby` is null).
+- Impact: sighted pointer users see the reason; keyboard and screen-reader users get a menu with
+  nothing reachable.
+- Fix: link the hint with `aria-describedby`, or keep the item focusable with `aria-disabled` so
+  arrow keys reach it.
+
+#### N5 — Low: ⋯ overlaps the medallion at 150% on phones
+
+- Where: `roster.css:130-134` (absolute at top 2px, right 2px).
+- Conditions: 390px, 150% text.
+- Observation: the 44px ⋯ button overlaps the portrait ring (`full-150` capture). It is still
+  usable.
+- Fix: reserve top padding or a corner inset for the menu.
+
+#### N6 — Low: a Player with only archived characters gets the first-character onboarding
+
+- Where: `src/features/characters/ui/party.tsx:128` and `:208`; `roster.tsx:243`.
+- How it can happen: the DM unlinks the active character while the Player's others are archived.
+- Observation: Party shows "¿Con quién vas a jugar?" with no roster link and no mention of the
+  archived character. `party/roster` shows an empty radio group ("0 de 4 personajes") above the
+  collapsed "Archivados 1".
+- Fix: offer "Restaurar" or link to "Mis personajes" in the onboarding when archived characters
+  exist.
+
+#### Nit (non-blocking)
+
+`ArchiveDialog` autofocuses the destructive "Archivar" button (`roster.tsx:738`). Archiving can be
+undone, so this is acceptable, but initial focus on Cancel would be the safer default.
+
+### Archive and restore flows (browser-verified)
+
+- **Player, ES dark, 390 and 820.**
+  - The ⋯ menu on the active character shows "Archivar personaje" disabled, with the reason.
+  - On a reserve character the menu works by keyboard: Enter opens it with focus on the item.
+  - The confirmation "¿Archivar a Cora?" says that archiving frees a slot and keeps the sheet and
+    inventory. Escape returns focus to ⋯.
+  - Confirming focuses the notice "Cora está archivado. Queda un hueco libre." The card leaves the
+    grid, the slot count drops to 2 of 4, and a new slot appears.
+  - "Archivados 1" is collapsed (`aria-expanded=false`). Restore focuses "Cora vuelve al plantel."
+  - The fixture recorded exactly one `archive_character` and one `restore_character` call. Axe
+    found 0 violations throughout.
+- **Full roster, EN light.** "No free slot" is shown, "Restore Zed" is disabled, and the copy reads
+  "All four slots are taken. Archive a character to free one."
+- **DM, ES light.**
+  - On a Player's active character the menu entry is disabled with the reason.
+  - Archiving the unassigned Grom from Party uses the NPC copy ("Sale de Grupo y de las listas…").
+  - Grom leaves Party.
+  - DM "Archivados 2" lists Zed ("Arin, Ficha a medias") and Grom ("Sin jugador"). Restoring Grom
+    works and focuses the notice.
+- **Combat smoke test (RYT-041 × RYT-044).** DM fixture with Bram in reserve and Zed archived, in a
+  new encounter: "Añadir combatientes" offers only "todo el grupo", Arin, Bea and Cato. Bram and Zed
+  appear nowhere on the page.
+- **DM Player preview.** "Personajes de Arin" shows 0 radios and 0 ⋯ menus (read-only), and axe
+  found 0 violations.
+
+### Round 2 coverage
+
+- **Browser-tested:** onboarding (focus, ring, lede, dialog layout); roster with 3 characters (Tab
+  order, arrow switch, blocked combat switch, notice position, close); archive and restore;
+  full roster with an archived character in EN light at 150% with reduced motion (transition
+  about 0s); a Player with only archived characters; DM Party and rosters, archive and restore;
+  DM preview; combat add list.
+- **Axe** (wcag2a/2aa/21aa/22aa): 0 violations in every state. No targets under 44px.
+- **Themes and languages:** dark and light, ES and EN; Default theme only in this round.
+- **Code only:** the archive SQL and RLS (`8e16b2b`), the RYT-040 and RYT-041 merged UI beyond the
+  combat add list, and the audit wording.
+- **Limitations:** same as round 1. Fixture only; no hosted Supabase, iOS Safari or real screen
+  reader. Captures are in a scratch folder outside the repo.

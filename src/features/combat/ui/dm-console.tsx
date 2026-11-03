@@ -1,0 +1,574 @@
+import { useState } from 'react'
+import {
+  Badge,
+  Button,
+  Drawer,
+  Group,
+  Menu,
+  Modal,
+  Stack,
+  Tabs,
+  Text,
+  TextInput,
+  Title,
+  ActionIcon,
+} from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Dice5,
+  Ellipsis,
+  Flag,
+  Heart,
+  ListChecks,
+  Monitor,
+  Pencil,
+  Play,
+  Swords,
+  Trash2,
+  Undo2,
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Link, useNavigate } from 'react-router'
+import {
+  missingInitiative,
+  nextUp,
+  type CombatState,
+  type Combatant,
+  type HpMode,
+} from '../domain/combat'
+import { AddCombatants } from './add-combatants'
+import { AmountDialog, InitiativeDialog } from './amount-dialog'
+import { CombatLog, CombatSummary } from './combat-log'
+import { CombatantDetail } from './combatant-detail'
+import { InitiativeRail } from './initiative-rail'
+import { onlyTopDialog, useRunner } from './helpers'
+import { NetworkState, RunnerError } from './parts'
+
+type Panel = 'detail' | 'log' | 'add'
+
+export function DmConsole({
+  campaignId,
+  state,
+  stale,
+  connected,
+  retry,
+}: {
+  campaignId: string
+  state: CombatState
+  stale: boolean
+  connected: boolean
+  retry: () => void
+}) {
+  const { t } = useTranslation()
+  const wide = useMediaQuery('(min-width: 62em)')
+  const navigate = useNavigate()
+  const encounter = state.encounter!
+  const { run, pending, error, trigger, clear } = useRunner(campaignId)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [multi, setMulti] = useState<ReadonlySet<string> | null>(null)
+  const [multiMode, setMultiMode] = useState<HpMode | null>(null)
+  const [initiativeFor, setInitiativeFor] = useState<Combatant | null>(null)
+  const [panel, setPanel] = useState<Panel>(encounter.status === 'draft' ? 'add' : 'detail')
+  // Leaving preparation hands the side panel to the fight (render-phase adjustment).
+  const [seenStatus, setSeenStatus] = useState(encounter.status)
+  if (seenStatus !== encounter.status) {
+    setSeenStatus(encounter.status)
+    if (seenStatus === 'draft' || encounter.status === 'ended') setPanel('detail')
+  }
+  const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
+  const [rename, setRename] = useState(encounter.name)
+  const combatants = state.combatants
+  const selected = combatants.find((c) => c.id === selectedId) ?? null
+  const active = combatants.find((c) => c.is_active) ?? null
+  const upNext = nextUp(combatants)
+  const missing = missingInitiative(combatants)
+  const status = encounter.status
+  const activeId = encounter.active_combatant ?? null
+  // While collecting initiative, a row without a total opens the initiative keypad directly.
+  const pick = (combatant: Combatant) => {
+    if (status === 'initiative' && combatant.initiative === undefined) {
+      setInitiativeFor(combatant)
+      return
+    }
+    setSelectedId(combatant.id)
+    if (wide) setPanel('detail')
+  }
+  const detail = selected && (
+    <CombatantDetail
+      key={selected.id}
+      encounterId={encounter.id}
+      status={status}
+      combatant={selected}
+      combatants={combatants}
+      effects={state.effects}
+      dm
+      activeId={activeId}
+      run={run}
+      pending={pending}
+      onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
+    />
+  )
+  const rail = (
+    <section className="combat-rail-section" aria-labelledby="combat-order-title">
+      <Group justify="space-between" mb="xs">
+        <Title order={2} id="combat-order-title" className="combat-section-title">
+          {t('combat.order.title')}
+        </Title>
+        {status === 'active' || status === 'initiative' ? (
+          <Button
+            size="sm"
+            variant={multi ? 'filled' : 'default'}
+            leftSection={<ListChecks size={16} aria-hidden="true" />}
+            onClick={() => setMulti(multi ? null : new Set())}
+            aria-pressed={multi !== null}
+          >
+            {t(multi ? 'combat.select.done' : 'combat.select.mode')}
+          </Button>
+        ) : null}
+      </Group>
+      <InitiativeRail
+        combatants={combatants}
+        mode={
+          multi
+            ? {
+                kind: 'multi',
+                selected: multi,
+                onToggle: (c) => {
+                  const next = new Set(multi)
+                  if (next.has(c.id)) next.delete(c.id)
+                  else next.add(c.id)
+                  setMulti(next)
+                },
+              }
+            : { kind: 'pick', selectedId, onPick: pick }
+        }
+        reorder={
+          status !== 'ended'
+            ? (ids) => void run({ kind: 'order', encounterId: encounter.id, ids })
+            : undefined
+        }
+      />
+      {multi && multi.size > 0 && (
+        <div className="combat-multi-bar" role="region" aria-label={t('combat.amount.targets')}>
+          <Text size="sm" fw={600}>
+            {t('combat.select.count', { count: multi.size })}
+          </Text>
+          <Group gap="xs">
+            <Button
+              variant="default"
+              className="combat-btn-damage"
+              leftSection={<Swords size={16} aria-hidden="true" />}
+              onClick={() => setMultiMode('damage')}
+            >
+              {t('combat.select.damage')}
+            </Button>
+            <Button
+              variant="default"
+              className="combat-btn-heal"
+              leftSection={<Heart size={16} aria-hidden="true" />}
+              onClick={() => setMultiMode('heal')}
+            >
+              {t('combat.select.heal')}
+            </Button>
+            <Button variant="subtle" onClick={() => setMulti(new Set())}>
+              {t('combat.select.clear')}
+            </Button>
+          </Group>
+        </div>
+      )}
+    </section>
+  )
+  const side = (
+    <Tabs
+      value={!wide && panel === 'detail' ? 'log' : panel}
+      onChange={(value) => setPanel((value as Panel) ?? 'detail')}
+      variant="pills"
+      keepMounted={false}
+      className="dm-tabs combat-tabs"
+    >
+      <Tabs.List aria-label={t('combat.tabs')} className="dm-tabs-list">
+        {wide && <Tabs.Tab value="detail">{t('combat.detail.title')}</Tabs.Tab>}
+        <Tabs.Tab value="log">{t('combat.log.title')}</Tabs.Tab>
+        {status !== 'ended' && <Tabs.Tab value="add">{t('combat.add.title')}</Tabs.Tab>}
+      </Tabs.List>
+      {wide && (
+        <Tabs.Panel value="detail" pt="md">
+          {detail ?? <Text c="dimmed">{t('combat.detail.empty')}</Text>}
+        </Tabs.Panel>
+      )}
+      <Tabs.Panel value="log" pt="md">
+        <CombatLog events={state.events} run={run} pending={pending} canUndo />
+      </Tabs.Panel>
+      {status !== 'ended' && (
+        <Tabs.Panel value="add" pt="md">
+          <AddCombatants
+            campaignId={campaignId}
+            encounterId={encounter.id}
+            combatants={combatants}
+            run={run}
+            pending={pending}
+          />
+        </Tabs.Panel>
+      )}
+    </Tabs>
+  )
+  return (
+    <Stack gap="md" className={`combat-console${status === 'active' ? ' has-turn-bar' : ''}`}>
+      <header className="combat-header">
+        <Button
+          component={Link}
+          to=".."
+          relative="path"
+          variant="subtle"
+          size="sm"
+          leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+          className="combat-back"
+        >
+          {t('combat.back')}
+        </Button>
+        <Group justify="space-between" align="flex-start" wrap="nowrap">
+          <div>
+            <Title order={1} className="combat-title">
+              {encounter.name}
+            </Title>
+            <Group gap={8} mt={4}>
+              <Badge variant={status === 'active' ? 'filled' : 'light'}>
+                {t(`combat.status.${status}`)}
+              </Badge>
+              {status === 'active' && (
+                <Text fw={700} className="combat-round">
+                  {t('combat.round', { round: encounter.round })}
+                </Text>
+              )}
+              {status !== 'ended' && (
+                <NetworkState stale={stale} connected={connected} retry={retry} />
+              )}
+            </Group>
+          </div>
+          <Group gap="xs" wrap="nowrap">
+            {status !== 'draft' && (
+              <Button
+                component={Link}
+                to="table"
+                variant="default"
+                leftSection={<Monitor size={16} aria-hidden="true" />}
+                title={t('combat.tableViewHint')}
+                visibleFrom="sm"
+              >
+                {t('combat.tableView')}
+              </Button>
+            )}
+            <Menu position="bottom-end">
+              <Menu.Target>
+                <ActionIcon variant="default" size={44} aria-label={t('combat.menu')}>
+                  <Ellipsis size={18} aria-hidden="true" />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {status !== 'draft' && (
+                  <Menu.Item
+                    component={Link}
+                    to="table"
+                    hiddenFrom="sm"
+                    leftSection={<Monitor size={16} aria-hidden="true" />}
+                  >
+                    {t('combat.tableView')}
+                  </Menu.Item>
+                )}
+                <Menu.Item
+                  leftSection={<Pencil size={16} aria-hidden="true" />}
+                  onClick={() => {
+                    setRename(encounter.name)
+                    setConfirm('rename')
+                  }}
+                >
+                  {t('combat.rename')}
+                </Menu.Item>
+                {status === 'initiative' && (
+                  <Menu.Item
+                    leftSection={<Undo2 size={16} aria-hidden="true" />}
+                    onClick={() =>
+                      void run({ kind: 'status', encounterId: encounter.id, status: 'draft' })
+                    }
+                  >
+                    {t('combat.flow.backToDraft')}
+                  </Menu.Item>
+                )}
+                {(status === 'draft' || status === 'ended') && (
+                  <Menu.Item
+                    color="red"
+                    leftSection={<Trash2 size={16} aria-hidden="true" />}
+                    onClick={() => setConfirm('delete')}
+                  >
+                    {t('combat.delete')}
+                  </Menu.Item>
+                )}
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
+        </Group>
+      </header>
+
+      <RunnerError error={error} trigger={trigger} onClose={clear} />
+
+      {status === 'draft' && (
+        <div className="combat-flow">
+          <Text size="sm">{t('combat.flow.draftHint')}</Text>
+          <Group gap="xs">
+            <Button
+              leftSection={<Dice5 size={16} aria-hidden="true" />}
+              disabled={pending || combatants.length === 0}
+              onClick={() =>
+                void run({ kind: 'status', encounterId: encounter.id, status: 'initiative' })
+              }
+            >
+              {t('combat.flow.askInitiative')}
+            </Button>
+            <Button
+              variant="default"
+              leftSection={<Play size={16} aria-hidden="true" />}
+              disabled={pending || combatants.length === 0}
+              onClick={() =>
+                void run({ kind: 'status', encounterId: encounter.id, status: 'active' })
+              }
+            >
+              {t('combat.flow.startNow')}
+            </Button>
+          </Group>
+        </div>
+      )}
+      {status === 'initiative' && (
+        <div className="combat-flow">
+          <Text size="sm">{t('combat.flow.initiativeHint')}</Text>
+          <Text fw={700} role="status">
+            {missing.length > 0
+              ? t('combat.flow.missing', { count: missing.length })
+              : t('combat.flow.ready')}
+          </Text>
+          <Group gap="xs">
+            <Button
+              variant="default"
+              leftSection={<Dice5 size={16} aria-hidden="true" />}
+              disabled={pending || !missing.some((c) => c.kind !== 'character')}
+              onClick={() => void run({ kind: 'roll', encounterId: encounter.id })}
+            >
+              {t('combat.flow.rollNpcs')}
+            </Button>
+            <Button
+              leftSection={<Play size={16} aria-hidden="true" />}
+              disabled={pending}
+              onClick={() =>
+                void run({ kind: 'status', encounterId: encounter.id, status: 'active' })
+              }
+            >
+              {t('combat.flow.start')}
+            </Button>
+          </Group>
+        </div>
+      )}
+      {status === 'active' && (
+        <Group justify="flex-end">
+          <Button
+            variant="default"
+            color="red"
+            leftSection={<Flag size={16} aria-hidden="true" />}
+            onClick={() => setConfirm('end')}
+          >
+            {t('combat.flow.end')}
+          </Button>
+        </Group>
+      )}
+      {status === 'ended' && <CombatSummary encounter={encounter} />}
+
+      {wide ? (
+        <div className="combat-columns">
+          {rail}
+          <div className="combat-side">{side}</div>
+        </div>
+      ) : (
+        <>
+          {rail}
+          {side}
+          <Drawer
+            opened={selected !== null && !initiativeFor && multi === null}
+            onClose={onlyTopDialog(() => {
+              const id = selectedId
+              setSelectedId(null)
+              requestAnimationFrame(() => document.getElementById(`combatant-${id}`)?.focus())
+            })}
+            position="bottom"
+            size="85%"
+            title={selected?.name}
+            closeButtonProps={{ 'aria-label': t('combat.detail.close'), size: 44 }}
+            className="combat-drawer"
+          >
+            {detail}
+          </Drawer>
+        </>
+      )}
+
+      {status === 'active' && (
+        <div className="combat-turn-bar" role="region" aria-label={t('combat.turn.bar')}>
+          <ActionIcon
+            variant="default"
+            size={52}
+            aria-label={t('combat.turn.prev')}
+            disabled={
+              pending ||
+              (encounter.round <= 1 && combatants.find((c) => c.in_turn_order)?.is_active === true)
+            }
+            onClick={() =>
+              void run({
+                kind: 'turn',
+                encounterId: encounter.id,
+                direction: -1,
+                expected: activeId,
+              })
+            }
+          >
+            <ChevronLeft size={24} aria-hidden="true" />
+          </ActionIcon>
+          <div className="combat-turn-now" aria-live="polite">
+            <Text size="xs" c="dimmed">
+              {t('combat.turn.now')} · {t('combat.round', { round: encounter.round })}
+            </Text>
+            <Text fw={800} className="combat-turn-name">
+              {active?.name ?? '—'}
+            </Text>
+            {upNext && (
+              <Text size="xs" c="dimmed">
+                {t('combat.turn.upNext')}: {upNext.name}
+              </Text>
+            )}
+          </div>
+          <Button
+            size="lg"
+            className="combat-turn-next"
+            rightSection={<ChevronRight size={20} aria-hidden="true" />}
+            disabled={pending}
+            onClick={() =>
+              void run({
+                kind: 'turn',
+                encounterId: encounter.id,
+                direction: 1,
+                expected: activeId,
+              })
+            }
+          >
+            {t('combat.turn.next')}
+          </Button>
+        </div>
+      )}
+
+      {initiativeFor && (
+        <InitiativeDialog
+          combatant={initiativeFor}
+          bonus={null}
+          dm
+          pending={pending}
+          close={() => setInitiativeFor(null)}
+          save={async (total) => {
+            if (
+              await run({ kind: 'initiative', combatantId: initiativeFor.id, total, bonus: null })
+            )
+              setInitiativeFor(null)
+          }}
+        />
+      )}
+      {multi && multiMode && (
+        <AmountDialog
+          targets={combatants.filter((c) => multi.has(c.id))}
+          initialMode={multiMode}
+          pending={pending}
+          close={() => setMultiMode(null)}
+          apply={async (mode, hits) => {
+            if (await run({ kind: 'hp', encounterId: encounter.id, mode, hits })) {
+              setMultiMode(null)
+              setMulti(new Set())
+            }
+          }}
+        />
+      )}
+      <Modal
+        opened={confirm === 'end'}
+        onClose={() => setConfirm(null)}
+        title={t('combat.flow.endTitle')}
+        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+      >
+        <Text>{t('combat.flow.endBody')}</Text>
+        <Group justify="flex-end" mt="md">
+          <Button variant="subtle" onClick={() => setConfirm(null)}>
+            {t('action.cancel')}
+          </Button>
+          <Button
+            color="red"
+            loading={pending}
+            onClick={async () => {
+              if (await run({ kind: 'status', encounterId: encounter.id, status: 'ended' }))
+                setConfirm(null)
+            }}
+          >
+            {t('combat.flow.end')}
+          </Button>
+        </Group>
+      </Modal>
+      <Modal
+        opened={confirm === 'delete'}
+        onClose={() => setConfirm(null)}
+        title={t('combat.deleteTitle', { name: encounter.name })}
+        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+      >
+        <Text>{t('combat.deleteBody')}</Text>
+        <Group justify="flex-end" mt="md">
+          <Button variant="subtle" onClick={() => setConfirm(null)}>
+            {t('action.cancel')}
+          </Button>
+          <Button
+            color="red"
+            loading={pending}
+            onClick={async () => {
+              if (await run({ kind: 'delete', encounterId: encounter.id }))
+                void navigate('..', { relative: 'path' })
+            }}
+          >
+            {t('combat.delete')}
+          </Button>
+        </Group>
+      </Modal>
+      <Modal
+        opened={confirm === 'rename'}
+        onClose={() => setConfirm(null)}
+        title={t('combat.renameTitle')}
+        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+      >
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault()
+            if (!rename.trim()) return
+            if (await run({ kind: 'rename', encounterId: encounter.id, name: rename.trim() }))
+              setConfirm(null)
+          }}
+        >
+          <TextInput
+            data-autofocus
+            label={t('combat.name')}
+            value={rename}
+            maxLength={80}
+            onChange={(event) => setRename(event.currentTarget.value)}
+          />
+          <Group justify="flex-end" mt="md">
+            <Button variant="subtle" onClick={() => setConfirm(null)}>
+              {t('action.cancel')}
+            </Button>
+            <Button type="submit" loading={pending} disabled={!rename.trim()}>
+              {t('combat.rename')}
+            </Button>
+          </Group>
+        </form>
+      </Modal>
+    </Stack>
+  )
+}

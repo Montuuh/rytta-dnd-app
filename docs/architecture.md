@@ -105,8 +105,13 @@ revision that clears both confirmations on any change and an atomic swap that wr
 ledger rows and audit events for both characters. Realtime `postgres_changes` on `trades`
 invalidates the trade query, with polling as the fallback (ADR 022).
 
-Future domains: quests,
-encounters/participants, glossary, media, maps/routes, strongholds and relationships.
+RYT-007 adds encounters: characters join by reference (their HP, death saves and conditions stay
+in `character_vitals`), NPCs and the lair keep combat state, and timed effects, a log with
+compensating undo and a summary live beside them. Players read the role projection
+`get_combat_state`; realtime publishes only the secret-free `encounters` row, whose revision
+moves on every combat or fighting-character change, with polling as the fallback (ADR 024).
+
+Future domains: quests, glossary, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency
 keys, audit history and compensating undo. Never mutate whole-campaign JSON snapshots.

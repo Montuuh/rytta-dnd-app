@@ -10,6 +10,7 @@ import { partyEs } from './party-es'
 import { settingsEs } from './settings-es'
 import { lifecycleEs } from './lifecycle-es'
 import { tradesEs } from './trades-es'
+import { combatEs } from './combat-es'
 
 export const es = {
   ...identityEs,
@@ -23,6 +24,7 @@ export const es = {
   ...settingsEs,
   ...lifecycleEs,
   ...tradesEs,
+  ...combatEs,
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
   'module.shops': 'Tiendas',

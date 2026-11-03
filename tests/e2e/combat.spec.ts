@@ -195,3 +195,56 @@ test('RYT-007 Player combat screen passes axe in English and light theme', async
   await expect(page.locator('.combat-own').getByRole('button', { name: 'Damage' })).toBeFocused()
   await expect(page.locator('.combat-own')).toContainText('19/24 HP')
 })
+
+test('RYT-007 action errors stay in view next to the action and floating ones leave', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  // Later routes win: these two writes fail like a dropped connection.
+  await page.route(/\/rest\/v1\/rpc\/(set_combat_condition|advance_turn)$/, (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Service unavailable' }),
+    }),
+  )
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}`)
+  const message = 'No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.'
+
+  // 1. Without a dialog the error floats, clears the turn bar and leaves on its own.
+  await page.getByRole('button', { name: 'Siguiente turno' }).click()
+  const toast = page.locator('.combat-toast').getByRole('alert')
+  await expect(toast).toHaveText(message)
+  const bar = await page.getByRole('region', { name: 'Controles de turno' }).boundingBox()
+  const box = await toast.boundingBox()
+  expect(box!.y + box!.height <= bar!.y || box!.y >= bar!.y + bar!.height).toBe(true)
+  await audit(page)
+  await evidence(page, info.project.name, 'error-toast')
+  await expect(toast).toBeHidden({ timeout: 12_000 })
+
+  // 2. A failed change in the detail keeps its error in view, inside the drawer on phones.
+  await row(page, 'Goblin 1').getByRole('button').first().click()
+  await page.getByRole('button', { name: 'Cambiar' }).click()
+  await page.getByText('Derribado', { exact: true }).click()
+  const inline =
+    info.project.name === 'identity-desktop'
+      ? page.locator('.combat-toast').getByRole('alert')
+      : page.locator('.mantine-Drawer-body .combat-inline-error').getByRole('alert')
+  await expect(inline).toHaveText(message)
+  await expect(inline).toBeInViewport()
+  await audit(page)
+  await evidence(page, info.project.name, 'error-detail')
+  // Errors inside a drawer wait for the person; dismissing returns to the same place.
+  await inline.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(inline).toBeHidden()
+})

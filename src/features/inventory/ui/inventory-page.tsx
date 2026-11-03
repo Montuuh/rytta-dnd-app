@@ -18,6 +18,7 @@ import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns
 import { inventoryQuery, rosterQuery, useInventoryAction } from '../api'
 import { canEquip, equippedBySlot, slotsFor } from '../domain/equipment'
 import type { DefinitionDraft, InventoryEvent, ItemDefinition, ItemStack } from '../domain/item'
+import { AddItemChooser } from './add-item-chooser'
 import { DefinitionEditor } from './definition-editor'
 import { Forge } from './forge'
 import { ItemCard } from './item-card'
@@ -62,6 +63,7 @@ export function InventoryPage() {
   )
   const [card, setCard] = useState<string | null>(null)
   const [forge, setForge] = useState<{ definition: ItemDefinition | null } | null>(null)
+  const [adding, setAdding] = useState(false)
   const [fuse, setFuse] = useState<(FuseEntry & { characterId: string }) | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -312,7 +314,12 @@ export function InventoryPage() {
           }}
           onAdd={(target) => {
             opener.current = target
-            openForge(null)
+            // DMs choose between an existing storeroom item and a new one (RYT-032).
+            if (dm && !playerPreview) {
+              action.reset()
+              setError(null)
+              setAdding(true)
+            } else openForge(null)
           }}
         />
       )}
@@ -427,6 +434,21 @@ export function InventoryPage() {
           }}
         />
       )}
+      {adding && dm && !playerPreview && (
+        <AddItemChooser
+          campaignId={campaign.id}
+          character={{ id: character.id, name: character.name }}
+          onClose={() => {
+            setAdding(false)
+            restoreFocus()
+          }}
+          onDone={(message) => {
+            setAdding(false)
+            setNotice(message)
+            restoreFocus()
+          }}
+        />
+      )}
       {forge && dm && !playerPreview && (
         <DefinitionEditor
           campaignId={campaign.id}
@@ -468,7 +490,7 @@ export function InventoryPage() {
           }}
         />
       )}
-      {fuse && fuse.characterId === character.id && canEdit && !openStack && !forge && (
+      {fuse && fuse.characterId === character.id && canEdit && !openStack && !forge && !adding && (
         <UndoFuse
           entry={fuse}
           pending={action.isPending}

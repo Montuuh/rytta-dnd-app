@@ -829,6 +829,25 @@ function inventoryState(characterIds: string[], seeded: boolean) {
         definitions.push(created)
         return { id: created.id }
       }
+      // RYT-032 lifecycle without shops; shopsFixture layers listings on top.
+      if (method === 'item_definition_impact') {
+        if (!dm) return new Error('Forbidden')
+        const held = stacks.filter((s) => s.definition_id === body.target_definition)
+        return {
+          listings: [],
+          holders: new Set(held.filter((s) => s.quantity > 0).map((s) => s.character_id)).size,
+          units: held.reduce((n, s) => n + s.quantity, 0),
+          open_orders: 0,
+        }
+      }
+      if (method === 'archive_item_definition') {
+        const item = definitions.find((d) => d.id === body.target_definition)
+        if (!dm || !item) return new Error('Forbidden')
+        if (item.revision !== body.expected_revision) return new Error('Stale revision')
+        item.archived = true
+        item.revision += 1
+        return { id: item.id, revision: item.revision, archived_listings: 0 }
+      }
       if (method === 'grant_item') {
         const source = dm ? 'dm' : 'player'
         let row = stacks.find(

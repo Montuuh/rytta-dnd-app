@@ -10,4 +10,5 @@ export { HoldSeal } from './ui/hold-seal'
 
 export { catalogueQuery, rosterQuery, useInventoryAction } from './api'
 export { DefinitionEditor, type GiveOutcome } from './ui/definition-editor'
+export { DeleteItemDialog } from './ui/delete-item'
 export { categoryIcons, rarityPips } from './ui/item-visuals'

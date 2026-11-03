@@ -1,7 +1,10 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import {
+  archiveDefinition,
   changeInventory,
+  loadDefinitionImpact,
+  syncListingPrices,
   loadCatalogue,
   itemImageUrl,
   listRoster,
@@ -89,6 +92,54 @@ export const catalogueQuery = (userId: string, campaignId: string) =>
     queryFn: ({ signal }) => loadCatalogue(campaignId, signal),
     refetchInterval: 20_000,
   })
+export const definitionImpactQuery = (userId: string, campaignId: string, definitionId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'catalogue', 'impact', definitionId],
+    queryFn: ({ signal }) => loadDefinitionImpact(campaignId, definitionId, signal),
+    staleTime: 0,
+    retry: false,
+  })
+
+/** RYT-032 soft delete and price sync; both refresh the campaign scope (shops and satchels). */
+export function useItemLifecycle(campaignId: string) {
+  const { userId, current } = useGuard()
+  const cache = useQueryClient()
+  const refresh = async () => {
+    if (current())
+      await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+  }
+  const archive = useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (input: { definitionId: string; revision: number; requestId: string }) => {
+      if (!current()) throw new Error('unavailable')
+      return archiveDefinition(campaignId, input.definitionId, input.revision, input.requestId)
+    },
+    onSettled: refresh,
+  })
+  const syncPrices = useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (input: {
+      definitionId: string
+      listingIds: string[]
+      price: number
+      requestId: string
+    }) => {
+      if (!current()) throw new Error('unavailable')
+      return syncListingPrices(
+        campaignId,
+        input.definitionId,
+        input.listingIds,
+        input.price,
+        input.requestId,
+      )
+    },
+    onSettled: refresh,
+  })
+  return { archive, syncPrices }
+}
+
 export const itemImageQuery = (userId: string | undefined, path?: string | null) =>
   queryOptions({
     queryKey: ['private', userId, 'item-image', path],

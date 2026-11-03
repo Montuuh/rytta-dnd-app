@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Alert, Button, Loader, Drawer, NumberInput, Select, Stack, Text } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
@@ -19,6 +20,8 @@ export function CatalogueShopPicker({
   const { state } = useAuth()
   const data = useQuery(shopAdminQuery(state.user!.id, campaignId))
   const action = useShopAction(campaignId)
+  // Same placement as the other storeroom drawers: right on wide screens, a bottom sheet on phones.
+  const phone = useMediaQuery('(max-width: 47.99em)')
   const [shop, setShop] = useState<string | null>(null)
   const [price, setPrice] = useState<number | string>(item.value_gp ?? 0)
   const [stock, setStock] = useState<number | string>(1)
@@ -37,13 +40,17 @@ export function CatalogueShopPicker({
   return (
     <Drawer
       opened
+      position={phone ? 'bottom' : 'right'}
+      size={phone ? 'auto' : 420}
       title={t('catalogue.addToShop')}
       returnFocus={false}
       onClose={() => !action.isPending && dismiss()}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
       <Stack>
-        <Text>{item.name}</Text>
+        <Text fw={600} className="user-copy">
+          {item.name}
+        </Text>
         {data.isPending && <Text role="status">{t('common.loading')}</Text>}
         {data.isError && (
           <Alert color="red" role="alert">

@@ -44,7 +44,7 @@ import { AmountDialog, InitiativeDialog } from './amount-dialog'
 import { CombatLog, CombatSummary } from './combat-log'
 import { CombatantDetail } from './combatant-detail'
 import { InitiativeRail } from './initiative-rail'
-import { useRunner } from './helpers'
+import { onlyTopDialog, useRunner } from './helpers'
 import { NetworkState, RunnerError } from './parts'
 
 type Panel = 'detail' | 'log' | 'add'
@@ -98,6 +98,7 @@ export function DmConsole({
   }
   const detail = selected && (
     <CombatantDetail
+      key={selected.id}
       encounterId={encounter.id}
       status={status}
       combatant={selected}
@@ -157,16 +158,16 @@ export function DmConsole({
           </Text>
           <Group gap="xs">
             <Button
-              color="red"
-              variant="light"
+              variant="default"
+              className="combat-btn-damage"
               leftSection={<Swords size={16} aria-hidden="true" />}
               onClick={() => setMultiMode('damage')}
             >
               {t('combat.select.damage')}
             </Button>
             <Button
-              color="green"
-              variant="light"
+              variant="default"
+              className="combat-btn-heal"
               leftSection={<Heart size={16} aria-hidden="true" />}
               onClick={() => setMultiMode('heal')}
             >
@@ -393,11 +394,11 @@ export function DmConsole({
           {side}
           <Drawer
             opened={selected !== null && !initiativeFor && multi === null}
-            onClose={() => {
+            onClose={onlyTopDialog(() => {
               const id = selectedId
               setSelectedId(null)
               requestAnimationFrame(() => document.getElementById(`combatant-${id}`)?.focus())
-            }}
+            })}
             position="bottom"
             size="85%"
             title={selected?.name}
@@ -445,6 +446,7 @@ export function DmConsole({
           </div>
           <Button
             size="lg"
+            className="combat-turn-next"
             rightSection={<ChevronRight size={20} aria-hidden="true" />}
             disabled={pending}
             onClick={() =>

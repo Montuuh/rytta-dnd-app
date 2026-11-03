@@ -22,7 +22,7 @@ import { InitiativeDialog } from './amount-dialog'
 import { CombatLog, CombatSummary } from './combat-log'
 import { CombatantDetail } from './combatant-detail'
 import { InitiativeRail } from './initiative-rail'
-import { useRunner } from './helpers'
+import { onlyTopDialog, useRunner } from './helpers'
 import { NetworkState, RunnerError } from './parts'
 
 /** Player screen: whose turn it is, the own character's controls and the shared order. */
@@ -102,7 +102,7 @@ export function PlayerView({
     <Stack gap="md" className={`combat-player${yours ? ' is-your-turn' : ''}`}>
       <VisuallyHidden aria-live="assertive">{announcement}</VisuallyHidden>
       <header className="combat-header">
-        {backLink && (
+        {backLink && !live && (
           <Button
             component={Link}
             to=".."
@@ -236,11 +236,11 @@ export function PlayerView({
 
       <Drawer
         opened={viewed !== null}
-        onClose={() => {
+        onClose={onlyTopDialog(() => {
           const id = viewing?.id
           setViewing(null)
           requestAnimationFrame(() => document.getElementById(`combatant-${id}`)?.focus())
-        }}
+        })}
         position={wide ? 'right' : 'bottom'}
         size={wide ? 'md' : '75%'}
         title={viewed?.name}
@@ -249,6 +249,7 @@ export function PlayerView({
       >
         {viewed && (
           <CombatantDetail
+            key={viewed.id}
             encounterId={encounter.id}
             status={encounter.status}
             combatant={viewed}

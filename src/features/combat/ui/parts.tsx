@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
-import { Alert, Badge, Button, Group, Text } from '@mantine/core'
+import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
 import { Castle, Radio, Shield, Skull, Users, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { Combatant, CombatErrorCode } from '../domain/combat'
 import { statusTone } from './helpers'
 
+/** Action errors float above dialogs and drawers so a failed write is never silent. */
 export function RunnerError({
   error,
   onClose,
@@ -15,16 +16,20 @@ export function RunnerError({
   const { t } = useTranslation()
   if (!error) return null
   return (
-    <Alert
-      color="red"
-      role="alert"
-      withCloseButton
-      closeButtonLabel={t('action.cancel')}
-      onClose={onClose}
-      className="combat-error"
-    >
-      {t(`combat.error.${error}`)}
-    </Alert>
+    <Portal>
+      <div className="combat-toast">
+        <Alert
+          color="red"
+          role="alert"
+          withCloseButton
+          closeButtonLabel={t('action.cancel')}
+          onClose={onClose}
+          className="combat-alert"
+        >
+          {t(`combat.error.${error}`)}
+        </Alert>
+      </div>
+    </Portal>
   )
 }
 

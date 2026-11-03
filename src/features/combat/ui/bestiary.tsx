@@ -53,6 +53,7 @@ export function Bestiary({ campaignId }: { campaignId: string }) {
       <RunnerError error={error} onClose={clear} />
       {saved && (
         <Alert
+          className="combat-alert"
           role="status"
           withCloseButton
           closeButtonLabel={t('action.cancel')}
@@ -152,15 +153,23 @@ export function Bestiary({ campaignId }: { campaignId: string }) {
       >
         <Text>{t('combat.bestiary.deleteBody')}</Text>
         <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={() => setDeleting(null)}>
+          <Button
+            variant="subtle"
+            onClick={() => {
+              setDeleting(null)
+              restore()
+            }}
+          >
             {t('action.cancel')}
           </Button>
           <Button
             color="red"
             loading={pending}
             onClick={async () => {
-              if (deleting && (await run({ kind: 'deleteTemplate', templateId: deleting.id })))
+              if (deleting && (await run({ kind: 'deleteTemplate', templateId: deleting.id }))) {
                 setDeleting(null)
+                restore()
+              }
             }}
           >
             {deleting ? t('combat.bestiary.delete', { name: deleting.name }) : ''}

@@ -12,6 +12,7 @@ import {
 } from '@mantine/core'
 import { Delete } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useReturnFocus } from './helpers'
 import { concentrationDc, halfDamage, type Combatant, type HpMode } from '../domain/combat'
 
 const quickAmounts = [1, 5, 10] as const
@@ -38,6 +39,7 @@ export function AmountDialog({
   apply: (mode: HpMode, hits: { combatant_id: string; amount: number }[]) => void
 }) {
   const { t } = useTranslation()
+  useReturnFocus()
   const [mode, setMode] = useState<HpMode>(initialMode)
   const [amount, setAmount] = useState<number | string>('')
   const [halved, setHalved] = useState<ReadonlySet<string>>(new Set())
@@ -223,6 +225,7 @@ export function InitiativeDialog({
   save: (total: number) => void
 }) {
   const { t } = useTranslation()
+  useReturnFocus()
   const [amount, setAmount] = useState<number | string>(combatant.initiative ?? '')
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = Number.isInteger(value) && value >= -20 && value <= 99

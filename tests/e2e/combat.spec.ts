@@ -112,7 +112,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await dm.getByRole('region', { name: 'Objetivos' }).getByRole('button', { name: 'Daño' }).click()
   const damage = dm.getByRole('dialog', { name: 'Aplicar daño' })
   await damage.getByRole('textbox', { name: 'Cantidad' }).fill('6')
-  await damage.getByRole('checkbox', { name: 'Mitad de daño para Goblin 2' }).check()
+  await damage.getByRole('checkbox', { name: 'Mitad (salvación): Goblin 2' }).check()
   await expect(damage).toContainText('Goblin 2: 3')
   await audit(dm)
   await evidence(dm, info.project.name, 'dm-area-damage')
@@ -159,4 +159,39 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
     timeout: 20_000,
   })
   expect(errors).toEqual([])
+})
+
+test('RYT-007 Player combat screen passes axe in English and light theme', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.addInitScript(() => {
+    localStorage.setItem('rytta-language', 'en')
+    localStorage.setItem('rytta-color-scheme', 'light')
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  // The DM side is driven straight through the fixture: an active encounter on Arin's turn.
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await expect(page.getByText('Your turn!')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Heal' })).toBeVisible()
+  await audit(page)
+  await evidence(page, info.project.name, 'player-turn-en-light')
+  await page.getByRole('button', { name: 'Damage' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Apply damage: Arin' })
+  await dialog.getByRole('textbox', { name: 'Amount' }).fill('5')
+  await audit(page)
+  await dialog.getByRole('button', { name: 'Apply' }).click()
+  await expect(dialog).toBeHidden()
+  // Focus returns to the control that opened the dialog.
+  await expect(page.locator('.combat-own').getByRole('button', { name: 'Damage' })).toBeFocused()
+  await expect(page.locator('.combat-own')).toContainText('19/24 HP')
 })

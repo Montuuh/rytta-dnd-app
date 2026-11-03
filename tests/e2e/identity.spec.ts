@@ -8,6 +8,7 @@ import {
   session,
   playerId,
 } from './fixtures/identity.ts'
+import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 
 test('Google sign-in uses PKCE and an exact Pages callback; no private requests while signed out', async ({
   page,
@@ -149,7 +150,7 @@ test('RYT-029: the campaign index lands the DM on the command center and Players
   await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/members$`))
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
-  await page.screenshot({ path: info.outputPath('landing-dm.png'), fullPage: true })
+  await capture(page, info.outputPath('landing-dm.png'))
 })
 
 test('RYT-029: Players land on Party with no Camp entry and no discoveries section', async ({
@@ -162,7 +163,7 @@ test('RYT-029: Players land on Party with no Camp entry and no discoveries secti
   await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
   await expect(nav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
   await expect(page.getByText('Descubrimientos de la campaña')).toHaveCount(0)
-  await page.screenshot({ path: info.outputPath('landing-player.png'), fullPage: true })
+  await capture(page, info.outputPath('landing-player.png'))
 })
 
 test('Player has no management payload or controls; revoked campaign fails closed', async ({
@@ -238,7 +239,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   await expect(page.getByRole('heading', { name: 'Almacén de objetos', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Abandonar campaña' })).toHaveCount(0)
   await page.evaluate(() => window.scrollTo(0, 0))
-  await page.screenshot({ path: info.outputPath('dm-command-center.png'), fullPage: true })
+  await capture(page, info.outputPath('dm-command-center.png'))
   await page.reload()
   await expect(
     page.getByRole('tablist', { name: 'Centro de mando DM' }).getByRole('tab', {
@@ -256,7 +257,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   await expect(nav.getByText('Tiendas', { exact: false })).toBeVisible()
   await expect(nav.getByText('Inventario', { exact: false })).toHaveCount(0)
   await page.evaluate(() => window.scrollTo(0, 0))
-  await page.screenshot({ path: info.outputPath('dm-player-preview-mode.png'), fullPage: true })
+  await capture(page, info.outputPath('dm-player-preview-mode.png'))
   await page.getByRole('button', { name: 'Volver a vista DM', exact: true }).click()
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
 })
@@ -348,7 +349,7 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   const bounds = await page.getByRole('menu').boundingBox()
   expect(bounds!.height).toBeLessThan(260)
   expect(bounds!.width).toBeLessThanOrEqual(260)
-  await page.screenshot({ path: info.outputPath('compact-settings-menu.png'), fullPage: true })
+  await capture(page, info.outputPath('compact-settings-menu.png'))
   await page.keyboard.press('Escape')
   await expect(trigger).toBeFocused()
   await trigger.click()
@@ -361,15 +362,14 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   const appearance = page.getByRole('radiogroup', { name: 'Apariencia' })
   await expect(appearance.getByRole('radio', { name: 'Oscuro', exact: true })).toBeChecked()
   await expect(appearance.getByRole('radio', { name: 'Claro', exact: true })).not.toBeChecked()
-  for (const choice of await appearance.locator('label').all()) {
-    const box = await choice.boundingBox()
-    expect(box!.width).toBeGreaterThanOrEqual(44)
-    expect(box!.height).toBeGreaterThanOrEqual(44)
-  }
+  await expectTouchTargets(appearance, 'label', {
+    height: 44,
+    width: 44,
+  })
   await appearance.locator('label').filter({ hasText: 'Claro' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
   await expect(appearance.getByRole('radio', { name: 'Claro', exact: true })).toBeChecked()
-  await page.screenshot({ path: info.outputPath('icon-theme-preferences.png'), fullPage: true })
+  await capture(page, info.outputPath('icon-theme-preferences.png'))
 })
 
 test('invitation panel distinguishes loading, empty and failed refresh with recovery', async ({
@@ -399,7 +399,7 @@ test('invitation panel distinguishes loading, empty and failed refresh with reco
   release()
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
   await expect(panel.getByText('Invitaciones para: dm@example.com')).toBeVisible()
-  await page.screenshot({ path: info.outputPath('invitations-empty.png'), fullPage: true })
+  await capture(page, info.outputPath('invitations-empty.png'))
   fail = true
   await panel.getByRole('button', { name: 'Actualizar', exact: true }).click()
   await expect(panel.getByRole('alert')).toBeVisible()
@@ -415,6 +415,7 @@ for (const language of ['es', 'en'] as const)
     test(`${language} ${scheme} sign-in, hub and member screens fit and pass axe at 150% text`, async ({
       page,
     }, testInfo) => {
+      limitMatrix(testInfo, language === 'es' && scheme === 'dark')
       await page.addInitScript(
         ({ language, scheme }) => {
           localStorage.setItem('rytta-language', language)
@@ -433,9 +434,7 @@ for (const language of ['es', 'en'] as const)
         await expect(
           page.getByText(screen === 'hub' ? 'The Sunken Coast' : 'Arin', { exact: true }).first(),
         ).toBeVisible()
-        await page.screenshot({
-          path: testInfo.outputPath(`${screen}-${language}-${scheme}-100.png`),
-          fullPage: true,
+        await capture(page, testInfo.outputPath(`${screen}-${language}-${scheme}-100.png`), {
           scale: 'css',
         })
         await page.addStyleTag({ content: 'html { font-size: 150%; }' })
@@ -451,9 +450,7 @@ for (const language of ['es', 'en'] as const)
             nodes: v.nodes.map((n) => ({ target: n.target, summary: n.failureSummary })),
           })),
         ).toEqual([])
-        await page.screenshot({
-          path: testInfo.outputPath(`${screen}-${language}-${scheme}-150.png`),
-          fullPage: true,
+        await capture(page, testInfo.outputPath(`${screen}-${language}-${scheme}-150.png`), {
           scale: 'css',
         })
       }
@@ -478,9 +475,7 @@ for (const language of ['es', 'en'] as const)
         .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
         .analyze()
       expect(audit.violations).toEqual([])
-      await page.screenshot({
-        path: testInfo.outputPath(`sign-in-${language}-${scheme}-150.png`),
-        fullPage: true,
+      await capture(page, testInfo.outputPath(`sign-in-${language}-${scheme}-150.png`), {
         scale: 'css',
       })
     })

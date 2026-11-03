@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId } from './fixtures/identity.ts'
+import { expectTouchTargets, capture } from './fixtures/audit.ts'
 import { shopsFixture, shopIds } from './fixtures/shops.ts'
 
 const shops = `./#/campaign/${campaignId}/shops`
@@ -11,18 +12,11 @@ async function audit(page: Page, path: string) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator(
-      'main button:visible:not(.glossary-term), main a.mantine-Button-root:visible, [role="dialog"] button:visible:not(.glossary-term)',
-    )
-    .all()) {
-    const box = await control.boundingBox()
-    expect(
-      box!.height,
-      await control.evaluate((el) => el.outerHTML.slice(0, 300)),
-    ).toBeGreaterThanOrEqual(44)
-  }
-  await page.screenshot({ path, fullPage: true })
+  await expectTouchTargets(
+    page,
+    'main button:visible:not(.glossary-term), main a.mantine-Button-root:visible, [role="dialog"] button:visible:not(.glossary-term)',
+  )
+  await capture(page, path)
 }
 
 test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory', async ({

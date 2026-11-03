@@ -61,8 +61,11 @@ Install Chromium with `npx playwright install chromium` before npm run test:e2e.
 Tests build demo and Supabase-contract variants at the Pages subpath and require free ports
 4173 and 4174; an unknown server is never reused. The latter uses intercepted HTTP fixtures
 and never signs in to Google or connects to hosted Supabase.
-Raw reports go to ignored test-results/ and playwright-report/. Preserve selected evidence
-under docs/evidence/. Real Supabase and Safari testing are separate integration gates.
+Language × scheme matrices run in full at 390px; tablet and desktop run the es/dark base.
+Raw reports go to ignored test-results/ and playwright-report/. Review screenshots there are
+opt-in with RYT_CAPTURE=1 (inspect changed UI at 390px and tablet); RYT_EVIDENCE=1 writes the
+ticket screenshots under docs/evidence/. Preserve selected evidence under docs/evidence/.
+Real Supabase and Safari testing are separate integration gates.
 
 Use npm/package-lock.json. Mantine Form/Notifications are present for upcoming UI work;
 avoid duplicate kits/state/form tools. Revalidate major upgrades. npm audit is a dependency

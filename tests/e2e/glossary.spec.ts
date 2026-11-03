@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, characterId, identityFixture } from './fixtures/identity.ts'
+import { expectTouchTargets } from './fixtures/audit.ts'
 
 const glossaryUrl = `./#/campaign/${campaignId}/glossary`
 const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
@@ -26,24 +27,17 @@ async function audit(page: Page) {
       .violations,
   ).toEqual([])
   // Controls are 44px; inline term links keep text flow and get a 44px hit area instead.
-  for (const control of await page
-    .locator(
-      'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
-    )
-    .all()) {
-    const box = await control.boundingBox()
-    expect(
-      box!.height,
-      await control.evaluate((el) => el.outerHTML.slice(0, 200)),
-    ).toBeGreaterThanOrEqual(44)
-  }
-  for (const term of await page.locator('.glossary-term:visible').all()) {
-    const hit = await term.evaluate((el) => {
+  await expectTouchTargets(
+    page,
+    'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
+  )
+  const hits = await page.locator('.glossary-term:visible').evaluateAll((terms) =>
+    terms.map((el) => {
       const after = getComputedStyle(el, '::after')
       return el.getBoundingClientRect().height - parseFloat(after.top) - parseFloat(after.bottom)
-    })
-    expect(hit).toBeGreaterThanOrEqual(44)
-  }
+    }),
+  )
+  for (const hit of hits) expect(hit).toBeGreaterThanOrEqual(44)
 }
 
 test('keyboard search finds a condition in either language and shows its quick facts', async ({

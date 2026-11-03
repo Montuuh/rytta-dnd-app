@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { beaId, campaignId, characterId, identityFixture, peerId } from './fixtures/identity.ts'
+import { expectTouchTargets } from './fixtures/audit.ts'
 import { tradeServer } from './fixtures/trades.ts'
 
 const size = (project: string) =>
@@ -16,12 +17,7 @@ async function audit(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator('[role="dialog"] button:visible:not(.glossary-term)')
-    .all()) {
-    const box = await control.boundingBox()
-    expect(box!.height).toBeGreaterThanOrEqual(44)
-  }
+  await expectTouchTargets(page, '[role="dialog"] button:visible:not(.glossary-term)')
 }
 
 test('RYT-034 two Players trade items and gold with a double confirmation', async ({

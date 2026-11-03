@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId } from './fixtures/identity.ts'
+import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 
 const url = `./#/campaign/${campaignId}/inventory`
 async function audit(page: Page, path: string) {
@@ -9,18 +10,11 @@ async function audit(page: Page, path: string) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  for (const control of await page
-    .locator(
-      'main button:visible:not(.glossary-term), main label.portrait-edit:visible, [role="dialog"] button:visible:not(.glossary-term), .undo-fuse button:visible',
-    )
-    .all()) {
-    const box = await control.boundingBox()
-    expect(
-      box!.height,
-      await control.evaluate((el) => el.outerHTML.slice(0, 200)),
-    ).toBeGreaterThanOrEqual(44)
-  }
-  await page.screenshot({ path, fullPage: true })
+  await expectTouchTargets(
+    page,
+    'main button:visible:not(.glossary-term), main label.portrait-edit:visible, [role="dialog"] button:visible:not(.glossary-term), .undo-fuse button:visible',
+  )
+  await capture(page, path)
 }
 
 for (const [language, scheme] of [
@@ -28,6 +22,7 @@ for (const [language, scheme] of [
   ['en', 'light'],
 ] as const)
   test(`${language} ${scheme} satchel, card, use and undo at 150%`, async ({ page }, info) => {
+    limitMatrix(info, language === 'es')
     await page.addInitScript(
       ({ language, scheme }) => {
         localStorage.setItem('rytta-language', language)
@@ -110,7 +105,7 @@ test('equipping through the card and the paper doll updates AC and attacks', asy
   ).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: 'Anillo izquierdo: vacío' })).toBeFocused()
-  await page.screenshot({ path: info.outputPath('doll-equipped.png'), fullPage: true })
+  await capture(page, info.outputPath('doll-equipped.png'))
 })
 
 test('hold-to-use needs a sustained press; a tap does nothing', async ({ page }) => {

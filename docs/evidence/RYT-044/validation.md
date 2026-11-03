@@ -264,3 +264,14 @@ Captured with `RYT_EVIDENCE=1` at 390 px (`-mobile`) and 820 px (`-tablet`), all
 - iOS Safari; screen-reader output was checked through the accessibility tree and axe only.
 - Concurrent switches from two devices are serialized by the campaign lock and covered by SQL
   invariants, not by a parallel load test.
+
+## Integration (2026-11-03)
+
+- Merged main (RYT-040, RYT-041 and the glossary e2e stabilization) into the branch; conflict-free.
+  `npm run check` 227 tests; combat/roster/characters e2e 119 passed. Independent ui-ux round 3
+  PASS at fingerprint `3db35da2…`, unchanged by the later test-only merge.
+- Production: applied `character_roster` and `character_archive` via Supabase MCP. Prechecks:
+  3 characters (2 assigned, 1 unassigned), no Player with more than one. Postchecks: columns,
+  constraints, partial unique index and deferred roster trigger present; 0 one-active violations;
+  counts unchanged; the four new RPCs deny `anon` and allow `authenticated`; function bodies match
+  PRE (md5 of prefix-stripped definitions). No hosted denial tests were run.

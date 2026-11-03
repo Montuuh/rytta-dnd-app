@@ -1633,7 +1633,7 @@
         "id": "gpt-6-astra",
         "reasoningEffort": "high"
       },
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-021", "RYT-024"],
       "sources": [
         "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents.",
@@ -1694,7 +1694,8 @@
         "docs/evidence/RYT-044/roster-archive-150-mobile.png",
         "docs/evidence/RYT-044/roster-archive-150-tablet.png",
         "docs/evidence/RYT-044/onboarding-archived-mobile.png",
-        "docs/evidence/RYT-044/onboarding-archived-tablet.png"
+        "docs/evidence/RYT-044/onboarding-archived-tablet.png",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

@@ -532,3 +532,82 @@ Only the scope above was re-checked. The round-one untested list still applies:
 - iOS/Safari and screen readers
 
 This approval applies only to the fingerprint above.
+
+## Re-review 5 (focused on N4/N5, after 9c1836e)
+
+- Reviewed source: `9c1836e`
+- UI fingerprint: `1ee0995af4f283381fd05a4d503f05a597350e3abe1706ae194ef3cbe6339fc9` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml` (implementation read-only)
+- Date: 2026-11-03
+- Method: a fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px).
+  English, light theme, 100% and 150% text. Failures were simulated by blocking routes, and taps
+  used `touchscreen.tap`.
+- Evidence: `docs/evidence/ui-review/combat/r6/*.png`
+
+### Verdict: CHANGES_REQUIRED
+
+Both fixes are verified for placement and focus. However, the new scroll logic introduced a
+scroll-jump regression in the drawer.
+
+### N4: fixed for placement
+
+The r5 case was repeated: m at 150%, with the death-save row scrolled to the bottom edge and a
+failing **tap** on Success.
+
+- Success and Failure are now in view, tappable and above the sticky alert: buttons at 627–671px,
+  alert from 687px (`r6/z150-deathsave-error-m.png`).
+- At 100% (m/t) the result is the same.
+- A failing condition chip at the bottom edge also lands above the alert (m 641–685px, alert at 687px).
+- `scroll-padding-bottom` is set to 102px at 100% and 172px at 150%, and it is cleared after dismissal.
+- axe reports no violations.
+
+### N5: fixed
+
+The inline drawer error returns focus to Success in every dismissal case:
+
+- Enter on its close button.
+- A tap on its close button.
+
+The floating toast returns focus to "Next turn" in every dismissal case:
+
+- Enter on its close button.
+- Space on its close button.
+- A tap on its close button.
+
+Auto-dismiss does not move focus: it stayed on "Select targets". The modal inline error dismissed
+with Enter returns focus to "Add effect", and the dialog stays open. Closing the drawer with Escape
+while the error shows returns focus to the row and leaves no stray alert.
+
+The delivery spec `tests/e2e/combat.spec.ts` passes 9/9 on identity mobile/tablet/desktop.
+
+### New finding
+
+**N6 (major, regression): while an error shows, the drawer jumps back to the failed control on
+every re-render, which with polling means every few seconds.**
+
+- Cause: `parts.tsx` `RunnerError` passes an inline `ref` callback. Under React 19
+  (`react@19.3.1`), React detaches and re-runs that callback on every render. Each run sets the
+  padding again and calls `trigger.scrollIntoView({ block: 'nearest' })` again, and the 4 s poll
+  re-renders the screen.
+- Reproduce:
+  1. On m or t, fail a death save in the drawer.
+  2. Scroll the drawer to the end, for example to read or edit Private notes.
+  3. About 2–3 s later the drawer jumps back.
+- Measured scrollTop, sampled once per second:
+  - m 100%: 642 → 420
+  - m 150%: 1373 → 714
+  - t 150%: 601 → 523
+- It happens again each time the user scrolls away, until the error is dismissed. Inline errors
+  are not auto-dismissed.
+- The modal branch (`node.scrollIntoView` on every render) has the same pattern.
+- Impact: the DM cannot freely scroll the drawer while an error is shown. The content moves under
+  their finger.
+- Fix: run the padding and scroll once per error, for example with a `useLayoutEffect` keyed on
+  the error and trigger, or with a stable `useCallback` ref. Keep the padding cleanup on unmount.
+
+### Limitations
+
+- The t 150% scripted tap-dismiss run hung in my harness, so its inline tap-dismiss result is not
+  recorded. Placement and the scroll-jump were measured separately for t.
+- Only the scope above was re-checked. The untested list from round one still applies.
+- This approval covers only the fingerprint above.

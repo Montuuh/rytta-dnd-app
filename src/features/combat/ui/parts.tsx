@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
 import { Castle, Radio, Shield, Skull, Users, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -42,32 +42,9 @@ export function RunnerError({
     if (returnFocus && trigger?.isConnected) requestAnimationFrame(() => trigger.focus())
   }
   const alert = (
-    <Alert
-      ref={(node) => {
-        if (!node) return
-        if (!sticky) {
-          node.scrollIntoView?.({ block: 'nearest' })
-          return
-        }
-        // The sticky error must not cover the control that failed: reserve its height at the
-        // bottom of the drawer's scroll area and bring that control into view above it.
-        const scroller = node.closest<HTMLElement>('.mantine-Drawer-content')
-        if (!scroller) return
-        scroller.style.scrollPaddingBottom = `${node.offsetHeight + 24}px`
-        if (trigger && scroller.contains(trigger)) trigger.scrollIntoView?.({ block: 'nearest' })
-        return () => {
-          scroller.style.scrollPaddingBottom = ''
-        }
-      }}
-      color="red"
-      role="alert"
-      withCloseButton
-      closeButtonLabel={t('action.cancel')}
-      onClose={() => dismiss(document.activeElement?.closest<HTMLElement>('.combat-alert') ?? null)}
-      className="combat-alert"
-    >
+    <ErrorAlert sticky={sticky} trigger={trigger} onDismiss={dismiss}>
       {t(`combat.error.${error}`)}
-    </Alert>
+    </ErrorAlert>
   )
   if (host)
     return (
@@ -79,6 +56,52 @@ export function RunnerError({
     <Portal>
       <FloatingError onClose={onClose}>{alert}</FloatingError>
     </Portal>
+  )
+}
+
+/** The alert itself. Placement work runs once per error (not on every poll re-render). */
+function ErrorAlert({
+  sticky,
+  trigger,
+  onDismiss,
+  children,
+}: {
+  sticky: boolean
+  trigger: HTMLElement | null
+  onDismiss: (alert: HTMLElement | null) => void
+  children: ReactNode
+}) {
+  const { t } = useTranslation()
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const node = ref.current
+    if (!node) return
+    if (!sticky) {
+      node.scrollIntoView?.({ block: 'nearest' })
+      return
+    }
+    // The sticky error must not cover the control that failed: reserve its height at the bottom
+    // of the drawer's scroll area and bring that control into view above it, once.
+    const scroller = node.closest<HTMLElement>('.mantine-Drawer-content')
+    if (!scroller) return
+    scroller.style.scrollPaddingBottom = `${node.offsetHeight + 24}px`
+    if (trigger && scroller.contains(trigger)) trigger.scrollIntoView?.({ block: 'nearest' })
+    return () => {
+      scroller.style.scrollPaddingBottom = ''
+    }
+  }, [sticky, trigger])
+  return (
+    <Alert
+      ref={ref}
+      color="red"
+      role="alert"
+      withCloseButton
+      closeButtonLabel={t('action.cancel')}
+      onClose={() => onDismiss(ref.current)}
+      className="combat-alert"
+    >
+      {children}
+    </Alert>
   )
 }
 

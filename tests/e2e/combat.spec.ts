@@ -256,6 +256,14 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
     const chipBox = (await chip.boundingBox())!
     const alertBox = (await inline.boundingBox())!
     expect(chipBox.y + chipBox.height).toBeLessThanOrEqual(alertBox.y)
+    // Polling re-renders while the error is shown never pull the drawer back (N6).
+    const drawer = page.locator('.mantine-Drawer-content')
+    const scrolled = await drawer.evaluate((node) => {
+      node.scrollTop = node.scrollHeight
+      return node.scrollTop
+    })
+    await page.waitForTimeout(5_000)
+    expect(await drawer.evaluate((node) => node.scrollTop)).toBe(scrolled)
   }
   await audit(page)
   await evidence(page, info.project.name, 'error-detail')

@@ -298,6 +298,7 @@ export const combatEs = {
   'combat.initiative.totalFor': 'Total de iniciativa de {{name}}',
   'combat.initiative.roll': 'Tira d20 {{bonus}}',
   'combat.initiative.rollPlain': 'Tira d20 y suma tu bonificador',
+  'combat.initiative.range': 'Escribe un total entre −20 y 99.',
   'combat.initiative.savedValue': '{{name}}: iniciativa {{total}} guardada.',
   'combat.summary.roundsLabel_one': 'ronda',
   'combat.summary.roundsLabel_other': 'rondas',

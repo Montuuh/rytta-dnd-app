@@ -33,6 +33,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import {
+  isLive,
   missingInitiative,
   nextUp,
   type CombatState,
@@ -123,6 +124,12 @@ export function DmConsole({
   if (seenStatus !== encounter.status) {
     setSeenStatus(encounter.status)
     if (seenStatus === 'draft' || encounter.status === 'ended') setPanel('detail')
+    // Choosing targets only exists in a live fight: leaving it (end, back to draft) drops the
+    // selection, its bar and any open damage/heal dialog (RYT-042 F1).
+    if (!isLive(encounter.status)) {
+      setMulti(null)
+      setMultiMode(null)
+    }
   }
   const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
   const [rename, setRename] = useState(encounter.name)

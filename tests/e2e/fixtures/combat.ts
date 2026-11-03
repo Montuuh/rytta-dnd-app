@@ -221,7 +221,17 @@ export function combatServer() {
         started_at: null,
         ended_at: null,
         updated_at: new Date(e.updated).toISOString(),
-        summary: e.summary,
+        // Same as get_combat_state: Players and the table never see hidden combatants in the
+        // summary either (20261104130000_combat_state_booleans.sql).
+        summary:
+          full || !e.summary
+            ? e.summary
+            : {
+                ...e.summary,
+                combatants: (e.summary.combatants as { combatant_id: string }[]).filter(
+                  (row) => !e.combatants.find((c) => c.id === row.combatant_id)?.hidden,
+                ),
+              },
       },
       combatants,
       // Same projection as public.get_combat_state: the DM sees every effect, others only

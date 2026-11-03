@@ -295,6 +295,7 @@ export const combatEn = {
   'combat.initiative.totalFor': 'Initiative total for {{name}}',
   'combat.initiative.roll': 'Roll d20 {{bonus}}',
   'combat.initiative.rollPlain': 'Roll d20 and add your bonus',
+  'combat.initiative.range': 'Enter a total from −20 to 99.',
   'combat.initiative.savedValue': '{{name}}: initiative {{total}} saved.',
   'combat.summary.roundsLabel_one': 'round',
   'combat.summary.roundsLabel_other': 'rounds',

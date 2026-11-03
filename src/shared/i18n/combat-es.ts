@@ -8,6 +8,7 @@ export const combatEs = {
   'combat.intro.player': 'Sigue el orden de turnos y cuida de tu personaje durante la pelea.',
   'combat.none.title': 'No hay combate ahora',
   'combat.none.body': 'Cuando el DM empiece un encuentro aparecerá aquí y te pedirá tu iniciativa.',
+  'combat.hiddenModule': 'El DM todavía no ha abierto el combate.',
   'combat.notFound': 'Este encuentro no está disponible. Puede que se haya borrado.',
   'combat.tab.encounters': 'Encuentros',
   'combat.tab.bestiary': 'Bestiario',

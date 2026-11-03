@@ -824,3 +824,112 @@ The modal stayed at 0.
   `.combat-drawer` rule.
 - The untested list from round one still applies.
 - This approval covers only the fingerprint above.
+
+## Re-review 9 (merged with main)
+
+- Reviewed source: `cdc3826` (main's RYT-035 #7 merged into `cl/eloquent-keller-w3cwpn`)
+- UI fingerprint: `60dfa106d63aaf661b7c874e9729c0c437de995b16c67a00be4097436a752216` (recomputed, matches)
+- Reviewer role: `.codex/agents/ui-ux.toml`, read-only on implementation
+- Date: 2026-11-03
+- Method: fresh identity build in real Chromium with touch, at m (390px), t (820px) and w (1180px).
+  Covered es-dark, en-light and es-dark at 150% text. Navigation and the modules panel were
+  checked in es and en dark; Player navigation in es light.
+- Evidence: `docs/evidence/ui-review/combat/r10/*.png`
+
+### Verdict: CHANGES_REQUIRED
+
+Most of the integration is clean: navigation, module switches, visual consistency, axe and the
+regression specs. One major integration issue remains: the combat routes ignore the Player module
+visibility that main's catalogue now governs.
+
+### 1. Combat in navigation and the DM module switch
+
+**DM navigation** (m/t/w, es and en):
+- The links are, in order: DM Command Center, Party, Inventory, Shops, Combat.
+- Combat is `aria-current` and active on `/combat`.
+- On phones the bottom bar has exactly 5 destinations and no label is truncated at 100%.
+- The More drawer still does not appear. At most 5 destinations exist, which matches ADR 023's
+  note that the drawer is currently unreachable. It remains untested by e2e.
+
+**Player navigation:**
+- With `party, combat` enabled the bar shows "Grupo | Combate".
+- With only `party` it shows "Grupo".
+
+**DM Command Center → Active modules:**
+- The Combat switch is labelled "Combate: visible para jugadores" / "Combat: visible to Players".
+- It is enabled, has no "Coming soon" badge and toggles.
+- Misiones, Atlas, Glosario, Recuerdos, Bastión and Taller are disabled, as main intends.
+- axe is clean, there is no overflow and no target is under 44px.
+
+### 2. Visual consistency with RYT-035 page heads
+
+**Combat list (DM `/combat`)** uses its own `Title` + `Text` instead of `PageHead`, but it renders
+the same as main's pages:
+- Same h1: 34px Georgia/500 at 100%, 51px at 150%.
+- Same lede token: `--app-muted` at 16px.
+- Same top offset: 16, 22 and 36px at m, t and w.
+- Content starts close to where it does on Party, Shops and the Command Center.
+
+**Console, Player view and table view** keep their own header: back link, h1, status badge with
+round, live indicator, Table view / ⋯ actions. I accept this as a deliberate **variant**, not a
+blocking inconsistency:
+- These are detail and live screens, comparable to the character sheet's back-link header.
+- Their status line replaces the RefreshControl with a live / last-known indicator.
+- They use the same tokens, fonts and 44px controls, and are axe-clean in every tested
+  combination.
+
+**Audits:** axe, horizontal overflow and the 44px scan are clean on the list, console (draft and
+active), Player view and table view, in all 3 combinations at m, t and w.
+
+### 3. Regression
+
+| Specs | Projects | Result |
+| --- | --- | --- |
+| `tests/e2e/combat.spec.ts` + `tests/e2e/identity.spec.ts` | identity mobile/tablet/desktop | 63/63 passed |
+| `tests/e2e/characters.spec.ts` + `tests/e2e/scaffold.spec.ts` | all projects, including demo desktop/tablet/mobile | 81/81 passed |
+
+The combat spec alone is 9/9 within those runs.
+
+### Findings
+
+**I1 (major): a Player can open Combat by URL while the DM has it switched off.**
+- Location: `src/features/combat/ui/combat-page.tsx`, in `CombatPage`, `CombatEncounterPage` and
+  `CombatTablePage`.
+- Reproduce: as a Player with `player_modules = ['party']`, open `#/campaign/:id/combat`.
+- Result: the full Player combat screen renders ("Combate", "No hay combate ahora", history).
+  With a live encounter the Player would get the whole live screen, including Player actions. A
+  direct `/combat/:id` or `/table` link behaves the same.
+- Expected: main's Inventory and Shops pages show a "the DM has not opened … yet" state
+  (`shop.hiddenModule`). ADR 012/023 say Players only see modules their DM activated. The nav
+  entry is correctly hidden, so only the routes are inconsistent.
+- Evidence: `r10/es-light-playerWithoutCombat-{m,t,w}.png`.
+- Fix:
+  - For a non-DM viewer (including a DM in Player preview) without `combat` in `player_modules`,
+    render a hidden-module state with a new typed key such as `combat.hiddenModule`, using
+    `PageHead` like Shops does.
+  - Do this on all three combat routes. Keep the DM's own access unchanged.
+  - Add an e2e assertion for it.
+- Note: this is presentation-level. Server reads are governed by RLS and the role projection
+  (ADR 024).
+
+**I2 (minor): the combat list does not follow the RYT-035 compact head on phones.**
+- The page has tabs (Encounters / Bestiario), but it still shows its lede on phones: 3 lines at
+  390px and 4 lines at 150%.
+- RYT-035 hides the lede on phones for tabbed pages (`compactOnPhone`) and keeps ledes to one line
+  on laptops.
+- Fix: switch the list (and the Player "no fight" page) to `PageHead` with `compactOnPhone`, and
+  shorten the lede.
+
+**Observation (main's RYT-035 scope, not combat):** at 150% text on phones, the 5-destination
+bottom bar truncates its labels with an ellipsis ("Inven…", "Tiend…", "Comb…") on every page. The
+accessible names stay complete. Combat adds the fifth destination, so this is now always visible
+for DMs. I leave it to main's owner whether two-line labels at large text are preferable.
+
+### Limitations
+
+- Not exercised: main's other RYT-035 screens beyond the Command Center modules panel, Party and
+  Shops page heads, and the specs listed above.
+- Not tested: class themes other than Default, the unreachable More drawer, and iOS/Safari and
+  screen readers.
+- The untested list from round one still applies.
+- This verdict applies only to the fingerprint above.

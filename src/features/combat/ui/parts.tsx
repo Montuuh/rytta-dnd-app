@@ -22,23 +22,48 @@ const toastMs = 8_000
  */
 export function RunnerError({
   error,
+  trigger = null,
   onClose,
 }: {
   error: CombatErrorCode | null
+  /** The control that started the failed action. */
+  trigger?: HTMLElement | null
   onClose: () => void
 }) {
   const { t } = useTranslation()
   // Resolved once per error: the dialog that was open when the write failed.
   const host = useMemo(() => (error ? topDialogBody() : null), [error])
   if (!error) return null
+  const sticky = host?.matches('.mantine-Drawer-body') ?? false
+  // Dismissing with the keyboard (or a tap on the close button) returns focus to that control.
+  const dismiss = (alert: HTMLElement | null) => {
+    const returnFocus = alert?.contains(document.activeElement) ?? false
+    onClose()
+    if (returnFocus && trigger?.isConnected) requestAnimationFrame(() => trigger.focus())
+  }
   const alert = (
     <Alert
-      ref={(node) => node?.scrollIntoView?.({ block: 'nearest' })}
+      ref={(node) => {
+        if (!node) return
+        if (!sticky) {
+          node.scrollIntoView?.({ block: 'nearest' })
+          return
+        }
+        // The sticky error must not cover the control that failed: reserve its height at the
+        // bottom of the drawer's scroll area and bring that control into view above it.
+        const scroller = node.closest<HTMLElement>('.mantine-Drawer-content')
+        if (!scroller) return
+        scroller.style.scrollPaddingBottom = `${node.offsetHeight + 24}px`
+        if (trigger && scroller.contains(trigger)) trigger.scrollIntoView?.({ block: 'nearest' })
+        return () => {
+          scroller.style.scrollPaddingBottom = ''
+        }
+      }}
       color="red"
       role="alert"
       withCloseButton
       closeButtonLabel={t('action.cancel')}
-      onClose={onClose}
+      onClose={() => dismiss(document.activeElement?.closest<HTMLElement>('.combat-alert') ?? null)}
       className="combat-alert"
     >
       {t(`combat.error.${error}`)}
@@ -47,11 +72,7 @@ export function RunnerError({
   if (host)
     return (
       <Portal target={host}>
-        <div
-          className={`combat-inline-error${host.matches('.mantine-Drawer-body') ? ' is-sticky' : ''}`}
-        >
-          {alert}
-        </div>
+        <div className={`combat-inline-error${sticky ? ' is-sticky' : ''}`}>{alert}</div>
       </Portal>
     )
   return (

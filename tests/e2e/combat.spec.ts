@@ -231,6 +231,13 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
   await audit(page)
   await evidence(page, info.project.name, 'error-toast')
   await expect(toast).toBeHidden({ timeout: 12_000 })
+  // Dismissing with the keyboard returns focus to the control that failed.
+  const next = page.getByRole('button', { name: 'Siguiente turno' })
+  await next.click()
+  await toast.getByRole('button', { name: 'Cancelar' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(toast).toBeHidden()
+  await expect(next).toBeFocused()
 
   // 2. A failed change in the detail keeps its error in view, inside the drawer on phones.
   await row(page, 'Goblin 1').getByRole('button').first().click()
@@ -242,9 +249,19 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
       : page.locator('.mantine-Drawer-body .combat-inline-error').getByRole('alert')
   await expect(inline).toHaveText(message)
   await expect(inline).toBeInViewport()
+  if (info.project.name !== 'identity-desktop') {
+    // The sticky error never covers the control that failed: it is scrolled into view above it.
+    const chip = page.getByText('Derribado', { exact: true })
+    await expect(chip).toBeInViewport()
+    const chipBox = (await chip.boundingBox())!
+    const alertBox = (await inline.boundingBox())!
+    expect(chipBox.y + chipBox.height).toBeLessThanOrEqual(alertBox.y)
+  }
   await audit(page)
   await evidence(page, info.project.name, 'error-detail')
   // Errors inside a drawer wait for the person; dismissing returns to the same place.
-  await inline.getByRole('button', { name: 'Cancelar' }).click()
+  await inline.getByRole('button', { name: 'Cancelar' }).focus()
+  await page.keyboard.press('Enter')
   await expect(inline).toBeHidden()
+  await expect(page.getByRole('checkbox', { name: 'Derribado' })).toBeFocused()
 })

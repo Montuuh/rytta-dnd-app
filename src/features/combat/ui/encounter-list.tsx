@@ -48,7 +48,7 @@ function Encounters({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
   const { state } = useAuth()
   const query = useQuery(encountersQuery(state.user!.id, campaignId))
-  const { run, pending, error, clear } = useRunner(campaignId)
+  const { run, pending, error, trigger, clear } = useRunner(campaignId)
   const [name, setName] = useState('')
   const all = query.data ?? []
   const live = all.filter((e) => e.status === 'initiative' || e.status === 'active')
@@ -80,7 +80,7 @@ function Encounters({ campaignId }: { campaignId: string }) {
           {t('combat.create.submit')}
         </Button>
       </form>
-      <RunnerError error={error} onClose={clear} />
+      <RunnerError error={error} trigger={trigger} onClose={clear} />
       <QueryFeedback
         pending={query.isPending}
         error={query.isError}

@@ -1,0 +1,397 @@
+/* Generated from src/shared/theme/class-themes.ts (RYT-033). Do not edit by hand. */
+html[data-rytta-theme='barbarian']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #150d0c;
+  --app-surface: #1f1413;
+  --app-raised: #2b1e1c;
+  --app-hover: #3b2827;
+  --app-border: #513936;
+  --app-hero: #2a1715;
+  --app-text: #fbeae8;
+  --app-muted: #d7b9b6;
+  --app-accent: #ff6b60;
+  --app-accent-secondary: #feb992;
+  --app-focus: #fe9c91;
+  --app-on-accent: #170c0b;
+  --mantine-color-dark-4: #513936;
+  --mantine-color-dark-5: #3b2827;
+  --mantine-color-dark-6: #2b1e1c;
+  --mantine-color-dark-7: #1f1413;
+  --mantine-color-dark-8: #150d0c;
+}
+html[data-rytta-theme='barbarian'][data-mantine-color-scheme='light'] {
+  --app-bg: #fcf1ef;
+  --app-surface: #fffdfd;
+  --app-raised: #f5e3e1;
+  --app-hover: #eed8d6;
+  --app-border: #e1c7c4;
+  --app-hero: #f8dddb;
+  --app-text: #2c1a18;
+  --app-muted: #674a47;
+  --app-accent: #650006;
+  --app-accent-secondary: #873d02;
+  --app-focus: #86010b;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='bard']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #140d11;
+  --app-surface: #1d1419;
+  --app-raised: #2a1d24;
+  --app-hover: #382831;
+  --app-border: #4e3844;
+  --app-hero: #281720;
+  --app-text: #f8eaf1;
+  --app-muted: #d3b8c6;
+  --app-accent: #fe7fc0;
+  --app-accent-secondary: #ffb3b8;
+  --app-focus: #ffafd4;
+  --app-on-accent: #160c11;
+  --mantine-color-dark-4: #4e3844;
+  --mantine-color-dark-5: #382831;
+  --mantine-color-dark-6: #2a1d24;
+  --mantine-color-dark-7: #1d1419;
+  --mantine-color-dark-8: #140d11;
+}
+html[data-rytta-theme='bard'][data-mantine-color-scheme='light'] {
+  --app-bg: #faf0f5;
+  --app-surface: #fefdfe;
+  --app-raised: #f2e3eb;
+  --app-hover: #ebd8e2;
+  --app-border: #ddc6d2;
+  --app-hero: #f4dde9;
+  --app-text: #2a1922;
+  --app-muted: #634a58;
+  --app-accent: #75004b;
+  --app-accent-secondary: #873741;
+  --app-focus: #90145f;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='cleric']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #110f0b;
+  --app-surface: #1a1711;
+  --app-raised: #252119;
+  --app-hover: #322d23;
+  --app-border: #453f31;
+  --app-hero: #211c11;
+  --app-text: #f2eee5;
+  --app-muted: #c7c0af;
+  --app-accent: #d9b255;
+  --app-accent-secondary: #edc291;
+  --app-focus: #f4cb6f;
+  --app-on-accent: #120f08;
+  --mantine-color-dark-4: #453f31;
+  --mantine-color-dark-5: #322d23;
+  --mantine-color-dark-6: #252119;
+  --mantine-color-dark-7: #1a1711;
+  --mantine-color-dark-8: #110f0b;
+}
+html[data-rytta-theme='cleric'][data-mantine-color-scheme='light'] {
+  --app-bg: #f6f3ed;
+  --app-surface: #fefdfb;
+  --app-raised: #ece8de;
+  --app-hover: #e3ded2;
+  --app-border: #d3cdbf;
+  --app-hero: #eae4d5;
+  --app-text: #231f14;
+  --app-muted: #595241;
+  --app-accent: #584100;
+  --app-accent-secondary: #714d1d;
+  --app-focus: #6f5300;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='druid']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0c110b;
+  --app-surface: #131911;
+  --app-raised: #1c241a;
+  --app-hover: #263124;
+  --app-border: #364433;
+  --app-hero: #152112;
+  --app-text: #e8f2e6;
+  --app-muted: #b5c7b2;
+  --app-accent: #8cc36d;
+  --app-accent-secondary: #d8cc87;
+  --app-focus: #a5de86;
+  --app-on-accent: #0b1209;
+  --mantine-color-dark-4: #364433;
+  --mantine-color-dark-5: #263124;
+  --mantine-color-dark-6: #1c241a;
+  --mantine-color-dark-7: #131911;
+  --mantine-color-dark-8: #0c110b;
+}
+html[data-rytta-theme='druid'][data-mantine-color-scheme='light'] {
+  --app-bg: #eff6ee;
+  --app-surface: #fcfefc;
+  --app-raised: #e1ebdf;
+  --app-hover: #d6e2d3;
+  --app-border: #c4d3c0;
+  --app-hero: #daead7;
+  --app-text: #182315;
+  --app-muted: #475843;
+  --app-accent: #244b00;
+  --app-accent-secondary: #615608;
+  --app-focus: #306101;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='fighter']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0c1013;
+  --app-surface: #13181c;
+  --app-raised: #1c2228;
+  --app-hover: #272f36;
+  --app-border: #37414a;
+  --app-hero: #151e25;
+  --app-text: #e9eff5;
+  --app-muted: #b6c3ce;
+  --app-accent: #9dbbd6;
+  --app-accent-secondary: #b0d1de;
+  --app-focus: #b6d5f0;
+  --app-on-accent: #0b1014;
+  --mantine-color-dark-4: #37414a;
+  --mantine-color-dark-5: #272f36;
+  --mantine-color-dark-6: #1c2228;
+  --mantine-color-dark-7: #13181c;
+  --mantine-color-dark-8: #0c1013;
+}
+html[data-rytta-theme='fighter'][data-mantine-color-scheme='light'] {
+  --app-bg: #f0f4f8;
+  --app-surface: #fcfeff;
+  --app-raised: #e2e9f0;
+  --app-hover: #d6dfe7;
+  --app-border: #c4cfd9;
+  --app-hero: #dbe6f0;
+  --app-text: #182027;
+  --app-muted: #48545f;
+  --app-accent: #2d485e;
+  --app-accent-secondary: #3d5a66;
+  --app-focus: #405b72;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='monk']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0a1111;
+  --app-surface: #0f1919;
+  --app-raised: #182424;
+  --app-hover: #203131;
+  --app-border: #2e4544;
+  --app-hero: #0d2121;
+  --app-text: #e4f2f1;
+  --app-muted: #adc7c6;
+  --app-accent: #f5af20;
+  --app-accent-secondary: #80ded7;
+  --app-focus: #ffcf83;
+  --app-on-accent: #071212;
+  --mantine-color-dark-4: #2e4544;
+  --mantine-color-dark-5: #203131;
+  --mantine-color-dark-6: #182424;
+  --mantine-color-dark-7: #0f1919;
+  --mantine-color-dark-8: #0a1111;
+}
+html[data-rytta-theme='monk'][data-mantine-color-scheme='light'] {
+  --app-bg: #edf6f5;
+  --app-surface: #fbfefe;
+  --app-raised: #dcebeb;
+  --app-hover: #d0e2e2;
+  --app-border: #bdd3d2;
+  --app-hero: #d3eae9;
+  --app-text: #112323;
+  --app-muted: #3e5858;
+  --app-accent: #634403;
+  --app-accent-secondary: #06625f;
+  --app-focus: #7c5500;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='paladin']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0e1011;
+  --app-surface: #15171a;
+  --app-raised: #1f2225;
+  --app-hover: #2a2e33;
+  --app-border: #3b4046;
+  --app-hero: #191d22;
+  --app-text: #ebeff3;
+  --app-muted: #bbc2c9;
+  --app-accent: #d7c155;
+  --app-accent-secondary: #a8cff7;
+  --app-focus: #f2dc70;
+  --app-on-accent: #0d1012;
+  --mantine-color-dark-4: #3b4046;
+  --mantine-color-dark-5: #2a2e33;
+  --mantine-color-dark-6: #1f2225;
+  --mantine-color-dark-7: #15171a;
+  --mantine-color-dark-8: #0e1011;
+}
+html[data-rytta-theme='paladin'][data-mantine-color-scheme='light'] {
+  --app-bg: #f1f4f6;
+  --app-surface: #fdfdfe;
+  --app-raised: #e4e8ec;
+  --app-hover: #dadee3;
+  --app-border: #c9ced4;
+  --app-hero: #dfe5eb;
+  --app-text: #1c2024;
+  --app-muted: #4d535a;
+  --app-accent: #5a4d02;
+  --app-accent-secondary: #36587b;
+  --app-focus: #706003;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='ranger']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0f100a;
+  --app-surface: #161810;
+  --app-raised: #202318;
+  --app-hover: #2c3022;
+  --app-border: #3d4230;
+  --app-hero: #1b1f0f;
+  --app-text: #edf0e4;
+  --app-muted: #bec4ae;
+  --app-accent: #82c795;
+  --app-accent-secondary: #f3be97;
+  --app-focus: #9ce1ae;
+  --app-on-accent: #0e1108;
+  --mantine-color-dark-4: #3d4230;
+  --mantine-color-dark-5: #2c3022;
+  --mantine-color-dark-6: #202318;
+  --mantine-color-dark-7: #161810;
+  --mantine-color-dark-8: #0f100a;
+}
+html[data-rytta-theme='ranger'][data-mantine-color-scheme='light'] {
+  --app-bg: #f2f5ed;
+  --app-surface: #fdfefb;
+  --app-raised: #e6eadd;
+  --app-hover: #dce0d1;
+  --app-border: #cbd1bd;
+  --app-hero: #e2e8d4;
+  --app-text: #1d2112;
+  --app-muted: #50563f;
+  --app-accent: #005126;
+  --app-accent-secondary: #764924;
+  --app-focus: #1f6538;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='rogue']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0f0f11;
+  --app-surface: #171719;
+  --app-raised: #212124;
+  --app-hover: #2d2e31;
+  --app-border: #3f3f43;
+  --app-hero: #1c1d20;
+  --app-text: #eeeef1;
+  --app-muted: #c0c0c5;
+  --app-accent: #ff748b;
+  --app-accent-secondary: #c8c9d8;
+  --app-focus: #fea4ae;
+  --app-on-accent: #0f0f11;
+  --mantine-color-dark-4: #3f3f43;
+  --mantine-color-dark-5: #2d2e31;
+  --mantine-color-dark-6: #212124;
+  --mantine-color-dark-7: #171719;
+  --mantine-color-dark-8: #0f0f11;
+}
+html[data-rytta-theme='rogue'][data-mantine-color-scheme='light'] {
+  --app-bg: #f3f3f5;
+  --app-surface: #fdfdfe;
+  --app-raised: #e7e7ea;
+  --app-hover: #dddee1;
+  --app-border: #cdcdd2;
+  --app-hero: #e4e4e9;
+  --app-text: #1f1f22;
+  --app-muted: #515257;
+  --app-accent: #6d0025;
+  --app-accent-secondary: #535461;
+  --app-focus: #8d0032;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='sorcerer']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #150d0c;
+  --app-surface: #1f1412;
+  --app-raised: #2b1e1b;
+  --app-hover: #3b2925;
+  --app-border: #513934;
+  --app-hero: #2a1713;
+  --app-text: #faeae7;
+  --app-muted: #d7b9b3;
+  --app-accent: #ff8f5a;
+  --app-accent-secondary: #feb5b1;
+  --app-focus: #ffb798;
+  --app-on-accent: #170c0a;
+  --mantine-color-dark-4: #513934;
+  --mantine-color-dark-5: #3b2925;
+  --mantine-color-dark-6: #2b1e1b;
+  --mantine-color-dark-7: #1f1412;
+  --mantine-color-dark-8: #150d0c;
+}
+html[data-rytta-theme='sorcerer'][data-mantine-color-scheme='light'] {
+  --app-bg: #fbf1ee;
+  --app-surface: #fffdfd;
+  --app-raised: #f5e3e0;
+  --app-hover: #eed9d4;
+  --app-border: #e1c7c2;
+  --app-hero: #f8ded8;
+  --app-text: #2c1a16;
+  --app-muted: #674b45;
+  --app-accent: #6b2800;
+  --app-accent-secondary: #97242d;
+  --app-focus: #883500;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='warlock']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #100e15;
+  --app-surface: #18151e;
+  --app-raised: #231f2b;
+  --app-hover: #302b3a;
+  --app-border: #423c50;
+  --app-hero: #1f192a;
+  --app-text: #f0ecf9;
+  --app-muted: #c4bcd5;
+  --app-accent: #c29fff;
+  --app-accent-secondary: #89e0ba;
+  --app-focus: #d6c2fe;
+  --app-on-accent: #110d17;
+  --mantine-color-dark-4: #423c50;
+  --mantine-color-dark-5: #302b3a;
+  --mantine-color-dark-6: #231f2b;
+  --mantine-color-dark-7: #18151e;
+  --mantine-color-dark-8: #100e15;
+}
+html[data-rytta-theme='warlock'][data-mantine-color-scheme='light'] {
+  --app-bg: #f4f2fb;
+  --app-surface: #fefdff;
+  --app-raised: #eae5f4;
+  --app-hover: #e0dbec;
+  --app-border: #d0cadf;
+  --app-hero: #e7e1f6;
+  --app-text: #211c2b;
+  --app-muted: #564e66;
+  --app-accent: #531d8d;
+  --app-accent-secondary: #026548;
+  --app-focus: #6635a3;
+  --app-on-accent: #ffffff;
+}
+html[data-rytta-theme='wizard']:not([data-mantine-color-scheme='light']) {
+  --app-bg: #0c0f16;
+  --app-surface: #131720;
+  --app-raised: #1c222c;
+  --app-hover: #262e3c;
+  --app-border: #364053;
+  --app-hero: #151d2c;
+  --app-text: #e8effb;
+  --app-muted: #b5c2d8;
+  --app-accent: #8bb4fe;
+  --app-accent-secondary: #7fdce6;
+  --app-focus: #b4cffe;
+  --app-on-accent: #0b0f18;
+  --mantine-color-dark-4: #364053;
+  --mantine-color-dark-5: #262e3c;
+  --mantine-color-dark-6: #1c222c;
+  --mantine-color-dark-7: #131720;
+  --mantine-color-dark-8: #0c0f16;
+}
+html[data-rytta-theme='wizard'][data-mantine-color-scheme='light'] {
+  --app-bg: #eff4fc;
+  --app-surface: #fdfdff;
+  --app-raised: #e1e8f6;
+  --app-hover: #d5deee;
+  --app-border: #c3cee2;
+  --app-hero: #dae5f9;
+  --app-text: #171f2e;
+  --app-muted: #465369;
+  --app-accent: #0f3a90;
+  --app-accent-secondary: #036169;
+  --app-focus: #224fa7;
+  --app-on-accent: #ffffff;
+}

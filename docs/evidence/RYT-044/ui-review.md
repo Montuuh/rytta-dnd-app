@@ -334,3 +334,69 @@ undone, so this is acceptable, but initial focus on Cancel would be the safer de
   combat add list, and the audit wording.
 - **Limitations:** same as round 1. Fixture only; no hosted Supabase, iOS Safari or real screen
   reader. Captures are in a scratch folder outside the repo.
+
+## Round 3
+
+- Date: 2026-11-03.
+- Snapshot: `c6c499e` (round 2 fixes) on top of `4a9b9ba`.
+- Fingerprint: `3db35da217e158362d465e59c8f4d5521e12dbb4af1a59c71ce0f4fc841ae288`.
+- Method: my own fixture build served on 127.0.0.1:4231, driven by throwaway Playwright Chromium
+  scripts at 390×844 and 820×1180 with touch enabled. I re-ran the whole round 2 regression script
+  plus targeted N1–N6 checks: 26 scenarios, all passed. I stopped the server and deleted the build
+  afterwards.
+
+### Verdict: PASS
+
+N1–N6 and the nit are fixed, and I found no regressions. Two Low cosmetic observations below are
+not blocking.
+
+### Round 2 findings
+
+| Finding | Status | Browser evidence |
+| --- | --- | --- |
+| N1 sideways scroll at 150% on phones | Resolved | Full roster plus archived Zed at 150%: overflow −15 (none) at 390 and 820, in EN light and ES dark. "No free slot" sits under the meta line and Restore wraps to its own line |
+| N2 Party archive focus | Resolved | After archiving Grom, focus moves to the "Grom está archivado." status, which is in view (y 354–409 of 844). "Cerrar" returns focus to the "Personajes de los jugadores, 1 en reserva" link |
+| N3 error close focus | Resolved | Blocked switch → Cerrar returns focus to the checked radio (Arin). Restore error → Cerrar returns focus to "Restaurar a Zed" |
+| N4 reason unreachable by keyboard | Resolved | Enter on ⋯ focuses "Archivar personaje" with `aria-disabled="true"` and `aria-describedby` set to the hint "Activa otro personaje para poder archivar este." Enter and click do nothing (0 dialogs); Escape returns to ⋯. After switching, the former active character's item is enabled and the new active one is blocked |
+| N5 ⋯ over the medallion | Resolved | No ⋯/medallion intersection on any card at 150% (390 and 820, both languages and themes) |
+| N6 only archived characters | Resolved | Party shows "Tus personajes están archivados. Restaura uno o crea otro nuevo." with "Crear un personaje nuevo" and "Ver personajes archivados" (EN copy verified as well). The roster shows the welcome card, no radio group, and "Archivados" expanded. Restore makes Zed active (1 of 4) and focuses the notice. Escape from the create dialog returns focus to its button |
+| Nit dialog initial focus | Resolved | The archive dialog opens with focus on Cancelar, both in Party and in the roster |
+| Extra: sheet label at 150% | Verified | "Finish sheet"/"Terminar ficha" wraps without clipping (`scrollWidth ≤ clientWidth`) |
+
+### Regression checks (browser)
+
+- **Onboarding:** F1 focus return on Escape, Cancelar and ×; the rings are decorative; the lede is
+  hidden; dialog buttons stack on phones.
+- **Roster:**
+  - Tab order is back link → refresh → radio → (sheet link, ⋯) for each card → new slot.
+  - Arrow keys switch the active character and the status announces it.
+  - A blocked switch shows the alert in view, on 390 after scrolling.
+- **Archive and restore:** confirmation, focus on the notice, slot count, and the collapsed
+  "Archivados". One `archive_character` and one `restore_character` call are recorded.
+- **DM:** compact rosters (1088 px / 1180 px tall, no empty cards); the menu entry on a Player's
+  active character is disabled with its reason; archive and restore of an unassigned character;
+  "Archivados 2" with owners.
+- **DM Player preview:** read-only, with 0 radios and 0 menus.
+- **Combat add list:** Arin, Bea and Cato only (Bram in reserve and Zed archived are absent).
+- **Settings and accessibility:** EN light and ES dark, 150% text and reduced motion (about 0s).
+  Axe (wcag2a/2aa/21aa/22aa) found 0 violations in every state. No horizontal overflow and no
+  targets under 44px.
+
+### Low observations (non-blocking)
+
+- **O1.** The new menu strip (`roster.css:83-88`) makes every card taller: 274px on 390 versus 242px
+  in round 2. On a phone the second row of cards now starts lower, so the third card's footer sits
+  under the bottom bar until you scroll. A tighter strip, with the ⋯ beside the medallion's top
+  edge rather than above it, would recover space. This is cosmetic.
+- **O2.** At 390px the DM's "Personajes de los jugadores" link wraps its label and the "1 en
+  reserva" meta onto two lines each (Party head). It is readable and the target is 44px or more,
+  but the link would look cleaner with the meta under the label.
+
+### Round 3 coverage
+
+- **Browser-tested:** everything listed above.
+- **Code-reviewed:** the `c6c499e` diff (`party.tsx`, `roster.tsx`, `roster.css`, `roster-*` catalogs).
+- **Limitations:** unchanged. Fixture only, no hosted Supabase, iOS Safari or real screen reader,
+  and Default theme only. The N4 `aria-disabled` is set through a ref callback rather than a
+  Mantine prop; I verified it while the menu is open, but a screen reader's announcement was not
+  heard. Captures are in a scratch folder outside the repo.

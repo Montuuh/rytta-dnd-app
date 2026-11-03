@@ -56,8 +56,14 @@ Accepted minor items:
 
 - M1: neighbouring term hit areas overlap (a tap just below "Estados" or between wrapped pill
   rows opens the next term); taps on the text are always correct. Same trade-off as RYT-008 F7.
-- M2: the e2e test does not cover the effect-line link, because the combat fixture cannot add
-  effects; the reviewer verified it manually with injected state.
+- M2: the e2e test did not cover the effect-line link, because the combat fixture could not add
+  effects; the reviewer verified it manually with injected state. Covered afterwards (test-only
+  follow-up, same UI fingerprint): `tests/e2e/fixtures/combat.ts` now mirrors
+  `add_combat_effect` / `remove_combat_effect` (condition applied with the effect and cleared
+  when no other effect grants it; projection with `visible` and `can_remove`; no turn ticking),
+  and the test "an effect's condition opens its definition and removing the effect clears it"
+  adds "Telaraña" with "Apresado", opens the effect-line term with the keyboard, runs axe,
+  checks Escape focus and removes the effect.
 
 Not tested: light and class themes, English and 150 % text for these pills (same component and
 tokens as RYT-008), real devices and screen readers.

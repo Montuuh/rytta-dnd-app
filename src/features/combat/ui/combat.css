@@ -721,6 +721,11 @@ button.combat-row-main:focus-visible {
 .combat-inline-error {
   margin-top: 12px;
 }
+/* Focus moving upward in a long drawer never lands under its sticky header (44px close button
+   plus the header's vertical padding). */
+.combat-drawer .mantine-Drawer-content {
+  scroll-padding-top: calc(44px + 2rem + 12px);
+}
 /* In a scrolling drawer the error sticks to the bottom of the visible area, next to whatever
    section the person was using, instead of waiting at the end of the drawer. */
 .combat-inline-error.is-sticky {

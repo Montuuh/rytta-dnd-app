@@ -2314,6 +2314,11 @@ button.exhaustion-pip:disabled {
   padding-block: 6px;
   white-space: normal;
 }
+/* A checked chip is filled with the accent: its text uses the on-accent token (AA in every
+   class theme), like the shop and ledger filter chips. */
+.condition-chip .mantine-Chip-label[data-checked] {
+  color: var(--app-on-accent);
+}
 .srd-license {
   max-width: 70ch;
 }

@@ -488,8 +488,12 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   // RYT-035: planned modules cannot be enabled, so they never reach Player navigation.
   await page.goto(`./#/campaign/${campaignId}/members`)
   await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
-  await expect(page.getByRole('switch', { name: 'Tiendas: visible para jugadores' })).toBeEnabled()
-  for (const module of ['Misiones', 'Combate'])
+  // RYT-007: combat is implemented, so the DM can enable it like shops.
+  for (const module of ['Tiendas', 'Combate'])
+    await expect(
+      page.getByRole('switch', { name: `${module}: visible para jugadores` }),
+    ).toBeEnabled()
+  for (const module of ['Misiones', 'Atlas'])
     await expect(
       page.getByRole('switch', { name: `${module}: visible para jugadores` }),
     ).toBeDisabled()
@@ -498,12 +502,14 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
 test('RYT-035 a planned module enabled by an old campaign row is not a destination', async ({
   page,
 }) => {
-  await identityFixture(page, { player: true, modules: ['party', 'quests', 'combat'] })
+  await identityFixture(page, { player: true, modules: ['party', 'quests', 'atlas', 'combat'] })
   await page.goto(`./#/campaign/${campaignId}/party`)
   const nav = page.getByRole('navigation', { name: /principal|Main/i }).first()
   await expect(nav.getByRole('link', { name: 'Grupo' })).toHaveCount(1)
   await expect(page.getByRole('link', { name: 'Misiones' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Combate' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Atlas' })).toHaveCount(0)
+  // RYT-007: an enabled, implemented module is a destination.
+  await expect(nav.getByRole('link', { name: 'Combate' })).toHaveCount(1)
 })
 
 /** RYT-031: evidence screenshots (390px phone, 820px tablet) only when RYT_EVIDENCE is set. */

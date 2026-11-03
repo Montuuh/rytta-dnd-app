@@ -202,6 +202,8 @@ export async function listRoster(campaignId: string, signal: AbortSignal) {
       .from('characters')
       .select('id, name, user_id')
       .eq('campaign_id', campaign)
+      // RYT-044: benched characters stay out of campaign lists.
+      .eq('is_active', true)
       .order('created_at')
       .abortSignal(signal),
     db

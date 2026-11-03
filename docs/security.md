@@ -49,6 +49,19 @@ campaign/character FK. Money uses whole gold; water and food use whole rations. 
 homebrew counter, without edition effects or a gameplay cap. SQL integers bound rations
 and exhaustion to 0..2147483647; gold/revision stay within JavaScript safe integers.
 
+RYT-044 (ADR 026): a Player owns at most four characters per campaign and exactly one is
+active. A partial unique index and a deferred constraint trigger enforce both in PostgreSQL;
+unassigned characters are always active. Players still have no table writes:
+`create_own_character` (active Player members, idempotent request id) and
+`set_active_character` (owner only, under the campaign lock, refused during an open trade or a
+running encounter) are security definer RPCs for `authenticated` only. DMs keep creation,
+assignment and unlinking below the limit and do not switch a Player's active character.
+Other Players never read reserve characters; SQL tests cover anon, outsider, another Player,
+the campaign DM, a cross-campaign DM, a removed member and the guarded PRE mirror.
+Archiving (`archive_character` / `restore_character`, owner or campaign DM, idempotent, under
+the campaign lock) frees a slot without deleting data; archived characters are never active,
+do not count towards the limit and can be restored only while a slot is free.
+
 RYT-003 revokes all client character/resource writes. `create_character`,
 `unassign_character`, `invite_character_player` and `set_character_resources` lock the
 campaign first, then check active DM membership. Resource edits compare expected revision,

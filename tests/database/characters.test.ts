@@ -167,7 +167,8 @@ describe('RYT-003 complete migration chain', () => {
     await db.query('select public.respond_campaign_invitation($1,true)', [id])
     await asUser(dm)
     const second = await scalar("select public.create_character($1,'Second') result", [c])
-    await expect(invite(c, second)).rejects.toThrow(/Already assigned/)
+    // RYT-044: a Player may hold up to four characters, so a second invitation is valid.
+    expect(await invite(c, second)).toBeTruthy()
     await expect(invite(c, ch, 'other@example.com')).rejects.toThrow(/unavailable/)
     await db.exec('reset role')
     await expect(
@@ -283,7 +284,7 @@ describe('RYT-003 complete migration chain', () => {
     await db.query('select public.assign_character($1,$2,$3)', [c, ch, player])
     await expect(
       db.query('select public.assign_character($1,$2,$3)', [c, ch, player]),
-    ).rejects.toThrow(/Already assigned/)
+    ).rejects.toThrow(/Character unavailable/)
     expect(
       (await db.query('select user_id from public.characters where id=$1', [ch])).rows,
     ).toEqual([{ user_id: player }])

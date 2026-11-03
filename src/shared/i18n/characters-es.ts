@@ -18,12 +18,12 @@ export const charactersEs = {
   'account.settings': 'Preferencias',
   'characters.title': 'Grupo',
   'characters.intro': 'Crea personajes, vincula a sus jugadores y gestiona sus recursos.',
-  'characters.playerIntro': 'Tu personaje y sus recursos. Pide a tu DM los cambios que necesites.',
+  'characters.playerIntro': 'Tu personaje activo, sus recursos y tus compañeros de mesa.',
   'characters.rules': 'Homebrew · Oro entero, raciones de comida y agua · Agotamiento manual',
   'characters.create': 'Crear personaje',
   'characters.name': 'Nombre del personaje',
   'characters.empty': 'Todavía no hay personajes.',
-  'characters.emptyPlayer': 'Tu DM todavía no te ha asignado un personaje.',
+  'characters.emptyPlayer': 'Este jugador todavía no tiene personaje.',
   'characters.unassigned': 'Sin jugador',
   'characters.assigned': 'Asignado a un jugador',
   'characters.you': 'Tu personaje',
@@ -53,7 +53,7 @@ export const charactersEs = {
   'characters.manageHint': 'Crea personajes e invita a sus jugadores desde Personajes y recursos.',
   'characters.assign': 'Vincular jugador',
   'characters.assignHint':
-    'Elige un miembro con rol Jugador que todavía no tenga personaje. Cada jugador puede tener un personaje por campaña.',
+    'Elige un miembro con rol Jugador. Cada jugador puede tener hasta cuatro personajes por campaña; uno nuevo queda en reserva si ya juega con otro.',
   'characters.player': 'Jugador',
   'characters.choosePlayer': 'Elige un jugador',
   'characters.playerName': 'Jugador: {{name}}',
@@ -61,7 +61,7 @@ export const charactersEs = {
   'characters.noPlayers':
     'Todavía no hay miembros con rol Jugador. Invita a un jugador y espera a que acepte para vincularlo.',
   'characters.noAvailablePlayers':
-    'Todos los jugadores ya tienen personaje. Para cambiar uno, desvincúlalo primero desde su ficha en Grupo, o invita a otro jugador.',
+    'Todos los jugadores tienen ya cuatro personajes. Desvincula uno desde su ficha en Grupo, o invita a otro jugador.',
   'characters.assignmentChanged':
     'La vinculación ha cambiado. Cierra y vuelve a abrir este diálogo para ver el estado actual.',
   'characters.assignmentSaved': 'Vinculación actualizada.',

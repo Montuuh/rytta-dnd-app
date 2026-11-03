@@ -116,6 +116,14 @@ lazy JSON chunks, a `GlossaryLayer` that makes rules terms clickable on every ca
 through a reference sheet, and `glossary_entries` for campaign homebrew written through
 revision-checked RPCs and readable under the DM module switch (ADR 025).
 
+RYT-044 lets Players create up to four characters per campaign and play one of them.
+`characters.is_active` with a partial unique index and a deferred roster trigger keeps exactly
+one active character per Player; `create_own_character` (idempotent) and `set_active_character`
+(transactional, refused during an open trade or running combat) are the only Player writes.
+`charactersQuery` returns characters in play, so Party, combat, shops and inventory lists skip
+the reserve; `characterRosterQuery` feeds the `party/roster` manager (ADR 026). Archived
+characters (`archived_at`, archive/restore RPCs) free a slot and leave every campaign list.
+
 Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

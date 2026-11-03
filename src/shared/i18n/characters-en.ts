@@ -17,12 +17,12 @@ export const charactersEn = {
   'account.settings': 'Preferences',
   'characters.title': 'Party',
   'characters.intro': 'Create characters, link their Players and manage their resources.',
-  'characters.playerIntro': 'Your character and resources. Ask your DM to make changes.',
+  'characters.playerIntro': 'Your active character, its resources and your tablemates.',
   'characters.rules': 'Homebrew · Whole gold, food and water rations · Manual exhaustion',
   'characters.create': 'Create character',
   'characters.name': 'Character name',
   'characters.empty': 'No characters yet.',
-  'characters.emptyPlayer': 'Your DM has not assigned a character to you yet.',
+  'characters.emptyPlayer': 'This player has no character yet.',
   'characters.unassigned': 'Unassigned',
   'characters.assigned': 'Assigned to a Player',
   'characters.you': 'Your character',
@@ -53,7 +53,7 @@ export const charactersEn = {
     'Create characters and invite their Players from Characters & resources.',
   'characters.assign': 'Link Player',
   'characters.assignHint':
-    'Choose a member with the Player role who has no character yet. Each Player can have one character per campaign.',
+    'Choose a member with the Player role. Each Player keeps up to four characters per campaign; a new one waits in reserve if they already play one.',
   'characters.player': 'Player',
   'characters.choosePlayer': 'Choose a Player',
   'characters.playerName': 'Player: {{name}}',
@@ -61,7 +61,7 @@ export const charactersEn = {
   'characters.noPlayers':
     'There are no members with the Player role yet. Invite a Player and wait for them to accept before linking them.',
   'characters.noAvailablePlayers':
-    'All Players already have a character. To change one, unlink them from their current card in Party first, or invite another Player.',
+    'Every Player already has four characters. Unlink one from its card in Party first, or invite another Player.',
   'characters.assignmentChanged':
     'This link has changed. Close and reopen this dialog to see the current state.',
   'characters.assignmentSaved': 'Player link updated.',

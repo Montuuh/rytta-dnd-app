@@ -33,6 +33,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
+import { PageHead } from '@/shared/ui/page-head'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { QueryFeedback, useCampaign, useCampaignView } from '@/features/campaigns'
@@ -68,6 +69,7 @@ import { CartDrawer } from './cart-drawer'
 import { ListingCard, ListingDrawer } from './listing-card'
 import { OrderCard } from './orders'
 import { EmptyNote, GoldAmount, ItemGlyph } from './visuals'
+import { newRequestId } from '@/shared/lib/request-id'
 
 type Notice = { text: string; inventoryLink?: boolean }
 /** Shelves up to this size are scanned by eye; a search field only adds a step. */
@@ -148,7 +150,7 @@ export function Storefront() {
         characterId: character.id,
         lines,
         note: notes[shop.id] ?? '',
-        requestId: crypto.randomUUID(),
+        requestId: newRequestId(),
       },
       (result) => {
         setLines([])
@@ -168,19 +170,13 @@ export function Storefront() {
 
   return (
     <Stack gap="lg" className="storefront">
-      <Group justify="space-between" align="end">
-        <div>
-          <Title order={1}>{t('shop.title')}</Title>
-          <Text c="dimmed" mt="sm">
-            {t('shop.intro')}
+      <PageHead title={t('shop.title')} description={t('shop.intro')}>
+        {playerPreview && previewLabel && (
+          <Text c="dimmed" mt="xs">
+            {t('shop.previewReadOnly', { name: previewLabel })}
           </Text>
-          {playerPreview && previewLabel && (
-            <Text c="dimmed" mt="xs">
-              {t('shop.previewReadOnly', { name: previewLabel })}
-            </Text>
-          )}
-        </div>
-      </Group>
+        )}
+      </PageHead>
       <QueryFeedback
         pending={acting.characters.isPending || (!!character && front.isPending)}
         error={acting.characters.isError || front.isError}
@@ -360,7 +356,7 @@ export function Storefront() {
                       characterId: character.id,
                       lines: saleLines,
                       note,
-                      requestId: crypto.randomUUID(),
+                      requestId: newRequestId(),
                     },
                     (result) =>
                       setNotice(
@@ -373,6 +369,10 @@ export function Storefront() {
               />
             </Tabs.Panel>
             <Tabs.Panel value="orders" pt="md">
+              {/* Orders span every shop, unlike the buy and sell shelves above. */}
+              <Text size="sm" c="dimmed" mb="sm">
+                {t('shop.ordersAllShops')}
+              </Text>
               <QueryFeedback
                 pending={orders.isPending}
                 error={orders.isError}

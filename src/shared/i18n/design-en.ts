@@ -1,10 +1,11 @@
 // RYT-025 navigation, compact controls and table widgets.
 export const designEn = {
-  'nav.dmShort': 'DM Command',
+  'nav.dmShort': 'DM',
   'nav.more': 'More',
   'nav.moreTitle': 'More sections',
   'nav.moreOpen': 'Open more sections',
   'shell.playerSwitch': 'Player view',
+  'shell.playerSwitchShort': 'Player',
   'shell.playerSwitchHint': 'See the table as a Player sees it',
   'shell.previewBanner': 'You are viewing the table as {{name}}',
   'shell.previewBannerGeneric': 'You are viewing the table as a Player',

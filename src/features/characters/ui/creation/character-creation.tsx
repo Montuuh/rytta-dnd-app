@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Group, Paper, Progress, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -18,6 +18,7 @@ import {
 } from '../../domain/creation'
 import type { SheetDraft, SheetRow } from '../../domain/sheet'
 import { CreationStepView } from './steps'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const fromRow = (sheet: SheetRow): SheetDraft =>
   sheet.build
@@ -153,7 +154,7 @@ function Wizard({
         expectedRevision: revision,
         draft: normalizeDraft(draft),
         complete,
-        requestId: crypto.randomUUID(),
+        requestId: newRequestId(),
       },
       {
         onSuccess: (next) => {
@@ -177,7 +178,8 @@ function Wizard({
         </Button>
         {!last && (
           <Button
-            variant="subtle"
+            variant="default"
+            leftSection={<Save size={16} aria-hidden="true" />}
             disabled={action.isPending}
             onClick={() => save(false, () => void navigate(sheetPath), true)}
           >
@@ -186,7 +188,7 @@ function Wizard({
         )}
       </Group>
       <div>
-        <Text size="sm" c="dimmed">
+        <Text className="eyebrow user-copy" mb={4}>
           {t(editing ? 'wizard.editTitle' : 'wizard.title', { name })}
         </Text>
         <Title order={1} ref={heading} tabIndex={-1}>

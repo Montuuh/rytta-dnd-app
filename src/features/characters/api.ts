@@ -9,7 +9,8 @@ import {
   listCharacters,
   listSheetSummaries,
 } from './data/repository'
-import type { CharacterAction } from './domain/character'
+import type { Character, CharacterAction, Resources } from './domain/character'
+import { newRequestId } from '@/shared/lib/request-id'
 import type { SheetAction } from './domain/sheet'
 export const charactersQuery = (userId: string, campaignId: string, filterUserId?: string) =>
   queryOptions({
@@ -30,8 +31,9 @@ export function useCharacterAction(campaignId: string) {
       await changeCharacter(campaignId, action)
     },
     onSuccess: async () => {
+      // Character changes stay inside this campaign (sheets, inventory roster, shops).
       if (controller?.getSnapshot().user?.id === userId)
-        await cache.invalidateQueries({ queryKey: ['private', userId] })
+        await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
     },
     onError: async (error) => {
       if (error.message === 'stale' && controller?.getSnapshot().user?.id === userId)
@@ -40,6 +42,73 @@ export function useCharacterAction(campaignId: string) {
         })
     },
   })
+}
+
+/**
+ * Quick resource steps for one character. Each tap updates the cached party at once and is
+ * queued per character (mutation scope), so the next tap sends the revision the previous one
+ * will produce. Steps for other characters never wait. A conflict refetches the server truth.
+ */
+export function useResourceAction(campaignId: string, characterId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  const scope = ['private', userId, 'campaign', campaignId, 'characters']
+  const mutationKey = ['resources', campaignId, characterId]
+  const patch = (resources: Resources) =>
+    cache.setQueriesData<unknown>({ queryKey: scope }, (data: unknown) =>
+      Array.isArray(data)
+        ? data.map((item: Character) =>
+            item?.id === characterId && item.character_resources
+              ? { ...item, character_resources: resources }
+              : item,
+          )
+        : data,
+    )
+  const latest = (): Resources | undefined => {
+    for (const [, data] of cache.getQueriesData<unknown>({ queryKey: scope }))
+      if (Array.isArray(data)) {
+        const found = (data as Character[]).find((item) => item?.id === characterId)
+        if (found?.character_resources) return found.character_resources
+      }
+    return undefined
+  }
+  const mutation = useMutation({
+    mutationKey,
+    scope: { id: `resources:${characterId}` },
+    retry: false,
+    networkMode: 'always',
+    onMutate: (values: Resources) => {
+      // Synchronous so a fast second tap already reads this optimistic revision.
+      patch({ ...values, revision: values.revision + 1 })
+      void cache.cancelQueries({ queryKey: scope })
+    },
+    mutationFn: async (values: Resources) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new Error('unavailable')
+      await changeCharacter(campaignId, {
+        kind: 'resources',
+        characterId,
+        values,
+        requestId: newRequestId(),
+      })
+    },
+    onSettled: async () => {
+      if (controller?.getSnapshot().user?.id !== userId) return
+      // Refetch once the queue for this character drains (or after any failure).
+      if (cache.isMutating({ mutationKey }) <= 1)
+        await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+    },
+  })
+  return {
+    ...mutation,
+    /** Applies `change` to the newest known values (optimistic included) and sends it. */
+    apply: (change: (current: Resources) => Partial<Resources>) => {
+      const current = latest()
+      if (!current) return
+      mutation.mutate({ ...current, ...change(current) })
+    },
+  }
 }
 
 /** RYT-031 live party state; polls every 10s only while the tab is visible. */

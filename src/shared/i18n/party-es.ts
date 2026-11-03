@@ -2,6 +2,8 @@ import type { partyEn } from './party-en'
 
 // RYT-031 party live sharing and per-character audit history.
 export const partyEs = {
+  'party.resourceStale':
+    'Otro DM cambió estos recursos a la vez. Ya ves los valores actuales; repite el cambio si hace falta.',
   'party.liveTitle': 'Compañeros',
   'party.liveHint': 'Estado en vivo de los compañeros que comparte tu DM.',
   'party.liveEmpty': 'Tu DM no está compartiendo ningún compañero ahora mismo.',
@@ -10,6 +12,7 @@ export const partyEs = {
   'party.liveAc': 'Clase de armadura {{value}}',
   'party.liveConditions': 'Estados de {{name}}',
   'party.liveNoSheet': 'Estado aún no disponible',
+  'party.shareLabel': 'Visible al grupo',
   'party.shareOn': 'Visible para el grupo',
   'party.shareOff': 'Oculto al grupo',
   'party.shareToggle': 'Compartir el estado en vivo de {{name}} con el grupo',

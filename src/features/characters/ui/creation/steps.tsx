@@ -72,6 +72,7 @@ import {
   type Skill,
 } from '../../domain/srd'
 import { useCharacterLabels } from '../labels'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const classIcons: Record<string, LucideIcon> = {
   barbarian: Axe,
@@ -89,7 +90,7 @@ const classIcons: Record<string, LucideIcon> = {
 }
 
 type StepProps = { draft: SheetDraft; setDraft: Dispatch<SetStateAction<SheetDraft>> }
-const newId = () => crypto.randomUUID()
+const newId = () => newRequestId()
 
 export function CreationStepView({ step, ...props }: StepProps & { step: CreationStep }) {
   switch (step) {

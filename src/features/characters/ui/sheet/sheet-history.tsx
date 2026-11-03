@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ActionIcon, Button, Drawer, Paper, Stack, Text, Tooltip } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { History } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +21,7 @@ export function SheetHistory({
   const { state } = useAuth()
   const userId = state.user!.id
   const [opened, setOpened] = useState(false)
-  const phone = useMediaQuery('(max-width: 47.99em)')
+  const phone = usePhone()
   const events = useQuery({
     ...auditEventsQuery(userId, campaignId, characterId),
     enabled: opened,

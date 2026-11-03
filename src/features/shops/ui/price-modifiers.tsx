@@ -46,8 +46,8 @@ function ModifierSlider({
     v === 0
       ? t('admin.modifier.none')
       : v < 0
-        ? t('shop.discount', { value: -v })
-        : t('shop.markup', { value: v })
+        ? t('admin.modifier.discount', { value: -v })
+        : t('admin.modifier.markup', { value: v })
   return (
     <div className="modifier-row">
       <Group justify="space-between" mb={6} wrap="wrap" gap={4}>
@@ -75,7 +75,8 @@ function ModifierSlider({
         max={50}
         step={5}
         value={value}
-        label={(v) => (v > 0 ? `+${v} %` : `${v} %`)}
+        label={(v) => t('admin.modifier.mark', { value: v > 0 ? `+${v}` : `${v}` })}
+        // Bare numbers keep the end marks inside a 390px screen at 150% text.
         marks={[-50, -25, 0, 25, 50].map((v) => ({ value: v, label: v > 0 ? `+${v}` : `${v}` }))}
         onChange={(v) => {
           setChosen(v)

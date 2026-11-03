@@ -155,6 +155,7 @@ export const inventoryEn = {
   'inventory.ledger.undone': 'undone',
   'inventory.ledger.undoTimed': 'Undo the change to {{name}}, {{minutes}} min left',
   'inventory.ledger.undoAny': 'Undo the change to {{name}}',
+  'inventory.forge.templatePlaceholder': 'Search: dagger, rope, potion…',
   'inventory.forge.title': 'Forge an item',
   'inventory.forge.editTitle': 'Edit item',
   'inventory.forge.template': 'Start from an SRD template',

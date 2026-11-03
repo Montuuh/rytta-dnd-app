@@ -52,10 +52,9 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   if (!prefix || !campaign) return []
   const effectiveDm = campaign.role === 'dm' && !playerPreview
   const enabledKeys = new Set(campaign.player_modules ?? ['party'])
+  // Planned modules never become destinations, even if an old campaign row enables them.
   const reachable = modules.filter(
-    ({ path, ...module }) =>
-      enabledKeys.has(path.replace(/^\//, '')) ||
-      (effectiveDm && 'implemented' in module && module.implemented),
+    ({ key, implemented }) => implemented && (effectiveDm || enabledKeys.has(key)),
   )
   const entries: NavEntry[] = reachable.map(({ path, label, icon }) => ({
     to: `${prefix}${path}`,
@@ -290,7 +289,12 @@ export function Layout() {
                 <div className="brand-copy">
                   <span className="brand-title">RYTTA</span>
                   {campaign ? (
-                    <Text size="xs" fw={600} className="header-campaign-name user-copy">
+                    <Text
+                      size="sm"
+                      fw={600}
+                      className="header-campaign-name user-copy"
+                      title={campaign.name}
+                    >
                       {campaign.name}
                     </Text>
                   ) : (
@@ -317,7 +321,16 @@ export function Layout() {
                           size="md"
                           checked={playerPreview}
                           onChange={(event) => togglePreview(event.currentTarget.checked)}
-                          label={t('shell.playerSwitch')}
+                          // Phones show the short label; the accessible name stays the full one.
+                          aria-label={t('shell.playerSwitch')}
+                          label={
+                            <>
+                              <span className="preview-switch-full">{t('shell.playerSwitch')}</span>
+                              <span className="preview-switch-short" aria-hidden="true">
+                                {t('shell.playerSwitchShort')}
+                              </span>
+                            </>
+                          }
                           title={t('shell.playerSwitchHint')}
                           thumbIcon={<Eye size={12} aria-hidden="true" />}
                         />

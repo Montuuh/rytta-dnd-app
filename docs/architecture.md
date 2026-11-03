@@ -108,7 +108,7 @@ invalidates the trade query, with polling as the fallback (ADR 022).
 RYT-008 adds the glossary: bundled SRD 5.2.1/5.1 content (English and Spanish, CC-BY-4.0) as
 lazy JSON chunks, a `GlossaryLayer` that makes rules terms clickable on every campaign page
 through a reference sheet, and `glossary_entries` for campaign homebrew written through
-revision-checked RPCs and readable under the DM module switch (ADR 023).
+revision-checked RPCs and readable under the DM module switch (ADR 024).
 
 Future domains: quests,
 encounters/participants, media, maps/routes, strongholds and relationships.

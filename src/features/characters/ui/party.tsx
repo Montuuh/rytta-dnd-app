@@ -1,5 +1,5 @@
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
   Alert,
@@ -13,10 +13,10 @@ import {
   Paper,
   Progress,
   Stack,
+  Switch,
   Text,
   TextInput,
   Title,
-  Tooltip,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
@@ -37,9 +37,11 @@ import {
   Radio,
   ScrollText,
   Unlink,
+  UserRound,
   Utensils,
 } from 'lucide-react'
 import { RefreshControl } from '@/shared/ui/refresh-control'
+import { PageHead } from '@/shared/ui/page-head'
 import { PullToRefresh } from '@/shared/ui/pull-to-refresh'
 import { useLongPress } from '@/shared/ui/use-long-press'
 import { useTranslation } from 'react-i18next'
@@ -51,6 +53,7 @@ import {
   partyOverviewQuery,
   sheetSummariesQuery,
   useCharacterAction,
+  useResourceAction,
 } from '../api'
 import { isClassKey } from '../domain/rules'
 import { resourceSchema, type Character } from '../domain/character'
@@ -59,6 +62,7 @@ import { hpTone, sharedTeammates, type PartyMember } from '../domain/party'
 import { PlayerAssignmentEditor } from './player-assignment'
 import { CharacterPortrait } from '@/features/inventory'
 import { TradeButton, TradeHistory, TradeLauncher } from '@/features/trades'
+import { newRequestId } from '@/shared/lib/request-id'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 type ResourceField = (typeof fields)[number]
@@ -106,39 +110,46 @@ export function CharacterParty() {
     'characters.saved' | 'characters.assignmentSaved' | 'characters.created' | null
   >(null)
   const [shareError, setShareError] = useState(false)
-  const quickResourceAction = useCharacterAction(campaign.id)
+  const [resourceError, setResourceError] = useState<'stale' | 'unavailable' | null>(null)
   return (
     <Stack gap="lg">
-      <Group justify="space-between" align="start">
-        <div>
-          <Title order={1}>{t('characters.title')}</Title>
-          <Text c="dimmed" mt="sm">
-            {t(dm ? 'characters.intro' : 'characters.playerIntro')}
+      <PageHead
+        title={t('characters.title')}
+        description={t(dm ? 'characters.intro' : 'characters.playerIntro')}
+        actions={
+          dm && (
+            <Button
+              leftSection={<Plus size={18} aria-hidden="true" />}
+              onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
+            >
+              {t('characters.create')}
+            </Button>
+          )
+        }
+        refresh={
+          <RefreshControl
+            onRefresh={() => {
+              void query.refetch()
+              void overview.refetch()
+            }}
+            fetching={query.isFetching || overview.isFetching}
+            updatedAt={Math.max(query.dataUpdatedAt, overview.dataUpdatedAt)}
+          />
+        }
+      >
+        {playerPreview && previewLabel && (
+          <Text c="dimmed" mt="xs">
+            {t('shell.previewAs', { name: previewLabel })}
           </Text>
-          {playerPreview && previewLabel && (
-            <Text c="dimmed" mt="xs">
-              {t('shell.previewAs', { name: previewLabel })}
-            </Text>
-          )}
-        </div>
-        {dm && (
-          <Button onClick={(event) => open({ kind: 'create' }, event.currentTarget)}>
-            {t('characters.create')}
-          </Button>
         )}
-      </Group>
+      </PageHead>
       <PullToRefresh onRefresh={() => void query.refetch()} />
-      <Group justify="flex-end">
-        <RefreshControl
-          onRefresh={() => {
-            void query.refetch()
-            void overview.refetch()
-          }}
-          fetching={query.isFetching || overview.isFetching}
-          updatedAt={Math.max(query.dataUpdatedAt, overview.dataUpdatedAt)}
-        />
-      </Group>
       {notice && <Alert role="status">{t(notice)}</Alert>}
+      {resourceError && (
+        <Alert color="red" role="alert" withCloseButton onClose={() => setResourceError(null)}>
+          {t(resourceError === 'stale' ? 'party.resourceStale' : 'characters.unavailable')}
+        </Alert>
+      )}
       {shareError && (
         <Alert color="red" role="alert" withCloseButton onClose={() => setShareError(false)}>
           {t('party.shareError')}
@@ -198,38 +209,25 @@ export function CharacterParty() {
                         </Title>
                         {dm && (
                           <div className="character-owner-info">
-                            <Badge variant={character.user_id ? 'light' : 'outline'}>
-                              {t(
-                                character.user_id ? 'characters.assigned' : 'characters.unassigned',
-                              )}
-                            </Badge>
-                            {character.user_id && members.data && !members.isError && (
-                              <Text size="sm" fw={600} className="user-copy">
+                            {character.user_id ? (
+                              <Badge
+                                variant="light"
+                                className="user-copy owner-badge"
+                                leftSection={<UserRound size={12} aria-hidden="true" />}
+                              >
                                 {t('characters.playerName', {
                                   name:
-                                    members.data.find(
-                                      (member) => member.user_id === character.user_id,
-                                    )?.display_name ?? t('characters.assigned'),
+                                    (!members.isError &&
+                                      members.data?.find(
+                                        (member) => member.user_id === character.user_id,
+                                      )?.display_name) ||
+                                    t('characters.assigned'),
                                 })}
-                              </Text>
-                            )}
-                            {live && !live.shares_live && (
-                              <Text size="sm" c="dimmed" className="live-hidden-note">
-                                <EyeOff size={14} aria-hidden="true" />
-                                {t('party.shareOff')}
-                              </Text>
-                            )}
-                            {live && (
-                              <span className="character-owner-share">
-                                <LiveShareToggle
-                                  campaignId={campaign.id}
-                                  characterId={character.id}
-                                  name={character.name}
-                                  shared={live.shares_live}
-                                  onError={() => setShareError(true)}
-                                  onSuccess={() => setShareError(false)}
-                                />
-                              </span>
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="owner-badge">
+                                {t('characters.unassigned')}
+                              </Badge>
                             )}
                           </div>
                         )}
@@ -243,6 +241,16 @@ export function CharacterParty() {
                               level: summary.level,
                             })}
                           </Text>
+                        )}
+                        {dm && live && (
+                          <LiveShareToggle
+                            campaignId={campaign.id}
+                            characterId={character.id}
+                            name={character.name}
+                            shared={live.shares_live}
+                            onError={() => setShareError(true)}
+                            onSuccess={() => setShareError(false)}
+                          />
                         )}
                       </div>
                       <CharacterMenu
@@ -278,19 +286,9 @@ export function CharacterParty() {
                           key={field}
                           field={field}
                           character={character}
+                          campaignId={campaign.id}
                           dm={dm}
-                          pending={quickResourceAction.isPending}
-                          commit={(next) =>
-                            quickResourceAction.mutate(
-                              {
-                                kind: 'resources',
-                                characterId: character.id,
-                                values: { ...character.character_resources, [field]: next },
-                                requestId: crypto.randomUUID(),
-                              },
-                              { onSuccess: () => setNotice('characters.saved') },
-                            )
-                          }
+                          onError={setResourceError}
                         />
                       ))}
                     </section>
@@ -376,28 +374,23 @@ function LiveShareToggle({
   const on =
     action.isPending && action.variables?.kind === 'liveSharing' ? action.variables.enabled : shared
   return (
-    <Tooltip
-      label={t(on ? 'party.shareOn' : 'party.shareOff')}
-      withArrow
-      events={{ hover: true, focus: true, touch: true }}
-    >
-      <ActionIcon
-        size={44}
-        variant={on ? 'light' : 'subtle'}
-        color={on ? undefined : 'gray'}
-        className="live-share-toggle"
-        data-on={on || undefined}
-        aria-label={t('party.shareToggle', { name })}
-        aria-pressed={on}
+    <div className="live-share-toggle" data-on={on || undefined}>
+      <Switch
+        size="md"
+        checked={on}
+        label={t('party.shareLabel')}
+        aria-label={`${t('party.shareLabel')} · ${name}`}
+        title={t('party.shareToggle', { name })}
         aria-busy={action.isPending || undefined}
-        onClick={() => {
+        thumbIcon={
+          on ? <Radio size={12} aria-hidden="true" /> : <EyeOff size={12} aria-hidden="true" />
+        }
+        onChange={() => {
           if (action.isPending) return
           action.mutate({ kind: 'liveSharing', characterId, enabled: !on }, { onError, onSuccess })
         }}
-      >
-        {on ? <Radio size={20} aria-hidden="true" /> : <EyeOff size={20} aria-hidden="true" />}
-      </ActionIcon>
-    </Tooltip>
+      />
+    </div>
   )
 }
 
@@ -437,14 +430,15 @@ function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId:
           )}
         </div>
         {ready && member.armor_class !== null && (
-          <div
-            className="ac-shield"
+          // Same "AC 14" chip as the Player's own card (RYT-035).
+          <span
+            className="vital-chip teammate-ac"
             role="img"
             aria-label={t('party.liveAc', { value: member.armor_class })}
           >
-            <Shield size={44} strokeWidth={1.6} aria-hidden="true" />
-            <span aria-hidden="true">{member.armor_class}</span>
-          </div>
+            <Shield size={16} aria-hidden="true" />
+            <span aria-hidden="true">{t('sheet.acSummary', { value: member.armor_class })}</span>
+          </span>
         )}
       </div>
       {ready ? (
@@ -626,24 +620,33 @@ function StepButton({
 function ResourceTile({
   field,
   character,
+  campaignId,
   dm,
-  pending,
-  commit,
+  onError,
 }: {
   field: ResourceField
   character: Character
+  campaignId: string
   dm: boolean
-  pending: boolean
-  commit: (next: number) => void
+  onError: (error: 'stale' | 'unavailable' | null) => void
 }) {
   const { t, i18n } = useTranslation()
   const Icon = resourceIcons[field]
   const maxVal = field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
   const currentVal = character.character_resources[field]
   const label = t(`characters.${field}`)
+  const resource = useResourceAction(campaignId, character.id)
+  const send = (change: (current: number) => number) =>
+    resource.apply((values) => {
+      onError(null)
+      return { [field]: Math.min(maxVal, Math.max(0, change(values[field]))) }
+    })
+  useEffect(() => {
+    if (resource.error) onError(resource.error.message === 'stale' ? 'stale' : 'unavailable')
+  }, [resource.error, onError])
   const step = (delta: number) => {
-    const next = Math.min(maxVal, Math.max(0, currentVal + delta))
-    if (next !== currentVal) commit(next)
+    if (currentVal + delta < 0 || currentVal + delta > maxVal) return
+    send((value) => value + delta)
   }
   const [goldEditor, setGoldEditor] = useState<Character | null>(null)
   const goldButton = useRef<HTMLButtonElement>(null)
@@ -698,10 +701,9 @@ function ResourceTile({
                   type="button"
                   className="exhaustion-pip"
                   data-filled={filled || undefined}
-                  aria-disabled={pending || undefined}
                   aria-pressed={filled}
                   aria-label={`${t('characters.exhaustionPip', { level })} · ${character.name}`}
-                  onClick={() => !pending && commit(target)}
+                  onClick={() => send(() => target)}
                 >
                   <span aria-hidden="true">{level}</span>
                 </button>
@@ -728,13 +730,13 @@ function ResourceTile({
               <StepButton
                 delta={-1}
                 label={`${t('characters.decrease', { field: label })} · ${character.name}`}
-                disabled={pending || currentVal <= 0}
+                disabled={currentVal <= 0}
                 step={step}
               />
               <StepButton
                 delta={1}
                 label={`${t('characters.increase', { field: label })} · ${character.name}`}
-                disabled={pending || currentVal >= maxVal}
+                disabled={currentVal >= maxVal}
                 step={step}
               />
             </div>
@@ -856,7 +858,7 @@ function CharacterEditor({
 }) {
   const { t } = useTranslation()
   const action = useCharacterAction(campaignId)
-  const [requestId] = useState(() => crypto.randomUUID())
+  const [requestId] = useState(() => newRequestId())
   const form = useForm({
     initialValues: {
       name: '',
@@ -996,7 +998,7 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
   const [gold, setGold] = useState<number | string>(character.character_resources.gold)
   const [attempted, setAttempted] = useState(false)
   const errorMessage = useRef<HTMLDivElement>(null)
-  const request = useRef(crypto.randomUUID())
+  const request = useRef(newRequestId())
   const valid = typeof gold === 'number' && Number.isSafeInteger(gold) && gold >= 0
   return (
     <Modal
@@ -1055,7 +1057,7 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
               leftSection={action.isPending ? <Loader size={16} /> : undefined}
               disabled={!valid || action.error?.message === 'stale'}
             >
-              {t(attempted ? 'common.retry' : 'characters.save')}
+              {t(attempted ? 'common.retry' : 'characters.saveGold')}
             </Button>
           </Group>
         </Stack>

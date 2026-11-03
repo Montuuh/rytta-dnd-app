@@ -189,7 +189,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/members`)
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  // RYT-027: the DM Command Center comes first; phones show the short "Mando DM" label.
+  // RYT-027: the DM Command Center comes first; phones show the short "DM" label.
   await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Centro de mando DM')
   await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Grupo')
   await expect(mainNav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
@@ -314,7 +314,7 @@ test('self-demotion clears management views and offline actions are not queued',
   const self = page
     .locator('.mantine-Paper-root')
     .filter({ has: page.getByText('Table DM · Tú', { exact: true }) })
-  await self.getByRole('button', { name: 'Cambiar a Jugador', exact: true }).click()
+  await self.getByRole('button', { name: 'Cambiar a jugador', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)

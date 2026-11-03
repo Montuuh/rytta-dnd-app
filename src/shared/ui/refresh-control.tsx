@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { ActionIcon, Group, Text } from '@mantine/core'
 import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -18,6 +18,7 @@ export function RefreshControl({
   label?: string
 }) {
   const { t, i18n } = useTranslation()
+  const stampId = useId()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000)
@@ -30,7 +31,7 @@ export function RefreshControl({
   return (
     <Group gap={4} wrap="nowrap" className="refresh-control">
       {stamp && (
-        <Text size="xs" c="dimmed" className="refresh-stamp" aria-live="off">
+        <Text size="xs" c="dimmed" className="refresh-stamp" aria-live="off" id={stampId}>
           {fetching ? t('common.refreshing') : t('common.checkedAgo', { time: stamp })}
         </Text>
       )}
@@ -38,6 +39,8 @@ export function RefreshControl({
         variant="subtle"
         size={44}
         aria-label={label ?? t('hub.refresh')}
+        // Phone page heads hide the stamp text; the button still announces it.
+        aria-describedby={stamp ? stampId : undefined}
         title={label ?? t('hub.refresh')}
         aria-busy={fetching || undefined}
         onClick={onRefresh}

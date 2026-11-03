@@ -39,6 +39,7 @@ export const charactersEs = {
   'characters.increase': 'Aumentar {{field}}',
   'characters.decrease': 'Reducir {{field}}',
   'characters.save': 'Guardar recursos',
+  'characters.saveGold': 'Guardar oro',
   'characters.saved': 'Recursos guardados.',
   'characters.invalid': 'Introduce un número entero dentro del rango permitido.',
   'characters.stale':

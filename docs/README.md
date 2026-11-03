@@ -55,5 +55,7 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-033 verification](evidence/RYT-033/validation.md).
 31. [ADR 022: player trades with a two-sided offer and double confirmation](decisions/022-player-trades.md)
     and [RYT-034 verification](evidence/RYT-034/validation.md).
-32. [ADR 023: SRD 5.5e glossary, term references and homebrew](decisions/023-glossary.md)
+32. [ADR 023: full review fixes, compact page heads and locked planned modules](decisions/023-review-fixes-visual-polish.md)
+    and [RYT-035 verification](evidence/RYT-035/validation.md).
+33. [ADR 024: SRD 5.5e glossary, term references and homebrew](decisions/024-glossary.md)
     and [RYT-008 verification](evidence/RYT-008/validation.md).

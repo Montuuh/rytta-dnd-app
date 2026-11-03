@@ -40,5 +40,5 @@ export const storeEs = {
   'satchel.view': 'Vista de la mochila',
   'party.hero': 'Tu personaje',
   'party.resources': 'Recursos',
-  'party.openInventory': 'Mochila',
+  'party.openInventory': 'Inventario',
 } satisfies Record<keyof typeof storeEn, string>

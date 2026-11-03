@@ -1,6 +1,6 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { Button, Drawer, Modal, Text, UnstyledButton } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ItemIcon } from '@/features/inventory'
@@ -22,7 +22,7 @@ export function ItemPicker({
   onClose: () => void
 }) {
   const { t } = useTranslation()
-  const phone = useMediaQuery('(max-width: 48em)')
+  const phone = usePhone()
   const [selected, setSelected] = useState<string | null>(initialItem ?? items[0]?.item_id ?? null)
   const offered = new Map(lines.map((line) => [line.item_id, line.quantity]))
   const current = items.find((item) => item.item_id === selected)

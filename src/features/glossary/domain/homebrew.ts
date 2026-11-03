@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-/** RYT-008 campaign homebrew entries; the SQL RPCs re-validate every field (ADR 023). */
+/** RYT-008 campaign homebrew entries; the SQL RPCs re-validate every field (ADR 024). */
 export const homebrewCategories = ['rule', 'condition', 'action', 'spell', 'lore', 'other'] as const
 export type HomebrewCategory = (typeof homebrewCategories)[number]
 

@@ -1443,6 +1443,159 @@
         "docs/evidence/RYT-039/condition-definition-mobile.png",
         "docs/evidence/RYT-039/condition-definition-tablet.png"
       ]
+    },
+    {
+      "id": "RYT-040",
+      "title": "Edit and delete homebrew glossary entries",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "medium"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-008"],
+      "sources": [
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+      ],
+      "scope": "Campaign DMs can edit and delete homebrew rules and house rules from the glossary using the existing revision-checked save/delete RPCs.",
+      "acceptance": [
+        "A DM can open a homebrew entry, edit it in place and see the saved revision without reloading.",
+        "A DM can delete a homebrew entry after an explicit confirmation; the entry disappears from index and search.",
+        "Stale revisions show a recoverable conflict message.",
+        "Players never see edit or delete controls; RPC denial tests cover anon, outsider, player and cross-campaign DM."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests if RPCs change"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-041",
+      "title": "Combat roster changes and turn focus",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-007", "RYT-037", "RYT-038"],
+      "sources": [
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+      ],
+      "scope": "The DM can add and remove player characters after combat has started; the DM console focuses the combatant whose turn it is; fullscreen and exit-table-view buttons are removed.",
+      "acceptance": [
+        "A DM can add a party character to a running encounter with an initiative value and it is ordered correctly in the current round.",
+        "A DM can remove a character from a running encounter after confirmation; turn order and the current turn stay consistent, including removing the active combatant.",
+        "On start, the console detail shows the highest-initiative combatant; each next/previous turn moves the detail to the active combatant.",
+        "No fullscreen button for anyone and no exit-table-view button for Players.",
+        "Roster RPCs are transactional, idempotent and DM-only, with denial tests for anon, outsider, player and cross-campaign DM."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-042",
+      "title": "Single Player combat view",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-041"],
+      "sources": [
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+      ],
+      "scope": "Players only use the table view: they enter their own initiative and see the end-of-combat summary there. The DM opens the table view by default and can switch to the DM console for full actions.",
+      "acceptance": [
+        "Players have no route or control to any combat panel other than the table view.",
+        "A Player can submit initiative for their own character from the table view while initiative is being collected; they cannot set anyone else's.",
+        "When the encounter ends, Players and DM see the combat summary in the table view.",
+        "The DM can switch between table view and console without losing state, by keyboard and touch.",
+        "Private DM data never reaches the Player projection."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests if RPCs change"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-043",
+      "title": "Combat screen art and readable enemy health",
+      "priority": "P2",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-042"],
+      "sources": [
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+      ],
+      "scope": "Rework the combat screens visually: character portraits, creature images and an enemy health display that reads as descriptive bands rather than a pseudo-precise bar.",
+      "acceptance": [
+        "Character and creature combatants show an image with a meaningful fallback when none exists.",
+        "Enemy health for Players reads as named bands (for example unharmed, wounded, bloodied, near death) with a distinct non-bar visual; exact HP stays DM-only.",
+        "Images use private storage and signed URLs consistent with the item image pipeline; no public bucket.",
+        "The redesign passes contrast in both themes, 390px, tablet and 150% text."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "Storage policy denial tests if storage changes"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-044",
+      "title": "Player character manager with an active character",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6-astra",
+        "reasoningEffort": "high"
+      },
+      "status": "ready",
+      "dependsOn": ["RYT-021", "RYT-024"],
+      "sources": [
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+      ],
+      "scope": "Each Player has a character manager in the campaign: create up to 4 characters with name and sheet, choose one active character; only active characters appear in Party and combat. A Player without characters is prompted to create one.",
+      "acceptance": [
+        "A Player with no character in the campaign is guided to create one on entry.",
+        "A Player can create characters with the existing wizard up to a server-enforced limit of 4 per campaign.",
+        "Exactly one active character per Player and campaign is enforced in the database; switching is transactional.",
+        "Party, combat roster and other campaign lists show only active characters; inactive characters stay editable by their owner and visible to the DM in the manager.",
+        "RLS and RPC denial tests cover anon, outsider, other player and cross-campaign DM."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "SQL denial tests"
+      ],
+      "evidence": []
     }
   ]
 }

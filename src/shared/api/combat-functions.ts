@@ -48,6 +48,11 @@ export type CombatFunctions = {
     data: Json
   }>
   delete_combatant_template: Call<{ target_template: string }>
+  set_combatant_tracker: Mutation<{
+    target_combatant: string
+    tracker_key: string
+    tracker_value: number
+  }>
   set_combatant_template_image: Mutation<{
     target_template: string
     expected_revision: number

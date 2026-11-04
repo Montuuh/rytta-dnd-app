@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Alert,
   Button,
@@ -19,8 +19,15 @@ import { Castle, UserPlus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { charactersQuery } from '@/features/characters'
-import { templatesQuery } from '../api'
-import type { Combatant, CombatantTemplate, EncounterStatus, NpcEntry } from '../domain/combat'
+import { averageDice, diceText, parseDice, type CreatureListItem } from '@/features/bestiary'
+import type { Combatant, EncounterStatus, NpcEntry } from '../domain/combat'
+import {
+  creatureFilter,
+  creatureFormula,
+  npcEntryFor,
+  useCreatureCatalog,
+  useSpellLabel,
+} from './creatures'
 import { InitiativeDialog } from './amount-dialog'
 import type { Run } from './helpers'
 import { JoinPreview } from './roster'
@@ -48,7 +55,6 @@ export function AddCombatants({
   const { state } = useAuth()
   const userId = state.user!.id
   const characters = useQuery(charactersQuery(userId, campaignId))
-  const templates = useQuery(templatesQuery(userId, campaignId))
   const present = new Set(combatants.map((c) => c.character_id).filter(Boolean))
   const missing = (characters.data ?? []).filter((c) => !present.has(c.id))
   const assignedMissing = missing.filter((c) => c.user_id)
@@ -183,7 +189,7 @@ export function AddCombatants({
         />
       )}
       <CreatureForm
-        templates={templates.data ?? []}
+        campaignId={campaignId}
         pending={pending}
         submit={async (entry) =>
           added(entry.count ?? 1, await run({ kind: 'add', encounterId, entries: [entry] }))
@@ -205,17 +211,22 @@ export function AddCombatants({
   )
 }
 
+/** One creature (or a batch): from the bestiary (SRD or campaign, ADR 028) or typed in. */
 function CreatureForm({
-  templates,
+  campaignId,
   pending,
   submit,
 }: {
-  templates: CombatantTemplate[]
+  campaignId: string
   pending: boolean
   submit: (entry: NpcEntry) => Promise<boolean>
 }) {
   const { t } = useTranslation()
-  const [templateId, setTemplateId] = useState<string | null>(null)
+  const catalog = useCreatureCatalog(campaignId)
+  const spellLabel = useSpellLabel()
+  const [picked, setPicked] = useState<CreatureListItem | null>(null)
+  const [alias, setAlias] = useState('')
+  const [hpMode, setHpMode] = useState<'average' | 'roll'>('average')
   const [name, setName] = useState('')
   const [count, setCount] = useState<number | string>(1)
   const [maxHp, setMaxHp] = useState<number | string>(7)
@@ -225,17 +236,29 @@ function CreatureForm({
   const [side, setSide] = useState<'enemy' | 'ally'>('enemy')
   const [hidden, setHidden] = useState(false)
   const [share, setShare] = useState(true)
-  const pick = (id: string | null) => {
-    setTemplateId(id)
-    const template = templates.find((item) => item.id === id)
-    if (!template) return
-    setName(template.name)
-    setMaxHp(template.max_hp)
-    setAc(template.armor_class)
-    setBonus(template.initiative_bonus)
-    setLegendary(template.legendary_max)
-    setSide(template.side)
+  const pick = (key: string | null) => {
+    const item = catalog.items.find((i) => i.key === key) ?? null
+    setPicked(item)
+    setHpMode('average')
+    if (!item) return
+    setName(item.name.slice(0, 70))
+    setMaxHp(item.hp)
+    setAc(item.ac)
+    setBonus(item.initiative)
+    setLegendary(item.legendary)
+    setSide(
+      item.source === 'homebrew' ? (catalog.templateById.get(item.id)?.side ?? 'enemy') : 'enemy',
+    )
   }
+  const block = catalog.blockFor(picked)
+  const formula =
+    creatureFormula(block) ?? (picked && catalog.templateById.get(picked.id)?.hp_formula)
+  const dice = formula ? parseDice(formula) : null
+  const filter = useMemo(
+    () =>
+      creatureFilter(new Map(catalog.items.map((i) => [i.key, `${i.name} ${i.altName ?? ''}`]))),
+    [catalog.items],
+  )
   const numbers = [count, maxHp, ac, bonus, legendary]
   const valid = name.trim().length > 0 && numbers.every((n) => typeof n === 'number')
   const total = typeof count === 'number' ? count : 1
@@ -248,9 +271,18 @@ function CreatureForm({
         onSubmit={async (event) => {
           event.preventDefault()
           if (!valid || pending) return
+          const base: NpcEntry = picked
+            ? npcEntryFor(
+                picked,
+                block,
+                { count: total, hpMode, alias, hidden, share, side },
+                spellLabel,
+                picked.source === 'srd' ? catalog.rows.get(picked.id) : undefined,
+              )
+            : { kind: 'npc' }
+          if (base.hp_mode === 'roll' && !dice) delete base.hp_mode
           const ok = await submit({
-            kind: 'npc',
-            template_id: templateId ?? undefined,
+            ...base,
             name: name.trim(),
             count: total,
             max_hp: maxHp as number,
@@ -260,21 +292,44 @@ function CreatureForm({
             side,
             hidden,
             share_initiative: total > 1 && share,
+            ...(alias.trim() ? { public_name: alias.trim().slice(0, 70) } : {}),
           })
-          if (ok) setHidden(false)
+          if (ok) {
+            setHidden(false)
+            setAlias('')
+          }
         }}
       >
         <Stack gap="sm" mt={6}>
-          {templates.length > 0 && (
-            <Select
-              label={t('combat.add.template')}
-              value={templateId}
-              onChange={pick}
-              clearable
-              placeholder={t('combat.add.templateNone')}
-              data={templates.map((template) => ({ value: template.id, label: template.name }))}
-            />
-          )}
+          <Select
+            label={t('combat.add.template')}
+            description={t('combat.add.templateHelp')}
+            value={picked?.key ?? null}
+            onChange={pick}
+            clearable
+            searchable
+            filter={filter}
+            limit={60}
+            nothingFoundMessage={t('bestiary.noMatch')}
+            placeholder={t('combat.add.templateNone')}
+            data={[
+              {
+                group: t('bestiary.source.homebrew'),
+                items: catalog.items
+                  .filter((i) => i.source === 'homebrew')
+                  .map((i) => ({ value: i.key, label: i.name })),
+              },
+              {
+                group: t('bestiary.source.srd'),
+                items: catalog.items
+                  .filter((i) => i.source === 'srd')
+                  .map((i) => ({
+                    value: i.key,
+                    label: `${i.name} · ${t('bestiary.crShort', { cr: i.cr })}`,
+                  })),
+              },
+            ].filter((g) => g.items.length > 0)}
+          />
           <TextInput
             required
             label={t('combat.add.name')}
@@ -324,6 +379,30 @@ function CreatureForm({
               onChange={setLegendary}
             />
           </div>
+          <TextInput
+            label={t('bestiary.add.alias')}
+            description={t('bestiary.add.aliasHelp')}
+            value={alias}
+            maxLength={60}
+            onChange={(event) => setAlias(event.currentTarget.value)}
+          />
+          {dice && (
+            <div>
+              <Text size="sm" fw={500} mb={4} id="creature-hp-mode">
+                {t('bestiary.add.hp')}
+              </Text>
+              <SegmentedControl
+                fullWidth
+                aria-labelledby="creature-hp-mode"
+                value={hpMode}
+                onChange={(value) => setHpMode(value as 'average' | 'roll')}
+                data={[
+                  { value: 'average', label: t('bestiary.add.average', { hp: averageDice(dice) }) },
+                  { value: 'roll', label: t('bestiary.add.roll', { dice: diceText(dice) }) },
+                ]}
+              />
+            </div>
+          )}
           <div>
             <Text size="sm" fw={500} mb={4} id="creature-side">
               {t('combat.add.side')}

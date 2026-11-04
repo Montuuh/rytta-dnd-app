@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { Json } from '@/shared/api/database.generated'
 import { config } from '@/shared/lib/config'
 import {
   combatErrorCode,
@@ -79,6 +80,36 @@ const entrySchema = z.discriminatedUnion('kind', [
     share_initiative: z.boolean().optional(),
     legendary_max: z.number().int().min(0).max(9).optional(),
     dm_notes: z.string().max(2000).optional(),
+    public_name: z.string().trim().min(1).max(70).optional(),
+    srd_id: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+      .max(80)
+      .optional(),
+    hp_mode: z.enum(['average', 'roll']).optional(),
+    hp_formula: z
+      .string()
+      .regex(/^[1-9]\d{0,2}d(4|6|8|10|12|20)([+-]\d{1,4})?$/)
+      .optional(),
+    trackers: z
+      .array(
+        z.discriminatedUnion('kind', [
+          z.object({
+            key: z.string().regex(/^[a-z0-9][a-z0-9:.-]{0,119}$/),
+            kind: z.literal('recharge'),
+            label: z.string().trim().min(1).max(120),
+            min: z.number().int().min(2).max(6),
+          }),
+          z.object({
+            key: z.string().regex(/^[a-z0-9][a-z0-9:.-]{0,119}$/),
+            kind: z.literal('uses'),
+            label: z.string().trim().min(1).max(120),
+            max: z.number().int().min(1).max(9),
+          }),
+        ]),
+      )
+      .max(24)
+      .optional(),
   }),
 ])
 
@@ -250,7 +281,8 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
         target_campaign,
         target_template: action.templateId === null ? null : uuid(action.templateId),
         expected_revision: action.revision,
-        data: action.data,
+        // Validated by the server (shape check of the stat block); plain JSON values only.
+        data: action.data as unknown as Json,
         request_id,
       })
       break
@@ -258,6 +290,15 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
       result = await db.rpc('delete_combatant_template', {
         target_campaign,
         target_template: uuid(action.templateId),
+      })
+      break
+    case 'tracker':
+      result = await db.rpc('set_combatant_tracker', {
+        target_campaign,
+        target_combatant: uuid(action.combatantId),
+        tracker_key: z.string().max(120).parse(action.key),
+        tracker_value: int(action.value, 0, 9),
+        request_id,
       })
       break
     case 'templateImage':

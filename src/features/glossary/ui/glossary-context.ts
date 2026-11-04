@@ -43,3 +43,9 @@ export type GlossaryContextValue = {
 export const GlossaryContext = createContext<GlossaryContextValue | null>(null)
 /** Null outside a glossary layer: terms then render as plain text. */
 export const useGlossary = () => useContext(GlossaryContext)
+
+/** The display name of a glossary entry in the current language (spells in stat blocks). */
+export function useGlossaryName() {
+  const glossary = useGlossary()
+  return (id: string) => glossary?.catalog?.byId.get(id)?.name ?? null
+}

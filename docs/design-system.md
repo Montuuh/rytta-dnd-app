@@ -191,3 +191,28 @@ missing information. Exact hit points keep the proportional bar, numbers and ban
 The bestiary token is its own image picker: a visually hidden file input labelled "Add an image of
 …" / "Change the image of …", the token as its label, a camera seal on the rim and the focus ring
 around the token. Progress and success are announced; failures appear under the card.
+
+## Bestiary (ADR 028)
+
+The bestiary is a DM Command Center tab (`?panel=bestiary`, `&creature=` deep link), never a
+navigation item. It reads like a field guide: a large search first (both languages, accents ignored,
+Enter opens the best match, ArrowDown enters the list), a source segmented control (all, SRD,
+campaign, favourites) and a Filters button with an active count (popover from 48em, bottom drawer on
+phones: CR range slider, type and size chips, sort). Rows are 60px buttons with a hexagonal token
+(campaign creatures keep their side's shape and image), the name, the other language's name as a
+gloss, one meta line (CR · type · size · AC · HP) and a source badge; the star is a separate 44px
+toggle. Arrow keys, Home and End move through rows.
+
+From 62em the stat block sits beside the sticky list; below it opens in a full-screen bottom sheet
+titled "Bestiary" with a sticky action bar (add to an encounter first). The stat block is ruled like a
+printed one: core numbers between accent rules, six ability tiles (score, modifier, save; the full
+reading is visually hidden text), detail lines, section headings in the accent and italic entry names;
+rules terms and spells link to the glossary. SRD blocks show their page and licence; the panel ends
+with the official SRD 5.2.1 statement and Rytta's adaptations.
+
+Dialogs that open from the sheet stack above it (z-index 400; their menus 410–420). The editor is a
+full-screen modal on phones and a wide one from 62em with the live preview beside the form (a
+segmented switch below), accordion sections, entries with 44px move and remove buttons and a sticky
+footer with the balance hint ("numbers like CR x–y") and Save. Numeric fields hide their tiny
+steppers; counts use 44px minus and plus buttons. Console trackers are 44px: a recharge toggle with a
+battery glyph and its state in words, and daily uses as numbered round pips (crossed when spent).

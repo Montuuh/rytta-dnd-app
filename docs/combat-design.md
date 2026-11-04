@@ -47,8 +47,12 @@ decisions (what Rytta builds) and lists deliberate non-goals.
    their own HP/AC, an optional lair (initiative 20, loses ties). Sides: party, ally, enemy.
    Batch creation with numbering (Goblin 1..n), optional shared initiative for a group, added
    hidden for reveal later, and mid-fight reinforcements.
-3. **Bestiary** (homebrew templates, DM only): name, side, HP, AC, initiative bonus, legendary
-   actions, notes. Rytta bundles no monster stat blocks (licensing).
+3. **Bestiary** (DM only, ADR 028): the 330 SRD 5.2.1 stat blocks (English and official Spanish,
+   CC-BY-4.0) bundled as lazy content, and campaign creatures with full stat blocks, in the DM
+   Command Center. Adding a creature brings its alias for the table, average or server-rolled hit
+   points and trackers (recharges rolled at its turn start, daily uses); the console shows its
+   stat block. RYT-036's core fields (name, side, HP, AC, initiative bonus, legendary, notes) stay
+   the combat contract.
 4. **Initiative**: each Player types the d20 total in the own row of the table view (the
    keypad shows the own bonus from the sheet), while initiative is collected or, once the fight
    runs, only while the total is missing (RYT-042); the DM sees who is missing, types any value, or lets the server roll d20 + bonus for
@@ -106,7 +110,8 @@ The table view uses the Player projection without "own" data.
 ## 5. Information architecture and screens
 
 ```
-/combat                      DM: encounters (live, prepared, finished) | bestiary
+/combat                      DM: encounters (live, prepared, finished); the bestiary lives in the
+                             DM Command Center (members?panel=bestiary, ADR 028)
                              Player: the table view of the live encounter (its summary once it
                              ends), or "no fight now" + past fights
 /combat/:id                  DM: [Table | DM console] switch, table by default (?view=)
@@ -233,7 +238,7 @@ and damage dealt, taken and healed as tabular numbers. Same component in the DM 
 
 ## 8. Non-goals (this delivery)
 
-Grid/positions, attack and damage roll resolution, monster stat block import, automatic
+Grid/positions, attack and damage roll resolution, automatic
 surprise, XP budgets and encounter difficulty, combat across several campaigns, offline queues.
 Candidates for later tickets: per-field sharing, XP/loot hand-off to shops, reaction tracking,
 and a VTT adapter (Owlbear) behind a feature boundary.

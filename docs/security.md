@@ -58,6 +58,17 @@ fighting visibly in a non-draft encounter; uploads and deletes stay owner or DM.
 outsiders, other Players' writes, Players before the fight starts and DMs of another campaign, and
 run the guarded PRE mirror; storage routers dispatch `pre/` objects to `pre_private` helpers.
 
+Bestiary (ADR 028, RYT-046–049): template stat blocks, SRD origin, hit dice, CR and type live on the
+DM-only `combatant_templates` (shape-checked on the server; Players raise Forbidden on list and save).
+Creature aliases (`public_name`) replace the name for Players and the table in rows, log and summary
+and suppress the creature image in the projection; `srd_id`, `template_id` and trackers are DM only.
+Rolled hit points are rolled on the server and never logged in a visible event. `set_combatant_tracker`
+is DM-only, campaign-locked and idempotent; recharge rolls at turn start are DM-only events. SQL tests
+deny anon, outsiders, Players and DMs of another campaign and run the guarded PRE mirror. The bundled
+SRD catalogue is public CC-BY content and is only loaded on DM screens; what the DM prepares is not.
+Limitation: a creature image path stays readable by members while its combatant is visible, but the
+projection no longer exposes the path while an alias is set.
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite

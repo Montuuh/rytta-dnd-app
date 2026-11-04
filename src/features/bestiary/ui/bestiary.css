@@ -1,0 +1,190 @@
+/* ADR 028 creature stat blocks: a field-journal page. Tokens only (class themes recolor it). */
+.sb {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  color: var(--app-text);
+}
+.sb-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.sb-title {
+  min-width: 0;
+  flex: 1;
+}
+.sb-name {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h2, 1.5rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.sb-name:focus {
+  outline: none;
+}
+.sb-name:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.sb-meta {
+  margin: 4px 0 0;
+  font-style: italic;
+  color: var(--app-muted);
+}
+.sb-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Core numbers: ruled like a printed stat block. */
+.sb-core {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border-top: 2px solid var(--app-accent);
+  border-bottom: 2px solid var(--app-accent);
+}
+.sb-core > div {
+  padding: 8px 10px;
+  min-width: 0;
+}
+.sb-core > div + div:not(.sb-core-wide) {
+  border-inline-start: 1px solid var(--app-border);
+}
+.sb-core-wide {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--app-border);
+}
+.sb-core dt,
+.sb-details dt {
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--app-muted);
+}
+.sb-core dd {
+  margin: 2px 0 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* Ability scores: six tiles, three per row on phones. */
+.sb-abilities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 36em) {
+  .sb-abilities {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.sb-ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-raised);
+  text-align: center;
+}
+.sb-ability-key {
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.sb-ability-score {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.375rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.sb-ability-mods {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.sb-save {
+  font-size: var(--fs-tag);
+  color: var(--app-muted);
+}
+.sb-save.is-proficient {
+  color: var(--app-text);
+  font-weight: 700;
+}
+
+.sb-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.sb-details > div {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, max-content) 1fr;
+  gap: 2px 12px;
+  align-items: baseline;
+}
+@media (max-width: 30em) {
+  .sb-details > div {
+    grid-template-columns: 1fr;
+  }
+}
+.sb-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sb-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sb-section-title {
+  margin: 6px 0 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--app-accent);
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3, 1.25rem);
+  font-weight: 600;
+  color: var(--app-accent);
+}
+.sb-intro {
+  margin: 0;
+  font-style: italic;
+  color: var(--app-muted);
+}
+.sb-entry p {
+  margin: 0 0 6px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.sb-entry p + p {
+  padding-inline-start: 1em;
+}
+.sb-entry-name {
+  font-style: italic;
+}
+.sb-footnote {
+  margin: 4px 0 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}

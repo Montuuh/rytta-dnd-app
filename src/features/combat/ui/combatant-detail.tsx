@@ -43,6 +43,7 @@ import {
   type HpMode,
 } from '../domain/combat'
 import { AmountDialog } from './amount-dialog'
+import { CreatureConsole } from './creature-console'
 import { sideLabel, useReturnFocus, type Run } from './helpers'
 import { HpMeter, Pips, StateBadge } from './parts'
 import { CombatantToken } from './token'
@@ -157,6 +158,16 @@ export function CombatantDetail(props: Props) {
         <Text size="sm" c="dimmed">
           {t('combat.detail.readOnly', { name: combatant.name })}
         </Text>
+      )}
+
+      {dm && combatant.kind === 'npc' && (
+        <CreatureConsole
+          combatant={combatant}
+          run={props.run}
+          pending={props.pending}
+          // Trackers can be prepared before the fight; a finished one is read-only.
+          live={status !== 'ended'}
+        />
       )}
 
       {dm && <DmControls {...props} />}

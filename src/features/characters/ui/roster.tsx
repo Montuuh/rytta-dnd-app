@@ -31,6 +31,7 @@ import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { CharacterPortrait } from '@/features/inventory'
 import { PageHead } from '@/shared/ui/page-head'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
 import {
@@ -128,12 +129,11 @@ export function CharacterRosterPage() {
           // Back to the control that started the action, else the active character's radio.
           const origin = notice?.returnTo?.()
           setNotice(null)
-          requestAnimationFrame(() =>
-            (origin?.isConnected
+          focusWhenReady(() =>
+            origin?.isConnected
               ? origin
               : (document.querySelector<HTMLElement>('.roster-page input[type="radio"]:checked') ??
-                document.querySelector<HTMLElement>('.roster-page .roster-back'))
-            )?.focus(),
+                document.querySelector<HTMLElement>('.roster-page .roster-back')),
           )
         }}
       />
@@ -334,7 +334,7 @@ function PlayerRoster({
         <CreateCharacterDialog
           onClose={() => {
             setCreating(false)
-            requestAnimationFrame(() => createButton.current?.focus())
+            focusWhenReady(() => createButton.current)
           }}
         />
       )}
@@ -715,13 +715,13 @@ function CardMenu({ entry, onNotice, noticeRef }: { entry: Entry } & NoticeProps
           entry={entry}
           onClose={() => {
             setArchiving(false)
-            requestAnimationFrame(() => trigger.current?.focus())
+            focusWhenReady(() => trigger.current)
           }}
           onArchived={(text) => {
             setArchiving(false)
             onNotice({ tone: 'done', text })
             // The card leaves the roster; continue from the outcome message.
-            requestAnimationFrame(() => noticeRef.current?.focus())
+            focusWhenReady(() => noticeRef.current)
           }}
         />
       )}
@@ -824,7 +824,7 @@ function ArchivedSection({
       {
         onSuccess: () => {
           onNotice({ tone: 'done', text: t('roster.restored', { name: entry.name }) })
-          requestAnimationFrame(() => noticeRef.current?.focus())
+          focusWhenReady(() => noticeRef.current)
         },
         onError: (error) =>
           onNotice({
@@ -968,7 +968,7 @@ export function FirstCharacter({
         <CreateCharacterDialog
           onClose={() => {
             setCreating(false)
-            requestAnimationFrame(() => cta.current?.focus())
+            focusWhenReady(() => cta.current)
           }}
         />
       )}

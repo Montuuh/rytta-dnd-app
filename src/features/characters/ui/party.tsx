@@ -67,6 +67,7 @@ import { PlayerAssignmentEditor } from './player-assignment'
 import { CharacterPortrait } from '@/features/inventory'
 import { TradeButton, TradeHistory, TradeLauncher } from '@/features/trades'
 import { newRequestId } from '@/shared/lib/request-id'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 type ResourceField = (typeof fields)[number]
@@ -387,13 +388,13 @@ export function CharacterParty() {
           entry={archiving}
           onClose={() => {
             setArchiving(null)
-            requestAnimationFrame(() => opener.current?.focus())
+            focusWhenReady(() => opener.current)
           }}
           onArchived={(text) => {
             setArchiving(null)
             setArchivedNotice(text)
-            // The card is gone; continue from the outcome message.
-            requestAnimationFrame(() => archivedNoticeRef.current?.focus())
+            // The card is gone; continue from the outcome message once it is on the page.
+            focusWhenReady(() => archivedNoticeRef.current)
           }}
         />
       )}

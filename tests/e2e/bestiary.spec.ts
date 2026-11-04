@@ -155,6 +155,81 @@ test('with large text and little room, the filters open in a side sheet', async 
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
 })
 
+test('the list reads like an index and active filters stay visible as removable chips', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  // Without a query the rows sit under letter rules; the challenge rating is a chip on the row.
+  await expect(
+    page.getByRole('heading', { level: 3, name: /^A \(\d+ en este grupo\)$/ }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Aboleth .* VD 10$/ })).toBeVisible()
+  // "/" jumps to the search from the list.
+  await page.getByRole('button', { name: /^Aboleth/ }).focus()
+  await page.keyboard.press('/')
+  await expect(page.getByRole('searchbox', { name: 'Buscar criatura' })).toBeFocused()
+
+  await page.getByRole('button', { name: 'Filtros' }).click()
+  const filters = phone(info)
+    ? page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+    : page.locator('.mantine-Popover-dropdown')
+  await filters.getByText('Dragón', { exact: true }).click()
+  await filters.getByText('Valor de desafío', { exact: true }).click()
+  await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
+  await expect(filters).toHaveCount(0)
+  // Sorting by CR groups by CR; each filter is a chip that names what it removes.
+  await expect(
+    page.getByRole('heading', { level: 3, name: /^VD 1\/8 \(1 en este grupo\)$/ }),
+  ).toBeVisible()
+  const summary = page.getByRole('group', { name: 'Filtros aplicados' })
+  await expect(summary.getByRole('button', { name: 'Quitar el filtro Dragón' })).toBeVisible()
+  await expectTouchTargets(page, '.bst-active-chip:visible, .bst-active-clear:visible')
+  await audit(page)
+  await evidence(page, info, 'active-filters', 'RYT-050')
+  await summary.getByRole('button', { name: 'Quitar el filtro Dragón' }).click()
+  // Focus stays in the summary on the chip that took its place.
+  await expect(
+    summary.getByRole('button', { name: 'Quitar el filtro Orden: valor de desafío' }),
+  ).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(summary).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Filtros/ })).toBeFocused()
+  await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible()
+})
+
+test('a laptop with large text reads the stat block in the sheet instead of a squeezed pane', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'identity-desktop', 'Laptop widths only')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  for (const [width, text, split] of [
+    [992, '100%', false],
+    [1280, '100%', true],
+    [1280, '150%', false],
+    [1440, '100%', true],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 })
+    await openBestiary(page)
+    await page.addStyleTag({ content: `html { font-size: ${text} }` })
+    await page.getByRole('button', { name: /^Aboleth/ }).click()
+    const pane = split ? page.locator('.bst-detail') : page.locator('.bst-sheet')
+    await expect(pane.getByRole('heading', { name: 'Aboleth' }).first()).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    if (split) {
+      const box = (await pane.boundingBox())!
+      expect(box.width).toBeGreaterThanOrEqual(400)
+      expect(box.x + box.width).toBeLessThanOrEqual(width)
+    }
+  }
+})
+
 test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and rolled hit points', async ({
   page,
 }, info) => {

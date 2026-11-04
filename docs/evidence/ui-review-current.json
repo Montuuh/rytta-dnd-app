@@ -1,8 +1,8 @@
 {
-  "ticket": "RYT-046",
+  "ticket": "RYT-050",
   "reviewer": "ui-ux",
   "verdict": "PASS",
   "reviewedAt": "2026-11-04",
-  "sourceDigest": "717b0bbe71c6a08a2d8e926684b4013572c10e1a84867fdca14903c9f7500d97",
-  "report": "docs/evidence/ui-review/ci-stabilization/review.md"
+  "sourceDigest": "d3c3db3943252e51ff3c41eb2f671b3eb9850be1c679d6af94ac137460ad34ea",
+  "report": "docs/evidence/ui-review/ryt-050/review.md"
 }

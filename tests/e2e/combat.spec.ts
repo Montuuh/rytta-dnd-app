@@ -688,7 +688,11 @@ test('RYT-041 dialogs from menus return focus to the menu; the sheet to its open
     // The detail's own DM menu has its own name and gets focus back too.
     const more = page.getByRole('button', { name: 'Más controles del DM para Arin' })
     await more.click()
-    await page.getByRole('menuitem', { name: 'Quitar del combate' }).click()
+    // Scoped: the Goblin menu can still be fading out from the last round.
+    await page
+      .getByRole('menu', { name: 'Más controles del DM para Arin' })
+      .getByRole('menuitem', { name: 'Quitar del combate' })
+      .click()
     await page.keyboard.press('Escape')
     await expect(more).toBeFocused()
   } else {

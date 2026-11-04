@@ -457,7 +457,8 @@ test('closing a dirty editor asks before discarding the edits', async ({ page })
   const article = page.locator('article.gl-entry')
   await entryAction(page, article, 'Descanso duro', 'edit')
   const editor = page.getByRole('dialog', { name: 'Editar entrada' })
-  // Untouched: closes at once.
+  // Untouched: closes at once. Escape belongs to the editor once its focus trap has moved in.
+  await expect(editor.getByRole('textbox', { name: /^Nombre/ })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await entryAction(page, article, 'Descanso duro', 'edit')
@@ -654,6 +655,27 @@ test('Escape closes a definition opened from an item card before the card itself
   // The next Escape closes the card.
   await page.keyboard.press('Escape')
   await expect(term).toHaveCount(0)
+})
+
+test('a definition closed before its focus trap moves in still returns focus to the term', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/inventory`)
+  await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
+  const term = page.getByRole('button', { name: 'cortante: ver definición' })
+  await term.click()
+  await expect(page.locator('.gl-sheet-headword')).toHaveText('Cortante')
+  // The order seen on a slow runner: Escape while focus is still on the term, then the sheet's
+  // focus trap lands inside the closing sheet.
+  await page.evaluate(() => {
+    document.querySelector<HTMLElement>('[aria-label="cortante: ver definición"]')!.focus()
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    setTimeout(() => document.querySelector<HTMLElement>('.gl-sheet-content button')?.focus(), 30)
+  })
+  await expect(page.locator('.gl-sheet-headword')).toHaveCount(0)
+  await expect(term).toBeFocused()
 })
 
 test('a search change from outside the field (the nav item) resets the field', async ({ page }) => {

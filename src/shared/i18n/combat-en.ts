@@ -230,7 +230,8 @@ export const combatEn = {
   'combat.bestiary.edit': 'Edit {{name}}',
   'combat.bestiary.delete': 'Delete {{name}}',
   'combat.bestiary.deleteTitle': 'Delete {{name}} from the bestiary?',
-  'combat.bestiary.deleteBody': 'Encounters that already use it keep their copies.',
+  'combat.bestiary.deleteBody':
+    'This cannot be undone. Encounters that already use it keep their copies.',
   'combat.bestiary.notes': 'Notes',
   'combat.bestiary.save': 'Save creature',
   'combat.bestiary.saved': 'Creature saved.',

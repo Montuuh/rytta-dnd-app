@@ -30,8 +30,23 @@
 }
 /* Filters drops below the search when the field would get too short (large text on phones). */
 .bst-toolbar-search .bst-search {
-  flex: 1 1 14rem;
+  flex: 1 1 10rem;
   min-width: 0;
+}
+/* Phones and tablets (no side pane): the search row stays at the top while the list scrolls. */
+.bst:not([data-split]) > .bst-toolbar-search {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  margin-inline: -4px;
+  padding: 8px 4px;
+  background: var(--app-bg);
+  box-shadow: 0 8px 12px -12px color-mix(in srgb, var(--app-text) 45%, transparent);
+}
+/* A row reached by Shift+Tab scrolls clear of the sticky search row (WCAG 2.4.11): the page
+   reserves the row's height at the top while the phone or tablet bestiary is open. */
+html:has(.bst:not([data-split])) {
+  scroll-padding-top: 7.5rem;
 }
 .bst-toolbar-row {
   display: flex;
@@ -119,6 +134,9 @@
      or against the top edge. */
   scroll-padding: 2rem 0 6rem;
 }
+.bst-filter-dropdown {
+  background: var(--app-surface);
+}
 .bst-filter-dropdown .bst-filter-actions {
   position: sticky;
   /* Above the range slider's track and thumbs (Mantine: 1 and 3). */
@@ -127,11 +145,23 @@
   margin: 0 calc(-1 * var(--mantine-spacing-md)) calc(-1 * var(--mantine-spacing-sm));
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-md) var(--mantine-spacing-sm);
   border-top: 1px solid var(--mantine-color-default-border);
-  /* The dropdown's own surface (Mantine Popover). */
-  background: var(--mantine-color-white);
+  background: var(--app-surface);
 }
-[data-mantine-color-scheme='dark'] .bst-filter-dropdown .bst-filter-actions {
-  background: var(--mantine-color-dark-6);
+/* Phones: the filters sheet keeps Clear and "Show N creatures" in reach under the thumb. */
+.bst-filter-drawer {
+  background: var(--app-surface);
+  /* Focused tiles scroll clear of the sticky actions (WCAG 2.4.11). */
+  scroll-padding-block: 2rem 6.5rem;
+}
+.bst-filter-sheet .bst-filter-actions {
+  position: sticky;
+  z-index: 4;
+  bottom: 0;
+  margin: 0 calc(-1 * var(--mantine-spacing-md));
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md)
+    calc(var(--mantine-spacing-sm) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--app-border);
+  background: var(--app-surface);
 }
 .bst-filters .bst-chip .mantine-Chip-label {
   height: auto;
@@ -141,7 +171,11 @@
 .bst-filters .mantine-RangeSlider-thumb::after {
   content: '';
   position: absolute;
-  inset: -8px;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 .bst-filters .mantine-RangeSlider-markLabel {
   font-size: var(--fs-tag);
@@ -406,7 +440,7 @@
 .bst-actions-secondary {
   display: flex;
   flex: 1 1 auto;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 4px;
   align-items: center;
   min-width: 0;
@@ -415,6 +449,7 @@
 .bst-actions-secondary > .mantine-Button-root {
   flex: 0 1 auto;
   min-width: max-content;
+  max-width: 100%;
   height: auto;
   min-height: 44px;
 }
@@ -572,13 +607,8 @@
   box-shadow: inset 0 0 0 1px var(--app-accent);
   background: color-mix(in srgb, var(--app-accent) 10%, var(--app-surface));
 }
-.bst-archetype:has(input:checked)::after {
-  content: '✓';
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-weight: 800;
-  color: var(--app-accent);
+.bst-archetype:has(input:checked) .bst-tile-seal {
+  display: grid;
 }
 .bst-archetype:has(input:focus-visible) {
   outline: 3px solid var(--app-focus);
@@ -806,4 +836,26 @@
 .combat-use[aria-disabled='true'] {
   cursor: progress;
   opacity: 0.7;
+}
+
+/* Editor entry tools: the trait library and Add wrap below the heading on narrow sheets. */
+.bst-entry-tools {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+.bst-entry-tools .mantine-Select-root {
+  flex: 1 1 11rem;
+  max-width: 220px;
+}
+/* Phone stat block sheet: a slimmer header, the creature's own name heads the sheet. */
+.bst-sheet .mantine-Drawer-header {
+  min-height: 56px;
+  padding-block: 6px;
+}
+
+.bst-actions-icons {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  align-items: center;
 }

@@ -4,7 +4,6 @@ import {
   ActionIcon,
   Alert,
   Button,
-  Checkbox,
   Group,
   Modal,
   NumberInput,
@@ -16,13 +15,21 @@ import {
   Textarea,
   Tooltip,
 } from '@mantine/core'
-import { ArrowDown, ArrowUp, BookMarked, Plus, Scale, Trash2 } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  BookMarked,
+  Heart,
+  Plus,
+  Scale,
+  Shield,
+  ShieldCheck,
+  Trash2,
+  Zap,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   abilityKeys,
-  challengeRatings,
-  creatureSizes,
-  creatureTypes,
   detailKeys,
   estimateCr,
   hitDieBySize,
@@ -47,6 +54,7 @@ import {
   type DraftEntry,
   type UsageChoice,
 } from './creature-draft'
+import { CrDial, NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
 import { useRunner } from './helpers'
 import { RunnerError } from './parts'
 
@@ -66,6 +74,7 @@ export function CreatureEditor({
   baselines,
   traits,
   unplaced = [],
+  basedOn,
   onClose,
   onSaved,
 }: {
@@ -78,6 +87,8 @@ export function CreatureEditor({
   traits: LibraryTrait[]
   /** Pasted lines the parser could not place. */
   unplaced?: string[]
+  /** A customised SRD creature: the title names it. */
+  basedOn?: string
   onClose: () => void
   /** The saved template id (null for a new one) and the name it was saved with. */
   onSaved: (id: string | null, name: string) => void
@@ -157,25 +168,18 @@ export function CreatureEditor({
                 maxLength={80}
                 onChange={(e) => update({ name: e.currentTarget.value })}
               />
+              <SizeScale
+                legend={t('bestiary.editor.size')}
+                value={draft.size}
+                onChange={(v) => isCreatureSize(v) && update({ size: v, hitDie: hitDieBySize[v] })}
+              />
+              <TypeTiles
+                compact
+                legend={t('bestiary.editor.type')}
+                value={draft.type}
+                onChange={(v) => isCreatureType(v) && update({ type: v })}
+              />
               <div className="bst-grid">
-                <Select
-                  label={t('bestiary.editor.size')}
-                  value={draft.size}
-                  allowDeselect={false}
-                  comboboxProps={{ zIndex: 410 }}
-                  onChange={(v) =>
-                    v && isCreatureSize(v) && update({ size: v, hitDie: hitDieBySize[v] })
-                  }
-                  data={creatureSizes.map((s) => ({ value: s, label: t(`bestiary.size.${s}`) }))}
-                />
-                <Select
-                  label={t('bestiary.editor.type')}
-                  value={draft.type}
-                  allowDeselect={false}
-                  comboboxProps={{ zIndex: 410 }}
-                  onChange={(v) => v && isCreatureType(v) && update({ type: v })}
-                  data={creatureTypes.map((s) => ({ value: s, label: t(`bestiary.type.${s}`) }))}
-                />
                 <TextInput
                   label={t('bestiary.editor.tags')}
                   description={t('bestiary.editor.tagsHelp')}
@@ -215,34 +219,22 @@ export function CreatureEditor({
                   )
                 }
               />
-              <div className="bst-grid">
-                <Select
+              <div className="bst-editor-cr-side">
+                <CrDial
                   label={t('bestiary.cr')}
+                  value={draft.cr}
+                  onChange={(v) => update({ cr: v })}
                   description={t('bestiary.editor.crHelp', {
                     xp: numbers.xp.toLocaleString(),
                     pb: numbers.pb,
                   })}
-                  value={draft.cr}
-                  allowDeselect={false}
-                  comboboxProps={{ zIndex: 410 }}
-                  onChange={(v) => v && update({ cr: v })}
-                  data={challengeRatings.map((c) => ({ value: c, label: c }))}
                 />
-                <div>
-                  <Text size="sm" fw={500} mb={4} id="editor-side">
-                    {t('combat.add.side')}
-                  </Text>
-                  <SegmentedControl
-                    fullWidth
-                    aria-labelledby="editor-side"
-                    value={draft.side}
-                    onChange={(v) => update({ side: v as 'enemy' | 'ally' })}
-                    data={[
-                      { value: 'enemy', label: t('combat.side.enemy') },
-                      { value: 'ally', label: t('combat.side.ally') },
-                    ]}
-                  />
-                </div>
+                <SideToggle
+                  legend={t('combat.add.side')}
+                  name={draft.name}
+                  value={draft.side}
+                  onChange={(v) => update({ side: v })}
+                />
               </div>
             </Stack>
           </Accordion.Panel>
@@ -252,12 +244,11 @@ export function CreatureEditor({
           <Accordion.Panel>
             <Stack gap="sm">
               <div className="bst-grid">
-                <NumberInput
-                  hideControls
+                <NumberDial
                   label={t('combat.add.ac')}
+                  icon={Shield}
                   min={0}
                   max={30}
-                  allowDecimal={false}
                   value={draft.ac}
                   onChange={(v) => typeof v === 'number' && update({ ac: v })}
                 />
@@ -268,36 +259,36 @@ export function CreatureEditor({
                   maxLength={60}
                   onChange={(e) => update({ acNote: e.currentTarget.value })}
                 />
-                <NumberInput
-                  hideControls
+                <NumberDial
                   label={t('bestiary.editor.hitDice')}
+                  icon={Heart}
                   description={t('bestiary.editor.hpResult', {
                     hp: numbers.hp,
                     dice: numbers.dice,
                   })}
                   min={1}
                   max={999}
-                  allowDecimal={false}
                   value={draft.hitDice}
                   onChange={(v) => typeof v === 'number' && update({ hitDice: v })}
                 />
-                <Select
-                  label={t('bestiary.editor.hitDie')}
+                <TileGroup
+                  legend={t('bestiary.editor.hitDie')}
+                  className="bst-dice"
                   value={String(draft.hitDie)}
-                  allowDeselect={false}
-                  comboboxProps={{ zIndex: 410 }}
-                  onChange={(v) => v && update({ hitDie: Number(v) })}
-                  data={dieFaces.map((f) => ({ value: String(f), label: `d${f}` }))}
+                  onChange={(v) => update({ hitDie: Number(v) })}
+                  options={dieFaces.map((f) => ({
+                    value: String(f),
+                    content: <span className="bst-die">d{f}</span>,
+                  }))}
                 />
-                <NumberInput
-                  hideControls
+                <NumberDial
                   label={t('bestiary.editor.initiativeExtra')}
+                  icon={Zap}
                   description={t('bestiary.editor.initiativeResult', {
                     value: signed(numbers.initiative),
                   })}
                   min={-10}
                   max={20}
-                  allowDecimal={false}
                   value={draft.initiativeExtra}
                   onChange={(v) => typeof v === 'number' && update({ initiativeExtra: v })}
                 />
@@ -318,36 +309,41 @@ export function CreatureEditor({
               {abilityKeys.map((key) => (
                 <fieldset key={key} className="bst-ability-field">
                   <legend>{t(`bestiary.ability.${key}`)}</legend>
-                  <NumberInput
-                    hideControls
-                    aria-label={t('bestiary.editor.score', { name: t(`bestiary.ability.${key}`) })}
+                  <NumberDial
+                    label={t('bestiary.editor.score', { name: t(`bestiary.ability.${key}`) })}
+                    className="bst-ability-dial"
                     min={1}
                     max={30}
-                    allowDecimal={false}
                     value={draft.abilities[key]}
                     onChange={(v) =>
                       typeof v === 'number' &&
                       update({ abilities: { ...draft.abilities, [key]: v } })
                     }
                   />
-                  <Text size="sm" c="dimmed">
-                    {t('bestiary.editor.modSave', {
-                      mod: signed(numbers.mods[key]),
-                      save: signed(numbers.saves[key]),
-                    })}
-                  </Text>
-                  <Checkbox
-                    size="md"
-                    label={t('bestiary.editor.proficientSave')}
-                    checked={draft.saves.includes(key)}
-                    onChange={(e) =>
-                      update({
-                        saves: e.currentTarget.checked
-                          ? [...draft.saves, key]
-                          : draft.saves.filter((s) => s !== key),
-                      })
-                    }
-                  />
+                  <p className="bst-ability-read">
+                    <span className="bst-ability-mod">{signed(numbers.mods[key])}</span>
+                    <span>
+                      {t('bestiary.saveShort')} {signed(numbers.saves[key])}
+                    </span>
+                  </p>
+                  <label className="bst-seal">
+                    <input
+                      type="checkbox"
+                      aria-label={t('bestiary.editor.saveSealFor', {
+                        name: t(`bestiary.ability.${key}`),
+                      })}
+                      checked={draft.saves.includes(key)}
+                      onChange={(e) =>
+                        update({
+                          saves: e.currentTarget.checked
+                            ? [...draft.saves, key]
+                            : draft.saves.filter((s) => s !== key),
+                        })
+                      }
+                    />
+                    <ShieldCheck size={16} aria-hidden="true" />
+                    <span aria-hidden="true">{t('bestiary.editor.saveSeal')}</span>
+                  </label>
                 </fieldset>
               ))}
             </div>
@@ -434,7 +430,9 @@ export function CreatureEditor({
       title={
         template
           ? t('bestiary.editor.editTitle', { name: template.name })
-          : t('bestiary.editor.newTitle')
+          : basedOn
+            ? t('bestiary.editor.basedTitle', { name: basedOn })
+            : t('bestiary.editor.newTitle')
       }
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       classNames={{ body: 'bst-editor-body' }}
@@ -552,7 +550,7 @@ function EntryList({
         <Text component="h3" id={headingId} fw={700} className="bst-entry-heading" tabIndex={-1}>
           {t(`bestiary.section.${kind}`)} <span className="bst-count">({entries.length})</span>
         </Text>
-        <Group gap="xs">
+        <Group gap="xs" className="bst-entry-tools">
           {traits.length > 0 && (
             <Select
               aria-label={t('bestiary.editor.library')}
@@ -567,7 +565,6 @@ function EntryList({
                 const trait = traits.find((tr) => tr.key === key)
                 if (trait) add({ name: trait.name, key: trait.key, text: trait.text.join('\n\n') })
               }}
-              w={220}
             />
           )}
           <Button

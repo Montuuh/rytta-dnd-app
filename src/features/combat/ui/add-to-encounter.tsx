@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import {
-  ActionIcon,
   Alert,
   Button,
+  Collapse,
   Group,
   Loader,
   Modal,
-  NumberInput,
-  SegmentedControl,
   Select,
   Stack,
   Switch,
@@ -15,7 +13,7 @@ import {
   TextInput,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { Dices, Minus, Plus, Sigma } from 'lucide-react'
+import { ChevronDown, Dices, Sigma, SlidersHorizontal, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -34,6 +32,9 @@ import type { CombatantTemplate } from '../domain/combat'
 import { creatureFormula, npcEntryFor, useSpellLabel, type AddOptions } from './creatures'
 import { useRunner } from './helpers'
 import { RunnerError } from './parts'
+import { NumberDial, SideToggle, TileGroup } from './bestiary-widgets'
+import { typeGlyphs } from './bestiary-glyphs'
+import { Token } from './token'
 
 /**
  * Adds a bestiary creature to an encounter (ADR 028): which fight, how many, average or rolled
@@ -70,7 +71,16 @@ export function AddToEncounterDialog({
   const [side, setSide] = useState<'enemy' | 'ally'>(template?.side ?? 'enemy')
   const [hidden, setHidden] = useState(false)
   const [share, setShare] = useState(true)
-  const [done, setDone] = useState<{ id: string; name: string; count: number } | null>(null)
+  const [done, setDone] = useState<{
+    id: string
+    name: string
+    count: number
+    side: 'enemy' | 'ally'
+    hidden: boolean
+    hp: string
+  } | null>(null)
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const optionsId = useId()
   const chosen = encounterId ?? open.find((e) => e.status !== 'draft')?.id ?? open[0]?.id ?? null
   const formula = creatureFormula(block) ?? template?.hp_formula ?? undefined
   const dice = formula ? parseDice(formula) : null
@@ -79,6 +89,7 @@ export function AddToEncounterDialog({
   const loading = encounters.isPending
   const failed = encounters.isError && !encounters.data
   const creating = !loading && !failed && open.length === 0
+  const targetLabel = creating ? newName.trim() : (open.find((e) => e.id === chosen)?.name ?? '')
   const valid =
     !loading &&
     !failed &&
@@ -105,7 +116,20 @@ export function AddToEncounterDialog({
     const entry = npcEntryFor(item, block, options, spellLabel, row)
     if (!dice) delete entry.hp_formula
     if (await run({ kind: 'add', encounterId: target!, entries: [entry] }))
-      setDone({ id: target!, name: targetName, count: total })
+      setDone({
+        id: target!,
+        name: targetName,
+        count: total,
+        side,
+        hidden,
+        hp:
+          hpMode === 'roll' && dice
+            ? t('bestiary.add.doneRoll', { dice: diceText(dice) })
+            : t('bestiary.add.doneAverage', {
+                count: total,
+                hp: dice ? averageDice(dice) : item.hp,
+              }),
+      })
   }
   const createEncounter = async (name: string) => {
     const before = new Set((encounters.data ?? []).map((e) => e.id))
@@ -120,14 +144,38 @@ export function AddToEncounterDialog({
       fullScreen={phone}
       zIndex={400}
       size="lg"
-      title={t('bestiary.add.title', { name: item.name })}
+      title={done ? t('bestiary.add.doneTitle') : t('bestiary.add.title', { name: item.name })}
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
       {done ? (
         <Stack gap="md">
-          <Alert className="combat-alert" role="status">
-            {t('bestiary.add.done', { count: done.count, name: item.name, encounter: done.name })}
-          </Alert>
+          <div className="bst-added" role="status">
+            <div className="bst-stack" aria-hidden="true">
+              {Array.from({ length: Math.min(done.count, 5) }, (_, i) => (
+                <Token
+                  key={i}
+                  name={item.name}
+                  side={done.side}
+                  imageKind="creature"
+                  path={item.imagePath ?? null}
+                  size={40}
+                  glyph={item.type ? typeGlyphs[item.type] : undefined}
+                />
+              ))}
+              {done.count > 5 && (
+                <span className="bst-stack-more">
+                  {t('bestiary.add.stackMore', { count: done.count - 5 })}
+                </span>
+              )}
+            </div>
+            <p className="bst-added-title">
+              {t('bestiary.add.done', { count: done.count, name: item.name, encounter: done.name })}
+            </p>
+            <ul className="bst-added-facts">
+              <li>{done.hp}</li>
+              {done.hidden && <li>{t('bestiary.add.doneHidden', { count: done.count })}</li>}
+            </ul>
+          </div>
           <Group justify="flex-end" className="bst-dialog-actions">
             <Button variant="subtle" onClick={onClose}>
               {t('bestiary.add.keepBrowsing')}
@@ -193,125 +241,83 @@ export function AddToEncounterDialog({
                 }))}
               />
             )}
-            <div className="bst-grid">
-              <NumberInput
+            <div className="bst-add-count">
+              <NumberDial
                 // The first field that is there from the start (encounters may still be loading).
-                data-autofocus
-                ref={countRef}
-                hideControls
+                autoFocus
+                inputRef={countRef}
                 label={t('combat.add.count')}
+                icon={Users}
                 min={1}
                 max={20}
-                allowDecimal={false}
                 value={count}
                 onChange={setCount}
-                classNames={{ input: 'bst-count-input' }}
-                leftSectionWidth={48}
-                rightSectionWidth={48}
-                leftSection={
-                  <ActionIcon
-                    variant="subtle"
-                    size={44}
-                    disabled={total <= 1}
-                    aria-label={t('bestiary.add.fewer')}
-                    onClick={() => setCount(Math.max(1, total - 1))}
-                  >
-                    <Minus size={18} aria-hidden="true" />
-                  </ActionIcon>
-                }
-                rightSection={
-                  <ActionIcon
-                    variant="subtle"
-                    size={44}
-                    disabled={total >= 20}
-                    aria-label={t('bestiary.add.more')}
-                    onClick={() => setCount(Math.min(20, total + 1))}
-                  >
-                    <Plus size={18} aria-hidden="true" />
-                  </ActionIcon>
-                }
-                leftSectionPointerEvents="all"
-                rightSectionPointerEvents="all"
               />
-              <TextInput
-                label={t('bestiary.add.alias')}
-                description={t('bestiary.add.aliasHelp')}
-                value={alias}
-                maxLength={60}
-                onChange={(event) => setAlias(event.currentTarget.value)}
-              />
+              <div className="bst-stack" aria-hidden="true">
+                {Array.from({ length: Math.min(total, 5) }, (_, i) => (
+                  <Token
+                    key={i}
+                    name={item.name}
+                    side={side}
+                    imageKind="creature"
+                    path={item.imagePath ?? null}
+                    size={36}
+                    glyph={item.type ? typeGlyphs[item.type] : undefined}
+                  />
+                ))}
+                {total > 5 && (
+                  <span className="bst-stack-more">
+                    {t('bestiary.add.stackMore', { count: total - 5 })}
+                  </span>
+                )}
+              </div>
             </div>
-            <div>
-              <Text size="sm" fw={500} mb={4} id="bestiary-hp-mode">
-                {t('bestiary.add.hp')}
-              </Text>
-              <SegmentedControl
-                className="bst-seg-wrap"
-                fullWidth
-                aria-labelledby="bestiary-hp-mode"
-                value={dice ? hpMode : 'average'}
-                onChange={(value) => setHpMode(value as 'average' | 'roll')}
-                data={[
-                  {
-                    value: 'average',
-                    label: (
-                      <span className="bst-seg">
-                        <Sigma size={16} aria-hidden="true" />
-                        {t('bestiary.add.average', { hp: dice ? averageDice(dice) : item.hp })}
+            <TileGroup
+              legend={t('bestiary.add.hp')}
+              className="bst-choice-tiles"
+              value={dice ? hpMode : 'average'}
+              onChange={setHpMode}
+              options={[
+                {
+                  value: 'average' as const,
+                  content: (
+                    <span className="bst-choice">
+                      <Sigma size={18} aria-hidden="true" />
+                      <span>
+                        <span className="bst-choice-title">
+                          {t('bestiary.add.average', { hp: dice ? averageDice(dice) : item.hp })}
+                        </span>
+                        <span className="bst-choice-help">{t('bestiary.add.averageHelp')}</span>
                       </span>
-                    ),
-                  },
-                  {
-                    value: 'roll',
-                    disabled: !dice,
-                    label: (
-                      <span className="bst-seg">
-                        <Dices size={16} aria-hidden="true" />
-                        {dice
-                          ? t('bestiary.add.roll', { dice: diceText(dice) })
-                          : t('bestiary.add.noDice')}
+                    </span>
+                  ),
+                },
+                {
+                  value: 'roll' as const,
+                  disabled: !dice,
+                  content: (
+                    <span className="bst-choice">
+                      <Dices size={18} aria-hidden="true" />
+                      <span>
+                        <span className="bst-choice-title">
+                          {dice
+                            ? t('bestiary.add.roll', { dice: diceText(dice) })
+                            : t('bestiary.add.noDice')}
+                        </span>
+                        {dice && (
+                          <span className="bst-choice-help">
+                            {t('bestiary.add.rollRange', {
+                              min: Math.max(1, dice.count + dice.bonus),
+                              max: dice.count * dice.faces + dice.bonus,
+                            })}
+                          </span>
+                        )}
                       </span>
-                    ),
-                  },
-                ]}
-              />
-              {hpMode === 'roll' && dice && (
-                <Text size="sm" c="dimmed" mt={4}>
-                  {t('bestiary.add.rollHelp')}
-                </Text>
-              )}
-            </div>
-            <div>
-              <Text size="sm" fw={500} mb={4} id="bestiary-side">
-                {t('combat.add.side')}
-              </Text>
-              <SegmentedControl
-                fullWidth
-                aria-labelledby="bestiary-side"
-                value={side}
-                onChange={(value) => setSide(value as 'enemy' | 'ally')}
-                data={[
-                  { value: 'enemy', label: t('combat.side.enemy') },
-                  { value: 'ally', label: t('combat.side.ally') },
-                ]}
-              />
-            </div>
-            <Switch
-              className="combat-switch"
-              size="md"
-              label={t('combat.add.hidden')}
-              checked={hidden}
-              onChange={(event) => setHidden(event.currentTarget.checked)}
+                    </span>
+                  ),
+                },
+              ]}
             />
-            {total > 1 && (
-              <Switch
-                className="combat-switch"
-                size="md"
-                label={t('combat.add.share')}
-                checked={share}
-                onChange={(event) => setShare(event.currentTarget.checked)}
-              />
-            )}
             {trackers.length > 0 && (
               <Text size="sm" c="dimmed">
                 {t('bestiary.add.trackers', {
@@ -320,12 +326,69 @@ export function AddToEncounterDialog({
                 })}
               </Text>
             )}
+            <div className="bst-options">
+              <button
+                type="button"
+                className="bst-options-toggle"
+                aria-expanded={optionsOpen}
+                aria-controls={optionsId}
+                onClick={() => setOptionsOpen((v) => !v)}
+              >
+                <SlidersHorizontal size={18} aria-hidden="true" />
+                <span>
+                  <span className="bst-options-title">{t('bestiary.add.tableOptions')}</span>
+                  <span className="bst-options-summary">
+                    {t('bestiary.add.tableSummary', {
+                      side: t(`combat.side.${side}`),
+                      visibility: t(hidden ? 'bestiary.add.hiddenShort' : 'bestiary.add.visible'),
+                      name: alias.trim() || t('bestiary.add.realName'),
+                    })}
+                  </span>
+                </span>
+                <ChevronDown size={18} className="bst-options-chevron" aria-hidden="true" />
+              </button>
+              <Collapse expanded={optionsOpen} id={optionsId} transitionDuration={160}>
+                <div className="bst-options-body">
+                  <TextInput
+                    label={t('bestiary.add.alias')}
+                    description={t('bestiary.add.aliasHelp')}
+                    value={alias}
+                    maxLength={60}
+                    onChange={(event) => setAlias(event.currentTarget.value)}
+                  />
+                  <SideToggle
+                    legend={t('combat.add.side')}
+                    name={item.name}
+                    value={side}
+                    onChange={setSide}
+                  />
+                  <Switch
+                    className="combat-switch"
+                    size="md"
+                    label={t('combat.add.hidden')}
+                    checked={hidden}
+                    onChange={(event) => setHidden(event.currentTarget.checked)}
+                  />
+                  {total > 1 && (
+                    <Switch
+                      className="combat-switch"
+                      size="md"
+                      label={t('combat.add.share')}
+                      checked={share}
+                      onChange={(event) => setShare(event.currentTarget.checked)}
+                    />
+                  )}
+                </div>
+              </Collapse>
+            </div>
             <Group justify="flex-end" className="bst-dialog-actions">
               <Button variant="subtle" onClick={onClose}>
                 {t('action.cancel')}
               </Button>
               <Button type="submit" disabled={!valid || pending} loading={pending}>
-                {t('bestiary.add.submit', { count: total })}
+                {targetLabel
+                  ? t('bestiary.add.submitTo', { count: total, encounter: targetLabel })
+                  : t('bestiary.add.submit', { count: total })}
               </Button>
             </Group>
           </Stack>

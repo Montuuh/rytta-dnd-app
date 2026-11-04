@@ -2023,6 +2023,75 @@
         "docs/evidence/ui-review/ryt-050/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-051",
+      "title": "Bestiary instruments across filters, dialogs and editor",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-04: review every bestiary panel, button and form, replace generic buttons and pills with distinctive frontend widgets."
+      ],
+      "dependsOn": ["RYT-050"],
+      "scope": "Replace the generic pills, segmented controls, selects and number fields in the bestiary (Filters, quick creature, Add to an encounter, archetype start, editor, stat block) with one set of accessible tabletop instruments (ADR 029).",
+      "acceptance": [
+        "Filters use type glyph tiles, a size scale of miniature bases, sort cards and CR bands; every state reads without colour.",
+        "Quick creature, Add to an encounter, the archetype start and the editor use number dials, the CR spin button, the side toggle with token shapes and hit point cards.",
+        "Editor abilities are dial tiles with a saving throw seal; the hit die is a row of die tiles.",
+        "All instruments are native inputs or ARIA spin buttons with 44px targets, keyboard support and named steppers; axe passes at 390px, tablet and laptop in both themes."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
+      "evidence": [
+        "docs/decisions/029-bestiary-instruments.md",
+        "tests/e2e/bestiary.spec.ts",
+        "docs/evidence/RYT-051/filters-mobile.png",
+        "docs/evidence/RYT-051/filters-tablet.png",
+        "docs/evidence/RYT-051/archetype-mobile.png",
+        "docs/evidence/RYT-051/archetype-tablet.png",
+        "docs/evidence/RYT-051/editor-mobile.png",
+        "docs/evidence/RYT-051/editor-tablet.png",
+        "docs/evidence/ui-review/ryt-051/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-052",
+      "title": "Bestiary critique and audit fixes",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-04: run the Impeccable critique and audit on the bestiary and fix everything they found (mobile list and filters first, compact navigation)."
+      ],
+      "dependsOn": ["RYT-051"],
+      "scope": "Fix the critique (29/40) and audit (15/20) findings: phone list reach, filters sheet actions, Add to an encounter density and ending, Customise/Duplicate overlap, scannable list tokens, 150% text overflow, copy and content errata, slider and clear-button targets, theme tokens and deferred filtering.",
+      "acceptance": [
+        "On phones and tablets the search row stays visible while the list scrolls; the filters sheet shows Clear and Show N creatures without scrolling.",
+        "List tokens without an image show the creature type glyph.",
+        "Add to an encounter asks encounter, count and hit points first, folds the table options under a summary, names the target encounter on submit and summarises what was added.",
+        "Customise is the only copy action for SRD creatures and its editor title names the source; copy has no gendered participles; delete says it cannot be undone; the Spanish SRD text has no split words.",
+        "Slider thumbs and the search clear button have 44px targets; filters use app tokens; filtering is deferred while typing; no horizontal overflow at 390px with 150% text."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
+      "evidence": [
+        "tests/e2e/bestiary.spec.ts",
+        "docs/design-system.md",
+        "docs/evidence/RYT-052/mobile-2-scrolled.png",
+        "docs/evidence/RYT-052/mobile-3-filters.png",
+        "docs/evidence/RYT-052/mobile-4-add.png",
+        "docs/evidence/RYT-052/mobile-6-add-done.png",
+        "docs/evidence/ui-review/ryt-052/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

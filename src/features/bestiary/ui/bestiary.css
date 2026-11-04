@@ -188,3 +188,29 @@
   font-size: var(--fs-meta);
   color: var(--app-muted);
 }
+
+/* RYT-051: the core numbers carry the glyphs the editor and dials use (shield, heart, spark, feet). */
+.sb-core dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sb-core-glyph {
+  flex: none;
+  color: var(--app-accent);
+}
+
+/* Narrow blocks at large text: AC and HP share a row, initiative takes the next. */
+.sb {
+  container-type: inline-size;
+}
+@container (max-width: 20rem) {
+  .sb-core {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sb-core > div:nth-child(3) {
+    grid-column: 1 / -1;
+    border-inline-start: 0;
+    border-top: 1px solid var(--app-border);
+  }
+}

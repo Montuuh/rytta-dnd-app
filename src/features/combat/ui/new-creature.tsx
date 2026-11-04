@@ -13,6 +13,7 @@ import {
 import {
   ArrowLeft,
   BookCopy,
+  Check,
   ClipboardPaste,
   Crosshair,
   Crown,
@@ -28,10 +29,9 @@ import { useTranslation } from 'react-i18next'
 import {
   archetypeDraft,
   archetypes,
-  challengeRatings,
-  creatureSizes,
-  creatureTypes,
   parseStatBlockText,
+  proficiencyForCr,
+  xpForCr,
   type Archetype,
   type Baseline,
   type BestiaryLanguage,
@@ -42,6 +42,7 @@ import {
 } from '@/features/bestiary'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { draftFromBlock, metaLine, type CreatureDraft } from './creature-draft'
+import { CrDial, SizeScale, TypeTiles } from './bestiary-widgets'
 import { creatureFilter } from './creatures'
 
 type Step = 'choose' | 'srd' | 'archetype' | 'paste'
@@ -303,6 +304,9 @@ function FromArchetype({
                   onChange={() => setArchetype(key)}
                 />
                 <Icon size={20} aria-hidden="true" />
+                <span className="bst-tile-seal" aria-hidden="true">
+                  <Check size={12} strokeWidth={3} />
+                </span>
                 <span>
                   <span className="bst-start-name">{t(`bestiary.arch.${key}`)}</span>
                   <span className="bst-start-help">{t(`bestiary.arch.${key}Help`)}</span>
@@ -311,32 +315,17 @@ function FromArchetype({
             )
           })}
         </fieldset>
-        <div className="bst-grid">
-          <Select
-            label={t('bestiary.cr')}
-            value={cr}
-            allowDeselect={false}
-            comboboxProps={{ zIndex: 410 }}
-            onChange={(v) => v && setCr(v)}
-            data={challengeRatings.map((c) => ({ value: c, label: c }))}
-          />
-          <Select
-            label={t('bestiary.editor.size')}
-            value={size}
-            allowDeselect={false}
-            comboboxProps={{ zIndex: 410 }}
-            onChange={(v) => v && setSize(v as CreatureSize)}
-            data={creatureSizes.map((s) => ({ value: s, label: t(`bestiary.size.${s}`) }))}
-          />
-          <Select
-            label={t('bestiary.editor.type')}
-            value={type}
-            allowDeselect={false}
-            comboboxProps={{ zIndex: 410 }}
-            onChange={(v) => v && setType(v as CreatureType)}
-            data={creatureTypes.map((s) => ({ value: s, label: t(`bestiary.type.${s}`) }))}
-          />
-        </div>
+        <CrDial
+          label={t('bestiary.cr')}
+          value={cr}
+          onChange={setCr}
+          description={t('bestiary.editor.crHelp', {
+            xp: xpForCr(cr as Parameters<typeof xpForCr>[0]).toLocaleString(),
+            pb: proficiencyForCr(cr as Parameters<typeof proficiencyForCr>[0]),
+          })}
+        />
+        <SizeScale legend={t('bestiary.editor.size')} value={size} onChange={setSize} />
+        <TypeTiles compact legend={t('bestiary.editor.type')} value={type} onChange={setType} />
         <Text size="sm" c="dimmed">
           {t('bestiary.start.archetypeNote')}
         </Text>

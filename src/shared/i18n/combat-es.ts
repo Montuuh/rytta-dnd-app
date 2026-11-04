@@ -231,7 +231,8 @@ export const combatEs = {
   'combat.bestiary.edit': 'Editar {{name}}',
   'combat.bestiary.delete': 'Borrar {{name}}',
   'combat.bestiary.deleteTitle': '¿Borrar {{name}} del bestiario?',
-  'combat.bestiary.deleteBody': 'Los encuentros que ya la usan conservan sus copias.',
+  'combat.bestiary.deleteBody':
+    'No se puede deshacer. Los encuentros que ya la usan conservan sus copias.',
   'combat.bestiary.notes': 'Notas',
   'combat.bestiary.save': 'Guardar criatura',
   'combat.bestiary.saved': 'Criatura guardada.',

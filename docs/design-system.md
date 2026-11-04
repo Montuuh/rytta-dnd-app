@@ -220,6 +220,22 @@ with the official SRD 5.2.1 statement and Rytta's adaptations.
 Dialogs that open from the sheet stack above it (z-index 400; their menus 410–420). The editor is a
 full-screen modal on phones and a wide one from 62em with the live preview beside the form (a
 segmented switch below), accordion sections, entries with 44px move and remove buttons and a sticky
-footer with the balance hint ("numbers like CR x–y") and Save. Numeric fields hide their tiny
-steppers; counts use 44px minus and plus buttons. Console trackers are 44px: a recharge toggle with a
+footer with the balance hint ("numbers like CR x–y") and Save.
+
+Bestiary instruments (RYT-051, ADR 029) replace generic pills, segmented controls and selects:
+painted tile groups over native radios or checkboxes (accent border, inset ring and a check seal),
+type tiles with a glyph per creature type, a size scale of miniature bases drawn to scale, a side
+toggle that shows the token shape, number dials (serif value between 44px steppers; hold for ±5), a
+CR spin button with a ladder and XP/PB, choice cards for hit points and sort, CR bands under the
+Filters slider, a token stack for the count and a seal for saving throw proficiency. Favourites are
+a bookmark ribbon. Selects stay only for long textual lists (SRD creature, trait library, usage).
+
+Critique pass (RYT-052): on phones and tablets the search row sticks to the top of the panel while
+the list scrolls, and the filters sheet keeps Clear and "Show N creatures" in a sticky footer. List
+tokens without an image show the creature type's glyph instead of initials. Add to an encounter asks
+for the encounter, the count and hit points; side, table name, hidden and shared initiative fold under
+"Table options" with a one-line summary. The submit names the target ("Add 3 to Crypt") and the
+success state shows the tokens, the hit point mode and visibility. Customise is the one way to copy an
+SRD creature (its editor title says what it is based on); Duplicate stays for campaign creatures.
+Notices avoid gendered participles ("Saved to the bestiary: X."). Delete says it cannot be undone. Console trackers are 44px: a recharge toggle with a
 battery glyph and its state in words, and daily uses as numbered round pips (crossed when spent).

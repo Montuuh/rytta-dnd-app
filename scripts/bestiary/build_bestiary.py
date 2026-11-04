@@ -42,6 +42,8 @@ CR_XP = {"0": 10, "1/8": 25, "1/4": 50, "1/2": 100, "1": 200, "2": 450, "3": 700
 PROBLEMS: list[str] = []
 # Printed XP that disagrees with the SRD's own "Experience Points by Challenge Rating" table.
 XP_ERRATA = {"archmage": 8000}
+# Words the Spanish PDF splits with a stray space (text extraction), fixed in every entry.
+TEXT_ERRATA = {"las t iradas": "las tiradas"}
 NOUN_ES_GENDER = {"la": "la criatura", "el": "la criatura", "del": "de la criatura",
                   "al": "a la criatura"}
 
@@ -409,10 +411,12 @@ def main(pdf_dir: str, out_dir: str) -> None:
                   separators=(",", ":"))
         fh.write("\n")
     for lang in ("en", "es"):
+        text = json.dumps({"monsters": bodies[lang], "traits": traits[lang]}, ensure_ascii=False,
+                          separators=(",", ":"))
+        for wrong, right in TEXT_ERRATA.items():
+            text = text.replace(wrong, right)
         with open(os.path.join(out_dir, f"{lang}.json"), "w", encoding="utf-8") as fh:
-            json.dump({"monsters": bodies[lang], "traits": traits[lang]}, fh, ensure_ascii=False,
-                      separators=(",", ":"))
-            fh.write("\n")
+            fh.write(text + "\n")
     print(f"{len(index)} monsters, {len(traits['en'])} library traits, {len(baselines)} CR rows")
 
 

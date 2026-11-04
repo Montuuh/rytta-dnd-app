@@ -1,0 +1,566 @@
+/* RYT-051: bestiary instruments. Tokens only; every state also reads without colour. */
+
+/* Tile groups: painted labels around native radios and checkboxes. */
+.bst-tiles {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.bst-tiles-legend {
+  display: block;
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--app-text);
+}
+.bst-tiles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bst-tile {
+  position: relative;
+  display: flex;
+  min-height: 44px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+.bst-tile > input {
+  /* The whole tile: scrolling a focused choice into view brings the full tile, not 1px. */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.bst-tile:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+}
+.bst-tile:has(input:checked) {
+  border-color: var(--app-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, var(--app-raised));
+}
+.bst-tile:has(input:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.bst-tile[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.bst-tile-seal {
+  /* Inside the tile so a selected edge tile never widens the page. */
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.bst-tile:has(input:checked) .bst-tile-seal {
+  display: grid;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bst-tile {
+    transition: none;
+  }
+}
+
+/* Creature types: a glyph medallion and the name. */
+.bst-type-tiles .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.25rem), 1fr));
+}
+.bst-type {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 10px 6px 6px;
+}
+.bst-type-tiles .bst-tile-seal {
+  top: 2px;
+  right: auto;
+  left: 28px;
+  box-shadow: 0 0 0 2px var(--app-raised);
+}
+.bst-type-glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-accent);
+}
+.bst-tile:has(input:checked) .bst-type-glyph {
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.bst-type-name {
+  min-width: 0;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  line-height: 1.2;
+  hyphens: auto;
+}
+.bst-type-tiles.is-compact .bst-type-glyph {
+  width: 28px;
+  height: 28px;
+}
+
+/* Sizes: miniature bases to scale on one baseline, like minis lined up on the table. */
+/* Six bases on one row only when each name fits on one line; otherwise three, then two. */
+.bst-size-scale {
+  container-type: inline-size;
+}
+.bst-size-scale .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@container (max-width: 34rem) {
+  .bst-size-scale .bst-tiles-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container (max-width: 17rem) {
+  .bst-size-scale .bst-tiles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.bst-size {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  text-align: center;
+}
+.bst-size-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 44px;
+}
+.bst-size-base {
+  /* 11px per 5-foot square: a Gargantuan base is four squares across. */
+  width: calc(var(--squares) * 11px);
+  aspect-ratio: 1;
+  border: 2px solid var(--app-muted);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--app-muted) 18%, transparent);
+}
+.bst-tile:has(input:checked) .bst-size-base {
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 45%, transparent);
+}
+.bst-size-name {
+  font-size: var(--fs-tag);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Side: the token shape the creature takes at the table. */
+.bst-side .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.bst-side-choice {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+  padding: 6px 24px 6px 8px;
+}
+.bst-side-name {
+  font-weight: 650;
+  hyphens: auto;
+}
+
+/* Card choices (hit points, sort): icon, title and one line of help. */
+.bst-choice {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 26px 10px 12px;
+}
+.bst-choice > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--app-accent);
+}
+.bst-choice-title {
+  display: block;
+  font-weight: 650;
+}
+.bst-choice-help {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bst-choice-tiles .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+/* Die faces: compact tiles in one row, across the whole form grid. */
+.bst-grid > .bst-dice {
+  grid-column: 1 / -1;
+}
+.bst-dice .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
+}
+.bst-die {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding: 0 6px;
+  font-family: Georgia, Cambria, serif;
+  font-weight: 700;
+  font-variant-numeric: lining-nums;
+}
+/* A chosen die is also underlined, beside the seal: not a border shade alone. */
+.bst-dice .bst-tile:has(input:checked) .bst-die {
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
+}
+
+/* Number dials: the value in the stat block's serif face between 44px steppers. */
+.bst-dial .bst-dial-input {
+  min-height: 52px;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+}
+.bst-dial-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bst-dial-title > svg {
+  flex: none;
+  color: var(--app-accent);
+}
+.bst-dial-help {
+  margin: 4px 0 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+/* Challenge rating: a spin button over the official ratings and a ladder of where it sits. */
+.bst-cr-dial-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 4px;
+  align-items: center;
+  min-height: 52px;
+  padding: 3px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-raised);
+}
+.bst-cr-dial-value {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border-radius: 6px;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}
+.bst-cr-dial-value:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.bst-cr-ladder {
+  position: relative;
+  height: 4px;
+  margin: 6px 6px 0;
+  border-radius: 2px;
+  background: var(--app-border);
+  overflow: hidden;
+}
+.bst-cr-ladder-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 4px;
+  background: var(--app-accent);
+}
+
+/* Count preview: a stack of tokens for the creatures about to join the fight. */
+.bst-stack {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline-start: 10px;
+}
+.bst-stack > * {
+  margin-inline-start: -10px;
+}
+.bst-stack-more {
+  margin-inline-start: 6px;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: var(--app-muted);
+}
+
+/* Saving throw proficiency: a seal toggle under the ability score. */
+.bst-seal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px dashed var(--app-border);
+  border-radius: 999px;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  cursor: pointer;
+}
+.bst-seal > input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.bst-seal:has(input:checked) {
+  border-style: solid;
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  color: var(--app-text);
+}
+.bst-seal:has(input:checked) > svg {
+  color: var(--app-accent);
+}
+.bst-seal:has(input:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+/* CR bands under the range slider: one tap sets a common range, a second tap clears it. */
+.bst-tiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.25rem), 1fr));
+  gap: 6px;
+}
+.bst-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  min-height: 48px;
+  min-width: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.bst-tier:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+}
+.bst-tier[aria-pressed='true'] {
+  border-color: var(--app-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, var(--app-raised));
+}
+.bst-tier:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.bst-tier-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-meta);
+  font-weight: 650;
+  line-height: 1.2;
+}
+.bst-tier-check {
+  display: none;
+  flex: none;
+  color: var(--app-accent);
+}
+.bst-tier[aria-pressed='true'] .bst-tier-check {
+  display: inline;
+}
+.bst-tier-range {
+  white-space: nowrap;
+  font-size: var(--fs-tag);
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Add to encounter: the count dial and the tokens it will place. */
+.bst-add-count {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-end;
+}
+.bst-add-count > .bst-dial {
+  flex: 1 1 12rem;
+  max-width: 18rem;
+}
+.bst-add-count > .bst-stack {
+  padding-bottom: 4px;
+}
+
+/* Editor: CR dial, then side, each across the whole row (the side tiles need room). */
+.bst-editor-cr-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Editor abilities: the fieldset legend names the ability; the dial's own label is for
+   assistive technology only, so the tile reads like the stat block's. */
+.bst-ability-dial .bst-dial-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.bst-ability-read {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: center;
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bst-ability-mod {
+  font-variant-numeric: lining-nums;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--app-text);
+}
+.bst-ability-field .bst-seal {
+  align-self: center;
+}
+
+/* Add to an encounter: table options fold under one summary line. */
+.bst-options {
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-raised);
+}
+.bst-options-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--app-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.bst-options-toggle:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.bst-options-toggle > svg {
+  flex: none;
+  color: var(--app-accent);
+}
+.bst-options-chevron {
+  margin-inline-start: auto;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bst-options-toggle[aria-expanded='true'] .bst-options-chevron {
+  transform: rotate(180deg);
+}
+.bst-options-title {
+  display: block;
+  font-weight: 650;
+}
+.bst-options-summary {
+  display: block;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bst-options-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 12px 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bst-options-chevron {
+    transition: none;
+  }
+}
+
+/* The moment the creatures join the fight: their tokens, what was set, where to go next. */
+.bst-added {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-raised);
+}
+.bst-added-title {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.bst-added-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}

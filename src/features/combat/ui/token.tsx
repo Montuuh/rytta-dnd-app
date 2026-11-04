@@ -36,6 +36,7 @@ export function Token({
   hidden = false,
   described = false,
   children,
+  glyph: Glyph,
 }: {
   /** The image is the subject here (not just beside the printed name): give it alt text. */
   described?: boolean
@@ -52,6 +53,8 @@ export function Token({
   hidden?: boolean
   /** Overlay (the bestiary's change-image affordance). */
   children?: ReactNode
+  /** Without an image, a glyph instead of the monogram (the bestiary list: creature type). */
+  glyph?: LucideIcon
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
@@ -92,6 +95,8 @@ export function Token({
         ) : side === 'lair' ? (
           // A place has no initials: the keep glyph (RYT-043 F6).
           <Castle className="combat-token-glyph" aria-hidden="true" strokeWidth={2} />
+        ) : Glyph ? (
+          <Glyph className="combat-token-glyph" aria-hidden="true" strokeWidth={2} />
         ) : (
           <span className="combat-token-monogram" aria-hidden="true">
             {monogram(name)}

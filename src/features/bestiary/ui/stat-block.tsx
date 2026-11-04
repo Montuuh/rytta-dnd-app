@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Footprints, Heart, Shield, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { RulesText } from '@/features/glossary'
 import { signed } from '../domain/stats'
@@ -52,19 +53,31 @@ export function StatBlockView({
       )}
       <dl className="sb-core">
         <div>
-          <dt>{t('bestiary.ac')}</dt>
+          <dt>
+            <Shield size={13} aria-hidden="true" className="sb-core-glyph" />
+            {t('bestiary.ac')}
+          </dt>
           <dd>{block.ac || '—'}</dd>
         </div>
         <div>
-          <dt>{t('bestiary.hp')}</dt>
+          <dt>
+            <Heart size={13} aria-hidden="true" className="sb-core-glyph" />
+            {t('bestiary.hp')}
+          </dt>
           <dd>{block.hp || '—'}</dd>
         </div>
         <div>
-          <dt>{t('bestiary.initiative')}</dt>
+          <dt>
+            <Zap size={13} aria-hidden="true" className="sb-core-glyph" />
+            {t('bestiary.initiative')}
+          </dt>
           <dd>{block.initiative || '—'}</dd>
         </div>
         <div className="sb-core-wide">
-          <dt>{t('bestiary.speed')}</dt>
+          <dt>
+            <Footprints size={13} aria-hidden="true" className="sb-core-glyph" />
+            {t('bestiary.speed')}
+          </dt>
           <dd>{block.speed || '—'}</dd>
         </div>
       </dl>

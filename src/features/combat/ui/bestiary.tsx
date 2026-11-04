@@ -1,4 +1,5 @@
 import {
+  useDeferredValue,
   useEffect,
   useId,
   useLayoutEffect,
@@ -12,14 +13,12 @@ import {
   Alert,
   Badge,
   Button,
-  Chip,
   CloseButton,
   Drawer,
   Group,
   Loader,
   Menu,
   Modal,
-  NumberInput,
   Popover,
   RangeSlider,
   SegmentedControl,
@@ -31,7 +30,15 @@ import {
   VisuallyHidden,
 } from '@mantine/core'
 import {
+  ArrowDown01,
+  ArrowDownAZ,
+  Bookmark,
   Camera,
+  Check,
+  Crown,
+  Heart,
+  Shield,
+  Zap,
   Copy,
   CopyPlus,
   EllipsisVertical,
@@ -42,7 +49,6 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
-  Star,
   Swords,
   Trash2,
   WandSparkles,
@@ -52,8 +58,6 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import {
   challengeRatings,
-  creatureSizes,
-  creatureTypes,
   emptyFilters,
   filterCreatures,
   searchKey,
@@ -62,7 +66,6 @@ import {
   StatBlockView,
   type CreatureFilters,
   type CreatureListItem,
-  type CreatureSize,
   type CreatureType,
 } from '@/features/bestiary'
 import { QueryFeedback } from '@/features/campaigns'
@@ -77,10 +80,21 @@ import { useRunner } from './helpers'
 import { NewCreatureDialog } from './new-creature'
 import { RunnerError } from './parts'
 import { toSquareWebp } from './square-image'
+import { typeGlyphs } from './bestiary-glyphs'
+import { NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
 import { Token } from './token'
 import './bestiary.css'
 
 const crCount = challengeRatings.length - 1
+const crAt = (cr: string) => challengeRatings.indexOf(cr as (typeof challengeRatings)[number])
+/** Quick CR bands for the filters: what a DM usually reaches for when building a fight. */
+const crTiers = [
+  { key: 'minion', range: [0, crAt('1')] },
+  { key: 'low', range: [crAt('2'), crAt('4')] },
+  { key: 'mid', range: [crAt('5'), crAt('10')] },
+  { key: 'high', range: [crAt('11'), crAt('16')] },
+  { key: 'epic', range: [crAt('17'), crCount] },
+] as const satisfies readonly { key: string; range: readonly [number, number] }[]
 
 function useFavorites(campaignId: string) {
   const key = `rytta.bestiary.favorites.${campaignId}`
@@ -133,6 +147,8 @@ type EditorState = {
   draft: CreatureDraft
   template: CombatantTemplate | null
   unplaced?: string[]
+  /** The SRD creature a customised copy starts from (shown in the editor title). */
+  basedOn?: string
 }
 
 /**
@@ -183,9 +199,17 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [])
+  // The list follows the query a frame behind the field, so typing never waits for 330 rows.
+  const deferredQuery = useDeferredValue(filters.query)
   const results = useMemo(
-    () => filterCreatures(catalog.items, filters, favorites, challengeRatings),
-    [catalog.items, filters, favorites],
+    () =>
+      filterCreatures(
+        catalog.items,
+        { ...filters, query: deferredQuery },
+        favorites,
+        challengeRatings,
+      ),
+    [catalog.items, filters, deferredQuery, favorites],
   )
   const selected = catalog.items.find((i) => i.key === selectedKey) ?? null
   const select = (key: string | null) =>
@@ -275,6 +299,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         if (!block || !row) return
         setEditor({
           template: null,
+          basedOn: selected.name,
           draft: draftFromBlock(t, catalog.language, block, {
             size: row.size[0],
             type: row.type,
@@ -323,7 +348,12 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   ) : null
 
   return (
-    <section aria-labelledby="bestiary-heading" className="bst" ref={panelRef}>
+    <section
+      aria-labelledby="bestiary-heading"
+      className="bst"
+      ref={panelRef}
+      data-split={wide || undefined}
+    >
       <Group justify="space-between" align="flex-start" gap="sm" wrap="nowrap">
         <div>
           <Group gap="xs">
@@ -460,6 +490,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           baselines={catalog.baselines}
           traits={catalog.traits}
           unplaced={editor.unplaced}
+          basedOn={editor.basedOn}
           onClose={() => {
             setEditor(null)
             restore()
@@ -651,58 +682,76 @@ function Toolbar({
           }))}
           onChange={(v) => set({ crRange: v[0] === 0 && v[1] === crCount ? null : v })}
         />
+        <div className="bst-tiers" role="group" aria-label={t('bestiary.tier.label')}>
+          {crTiers.map((tier) => {
+            const on = range[0] === tier.range[0] && range[1] === tier.range[1]
+            return (
+              <button
+                key={tier.key}
+                type="button"
+                className="bst-tier"
+                aria-pressed={on}
+                onClick={() => set({ crRange: on ? null : [tier.range[0], tier.range[1]] })}
+              >
+                <span className="bst-tier-name">
+                  <Check size={12} strokeWidth={3} className="bst-tier-check" aria-hidden="true" />
+                  {t(`bestiary.tier.${tier.key}`)}
+                </span>
+                <span className="bst-tier-range">
+                  {t('bestiary.tier.range', {
+                    low: challengeRatings[tier.range[0]],
+                    high: challengeRatings[tier.range[1]],
+                  })}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
-      <div>
-        <Text size="sm" fw={600} mb={6} id="bst-filter-type">
-          {t('bestiary.filter.types')}
-        </Text>
-        <Chip.Group
-          multiple
-          value={filters.types}
-          onChange={(v) => set({ types: v as CreatureType[] })}
-        >
-          <Group gap={6} role="group" aria-labelledby="bst-filter-type">
-            {creatureTypes.map((type) => (
-              <Chip key={type} value={type} size="sm" className="bst-chip">
-                {t(`bestiary.type.${type}`)}
-              </Chip>
-            ))}
-          </Group>
-        </Chip.Group>
-      </div>
-      <div>
-        <Text size="sm" fw={600} mb={6} id="bst-filter-size">
-          {t('bestiary.filter.sizes')}
-        </Text>
-        <Chip.Group
-          multiple
-          value={filters.sizes}
-          onChange={(v) => set({ sizes: v as CreatureSize[] })}
-        >
-          <Group gap={6} role="group" aria-labelledby="bst-filter-size">
-            {creatureSizes.map((size) => (
-              <Chip key={size} value={size} size="sm" className="bst-chip">
-                {t(`bestiary.size.${size}`)}
-              </Chip>
-            ))}
-          </Group>
-        </Chip.Group>
-      </div>
-      <div>
-        <Text size="sm" fw={600} mb={6} id="bst-sort">
-          {t('bestiary.sort.label')}
-        </Text>
-        <SegmentedControl
-          fullWidth
-          aria-labelledby="bst-sort"
-          value={filters.sort}
-          onChange={(v) => set({ sort: v as CreatureFilters['sort'] })}
-          data={[
-            { value: 'name', label: t('bestiary.sort.name') },
-            { value: 'cr', label: t('bestiary.sort.cr') },
-          ]}
-        />
-      </div>
+      <TypeTiles
+        legend={t('bestiary.filter.types')}
+        multiple
+        value={filters.types}
+        onChange={(types) => set({ types })}
+      />
+      <SizeScale
+        legend={t('bestiary.filter.sizes')}
+        multiple
+        value={filters.sizes}
+        onChange={(sizes) => set({ sizes })}
+      />
+      <TileGroup
+        legend={t('bestiary.sort.label')}
+        className="bst-choice-tiles"
+        value={filters.sort}
+        onChange={(sort) => set({ sort })}
+        options={[
+          {
+            value: 'name' as const,
+            content: (
+              <span className="bst-choice">
+                <ArrowDownAZ size={18} aria-hidden="true" />
+                <span>
+                  <span className="bst-choice-title">{t('bestiary.sort.name')}</span>
+                  <span className="bst-choice-help">{t('bestiary.sort.nameHelp')}</span>
+                </span>
+              </span>
+            ),
+          },
+          {
+            value: 'cr' as const,
+            content: (
+              <span className="bst-choice">
+                <ArrowDown01 size={18} aria-hidden="true" />
+                <span>
+                  <span className="bst-choice-title">{t('bestiary.sort.cr')}</span>
+                  <span className="bst-choice-help">{t('bestiary.sort.crHelp')}</span>
+                </span>
+              </span>
+            ),
+          },
+        ]}
+      />
       <Group justify="space-between" className="bst-filter-actions">
         <Button
           variant="subtle"
@@ -738,7 +787,7 @@ function Toolbar({
     </Button>
   )
   return (
-    <div className="bst-toolbar">
+    <>
       <div className="bst-toolbar-search">
         <TextInput
           id="bestiary-search"
@@ -761,10 +810,11 @@ function Toolbar({
               set({ query: '' })
             }
           }}
+          rightSectionWidth={48}
           rightSection={
             filters.query ? (
               <CloseButton
-                size={36}
+                size={44}
                 aria-label={t('bestiary.searchClear')}
                 onClick={() => {
                   set({ query: '' })
@@ -806,51 +856,54 @@ function Toolbar({
           closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
           size={phone ? 'auto' : 440}
           zIndex={320}
+          classNames={{ content: 'bst-filter-drawer', body: 'bst-filter-sheet' }}
         >
           {panel}
         </Drawer>
       </div>
-      <div className="bst-toolbar-row">
-        <SegmentedControl
-          className="bst-source"
-          aria-label={t('bestiary.source.label')}
-          value={filters.source}
-          onChange={(v) => set({ source: v as CreatureFilters['source'] })}
-          data={(['all', 'srd', 'homebrew', 'favorites'] as const).map((value) => ({
-            value,
-            label: t(`bestiary.source.${value}`),
-          }))}
-        />
-        <p className="bst-count-line" role="status" aria-live="polite">
-          {t('bestiary.count', { count })}
-        </p>
-      </div>
-      {chips.length > 0 && (
-        <div className="bst-active" role="group" aria-label={t('bestiary.filter.summary')}>
-          {chips.map((chip, index) => (
-            <button
-              key={chip.key}
-              type="button"
-              className="bst-active-chip"
-              aria-label={t('bestiary.filter.remove', { label: chip.label })}
-              onClick={() => removeFilter(chip.patch, index)}
-            >
-              <span>{chip.label}</span>
-              <X size={14} strokeWidth={2.5} aria-hidden="true" />
-            </button>
-          ))}
-          {chips.length > 1 && (
-            <Button
-              variant="subtle"
-              className="bst-active-clear"
-              onClick={() => removeFilter({ types: [], sizes: [], crRange: null, sort: 'name' })}
-            >
-              {t('bestiary.filter.clear')}
-            </Button>
-          )}
+      <div className="bst-toolbar">
+        <div className="bst-toolbar-row">
+          <SegmentedControl
+            className="bst-source"
+            aria-label={t('bestiary.source.label')}
+            value={filters.source}
+            onChange={(v) => set({ source: v as CreatureFilters['source'] })}
+            data={(['all', 'srd', 'homebrew', 'favorites'] as const).map((value) => ({
+              value,
+              label: t(`bestiary.source.${value}`),
+            }))}
+          />
+          <p className="bst-count-line" role="status" aria-live="polite">
+            {t('bestiary.count', { count })}
+          </p>
         </div>
-      )}
-    </div>
+        {chips.length > 0 && (
+          <div className="bst-active" role="group" aria-label={t('bestiary.filter.summary')}>
+            {chips.map((chip, index) => (
+              <button
+                key={chip.key}
+                type="button"
+                className="bst-active-chip"
+                aria-label={t('bestiary.filter.remove', { label: chip.label })}
+                onClick={() => removeFilter(chip.patch, index)}
+              >
+                <span>{chip.label}</span>
+                <X size={14} strokeWidth={2.5} aria-hidden="true" />
+              </button>
+            ))}
+            {chips.length > 1 && (
+              <Button
+                variant="subtle"
+                className="bst-active-clear"
+                onClick={() => removeFilter({ types: [], sizes: [], crRange: null, sort: 'name' })}
+              >
+                {t('bestiary.filter.clear')}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -957,6 +1010,7 @@ function CreatureList({
             imageKind="creature"
             path={item.imagePath ?? null}
             size={44}
+            glyph={item.type ? typeGlyphs[item.type] : undefined}
           />
           <span className="bst-row-text">
             <span className="bst-row-name">{item.name}</span>
@@ -995,7 +1049,7 @@ function CreatureList({
           })}
           onClick={() => toggleFavorite(item.key)}
         >
-          <Star size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+          <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
         </ActionIcon>
       </li>
     )
@@ -1081,7 +1135,14 @@ function CreatureDetail({
     item.source === 'homebrew' && template ? (
       <CreatureImage campaignId={campaignId} template={template} />
     ) : (
-      <Token name={item.name} side="enemy" imageKind="creature" path={null} size={64} />
+      <Token
+        name={item.name}
+        side="enemy"
+        imageKind="creature"
+        path={null}
+        size={64}
+        glyph={item.type ? typeGlyphs[item.type] : undefined}
+      />
     )
   const actions = (
     <div className={inSheet ? 'bst-actions is-sticky' : 'bst-actions is-pinned'}>
@@ -1111,68 +1172,71 @@ function CreatureDetail({
             {t('bestiary.edit')}
           </Button>
         )}
-        <ActionIcon
-          variant="subtle"
-          size={44}
-          aria-pressed={favorite}
-          aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
-            name: item.name,
-          })}
-          onClick={toggleFavorite}
-        >
-          <Star size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
-        </ActionIcon>
-        <Menu position="bottom-end" withinPortal zIndex={420}>
-          <Menu.Target>
-            <ActionIcon
-              ref={more}
-              variant="subtle"
-              size={44}
-              aria-label={t('bestiary.more', { name: item.name })}
-            >
-              <EllipsisVertical size={18} aria-hidden="true" />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {item.source === 'homebrew' && !block && (
-              <Menu.Item
-                leftSection={<FilePenLine size={16} aria-hidden="true" />}
-                onClick={() => onComplete(fromMenu())}
+        {/* The bookmark and the menu wrap together, so the text action keeps its word. */}
+        <div className="bst-actions-icons">
+          <ActionIcon
+            variant="subtle"
+            size={44}
+            aria-pressed={favorite}
+            aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
+              name: item.name,
+            })}
+            onClick={toggleFavorite}
+          >
+            <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+          </ActionIcon>
+          <Menu position="bottom-end" withinPortal zIndex={420}>
+            <Menu.Target>
+              <ActionIcon
+                ref={more}
+                variant="subtle"
+                size={44}
+                aria-label={t('bestiary.more', { name: item.name })}
               >
-                {t('bestiary.complete')}
-              </Menu.Item>
-            )}
-            {block && (
-              <Menu.Item
-                leftSection={<CopyPlus size={16} aria-hidden="true" />}
-                onClick={() => onDuplicate(fromMenu())}
-              >
-                {t('bestiary.duplicate')}
-              </Menu.Item>
-            )}
-            {block && (
-              <Menu.Item
-                leftSection={<Copy size={16} aria-hidden="true" />}
-                onClick={() => {
-                  void navigator.clipboard
-                    ?.writeText(statBlockToText(block, catalog.language))
-                    .then(onCopied, () => undefined)
-                }}
-              >
-                {t('bestiary.copyText')}
-              </Menu.Item>
-            )}
-            {item.source === 'homebrew' && (
-              <Menu.Item
-                color="red"
-                leftSection={<Trash2 size={16} aria-hidden="true" />}
-                onClick={() => onDelete(fromMenu())}
-              >
-                {t('bestiary.delete')}
-              </Menu.Item>
-            )}
-          </Menu.Dropdown>
-        </Menu>
+                <EllipsisVertical size={18} aria-hidden="true" />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {item.source === 'homebrew' && !block && (
+                <Menu.Item
+                  leftSection={<FilePenLine size={16} aria-hidden="true" />}
+                  onClick={() => onComplete(fromMenu())}
+                >
+                  {t('bestiary.complete')}
+                </Menu.Item>
+              )}
+              {block && item.source === 'homebrew' && (
+                <Menu.Item
+                  leftSection={<CopyPlus size={16} aria-hidden="true" />}
+                  onClick={() => onDuplicate(fromMenu())}
+                >
+                  {t('bestiary.duplicate')}
+                </Menu.Item>
+              )}
+              {block && (
+                <Menu.Item
+                  leftSection={<Copy size={16} aria-hidden="true" />}
+                  onClick={() => {
+                    void navigator.clipboard
+                      ?.writeText(statBlockToText(block, catalog.language))
+                      .then(onCopied, () => undefined)
+                  }}
+                >
+                  {t('bestiary.copyText')}
+                </Menu.Item>
+              )}
+              {item.source === 'homebrew' && (
+                <Menu.Item
+                  color="red"
+                  leftSection={<Trash2 size={16} aria-hidden="true" />}
+                  onClick={() => onDelete(fromMenu())}
+                >
+                  {t('bestiary.delete')}
+                </Menu.Item>
+              )}
+            </Menu.Dropdown>
+          </Menu>
+        </div>
       </div>
     </div>
   )
@@ -1366,7 +1430,7 @@ function QuickDialog({
       fullScreen={phone}
       zIndex={400}
       title={
-        template ? t('combat.bestiary.edit', { name: template.name }) : t('bestiary.start.quick')
+        template ? t('combat.bestiary.edit', { name: template.name }) : t('bestiary.quick.title')
       }
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
@@ -1394,55 +1458,37 @@ function QuickDialog({
             maxLength={80}
             onChange={(event) => setName(event.currentTarget.value)}
           />
-          <div>
-            <Text size="sm" fw={500} mb={4} id="template-side">
-              {t('combat.add.side')}
-            </Text>
-            <SegmentedControl
-              fullWidth
-              aria-labelledby="template-side"
-              value={side}
-              onChange={(value) => setSide(value as 'enemy' | 'ally')}
-              data={[
-                { value: 'enemy', label: t('combat.side.enemy') },
-                { value: 'ally', label: t('combat.side.ally') },
-              ]}
-            />
-          </div>
+          <SideToggle legend={t('combat.add.side')} name={name} value={side} onChange={setSide} />
           <div className="combat-grid-2">
-            <NumberInput
-              hideControls
+            <NumberDial
               label={t('combat.add.maxHp')}
+              icon={Heart}
               min={1}
               max={99999}
-              allowDecimal={false}
               value={maxHp}
               onChange={setMaxHp}
             />
-            <NumberInput
-              hideControls
+            <NumberDial
               label={t('combat.add.ac')}
+              icon={Shield}
               min={0}
               max={99}
-              allowDecimal={false}
               value={ac}
               onChange={setAc}
             />
-            <NumberInput
-              hideControls
+            <NumberDial
               label={t('combat.add.bonus')}
+              icon={Zap}
               min={-20}
               max={30}
-              allowDecimal={false}
               value={bonus}
               onChange={setBonus}
             />
-            <NumberInput
-              hideControls
+            <NumberDial
               label={t('combat.add.legendary')}
+              icon={Crown}
               min={0}
               max={9}
-              allowDecimal={false}
               value={legendary}
               onChange={setLegendary}
             />

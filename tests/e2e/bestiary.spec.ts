@@ -251,24 +251,28 @@ test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and ro
   const dialog = page.getByRole('dialog', { name: 'Añadir Dragón rojo joven a un encuentro' })
   await expect(dialog).toBeVisible()
   // ui-ux F1: Escape closes only the dialog; the stat block sheet stays and gets focus back.
-  await expect(dialog.getByLabel('Cuántas')).toBeFocused()
+  await expect(dialog.getByRole('textbox', { name: 'Cuántas' })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(
     detail(page, info).getByRole('button', { name: 'Añadir a un encuentro' }),
   ).toBeFocused()
   await detail(page, info).getByRole('button', { name: 'Añadir a un encuentro' }).click()
-  await dialog.getByLabel('Cuántas').fill('2')
+  await dialog.getByRole('textbox', { name: 'Cuántas' }).fill('2')
+  // Table options fold under one summary line.
+  await dialog.getByRole('button', { name: /^Opciones de mesa/ }).click()
   await dialog.getByLabel('Nombre para la mesa').fill('Sombra alada')
-  await dialog.locator('label', { hasText: /^Tirar 17d10 \+ 85$/ }).click()
+  await dialog.locator('label', { hasText: /^Tirar 17d10 \+ 85/ }).click()
   await expect(
     dialog.getByText('Se creará 1 contador: Aliento de fuego (recarga 5–6).'),
   ).toBeVisible()
   await audit(page, '[role="dialog"]')
   await expectTouchTargets(dialog, 'button:visible')
   await evidence(page, info, 'add-dialog', 'RYT-048')
-  await dialog.getByRole('button', { name: 'Añadir 2 criaturas' }).click()
-  await expect(dialog.getByText('2 × Dragón rojo joven añadidas a Cripta.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Añadir 2 a Cripta' }).click()
+  // The success state names the fight and takes over the dialog title.
+  const done = page.getByRole('dialog', { name: 'En el encuentro' })
+  await expect(done.getByText('En Cripta: 2 × Dragón rojo joven.')).toBeVisible()
   const added = server.encounters.find((e) => e.id === created.encounter_id)!.combatants
   expect(added.map((c) => [c.name, c.public_name, c.srd_id])).toEqual([
     ['Dragón rojo joven 1', 'Sombra alada 1', 'young-red-dragon'],
@@ -277,7 +281,7 @@ test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and ro
   expect(added[0]!.trackers?.some((t) => t.kind === 'recharge' && t.min === 5)).toBe(true)
 
   // The console shows the alias, the trackers and the stat block of the creature.
-  await dialog.getByRole('link', { name: 'Abrir el encuentro' }).click()
+  await done.getByRole('link', { name: 'Abrir el encuentro' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Cripta' })).toBeVisible({
     timeout: 15_000,
   })
@@ -343,7 +347,7 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   } else await expect(editor.getByRole('heading', { name: 'Lobo de sombra' })).toBeVisible()
   await expect(editor.getByText(/Por sus números parece VD/)).toBeVisible()
   await editor.getByRole('button', { name: 'Guardar criatura' }).click()
-  await expect(page.getByText('Lobo de sombra guardada en el bestiario.')).toBeVisible()
+  await expect(page.getByText('Guardado en el bestiario: Lobo de sombra.')).toBeVisible()
   const wolf = server.templates.find((t) => t.name === 'Lobo de sombra')!
   expect(wolf).toMatchObject({
     srd_id: 'wolf',
@@ -372,7 +376,7 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
     'Capitán orco',
   )
   await editor.getByRole('button', { name: 'Guardar criatura' }).click()
-  await expect(page.getByText('Capitán orco guardada en el bestiario.')).toBeVisible()
+  await expect(page.getByText('Guardado en el bestiario: Capitán orco.')).toBeVisible()
   const captain = server.templates.find((t) => t.name === 'Capitán orco')!
   expect(captain).toMatchObject({ challenge: '2', creature_type: 'monstrosity' })
   if (sheet(info)) await page.keyboard.press('Escape')
@@ -400,7 +404,7 @@ Scimitar. Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 +
     'Bandit Captain',
   )
   await editor.getByRole('button', { name: 'Guardar criatura' }).click()
-  await expect(page.getByText('Bandit Captain guardada en el bestiario.')).toBeVisible()
+  await expect(page.getByText('Guardado en el bestiario: Bandit Captain.')).toBeVisible()
   expect(server.templates.find((t) => t.name === 'Bandit Captain')).toMatchObject({
     armor_class: 15,
     max_hp: 65,
@@ -408,6 +412,109 @@ Scimitar. Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 +
     challenge: '2',
   })
   expect(errors).toEqual([])
+})
+
+test('RYT-051 bestiary instruments: CR bands, glyph tiles, size bases and dials', async ({
+  page,
+}, info) => {
+  test.setTimeout(120_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+
+  // Filters: a CR band is a toggle; type and size are native checkboxes painted as tiles.
+  await page.getByRole('button', { name: 'Filtros' }).click()
+  const filters = phone(info)
+    ? page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+    : page.locator('.mantine-Popover-dropdown')
+  const epic = filters.getByRole('button', { name: /^Épicas/ })
+  await epic.click()
+  await expect(epic).toHaveAttribute('aria-pressed', 'true')
+  await expect(filters.getByText('Valor de desafío: 17 a 30')).toBeVisible()
+  await filters.getByText('Dragón', { exact: true }).click()
+  await expect(filters.getByRole('checkbox', { name: 'Dragón' })).toBeChecked()
+  await filters.getByText('Gargantuesco', { exact: true }).click()
+  await expect(filters.getByRole('checkbox', { name: 'Gargantuesco' })).toBeChecked()
+  await audit(page, phone(info) ? '[role="dialog"]' : '.mantine-Popover-dropdown')
+  await expectTouchTargets(filters, '.bst-tile:visible, .bst-tier:visible')
+  await evidence(page, info, 'filters', 'RYT-051')
+  await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
+  await expect(page.getByRole('button', { name: /^Dragón rojo anciano/ })).toBeVisible()
+
+  // Archetype: the CR is a spin button, size and type are radio tiles.
+  await page.getByRole('button', { name: 'Nueva criatura' }).click()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /Arquetipo y VD/ })
+    .click()
+  const arch = page.getByRole('dialog', { name: 'Arquetipo y valor de desafío' })
+  await arch.getByRole('textbox', { name: 'Nombre' }).fill('Sierpe del pantano')
+  const cr = arch.getByRole('spinbutton', { name: 'VD' })
+  await expect(cr).toHaveAttribute('aria-valuetext', 'VD 2')
+  await cr.focus()
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('ArrowUp')
+  await expect(cr).toHaveAttribute('aria-valuetext', 'VD 4')
+  await arch.getByRole('button', { name: 'Restar a VD' }).click()
+  await expect(cr).toHaveAttribute('aria-valuetext', 'VD 3')
+  await expect(arch.getByText('700 PX · bonificador de competencia +2')).toBeVisible()
+  await arch.getByText('Grande', { exact: true }).click()
+  await expect(arch.getByRole('radio', { name: 'Grande' })).toBeChecked()
+  await arch.getByText('Dragón', { exact: true }).click()
+  await expect(arch.getByRole('radio', { name: 'Dragón' })).toBeChecked()
+  await audit(page, '[role="dialog"]')
+  await evidence(page, info, 'archetype', 'RYT-051')
+  await arch.getByRole('button', { name: 'Crear borrador' }).click()
+  const editor = page.getByRole('dialog', { name: 'Nueva criatura' })
+  await expect(editor.getByRole('radio', { name: 'Grande' })).toBeChecked()
+  await expect(editor.getByRole('spinbutton', { name: 'VD' })).toHaveAttribute(
+    'aria-valuetext',
+    'VD 3',
+  )
+  // Ability dials step by one; the saving throw is a seal checkbox.
+  const strength = editor.getByRole('textbox', { name: 'Puntuación de Fuerza' })
+  const before = Number(await strength.inputValue())
+  await editor.getByRole('button', { name: 'Sumar a Puntuación de Fuerza' }).click()
+  await expect(strength).toHaveValue(String(before + 1))
+  await editor.locator('.bst-ability-field', { hasText: 'Fuerza' }).locator('.bst-seal').click()
+  await editor.getByText('d10', { exact: true }).click()
+  await expect(editor.getByRole('radio', { name: 'd10' })).toBeChecked()
+  await audit(page, '[role="dialog"]')
+  await evidence(page, info, 'editor', 'RYT-051')
+  await editor.getByRole('button', { name: 'Guardar criatura' }).click()
+  await expect(page.getByText('Guardado en el bestiario: Sierpe del pantano.')).toBeVisible()
+  expect(server.templates.find((t) => t.name === 'Sierpe del pantano')).toMatchObject({
+    challenge: '3',
+    creature_type: 'dragon',
+  })
+  expect(errors).toEqual([])
+})
+
+test('RYT-052 rows reached by Shift+Tab stay clear of the sticky search row', async ({
+  page,
+}, info) => {
+  test.skip(!sheet(info), 'The search row is sticky only without the side pane')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.locator('.bst-row-main').nth(25).focus()
+  for (let i = 0; i < 20; i++) {
+    await page.keyboard.press('Shift+Tab')
+    const covered = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement
+      if (!el.closest('.bst-list')) return 0
+      const bar = document.querySelector('.bst-toolbar-search')!.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
+      return Math.max(0, Math.min(r.bottom, bar.bottom) - r.top)
+    })
+    expect(covered).toBe(0)
+  }
 })
 
 test('RYT-046 Players never reach the bestiary', async ({ page }) => {

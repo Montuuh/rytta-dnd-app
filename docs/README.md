@@ -10,7 +10,7 @@
 8. [Backlog guide](backlog/README.md) and [canonical tickets](backlog/items.json).
 9. [ADR 001](decisions/001-foundation.md).
 10. [Verification evidence](evidence/scaffold-validation.md).
-11. [Mandatory UI/UX review](ui-review.md).
+11. [Mandatory UI/UX review](ui-review.md) and [UI design flow](ui-design-flow.md).
 12. [ADR 002: appearance and localization](decisions/002-appearance-localization-review.md)
     and [RYT-016 verification](evidence/RYT-016/validation.md).
 13. [Google and Supabase setup](setup-google-supabase.md) and

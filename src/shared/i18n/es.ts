@@ -13,6 +13,7 @@ import { tradesEs } from './trades-es'
 import { combatEs } from './combat-es'
 import { glossaryEs } from './glossary-es'
 import { rosterEs } from './roster-es'
+import { bestiaryEs } from './bestiary-es'
 
 export const es = {
   ...identityEs,
@@ -29,6 +30,7 @@ export const es = {
   ...combatEs,
   ...glossaryEs,
   ...rosterEs,
+  ...bestiaryEs,
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
   'module.shops': 'Tiendas',

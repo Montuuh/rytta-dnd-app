@@ -67,3 +67,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-044 verification](evidence/RYT-044/validation.md).
 36. [ADR 027: combat tokens, private combat images and health bands](decisions/027-combat-art-and-health-bands.md)
     and [RYT-043 verification](evidence/RYT-043/validation.md).
+37. [ADR 028: SRD bestiary in the DM Command Center, full stat blocks and combat trackers](decisions/028-bestiary.md)
+    and [RYT-046–049 verification](evidence/RYT-046/validation.md).

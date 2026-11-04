@@ -1426,21 +1426,29 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
       notes: '',
     },
   })
+  // ADR 028: the bestiary moved to the DM Command Center; old links land there.
   await page.goto(`./#/campaign/${campaignId}/combat?tab=bestiary`)
-  const card = page.locator('.combat-card', { hasText: 'Goblin' })
+  await expect(page).toHaveURL(/members\?panel=bestiary/, { timeout: 15_000 })
+  await page.locator('.bst-source label', { hasText: 'Campaña' }).click()
+  await expect(page.locator('.bst-row', { hasText: 'Wolf' }).locator('.combat-token')).toHaveClass(
+    /shape-ally/,
+  )
+  await page.locator('.bst-row-main', { hasText: 'Goblin' }).click()
+  const card = page.locator('.bst-detail:visible, .bst-sheet').first()
   // No image yet: a designed hexagonal monogram, and the token itself is the picker.
-  await expect(card.locator('.combat-token-monogram')).toHaveText('G', { timeout: 15_000 })
-  await expect(
-    page.locator('.combat-card', { hasText: 'Wolf' }).locator('.combat-token'),
-  ).toHaveClass(/shape-ally/)
+  await expect(card.locator('.combat-creature-image .combat-token-monogram')).toHaveText('G', {
+    timeout: 15_000,
+  })
   const picker = card.getByLabel('Añadir una imagen de Goblin')
   await expect(picker).toHaveAttribute('type', 'file')
   // ui-ux F5: one accessible name, on the control; no loose duplicate text.
   await expect(card.getByText('Añadir una imagen de Goblin')).toHaveCount(0)
   // ui-ux F4: each stat keeps its label and value together.
-  expect(await card.locator('.combat-card-text p').nth(1).textContent()).toContain('CA 15')
+  await expect(card.locator('.sb-core > div').first()).toHaveText('CA15')
   await expectTouchTargets(page, '.combat-image-picker')
   // Keyboard: the picker takes focus and shows the focus ring around the token.
+  // The rows were clicked: a key press puts the browser back in keyboard modality (:focus-visible).
+  await page.keyboard.press('Shift')
   await picker.focus()
   await expect(card.locator('.combat-image-picker')).toHaveCSS('outline-style', 'solid')
   await audit(page)
@@ -1455,9 +1463,13 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
 
   // Add: the image is cropped to WebP, stored privately and attached with the revision.
   await picker.setInputFiles({ name: 'goblin.png', mimeType: 'image/png', buffer: png })
-  await expect(card.locator('.combat-token img')).toHaveAttribute('src', /goblin/, {
-    timeout: 15_000,
-  })
+  await expect(card.locator('.combat-creature-image .combat-token img')).toHaveAttribute(
+    'src',
+    /goblin/,
+    {
+      timeout: 15_000,
+    },
+  )
   await expect(card.getByRole('alert')).toHaveCount(0)
   await expect(card.getByRole('status')).toHaveText('Imagen de Goblin guardada')
   expect([...server.uploads]).toEqual([

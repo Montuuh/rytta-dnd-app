@@ -224,6 +224,12 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
           <Text component="span" fw={700} className="combat-row-name">
             {combatant.name}
           </Text>
+          {/* ADR 028: the DM sees which name the table reads. */}
+          {combatant.public_name && (
+            <span className="combat-alias-tag">
+              {t('combat.creature.aliasRow', { alias: combatant.public_name })}
+            </span>
+          )}
           {combatant.is_own && (
             <Text component="span" size="xs" className="combat-you">
               {t('combat.you')}

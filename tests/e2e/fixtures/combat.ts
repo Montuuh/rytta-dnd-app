@@ -29,6 +29,10 @@ type Row = {
   df: number
   dm_notes: string
   created: number
+  /** ADR 028: table alias, SRD origin and DM-only trackers. */
+  public_name?: string
+  srd_id?: string
+  trackers?: Record<string, unknown>[]
 }
 type Event = {
   id: string
@@ -201,7 +205,11 @@ export function combatServer() {
           id: c.id,
           kind: c.kind,
           side: c.side,
-          name: c.name,
+          name: full ? c.name : (c.public_name ?? c.name),
+          public_name: full ? c.public_name : undefined,
+          srd_id: full ? c.srd_id : undefined,
+          template_id: full ? c.template_id : undefined,
+          trackers: full && c.trackers?.length ? c.trackers : undefined,
           initiative: c.initiative,
           initiative_bonus: full || own ? c.initiative_bonus : undefined,
           in_turn_order: turns.includes(c.id),
@@ -215,7 +223,7 @@ export function combatServer() {
           hp_revealed: full ? c.hp_revealed : undefined,
           dm_notes: full ? c.dm_notes : undefined,
         }
-        row.image_path = imageOf(c)
+        row.image_path = !full && c.public_name ? undefined : imageOf(c)
         if (c.kind !== 'lair') {
           row.hp_status = c.kind === 'character' && !vitals ? 'unknown' : status(c)
           row.hp_band = c.kind === 'character' && !vitals ? 'unknown' : band(c)
@@ -299,7 +307,9 @@ export function combatServer() {
               kind: x.kind,
               round: x.round,
               target_combatant: x.target,
-              target_name: x.target_name,
+              target_name: full
+                ? x.target_name
+                : (e.combatants.find((c) => c.id === x.target)?.public_name ?? x.target_name),
               amount: x.amount,
               source_name: e.combatants.find((c) => c.id === x.source && (full || !c.hidden))?.name,
               detail: x.detail,
@@ -387,6 +397,7 @@ export function combatServer() {
       'save_combatant_template',
       'delete_combatant_template',
       'set_combatant_template_image',
+      'set_combatant_tracker',
     ])
     if (dmOnly.has(method) && !dm) return fail('Forbidden')
     if (method === 'create_encounter') {
@@ -406,10 +417,25 @@ export function combatServer() {
       return result(e)
     }
     if (method === 'save_combatant_template') {
-      const data = body.data as Record<string, unknown>
-      const row = { id: uuid('e2000000'), revision: 0, image_path: null, ...data }
+      const data = Object.fromEntries(
+        Object.entries(body.data as Record<string, unknown>).filter(([, v]) => v !== null),
+      )
+      const updated_at = new Date(Date.now() + counter++).toISOString()
+      if (body.target_template) {
+        const row = templates.find((t) => t.id === body.target_template)
+        if (!row) return fail('Template unavailable')
+        if (row.revision !== body.expected_revision) return fail('Stale revision')
+        Object.assign(row, data, { revision: Number(row.revision) + 1, updated_at })
+        return { id: row.id, revision: row.revision }
+      }
+      const row = { id: uuid('e2000000'), revision: 0, image_path: null, updated_at, ...data }
       templates.push(row)
       return { id: row.id, revision: 0 }
+    }
+    if (method === 'delete_combatant_template') {
+      const at = templates.findIndex((t) => t.id === body.target_template)
+      if (at >= 0) templates.splice(at, 1)
+      return { deleted: at >= 0 }
     }
     if (method === 'set_combatant_template_image') {
       const row = templates.find((t) => t.id === body.target_template)
@@ -507,6 +533,10 @@ export function combatServer() {
             const count = Number(entry.count ?? 1)
             const base = String(entry.name ?? 'Lair')
             const group = count > 1 && entry.share_initiative ? `${base}:${uuid('g')}` : undefined
+            const alias = typeof entry.public_name === 'string' ? entry.public_name : undefined
+            const trackers = ((entry.trackers as Record<string, unknown>[] | undefined) ?? []).map(
+              (t) => (t.kind === 'recharge' ? { ...t, spent: false } : { ...t, used: 0 }),
+            )
             for (let i = 1; i <= count; i++) {
               const row: Row = {
                 id: uuid('e3000000'),
@@ -532,6 +562,9 @@ export function combatServer() {
                 df: 0,
                 dm_notes: String(entry.dm_notes ?? ''),
                 created: Date.now() + counter,
+                public_name: alias ? (count > 1 ? `${alias} ${i}` : alias) : undefined,
+                srd_id: typeof entry.srd_id === 'string' ? entry.srd_id : undefined,
+                trackers: trackers.map((t) => ({ ...t })),
               }
               e.combatants.push(row)
               log(e, actor, 'join', row)
@@ -543,8 +576,18 @@ export function combatServer() {
         if (!target) return fail('Combatant unavailable')
         const patch = body.patch as Record<string, unknown>
         const wasHidden = target.hidden
+        const alias = target.public_name
         Object.assign(target, patch)
+        if (patch.public_name === null || patch.public_name === '') delete target.public_name
         if (wasHidden && !target.hidden) log(e, actor, 'reveal', target)
+        if (alias && !target.public_name) log(e, actor, 'reveal', target, { detail: { alias } })
+        break
+      }
+      case 'set_combatant_tracker': {
+        const tracker = target?.trackers?.find((t) => t.key === body.tracker_key)
+        if (!target || !tracker) return fail('Invalid request')
+        if (tracker.kind === 'recharge') tracker.spent = body.tracker_value === 1
+        else tracker.used = Number(body.tracker_value)
         break
       }
       case 'remove_combatant': {
@@ -923,7 +966,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image)$/,
+        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

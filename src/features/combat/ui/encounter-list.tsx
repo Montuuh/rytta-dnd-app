@@ -1,46 +1,38 @@
 import { useState } from 'react'
-import { Badge, Button, Group, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
+import { Badge, Button, Group, Paper, Stack, Text, TextInput, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, Plus, Swords } from 'lucide-react'
+import { ChevronRight, PawPrint, Plus, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from 'react-router'
+import { Link, Navigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { QueryFeedback } from '@/features/campaigns'
 import { encountersQuery } from '../api'
 import type { EncounterSummary } from '../domain/combat'
-import { Bestiary } from './bestiary'
 import { useRunner } from './helpers'
 import { RunnerError } from './parts'
 
-/** DM hub: the live encounter first, then prepared drafts, then history; and the bestiary. */
+/** DM hub: the live encounter first, then prepared drafts, then history. The bestiary lives in
+ * the DM Command Center (ADR 028); old `?tab=bestiary` links go there. */
 export function EncounterList({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
-  const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'bestiary' ? 'bestiary' : 'encounters'
+  const [params] = useSearchParams()
+  const bestiaryPath = `/campaign/${campaignId}/members?panel=bestiary`
+  if (params.get('tab') === 'bestiary') return <Navigate to={bestiaryPath} replace />
   return (
-    <Tabs
-      value={tab}
-      onChange={(value) => {
-        const next = new URLSearchParams(params)
-        if (value === 'bestiary') next.set('tab', 'bestiary')
-        else next.delete('tab')
-        setParams(next, { replace: true })
-      }}
-      keepMounted={false}
-      variant="pills"
-      className="dm-tabs combat-tabs"
-    >
-      <Tabs.List aria-label={t('combat.tabs')} className="dm-tabs-list">
-        <Tabs.Tab value="encounters">{t('combat.tab.encounters')}</Tabs.Tab>
-        <Tabs.Tab value="bestiary">{t('combat.tab.bestiary')}</Tabs.Tab>
-      </Tabs.List>
-      <Tabs.Panel value="encounters" pt="md">
-        <Encounters campaignId={campaignId} />
-      </Tabs.Panel>
-      <Tabs.Panel value="bestiary" pt="md">
-        <Bestiary campaignId={campaignId} />
-      </Tabs.Panel>
-    </Tabs>
+    <Stack gap="lg">
+      <Encounters campaignId={campaignId} />
+      <Paper className="combat-panel combat-bestiary-link" p="sm">
+        <Group gap="sm" wrap="nowrap" align="center">
+          <PawPrint size={22} className="feature-icon" aria-hidden="true" />
+          <Text size="sm" style={{ flex: 1 }}>
+            {t('combat.bestiaryLink.body')}
+          </Text>
+          <Button component={Link} to={bestiaryPath} variant="light">
+            {t('combat.bestiaryLink.open')}
+          </Button>
+        </Group>
+      </Paper>
+    </Stack>
   )
 }
 

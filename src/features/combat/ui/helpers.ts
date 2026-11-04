@@ -131,6 +131,27 @@ export function eventText(t: TFunction, event: CombatEvent) {
       return detail.spell
         ? t('combat.event.concentration', { target, spell: detail.spell })
         : t('combat.event.concentrationEnd', { target })
+    // ADR 028: an alias revealed, a server recharge roll and a tracker change (DM only).
+    case 'reveal':
+      return detail.alias
+        ? t('combat.event.revealAlias', { target, alias: detail.alias })
+        : t('combat.event.reveal', { target })
+    case 'recharge':
+      return t(
+        (event.detail as { recharged?: boolean }).recharged
+          ? 'combat.event.rechargeYes'
+          : 'combat.event.rechargeNo',
+        { target, label: detail.label ?? '', roll: event.amount ?? '' },
+      )
+    case 'tracker':
+      return t(
+        detail.kind !== 'recharge'
+          ? 'combat.event.tracker'
+          : event.amount
+            ? 'combat.event.trackerSpent'
+            : 'combat.event.trackerReady',
+        { target, label: detail.label ?? '', amount: event.amount ?? 0 },
+      )
     case 'death_save':
       return t('combat.event.death_save', {
         target,

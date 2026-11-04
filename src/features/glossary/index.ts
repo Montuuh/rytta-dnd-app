@@ -1,4 +1,5 @@
 export { GlossaryPage } from './ui/glossary-page'
 export { CampaignGlossaryLayer, GlossaryLayer, StandaloneGlossaryLayer } from './ui/glossary-layer'
-export { GlossaryNameLink, GlossaryTerm, GlossaryText } from './ui/term'
+export { GlossaryNameLink, GlossaryTerm, GlossaryText, RulesText } from './ui/term'
+export { useGlossaryName } from './ui/glossary-context'
 export { glossaryIds } from './domain/catalog'

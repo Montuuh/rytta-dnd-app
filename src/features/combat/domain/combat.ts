@@ -31,6 +31,24 @@ export type Side = 'party' | 'ally' | 'enemy'
 export type HpMode = 'damage' | 'heal' | 'temp'
 export type DeathSaveOutcome = 'success' | 'failure' | 'nat1' | 'nat20'
 
+export const trackerSchema = z.discriminatedUnion('kind', [
+  z.object({
+    key: z.string().max(120),
+    kind: z.literal('recharge'),
+    label: z.string().max(120),
+    min: z.number().int().min(2).max(6),
+    spent: z.boolean(),
+  }),
+  z.object({
+    key: z.string().max(120),
+    kind: z.literal('uses'),
+    label: z.string().max(120),
+    max: z.number().int().min(1).max(9),
+    used: z.number().int().min(0).max(9),
+  }),
+])
+export type Tracker = z.infer<typeof trackerSchema>
+
 const hpSchema = z.object({
   current: z.number().int().min(0),
   max: z.number().int().min(0),
@@ -70,6 +88,11 @@ export const combatantSchema = z.object({
   exhaustion: z.number().int().min(0).optional(),
   /** RYT-045: a death save outcome the whole table knows, even without shared vitals. */
   death_state: z.enum(['stable', 'revived']).optional(),
+  /** ADR 028 (DM only): the table alias, the SRD origin, the template and the trackers. */
+  public_name: z.string().max(80).optional(),
+  srd_id: z.string().max(80).optional(),
+  template_id: z.uuid().optional(),
+  trackers: z.array(trackerSchema).max(24).optional(),
 })
 export type Combatant = z.infer<typeof combatantSchema>
 
@@ -137,6 +160,8 @@ export const eventKinds = [
   'effect_off',
   'effect_expired',
   'undo',
+  'recharge',
+  'tracker',
 ] as const
 export const eventSchema = z.object({
   id: z.uuid(),
@@ -189,6 +214,13 @@ export const templateSchema = z.object({
   legendary_max: z.number().int(),
   notes: z.string(),
   image_path: z.string().max(300).nullable().optional(),
+  /** ADR 028: the full stat block (validated by the bestiary's schema where it is read). */
+  stat_block: z.record(z.string(), z.unknown()).optional(),
+  srd_id: z.string().max(80).optional(),
+  hp_formula: z.string().max(20).optional(),
+  challenge: z.string().max(4).optional(),
+  creature_type: z.string().max(20).optional(),
+  updated_at: z.string().optional(),
   revision: z.number().int(),
 })
 export type CombatantTemplate = z.infer<typeof templateSchema>
@@ -222,7 +254,15 @@ export type NpcEntry = {
   share_initiative?: boolean
   legendary_max?: number
   dm_notes?: string
+  public_name?: string
+  srd_id?: string
+  hp_mode?: 'average' | 'roll'
+  hp_formula?: string
+  trackers?: TrackerInput[]
 }
+export type TrackerInput =
+  | { key: string; kind: 'recharge'; label: string; min: number }
+  | { key: string; kind: 'uses'; label: string; max: number }
 export type CombatantEntry =
   | { kind: 'character'; character_id: string; initiative?: number }
   | { kind: 'lair'; name?: string; hidden?: boolean }
@@ -242,6 +282,7 @@ export type CombatantPatch = Partial<{
   legendary_max: number
   legendary_used: number
   dm_notes: string
+  public_name: string | null
 }>
 
 export type EffectInput = {
@@ -262,6 +303,11 @@ export type TemplateInput = {
   initiative_bonus: number
   legendary_max: number
   notes: string
+  stat_block?: Record<string, unknown> | null
+  srd_id?: string | null
+  hp_formula?: string | null
+  challenge?: string | null
+  creature_type?: string | null
 }
 
 export type CombatAction =
@@ -297,6 +343,7 @@ export type CombatAction =
     }
   | { kind: 'deleteTemplate'; templateId: string }
   | { kind: 'templateImage'; templateId: string; revision: number; path: string | null }
+  | { kind: 'tracker'; combatantId: string; key: string; value: number }
 
 export const combatErrorCodes = [
   'staleTurn',
@@ -541,6 +588,13 @@ export function previewAsPlayer(state: CombatState, ownCharacterIds: ReadonlySet
       const revealed = c.kind === 'npc' && c.hp_revealed
       return {
         ...c,
+        // ADR 028: the alias replaces the name, and hides the image, for Players.
+        name: c.public_name ?? c.name,
+        image_path: c.public_name ? undefined : c.image_path,
+        public_name: undefined,
+        srd_id: undefined,
+        template_id: undefined,
+        trackers: undefined,
         is_own: own,
         can_act: own,
         hidden: undefined,
@@ -561,13 +615,32 @@ export function previewAsPlayer(state: CombatState, ownCharacterIds: ReadonlySet
       }
     })
   const visibleIds = new Set(combatants.map((c) => c.id))
+  const aliases = new Map(
+    state.combatants.filter((c) => c.public_name).map((c) => [c.id, c.public_name!]),
+  )
   return {
     ...state,
     viewer: { role: 'player' as const },
+    encounter: state.encounter?.summary
+      ? {
+          ...state.encounter,
+          summary: {
+            ...state.encounter.summary,
+            combatants: state.encounter.summary.combatants
+              .filter((row) => visibleIds.has(row.combatant_id))
+              .map((row) => ({ ...row, name: aliases.get(row.combatant_id) ?? row.name })),
+          },
+        }
+      : state.encounter,
     combatants,
     effects: state.effects.filter((f) => f.visible && visibleIds.has(f.target_combatant)),
     events: state.events
       .filter((e) => e.visible !== false)
-      .map((e) => ({ ...e, undoable: false, visible: undefined })),
+      .map((e) => ({
+        ...e,
+        target_name: (e.target_combatant && aliases.get(e.target_combatant)) || e.target_name,
+        undoable: false,
+        visible: undefined,
+      })),
   }
 }

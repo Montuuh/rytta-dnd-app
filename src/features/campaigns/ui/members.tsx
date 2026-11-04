@@ -18,7 +18,7 @@ import {
 import { useWide } from '@/shared/ui/use-viewport'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, History, Lock, LogOut, Package, Shield, Users } from 'lucide-react'
+import { Eye, History, Lock, LogOut, Package, PawPrint, Shield, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
@@ -39,13 +39,17 @@ import { PageHead } from '@/shared/ui/page-head'
 import { campaignModules, implementedModuleKeys } from './module-catalog'
 
 type Confirmation = { action: CampaignAction; message: string }
-type DmPanel = 'members' | 'modules' | 'items' | 'audit'
-const dmPanels: DmPanel[] = ['members', 'modules', 'items', 'audit']
+type DmPanel = 'members' | 'modules' | 'items' | 'bestiary' | 'audit'
+const dmPanels: DmPanel[] = ['members', 'modules', 'items', 'bestiary', 'audit']
 type AuditFilter = 'all' | 'characters' | 'resources'
 
-/** The DM Command Center. `itemsPanel` is composed by the page so the campaigns feature does
- * not depend on inventory or shops (ADR 016). The active tab lives in `?panel=` for links. */
-export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {}) {
+/** The DM Command Center. `itemsPanel` and `bestiaryPanel` are composed by the page so the
+ * campaigns feature does not depend on inventory, shops or combat (ADR 016, ADR 028). The active
+ * tab lives in `?panel=` for links. */
+export function CampaignMembers({
+  itemsPanel,
+  bestiaryPanel,
+}: { itemsPanel?: ReactNode; bestiaryPanel?: ReactNode } = {}) {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const user = state.user!
@@ -55,7 +59,10 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
   const [params, setParams] = useSearchParams()
   const requested = params.get('panel') as DmPanel | null
   const activePanel: DmPanel =
-    requested && dmPanels.includes(requested) && (requested !== 'items' || itemsPanel)
+    requested &&
+    dmPanels.includes(requested) &&
+    (requested !== 'items' || itemsPanel) &&
+    (requested !== 'bestiary' || bestiaryPanel)
       ? requested
       : 'members'
   const setActivePanel = (panel: DmPanel) =>
@@ -64,6 +71,8 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
         const next = new URLSearchParams(current)
         if (panel === 'members') next.delete('panel')
         else next.set('panel', panel)
+        // Panel deep links (the bestiary's ?creature=) do not outlive their panel.
+        if (panel !== 'bestiary') next.delete('creature')
         return next
       },
       { replace: true },
@@ -126,6 +135,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
   const showMembers = activePanel === 'members'
   const showModules = activePanel === 'modules'
   const showItems = activePanel === 'items' && !!itemsPanel
+  const showBestiary = activePanel === 'bestiary' && !!bestiaryPanel
   const showAudit = activePanel === 'audit'
   const refreshAll = () => {
     void members.refetch()
@@ -198,10 +208,14 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                   ['members', 'dm.panelMembers', Users],
                   ['modules', 'dm.panelModules', Shield],
                   ['items', 'dm.panelItems', Package],
+                  ['bestiary', 'dm.panelBestiary', PawPrint],
                   ['audit', 'dm.panelAudit', History],
                 ] as const
               )
-                .filter(([key]) => key !== 'items' || itemsPanel)
+                .filter(
+                  ([key]) =>
+                    (key !== 'items' || itemsPanel) && (key !== 'bestiary' || bestiaryPanel),
+                )
                 .map(([key, label, Icon]) => (
                   <Tabs.Tab
                     key={key}
@@ -461,6 +475,7 @@ export function CampaignMembers({ itemsPanel }: { itemsPanel?: ReactNode } = {})
                   </section>
                 )}
                 {showItems && itemsPanel}
+                {showBestiary && bestiaryPanel}
                 {showAudit && (
                   <section aria-labelledby="audit-heading">
                     <Stack>

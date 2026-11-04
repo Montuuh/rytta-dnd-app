@@ -7,3 +7,5 @@ package-lock.json
 docs/evidence
 # Generated SRD content (scripts/glossary/build_content.py)
 src/features/glossary/content/
+# Generated SRD content (scripts/bestiary/build_bestiary.py)
+src/features/bestiary/content/

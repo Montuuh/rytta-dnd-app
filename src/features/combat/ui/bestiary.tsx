@@ -627,6 +627,7 @@ function Toolbar({
       variant={activeFilters ? 'light' : 'default'}
       leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
       onClick={(event) => toggle(event.currentTarget)}
+      aria-haspopup="dialog"
       aria-expanded={open}
       className="bst-filter-button"
     >
@@ -699,12 +700,18 @@ function Toolbar({
           returnFocus
           shadow="md"
           withinPortal
+          // The button owns aria-expanded: the filters may open in the sheet instead.
+          withRoles={false}
           // Fit the space beside the button and scroll inside: scrolling the page to reach the
           // results button would take the button out of view and hide the dropdown.
           middlewares={{ size: { padding: 8 } }}
         >
           <Popover.Target>{filterButton}</Popover.Target>
-          <Popover.Dropdown aria-label={t('bestiary.filter.title')} className="bst-filter-dropdown">
+          <Popover.Dropdown
+            role="dialog"
+            aria-label={t('bestiary.filter.title')}
+            className="bst-filter-dropdown"
+          >
             {panel}
           </Popover.Dropdown>
         </Popover>

@@ -126,6 +126,29 @@ test('the filters dropdown fits a short screen and keeps its results button in r
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
 })
 
+test('with large text and little room, the filters open in a side sheet', async ({
+  page,
+}, info) => {
+  test.skip(phone(info), 'Phones always use the bottom sheet')
+  const server = combatServer()
+  await page.setViewportSize({ width: info.project.use.viewport?.width ?? 1440, height: 800 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.addStyleTag({ content: 'html { font-size: 150% }' })
+  const open = page.getByRole('button', { name: 'Filtros' })
+  await open.click()
+  const filters = page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+  await expect(filters).toBeVisible()
+  await expect(page.locator('.mantine-Popover-dropdown')).toHaveCount(0)
+  await filters.getByText('Muerto viviente', { exact: true }).click()
+  await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
+  await expect(filters).toHaveCount(0)
+  await expect(open).toBeFocused()
+  await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
+})
+
 test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and rolled hit points', async ({
   page,
 }, info) => {

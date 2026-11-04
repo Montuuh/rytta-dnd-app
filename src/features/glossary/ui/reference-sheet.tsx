@@ -4,12 +4,14 @@ import { ArrowUpRight, ChevronLeft } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useGlossary } from './glossary-context'
 import { EntryArticle } from './entry-article'
 
 /**
  * The in-place definition: a bottom sheet on phones and a side sheet from 48em. Mantine's
- * Drawer traps focus, closes on Escape and returns focus to the tapped term. The drawer title
+ * Drawer traps focus; closing returns focus to the tapped term once it is reachable again (an
+ * item card underneath can still be settling on a slow device). The drawer title
  * is the entry's headword (it names the dialog); terms inside a definition push onto a small
  * history with a back control, and every move through that history focuses the headword.
  */
@@ -42,12 +44,24 @@ export function ReferenceSheet({
   }, [stack.length])
 
   const open = stack.length > 0
+  const opener = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (open) {
+      const active = document.activeElement
+      opener.current = active instanceof HTMLElement && active !== document.body ? active : null
+      return
+    }
+    const term = opener.current
+    opener.current = null
+    if (term) focusWhenReady(() => (term.isConnected ? term : null))
+  }, [open])
 
   return (
     <Drawer
       opened={open}
       onClose={onClose}
       closeOnEscape={false}
+      returnFocus={false}
       position={wide ? 'right' : 'bottom'}
       size={wide ? 440 : 'auto'}
       transitionProps={{ duration: 180 }}

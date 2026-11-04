@@ -11,6 +11,7 @@ import {
 } from '@mantine/core'
 import { ChevronsRight, Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import {
   canEndTurn,
   canRollDeathSave,
@@ -78,10 +79,9 @@ export function TableDisplay({
       next.delete(id)
       return next
     })
+  // The target may only appear once the saved state is refetched.
   const focusLater = (selector: string, preventScroll = false) =>
-    requestAnimationFrame(() =>
-      document.querySelector<HTMLElement>(selector)?.focus({ preventScroll }),
-    )
+    focusWhenReady(selector, { preventScroll })
   const progress = initiativeProgress(combatants)
   return (
     <Stack gap="lg" className={`combat-table-view${yours ? ' is-your-turn' : ''}`}>

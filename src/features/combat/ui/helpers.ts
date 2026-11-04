@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useCombatAction } from '../api'
 import {
   isCombatErrorCode,
@@ -158,9 +159,7 @@ export function useReturnFocus() {
   })
   useEffect(
     () => () => {
-      requestAnimationFrame(() => {
-        if (opener?.isConnected) opener.focus()
-      })
+      if (opener) focusWhenReady(() => (opener.isConnected ? opener : null))
     },
     [opener],
   )

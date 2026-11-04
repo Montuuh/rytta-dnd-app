@@ -19,6 +19,9 @@ This repository is a foundation; planned modules are not implemented features.
 - Delegate only when the user authorizes it; role files do not authorize spawning.
 - Standing user authorization: invoke `ui-ux` after every interface change, including
   translations, theme, layout and interaction changes.
+- New or redesigned UI follows docs/ui-design-flow.md without being asked: brief
+  `ui-ux-pro-max` first (avoid pill/generic-button overuse), refine with frontend skills,
+  then run `impeccable` critique/audit on the rendered result before `ui-ux`.
 - Do not edit the legacy sibling `../rytta`; use it only as a reference.
 - Keep durable decisions in ADRs and backlog evidence, not chat history alone.
 

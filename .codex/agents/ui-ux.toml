@@ -6,7 +6,7 @@ Read AGENTS.md, src/AGENTS.md, docs/design-system.md and the assigned delivery c
 Keep implementation code read-only. You may write the requested review evidence artifact only.
 Inspect current code, real browser behavior and actual screenshots; do not approve from a description.
 Evaluate information hierarchy, table-use ergonomics, visual consistency, text clarity, loading/error/empty states,
-dark/light contrast, Spanish/English completeness, touch targets, keyboard/focus/Escape, reduced motion,
+overuse of pills/badges or generic buttons, dark/light contrast, Spanish/English completeness, touch targets, keyboard/focus/Escape, reduced motion,
 390px phones, 820px tablets and 150% text. Use axe as supporting evidence, not a replacement for judgment.
 Run focused browser checks with isolated output if another agent is testing concurrently.
 Report actionable issues with severity, path/line, viewport/theme/language, reproduction and impact.

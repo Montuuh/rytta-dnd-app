@@ -6,7 +6,9 @@ description: Implement a scoped Rytta React feature using the project boundaries
 Read the assigned backlog item, `src/AGENTS.md`, `docs/architecture.md` and `docs/design-system.md`.
 Inspect current behavior and git changes. Keep domain rules out of page components.
 Use a feature public API, an adapter and TanStack Query for remote data. Parse external boundaries with Zod.
-Compose existing Mantine widgets. Provide touch equivalents for hover, useful focus order and error recovery.
+For new or redesigned UI follow `docs/ui-design-flow.md`: brief `ui-ux-pro-max` before coding
+(no pill or generic-button overuse), refine with frontend skills, and run `impeccable` critique/audit
+on the rendered result before review. Compose existing Mantine widgets. Provide touch equivalents for hover, useful focus order and error recovery.
 Do not substitute mock mutations for backend operations. Label demonstration content visibly.
 Verify the slice with focused tests and `npm run check`. For rendered changes run `npm run test:e2e`,
 inspect phone/tablet screenshots and test keyboard, Escape, 150% text and reduced motion.

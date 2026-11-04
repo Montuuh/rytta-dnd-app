@@ -19,7 +19,7 @@ to launch all implementations.
 
 The user has given standing authorization for `ui-ux` reviews after interface changes.
 This scoped exception is now part of AGENTS.md, the frontend skill and producer/frontend
-roles. Follow [UI review](ui-review.md); CI checks the verdict and source fingerprint.
+roles. Design work follows [UI design flow](ui-design-flow.md). Follow [UI review](ui-review.md); CI checks the verdict and source fingerprint.
 This is an agent-workflow trigger, not an unattended background process or a shell hook
 that can spawn an AI model. Other delegation still requires authorization.
 

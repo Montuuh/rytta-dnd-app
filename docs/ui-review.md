@@ -6,7 +6,8 @@ component states, navigation, responsive layout and interactions.
 
 ## Workflow
 
-1. Implement the scoped change and run type/lint/unit/browser validation. Capture the real UI.
+1. For new or redesigned UI, complete [UI design flow](ui-design-flow.md) phases 1–4 first.
+   Implement the scoped change and run type/lint/unit/browser validation. Capture the real UI.
 2. Invoke `ui-ux` with the ticket, owned paths, acceptance criteria, preview URL and evidence.
    If the host exposes only generic delegation, start an independent subagent and explicitly
    have it read/apply the TOML role. Never claim native custom-role discovery from a file alone.

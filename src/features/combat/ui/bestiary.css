@@ -22,15 +22,32 @@
   min-height: 48px;
   font-size: 1.0625rem;
 }
-.bst-toolbar-row {
+.bst-toolbar-search {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: flex-end;
+}
+/* Filters drops below the search when the field would get too short (large text on phones). */
+.bst-toolbar-search .bst-search {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.bst-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   align-items: center;
+  justify-content: space-between;
 }
 .bst-source {
-  flex: 1 1 18rem;
-  min-width: 0;
+  flex: 0 1 34rem;
+  min-width: min(100%, 18rem);
+}
+@media (max-width: 47.99em) {
+  .bst-source {
+    flex: 1 1 100%;
+  }
 }
 /* Segment labels wrap instead of clipping at large text (WCAG 1.4.4). */
 .bst-source .mantine-SegmentedControl-label,
@@ -48,6 +65,44 @@
   overflow: visible;
 }
 .bst-filter-button {
+  flex: none;
+  min-height: 48px;
+}
+/* Active filters stay visible as removable chips: no need to reopen the panel to see them. */
+.bst-active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.bst-active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-accent) 12%, var(--app-surface));
+  color: var(--app-text);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bst-active-chip:hover {
+  background: color-mix(in srgb, var(--app-accent) 20%, var(--app-surface));
+}
+.bst-active-chip:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.bst-active-chip > svg {
+  flex: none;
+  color: var(--app-muted);
+}
+.bst-active-clear {
   min-height: 44px;
 }
 .bst-count-line {
@@ -95,7 +150,8 @@
 /* List and stat block side by side from 62em. */
 .bst-split {
   display: grid;
-  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  /* The panel splits only from 52rem of its own width (useSplit), so both tracks always fit. */
+  grid-template-columns: minmax(17rem, 2fr) minmax(30rem, 3fr);
   gap: 16px;
   align-items: start;
 }
@@ -111,9 +167,68 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin: 0;
   padding: 2px;
+  container-type: inline-size;
+}
+/* Narrow lists for their text size (phones at 150%): the CR chip moves under the name. */
+@container (max-width: 20rem) {
+  .bst-row-main {
+    flex-wrap: wrap;
+  }
+  .bst-row-text {
+    flex-basis: calc(100% - 54px);
+  }
+  .bst-row-side {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    padding-inline-start: 54px;
+  }
+}
+.bst-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
   list-style: none;
+}
+/* Index rules: a letter (by name) or a challenge rating (by CR), with the group's size. */
+.bst-group + .bst-group {
+  margin-top: 8px;
+}
+.bst-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 6px 10px 4px;
+  border-bottom: 1px solid var(--app-border);
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--app-accent);
+}
+.bst-split .bst-group-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--app-bg);
+}
+.bst-group-count {
+  min-width: 1.75rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--app-raised);
+  font-family: var(--mantine-font-family);
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--app-muted);
 }
 .bst-row {
   display: flex;
@@ -146,6 +261,9 @@
 .bst-row-main:hover {
   background: var(--app-hover);
 }
+.bst-row:hover:not([data-current]) {
+  border-color: var(--app-border);
+}
 .bst-row-main:focus-visible {
   outline: 3px solid var(--app-focus);
   outline-offset: 1px;
@@ -166,11 +284,38 @@
   font-style: italic;
   color: var(--app-muted);
   font-size: var(--fs-meta);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 .bst-row-meta {
   font-size: var(--fs-meta);
   color: var(--app-muted);
   overflow-wrap: anywhere;
+}
+.bst-row-side {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+/* Challenge rating: the number a DM scans for first, a fixed-width chip on the row's edge. */
+.bst-cr {
+  min-width: 4.25rem;
+  padding: 3px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+.bst-row[data-current] .bst-cr {
+  border-color: var(--app-accent);
 }
 .bst-source-badge {
   flex: none;
@@ -192,9 +337,10 @@
 .bst-empty {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  text-align: center;
   border: 1px dashed var(--app-border);
   border-radius: 12px;
 }
@@ -212,9 +358,18 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 48px 16px;
-  color: var(--app-muted);
+  padding: 56px 16px;
   text-align: center;
+}
+.bst-detail-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+  color: var(--app-accent);
 }
 .bst-detail-inner {
   min-width: 0;
@@ -227,6 +382,17 @@
 }
 .bst-actions .mantine-Button-root {
   min-height: 44px;
+}
+/* Laptops: the actions stay pinned to the top of the viewport while the stat block scrolls. */
+.bst-actions.is-pinned {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: -16px -18px 0;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--app-border);
+  border-radius: 16px 16px 0 0;
+  background: var(--app-surface);
 }
 .bst-actions.is-sticky {
   position: sticky;

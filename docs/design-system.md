@@ -196,14 +196,21 @@ around the token. Progress and success are announced; failures appear under the 
 
 The bestiary is a DM Command Center tab (`?panel=bestiary`, `&creature=` deep link), never a
 navigation item. It reads like a field guide: a large search first (both languages, accents ignored,
-Enter opens the best match, ArrowDown enters the list), a source segmented control (all, SRD,
-campaign, favourites) and a Filters button with an active count (popover from 48em, bottom drawer on
-phones: CR range slider, type and size chips, sort). Rows are 60px buttons with a hexagonal token
-(campaign creatures keep their side's shape and image), the name, the other language's name as a
-gloss, one meta line (CR · type · size · AC · HP) and a source badge; the star is a separate 44px
-toggle. Arrow keys, Home and End move through rows.
+Enter opens the best match, ArrowDown enters the list, `/` focuses it from anywhere on the panel)
+with the Filters button beside it (active count; popover from 48em, bottom drawer on phones: CR
+range slider, type and size chips, sort), then a source segmented control (all, SRD, campaign,
+favourites) and the live count on one row. Active filters and a CR sort show below as removable
+44px chips that name what they remove ("Remove the Dragon filter"); removing one keeps focus on the
+next chip or returns it to Filters (RYT-050). Without a query the list reads like an index: serif
+letter rules by name or CR rules when sorted by challenge, each with its size (sticky inside the
+laptop list); a query keeps the ranked order without rules. Rows are 60px buttons with a hexagonal
+token (campaign creatures keep their side's shape and image), the name, the other language's name on
+its own italic line, one meta line (type · size · AC · HP) and a fixed CR chip on the row's edge;
+only campaign creatures carry a source badge. The star is a separate 44px toggle. Arrow keys, Home
+and End move through rows across groups.
 
-From 62em the stat block sits beside the sticky list; below it opens in a full-screen bottom sheet
+From 62em the stat block sits beside the sticky list, its action bar pinned to the top of the
+viewport while the block scrolls; below it opens in a full-screen bottom sheet
 titled "Bestiary" with a sticky action bar (add to an encounter first). The stat block is ruled like a
 printed one: core numbers between accent rules, six ability tiles (score, modifier, save; the full
 reading is visually hidden text), detail lines, section headings in the accent and italic entry names;

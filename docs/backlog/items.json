@@ -1992,6 +1992,37 @@
         "docs/evidence/RYT-046/ui-review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-050",
+      "title": "Bestiary list and toolbar polish in the DM Command Center",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-04: improve the overall frontend and UI/UX of the DM Command Center bestiary."
+      ],
+      "dependsOn": ["RYT-046"],
+      "scope": "Make the 330-creature list faster to scan and the filters easier to read and undo: index rules, a CR chip per row, the filters button beside the search, removable active-filter chips, pinned stat block actions on laptops and a / shortcut.",
+      "acceptance": [
+        "Without a query the list is grouped under letter rules (by name) or CR rules (by challenge rating), each with its size; with a query it keeps the ranked order without rules.",
+        "Each row shows the CR as a fixed chip on its edge, the other language's name on its own line and type · size · AC · HP; only campaign creatures carry a source badge.",
+        "The Filters button sits beside the search; the source control and the live count share the next row.",
+        "Every active filter and a non-default sort is a removable 44px chip naming what it removes; removing one keeps focus in the summary or returns it to the Filters button.",
+        "From 62em the stat block actions stay pinned while the stat block scrolls; / focuses the search when no field or dialog has focus.",
+        "Axe, touch targets and no horizontal scroll hold at 390px, tablet and laptop sizes."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
+      "evidence": [
+        "tests/e2e/bestiary.spec.ts",
+        "docs/design-system.md",
+        "docs/evidence/ui-review/ryt-050/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

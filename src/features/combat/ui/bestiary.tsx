@@ -600,7 +600,7 @@ function Toolbar({
           ]}
         />
       </div>
-      <Group justify="space-between">
+      <Group justify="space-between" className="bst-filter-actions">
         <Button
           variant="subtle"
           disabled={activeFilters === 0}
@@ -705,9 +705,17 @@ function Toolbar({
             returnFocus
             shadow="md"
             withinPortal
+            // Fit the space beside the button and scroll inside: scrolling the page to reach the
+            // results button would take the button out of view and hide the dropdown.
+            middlewares={{ size: { padding: 8 } }}
           >
             <Popover.Target>{filterButton}</Popover.Target>
-            <Popover.Dropdown aria-label={t('bestiary.filter.title')}>{panel}</Popover.Dropdown>
+            <Popover.Dropdown
+              aria-label={t('bestiary.filter.title')}
+              className="bst-filter-dropdown"
+            >
+              {panel}
+            </Popover.Dropdown>
           </Popover>
         )}
       </div>

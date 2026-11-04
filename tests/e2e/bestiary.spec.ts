@@ -105,6 +105,27 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
   expect(errors).toEqual([])
 })
 
+test('the filters dropdown fits a short screen and keeps its results button in reach', async ({
+  page,
+}, info) => {
+  test.skip(phone(info), 'Phones use the filters drawer')
+  const server = combatServer()
+  await page.setViewportSize({ width: info.project.use.viewport?.width ?? 1440, height: 900 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.getByRole('button', { name: 'Filtros' }).click()
+  const filters = page.locator('.mantine-Popover-dropdown')
+  // The dropdown stays inside the viewport and scrolls inside instead of the page.
+  const box = (await filters.boundingBox())!
+  expect(box.y + box.height).toBeLessThanOrEqual(900)
+  await filters.getByText('Muerto viviente', { exact: true }).click()
+  await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
+  await expect(filters).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
+})
+
 test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and rolled hit points', async ({
   page,
 }, info) => {

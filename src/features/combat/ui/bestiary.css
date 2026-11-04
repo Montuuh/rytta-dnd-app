@@ -55,6 +55,21 @@
   font-size: var(--fs-meta);
   color: var(--app-muted);
 }
+/* The dropdown fits the space beside its button and scrolls inside; Clear and the results button
+   stay in view at the bottom. */
+.bst-filter-dropdown {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* A focused or scrolled-to chip never ends under the sticky actions. */
+  scroll-padding-bottom: 5rem;
+}
+.bst-filter-dropdown .bst-filter-actions {
+  position: sticky;
+  bottom: calc(-1 * var(--mantine-spacing-sm));
+  margin-bottom: calc(-1 * var(--mantine-spacing-sm));
+  padding-block: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  background: var(--mantine-color-body);
+}
 .bst-filters .bst-chip .mantine-Chip-label {
   height: auto;
   min-height: 44px;

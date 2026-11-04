@@ -53,7 +53,9 @@ export function ReferenceSheet({
     }
     const term = opener.current
     opener.current = null
-    if (term) focusWhenReady(() => (term.isConnected ? term : null))
+    // Escape can beat the drawer's focus trap, which then lands inside the closing sheet.
+    const sheet = document.querySelector('.gl-sheet-content')
+    if (term) focusWhenReady(() => (term.isConnected ? term : null), { leaving: sheet })
   }, [open])
 
   return (

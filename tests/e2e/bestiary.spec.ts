@@ -117,6 +117,11 @@ test('the filters dropdown fits a short screen and keeps its results button in r
   await openBestiary(page)
   await page.getByRole('button', { name: 'Filtros' }).click()
   const filters = page.locator('.mantine-Popover-dropdown')
+  await expect(page.getByRole('button', { name: /^Filtros/ })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
+  await expect(filters).toHaveRole('dialog')
   // The dropdown stays inside the viewport and scrolls inside instead of the page.
   const box = (await filters.boundingBox())!
   expect(box.y + box.height).toBeLessThanOrEqual(900)
@@ -137,10 +142,11 @@ test('with large text and little room, the filters open in a side sheet', async 
   await server.install(page)
   await openBestiary(page)
   await page.addStyleTag({ content: 'html { font-size: 150% }' })
-  const open = page.getByRole('button', { name: 'Filtros' })
+  const open = page.getByRole('button', { name: /^Filtros/ })
   await open.click()
   const filters = page.getByRole('dialog', { name: 'Filtrar y ordenar' })
   await expect(filters).toBeVisible()
+  await expect(open).toHaveAttribute('aria-expanded', 'true')
   await expect(page.locator('.mantine-Popover-dropdown')).toHaveCount(0)
   await filters.getByText('Muerto viviente', { exact: true }).click()
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()

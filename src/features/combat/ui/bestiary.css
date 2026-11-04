@@ -60,12 +60,14 @@
 .bst-filter-dropdown {
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* A focused or scrolled-to chip, focus ring included, never ends under the sticky actions. */
-  scroll-padding-bottom: 6rem;
+  /* A focused or scrolled-to chip, focus ring included, never ends under the sticky actions
+     or against the top edge. */
+  scroll-padding: 2rem 0 6rem;
 }
 .bst-filter-dropdown .bst-filter-actions {
   position: sticky;
-  z-index: 2;
+  /* Above the range slider's track and thumbs (Mantine: 1 and 3). */
+  z-index: 4;
   bottom: calc(-1 * var(--mantine-spacing-sm));
   margin: 0 calc(-1 * var(--mantine-spacing-md)) calc(-1 * var(--mantine-spacing-sm));
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-md) var(--mantine-spacing-sm);

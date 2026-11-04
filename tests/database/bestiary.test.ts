@@ -341,7 +341,8 @@ describe('ADR 028 creatures in combat', () => {
       const view = await pub.state(s.c, e, table)
       const text = JSON.stringify(view)
       expect(text).not.toContain('Shadow Hound')
-      expect(text).not.toMatch(/public_name|srd_id|template_id|trackers|hp_roll|5d8/)
+      // The full formula: random UUIDs can contain "5d8" by chance.
+      expect(text.match(/public_name|srd_id|template_id|trackers|hp_roll|5d8\+5/g)).toBeNull()
       expect(view.combatants.map((c) => c.name)).toEqual(
         expect.arrayContaining(['Shadow 1', 'Shadow 2', 'Shadow 3', 'Shadow 4', 'Wolf']),
       )

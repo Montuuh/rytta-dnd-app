@@ -293,6 +293,23 @@ test('the DM archives an unassigned character from Party and restores it', async
   )
 })
 
+test('a slow restore leaves focus where the user moved it', async ({ page }) => {
+  await identityFixture(page, { player: true, archived: ['Old'] })
+  await page.route('**/rest/v1/rpc/restore_character', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 800))
+    await route.fallback()
+  })
+  await page.goto(rosterPath)
+  await page.getByRole('button', { name: /Archivados/ }).click()
+  await page.getByRole('button', { name: 'Restaurar a Old' }).click()
+  // The user moves on while the restore is pending; the outcome must not pull them back.
+  const back = page.getByRole('link', { name: 'Volver a Grupo' })
+  await back.focus()
+  await expect(page.getByText('Old vuelve al plantel.')).toBeVisible()
+  await page.waitForTimeout(500)
+  await expect(back).toBeFocused()
+})
+
 test('English light roster', async ({ page }, info) => {
   await page.addInitScript(() => {
     localStorage.setItem('rytta-language', 'en')

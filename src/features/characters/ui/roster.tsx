@@ -824,7 +824,8 @@ function ArchivedSection({
       {
         onSuccess: () => {
           onNotice({ tone: 'done', text: t('roster.restored', { name: entry.name }) })
-          focusWhenReady(() => noticeRef.current)
+          // From the restore button: a user who moved on while it was pending keeps their place.
+          focusWhenReady(() => noticeRef.current, { from: origin })
         },
         onError: (error) =>
           onNotice({

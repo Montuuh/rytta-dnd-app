@@ -3,15 +3,20 @@
  * transition ends. A single animation frame is not enough on a slow device, so this retries every
  * frame until `timeout`, then keeps the focus for a short `settle` window in case a closing
  * dialog drops it back onto the page. It gives up as soon as focus lands on another control,
- * so a user who has already moved on is never pulled back.
+ * so a user who has already moved on is never pulled back. Pass `from` (the control focused when
+ * the action started) when the call comes after an await: by then the user may have moved.
  */
 export function focusWhenReady(
   target: string | (() => HTMLElement | null | undefined),
-  { preventScroll = false, timeout = 3000, settle = 300 } = {},
+  {
+    preventScroll = false,
+    timeout = 3000,
+    settle = 300,
+    from = document.activeElement,
+  }: { preventScroll?: boolean; timeout?: number; settle?: number; from?: Element | null } = {},
 ) {
   const resolve = () =>
     (typeof target === 'string' ? document.querySelector<HTMLElement>(target) : target()) ?? null
-  const origin = document.activeElement
   const start = performance.now()
   let heldSince = 0
 
@@ -20,10 +25,9 @@ export function focusWhenReady(
   const fallen = (active: Element | null) =>
     !active ||
     active === document.body ||
-    active === origin ||
+    active === from ||
     !active.isConnected ||
-    active.getAttribute('role') === 'dialog' ||
-    (active.getAttribute('tabindex') === '-1' && !active.matches('h1, h2, h3, h4'))
+    active.getAttribute('role') === 'dialog'
 
   const tick = () => {
     const now = performance.now()

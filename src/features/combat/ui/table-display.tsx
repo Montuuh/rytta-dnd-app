@@ -80,8 +80,8 @@ export function TableDisplay({
       return next
     })
   // The target may only appear once the saved state is refetched.
-  const focusLater = (selector: string, preventScroll = false) =>
-    focusWhenReady(selector, { preventScroll })
+  const focusLater = (selector: string, preventScroll = false, from?: Element | null) =>
+    focusWhenReady(selector, { preventScroll, ...(from !== undefined && { from }) })
   const progress = initiativeProgress(combatants)
   return (
     <Stack gap="lg" className={`combat-table-view${yours ? ' is-your-turn' : ''}`}>
@@ -233,6 +233,8 @@ export function TableDisplay({
                     focusLater(`#initiative-edit-${c.id}`)
                   }}
                   save={async (total, bonus) => {
+                    // Whoever moves focus elsewhere during the save keeps it there.
+                    const from = document.activeElement
                     if (await run({ kind: 'initiative', combatantId: c.id, total, bonus })) {
                       stopEditing(c.id)
                       setSaved(t('combat.initiative.savedValue', { name: c.name, total }))
@@ -242,6 +244,8 @@ export function TableDisplay({
                         status === 'initiative'
                           ? `#initiative-edit-${c.id}`
                           : '#combat-table-order',
+                        false,
+                        from,
                       )
                     }
                   }}

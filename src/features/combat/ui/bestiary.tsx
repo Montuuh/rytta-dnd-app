@@ -518,6 +518,16 @@ function Toolbar({
   const { t } = useTranslation()
   const phone = usePhone()
   const [open, setOpen] = useState(false)
+  // Phones, and screens without room below the button (short or with large text), get a sheet
+  // (bottom on phones, side otherwise); the dropdown would be a sliver or open off screen.
+  const [sheet, setSheet] = useState(phone)
+  const toggle = (button: HTMLElement) => {
+    if (!open) {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      setSheet(phone || innerHeight - button.getBoundingClientRect().bottom < 16 * rem)
+    }
+    setOpen(!open)
+  }
   const set = (patch: Partial<CreatureFilters>) => setFilters({ ...filters, ...patch })
   const range = filters.crRange ?? [0, crCount]
   const panel = (
@@ -616,7 +626,7 @@ function Toolbar({
     <Button
       variant={activeFilters ? 'light' : 'default'}
       leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
-      onClick={() => setOpen((o) => !o)}
+      onClick={(event) => toggle(event.currentTarget)}
       aria-expanded={open}
       className="bst-filter-button"
     >
@@ -680,44 +690,35 @@ function Toolbar({
             label: t(`bestiary.source.${value}`),
           }))}
         />
-        {phone ? (
-          <>
-            {filterButton}
-            <Drawer
-              opened={open}
-              onClose={() => setOpen(false)}
-              position="bottom"
-              title={t('bestiary.filter.title')}
-              closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-              size="auto"
-              zIndex={320}
-            >
-              {panel}
-            </Drawer>
-          </>
-        ) : (
-          <Popover
-            opened={open}
-            onChange={setOpen}
-            position="bottom-end"
-            width={420}
-            trapFocus
-            returnFocus
-            shadow="md"
-            withinPortal
-            // Fit the space beside the button and scroll inside: scrolling the page to reach the
-            // results button would take the button out of view and hide the dropdown.
-            middlewares={{ size: { padding: 8 } }}
-          >
-            <Popover.Target>{filterButton}</Popover.Target>
-            <Popover.Dropdown
-              aria-label={t('bestiary.filter.title')}
-              className="bst-filter-dropdown"
-            >
-              {panel}
-            </Popover.Dropdown>
-          </Popover>
-        )}
+        <Popover
+          opened={open && !sheet}
+          onChange={setOpen}
+          position="bottom-end"
+          width={420}
+          trapFocus
+          returnFocus
+          shadow="md"
+          withinPortal
+          // Fit the space beside the button and scroll inside: scrolling the page to reach the
+          // results button would take the button out of view and hide the dropdown.
+          middlewares={{ size: { padding: 8 } }}
+        >
+          <Popover.Target>{filterButton}</Popover.Target>
+          <Popover.Dropdown aria-label={t('bestiary.filter.title')} className="bst-filter-dropdown">
+            {panel}
+          </Popover.Dropdown>
+        </Popover>
+        <Drawer
+          opened={open && sheet}
+          onClose={() => setOpen(false)}
+          position={phone ? 'bottom' : 'right'}
+          title={t('bestiary.filter.title')}
+          closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+          size={phone ? 'auto' : 440}
+          zIndex={320}
+        >
+          {panel}
+        </Drawer>
       </div>
       <p className="bst-count-line" role="status" aria-live="polite">
         {t('bestiary.count', { count })}

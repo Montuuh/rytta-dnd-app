@@ -56,19 +56,25 @@
   color: var(--app-muted);
 }
 /* The dropdown fits the space beside its button and scrolls inside; Clear and the results button
-   stay in view at the bottom. */
+   stay in view at the bottom, full width and above the range slider's track. */
 .bst-filter-dropdown {
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* A focused or scrolled-to chip never ends under the sticky actions. */
-  scroll-padding-bottom: 5rem;
+  /* A focused or scrolled-to chip, focus ring included, never ends under the sticky actions. */
+  scroll-padding-bottom: 6rem;
 }
 .bst-filter-dropdown .bst-filter-actions {
   position: sticky;
+  z-index: 2;
   bottom: calc(-1 * var(--mantine-spacing-sm));
-  margin-bottom: calc(-1 * var(--mantine-spacing-sm));
-  padding-block: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
-  background: var(--mantine-color-body);
+  margin: 0 calc(-1 * var(--mantine-spacing-md)) calc(-1 * var(--mantine-spacing-sm));
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md) var(--mantine-spacing-sm);
+  border-top: 1px solid var(--mantine-color-default-border);
+  /* The dropdown's own surface (Mantine Popover). */
+  background: var(--mantine-color-white);
+}
+[data-mantine-color-scheme='dark'] .bst-filter-dropdown .bst-filter-actions {
+  background: var(--mantine-color-dark-6);
 }
 .bst-filters .bst-chip .mantine-Chip-label {
   height: auto;

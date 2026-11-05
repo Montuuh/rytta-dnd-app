@@ -71,3 +71,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-046–049 verification](evidence/RYT-046/validation.md).
 38. [ADR 030: art for every SRD creature and the DM's own image per creature](decisions/030-bestiary-art.md),
     [art credits](bestiary-art-credits.md) and [RYT-053 verification](evidence/RYT-053/validation.md).
+39. [ADR 031: encounter builder with the SRD 5.2.1 XP budget](decisions/031-encounter-builder.md)
+    and [RYT-054 verification](evidence/RYT-054/validation.md).

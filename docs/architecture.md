@@ -145,6 +145,11 @@ ADR 030 (RYT-053) bundles art for every SRD creature as static WebP files (`publ
 SRD creature per campaign (`campaign_creature_images`, `set_creature_srd_image`); the bestiary token
 opens a menu to view (credited viewer), change, restore or remove the image.
 
+ADR 031 (RYT-054) adds the encounter builder without backend: `combat/domain/difficulty.ts` holds the
+SRD 5.2.1 XP budget, bands, notes and suggestions; the DM console of a draft measures the combatants
+the server already holds against the party levels of `get_party_overview` and adds suggested groups
+through `add_combatants`.
+
 Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

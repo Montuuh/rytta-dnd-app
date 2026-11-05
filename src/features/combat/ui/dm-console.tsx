@@ -45,6 +45,7 @@ import { AmountDialog, InitiativeDialog } from './amount-dialog'
 import { CombatLog } from './combat-log'
 import { CombatSummary } from './combat-summary'
 import { CombatantDetail } from './combatant-detail'
+import { EncounterBalance } from './encounter-balance'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
 import { NetworkState, RunnerError } from './parts'
@@ -502,6 +503,16 @@ export function DmConsole({
             </Button>
           </Group>
         </div>
+      )}
+      {(status === 'draft' || status === 'initiative') && (
+        <EncounterBalance
+          campaignId={campaignId}
+          encounterId={encounter.id}
+          encounterName={encounter.name}
+          combatants={combatants}
+          run={run}
+          pending={pending}
+        />
       )}
       {status === 'active' && (
         <Group justify="flex-end">

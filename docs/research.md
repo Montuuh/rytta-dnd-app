@@ -33,6 +33,18 @@ slot circles, and collapsible feature/spell rows. Rytta adapts the information
 architecture with its own palette, sentence-case labels, text alternatives for status,
 and no copied text or art.
 
+Signed-in follow-up (2026-11-05, RYT-054): the user signed in to the browser pane and the GM
+panel was reviewed (Overview, Encounters, Builder, Changelog, Quiz, Casino, Light Pad, Settings) and
+the Tabletop page. Observed in Encounters: party levels typed per member, a 2014/2024 toggle (count
+multiplier only for 2014), thresholds summed for the party, a zoned budget scale with a marker,
+difficulty and stats (monsters, raw/total XP, XP per player), a roster with steppers kept in browser
+storage, saved named encounters, CR/type/size/environment filters and a random fill within a budget
+tier. Tabletop: a canvas VTT (scenes, maps, tokens with live HP, initiative bar, walls and doors,
+lights, fog with a player-view preview, measuring, pings, spell areas, drawing, grid snap, dice,
+audio, props, uploads, a cast/table window and an exploration group token). Rytta adapts the
+builder idea to its draft encounters with the SRD 5.2.1 method (ADR 031); the Tabletop stays a
+product non-goal unless a new ADR changes it. No code, text or art was copied.
+
 ## SRD 5.2
 
 Source: [System Reference Document 5.2](https://www.dndbeyond.com/srd) by Wizards of the

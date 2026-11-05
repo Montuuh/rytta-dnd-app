@@ -239,6 +239,7 @@ and damage dealt, taken and healed as tabular numbers. Same component in the DM 
 ## 8. Non-goals (this delivery)
 
 Grid/positions, attack and damage roll resolution, automatic
-surprise, XP budgets and encounter difficulty, combat across several campaigns, offline queues.
+surprise, combat across several campaigns, offline queues. XP budgets and encounter difficulty
+were a non-goal here; RYT-054 adds them to draft encounters (ADR 031).
 Candidates for later tickets: per-field sharing, XP/loot hand-off to shops, reaction tracking,
 and a VTT adapter (Owlbear) behind a feature boundary.

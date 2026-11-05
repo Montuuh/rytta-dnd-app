@@ -254,3 +254,41 @@ The DM's own image says it is the campaign's; when it cannot load, the viewer sh
 with its credit, as the token does. The print develops from sepia in 220ms unless motion is reduced.
 One quiet action, Change image, sticks to the foot of the full-screen sheet on phones. Escape and
 close return focus to the token. No licence badges or art pills.
+
+## Encounter builder (RYT-054, ADR 031)
+
+A draft (and an encounter collecting initiative) shows a difficulty card under the flow strip of the
+DM console, labelled "Encounter difficulty" for screen readers. It reads like an instrument, not a
+slider or a progress bar with chips: a 44px seal with the band's glyph (scale: no enemies, feather:
+Low, swords: Moderate, flame: High, skull: over High, the only filled seal) beside the band as an h2
+in the heading face, then one reading line in tabular numbers ("1100 de 1500 PX; quedan 400"; Spanish groups thousands from five digits).
+Numbers use the interface language, and a no-break space keeps each number with its unit.
+
+The gauge is a ruled track on a fixed scale (a quarter past the party's High budget): three notches
+for the Low, Moderate and High budgets, each band's word in italics in the middle of its own stretch
+(Low and High below, Moderate above, so they never collide) with "up to N" under it from 30em, the
+spent XP as the fill and a 3px pointer with a caret (moved by transform), and the stretch beyond High
+hatched in `--danger`. A fight beyond the scale pins the pointer at the end with a chevron.
+
+Below sit the party it is measured against, the one action "Suggest creatures" (light variant; full
+width on phones, under the reading where the thumb is; beside the reading from 48em; replaced by a
+quiet line once the High budget is spent), SRD notes as margin notes (italic heading face, a pen
+glyph in the secondary accent and a hairline above; never alert boxes or a thick side rule; a note
+also names characters without a sheet) and a quiet 44px disclosure for the party and creature
+ledgers (hairline-ruled rows, tabular XP, not-counted rows in italics with the reason in words) and
+the SRD source line. "Ask for initiative" stays the console's primary action. One polite live region
+announces changes from anywhere, never the first reading; the add notice is plain text and leaves
+with the next change of the draft.
+
+The suggestion dialog (full screen on phones) keeps its choices between openings. Difficulty uses
+bestiary tiles that show the XP left ("Already reached" and disabled otherwise): three columns from
+48em, one row each on phones and with large text. Kinds are choice tiles with a glyph, title and help
+(two columns on phones with the help visually hidden); "A leader and its band" is always one leader
+with two or more lesser creatures of its type. The creature type is a select with type glyphs and a
+real "Any type" option; until the DM picks one it follows the most common enemy type in the draft.
+"Other ideas" sits beside the Ideas heading, announces how many new ideas came and stays
+`aria-disabled` once there are none. Idea cards show overlapping hexagon tokens, the composition as
+the heading, one line per creature with its type glyph, CR and XP, the total and the resulting band,
+and one "Add" button whose accessible name carries the composition and the encounter. Buttons stay
+focusable while saving (`aria-disabled`), so a failure keeps focus where it was. The dialog unmounts
+on close and returns focus to "Suggest creatures"; a successful add closes it and shows the notice.

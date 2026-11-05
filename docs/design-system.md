@@ -239,3 +239,18 @@ success state shows the tokens, the hit point mode and visibility. Customise is 
 SRD creature (its editor title says what it is based on); Duplicate stays for campaign creatures.
 Notices avoid gendered participles ("Saved to the bestiary: X."). Delete says it cannot be undone. Console trackers are 44px: a recharge toggle with a
 battery glyph and its state in words, and daily uses as numbered round pips (crossed when spent).
+
+Creature art (RYT-053, ADR 030): every SRD creature shows bundled art in its list token and at the
+head of its stat block; in the dark theme list and stat block thumbnails are toned down slightly so
+white photos do not glare. With any image the token is a button with a quiet seal (surface disc,
+accent ring) that opens a short menu anchored to it: view, change, then restore the original art
+(SRD creature with the DM's image) or remove the image (campaign creature, which asks first).
+Without one it stays the file picker with the filled accent seal. Saving, saved and removed notices
+show in words under the token. The viewer is a specimen plate from a field journal: the print on the
+raised mat, held at its own corners by four accent photo corners, and a museum label beneath (a
+hairline rule above it, italic terms for author, licence and source in 44px rows, underlined links
+with an external-link glyph and "opens in a new tab" for screen readers, and the adaptation note).
+The DM's own image says it is the campaign's; when it cannot load, the viewer shows the bundled art
+with its credit, as the token does. The print develops from sepia in 220ms unless motion is reduced.
+One quiet action, Change image, sticks to the foot of the full-screen sheet on phones. Escape and
+close return focus to the token. No licence badges or art pills.

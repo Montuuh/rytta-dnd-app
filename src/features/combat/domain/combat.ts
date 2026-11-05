@@ -226,6 +226,16 @@ export const templateSchema = z.object({
 export type CombatantTemplate = z.infer<typeof templateSchema>
 export const templateListSchema = z.array(templateSchema)
 
+/** RYT-053: the DM's own image for an SRD creature in this campaign (replaces the bundled art). */
+export const srdImageListSchema = z.array(
+  z.object({
+    srd_id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    image_path: z.string().min(1),
+    updated_at: z.string(),
+  }),
+)
+export type SrdImage = z.infer<typeof srdImageListSchema>[number]
+
 export const mutationResultSchema = z
   .object({
     encounter_id: z.uuid().optional(),
@@ -343,6 +353,7 @@ export type CombatAction =
     }
   | { kind: 'deleteTemplate'; templateId: string }
   | { kind: 'templateImage'; templateId: string; revision: number; path: string | null }
+  | { kind: 'srdImage'; srdId: string; path: string | null }
   | { kind: 'tracker'; combatantId: string; key: string; value: number }
 
 export const combatErrorCodes = [

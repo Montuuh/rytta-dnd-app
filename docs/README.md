@@ -69,3 +69,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-043 verification](evidence/RYT-043/validation.md).
 37. [ADR 028: SRD bestiary in the DM Command Center, full stat blocks and combat trackers](decisions/028-bestiary.md)
     and [RYT-046–049 verification](evidence/RYT-046/validation.md).
+38. [ADR 030: art for every SRD creature and the DM's own image per creature](decisions/030-bestiary-art.md),
+    [art credits](bestiary-art-credits.md) and [RYT-053 verification](evidence/RYT-053/validation.md).

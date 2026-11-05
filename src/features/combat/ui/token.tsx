@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { creatureArtQuery, creatureArtUrl } from '@/features/bestiary'
 import { combatImageQuery } from '../api'
 import { monogram, type Combatant, type HpBand } from '../domain/combat'
 
@@ -30,6 +31,7 @@ export function Token({
   side,
   imageKind,
   path,
+  art,
   size,
   active = false,
   defeated = false,
@@ -45,6 +47,8 @@ export function Token({
   /** Which private bucket holds `path`. */
   imageKind: 'character' | 'creature'
   path: string | null | undefined
+  /** RYT-053: public bundled art shown when there is no private image (or it cannot load). */
+  art?: string | null
   /** Pixels; omit to let the layout's --token-size decide. */
   size?: number
   active?: boolean
@@ -60,7 +64,10 @@ export function Token({
   const { state } = useAuth()
   const url = useQuery(combatImageQuery(state.user?.id ?? 'anonymous', imageKind, path ?? null))
   const [failed, setFailed] = useState<string | null>(null)
-  const src = url.data && failed !== url.data ? url.data : null
+  const own = url.data && failed !== url.data ? url.data : null
+  // The bundled art stands in when there is no private image or it cannot be read.
+  const ownGone = !path || url.isError || (url.data !== undefined && failed === url.data)
+  const src = own ?? (art && ownGone && failed !== art ? art : null)
   return (
     <span
       className={[
@@ -120,12 +127,18 @@ export function CombatantToken({
   showActive?: boolean
   described?: boolean
 }) {
+  // The DM's projection names the SRD creature an NPC came from: its bundled art stands in for a
+  // missing image (RYT-053). Players and the table never receive srd_id, so they keep the monogram.
+  const srdId = combatant.kind === 'npc' ? combatant.srd_id : undefined
+  const credits = useQuery({ ...creatureArtQuery(), enabled: Boolean(srdId) })
+  const art = srdId && credits.data?.[srdId] ? creatureArtUrl(srdId, 'thumb') : null
   return (
     <Token
       name={combatant.name}
       side={combatant.kind === 'lair' ? 'lair' : combatant.side}
       imageKind={combatant.kind === 'character' ? 'character' : 'creature'}
       path={combatant.kind === 'lair' ? null : combatant.image_path}
+      art={art}
       size={size}
       active={showActive && combatant.is_active}
       defeated={combatant.defeated || combatant.hp_band === 'down'}

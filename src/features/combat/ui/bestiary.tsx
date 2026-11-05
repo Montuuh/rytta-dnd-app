@@ -33,7 +33,6 @@ import {
   ArrowDown01,
   ArrowDownAZ,
   Bookmark,
-  Camera,
   Check,
   Crown,
   Heart,
@@ -43,7 +42,6 @@ import {
   CopyPlus,
   EllipsisVertical,
   FilePenLine,
-  ImagePlus,
   PawPrint,
   Pencil,
   Plus,
@@ -70,16 +68,15 @@ import {
 } from '@/features/bestiary'
 import { QueryFeedback } from '@/features/campaigns'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
-import { useCreatureImageUpload } from '../api'
 import type { CombatantTemplate, TemplateInput } from '../domain/combat'
 import { AddToEncounterDialog } from './add-to-encounter'
 import { CreatureEditor } from './creature-editor'
 import { blankDraft, draftFromBlock, type CreatureDraft } from './creature-draft'
-import { templateBlock, useCreatureCatalog } from './creatures'
+import { CreatureArtControl } from './creature-art'
+import { itemArt, templateBlock, useCreatureCatalog } from './creatures'
 import { useRunner } from './helpers'
 import { NewCreatureDialog } from './new-creature'
 import { RunnerError } from './parts'
-import { toSquareWebp } from './square-image'
 import { typeGlyphs } from './bestiary-glyphs'
 import { NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
 import { Token } from './token'
@@ -182,7 +179,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     )
   }
   // A dialog over the phone sheet owns Escape: the sheet stays open underneath.
-  const overlayOpen = Boolean(adding || editor || quick || deleting) || creating
+  const [viewingArt, setViewingArt] = useState(false)
+  const overlayOpen = Boolean(adding || editor || quick || deleting) || creating || viewingArt
   // "/" jumps to the search from anywhere on the panel, as in the glossary.
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -288,6 +286,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       favorite={favorites.has(selected.key)}
       toggleFavorite={() => toggle(selected.key)}
       inSheet={!wide}
+      onViewArt={setViewingArt}
       onAdd={(target) => {
         opener.current = target
         setAdding(selected)
@@ -1009,6 +1008,7 @@ function CreatureList({
             side={item.side ?? 'enemy'}
             imageKind="creature"
             path={item.imagePath ?? null}
+            art={itemArt(item)?.thumb}
             size={44}
             glyph={item.type ? typeGlyphs[item.type] : undefined}
           />
@@ -1089,6 +1089,7 @@ function CreatureDetail({
   favorite,
   toggleFavorite,
   inSheet,
+  onViewArt,
   onAdd,
   onCustomise,
   onEdit,
@@ -1103,6 +1104,8 @@ function CreatureDetail({
   favorite: boolean
   toggleFavorite: () => void
   inSheet: boolean
+  /** The image viewer is open (it owns Escape over the phone sheet). */
+  onViewArt: (open: boolean) => void
   onAdd: (target: HTMLElement) => void
   onCustomise: (target: HTMLElement) => void
   onEdit: (target: HTMLElement) => void
@@ -1131,19 +1134,23 @@ function CreatureDetail({
   // Menu items unmount with the menu: overlays they open return focus to the ⋯ button.
   const more = useRef<HTMLButtonElement>(null)
   const fromMenu = () => more.current ?? document.body
-  const media =
-    item.source === 'homebrew' && template ? (
-      <CreatureImage campaignId={campaignId} template={template} />
-    ) : (
-      <Token
-        name={item.name}
-        side="enemy"
-        imageKind="creature"
-        path={null}
-        size={64}
-        glyph={item.type ? typeGlyphs[item.type] : undefined}
-      />
-    )
+  const media = (
+    <CreatureArtControl
+      // A new creature or a new image: the control's notices start fresh.
+      key={item.key}
+      campaignId={campaignId}
+      name={item.name}
+      side={item.side ?? 'enemy'}
+      type={item.type}
+      target={
+        template ? { templateId: template.id, revision: template.revision } : { srdId: item.id }
+      }
+      imagePath={item.imagePath ?? null}
+      art={itemArt(item)}
+      credit={catalog.artCredit(item.artId)}
+      onViewing={onViewArt}
+    />
+  )
   const actions = (
     <div className={inSheet ? 'bst-actions is-sticky' : 'bst-actions is-pinned'}>
       <Button
@@ -1304,99 +1311,6 @@ function CreatureDetail({
         }
       />
     </Stack>
-  )
-}
-
-/**
- * The creature's token is its own upload control (RYT-043): tapping it (or Enter/Space on its focus)
- * opens the file picker; a camera seal on the rim says so. The image is cropped to a 512px WebP square,
- * stored privately and attached with the template's revision. Progress, success and failure are
- * announced; a failure stays next to the token until the next attempt.
- */
-function CreatureImage({
-  campaignId,
-  template,
-}: {
-  campaignId: string
-  template: CombatantTemplate
-}) {
-  const { t } = useTranslation()
-  const inputId = useId()
-  const errorId = useId()
-  const upload = useCreatureImageUpload(campaignId)
-  const [unreadable, setUnreadable] = useState(false)
-  const [done, setDone] = useState(false)
-  const failed = unreadable || upload.isError
-  const has = Boolean(template.image_path)
-  const action = t(has ? 'combat.image.change' : 'combat.image.add', { name: template.name })
-  return (
-    <div className="combat-creature-image">
-      <input
-        id={inputId}
-        type="file"
-        accept="image/webp,image/png,image/jpeg"
-        className="visually-hidden combat-image-input"
-        disabled={upload.isPending}
-        // One accessible name, on the control itself (RYT-043 F5); the label is the visual target.
-        aria-label={action}
-        aria-describedby={failed ? errorId : undefined}
-        onChange={async (event) => {
-          const file = event.currentTarget.files?.[0]
-          event.currentTarget.value = ''
-          if (!file) return
-          setUnreadable(false)
-          setDone(false)
-          upload.reset()
-          let image: Blob
-          try {
-            image = await toSquareWebp(file)
-          } catch {
-            setUnreadable(true)
-            return
-          }
-          upload.mutate(
-            { templateId: template.id, revision: template.revision, image },
-            { onSuccess: () => setDone(true) },
-          )
-        }}
-      />
-      <label
-        htmlFor={inputId}
-        className="combat-image-picker"
-        data-pending={upload.isPending || undefined}
-        title={action}
-      >
-        <Token
-          name={template.name}
-          side={template.side}
-          imageKind="creature"
-          path={template.image_path}
-          size={64}
-        >
-          <span className="combat-image-seal" aria-hidden="true">
-            {upload.isPending ? (
-              <Loader size={14} color="currentColor" />
-            ) : has ? (
-              <Camera size={16} strokeWidth={2.25} />
-            ) : (
-              <ImagePlus size={16} strokeWidth={2.25} />
-            )}
-          </span>
-        </Token>
-      </label>
-      <VisuallyHidden role="status">
-        {upload.isPending
-          ? t('combat.image.saving')
-          : done
-            ? t('combat.image.saved', { name: template.name })
-            : ''}
-      </VisuallyHidden>
-      {failed && (
-        <Text id={errorId} role="alert" size="sm" className="combat-image-error">
-          {t(unreadable ? 'combat.image.unreadable' : 'combat.image.failed')}
-        </Text>
-      )}
-    </div>
   )
 }
 

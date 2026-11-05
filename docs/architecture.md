@@ -139,6 +139,12 @@ and a pasted-text parser. `combat` keeps the data: `combatant_templates` gains `
 and `trackers` (`set_combatant_tracker`, server recharge rolls in `combat_tick`). The combat feature
 exposes `BestiaryPanel`, which the DM Command Center page composes like the item storeroom.
 
+ADR 030 (RYT-053) bundles art for every SRD creature as static WebP files (`public/bestiary/art`,
+`public/bestiary/thumbs`) with credits in the lazy `bestiary/content/art.json`, built by
+`scripts/bestiary/build_images.py` from a curated selection. `combat` stores the DM's own image of an
+SRD creature per campaign (`campaign_creature_images`, `set_creature_srd_image`); the bestiary token
+opens a menu to view (credited viewer), change, restore or remove the image.
+
 Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

@@ -69,6 +69,15 @@ SRD catalogue is public CC-BY content and is only loaded on DM screens; what the
 Limitation: a creature image path stays readable by members while its combatant is visible, but the
 projection no longer exposes the path while an alias is set.
 
+Bestiary art (ADR 030, RYT-053): the bundled SRD art is public static content with its credits. The
+DM's image of an SRD creature lives in `campaign_creature_images` (DM-only reads under RLS, no direct
+writes) and in the private `creature-images` bucket under `{env}/{campaign}/srd-{id}/`; the storage
+router lets only that campaign's DM read, upload or delete there. `set_creature_srd_image` is DM-only,
+campaign-locked, idempotent and checks the path's environment, campaign and creature and that the
+object exists. SQL tests deny anon, outsiders, Players and DMs of another campaign and run the PRE
+mirror. Players and the table never receive `srd_id`, so SRD art never reveals which creature an NPC
+is.
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite

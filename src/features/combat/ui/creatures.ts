@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
   bestiaryLanguage,
+  creatureArtQuery,
+  creatureArtUrl,
   monsterBodiesQuery,
   monsterIndexQuery,
   parseDice,
@@ -12,6 +14,7 @@ import {
   srdItems,
   statBlockSchema,
   trackersOf,
+  type CreatureArt,
   type CreatureListItem,
   type CreatureSize,
   type CreatureType,
@@ -19,7 +22,7 @@ import {
   type StatBlock,
 } from '@/features/bestiary'
 import { useGlossaryName } from '@/features/glossary'
-import { templatesQuery } from '../api'
+import { srdImagesQuery, templatesQuery } from '../api'
 import type { CombatantTemplate, NpcEntry } from '../domain/combat'
 
 /** A template's stored stat block, when it is readable (ADR 028). */
@@ -74,13 +77,20 @@ export function useCreatureCatalog(campaignId: string) {
   const index = useQuery(monsterIndexQuery())
   const bodies = useQuery(monsterBodiesQuery(language))
   const templates = useQuery(templatesQuery(state.user!.id, campaignId))
-  const items = useMemo(
-    () => [
-      ...(templates.data ?? []).map(templateItem),
-      ...(index.data ? srdItems(index.data.monsters, language) : []),
-    ],
-    [index.data, templates.data, language],
-  )
+  const art = useQuery(creatureArtQuery())
+  const srdImages = useQuery(srdImagesQuery(state.user!.id, campaignId))
+  const items = useMemo(() => {
+    const own = new Map((srdImages.data ?? []).map((i) => [i.srd_id, i.image_path]))
+    const artOf = (id: string | null | undefined) => (id && art.data?.[id] ? id : null)
+    return [
+      ...(templates.data ?? []).map((tp) => ({ ...templateItem(tp), artId: artOf(tp.srd_id) })),
+      ...(index.data ? srdItems(index.data.monsters, language) : []).map((item) => ({
+        ...item,
+        imagePath: own.get(item.id) ?? null,
+        artId: artOf(item.id),
+      })),
+    ]
+  }, [index.data, templates.data, language, art.data, srdImages.data])
   const rows = useMemo(
     () => new Map((index.data?.monsters ?? []).map((row) => [row.id, row])),
     [index.data],
@@ -97,6 +107,9 @@ export function useCreatureCatalog(campaignId: string) {
   return {
     language,
     items,
+    /** The credit of an SRD creature's bundled art, once the credits have loaded. */
+    artCredit: (id: string | null | undefined): CreatureArt | null =>
+      (id && art.data?.[id]) || null,
     rows,
     templateById,
     baselines: index.data?.baselines ?? [],
@@ -115,6 +128,13 @@ export function useCreatureCatalog(campaignId: string) {
       void templates.refetch()
     },
   }
+}
+
+/** The bundled art an item shows without a private image: its thumbnail and full image URLs. */
+export function itemArt(item: Pick<CreatureListItem, 'artId'>) {
+  return item.artId
+    ? { thumb: creatureArtUrl(item.artId, 'thumb'), full: creatureArtUrl(item.artId, 'full') }
+    : null
 }
 
 /** Builds tracker labels for per-day spells from the glossary in the interface language. */

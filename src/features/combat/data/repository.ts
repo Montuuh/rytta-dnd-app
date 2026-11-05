@@ -6,6 +6,7 @@ import {
   combatStateSchema,
   encounterListSchema,
   mutationResultSchema,
+  srdImageListSchema,
   templateListSchema,
   type CombatAction,
 } from '../domain/combat'
@@ -55,6 +56,22 @@ export async function loadTemplates(campaignId: string, signal: AbortSignal) {
   if (result.error) throw new Error(combatErrorCode(result.error.message))
   return templateListSchema.parse(result.data)
 }
+
+export async function loadSrdImages(campaignId: string, signal: AbortSignal) {
+  const db = await client()
+  const result = await db
+    .rpc('list_creature_srd_images', { target_campaign: uuid(campaignId) })
+    .abortSignal(signal)
+  if (result.error) throw new Error(combatErrorCode(result.error.message))
+  return srdImageListSchema.parse(result.data)
+}
+
+const srdId = (value: string) =>
+  z
+    .string()
+    .max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .parse(value)
 
 const entrySchema = z.discriminatedUnion('kind', [
   z.object({
@@ -310,6 +327,14 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
         request_id,
       })
       break
+    case 'srdImage':
+      result = await db.rpc('set_creature_srd_image', {
+        target_campaign,
+        target_srd: srdId(action.srdId),
+        new_path: action.path,
+        request_id,
+      })
+      break
   }
   if (result.error) throw new Error(combatErrorCode(result.error.message))
   return mutationResultSchema.parse(result.data)
@@ -336,12 +361,20 @@ export async function combatImageUrl(kind: ImageKind, path: string) {
   return z.url().parse(signed.data.signedUrl)
 }
 
-/** Uploads a prepared WebP for a bestiary template; the attach RPC links it afterwards. */
-export async function uploadCreatureImage(campaignId: string, templateId: string, image: Blob) {
+/**
+ * Uploads a prepared WebP for a bestiary template or (RYT-053) an SRD creature of the campaign; the
+ * attach RPC links it afterwards.
+ */
+export async function uploadCreatureImage(
+  campaignId: string,
+  target: { templateId: string } | { srdId: string },
+  image: Blob,
+) {
   if (image.type !== 'image/webp' || image.size > 1_048_576) throw new Error('invalid')
   const db = await client()
   const { activeSchema } = await import('@/shared/api/supabase')
-  const path = `${activeSchema()}/${uuid(campaignId)}/${uuid(templateId)}/${crypto.randomUUID()}.webp`
+  const folder = 'templateId' in target ? uuid(target.templateId) : `srd-${srdId(target.srdId)}`
+  const path = `${activeSchema()}/${uuid(campaignId)}/${folder}/${crypto.randomUUID()}.webp`
   const result = await db.storage
     .from(imageBuckets.creature.bucket)
     .upload(path, image, { contentType: image.type })

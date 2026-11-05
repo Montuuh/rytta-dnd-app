@@ -58,4 +58,6 @@ export type CombatFunctions = {
     expected_revision: number
     new_path: string | null
   }>
+  list_creature_srd_images: Call<object>
+  set_creature_srd_image: Mutation<{ target_srd: string; new_path: string | null }>
 }

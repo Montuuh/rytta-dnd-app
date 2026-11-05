@@ -8,12 +8,14 @@
 }
 .sb-head {
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   align-items: flex-start;
 }
+/* The title keeps the row beside the token; notices under the token wrap to their own line. */
 .sb-title {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 9rem;
 }
 .sb-name {
   margin: 0;

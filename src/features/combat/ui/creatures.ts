@@ -122,6 +122,8 @@ export function useCreatureCatalog(campaignId: string) {
     pending: index.isPending || templates.isPending,
     bodiesPending: bodies.isPending,
     error: index.isError || templates.isError || bodies.isError,
+    /** RYT-054: the index or the campaign creatures failed with nothing cached to show. */
+    dataError: (index.isError && !index.data) || (templates.isError && !templates.data),
     retry: () => {
       void index.refetch()
       void bodies.refetch()

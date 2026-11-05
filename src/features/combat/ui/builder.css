@@ -1,0 +1,568 @@
+/* RYT-054 encounter builder: a difficulty instrument for the prepared fight. Tokens only; the band
+   always reads as a word with a glyph, colour only repeats it. */
+
+.bld {
+  --bld-tone: var(--app-muted);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface);
+}
+.bld.band-low {
+  --bld-tone: var(--info);
+}
+.bld.band-moderate {
+  --bld-tone: var(--warn);
+}
+.bld.band-high,
+.bld.band-aboveHigh {
+  --bld-tone: var(--danger);
+}
+/* From tablets the one action sits beside the reading; on phones it ends the reading, under the
+   thumb, before the notes. */
+@media (min-width: 48em) {
+  .bld:has(> .bld-head) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .bld > * {
+    grid-column: 1 / -1;
+  }
+  .bld > .bld-head {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .bld > .bld-suggest,
+  .bld > .bld-full {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+  .bld > .bld-full {
+    max-width: 18rem;
+  }
+}
+
+/* Reading: seal, band in the heading face, the numbers. */
+.bld-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 14px;
+}
+.bld-seal {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--bld-tone);
+  border-radius: 50%;
+  color: var(--bld-tone);
+  background: color-mix(in srgb, var(--bld-tone) 10%, var(--app-surface));
+}
+/* Over the High budget is the only filled seal, as near death is for health. */
+.bld.band-aboveHigh .bld-seal {
+  background: var(--danger);
+  color: var(--app-bg);
+}
+.bld-reading {
+  min-width: 0;
+}
+.bld-title {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h2);
+  line-height: 1.15;
+  color: var(--app-text);
+}
+.bld-numbers {
+  margin: 2px 0 0;
+  font-weight: 600;
+  color: var(--app-text);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-wrap: pretty;
+}
+.bld-suggest {
+  min-height: 44px;
+}
+.bld-full {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+/* The instrument: notches for the three budgets on a ruled track, each band named inside its
+   stretch, a pointer for the spent XP and the stretch beyond High hatched. Labels alternate below
+   and above so they never collide. */
+/* The band words sit outside the reach of the pointer and its caret (15px above the track, 9px
+   below): the padding is the label's height in rem (it grows with the text) plus that reach. */
+.bld-gauge {
+  --bld-label: 1.15rem;
+  position: relative;
+  padding: calc(var(--bld-label) + 20px) 0 calc(var(--bld-label) + 14px);
+  margin: 0 4px;
+  /* The pointer's carrier is as wide as the track; clip it, but keep room for the caret. */
+  overflow: clip;
+  overflow-clip-margin: 12px;
+}
+@media (min-width: 30em) {
+  .bld-gauge {
+    --bld-label: 2.3rem;
+  }
+}
+.bld-track {
+  position: relative;
+  height: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 7px;
+  background: var(--app-raised);
+}
+.bld-lethal {
+  position: absolute;
+  inset: 0 0 0 var(--bld-high);
+  border-radius: 0 6px 6px 0;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--danger) 38%, transparent) 0 3px,
+    transparent 3px 8px
+  );
+}
+.bld-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: var(--bld-tone);
+  transform-origin: left center;
+  transform: scaleX(var(--bld-fill-ratio));
+  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.bld.band-none .bld-fill {
+  display: none;
+}
+/* Notches stand out of the track and carry a surface outline, so they read over the fill too. */
+.bld-tick {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--app-text);
+  box-shadow: 0 0 0 1px var(--app-surface);
+}
+/* The pointer: a hairline with a caret, moved by transform along the whole track. */
+.bld-pointer-run {
+  position: absolute;
+  inset: 0;
+  transform: translateX(calc(var(--bld-fill-ratio) * 100%));
+  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+}
+.bld-pointer {
+  position: absolute;
+  top: -9px;
+  bottom: -9px;
+  left: -1.5px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--app-text);
+  box-shadow: 0 0 0 1px var(--app-surface);
+}
+.bld-pointer::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  border: 6px solid transparent;
+  border-top-color: var(--app-text);
+  border-bottom: 0;
+  transform: translateX(-50%);
+}
+.bld-pointer-beyond {
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  /* It sits on the danger fill: the page background reads on it in both schemes. */
+  color: var(--app-bg);
+  transform: translateY(-50%);
+}
+.bld-gauge.is-beyond .bld-pointer {
+  left: -3px;
+}
+.bld-mark {
+  position: absolute;
+  bottom: 0;
+  display: grid;
+  justify-items: center;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--fs-meta);
+  line-height: 1.25;
+  color: var(--app-muted);
+}
+.bld-mark.mark-moderate {
+  top: 0;
+  bottom: auto;
+}
+.bld-mark.mark-moderate .bld-mark-xp {
+  order: -1;
+}
+.bld-mark-word {
+  font-family: var(--mantine-font-family-headings);
+  font-style: italic;
+  color: var(--app-text);
+}
+.bld-mark-xp {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+@media (max-width: 29.99em) {
+  .bld-mark-xp {
+    display: none;
+  }
+}
+
+.bld-party-line,
+.bld-source {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bld-notice {
+  margin: 0;
+  color: var(--app-text);
+}
+.bld-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+/* Field notes: a pen glyph in the margin and a hairline above, not alert boxes or side tabs. */
+.bld-notes {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bld-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
+  font-family: var(--mantine-font-family-headings);
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--app-text);
+}
+.bld-note > svg {
+  margin-top: 4px;
+  color: var(--app-accent-secondary);
+}
+
+/* Disclosure: a quiet ruled line with a chevron, 44px tall. */
+.bld-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 4px;
+  border-top: 1px solid var(--app-border);
+  font-weight: 600;
+  color: var(--app-text);
+}
+.bld-more:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.bld-more-chevron {
+  transition: transform 160ms ease;
+}
+.bld-more[aria-expanded='true'] .bld-more-chevron {
+  transform: rotate(180deg);
+}
+
+.bld-ledgers {
+  display: grid;
+  gap: 16px;
+  padding: 4px 0 8px;
+}
+@media (min-width: 48em) {
+  .bld-ledgers {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 24px;
+  }
+}
+.bld-ledger {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+.bld-ledger-title {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+}
+.bld-rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bld-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+.bld-row-what {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.bld-row-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.bld-row-meta {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bld-row-xp {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: right;
+}
+.bld-row.is-excluded .bld-row-name,
+.bld-row.is-excluded .bld-row-meta {
+  font-style: italic;
+}
+.bld-row.is-excluded .bld-row-xp {
+  color: var(--app-muted);
+}
+.bld-budget {
+  display: grid;
+  /* Three columns while the words fit; fewer with large text. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
+  gap: 2px 12px;
+  margin: 6px 0 0;
+}
+.bld-budget dt {
+  grid-column: 1 / -1;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bld-budget dd {
+  display: grid;
+  margin: 0;
+}
+.bld-budget dd span {
+  font-family: var(--mantine-font-family-headings);
+  font-style: italic;
+}
+.bld-budget dd strong {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.bld-empty {
+  margin: 0;
+  color: var(--app-muted);
+}
+.bld-source {
+  padding-top: 4px;
+}
+
+/* Suggestions: target tiles show what is left; each idea is a muster roll with one action. */
+.bld-targets .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.bld-target {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  width: 100%;
+  /* Room on the right for the check seal of the chosen tile. */
+  padding: 10px 24px 10px 12px;
+}
+.bld-target-word {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+.bld-target-xp {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* Phones (and large text): one row per difficulty, glyph, word and what is left on one line. */
+@media (max-width: 47.99em) {
+  .bld-targets .bst-tiles-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* A row that wraps instead of overlapping: what is left drops below the word when it must. */
+  .bld-target {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+  }
+  .bld-target-word {
+    font-size: var(--fs-body);
+  }
+  .bld-target-xp {
+    margin-left: auto;
+    text-align: right;
+  }
+}
+.bld-target.band-low > svg {
+  color: var(--info);
+}
+.bld-target.band-moderate > svg {
+  color: var(--warn);
+}
+.bld-target.band-high > svg {
+  color: var(--danger);
+}
+.bld-options {
+  display: grid;
+  gap: 12px;
+}
+.bld-options .mantine-Select-root {
+  max-width: 22rem;
+}
+.bld-type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Phones: the two kinds sit side by side; their help stays for screen readers only. */
+@media (max-width: 47.99em) {
+  .bld-kinds.bst-choice-tiles .bst-tiles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bld-kinds .bst-choice-help {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+.bld-rules {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bld-ideas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.bld-more-ideas {
+  min-height: 44px;
+}
+.bld-no-new {
+  margin-top: 8px;
+}
+.bld-ideas {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bld-idea {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 14px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-raised);
+}
+.bld-idea-tokens {
+  display: flex;
+  padding-top: 2px;
+}
+.bld-idea-tokens > .combat-token + .combat-token {
+  margin-left: -10px;
+}
+.bld-idea-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.bld-idea-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.bld-idea-groups {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bld-idea-groups > li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.bld-idea-groups svg {
+  flex: none;
+  align-self: center;
+  color: var(--app-accent);
+}
+.bld-idea-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 2px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.bld-idea-band {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.bld-idea-band.band-low > svg {
+  color: var(--info);
+}
+.bld-idea-band.band-moderate > svg {
+  color: var(--warn);
+}
+.bld-idea-band.band-high > svg {
+  color: var(--danger);
+}
+.bld-idea-add {
+  min-height: 44px;
+  margin-left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bld-fill,
+  .bld-pointer-run,
+  .bld-more-chevron {
+    transition: none;
+  }
+}

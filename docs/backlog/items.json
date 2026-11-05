@@ -2134,6 +2134,55 @@
         "docs/evidence/ui-review/ryt-053/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-054",
+      "title": "Encounter builder: party XP budget, difficulty gauge and suggestions",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: build the encounter builder module taking ideas from D&D Sync (dndsync.com, reviewed in the browser with the user's account) and improve Rytta's encounter preparation.",
+        "SRD 5.2.1 Gameplay Toolbox, Combat Encounters (pages 201-202, CC-BY-4.0): XP Budget per Character and Troubleshooting."
+      ],
+      "dependsOn": ["RYT-048"],
+      "scope": "While a fight is prepared (draft) or collecting initiative, the DM console measures the encounter against the party with the SRD 5.2.1 XP budget: a difficulty gauge with Low, Moderate and High thresholds, the party and creature ledgers behind it, SRD troubleshooting notes triggered by the draft, and a suggestion dialog that proposes creature groups to reach a chosen difficulty and adds one with the existing add RPC. No schema change.",
+      "acceptance": [
+        "The party budget is the sum of each character's SRD 5.2.1 Low, Moderate and High budget; the party is the characters in the draft, or everyone in play while none was added; characters without a sheet count as level 1 and say so.",
+        "Enemy creatures from the SRD or the campaign bestiary spend their XP (the lair XP when the draft has a lair); allies and creatures without a challenge rating are listed as not counted.",
+        "The gauge names the band in words with a glyph (never colour alone), shows spent XP against the thresholds and how much reaches or stays within the next one, and announces changes politely.",
+        "Notes follow the SRD troubleshooting: more than two creatures per character, more than three stat blocks, a creature whose CR is above the party level and groups of CR 0 creatures.",
+        "Suggestions spend the XP left to the chosen difficulty without going over, prefer one or two stat blocks and no more than two creatures per character, honour an optional creature type, and one tap adds the chosen group to the draft; another set is one tap away.",
+        "Phone (390px) and tablet layouts, keyboard, Escape and focus return, both themes and languages pass axe and touch-target checks."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "unit tests for budget, bands, notes and suggestions",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/031-encounter-builder.md",
+        "docs/evidence/RYT-054/validation.md",
+        "docs/evidence/RYT-054/design-flow.md",
+        "docs/evidence/RYT-054/gauge-mobile.png",
+        "docs/evidence/RYT-054/gauge-tablet.png",
+        "docs/evidence/RYT-054/suggest-mobile.png",
+        "docs/evidence/RYT-054/suggest-tablet.png",
+        "docs/evidence/RYT-054/gauge-en-light-mobile.png",
+        "docs/evidence/RYT-054/over-high-mobile.png",
+        "docs/evidence/RYT-054/suggest-150-mobile.png",
+        "src/features/combat/domain/difficulty.test.ts",
+        "tests/e2e/encounter-builder.spec.ts",
+        "docs/evidence/ui-review/ryt-054/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

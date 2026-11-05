@@ -7,6 +7,7 @@ import {
   imageBuckets,
   loadCombatState,
   loadEncounters,
+  loadSrdImages,
   loadTemplates,
   subscribeEncounters,
   uploadCreatureImage,
@@ -53,6 +54,15 @@ export const templatesQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: [...combatScope(userId, campaignId), 'templates'],
     queryFn: ({ signal }) => loadTemplates(campaignId, signal),
+    staleTime: 30_000,
+    retry: 1,
+  })
+
+/** RYT-053: the DM's own images of SRD creatures in this campaign (DM only). */
+export const srdImagesQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: [...combatScope(userId, campaignId), 'srd-images'],
+    queryFn: ({ signal }) => loadSrdImages(campaignId, signal),
     staleTime: 30_000,
     retry: 1,
   })
@@ -116,7 +126,10 @@ export const combatImageQuery = (userId: string, kind: ImageKind, path: string |
     retry: false,
   })
 
-/** Uploads a prepared creature image and attaches it to its template in one user action. */
+/**
+ * Uploads a prepared creature image and attaches it in one user action: to a campaign creature
+ * (template, with its revision) or, RYT-053, to an SRD creature of the campaign.
+ */
 export function useCreatureImageUpload(campaignId: string) {
   const { state, controller } = useAuth()
   const userId = state.user?.id
@@ -127,17 +140,25 @@ export function useCreatureImageUpload(campaignId: string) {
     retry: false,
     networkMode: 'always',
     mutationFn: async ({
-      templateId,
-      revision,
+      target,
       image,
     }: {
-      templateId: string
-      revision: number
+      target: { templateId: string; revision: number } | { srdId: string }
       image: Blob
     }) => {
       if (!current()) throw new Error('unavailable')
-      const path = await uploadCreatureImage(campaignId, templateId, image)
-      return changeCombat(campaignId, { kind: 'templateImage', templateId, revision, path })
+      const path = await uploadCreatureImage(campaignId, target, image)
+      return changeCombat(
+        campaignId,
+        'srdId' in target
+          ? { kind: 'srdImage', srdId: target.srdId, path }
+          : {
+              kind: 'templateImage',
+              templateId: target.templateId,
+              revision: target.revision,
+              path,
+            },
+      )
     },
     onSettled: async () => {
       if (!current() || !userId) return

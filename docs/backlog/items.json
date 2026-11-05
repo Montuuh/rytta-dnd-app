@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-04",
+  "updatedAt": "2026-11-05",
   "items": [
     {
       "id": "RYT-000",
@@ -2090,6 +2090,48 @@
         "docs/evidence/RYT-052/mobile-4-add.png",
         "docs/evidence/RYT-052/mobile-6-add-done.png",
         "docs/evidence/ui-review/ryt-052/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-053",
+      "title": "Art for every SRD creature and the DM's own creature image",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: an image on every bestiary monster from any free source; tapping a creature image (SRD or homebrew) lets the DM view it or change it. The user chose the free mix (Commons, Battle for Wesnoth, game-icons.net) over paid AI art."
+      ],
+      "dependsOn": ["RYT-052"],
+      "scope": "Bundle openly licensed art and credits for the 330 SRD creatures (ADR 030), a per-campaign DM image for SRD creatures (table, RPCs, storage prefix), a token menu to view, change, restore or remove the image, an image viewer with the credit, list thumbnails and DM combat tokens with the bundled art.",
+      "acceptance": [
+        "Every SRD creature has a WebP image and a thumbnail with origin, author, licence and source; no NC, ND or non-free licences.",
+        "Tapping a creature image with art opens a menu: view, change, and restore the original art (SRD with the DM image) or remove it (campaign creature); without art the token is the file picker.",
+        "The viewer shows the image with its author, licence and source links (or says it is the campaign image), traps focus, closes with Escape and returns focus to the token.",
+        "The DM image of an SRD creature is per campaign, DM-only under RLS and storage policies, written by an idempotent RPC; anon, outsiders, Players and other DMs are refused.",
+        "List rows and DM combat tokens show the bundled art; Player and table projections are unchanged."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "denial SQL tests",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/030-bestiary-art.md",
+        "docs/bestiary-art-credits.md",
+        "docs/evidence/RYT-053/validation.md",
+        "docs/evidence/RYT-053/design-flow.md",
+        "docs/evidence/RYT-053/viewer-mobile.png",
+        "docs/evidence/RYT-053/saved-mobile.png",
+        "supabase/migrations/20261110120000_bestiary_images.sql",
+        "tests/database/bestiary-images.test.ts",
+        "tests/e2e/bestiary.spec.ts",
+        "docs/evidence/ui-review/ryt-053/review.md",
         "docs/evidence/ui-review-current.json"
       ]
     }

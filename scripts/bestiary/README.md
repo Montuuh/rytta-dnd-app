@@ -21,3 +21,21 @@ The scripts run manually (not in CI) and need `pdfplumber` (they reuse `scripts/
   lair) and per-day spell lists (glossary spell ids), and writes `index.json` (catalogue and per-CR
   medians) and `{en,es}.json` (stat blocks and the reusable trait library). Known printing errata are
   listed in `XP_ERRATA` and in `srd_monsters.parse_abilities`.
+
+## Creature art (ADR 030)
+
+Every SRD creature has bundled art: `public/bestiary/art/<id>.webp` (720px), `public/bestiary/thumbs/<id>.webp`
+(128px square) and its credit in `src/features/bestiary/content/art.json` (also listed in
+`docs/bestiary-art-credits.md`). The curated choice is `art-selection.json` (one source per creature: a
+Wikimedia Commons file, a Battle for Wesnoth portrait or a game-icons.net icon, optionally tinted and with
+a thumbnail crop focus); `art-commons.json` keeps the Commons metadata of the chosen files.
+
+1. `image_candidates.py <index.json> <out.json> [--leads-only]` collects free Wikipedia lead images and
+   Commons search results; `contact_sheet.py` turns candidates into sheets to choose by eye.
+2. Clone `github.com/wesnoth/wesnoth` (sparse: `data/core/images/portraits`) and `github.com/game-icons/icons`
+   outside the repo; `node scripts/bestiary/render_icons.mjs <game-icons> scripts/bestiary/art-selection.json <icons-dir>`
+   renders the icon plates.
+3. `python3 -I scripts/bestiary/build_images.py scripts/bestiary/art-selection.json . --candidates
+scripts/bestiary/art-commons.json --wesnoth <wesnoth-dir> <commit> --icons <icons-dir> <commit>`
+   writes the images, `art.json` and the credits page, then `npx vitest run src/features/bestiary` checks
+   coverage and licences. Wikimedia rate-limits anonymous clients; the scripts pace their calls.

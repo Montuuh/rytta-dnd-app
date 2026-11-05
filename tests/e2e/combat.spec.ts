@@ -1479,16 +1479,45 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   expect([...server.uploads]).toEqual([
     expect.stringMatching(new RegExp(`^pre/${campaignId}/${goblin.id}/.+\\.webp$`)),
   ])
-  const changer = card.getByLabel('Cambiar la imagen de Goblin')
-  await expect(changer).toBeAttached()
+  // RYT-053: with an image the token opens a menu (view, change, remove) instead of the picker.
+  const token = card.getByRole('button', { name: 'Imagen de Goblin: ver o cambiar' })
+  await expect(token).toBeFocused()
   await audit(page)
   await evidence(page, info.project.name, 'bestiary', 'RYT-043')
 
   // Change: a second upload replaces it (revision 1 → 2).
-  await changer.setInputFiles({ name: 'goblin-2.png', mimeType: 'image/png', buffer: png })
+  await token.click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('menuitem', { name: 'Cambiar la imagen…' }).click()
+  await (await chooser).setFiles({ name: 'goblin-2.png', mimeType: 'image/png', buffer: png })
   await expect.poll(() => server.uploads.size).toBe(2)
   await expect.poll(() => server.templates.find((t) => t.id === goblin.id)?.revision).toBe(2)
   expect(server.templates.find((t) => t.id === goblin.id)?.image_path).toBe([...server.uploads][1])
+  // Remove: the campaign creature goes back to its monogram, and the token is the picker again.
+  await token.click()
+  await page.getByRole('menuitem', { name: 'Quitar la imagen…' }).click()
+  // Removing asks first (a quiet destructive action, axe-clean); Cancel and Escape keep the image,
+  // and Escape closes only the question, never the phone sheet underneath (ui-ux P2-2).
+  const ask = page.getByRole('dialog', { name: '¿Quitar la imagen de Goblin?' })
+  // The menu fades out behind the question; audit once it is gone.
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await audit(page)
+  await ask.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(token).toBeFocused()
+  await token.click()
+  await page.getByRole('menuitem', { name: 'Quitar la imagen…' }).click()
+  await expect(ask).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(ask).toHaveCount(0)
+  if ((info.project.use.viewport?.width ?? 1440) < 992)
+    await expect(page.locator('.bst-sheet')).toBeVisible()
+  await expect(token).toBeFocused()
+  expect(server.templates.find((t) => t.id === goblin.id)?.image_path).toBe([...server.uploads][1])
+  await token.click()
+  await page.getByRole('menuitem', { name: 'Quitar la imagen…' }).click()
+  await ask.getByRole('button', { name: 'Quitar la imagen' }).click()
+  await expect.poll(() => server.templates.find((t) => t.id === goblin.id)?.image_path).toBe(null)
+  await expect(card.getByLabel('Añadir una imagen de Goblin')).toHaveAttribute('type', 'file')
   expect(errors).toEqual([])
 })
 

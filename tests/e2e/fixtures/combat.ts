@@ -373,6 +373,14 @@ export function combatServer() {
       return project(e, actor, table)
     }
     if (method === 'list_combatant_templates') return dm ? templates : fail('Forbidden')
+    if (method === 'list_creature_srd_images')
+      return dm
+        ? [...srdImages].map(([srd_id, image_path]) => ({
+            srd_id,
+            image_path,
+            updated_at: '2026-11-05',
+          }))
+        : fail('Forbidden')
     // Mutations: retried request ids replay.
     const key = String(body.request_id ?? '')
     if (key && requests.has(key)) return requests.get(key)
@@ -398,6 +406,7 @@ export function combatServer() {
       'delete_combatant_template',
       'set_combatant_template_image',
       'set_combatant_tracker',
+      'set_creature_srd_image',
     ])
     if (dmOnly.has(method) && !dm) return fail('Forbidden')
     if (method === 'create_encounter') {
@@ -447,6 +456,16 @@ export function combatServer() {
       row.revision = Number(row.revision) + 1
       for (const e of encounters) if (e.combatants.some((c) => c.template_id === row.id)) bump(e)
       return { id: row.id, revision: row.revision, image_path: row.image_path }
+    }
+    if (method === 'set_creature_srd_image') {
+      const srd = String(body.target_srd)
+      if (body.new_path === null) srdImages.delete(srd)
+      else {
+        if (!uploads.has(String(body.new_path)) || !String(body.new_path).includes(`/srd-${srd}/`))
+          return fail('Image unavailable')
+        srdImages.set(srd, String(body.new_path))
+      }
+      return { srd_id: srd, image_path: body.new_path }
     }
     const e =
       find(body.target_encounter) ??
@@ -870,6 +889,8 @@ export function combatServer() {
 
   /** Objects uploaded to the creature-images bucket (RYT-043). */
   const uploads = new Set<string>()
+  /** RYT-053: the DM's own image per SRD creature (srd id -> path). */
+  const srdImages = new Map<string, string>()
   /** Every bucket/path a page asked to sign (RYT-043 privacy checks). */
   const signed: string[] = []
   /** Which illustration a stored path shows: a part of the path (an id) to an artwork name. */
@@ -880,6 +901,7 @@ export function combatServer() {
     templates,
     portraits,
     uploads,
+    srdImages,
     /** Runs one RPC as `actor` (defaults to the DM), as the browser would. */
     act(method: string, body: Record<string, unknown>, actor = dmId) {
       return handle(actor, method, body)
@@ -966,7 +988,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker)$/,
+        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

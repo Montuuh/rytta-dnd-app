@@ -1,4 +1,5 @@
-export { bestiaryLanguage, monsterBodiesQuery, monsterIndexQuery } from './api'
+export { bestiaryLanguage, creatureArtQuery, monsterBodiesQuery, monsterIndexQuery } from './api'
+export { creatureArtUrl } from './data/content'
 export { StatBlockView } from './ui/stat-block'
 export {
   emptyFilters,
@@ -30,6 +31,8 @@ export { parseStatBlockText, statBlockToText, type ParsedCreature } from './doma
 export {
   abilityKeys,
   challengeRatings,
+  creatureArtCatalogSchema,
+  creatureArtSchema,
   creatureSizes,
   creatureTypes,
   detailKeys,
@@ -39,6 +42,8 @@ export {
   type AbilityKey,
   type Baseline,
   type BestiaryLanguage,
+  type CreatureArt,
+  type CreatureArtCatalog,
   type CreatureSize,
   type CreatureType,
   type DetailKey,

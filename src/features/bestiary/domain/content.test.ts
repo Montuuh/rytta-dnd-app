@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import index from '../content/index.json'
 import en from '../content/en.json'
 import es from '../content/es.json'
+import art from '../content/art.json'
 import { trackersOf } from './trackers'
 import { xpForCr } from './stats'
 import {
   baselineSchema,
   challengeRatings,
+  creatureArtCatalogSchema,
   libraryTraitSchema,
   monsterRowSchema,
   statBlockSchema,
@@ -110,5 +112,34 @@ describe('ADR 028 bundled SRD 5.2.1 monsters', () => {
     expect(traits.en.length).toBeGreaterThan(30)
     expect(traits.es.map((t) => t.key)).toEqual(traits.en.map((t) => t.key))
     expect(traits.en.find((t) => t.key === 'pack-tactics')?.text.join(' ')).toMatch(/the creature/i)
+  })
+})
+
+// RYT-053: bundled art. The images are static files (public/bestiary); credits live in art.json.
+const artFiles = Object.keys(
+  import.meta.glob('../../../../public/bestiary/{art,thumbs}/*.webp', { eager: false }),
+)
+describe('ADR 030 bundled creature art', () => {
+  it('credits an openly licensed image and a thumbnail for every SRD creature', () => {
+    const credits = creatureArtCatalogSchema.parse(art)
+    expect(Object.keys(credits).sort()).toEqual(rows.map((r) => r.id).sort())
+    const named = (folder: string) =>
+      new Set(
+        artFiles
+          .filter((f) => f.includes(`/bestiary/${folder}/`))
+          .map((f) => f.split('/').at(-1)!.replace('.webp', '')),
+      )
+    expect(named('art')).toEqual(new Set(rows.map((r) => r.id)))
+    expect(named('thumbs')).toEqual(new Set(rows.map((r) => r.id)))
+    for (const [id, credit] of Object.entries(credits)) {
+      // No non-commercial, no-derivatives or unfree licences; images fit the 720px rendition.
+      expect(credit.license, id).not.toMatch(/\b(NC|ND)\b|non-?free|fair use/i)
+      expect(Math.max(credit.width, credit.height), id).toBeLessThanOrEqual(720)
+      expect(credit.author.trim(), id).not.toBe('')
+      if (credit.origin === 'commons')
+        expect(credit.source, id).toMatch(/^https:\/\/commons\.wikimedia\.org\//)
+      if (credit.origin === 'wesnoth') expect(credit.license).toBe('GPL-2.0-or-later')
+      if (credit.origin === 'game-icons') expect(credit.license).toBe('CC BY 3.0')
+    }
   })
 })

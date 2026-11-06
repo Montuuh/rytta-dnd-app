@@ -1,1040 +1,1031 @@
 {
- "aboleth": {
-  "icon": "delapouite/floating-tentacles"
- },
- "adult-black-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#2b2622"
- },
- "adult-blue-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#2f5f93"
- },
- "adult-brass-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#9a6b1f"
- },
- "adult-bronze-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#7a5230"
- },
- "adult-copper-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#a04f2a"
- },
- "adult-gold-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#a77a0e"
- },
- "adult-green-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#3c6b33"
- },
- "adult-red-dragon": {
-  "wesnoth": "monsters/fire-dragon.webp"
- },
- "adult-silver-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#5d6f7d"
- },
- "adult-white-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#6f8fa6"
- },
- "air-elemental": {
-  "icon": "lorc/tornado"
- },
- "allosaurus": {
-  "commons": "File:Allosaurus anax.jpg",
-  "focus": [
-   0.22,
-   0.45
-  ]
- },
- "ancient-black-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#2b2622"
- },
- "ancient-blue-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#2f5f93"
- },
- "ancient-brass-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#9a6b1f"
- },
- "ancient-bronze-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#7a5230"
- },
- "ancient-copper-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#a04f2a"
- },
- "ancient-gold-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#a77a0e"
- },
- "ancient-green-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#3c6b33"
- },
- "ancient-red-dragon": {
-  "wesnoth": "monsters/fire-dragon.webp"
- },
- "ancient-silver-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#5d6f7d"
- },
- "ancient-white-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#6f8fa6"
- },
- "animated-armor": {
-  "commons": "File:Lossy-page1-2122px-Hästrustning - Livrustkammaren - 72697 aaa.jpg"
- },
- "animated-flying-sword": {
-  "commons": "File:Hand-and-a-Half Sword MET DP146428.jpg"
- },
- "animated-rug-of-smothering": {
-  "commons": "File:Vasnetsov samolet.jpg"
- },
- "ankheg": {
-  "wesnoth": "monsters/ant-giant.webp"
- },
- "ankylosaurus": {
-  "commons": "File:Ankylosaurus dinosaur.png",
-  "focus": [
-   0.38,
-   0.6
-  ]
- },
- "ape": {
-  "commons": "File:015 Chimpanzee at Kibale forest National Park Photo by Giles Laurent.jpg"
- },
- "archelon": {
-  "commons": "File:Archelon ischyros Wieland, 1896.jpg"
- },
- "archmage": {
-  "wesnoth": "humans/mage-arch.webp"
- },
- "assassin": {
-  "wesnoth": "humans/assassin.webp"
- },
- "awakened-shrub": {
-  "commons": "File:Cytisus scoparius2.jpg"
- },
- "awakened-tree": {
-  "wesnoth": "woses/wose.webp"
- },
- "axe-beak": {
-  "commons": "File:Gastornis 1917 white background.jpg"
- },
- "azer-sentinel": {
-  "wesnoth": "dwarves/sentinel.webp"
- },
- "baboon": {
-  "commons": "File:Olive baboon Ngorongoro.jpg"
- },
- "badger": {
-  "commons": "File:European badger (Meles meles taxus) Drenthe.jpg"
- },
- "balor": {
-  "commons": "File:Asmodeus.jpg"
- },
- "bandit": {
-  "wesnoth": "humans/bandit.webp"
- },
- "bandit-captain": {
-  "wesnoth": "humans/outlaw.webp"
- },
- "barbed-devil": {
-  "commons": "File:ABRAXAS INFERNAL DICTIONARY.jpg"
- },
- "basilisk": {
-  "commons": "File:Basilisk aldrovandi.jpg"
- },
- "bat": {
-  "commons": "File:Big-eared-townsend-fledermaus.jpg"
- },
- "bearded-devil": {
-  "commons": "File:Agares.jpg"
- },
- "behir": {
-  "wesnoth": "monsters/sea-serpent.webp"
- },
- "berserker": {
-  "wesnoth": "dwarves/ulfserker.webp"
- },
- "black-bear": {
-  "commons": "File:Vancouver Island black bear (Ursus americanus vancouveri) Tofino 4.jpg"
- },
- "black-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#2b2622"
- },
- "black-pudding": {
-  "wesnoth": "monsters/giant-mudcrawler.webp"
- },
- "blink-dog": {
-  "icon": "lorc/hound"
- },
- "blood-hawk": {
-  "commons": "File:Red-tailed Hawk (45812546121).jpg"
- },
- "blue-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#2f5f93"
- },
- "boar": {
-  "commons": "File:Wildschwein, Nähe Pulverstampftor (cropped).jpg"
- },
- "bone-devil": {
-  "commons": "File:Buer-blog.jpg"
- },
- "brass-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#9a6b1f"
- },
- "bronze-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#7a5230"
- },
- "brown-bear": {
-  "commons": "File:2010-kodiak-bear-1.jpg"
- },
- "bugbear-stalker": {
-  "wesnoth": "orcs/assassin.webp"
- },
- "bugbear-warrior": {
-  "wesnoth": "orcs/grunt.webp"
- },
- "bulette": {
-  "icon": "lorc/shark-jaws"
- },
- "camel": {
-  "commons": "File:07. Camel Profile, near Silverton, NSW, 07.07.2007.jpg"
- },
- "cat": {
-  "commons": "File:Siam lilacpoint.jpg"
- },
- "centaur-trooper": {
-  "commons": "File:Terracotta lekythos (oil flask) with centaur battling a warrior MET DP161810.jpg"
- },
- "chain-devil": {
-  "icon": "lorc/crossed-chains"
- },
- "chimera": {
-  "commons": "File:Chimera Apulia Louvre K362.jpg"
- },
- "chuul": {
-  "wesnoth": "monsters/scorpion-rock.webp"
- },
- "clay-golem": {
-  "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
- },
- "cloaker": {
-  "commons": "File:Dharavandhoo Thila - Manata Black Pearl.JPG"
- },
- "cloud-giant": {
-  "icon": "delapouite/giant"
- },
- "cockatrice": {
-  "commons": "File:DragonTransom.jpg"
- },
- "commoner": {
-  "wesnoth": "humans/peasant.webp"
- },
- "constrictor-snake": {
-  "commons": "File:Red-tailed boa (Boa constrictor constrictor) Rio Napo.jpg"
- },
- "copper-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#a04f2a"
- },
- "couatl": {
-  "commons": "File:Quetzalcóatl como la serpiente emplumada y el dios del viento Ehécatl, en el folio 19.jpg"
- },
- "crab": {
-  "commons": "File:Cancer pagurus.jpg"
- },
- "crocodile": {
-  "commons": "File:Nile crocodile head.jpg"
- },
- "cultist": {
-  "wesnoth": "humans/dark-adept.webp"
- },
- "cultist-fanatic": {
-  "wesnoth": "humans/necromancer.webp"
- },
- "darkmantle": {
-  "icon": "lucasms/cloak"
- },
- "death-dog": {
-  "commons": "File:Orthos Staatliche Antikensammlungen 2620.jpg"
- },
- "deer": {
-  "commons": "File:Cervus elaphus Luc Viatour 6.jpg"
- },
- "deva": {
-  "commons": "File:Angel of the Annunciation MET DP167921.jpg"
- },
- "dire-wolf": {
-  "wesnoth": "wolves/wolf-great.webp"
- },
- "djinni": {
-  "wesnoth": "monsters/jinn.webp"
- },
- "doppelganger": {
-  "commons": "File:Dante Gabriel Rossetti - How They Met Themselves (1860-64 circa).jpg"
- },
- "draft-horse": {
-  "commons": "File:Aa shirehorse.jpg"
- },
- "dragon-turtle": {
-  "commons": "File:Dragon Turtle.jpg"
- },
- "dretch": {
-  "commons": "File:Amduscias.jpg"
- },
- "drider": {
-  "icon": "carl-olsen/spider-face"
- },
- "druid": {
-  "wesnoth": "elves/druid.webp"
- },
- "dryad": {
-  "wesnoth": "elves/shyde.webp"
- },
- "dust-mephit": {
-  "commons": "File:Dust devil.jpg"
- },
- "eagle": {
-  "commons": "File:Bald eagle about to fly in Alaska (2016).jpg"
- },
- "earth-elemental": {
-  "icon": "delapouite/rock-golem"
- },
- "efreeti": {
-  "commons": "File:Brooklyn Museum - Arghan Div Brings the Chest of Armor to Hamza.jpg"
- },
- "elephant": {
-  "commons": "File:178 Male African bush elephant in Etosha National Park Photo by Giles Laurent.jpg"
- },
- "elk": {
-  "commons": "File:Jasper.Wapiti-Hirsch.P1033401.jpg"
- },
- "erinyes": {
-  "commons": "File:Abigor.jpg"
- },
- "ettercap": {
-  "icon": "delapouite/spider-mask"
- },
- "ettin": {
-  "icon": "delapouite/ogre"
- },
- "fire-elemental": {
-  "wesnoth": "monsters/fire_guardian.webp"
- },
- "fire-giant": {
-  "commons": "File:The giant with the flaming sword by Dollman.jpg"
- },
- "flesh-golem": {
-  "commons": "File:Frankenstein, or the Modern Prometheus (Revised Edition, 1831) Creature.jpg"
- },
- "flying-snake": {
-  "commons": "File:Chrysopelea ornata.jpg"
- },
- "frog": {
-  "commons": "File:Red-eyed Leaf Frog (49661076226).jpg"
- },
- "frost-giant": {
-  "commons": "File:Kulturen - Riesin Holdrykka.jpg"
- },
- "gargoyle": {
-  "commons": "File:Notre-Dame Rzygacze.JPG"
- },
- "gelatinous-cube": {
-  "commons": "File:Gelatinous Cube illustration by Tara Quinn.png"
- },
- "ghast": {
-  "icon": "delapouite/shambling-zombie"
- },
- "ghost": {
-  "wesnoth": "undead/ghost.webp"
- },
- "ghoul": {
-  "wesnoth": "undead/ghoul.webp"
- },
- "giant-ape": {
-  "commons": "File:Gorille des plaines de l'ouest à l'Espace Zoologique.jpg"
- },
- "giant-badger": {
-  "commons": "File:Honey Badger.jpg"
- },
- "giant-bat": {
-  "commons": "File:047 Indian flying fox in Keoladeo National Park Photo by Giles Laurent.jpg"
- },
- "giant-boar": {
-  "wesnoth": "monsters/woodland_boar.webp"
- },
- "giant-centipede": {
-  "commons": "File:Scolopendra gigantea.jpg"
- },
- "giant-constrictor-snake": {
-  "commons": "File:Python reticulatus сетчатый питон-2.jpg"
- },
- "giant-crab": {
-  "commons": "File:Macrocheira kaempferi.jpg"
- },
- "giant-crocodile": {
-  "commons": "File:SaltwaterCrocodile('Maximo').jpg"
- },
- "giant-eagle": {
-  "commons": "File:015 Wild Golden Eagle in flight at Pfyn-Finges (Switzerland) Photo by Giles Laurent.jpg"
- },
- "giant-elk": {
-  "commons": "File:Megaloceros by Knight.jpg"
- },
- "giant-fire-beetle": {
-  "commons": "File:Photuris lucicrescens.jpg"
- },
- "giant-frog": {
-  "commons": "File:Conraua goliath photo from iNaturalist 539752953.jpg"
- },
- "giant-goat": {
-  "commons": "File:Markhor Schraubenziege Capra falconeri Zoo Augsburg-02.jpg"
- },
- "giant-hyena": {
-  "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
- },
- "giant-lizard": {
-  "commons": "File:202306 Varanus komodoensis.jpg"
- },
- "giant-octopus": {
-  "commons": "File:Enteroctopus dolfeini.jpg"
- },
- "giant-owl": {
-  "commons": "File:Bubo bubo 3 (Martin Mecnarowski).jpg"
- },
- "giant-rat": {
-  "wesnoth": "monsters/giant-rat.webp"
- },
- "giant-scorpion": {
-  "commons": "File:Female Emperor Scorpion.jpg"
- },
- "giant-seahorse": {
-  "commons": "File:Sketchbook of fishes - 18. (Pot bellied) Sea horse - William Buelow Gould, c1832.jpg"
- },
- "giant-shark": {
-  "commons": "File:White shark.jpg"
- },
- "giant-spider": {
-  "wesnoth": "monsters/giant-spider.webp"
- },
- "giant-toad": {
-  "commons": "File:Canetoadmale.jpg"
- },
- "giant-venomous-snake": {
-  "commons": "File:12 - The Mystical King Cobra and Coffee Forests.jpg"
- },
- "giant-vulture": {
-  "commons": "File:Buitre negro (1).jpg"
- },
- "giant-wasp": {
-  "commons": "File:Vespa mandarinia.jpg"
- },
- "giant-weasel": {
-  "commons": "File:Järv1.jpg"
- },
- "giant-wolf-spider": {
-  "commons": "File:Wolf spider tunnel.jpg"
- },
- "gibbering-mouther": {
-  "icon": "lorc/carnivore-mouth"
- },
- "glabrezu": {
-  "commons": "File:Astaroth.jpg"
- },
- "gladiator": {
-  "wesnoth": "humans/royal-warrior.webp"
- },
- "gnoll-warrior": {
-  "icon": "caro-asercion/hyena-head"
- },
- "goat": {
-  "commons": "File:Hausziege 04.jpg"
- },
- "goblin-boss": {
-  "wesnoth": "goblins/rouser.webp"
- },
- "goblin-minion": {
-  "wesnoth": "goblins/spearman-2.webp"
- },
- "goblin-warrior": {
-  "wesnoth": "goblins/spearman.webp"
- },
- "gold-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#a77a0e"
- },
- "gorgon": {
-  "commons": "File:Catoblepas 1657 (22295803).jpg"
- },
- "gray-ooze": {
-  "wesnoth": "monsters/mudcrawler.webp"
- },
- "green-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#3c6b33"
- },
- "green-hag": {
-  "commons": "File:11 The Hag of the Mill was a bony, thin pole of a hag with odd feet.jpg"
- },
- "grick": {
-  "icon": "lorc/worm-mouth"
- },
- "griffon": {
-  "wesnoth": "monsters/gryphon.webp"
- },
- "grimlock": {
-  "icon": "delapouite/goblin-head"
- },
- "guard": {
-  "wesnoth": "humans/spearman.webp"
- },
- "guard-captain": {
-  "wesnoth": "humans/lieutenant.webp"
- },
- "guardian-naga": {
-  "commons": "File:Naga182.JPG"
- },
- "half-dragon": {
-  "wesnoth": "drakes/clasher.webp"
- },
- "harpy": {
-  "icon": "lorc/harpy"
- },
- "hawk": {
-  "commons": "File:Northern Goshawk ad M2.jpg"
- },
- "hell-hound": {
-  "wesnoth": "wolves/wolf-red.webp"
- },
- "hezrou": {
-  "commons": "File:Bael.jpg"
- },
- "hill-giant": {
-  "commons": "File:Rhinegold and the Valkyries p 032.jpg"
- },
- "hippogriff": {
-  "commons": "File:Roger délivrant Angélique by Louis-Édouard Rioult.jpg"
- },
- "hippopotamus": {
-  "commons": "File:Portrait Hippopotamus in the water.jpg"
- },
- "hobgoblin-captain": {
-  "wesnoth": "orcs/warlord.webp"
- },
- "hobgoblin-warrior": {
-  "wesnoth": "orcs/warrior.webp"
- },
- "homunculus": {
-  "icon": "lorc/imp"
- },
- "horned-devil": {
-  "commons": "File:Azazel.jpg"
- },
- "hunter-shark": {
-  "commons": "File:White shark.jpg"
- },
- "hydra": {
-  "commons": "File:Lernaean Hydra Getty Villa 83.AE.346.jpg"
- },
- "hyena": {
-  "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
- },
- "ice-devil": {
-  "commons": "File:Beelzebub.png"
- },
- "ice-mephit": {
-  "icon": "delapouite/ice-golem"
- },
- "imp": {
-  "commons": "File:Imp with cards - illustration from Le grand Etteilla.jpg"
- },
- "incubus": {
-  "commons": "File:Incubus.jpg"
- },
- "invisible-stalker": {
-  "icon": "delapouite/invisible"
- },
- "iron-golem": {
-  "commons": "File:Comparable to the Group of Polygnotos ARV extra - death of Talos - draped youths 02.jpg"
- },
- "jackal": {
-  "commons": "File:033 Golden jackal in Keoladeo National Park Photo by Giles Laurent.jpg"
- },
- "killer-whale": {
-  "commons": "File:Killerwhales jumping.jpg"
- },
- "knight": {
-  "wesnoth": "humans/knight.webp"
- },
- "kobold-warrior": {
-  "wesnoth": "saurians/skirmisher.webp"
- },
- "kraken": {
-  "commons": "File:Le Poulpe Colossal.jpg"
- },
- "lamia": {
-  "commons": "File:The knight and the mermaid.jpg"
- },
- "lemure": {
-  "commons": "File:Bifrons.png"
- },
- "lich": {
-  "wesnoth": "undead/lich.webp"
- },
- "lion": {
-  "commons": "File:020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg"
- },
- "lizard": {
-  "commons": "File:Hemidactylus platyurus (Flat-tailed House Gecko) on white background, focus stacking.jpg"
- },
- "mage": {
-  "wesnoth": "humans/mage.webp"
- },
- "magma-mephit": {
-  "icon": "sbed/lava"
- },
- "magmin": {
-  "wesnoth": "monsters/fire_wraith_A.webp"
- },
- "mammoth": {
-  "commons": "File:Woolly mammoth (Mammuthus primigenius) - Mauricio Antón.jpg"
- },
- "manticore": {
-  "commons": "File:Martigora ca 1652 (21203315).jpg"
- },
- "marilith": {
-  "icon": "skoll/cobra"
- },
- "mastiff": {
-  "commons": "File:Westgort Anticipation 17 months.JPG"
- },
- "medusa": {
-  "commons": "File:Gorgona pushkin.jpg"
- },
- "merfolk-skirmisher": {
-  "wesnoth": "merfolk/fighter.webp"
- },
- "merrow": {
-  "wesnoth": "merfolk/brawler.webp"
- },
- "mimic": {
-  "icon": "delapouite/mimic-chest"
- },
- "minotaur-of-baphomet": {
-  "commons": "File:Tondo Minotaur London E4 MAN.jpg"
- },
- "minotaur-skeleton": {
-  "icon": "lorc/minotaur"
- },
- "mule": {
-  "commons": "File:Pack Mules Waiting (15755930793).jpg"
- },
- "mummy": {
-  "icon": "delapouite/mummy-head"
- },
- "mummy-lord": {
-  "wesnoth": "undead/ancient-lich.webp"
- },
- "nalfeshnee": {
-  "commons": "File:Aamon.jpg"
- },
- "night-hag": {
-  "commons": "File:Lapland witches.jpg"
- },
- "nightmare": {
-  "wesnoth": "monsters/nightmare.webp"
- },
- "noble": {
-  "wesnoth": "humans/general.webp"
- },
- "ochre-jelly": {
-  "icon": "delapouite/jelly"
- },
- "octopus": {
-  "commons": "File:Octopus2.jpg"
- },
- "ogre": {
-  "wesnoth": "monsters/ogre.webp"
- },
- "ogre-zombie": {
-  "wesnoth": "undead/zombie-troll.webp"
- },
- "oni": {
-  "commons": "File:Kobo Daishi Practicing the Tantra, with Demon and Wolf, by Hokusai.jpg"
- },
- "otyugh": {
-  "icon": "lorc/tentacles-skull"
- },
- "owl": {
-  "commons": "File:American Barn Owl (Tyto furcata guatemalae), Orange Walk.jpg"
- },
- "owlbear": {
-  "icon": "lorc/owl"
- },
- "panther": {
-  "commons": "File:Black Panther - India.jpg"
- },
- "pegasus": {
-  "commons": "File:Lakonian Black-Figure Kylix; detached fragments.jpg"
- },
- "phase-spider": {
-  "wesnoth": "monsters/jumping-spider.webp"
- },
- "piranha": {
-  "commons": "File:Pygocentrus nattereri - Karlsruhe Zoo 01.jpg"
- },
- "pirate": {
-  "wesnoth": "humans/outlaw+female.webp"
- },
- "pirate-captain": {
-  "commons": "File:Edward Teach Commonly Call'd Black Beard (bw) (cropped).jpg"
- },
- "pit-fiend": {
-  "commons": "File:Codex Gigas fol 290r Devil.jpg"
- },
- "planetar": {
-  "commons": "File:GuidoReni MichaelDefeatsSatan.jpg"
- },
- "plesiosaurus": {
-  "commons": "File:Plesiosaurus 3DB.jpg"
- },
- "polar-bear": {
-  "commons": "File:Polar Bear - Alaska (cropped).jpg"
- },
- "pony": {
-  "commons": "File:Gracie-rhs2005.jpg"
- },
- "priest": {
-  "wesnoth": "humans/mage-white.webp"
- },
- "priest-acolyte": {
-  "wesnoth": "humans/mage-light.webp"
- },
- "pseudodragon": {
-  "commons": "File:DnD Dragon.png"
- },
- "pteranodon": {
-  "commons": "File:Pteranodon hharder.jpg"
- },
- "purple-worm": {
-  "commons": "File:Allghoikhorkhoi.jpg"
- },
- "quasit": {
-  "commons": "File:Caim in human form.jpg"
- },
- "rakshasa": {
-  "commons": "File:The three-headed rakshasa Trishiras sits in lalitasana on a throne facing a fire altar in which a severed head is burning.jpg"
- },
- "rat": {
-  "commons": "File:Brown Rat (Rattus norvegicus).jpg"
- },
- "raven": {
-  "commons": "File:Corvus corax clarionensis, Point Reyes National Seashore.jpg"
- },
- "red-dragon-wyrmling": {
-  "wesnoth": "drakes/burner.webp"
- },
- "reef-shark": {
-  "commons": "File:Caribbean reef shark.jpg"
- },
- "remorhaz": {
-  "wesnoth": "monsters/big-icemonax.webp"
- },
- "rhinoceros": {
-  "commons": "File:081 White rhinoceros (male) in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"
- },
- "riding-horse": {
-  "commons": "File:Nokota Horses cropped.jpg"
- },
- "roc": {
-  "commons": "File:Edward Julius Detmold49.jpg"
- },
- "roper": {
-  "wesnoth": "monsters/deep-tentacle.webp"
- },
- "rust-monster": {
-  "icon": "lorc/long-antennae-bug"
- },
- "saber-toothed-tiger": {
-  "commons": "File:Smilodon Knight.jpg"
- },
- "sahuagin-warrior": {
-  "icon": "delapouite/fish-monster"
- },
- "salamander": {
-  "commons": "File:A salamander unharmed in the fire.jpg"
- },
- "satyr": {
-  "icon": "delapouite/harp"
- },
- "scorpion": {
-  "commons": "File:Scorpion Photograph By Shantanu Kuveskar.jpg"
- },
- "scout": {
-  "wesnoth": "humans/huntsman.webp"
- },
- "sea-hag": {
-  "icon": "cathelineau/witch-face"
- },
- "seahorse": {
-  "commons": "File:Hippocampus hippocampus (on Ascophyllum nodosum).jpg"
- },
- "shadow": {
-  "wesnoth": "undead/shadow.webp"
- },
- "shambling-mound": {
-  "icon": "lorc/ent-mouth"
- },
- "shield-guardian": {
-  "icon": "delapouite/golem-head"
- },
- "shrieker-fungus": {
-  "commons": "File:Amanita muscaria Aberystwyth 2023.jpg"
- },
- "silver-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#5d6f7d"
- },
- "skeleton": {
-  "wesnoth": "undead/skeleton.webp"
- },
- "solar": {
-  "icon": "lorc/angel-wings"
- },
- "specter": {
-  "wesnoth": "undead/spectre.webp"
- },
- "sphinx-of-lore": {
-  "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
- },
- "sphinx-of-valor": {
-  "commons": "File:Sphinx with the third pyramid.jpg"
- },
- "sphinx-of-wonder": {
-  "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
- },
- "spider": {
-  "commons": "File:Araneus diadematus (Clerck, 1757).JPG"
- },
- "spirit-naga": {
-  "wesnoth": "nagas/naga-ophidian.webp"
- },
- "sprite": {
-  "wesnoth": "elves/sylph.webp"
- },
- "spy": {
-  "wesnoth": "humans/thief.webp"
- },
- "steam-mephit": {
-  "icon": "delapouite/steam"
- },
- "stirge": {
-  "icon": "delapouite/amber-mosquito"
- },
- "stone-giant": {
-  "commons": "File:Kulturen - Riesin Holdrykka.jpg"
- },
- "stone-golem": {
-  "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
- },
- "storm-giant": {
-  "icon": "lorc/lightning-storm"
- },
- "succubus": {
-  "icon": "lorc/wing-cloak"
- },
- "swarm-of-bats": {
-  "wesnoth": "monsters/bat-dread.webp"
- },
- "swarm-of-crawling-claws": {
-  "icon": "darkzaitzev/severed-hand"
- },
- "swarm-of-insects": {
-  "commons": "File:Locusta-migratoria-wanderheuschrecke.jpg"
- },
- "swarm-of-piranhas": {
-  "wesnoth": "monsters/caribe-hunter.webp"
- },
- "swarm-of-rats": {
-  "icon": "delapouite/rat"
- },
- "swarm-of-ravens": {
-  "wesnoth": "monsters/raven.webp"
- },
- "swarm-of-venomous-snakes": {
-  "commons": "File:Bildstein-Fornsalen 01.jpg"
- },
- "tarrasque": {
-  "commons": "File:Tarasque in Tarascon 02.jpg"
- },
- "tiger": {
-  "commons": "File:Bengal tiger (Panthera tigris tigris) female 3 crop.jpg"
- },
- "tough": {
-  "wesnoth": "humans/ruffian.webp"
- },
- "tough-boss": {
-  "wesnoth": "humans/thug.webp"
- },
- "treant": {
-  "wesnoth": "woses/ancient-wose.png"
- },
- "triceratops": {
-  "commons": "File:Triceratops - 1904.jpg"
- },
- "troll": {
-  "wesnoth": "trolls/troll.png"
- },
- "troll-limb": {
-  "icon": "skoll/troll"
- },
- "tyrannosaurus-rex": {
-  "commons": "File:Reconstruction of Tyrannosaurus mcraeensis.png",
-  "focus": [
-   0.22,
-   0.45
-  ]
- },
- "unicorn": {
-  "commons": "File:Oftheunicorn.jpg"
- },
- "vampire": {
-  "commons": "File:Philip Burne-Jones - The Vampire.jpg"
- },
- "vampire-familiar": {
-  "wesnoth": "humans/footpad.webp"
- },
- "vampire-spawn": {
-  "wesnoth": "undead/soulless.webp"
- },
- "venomous-snake": {
-  "commons": "File:Bitis gabonica.jpg"
- },
- "violet-fungus": {
-  "commons": "File:2008-08-22 Cortinarius violaceus (L.) Gray 18241.jpg"
- },
- "vrock": {
-  "wesnoth": "monsters/herald.webp"
- },
- "vulture": {
-  "commons": "File:Gyps fulvus in flight - Spain.jpg"
- },
- "warhorse": {
-  "commons": "File:Scotland Forever crop.jpg"
- },
- "warhorse-skeleton": {
-  "wesnoth": "undead/skeletal_rider.webp"
- },
- "warrior-infantry": {
-  "wesnoth": "humans/spearman-2.webp"
- },
- "warrior-veteran": {
-  "wesnoth": "humans/swordsman.webp"
- },
- "water-elemental": {
-  "commons": "File:Baden Undine Kurpark.jpg"
- },
- "weasel": {
-  "commons": "File:Mustela nivalis -British Wildlife Centre-4.jpg"
- },
- "werebear": {
-  "icon": "sparker/bear-face"
- },
- "wereboar": {
-  "icon": "caro-asercion/boar"
- },
- "wererat": {
-  "icon": "delapouite/rat"
- },
- "weretiger": {
-  "icon": "delapouite/tiger-head"
- },
- "werewolf": {
-  "commons": "File:WeirdTalesv36n2pg038 The Werewolf Howls.png"
- },
- "white-dragon-wyrmling": {
-  "icon": "lorc/dragon-spiral",
-  "ink": "#6f8fa6"
- },
- "wight": {
-  "commons": "File:Giant draugr by Kim Diaz Holm (cropped).jpg"
- },
- "will-o-wisp": {
-  "commons": "File:Will-o-the-wisp and snake by Hermann Hendrich 1823.jpg"
- },
- "winter-wolf": {
-  "commons": "File:Arctic Wolf in Aulavik National Park 04 (cropped).jpg"
- },
- "wolf": {
-  "commons": "File:Eurasian wolf 2.jpg"
- },
- "worg": {
-  "wesnoth": "wolves/wolf-dark.webp"
- },
- "wraith": {
-  "wesnoth": "undead/wraith.webp"
- },
- "wyvern": {
-  "wesnoth": "monsters/wyvern.webp"
- },
- "xorn": {
-  "icon": "lorc/crystal-growth"
- },
- "young-black-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#2b2622"
- },
- "young-blue-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#2f5f93"
- },
- "young-brass-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#9a6b1f"
- },
- "young-bronze-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#7a5230"
- },
- "young-copper-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#a04f2a"
- },
- "young-gold-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#a77a0e"
- },
- "young-green-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#3c6b33"
- },
- "young-red-dragon": {
-  "wesnoth": "monsters/fire-dragon.webp"
- },
- "young-silver-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#5d6f7d"
- },
- "young-white-dragon": {
-  "icon": "lorc/dragon-head",
-  "ink": "#6f8fa6"
- },
- "zombie": {
-  "wesnoth": "undead/walking-corpse.webp"
- }
+  "aboleth": {
+    "icon": "delapouite/floating-tentacles"
+  },
+  "adult-black-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#2b2622"
+  },
+  "adult-blue-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#2f5f93"
+  },
+  "adult-brass-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#9a6b1f"
+  },
+  "adult-bronze-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#7a5230"
+  },
+  "adult-copper-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#a04f2a"
+  },
+  "adult-gold-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#a77a0e"
+  },
+  "adult-green-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#3c6b33"
+  },
+  "adult-red-dragon": {
+    "wesnoth": "monsters/fire-dragon.webp"
+  },
+  "adult-silver-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#5d6f7d"
+  },
+  "adult-white-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#6f8fa6"
+  },
+  "air-elemental": {
+    "icon": "lorc/tornado"
+  },
+  "allosaurus": {
+    "commons": "File:Allosaurus anax.jpg",
+    "focus": [0.22, 0.45]
+  },
+  "ancient-black-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#2b2622"
+  },
+  "ancient-blue-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#2f5f93"
+  },
+  "ancient-brass-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#9a6b1f"
+  },
+  "ancient-bronze-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#7a5230"
+  },
+  "ancient-copper-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#a04f2a"
+  },
+  "ancient-gold-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#a77a0e"
+  },
+  "ancient-green-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#3c6b33"
+  },
+  "ancient-red-dragon": {
+    "wesnoth": "monsters/fire-dragon.webp"
+  },
+  "ancient-silver-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#5d6f7d"
+  },
+  "ancient-white-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#6f8fa6"
+  },
+  "animated-armor": {
+    "commons": "File:Lossy-page1-2122px-Hästrustning - Livrustkammaren - 72697 aaa.jpg"
+  },
+  "animated-flying-sword": {
+    "commons": "File:Hand-and-a-Half Sword MET DP146428.jpg"
+  },
+  "animated-rug-of-smothering": {
+    "commons": "File:Vasnetsov samolet.jpg"
+  },
+  "ankheg": {
+    "wesnoth": "monsters/ant-giant.webp"
+  },
+  "ankylosaurus": {
+    "commons": "File:Ankylosaurus dinosaur.png",
+    "focus": [0.38, 0.6]
+  },
+  "ape": {
+    "commons": "File:015 Chimpanzee at Kibale forest National Park Photo by Giles Laurent.jpg"
+  },
+  "archelon": {
+    "commons": "File:Archelon ischyros Wieland, 1896.jpg"
+  },
+  "archmage": {
+    "wesnoth": "humans/mage-arch.webp"
+  },
+  "assassin": {
+    "wesnoth": "humans/assassin.webp"
+  },
+  "awakened-shrub": {
+    "commons": "File:Cytisus scoparius2.jpg"
+  },
+  "awakened-tree": {
+    "wesnoth": "woses/wose.webp"
+  },
+  "axe-beak": {
+    "commons": "File:Gastornis 1917 white background.jpg"
+  },
+  "azer-sentinel": {
+    "wesnoth": "dwarves/sentinel.webp"
+  },
+  "baboon": {
+    "commons": "File:Olive baboon Ngorongoro.jpg"
+  },
+  "badger": {
+    "commons": "File:European badger (Meles meles taxus) Drenthe.jpg"
+  },
+  "balor": {
+    "commons": "File:Asmodeus.jpg"
+  },
+  "bandit": {
+    "wesnoth": "humans/bandit.webp"
+  },
+  "bandit-captain": {
+    "wesnoth": "humans/outlaw.webp"
+  },
+  "barbed-devil": {
+    "commons": "File:ABRAXAS INFERNAL DICTIONARY.jpg"
+  },
+  "basilisk": {
+    "commons": "File:Basilisk aldrovandi.jpg"
+  },
+  "bat": {
+    "commons": "File:Big-eared-townsend-fledermaus.jpg"
+  },
+  "bearded-devil": {
+    "commons": "File:Agares.jpg"
+  },
+  "behir": {
+    "wesnoth": "monsters/sea-serpent.webp"
+  },
+  "berserker": {
+    "wesnoth": "dwarves/ulfserker.webp"
+  },
+  "black-bear": {
+    "commons": "File:Vancouver Island black bear (Ursus americanus vancouveri) Tofino 4.jpg"
+  },
+  "black-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#2b2622"
+  },
+  "black-pudding": {
+    "wesnoth": "monsters/giant-mudcrawler.webp"
+  },
+  "blink-dog": {
+    "icon": "lorc/hound"
+  },
+  "blood-hawk": {
+    "commons": "File:Red-tailed Hawk (45812546121).jpg"
+  },
+  "blue-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#2f5f93"
+  },
+  "boar": {
+    "commons": "File:Wildschwein, Nähe Pulverstampftor (cropped).jpg"
+  },
+  "bone-devil": {
+    "commons": "File:Buer-blog.jpg"
+  },
+  "brass-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#9a6b1f"
+  },
+  "bronze-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#7a5230"
+  },
+  "brown-bear": {
+    "commons": "File:2010-kodiak-bear-1.jpg"
+  },
+  "bugbear-stalker": {
+    "wesnoth": "orcs/assassin.webp"
+  },
+  "bugbear-warrior": {
+    "wesnoth": "orcs/grunt.webp"
+  },
+  "bulette": {
+    "icon": "lorc/shark-jaws"
+  },
+  "camel": {
+    "commons": "File:07. Camel Profile, near Silverton, NSW, 07.07.2007.jpg"
+  },
+  "cat": {
+    "commons": "File:Siam lilacpoint.jpg"
+  },
+  "centaur-trooper": {
+    "commons": "File:Terracotta lekythos (oil flask) with centaur battling a warrior MET DP161810.jpg"
+  },
+  "chain-devil": {
+    "icon": "lorc/crossed-chains"
+  },
+  "chimera": {
+    "commons": "File:Chimera Apulia Louvre K362.jpg"
+  },
+  "chuul": {
+    "wesnoth": "monsters/scorpion-rock.webp"
+  },
+  "clay-golem": {
+    "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
+  },
+  "cloaker": {
+    "commons": "File:Dharavandhoo Thila - Manata Black Pearl.JPG"
+  },
+  "cloud-giant": {
+    "icon": "delapouite/giant"
+  },
+  "cockatrice": {
+    "commons": "File:DragonTransom.jpg"
+  },
+  "commoner": {
+    "wesnoth": "humans/peasant.webp"
+  },
+  "constrictor-snake": {
+    "commons": "File:Red-tailed boa (Boa constrictor constrictor) Rio Napo.jpg"
+  },
+  "copper-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#a04f2a"
+  },
+  "couatl": {
+    "commons": "File:Quetzalcóatl como la serpiente emplumada y el dios del viento Ehécatl, en el folio 19.jpg"
+  },
+  "crab": {
+    "commons": "File:Cancer pagurus.jpg"
+  },
+  "crocodile": {
+    "commons": "File:Nile crocodile head.jpg"
+  },
+  "cultist": {
+    "wesnoth": "humans/dark-adept.webp"
+  },
+  "cultist-fanatic": {
+    "wesnoth": "humans/necromancer.webp"
+  },
+  "darkmantle": {
+    "icon": "lucasms/cloak"
+  },
+  "death-dog": {
+    "commons": "File:Orthos Staatliche Antikensammlungen 2620.jpg"
+  },
+  "deer": {
+    "commons": "File:Cervus elaphus Luc Viatour 6.jpg"
+  },
+  "deva": {
+    "commons": "File:Angel of the Annunciation MET DP167921.jpg"
+  },
+  "dire-wolf": {
+    "wesnoth": "wolves/wolf-great.webp"
+  },
+  "djinni": {
+    "wesnoth": "monsters/jinn.webp"
+  },
+  "doppelganger": {
+    "commons": "File:Dante Gabriel Rossetti - How They Met Themselves (1860-64 circa).jpg"
+  },
+  "draft-horse": {
+    "commons": "File:Aa shirehorse.jpg"
+  },
+  "dragon-turtle": {
+    "commons": "File:Dragon Turtle.jpg"
+  },
+  "dretch": {
+    "commons": "File:Amduscias.jpg"
+  },
+  "drider": {
+    "icon": "carl-olsen/spider-face"
+  },
+  "druid": {
+    "wesnoth": "elves/druid.webp"
+  },
+  "dryad": {
+    "wesnoth": "elves/shyde.webp"
+  },
+  "dust-mephit": {
+    "commons": "File:Dust devil.jpg"
+  },
+  "eagle": {
+    "commons": "File:Bald eagle about to fly in Alaska (2016).jpg"
+  },
+  "earth-elemental": {
+    "icon": "delapouite/rock-golem"
+  },
+  "efreeti": {
+    "commons": "File:Brooklyn Museum - Arghan Div Brings the Chest of Armor to Hamza.jpg"
+  },
+  "elephant": {
+    "commons": "File:178 Male African bush elephant in Etosha National Park Photo by Giles Laurent.jpg"
+  },
+  "elk": {
+    "commons": "File:Jasper.Wapiti-Hirsch.P1033401.jpg"
+  },
+  "erinyes": {
+    "commons": "File:Abigor.jpg"
+  },
+  "ettercap": {
+    "icon": "delapouite/spider-mask"
+  },
+  "ettin": {
+    "icon": "delapouite/ogre"
+  },
+  "fire-elemental": {
+    "wesnoth": "monsters/fire_guardian.webp"
+  },
+  "fire-giant": {
+    "commons": "File:The giant with the flaming sword by Dollman.jpg"
+  },
+  "flesh-golem": {
+    "commons": "File:Frankenstein, or the Modern Prometheus (Revised Edition, 1831) Creature.jpg"
+  },
+  "flying-snake": {
+    "commons": "File:Chrysopelea ornata.jpg"
+  },
+  "frog": {
+    "commons": "File:Red-eyed Leaf Frog (49661076226).jpg"
+  },
+  "frost-giant": {
+    "commons": "File:Kulturen - Riesin Holdrykka.jpg"
+  },
+  "gargoyle": {
+    "commons": "File:Notre-Dame Rzygacze.JPG"
+  },
+  "gelatinous-cube": {
+    "commons": "File:Gelatinous Cube illustration by Tara Quinn.png"
+  },
+  "ghast": {
+    "icon": "delapouite/shambling-zombie"
+  },
+  "ghost": {
+    "wesnoth": "undead/ghost.webp"
+  },
+  "ghoul": {
+    "wesnoth": "undead/ghoul.webp"
+  },
+  "giant-ape": {
+    "commons": "File:Gorille des plaines de l'ouest à l'Espace Zoologique.jpg"
+  },
+  "giant-badger": {
+    "commons": "File:Honey Badger.jpg"
+  },
+  "giant-bat": {
+    "commons": "File:047 Indian flying fox in Keoladeo National Park Photo by Giles Laurent.jpg"
+  },
+  "giant-boar": {
+    "wesnoth": "monsters/woodland_boar.webp"
+  },
+  "giant-centipede": {
+    "commons": "File:Scolopendra gigantea.jpg"
+  },
+  "giant-constrictor-snake": {
+    "commons": "File:Python reticulatus сетчатый питон-2.jpg"
+  },
+  "giant-crab": {
+    "commons": "File:Macrocheira kaempferi.jpg"
+  },
+  "giant-crocodile": {
+    "commons": "File:SaltwaterCrocodile('Maximo').jpg"
+  },
+  "giant-eagle": {
+    "commons": "File:015 Wild Golden Eagle in flight at Pfyn-Finges (Switzerland) Photo by Giles Laurent.jpg"
+  },
+  "giant-elk": {
+    "commons": "File:Megaloceros by Knight.jpg"
+  },
+  "giant-fire-beetle": {
+    "commons": "File:Photuris lucicrescens.jpg"
+  },
+  "giant-frog": {
+    "commons": "File:Conraua goliath photo from iNaturalist 539752953.jpg"
+  },
+  "giant-goat": {
+    "commons": "File:Markhor Schraubenziege Capra falconeri Zoo Augsburg-02.jpg"
+  },
+  "giant-hyena": {
+    "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
+  },
+  "giant-lizard": {
+    "commons": "File:202306 Varanus komodoensis.jpg"
+  },
+  "giant-octopus": {
+    "commons": "File:Enteroctopus dolfeini.jpg"
+  },
+  "giant-owl": {
+    "commons": "File:Bubo bubo 3 (Martin Mecnarowski).jpg"
+  },
+  "giant-rat": {
+    "wesnoth": "monsters/giant-rat.webp"
+  },
+  "giant-scorpion": {
+    "commons": "File:Female Emperor Scorpion.jpg"
+  },
+  "giant-seahorse": {
+    "commons": "File:Sketchbook of fishes - 18. (Pot bellied) Sea horse - William Buelow Gould, c1832.jpg"
+  },
+  "giant-shark": {
+    "commons": "File:White shark.jpg"
+  },
+  "giant-spider": {
+    "wesnoth": "monsters/giant-spider.webp"
+  },
+  "giant-toad": {
+    "commons": "File:Canetoadmale.jpg"
+  },
+  "giant-venomous-snake": {
+    "commons": "File:12 - The Mystical King Cobra and Coffee Forests.jpg"
+  },
+  "giant-vulture": {
+    "commons": "File:Buitre negro (1).jpg"
+  },
+  "giant-wasp": {
+    "commons": "File:Vespa mandarinia.jpg"
+  },
+  "giant-weasel": {
+    "commons": "File:Järv1.jpg"
+  },
+  "giant-wolf-spider": {
+    "commons": "File:Wolf spider tunnel.jpg"
+  },
+  "gibbering-mouther": {
+    "icon": "lorc/carnivore-mouth"
+  },
+  "glabrezu": {
+    "commons": "File:Astaroth.jpg"
+  },
+  "gladiator": {
+    "wesnoth": "humans/royal-warrior.webp"
+  },
+  "gnoll-warrior": {
+    "icon": "caro-asercion/hyena-head"
+  },
+  "goat": {
+    "commons": "File:Hausziege 04.jpg"
+  },
+  "goblin-boss": {
+    "wesnoth": "goblins/rouser.webp"
+  },
+  "goblin-minion": {
+    "wesnoth": "goblins/spearman-2.webp"
+  },
+  "goblin-warrior": {
+    "wesnoth": "goblins/spearman.webp"
+  },
+  "gold-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#a77a0e"
+  },
+  "gorgon": {
+    "commons": "File:Catoblepas 1657 (22295803).jpg"
+  },
+  "gray-ooze": {
+    "wesnoth": "monsters/mudcrawler.webp"
+  },
+  "green-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#3c6b33"
+  },
+  "green-hag": {
+    "commons": "File:11 The Hag of the Mill was a bony, thin pole of a hag with odd feet.jpg"
+  },
+  "grick": {
+    "icon": "lorc/worm-mouth"
+  },
+  "griffon": {
+    "wesnoth": "monsters/gryphon.webp"
+  },
+  "grimlock": {
+    "icon": "delapouite/goblin-head"
+  },
+  "guard": {
+    "wesnoth": "humans/spearman.webp"
+  },
+  "guard-captain": {
+    "wesnoth": "humans/lieutenant.webp"
+  },
+  "guardian-naga": {
+    "commons": "File:Naga182.JPG"
+  },
+  "half-dragon": {
+    "wesnoth": "drakes/clasher.webp"
+  },
+  "harpy": {
+    "icon": "lorc/harpy"
+  },
+  "hawk": {
+    "commons": "File:Northern Goshawk ad M2.jpg"
+  },
+  "hell-hound": {
+    "wesnoth": "wolves/wolf-red.webp"
+  },
+  "hezrou": {
+    "commons": "File:Bael.jpg"
+  },
+  "hill-giant": {
+    "commons": "File:Rhinegold and the Valkyries p 032.jpg"
+  },
+  "hippogriff": {
+    "commons": "File:Roger délivrant Angélique by Louis-Édouard Rioult.jpg"
+  },
+  "hippopotamus": {
+    "commons": "File:Portrait Hippopotamus in the water.jpg"
+  },
+  "hobgoblin-captain": {
+    "wesnoth": "orcs/warlord.webp"
+  },
+  "hobgoblin-warrior": {
+    "wesnoth": "orcs/warrior.webp"
+  },
+  "homunculus": {
+    "icon": "lorc/imp"
+  },
+  "horned-devil": {
+    "commons": "File:Azazel.jpg"
+  },
+  "hunter-shark": {
+    "commons": "File:White shark.jpg"
+  },
+  "hydra": {
+    "commons": "File:Lernaean Hydra Getty Villa 83.AE.346.jpg"
+  },
+  "hyena": {
+    "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
+  },
+  "ice-devil": {
+    "commons": "File:Beelzebub.png"
+  },
+  "ice-mephit": {
+    "icon": "delapouite/ice-golem"
+  },
+  "imp": {
+    "commons": "File:Imp with cards - illustration from Le grand Etteilla.jpg"
+  },
+  "incubus": {
+    "commons": "File:Incubus.jpg"
+  },
+  "invisible-stalker": {
+    "icon": "delapouite/invisible"
+  },
+  "iron-golem": {
+    "commons": "File:Comparable to the Group of Polygnotos ARV extra - death of Talos - draped youths 02.jpg"
+  },
+  "jackal": {
+    "commons": "File:033 Golden jackal in Keoladeo National Park Photo by Giles Laurent.jpg"
+  },
+  "killer-whale": {
+    "commons": "File:Killerwhales jumping.jpg"
+  },
+  "knight": {
+    "wesnoth": "humans/knight.webp"
+  },
+  "kobold-warrior": {
+    "wesnoth": "saurians/skirmisher.webp"
+  },
+  "kraken": {
+    "commons": "File:Le Poulpe Colossal.jpg"
+  },
+  "lamia": {
+    "commons": "File:The knight and the mermaid.jpg"
+  },
+  "lemure": {
+    "commons": "File:Bifrons.png"
+  },
+  "lich": {
+    "wesnoth": "undead/lich.webp"
+  },
+  "lion": {
+    "commons": "File:020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg"
+  },
+  "lizard": {
+    "commons": "File:Hemidactylus platyurus (Flat-tailed House Gecko) on white background, focus stacking.jpg"
+  },
+  "mage": {
+    "wesnoth": "humans/mage.webp"
+  },
+  "magma-mephit": {
+    "icon": "sbed/lava"
+  },
+  "magmin": {
+    "wesnoth": "monsters/fire_wraith_A.webp"
+  },
+  "mammoth": {
+    "commons": "File:Woolly mammoth (Mammuthus primigenius) - Mauricio Antón.jpg"
+  },
+  "manticore": {
+    "commons": "File:Martigora ca 1652 (21203315).jpg"
+  },
+  "marilith": {
+    "icon": "skoll/cobra"
+  },
+  "mastiff": {
+    "commons": "File:Westgort Anticipation 17 months.JPG"
+  },
+  "medusa": {
+    "commons": "File:Gorgona pushkin.jpg"
+  },
+  "merfolk-skirmisher": {
+    "wesnoth": "merfolk/fighter.webp"
+  },
+  "merrow": {
+    "wesnoth": "merfolk/brawler.webp"
+  },
+  "mimic": {
+    "icon": "delapouite/mimic-chest"
+  },
+  "minotaur-of-baphomet": {
+    "commons": "File:Tondo Minotaur London E4 MAN.jpg"
+  },
+  "minotaur-skeleton": {
+    "icon": "lorc/minotaur"
+  },
+  "mule": {
+    "commons": "File:Pack Mules Waiting (15755930793).jpg"
+  },
+  "mummy": {
+    "icon": "delapouite/mummy-head"
+  },
+  "mummy-lord": {
+    "wesnoth": "undead/ancient-lich.webp"
+  },
+  "nalfeshnee": {
+    "commons": "File:Aamon.jpg"
+  },
+  "night-hag": {
+    "commons": "File:Lapland witches.jpg"
+  },
+  "nightmare": {
+    "wesnoth": "monsters/nightmare.webp"
+  },
+  "noble": {
+    "wesnoth": "humans/general.webp"
+  },
+  "ochre-jelly": {
+    "icon": "delapouite/jelly"
+  },
+  "octopus": {
+    "commons": "File:Octopus2.jpg"
+  },
+  "ogre": {
+    "wesnoth": "monsters/ogre.webp"
+  },
+  "ogre-zombie": {
+    "wesnoth": "undead/zombie-troll.webp"
+  },
+  "oni": {
+    "commons": "File:Kobo Daishi Practicing the Tantra, with Demon and Wolf, by Hokusai.jpg"
+  },
+  "otyugh": {
+    "icon": "lorc/tentacles-skull"
+  },
+  "owl": {
+    "commons": "File:American Barn Owl (Tyto furcata guatemalae), Orange Walk.jpg"
+  },
+  "owlbear": {
+    "icon": "lorc/owl"
+  },
+  "panther": {
+    "commons": "File:Black Panther - India.jpg"
+  },
+  "pegasus": {
+    "commons": "File:Lakonian Black-Figure Kylix; detached fragments.jpg"
+  },
+  "phase-spider": {
+    "wesnoth": "monsters/jumping-spider.webp"
+  },
+  "piranha": {
+    "commons": "File:Pygocentrus nattereri - Karlsruhe Zoo 01.jpg"
+  },
+  "pirate": {
+    "wesnoth": "humans/outlaw+female.webp"
+  },
+  "pirate-captain": {
+    "commons": "File:Edward Teach Commonly Call'd Black Beard (bw) (cropped).jpg"
+  },
+  "pit-fiend": {
+    "commons": "File:Codex Gigas fol 290r Devil.jpg"
+  },
+  "planetar": {
+    "commons": "File:GuidoReni MichaelDefeatsSatan.jpg"
+  },
+  "plesiosaurus": {
+    "commons": "File:Plesiosaurus 3DB.jpg"
+  },
+  "polar-bear": {
+    "commons": "File:Polar Bear - Alaska (cropped).jpg"
+  },
+  "pony": {
+    "commons": "File:Gracie-rhs2005.jpg"
+  },
+  "priest": {
+    "wesnoth": "humans/mage-white.webp"
+  },
+  "priest-acolyte": {
+    "wesnoth": "humans/mage-light.webp"
+  },
+  "pseudodragon": {
+    "commons": "File:DnD Dragon.png"
+  },
+  "pteranodon": {
+    "commons": "File:Pteranodon hharder.jpg"
+  },
+  "purple-worm": {
+    "commons": "File:Allghoikhorkhoi.jpg"
+  },
+  "quasit": {
+    "commons": "File:Caim in human form.jpg"
+  },
+  "rakshasa": {
+    "commons": "File:The three-headed rakshasa Trishiras sits in lalitasana on a throne facing a fire altar in which a severed head is burning.jpg"
+  },
+  "rat": {
+    "commons": "File:Brown Rat (Rattus norvegicus).jpg"
+  },
+  "raven": {
+    "commons": "File:Corvus corax clarionensis, Point Reyes National Seashore.jpg"
+  },
+  "red-dragon-wyrmling": {
+    "wesnoth": "drakes/burner.webp"
+  },
+  "reef-shark": {
+    "commons": "File:Caribbean reef shark.jpg"
+  },
+  "remorhaz": {
+    "wesnoth": "monsters/big-icemonax.webp"
+  },
+  "rhinoceros": {
+    "commons": "File:081 White rhinoceros (male) in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"
+  },
+  "riding-horse": {
+    "commons": "File:Nokota Horses cropped.jpg"
+  },
+  "roc": {
+    "commons": "File:Edward Julius Detmold49.jpg"
+  },
+  "roper": {
+    "wesnoth": "monsters/deep-tentacle.webp"
+  },
+  "rust-monster": {
+    "icon": "lorc/long-antennae-bug"
+  },
+  "saber-toothed-tiger": {
+    "commons": "File:Smilodon Knight.jpg"
+  },
+  "sahuagin-warrior": {
+    "icon": "delapouite/fish-monster"
+  },
+  "salamander": {
+    "commons": "File:A salamander unharmed in the fire.jpg"
+  },
+  "satyr": {
+    "icon": "delapouite/harp"
+  },
+  "scorpion": {
+    "commons": "File:Scorpion Photograph By Shantanu Kuveskar.jpg"
+  },
+  "scout": {
+    "wesnoth": "humans/huntsman.webp"
+  },
+  "sea-hag": {
+    "icon": "cathelineau/witch-face"
+  },
+  "seahorse": {
+    "commons": "File:Hippocampus hippocampus (on Ascophyllum nodosum).jpg"
+  },
+  "shadow": {
+    "wesnoth": "undead/shadow.webp"
+  },
+  "shambling-mound": {
+    "icon": "lorc/ent-mouth"
+  },
+  "shield-guardian": {
+    "icon": "delapouite/golem-head"
+  },
+  "shrieker-fungus": {
+    "commons": "File:Amanita muscaria Aberystwyth 2023.jpg"
+  },
+  "silver-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#5d6f7d"
+  },
+  "skeleton": {
+    "wesnoth": "undead/skeleton.webp"
+  },
+  "solar": {
+    "icon": "lorc/angel-wings"
+  },
+  "specter": {
+    "wesnoth": "undead/spectre.webp"
+  },
+  "sphinx-of-lore": {
+    "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
+  },
+  "sphinx-of-valor": {
+    "commons": "File:Sphinx with the third pyramid.jpg"
+  },
+  "sphinx-of-wonder": {
+    "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
+  },
+  "spider": {
+    "commons": "File:Araneus diadematus (Clerck, 1757).JPG"
+  },
+  "spirit-naga": {
+    "wesnoth": "nagas/naga-ophidian.webp"
+  },
+  "sprite": {
+    "wesnoth": "elves/sylph.webp"
+  },
+  "spy": {
+    "wesnoth": "humans/thief.webp"
+  },
+  "steam-mephit": {
+    "icon": "delapouite/steam"
+  },
+  "stirge": {
+    "icon": "delapouite/amber-mosquito"
+  },
+  "stone-giant": {
+    "commons": "File:Kulturen - Riesin Holdrykka.jpg"
+  },
+  "stone-golem": {
+    "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
+  },
+  "storm-giant": {
+    "icon": "lorc/lightning-storm"
+  },
+  "succubus": {
+    "icon": "lorc/wing-cloak"
+  },
+  "swarm-of-bats": {
+    "wesnoth": "monsters/bat-dread.webp"
+  },
+  "swarm-of-crawling-claws": {
+    "icon": "darkzaitzev/severed-hand"
+  },
+  "swarm-of-insects": {
+    "commons": "File:Locusta-migratoria-wanderheuschrecke.jpg"
+  },
+  "swarm-of-piranhas": {
+    "wesnoth": "monsters/caribe-hunter.webp"
+  },
+  "swarm-of-rats": {
+    "icon": "delapouite/rat"
+  },
+  "swarm-of-ravens": {
+    "wesnoth": "monsters/raven.webp"
+  },
+  "swarm-of-venomous-snakes": {
+    "commons": "File:Bildstein-Fornsalen 01.jpg"
+  },
+  "tarrasque": {
+    "commons": "File:Tarasque in Tarascon 02.jpg"
+  },
+  "tiger": {
+    "commons": "File:Bengal tiger (Panthera tigris tigris) female 3 crop.jpg"
+  },
+  "tough": {
+    "wesnoth": "humans/ruffian.webp"
+  },
+  "tough-boss": {
+    "wesnoth": "humans/thug.webp"
+  },
+  "treant": {
+    "wesnoth": "woses/ancient-wose.png"
+  },
+  "triceratops": {
+    "commons": "File:Triceratops - 1904.jpg"
+  },
+  "troll": {
+    "wesnoth": "trolls/troll.png"
+  },
+  "troll-limb": {
+    "icon": "skoll/troll"
+  },
+  "tyrannosaurus-rex": {
+    "commons": "File:Reconstruction of Tyrannosaurus mcraeensis.png",
+    "focus": [0.22, 0.45]
+  },
+  "unicorn": {
+    "commons": "File:Oftheunicorn.jpg"
+  },
+  "vampire": {
+    "commons": "File:Philip Burne-Jones - The Vampire.jpg"
+  },
+  "vampire-familiar": {
+    "wesnoth": "humans/footpad.webp"
+  },
+  "vampire-spawn": {
+    "wesnoth": "undead/soulless.webp"
+  },
+  "venomous-snake": {
+    "commons": "File:Bitis gabonica.jpg"
+  },
+  "violet-fungus": {
+    "commons": "File:2008-08-22 Cortinarius violaceus (L.) Gray 18241.jpg"
+  },
+  "vrock": {
+    "wesnoth": "monsters/herald.webp"
+  },
+  "vulture": {
+    "commons": "File:Gyps fulvus in flight - Spain.jpg"
+  },
+  "warhorse": {
+    "commons": "File:Scotland Forever crop.jpg"
+  },
+  "warhorse-skeleton": {
+    "wesnoth": "undead/skeletal_rider.webp"
+  },
+  "warrior-infantry": {
+    "wesnoth": "humans/spearman-2.webp"
+  },
+  "warrior-veteran": {
+    "wesnoth": "humans/swordsman.webp"
+  },
+  "water-elemental": {
+    "commons": "File:Baden Undine Kurpark.jpg"
+  },
+  "weasel": {
+    "commons": "File:Mustela nivalis -British Wildlife Centre-4.jpg"
+  },
+  "werebear": {
+    "icon": "sparker/bear-face"
+  },
+  "wereboar": {
+    "icon": "caro-asercion/boar"
+  },
+  "wererat": {
+    "icon": "delapouite/rat"
+  },
+  "weretiger": {
+    "icon": "delapouite/tiger-head"
+  },
+  "werewolf": {
+    "commons": "File:WeirdTalesv36n2pg038 The Werewolf Howls.png"
+  },
+  "white-dragon-wyrmling": {
+    "icon": "lorc/dragon-spiral",
+    "ink": "#6f8fa6"
+  },
+  "wight": {
+    "commons": "File:Giant draugr by Kim Diaz Holm (cropped).jpg"
+  },
+  "will-o-wisp": {
+    "commons": "File:Will-o-the-wisp and snake by Hermann Hendrich 1823.jpg"
+  },
+  "winter-wolf": {
+    "commons": "File:Arctic Wolf in Aulavik National Park 04 (cropped).jpg"
+  },
+  "wolf": {
+    "commons": "File:Eurasian wolf 2.jpg"
+  },
+  "worg": {
+    "wesnoth": "wolves/wolf-dark.webp"
+  },
+  "wraith": {
+    "wesnoth": "undead/wraith.webp"
+  },
+  "wyvern": {
+    "wesnoth": "monsters/wyvern.webp"
+  },
+  "xorn": {
+    "icon": "lorc/crystal-growth"
+  },
+  "young-black-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#2b2622"
+  },
+  "young-blue-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#2f5f93"
+  },
+  "young-brass-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#9a6b1f"
+  },
+  "young-bronze-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#7a5230"
+  },
+  "young-copper-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#a04f2a"
+  },
+  "young-gold-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#a77a0e"
+  },
+  "young-green-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#3c6b33"
+  },
+  "young-red-dragon": {
+    "wesnoth": "monsters/fire-dragon.webp"
+  },
+  "young-silver-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#5d6f7d"
+  },
+  "young-white-dragon": {
+    "icon": "lorc/dragon-head",
+    "ink": "#6f8fa6"
+  },
+  "zombie": {
+    "wesnoth": "undead/walking-corpse.webp"
+  }
 }

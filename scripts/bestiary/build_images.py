@@ -21,6 +21,7 @@ docs/bestiary-art-credits.md. Commons downloads are cached next to the selection
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -215,7 +216,15 @@ def write_credits(root: Path, credits: dict[str, dict], wesnoth_commit: str, ico
             else cell(credit["license"])
         lines.append(f"| {creature} | [{cell(credit['title'])}]({credit['source']}) | {cell(credit['author'])} | "
                      f"{license_cell} |")
-    (root / "docs/bestiary-art-credits.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    credits_doc = root / "docs/bestiary-art-credits.md"
+    credits_doc.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    prettier(credits_doc, root)
+
+
+def prettier(path: Path, root: Path) -> None:
+    """Formats a written file as the repository's format check expects, so a rebuild never fails CI."""
+    subprocess.run(["npx", "prettier", "--write", str(path)], cwd=root, check=True, shell=os.name == "nt",
+                   stdout=subprocess.DEVNULL)
 
 
 if __name__ == "__main__":

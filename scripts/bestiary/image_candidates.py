@@ -12,11 +12,13 @@ Requests are batched (50 titles per call) and paced: Wikimedia rate-limits anony
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
 import time
 import urllib.parse
+from pathlib import Path
 
 UA = "RyttaBestiaryImages/0.1 (tabletop companion; manual content build)"
 WIKI = "https://en.wikipedia.org/w/api.php"
@@ -257,6 +259,15 @@ def main() -> None:
         result[monster["id"]] = unique
         print(f"{count:3}/{len(todo)} {monster['id']}: {len(unique)}", flush=True)
         json.dump(result, open(out_path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    root = Path(__file__).resolve().parents[2]
+    if Path(out_path).exists() and Path(out_path).resolve().is_relative_to(root):
+        prettier(Path(out_path).resolve(), root)
+
+
+def prettier(path: Path, root: Path) -> None:
+    """Formats a written file as the repository's format check expects, so a rebuild never fails CI."""
+    subprocess.run(["npx", "prettier", "--write", str(path)], cwd=root, check=True, shell=os.name == "nt",
+                   stdout=subprocess.DEVNULL)
 
 
 if __name__ == "__main__":

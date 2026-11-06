@@ -5,6 +5,7 @@ import {
   Gem,
   Image,
   Landmark,
+  Map as TableMap,
   ScrollText,
   Store,
   Swords,
@@ -58,6 +59,15 @@ export const campaignModules = [
     summary: 'summary.combat',
     icon: Swords,
     ticket: 'RYT-007',
+    implemented: true,
+  },
+  {
+    key: 'tabletop',
+    path: '/tabletop',
+    label: 'module.tabletop',
+    summary: 'summary.tabletop',
+    icon: TableMap,
+    ticket: 'RYT-055',
     implemented: true,
   },
   {

@@ -292,3 +292,52 @@ the heading, one line per creature with its type glyph, CR and XP, the total and
 and one "Add" button whose accessible name carries the composition and the encounter. Buttons stay
 focusable while saving (`aria-disabled`), so a failure keeps focus where it was. The dialog unmounts
 on close and returns focus to "Suggest creatures"; a successful add closes it and shows the notice.
+
+## Tabletop (RYT-055–063, ADR 032)
+
+The map is the hero; the chrome around it stays quiet. The DM's tabletop (library and editor) is the one
+section whose main area spans the window from 48em, with a small fluid gutter; the header and navigation
+keep the shell's measure, and the dock grows a little on wide screens (RYT-063). On the DM board each
+room carries a key: a small parchment plate with a sepia serif numeral above the fog, in the first
+corner of the room (top-left first, then the centre) that holds no note, event or token, so it never covers
+what the DM placed. Generated passages are reveal areas
+numbered apart (P1, P2…); their dashed, italic keys appear only while the DM uses Fog or has a door or an
+event selected, and the reveal list groups rooms and passages. Props on painted maps are painted
+sprites (a centred contact shadow, a warm halo for lights); on ink maps and parchment grids they stay
+line drawings, so each map keeps one visual language (RYT-064). Painted props with a picture made for
+them (RYT-066, [generated sprite art](sprite-art.md)) use it: seen from above, lit from overhead, at their
+real share of their squares, mirrored or turned a quarter by item so repeats differ, and shown together
+once decoded; the others keep the drawn sprite until their pictures exist, and a picture that fails to
+load falls back to it. The look travels with the table projection
+(never the recipe), so the table and phones match the DM. On uploaded maps the picture already draws its
+doors: Rytta shows the DM dashed handles only and the table nothing extra. The Universal VTT preview tints
+each fog area with its number (sized to the picture), draws the file's doors and says what is not imported
+(RYT-065). The DM editor has a compact head (back, the scene
+name in the serif, the "On the table" seal or the one primary action "Put on the table", "Move the table
+here" and "Open the table screen"), then the option strip, the board and the dock. The tool kit is one
+radio group of square keys (glyph, word and the key letter engraved in a corner): a left rail from 62em,
+one row of nine keys under the board on portrait tablets, and a bottom tray of five keys plus "More" on
+phones. Arrows, Home and End move the choice; the letters V, M, A, F, D, N, E, P and X work while focus is
+in the editor, outside text fields (entering the editor focuses its title). The option strip shows only the
+active tool's instruments (painted tiles, number dials, switches, the measuring readout with feet as a large
+serif figure); on phones it is one scrolling row so the board keeps its height.
+
+Panels (Tokens, Props, Story, Audio, Scene) open from disclosure keys (`aria-expanded`): beside the board
+from 75em, as a sheet floating over the board from 62em, below the board on portrait tablets, and as a
+bottom drawer at 75dvh on phones. The selection opens the
+inspector in the same place; door toggles never open the phone sheet. The board is one Tab stop with a
+square cursor: arrows move it (Shift: five squares) and announce what is there, Enter does what a tap does
+with the current tool, and with Select it opens the item's inspector and moves focus to its heading
+(Escape returns to the board). Delete removes and H hides what is under the cursor, or the selection; Undo
+follows a removal. Items are named buttons but not Tab stops. Tokens and props also move by drag (snapped)
+or by "Move to a square", which waits for a tap or the cursor; areas turn with two 15° keys. Two fingers pan
+and zoom in every tool; one finger acts with the tool; the zoom keys sit outside the board element.
+
+Board art (design-flow.md, section 2): ink-on-parchment and painted map looks, original line-art props
+(2.5px outlines at 64px per square), tokens in the combat token shapes with a name plate and a breathing
+amber double ring for the active turn (static with reduced motion), translucent fog for the DM and opaque
+fog with paper fibre and feathered edges on the table and phones, an amber measuring tape over a dark halo
+with a diamond per counted square, and areas filled at 28 % in their damage colour with corner ticks on
+caught squares and the shape and damage named in words. The table screen has no chrome: the map at the
+calibrated scale, a small status corner (scene, round and turn, connection in words, ruler and mute),
+a start overlay for the one tap browsers need, and story cards on a parchment plate set large.

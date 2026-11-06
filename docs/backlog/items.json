@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-05",
+  "updatedAt": "2026-11-06",
   "items": [
     {
       "id": "RYT-000",
@@ -2181,6 +2181,475 @@
         "src/features/combat/domain/difficulty.test.ts",
         "tests/e2e/encounter-builder.spec.ts",
         "docs/evidence/ui-review/ryt-054/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "owner": "backend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "supabase/migrations/20261111120000_tabletop.sql",
+        "supabase/migrations/20261111130000_tabletop_alias.sql",
+        "tests/database/tabletop.test.ts",
+        "src/features/tabletop/domain/geometry.test.ts",
+        "docs/evidence/RYT-055/editor-mobile.png",
+        "docs/evidence/RYT-055/editor-tablet.png",
+        "docs/evidence/RYT-055/table-mobile.png",
+        "docs/evidence/RYT-055/table-tablet.png"
+      ],
+      "id": "RYT-055",
+      "title": "Tabletop foundation: scenes, maps, grid calibration and the table screen",
+      "dependsOn": ["RYT-007", "RYT-053"],
+      "scope": "A tabletop campaign module (ADR 032): scenes with a blank, uploaded or generated map and its grid, one scene on the table, a DM editor with pan and zoom and the table frame, a chrome-less table screen at the calibrated scale and a read-only Player view; data, RPCs, storage and realtime for the whole tabletop.",
+      "acceptance": [
+        "Scenes are created, renamed, re-gridded and deleted by the DM; one is on the table; prepared scenes never reach Players or the table screen.",
+        "Calibration from the table screen diagonal, its reported resolution, the miniature base and a fine adjustment gives one square per base; a ruler checks it and the table screen shows the whole squares that fit.",
+        "Uploaded maps (WebP, PNG, JPEG) are downscaled to 4096 px and aligned with squares across and an offset; blank grids offer five grounds.",
+        "The table screen and Players use the table projection (no notes, events, hidden items, secrets, undiscovered secret doors or tokens of hidden or draft combatants); Players read only while the module is on.",
+        "Realtime on the live row with polling and reconnect refetch; tables are read-only through the Data API; RPCs lock the campaign and replay request ids.",
+        "Denial tests for anon, outsider, Player and a DM of another campaign; storage router by prefix; PRE mirror."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:db",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "src/features/tabletop/domain/generator/generator.test.ts",
+        "docs/evidence/RYT-055/generator-mobile.png",
+        "docs/evidence/RYT-055/generator-tablet.png"
+      ],
+      "id": "RYT-056",
+      "title": "Tabletop map generator: dungeon, crypt, cave, forest and tavern",
+      "dependsOn": ["RYT-055"],
+      "scope": "Seeded original generators that produce a map image, its rooms and editable doors and props, in an ink-on-parchment or painted look, sized for the calibrated table or a preset.",
+      "acceptance": [
+        "The same recipe gives the same map; reroll changes the seed; sizes include the table, presets and custom up to 80 x 80.",
+        "Dungeon and crypt rooms connect (every room reachable) with doors at openings and optional secret doors; caves keep only the largest connected cavern; forest keeps a walkable clearing and path; tavern lays out a hall, bar, hearth and side rooms.",
+        "The preview shows the map before creating it; creating uploads a WebP and stores rooms, doors and props as items."
+      ],
+      "validation": [
+        "unit tests for determinism, connectivity and bounds",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS"
+      ]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "src/features/tabletop/domain/geometry.test.ts",
+        "tests/database/tabletop.test.ts"
+      ],
+      "id": "RYT-057",
+      "title": "Tabletop tokens linked to combat",
+      "dependsOn": ["RYT-055"],
+      "scope": "Place encounter combatants (one, every enemy, the party) or free tokens on the map, sized by creature size, hidden until seen, with the active turn, defeated state and health band from the combat projection on the table.",
+      "acceptance": [
+        "Token size follows SRD Creature Size and Space; free tokens have a label and colour.",
+        "Hidden tokens and tokens of hidden combatants or draft encounters never reach the table projection; aliases hide real names and art.",
+        "The DM moves tokens by drag or arrow keys with snap; the table shows the active turn and defeated creatures."
+      ],
+      "validation": ["npm run test:db", "npm run test:e2e", "independent ui-ux PASS"]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "src/features/tabletop/domain/geometry.test.ts",
+        "docs/evidence/RYT-055/measure-mobile.png",
+        "docs/evidence/RYT-055/measure-tablet.png"
+      ],
+      "id": "RYT-058",
+      "title": "Tabletop measuring and areas of effect",
+      "dependsOn": ["RYT-055"],
+      "scope": "A measuring tool with waypoints following SRD 5.2.1 grid counting, shown on the table on demand, and the six SRD area shapes with affected squares and tokens, temporary or lasting.",
+      "acceptance": [
+        "Each segment costs max(|dx|, |dy|) squares of 5 feet; totals read in feet and squares; snapping is optional.",
+        "Sphere, cylinder, cube, cone, line and emanation place by origin and direction; squares count when their centre is inside (shown as a Rytta convention); the caught tokens are listed.",
+        "A shared measure and lasting areas appear on the table screen."
+      ],
+      "validation": [
+        "unit tests for distance and coverage",
+        "npm run test:e2e",
+        "independent ui-ux PASS"
+      ]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "tests/database/tabletop.test.ts"
+      ],
+      "id": "RYT-059",
+      "title": "Tabletop fog, rooms and doors",
+      "dependsOn": ["RYT-055"],
+      "scope": "Fog hidden by default when enabled, revealed or hidden with a brush, a box or a room, and doors on square edges that open, close, lock and stay secret until discovered.",
+      "acceptance": [
+        "The DM sees through fog; the table and Players see it opaque.",
+        "Reveal and hide all; operations are capped and appended server-side.",
+        "Secret doors are DM-only until discovered; opening a door can reveal the room behind it."
+      ],
+      "validation": ["npm run test:db", "npm run test:e2e", "independent ui-ux PASS"]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "tests/database/tabletop.test.ts",
+        "docs/evidence/RYT-055/event-mobile.png",
+        "docs/evidence/RYT-055/event-tablet.png"
+      ],
+      "id": "RYT-060",
+      "title": "Tabletop notes, events and story cards",
+      "dependsOn": ["RYT-055"],
+      "scope": "Private DM notes on the map, events that reveal a room or radius, show nearby hidden tokens, show a story card and start an ambience or sound in one tap, and story cards shown on the table and phones.",
+      "acceptance": [
+        "Notes and events never reach the table projection.",
+        "Firing an event applies its actions in one transaction and marks it fired; it can be reset.",
+        "A shown story card appears on the table and on Players phones; hiding it removes it."
+      ],
+      "validation": ["npm run test:db", "npm run test:e2e", "independent ui-ux PASS"]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "src/features/tabletop/audio/engine.test.ts",
+        "docs/evidence/RYT-055/audio-mobile.png",
+        "docs/evidence/RYT-055/audio-tablet.png"
+      ],
+      "id": "RYT-061",
+      "title": "Tabletop audio: synthesized ambience, effects and uploaded tracks",
+      "dependsOn": ["RYT-055"],
+      "scope": "The table screen plays synthesized ambiences and effects (Web Audio, original) and uploaded tracks chosen by the DM, with volume, loop and stop, after a tap to enable sound.",
+      "acceptance": [
+        "Eight ambiences and five effects are generated in code; nothing is bundled or copied.",
+        "Uploaded tracks (MP3, OGG, M4A, WebM up to 20 MB) are private to the campaign; members read only the current track.",
+        "The DM can also listen locally; a muted table says so."
+      ],
+      "validation": ["unit tests for the audio state", "npm run test:e2e", "independent ui-ux PASS"]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
+        "D&D Sync Tabletop reviewed in the browser with the user account on 2026-11-05 (docs/research.md).",
+        "SRD 5.2.1 Playing on a Grid and Creature Size and Space (pages 13-14) and Rules Glossary areas of effect (CC-BY-4.0)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/tabletop-design.md",
+        "docs/evidence/RYT-055/validation.md",
+        "docs/evidence/RYT-055/design-flow.md",
+        "docs/evidence/ui-review/ryt-055/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/tabletop.spec.ts",
+        "src/features/tabletop/domain/props.ts",
+        "src/features/tabletop/ui/prop-art.tsx"
+      ],
+      "id": "RYT-062",
+      "title": "Tabletop props library",
+      "dependsOn": ["RYT-055"],
+      "scope": "An original vector prop library in the ink style placed, rotated, resized, hidden and locked on the map, also used by the generator.",
+      "acceptance": [
+        "At least thirty props in six categories, drawn by Rytta and searchable in both languages.",
+        "Props snap to squares, rotate in 90 degree steps and resize in whole squares; hidden props are DM-only."
+      ],
+      "validation": ["npm run test:e2e", "390px and tablet screenshots", "independent ui-ux PASS"]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: the DM table management section is the only panel that may use the whole page width; improve map generation after finding where D&D Sync gets it from; which doctrines to follow when making maps by hand.",
+        "D&D Sync scripts vtt/dungeon.js and env-* reviewed in the browser pane (module headers only) on 2026-11-05 (docs/research.md).",
+        "Public sources: Alexandrian Jaquaying, Nystrom Rooms and Mazes, RogueBasin cellular automata, Boris the Brave cyclic generation, Watabou One Page Dungeon, SRD 5.2.1 Cover and Playing on a Grid (docs/map-doctrine.md)."
+      ],
+      "evidence": [
+        "docs/map-doctrine.md",
+        "docs/decisions/032-tabletop.md",
+        "docs/evidence/RYT-063/validation.md",
+        "src/features/tabletop/domain/generator/generator.test.ts",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/RYT-055/editor-desktop.png",
+        "docs/evidence/RYT-055/generator-desktop.png",
+        "docs/evidence/ui-review/ryt-063/review.md",
+        "docs/evidence/ui-review-current.json",
+        "docs/evidence/RYT-055/generator-mobile.png",
+        "docs/evidence/RYT-055/editor-tablet.png"
+      ],
+      "id": "RYT-063",
+      "title": "Tabletop: map generator v2, map doctrine and a full-width DM section",
+      "dependsOn": ["RYT-056"],
+      "scope": "Generator v2 (layouts, roles, doors, notes, variants) and painter v2 (traced walls, textures, hatching, trails and trees) following a written map doctrine; the DM tabletop library and editor span the window.",
+      "acceptance": [
+        "Dungeons place rooms by size with A* passages and loops, an entrance by the edge, a goal farthest by walking, treasure in a dead end and locked or secret doors where they mean something; crypts roll a nave or catacombs with niches; caves are caverns joined by tunnels with one mouth; forests string clearings with a purpose on a trail with a stream and spaced trees.",
+        "Passages are reveal areas numbered apart from rooms; doors reveal both sides; key rooms, places and optional traps become DM notes in the DM language; secret doors are painted as wall.",
+        "Walls are one traced line (curved for caves and round rooms), ink maps hatch along the walls, painted maps lay stones; generation stays deterministic per seed and options like traps never move the layout.",
+        "From 48em the DM tabletop library and editor use the full window width; phones keep their gutters.",
+        "docs/map-doctrine.md answers how to make maps by hand and how the generator applies it."
+      ],
+      "validation": [
+        "unit tests for determinism, connectivity, roles, doors, notes and outlines",
+        "npm run check",
+        "tabletop e2e at 390px, 820px and 1440px",
+        "Impeccable critique and audit",
+        "independent ui-ux PASS"
+      ]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: improve the overall map generator, import sprites online or generate them in 2D, make quick procedural maps beautiful with all the assets, using D&D Sync procedural maps as the reference.",
+        "D&D Sync painted generator output rendered in its own page on 2026-11-05 (docs/research.md)."
+      ],
+      "evidence": [
+        "docs/decisions/032-tabletop.md",
+        "docs/evidence/RYT-064/validation.md",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/RYT-055/editor-desktop.png",
+        "docs/evidence/RYT-055/event-desktop.png",
+        "docs/evidence/ui-review/ryt-064/review.md",
+        "docs/evidence/ui-review-current.json",
+        "supabase/migrations/20261111140000_tabletop_look.sql",
+        "tests/database/tabletop.test.ts"
+      ],
+      "id": "RYT-064",
+      "title": "Tabletop: painted 2D sprites and dressed painted maps",
+      "dependsOn": ["RYT-063"],
+      "scope": "Rytta-drawn painted sprites for every library prop on painted maps (board, table, Player view, generator preview) and a dressed painted look: masonry walls, round-room rings, wall torches with light, cobwebs, cracks, puddles, cave stone rims, textured crowns, grass, stone tavern walls; painted as the default look.",
+      "acceptance": [
+        "Every prop in the library has a painted sprite with shadow and light; light sources carry a halo; a prop keeps its box as its target.",
+        "Ink maps and parchment grids keep the line art; painted, uploaded and coloured-ground scenes use the sprites.",
+        "Painted dungeons and crypts draw stone-block walls, torches with light and corner dressing; caves a rim of loose stones; forests textured crowns and grass."
+      ],
+      "validation": [
+        "npm run check",
+        "tabletop e2e at 390px, 820px and 1440px",
+        "map renders",
+        "Impeccable critique and audit",
+        "independent ui-ux PASS"
+      ]
+    },
+    {
+      "owner": "frontend",
+      "priority": "P1",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "sources": [
+        "User 2026-11-05: the app used to make maps is Dungeon Alchemist; import it directly.",
+        "Universal VTT format as described by Roll20 and the Dungeondraft guide (docs/research.md)."
+      ],
+      "evidence": [
+        "src/features/tabletop/domain/uvtt.test.ts",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/RYT-064/validation.md",
+        "docs/evidence/RYT-055/uvtt-desktop.png",
+        "docs/evidence/ui-review/ryt-064/review.md",
+        "docs/evidence/ui-review-current.json",
+        "supabase/migrations/20261111140000_tabletop_look.sql",
+        "tests/database/tabletop.test.ts"
+      ],
+      "id": "RYT-065",
+      "title": "Tabletop: Universal VTT import (Dungeon Alchemist, Dungeondraft)",
+      "dependsOn": ["RYT-055"],
+      "scope": "Upload accepts .dd2vtt, .uvtt and .df2vtt: picture fitted, grid from the file, closed portals as doors, reveal areas from walls, doors joined to the areas on both sides; grid read from image file names such as 30x20.",
+      "acceptance": [
+        "A Universal VTT file creates an upload scene with the file grid, its doors and fog areas split along walls, doors and windows; the dialog shows squares, pixels, doors and areas and asks no grid alignment.",
+        "Map origin is honoured; files over 120 squares a side are refused with the size; invalid files say so.",
+        "Plain pictures named like 30x20 start with that grid."
+      ],
+      "validation": [
+        "unit tests for parsing, areas, doors and names",
+        "tabletop e2e upload at 390px, 820px and 1440px",
+        "independent ui-ux PASS"
+      ]
+    },
+    {
+      "id": "RYT-066",
+      "title": "Tabletop: painted props from generated art and the sprite catalogue",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-064"],
+      "sources": [
+        "User 2026-11-05: use ChatGPT image generation (ChatGPT Plus) to create the sprites.",
+        "OpenAI Terms of Use: the user owns the output (docs/sprite-art.md).",
+        "User 2026-11-06: a CSV/Excel with every prompt, file name and path; floors, walls and effects too; many sprites so generated maps differ."
+      ],
+      "scope": "Style guide, prompts and provenance for art the author makes by hand with ChatGPT; the tavern pilot of 12 props imported; an import that cuts each prop from its sheet by the catalogue layout, fits it to its real share of its footprint and saves WebP; the board uses the picture when there is one (mirrored or turned by item) and the drawn sprite otherwise; a catalogue (CSV and Excel) of 211 pictures to generate: props, floors, walls, decals and effects. Floors, walls, decals, effects and new props are integrated as they arrive.",
+      "acceptance": [
+        "Prompts never name artists, studios or asset packs; every imported sheet is logged with date and model and the shipped pictures are credited.",
+        "Generated props are seen from above, fit their real share of their footprint, keep the wall-back orientation, vary by item and read at about 70 px a square.",
+        "Scenes without a generated picture keep the drawn sprite; a picture that fails to load falls back to it; the ink look keeps its line art.",
+        "The catalogue gives every picture its prompt, file name and path, and the import reads the same rows."
+      ],
+      "validation": [
+        "tavern render compared with docs/evidence/RYT-064/tavern-painted-42.png",
+        "npm run check",
+        "tabletop e2e at 390px, 820px and 1440px",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/sprite-art.md",
+        "docs/evidence/RYT-066/validation.md",
+        "src/features/tabletop/ui/sprites.test.ts",
+        "src/features/tabletop/domain/generator/generator.test.ts",
+        "art/sprites/catalogue.csv",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/ui-review/ryt-066/review.md",
         "docs/evidence/ui-review-current.json"
       ]
     }

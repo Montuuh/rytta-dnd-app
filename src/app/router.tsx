@@ -59,6 +59,17 @@ const CombatTablePage = lazy(() =>
   import('@/features/combat').then((module) => ({ default: module.CombatTablePage })),
 )
 
+// ADR 032: the tabletop editor, the Player view and the chrome-less table screen.
+const TabletopPage = lazy(() =>
+  import('@/features/tabletop').then((module) => ({ default: module.TabletopPage })),
+)
+const TabletopScenePage = lazy(() =>
+  import('@/features/tabletop').then((module) => ({ default: module.TabletopScenePage })),
+)
+const TabletopTablePage = lazy(() =>
+  import('@/features/tabletop').then((module) => ({ default: module.TabletopTablePage })),
+)
+
 const ModulePage = lazy(() =>
   import('@/pages/module-page').then((module) => ({ default: module.ModulePage })),
 )
@@ -73,6 +84,12 @@ export function AppRouter() {
     <HashRouter>
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
+          {/* The table screen lies under the miniatures: no app chrome around the map. */}
+          {live && state.status === 'signed-in' && (
+            <Route path="campaign/:campaignId/tabletop-table" element={<CampaignBoundary />}>
+              <Route index element={<TabletopTablePage />} />
+            </Route>
+          )}
           <Route element={<Layout />}>
             <Route path="settings" element={<SettingsPage />} />
             {live && state.status !== 'signed-in' ? (
@@ -109,6 +126,8 @@ export function AppRouter() {
                         <Route path="combat/:encounterId/table" element={<CombatTablePage />} />
                         <Route path="glossary" element={<GlossaryPage />} />
                         <Route path="glossary/:entryId" element={<GlossaryPage />} />
+                        <Route path="tabletop" element={<TabletopPage />} />
+                        <Route path="tabletop/:sceneId" element={<TabletopScenePage />} />
                         <Route path="*" element={<ModulePage />} />
                       </Route>
                     </Route>

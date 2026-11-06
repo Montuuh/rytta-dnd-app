@@ -4,7 +4,8 @@
 
 Rytta supports a group playing custom D&D campaigns in the same room. Players use
 phones/tablets to consult information that otherwise requires paper bookkeeping.
-A shared screen already handles maps. Keep the table playing.
+A screen lying on the table shows the battle map under physical miniatures: Rytta's tabletop
+(ADR 032) or another map tool. Keep the table playing.
 
 - DM controls campaign content, character resources, merchants, prices and visibility.
 - Players consult authorized information and eventually buy, sell, equip and use items
@@ -45,6 +46,7 @@ Quests, glossary and combat follow; atlas, album, stronghold and crafting are la
 
 ## Non-goals
 
-Full VTT, battle-map renderer, IR touch hardware, 3D dice, autonomous DM, subscriptions
+Remote-play VTT features (dynamic lighting, vision, line of sight, chat, player-moved tokens;
+ADR 032 builds a table-first map instead), IR touch hardware, 3D dice, autonomous DM, subscriptions
 and runtime LLM integration. AI architecture here means development agents and workflows.
 No brainstorming item is implicitly promised for the first release.

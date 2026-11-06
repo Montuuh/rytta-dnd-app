@@ -11,6 +11,7 @@ export const campaignModuleKeys = [
   'memories',
   'stronghold',
   'workshop',
+  'tabletop',
 ] as const
 export type CampaignModuleKey = (typeof campaignModuleKeys)[number]
 

@@ -150,6 +150,17 @@ SRD 5.2.1 XP budget, bands, notes and suggestions; the DM console of a draft mea
 the server already holds against the party levels of `get_party_overview` and adds suggested groups
 through `add_combatants`.
 
+ADR 032 (RYT-055–062) adds the `tabletop` feature: `tabletop_scenes` (map, grid, fog operations, rooms,
+generator recipe), `tabletop_items` (tokens, props, doors, notes, events and areas in squares, with public
+`data`, DM-only `secret`, `hidden` and optional links to combatants or characters), `tabletop_cards`,
+`tabletop_tracks` and one secret-free `tabletop_live` row per campaign in the realtime publication.
+`get_tabletop` returns the DM's full scene or the table projection (the scene on the table only, without
+notes, events, hidden items, secret doors, secrets or draft/hidden combatants); every write is a DM-only,
+campaign-locked, idempotent RPC. Media lives in the private `tabletop-media` bucket behind a prefix router.
+The board is a CSS-transformed world (map image or ground, SVG layers, DOM tokens, SVG fog mask) without a
+rendering dependency; the generator and Web Audio engine are original code in the feature. The table screen
+(`/tabletop-table`) renders outside the app layout at the calibrated square size.
+
 Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

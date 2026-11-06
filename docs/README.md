@@ -73,3 +73,11 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     [art credits](bestiary-art-credits.md) and [RYT-053 verification](evidence/RYT-053/validation.md).
 39. [ADR 031: encounter builder with the SRD 5.2.1 XP budget](decisions/031-encounter-builder.md)
     and [RYT-054 verification](evidence/RYT-054/validation.md).
+40. [ADR 032: a table-first tabletop built into Rytta](decisions/032-tabletop.md),
+    [tabletop design analysis](tabletop-design.md) and [RYT-055–062 verification](evidence/RYT-055/validation.md).
+41. [Map design doctrine](map-doctrine.md) for hand-made and generated maps, and
+    [RYT-063 verification](evidence/RYT-063/validation.md) (generator v2, full-width DM tabletop).
+42. [RYT-064–065 verification](evidence/RYT-064/validation.md): painted sprites and dressed maps,
+    and Universal VTT (Dungeon Alchemist) import.
+43. [Generated sprite art](sprite-art.md): style guide, the sprite catalogue of ChatGPT prompts, file
+    names and paths, provenance and credits, and [RYT-066 verification](evidence/RYT-066/validation.md).

@@ -4,9 +4,18 @@ export {
   normalizeClassTheme,
   paletteName,
   primaryShade,
+  resolveClassTheme,
+  themeScheme,
+  themesOfScheme,
   type ClassTheme,
   type ClassThemeId,
   type ColorSchemeName,
   type ThemeTokens,
 } from './class-themes'
-export { classThemeKey, getClassTheme, setClassTheme, useClassTheme } from './theme-store'
+export {
+  classThemeKey,
+  getClassTheme,
+  legacySchemeKey,
+  setClassTheme,
+  useClassTheme,
+} from './theme-store'

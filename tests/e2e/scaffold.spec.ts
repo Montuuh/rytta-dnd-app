@@ -46,7 +46,7 @@ test('compact settings menu supports Escape, keyboard and returns focus', async 
   const menu = page.getByRole('button', { name: /Open settings menu/ })
   await menu.click()
   await expect(page.getByRole('menu')).toBeVisible()
-  // Appearance and language moved to the Settings page (RYT-033); the menu only links there.
+  // Language and theme live in the Settings drawer (RYT-033, RYT-069); the menu only opens it.
   await expect(page.getByRole('menuitem')).toHaveCount(1)
   const bounds = await page.getByRole('menu').boundingBox()
   expect(bounds!.height).toBeLessThan(260)
@@ -56,9 +56,14 @@ test('compact settings menu supports Escape, keyboard and returns focus', async 
   await expect(menu).toBeFocused()
   await page.keyboard.press('Enter')
   await page.getByRole('menuitem', { name: 'App setup', exact: true }).click()
-  await expect(page).toHaveTitle('App setup · Rytta')
-  await expect(page.getByRole('radiogroup', { name: 'Language' })).toBeVisible()
-  await expect(page.locator('main')).toBeFocused()
+  const drawer = page.getByRole('dialog', { name: 'App setup' })
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByRole('radiogroup', { name: 'Language' })).toBeVisible()
+  // The drawer sits over the page: the route and title stay, Escape hands focus back.
+  await expect(page).toHaveTitle('Party · Rytta')
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeHidden()
+  await expect(menu).toBeFocused()
 })
 
 test('large text and reduced motion retain usable navigation', async ({ page }) => {

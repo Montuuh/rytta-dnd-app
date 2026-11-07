@@ -1,7 +1,7 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router'
 import { lazy, Suspense } from 'react'
 import { LoadingScreen } from '@/shared/ui/loading-screen'
-import { Layout } from './layout'
+import { Layout, SettingsRoute } from './layout'
 import { CampaignBoundary, CampaignHub } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
@@ -73,9 +73,6 @@ const TabletopTablePage = lazy(() =>
 const ModulePage = lazy(() =>
   import('@/pages/module-page').then((module) => ({ default: module.ModulePage })),
 )
-const SettingsPage = lazy(() =>
-  import('@/pages/settings-page').then((module) => ({ default: module.SettingsPage })),
-)
 
 export function AppRouter() {
   const { state } = useAuth()
@@ -91,7 +88,8 @@ export function AppRouter() {
             </Route>
           )}
           <Route element={<Layout />}>
-            <Route path="settings" element={<SettingsPage />} />
+            {/* RYT-069: Settings is a drawer; old links open it over the home screen. */}
+            <Route path="settings" element={<SettingsRoute />} />
             {live && state.status !== 'signed-in' ? (
               <Route
                 path="*"

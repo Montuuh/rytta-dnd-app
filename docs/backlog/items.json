@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-06",
+  "updatedAt": "2026-11-07",
   "items": [
     {
       "id": "RYT-000",
@@ -2651,6 +2651,51 @@
         "tests/e2e/tabletop.spec.ts",
         "docs/evidence/ui-review/ryt-066/review.md",
         "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-069",
+      "title": "One color scheme per theme, theme swatch tiles and a Settings drawer",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-033"],
+      "sources": [
+        "User 2026-11-07: unify class colors with dark and light; classes whose colors contrast better on dark become dark themes and the rest light themes, like D&D Sync.",
+        "D&D Sync themes reviewed in the in-app browser with the user's account (theme.js/theme.css: navy, light, toxic, plant; dark mode follows the theme).",
+        "User 2026-11-07: accepted the measured split (10 dark including Hearth and Bard, 4 light including Parchment and Warlock).",
+        "User 2026-11-07: Settings should not open a whole new page; a small to medium panel on the right instead. Language first, then the class theme cards.",
+        "User 2026-11-07: shared a screenshot of D&D Sync appearance tiles (small chips previewing each theme); do something similar, not an exact copy."
+      ],
+      "scope": "Each theme owns one scheme chosen by measured class color contrast; Parchment as a neutral light theme; light class accents moved toward the class color; Settings becomes a right-hand drawer with language first and the theme as small swatch tiles in dark and light groups; legacy light default migrates to Parchment.",
+      "acceptance": [
+        "Ten dark themes (Hearth, Bard, Cleric, Druid, Fighter, Monk, Paladin, Ranger, Rogue, Sorcerer) and four light themes (Parchment, Barbarian, Warlock, Wizard), each with one token set that passes WCAG AA in a unit test.",
+        "The color scheme always follows the theme: no separate appearance control, bootstrap and store set both attributes together.",
+        "Settings opens from the profile menu as a medium right-hand drawer over the current screen (route and title kept); Escape and close return focus to the profile button; old #/settings links open it.",
+        "Language comes first, then one Theme radio group of swatch tiles in Dark and Light subgroups, each tile previewing its own theme; keyboard, focus, 44px targets and 150% text work at 390px, tablet and desktop.",
+        "A stored light scheme with the default theme becomes Parchment; classes keep their class; an explicit choice retires the legacy key."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/034-one-scheme-per-theme.md",
+        "docs/evidence/RYT-069/validation.md",
+        "docs/evidence/RYT-069/design-flow.md",
+        "tests/unit/class-themes.test.ts",
+        "tests/e2e/preferences.spec.ts",
+        "docs/evidence/ui-review/ryt-069/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/e2e/scaffold.spec.ts",
+        "tests/e2e/identity.spec.ts"
       ]
     }
   ]

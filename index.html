@@ -10,31 +10,48 @@
     <script>
       // Set validated preferences before the first paint; storage may be unavailable.
       try {
-        const scheme = localStorage.getItem('rytta-color-scheme') === 'light' ? 'light' : 'dark'
-        document.documentElement.dataset.mantineColorScheme = scheme
         document.documentElement.lang =
           localStorage.getItem('rytta-language') === 'en' ? 'en' : 'es'
-        // Class theme (RYT-033); keep this list in sync with src/shared/theme/class-themes.ts.
-        const theme = localStorage.getItem('rytta-theme')
-        const themes =
-          'barbarian bard cleric druid fighter monk paladin ranger rogue sorcerer warlock wizard'
-        document.documentElement.dataset.ryttaTheme = themes.split(' ').includes(theme)
-          ? theme
-          : 'default'
-        document.querySelector('meta[name="theme-color"]').content =
-          scheme === 'dark' ? '#140f0b' : '#f7efe2'
+        // Each theme owns its scheme (RYT-069): theme -> 'scheme background'. Keep this map in
+        // sync with src/shared/theme/class-themes.ts. A legacy light default becomes Parchment.
+        const themes = {
+          default: 'dark #140f0b',
+          bard: 'dark #140d11',
+          cleric: 'dark #110f0b',
+          druid: 'dark #0c110b',
+          fighter: 'dark #0c1013',
+          monk: 'dark #0a1111',
+          paladin: 'dark #0e1011',
+          ranger: 'dark #0f100a',
+          rogue: 'dark #0f0f11',
+          sorcerer: 'dark #150d0c',
+          parchment: 'light #f7efe2',
+          barbarian: 'light #fcf1ef',
+          warlock: 'light #f4f2fb',
+          wizard: 'light #eff4fc',
+        }
+        let theme = localStorage.getItem('rytta-theme')
+        if (!Object.prototype.hasOwnProperty.call(themes, theme)) theme = 'default'
+        if (theme === 'default' && localStorage.getItem('rytta-color-scheme') === 'light')
+          theme = 'parchment'
+        const [scheme, background] = themes[theme].split(' ')
+        document.documentElement.dataset.ryttaTheme = theme
+        document.documentElement.dataset.mantineColorScheme = scheme
+        document.documentElement.style.setProperty('--boot-bg', background)
+        document.querySelector('meta[name="theme-color"]').content = background
       } catch {
         /* Spanish and dark are already set on the document. */
       }
     </script>
     <style>
-      html {
-        background: #140f0b;
+      /* Pre-paint colors only: :where() keeps them below the theme tokens in styles.css. */
+      :where(html) {
+        background: var(--boot-bg, #140f0b);
         color: #f5ebd6;
         color-scheme: dark;
       }
-      html[data-mantine-color-scheme='light'] {
-        background: #f7efe2;
+      :where(html[data-mantine-color-scheme='light']) {
+        background: var(--boot-bg, #f7efe2);
         color: #2a1c11;
         color-scheme: light;
       }

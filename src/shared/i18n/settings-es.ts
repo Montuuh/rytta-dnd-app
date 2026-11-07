@@ -1,14 +1,14 @@
 import type { settingsEn } from './settings-en'
 
-/** RYT-033 settings page and class themes. */
+/** RYT-033 settings page and class themes; RYT-069 gives every theme its own scheme. */
 export const settingsEs = {
-  'settings.intro': 'Elige cómo se ve Rytta y en qué idioma te habla en este dispositivo.',
-  'settings.appearanceHelp': 'El modo oscuro cansa menos la vista en mesas con poca luz.',
-  'settings.darkHint': 'Mesas con poca luz',
-  'settings.lightHint': 'Luz de día y salas claras',
-  'settings.classTheme': 'Tema de clase',
-  'settings.classThemeHelp':
-    'Tiñe botones, enlaces y realces con los colores de tu clase. El texto siempre mantiene su contraste.',
+  'settings.close': 'Cerrar ajustes',
+  'settings.theme': 'Tema',
+  'settings.themeHelp': 'Cada tema trae su modo, oscuro o claro.',
+  'settings.darkThemes': 'Oscuros',
+  'settings.darkHint': 'Para mesas con poca luz',
+  'settings.lightThemes': 'Claros',
+  'settings.lightHint': 'Para luz de día y salas claras',
   'settings.languageHelp': 'Cambia la interfaz. El contenido de tus campañas no se traduce.',
   'settings.about': 'Esta instalación',
   'theme.default': 'Hoguera',
@@ -37,4 +37,6 @@ export const settingsEs = {
   'theme.warlock.tagline': 'Violeta sobrenatural',
   'theme.wizard': 'Mago',
   'theme.wizard.tagline': 'Azul arcano',
+  'theme.parchment': 'Pergamino',
+  'theme.parchment.tagline': 'Tinta sobre papel',
 } satisfies Record<keyof typeof settingsEn, string>

@@ -90,12 +90,9 @@ export const es = {
   'error.help':
     'Recarga para intentarlo de nuevo. Si el problema continúa, comprueba la configuración.',
   'error.reload': 'Recargar',
-  'preferences.theme': 'Apariencia',
-  'preferences.dark': 'Oscuro',
-  'preferences.light': 'Claro',
   'preferences.language': 'Idioma',
   'preferences.saved':
-    'Tus preferencias se guardan en este dispositivo. La primera visita empieza en español y modo oscuro.',
+    'Tus preferencias se guardan en este dispositivo. La primera visita empieza en español y con el tema Hoguera.',
   'settings.demo': 'Modo demo',
   'settings.backend': 'Modo Supabase',
   'settings.demoDescription':

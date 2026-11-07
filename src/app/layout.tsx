@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ComponentType } from 'react'
 import {
   Alert,
   Button,
@@ -12,7 +12,7 @@ import {
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { Compass, Eye, LogOut, Menu as MenuIcon, Settings, Shield, UserRound } from 'lucide-react'
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { modules } from './modules'
 import { config } from '@/shared/lib/config'
@@ -24,6 +24,21 @@ import {
   type Campaign,
 } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
+import { SettingsPanel } from '@/pages/settings-panel'
+
+/** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
+const SettingsDrawerContext = createContext<() => void>(() => {})
+
+/** Old `#/settings` links open the drawer over the home screen. */
+export function SettingsRoute() {
+  const openSettings = useContext(SettingsDrawerContext)
+  const navigate = useNavigate()
+  useEffect(() => {
+    openSettings()
+    void navigate('/', { replace: true })
+  }, [openSettings, navigate])
+  return null
+}
 
 const defaultActivePaths = new Set(['/party', '/glossary'])
 /** Phones show this many destinations before folding the rest into "More". */
@@ -191,6 +206,7 @@ export function Layout() {
   const [previewLabel, setPreviewLabel] = useState<string | null>(null)
   const [pickerOpened, setPickerOpened] = useState(false)
   const [opened, { open, close }] = useDisclosure(false)
+  const [settingsOpened, settings] = useDisclosure(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   const previewSwitch = useRef<HTMLInputElement>(null)
   const restoreMenuFocus = useRef(false)
@@ -217,7 +233,8 @@ export function Layout() {
   const previousPath = useRef(pathname)
   useEffect(() => {
     if (previousPath.current !== pathname) {
-      mainRef.current?.focus()
+      // An old #/settings link redirects with the drawer open: focus stays inside the dialog.
+      if (!settingsOpened) mainRef.current?.focus()
       window.scrollTo(0, 0)
       previousPath.current = pathname
     }
@@ -233,10 +250,9 @@ export function Layout() {
               ? 'wizard.editorTitle'
               : /^\/party\/[^/]+$/.test(modulePath)
                 ? 'sheet.title'
-                : (modules.find((m) => m.path === modulePath)?.label ??
-                  (pathname === '/settings' ? 'nav.settings' : 'page.notFound'))
+                : (modules.find((m) => m.path === modulePath)?.label ?? 'page.notFound')
     document.title = `${t(key)} · Rytta`
-  }, [pathname, t, live, state.status])
+  }, [pathname, t, live, state.status, settingsOpened])
   const enterPreview = (userId: string | null, label: string | null) => {
     setPreviewUserId(userId)
     setPreviewLabel(label)
@@ -412,13 +428,15 @@ export function Layout() {
                         <Menu.Divider />
                       </>
                     )}
-                    {/* Appearance, language and class theme live only in Settings (RYT-033). */}
+                    {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
                     <Menu.Item
-                      component={NavLink}
-                      to="/settings"
                       leftSection={<Settings size={18} aria-hidden="true" />}
-                      // Navigation moves focus to the page content instead of the trigger.
-                      onClick={() => (restoreMenuFocus.current = pathname === '/settings')}
+                      aria-haspopup="dialog"
+                      // The drawer takes focus; it hands it back to the trigger when it closes.
+                      onClick={() => {
+                        restoreMenuFocus.current = false
+                        settings.open()
+                      }}
                     >
                       {t('nav.settings')}
                     </Menu.Item>
@@ -462,11 +480,29 @@ export function Layout() {
                 {t('campaign.offline')}
               </Alert>
             )}
-            <Outlet key={state.user?.id ?? 'guest'} />
+            <SettingsDrawerContext.Provider value={settings.open}>
+              <Outlet key={state.user?.id ?? 'guest'} />
+            </SettingsDrawerContext.Provider>
           </main>
           <footer className="page-footer">{t('brand.footer')}</footer>
         </div>
         {showNav && <BottomNavigation entries={entries} />}
+        <Drawer
+          opened={settingsOpened}
+          onClose={settings.close}
+          position="right"
+          // A medium panel beside the page; phones keep a strip of the page visible.
+          size="calc(min(100vw - 1.5rem, 30rem))"
+          title={t('nav.settings')}
+          className="settings-drawer"
+          closeButtonProps={{ 'aria-label': t('settings.close'), size: 44 }}
+          // A light veil keeps the page readable, so a new theme shows behind the panel.
+          overlayProps={{ backgroundOpacity: 0.3 }}
+          returnFocus={false}
+          onExitTransitionEnd={() => menuButton.current?.focus()}
+        >
+          <SettingsPanel />
+        </Drawer>
       </div>
     </CampaignViewContext.Provider>
   )

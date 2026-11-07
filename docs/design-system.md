@@ -14,13 +14,14 @@ indicator. Filled amber controls use deep espresso text #181009, including their
 Light mode uses warm parchment #F7EFE2, surface #FFFDF9, text #2A1C11, secondary text #664F3A
 and roasted chestnut accents (#6E3410 for primary buttons, #974D13 secondary). Focus uses
 #844112. Both palettes preserve the same hierarchy; the palette is a product choice verified
-with contrast tests. These values are the Default ("Hearth") class theme described below.
+with contrast tests. The dark values are the default Hearth theme and the light values are
+Parchment; every theme owns one scheme (RYT-069, ADR 034).
 
 Semantic tokens live in src/app/styles.css and feed Mantine variables. Avoid hardcoded
 light backgrounds or white text on pale dark-mode accents. The header has no left sidebar.
 Row 1 shows the logo, the RYTTA brand and the campaign name, plus a DM `Player view` switch
-and a unified Profile menu (My campaigns, App setup, Sign out). Appearance, language and class
-theme are changed only on the Settings page (RYT-033, ADR 020). Tablets and laptops show reachable modules in a second row: one non-wrapping,
+and a unified Profile menu (My campaigns, App setup, Sign out). Theme and language are changed
+only in the Settings drawer (RYT-033, RYT-069, ADR 021, ADR 034). Tablets and laptops show reachable modules in a second row: one non-wrapping,
 scrollable line. Phones (< 48em) use a fixed bottom bar with up to five destinations; when
 there are more, the extras go in a `More` drawer. Planned modules are never navigation items.
 They fold into the campaign home `Coming soon` accordion and the DM module switch list. A
@@ -75,51 +76,62 @@ line, icon actions) with an optional compact grid. Actions that fit stay as 44px
 with accessible names; on phones they fold into one ⋯ menu. Avoid stacks of plain text
 buttons on cards. Campaign pages share one width for every role.
 
-## Settings and class themes (RYT-033)
+## Settings and themes (RYT-033, RYT-069)
 
-Settings (`#/settings`) is the single home for appearance, language and class theme. Each
-preference is a section: an h2 with one line of help (beside the controls from 62em, stacked
-below), then one radio group. Radio cards are native radios kept in the accessibility tree and
-painted as cards (`.choice-card`). They have a 1px border, a 2px accent border plus a check
-badge when selected (never color alone), a 3px `--app-focus` ring on keyboard focus and at
-least 56px of height. Arrow keys move the selection, and Tab moves between groups. Do not
-reintroduce quick toggles in the profile menu or elsewhere.
+Settings is a right-hand drawer opened from the profile menu, the single home for language
+and theme (RYT-069, ADR 034). It is a medium panel (`calc(min(100vw - 1.5rem, 30rem))`) over
+the current screen; the route and title stay, Escape or the 44px close button closes it and
+focus returns to the profile button. Old `#/settings` links open it over the home screen. The
+drawer title is the h2; each preference is a section with an h3 and one line of help, then one
+radio group: Language first, then Theme. Radio cards are native radios kept in the
+accessibility tree and painted as cards (`.choice-card`). They have a 1px border, a 2px accent
+border plus a check badge when selected (never color alone), a 3px `--app-focus` ring on
+keyboard focus and at least 56px of height. Arrow keys move the selection, and Tab moves
+between groups. Do not reintroduce quick toggles in the profile menu or elsewhere.
 
-- Appearance: two preview tiles draw a miniature screen in the active class theme for each
-  scheme.
-- Class theme: a gallery of 13 cards. Each card has a medallion with the class glyph in the
-  theme's own background, accent and secondary ring, plus the name and a short tagline. The
-  glyphs are Lucide icons: Compass, Axe, Music, HandHeart, Leaf, Swords, HandFist,
-  ShieldHalf, BowArrow, VenetianMask, Flame, Eye and WandSparkles.
-- Language: Español and English cards with a language-tagged label.
+- Language: Español and English cards with a language-tagged label, side by side when a name
+  fits whole and stacked on narrow phones or at enlarged text (names never break inside a word).
+- Theme: one radio group of 14 swatch tiles split into a Dark and a Light subgroup
+  (`role="group"`, an h4 with a moon or sun glyph and a one-line hint). There is no separate
+  light/dark switch: each theme owns its scheme (ADR 034). Each tile is painted in its own
+  theme's background, border and text, with a round seal in the theme's surface showing the
+  class glyph in the accent and a secondary ring, and the name below; the tagline is the
+  radio's screen-reader description. Tiles are at least 4.75rem wide: five a row in the drawer,
+  four on phones, fewer at 150% text. The glyphs are Lucide icons: Compass, Music, HandHeart,
+  Leaf, Swords, HandFist, ShieldHalf, BowArrow, VenetianMask, Flame, Feather, Axe, Eye and
+  WandSparkles.
 
-Themes: Default/Hearth (campfire amber), Barbarian (blood and embers), Bard (velvet and rose),
-Cleric (radiant gold), Druid (moss and bark), Fighter (tempered steel), Monk (saffron and jade),
-Paladin (gold and silver), Ranger (forest and leather), Rogue (charcoal and crimson), Sorcerer
-(dragonfire), Warlock (eldritch violet) and Wizard (arcane blue).
+Dark themes: Hearth (default, campfire amber), Bard (velvet and rose), Cleric (radiant gold),
+Druid (moss and bark), Fighter (tempered steel), Monk (saffron and jade), Paladin (gold and
+silver), Ranger (forest and leather), Rogue (charcoal and crimson) and Sorcerer (dragonfire).
+Light themes: Parchment (ink on paper), Barbarian (blood and embers), Warlock (eldritch violet)
+and Wizard (arcane blue). Each class sits in the scheme where its color reads best (ADR 034).
 
 How it works:
 
-- Source of truth: `src/shared/theme/class-themes.ts`. Each theme has a Mantine 10-shade
-  palette (lightest first) and `dark`/`light` token sets. The token sets cover `--app-bg`,
+- Source of truth: `src/shared/theme/class-themes.ts`. Each theme has a `scheme`, a Mantine
+  10-shade palette (lightest first) tuned for that scheme and one token set covering `--app-bg`,
   `--app-surface`, `--app-raised`, `--app-hover`, `--app-border`, `--app-hero`, `--app-text`,
-  `--app-muted`, `--app-accent`, `--app-accent-secondary`, `--app-focus` and
-  `--app-on-accent`. In dark mode they also override Mantine's `dark-4..8` slots.
-- `--app-accent` is always the Mantine filled shade: `palette[3]` in dark mode and
-  `palette[8]` in light mode. Filled primary controls use `--app-on-accent` text.
+  `--app-muted`, `--app-accent`, `--app-accent-secondary`, `--app-focus` and `--app-on-accent`.
+  Dark themes also override Mantine's `dark-4..8` slots.
+- `--app-accent` is always the Mantine filled shade: `palette[3]` in dark themes and
+  `palette[8]` in light themes. Filled primary controls use `--app-on-accent` text. Light
+  palettes keep their tints in shades 1–2 for Mantine's light variants.
 - `src/app/class-themes.css` is generated. Do not edit it by hand. After changing the
-  source, run `UPDATE_THEME_CSS=1 npx vitest run tests/unit/class-themes.test.ts`. The
-  Default tokens stay in the base blocks of `src/app/styles.css`, and the test keeps them equal.
-- Applied as `html[data-rytta-theme]`. The `index.html` bootstrap sets it before the first
-  paint. `MantineProvider` switches `primaryColor`, and one effect in `providers.tsx` keeps
-  `<meta name="theme-color">` equal to the theme background. The theme persists in
-  `localStorage['rytta-theme']`. Invalid values fall back to `default`, and blocked storage
+  source, run `UPDATE_THEME_CSS=1 npx vitest run tests/unit/class-themes.test.ts`. Hearth and
+  Parchment stay in the base blocks of `src/app/styles.css`, and the test keeps them equal.
+- Applied as `html[data-rytta-theme]` together with `data-mantine-color-scheme`, which always
+  follows the theme. The `index.html` bootstrap sets both before the first paint, the theme
+  store sets both on change and `MantineProvider` gets `forceColorScheme`. One effect in
+  `providers.tsx` keeps `<meta name="theme-color">` equal to the theme background. The theme
+  persists in `localStorage['rytta-theme']`. Invalid values fall back to `default`; a legacy
+  `rytta-color-scheme` of `light` with the default theme becomes Parchment. Blocked storage
   keeps the choice in memory.
-- Contrast is enforced in `tests/unit/class-themes.test.ts`. Text, muted, accent and secondary
-  accent need 4.5:1 on bg, surface, raised and hero. On-accent needs 4.5:1 on the accent and
-  on the filled hover shade, and Mantine's light and outline variants need 4.5:1. The focus
-  ring needs 3:1 on every surface. A new theme must pass this test, and axe on Settings in
-  both schemes, before it ships.
+- Contrast is enforced in `tests/unit/class-themes.test.ts` for each theme in its own scheme.
+  Text, muted, accent and secondary accent need 4.5:1 on bg, surface, raised and hero.
+  On-accent needs 4.5:1 on the accent and on the filled hover shade, and Mantine's light and
+  outline variants need 4.5:1. The focus ring needs 3:1 on every surface. A new theme must
+  pass this test, and axe on Settings, before it ships.
 - Never hardcode a theme color in components. Use the tokens. Resource and status colors
   (gold, water, rations, danger, success, rarity) keep their meaning across themes.
 

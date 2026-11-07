@@ -86,12 +86,9 @@ export const en = {
   'error.title': 'The companion could not open',
   'error.help': 'Reload to try again. If this continues, check the app configuration.',
   'error.reload': 'Reload',
-  'preferences.theme': 'Appearance',
-  'preferences.dark': 'Dark',
-  'preferences.light': 'Light',
   'preferences.language': 'Language',
   'preferences.saved':
-    'Your choices are saved on this device. New visits start in Spanish and dark mode.',
+    'Your choices are saved on this device. New visits start in Spanish with the Hearth theme.',
   'settings.demo': 'Demo mode',
   'settings.backend': 'Supabase mode',
   'settings.demoDescription':

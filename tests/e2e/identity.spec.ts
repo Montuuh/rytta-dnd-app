@@ -344,7 +344,7 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   const campaignsItem = page.getByRole('menuitem', { name: 'Mis campañas', exact: true })
   const settings = page.getByRole('menuitem', { name: 'Ajustes', exact: true })
   await expect(campaignsItem).toBeFocused()
-  // My campaigns, App setup and Sign out; appearance and language live in Settings (RYT-033).
+  // My campaigns, App setup and Sign out; language and theme live in Settings (RYT-033).
   await expect(page.getByRole('menuitem')).toHaveCount(3)
   const bounds = await page.getByRole('menu').boundingBox()
   expect(bounds!.height).toBeLessThan(260)
@@ -357,19 +357,24 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   await expect(page.getByRole('menu')).not.toBeVisible()
   await trigger.click()
   await settings.click()
-  await expect(page.getByRole('heading', { name: 'Ajustes', level: 1 })).toBeVisible()
-  await expect(page.locator('main')).toBeFocused()
-  const appearance = page.getByRole('radiogroup', { name: 'Apariencia' })
-  await expect(appearance.getByRole('radio', { name: 'Oscuro', exact: true })).toBeChecked()
-  await expect(appearance.getByRole('radio', { name: 'Claro', exact: true })).not.toBeChecked()
-  await expectTouchTargets(appearance, 'label', {
+  // RYT-069: Settings opens as a drawer over the current page.
+  const drawer = page.getByRole('dialog', { name: 'Ajustes' })
+  await expect(drawer).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Mis campañas', exact: true })).toBeAttached()
+  const themes = drawer.getByRole('radiogroup', { name: 'Tema' })
+  await expect(themes.getByRole('radio', { name: 'Hoguera', exact: true })).toBeChecked()
+  await expect(themes.getByRole('radio', { name: 'Pergamino', exact: true })).not.toBeChecked()
+  await expectTouchTargets(themes, 'label', {
     height: 44,
     width: 44,
   })
-  await appearance.locator('label').filter({ hasText: 'Claro' }).click()
+  await themes.locator('label').filter({ hasText: 'Pergamino' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
-  await expect(appearance.getByRole('radio', { name: 'Claro', exact: true })).toBeChecked()
+  await expect(themes.getByRole('radio', { name: 'Pergamino', exact: true })).toBeChecked()
   await capture(page, info.outputPath('icon-theme-preferences.png'))
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeHidden()
+  await expect(trigger).toBeFocused()
 })
 
 test('invitation panel distinguishes loading, empty and failed refresh with recovery', async ({

@@ -1,6 +1,7 @@
 # ADR 021: one settings home and class themes
 
-Date: 2026-11-03. Status: accepted for RYT-033.
+Date: 2026-11-03. Status: accepted for RYT-033; the appearance switch and the per-theme
+light/dark token sets are superseded by [ADR 034](034-one-scheme-per-theme.md) (RYT-069).
 
 Appearance and language used to be controlled from three places: quick toggles in the profile
 menu, a settings dialog opened from that menu and the Settings page. The user asked for one

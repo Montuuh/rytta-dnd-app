@@ -1,12 +1,12 @@
-/** RYT-033 settings page and class themes. */
+/** RYT-033 settings page and class themes; RYT-069 gives every theme its own scheme. */
 export const settingsEn = {
-  'settings.intro': 'Choose how Rytta looks and which language it speaks on this device.',
-  'settings.appearanceHelp': 'Dark mode is easier on the eyes at dimly lit tables.',
-  'settings.darkHint': 'Low-light tables',
-  'settings.lightHint': 'Daylight and bright rooms',
-  'settings.classTheme': 'Class theme',
-  'settings.classThemeHelp':
-    'Tints buttons, links and highlights with your class colors. Text always keeps its contrast.',
+  'settings.close': 'Close app setup',
+  'settings.theme': 'Theme',
+  'settings.themeHelp': 'Each theme comes with its own mode, dark or light.',
+  'settings.darkThemes': 'Dark',
+  'settings.darkHint': 'For low-light tables',
+  'settings.lightThemes': 'Light',
+  'settings.lightHint': 'For daylight and bright rooms',
   'settings.languageHelp': 'Changes the interface. Your campaign content is not translated.',
   'settings.about': 'This installation',
   'theme.default': 'Hearth',
@@ -35,4 +35,6 @@ export const settingsEn = {
   'theme.warlock.tagline': 'Eldritch violet',
   'theme.wizard': 'Wizard',
   'theme.wizard.tagline': 'Arcane blue',
+  'theme.parchment': 'Parchment',
+  'theme.parchment.tagline': 'Ink on paper',
 }

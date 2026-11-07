@@ -1,13 +1,9 @@
-import {
-  MantineProvider,
-  localStorageColorSchemeManager,
-  useComputedColorScheme,
-} from '@mantine/core'
+import { MantineProvider, type MantineColorSchemeManager } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect, useMemo, type PropsWithChildren } from 'react'
 import { createAppTheme } from './theme'
-import { classThemes, useClassTheme } from '@/shared/theme'
+import { classThemes, getClassTheme, themeScheme, useClassTheme } from '@/shared/theme'
 import { AuthProvider } from '@/features/auth'
 
 const queryClient = new QueryClient({
@@ -23,21 +19,24 @@ const dangerVariables = {
   '--mantine-color-red-outline': 'var(--danger)',
   '--mantine-color-red-outline-hover': 'var(--danger-soft)',
 }
-const storedScheme = localStorageColorSchemeManager({ key: 'rytta-color-scheme' })
-const colorSchemeManager = {
-  ...storedScheme,
-  get: () => (storedScheme.get('dark') === 'light' ? ('light' as const) : ('dark' as const)),
+/** RYT-069: the color scheme follows the theme. Mantine reads it from here on mount (before the
+ * forced value applies) and never stores a scheme of its own. */
+const colorSchemeManager: MantineColorSchemeManager = {
+  get: () => themeScheme(getClassTheme()),
+  set: () => {},
+  subscribe: () => {},
+  unsubscribe: () => {},
+  clear: () => {},
 }
 
 /** The one place that keeps the browser chrome color in sync with the active theme. */
 function ThemeColorMeta() {
-  const scheme = useComputedColorScheme('dark')
   const classTheme = useClassTheme()
   useEffect(() => {
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', classThemes[classTheme][scheme].bg)
-  }, [scheme, classTheme])
+      ?.setAttribute('content', classThemes[classTheme].tokens.bg)
+  }, [classTheme])
   return null
 }
 
@@ -48,6 +47,7 @@ export function Providers({ children }: PropsWithChildren) {
     <MantineProvider
       theme={theme}
       defaultColorScheme="dark"
+      forceColorScheme={themeScheme(classTheme)}
       colorSchemeManager={colorSchemeManager}
       cssVariablesResolver={() => ({
         variables: {},

@@ -81,6 +81,9 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and Universal VTT (Dungeon Alchemist) import.
 43. [Generated sprite art](sprite-art.md): style guide, the sprite catalogue of ChatGPT prompts, file
     names and paths, provenance and credits, and [RYT-066 verification](evidence/RYT-066/validation.md).
-44. [ADR 034: one color scheme per theme, and Settings as a drawer](decisions/034-one-scheme-per-theme.md) and
+44. [ADR 033: painted map art, themes and an untextured outside](decisions/033-map-art.md) and
+    [RYT-068 verification](evidence/RYT-068/validation.md): the whole catalogue imported, map themes,
+    rooms by purpose and textured painting.
+45. [ADR 034: one color scheme per theme, and Settings as a drawer](decisions/034-one-scheme-per-theme.md) and
     [RYT-069 verification](evidence/RYT-069/validation.md): dark and light themes chosen by
     class color contrast, Parchment, theme swatch tiles and a right-hand Settings drawer.

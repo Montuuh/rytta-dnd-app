@@ -2654,6 +2654,56 @@
       ]
     },
     {
+      "id": "RYT-068",
+      "title": "Tabletop: the whole sprite catalogue imported, map themes and textured painted maps",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-066"],
+      "sources": [
+        "User 2026-11-07: all sprites but 3 props are generated; import them and improve Rytta's map generation until interface and maps are polished, easy for the DM and beautiful, visual and useful for players and DM.",
+        "User 2026-11-07: a map without a ground, such as a cave, must leave the rock outside untextured; paint the outside like D&D Sync does, or black.",
+        "D&D Sync Tabletop reviewed in the in-app browser with the user's account (dark untextured outside, stone rims, coloured lights).",
+        "OpenAI Terms of Use: the user owns the output (docs/sprite-art.md)."
+      ],
+      "scope": "Import every saved catalogue picture (props, floors, walls, decals, effects; rejected rows skipped); new props in the library and in both looks; map themes per kind stored in the recipe (generator v3); rooms furnished by purpose with the new props; a textured painted look (room floors by purpose, worn patches, decals, wall bands, torches, cave rock fading into the dark, tree pictures, quiet loud floors); the untextured dark outside; the generator dialog with theme samples, a written summary, a legend of DM marks, R for another seed and a Create that stays in reach; spell areas with painted effects; revealed rooms that show their walls and secret doors drawn as wall.",
+      "acceptance": [
+        "Every saved, non-rejected picture of the catalogue is imported and listed; the three missing sheets and the rejected one are reported in the catalogue and the docs; the sources stay out of git.",
+        "Each kind offers its themes as material samples; the theme is stored in the recipe and old recipes read as the default theme; every theme lays out a connected map furnished only with library props.",
+        "Underground maps never texture the rock outside; walls read at a glance on a TV and in the DM's preview; loud floors stay quieter than the props.",
+        "A revealed room shows its walls and never what lies behind a secret door.",
+        "The generator works by touch and keyboard at 390px, 820px and 1440px, keeps Create in reach, says what the map holds in plain sentences and explains the DM's marks.",
+        "Without the tiles the drawn painted look is used; ink maps keep their line art and print picture-only props in ink."
+      ],
+      "validation": [
+        "renders of every theme compared with the RYT-064/066 painted maps",
+        "npm run check",
+        "tabletop e2e at 390px, 820px and 1440px",
+        "Impeccable critique and audit on the rendered result",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/033-map-art.md",
+        "docs/sprite-art.md",
+        "docs/evidence/RYT-068/validation.md",
+        "docs/evidence/RYT-068/design-flow.md",
+        "docs/evidence/RYT-068/themes.jpg",
+        "docs/evidence/RYT-068/webkit-compare.jpg",
+        "docs/evidence/RYT-068/secret-door-seams.jpg",
+        "docs/evidence/RYT-068/secret-passage-fog.jpg",
+        "src/features/tabletop/domain/generator/generator.test.ts",
+        "src/features/tabletop/ui/materials.test.ts",
+        "src/features/tabletop/ui/sprites.test.ts",
+        "tests/e2e/tabletop.spec.ts",
+        "art/sprites/catalogue.csv",
+        "docs/evidence/ui-review/ryt-068/review.md"
+      ]
+    },
+    {
       "id": "RYT-069",
       "title": "One color scheme per theme, theme swatch tiles and a Settings drawer",
       "priority": "P2",

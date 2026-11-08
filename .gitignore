@@ -45,3 +45,9 @@ dist-party-button-review/
 
 # Python bytecode (scripts/glossary)
 __pycache__/
+
+# Sprite and map art painted in ChatGPT (art/sprites/source/*/, about 430 MB, C2PA inside). The shipped
+# WebPs in public/tabletop and the catalogue are committed; the two pilot sheets stay as examples.
+art/sprites/source/*/
+# Office lock files (an open catalogue workbook).
+~$*

@@ -1470,8 +1470,18 @@ button.tt-token:focus-visible {
 }
 @media (min-width: 62em) {
   .tt-generator {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     align-items: start;
+  }
+  /* Create stays in reach at the foot of the options while they scroll. */
+  .tt-generator .tt-dialog-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-inline: -0.25rem;
+    padding: 0.625rem 0.25rem;
+    background: var(--mantine-color-body);
+    border-top: 1px solid var(--app-border);
   }
   .tt-generator-preview {
     position: sticky;
@@ -1482,6 +1492,9 @@ button.tt-token:focus-visible {
 .tt-generator .mantine-Switch-body {
   min-height: 44px;
   align-items: center;
+}
+.tt-generator .mantine-Switch-description {
+  line-height: 1.4;
 }
 .tt-room-numbers .is-passage rect {
   fill: rgba(242, 230, 204, 0.78);
@@ -1536,22 +1549,234 @@ button.tt-token:focus-visible {
   width: 100%;
   height: 100%;
 }
+.tt-preview-items[data-hidden] {
+  visibility: hidden;
+}
 .tt-preview-caption {
-  margin: 0;
+  display: grid;
+  gap: 0.125rem;
   font-size: var(--fs-meta);
+  line-height: 1.4;
+  color: var(--app-muted);
+}
+.tt-preview-caption p {
+  margin: 0;
+}
+/* RYT-068: the place in serif like a map's title, then what it holds, then the DM's part. */
+.tt-preview-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+  color: var(--app-text);
+}
+.tt-preview-dm {
+  font-style: italic;
+}
+.tt-preview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.tt-preview-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.tt-preview-legend svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+.tt-mark-plate {
+  fill: #2b241d;
+}
+.tt-preview-wait {
+  position: absolute;
+  inset: auto 0.5rem 0.5rem auto;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+  color: var(--app-text);
+  font-size: var(--fs-meta);
+}
+.tt-preview-frame[data-loading] .tt-preview-canvas {
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+}
+.tt-shortcut {
+  min-width: 1.375rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  font-family: Georgia, Cambria, serif;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  text-align: center;
   color: var(--app-muted);
 }
 .tt-generator-options {
   display: grid;
   gap: 0.875rem;
+  min-width: 0;
+}
+.tt-generator-fields {
+  display: grid;
+  gap: 0.875rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+/* The step of a creation, or its error, beside Create. */
+.tt-foot-status {
+  flex: 1 1 12rem;
+  margin: 0;
+  align-self: center;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.tt-foot-status:empty {
+  flex: 0 0 0;
+}
+.tt-foot-status.is-error {
+  color: var(--danger);
+}
+.tt-dialog-foot [data-disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+.tt-back-key[data-disabled] {
+  opacity: 0.5;
+}
+/* Every choice reads at one size, whatever the tile holds. */
+.tt-generator .bst-tile {
+  font-size: var(--fs-meta);
 }
 .tt-kind-tiles .bst-tiles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
   gap: 0.375rem;
 }
+/* The five places on one row, glyph above the word, when the options column has room for the
+   words (rem-based, so larger text falls back to the wrapping grid). */
+.tt-generator-options {
+  container-type: inline-size;
+}
+@container (min-width: 30rem) {
+  .tt-generator .tt-kind-tiles .bst-tiles-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .tt-generator .tt-kind-tiles .bst-tile {
+    padding-inline: 0.25rem;
+  }
+  .tt-generator .tt-kind-tile {
+    flex-direction: column;
+    gap: 0.2rem;
+    width: 100%;
+    padding-block: 0.375rem;
+    text-align: center;
+  }
+}
 .tt-kind-tile svg {
   color: var(--app-accent);
+}
+.tt-kind-tiles .tt-kind-tile {
+  padding-inline-start: 0.5rem;
+}
+/* RYT-068: themes as material samples, the floor tile the map is painted with above its name. */
+.tt-theme-tiles .bst-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.75rem, 1fr));
+  gap: 0.375rem;
+}
+.tt-theme-tile {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.375rem 0.375rem 0.5rem;
+  font-size: var(--fs-meta);
+  line-height: 1.25;
+  text-align: center;
+}
+/* The look as a sample: inked parchment, or the setting's painted floor. */
+.tt-look-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tt-look-sample {
+  display: inline-block;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  background-size: 4rem;
+  background-position: center;
+}
+.tt-look-sample.is-ink {
+  background-color: #efe3c6;
+  background-image:
+    linear-gradient(#2e2014, #2e2014),
+    repeating-linear-gradient(135deg, rgba(66, 45, 26, 0.55) 0 1px, transparent 1px 4px);
+  background-size:
+    100% 2px,
+    auto;
+  background-position:
+    0 70%,
+    0 0;
+  background-repeat: no-repeat, repeat;
+}
+.tt-theme-sample {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 2.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  background-size: 5.5rem;
+  background-position: center;
+}
+.tt-theme-sample > span {
+  position: absolute;
+  background-size: 3rem;
+}
+/* The wall along the top, like the far wall of a room. */
+.tt-theme-sample .is-wall {
+  inset: 0 0 auto 0;
+  height: 28%;
+  box-shadow:
+    0 1px 0 rgba(8, 6, 4, 0.85),
+    0 3px 4px rgba(0, 0, 0, 0.45);
+}
+/* A pool of the theme's water or lava in the corner. */
+.tt-theme-sample .is-pool {
+  right: -0.5rem;
+  bottom: -0.625rem;
+  width: 2.25rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(12, 10, 8, 0.55);
+}
+/* Outside a tavern (its yard) or along a wood's trail. */
+.tt-theme-sample .is-ground {
+  inset: auto 0 0 0;
+  height: 26%;
+  box-shadow: 0 -1px 0 rgba(8, 6, 4, 0.6);
+}
+.tt-theme-sample.is-ink {
+  filter: sepia(0.85) saturate(0.55) brightness(1.05);
+}
+.tt-theme-tiles .bst-tile:has(input:checked) .tt-theme-sample {
+  border-color: var(--app-accent);
 }
 
 /* ------------------------------------------------------------------ calibration */
@@ -1976,10 +2201,12 @@ html.tt-table-mode body {
    Focus never hides under either sticky part. */
 @media (max-width: 61.99em) {
   .tt-generator-content {
+    /* Focus scrolls clear of the sticky preview, measured (generator-dialog.tsx). */
     scroll-padding-top: calc(
-      var(--tt-modal-head, calc(44px + 2 * var(--mantine-spacing-md))) + 26dvh + 8rem
+      var(--tt-modal-head, calc(44px + 2 * var(--mantine-spacing-md))) +
+        var(--tt-sticky, calc(26dvh + 8rem)) + 0.5rem
     );
-    scroll-padding-bottom: 6.5rem;
+    scroll-padding-bottom: calc(var(--tt-foot, 6rem) + 0.5rem);
   }
   .tt-generator-preview {
     position: sticky;
@@ -1987,20 +2214,40 @@ html.tt-table-mode body {
     top: var(--tt-modal-head, calc(44px + 2 * var(--mantine-spacing-md)));
     z-index: 3;
     padding-bottom: 0.5rem;
-    background: var(--app-surface);
+    background: var(--mantine-color-body);
     /* Options scroll under the preview: a soft edge says where it ends. */
     box-shadow: 0 10px 12px -10px rgba(0, 0, 0, 0.55);
   }
   .tt-generator .tt-preview-canvas {
-    max-height: 26dvh;
+    max-height: 22dvh;
     object-fit: contain;
+  }
+  .tt-generator .tt-preview-caption {
+    font-size: var(--fs-tag);
+    line-height: 1.35;
+  }
+  /* Tablets have room beside the map: the summary at its own size. */
+  @media (min-width: 48em) {
+    .tt-generator .tt-preview-caption {
+      font-size: var(--fs-meta);
+    }
+    .tt-generator .tt-preview-canvas {
+      max-height: 26dvh;
+    }
+  }
+  .tt-generator .tt-preview-legend {
+    gap: 0.125rem 0.75rem;
+    font-size: var(--fs-tag);
+  }
+  .tt-generator .tt-preview-title {
+    font-size: var(--fs-body);
   }
   .tt-generator .tt-dialog-foot {
     position: sticky;
     bottom: 0;
     z-index: 3;
     padding-block: 0.625rem;
-    background: var(--app-surface);
+    background: var(--mantine-color-body);
     border-top: 1px solid var(--app-border);
   }
 }
@@ -2084,6 +2331,26 @@ html.tt-table-mode body {
 .tt-story-plate.is-clipped {
   -webkit-mask-image: linear-gradient(to bottom, #000 88%, transparent);
   mask-image: linear-gradient(to bottom, #000 88%, transparent);
+}
+
+/* Wide dialogs: focus scrolls clear of the sticky header and footer (heights measured; stacked
+   layouts set their own padding with the sticky preview above). */
+@media (min-width: 62em) {
+  .tt-generator-content {
+    scroll-padding-top: calc(
+      var(--tt-modal-head, calc(44px + 2 * var(--mantine-spacing-md))) + 0.5rem
+    );
+    scroll-padding-bottom: calc(var(--tt-foot, 4.5rem) + 0.5rem);
+  }
+}
+/* A preview too tall for its dialog (large text): it scrolls with the options, so it never hides
+   them or the focus. */
+.tt-generator-content[data-unstuck] .tt-generator-preview {
+  position: static;
+  box-shadow: none;
+}
+.tt-generator-content[data-unstuck] {
+  scroll-padding-top: var(--tt-modal-head, calc(44px + 2 * var(--mantine-spacing-md)));
 }
 
 /* Low windows (a phone on its side): nothing sticks, the options get the height. */

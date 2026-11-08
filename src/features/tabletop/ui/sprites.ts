@@ -198,6 +198,7 @@ const halo: Record<string, number> = {
   candles: 0.8,
   torch: 1.1,
   hearth: 1.2,
+  'lantern-post': 1.1,
 }
 
 const draw: Record<string, (d: Draw) => void> = {
@@ -927,6 +928,76 @@ const draw: Record<string, (d: Draw) => void> = {
     ctx.lineWidth = 0.02
     ctx.stroke(disc(w / 2, h / 2, 0.3))
   },
+  // RYT-068: the three catalogue props still without a picture, drawn until theirs arrive.
+  signpost: ({ ctx, w, h, v }) => {
+    // A post and two arms pointing different ways, seen from above.
+    const turn = rnd(v, 1) * 0.6 - 0.3
+    shadowed(ctx, () => {
+      for (const [a, len] of [
+        [turn, 0.36],
+        [turn + Math.PI * 0.62, 0.3],
+      ] as const) {
+        ctx.save()
+        ctx.translate(w / 2, h / 2)
+        ctx.rotate(a)
+        solid(ctx, rect(-0.02, -0.07, len, 0.14, 0.02), C.plank, C.woodLight, C.woodDark, 0.02)
+        ctx.beginPath()
+        ctx.moveTo(len - 0.02, -0.07)
+        ctx.lineTo(len + 0.08, 0)
+        ctx.lineTo(len - 0.02, 0.07)
+        ctx.fillStyle = C.plank
+        ctx.fill()
+        ctx.restore()
+      }
+    })
+    solid(ctx, disc(w / 2, h / 2, 0.08), C.woodDark, C.wood, C.ink, 0.02)
+  },
+  'lantern-post': ({ ctx, w, h }) => {
+    // A stone foot and iron post, its lantern on an arm, lit: large enough to read in a 44 px icon.
+    shadowed(ctx, () =>
+      solid(ctx, disc(w * 0.36, h * 0.64, 0.17), C.stone, C.stoneLight, C.stoneDark),
+    )
+    solid(ctx, disc(w * 0.36, h * 0.64, 0.09), C.iron, C.ironLight, '#1e2023', 0.02)
+    lines(ctx, C.iron, 0.07, [[w * 0.36, h * 0.64, w * 0.62, h * 0.38]])
+    ctx.fillStyle = 'rgba(255, 190, 110, 0.4)'
+    ctx.fill(disc(w * 0.66, h * 0.34, 0.26))
+    shadowed(ctx, () =>
+      solid(ctx, rect(w * 0.53, h * 0.21, 0.26, 0.26, 0.04), C.iron, C.ironLight, '#1e2023', 0.02),
+    )
+    ctx.fillStyle = '#ffe2a0'
+    ctx.fill(rect(w * 0.57, h * 0.25, 0.18, 0.18, 0.03))
+    // The flame seen from above: a bright core in an orange ring (as the painted wall torches).
+    ctx.fillStyle = C.fire
+    ctx.fill(disc(w * 0.66, h * 0.34, 0.065))
+    ctx.fillStyle = C.flame
+    ctx.fill(disc(w * 0.66, h * 0.34, 0.035))
+  },
+  'market-stall': ({ ctx, w, h, v }) => {
+    // A striped awning over a counter: the counter's front faces south.
+    const dye = dyes[Math.floor(rnd(v, 2) * dyes.length)]!
+    shadowed(ctx, () =>
+      solid(ctx, rect(0.08, 0.1, w - 0.16, h * 0.62, 0.04), C.canvas, '#efe3c2', C.canvasDark),
+    )
+    const stripes = 6
+    for (let k = 0; k < stripes; k += 2) {
+      ctx.fillStyle = dye
+      ctx.fillRect(0.08 + (k * (w - 0.16)) / stripes, 0.12, (w - 0.16) / stripes, h * 0.62 - 0.04)
+    }
+    lines(ctx, 'rgba(40, 25, 10, 0.45)', 0.02, [[0.08, h * 0.41, w - 0.08, h * 0.41]])
+    shadowed(ctx, () =>
+      solid(ctx, rect(0.12, h * 0.72, w - 0.24, h * 0.18, 0.03), C.wood, C.woodLight, C.woodDark),
+    )
+    // Goods on the counter: a few round fruits or pots.
+    for (let k = 0; k < 5; k++)
+      solid(
+        ctx,
+        disc(0.3 + (k * (w - 0.6)) / 4, h * 0.81, 0.06),
+        k % 2 ? C.clay : '#b8433a',
+        '#e09a6a',
+        C.clayDark,
+        0.012,
+      )
+  },
 }
 
 /** Drawers that read the variant; the rest are cached once. */
@@ -950,6 +1021,8 @@ const varied = new Set([
   'bridge',
   'cart',
   'tent',
+  'signpost',
+  'market-stall',
 ])
 
 /** Props this kit can paint; anything else falls back to the line drawing. */
@@ -1059,11 +1132,13 @@ export function decodePictures(urls: readonly string[], timeout = 1500): Promise
 }
 
 /**
- * A stable variant for an item, from its id: 0–59, so it divides evenly among 1–6 pictures and
- * leaves room for the mirror and the quarter turn (drawings use it modulo 6).
+ * A stable variant for an item, from its id: 0–20159 (2520 × 8), so it divides evenly among 1–9
+ * pictures (RYT-068: up to 9 a prop) times the mirror and the quarter turns; drawings use it
+ * modulo 6.
  */
+export const variantRange = 20_160
 export const variantOf = (id: string) => {
   let h = 0
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0
-  return Math.abs(h) % 60
+  return Math.abs(h) % variantRange
 }

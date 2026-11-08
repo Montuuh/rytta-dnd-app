@@ -40,9 +40,11 @@ import { fromSetup, squaresThatFit } from '../domain/calibration'
 import {
   angleTo,
   areaCells,
+  areaRevealed,
   caughtTokens,
   cellCenter,
   clamp,
+  doorSquares,
   itemCells,
   measurePath,
   nearestEdge,
@@ -59,6 +61,7 @@ import { CaughtList, Inspector } from './inspector'
 import { AreaOptions, FogOptions, MeasureReadout, OptionStrip, ToolKit } from './kit'
 import { MeasureTape, PingRipple, TableFrame } from './overlays'
 import { AudioPanel, PropsPanel, ScenePanel, StoryPanel, TokensPanel } from './panels'
+import { paintedScene } from './palette'
 import {
   defaultArea,
   defaultFog,
@@ -370,9 +373,29 @@ function EditorBody({
   }
 
   const fogRoom = (p: Point) => {
-    const room = roomAt(scene.rooms ?? [], p)
+    const rooms = scene.rooms ?? []
+    const room = roomAt(rooms, p)
     if (!room) return say(t('tabletop.fog.noRoom'))
-    run({ kind: 'fog', sceneId: scene.id, op: { mode: fog.mode, shape: 'room', room: room.id } })
+    const acts: TabletopAction[] = [
+      { kind: 'fog', sceneId: scene.id, op: { mode: fog.mode, shape: 'room', room: room.id } },
+    ]
+    // RYT-068: the square just behind a secret door belongs to no area, so neither side shows what
+    // is beyond it. Once both sides are revealed (the door was found), it is revealed as well, so
+    // tokens crossing it stay in view.
+    if (fog.mode === 'reveal')
+      for (const door of items) {
+        if (door.kind !== 'door' || !door.data.rooms?.includes(room.id)) continue
+        const other = rooms.find((r) => r.id !== room.id && door.data.rooms!.includes(r.id))
+        if (!other || !areaRevealed(scene.fog, other)) continue
+        const square = doorSquares(door).find(([x, y]) => !roomAt(rooms, [x + 0.5, y + 0.5]))
+        if (square)
+          acts.push({
+            kind: 'fog',
+            sceneId: scene.id,
+            op: { mode: 'reveal', shape: 'rect', x: square[0], y: square[1], w: 1, h: 1 },
+          })
+      }
+    run(acts)
   }
 
   const fogBox = (a: Point, b: Point) => {
@@ -736,9 +759,15 @@ function EditorBody({
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (typing(event.target) || event.ctrlKey || event.metaKey || event.altKey) return
-      // Only while the editor has focus: dialogs, drawers and menus keep their own keys.
+      // Only while the editor has focus: dialogs, drawers and menus keep their own keys. Safari
+      // leaves focus on the page's main landmark (or the body) after a button is clicked, so an
+      // element that holds the editor counts too.
       const target = event.target instanceof Node ? event.target : null
-      if (target !== document.body && !(target && root.current?.contains(target))) return
+      const editor = root.current
+      if (!target || !editor || !(editor.contains(target) || target.contains(editor))) return
+      // A sheet or dialog open in front of the board keeps the keys even when focus fell behind it.
+      if (!editor.contains(target) && document.querySelector('[role="dialog"][aria-modal="true"]'))
+        return
       const key = event.key.toLowerCase()
       const found = tools.find((x) => toolKeys[x] === key)
       if (found) {
@@ -1047,6 +1076,7 @@ function EditorBody({
     props: (
       <PropsPanel
         chosen={propChoice}
+        painted={paintedScene(scene)}
         onChoose={(prop) => {
           setPropChoice(prop)
           setToolState('prop')

@@ -32,8 +32,11 @@ PROP_STYLE = (
     "spilling outside the objects. Flames, candles and embers are seen from directly above: a bright "
     "core with glowing embers, never upright tongues of fire. No text, letters, runes, numbers, labels, "
     "watermark or signature; no living people or animals (statues, carvings and bones are fine).\n"
-    "View: strictly top-down orthographic, the camera pointing straight down; no perspective, no "
-    "isometric or three-quarter angle, no visible legs or sides.\n"
+    "View: strictly top-down orthographic, like a floor plan: the camera directly overhead, pointing "
+    "straight down at 90 degrees. Show only what is seen from above, the tops of objects. Never draw a "
+    "front face, a side, legs, doors, shelves, arches or openings as seen from the front; no "
+    "perspective, no isometric or three-quarter angle, no horizon. Tall things read only by their top "
+    "outline.\n"
     "Background: fully transparent PNG with a real alpha channel. No floor, no ground texture, no "
     "grid, no cells, no frames."
 )
@@ -98,12 +101,15 @@ class Prop:
     anchor: str = ""  # "back": a wall prop, its back along the top edge
     facing: str = ""  # an orientation sentence for the prompt
     halo: float = 0.0  # warm light past the footprint, in squares (as ui/sprites.ts)
+    above: str = ""  # what each one shows from directly above (sprite audit 2026-11-08)
     spin: bool = False  # square and without a front: the board may turn it a quarter
     priority: int = 1
     second_priority: int = 2  # priority of sheets after the first
 
 
-WALL_BACK = "Each one stands against a wall: its back runs along the top edge of its space and its front faces the bottom of the image."
+WALL_BACK = (
+    "Each one stands against a wall, seen from directly above: its back runs along the top edge of its space and its front is only the bottom edge of its outline; its front face is not visible."
+)
 
 PROPS: dict[str, Prop] = {
     # Furniture ---------------------------------------------------------------------------------
@@ -125,11 +131,11 @@ PROPS: dict[str, Prop] = {
         [
             ["a plain wooden chair", "a chair with a faded red cushion", "a sturdy armchair with a leather seat",
              "a rickety chair with a cracked seat"],
-            ["a carved high-backed chair", "a chair with a cloak draped over the backrest", "a simple wicker chair",
+            ["a carved high-backed chair: from above, only the carved top rail of its back shows behind the seat", "a chair with a cloak draped over the backrest", "a simple wicker chair",
              "a dark-stained chair with iron studs"],
         ],
         "around tables in taverns and dungeon libraries",
-        facing="Each chair's backrest runs along the top edge; the seat faces the bottom of the image.",
+        facing="Each chair is seen from directly above: the backrest is only a thin bar along the top edge of the seat, and the seat fills the rest.",
     ),
     "bed": Prop(
         "beds",
@@ -147,8 +153,8 @@ PROPS: dict[str, Prop] = {
         "bookshelves against a wall",
         1, 1, "a bookshelf spans its square from side to side and is about half a square deep", 1.0,
         [
-            ["a shelf of books in muted colours, chunky spines", "a shelf of scroll cubbies with rolled scrolls",
-             "a shelf of jars, potion bottles and dried herbs", "a half-empty dusty shelf with a skull and a candle"],
+            ["a bookshelf: from above, rows of book tops in muted colours along its top board", "a scroll rack: from above, the round ends of rolled scrolls in rows",
+             "a shelf of jars and potion bottles: from above, round lids and corks in rows, dried herbs on top", "a half-empty dusty shelf: bare boards from above, a skull and a candle on top"],
         ],
         "dungeon libraries and studies, tavern rooms",
         anchor="back", facing=WALL_BACK,
@@ -177,8 +183,8 @@ PROPS: dict[str, Prop] = {
         "weapon racks against a wall",
         1, 1, "a rack spans its square and is about a third of a square deep", 1.0,
         [
-            ["a rack holding three spears", "a rack with two swords and a round shield",
-             "a rack with axes and a crossbow", "a broken, half-empty rack"],
+            ["a rack holding three upright spears: from above, a wooden rail with three spear points", "a rack with two swords and a round shield: the pommels and crossguards on the rail, the shield face-up beside it",
+             "a rack with axes and a crossbow: axe heads and the crossbow lying on top of the rail", "a broken, half-empty rack: a cracked rail and one fallen sword on the floor beside it"],
         ],
         "dungeon barracks and guard rooms",
         anchor="back", facing=WALL_BACK,
@@ -212,9 +218,9 @@ PROPS: dict[str, Prop] = {
         "sacks",
         1, 1, "a sack takes about two thirds of its square", 0.65,
         [
-            ["an upright tied burlap sack", "an open sack of grain", "a spilled sack of white flour",
-             "two sacks leaning together"],
-            ["a sack of potatoes", "a sack of coal", "a rolled bundle of cloth tied with rope", "a small sack of salt"],
+            ["a tied burlap sack: from above, a round bulging top gathered into a knot at the centre", "an open sack of grain", "a spilled sack of white flour",
+             "two tied sacks side by side: from above, two round bulging tops"],
+            ["a sack of potatoes", "a sack of coal", "a rolled bundle of cloth tied with rope", "a small tied sack of salt: from above, a round top gathered at the centre"],
         ],
         "tavern kitchens and storerooms, camps",
         spin=True,
@@ -223,20 +229,20 @@ PROPS: dict[str, Prop] = {
         "chests",
         1, 1, "a chest is about three quarters of a square wide and half a square deep", 0.75,
         [
-            ["an iron-banded wooden chest with a flat lid", "an open chest with gold coins",
+            ["an iron-banded wooden chest with a flat lid", "an open chest with gold coins: from above, the inside full of coins, the open lid lying flat behind it",
              "a small ornate chest with brass corners", "an old rotten chest with a broken lid"],
-            ["an open treasure chest with gems and a goblet", "a plain pine travel trunk",
+            ["an open treasure chest with gems and a goblet: from above, the inside, the open lid lying flat behind it", "a plain pine travel trunk",
              "a heavy iron strongbox", "a chest wrapped in chains with a padlock"],
         ],
         "tavern bedrooms, dungeon treasuries",
-        facing="Each chest's lock and front are on its bottom edge; the lid is flat, seen from above.",
+        facing="Each chest is seen from directly above: a rectangular box with straight sides and a flat lid, the lock clasp at the middle of its bottom edge; never a rounded or barrel-shaped lid, and the front face is not visible.",
     ),
     "urn": Prop(
         "urns and pots",
         1, 1, "an urn takes a little over half of its square", 0.6,
         [
             ["a clay amphora seen from above, round mouth and body", "a tipped, broken urn with shards",
-             "a bronze funerary urn with a lid", "a cluster of three small clay pots"],
+             "a bronze funerary urn: from above, its round lid with a knob and its two handles at the sides", "a cluster of three small clay pots"],
         ],
         "crypts and dungeon stores",
         spin=True,
@@ -276,11 +282,11 @@ PROPS: dict[str, Prop] = {
         "stone statues on plinths, seen from above",
         1, 1, "a statue and its plinth take most of its square", 0.8,
         [
-            ["a knight statue on a square plinth", "a robed figure statue on a round plinth",
-             "a broken statue: only the legs remain on the plinth", "a winged gargoyle statue on a plinth"],
+            ["a knight statue on a square plinth: from above, the helmet, the shoulders and the sword's pommel", "a robed figure statue on a round plinth: from above, a hooded head and the robe's shoulders",
+             "a broken statue: only the legs remain on the plinth", "a winged gargoyle statue on a plinth: from above, its head, its back and its spread wings"],
         ],
         "dungeon halls and shrines",
-        facing="Each statue faces the bottom of the image.",
+        facing="Each statue faces the bottom of the image, seen from directly above: the top of its head and its shoulders, never its face.",
     ),
     "pillar": Prop(
         "stone pillars seen from above",
@@ -288,7 +294,7 @@ PROPS: dict[str, Prop] = {
         [
             ["a round stone column top", "a square stone pillar with a carved capital",
              "a broken pillar stump with rubble", "a round pillar wrapped in ivy"],
-            ["a fluted marble column", "a cracked sandstone pillar", "a dark basalt pillar", "a pillar with an iron torch ring"],
+            ["a fluted marble column: from above, its round top with the flutes as a scalloped edge", "a cracked sandstone pillar: its square top with cracks", "a dark basalt pillar: its hexagonal top", "a pillar with an iron torch ring: its top, with the ring at one side"],
         ],
         "dungeon halls and crypts",
         spin=True,
@@ -369,8 +375,8 @@ PROPS: dict[str, Prop] = {
         "stalagmites seen from above",
         1, 1, "a stalagmite takes about two thirds of its square", 0.7,
         [
-            ["a single cone with ringed layers", "a cluster of three stalagmites", "a broken stalagmite stump",
-             "a stalagmite tipped with pale crystals"],
+            ["a single stalagmite: from above, ringed layers narrowing to its tip at the centre, like a contour map", "three stalagmites close together: three tips, each ringed by its layers", "a broken stalagmite stump: its flat broken top",
+             "a stalagmite tipped with pale crystals: the crystal tips at its centre"],
             ["a tall pale limestone stalagmite", "a wet, dark stalagmite", "a pair of joined stalagmites",
              "a small stalagmite with moss"],
         ],
@@ -381,9 +387,9 @@ PROPS: dict[str, Prop] = {
         "mushroom clusters",
         1, 1, "a cluster takes about two thirds of its square", 0.7,
         [
-            ["brown cave mushrooms", "softly glowing blue cave mushrooms", "red toadstools with white spots",
+            ["brown cave mushrooms: round brown caps overlapping", "softly glowing blue cave mushrooms: round blue caps overlapping", "red toadstools: round red caps with white spots",
              "shelf fungus growing on a stone"],
-            ["tall pale mushrooms", "purple mushrooms", "a ring of tiny mushrooms", "a giant flat-capped mushroom"],
+            ["pale mushrooms: round pale caps overlapping", "purple mushrooms", "a ring of tiny mushrooms", "a giant flat-capped mushroom"],
         ],
         "caves and forests",
         spin=True,
@@ -470,7 +476,7 @@ PROPS: dict[str, Prop] = {
     ),
     "torch": Prop(
         "wall torches",
-        1, 1, "a torch and its bracket take about half of its square, against the wall", 0.5,
+        1, 1, "a torch and its bracket take about half of its square, against the wall", 0.75,
         [
             ["an iron wall sconce with a burning torch", "an unlit torch in a sconce", "a lantern on a wall hook",
              "a torch with a blue flame"],
@@ -482,11 +488,11 @@ PROPS: dict[str, Prop] = {
         "hearths against a wall",
         2, 1, "a hearth fills its 2 by 1 squares", 1.0,
         [
-            ["a stone hearth with burning logs", "a hearth with a cooking pot over embers", "a cold hearth with ash",
-             "a domed brick bread oven"],
+            ["a stone hearth with burning logs: from above, logs and embers in the fire pit", "a hearth with a cooking pot over embers: the pot seen from above, its rim and contents", "a cold hearth with ash",
+             "a domed brick bread oven: from above, a round brick dome against the wall, its mouth only a dark crescent on the front edge"],
         ],
         "tavern hall and kitchen",
-        anchor="back", facing="Each hearth lies horizontally against a wall: its back runs along the top edge and the fire opens toward the bottom.",
+        anchor="back", facing="Each hearth lies horizontally against a wall, seen from directly above: the chimney breast is a stone block along the top edge, and in front of it the hearth slab with the fire pit open to the sky; no arch and no front face.",
         halo=1.2,
     ),
     # Structures --------------------------------------------------------------------------------
@@ -536,7 +542,7 @@ PROPS: dict[str, Prop] = {
             ["a cream canvas tent", "a red-and-cream striped tent", "a leather hide tent", "a collapsed tent"],
         ],
         "camps",
-        facing="Each tent's entrance faces the bottom of the image.",
+        facing="Each tent is seen from directly above: the roof canvas with its ridge line, the entrance only as a flap on the bottom edge.",
     ),
     "fountain": Prop(
         "fountains",
@@ -557,19 +563,19 @@ PROPS.update({
                   [["a round three-legged stool", "a square stool", "a stool with a cushion", "a tall bar stool"]],
                   "tavern bar and hall", spin=True, **NEW),
     "bench": Prop("benches", 2, 1, "a bench fills the length of its 2 by 1 squares and half its depth", 1.0,
-                  [["a plain plank bench", "a carved church pew", "a log bench", "a bench with a folded blanket"]],
-                  "tavern hall, chapels, camps", facing="Each bench lies horizontally.", **NEW),
+                  [["a plain plank bench", "a carved pew: from above, the seat planks and the carved top rail of its back along the top edge", "a log bench", "a bench with a folded blanket"]],
+                  "tavern hall, chapels, camps", facing="Each bench lies horizontally, seen from directly above.", **NEW),
     "wardrobe": Prop("wardrobes against a wall", 2, 1, "a wardrobe fills the width of its 2 by 1 squares", 1.0,
-                     [["a dark oak wardrobe, doors closed", "a wardrobe with one door open and clothes",
-                       "a painted wardrobe", "a broken wardrobe"]], "bedrooms", anchor="back", facing=WALL_BACK, **NEW),
+                     [["a dark oak wardrobe, doors closed: from above, its flat moulded top", "a wardrobe with one door open: from above, its top and the open door as a thin board swung out, clothes on hangers seen from above",
+                       "a painted wardrobe: its flat top painted with flowers", "a broken wardrobe: a cracked top with a missing corner"]], "bedrooms", anchor="back", facing=WALL_BACK, **NEW),
     "desk": Prop("writing desks against a wall", 2, 1, "a desk fills its 2 by 1 squares", 1.0,
                  [["a desk with papers, quill and inkwell", "a desk with an open book and a candle",
                    "a cluttered alchemist's desk with flasks", "a tidy desk with a map and compass"]],
                  "studies, libraries, captain's rooms", anchor="back", facing=WALL_BACK, **NEW),
     "throne": Prop("thrones", 1, 1, "a throne nearly fills its square", 0.9,
-                   [["a gilded throne with red cushions", "a stone throne", "a throne of bones and antlers",
+                   [["a gilded throne with red cushions", "a stone throne", "a throne of bones and antlers: from above, the antlers spread along its top rail",
                      "a carved wooden chieftain's seat"]], "throne rooms, lairs",
-                   facing="Each throne's backrest runs along the top edge; the seat faces the bottom of the image.", **NEW),
+                   facing="Each throne is seen from directly above: the high back is a thick top rail along the top edge, the seat cushion and the armrests below it.", **NEW),
     "bathtub": Prop("bathtubs", 1, 2, "a tub fills its 1 by 2 squares", 0.95,
                     [["a wooden tub with steaming water", "a copper tub", "an empty stone basin", "a tub with soap and a brush"]],
                     "bathhouses, noble rooms", **NEW),
@@ -578,16 +584,16 @@ PROPS.update({
                               "a counter with dough and flour", "a counter with fish and a cleaver"]],
                             "tavern kitchens", anchor="back", facing=WALL_BACK, **NEW),
     "oven": Prop("stone ovens against a wall", 1, 1, "an oven fills its square", 0.95,
-                 [["a stone oven with glowing coals", "a brick oven with bread", "a cold oven", "an iron stove with a kettle"]],
+                 [["a stone oven with glowing coals: from above, a round stone dome with a glow at its mouth on the front edge", "a brick oven with bread: a brick dome, loaves on a board at its mouth", "a cold oven: a soot-darkened dome", "an iron stove with a kettle: the stove top and the kettle seen from above"]],
                  "tavern kitchens, bakeries", anchor="back", facing=WALL_BACK, halo=0.9, **NEW),
     "keg-rack": Prop("keg racks against a wall", 2, 1, "a rack fills its 2 by 1 squares", 1.0,
-                     [["a rack holding three kegs", "a rack with two big casks", "a half-empty rack", "a rack with wine bottles"]],
+                     [["a rack holding three kegs: from above, three kegs lying side by side as long cylinders with iron hoops", "a rack with two big casks: two long casks lying side by side", "a half-empty rack: one keg and an empty wooden cradle", "a rack with wine bottles: rows of bottle necks and corks seen from above"]],
                      "tavern bars and cellars", anchor="back", facing=WALL_BACK, **NEW),
     "hay-bale": Prop("hay bales", 1, 1, "a bale takes most of its square", 0.85,
                      [["a square hay bale", "a round hay bale", "a loose pile of hay", "two stacked small bales"]],
                      "stables, barns, farms", spin=True, **NEW),
     "firewood": Prop("firewood piles", 1, 1, "a pile takes most of its square", 0.8,
-                     [["a neat stack of split logs", "a loose pile of branches", "logs in a basket", "a chopping block with an axe"]],
+                     [["a neat stack of split logs: from above, logs lying side by side", "a loose pile of branches", "logs in a basket", "a chopping block with an axe"]],
                      "kitchens, camps, cabins", spin=True, **NEW),
     "workbench": Prop("workbenches against a wall", 2, 1, "a bench fills its 2 by 1 squares", 1.0,
                       [["a carpenter's bench with tools", "a leatherworker's bench", "a tinkerer's bench with gears",
@@ -596,8 +602,8 @@ PROPS.update({
                   [["an anvil on a wooden block", "an anvil with a hammer and tongs", "a small rusty anvil",
                     "an anvil with a glowing horseshoe"]], "smithies", **NEW),
     "forge": Prop("smithing forges", 2, 2, "a forge fills its 2 by 2 squares", 1.0,
-                  [["a stone forge with glowing coals and bellows", "a brick forge with a chimney hood",
-                    "a cold forge", "a dwarven forge with a channel of molten metal"]], "smithies, dwarven halls",
+                  [["a stone forge: from above, the glowing coal bed with the bellows beside it", "a brick forge: the chimney hood as a square block over part of the hearth",
+                    "a cold forge: grey ash in the coal bed", "a dwarven forge with a channel of molten metal"]], "smithies, dwarven halls",
                   halo=1.4, **NEW),
     "loom": Prop("weaving looms", 2, 1, "a loom fills its 2 by 1 squares", 1.0,
                  [["a loom with red cloth", "a loom with blue cloth", "an empty loom", "a loom with half-woven tapestry"]],
@@ -609,16 +615,16 @@ PROPS.update({
                            [["a straw dummy on a post", "a wooden dummy with arms", "a dummy with a dented helmet",
                              "a broken dummy"]], "barracks, yards", **NEW),
     "archery-target": Prop("archery targets", 1, 1, "a target takes most of its square", 0.8,
-                           [["a straw target with arrows", "a painted wooden target", "a target on a stand", "a worn target"]],
+                           [["a straw target with arrows: from above, the round straw boss standing on its edge as a thick bar, arrow fletchings sticking out of its front", "a painted wooden target", "a target on its wooden A-frame stand, seen from above", "a worn target"]],
                            "yards, barracks", **NEW),
     "banner": Prop("wall banners", 1, 1, "a banner spans its square along the wall", 1.0,
-                   [["a red banner with a gold border", "a blue banner", "a torn black banner", "a green banner with a tree motif"]],
+                   [["a red banner with a gold border: from above, the pole along the wall and the cloth as a narrow red strip with a gold edge", "a blue banner: the pole and a narrow blue strip of cloth", "a torn black banner: the pole and a ragged black strip", "a green banner: the pole and a narrow green strip with a gold fringe"]],
                    "halls, throne rooms", anchor="back", facing=WALL_BACK, **NEW),
     "cage": Prop("iron cages", 1, 1, "a cage fills its square", 0.9,
                  [["an empty iron cage", "a cage with straw and a bowl", "a hanging cage seen from above",
                    "a broken cage with bent bars"]], "prisons, lairs", spin=True, **NEW),
     "chains": Prop("wall chains and shackles", 1, 1, "chains hang along the wall and take about half of its square", 0.6,
-                   [["shackles on a short chain", "a long chain coiled on the floor", "a rusty manacle", "chains with a broken lock"]],
+                   [["shackles on a short chain: an iron ring at the wall, the chain and the open shackles lying on the floor", "a long chain coiled on the floor", "a rusty manacle lying on the floor by its wall ring", "chains with a broken lock lying on the floor"]],
                    "prisons, dungeon cells", anchor="back", facing=WALL_BACK, **NEW),
     "skull-pile": Prop("skull piles", 1, 1, "a pile takes most of its square", 0.8,
                        [["a pile of human skulls", "skulls with melted candles", "skulls and old helmets", "a few skulls in dust"]],
@@ -654,8 +660,8 @@ PROPS.update({
                     [["a black stone obelisk", "a sandstone obelisk", "a cracked obelisk", "an obelisk with carved bands"]],
                     "ruins, deserts, shrines", spin=True, **NEW),
     "idol": Prop("idols", 1, 1, "an idol takes about two thirds of its square", 0.7,
-                 [["a squat stone idol", "a golden idol on a pedestal", "a wooden totem", "a horned idol"]],
-                 "shrines, jungles, lairs", facing="Each idol faces the bottom of the image.", **NEW),
+                 [["a squat stone idol", "a golden idol on a pedestal", "a wooden totem pole: from above, its carved top with outspread wings", "a horned idol: from above, its head with the horns spread"]],
+                 "shrines, jungles, lairs", facing="Each idol faces the bottom of the image, seen from directly above: the top of its head and its shoulders, never its face.", **NEW),
     "pit": Prop("pits", 1, 1, "a pit fills its square", 0.95,
                 [["a dark round pit", "a square pit with stone edges", "a pit covered with a broken grate",
                   "a collapsed hole in the floor"]], "dungeon traps, caves", **NEW),
@@ -688,18 +694,20 @@ PROPS.update({
     "rowboat": Prop("rowboats", 1, 2, "a boat fills its 1 by 2 squares", 0.95,
                     [["a wooden rowboat with oars", "a rowboat with nets", "an old leaky rowboat", "a painted rowboat"]],
                     "docks, rivers", facing="The bow of each boat points to the top.", **NEW),
-    "signpost": Prop("signposts", 1, 1, "a signpost takes about half of its square", 0.6,
+    "signpost": Prop("signposts", 1, 1, "a signpost takes about half of its square", 0.85,
                      [["a wooden signpost with three blank arrows", "a leaning signpost", "a stone waymarker", "a broken signpost"]],
                      "roads, crossroads", **NEW),
     "fence": Prop("wooden fence sections", 2, 1, "a fence spans its 2 squares and is thin", 1.0,
-                  [["a split-rail fence", "a picket fence", "a wattle fence", "a broken fence"]], "farms, villages",
-                  facing="Each fence section lies horizontally.", **NEW),
-    "lantern-post": Prop("lantern posts", 1, 1, "a post and lantern take about half of its square", 0.5,
+                  [["a split-rail fence: from above, post tops joined by rails", "a picket fence: a row of small square picket tops along a rail", "a wattle fence: a woven band seen from above", "a broken fence: posts with a gap and a fallen rail"]], "farms, villages",
+                  facing="Each fence section lies horizontally, seen from directly above, as thin as a line.", **NEW),
+    "lantern-post": Prop("lantern posts", 1, 1, "a post and lantern take about half of its square", 0.85,
                          [["an iron post with a lit lantern", "a wooden post with a lantern", "an unlit lantern post",
                            "a crooked post with a lantern"]], "streets, docks", halo=1.1, spin=True, **NEW),
     "market-stall": Prop("market stalls", 2, 2, "a stall fills its 2 by 2 squares", 1.0,
                          [["a stall with a striped awning and fruit", "a stall with cloth bolts", "a stall with pots",
-                           "a fish stall"]], "villages, markets", facing="Each stall's counter faces the bottom.", **NEW),
+                           "a fish stall"]], "villages, markets",
+                         facing="Each stall is seen from directly above: its awning is a flat rectangle of canvas over the back half, and the top of its counter with the goods fills the front half; no hanging valance and no front of the counter.",
+                         above="the flat awning and the counter top with its goods; never the front of the stall", **NEW),
 })
 
 # ---------------------------------------------------------------------------------------------
@@ -829,6 +837,69 @@ MAGIC_CIRCLES = [
     "a green druidic circle of leaves and vines",
 ]
 
+# Pictures saved at their path that the import must not use, with the reason shown in the catalogue.
+# Sprite audit 2026-11-08: what each object of these sheets shows from directly above.
+ABOVE = {
+    "torch": "the iron bracket as a small plate on the edge that touches the wall, and the flame as a round bright core with embers; never an upright tongue of fire or a bracket seen from the front",
+    "archery-target": "the boss standing on its edge as a thick round-ended bar on its stand; never the painted face",
+    "banner": "the pole along the wall and the hanging cloth as a narrow strip of colour; never the banner's face",
+    "bench": "the seat planks and, for a bench with a back, only the top rail of the back",
+    "bookshelf": "the long top board of the shelf and, along its front edge, the tops of what it holds",
+    "cart": "the cart bed and the handles, with the wheels as narrow rectangles at the sides; never round wheels",
+    "chains": "an iron ring at the wall and the chain lying on the floor; never chains hanging down a wall",
+    "chair": "the seat and the thin top edge of the backrest; no legs and no backrest seen from the front",
+    "chest": "only the lid with its bands, studs and lock clasp; an open chest shows its inside from above",
+    "crystal-cluster": "crystal points radiating outward from the centre like a star; never pointing up",
+    "fence": "post tops joined by rails, as thin as a line; never posts or pickets standing up",
+    "firewood": "logs and branches lying on the floor; never the ends of a stack seen from the front",
+    "forge": "the coal bed, the bellows and the chimney as a square, filling its 2 by 2 squares",
+    "hearth": "the hearth slab and fire pit filling the 2 by 1 footprint",
+    "idol": "the top of the head and the shoulders on the plinth; never the face",
+    "keg-rack": "kegs lying on their wooden cradle seen as long cylinders with hoops; never their round ends",
+    "mushrooms": "round caps overlapping; no stems",
+    "obelisk": "a square base and the pyramid tip as four triangles meeting at the centre",
+    "oven": "the round dome or stove top, the mouth only as a dark crescent on the front edge",
+    "pillar": "the round or square top and its capital; no shaft and no base",
+    "sack": "round bulging tops, tied sacks gathered at the centre; never the side of a sack",
+    "spike-trap": "the spike points as small dots with bright tips; never cones in perspective",
+    "spinning-wheel": "the wheel seen edge-on as a thin line along its axle, the treadle and the stool beside it",
+    "stalagmite": "a round rocky base narrowing to its tip at the centre; never a cone seen from the side",
+    "statue": "the top of the head and the shoulders on the plinth",
+    "tent": "the roof canvas with its ridge line, the guy ropes and the pegs; no walls and no doorway seen from the front",
+    "throne": "the seat cushion, the armrests and the top of the high back; never the back seen from the front",
+    "urn": "round mouths, lids and rims",
+    "wardrobe": "the flat top of the wardrobe; the doors only as a thin line on the front edge",
+    "weapon-rack": "a long narrow wooden rack along the wall with the tops of the weapons in a row",
+}
+for _key, _text in ABOVE.items():
+    PROPS[_key].above = _text
+DECAL_ABOVE = {
+    "flower-patches": "round flower heads facing up among their leaves; no stems, and spikes such as lavender seen from above as clusters of buds",
+    "grass-tufts": "a flat rosette of blades radiating from a darker centre, the way grass looks from a tower; never a fan of blades standing up and no visible base",
+    "shards": "flat broken pieces lying on the floor; a cup, jug or goblet shows its round rim or base, never its profile",
+}
+
+
+def decal_above(slug: str) -> str:
+    text = DECAL_ABOVE.get(slug)
+    return f"\nSeen from directly above, each patch shows only {text}." if text else ""
+
+
+# Fitting options for single objects of a sheet, by file and position (0 = top left).
+OBJECT_EXTRAS: dict[tuple[str, int], dict] = {
+    # The unlit torch casts no light: no warm halo around it (ui-ux RYT-068 round 14).
+    ("props/torch-1.png", 1): {"halo": 0.0},
+}
+
+# Sheets to generate again (empty since the 2026-11-08 redo). The import leaves out the listed objects
+# of a sheet (None: the whole sheet, so Rytta draws the prop; an empty set: it keeps the current
+# pictures), and the catalogue shows the sheet as pending with the reason. Example:
+# "props/chest-1.png": ({0, 3}, "Redo top left and bottom right: they read as barrels.")
+REDO: dict[str, tuple[set[int] | None, str]] = {}
+
+# Pictures that came out wrong, with the reason (none since the shards were redone on 2026-11-08).
+REJECTED: dict[str, str] = {}
+
 # ---------------------------------------------------------------------------------------------
 # Rows
 
@@ -896,6 +967,8 @@ def prop_prompt(p: Prop, variants: list[str]) -> tuple[str, str, list[tuple[floa
         lines.append(p.facing)
     for word, text in zip(words, variants):
         lines.append(f"- {word.capitalize()}: {text}.")
+    if p.above:
+        lines.append(f"Seen from directly above, each one shows only {p.above}.")
     return "\n".join(lines) + "\n\n" + PROP_STYLE, aspect, hints
 
 
@@ -937,7 +1010,8 @@ def build_rows(imported: set[str] | None = None) -> list[Row]:
                 f"{prop} ({len(variants)} variants)", f"props/{prop}-{n}.png", aspect, "transparent", layout,
                 f"{prop} {p.w}x{p.h} x{len(variants)}", "", p.used_in, p.library, prompt,
                 notes="New prop: Rytta adds it to the library and the generators when imported." if p.library == "new" else "",
-                props=[(prop, at, {}) for at in hints],
+                props=[(prop, at, dict(OBJECT_EXTRAS.get((f"props/{prop}-{n}.png", i), {})))
+                       for i, at in enumerate(hints)],
             ))
     for slug, priority, used, text in FLOORS:
         rows.append(Row(priority, "floor", slug, f"floors/{slug}.png", "Square (1:1)", "opaque", "tile",
@@ -956,7 +1030,7 @@ def build_rows(imported: set[str] | None = None) -> list[Row]:
                         "to scatter over floors. Layout: a 3 by 3 arrangement, one in the middle of each ninth of the "
                         "image, with wide empty space around each; nothing touches. Each is "
                         f"{size} of a 5-foot square. They have soft, irregular edges and sit naturally on any floor; "
-                        f"thin parts may be partly transparent.\n\n{PROP_STYLE}",
+                        f"thin parts may be partly transparent.{decal_above(slug)}\n\n{PROP_STYLE}",
                         props=[(slug, ((c + 0.5) / 3, (r + 0.5) / 3), {}) for r in range(3) for c in range(3)]))
     for slug, blend, text in EFFECTS:
         rows.append(Row(2, "effect", slug, f"effects/{slug}.png", "Square (1:1)",
@@ -972,8 +1046,15 @@ def build_rows(imported: set[str] | None = None) -> list[Row]:
                     + "\n".join(f"- {w}: {t}." for w, t in zip(["Top left", "Top right", "Bottom left", "Bottom right"], MAGIC_CIRCLES))
                     + "\n\nNo letters, runes or text: use geometric marks only. " + EFFECT_STYLE["screen"]))
     for row in rows:
-        if row.status != "imported" and (ROOT / row.path).exists():
+        if row.file in REJECTED:
+            row.status, row.notes = "rejected", REJECTED[row.file]
+        elif row.status != "imported" and (ROOT / row.path).exists():
             row.status = "imported" if imported and row.file in imported else "generated"
+        if row.file in REDO:
+            left_out, reason = REDO[row.file]
+            row.status, row.notes = "pending", reason
+            row.props = [(prop, at, {**extra, "skip": True} if left_out is None or i in left_out else extra)
+                         for i, (prop, at, extra) in enumerate(row.props)]
     # Within a priority the categories are interleaved, so floors and walls arrive early enough to
     # try them on maps while the props keep coming.
     totals: dict[tuple[int, str], int] = {}

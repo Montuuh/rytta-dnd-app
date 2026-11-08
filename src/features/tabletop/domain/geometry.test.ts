@@ -11,7 +11,9 @@ import {
 } from './calibration'
 import {
   areaCells,
+  areaRevealed,
   caughtTokens,
+  doorSquares,
   itemCells,
   measurePath,
   nearestEdge,
@@ -20,6 +22,8 @@ import {
   sizeSquares,
   snapItem,
   squaresBetween,
+  stillHidden,
+  stillRevealed,
 } from './geometry'
 
 const tv: Calibration = { diagonalIn: 55, pxW: 3840, pxH: 2160, baseMm: 25.4, fine: 1, flip: false }
@@ -159,5 +163,57 @@ describe('areas of effect (centre-of-square convention)', () => {
       { id: 'self', kind: 'token' as const, x: 5, y: 5, w: 1, h: 1 },
     ]
     expect(caughtTokens(cells, tokens, 'self').map((t) => t.id)).toEqual(['a'])
+  })
+})
+
+describe('room fog margins (RYT-068)', () => {
+  const a = {
+    mode: 'reveal' as const,
+    shape: 'rects' as const,
+    rects: [[0, 0, 4, 4]] as [number, number, number, number][],
+  }
+  const b = {
+    mode: 'reveal' as const,
+    shape: 'rects' as const,
+    rects: [[5, 0, 4, 4]] as [number, number, number, number][],
+  }
+  const hide = (op: typeof a) => ({ ...op, mode: 'hide' as const })
+
+  it('reveals a neighbour again when a room next to it is hidden', () => {
+    expect(stillRevealed([a, b, hide(a)])).toEqual([b])
+    expect(stillRevealed([b, a, hide(a)])).toEqual([b])
+  })
+
+  it('never brings back a room hidden itself or covered by a hand-drawn hide', () => {
+    expect(stillRevealed([a, b, hide(a), hide(b)])).toEqual([])
+    expect(
+      stillRevealed([a, b, { mode: 'hide', shape: 'rect', x: 0, y: 0, w: 20, h: 20 }, hide(a)]),
+    ).toEqual([])
+    // Nothing to restore while no room was hidden.
+    expect(stillRevealed([a, b])).toEqual([])
+  })
+
+  it('names the two squares a door joins and whether a room op left an area revealed', () => {
+    expect(doorSquares({ x: 3.5, y: 4, rotation: 0 })).toEqual([
+      [3, 3],
+      [3, 4],
+    ])
+    expect(doorSquares({ x: 4, y: 3.5, rotation: 90 })).toEqual([
+      [3, 3],
+      [4, 3],
+    ])
+    const room = { id: 'r1', rects: a.rects }
+    expect(areaRevealed({ base: 'hidden', ops: [] }, room)).toBe(false)
+    expect(areaRevealed({ base: 'hidden', ops: [a, b] }, room)).toBe(true)
+    expect(areaRevealed({ base: 'hidden', ops: [a, hide(a)] }, room)).toBe(false)
+    expect(areaRevealed({ base: 'revealed', ops: [b] }, room)).toBe(true)
+  })
+
+  it('covers again only rooms no later reveal reopened', () => {
+    expect(stillHidden([a, b, hide(a)])).toEqual([hide(a)])
+    expect(stillHidden([a, hide(a), a])).toEqual([])
+    expect(
+      stillHidden([hide(a), { mode: 'reveal', shape: 'brush', r: 1, points: [[1, 1]] }]),
+    ).toEqual([])
   })
 })

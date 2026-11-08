@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
+import { hasDrawing } from './palette'
+import { propSprite } from './sprites'
 
 // RYT-062: original line art for the prop library, drawn in squares (one unit = one square).
 // Ink outlines (0.04 of a square, 2.5px at 64px per square) over flat material washes.
@@ -548,6 +550,53 @@ const propArt: Record<string, (w: number, h: number) => ReactNode> = {
       <path d="M 0.12 0.5 H 0.88" stroke={c.woodDark} strokeWidth={0.06} />
     </g>
   ),
+  signpost: () => (
+    <g>
+      <path d="M 0.48 0.44 H 0.84 L 0.92 0.5 L 0.84 0.56 H 0.48 Z" fill={c.woodLight} {...line} />
+      <path
+        d="M 0.52 0.5 L 0.24 0.3 L 0.16 0.32 L 0.2 0.4 L 0.46 0.58 Z"
+        fill={c.woodLight}
+        {...line}
+      />
+      <circle cx={0.5} cy={0.5} r={0.08} fill={c.woodDark} {...line} />
+    </g>
+  ),
+  'lantern-post': () => (
+    <g>
+      <circle cx={0.36} cy={0.64} r={0.17} fill={c.stone} {...line} />
+      <circle cx={0.36} cy={0.64} r={0.08} fill={c.stoneDark} {...line} />
+      <path d="M 0.36 0.64 L 0.6 0.4" fill="none" stroke={ink} strokeWidth={0.06} />
+      <rect x={0.53} y={0.21} width={0.26} height={0.26} rx={0.04} fill={c.paper} {...line} />
+      {/* The flame from above: a bright core in a ring. */}
+      <circle cx={0.66} cy={0.34} r={0.065} fill={c.fire} {...thin} />
+      <circle cx={0.66} cy={0.34} r={0.03} fill={c.flame} />
+    </g>
+  ),
+  'market-stall': (w, h) => (
+    <g>
+      <rect x={0.1} y={0.12} width={w - 0.2} height={h * 0.6} rx={0.04} fill={c.cloth} {...line} />
+      {[0, 2, 4].map((k) => (
+        <rect
+          key={k}
+          x={0.1 + (k * (w - 0.2)) / 6}
+          y={0.12}
+          width={(w - 0.2) / 6}
+          height={h * 0.6}
+          fill={c.red}
+          fillOpacity={0.55}
+        />
+      ))}
+      <rect
+        x={0.14}
+        y={h * 0.74}
+        width={w - 0.28}
+        height={h * 0.16}
+        rx={0.03}
+        fill={c.woodLight}
+        {...line}
+      />
+    </g>
+  ),
   bridge: (w, h) => (
     <g>
       <rect x={0.1} y={0.18} width={w - 0.2} height={h - 0.36} fill={c.woodLight} {...line} />
@@ -610,6 +659,21 @@ const propArt: Record<string, (w: number, h: number) => ReactNode> = {
   ),
 }
 
+/**
+ * The ink filter for pictures on ink maps: the painting printed in sepia on the parchment, so a
+ * prop without a line drawing still belongs to the look (RYT-068).
+ */
+export function InkFilter({ id }: { id: string }) {
+  return (
+    <filter id={id} colorInterpolationFilters="sRGB">
+      <feColorMatrix
+        type="matrix"
+        values="0.36 0.62 0.14 0 -0.02  0.29 0.52 0.12 0 -0.03  0.2 0.38 0.09 0 -0.04  0 0 0 1 0"
+      />
+    </filter>
+  )
+}
+
 /** A prop drawn in its footprint; unknown ids fall back to a labelled square. */
 export function PropDrawing({ prop, w, h }: { prop: string; w: number; h: number }) {
   const draw = propArt[prop]
@@ -627,19 +691,28 @@ export function PropDrawing({ prop, w, h }: { prop: string; w: number; h: number
   )
 }
 
-/** A standalone icon of a prop for lists and the library (decorative; names are printed). */
+/**
+ * A standalone icon of a prop for lists and the library (decorative; names are printed): its
+ * picture on painted maps, its line drawing on ink maps (or its picture printed in ink).
+ */
 export function PropIcon({
   prop,
   w,
   h,
   size = 40,
+  painted = true,
 }: {
   prop: string
   w: number
   h: number
   size?: number
+  painted?: boolean
 }) {
+  const filter = `ink${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const box = Math.max(w, h)
+  const ink = !painted && !hasDrawing(prop)
+  const sprite = painted || ink ? propSprite(prop, w, h, 0) : null
+  const picture = sprite?.picture ? sprite : null
   return (
     <svg
       viewBox={`${(w - box) / 2} ${(h - box) / 2} ${box} ${box}`}
@@ -649,7 +722,21 @@ export function PropIcon({
       focusable="false"
       className="tt-prop-icon"
     >
-      <PropDrawing prop={prop} w={w} h={h} />
+      {picture ? (
+        <>
+          {ink && <InkFilter id={filter} />}
+          <image
+            href={picture.url}
+            x={-picture.pad}
+            y={-picture.pad}
+            width={w + picture.pad * 2}
+            height={h + picture.pad * 2}
+            filter={ink ? `url(#${filter})` : undefined}
+          />
+        </>
+      ) : (
+        <PropDrawing prop={prop} w={w} h={h} />
+      )}
     </svg>
   )
 }

@@ -1,7 +1,38 @@
 import { describe, expect, it } from 'vitest'
+import { generateMap, mapThemes } from '../domain/generator'
 import { propById } from '../domain/props'
+import { hasDrawing } from './palette'
 import { propPictures } from './prop-pictures'
-import { propSprite, variantOf } from './sprites'
+import { propSprite, variantOf, variantRange } from './sprites'
+
+describe('generated props have art (RYT-068)', () => {
+  it('places every prop at a size its picture covers, or one Rytta draws', () => {
+    const bare = new Set<string>()
+    for (const [kind, themes] of Object.entries(mapThemes))
+      for (const theme of themes)
+        for (let seed = 1; seed <= 12; seed++) {
+          const map = generateMap({
+            kind: kind as keyof typeof mapThemes,
+            look: 'painted',
+            cols: 34,
+            rows: 19,
+            seed,
+            theme,
+            density: 'normal',
+            secret: true,
+            wide: seed % 2 === 0,
+            traps: true,
+          })
+          for (const p of map.props) {
+            const turned = p.rotation % 180 !== 0
+            const [w, h] = turned ? [p.h, p.w] : [p.w, p.h]
+            if (!propSprite(p.prop, w, h)?.picture && !hasDrawing(p.prop))
+              bare.add(`${p.prop} ${w}x${h} (${kind}/${theme})`)
+          }
+        }
+    expect([...bare]).toEqual([])
+  })
+})
 
 describe('painted prop pictures (RYT-066)', () => {
   // The pictures shipped in public/, listed without loading them.
@@ -42,7 +73,7 @@ describe('painted prop pictures (RYT-066)', () => {
   it('spreads variants over pictures, mirror images and quarter turns', () => {
     const count = propPictures.table!.sizes['1x1']!
     const seen = new Set<string>()
-    for (let n = 0; n < 60; n++) {
+    for (let n = 0; n < count * 8; n++) {
       const sprite = propSprite('table', 1, 1, n)!
       expect(sprite.url.endsWith(`/table-${n % count}-1x1.webp`)).toBe(true)
       seen.add(`${sprite.url}|${sprite.flip}|${sprite.turn}`)
@@ -50,18 +81,20 @@ describe('painted prop pictures (RYT-066)', () => {
     // Every picture shows mirrored and unmirrored, in all four turns.
     expect(seen.size).toBe(count * 2 * 4)
     // No turn for a prop with a front (a chair) or a long one (a bed); both may still be mirrored.
-    for (let n = 0; n < 60; n++) {
+    for (let n = 0; n < 80; n++) {
       expect(propSprite('chair', 1, 1, n)?.turn).toBe(0)
       expect(propSprite('bed', 1, 2, n)?.turn).toBe(0)
     }
     const ids = Array.from({ length: 500 }, (_, i) => variantOf(`item-${i}`))
     expect(Math.min(...ids)).toBeGreaterThanOrEqual(0)
-    expect(Math.max(...ids)).toBeLessThan(60)
+    expect(Math.max(...ids)).toBeLessThan(variantRange)
+    // Every count of pictures up to 9, mirrored and turned, divides the range evenly.
+    for (let c = 1; c <= 9; c++) expect(variantRange % (c * 8)).toBe(0)
   })
 
   it('falls back to the drawing when no picture has those proportions', () => {
     // Without a document (Node) the drawing cannot be made, so the fallback is visible as null.
     expect(propSprite('table', 2, 1, 0)).toBeNull()
-    expect(propSprite('altar', 2, 1, 0)).toBeNull()
+    expect(propSprite('bench', 1, 1, 0)).toBeNull()
   })
 })

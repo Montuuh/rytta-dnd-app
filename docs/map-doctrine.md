@@ -67,6 +67,10 @@ one **reward off the main path**.
   and place it as a Rytta door marked secret. Leave out tokens, room numbers and traps too: place
   them as tokens, notes and events, which can be hidden.
 - **Check both lights.** Look at the map in a dim room (the dark theme at night) and in daylight.
+- **Leave the outside alone.** What nobody walks on (the rock round a cave or a dungeon) stays a quiet
+  dark ground, never a texture: the eye goes to the rooms. Walls show with the room they close.
+- **One floor per purpose.** A floor may say what a room is (a library's parquet, a kitchen's flags)
+  but stays quieter than the props and miniatures on it.
 
 ## 6. Reveal and pacing
 
@@ -110,11 +114,14 @@ private to the campaign. Rytta never bundles them.
 | Loops                    | A spanning tree of passages plus loops that join parts far apart through the tree                                        |
 | Purpose                  | Furniture by room purpose (store, library, barracks, shrine, tombs), against the walls, flanking pairs                   |
 | Chokepoints and sizes    | Rooms from a wish list (large, ordinary, small); passages one square or two                                              |
-| Secrets out of the image | Secret doors are drawn as wall; the door is a hidden item                                                                |
+| Secrets out of the image | Secret doors are drawn as wall; the door is a hidden item; the passage square behind one is in no reveal area            |
 | Reveal areas             | Rooms, passages, caverns and clearings are fog areas; doors reveal both sides                                            |
 | Notes                    | DM notes for the entrance, the goal, treasure, places and, optionally, traps                                             |
 | Readable                 | One traced wall line, a light band and hatching outside, low-contrast floor stones                                       |
 | Outdoors                 | Clearings with a purpose on a trail, a stream with a bridge, trees spaced by dart throwing                               |
+| Themes (RYT-068)         | Each kind has themes (stone, ruins, temple, dwarf hold, ice, lava…) that choose its tiles, light and part of its props   |
+| Purpose shows (RYT-068)  | Rooms are armouries, forges, kitchens, prisons, studies, training grounds, throne rooms; floors follow the purpose       |
+| The outside (RYT-068)    | Untextured dark ground with faint clouds and specks; caves' rock fades into it; revealed rooms show their walls          |
 
 ## Sources
 

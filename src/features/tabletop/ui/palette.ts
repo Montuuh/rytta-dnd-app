@@ -1,4 +1,5 @@
 import type { Scene } from '../domain/model'
+import { propById } from '../domain/props'
 
 /**
  * Painted maps get painted props and doors; ink maps and plain parchment keep the line art
@@ -8,6 +9,9 @@ export const paintedScene = (scene: Pick<Scene, 'recipe' | 'look' | 'map_kind' |
   const look = scene.recipe?.look ?? scene.look
   return look ? look === 'painted' : !(scene.map_kind === 'blank' && scene.ground === 'parchment')
 }
+
+/** True when the prop has a line drawing; RYT-068 props only have a picture. */
+export const hasDrawing = (prop: string) => propById.get(prop)?.art !== 'picture'
 
 // Shared drawing constants for the board, panels and dialogs (design-flow.md, section 2).
 

@@ -15,7 +15,7 @@ import { useAuth } from '@/features/auth'
 import { creatureArtUrl } from '@/features/bestiary'
 import { Token, type Combatant } from '@/features/combat'
 import { mediaQuery } from '../api'
-import { areaCells, areaPath, circlePath } from '../domain/geometry'
+import { areaCells, areaPath, circlePath, stillHidden, stillRevealed } from '../domain/geometry'
 import {
   isPassage,
   roomNumbers,
@@ -25,9 +25,18 @@ import {
   type ItemOf,
   type Scene,
 } from '../domain/model'
-import { PropDrawing } from './prop-art'
+import { InkFilter, PropDrawing } from './prop-art'
 import { decodePictures, drawnSprite, picturesReady, propSprite, variantOf } from './sprites'
-import { damageColors, groundColors, paintedScene, tokenColorValues, U } from './palette'
+import { effectArt, type EffectArt } from './map-art'
+import { effectUrl } from './materials'
+import {
+  damageColors,
+  groundColors,
+  hasDrawing,
+  paintedScene,
+  tokenColorValues,
+  U,
+} from './palette'
 
 export type BoardMode = 'dm' | 'table' | 'player'
 
@@ -88,6 +97,8 @@ export const Board = memo(function Board(props: BoardProps) {
   )
   const below = items.filter((i) => i.kind === 'area' || i.kind === 'prop' || i.kind === 'door')
   const art = usePropArt(painted, props.items)
+  // Pictures of props without a line drawing are printed in ink on ink maps (RYT-068).
+  const ink = `ink${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const tokens = items.filter((i): i is ItemOf<'token'> => i.kind === 'token')
   const pins = mode === 'dm' ? items.filter((i) => i.kind === 'note' || i.kind === 'event') : []
   return (
@@ -113,6 +124,11 @@ export const Board = memo(function Board(props: BoardProps) {
         height={height}
         aria-hidden={mode !== 'dm' ? true : undefined}
       >
+        {!painted && (
+          <defs>
+            <InkFilter id={ink} />
+          </defs>
+        )}
         {scene.grid_visible && <GridLines scene={scene} />}
         {props.underlay}
         {below.map((item) =>
@@ -133,6 +149,7 @@ export const Board = memo(function Board(props: BoardProps) {
               item={item}
               mode={mode}
               painted={painted}
+              ink={painted ? undefined : ink}
               shown={art}
               selected={props.selectedId === item.id}
               onPointerDown={props.onItemPointerDown}
@@ -413,41 +430,69 @@ export function AreaDrawing({
   preview = false,
 }: {
   placement: Parameters<typeof areaPath>[0]
-  scene: Pick<Scene, 'cols' | 'rows'>
+  scene: Pick<Scene, 'cols' | 'rows'> &
+    Partial<Pick<Scene, 'recipe' | 'look' | 'map_kind' | 'ground'>>
   selected?: boolean
   dim?: boolean
   preview?: boolean
 }) {
-  const color = damageColors[placement.data.damage ?? 'force'] ?? damageColors.force
+  const damage = placement.data.damage ?? 'force'
+  const color = damageColors[damage] ?? damageColors.force
   const cells = areaCells(placement, scene.cols, scene.rows)
+  // RYT-068: on painted maps the damage's painted effect (a 4 × 4 square tile), translucent so
+  // walls, doors and props stay readable under it; ink maps hatch the area in the damage colour.
+  const fill = `fx${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
+  const painted =
+    scene.map_kind === undefined ||
+    paintedScene(scene as Pick<Scene, 'recipe' | 'look' | 'map_kind' | 'ground'>)
+  const effect = painted && damage in effectArt ? effectUrl(damage as EffectArt) : null
+  const d = areaPath(placement)
   return (
     <g className={`tt-area ${preview ? 'is-preview' : ''}`} opacity={dim ? 0.45 : 1}>
+      <defs>
+        {effect ? (
+          <pattern id={fill} patternUnits="userSpaceOnUse" width={4} height={4}>
+            <image href={effect} width={4} height={4} preserveAspectRatio="none" />
+          </pattern>
+        ) : (
+          <pattern
+            id={fill}
+            patternUnits="userSpaceOnUse"
+            width={0.35}
+            height={0.35}
+            patternTransform="rotate(45)"
+          >
+            <rect width={0.08} height={0.35} fill={color} fillOpacity={0.6} />
+          </pattern>
+        )}
+      </defs>
+      <path d={d} fill={color} fillOpacity={effect ? 0.12 : 0.16} />
       <path
-        d={areaPath(placement)}
-        fill={color}
-        fillOpacity={0.28}
+        className="tt-area-effect"
+        d={d}
+        fill={`url(#${fill})`}
+        fillOpacity={effect ? (preview ? 0.4 : 0.5) : 1}
+      />
+      {/* A dark halo under the outline and the counted squares, so both read over any floor. */}
+      <path d={d} fill="none" stroke="#0a0806" strokeOpacity={0.7} strokeWidth={0.15} />
+      <path
+        d={d}
+        fill="none"
         stroke={color}
-        strokeOpacity={0.85}
-        strokeWidth={0.06}
+        strokeWidth={0.07}
         strokeDasharray={preview ? '0.25 0.15' : undefined}
       />
-      {cells.map(([x, y]) => (
-        <path
-          key={`${x}:${y}`}
-          d={`M ${x + 0.1} ${y + 0.28} V ${y + 0.1} H ${x + 0.28} M ${x + 0.72} ${y + 0.9} H ${x + 0.9} V ${y + 0.72}`}
-          stroke={color}
-          strokeWidth={0.05}
-          fill="none"
-        />
-      ))}
+      {cells.map(([x, y]) => {
+        const tick = `M ${x + 0.1} ${y + 0.28} V ${y + 0.1} H ${x + 0.28} M ${x + 0.72} ${y + 0.9} H ${x + 0.9} V ${y + 0.72}`
+        return (
+          <g key={`${x}:${y}`} fill="none">
+            <path d={tick} stroke="#0a0806" strokeOpacity={0.75} strokeWidth={0.11} />
+            <path d={tick} stroke={color} strokeWidth={0.05} />
+          </g>
+        )
+      })}
       {selected && (
-        <path
-          d={areaPath(placement)}
-          className="tt-sel"
-          fill="none"
-          stroke="var(--app-focus)"
-          strokeWidth={0.08}
-        />
+        <path d={d} className="tt-sel" fill="none" stroke="var(--app-focus)" strokeWidth={0.08} />
       )}
     </g>
   )
@@ -464,10 +509,9 @@ const drawnSize = (item: ItemOf<'prop'>): [number, number] =>
  */
 function usePropArt(painted: boolean, items: readonly Item[]) {
   const urls = useMemo(() => {
-    if (!painted) return []
     const set = new Set<string>()
     for (const item of items) {
-      if (item.kind !== 'prop') continue
+      if (item.kind !== 'prop' || (!painted && hasDrawing(item.data.prop))) continue
       const [w, h] = drawnSize(item)
       const sprite = propSprite(item.data.prop, w, h, variantOf(item.id))
       if (sprite?.picture) set.add(sprite.url)
@@ -492,6 +536,7 @@ function PropShape({
   item,
   mode,
   painted,
+  ink,
   shown,
   selected,
   onPointerDown,
@@ -501,6 +546,8 @@ function PropShape({
   item: ItemOf<'prop'>
   mode: BoardMode
   painted: boolean
+  /** The ink filter's id on ink maps, for props that only have a picture. */
+  ink?: string
   shown: boolean
   selected: boolean
   onPointerDown?: BoardProps['onItemPointerDown']
@@ -525,7 +572,8 @@ function PropShape({
   // A picture that fails to load falls back to the sprite Rytta draws (for that picture only).
   const [failed, setFailed] = useState<string | null>(null)
   const variant = variantOf(item.id)
-  const chosen = painted ? propSprite(item.data.prop, dw, dh, variant) : null
+  const printed = !painted && !hasDrawing(item.data.prop)
+  const chosen = painted || printed ? propSprite(item.data.prop, dw, dh, variant) : null
   const sprite =
     chosen?.picture && chosen.url === failed ? drawnSprite(item.data.prop, dw, dh, variant) : chosen
   // Mirrored or turned a quarter inside its box, about the box's middle (pictures only).
@@ -567,6 +615,7 @@ function PropShape({
             width={dw + sprite.pad * 2}
             height={dh + sprite.pad * 2}
             transform={inner || undefined}
+            filter={printed && ink ? `url(#${ink})` : undefined}
             pointerEvents="none"
             onError={sprite.picture ? () => setFailed(sprite.url) : undefined}
           />
@@ -963,6 +1012,9 @@ const initials = (name: string) =>
     .map((part) => part[0]!.toUpperCase())
     .join('')
 
+/** How far past its squares a revealed room shows: its walls. */
+const roomMargin = 0.4
+
 function fogShape(op: FogOp, index: number) {
   const fill = op.mode === 'reveal' ? 'black' : 'white'
   switch (op.shape) {
@@ -971,8 +1023,16 @@ function fogShape(op: FogOp, index: number) {
     case 'circle':
       return <path key={index} d={circlePath(op.x, op.y, op.r)} fill={fill} />
     case 'rects':
+      // A room's squares, grown by 0.4 of a square so its walls show with it (RYT-068: walls are
+      // painted just outside the floor; the neighbour beyond a wall stays hidden).
       return (
-        <g key={index} fill={fill}>
+        <g
+          key={index}
+          fill={fill}
+          stroke={fill}
+          strokeWidth={roomMargin * 2}
+          strokeLinejoin="miter"
+        >
           {op.rects.map(([x, y, w, h], i) => (
             <rect key={i} x={x} y={y} width={w} height={h} />
           ))}
@@ -1036,6 +1096,30 @@ export function FogLayer({
               fill={fog.base === 'hidden' ? 'white' : 'black'}
             />
             {fog.ops.map(fogShape)}
+            {/* A room hidden again grows into a revealed neighbour by the margin: those rooms are
+                revealed once more with their margin (the shared wall shows), then the rooms
+                still hidden are covered again on their own squares. */}
+            {stillRevealed(fog.ops).map((op, i) => (
+              <g
+                key={`again-${i}`}
+                fill="black"
+                stroke="black"
+                strokeWidth={roomMargin * 2}
+                strokeLinejoin="miter"
+              >
+                {op.rects.map(([x, y, w, h], k) => (
+                  <rect key={k} x={x} y={y} width={w} height={h} />
+                ))}
+              </g>
+            ))}
+            {stillRevealed(fog.ops).length > 0 &&
+              stillHidden(fog.ops).map((op, i) => (
+                <g key={`still-${i}`} fill="white">
+                  {op.rects.map(([x, y, w, h], k) => (
+                    <rect key={k} x={x} y={y} width={w} height={h} />
+                  ))}
+                </g>
+              ))}
           </g>
         </mask>
         <pattern

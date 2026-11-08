@@ -2,9 +2,13 @@
 
 RYT-066. Rytta's painted props were drawn in code (`src/features/tabletop/ui/sprites.ts`, RYT-064). The
 author now paints them with ChatGPT image generation, by hand: Rytta cuts each picture, fits it to its
-squares and keeps the drawn sprite as the fallback. The ink look keeps its line art. The tavern pilot
-is imported (9 props; 4 more wait for pictures seen from above); the [catalogue](#catalogue) lists every other picture to make, floors, walls,
-decals and spell effects included.
+squares and keeps the drawn sprite as the fallback. The ink look keeps its line art and prints props
+that only have a picture in sepia. RYT-068 imported all 211 pictures of the [catalogue](#catalogue):
+91 props (439 pictures), 50 floors, 16 walls, 20 decal sheets and 17 effects
+([ADR 033](decisions/033-map-art.md)). On 2026-11-08 a sprite audit sent 35 sheets back because they
+were drawn from the front, from the side or at three quarters. The author generated them again, with
+prompts that describe what each object shows from directly above. The same day the signpost, lantern
+post and market stall sheets and the shards decals arrived.
 
 ## Catalogue
 
@@ -13,22 +17,27 @@ decals and spell effects included.
 paste, the file name and the path to save it at, in the order to generate them. Both are written by
 `python scripts/sprites/catalogue.py` from the data in that script; edit the script, not the files.
 
-| Category | Rows | What it is                                                                                      | Used today                        |
-| -------- | ---- | ----------------------------------------------------------------------------------------------- | --------------------------------- |
-| prop     | 108  | Sheets of 4 variants of one prop (2 sheets for the commonest): 42 library props and 48 new ones | Library props, on import          |
-| floor    | 50   | Seamless 4 × 4 square textures: stone, wood, earth, sand, grass, water, lava…                   | Not yet: painter integration next |
-| wall     | 16   | Seamless textures of wall tops for the wall bands                                               | Not yet                           |
-| decal    | 20   | Sheets of 9 scattered details: cracks, puddles, moss, leaves…                                   | Not yet                           |
-| effect   | 17   | Seamless spell effects per damage type and magic circles, on black or white for blending        | Not yet                           |
+| Category | Rows | What it is                                                                                      | Used today                                 |
+| -------- | ---- | ----------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| prop     | 108  | Sheets of 4 variants of one prop (2 sheets for the commonest): 42 library props and 48 new ones | The library and the generators (RYT-068)   |
+| floor    | 50   | Seamless 4 × 4 square textures: stone, wood, earth, sand, grass, water, lava…                   | Floors of the map themes                   |
+| wall     | 16   | Seamless textures of wall tops for the wall bands                                               | Walls of the map themes                    |
+| decal    | 20   | Sheets of 9 scattered details: cracks, puddles, moss, leaves…                                   | Scattered over painted maps                |
+| effect   | 17   | Seamless spell effects per damage type and magic circles, on black or white for blending        | Spell areas; magic circles as a 2 × 2 prop |
 
 Priority 1 is what generated maps use today, 2 adds variety (floors, walls, effects), 3 is new props
 that Rytta adds to its library and generators when they are imported. Within a priority the rows are
 interleaved so floors and walls arrive early enough to try them on maps.
 
-`python scripts/sprites/import_sheets.py` imports every prop sheet saved at its path and marks it
-imported in the catalogue. Props on a sheet are found by the layout's position (a 2 × 2 grid, a row of
-4 or 3); a sheet that came without transparency, on a flat magenta or other plain background, is keyed
-out.
+`python scripts/sprites/import_sheets.py` imports every picture saved at its path and marks it
+imported in the catalogue (`--props` or `--art` for one half, `--inspect` to only report). Props on a
+sheet are found by the layout's position (a 2 × 2 grid, a row of 4 or 3); shapes painted close
+together are counted again unjoined, or cut by their share of the sheet. A sheet that came without
+transparency, on a flat magenta or other plain background, is keyed out, and a faint veil behind the
+props is lifted. Floors and walls become 512 px tiles with the wrap seam evened out; effects painted on
+black or white get their transparency from it; decal sheets become 3 × 3 atlases. A row listed in
+`REJECTED` in `catalogue.py` is skipped and shows `rejected` with the reason. The sources stay out of
+git (`art/sprites/source/*/` is ignored); the shipped WebPs and the catalogue are committed.
 
 ## Rules
 
@@ -195,10 +204,13 @@ Corrections to send in the same conversation:
 | Tavern, large    | `art/sprites/source/tavern-large.png` | 2026-11-06 | ChatGPT, `gpt-image` (C2PA) | Sheet 2 above | Imported: 3 props, 1536 × 1024. Not used: the hearth (fire drawn from the front)                                                                                                   |
 
 Later sheets are logged by their catalogue row: the import marks them imported, and the C2PA
-manifest in each source keeps its date and model.
+manifest in each source keeps its date and model. The pictures of RYT-068 were saved by the author
+between 2026-11-06 and 2026-11-08 (ChatGPT, `gpt-image`). The 35 sheets of the 2026-11-08 audit and the
+four last sheets replaced or completed them on 2026-11-08.
 
 ## Credits
 
-The pictures under `public/tabletop/props/` were made by the Rytta author with ChatGPT image
-generation (OpenAI, `gpt-image`), from the prompts of this guide and of the catalogue, and edited by
+The pictures under `public/tabletop/props/`, `public/tabletop/textures/` and
+`public/tabletop/decals/` were made by the Rytta author with ChatGPT image generation (OpenAI,
+`gpt-image`), from the prompts of this guide and of the catalogue, and edited by
 `scripts/sprites/import_sheets.py`. Under OpenAI's Terms of Use the output belongs to the author.

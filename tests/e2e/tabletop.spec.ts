@@ -163,14 +163,15 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
     .toBeGreaterThan(300)
   const seedField = generator.getByRole('textbox', { name: 'Semilla', exact: true })
   // RYT-063: a reroll can be taken back.
-  await generator.getByRole('button', { name: 'Otra semilla' }).click()
+  await generator.getByRole('button', { name: 'Otro mapa' }).click()
   const rolled = await seedField.inputValue()
-  await generator.getByRole('button', { name: 'Otra semilla' }).click()
-  const back = generator.getByRole('button', { name: 'Semilla anterior' })
+  await generator.getByRole('button', { name: 'Otro mapa' }).click()
+  const back = generator.getByRole('button', { name: 'Volver al mapa anterior' })
   await back.click()
   await expect(seedField).toHaveValue(rolled)
-  // Back to the first seed: the key looks disabled but keeps keyboard focus.
-  await back.click()
+  // Back to the first seed by keyboard: the key looks disabled but keeps keyboard focus.
+  await back.focus()
+  await page.keyboard.press('Enter')
   await expect(back).toHaveAttribute('aria-disabled', 'true')
   await expect(back).toBeFocused()
   // An emptied seed field takes the digits typed, nothing more.
@@ -178,12 +179,44 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   await seedField.pressSequentially('77')
   await expect(seedField).toHaveValue('77')
   await seedField.fill('4242')
-  await expect(
-    generator.getByText(/47 × 26 casillas · \d+ áreas · \d+ puertas · \d+ objetos/),
-  ).toBeVisible()
+  // RYT-068: the place, its theme and size, then what it holds in a sentence.
+  const caption = generator.locator('.tt-preview-caption')
+  await expect(caption).toContainText('Mazmorra (Piedra), 47 × 26 casillas')
+  await expect(caption).toContainText(/\d+ salas, \d+ pasillos, \d+ puertas y \d+ objetos\./)
   // RYT-063: key rooms come with DM notes; traps add more, written when the scene is made.
-  await expect(generator.locator('.tt-preview-caption')).toContainText('notas del DM')
+  await expect(caption).toContainText(/Para el DM: .*\d+ notas: Entrada.*Objetivo/)
+  await expect(generator.locator('.tt-preview-legend')).toContainText('Nota del DM')
+  // RYT-068: R rolls another seed while the focus is not in a field.
+  await generator.getByRole('radio', { name: 'Normal' }).focus()
+  await page.keyboard.press('r')
+  await expect(seedField).not.toHaveValue('4242')
+  await seedField.fill('4242')
+  // A theme is a material sample; the dungeon keeps it when the DM looks at another kind.
+  await generator.locator('label', { hasText: 'Bastión enano' }).click()
+  await expect(generator.getByRole('radio', { name: 'Bastión enano' })).toBeChecked()
+  await generator.locator('label', { hasText: 'Cueva' }).click()
+  await expect(generator.getByRole('radio', { name: 'Roca' })).toBeChecked()
+  await generator.locator('label', { hasText: 'Mazmorra' }).click()
+  await expect(generator.getByRole('radio', { name: 'Bastión enano' })).toBeChecked()
+  await expect(caption).toContainText('Mazmorra (Bastión enano), 47 × 26 casillas')
+  // The swatches and the painted tiles load under the production subpath.
+  const tiles = await generator
+    .locator('.tt-theme-sample, .tt-theme-sample > span')
+    .evaluateAll((nodes) =>
+      nodes.map((n) => getComputedStyle(n).backgroundImage.replace(/^url\("?|"?\)$/g, '')),
+    )
+  expect(tiles.length).toBeGreaterThanOrEqual(7 * 3)
+  for (const src of new Set(tiles)) expect((await page.request.get(src)).status(), src).toBe(200)
+  await expect(generator.locator('.tt-preview-frame')).not.toHaveAttribute('data-loading')
+  // Taverns show their hall floor, a band of wall and the yard in the sample.
+  await generator.locator('label', { hasText: 'Taberna' }).click()
+  const tavern = generator.locator('label', { hasText: 'Roble' }).locator('.tt-theme-sample')
+  await expect(tavern.locator('.is-wall')).toHaveCount(1)
+  await expect(tavern.locator('.is-ground')).toHaveCount(1)
+  await generator.locator('label', { hasText: 'Mazmorra' }).click()
+  await expect(generator.getByRole('radio', { name: 'Bastión enano' })).toBeChecked()
   await generator.getByRole('switch', { name: 'Trampas' }).check()
+  await expect(caption).toContainText(/Trampa/)
   await expect(generator.locator('.tt-preview-items circle').first()).toBeVisible()
   await evidence(page, info, 'generator')
   await audit(page, '[role="dialog"]')
@@ -194,6 +227,12 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   })
   const scene = server.scenes.at(-1)!
   expect(scene).toMatchObject({ map_kind: 'generated', cols: 47, rows: 26, fog_enabled: true })
+  expect(scene.recipe).toMatchObject({
+    kind: 'dungeon',
+    theme: 'dwarven',
+    look: 'painted',
+    version: 3,
+  })
   expect((scene.rooms as unknown[]).length).toBeGreaterThan(3)
   // Rooms carry only their id and squares; passages are reveal areas of their own.
   const stored = scene.rooms as { id: string }[]
@@ -282,6 +321,8 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   const start = server.items.find((i) => i.label === 'Caballo')!
   const [x0, y0] = [start.x as number, start.y as number]
   if (phone(info)) {
+    // The sheet closes so the board is in front; a tap lands once it is gone.
+    await expect(page.locator('.mantine-Drawer-overlay')).toHaveCount(0)
     const [tx, ty] = await squareAt(page, 47, x0, y0 + 1)
     await page.mouse.click(tx, ty)
   } else {

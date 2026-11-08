@@ -274,9 +274,12 @@ export function TokensPanel({
 export function PropsPanel({
   chosen,
   onChoose,
+  painted = true,
 }: {
   chosen: string | null
   onChoose: (prop: string) => void
+  /** The scene's look: pictures on painted maps, line drawings on ink maps. */
+  painted?: boolean
 }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
@@ -318,7 +321,7 @@ export function PropsPanel({
               aria-pressed={chosen === p.id}
               onClick={() => onChoose(p.id)}
             >
-              <PropIcon prop={p.id} w={p.w} h={p.h} size={44} />
+              <PropIcon prop={p.id} w={p.w} h={p.h} size={44} painted={painted} />
               <span>{t(`tabletop.prop.${p.id}` as never)}</span>
             </button>
           </li>

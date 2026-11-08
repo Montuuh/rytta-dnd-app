@@ -332,37 +332,88 @@ export function cave(options: GeneratorOptions): GeneratedMap {
   const nearWater = (x: number, y: number) =>
     grid.get(x, y) === T.floor && N8.some(([dx, dy]) => grid.get(x + dx, y + dy) === T.water)
   const floorCount = grid.tiles.filter((t) => t === T.floor).length
-  p.scatter(
-    random,
-    Math.round((floorCount / 42) * factor),
-    ['stalagmite', 'rock', 'stalagmite', 'rubble'],
-    nearWall,
-  )
+  // RYT-068: what grows from the walls and by the water, by theme.
+  const theme = options.theme ?? 'rock'
+  const walls: Record<string, string[]> = {
+    rock: ['stalagmite', 'rock', 'stalagmite', 'rubble'],
+    damp: ['stalagmite', 'rock', 'mushrooms', 'rubble'],
+    crystal: ['crystal-cluster', 'stalagmite', 'crystal-cluster', 'rock'],
+    ice: ['crystal-cluster', 'rock', 'stalagmite', 'crystal-cluster'],
+    volcanic: ['rock', 'rubble', 'stalagmite', 'rock'],
+  }
+  const wet: Record<string, string[]> = {
+    rock: ['mushrooms'],
+    damp: ['mushrooms', 'reeds'],
+    crystal: ['crystal-cluster', 'mushrooms'],
+    ice: ['crystal-cluster'],
+    volcanic: ['rubble'],
+  }
+  p.scatter(random, Math.round((floorCount / 42) * factor), walls[theme] ?? walls.rock!, nearWall)
   p.scatter(
     random,
     Math.round((floorCount / 160) * factor) + 1,
-    ['mushrooms'],
+    wet[theme] ?? wet.rock!,
     (x, y) => nearWater(x, y) || (nearWall(x, y) && random.chance(0.3)),
   )
+  // A boulder or two that fell from the roof, out in the open.
+  const open4 = (x: number, y: number) =>
+    grid.get(x, y) === T.floor &&
+    grid.get(x + 1, y) === T.floor &&
+    grid.get(x, y + 1) === T.floor &&
+    grid.get(x + 1, y + 1) === T.floor &&
+    wall[y * cols + x] !== 1
+  if (floorCount > 240)
+    for (
+      let n = 0, tries = 0;
+      n < Math.max(1, Math.round(floorCount / 400)) && tries < 60;
+      tries++
+    ) {
+      const x = random.int(1, cols - 3)
+      const y = random.int(1, rows - 3)
+      if (open4(x, y) && p.place('boulder', x, y, 2, 2, random.int(0, 3) * 90)) n++
+    }
   const notes: GeneratedNote[] = []
   const at = (o: { s: number } | undefined, key: NoteKey, props: [string, number, number][]) => {
     if (!o) return
     const cx = o.s % cols
     const cy = (o.s - cx) / cols
-    for (const [prop, dx, dy] of props) p.place(prop, cx + dx, cy + dy, prop === 'log' ? 2 : 1, 1)
+    for (const [prop, dx, dy] of props) {
+      if (prop === 'campfire') {
+        // RYT-068: a fire's light reaches two squares; it burns where that light stays inside the
+        // cavern (three steps from the rock, else as far from it as the place allows).
+        let best: [number, number] | null = null
+        let room = -1
+        for (let ry = -3; ry <= 3; ry++)
+          for (let rx = -3; rx <= 3; rx++) {
+            const x = cx + dx + rx
+            const y = cy + dy + ry
+            const d = grid.get(x, y) === T.floor ? (wall[y * cols + x] ?? 0) : -1
+            const score = Math.min(d, 3) * 10 - Math.abs(rx) - Math.abs(ry)
+            if (d > 0 && !p.taken.has(`${x}:${y}`) && score > room) {
+              room = score
+              best = [x, y]
+            }
+          }
+        if (best) p.place('campfire', best[0], best[1])
+        continue
+      }
+      p.place(prop, cx + dx, cy + dy, prop === 'log' ? 2 : 1, prop === 'bedroll' ? 2 : 1)
+    }
     notes.push({ key, x: cx, y: cy })
   }
   at(lair, 'lair', [
     ['bones', 1, 0],
-    ['bones', -1, 1],
+    ['skull-pile', -1, 1],
     ['chest', 0, -1],
     ['coins', 1, -1],
+    ['bones', 2, 1],
   ])
   if (camp && camp !== lair)
     at(camp, 'camp', [
       ['campfire', 1, 0],
       ['log', 1, 1],
-      ['bones', -1, -1],
+      ['bedroll', -1, -1],
+      ['sack', 2, -1],
     ])
   const mouthInside = mouth[Math.max(0, mouth.length - 3)] ?? mouthCell
   notes.push({ key: 'entrance', x: mouthInside % cols, y: Math.floor(mouthInside / cols) })
@@ -586,6 +637,7 @@ export function forest(options: GeneratorOptions): GeneratedMap {
   // The places themselves.
   const notes: GeneratedNote[] = []
   const flat = (x: number, y: number) => grid.get(x, y) === T.grass
+  const theme = options.theme ?? 'forest'
   clearings.forEach((c) => {
     const x = Math.floor(c.x)
     const y = Math.floor(c.y)
@@ -595,11 +647,22 @@ export function forest(options: GeneratorOptions): GeneratedMap {
         props.place('tent', x + 2, y - 3, 2, 2)
         props.place('log', x - 2, y - 1, 2, 1)
         props.place('log', x, y + 1, 2, 1)
+        props.place('bedroll', x - 2, y - 3, 1, 2)
+        props.place('firewood', x - 1, y - 2)
         break
       case 'stones':
+        // A ring of standing stones round a slab; in the deep woods sometimes a fairy ring.
+        if (theme !== 'winter' && variant === 'deepwoods' && random.chance(0.5)) {
+          props.place('mushroom-ring', x, y, 2, 2)
+          break
+        }
         for (let k = 0; k < 6; k++) {
           const a = (k / 6) * Math.PI * 2
-          props.place('rock', Math.round(x + Math.cos(a) * 2.2), Math.round(y + Math.sin(a) * 2))
+          props.place(
+            'standing-stone',
+            Math.round(x + Math.cos(a) * 2.2),
+            Math.round(y + Math.sin(a) * 2),
+          )
         }
         props.place('altar', x, y, 2, 1)
         break
@@ -619,32 +682,64 @@ export function forest(options: GeneratorOptions): GeneratedMap {
         props.place('log', x - 1, y + 1, 2, 1)
         props.place('cart', x + 1, y, 2, 1)
         break
-      case 'pond':
+      case 'pond': {
         props.scatter(
           random,
           3,
-          ['flowers', 'bush'],
+          theme === 'winter' ? ['rock', 'bush'] : ['flowers', 'bush', 'reeds'],
           (px, py) => flat(px, py) && inClearing(c, px, py),
         )
+        // Reeds by the water and lily pads on it (not on ice).
+        if (theme !== 'winter') {
+          const shore = (px: number, py: number) =>
+            flat(px, py) && N8.some(([dx, dy]) => grid.get(px + dx, py + dy) === T.water)
+          props.scatter(random, 3, ['reeds'], shore)
+          for (let n = 0, tries = 0; n < 2 && tries < 40; tries++) {
+            const px = random.int(Math.floor(c.x - c.rx), Math.ceil(c.x + c.rx))
+            const py = random.int(Math.floor(c.y - c.ry), Math.ceil(c.y + c.ry))
+            if (props.place('lily-pads', px, py, 1, 1, random.int(0, 3) * 90, (t) => t === T.water))
+              n++
+          }
+        }
         break
+      }
     }
     notes.push({ key: c.kind, x, y })
   })
   // Undergrowth: bushes where the trees thin out, rocks, stumps, flowers at the clearing edges.
   const besideTree = (x: number, y: number) =>
     flat(x, y) && N8.some(([dx, dy]) => grid.get(x + dx, y + dy) === T.tree)
+  const undergrowth: Record<string, string[]> = {
+    forest: ['bush', 'bush', 'stump', 'rock', 'mushrooms'],
+    autumn: ['bush', 'stump', 'mushrooms', 'rock', 'stump'],
+    meadow: ['bush', 'flowers', 'rock', 'bush'],
+    swamp: ['reeds', 'bush', 'stump', 'mushrooms', 'reeds'],
+    winter: ['rock', 'stump', 'bush', 'rock'],
+  }
   props.scatter(
     random,
     Math.round(((cols * rows) / 55) * factor),
-    ['bush', 'bush', 'stump', 'rock', 'mushrooms'],
+    undergrowth[theme] ?? undergrowth.forest!,
     (x, y) => besideTree(x, y) && !inAny(x, y),
   )
   props.scatter(
     random,
     count * 3,
-    ['flowers'],
+    theme === 'winter' ? ['rock'] : theme === 'swamp' ? ['reeds', 'flowers'] : ['flowers'],
     (x, y) => flat(x, y) && inAny(x, y, 0.6) && !inAny(x, y, -0.8),
   )
+  // A fallen trunk or a boulder here and there in the open wood.
+  for (
+    let n = 0, tries = 0;
+    n < Math.max(1, Math.round(((cols * rows) / 400) * factor)) && tries < 80;
+    tries++
+  ) {
+    const x = random.int(1, cols - 3)
+    const y = random.int(1, rows - 3)
+    if (!flat(x, y) || !flat(x + 1, y) || inAny(x, y, 0.5)) continue
+    const boulder = random.chance(0.35) && flat(x, y + 1) && flat(x + 1, y + 1)
+    if (props.place(boulder ? 'boulder' : 'log', x, y, 2, boulder ? 2 : 1, 0)) n++
+  }
 
   const map = emptyMap(options, grid)
   for (let i = 0; i < cols * rows; i++)

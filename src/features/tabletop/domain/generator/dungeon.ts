@@ -7,6 +7,7 @@ import {
   rng,
   route,
   runsOf,
+  sealSecretDoors,
   subRng,
   T,
   walkable,
@@ -16,8 +17,10 @@ import {
   type GeneratedProp,
   type GeneratedRoom,
   type GeneratorOptions,
+  type MapTheme,
   type Rng,
   type RoomRole,
+  type RoomUse,
 } from './core'
 
 // RYT-063 dungeon and crypt. Rooms by size (a few large, mostly ordinary, some small), packed
@@ -26,8 +29,8 @@ import {
 // a hidden treasure in a dead end; furniture that faces the walls and says what each room is for.
 
 type Shape = 'rect' | 'round' | 'hall'
-type Theme =
-  'store' | 'shrine' | 'library' | 'barracks' | 'ruin' | 'plain' | 'tomb' | 'ossuary' | 'lord'
+/** A room's purpose (RoomUse); named theme before map themes existed. */
+type Theme = RoomUse
 interface Room {
   id: string
   index: number
@@ -41,6 +44,50 @@ interface Room {
 }
 /** 0 north, 1 east, 2 south, 3 west: the room wall a doorway opens in. */
 type Side = 0 | 1 | 2 | 3
+/** One step from wall `side` into the room. */
+const inward: Record<Side, readonly [number, number]> = {
+  0: [0, 1],
+  1: [-1, 0],
+  2: [0, -1],
+  3: [1, 0],
+}
+/** How the goal of a dungeon is dressed (RYT-068). */
+type GoalStyle = 'altar' | 'throne' | 'hoard'
+
+/** Room purposes by map theme: what the builders of such a place would have needed. */
+const usesByTheme: Record<string, Theme[]> = {
+  stone: [
+    'store',
+    'shrine',
+    'library',
+    'barracks',
+    'armory',
+    'prison',
+    'kitchen',
+    'study',
+    'training',
+    'ruin',
+    'plain',
+  ],
+  ruins: ['ruin', 'ruin', 'store', 'shrine', 'barracks', 'prison', 'plain'],
+  temple: ['shrine', 'shrine', 'library', 'study', 'store', 'barracks', 'kitchen'],
+  sandstone: ['shrine', 'store', 'library', 'ruin', 'armory', 'study', 'plain'],
+  dwarven: ['forge', 'forge', 'armory', 'store', 'barracks', 'kitchen', 'training'],
+  ice: ['store', 'ruin', 'barracks', 'shrine', 'prison', 'plain'],
+  volcanic: ['forge', 'prison', 'shrine', 'store', 'ruin', 'armory'],
+  crypt: ['tomb', 'tomb', 'tomb', 'ossuary', 'shrine', 'ruin'],
+  mossy: ['tomb', 'tomb', 'ossuary', 'ruin', 'ruin', 'shrine'],
+  marble: ['tomb', 'tomb', 'shrine', 'shrine', 'ossuary'],
+}
+const goalStyles: Record<string, GoalStyle[]> = {
+  stone: ['throne', 'altar', 'hoard'],
+  ruins: ['altar', 'hoard'],
+  temple: ['altar', 'altar', 'throne'],
+  sandstone: ['altar', 'hoard'],
+  dwarven: ['throne', 'hoard'],
+  ice: ['throne', 'hoard', 'altar'],
+  volcanic: ['hoard', 'throne', 'altar'],
+}
 interface Doorway {
   room: number
   side: Side
@@ -527,6 +574,17 @@ class Furnisher {
   reserve(x: number, y: number) {
     this.taken.add(`${x}:${y}`)
   }
+  /** A prop centred on a point that may fall between squares; it takes every square it covers. */
+  centred(prop: string, cx: number, cy: number, w: number, h: number) {
+    const x0 = Math.floor(cx - w / 2 + 0.01)
+    const y0 = Math.floor(cy - h / 2 + 0.01)
+    const x1 = Math.ceil(cx + w / 2 - 0.01)
+    const y1 = Math.ceil(cy + h / 2 - 0.01)
+    for (let i = x0; i < x1; i++) for (let j = y0; j < y1; j++) if (!this.free(i, j)) return false
+    for (let i = x0; i < x1; i++) for (let j = y0; j < y1; j++) this.taken.add(`${i}:${j}`)
+    this.props.push({ prop, x: cx - w / 2, y: cy - h / 2, w, h, rotation: 0 })
+    return true
+  }
 }
 
 /**
@@ -535,13 +593,23 @@ class Furnisher {
  */
 const wallRotation: Record<Side, number> = { 0: 0, 1: 90, 2: 180, 3: 270 }
 
-function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, crypt: boolean) {
+function furnishRoom(
+  room: Room,
+  layout: Layout,
+  f: Furnisher,
+  factor: number,
+  crypt: boolean,
+  theme: MapTheme,
+  goalStyle: GoalStyle,
+) {
   const random = f.random
   const mine = layout.doorways.filter((d) => d.room === room.index)
   const firstSide = mine[0]?.side ?? 2
   const far = ((firstSide + 2) % 4) as Side
   const midX = room.x + Math.floor((room.w - 1) / 2)
   const midY = room.y + Math.floor((room.h - 1) / 2)
+  /** The squares along the far wall. */
+  const across = far === 0 || far === 2 ? room.w : room.h
   /** A square against wall `side`, `offset` squares from that wall's middle. */
   const onWall = (side: Side, offset: number): [number, number] =>
     side === 0
@@ -551,6 +619,12 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
         : side === 1
           ? [room.x + room.w - 1, midY + offset]
           : [room.x, midY + offset]
+  /** `depth` squares in from wall `side` (in front of what stands against it). */
+  const inFront = (side: Side, offset: number, depth = 1): [number, number] => {
+    const [x, y] = onWall(side, offset)
+    const [dx, dy] = inward[side]
+    return [x + dx * depth, y + dy * depth]
+  }
   const spots = (sides: Side[]) => {
     const list: [number, number, Side][] = []
     for (const side of sides) {
@@ -562,26 +636,58 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
     }
     return list
   }
+  /**
+   * A prop `len` squares long with its back to wall `side`, `offset` squares from the wall's middle
+   * (the footprint turns with the wall: len × 1 on north and south walls, 1 × len on east and west).
+   */
+  const against = (prop: string, side: Side, offset = 0, len = 2) => {
+    const [x, y] = onWall(side, offset)
+    const along = side === 0 || side === 2
+    const sx = along ? x - Math.floor((len - 1) / 2) : x
+    const sy = along ? y : y - Math.floor((len - 1) / 2)
+    const ex = sx + (along ? len - 1 : 0)
+    const ey = sy + (along ? 0 : len - 1)
+    if (!inRoom(room, sx, sy) || !inRoom(room, ex, ey)) return false
+    return f.place(prop, sx, sy, along ? len : 1, along ? 1 : len, wallRotation[side])
+  }
+  /** A 2 × 2 prop with its back to wall `side`, in the middle of that wall. */
+  const deepAgainst = (prop: string, side: Side) => {
+    const [x, y] = onWall(side, 0)
+    const along = side === 0 || side === 2
+    const sx = along ? x : side === 1 ? x - 1 : x
+    const sy = along ? (side === 0 ? y : y - 1) : y
+    if (!inRoom(room, sx, sy) || !inRoom(room, sx + 1, sy + 1)) return false
+    return f.place(prop, sx, sy, 2, 2, wallRotation[side])
+  }
   const focal = (prop: string) => {
-    if ((far === 0 || far === 2) && room.w >= 4 && prop === 'altar') {
-      const x = room.x + Math.floor((room.w - 2) / 2)
-      const y = far === 0 ? room.y : room.y + room.h - 1
-      if (f.place('altar', x, y, 2, 1, wallRotation[far])) return [x, y] as const
-    }
+    if (prop === 'altar' && room.w >= 4 && against('altar', far)) return
     const [x, y] = onWall(far, 0)
     f.place(prop === 'altar' ? 'statue' : prop, x, y, 1, 1, wallRotation[far])
-    return [x, y] as const
   }
-  /** The same prop on both sides of the far wall's middle. */
-  const flank = (prop: string, offset: number) => {
-    const a = onWall(far, -offset)
-    const b = onWall(
-      far,
-      offset + (far === 0 || far === 2 ? (room.w % 2 ? 0 : 1) : room.h % 2 ? 0 : 1),
-    )
+  /** The same prop on both sides of a wall's middle (the far wall unless told). */
+  const flank = (prop: string, offset: number, side: Side = far) => {
+    const even = side === 0 || side === 2 ? (room.w % 2 ? 0 : 1) : room.h % 2 ? 0 : 1
+    const a = onWall(side, -offset)
+    const b = onWall(side, offset + even)
     if (!inRoom(room, ...a) || !inRoom(room, ...b) || !f.free(...a) || !f.free(...b)) return
-    f.place(prop, a[0], a[1], 1, 1, wallRotation[far])
-    f.place(prop, b[0], b[1], 1, 1, wallRotation[far])
+    f.place(prop, a[0], a[1], 1, 1, wallRotation[side])
+    f.place(prop, b[0], b[1], 1, 1, wallRotation[side])
+  }
+  /** A 2 × 2 prop in the middle of the room, moved `toward` the far wall by some squares. */
+  const centrePiece = (prop: string, toward = 0, turn = true) => {
+    if (room.w < 4 || room.h < 4) return false
+    const [dx, dy] = inward[far]
+    const x = clamp(
+      room.x + Math.floor((room.w - 2) / 2) - dx * toward,
+      room.x + 1,
+      room.x + room.w - 3,
+    )
+    const y = clamp(
+      room.y + Math.floor((room.h - 2) / 2) - dy * toward,
+      room.y + 1,
+      room.y + room.h - 3,
+    )
+    return f.place(prop, x, y, 2, 2, turn ? random.int(0, 3) * 90 : 0)
   }
   const scatter = (pool: string[], count: number, wallsOnly = true) => {
     const list = wallsOnly
@@ -611,37 +717,53 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
     }
   }
   const extras = (n: number) => Math.max(1, Math.round(n * factor))
+  /** Walls without a doorway other than the far one, for long furniture. */
+  const quiet = ([0, 1, 2, 3] as Side[]).filter((s) => s !== far && !mine.some((d) => d.side === s))
+  const fire = theme === 'ice' ? 'candles' : 'brazier'
 
   if (room.shape === 'round') {
     const c = room.x + (room.w - 1) / 2
     const m = room.y + (room.h - 1) / 2
     if (room.role === 'goal' && crypt) f.place('sarcophagus', c, m - 1, 1, 2, 0)
-    else f.place('statue', c, m, 1, 1, 0)
+    else if (room.w >= 7 && (crypt || theme === 'temple' || room.role === 'goal')) {
+      if (!f.centred('magic-circle', c + 0.5, m + 0.5, 2, 2)) f.place('statue', c, m, 1, 1, 0)
+    } else f.place(theme === 'dwarven' ? 'pillar' : 'statue', c, m, 1, 1, 0)
     for (const [x, y] of [
       [c, room.y + 1],
       [c, room.y + room.h - 2],
       [room.x + 1, m],
       [room.x + room.w - 2, m],
     ] as const)
-      if (room.w >= 7) f.place(crypt ? 'candles' : 'brazier', x, y)
+      if (room.w >= 7) f.place(crypt ? 'candles' : fire, x, y)
     if (room.role === 'treasure') scatter(['chest', 'coins', 'urn'], 3)
     return
   }
   if (room.shape === 'hall' && Math.min(room.w, room.h) >= 5) {
-    // Two rows of pillars, mirrored from both ends towards the middle.
+    // Two rows of pillars, mirrored from both ends towards the middle; some fallen in ruins.
     const horizontal = room.w >= room.h
     const len = horizontal ? room.w : room.h
     const lines = horizontal ? [room.y + 1, room.y + room.h - 2] : [room.x + 1, room.x + room.w - 2]
     const start = horizontal ? room.x : room.y
+    const fallen = theme === 'ruins' || room.theme === 'ruin'
     for (let i = 1; i * 2 < len - 1; i += 2) {
       const a = start + i
       const b = start + len - 1 - i
       for (const line of lines)
         for (const p of a === b ? [a] : [a, b]) {
           const [x, y] = horizontal ? [p, line] : [line, p]
-          f.place('pillar', x, y)
+          if (fallen && random.chance(0.22)) f.place('rubble', x, y, 1, 1, random.int(0, 3) * 90)
+          else f.place('pillar', x, y)
         }
     }
+    if (fallen)
+      f.place(
+        'fallen-pillar',
+        room.x + Math.floor(room.w / 2) - 1,
+        room.y + Math.floor(room.h / 2),
+        2,
+        1,
+        random.pick([0, 180]),
+      )
   }
   switch (room.role ?? room.theme) {
     case 'goal':
@@ -651,25 +773,41 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
         f.place('sarcophagus', x, y, 1, 2, 0)
         flank('candles', 1)
         focal('altar')
+        if (room.w >= 6) flank('skull-pile', 2, ((far + 2) % 4) as Side)
+      } else if (goalStyle === 'throne' && room.w >= 5 && room.h >= 5) {
+        // A throne against the far wall, fire and banners either side, a rug before it.
+        focal('throne')
+        flank(fire, 1)
+        flank('banner', 2)
+        centrePiece(
+          'rug',
+          Math.max(0, Math.floor(((far === 0 || far === 2 ? room.h : room.w) - 4) / 2)),
+          false,
+        )
+        scatter(['chest', 'armor-stand'], 2)
+      } else if (goalStyle === 'hoard' && room.w >= 5 && room.h >= 5) {
+        // A hoard heaped in the middle, the bones of those who came before, a chest or two.
+        centrePiece('treasure-hoard')
+        scatter(['skull-pile', 'bones', 'coins', 'chest'], extras(3))
+        flank(fire, 1)
       } else {
         focal(room.w >= 5 ? 'altar' : 'statue')
-        flank('brazier', 2)
+        flank(fire, 2)
         scatter(['chest', 'coins'], 2)
-        if (room.w >= 6 && room.h >= 5) {
-          const x = room.x + Math.floor((room.w - 2) / 2)
-          const y = far === 0 ? room.y + 2 : far === 2 ? room.y + room.h - 4 : midY
-          f.place('rug', x, y, 2, 2)
-        }
+        if (room.w >= 6 && room.h >= 6) centrePiece('magic-circle', 1)
+        else if (room.w >= 6 && room.h >= 5) centrePiece('rug', 1)
       }
       return
     case 'treasure':
-      focal('chest')
+      if (room.w >= 5 && room.h >= 5 && random.chance(0.5)) centrePiece('treasure-hoard')
+      else focal('chest')
       flank('chest', 1)
       scatter(['coins', 'urn', 'coins'], extras(2))
       return
     case 'entrance':
       if (!layout.exit) focal('stairs')
       scatter(['barrel', 'crate', 'torch'], extras(1))
+      if (room.w >= 5 && !crypt && theme !== 'ruins') flank('banner', 1, firstSide)
       return
   }
   switch (room.theme) {
@@ -688,6 +826,7 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
         ] as const)
           if (random.chance(0.85 * Math.min(1.2, factor)))
             f.place(random.pick(['crate', 'barrel', 'sack', 'crate']), cx + dx, cy + dy)
+      if (quiet[0] !== undefined && random.chance(0.6)) against('keg-rack', quiet[0])
       return
     }
     case 'library': {
@@ -703,19 +842,101 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
       scatter(['candles'], 1)
       return
     }
+    case 'study': {
+      // A desk against the far wall and its chair, shelves beside it, a reading rug.
+      if (against('desk', far)) {
+        const [cx, cy] = inFront(far, 0)
+        f.place('chair', cx, cy, 1, 1, (wallRotation[far] + 180) % 360)
+      } else focal('bookshelf')
+      flank('bookshelf', 2)
+      if (room.w >= 5 && room.h >= 6) centrePiece('rug', -1)
+      scatter(['candles', 'cauldron', 'chest'], extras(1))
+      return
+    }
     case 'barracks': {
       if (room.h >= 4)
-        for (let x = room.x; x < room.x + room.w; x += 2) f.place('bed', x, room.y, 1, 2, 0)
+        for (let x = room.x; x < room.x + room.w; x += 2)
+          f.place(random.chance(0.75) ? 'bed' : 'bedroll', x, room.y, 1, 2, 0)
       scatter(['chest', 'weapon-rack'], extras(2))
-      if (room.w >= 4 && room.h >= 5) f.place('table', midX, room.y + room.h - 2)
+      if (room.w >= 4 && room.h >= 5) {
+        const ty = room.y + room.h - 2
+        if (f.place('table', midX, ty)) {
+          f.place('stool', midX - 1, ty, 1, 1, 0)
+          f.place('stool', midX + 1, ty, 1, 1, 0)
+        }
+      }
+      return
+    }
+    case 'armory':
+      // Racks along the walls, armour on stands either side of the far wall, a heap to sort.
+      for (const [x, y, side] of spots(quiet.length ? quiet : [far]))
+        if (random.chance(0.55)) f.place('weapon-rack', x, y, 1, 1, wallRotation[side])
+      flank('armor-stand', 1)
+      scatter(['weapon-pile', 'chest'], extras(1), false)
+      return
+    case 'forge':
+      // The forge on the far wall, its anvil in front, a workbench and fuel along a side wall.
+      if (room.w >= 4 && room.h >= 4 && deepAgainst('forge', far)) {
+        const [ax, ay] = inFront(far, 0, 2)
+        f.place('anvil', ax, ay, 1, 1, wallRotation[far])
+      } else focal('anvil')
+      if (quiet[0] !== undefined) against('workbench', quiet[0])
+      scatter(['firewood', 'barrel', 'weapon-pile'], extras(2))
+      return
+    case 'kitchen': {
+      if (!against('kitchen-counter', far, -1)) focal('oven')
+      const [ox, oy] = onWall(far, 1)
+      f.place('oven', ox, oy, 1, 1, wallRotation[far])
+      if (room.w >= 4 && room.h >= 4) f.place('cauldron', midX, midY, 1, 1, 0)
+      scatter(['sack', 'barrel', 'firewood', 'table'], extras(2))
+      return
+    }
+    case 'prison': {
+      // Cages along the far wall, chains on the side walls, what is left of the last prisoner.
+      for (let o = -Math.floor((across - 1) / 2); o <= Math.ceil((across - 1) / 2); o += 2) {
+        const [x, y] = onWall(far, o)
+        if (inRoom(room, x, y)) f.place('cage', x, y, 1, 1, wallRotation[far])
+      }
+      for (const side of quiet) {
+        const [x, y] = onWall(side, 0)
+        f.place('chains', x, y, 1, 1, wallRotation[side])
+      }
+      scatter(['bones', 'bones'], extras(1), false)
+      // What is left of the last prisoner's bedroll, at its own size (1 × 2: its picture's).
+      const beds: [number, number][] = []
+      for (let x = room.x; x < room.x + room.w; x++)
+        for (let y = room.y; y < room.y + room.h - 1; y++)
+          if (inRoom(room, x, y) && inRoom(room, x, y + 1)) beds.push([x, y])
+      for (let t = 0; t < 8 && beds.length; t++) {
+        const [bx, by] = random.pick(beds)
+        if (f.place('bedroll', bx, by, 1, 2, 0)) break
+      }
+      const [lx, ly] = onWall(firstSide, 1)
+      if (inRoom(room, lx, ly)) f.place('lever', lx, ly, 1, 1, wallRotation[firstSide])
+      return
+    }
+    case 'training': {
+      // Dummies in a row, a target on the far wall, racks to hand, a bench to rest.
+      const [tx, ty] = onWall(far, 0)
+      f.place('archery-target', tx, ty, 1, 1, wallRotation[far])
+      const depth = Math.min(3, (far === 0 || far === 2 ? room.h : room.w) - 2)
+      for (const k of [-2, 0, 2]) {
+        const [x, y] = inFront(far, k, depth)
+        if (inRoom(room, x, y)) f.place('training-dummy', x, y, 1, 1, 0)
+      }
+      if (quiet[0] !== undefined) against('bench', quiet[0])
+      scatter(['weapon-rack'], 1)
       return
     }
     case 'shrine':
-      focal(room.w >= 5 ? 'altar' : 'statue')
+      focal(room.w >= 5 ? 'altar' : theme === 'temple' || theme === 'sandstone' ? 'idol' : 'statue')
       flank('candles', room.w >= 5 ? 2 : 1)
+      if (room.w >= 6 && room.h >= 6) centrePiece(random.chance(0.5) ? 'magic-circle' : 'rug', 1)
+      else if (theme === 'temple' || theme === 'sandstone') scatter(['urn', 'idol'], 1)
       return
     case 'tomb': {
       // Sarcophagi in mirrored rows along the long walls, an aisle down the middle.
+      const tomb = theme === 'mossy' && random.chance(0.4) ? 'coffin' : 'sarcophagus'
       if (room.h >= 4) {
         const rowsY = room.h >= 6 ? [room.y, room.y + room.h - 2] : [room.y]
         for (let i = 0; room.x + 1 + i * 2 <= room.x + room.w - 2; i++) {
@@ -724,23 +945,32 @@ function furnishRoom(room: Room, layout: Layout, f: Furnisher, factor: number, c
           if (a > b) break
           for (const y of rowsY)
             for (const x of a === b ? [a] : [a, b])
-              f.place('sarcophagus', x, y, 1, 2, y === room.y ? 0 : 180)
+              f.place(tomb, x, y, 1, 2, y === room.y ? 0 : 180)
         }
-      } else f.place('sarcophagus', midX, room.y, 1, 2, 0)
+      } else f.place(tomb, midX, room.y, 1, 2, 0)
       scatter(['candles', 'urn', 'web'], extras(1))
       return
     }
     case 'ossuary':
       for (const [x, y, side] of spots([0, 1, 2, 3]))
         if (random.chance(0.45))
-          f.place(random.pick(['bones', 'bones', 'urn']), x, y, 1, 1, wallRotation[side])
+          f.place(random.pick(['bones', 'skull-pile', 'urn']), x, y, 1, 1, wallRotation[side])
       return
     case 'ruin':
       scatter(
-        ['rubble', 'bones', 'web', 'rubble'],
+        ['rubble', 'bones', 'web', 'rubble', 'skull-pile'],
         extras(Math.ceil((room.w * room.h) / 10)),
         false,
       )
+      if (room.w >= 4)
+        f.place(
+          'fallen-pillar',
+          room.x + random.int(0, room.w - 2),
+          room.y + random.int(0, room.h - 1),
+          2,
+          1,
+          random.pick([0, 180]),
+        )
       return
     default:
       scatter(['barrel', 'crate', 'table', 'chest'], extras(1))
@@ -811,9 +1041,12 @@ function roomsAndPassages(options: GeneratorOptions, crypt: boolean): GeneratedM
   const layout = carve(options, rooms, k)
   const { entrance, goal, treasure } = assignRoles(layout)
   openExit(layout, entrance, k)
-  const themes: Room['theme'][] = crypt
-    ? ['tomb', 'tomb', 'tomb', 'ossuary', 'shrine', 'ruin']
-    : ['store', 'shrine', 'library', 'barracks', 'ruin', 'store', 'plain', 'barracks']
+  const theme = options.theme ?? (crypt ? 'crypt' : 'stone')
+  const themes = usesByTheme[theme] ?? usesByTheme[crypt ? 'crypt' : 'stone']!
+  // Its own stream, so the goal's dressing never moves the layout.
+  const goalStyle: GoalStyle = subRng(options.seed, 11).pick(
+    goalStyles[theme] ?? ['altar' as const],
+  )
   for (const room of rooms) {
     if (room.role) continue
     // Neighbours rarely share a purpose.
@@ -841,7 +1074,7 @@ function roomsAndPassages(options: GeneratorOptions, crypt: boolean): GeneratedM
       for (const s of [-1, 0, 1]) f.reserve(cx + dx + (dy ? s : 0), cy + dy + (dx ? s : 0))
     }
   if (crypt) niches(layout, f, factor, random)
-  for (const room of rooms) furnishRoom(room, layout, f, factor, crypt)
+  for (const room of rooms) furnishRoom(room, layout, f, factor, crypt, theme, goalStyle)
 
   // Doors: arches, plain doors, the goal locked, loops and the hidden treasure secret.
   const doors: GeneratedDoor[] = []
@@ -923,6 +1156,7 @@ function roomsAndPassages(options: GeneratorOptions, crypt: boolean): GeneratedM
     id: r.id,
     rects: runsOf(grid.cols, grid.rows, (x, y) => inRoom(r, x, y)),
     ...(r.role ? { role: r.role } : {}),
+    use: r.role === 'goal' && !crypt ? (goalStyle === 'altar' ? 'shrine' : 'throne') : r.theme,
   }))
   for (let p = 0; p < layout.passages; p++) {
     const rects = runsOf(grid.cols, grid.rows, (x, y) => layout.passage[y * grid.cols + x] === p)
@@ -931,7 +1165,7 @@ function roomsAndPassages(options: GeneratorOptions, crypt: boolean): GeneratedM
   return {
     ...map,
     ...(crypt ? { variant: 'catacomb' as const } : {}),
-    rooms: generatedRooms,
+    rooms: sealSecretDoors(generatedRooms, doors, grid.cols, grid.rows),
     doors,
     props: f.props,
     notes,
@@ -1065,7 +1299,7 @@ function nave(options: GeneratorOptions): GeneratedMap {
   return {
     ...emptyMap(options, grid),
     variant: 'nave',
-    rooms,
+    rooms: sealSecretDoors(rooms, doors, cols, rows),
     doors,
     props: f.props,
     notes,

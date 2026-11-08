@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button, Select, Switch, Textarea, TextInput } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { Crosshair, Move, RotateCcw, RotateCw, Sparkles, Trash2, X } from 'lucide-react'
@@ -19,7 +19,7 @@ import {
   type Scene,
 } from '../domain/model'
 import { propById } from '../domain/props'
-import { tokenColorValues } from './palette'
+import { paintedScene, tokenColorValues } from './palette'
 import { PropIcon } from './prop-art'
 import { AreaOptions } from './kit'
 
@@ -225,7 +225,7 @@ function TokenFields({ item, combatant, onPatch }: InspectorProps & { item: Item
   )
 }
 
-function PropFields({ item, onPatch }: InspectorProps & { item: ItemOf<'prop'> }) {
+function PropFields({ item, scene, onPatch }: InspectorProps & { item: ItemOf<'prop'> }) {
   const { t } = useTranslation()
   const definition = propById.get(item.data.prop)
   const rotate = (by: number) => {
@@ -243,6 +243,7 @@ function PropFields({ item, onPatch }: InspectorProps & { item: ItemOf<'prop'> }
           w={definition?.w ?? item.w}
           h={definition?.h ?? item.h}
           size={56}
+          painted={paintedScene(scene)}
         />
       </div>
       <div className="tt-row">
@@ -362,6 +363,20 @@ function EventFields({
 }: InspectorProps & { item: ItemOf<'event'> }) {
   const { t, i18n } = useTranslation()
   const actions: EventActions = item.secret?.actions ?? {}
+  // Firing swaps "Activate" for "Reset" (and back): the focus moves to the key that replaces the
+  // one pressed, so the keyboard stays in the inspector instead of falling to the page.
+  const head = useRef<HTMLDivElement>(null)
+  const handoff = useRef(false)
+  const fired = Boolean(item.data.fired)
+  useEffect(() => {
+    if (busy || !handoff.current) return
+    handoff.current = false
+    head.current?.querySelector<HTMLButtonElement>('button')?.focus()
+  }, [busy, fired])
+  const fire = (reset: boolean) => {
+    handoff.current = true
+    onFire(reset)
+  }
   const save = (next: EventActions) => {
     const clean = Object.fromEntries(
       Object.entries(next).filter(
@@ -397,8 +412,8 @@ function EventFields({
   const list = new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(parts)
   return (
     <>
-      <div className="tt-event-head">
-        {item.data.fired ? (
+      <div className="tt-event-head" ref={head}>
+        {fired ? (
           <div className="tt-fired">
             <span className="tt-seal is-struck" aria-hidden="true">
               <Sparkles size={16} />
@@ -407,7 +422,7 @@ function EventFields({
             <button
               type="button"
               className="tt-text-action"
-              onClick={() => onFire(true)}
+              onClick={() => fire(true)}
               disabled={busy}
             >
               {t('tabletop.event.reset')}
@@ -416,7 +431,7 @@ function EventFields({
         ) : (
           <Button
             leftSection={<Sparkles size={18} aria-hidden="true" />}
-            onClick={() => onFire(false)}
+            onClick={() => fire(false)}
             disabled={busy}
           >
             {t('tabletop.event.fire')}

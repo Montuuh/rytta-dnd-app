@@ -4,7 +4,9 @@ import {
   Grid,
   loopArea,
   mapKinds,
+  mapThemes,
   reach,
+  recipeOf,
   sceneContent,
   T,
   traceLoops,
@@ -14,6 +16,7 @@ import {
   type MapKind,
 } from './index'
 import { itemSchema } from '../model'
+import { propById } from '../props'
 
 const base = (
   kind: MapKind,
@@ -59,7 +62,9 @@ describe('ADR 032 map generator', () => {
           expect(prop.y).toBeGreaterThanOrEqual(0)
           expect(prop.x + prop.w).toBeLessThanOrEqual(32)
           expect(prop.y + prop.h).toBeLessThanOrEqual(24)
-          if (prop.prop !== 'bridge') expect(walkable(grid.get(prop.x, prop.y))).toBe(true)
+          // Bridges span water and lily pads float on it (RYT-068).
+          if (prop.prop !== 'bridge' && prop.prop !== 'lily-pads')
+            expect(walkable(grid.get(prop.x, prop.y)), `${kind} ${seed} ${prop.prop}`).toBe(true)
         }
         // Every room and passage is reachable from the first room.
         const rooms = a.rooms.filter((r) => r.id !== 'yard')
@@ -110,6 +115,35 @@ describe('ADR 032 map generator', () => {
         Array.from(generateMap(base(kind, 2)).tiles),
       )
     })
+
+  it('leaves the square behind a secret door out of every reveal area (RYT-068)', () => {
+    let checked = 0
+    for (const kind of ['dungeon', 'crypt'] as const)
+      for (const seed of [3, 7, 13, 42, 77, 2024, 4242]) {
+        const map = generateMap(base(kind, seed, { cols: 47, rows: 26, secret: true }))
+        const inArea = (x: number, y: number) =>
+          map.rooms.filter((r) =>
+            r.rects.some(([rx, ry, w, h]) => x >= rx && x < rx + w && y >= ry && y < ry + h),
+          )
+        for (const door of map.doors.filter((d) => d.secret)) {
+          const flat = door.rotation === 0
+          const squares = flat
+            ? [
+                [Math.floor(door.x), door.y - 1],
+                [Math.floor(door.x), door.y],
+              ]
+            : [
+                [door.x - 1, Math.floor(door.y)],
+                [door.x, Math.floor(door.y)],
+              ]
+          const areas = squares.map(([x, y]) => inArea(x!, y!).map((r) => r.id))
+          // One side is the room behind the secret door; the passage's square is in no area.
+          expect(areas.flat(), `${kind} ${seed} ${door.x},${door.y}`).toEqual([door.rooms[0]])
+          checked++
+        }
+      }
+    expect(checked).toBeGreaterThan(3)
+  })
 
   it('dungeons follow the map doctrine: a way in, a goal far away, loops, purposeful doors', () => {
     for (const seed of [3, 7, 42, 77, 2024]) {
@@ -277,7 +311,20 @@ describe('prop orientation (RYT-066)', () => {
         const map = generateMap(base(kind, seed))
         const grid = gridOf(map)
         for (const p of map.props.filter((p) =>
-          ['bookshelf', 'hearth', 'weapon-rack'].includes(p.prop),
+          [
+            'bookshelf',
+            'hearth',
+            'weapon-rack',
+            // RYT-068: the new props that stand against a wall.
+            'desk',
+            'kitchen-counter',
+            'oven',
+            'keg-rack',
+            'workbench',
+            'banner',
+            'chains',
+            'wardrobe',
+          ].includes(p.prop),
         )) {
           const [dx, dy] = back(p.rotation)
           // The square just behind the middle of the prop's back is not floor.
@@ -296,8 +343,16 @@ describe('prop orientation (RYT-066)', () => {
       let checked = 0
       for (const seed of seeds) {
         const map = generateMap(base(kind, seed))
+        // Tables, and the squares of desks (RYT-068: a study's chair faces its desk).
         const tables = new Set(
-          map.props.filter((p) => p.prop === 'table').map((p) => `${p.x}:${p.y}`),
+          map.props
+            .filter((p) => p.prop === 'table' || p.prop === 'desk')
+            .flatMap((p) =>
+              Array.from(
+                { length: p.w * p.h },
+                (_, i) => `${p.x + (i % p.w)}:${p.y + Math.floor(i / p.w)}`,
+              ),
+            ),
         )
         for (const chair of map.props.filter((p) => p.prop === 'chair')) {
           const [dx, dy] = back(chair.rotation)
@@ -310,5 +365,46 @@ describe('prop orientation (RYT-066)', () => {
       }
       expect(checked, kind).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('map themes (RYT-068)', () => {
+  it('every theme lays out a connected map furnished only with library props', () => {
+    for (const kind of mapKinds)
+      for (const theme of mapThemes[kind])
+        for (const seed of [3, 77, 4242]) {
+          const map = generateMap(base(kind, seed, { theme }))
+          expect(map.options.theme, `${kind} ${theme}`).toBe(theme)
+          for (const prop of map.props) expect(propById.has(prop.prop), prop.prop).toBe(true)
+          const grid = gridOf(map)
+          const rooms = map.rooms.filter((r) => r.id !== 'yard')
+          const start = cellsOf(rooms[0]!.rects).find(([x, y]) => walkable(grid.get(x, y)))!
+          const reached = reach(grid, start[0], start[1])
+          for (const room of rooms)
+            expect(
+              cellsOf(room.rects).some(([x, y]) => reached[y * 32 + x]),
+              `${kind} ${theme} ${seed} ${room.id}`,
+            ).toBe(true)
+        }
+  })
+
+  it('reads a missing or foreign theme as the kind default, and stores it in the recipe', () => {
+    expect(generateMap(base('cave', 5)).options.theme).toBe('rock')
+    expect(generateMap(base('cave', 5, { theme: 'oak' })).options.theme).toBe('rock')
+    expect(recipeOf(generateMap(base('forest', 5, { theme: 'winter' })).options)).toMatchObject({
+      kind: 'forest',
+      theme: 'winter',
+      version: 3,
+    })
+  })
+
+  it('dresses rooms by their purpose with the new props', () => {
+    const seen = new Set<string>()
+    for (const theme of mapThemes.dungeon)
+      for (let seed = 1; seed < 60; seed += 3)
+        for (const p of generateMap(base('dungeon', seed, { theme, cols: 40, rows: 30 })).props)
+          seen.add(p.prop)
+    for (const prop of ['forge', 'anvil', 'cage', 'desk', 'throne', 'banner', 'training-dummy'])
+      expect(seen.has(prop), prop).toBe(true)
   })
 })

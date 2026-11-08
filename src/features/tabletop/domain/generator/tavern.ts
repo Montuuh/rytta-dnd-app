@@ -89,21 +89,30 @@ export function tavern(options: GeneratorOptions): GeneratedMap {
     props.push({ prop, x, y, w, h, rotation })
     return true
   }
-  // Keep doorways clear.
+  // Keep doorways clear, and the square in front of them on both sides.
   for (const d of doors) {
     if (d.rotation === 90) {
-      taken.add(`${d.x - 1}:${Math.floor(d.y)}`).add(`${d.x}:${Math.floor(d.y)}`)
+      const y = Math.floor(d.y)
+      for (const x of [d.x - 2, d.x - 1, d.x, d.x + 1]) taken.add(`${x}:${y}`)
     } else {
-      taken.add(`${Math.floor(d.x)}:${d.y - 1}`).add(`${Math.floor(d.x)}:${d.y}`)
+      const x = Math.floor(d.x)
+      for (const y of [d.y - 2, d.y - 1, d.y, d.y + 1]) taken.add(`${x}:${y}`)
     }
   }
   // Hall: the bar along the kitchen wall, barrels behind it, the hearth, stairs, tables.
   const barLength = Math.max(2, Math.min(5, hall.h - 2))
   const barX = hall.x + hall.w - 2
   place('bar', barX, hall.y + 1, 1, barLength)
-  for (let j = hall.y + 1; j < hall.y + 1 + barLength; j += 2) place('barrel', barX + 1, j)
+  // Behind the bar: a rack of kegs against the wall, then barrels; stools in front of it.
+  let behind = hall.y + 1
+  if (barLength >= 3 && place('keg-rack', barX + 1, behind, 1, 2, 90)) behind += 2
+  for (let j = behind; j < hall.y + 1 + barLength; j += 2) place('barrel', barX + 1, j)
+  for (let j = hall.y + 1; j < hall.y + 1 + barLength; j += 2) place('stool', barX - 1, j)
   // Its back against the west wall (rotation turns the back clockwise from north).
-  place('hearth', hall.x, hall.y + Math.max(0, Math.floor(hall.h / 2) - 1), 1, 2, 270)
+  const hearthY = hall.y + Math.max(0, Math.floor(hall.h / 2) - 1)
+  place('hearth', hall.x, hearthY, 1, 2, 270)
+  // A rug before the fire when the hall has room for it.
+  if (hall.w >= 9 && hall.h >= 5) place('rug', hall.x + 1, hearthY, 2, 2, random.int(0, 3) * 90)
   place('stairs', hall.x, hall.y + hall.h - 1, 1, 1, 0)
   const tableStep = (factor > 1.2 ? 3 : factor < 0.8 ? 4 : 3) + (hall.w * hall.h > 600 ? 1 : 0)
   for (let tx = hall.x + 2; tx < barX - 1; tx += tableStep)
@@ -115,12 +124,17 @@ export function tavern(options: GeneratorOptions): GeneratedMap {
       place('chair', tx + 1, ty, 1, 1, 90)
       if (random.chance(0.5)) place('chair', tx, ty + 1, 1, 1, 180)
     }
-  // Kitchen: an oven on the far wall, a work table, stores.
-  place('hearth', kitchen.x + kitchen.w - 2, kitchen.y, 2, 1, 0)
+  // Kitchen: the oven and a counter along the far wall, the pot on the fire, a work table, stores.
+  place('oven', kitchen.x + kitchen.w - 1, kitchen.y, 1, 1, 0)
+  if (!place('kitchen-counter', kitchen.x + kitchen.w - 3, kitchen.y, 2, 1, 0))
+    place('hearth', kitchen.x + kitchen.w - 3, kitchen.y, 2, 1, 0)
+  place('firewood', kitchen.x + kitchen.w - 1, kitchen.y + 1)
   place('table', kitchen.x + Math.floor(kitchen.w / 2), kitchen.y + Math.floor(kitchen.h / 2))
+  place('cauldron', kitchen.x + 1, kitchen.y + Math.floor(kitchen.h / 2))
   place('barrel', kitchen.x, kitchen.y)
   place('sack', kitchen.x + kitchen.w - 1, kitchen.y + kitchen.h - 1)
-  // Storeroom: crates, barrels and sacks along the walls.
+  // Storeroom: a keg rack, then crates, barrels and sacks along the walls.
+  place('keg-rack', store.x, store.y + store.h - 1, 2, 1, 180)
   const goods = Math.max(3, Math.round(((store.w * store.h) / 4) * factor))
   for (let n = 0, tries = 0; n < goods && tries < goods * 10; tries++) {
     const edge = random.int(0, 1)
@@ -128,19 +142,30 @@ export function tavern(options: GeneratorOptions): GeneratedMap {
     const y = edge ? random.int(store.y, store.y + store.h - 1) : store.y + store.h - 1
     if (place(random.pick(['crate', 'barrel', 'sack', 'crate']), x, y)) n++
   }
-  // Guest rooms: a bed and a chest.
-  for (const guest of guests) {
+  // Guest rooms: a bed and a chest; a wardrobe and a rug when there is room, one with a bath.
+  guests.forEach((guest, g) => {
     place('bed', guest.x, guest.y, 1, 2)
     place('chest', guest.x, guest.y + 2 < guest.y + guest.h ? guest.y + 2 : guest.y + guest.h - 1)
     if (guest.w >= 3) place('table', guest.x + guest.w - 1, guest.y)
-  }
-  // The yard.
+    if (guest.w >= 5) place('wardrobe', guest.x + guest.w - 3, guest.y, 2, 1, 0)
+    if (guest.w >= 4 && guest.h >= 4) place('rug', guest.x + 1, guest.y + guest.h - 2, 2, 2, 0)
+    if (g === guests.length - 1 && guest.w >= 4 && guest.h >= 3)
+      place('bathtub', guest.x + guest.w - 1, guest.y + guest.h - 2, 1, 2, 0)
+  })
+  // The yard: the well, a wagon or a cart, hay and firewood by the wall, a fence at the edge.
   const yardTop = by + bh
   place('well', Math.max(0, fx - 3), Math.min(rows - 1, yardTop + 1))
-  place('cart', Math.min(cols - 2, fx + 3), Math.min(rows - 1, yardTop))
+  if (rows - yardTop < 3 || !place('wagon', Math.min(cols - 3, fx + 3), yardTop, 2, 3, 0))
+    place('cart', Math.min(cols - 2, fx + 3), Math.min(rows - 1, yardTop))
+  place('lantern-post', Math.max(0, fx - 1), Math.min(rows - 1, yardTop))
+  place('signpost', Math.min(cols - 1, fx + 2), rows - 1)
+  place('hay-bale', bx, yardTop)
+  place('firewood', bx + 1, yardTop)
+  for (let x = bx + 3; x + 1 < fx - 3; x += 2)
+    if (random.chance(0.6)) place('fence', x, rows - 1, 2, 1, 0)
   for (let n = 0; n < Math.round(4 * factor); n++)
     place(
-      random.pick(['bush', 'barrel', 'rock']),
+      random.pick(['bush', 'barrel', 'rock', 'hay-bale']),
       random.int(0, cols - 1),
       random.int(yardTop, rows - 1),
     )
@@ -164,8 +189,16 @@ export function tavern(options: GeneratorOptions): GeneratedMap {
       ...areas.map((a) => ({
         id: a.id,
         rects: [[a.x, a.y, a.w, a.h] as [number, number, number, number]],
+        use:
+          a === hall
+            ? ('hall' as const)
+            : a === kitchen
+              ? ('kitchen' as const)
+              : a === store
+                ? ('cellar' as const)
+                : ('guest' as const),
       })),
-      yardRoom,
+      { ...yardRoom, use: 'yard' as const },
     ],
     doors,
     props,

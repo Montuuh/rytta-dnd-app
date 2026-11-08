@@ -1,4 +1,4 @@
-import type { AreaData, CreatureSize, Item, Room } from './model'
+import type { AreaData, CreatureSize, FogOp, Item, Room } from './model'
 
 export type Point = readonly [number, number]
 export const feetPerSquare = 5
@@ -199,6 +199,33 @@ export const roomAt = (rooms: readonly Room[], p: Point) =>
     room.rects.some(([x, y, w, h]) => p[0] >= x && p[0] < x + w && p[1] >= y && p[1] < y + h),
   )
 
+/** The two squares a door on a square's edge joins (a flat door: above and below it). */
+export function doorSquares(door: { x: number; y: number; rotation: number }) {
+  const flat = door.rotation % 180 === 0
+  return flat
+    ? ([
+        [Math.floor(door.x), Math.round(door.y) - 1],
+        [Math.floor(door.x), Math.round(door.y)],
+      ] as const)
+    : ([
+        [Math.round(door.x) - 1, Math.floor(door.y)],
+        [Math.round(door.x), Math.floor(door.y)],
+      ] as const)
+}
+
+/**
+ * RYT-068: whether a room op left an area revealed: the last op on its squares decides, else the
+ * fog's base.
+ */
+export function areaRevealed(fog: { base: string; ops: readonly FogOp[] }, room: Room) {
+  const key = JSON.stringify(room.rects)
+  for (let i = fog.ops.length - 1; i >= 0; i--) {
+    const op = fog.ops[i]!
+    if (op.shape === 'rects' && JSON.stringify(op.rects) === key) return op.mode === 'reveal'
+  }
+  return fog.base === 'revealed'
+}
+
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
@@ -209,4 +236,44 @@ export function snapItem(x: number, y: number, w: number, h: number) {
     return [Math.round(x / step) * step, Math.round(y / step) * step] as const
   }
   return [Math.round(x), Math.round(y)] as const
+}
+
+type RoomsOp = Extract<FogOp, { shape: 'rects' }>
+const sameRooms = (a: RoomsOp, b: RoomsOp) => JSON.stringify(a.rects) === JSON.stringify(b.rects)
+
+/**
+ * RYT-068: room reveals still in force after a later room was hidden again. A revealed room shows a
+ * margin past its squares (its walls), so hiding a room also covers that margin of a revealed
+ * neighbour; the board reveals these rooms' own squares once more. A reveal is in force when no
+ * later hide covers it (the same room hidden, or any hide drawn by hand).
+ */
+export function stillRevealed(ops: readonly FogOp[]): RoomsOp[] {
+  const out: RoomsOp[] = []
+  ops.forEach((op, i) => {
+    if (op.shape !== 'rects' || op.mode !== 'reveal') return
+    const later = ops.slice(i + 1)
+    const covered = later.some(
+      (o) => o.mode === 'hide' && (o.shape !== 'rects' || sameRooms(o, op)),
+    )
+    const roomHidden = later.some((o) => o.mode === 'hide' && o.shape === 'rects')
+    if (!covered && roomHidden) out.push(op)
+  })
+  return out
+}
+
+/**
+ * Room hides still in force: no later reveal can have opened them again (the same room revealed, or
+ * any hand-drawn reveal). The board covers these rooms' own squares again after restoring their
+ * revealed neighbours with their margin, so the shared wall stays in view and nothing behind it.
+ */
+export function stillHidden(ops: readonly FogOp[]): RoomsOp[] {
+  const out: RoomsOp[] = []
+  ops.forEach((op, i) => {
+    if (op.shape !== 'rects' || op.mode !== 'hide') return
+    const reopened = ops
+      .slice(i + 1)
+      .some((o) => o.mode === 'reveal' && (o.shape !== 'rects' || sameRooms(o, op)))
+    if (!reopened) out.push(op)
+  })
+  return out
 }

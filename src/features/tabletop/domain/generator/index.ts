@@ -1,4 +1,5 @@
 import {
+  themeOf,
   generatorVersion,
   type GeneratedMap,
   type GeneratedNote,
@@ -36,6 +37,7 @@ export function normalizeOptions(options: GeneratorOptions): GeneratorOptions {
     cols: Math.max(min.cols, Math.min(maximumSize, Math.round(options.cols))),
     rows: Math.max(min.rows, Math.min(maximumSize, Math.round(options.rows))),
     seed: Math.abs(Math.trunc(options.seed)) % 1_000_000,
+    theme: themeOf(options.kind, options.theme),
     secret: options.secret && (options.kind === 'dungeon' || options.kind === 'crypt'),
     wide: options.wide && options.kind === 'dungeon',
     traps:
@@ -72,6 +74,7 @@ export const recipeOf = (options: GeneratorOptions): Recipe => ({
   kind: options.kind,
   seed: options.seed,
   look: options.look,
+  theme: themeOf(options.kind, options.theme),
   density: options.density,
   secret: options.secret,
   wide: options.wide,

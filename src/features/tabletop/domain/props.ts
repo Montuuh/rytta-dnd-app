@@ -1,4 +1,5 @@
-// RYT-062: the prop library. Every drawing is Rytta's own (ui/prop-art.tsx); sizes in squares.
+// RYT-062: the prop library. Every drawing and picture is Rytta's own (ui/prop-art.tsx, public/tabletop/props);
+// sizes in squares.
 
 export const propCategories = [
   'furniture',
@@ -15,6 +16,8 @@ export interface PropDefinition {
   category: PropCategory
   w: number
   h: number
+  /** RYT-068: only a painted picture, no line drawing (ink maps print the picture in ink). */
+  art?: 'picture'
 }
 
 export const propLibrary: readonly PropDefinition[] = [
@@ -60,6 +63,58 @@ export const propLibrary: readonly PropDefinition[] = [
   { id: 'cart', category: 'structures', w: 2, h: 1 },
   { id: 'tent', category: 'structures', w: 2, h: 2 },
   { id: 'fountain', category: 'structures', w: 2, h: 2 },
+  // RYT-068: props painted with ChatGPT (docs/sprite-art.md); they have no line drawing, so the ink
+  // look shows their picture printed in ink.
+  { id: 'stool', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'bench', category: 'furniture', w: 2, h: 1, art: 'picture' },
+  { id: 'wardrobe', category: 'furniture', w: 2, h: 1, art: 'picture' },
+  { id: 'desk', category: 'furniture', w: 2, h: 1, art: 'picture' },
+  { id: 'throne', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'bathtub', category: 'furniture', w: 1, h: 2, art: 'picture' },
+  { id: 'kitchen-counter', category: 'furniture', w: 2, h: 1, art: 'picture' },
+  { id: 'workbench', category: 'furniture', w: 2, h: 1, art: 'picture' },
+  { id: 'loom', category: 'furniture', w: 2, h: 1, art: 'picture' },
+  { id: 'spinning-wheel', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'banner', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'armor-stand', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'bedroll', category: 'furniture', w: 1, h: 2, art: 'picture' },
+  { id: 'training-dummy', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'archery-target', category: 'furniture', w: 1, h: 1, art: 'picture' },
+  { id: 'keg-rack', category: 'containers', w: 2, h: 1, art: 'picture' },
+  { id: 'hay-bale', category: 'containers', w: 1, h: 1, art: 'picture' },
+  { id: 'firewood', category: 'containers', w: 1, h: 1, art: 'picture' },
+  { id: 'treasure-hoard', category: 'containers', w: 2, h: 2, art: 'picture' },
+  { id: 'weapon-pile', category: 'containers', w: 1, h: 1, art: 'picture' },
+  { id: 'cage', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'chains', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'skull-pile', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'spike-trap', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'pressure-plate', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'coffin', category: 'dungeon', w: 1, h: 2, art: 'picture' },
+  { id: 'gravestone', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'obelisk', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'idol', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'pit', category: 'dungeon', w: 1, h: 1, art: 'picture' },
+  { id: 'fallen-pillar', category: 'dungeon', w: 2, h: 1, art: 'picture' },
+  { id: 'magic-circle', category: 'dungeon', w: 2, h: 2, art: 'picture' },
+  { id: 'oven', category: 'light', w: 1, h: 1, art: 'picture' },
+  { id: 'forge', category: 'light', w: 2, h: 2, art: 'picture' },
+  { id: 'anvil', category: 'structures', w: 1, h: 1, art: 'picture' },
+  { id: 'wagon', category: 'structures', w: 2, h: 3, art: 'picture' },
+  { id: 'rowboat', category: 'structures', w: 1, h: 2, art: 'picture' },
+  { id: 'fence', category: 'structures', w: 2, h: 1, art: 'picture' },
+  // Drawn by Rytta until their catalogue pictures are generated (the import then uses those).
+  { id: 'signpost', category: 'structures', w: 1, h: 1 },
+  { id: 'lantern-post', category: 'light', w: 1, h: 1 },
+  { id: 'market-stall', category: 'structures', w: 2, h: 2 },
+  { id: 'crystal-cluster', category: 'nature', w: 1, h: 1, art: 'picture' },
+  { id: 'boulder', category: 'nature', w: 2, h: 2, art: 'picture' },
+  { id: 'reeds', category: 'nature', w: 1, h: 1, art: 'picture' },
+  { id: 'lily-pads', category: 'nature', w: 1, h: 1, art: 'picture' },
+  { id: 'standing-stone', category: 'nature', w: 1, h: 1, art: 'picture' },
+  { id: 'cactus', category: 'nature', w: 1, h: 1, art: 'picture' },
+  { id: 'dune-grass', category: 'nature', w: 1, h: 1, art: 'picture' },
+  { id: 'mushroom-ring', category: 'nature', w: 2, h: 2, art: 'picture' },
 ]
 
 export const propById = new Map(propLibrary.map((p) => [p.id, p]))

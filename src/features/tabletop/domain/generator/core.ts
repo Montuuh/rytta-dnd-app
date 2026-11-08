@@ -1,3 +1,5 @@
+import { doorSquares } from '../geometry'
+
 // ADR 032 map generator: seeded, deterministic and original. Positions are in squares.
 // Generator v2 (RYT-063) follows the map doctrine in docs/map-doctrine.md: loops, a way in, a goal,
 // rooms with a purpose, readable walls. Techniques are public (see docs/research.md); code is Rytta's.
@@ -8,12 +10,36 @@ export const mapLooks = ['ink', 'painted'] as const
 export type MapLook = (typeof mapLooks)[number]
 export const densities = ['sparse', 'normal', 'dense'] as const
 export type Density = (typeof densities)[number]
-/** v2 lays out new maps for old seeds; stored scenes keep their painted map. */
-export const generatorVersion = 2
+/**
+ * v2 lays out new maps for old seeds; v3 (RYT-068) adds themes and furnishes rooms with the new
+ * props. Stored scenes keep their painted map.
+ */
+export const generatorVersion = 3
+
+/**
+ * RYT-068: what a place is built of. The first theme of each kind is its default. A theme changes
+ * the painted materials (floors, walls, water, decals, light) and part of the furniture or plants.
+ */
+export const mapThemes = {
+  dungeon: ['stone', 'ruins', 'temple', 'sandstone', 'dwarven', 'ice', 'volcanic'],
+  crypt: ['crypt', 'mossy', 'marble'],
+  cave: ['rock', 'damp', 'crystal', 'ice', 'volcanic'],
+  forest: ['forest', 'autumn', 'meadow', 'swamp', 'winter'],
+  tavern: ['oak', 'walnut', 'winter'],
+} as const satisfies Record<MapKind, readonly string[]>
+export type MapTheme = (typeof mapThemes)[MapKind][number]
+
+/** The theme a map uses: the one asked for when the kind has it, else the kind's default. */
+export const themeOf = (kind: MapKind, theme?: string | null): MapTheme => {
+  const list: readonly string[] = mapThemes[kind]
+  return (theme && list.includes(theme) ? theme : list[0]) as MapTheme
+}
 
 export interface GeneratorOptions {
   kind: MapKind
   look: MapLook
+  /** RYT-068; missing on v2 recipes, which read as the kind's default theme. */
+  theme?: MapTheme
   cols: number
   rows: number
   seed: number
@@ -82,7 +108,32 @@ export interface GeneratedRoom {
   id: string
   rects: [number, number, number, number][]
   role?: RoomRole
+  /** What the room is used for (store, library, kitchen…): the painter picks its floor by it. */
+  use?: RoomUse
 }
+/** Room purposes the generators furnish (RYT-063/068). */
+export type RoomUse =
+  | 'store'
+  | 'shrine'
+  | 'library'
+  | 'barracks'
+  | 'ruin'
+  | 'plain'
+  | 'tomb'
+  | 'ossuary'
+  | 'lord'
+  | 'armory'
+  | 'forge'
+  | 'kitchen'
+  | 'prison'
+  | 'study'
+  | 'training'
+  | 'throne'
+  | 'hall'
+  | 'cellar'
+  | 'guest'
+  | 'bath'
+  | 'yard'
 export interface GeneratedNote {
   key: NoteKey
   x: number
@@ -255,6 +306,44 @@ export function distances(grid: Grid, starts: number[], passable: (t: Tile) => b
     }
   }
   return dist
+}
+
+/**
+ * RYT-068: the passage square just behind a secret door belongs to no reveal area. Revealing the
+ * passage then shows its dead end and stops short of the door (the margin and the fog's blur reach
+ * about 0.7 of a square), so nothing behind a secret door shows; revealing the room shows its wall
+ * across the doorway. The DM's editor reveals that square once both sides are revealed.
+ */
+export function sealSecretDoors(
+  rooms: GeneratedRoom[],
+  doors: readonly GeneratedDoor[],
+  cols: number,
+  rows: number,
+): GeneratedRoom[] {
+  const sealed = new Map<string, Set<number>>()
+  for (const door of doors) {
+    if (!door.secret) continue
+    const passage = rooms.find((r) => r.id === door.rooms[1])
+    if (!passage) continue
+    const cells = sealed.get(passage.id) ?? cellsOf(passage, cols)
+    for (const [x, y] of doorSquares(door)) cells.delete(y * cols + x)
+    sealed.set(passage.id, cells)
+  }
+  return rooms
+    .map((room) => {
+      const cells = sealed.get(room.id)
+      return cells
+        ? { ...room, rects: runsOf(cols, rows, (x, y) => cells.has(y * cols + x)) }
+        : room
+    })
+    .filter((room) => room.rects.length > 0)
+}
+
+const cellsOf = (room: GeneratedRoom, cols: number) => {
+  const cells = new Set<number>()
+  for (const [x, y, w, h] of room.rects)
+    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) cells.add(j * cols + i)
+  return cells
 }
 
 /** Row runs of the squares in a set, as rectangles (for rooms of irregular shape). */

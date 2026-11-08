@@ -2654,6 +2654,48 @@
       ]
     },
     {
+      "id": "RYT-067",
+      "title": "Single-style bestiary art: fit review, ChatGPT catalogue and import",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-053", "RYT-066"],
+      "sources": [
+        "User 2026-11-06: rate every bestiary image from 1 to 10 by how well it fits its creature, prefer art over photos of real animals, and give an Excel with a ChatGPT prompt, the folder and the file name of each picture.",
+        "User 2026-11-06: prepare the import of the generated pictures into the bestiary.",
+        "OpenAI Terms of Use: the user owns the output (docs/sprite-art.md)."
+      ],
+      "scope": "Score the 330 bundled pictures by eye (1 to 10) with a review each; an Excel and CSV catalogue, worst fit first, with one shared prompt style, the file name and the path of every replacement; an import that turns each saved picture into the bestiary image and thumbnail, credits it to Rytta (origin generated), keeps the replaced source and logs checksum and C2PA provenance; the viewer credits the painted pictures.",
+      "acceptance": [
+        "Every SRD creature has a score, a review, a prompt, a file name and a path; rows go from the worst fit to the best and keep the status the author sets.",
+        "Prompts share one style and never name an artist, studio, book or product.",
+        "The import refuses unknown names, pictures under 512px and pictures far from square; it writes the 720px image and the 128px thumbnail, the credit, the selection with the replaced source and the provenance log, and skips unchanged sources.",
+        "The viewer shows painted pictures with author Rytta, licence © Rytta, the credits page as source and a note naming ChatGPT image generation, in English and Spanish.",
+        "Sources stay out of git and a rebuild without them keeps the imported art."
+      ],
+      "validation": [
+        "import run on an isolated copy with valid and invalid pictures",
+        "npm run check",
+        "viewer at 390px and tablet with an imported sample",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/030-bestiary-art.md",
+        "scripts/bestiary/README.md",
+        "art/bestiary/catalogue.csv",
+        "src/features/bestiary/domain/content.test.ts",
+        "docs/evidence/RYT-067/validation.md",
+        "docs/evidence/RYT-067/viewer-es-mobile.png",
+        "docs/evidence/RYT-067/viewer-en-tablet.png",
+        "docs/evidence/ui-review/ryt-067/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
       "id": "RYT-068",
       "title": "Tabletop: the whole sprite catalogue imported, map themes and textured painted maps",
       "priority": "P2",

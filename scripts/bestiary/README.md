@@ -39,3 +39,25 @@ a thumbnail crop focus); `art-commons.json` keeps the Commons metadata of the ch
 scripts/bestiary/art-commons.json --wesnoth <wesnoth-dir> <commit> --icons <icons-dir> <commit>`
    writes the images, `art.json` and the credits page, then `npx vitest run src/features/bestiary` checks
    coverage and licences. Wikimedia rate-limits anonymous clients; the scripts pace their calls.
+
+### Single-style replacements painted in ChatGPT
+
+`art-review.json` scores how well each bundled picture fits its creature (1 = unrepresentative and far
+from a fantasy RPG look, 10 = a perfect illustration; reviewed by eye on 2026-11-06) and holds the
+subject of the picture that replaces it. `python3 -I scripts/bestiary/art_catalogue.py` writes
+`art/bestiary/bestiary-art-catalogue.xlsx` (a tracker: the current picture, the creature, the file name,
+an editable Status and Notes, the prompt, and a Progress sheet that counts the statuses) and
+`art/bestiary/catalogue.csv`: one row per creature from the worst fit to the best, with the prompt to
+paste in ChatGPT and the path to save the picture at, `art/bestiary/source/<creature id>.png`. The
+author paints them by hand under the rules of `docs/sprite-art.md` (no artist or product names, no
+third-party references). Edit the review file or the script, not the outputs; running it again keeps
+each row's status (read from the Excel file) and marks saved pictures `generated`.
+
+`python3 -I scripts/bestiary/import_art.py` (`--check` only reports) imports every saved picture: it
+refuses names that are not creature ids, pictures under 512px and pictures far from square, writes the
+720px image and the 128px thumbnail, credits the picture to Rytta (`origin: generated`), records the
+replaced source under `replaced` in `art-selection.json`, logs the source's checksum and C2PA provenance
+in `art-generated.json` and rewrites the credits page and the catalogue. Unchanged sources are skipped.
+The PNG sources stay out of git (about 2 MB each); without them `build_images.py` keeps the imported
+renditions. To bring back the replaced art, restore its selection entry from `replaced` and rebuild, or
+restore its two WebP files and `art.json` entry from git.

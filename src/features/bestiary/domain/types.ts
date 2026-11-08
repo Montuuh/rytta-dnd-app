@@ -171,11 +171,11 @@ export type MonsterBodies = { monsters: Record<string, StatBlock>; traits: Libra
 
 /**
  * Bundled art for one SRD creature (RYT-053, ADR 030): an openly licensed Wikimedia Commons file, a
- * Battle for Wesnoth portrait (GPL) or a game-icons.net icon (CC BY), resized by
- * `scripts/bestiary/build_images.py` and cropped to a square for the thumbnail. Its credit is shown
- * wherever the full image is shown.
+ * Battle for Wesnoth portrait (GPL), a game-icons.net icon (CC BY) or, since RYT-067, an illustration
+ * painted for Rytta with ChatGPT (`scripts/bestiary/import_art.py`), resized and cropped to a square for
+ * the thumbnail. Its credit is shown wherever the full image is shown.
  */
-export const artOrigins = ['commons', 'wesnoth', 'game-icons'] as const
+export const artOrigins = ['commons', 'wesnoth', 'game-icons', 'generated'] as const
 export const creatureArtSchema = z.object({
   origin: z.enum(artOrigins),
   title: z.string().min(1).max(240),

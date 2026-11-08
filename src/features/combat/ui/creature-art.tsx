@@ -436,7 +436,9 @@ function ArtViewer({
                 </div>
               </dl>
               <Text size="sm" c="dimmed" className="bst-art-note">
-                {t('bestiary.art.adapted')}
+                {t(
+                  credit.origin === 'generated' ? 'bestiary.art.generated' : 'bestiary.art.adapted',
+                )}
               </Text>
             </>
           ) : (

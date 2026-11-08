@@ -378,7 +378,10 @@ export const bestiaryEn = {
   'bestiary.art.origin.commons': 'Wikimedia Commons',
   'bestiary.art.origin.wesnoth': 'Battle for Wesnoth',
   'bestiary.art.origin.game-icons': 'game-icons.net',
+  'bestiary.art.origin.generated': 'Rytta’s art credits',
   'bestiary.art.adapted': 'Resized by Rytta; the thumbnail is a square crop.',
+  'bestiary.art.generated':
+    'Painted for Rytta with ChatGPT image generation (OpenAI) and resized by Rytta.',
   'bestiary.art.newTab': '(opens in a new tab)',
   'bestiary.art.clearFailed': 'Couldn’t remove the image. Try again.',
   'bestiary.art.removeAsk': 'Remove image…',

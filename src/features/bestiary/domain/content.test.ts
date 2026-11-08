@@ -140,6 +140,28 @@ describe('ADR 030 bundled creature art', () => {
         expect(credit.source, id).toMatch(/^https:\/\/commons\.wikimedia\.org\//)
       if (credit.origin === 'wesnoth') expect(credit.license).toBe('GPL-2.0-or-later')
       if (credit.origin === 'game-icons') expect(credit.license).toBe('CC BY 3.0')
+      // RYT-067: illustrations painted for Rytta credit the project and point at the credits page.
+      if (credit.origin === 'generated') {
+        expect(credit).toMatchObject({ author: 'Rytta', license: '© Rytta' })
+        expect(credit.source).toMatch(/\/docs\/bestiary-art-credits\.md$/)
+      }
     }
+  })
+
+  it('accepts an illustration painted for Rytta and refuses an unknown origin', () => {
+    const generated = {
+      origin: 'generated',
+      title: 'Rytta bestiary illustration: owlbear',
+      source: 'https://github.com/Montuuh/rytta-dnd-app/blob/main/docs/bestiary-art-credits.md',
+      author: 'Rytta',
+      license: '© Rytta',
+      width: 720,
+      height: 720,
+    }
+    expect(creatureArtCatalogSchema.safeParse({ owlbear: generated }).success).toBe(true)
+    expect(
+      creatureArtCatalogSchema.safeParse({ owlbear: { ...generated, origin: 'midjourney' } })
+        .success,
+    ).toBe(false)
   })
 })

@@ -78,3 +78,27 @@ over a paid, single-style AI set (2026-11-05).
   its own licence.
 - Not covered: Player-side art for SRD creatures (it would reveal which SRD creature an NPC is),
   replacing images in running fights for Players, and a single art style.
+
+## RYT-067 amendment: one painted style, made by hand in ChatGPT (2026-11-06)
+
+The mix of photos, old artwork, portraits and icons fits the creatures unevenly: reviewed by eye, 204
+of the 330 pictures score 1–3 out of 10 (icons average 1.5, photos 2.7, old artwork 4.1, Wesnoth
+portraits 7.3). The author replaces them, creature by creature, with illustrations painted in ChatGPT
+in one style, under the rules of the sprite art (`docs/sprite-art.md`): made by hand in the ChatGPT app,
+no artist or product names, no third-party references.
+
+- `scripts/bestiary/art-review.json` keeps each picture's score, kind and review and the subject of
+  its replacement; `art_catalogue.py` writes `art/bestiary/bestiary-art-catalogue.xlsx` and
+  `catalogue.csv`, worst fit first, with the shared prompt and the path to save each picture at,
+  `art/bestiary/source/<creature id>.png`.
+- `import_art.py` turns every saved picture into the 720px image and the 128px thumbnail (refusing
+  unknown names, pictures under 512px and pictures far from square), keeps the replaced source under
+  `replaced` in `art-selection.json` so `build_images.py` rebuilds the same art, and logs the source's
+  checksum and C2PA provenance (software agent, model, date) in `art-generated.json`.
+- The credit has a fourth origin, `generated`: author Rytta, licence "© Rytta", source the credits page,
+  whose header names ChatGPT image generation (OpenAI, `gpt-image`). The viewer says the picture was
+  painted for Rytta with ChatGPT image generation and resized. Under OpenAI's Terms of Use the output
+  belongs to the author; a purely generated picture may not be protected by copyright, which is
+  acceptable for this art.
+- The PNG sources (about 2 MB each with their manifest) stay out of git; the shipped WebPs and the
+  provenance log are committed. Without the sources, `build_images.py` keeps the imported renditions.

@@ -1,0 +1,1940 @@
+{
+  "_about": "Fit of the bundled art (ADR 030) to each SRD creature, judged by eye from contact sheets on 2026-11-06, and the subject of the prompt that replaces it. score: 1 = unrepresentative and far from a fantasy RPG look, 10 = a perfect illustration. kind: photo, artwork (painting, engraving, vase, statue), portrait (Battle for Wesnoth) or icon (game-icons.net). Dragons of the chromatic and metallic families take their subject from scripts/bestiary/art_catalogue.py. Read by art_catalogue.py.",
+  "creatures": {
+    "aboleth": [
+      1,
+      "icon",
+      "Abstract tentacles-and-eye icon; no fish body, no row of eyes.",
+      "an aboleth: a huge primeval fish-like aberration with a slimy blue-green body, a long finned tail, four long tentacles and three glowing red eyes stacked one above the other on its head, mucus dripping, hovering"
+    ],
+    "adult-black-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-blue-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-brass-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-bronze-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-copper-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-gold-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-green-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-red-dragon": [
+      8,
+      "portrait",
+      "Good painted red dragon; the same picture serves young, adult and ancient.",
+      null
+    ],
+    "adult-silver-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "adult-white-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "air-elemental": [
+      1,
+      "icon",
+      "Tornado pictogram; no creature.",
+      "an air elemental: a towering swirling vortex of wind and storm cloud with a vague, fierce face and long arms of gusting air, leaves and dust caught in the whirl"
+    ],
+    "allosaurus": [
+      5,
+      "artwork",
+      "Accurate pencil palaeo-drawing; scientific, not fantasy.",
+      "an allosaurus: a large bipedal predatory dinosaur with powerful jaws full of serrated teeth, small horn crests above the eyes and a muscular tail, mid-stride, hunting"
+    ],
+    "ancient-black-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-blue-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-brass-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-bronze-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-copper-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-gold-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-green-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-red-dragon": [
+      7,
+      "portrait",
+      "Good red dragon but the same as the adult; no sense of ancient scale.",
+      null
+    ],
+    "ancient-silver-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "ancient-white-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "animated-armor": [
+      2,
+      "photo",
+      "Museum photo of a knight on a barded horse; not an empty walking armour.",
+      "an animated armor: an empty, dented suit of plate armour walking on its own, darkness visible through the visor and the gaps between plates, a faint eerie glow inside, a longsword in its gauntlet"
+    ],
+    "animated-flying-sword": [
+      2,
+      "photo",
+      "Museum photo of a sword on grey; no magic, no motion.",
+      "an animated flying sword: a longsword flying by itself, point forward, no hand holding it, a faint magical shimmer trailing behind it"
+    ],
+    "animated-rug-of-smothering": [
+      3,
+      "artwork",
+      "Fairy-tale flying carpet with a rider; not a predatory rug.",
+      "a rug of smothering: an ornate patterned rug rising off the floor and curling like a predator about to wrap its prey, its fringed edges reaching out like grasping fingers"
+    ],
+    "ankheg": [
+      6,
+      "portrait",
+      "Painted giant ant; close insectoid stand-in for the burrower.",
+      "an ankheg: a large burrowing insectoid monster with a brown-green chitinous carapace, six legs and huge mandibles dripping acid, bursting up out of churned farmland soil"
+    ],
+    "ankylosaurus": [
+      5,
+      "artwork",
+      "Clean palaeo-illustration; scientific, not fantasy.",
+      "an ankylosaurus: a heavily armoured four-legged dinosaur covered in bony plates and spikes, a massive bone club at the end of its tail"
+    ],
+    "ape": [
+      3,
+      "photo",
+      "Photo of a chimpanzee: right animal, not an illustration.",
+      "an ape: a powerful great ape with dark fur, knuckle-walking, teeth bared in a threat display"
+    ],
+    "archelon": [
+      5,
+      "artwork",
+      "Palaeo painting of the giant turtle; scientific, not fantasy.",
+      "an archelon: a gigantic prehistoric sea turtle with a leathery ridged shell and a hooked beak, swimming"
+    ],
+    "archmage": [
+      9,
+      "portrait",
+      "Painted arch mage with staff; fits the role well.",
+      "an archmage: an elderly human wizard of immense power with a long grey beard, rich embroidered robes and an ornate staff topped by a glowing crystal, swirls of arcane light around his raised hand"
+    ],
+    "assassin": [
+      9,
+      "portrait",
+      "Painted hooded assassin; fits the role well.",
+      "an assassin: a lean hooded killer in dark leather armour, the lower face masked, a poisoned dagger in each hand, crouched and ready to strike"
+    ],
+    "awakened-shrub": [
+      1,
+      "photo",
+      "Photo of an ordinary flowering bush; nothing alive about it.",
+      "an awakened shrub: a small leafy bush come to life, its roots pulling free of the soil as legs, twiggy arms, two tiny glinting eyes among the leaves"
+    ],
+    "awakened-tree": [
+      8,
+      "portrait",
+      "Painted tree creature with a face; a good awakened tree.",
+      "an awakened tree: a large oak that has gained awareness, a bark face with knot-hole eyes, heavy branches as arms, roots stepping out of the ground"
+    ],
+    "axe-beak": [
+      5,
+      "artwork",
+      "Old natural-history plate of a terror bird; right shape, no fantasy.",
+      "an axe beak: a tall flightless bird with long powerful legs, shaggy brown feathers and a huge axe-shaped beak, charging"
+    ],
+    "azer-sentinel": [
+      4,
+      "portrait",
+      "Armoured dwarf with no flame or brass; misses what an azer is.",
+      "an azer sentinel: a dwarf-like humanoid made of living brass, with flames for hair and beard and glowing ember eyes, bronze armour and a red-hot warhammer"
+    ],
+    "baboon": [
+      3,
+      "photo",
+      "Photo of a baboon: right animal, not an illustration.",
+      "a baboon: a baboon with a long muzzle and a mane of fur, crouched on a rock, canines bared"
+    ],
+    "badger": [
+      3,
+      "photo",
+      "Photo of a badger: right animal, not an illustration.",
+      "a badger: a stocky badger with a black-and-white striped face, digging with its strong claws"
+    ],
+    "balor": [
+      4,
+      "artwork",
+      "Demon engraving (Asmodeus); no wings of flame, whip or sword.",
+      "a balor: a towering demon of flame and shadow with huge bat-like wings and a horned head, a flaming whip in one hand and a lightning-shaped longsword in the other, wreathed in fire"
+    ],
+    "bandit": [
+      9,
+      "portrait",
+      "Painted masked bandit; fits the role well.",
+      "a bandit: a rough outlaw with a scarf over the lower face, leather armour, a scimitar and a light crossbow"
+    ],
+    "bandit-captain": [
+      8,
+      "portrait",
+      "Painted outlaw leader; good fit.",
+      "a bandit captain: a confident, scarred outlaw leader in a long coat over studded leather, a scimitar in one hand and a dagger in the other, a feathered hat"
+    ],
+    "barbed-devil": [
+      3,
+      "artwork",
+      "Generic devil engraving; no barbs.",
+      "a barbed devil: a tall, lean humanoid fiend covered in sharp barbs and spikes, long clawed hands and a barbed tail, red-brown hide, a hellish glow"
+    ],
+    "basilisk": [
+      3,
+      "artwork",
+      "Rooster-like woodcut of the myth, not the eight-legged reptile.",
+      "a basilisk: a squat eight-legged reptile with dull brown scales, a row of bony spines, a toothy maw and glowing green eyes whose gaze turns flesh to stone, a small half-petrified animal beside it"
+    ],
+    "bat": [
+      3,
+      "photo",
+      "Photo of a bat: right animal, not an illustration.",
+      "a bat: a small bat in flight, leathery wings spread, big ears"
+    ],
+    "bearded-devil": [
+      2,
+      "artwork",
+      "Engraving of an old man on a crocodile; no tentacle beard or glaive.",
+      "a bearded devil: a humanoid devil with a beard of writhing snake-like tendrils, pointed ears, scaly skin and a forked tail, wielding a saw-toothed glaive"
+    ],
+    "behir": [
+      4,
+      "portrait",
+      "Painted sea serpent; a behir is a many-legged lightning serpent.",
+      "a behir: a long serpentine monster with blue scales and a dozen legs, a crocodile-like head with two horns curving back, lightning crackling in its jaws, coiled"
+    ],
+    "berserker": [
+      9,
+      "portrait",
+      "Painted tattooed axe warrior; fits the role well.",
+      "a berserker: a wild-eyed tribal warrior with tattoos and a fur mantle, swinging a huge greataxe, mid battle cry"
+    ],
+    "black-bear": [
+      3,
+      "photo",
+      "Photo of a black bear: right animal, not an illustration.",
+      "a black bear: a black bear rearing up on its hind legs"
+    ],
+    "black-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "black-pudding": [
+      5,
+      "portrait",
+      "Painted humanoid mud monster; a pudding has no body or face.",
+      "a black pudding: a heaving mass of glistening black ooze with no face, pseudopods reaching out, a dissolving iron shield sinking into it"
+    ],
+    "blink-dog": [
+      2,
+      "icon",
+      "Flat dog-head icon.",
+      "a blink dog: a lean yellow-brown dog with a clever face, flickering with light as it teleports, faint afterimages of itself around it"
+    ],
+    "blood-hawk": [
+      3,
+      "photo",
+      "Photo of an ordinary hawk.",
+      "a blood hawk: a fierce hawk with crimson-red feathers, a hooked beak and sharp talons, diving to attack"
+    ],
+    "blue-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "boar": [
+      3,
+      "photo",
+      "Photo of a wild boar: right animal, not an illustration.",
+      "a boar: a bristly wild boar with long curved tusks, charging"
+    ],
+    "bone-devil": [
+      3,
+      "artwork",
+      "Generic demon engraving; no skeletal body or scorpion tail.",
+      "a bone devil: a tall gaunt devil with dried skin stretched over a skeletal body, a skull-like head, tattered insect-like wings and a scorpion tail with a stinger"
+    ],
+    "brass-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "bronze-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "brown-bear": [
+      3,
+      "photo",
+      "Photo of a brown bear: right animal, not an illustration.",
+      "a brown bear: a huge brown bear standing in shallow water, roaring"
+    ],
+    "bugbear-stalker": [
+      5,
+      "portrait",
+      "Painted hooded orc; not hairy or bear-like.",
+      "a bugbear stalker: a tall, hairy goblinoid with bear-like ears and snout, very long arms and yellow eyes, sneaking with a javelin and a morningstar"
+    ],
+    "bugbear-warrior": [
+      5,
+      "portrait",
+      "Painted orc grunt; not hairy or bear-like.",
+      "a bugbear warrior: a tall, hairy goblinoid with bear-like ears and snout and very long arms, hide armour, a grab hook and a heavy morningstar"
+    ],
+    "bulette": [
+      2,
+      "icon",
+      "Shark-fin icon; no body.",
+      "a bulette: a massive armoured burrowing predator with blue-grey plates and a shark-like dorsal crest, a huge jaw, bursting out of the ground with rocks flying"
+    ],
+    "camel": [
+      3,
+      "photo",
+      "Photo of a camel: right animal, not an illustration.",
+      "a camel: a dromedary camel carrying saddle bags"
+    ],
+    "cat": [
+      3,
+      "photo",
+      "Photo of a Siamese cat on a pedestal.",
+      "a cat: a tabby cat stalking low, tail up"
+    ],
+    "centaur-trooper": [
+      3,
+      "artwork",
+      "Tiny centaur on a Greek vase; reads as pottery.",
+      "a centaur trooper: a centaur with the upper body of a human warrior and the lower body of a horse, leather armour, a pike and a longbow, galloping"
+    ],
+    "chain-devil": [
+      1,
+      "icon",
+      "Chain-link icon; no creature.",
+      "a chain devil: a tall, muscular devil wrapped in barbed chains that move like living tentacles, hooks at their ends, a grim masked face"
+    ],
+    "chimera": [
+      3,
+      "artwork",
+      "Greek plate of the myth's chimera; not the three-headed winged beast.",
+      "a chimera: a winged beast with three heads, a lion, a horned goat and a red dragon, on a lion's body with leathery dragon wings, the dragon head breathing fire"
+    ],
+    "chuul": [
+      6,
+      "portrait",
+      "Painted crustacean monster; close, misses the face tentacles.",
+      "a chuul: a large armoured lobster-like aberration with huge pincers and a cluster of writhing tentacles around its mouth, rising from murky water"
+    ],
+    "clay-golem": [
+      3,
+      "artwork",
+      "Engraving of a man and a golem in a study; small and unclear.",
+      "a clay golem: a massive humanoid sculpted from reddish clay, crude features, tool marks and fingerprints in the clay, slow and heavy"
+    ],
+    "cloaker": [
+      2,
+      "photo",
+      "Photo of a manta ray; only the shape hints at a cloaker.",
+      "a cloaker: a manta-like aberration that looks like a black leather cloak, a whip-like tail, glowing red eyes and a toothy mouth on its pale underside, ivory claws on its wing tips, gliding"
+    ],
+    "cloud-giant": [
+      1,
+      "icon",
+      "Stick-figure giant icon.",
+      "a cloud giant: a towering, regal giant with pale skin and silver hair, fine robes and jewellery, a morningstar, wisps of cloud at its feet"
+    ],
+    "cockatrice": [
+      3,
+      "artwork",
+      "Small dragon relief in a stone lunette; hard to read.",
+      "a cockatrice: a small monster with the head and legs of a rooster, bat-like wings and a lizard tail, scaly patches, aggressive pose"
+    ],
+    "commoner": [
+      9,
+      "portrait",
+      "Painted peasant with pitchfork; fits the role well.",
+      "a commoner: a humble villager in simple homespun clothes holding a pitchfork"
+    ],
+    "constrictor-snake": [
+      3,
+      "photo",
+      "Photo of a boa: right animal, not an illustration.",
+      "a constrictor snake: a large boa coiled around a branch"
+    ],
+    "copper-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "couatl": [
+      3,
+      "artwork",
+      "Aztec codex figure; not a winged feathered serpent.",
+      "a couatl: a graceful feathered serpent with rainbow-coloured feathered wings, iridescent scales and wise golden eyes, flying"
+    ],
+    "crab": [
+      3,
+      "photo",
+      "Photo of a crab: right animal, not an illustration.",
+      "a crab: a crab with raised pincers"
+    ],
+    "crocodile": [
+      3,
+      "photo",
+      "Photo of a crocodile: right animal, not an illustration.",
+      "a crocodile: a crocodile with its jaws open, half out of the water"
+    ],
+    "cultist": [
+      8,
+      "portrait",
+      "Painted dark adept in hood; good fit.",
+      "a cultist: a hooded figure in dark robes with a sickle and a ritual dagger, candlelight on the face"
+    ],
+    "cultist-fanatic": [
+      8,
+      "portrait",
+      "Painted necromancer; good fit.",
+      "a cultist fanatic: a zealous cult leader in ornate dark robes, holding a skull-topped staff, casting dark magic"
+    ],
+    "darkmantle": [
+      2,
+      "icon",
+      "Bell-shaped icon.",
+      "a darkmantle: a small squid-like creature hanging from a cave ceiling like a stalactite, tentacles spreading to drop on its prey, dark grey skin"
+    ],
+    "death-dog": [
+      3,
+      "artwork",
+      "Greek vase scene; the two-headed dog is barely visible.",
+      "a death dog: a lean, mangy two-headed dog, both heads snarling"
+    ],
+    "deer": [
+      3,
+      "photo",
+      "Photo of a stag: right animal, not an illustration.",
+      "a deer: a red deer stag with antlers, alert"
+    ],
+    "deva": [
+      3,
+      "artwork",
+      "Small medieval angel statue; static and colourless.",
+      "a deva: an angel with silvery skin, white feathered wings and luminous eyes, a radiant mace, serene and powerful"
+    ],
+    "dire-wolf": [
+      8,
+      "portrait",
+      "Painted large wolf; good fit.",
+      "a dire wolf: an enormous shaggy wolf with grey-black fur, snarling"
+    ],
+    "djinni": [
+      5,
+      "portrait",
+      "Painted blue desert mage; no whirlwind body.",
+      "a djinni: a towering genie of air with blue skin and a muscular upper body whose lower body dissolves into a swirling whirlwind, fine silks and jewellery, a scimitar"
+    ],
+    "doppelganger": [
+      3,
+      "artwork",
+      "Pre-Raphaelite doubles painting; clever, not a shapeshifter.",
+      "a doppelganger: a grey-skinned shapeshifter with blank white eyes and a featureless face, half of its body mid-transformation into a human traveller"
+    ],
+    "draft-horse": [
+      3,
+      "photo",
+      "Photo of a draft horse: right animal, not an illustration.",
+      "a draft horse: a heavy draft horse in harness"
+    ],
+    "dragon-turtle": [
+      4,
+      "artwork",
+      "Photo of a bronze statue; right idea, not a sea monster.",
+      "a dragon turtle: a gigantic sea monster with a turtle's rugged shell and a dragon's head, emerald and gold scales, breathing scalding steam over the waves"
+    ],
+    "dretch": [
+      3,
+      "artwork",
+      "Demon engraving; not a small pot-bellied dretch.",
+      "a dretch: a small, pot-bellied, repulsive demon with rubbery grey skin, spindly limbs and a dim, cruel face"
+    ],
+    "drider": [
+      1,
+      "icon",
+      "Abstract face-and-legs icon.",
+      "a drider: a creature with the upper body of a dark elf and the lower body of a giant spider, a longsword in one hand, a longbow across its back"
+    ],
+    "druid": [
+      9,
+      "portrait",
+      "Painted elf druid with vines; fits the role well.",
+      "a druid: a nature priest in leaf-and-hide garments holding a wooden staff wrapped in living vines"
+    ],
+    "dryad": [
+      8,
+      "portrait",
+      "Painted winged sylph; close to a dryad.",
+      "a dryad: a fey woman whose skin has the texture of bark and whose hair is leaves and blossoms, dressed in leaves, half emerging from an oak trunk"
+    ],
+    "dust-mephit": [
+      1,
+      "photo",
+      "Photo of a dust devil; no creature.",
+      "a dust mephit: a small, impish, gaunt elemental made of dust and grit, bat-like wings, a dusty trail behind it"
+    ],
+    "eagle": [
+      3,
+      "photo",
+      "Photo of an eagle: right animal, not an illustration.",
+      "an eagle: an eagle swooping, talons out"
+    ],
+    "earth-elemental": [
+      1,
+      "icon",
+      "Blocky golem icon.",
+      "an earth elemental: a hulking humanoid of rock and soil with crystal veins and glowing eyes in a craggy face, rising out of the ground"
+    ],
+    "efreeti": [
+      2,
+      "artwork",
+      "Persian miniature; the efreeti is unreadable.",
+      "an efreeti: a towering fire genie with red-black skin, burning eyes and horns, a muscular torso over a lower body of smoke and flame, brass jewellery, a scimitar"
+    ],
+    "elephant": [
+      3,
+      "photo",
+      "Photo of an elephant: right animal, not an illustration.",
+      "an elephant: an African elephant, trunk raised"
+    ],
+    "elk": [
+      3,
+      "photo",
+      "Photo of an elk: right animal, not an illustration.",
+      "an elk: a bull elk with large antlers"
+    ],
+    "erinyes": [
+      4,
+      "artwork",
+      "Engraving of a fury on a beast; style far from fantasy art.",
+      "an erinyes: a stern fallen-angel devil warrior in dark plate armour with black feathered wings, a longsword and a rope, a grim, beautiful face"
+    ],
+    "ettercap": [
+      1,
+      "icon",
+      "Comic-book mask icon.",
+      "an ettercap: a hunched humanoid with spider-like features, a bulbous abdomen, long spindly arms with claws and a fanged mouth with mandibles, spinning webs"
+    ],
+    "ettin": [
+      1,
+      "icon",
+      "One-faced icon; an ettin has two heads.",
+      "an ettin: a huge, dirty two-headed giant, each head with its own expression, crude hide clothing, a morningstar in each hand"
+    ],
+    "fire-elemental": [
+      8,
+      "portrait",
+      "Painted fire elemental; good fit.",
+      "a fire elemental: a roaring humanoid figure of living flame with arms of fire, embers swirling around it"
+    ],
+    "fire-giant": [
+      5,
+      "artwork",
+      "Engraving of a fire giant with a sword; no colour or armour.",
+      "a fire giant: a huge, broad giant with coal-black skin and flaming red hair and beard, heavy iron armour and a glowing greatsword"
+    ],
+    "flesh-golem": [
+      5,
+      "artwork",
+      "Frankenstein frontispiece; apt but an old engraving.",
+      "a flesh golem: a hulking stitched-together body of mismatched parts with crude stitches and metal bolts, a vacant stare, electric sparks, not gory"
+    ],
+    "flying-snake": [
+      2,
+      "photo",
+      "Photo of a snake with no wings.",
+      "a flying snake: a small, brightly coloured snake with feathered wings, darting through the air"
+    ],
+    "frog": [
+      3,
+      "photo",
+      "Photo of a tree frog: right animal, not an illustration.",
+      "a frog: a green frog on a lily pad"
+    ],
+    "frost-giant": [
+      1,
+      "photo",
+      "Photo of a runestone; no giant.",
+      "a frost giant: a massive giant with ice-blue skin and a braided white-blond beard, furs over scale armour and a greataxe, snow swirling"
+    ],
+    "gargoyle": [
+      3,
+      "photo",
+      "Photo of cathedral gargoyles; architecture, not a creature.",
+      "a gargoyle: a winged stone monster with horns, claws and a grinning fanged face, crouching on a ledge as it comes to life"
+    ],
+    "gelatinous-cube": [
+      7,
+      "artwork",
+      "Clear line drawing of the cube with bones inside; fits, uncoloured.",
+      "a gelatinous cube: a translucent green cube of ooze, bones, coins and a sword suspended inside it"
+    ],
+    "ghast": [
+      2,
+      "icon",
+      "Shambling-figure icon.",
+      "a ghast: a gaunt, emaciated undead with grey leathery skin, a long tongue and sharp claws, crouched, a faint foul green haze around it"
+    ],
+    "ghost": [
+      8,
+      "portrait",
+      "Painted hooded ghost; good fit.",
+      "a ghost: a translucent, pale blue spectral figure of a mournful person in tattered clothes, floating"
+    ],
+    "ghoul": [
+      8,
+      "portrait",
+      "Painted ghoul; good fit.",
+      "a ghoul: a hunched undead with grey skin, a lolling tongue, long claws and feral eyes"
+    ],
+    "giant-ape": [
+      3,
+      "photo",
+      "Photo of a gorilla; no giant scale.",
+      "a giant ape: a colossal ape towering over treetops, beating its chest"
+    ],
+    "giant-badger": [
+      2,
+      "photo",
+      "Photo of an ordinary honey badger; no giant scale.",
+      "a giant badger: a badger the size of a bear, snarling, claws dug into the earth"
+    ],
+    "giant-bat": [
+      3,
+      "photo",
+      "Photo of a fruit bat; no giant scale.",
+      "a giant bat: a bat with a wingspan wider than a man, swooping"
+    ],
+    "giant-boar": [
+      8,
+      "portrait",
+      "Painted huge boar; good fit.",
+      "a giant boar: a huge boar the size of a horse with bristly hide and enormous tusks"
+    ],
+    "giant-centipede": [
+      3,
+      "photo",
+      "Photo of a centipede: right animal, not an illustration.",
+      "a giant centipede: a centipede as long as a man, segmented red-brown armour, venomous mandibles"
+    ],
+    "giant-constrictor-snake": [
+      3,
+      "photo",
+      "Photo of a python: right animal, not an illustration.",
+      "a giant constrictor snake: an enormous python, thick as a man's waist, coiled to strike"
+    ],
+    "giant-crab": [
+      3,
+      "photo",
+      "Photo of a spider crab: right animal, not an illustration.",
+      "a giant crab: a crab the size of a horse with massive pincers"
+    ],
+    "giant-crocodile": [
+      3,
+      "photo",
+      "Photo of a crocodile; no giant scale.",
+      "a giant crocodile: a crocodile longer than a boat, lunging out of the water"
+    ],
+    "giant-eagle": [
+      2,
+      "photo",
+      "Photo of an ordinary eagle; no giant or celestial nature.",
+      "a giant eagle: a majestic eagle large enough to carry a rider, noble intelligent eyes, wings outstretched"
+    ],
+    "giant-elk": [
+      6,
+      "artwork",
+      "Old painting of an Irish elk; apt, scientific style.",
+      "a giant elk: a majestic elk with colossal antlers and a noble presence, a faint golden light about it"
+    ],
+    "giant-fire-beetle": [
+      2,
+      "photo",
+      "Photo of a firefly on a leaf; no glowing glands.",
+      "a giant fire beetle: a dog-sized beetle with a dark red carapace and two glowing orange glands above its eyes shining like lanterns"
+    ],
+    "giant-frog": [
+      2,
+      "photo",
+      "Photo of an ordinary frog.",
+      "a giant frog: a frog as big as a large dog, its long sticky tongue snapping out"
+    ],
+    "giant-goat": [
+      3,
+      "photo",
+      "Photo of a markhor; no giant scale.",
+      "a giant goat: a goat as large as a horse with huge curling horns, on a rocky ledge"
+    ],
+    "giant-hyena": [
+      2,
+      "photo",
+      "Photo of an ordinary hyena (same as hyena).",
+      "a giant hyena: a hyena as big as a pony with matted spotted fur and slavering jaws"
+    ],
+    "giant-lizard": [
+      3,
+      "photo",
+      "Photo of a monitor lizard: right animal, not an illustration.",
+      "a giant lizard: a lizard the size of a horse, scaly and powerful, wearing a simple riding saddle"
+    ],
+    "giant-octopus": [
+      3,
+      "photo",
+      "Photo of an octopus: right animal, not an illustration.",
+      "a giant octopus: a huge octopus with its tentacles spread, a cloud of ink"
+    ],
+    "giant-owl": [
+      2,
+      "photo",
+      "Photo of an ordinary owl; no giant or celestial nature.",
+      "a giant owl: an owl as big as a person with wise eyes and silent wings, calm and noble"
+    ],
+    "giant-rat": [
+      8,
+      "portrait",
+      "Painted giant rat; good fit.",
+      "a giant rat: a dog-sized rat with mangy fur and yellow teeth"
+    ],
+    "giant-scorpion": [
+      3,
+      "photo",
+      "Photo of a scorpion: right animal, not an illustration.",
+      "a giant scorpion: a scorpion the size of a horse, stinger raised, massive claws"
+    ],
+    "giant-seahorse": [
+      5,
+      "artwork",
+      "Old natural-history plate; apt, not fantasy.",
+      "a giant seahorse: a seahorse large enough to ride, armoured ridges, among kelp"
+    ],
+    "giant-shark": [
+      3,
+      "photo",
+      "Photo of a great white; no giant scale.",
+      "a giant shark: an enormous prehistoric shark, jaws agape"
+    ],
+    "giant-spider": [
+      8,
+      "portrait",
+      "Painted giant spider; good fit.",
+      "a giant spider: a huge hairy spider with venomous fangs, strands of web around it"
+    ],
+    "giant-toad": [
+      2,
+      "photo",
+      "Photo of an ordinary toad.",
+      "a giant toad: a warty toad the size of a pony, its wide mouth open to swallow prey"
+    ],
+    "giant-venomous-snake": [
+      3,
+      "photo",
+      "Photo of a cobra: right animal, not an illustration.",
+      "a giant venomous snake: a giant cobra-like serpent rearing up, hood spread, fangs dripping"
+    ],
+    "giant-vulture": [
+      2,
+      "photo",
+      "Photo of a vulture at a carcass; no giant or evil nature.",
+      "a giant vulture: a huge vulture with ragged feathers and a malevolent intelligence in its eyes, perched on a dead branch"
+    ],
+    "giant-wasp": [
+      2,
+      "photo",
+      "Macro photo of a hornet head with a scale bar.",
+      "a giant wasp: a wasp the size of a dog with yellow-and-black armour, a huge stinger and buzzing wings"
+    ],
+    "giant-weasel": [
+      2,
+      "photo",
+      "Photo of a wolverine; not a giant weasel.",
+      "a giant weasel: a weasel as big as a wolf with sleek brown fur and sharp teeth"
+    ],
+    "giant-wolf-spider": [
+      3,
+      "photo",
+      "Photo of a spider in its burrow: right animal, not an illustration.",
+      "a giant wolf spider: a hunting spider as big as a pony with a hairy body and eight glinting eyes"
+    ],
+    "gibbering-mouther": [
+      1,
+      "icon",
+      "Teeth-only icon.",
+      "a gibbering mouther: an amorphous mass of flesh covered in dozens of eyes and toothy mouths, oozing across the floor, not gory"
+    ],
+    "glabrezu": [
+      3,
+      "artwork",
+      "Demon engraving; no pincers or canine head.",
+      "a glabrezu: a huge demon with a horned canine head and four arms, two ending in great pincers and two small clawed hands, reddish hide, a tempting gaze"
+    ],
+    "gladiator": [
+      7,
+      "portrait",
+      "Painted ornate armoured guard; fits a gladiator loosely.",
+      "a gladiator: an arena fighter with a spear and a round shield, a crested helmet and partial armour"
+    ],
+    "gnoll-warrior": [
+      2,
+      "icon",
+      "Hyena-head icon.",
+      "a gnoll warrior: a tall hyena-headed humanoid with spotted mangy fur, crude armour, a spear and a bow, red demonic eyes"
+    ],
+    "goat": [
+      3,
+      "photo",
+      "Photo of a goat: right animal, not an illustration.",
+      "a goat: a goat standing on a rock"
+    ],
+    "goblin-boss": [
+      6,
+      "portrait",
+      "Painted goblin with a sling; readable but not a boss.",
+      "a goblin boss: a small, wiry goblin leader with green-grey skin and big pointed ears, a scimitar and a shield, a crude trophy necklace, sneering"
+    ],
+    "goblin-minion": [
+      7,
+      "portrait",
+      "Painted goblin spearman; good fit.",
+      "a goblin minion: a scrawny little goblin with green skin, pointed ears, ragged clothes and a dagger"
+    ],
+    "goblin-warrior": [
+      7,
+      "portrait",
+      "Painted goblin spearman; good fit.",
+      "a goblin warrior: a small goblin with green skin and pointed ears, leather armour, a scimitar and a shortbow"
+    ],
+    "gold-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "gorgon": [
+      4,
+      "artwork",
+      "Old engraving of a bull-like beast; no iron plates.",
+      "a gorgon: a massive bull covered in overlapping iron plates, breathing a cloud of green petrifying gas"
+    ],
+    "gray-ooze": [
+      6,
+      "portrait",
+      "Painted mud monster; closer to an ooze than a humanoid.",
+      "a gray ooze: a puddle of wet grey slime that looks like stone, rising into a pseudopod, a corroded sword beside it"
+    ],
+    "green-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "green-hag": [
+      5,
+      "artwork",
+      "Fairy-tale ink drawing of a hag; apt, faint at small size.",
+      "a green hag: a hideous crone with green skin, long tangled dark hair, yellow eyes and long claws, mist around her feet"
+    ],
+    "grick": [
+      1,
+      "icon",
+      "Flower icon; no creature.",
+      "a grick: a worm-like creature with a beaked mouth ringed by four barbed tentacles, rubbery grey skin"
+    ],
+    "griffon": [
+      9,
+      "portrait",
+      "Painted griffon; fits well.",
+      "a griffon: a creature with the head, wings and front talons of an eagle and the body of a lion, rearing"
+    ],
+    "grimlock": [
+      2,
+      "icon",
+      "Goblin-face icon.",
+      "a grimlock: a blind, grey-skinned humanoid with no eyes, a wide toothy mouth and a stone club"
+    ],
+    "guard": [
+      9,
+      "portrait",
+      "Painted spear guard; fits the role well.",
+      "a guard: a town guard in chain shirt and helmet with a spear and a shield"
+    ],
+    "guard-captain": [
+      8,
+      "portrait",
+      "Painted armoured knight; good fit.",
+      "a guard captain: a veteran officer in polished plate armour with a longsword and a shield, a red plume on the helmet"
+    ],
+    "guardian-naga": [
+      4,
+      "artwork",
+      "Photo of a temple naga relief.",
+      "a guardian naga: a great golden-green serpent with a wise human-like face and a regal crest, coiled protectively"
+    ],
+    "half-dragon": [
+      7,
+      "portrait",
+      "Painted armoured lizard warrior; good fit.",
+      "a half-dragon: a humanoid warrior with red draconic scales, horns, clawed hands and reptilian eyes, in plate armour, a lick of fire at its mouth"
+    ],
+    "harpy": [
+      1,
+      "icon",
+      "Abstract winged icon.",
+      "a harpy: a creature with the upper body of a wild-haired woman in feathered rags and the wings, legs and talons of a vulture, singing a luring song"
+    ],
+    "hawk": [
+      3,
+      "photo",
+      "Photo of a hawk: right animal, not an illustration.",
+      "a hawk: a hawk perched with wings half open"
+    ],
+    "hell-hound": [
+      4,
+      "portrait",
+      "Painted tan wolf; not a fiery black hound.",
+      "a hell hound: a large black dog with smouldering red eyes, fire licking from its jaws and embers in its fur"
+    ],
+    "hezrou": [
+      3,
+      "artwork",
+      "Three-headed demon engraving (Bael); not a toad demon.",
+      "a hezrou: a hulking, toad-like demon walking upright, a wide mouth full of teeth, a spiky back and scaly green-brown hide"
+    ],
+    "hill-giant": [
+      5,
+      "artwork",
+      "Fairy-tale ink drawing of giants; apt, faint at small size.",
+      "a hill giant: a huge, dim-witted brute with a pot belly and crude hides, a tree-trunk club"
+    ],
+    "hippogriff": [
+      6,
+      "artwork",
+      "Romantic painting of a rider on a hippogriff; apt, small creature.",
+      "a hippogriff: a creature with the front of an eagle and the hindquarters of a horse, wings spread"
+    ],
+    "hippopotamus": [
+      3,
+      "photo",
+      "Photo of a hippopotamus: right animal, not an illustration.",
+      "a hippopotamus: a hippopotamus with its jaws wide open"
+    ],
+    "hobgoblin-captain": [
+      6,
+      "portrait",
+      "Painted orc swordsman; not a disciplined hobgoblin.",
+      "a hobgoblin captain: a disciplined goblinoid commander with orange-red skin and a stern face, polished half-plate armour and a greatsword"
+    ],
+    "hobgoblin-warrior": [
+      6,
+      "portrait",
+      "Painted orc warrior; not a disciplined hobgoblin.",
+      "a hobgoblin warrior: a disciplined goblinoid soldier with reddish skin, uniform chain armour, a longsword and a shield"
+    ],
+    "homunculus": [
+      2,
+      "icon",
+      "Bat-demon icon.",
+      "a homunculus: a tiny winged humanoid construct with leathery wings, greenish skin and a bat-like face, perched on an open spellbook"
+    ],
+    "horned-devil": [
+      4,
+      "artwork",
+      "Old woodcut of a devil; style far from fantasy art.",
+      "a horned devil: a large winged devil with great horns and a spiked tail, holding a barbed fork"
+    ],
+    "hunter-shark": [
+      3,
+      "photo",
+      "Photo of a shark: right animal, not an illustration.",
+      "a hunter shark: a shark swimming toward its prey, jaws open"
+    ],
+    "hydra": [
+      3,
+      "artwork",
+      "Greek vase of Heracles and the hydra; small creature.",
+      "a hydra: a reptilian monster with five long snake-like heads on a heavy crocodile-like body"
+    ],
+    "hyena": [
+      3,
+      "photo",
+      "Photo of a hyena: right animal, not an illustration.",
+      "a hyena: a spotted hyena, head low, laughing"
+    ],
+    "ice-devil": [
+      3,
+      "artwork",
+      "Engraving of a giant fly demon; insectoid but no ice.",
+      "an ice devil: a tall insect-like devil with pale blue chitin, a bug-like head with mandibles, claws and a long tail, frost mist around it, an icy spear in hand"
+    ],
+    "ice-mephit": [
+      1,
+      "icon",
+      "Abstract shards icon.",
+      "an ice mephit: a small, impish elemental made of jagged ice with bat wings and frosty breath"
+    ],
+    "imp": [
+      5,
+      "artwork",
+      "Woodcut of imps; apt but crude.",
+      "an imp: a tiny red-skinned devil with bat wings, small horns and a barbed tail, a mischievous grin"
+    ],
+    "incubus": [
+      4,
+      "artwork",
+      "Romantic painting of a nightmare scene; the fiend is small.",
+      "an incubus: a handsome fiend with dark wings, small horns and a tail, fully clothed in fine dark garments, a sinister smile"
+    ],
+    "invisible-stalker": [
+      2,
+      "icon",
+      "Dotted-outline icon; clever, not an illustration.",
+      "an invisible stalker: an almost invisible air elemental seen only as a humanoid shape of rippling, distorted air outlined by swirling dust and leaves"
+    ],
+    "iron-golem": [
+      3,
+      "artwork",
+      "Greek vase scene; no iron giant.",
+      "an iron golem: a towering humanoid of black iron plates and rivets with a helm-like head and a great iron sword, green poison vapour seeping from its joints"
+    ],
+    "jackal": [
+      3,
+      "photo",
+      "Photo of a jackal: right animal, not an illustration.",
+      "a jackal: a lean jackal, ears up"
+    ],
+    "killer-whale": [
+      3,
+      "photo",
+      "Photo of an orca: right animal, not an illustration.",
+      "a killer whale: an orca breaching from the water"
+    ],
+    "knight": [
+      9,
+      "portrait",
+      "Painted mounted knight; fits the role well.",
+      "a knight: a knight in shining plate armour on a barded warhorse, a lance and a heraldic shield"
+    ],
+    "kobold-warrior": [
+      7,
+      "portrait",
+      "Painted lizard skirmisher; good kobold stand-in.",
+      "a kobold warrior: a small reptilian humanoid with rust-red scales, a dog-like snout and small horns, a spear and a sling"
+    ],
+    "kraken": [
+      6,
+      "artwork",
+      "Famous colossal-octopus engraving; apt, old style.",
+      "a kraken: a colossal squid-like monster with a beaked mouth and malevolent eyes, its tentacles dragging a sailing ship under the waves"
+    ],
+    "lamia": [
+      4,
+      "artwork",
+      "Pre-Raphaelite painting of a woman; no lion body.",
+      "a lamia: a creature with the upper body of a regal woman wearing jewellery and the lower body of a lion, a cunning smile"
+    ],
+    "lemure": [
+      3,
+      "artwork",
+      "Engraving of a grotesque face.",
+      "a lemure: a shapeless, melting blob-like humanoid devil with a vacant face and an oozing body"
+    ],
+    "lich": [
+      9,
+      "portrait",
+      "Painted lich with staff; fits well.",
+      "a lich: a skeletal undead sorcerer in dark tattered robes with a crown, glowing eyes and a staff crackling with cold green magic"
+    ],
+    "lion": [
+      3,
+      "photo",
+      "Photo of a lion: right animal, not an illustration.",
+      "a lion: a male lion with a full mane, roaring"
+    ],
+    "lizard": [
+      3,
+      "photo",
+      "Photo of a lizard: right animal, not an illustration.",
+      "a lizard: a small lizard basking on a stone"
+    ],
+    "mage": [
+      8,
+      "portrait",
+      "Painted hooded mage with a book; good fit.",
+      "a mage: a hooded wizard in robes reading a spellbook, a wand glowing in the other hand"
+    ],
+    "magma-mephit": [
+      1,
+      "icon",
+      "Bubbles icon; no creature.",
+      "a magma mephit: a small, impish elemental of molten rock with bat wings, dripping lava"
+    ],
+    "magmin": [
+      6,
+      "portrait",
+      "Painted fire elemental; a magmin is small and of magma.",
+      "a magmin: a small, stout humanoid made of magma, a cracked crust of cooled rock over glowing lava, a gleeful grin"
+    ],
+    "mammoth": [
+      6,
+      "artwork",
+      "Classic palaeo painting of mammoths; apt, scientific.",
+      "a mammoth: a woolly mammoth with long curved tusks, shaggy brown fur"
+    ],
+    "manticore": [
+      5,
+      "artwork",
+      "Old engraving of the manticore; apt, crude.",
+      "a manticore: a monster with a lion's body, a humanoid face framed by a mane, leathery dragon wings and a tail bristling with iron spikes"
+    ],
+    "marilith": [
+      1,
+      "icon",
+      "Snake-fang icon.",
+      "a marilith: a demon with the upper body of a woman in armour with six arms, each holding a sword, and the lower body of a great green serpent"
+    ],
+    "mastiff": [
+      3,
+      "photo",
+      "Photo of a mastiff: right animal, not an illustration.",
+      "a mastiff: a muscular mastiff on guard"
+    ],
+    "medusa": [
+      3,
+      "artwork",
+      "Photo of a terracotta gorgon mask.",
+      "a medusa: a woman with a crown of living snakes for hair and scaly green skin, a longbow in hand"
+    ],
+    "merfolk-skirmisher": [
+      9,
+      "portrait",
+      "Painted merman fighter; fits well.",
+      "a merfolk skirmisher: a merfolk warrior with a fish tail, scale armour and a trident"
+    ],
+    "merrow": [
+      5,
+      "portrait",
+      "Painted merman; a merrow is a monstrous aquatic ogre.",
+      "a merrow: a monstrous aquatic ogre with scaly green skin and a fish-like lower body, a harpoon, barnacles and seaweed"
+    ],
+    "mimic": [
+      3,
+      "icon",
+      "Toothy-chest icon; recognisable, not an illustration.",
+      "a mimic: a wooden treasure chest that has sprouted a huge toothy mouth and a long tongue, pseudopods gripping the floor"
+    ],
+    "minotaur-of-baphomet": [
+      4,
+      "artwork",
+      "Greek kylix minotaur; reads as pottery.",
+      "a minotaur: a towering bull-headed humanoid with thick fur and great horns, a greataxe"
+    ],
+    "minotaur-skeleton": [
+      1,
+      "icon",
+      "Bull-horn icon.",
+      "a minotaur skeleton: the animated skeleton of a minotaur with a horned bull skull and a greataxe, eerie light in its eye sockets"
+    ],
+    "mule": [
+      3,
+      "photo",
+      "Photo of a pack mule: right animal, not an illustration.",
+      "a mule: a mule carrying packs"
+    ],
+    "mummy": [
+      2,
+      "icon",
+      "Bandaged-face icon.",
+      "a mummy: an undead wrapped in ancient decaying bandages with glowing eyes"
+    ],
+    "mummy-lord": [
+      8,
+      "portrait",
+      "Painted undead pharaoh; good fit.",
+      "a mummy lord: an undead pharaoh in decaying bandages, a golden mask and headdress, a sceptre and glowing eyes"
+    ],
+    "nalfeshnee": [
+      3,
+      "artwork",
+      "Demon engraving; no boar head or obese body.",
+      "a nalfeshnee: a huge, corpulent demon with the head of a boar, small feathered wings and an ape-like body"
+    ],
+    "night-hag": [
+      5,
+      "artwork",
+      "Dark romantic painting of a hag; apt, unreadable when small.",
+      "a night hag: a hideous hag with blue-violet skin, wild white hair, black horns and glowing eyes, holding a glowing heartstone pendant"
+    ],
+    "nightmare": [
+      6,
+      "portrait",
+      "Painted dark horse; no fire mane or hooves.",
+      "a nightmare: a coal-black horse with a mane, tail and hooves of fire, glowing red eyes, smoke"
+    ],
+    "noble": [
+      8,
+      "portrait",
+      "Painted noble officer; good fit.",
+      "a noble: an aristocrat in rich clothing with a rapier, a proud bearing"
+    ],
+    "ochre-jelly": [
+      1,
+      "icon",
+      "Jelly-mould icon; a joke, not a creature.",
+      "an ochre jelly: a yellow-orange blob of acidic ooze creeping forward, dissolving a bone"
+    ],
+    "octopus": [
+      3,
+      "photo",
+      "Photo of an octopus: right animal, not an illustration.",
+      "an octopus: an octopus with its tentacles curling"
+    ],
+    "ogre": [
+      9,
+      "portrait",
+      "Painted ogre; fits well.",
+      "an ogre: a huge, brutish ogre with a pot belly, crude hides and a greatclub"
+    ],
+    "ogre-zombie": [
+      7,
+      "portrait",
+      "Painted undead brute; good fit.",
+      "an ogre zombie: the rotting corpse of an ogre shambling forward, grey skin, a massive club and vacant eyes, not gory"
+    ],
+    "oni": [
+      4,
+      "artwork",
+      "Japanese painting; the oni is small and unclear.",
+      "an oni: a large ogre-like demon with blue skin, horns, tusks and a wild mane, ornate armour and a heavy glaive"
+    ],
+    "otyugh": [
+      1,
+      "icon",
+      "Skull-tentacle icon.",
+      "an otyugh: a bloated three-legged creature with a huge toothy maw, an eye stalk and two long tentacles with spiked tips, wallowing in refuse"
+    ],
+    "owl": [
+      3,
+      "photo",
+      "Photo of a barn owl: right animal, not an illustration.",
+      "an owl: a barn owl perched on a post"
+    ],
+    "owlbear": [
+      1,
+      "icon",
+      "Owl icon; no bear.",
+      "an owlbear: a bear-sized beast with the body of a bear covered in shaggy fur and feathers and the head of a great owl with a hooked beak, rearing"
+    ],
+    "panther": [
+      3,
+      "photo",
+      "Photo of a black panther: right animal, not an illustration.",
+      "a panther: a black panther crouched on a branch"
+    ],
+    "pegasus": [
+      3,
+      "artwork",
+      "Greek kylix with a winged horse; reads as pottery.",
+      "a pegasus: a white winged horse with feathered wings outstretched in flight"
+    ],
+    "phase-spider": [
+      7,
+      "portrait",
+      "Painted blue-violet spider; good fit.",
+      "a phase spider: a large spider with a shimmering blue-violet carapace, half phased out of reality, ghostly afterimages around it"
+    ],
+    "piranha": [
+      3,
+      "photo",
+      "Photo of a piranha: right animal, not an illustration.",
+      "a piranha: a piranha with its jaws open, sharp teeth"
+    ],
+    "pirate": [
+      8,
+      "portrait",
+      "Painted masked brigand; good fit.",
+      "a pirate: a pirate in a headscarf and sea-worn coat with a cutlass and a belaying pin"
+    ],
+    "pirate-captain": [
+      6,
+      "artwork",
+      "Old engraving of Blackbeard; apt, monochrome.",
+      "a pirate captain: a swaggering pirate captain with a tricorn hat and a long coat, a cutlass in hand"
+    ],
+    "pit-fiend": [
+      4,
+      "artwork",
+      "Medieval devil from a codex; style far from fantasy art.",
+      "a pit fiend: a colossal devil with red scaly skin, huge bat-like wings, great horns and a fanged maw, a mace and a long tail, flames around it"
+    ],
+    "planetar": [
+      5,
+      "artwork",
+      "Baroque painting of an archangel; apt, not a green-skinned planetar.",
+      "a planetar: a towering angel with emerald-green skin, white feathered wings and a hairless head, gleaming armour and a great sword of radiant light"
+    ],
+    "plesiosaurus": [
+      5,
+      "artwork",
+      "Palaeo illustration; scientific, not fantasy.",
+      "a plesiosaurus: a long-necked marine reptile with four flippers, swimming"
+    ],
+    "polar-bear": [
+      3,
+      "photo",
+      "Photo of a polar bear: right animal, not an illustration.",
+      "a polar bear: a polar bear walking on ice"
+    ],
+    "pony": [
+      3,
+      "photo",
+      "Photo of a show pony: right animal, not an illustration.",
+      "a pony: a sturdy pony with a shaggy mane"
+    ],
+    "priest": [
+      9,
+      "portrait",
+      "Painted white mage priest; fits well.",
+      "a priest: a robed cleric holding a holy symbol staff, radiant light at the hand"
+    ],
+    "priest-acolyte": [
+      8,
+      "portrait",
+      "Painted acolyte; good fit.",
+      "a priest acolyte: a young cleric in simple robes with a holy symbol and a mace"
+    ],
+    "pseudodragon": [
+      6,
+      "artwork",
+      "Clean dragon line drawing; apt, uncoloured.",
+      "a pseudodragon: a tiny, cat-sized red-brown dragon with large eyes, small wings and a long tail with a stinger, perched on a book"
+    ],
+    "pteranodon": [
+      5,
+      "artwork",
+      "Palaeo painting; scientific, not fantasy.",
+      "a pteranodon: a flying reptile with a long crest and leathery wings, gliding"
+    ],
+    "purple-worm": [
+      3,
+      "artwork",
+      "Painting of a red worm; wrong colour, no mouth.",
+      "a purple worm: a gigantic purple-scaled worm bursting out of the ground, a huge round mouth ringed with teeth, a stinger tail"
+    ],
+    "quasit": [
+      3,
+      "artwork",
+      "Demon engraving; not a tiny green quasit.",
+      "a quasit: a tiny green-skinned demon with small horns, clawed hands, a barbed tail and a malicious grin"
+    ],
+    "rakshasa": [
+      3,
+      "artwork",
+      "Indian painting of a demon king; no tiger head.",
+      "a rakshasa: a fiend with the head of a tiger and backward-bending hands, rich silken robes and jewellery, an elegant, sinister pose"
+    ],
+    "rat": [
+      3,
+      "photo",
+      "Photo of a rat: right animal, not an illustration.",
+      "a rat: a brown rat sniffing"
+    ],
+    "raven": [
+      3,
+      "photo",
+      "Photo of a raven: right animal, not an illustration.",
+      "a raven: a raven cawing"
+    ],
+    "red-dragon-wyrmling": [
+      4,
+      "portrait",
+      "Painted armoured dragon warrior; not a young dragon.",
+      null
+    ],
+    "reef-shark": [
+      3,
+      "photo",
+      "Photo of a reef shark: right animal, not an illustration.",
+      "a reef shark: a reef shark swimming"
+    ],
+    "remorhaz": [
+      4,
+      "portrait",
+      "Painted armoured beast; a remorhaz is a long, red-hot centipede.",
+      "a remorhaz: a huge centipede-like arctic monster with a long segmented body, many legs and insect-like jaws, its back plates glowing red hot, snow melting around it"
+    ],
+    "rhinoceros": [
+      3,
+      "photo",
+      "Photo of a rhinoceros: right animal, not an illustration.",
+      "a rhinoceros: a rhinoceros charging, horn lowered"
+    ],
+    "riding-horse": [
+      3,
+      "photo",
+      "Photo of two horses: right animal, not an illustration.",
+      "a riding horse: a saddled riding horse"
+    ],
+    "roc": [
+      7,
+      "artwork",
+      "Colour illustration of a roc carrying an elephant; apt.",
+      "a roc: a gargantuan bird of prey carrying an elephant in its talons"
+    ],
+    "roper": [
+      3,
+      "portrait",
+      "Painted tentacle; no body, eye or mouth.",
+      "a roper: a stalagmite-like creature with a single glowing eye, a wide toothed mouth and long sticky tendrils reaching out"
+    ],
+    "rust-monster": [
+      1,
+      "icon",
+      "Bug icon.",
+      "a rust monster: an insect-like quadruped with a rust-red armoured hide, long feathery antennae and a paddle-shaped tail, a rusting sword at its feet"
+    ],
+    "saber-toothed-tiger": [
+      6,
+      "artwork",
+      "Classic palaeo painting; apt, scientific.",
+      "a saber-toothed tiger: a muscular big cat with huge saber-like canines, snarling"
+    ],
+    "sahuagin-warrior": [
+      1,
+      "icon",
+      "Fish-face icon.",
+      "a sahuagin warrior: a fish-like humanoid with green scales, a shark-like fanged mouth, webbed claws and back fins, a trident"
+    ],
+    "salamander": [
+      3,
+      "artwork",
+      "Medieval manuscript salamander in flames; not a fire serpent.",
+      "a salamander: a fire creature with the upper body of a humanoid covered in spiky red-orange scales and the long tail of a snake, wreathed in flames, a red-hot spear"
+    ],
+    "satyr": [
+      1,
+      "icon",
+      "Harp icon; no creature.",
+      "a satyr: a fey with the upper body of a man and the legs and horns of a goat, playing pan pipes"
+    ],
+    "scorpion": [
+      3,
+      "photo",
+      "Photo of a scorpion: right animal, not an illustration.",
+      "a scorpion: a scorpion with its tail raised"
+    ],
+    "scout": [
+      8,
+      "portrait",
+      "Painted hooded ranger with a bow; good fit.",
+      "a scout: a hooded ranger in a green-brown cloak with a longbow, crouched and watchful"
+    ],
+    "sea-hag": [
+      2,
+      "icon",
+      "Witch-hat icon.",
+      "a sea hag: a horrid hag with wet green-grey skin, seaweed hair, fish-like eyes and barnacles"
+    ],
+    "seahorse": [
+      3,
+      "photo",
+      "Photo of a seahorse: right animal, not an illustration.",
+      "a seahorse: a seahorse among seaweed"
+    ],
+    "shadow": [
+      8,
+      "portrait",
+      "Painted dark spectre with claws; good fit.",
+      "a shadow: a living shadow in the shape of a gaunt human, dark and smoky with faint glowing eyes"
+    ],
+    "shambling-mound": [
+      1,
+      "icon",
+      "Abstract shape icon.",
+      "a shambling mound: a hulking heap of rotting vegetation, vines and moss in a vaguely humanoid shape"
+    ],
+    "shield-guardian": [
+      2,
+      "icon",
+      "Blocky face icon.",
+      "a shield guardian: a hulking construct of wood, stone and metal plates with a glowing amulet set in its chest, standing protectively"
+    ],
+    "shrieker-fungus": [
+      3,
+      "photo",
+      "Photo of fly agaric mushrooms; not a giant shrieking fungus.",
+      "a shrieker: a person-sized mushroom with a purple-grey cap, its shriek shown as rippling rings in the air"
+    ],
+    "silver-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "skeleton": [
+      9,
+      "portrait",
+      "Painted armoured skeleton; fits well.",
+      "a skeleton: an animated human skeleton in rusted armour with a shortsword and a shield"
+    ],
+    "solar": [
+      2,
+      "icon",
+      "Winged-figure icon.",
+      "a solar: a radiant angel with golden skin and immense white feathered wings, gleaming armour, a flaming greatsword and a longbow"
+    ],
+    "specter": [
+      7,
+      "portrait",
+      "Painted hooded reaper; good fit.",
+      "a specter: a translucent, hooded undead spirit with a gaunt face, trailing wisps"
+    ],
+    "sphinx-of-lore": [
+      3,
+      "artwork",
+      "Greek pyxis sphinx; reads as pottery.",
+      "a sphinx of lore: a winged sphinx with a lion's body and a wise woman's face under an Egyptian-style headdress, floating scrolls around it"
+    ],
+    "sphinx-of-valor": [
+      2,
+      "photo",
+      "Photo of the Great Sphinx of Giza.",
+      "a sphinx of valor: a mighty winged sphinx with a lion's body and a stern man's face under a pharaoh's headdress"
+    ],
+    "sphinx-of-wonder": [
+      2,
+      "artwork",
+      "Same Greek pyxis as the sphinx of lore; no tiny sphinx.",
+      "a sphinx of wonder: a tiny, cat-sized winged sphinx with a feline body, feathered wings and a curious face, a few gleaming gems at its paws"
+    ],
+    "spider": [
+      3,
+      "photo",
+      "Photo of a spider: right animal, not an illustration.",
+      "a spider: a spider on its web"
+    ],
+    "spirit-naga": [
+      7,
+      "portrait",
+      "Painted naga warrior; good fit.",
+      "a spirit naga: a dark serpent with a malevolent human-like face and black hair, coiled, dark magic around it"
+    ],
+    "sprite": [
+      7,
+      "portrait",
+      "Painted winged faerie; good fit.",
+      "a sprite: a tiny fey warrior with dragonfly wings and a little bow"
+    ],
+    "spy": [
+      8,
+      "portrait",
+      "Painted spy with dagger; good fit.",
+      "a spy: a cloaked agent in nondescript clothes, a hidden dagger and a sly look"
+    ],
+    "steam-mephit": [
+      1,
+      "icon",
+      "Cloud icon; no creature.",
+      "a steam mephit: a small, impish elemental made of steam and boiling water with bat wings, hissing"
+    ],
+    "stirge": [
+      2,
+      "icon",
+      "Insect-in-dome icon.",
+      "a stirge: a bat-winged, bird-sized creature with a long needle-like proboscis, four insect legs and reddish fur"
+    ],
+    "stone-giant": [
+      1,
+      "photo",
+      "Photo of a runestone (same as frost giant).",
+      "a stone giant: a tall, lean giant with grey stone-like skin and chiselled features, a stone greatclub"
+    ],
+    "stone-golem": [
+      2,
+      "artwork",
+      "Same engraving as the clay golem.",
+      "a stone golem: a massive humanoid carved from grey stone with blocky features and faintly glowing cracks"
+    ],
+    "storm-giant": [
+      1,
+      "icon",
+      "Lightning icon; no giant.",
+      "a storm giant: a colossal giant with pale violet skin and long silver hair, a trident in hand, lightning crackling around it"
+    ],
+    "succubus": [
+      1,
+      "icon",
+      "Abstract winged icon.",
+      "a succubus: a fiend with bat-like wings, small horns and a tail, fully clothed in an elegant dark gown, a beguiling, dangerous smile"
+    ],
+    "swarm-of-bats": [
+      6,
+      "portrait",
+      "Painted single bat; not a swarm.",
+      "a swarm of bats: dozens of bats in a dense whirling cloud"
+    ],
+    "swarm-of-crawling-claws": [
+      1,
+      "icon",
+      "Single hand icon.",
+      "a swarm of crawling claws: a crowd of pale, withered undead hands crawling forward like spiders, not gory"
+    ],
+    "swarm-of-insects": [
+      2,
+      "photo",
+      "Photo of one grasshopper.",
+      "a swarm of insects: a dense buzzing cloud of beetles, flies and wasps"
+    ],
+    "swarm-of-piranhas": [
+      5,
+      "portrait",
+      "Painted single monstrous fish; not a swarm.",
+      "a swarm of piranhas: a frenzy of piranhas churning the water"
+    ],
+    "swarm-of-rats": [
+      1,
+      "icon",
+      "Single rat icon (same as the wererat).",
+      "a swarm of rats: a squeaking tide of rats pouring forward"
+    ],
+    "swarm-of-ravens": [
+      5,
+      "portrait",
+      "Painted single dark bird; not a swarm.",
+      "a swarm of ravens: a flock of black ravens wheeling and diving"
+    ],
+    "swarm-of-venomous-snakes": [
+      1,
+      "photo",
+      "Photo of a runestone; no snakes.",
+      "a swarm of venomous snakes: a writhing knot of venomous snakes, heads raised"
+    ],
+    "tarrasque": [
+      2,
+      "photo",
+      "Photo of a festival float.",
+      "a tarrasque: a colossal reptilian monster, larger than a castle, two huge horns, a spiked tail and a reflective armoured carapace, rampaging"
+    ],
+    "tiger": [
+      3,
+      "photo",
+      "Photo of a tiger: right animal, not an illustration.",
+      "a tiger: a tiger prowling"
+    ],
+    "tough": [
+      9,
+      "portrait",
+      "Painted thug with club; fits the role well.",
+      "a tough: a burly street thug with a club, rolled sleeves and a scar"
+    ],
+    "tough-boss": [
+      8,
+      "portrait",
+      "Painted gang leader; good fit.",
+      "a tough boss: a hulking gang leader in a leather jerkin with a heavy club, a confident glare"
+    ],
+    "treant": [
+      8,
+      "portrait",
+      "Painted great tree creature; good fit.",
+      "a treant: a towering ancient tree creature with a wise bark face, mossy limbs and leafy crown, striding"
+    ],
+    "triceratops": [
+      5,
+      "artwork",
+      "Classic monochrome palaeo painting; small creature.",
+      "a triceratops: a massive horned dinosaur with a bony frill and three horns, charging"
+    ],
+    "troll": [
+      9,
+      "portrait",
+      "Painted troll with club; fits well.",
+      "a troll: a tall, gangly troll with green rubbery skin, long claws and a hooked nose, hunched and menacing"
+    ],
+    "troll-limb": [
+      1,
+      "icon",
+      "Troll-face icon; no limb.",
+      "a troll limb: a severed troll arm with green rubbery skin crawling on its own with its claws, not gory"
+    ],
+    "tyrannosaurus-rex": [
+      5,
+      "artwork",
+      "Digital palaeo render; scientific, not fantasy.",
+      "a tyrannosaurus rex: a huge bipedal predator dinosaur with massive jaws, roaring"
+    ],
+    "unicorn": [
+      5,
+      "artwork",
+      "Old engraving of a unicorn; apt, crude.",
+      "a unicorn: a radiant white horse with a single spiralled horn, a flowing silver mane and cloven hooves"
+    ],
+    "vampire": [
+      4,
+      "artwork",
+      "Painting of a vampire over a sleeper; style far from fantasy art.",
+      "a vampire: a pale aristocrat in a dark high-collared cloak with red eyes and fangs, a gothic, menacing pose"
+    ],
+    "vampire-familiar": [
+      5,
+      "portrait",
+      "Painted young man; nothing marks him as a vampire's servant.",
+      "a vampire familiar: a loyal human servant of a vampire with a pale, haggard face and a bite scar on the neck, a dagger and a lantern"
+    ],
+    "vampire-spawn": [
+      7,
+      "portrait",
+      "Painted pale undead; good fit.",
+      "a vampire spawn: a feral undead with pale grey skin, red eyes, fangs and long claws, in torn clothes"
+    ],
+    "venomous-snake": [
+      3,
+      "photo",
+      "Photo of a viper: right animal, not an illustration.",
+      "a venomous snake: a viper coiled and ready to strike"
+    ],
+    "violet-fungus": [
+      3,
+      "photo",
+      "Photo of purple mushrooms; no tendrils.",
+      "a violet fungus: a purple mushroom-like creature with whip-like tendrils"
+    ],
+    "vrock": [
+      6,
+      "portrait",
+      "Painted dark winged bird demon; close.",
+      "a vrock: a vulture-like demon with a hunched humanoid body, a vulture's head, grey feathers, ragged wings and long claws"
+    ],
+    "vulture": [
+      3,
+      "photo",
+      "Photo of a vulture: right animal, not an illustration.",
+      "a vulture: a vulture gliding, wings spread"
+    ],
+    "warhorse": [
+      4,
+      "artwork",
+      "Battle painting of a cavalry charge; the horse is not the subject.",
+      "a warhorse: a powerful warhorse in barding, rearing"
+    ],
+    "warhorse-skeleton": [
+      8,
+      "portrait",
+      "Painted skeletal horse with rider; good fit.",
+      "a warhorse skeleton: the animated skeleton of a warhorse in rusted barding, eerie light in its eye sockets"
+    ],
+    "warrior-infantry": [
+      9,
+      "portrait",
+      "Painted spearman; fits the role well.",
+      "a warrior infantry: a foot soldier in a gambeson and helmet with a spear and a round shield"
+    ],
+    "warrior-veteran": [
+      9,
+      "portrait",
+      "Painted veteran soldier; fits the role well.",
+      "a warrior veteran: a battle-scarred veteran in chain and plate with a longsword and a shield"
+    ],
+    "water-elemental": [
+      1,
+      "photo",
+      "Photo of a fountain statue.",
+      "a water elemental: a towering wave of water in a vaguely humanoid shape, foam and spray, eyes of glinting light"
+    ],
+    "weasel": [
+      3,
+      "photo",
+      "Photo of a weasel: right animal, not an illustration.",
+      "a weasel: a weasel standing up, alert"
+    ],
+    "werebear": [
+      2,
+      "icon",
+      "Bear-head icon.",
+      "a werebear: a hybrid of a human and a brown bear standing upright in tatters of clothing"
+    ],
+    "wereboar": [
+      2,
+      "icon",
+      "Boar icon.",
+      "a wereboar: a hybrid of a human and a boar with tusks and bristly hide, a maul in hand"
+    ],
+    "wererat": [
+      1,
+      "icon",
+      "Rat icon (same as the swarm of rats).",
+      "a wererat: a hybrid of a human and a rat in tattered clothing, a dagger in hand"
+    ],
+    "weretiger": [
+      2,
+      "icon",
+      "Tiger-head icon.",
+      "a weretiger: a hybrid of a human and a tiger with striped fur, a scimitar in hand"
+    ],
+    "werewolf": [
+      6,
+      "artwork",
+      "Ink drawing of a werewolf in a graveyard; apt, monochrome.",
+      "a werewolf: a hybrid of a human and a wolf, hunched, in torn clothes, howling"
+    ],
+    "white-dragon-wyrmling": [1, "icon", "Abstract spiral icon; unreadable as a dragon.", null],
+    "wight": [
+      4,
+      "artwork",
+      "Monochrome ghostly figure; vague.",
+      "a wight: an undead warrior in corroded chainmail with withered grey skin, glowing eyes and a longsword"
+    ],
+    "will-o-wisp": [
+      5,
+      "artwork",
+      "Painting of wisps over a marsh; apt, tiny subject.",
+      "a will-o'-wisp: a pale floating ball of light with a faint ghostly face, wisps of fog around it"
+    ],
+    "winter-wolf": [
+      3,
+      "photo",
+      "Photo of a white wolf; no frost or size.",
+      "a winter wolf: a huge white wolf with frosty breath and icy blue eyes"
+    ],
+    "wolf": [
+      3,
+      "photo",
+      "Photo of a wolf: right animal, not an illustration.",
+      "a wolf: a grey wolf, head low"
+    ],
+    "worg": [
+      8,
+      "portrait",
+      "Painted dark wolf; good fit.",
+      "a worg: a huge, evil wolf with dark matted fur and glowing eyes, snarling"
+    ],
+    "wraith": [
+      7,
+      "portrait",
+      "Painted spectral swordsman; good fit.",
+      "a wraith: a dark, hooded undead spirit with glowing eyes and a ghostly blade"
+    ],
+    "wyvern": [
+      9,
+      "portrait",
+      "Painted green wyvern; fits well.",
+      "a wyvern: a green dragon-like creature with two legs, bat-like wings and a long tail ending in a venomous stinger"
+    ],
+    "xorn": [
+      1,
+      "icon",
+      "Crystal icon; no creature.",
+      "a xorn: a barrel-shaped creature of stone with three arms, three legs and a big mouth on top, emerging from rock and chewing a gem"
+    ],
+    "young-black-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-blue-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-brass-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-bronze-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-copper-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-gold-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-green-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-red-dragon": [
+      7,
+      "portrait",
+      "Good red dragon but the same as the adult; no sense of youth.",
+      null
+    ],
+    "young-silver-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "young-white-dragon": [
+      2,
+      "icon",
+      "Generic recoloured dragon-head icon shared by every age.",
+      null
+    ],
+    "zombie": [
+      9,
+      "portrait",
+      "Painted zombie; fits well.",
+      "a zombie: a shambling human zombie with grey skin and torn clothes, arms outstretched, not gory"
+    ]
+  }
+}

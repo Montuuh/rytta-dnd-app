@@ -12,6 +12,8 @@ square thumbnail ([x, y], 0-1):
   {"lich": {"wesnoth": "undead/lich.webp"}}                    Battle for Wesnoth portrait (GPL-2.0+)
   {"mimic": {"icon": "delapouite/mimic-chest"}}                game-icons.net icon (CC BY 3.0)
   {"adult-blue-dragon": {"icon": "lorc/dragon-head", "ink": "#2f5f93"}}   the same, tinted
+  {"owlbear": {"generated": "owlbear.png", "replaced": {"icon": "lorc/owl"}}}
+      a picture painted for Rytta in ChatGPT, saved under art/bestiary/source/ (import_art.py writes these)
 
 It writes public/bestiary/art/<id>.webp (longest side 720px), public/bestiary/thumbs/<id>.webp
 (128px square), src/features/bestiary/content/art.json (credits shown in the app's image viewer) and
@@ -34,6 +36,9 @@ from PIL import Image, ImageOps
 UA = "RyttaBestiaryImages/0.1 (tabletop companion; manual content build)"
 GPL = ("GPL-2.0-or-later", "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
 CC_BY_3 = ("CC BY 3.0", "https://creativecommons.org/licenses/by/3.0/")
+REPOSITORY = "https://github.com/Montuuh/rytta-dnd-app"
+GENERATED_SOURCE = "art/bestiary/source"
+CREDITS_DOC = "docs/bestiary-art-credits.md"
 # Authors the Commons metadata leaves empty or buries in prose (checked on each file page).
 AUTHOR_OVERRIDES = {
     "animated-flying-sword": "The Metropolitan Museum of Art",
@@ -107,6 +112,45 @@ def author_text(candidate: dict) -> str:
     return text[:200]
 
 
+def generated_credit(creature: str) -> dict:
+    """Credit of a picture painted for Rytta by its author with ChatGPT image generation. Under OpenAI's
+    Terms of Use the output belongs to the author; the credits page explains it and names the model."""
+    return {
+        "origin": "generated",
+        "title": f"Rytta bestiary illustration: {creature}",
+        "source": f"{REPOSITORY}/blob/main/{CREDITS_DOC}",
+        "author": "Rytta",
+        "license": "© Rytta",
+    }
+
+
+def save_renditions(creature: str, image: Image.Image, focus: list[float], art_dir: Path,
+                    thumb_dir: Path) -> tuple[int, int]:
+    """Writes the 720px image and the 128px square thumbnail cropped around `focus` ([x, y], 0-1)."""
+    image = ImageOps.exif_transpose(image)
+    image = image.convert("RGBA" if image.mode in ("RGBA", "LA", "P") else "RGB")
+    full = image.copy()
+    full.thumbnail((720, 720), Image.Resampling.LANCZOS)
+    full.save(art_dir / f"{creature}.webp", "WEBP", quality=80, method=6)
+    fx, fy = focus
+    side = min(image.size)
+    left = min(max(0, round(fx * image.width - side / 2)), image.width - side)
+    top = min(max(0, round(fy * image.height - side / 2)), image.height - side)
+    square = image.crop((left, top, left + side, top + side)).resize((128, 128), Image.Resampling.LANCZOS)
+    square.save(thumb_dir / f"{creature}.webp", "WEBP", quality=78, method=6)
+    return full.width, full.height
+
+
+def credited_commits(root: Path) -> tuple[str, str]:
+    """The Battle for Wesnoth and game-icons commits named on the current credits page."""
+    text = (root / CREDITS_DOC).read_text(encoding="utf-8")
+    wesnoth = re.search(r"`([0-9a-f]{40})` of https://github\.com/wesnoth/wesnoth", text)
+    icons = re.search(r"`([0-9a-f]{40})` of https://github\.com/game-icons/icons", text)
+    if not wesnoth or not icons:
+        raise SystemExit(f"{CREDITS_DOC} does not name the Wesnoth and game-icons commits")
+    return wesnoth.group(1), icons.group(1)
+
+
 def option(args: list[str], name: str, count: int = 1) -> list[str]:
     at = args.index(name)
     return args[at + 1:at + 1 + count]
@@ -129,6 +173,7 @@ def main() -> None:
     art_dir.mkdir(parents=True, exist_ok=True)
     thumb_dir.mkdir(parents=True, exist_ok=True)
     credits: dict[str, dict] = {}
+    previous = json.loads((root / "src/features/bestiary/content/art.json").read_text(encoding="utf-8"))
     for count, (creature, choice) in enumerate(sorted(selection.items()), 1):
         if "commons" in choice:
             candidate = candidates.get(choice["commons"])
@@ -147,6 +192,15 @@ def main() -> None:
                 **({"licenseUrl": candidate["licenseUrl"]}
                    if (candidate.get("licenseUrl") or "").startswith("http") else {}),
             }
+        elif "generated" in choice:
+            path = root / GENERATED_SOURCE / choice["generated"]
+            if not path.exists():
+                # The painted sources stay out of git: without one, keep the imported renditions.
+                credits[creature] = previous[creature]
+                print(f"{count:3}/{len(selection)} {creature} (kept: {path.name} is not here)", flush=True)
+                continue
+            image = Image.open(path)
+            credit = generated_credit(creature)
         elif "wesnoth" in choice:
             path = f"data/core/images/portraits/{choice['wesnoth']}"
             image = Image.open(Path(wesnoth) / path)
@@ -170,19 +224,10 @@ def main() -> None:
                 "license": CC_BY_3[0],
                 "licenseUrl": CC_BY_3[1],
             }
-        image = ImageOps.exif_transpose(image)
-        image = image.convert("RGBA" if image.mode in ("RGBA", "LA", "P") else "RGB")
-        full = image.copy()
-        full.thumbnail((720, 720), Image.Resampling.LANCZOS)
-        full.save(art_dir / f"{creature}.webp", "WEBP", quality=80, method=6)
         # Portraits stand on a transparent ground: their crop centres higher, on the face.
-        fx, fy = choice.get("focus", [0.5, 0.35 if "wesnoth" in choice else 0.45])
-        side = min(image.size)
-        left = min(max(0, round(fx * image.width - side / 2)), image.width - side)
-        top = min(max(0, round(fy * image.height - side / 2)), image.height - side)
-        square = image.crop((left, top, left + side, top + side)).resize((128, 128), Image.Resampling.LANCZOS)
-        square.save(thumb_dir / f"{creature}.webp", "WEBP", quality=78, method=6)
-        credits[creature] = {**credit, "width": full.width, "height": full.height}
+        focus = choice.get("focus", [0.5, 0.35 if "wesnoth" in choice else 0.45])
+        width, height = save_renditions(creature, image, focus, art_dir, thumb_dir)
+        credits[creature] = {**credit, "width": width, "height": height}
         print(f"{count:3}/{len(selection)} {creature}", flush=True)
     for stale in [*art_dir.glob("*.webp"), *thumb_dir.glob("*.webp")]:
         if stale.stem not in selection:
@@ -207,6 +252,13 @@ def write_credits(root: Path, credits: dict[str, dict], wesnoth_commit: str, ico
         "  The full source of the portraits is in that repository.",
         "- game-icons.net icons (https://game-icons.net), CC BY 3.0, from commit",
         f"  `{icons_commit}` of https://github.com/game-icons/icons, recoloured as ink on parchment.",
+        *([
+            "- Rytta bestiary illustrations were painted for Rytta by its author with ChatGPT image",
+            "  generation (OpenAI, `gpt-image`) from the prompts of `art/bestiary/catalogue.csv`, then",
+            "  resized by `scripts/bestiary/import_art.py`. Under OpenAI's Terms of Use the output belongs to",
+            "  the author. Each source's checksum and C2PA provenance are in",
+            "  `scripts/bestiary/art-generated.json`.",
+        ] if any(c["origin"] == "generated" for c in credits.values()) else []),
         "",
         "| Creature | Image | Author | Licence |",
         "| --- | --- | --- | --- |",
@@ -216,7 +268,7 @@ def write_credits(root: Path, credits: dict[str, dict], wesnoth_commit: str, ico
             else cell(credit["license"])
         lines.append(f"| {creature} | [{cell(credit['title'])}]({credit['source']}) | {cell(credit['author'])} | "
                      f"{license_cell} |")
-    credits_doc = root / "docs/bestiary-art-credits.md"
+    credits_doc = root / CREDITS_DOC
     credits_doc.write_text("\n".join(lines) + "\n", encoding="utf-8")
     prettier(credits_doc, root)
 

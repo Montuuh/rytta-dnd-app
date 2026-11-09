@@ -102,21 +102,80 @@ export function TableFrame({
   y,
   cols,
   rows,
+  map,
+  state = null,
+  squarePx = 64,
 }: {
   x: number
   y: number
   cols: number
   rows: number
+  /** The map's size: while the frame moves, what the table will not show is dimmed. */
+  map: { cols: number; rows: number }
+  /** RYT-075: dragged, or waiting for the square it goes to (the alternative to dragging). */
+  state?: 'drag' | 'wait' | null
+  /** CSS pixels per square at the board's zoom: the handle keeps a size a finger can take. */
+  squarePx?: number
 }) {
   const { t } = useTranslation()
   const left = x - cols / 2
   const top = y - rows / 2
+  // The tab keeps one size on screen at any zoom: 44 CSS pixels tall (the 0.6-square tab scaled).
+  const k = 44 / (0.6 * squarePx)
+  // A frame as large as the map along both sides has nowhere to go: a label, not a handle.
+  const movable = cols < map.cols || rows < map.rows
+  if (!movable)
+    return (
+      <g className="tt-frame" aria-hidden="true">
+        <rect x={left} y={top} width={cols} height={rows} className="tt-frame-rect" />
+        <g transform={`translate(${left} ${top - 0.62 * k}) scale(${k})`}>
+          <rect width={2.6} height={0.56} rx={0.1} className="tt-frame-tab" />
+          <text x={0.2} y={0.4} fontSize={0.34} className="tt-frame-label">
+            {t('tabletop.frame.label', { cols, rows })}
+          </text>
+        </g>
+      </g>
+    )
+  // It sits outside the frame so it never hides the map's squares: above, else below, else inside.
+  const tabY =
+    top >= 0.7 * k
+      ? top - 0.66 * k
+      : top + rows + 0.7 * k <= map.rows
+        ? top + rows + 0.06 * k
+        : top + 0.1 * k
+  // From the frame's left edge, or ending at its right edge when it would run past the map.
+  const tabW = 3.3 * k
+  const tabX =
+    left + 0.1 * k + tabW <= map.cols ? left + 0.1 * k : Math.max(0, left + cols - tabW - 0.1 * k)
   return (
-    <g className="tt-frame" aria-hidden="true">
+    <g className={`tt-frame ${state ? `is-${state}` : ''}`} aria-hidden="true">
+      {state && (
+        <path
+          className="tt-frame-outside"
+          fillRule="evenodd"
+          d={`M -1 -1 H ${map.cols + 1} V ${map.rows + 1} H -1 Z M ${left} ${top} H ${left + cols} V ${top + rows} H ${left} Z`}
+        />
+      )}
       <rect x={left} y={top} width={cols} height={rows} className="tt-frame-rect" />
-      <g transform={`translate(${left} ${top - 0.62})`}>
-        <rect width={2.6} height={0.56} rx={0.1} className="tt-frame-tab" />
-        <text x={0.2} y={0.4} fontSize={0.34} className="tt-frame-label">
+      {/* The handle: drag it to move what the table shows, or tap it and then tap a square. */}
+      <g
+        transform={`translate(${tabX} ${tabY}) scale(${k})`}
+        className="tt-frame-handle"
+        data-frame-handle
+      >
+        <rect width={3.3} height={0.6} rx={0.12} className="tt-frame-tab" />
+        {[0, 1].map((col) =>
+          [0, 1, 2].map((row) => (
+            <circle
+              key={`${col}${row}`}
+              cx={0.22 + col * 0.14}
+              cy={0.16 + row * 0.14}
+              r={0.04}
+              className="tt-frame-grip"
+            />
+          )),
+        )}
+        <text x={0.52} y={0.42} fontSize={0.34} className="tt-frame-label">
           {t('tabletop.frame.label', { cols, rows })}
         </text>
       </g>

@@ -17,6 +17,8 @@ import {
   itemCells,
   measurePath,
   nearestEdge,
+  placeFrame,
+  propFootprint,
   roomAt,
   routeMarks,
   sizeSquares,
@@ -215,5 +217,31 @@ describe('room fog margins (RYT-068)', () => {
     expect(
       stillHidden([hide(a), { mode: 'reveal', shape: 'brush', r: 1, points: [[1, 1]] }]),
     ).toEqual([])
+  })
+})
+
+describe('the table frame and prop footprints (RYT-075, RYT-077)', () => {
+  const map = { cols: 60, rows: 40 }
+  const frame = { cols: 27, rows: 15 }
+
+  it('keeps the table frame inside the map with its edges on whole squares', () => {
+    expect(placeFrame([40.2, 30.7], frame, map)).toEqual([40.5, 30.5])
+    // Near the edges it stops at the map's border.
+    expect(placeFrame([2, 1], frame, map)).toEqual([13.5, 7.5])
+    expect(placeFrame([59, 39], frame, map)).toEqual([46.5, 32.5])
+    // A map smaller than the table along a side: the frame centres on the map there.
+    expect(placeFrame([3, 30], frame, { cols: 20, rows: 40 })).toEqual([10, 30.5])
+  })
+
+  it('centres a prop under the pointer, turned or not, inside the map', () => {
+    expect(propFootprint([5.5, 5.5], { w: 1, h: 1 }, 0, map)).toEqual({ x: 5, y: 5, w: 1, h: 1 })
+    expect(propFootprint([5.5, 5.5], { w: 2, h: 1 }, 0, map)).toEqual({ x: 5, y: 5, w: 2, h: 1 })
+    expect(propFootprint([5.5, 5.5], { w: 2, h: 1 }, 90, map)).toEqual({ x: 5, y: 5, w: 1, h: 2 })
+    expect(propFootprint([0.2, 39.9], { w: 2, h: 2 }, 270, map)).toEqual({
+      x: 0,
+      y: 38,
+      w: 2,
+      h: 2,
+    })
   })
 })

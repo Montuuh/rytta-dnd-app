@@ -345,6 +345,20 @@ follows a removal. Items are named buttons but not Tab stops. Tokens and props a
 or by "Move to a square", which waits for a tap or the cursor; areas turn with two 15° keys. Two fingers pan
 and zoom in every tool; one finger acts with the tool; the zoom keys sit outside the board element.
 
+The table frame (RYT-075) is the TV's calibrated size, drawn on the DM board as a dashed amber
+rectangle. Its tab moves it: drag the tab, or tap it and then a square (Escape cancels). The tab is
+grip dots and "Table · cols × rows", at least 40 px tall at any zoom, outside the frame. While the frame
+moves, what the table will not show is dimmed. It snaps to whole squares inside the map. It is
+prepared before the scene goes on the table, and once there it moves the table screen. "Move the table
+here" centres it on the board cursor, and a frame as large as the map is only a label. Deleting a scene
+(RYT-076) sits in the plate's menu after a divider and always confirms in a dialog that names the scene
+and what goes with it.
+
+Placing a prop (RYT-077) shows the chosen prop at 62 % on a dashed footprint, under the pointer or the
+cursor, or under the finger and placed on release. The preview is the exact picture and turn that will
+be placed. The option strip, never an overlay on the board, holds the prop's name, its turn (two
+quarter-turn keys, R and Shift+R), "Another version", "Change prop" and "Done".
+
 Board art (design-flow.md, section 2): ink-on-parchment and painted map looks, original line-art props
 (2.5px outlines at 64px per square), tokens in the combat token shapes with a name plate and a breathing
 amber double ring for the active turn (static with reduced motion), translucent fog for the DM and opaque

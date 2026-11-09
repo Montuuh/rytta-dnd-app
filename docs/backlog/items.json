@@ -2989,6 +2989,123 @@
         "docs/evidence/ui-review/ryt-073/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-075",
+      "title": "Choose the table's portion of a larger map: drag the table frame",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-055"],
+      "sources": [
+        "User 2026-11-09: the DM should choose which portion of a larger map the table shows; the DM should be able to delete scenes from the tabletop; placing a prop should show a translucent preview of the item, let the DM rotate its sprite, and the whole prop placement UX should improve."
+      ],
+      "scope": "The calibrated table frame on the DM board becomes a handle the DM drags (snapped to whole squares, kept inside the map). It can be prepared before the scene is on the table and is used when it goes on; on the table, a drop moves the table screen. Keyboard: the frame button centres it on the board cursor.",
+      "acceptance": [
+        "Dragging the frame's tab moves the frame; on release the table shows that portion (live view), edges on whole squares and inside the map.",
+        "A scene not on the table keeps its prepared frame and 'Put on table' shows that portion.",
+        "Keyboard: 'Frame here' centres the frame on the board cursor or the viewport centre.",
+        "Without a calibration nothing changes: the table fits the whole map."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-075/validation.md",
+        "docs/evidence/RYT-075/design-flow.md",
+        "docs/evidence/RYT-075/desktop-frame-wait.jpg",
+        "docs/evidence/RYT-075/tablet-frame-wait.jpg",
+        "docs/evidence/RYT-075/mobile-frame-wait.jpg",
+        "src/features/tabletop/domain/geometry.test.ts",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/ui-review/ryt-075/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-076",
+      "title": "Delete scenes from the tabletop library",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-055"],
+      "sources": [
+        "User 2026-11-09: the DM should choose which portion of a larger map the table shows; the DM should be able to delete scenes from the tabletop; placing a prop should show a translucent preview of the item, let the DM rotate its sprite, and the whole prop placement UX should improve."
+      ],
+      "scope": "Each scene plate in the library gets 'Delete the scene' in its menu, with a confirmation that names the scene and what goes with it; a scene on the table says the table goes blank. Uses the existing transactional RPC.",
+      "acceptance": [
+        "The plate menu offers Delete; a confirmation dialog names the scene and the loss; Cancel keeps it.",
+        "Deleting removes the plate; if it was on the table, the table shows no scene.",
+        "Errors say so and keep the scene; focus returns to the library."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-075/validation.md",
+        "docs/evidence/RYT-075/design-flow.md",
+        "docs/evidence/RYT-075/desktop-delete-confirm.jpg",
+        "docs/evidence/RYT-075/tablet-delete-confirm.jpg",
+        "docs/evidence/RYT-075/mobile-delete-confirm.jpg",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/ui-review/ryt-075/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-077",
+      "title": "Prop placement: translucent preview, rotation, version and a placing strip",
+      "priority": "P1",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-061", "RYT-068"],
+      "sources": [
+        "User 2026-11-09: the DM should choose which portion of a larger map the table shows; the DM should be able to delete scenes from the tabletop; placing a prop should show a translucent preview of the item, let the DM rotate its sprite, and the whole prop placement UX should improve."
+      ],
+      "scope": "With the prop tool, a translucent copy of the chosen prop follows the pointer (or the keyboard cursor) on whole squares; on touch it follows the finger and is placed on release. R and Shift+R (and buttons) turn it a quarter; 'Another version' picks another picture of the same prop. The option strip shows the prop, its turn and how to change or stop.",
+      "acceptance": [
+        "The preview shows exactly the picture, size and turn that will be placed, centred under the pointer and kept inside the map.",
+        "R / Shift+R and the strip's buttons rotate the preview; placed props keep that rotation.",
+        "'Another version' changes the preview's picture and the placed prop uses it.",
+        "Touch: press shows the preview, dragging moves it, releasing places it.",
+        "Escape stops placing; keyboard Enter places at the cursor."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-075/validation.md",
+        "docs/evidence/RYT-075/design-flow.md",
+        "docs/evidence/RYT-075/desktop-prop-ghost.jpg",
+        "docs/evidence/RYT-075/tablet-prop-ghost.jpg",
+        "src/features/tabletop/domain/geometry.test.ts",
+        "tests/e2e/tabletop.spec.ts",
+        "docs/evidence/ui-review/ryt-075/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
     }
   ]
 }

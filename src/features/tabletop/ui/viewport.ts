@@ -18,6 +18,8 @@ export interface GestureHandlers {
   onEnd?: (point: WorldPoint, moved: boolean) => void
   onTap?: (point: WorldPoint, event: PointerEvent) => void
   onCancel?: () => void
+  /** A mouse or pen over the board with no button pressed (null when it leaves): previews. */
+  onHover?: (point: WorldPoint | null) => void
 }
 
 const minZ = 0.08
@@ -183,7 +185,11 @@ export function useBoardView(
   }
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!pointers.current.has(event.pointerId)) return
+    if (!pointers.current.has(event.pointerId)) {
+      if (event.pointerType !== 'touch')
+        latest.current.handlers.onHover?.(toWorld(event.clientX, event.clientY))
+      return
+    }
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
     const p = pinch.current
     if (p && pointers.current.size >= 2 && el) {
@@ -230,6 +236,11 @@ export function useBoardView(
     else if (!g.moved) h.onTap?.(point, event)
   }
 
+  const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'touch' && !pointers.current.has(event.pointerId))
+      latest.current.handlers.onHover?.(null)
+  }
+
   const onPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
     pointers.current.delete(event.pointerId)
     if (gesture.current?.claimed) latest.current.handlers.onCancel?.()
@@ -244,6 +255,13 @@ export function useBoardView(
     center,
     reveal,
     /** Spread on the viewport element: its callback ref and pointer handlers. */
-    bind: { ref: setEl, onPointerDown, onPointerMove, onPointerUp, onPointerCancel },
+    bind: {
+      ref: setEl,
+      onPointerDown,
+      onPointerMove,
+      onPointerUp,
+      onPointerCancel,
+      onPointerLeave,
+    },
   }
 }

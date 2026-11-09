@@ -293,6 +293,7 @@ export function PropsPanel({
   return (
     <div className="tt-panel-body">
       <TextInput
+        id="tt-props-search"
         label={t('tabletop.props.search')}
         leftSection={<Search size={18} aria-hidden="true" />}
         value={query}

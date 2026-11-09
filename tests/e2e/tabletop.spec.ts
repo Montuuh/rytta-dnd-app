@@ -372,6 +372,107 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   expect(errors).toEqual([])
 })
 
+test('RYT-075/076 the DM deletes a scene and chooses what the table shows', async ({
+  page,
+}, info) => {
+  test.setTimeout(120_000)
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const { server } = await prepare(page)
+  seedScene(server)
+  server.act('save_tabletop_scene', {
+    target_campaign: campaignId,
+    target_scene: null,
+    expected_revision: null,
+    request_id: 'cavern',
+    fields: { name: 'Gran caverna', map_kind: 'blank', ground: 'stone', cols: 60, rows: 40 },
+  })
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Mesa' })).toBeVisible({
+    timeout: 15_000,
+  })
+  // RYT-076: delete the scene on the table from its plate's menu, after a confirmation.
+  const menu = page.getByRole('button', { name: 'Más opciones de Puente de Vado' })
+  await menu.click()
+  await page.getByRole('menuitem', { name: 'Borrar la escena' }).click()
+  const confirm = page.getByRole('dialog', { name: '¿Borrar «Puente de Vado»?' })
+  await expect(confirm).toContainText('los jugadores dejarán de verla')
+  await expect(confirm).toContainText('No se puede deshacer.')
+  // The safe choice holds the first focus.
+  await expect(confirm.getByRole('button', { name: 'Cancelar' })).toBeFocused()
+  await confirm.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(confirm).toHaveCount(0)
+  // Kept: focus returns to that scene's menu.
+  await expect(menu).toBeFocused()
+  expect(server.scenes).toHaveLength(2)
+  await menu.click()
+  // The open menu passes axe (contrast of the danger item included). Mantine's menu carries a
+  // focus sentinel (an empty presentation div) that axe reads as a menu child: that rule only.
+  const menuAudit = await new AxeBuilder({ page })
+    .include('[role="menu"]')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .disableRules(['aria-required-children'])
+    .analyze()
+  expect(menuAudit.violations).toEqual([])
+  await page.getByRole('menuitem', { name: 'Borrar la escena' }).click()
+  await expect(confirm).toBeVisible()
+  await audit(page, '[role="dialog"]')
+  await capture(page, info.outputPath('delete-confirm.png'))
+  await confirm.getByRole('button', { name: 'Borrar la escena' }).click()
+  await expect(confirm).toHaveCount(0)
+  await expect(menu).toHaveCount(0)
+  expect(server.scenes.map((s) => s.name)).toEqual(['Gran caverna'])
+  expect(server.live.scene_id).toBeNull()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Escena «Puente de Vado» borrada.' }),
+  ).toHaveCount(1)
+  await expect(page.getByRole('button', { name: 'Nueva escena' })).toBeFocused()
+
+  // RYT-075: prepare what the table will show before the scene goes on it: tap the frame's tab,
+  // then the square to centre it on (the alternative to dragging it).
+  await page
+    .getByRole('button', { name: /Gran caverna/ })
+    .first()
+    .click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Gran caverna' })).toBeVisible()
+  const label = await page.locator('.tt-frame-label').textContent()
+  const [, fc, fr] = label!.match(/(\d+) × (\d+)/)!.map(Number)
+  await page.locator('.tt-frame-handle').click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Toca la casilla donde centrar la mesa' }),
+  ).toHaveCount(1)
+  // The wait shows in words too, with a way out that needs no keyboard.
+  const strip = page.locator('.tt-strip')
+  await expect(strip).toContainText('Toca la casilla donde centrar la mesa')
+  await expect(strip.getByRole('button', { name: 'Cancelar' })).toBeVisible()
+  await capture(page, info.outputPath('frame-wait.png'))
+  const [sx, sy] = await squareAt(page, 60, 40, 28)
+  await page.mouse.click(sx, sy)
+  // Centred on that square, kept inside the map, its edges on whole squares.
+  const axis = (c: number, size: number, total: number) =>
+    Math.min(Math.max(Math.round(c - size / 2), 0), total - size) + size / 2
+  const expected = [axis(40.5, fc!, 60), axis(28.5, fr!, 40)]
+  await page.getByRole('button', { name: phone(info) ? 'A la mesa' : 'Poner en la mesa' }).click()
+  await expect.poll(() => server.live.scene_id).not.toBeNull()
+  expect([server.live.view_x, server.live.view_y]).toEqual(expected)
+  if (!phone(info)) {
+    // On the table, dragging the tab moves what the table shows.
+    // Measured once the board has settled (putting the scene on the table changes the header).
+    const [ax, ay] = await squareAt(page, 60, 0, 0)
+    const [bx, by] = await squareAt(page, 60, 10, 10)
+    const tab = (await page.locator('.tt-frame-tab').boundingBox())!
+    await page.mouse.move(tab.x + tab.width / 2, tab.y + tab.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(tab.x + tab.width / 2 - (bx - ax), tab.y + tab.height / 2 - (by - ay), {
+      steps: 6,
+    })
+    await page.mouse.up()
+    await expect.poll(() => server.live.view_x).toBe(expected[0]! - 10)
+    expect(server.live.view_y).toBe(expected[1]! - 10)
+  }
+  expect(errors).toEqual([])
+})
+
 test('RYT-065 a Dungeon Alchemist export arrives with its grid, doors and fog areas', async ({
   page,
 }, info) => {
@@ -659,6 +760,32 @@ test('RYT-056–062 story cards, audio, props, areas, fog and events from the ed
   await page.mouse.click(px, py)
   await expect
     .poll(() => server.items.filter((i) => i.kind === 'prop' && i.data.prop === 'barrel').length)
+    .toBe(1)
+  // RYT-077: the placing bar turns the prop; a translucent preview shows where it goes.
+  const placing = page.getByRole('group', { name: 'Colocando Barril' })
+  await expect(placing).toBeVisible()
+  await placing.getByRole('button', { name: 'Girar a la derecha' }).click()
+  await expect(placing).toContainText('90°')
+  await placing.getByRole('button', { name: 'Otra versión' }).click()
+  const [gx, gy] = await squareAt(page, 20, 4, 6)
+  if (!phone(info)) {
+    await page.mouse.move(gx, gy)
+    await expect(page.locator('.tt-prop-ghost')).toHaveCount(1)
+    // R turns it again from the keyboard; Shift+R turns it back.
+    await page.keyboard.press('r')
+    await expect(placing).toContainText('180°')
+    await page.keyboard.press('Shift+R')
+    await expect(placing).toContainText('90°')
+    await capture(page, info.outputPath('prop-ghost.png'))
+  }
+  await page.mouse.click(gx, gy)
+  await expect
+    .poll(
+      () =>
+        server.items.filter(
+          (i) => i.kind === 'prop' && i.data.prop === 'barrel' && i.rotation === 90,
+        ).length,
+    )
     .toBe(1)
 
   // Areas: a 20-foot sphere left on the map lists the tokens it catches.

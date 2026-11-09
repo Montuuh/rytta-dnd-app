@@ -199,6 +199,44 @@ export const roomAt = (rooms: readonly Room[], p: Point) =>
     room.rects.some(([x, y, w, h]) => p[0] >= x && p[0] < x + w && p[1] >= y && p[1] < y + h),
   )
 
+/**
+ * RYT-075: where the table frame goes. Its edges sit on whole squares and it stays inside the map;
+ * along a side where the map is smaller than the table, it centres on the map.
+ */
+export function placeFrame(
+  center: Point,
+  frame: { cols: number; rows: number },
+  map: { cols: number; rows: number },
+): [number, number] {
+  const axis = (c: number, size: number, total: number) => {
+    if (size >= total) return total / 2
+    const left = clamp(Math.round(c - size / 2), 0, total - size)
+    return left + size / 2
+  }
+  return [axis(center[0], frame.cols, map.cols), axis(center[1], frame.rows, map.rows)]
+}
+
+/**
+ * RYT-077: the squares a prop of w × h takes when centred under a point, turned a quarter or not,
+ * and kept inside the map.
+ */
+export function propFootprint(
+  point: Point,
+  size: { w: number; h: number },
+  turn: number,
+  map: { cols: number; rows: number },
+) {
+  const turned = turn % 180 !== 0
+  const w = turned ? size.h : size.w
+  const h = turned ? size.w : size.h
+  return {
+    x: clamp(Math.round(point[0] - w / 2), 0, Math.max(0, map.cols - w)),
+    y: clamp(Math.round(point[1] - h / 2), 0, Math.max(0, map.rows - h)),
+    w,
+    h,
+  }
+}
+
 /** The two squares a door on a square's edge joins (a flat door: above and below it). */
 export function doorSquares(door: { x: number; y: number; rotation: number }) {
   const flat = door.rotation % 180 === 0

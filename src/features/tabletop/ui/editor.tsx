@@ -28,6 +28,7 @@ import {
   RotateCcw,
   RotateCw,
   Settings2,
+  Shuffle,
   Users,
   X,
 } from 'lucide-react'
@@ -48,6 +49,8 @@ import {
   itemCells,
   measurePath,
   nearestEdge,
+  placeFrame,
+  propFootprint,
   roomAt,
   type AreaPlacement,
   snapItem,
@@ -58,10 +61,13 @@ import type { TabletopAction } from '../data/repository'
 import { propById } from '../domain/props'
 import { AreaDrawing, Board, type DragOverride } from './board'
 import { CaughtList, Inspector } from './inspector'
+import { PropIcon } from './prop-art'
+import { decodePictures, pictureCount, pictureUrls, variantOf } from './sprites'
+import { preparedView, savePreparedView } from './prepared-view'
 import { AreaOptions, FogOptions, MeasureReadout, OptionStrip, ToolKit } from './kit'
 import { MeasureTape, PingRipple, TableFrame } from './overlays'
 import { AudioPanel, PropsPanel, ScenePanel, StoryPanel, TokensPanel } from './panels'
-import { paintedScene } from './palette'
+import { paintedScene, U } from './palette'
 import {
   defaultArea,
   defaultFog,
@@ -227,6 +233,24 @@ function EditorBody({
   const [stroke, setStroke] = useState<Point[] | null>(null)
   const [box, setBox] = useState<[Point, Point] | null>(null)
   const [propChoice, setPropChoice] = useState<string | null>(null)
+  /** RYT-077: where the chosen prop would go, its turn, and the id that picks its picture. */
+  const [ghostAt, setGhostAt] = useState<Point | null>(null)
+  const [propTurn, setPropTurn] = useState(0)
+  const [propId, setPropId] = useState(() => crypto.randomUUID())
+  /** RYT-075: the frame prepared before the scene is on the table, its drag and its tap-to-move. */
+  const [prepared, setPrepared] = useState<Point | null>(() => preparedView(view.scene.id))
+  /** A move sent to the table: shown until the live view changes (the server answered). */
+  const [pendingFrame, setPendingFrame] = useState<{
+    center: Point
+    from: [number | null, number | null]
+  } | null>(null)
+  /** Whether the board's square cursor was last moved by the keyboard (not a tap or a click). */
+  const keyboardCursor = useRef(false)
+  /** On touch the preview rises above the finger, so the finger never hides it. */
+  const lift = useRef(0)
+  const coarse = useMediaQuery('(pointer: coarse)')
+  const [frameDrag, setFrameDrag] = useState<{ center: Point; ox: number; oy: number } | null>(null)
+  const [frameWaiting, setFrameWaiting] = useState(false)
   const [announce, setAnnounce] = useState('')
   // The same words twice still reach screen readers: a no-break space makes them new.
   const say = useCallback(
@@ -242,11 +266,80 @@ function EditorBody({
   const selected = items.find((i) => i.id === selectedId) ?? null
   const calibration = fromSetup(live.screen)
   const frame = calibration ? squaresThatFit(calibration) : null
-  const frameCenter: Point = [live.view_x ?? scene.cols / 2, live.view_y ?? scene.rows / 2]
+  // On the table the frame shows the live centre exactly as the table screen uses it; before, the
+  // prepared one. A move just sent shows at once, until the live view changes.
+  const liveCenter: Point | null =
+    onTable && live.view_x !== null && live.view_y !== null ? [live.view_x, live.view_y] : null
+  const pending =
+    pendingFrame &&
+    onTable &&
+    pendingFrame.from[0] === live.view_x &&
+    pendingFrame.from[1] === live.view_y
+      ? pendingFrame.center
+      : null
+  const restCenter: Point = frame
+    ? placeFrame(prepared ?? [scene.cols / 2, scene.rows / 2], frame, scene)
+    : [scene.cols / 2, scene.rows / 2]
+  const frameCenter: Point = frameDrag?.center ?? pending ?? liveCenter ?? restCenter
+  // The chosen prop as it would be placed: centred under the pointer or the keyboard cursor.
+  const propDef = tool === 'prop' && propChoice ? (propById.get(propChoice) ?? null) : null
+  const spot =
+    propDef && ghostAt && !frameWaiting && !frameDrag
+      ? propFootprint(ghostAt, propDef, propTurn, scene)
+      : null
+  const ghost = useMemo(
+    () =>
+      spot && propDef
+        ? {
+            ...spot,
+            id: propId,
+            kind: 'prop' as const,
+            rotation: propTurn,
+            label: null,
+            combatant_id: null,
+            character_id: null,
+            data: { prop: propDef.id },
+          }
+        : null,
+    // The footprint's own numbers: a new point on the same squares keeps the same ghost.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [spot?.x, spot?.y, spot?.w, spot?.h, propId, propTurn, propDef],
+  )
+  /** The preview follows a point; the board re-renders only when its squares change. */
+  const aimProp = (p: Point | null) =>
+    setGhostAt((g) => {
+      if (!p || !propDef) return p
+      if (!g) return p
+      const a = propFootprint(p, propDef, propTurn, scene)
+      const b = propFootprint(g, propDef, propTurn, scene)
+      return a.x === b.x && a.y === b.y ? g : p
+    })
+  // Versions are the prop's pictures at its size; an id picks one (the board varies props by id).
+  const versions = propDef ? pictureCount(propDef.id, propDef.w, propDef.h) : 0
+  const versionOf = (id: string) => (versions ? Math.abs(Math.trunc(variantOf(id))) % versions : 0)
+  /** A new id with the same picture (repeat the chosen version) or another one. */
+  const nextPropId = (from: string, same: boolean) => {
+    for (let n = 0; n < 60; n++) {
+      const id = crypto.randomUUID()
+      if (versions < 2 || (versionOf(id) === versionOf(from)) === same) return id
+    }
+    return crypto.randomUUID()
+  }
+  // The chosen prop's pictures load as it is chosen: the preview shows each version at once.
+  useEffect(() => {
+    if (propChoice) void decodePictures(pictureUrls(propChoice), 4000)
+  }, [propChoice])
+  const turnProp = (by: number) => {
+    const next = (propTurn + by + 360) % 360
+    setPropTurn(next)
+    say(t('tabletop.props.turned', { value: next }))
+  }
 
   const setTool = (next: Tool) => {
     setToolState(next)
     setMoving(null)
+    setFrameWaiting(false)
+    if (next !== 'prop') setGhostAt(null)
     setAreaAt(null)
     setStroke(null)
     setBox(null)
@@ -293,6 +386,41 @@ function EditorBody({
     [run, scene.id],
   )
   const live_ = (patch: TabletopAction & { kind: 'live' }) => run(patch)
+  /** Move what the table shows: live when the scene is on the table, prepared otherwise. */
+  const moveFrame = (to: Point) => {
+    setFrameWaiting(false)
+    if (!frame) return
+    const [x, y] = placeFrame(to, frame, scene)
+    // In words: the columns and rows the table shows (counted from 1, inside the map).
+    const range = {
+      c1: Math.max(1, Math.round(x - frame.cols / 2) + 1),
+      c2: Math.min(scene.cols, Math.round(x + frame.cols / 2)),
+      r1: Math.max(1, Math.round(y - frame.rows / 2) + 1),
+      r2: Math.min(scene.rows, Math.round(y + frame.rows / 2)),
+    }
+    if (!onTable) {
+      setPrepared([x, y])
+      savePreparedView(scene.id, [x, y])
+      return say(t('tabletop.frame.prepared', range))
+    }
+    const before = liveCenter
+    setPendingFrame({ center: [x, y], from: [live.view_x, live.view_y] })
+    // The players' screen moved: the DM can put it back.
+    run({ kind: 'live', patch: { view_x: x, view_y: y } }, t('tabletop.frame.moved', range), () =>
+      setNotice({
+        message: t('tabletop.frame.moved', range),
+        undo: before
+          ? () => {
+              setNotice(null)
+              run(
+                { kind: 'live', patch: { view_x: before[0], view_y: before[1] } },
+                t('tabletop.frame.restored'),
+              )
+            }
+          : undefined,
+      }),
+    )
+  }
 
   // Entering the editor puts focus inside it, where its tool letters work (WCAG 2.1.4).
   useEffect(() => {
@@ -452,20 +580,32 @@ function EditorBody({
     } else if (tool === 'prop') {
       const definition = propChoice ? propById.get(propChoice) : null
       if (!definition) return setPanel('props')
-      put(
-        [
-          {
-            kind: 'prop',
-            x: clamp(cx, 0, scene.cols - definition.w),
-            y: clamp(cy, 0, scene.rows - definition.h),
-            w: definition.w,
-            h: definition.h,
-            rotation: 0,
-            data: { prop: definition.id },
-          },
-        ],
-        t('tabletop.announce.prop', { name: t(`tabletop.prop.${definition.id}` as never) }),
+      const place = propFootprint(p, definition, propTurn, scene)
+      const id = propId
+      const name = t(`tabletop.prop.${definition.id}` as never)
+      run(
+        {
+          kind: 'putItems',
+          sceneId: scene.id,
+          items: [
+            { id, kind: 'prop', ...place, rotation: propTurn, data: { prop: definition.id } },
+          ],
+        },
+        t('tabletop.announce.prop', { name }),
+        () =>
+          setNotice({
+            message: t('tabletop.props.placed', { name }),
+            undo: () => {
+              setNotice(null)
+              run(
+                { kind: 'deleteItems', sceneId: scene.id, ids: [id] },
+                t('tabletop.announce.removedName', { name }),
+              )
+            },
+          }),
       )
+      // The next one repeats the chosen picture; mirror and turn still vary it by its new id.
+      setPropId(nextPropId(id, true))
     } else if (tool === 'ping') {
       live_({
         kind: 'live',
@@ -504,10 +644,31 @@ function EditorBody({
   const board = useBoardView(
     { cols: scene.cols, rows: scene.rows },
     {
-      onStart: (p) => {
+      onStart: (p, event) => {
         const item = pressed.current
         pressed.current = null
         tapped.current = null
+        // RYT-075: with Select, the frame's handle moves what the table shows.
+        if (
+          frame &&
+          tool === 'select' &&
+          event.target instanceof Element &&
+          event.target.closest('[data-frame-handle]')
+        ) {
+          setFrameDrag({
+            center: frameCenter,
+            ox: p[0] - frameCenter[0],
+            oy: p[1] - frameCenter[1],
+          })
+          return true
+        }
+        // Waiting for the frame's square: a tap answers it (onTap), a drag still pans the map.
+        if (frameWaiting) return false
+        if (tool === 'prop' && propChoice) {
+          lift.current = event.pointerType === 'touch' ? 48 / (U * board.view.z) : 0
+          aimProp([p[0], p[1] - lift.current])
+          return true
+        }
         if (tool === 'select') {
           // A waiting move takes the next tap, wherever it lands.
           if (moving) return true
@@ -543,7 +704,14 @@ function EditorBody({
         return true
       },
       onMove: (p) => {
-        if (drag) setDrag((d) => (d ? { ...d, x: p[0] - d.ox, y: p[1] - d.oy } : d))
+        if (frameDrag && frame) {
+          setFrameDrag((d) =>
+            d ? { ...d, center: placeFrame([p[0] - d.ox, p[1] - d.oy], frame, scene) } : d,
+          )
+          return
+        }
+        if (tool === 'prop' && propChoice) aimProp([p[0], p[1] - lift.current])
+        else if (drag) setDrag((d) => (d ? { ...d, x: p[0] - d.ox, y: p[1] - d.oy } : d))
         else if (tool === 'measure') setMeasureEnd(snap ? cellCenter(p) : p)
         else if (tool === 'area' && areaAt && area.shape !== 'emanation') {
           const raw = angleTo([areaAt.x, areaAt.y], p)
@@ -555,6 +723,34 @@ function EditorBody({
         } else if (tool === 'fog' && box) setBox([box[0], p])
       },
       onEnd: (p, moved) => {
+        if (frameDrag) {
+          const done = frameDrag
+          setFrameDrag(null)
+          // From the release point (the last move may not have rendered yet).
+          if (moved) moveFrame([p[0] - done.ox, p[1] - done.oy])
+          else if (frameWaiting) {
+            // A second tap on the tab cancels the wait.
+            setFrameWaiting(false)
+            say(t('tabletop.frame.cancelled'))
+          } else {
+            setFrameWaiting(true)
+            say(t('tabletop.frame.waiting'))
+          }
+          return
+        }
+        // Touch places the prop where the finger lifts (the preview above it); off the map, nothing.
+        if (tool === 'prop' && propChoice) {
+          const at: Point = [p[0], p[1] - lift.current]
+          const touch = lift.current > 0
+          lift.current = 0
+          if (at[0] < 0 || at[1] < 0 || at[0] > scene.cols || at[1] > scene.rows) {
+            setGhostAt(null)
+            return say(t('tabletop.props.offMap'))
+          }
+          placeAt(at)
+          if (touch) setGhostAt(null)
+          return
+        }
         if (drag) {
           const item = items.find((i) => i.id === drag.id)
           setDrag(null)
@@ -612,10 +808,16 @@ function EditorBody({
         }
         if (!moved) placeAt(p)
       },
-      onTap: () => {
+      onTap: (p) => {
+        if (frameWaiting) return moveFrame(p)
         if (tool === 'select') setSelectedId(null)
       },
+      onHover: (p) => {
+        if (tool !== 'prop' || !p) return setGhostAt(null)
+        aimProp(p)
+      },
       onCancel: () => {
+        setFrameDrag(null)
         setDrag(null)
         setStroke(null)
         setBox(null)
@@ -769,6 +971,10 @@ function EditorBody({
       if (!editor.contains(target) && document.querySelector('[role="dialog"][aria-modal="true"]'))
         return
       const key = event.key.toLowerCase()
+      if (key === 'r' && tool === 'prop' && propChoice) {
+        event.preventDefault()
+        return turnProp(event.shiftKey ? -90 : 90)
+      }
       const found = tools.find((x) => toolKeys[x] === key)
       if (found) {
         event.preventDefault()
@@ -777,7 +983,10 @@ function EditorBody({
         return
       }
       if (event.key === 'Escape') {
-        if (moving) {
+        if (frameWaiting) {
+          setFrameWaiting(false)
+          say(t('tabletop.frame.cancelled'))
+        } else if (moving) {
           setMoving(null)
           say(t('tabletop.move.cancelled'))
         } else if (measure.length || areaAt || stroke || box) {
@@ -871,6 +1080,8 @@ function EditorBody({
         clamp(here[1] + delta[1], 0, scene.rows - 1),
       ]
       setCursor(next)
+      keyboardCursor.current = true
+      if (tool === 'prop') setGhostAt([next[0] + 0.5, next[1] + 0.5])
       board.reveal(next[0], next[1])
       if (box)
         setBox([box[0], [Math.max(box[0][0], next[0]) + 1, Math.max(box[0][1], next[1]) + 1]])
@@ -879,6 +1090,11 @@ function EditorBody({
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       setCursor(here)
+      if (frameWaiting) {
+        setFrameWaiting(false)
+        moveFrame([here[0] + 0.5, here[1] + 0.5])
+        return
+      }
       actAt(here)
       return
     }
@@ -902,6 +1118,7 @@ function EditorBody({
   }
 
   const startMove = (item: Item) => {
+    setFrameWaiting(false)
     if (item.locked) return say(t('tabletop.announce.locked'))
     setMoving(item.id)
     setToolState('select')
@@ -938,7 +1155,15 @@ function EditorBody({
   const overlay = (
     <>
       {frame && (
-        <TableFrame x={frameCenter[0]} y={frameCenter[1]} cols={frame.cols} rows={frame.rows} />
+        <TableFrame
+          x={frameCenter[0]}
+          y={frameCenter[1]}
+          cols={frame.cols}
+          rows={frame.rows}
+          map={scene}
+          state={frameDrag ? 'drag' : frameWaiting ? 'wait' : null}
+          squarePx={U * board.view.z}
+        />
       )}
       {(tool === 'measure' || measure.length > 0) && <MeasureTape points={measurePoints} />}
       {stroke && (
@@ -956,6 +1181,26 @@ function EditorBody({
           height={Math.abs(box[1][1] - box[0][1])}
           className={`tt-fog-box is-${fog.mode}`}
         />
+      )}
+      {ghost && (
+        <g aria-hidden="true">
+          <rect
+            x={ghost.x}
+            y={ghost.y}
+            width={ghost.w}
+            height={ghost.h}
+            className="tt-ghost-halo"
+            vectorEffect="non-scaling-stroke"
+          />
+          <rect
+            x={ghost.x}
+            y={ghost.y}
+            width={ghost.w}
+            height={ghost.h}
+            className="tt-ghost-mark"
+            vectorEffect="non-scaling-stroke"
+          />
+        </g>
       )}
       <PingRipple ping={live.ping} />
       {cursor && (
@@ -983,6 +1228,23 @@ function EditorBody({
 
   const movingItem = moving ? items.find((i) => i.id === moving) : null
   const strip = (() => {
+    if (frameWaiting)
+      return (
+        <>
+          <span className="tt-readout-hint">{t('tabletop.frame.waitingHint')}</span>
+          <button
+            type="button"
+            className="tt-text-action"
+            onClick={() => {
+              setFrameWaiting(false)
+              say(t('tabletop.frame.cancelled'))
+              focusBoard()
+            }}
+          >
+            {t('tabletop.cancel')}
+          </button>
+        </>
+      )
     if (movingItem)
       return (
         <>
@@ -1044,12 +1306,87 @@ function EditorBody({
           />
         )
       case 'prop':
-        return (
-          <span className="tt-readout-hint">
-            {propChoice
-              ? t('tabletop.props.placing', { name: t(`tabletop.prop.${propChoice}` as never) })
-              : t('tabletop.props.choose')}
+        return propDef ? (
+          <span
+            className="tt-prop-strip"
+            role="group"
+            aria-label={t('tabletop.props.placingGroup', {
+              name: t(`tabletop.prop.${propDef.id}` as never),
+            })}
+          >
+            <span className="tt-placebar-prop">
+              <PropIcon
+                prop={propDef.id}
+                w={propDef.w}
+                h={propDef.h}
+                size={36}
+                painted={paintedScene(scene)}
+              />
+              <span>{t(`tabletop.prop.${propDef.id}` as never)}</span>
+            </span>
+            <span className="tt-angle" role="group" aria-label={t('tabletop.props.turn')}>
+              <button
+                type="button"
+                className="tt-icon-button"
+                aria-label={t('tabletop.props.turnLeft')}
+                aria-keyshortcuts="Shift+R"
+                onClick={() => turnProp(-90)}
+              >
+                <RotateCcw size={18} aria-hidden="true" />
+              </button>
+              <span className="tt-angle-value">
+                {t('tabletop.area.degrees', { value: propTurn })}
+              </span>
+              <button
+                type="button"
+                className="tt-icon-button"
+                aria-label={t('tabletop.props.turnRight')}
+                aria-keyshortcuts="R"
+                onClick={() => turnProp(90)}
+              >
+                <RotateCw size={18} aria-hidden="true" />
+              </button>
+            </span>
+            {versions > 1 && (
+              <button
+                type="button"
+                className="tt-text-action"
+                onClick={() => {
+                  const id = nextPropId(propId, false)
+                  setPropId(id)
+                  say(t('tabletop.props.versionOf', { n: versionOf(id) + 1, count: versions }))
+                }}
+              >
+                <Shuffle size={16} aria-hidden="true" />
+                {t('tabletop.props.version')}
+              </button>
+            )}
+            <button
+              type="button"
+              className="tt-text-action"
+              onClick={() => {
+                setPanel('props')
+                requestAnimationFrame(() => document.getElementById('tt-props-search')?.focus())
+              }}
+            >
+              {t('tabletop.props.change')}
+            </button>
+            <span className="tt-readout-hint">
+              {t(coarse ? 'tabletop.props.keysTouch' : 'tabletop.props.keys')}
+            </span>
+            <button
+              type="button"
+              className="tt-text-action tt-prop-done"
+              onClick={() => {
+                setTool('select')
+                focusBoard()
+              }}
+            >
+              {t('tabletop.props.done')}
+            </button>
           </span>
+        ) : (
+          <span className="tt-readout-hint">{t('tabletop.props.choose')}</span>
         )
       default:
         return <span className="tt-readout-hint">{t(`tabletop.hint.${tool}`)}</span>
@@ -1079,8 +1416,14 @@ function EditorBody({
         painted={paintedScene(scene)}
         onChoose={(prop) => {
           setPropChoice(prop)
+          setPropId(crypto.randomUUID())
           setToolState('prop')
-          if (phone) setPanel(null)
+          setFrameWaiting(false)
+          if (phone) {
+            // The sheet closes: focus goes to the board, where the preview waits.
+            setPanel(null)
+            setTimeout(() => focusBoard(), 250)
+          }
         }}
       />
     ),
@@ -1115,12 +1458,7 @@ function EditorBody({
           t(reset ? 'tabletop.announce.eventReset' : 'tabletop.announce.eventFired'),
         )
       }
-      onCenterTable={() =>
-        live_({
-          kind: 'live',
-          patch: { view_x: selected.x + selected.w / 2, view_y: selected.y + selected.h / 2 },
-        })
-      }
+      onCenterTable={() => moveFrame([selected.x + selected.w / 2, selected.y + selected.h / 2])}
     />
   )
 
@@ -1151,7 +1489,7 @@ function EditorBody({
             onClick={() =>
               live_({
                 kind: 'live',
-                patch: { scene_id: scene.id, view_x: scene.cols / 2, view_y: scene.rows / 2 },
+                patch: { scene_id: scene.id, view_x: frameCenter[0], view_y: frameCenter[1] },
               })
             }
             loading={action.isPending && action.variables?.kind === 'live'}
@@ -1160,17 +1498,18 @@ function EditorBody({
           </Button>
         )}
         <div className="tt-head-actions">
-          {onTable && (
+          {frame && (
             <Button
               variant="subtle"
               leftSection={<Frame size={18} aria-hidden="true" />}
-              onClick={() => {
-                const [x, y] = board.center()
-                live_({
-                  kind: 'live',
-                  patch: { view_x: Number(x.toFixed(2)), view_y: Number(y.toFixed(2)) },
-                })
-              }}
+              // The keyboard cursor's square, or the middle of the board in view.
+              onClick={() =>
+                moveFrame(
+                  keyboardCursor.current && cursor
+                    ? [cursor[0] + 0.5, cursor[1] + 0.5]
+                    : board.center(),
+                )
+              }
             >
               {phone ? t('tabletop.frame.hereShort') : t('tabletop.frame.here')}
             </Button>
@@ -1230,22 +1569,31 @@ function EditorBody({
       <div className="tt-body">
         {!phone && !compact && <ToolKit tool={tool} onChange={setTool} variant="rail" />}
         <div className="tt-stage">
-          {(tool !== 'select' || movingItem) && (
+          {(tool !== 'select' || movingItem || frameWaiting) && (
             <OptionStrip label={t('tabletop.strip', { tool: t(`tabletop.tool.${tool}`) })}>
               {strip}
             </OptionStrip>
           )}
           <div className="tt-board-frame">
             <div
-              className={`tt-viewport tool-${tool} ${moving ? 'is-moving' : ''}`}
+              className={`tt-viewport tool-${tool} ${moving || frameWaiting ? 'is-moving' : ''}`}
               {...board.bind}
               tabIndex={0}
               role="application"
               aria-label={t('tabletop.board', { name: scene.name })}
               aria-describedby="tt-board-help"
               onKeyDown={onBoardKeyDown}
+              onPointerDownCapture={() => {
+                keyboardCursor.current = false
+              }}
               onFocus={(event) => {
-                if (event.target === event.currentTarget) setCursor((c) => c ?? cursorStart())
+                if (event.target !== event.currentTarget) return
+                setCursor((c) => c ?? cursorStart())
+                // With a prop chosen, the preview waits on the cursor's square.
+                if (tool === 'prop' && !ghostAt) {
+                  const here = cursor ?? cursorStart()
+                  setGhostAt([here[0] + 0.5, here[1] + 0.5])
+                }
               }}
             >
               <div
@@ -1268,6 +1616,7 @@ function EditorBody({
                     areaPlacement && <AreaDrawing placement={areaPlacement} scene={scene} preview />
                   }
                   overlay={overlay}
+                  ghost={ghost}
                   onItemPointerDown={onItemPointerDown}
                   onItemKeyDown={onItemKeyDown}
                   onItemActivate={activate}

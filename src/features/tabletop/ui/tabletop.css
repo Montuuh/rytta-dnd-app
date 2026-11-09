@@ -868,6 +868,89 @@ button.tt-token:focus-visible {
   fill: #f6c478;
   font-family: system-ui, sans-serif;
 }
+/* RYT-075: the tab is the frame's handle with Select: drag it, or tap it and then a square. */
+.tt-frame-handle {
+  pointer-events: none;
+}
+.tt-viewport.tool-select .tt-frame-handle {
+  pointer-events: auto;
+  cursor: grab;
+}
+.tt-frame.is-drag .tt-frame-handle {
+  cursor: grabbing;
+}
+.tt-frame-grip {
+  fill: #f6c478;
+}
+.tt-frame-handle:hover .tt-frame-tab,
+.tt-frame.is-drag .tt-frame-tab,
+.tt-frame.is-wait .tt-frame-tab {
+  fill: rgba(60, 40, 18, 0.95);
+  stroke-width: 0.05;
+}
+/* While the frame moves, what the table will not show is dimmed. */
+.tt-frame-outside {
+  fill: rgba(10, 7, 5, 0.42);
+}
+.tt-frame.is-drag .tt-frame-rect,
+.tt-frame.is-wait .tt-frame-rect {
+  stroke-width: 0.11;
+  stroke-dasharray: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tt-frame.is-wait .tt-frame-rect {
+    animation: tt-frame-wait 1.4s ease-in-out infinite;
+  }
+}
+@keyframes tt-frame-wait {
+  50% {
+    stroke-opacity: 0.45;
+  }
+}
+
+/* RYT-077: the prop about to be placed, translucent, on the squares it would take. */
+.tt-prop-ghost {
+  opacity: 0.62;
+  pointer-events: none;
+}
+.tt-world[data-mode] .tt-prop-ghost .tt-prop,
+.tt-world[data-mode] .tt-prop-ghost .tt-hit {
+  pointer-events: none;
+  cursor: inherit;
+}
+/* Its footprint sits above the fog: a constant 2px dashed line on a dark halo, on any ground. */
+.tt-ghost-halo {
+  fill: none;
+  stroke: rgba(10, 7, 5, 0.7);
+  stroke-width: 5px;
+}
+.tt-ghost-mark {
+  fill: rgba(246, 196, 120, 0.16);
+  stroke: #f6c478;
+  stroke-width: 2px;
+  stroke-dasharray: 6px 4px;
+}
+.tt-placebar-prop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: Georgia, Cambria, serif;
+}
+.tt-prop-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+.tt-prop-strip .tt-prop-done {
+  margin-left: auto;
+}
+.tt-prop-strip .tt-text-action,
+.tt-placebar .tt-text-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
 
 .tt-zoom {
   position: absolute;
@@ -1453,6 +1536,49 @@ button.tt-token:focus-visible {
   stroke: #f6c478;
   stroke-width: 1;
   opacity: 0.85;
+}
+/* RYT-076: a confirmation says what is lost before the destructive button. */
+.tt-confirm {
+  display: grid;
+  gap: 0.75rem;
+}
+.tt-confirm p {
+  margin: 0;
+}
+.tt-confirm-live {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm, 6px);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--app-text);
+}
+.tt-confirm .tt-dialog-foot {
+  flex-wrap: nowrap;
+}
+@media (max-width: 30em) {
+  .tt-confirm .tt-dialog-foot {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+/* A destructive menu item in the theme's own danger colour (AA in both themes). */
+.tt-menu-danger {
+  color: var(--danger);
+}
+.tt-confirm .tt-dialog-foot [data-disabled] {
+  opacity: 0.7;
+  cursor: progress;
+}
+/* After a deletion: the library says so in words, visibly. */
+.tt-said:empty {
+  display: none;
+}
+.tt-said {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
 }
 .tt-dialog-foot {
   display: flex;

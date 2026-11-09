@@ -71,6 +71,8 @@ interface BoardProps {
   onItemFocus?: (item: Item) => void
   /** Passage keys (P1, P2…) while the DM picks what fog, doors or events reveal. */
   showPassages?: boolean
+  /** RYT-077: the prop the DM is about to place, drawn translucent where it would go. */
+  ghost?: ItemOf<'prop'> | null
 }
 
 /**
@@ -174,6 +176,18 @@ export const Board = memo(function Board(props: BoardProps) {
               onActivate={props.onItemActivate}
             />
           ) : null,
+        )}
+        {props.ghost && (
+          <g className="tt-prop-ghost" aria-hidden="true">
+            <PropShape
+              item={props.ghost}
+              mode="table"
+              painted={painted}
+              ink={painted ? undefined : ink}
+              shown
+              selected={false}
+            />
+          </g>
         )}
       </svg>
       {tokens.map((item) => (

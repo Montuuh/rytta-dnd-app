@@ -12,19 +12,30 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { EllipsisVertical, Grid3x3, ImageUp, Monitor, Plus, Ruler, Wand2 } from 'lucide-react'
+import {
+  EllipsisVertical,
+  Grid3x3,
+  ImageUp,
+  Monitor,
+  Plus,
+  Ruler,
+  Trash2,
+  Wand2,
+} from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { TileGroup } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { mediaQuery, scenesQuery, useMediaUpload, useTabletopAction } from '../api'
 import { fromSetup, squaresThatFit } from '../domain/calibration'
+import { placeFrame } from '../domain/geometry'
 import { sizePresets } from '../domain/generator'
 import { grounds, type Ground, type SceneSummary } from '../domain/model'
 import { groundColors } from './palette'
 import { CalibrationDialog } from './calibration'
 import { GeneratorDialog } from './generator-dialog'
 import { prepareImage } from './media'
+import { preparedView } from './prepared-view'
 import {
   gridFromName,
   isUvttName,
@@ -52,6 +63,33 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
     requestAnimationFrame(() => newScene.current?.focus())
   }
   const [setup, setSetup] = useState(false)
+  /** RYT-076: the scene waiting for the DM to confirm its deletion, and what the page says after. */
+  const [deleting, setDeleting] = useState<SceneSummary | null>(null)
+  // The dialog keeps painting the last scene while it closes.
+  const [shown, setShown] = useState<SceneSummary | null>(null)
+  if (deleting && deleting !== shown) setShown(deleting)
+  const [said, setSaid] = useState('')
+  /** Closing without deleting: focus goes back to that scene's menu (its item has unmounted). */
+  const keepScene = () => {
+    const id = deleting?.id
+    setDeleting(null)
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLElement>(`[data-scene-menu="${id}"]`)?.focus(),
+    )
+  }
+  const deletingNow = action.isPending && action.variables?.kind === 'deleteScene'
+  const deleteScene = (scene: SceneSummary) =>
+    action.mutate(
+      { kind: 'deleteScene', sceneId: scene.id },
+      {
+        onSuccess: () => {
+          setDeleting(null)
+          setSaid(t('tabletop.scene.deleted', { name: scene.name }))
+          // The plate is gone: focus goes back to "New scene".
+          requestAnimationFrame(() => newScene.current?.focus())
+        },
+      },
+    )
   const calibration = fromSetup(query.data?.live.screen)
   const table = calibration ? squaresThatFit(calibration) : null
   const liveId = query.data?.live.scene_id ?? null
@@ -131,17 +169,76 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
               scene={scene}
               live={scene.id === liveId}
               onOpen={() => open(scene.id)}
-              onPut={() =>
-                action.mutate({
-                  kind: 'live',
-                  patch: { scene_id: scene.id, view_x: scene.cols / 2, view_y: scene.rows / 2 },
-                })
-              }
+              onPut={() => {
+                // The frame the DM prepared in the editor, else the map's middle, on whole squares.
+                const center = preparedView(scene.id) ?? [scene.cols / 2, scene.rows / 2]
+                const [view_x, view_y] = table ? placeFrame(center, table, scene) : center
+                action.mutate({ kind: 'live', patch: { scene_id: scene.id, view_x, view_y } })
+              }}
               onClear={() => action.mutate({ kind: 'live', patch: { scene_id: null } })}
+              onDelete={() => {
+                action.reset()
+                setDeleting(scene)
+              }}
             />
           ))}
         </ul>
       )}
+      <p className="tt-said" role="status">
+        {said}
+      </p>
+      <Modal
+        closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
+        opened={deleting !== null}
+        onClose={keepScene}
+        returnFocus={false}
+        title={shown ? t('tabletop.scene.deleteTitle', { name: shown.name }) : ''}
+      >
+        {shown && (
+          <div className="tt-confirm">
+            <p>
+              {t('tabletop.scene.deleteWarning')}{' '}
+              {t('tabletop.scene.deleteCount', { count: shown.items })}
+            </p>
+            {shown.id === liveId && (
+              <p className="tt-confirm-live">
+                <Monitor size={18} aria-hidden="true" />
+                <span>{t('tabletop.scene.deleteLive')}</span>
+              </p>
+            )}
+            <p>{t('tabletop.scene.deleteIrreversible')}</p>
+            {action.isError && action.variables?.kind === 'deleteScene' && (
+              <p className="tt-error" role="alert">
+                {t('tabletop.scene.deleteFailed')}
+              </p>
+            )}
+            <div className="tt-dialog-foot">
+              <Button variant="subtle" data-autofocus onClick={keepScene}>
+                {t('tabletop.cancel')}
+              </Button>
+              {/* Busy, it stays focusable (aria-disabled): a failure keeps the focus here. */}
+              <Button
+                color="red"
+                variant="light"
+                leftSection={
+                  deletingNow ? (
+                    <Loader size={16} color="currentColor" aria-hidden="true" />
+                  ) : (
+                    <Trash2 size={18} aria-hidden="true" />
+                  )
+                }
+                aria-disabled={deletingNow}
+                data-disabled={deletingNow || undefined}
+                onClick={() => {
+                  if (!deletingNow) deleteScene(shown)
+                }}
+              >
+                {t('tabletop.scene.delete')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
       <Modal
         closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
         opened={flow === 'choose'}
@@ -198,12 +295,14 @@ function ScenePlate({
   onOpen,
   onPut,
   onClear,
+  onDelete,
 }: {
   scene: SceneSummary
   live: boolean
   onOpen: () => void
   onPut: () => void
   onClear: () => void
+  onDelete: () => void
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
@@ -247,6 +346,7 @@ function ScenePlate({
           <button
             type="button"
             className="tt-icon-button tt-plate-menu"
+            data-scene-menu={scene.id}
             aria-label={t('tabletop.plate.menu', { name: scene.name })}
           >
             <EllipsisVertical size={18} aria-hidden="true" />
@@ -259,6 +359,14 @@ function ScenePlate({
           ) : (
             <Menu.Item onClick={onPut}>{t('tabletop.putOnTable')}</Menu.Item>
           )}
+          <Menu.Divider />
+          <Menu.Item
+            className="tt-menu-danger"
+            leftSection={<Trash2 size={16} aria-hidden="true" />}
+            onClick={onDelete}
+          >
+            {t('tabletop.scene.delete')}
+          </Menu.Item>
         </Menu.Dropdown>
       </Menu>
     </li>

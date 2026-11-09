@@ -1105,6 +1105,29 @@ function pictureOf(prop: string, w: number, h: number, variant: number): Sprite 
 
 const decoded = new Set<string>()
 
+/** RYT-077: how many pictures a prop has at this size (or one of the same proportions). */
+export function pictureCount(prop: string, w: number, h: number): number {
+  const picture = propPictures[prop]
+  if (!picture) return 0
+  const sizes = Object.keys(picture.sizes).map((k) => k.split('x').map(Number) as [number, number])
+  const size =
+    sizes.find(([a, b]) => a === w && b === h) ??
+    sizes.find(([a, b]) => Math.abs(a * h - b * w) < 1e-9)
+  return size ? picture.sizes[`${size[0]}x${size[1]}`]! : 0
+}
+
+/** RYT-077: every picture of a prop, at every size it has, so a placing preview never waits. */
+export function pictureUrls(prop: string): string[] {
+  const picture = propPictures[prop]
+  if (!picture) return []
+  return Object.entries(picture.sizes).flatMap(([size, count]) =>
+    Array.from(
+      { length: count },
+      (_, v) => `${import.meta.env.BASE_URL}tabletop/props/${prop}-${v}-${size}.webp`,
+    ),
+  )
+}
+
 /** True once every picture has been decoded by this page. */
 export const picturesReady = (urls: readonly string[]) => urls.every((url) => decoded.has(url))
 

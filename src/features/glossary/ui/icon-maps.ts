@@ -1,5 +1,6 @@
 import {
   Activity,
+  Award,
   BellRing,
   BookOpenText,
   CircleDot,
@@ -41,6 +42,7 @@ export const categoryIcons: Record<GlossaryCategory, LucideIcon> = {
   property: Sword,
   mastery: Swords,
   spell: WandSparkles,
+  feature: Award,
   lore: ScrollText,
   other: Feather,
 }

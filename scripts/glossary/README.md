@@ -10,7 +10,10 @@ The scripts run manually (not in CI) and need `pdfplumber` and `pdftotext`:
    `SRD_CC_v5.2.1.pdf`, `SP_SRD_CC_v5.2.1.pdf`, `SRD_CC_v5.1.pdf`, `SRD_CC_v5.1_ES.pdf`.
 2. `python3 -I scripts/glossary/extract_srd.py <pdf-dir> <raw-dir>` writes raw extraction JSON.
 3. `python3 -I scripts/glossary/build_content.py <raw-dir> src/features/glossary/content`.
-4. Review the diff and run `npm run test` (content contract tests).
+4. `python3 -I scripts/glossary/class_features.py <pdf-dir> src/features/glossary/content [--report]`
+   merges the 232 SRD 5.2.1 class and subclass features (RYT-071, ADR 035) as category `feature`;
+   `--report` prints the English–Spanish pairs for review. Re-run it after step 3.
+5. Review the diff and run `npm run test` (content contract tests).
 
 - `srd_pdf.py`: two-column PDF reader with font styles (heading, bold lead-in, italic).
 - `blocks.py`: paragraphs, tables and Rytta inline markup (`*em*`, `**strong**`).
@@ -18,3 +21,5 @@ The scripts run manually (not in CI) and need `pdfplumber` and `pdftotext`:
 - `curated.py`: hand-written data (abilities, skills, damage types, quick facts, aliases,
   auto-link exclusions, 2014 headings, table overrides).
 - `legacy.py`: SRD 5.1 conditions and combat actions.
+- `class_features.py`: class features (reviewed pairs for levels with several features, reviewed
+  tables, subclass spell lists named from the glossary's spell pairs).

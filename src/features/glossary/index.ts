@@ -3,3 +3,5 @@ export { CampaignGlossaryLayer, GlossaryLayer, StandaloneGlossaryLayer } from '.
 export { GlossaryNameLink, GlossaryTerm, GlossaryText, RulesText } from './ui/term'
 export { useGlossaryName } from './ui/glossary-context'
 export { glossaryIds } from './domain/catalog'
+export { useSrdLibrary, type LibraryFeatureEntry, type LibrarySpellEntry } from './ui/library'
+export { useGlossary } from './ui/glossary-context'

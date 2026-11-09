@@ -14,6 +14,8 @@ import { EyeOff, Lock, Skull } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { creatureArtUrl } from '@/features/bestiary'
 import { Token, type Combatant } from '@/features/combat'
+import { useCampaign } from '@/features/campaigns'
+import { useCampaignPortraits } from '@/features/inventory'
 import { mediaQuery } from '../api'
 import { areaCells, areaPath, circlePath, stillHidden, stillRevealed } from '../domain/geometry'
 import {
@@ -77,6 +79,9 @@ interface BoardProps {
  */
 export const Board = memo(function Board(props: BoardProps) {
   const { scene, mode } = props
+  // RYT-074: character tokens outside combat show the character's portrait.
+  const campaign = useCampaign()
+  const portraits = useCampaignPortraits(campaign.id)
   const painted = paintedScene(scene)
   // On an uploaded map the picture already shows its doors: Rytta only marks them for the DM.
   const marker = scene.map_kind === 'upload'
@@ -177,6 +182,7 @@ export const Board = memo(function Board(props: BoardProps) {
           item={item}
           mode={mode}
           combatant={item.combatant_id ? props.combatants?.get(item.combatant_id) : undefined}
+          portrait={item.character_id ? (portraits.get(item.character_id) ?? null) : null}
           selected={props.selectedId === item.id}
           dragging={props.drag?.id === item.id}
           onPointerDown={props.onItemPointerDown}
@@ -905,6 +911,7 @@ function MapToken({
   item,
   mode,
   combatant,
+  portrait,
   selected,
   dragging,
   onPointerDown,
@@ -914,6 +921,7 @@ function MapToken({
   item: ItemOf<'token'>
   mode: BoardMode
   combatant?: Combatant
+  portrait: string | null
   selected: boolean
   dragging: boolean
   onPointerDown?: BoardProps['onItemPointerDown']
@@ -960,6 +968,18 @@ function MapToken({
           active={active}
           defeated={defeated}
           hidden={mode === 'dm' && (item.hidden || combatant?.hidden)}
+        />
+      ) : portrait && item.character_id ? (
+        <Token
+          name={name}
+          side="party"
+          imageKind="character"
+          path={portrait}
+          art={null}
+          size={Math.round(px * 0.9)}
+          active={false}
+          defeated={false}
+          hidden={mode === 'dm' && item.hidden}
         />
       ) : (
         <span className="tt-free-token" aria-hidden="true">

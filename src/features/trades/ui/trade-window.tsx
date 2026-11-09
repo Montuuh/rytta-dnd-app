@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { ItemIcon } from '@/features/inventory'
+import { CharacterPortrait, ItemIcon, useCampaignPortraits } from '@/features/inventory'
 import { useTradeAction } from '../api'
 import {
   formatCountdown,
@@ -61,6 +61,7 @@ export function TradeWindow({
   const { t } = useTranslation()
   const phone = usePhone()
   const action = useTradeAction(campaignId)
+  const portraits = useCampaignPortraits(campaignId)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [error, setError] = useState<TradeErrorCode | null>(null)
   const [picker, setPicker] = useState<{ item: string | null } | null>(null)
@@ -221,7 +222,14 @@ export function TradeWindow({
       size={1040}
       title={
         <span className="trade-title">
-          <Handshake size={22} aria-hidden="true" />
+          {/* RYT-074: the partner's face beside the barter table's title. */}
+          <CharacterPortrait
+            campaignId={campaignId}
+            characterId={trade.partner.character_id}
+            name={partner}
+            path={portraits.get(trade.partner.character_id) ?? null}
+            size={36}
+          />
           <span className="user-copy">{t('trade.window.title', { name: partner })}</span>
         </span>
       }

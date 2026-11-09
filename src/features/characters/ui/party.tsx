@@ -50,6 +50,7 @@ import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { Link } from 'react-router'
 import { ArchiveDialog, FirstCharacter, RosterLink } from './roster'
+import { CreationChooser } from './creation/chooser'
 import {
   useOwnRoster,
   characterRosterQuery,
@@ -64,7 +65,7 @@ import { resourceSchema, type Character } from '../domain/character'
 import type { SheetSummary } from '../domain/sheet'
 import { hpTone, sharedTeammates, type PartyMember } from '../domain/party'
 import { PlayerAssignmentEditor } from './player-assignment'
-import { CharacterPortrait } from '@/features/inventory'
+import { CharacterPortrait, useCampaignPortraits } from '@/features/inventory'
 import { TradeButton, TradeHistory, TradeLauncher } from '@/features/trades'
 import { newRequestId } from '@/shared/lib/request-id'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
@@ -85,6 +86,7 @@ export function CharacterParty() {
   const { t } = useTranslation()
   const { state } = useAuth()
   const campaign = useCampaign()
+  const portraits = useCampaignPortraits(campaign.id)
   const { playerPreview, previewUserId, previewLabel } = useCampaignView()
   const dm = campaign.role === 'dm'
   const filterUserId = dm ? undefined : (previewUserId ?? state.user!.id)
@@ -242,7 +244,7 @@ export function CharacterParty() {
                         campaignId={campaign.id}
                         characterId={character.id}
                         name={character.name}
-                        path={null}
+                        path={portraits.get(character.id) ?? null}
                         size={own || !dm ? 64 : 52}
                       />
                       <div className="character-head-text">
@@ -467,6 +469,7 @@ function LiveShareToggle({
 
 /** Compact live card of a shared teammate: only HP, AC, exhaustion and conditions. */
 function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId: string }) {
+  const portraits = useCampaignPortraits(campaignId)
   const { t } = useTranslation()
   const ready =
     member.sheet_status === 'complete' && member.current_hp !== null && member.max_hp !== null
@@ -481,7 +484,7 @@ function TeammateCard({ member, campaignId }: { member: PartyMember; campaignId:
           campaignId={campaignId}
           characterId={member.id}
           name={member.name}
-          path={null}
+          path={portraits.get(member.id) ?? null}
           size={40}
         />
         <div className="teammate-id">
@@ -846,25 +849,37 @@ function SheetSummaryBar({
   inventoryPath?: string
 }) {
   const { t } = useTranslation()
+  const [chooser, setChooser] = useState(false)
   if (!summary) return null
   if (summary.status === 'draft')
     return (
       <div className="sheet-summary is-draft">
         <Badge variant="outline">{t('sheet.draft')}</Badge>
-        {canCreate ? (
+        {canCreate && summary.class_label ? (
           <Button
             component={Link}
-            to={`${path}/create`}
+            to={`${path}/create?mode=full`}
             aria-describedby={`character-${character.id}`}
           >
-            {t(
-              summary.class_label
-                ? 'sheet.continueCta'
-                : own
-                  ? 'sheet.createCta'
-                  : 'sheet.createForCharacter',
-            )}
+            {t('sheet.continueCta')}
           </Button>
+        ) : canCreate ? (
+          <>
+            {/* RYT-072: the three doors open over the party list. */}
+            <Button
+              aria-describedby={`character-${character.id}`}
+              aria-haspopup="dialog"
+              onClick={() => setChooser(true)}
+            >
+              {t(own ? 'sheet.createCta' : 'sheet.createForCharacter')}
+            </Button>
+            <CreationChooser
+              opened={chooser}
+              onClose={() => setChooser(false)}
+              name={character.name}
+              characterPath={path}
+            />
+          </>
         ) : (
           <Button
             component={Link}

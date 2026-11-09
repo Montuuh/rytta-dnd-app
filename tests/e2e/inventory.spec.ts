@@ -182,5 +182,15 @@ test('the Player sets a portrait that shows in the satchel and the sheet', async
     mimeType: 'image/png',
     buffer: png,
   })
+  // RYT-074: the editor always opens; crop is the default, fit adds black bars.
+  const editor = page.getByRole('dialog', { name: 'Retrato de Arin' })
+  await expect(editor.getByRole('radio', { name: 'Recortar' })).toBeChecked()
+  const frame = editor.getByRole('img', { name: /Encuadre del retrato/ })
+  await frame.focus()
+  await page.keyboard.press('+')
+  await page.keyboard.press('ArrowLeft')
+  await editor.getByText('Encajar con bandas negras').click()
+  await editor.getByRole('button', { name: 'Guardar retrato' }).click()
+  await expect(editor).toHaveCount(0)
   await expect(page.getByRole('img', { name: 'Retrato de Arin' }).first()).toBeVisible()
 })

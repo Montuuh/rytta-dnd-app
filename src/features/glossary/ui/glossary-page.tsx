@@ -23,7 +23,14 @@ import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import type { GlossaryEntry } from '../domain/catalog'
 import { searchGlossary } from '../domain/search'
-import { spellClasses, spellSchools, type SpellClass, type SpellSchool } from '../domain/types'
+import {
+  featureClasses,
+  spellClasses,
+  spellSchools,
+  type FeatureClass,
+  type SpellClass,
+  type SpellSchool,
+} from '../domain/types'
 import { EntryArticle } from './entry-article'
 import { EntryIndex, type IndexRowData } from './entry-index'
 import { useGlossary } from './glossary-context'
@@ -75,6 +82,7 @@ export function GlossaryPage() {
   const indexRef = useRef<HTMLDivElement>(null)
   const readerHeading = useRef<HTMLHeadingElement>(null)
   const [filters, setFilters] = useState<SpellFilters>(noSpellFilters)
+  const [featureClass, setFeatureClass] = useState<FeatureClass | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
   // The field owns what is typed; the URL only mirrors it for deep links. Driving the input
   // from the URL dropped keystrokes while the 550-row list re-rendered (ui-ux F1).
@@ -195,9 +203,11 @@ export function GlossaryPage() {
     () =>
       matches.filter(
         ({ entry }) =>
-          inTab(entry, tab) && (tab !== 'spell' || matchesSpellFilters(entry, filters)),
+          inTab(entry, tab) &&
+          (tab !== 'spell' || matchesSpellFilters(entry, filters)) &&
+          (tab !== 'feature' || !featureClass || entry.feature?.classKey === featureClass),
       ),
-    [matches, tab, filters],
+    [matches, tab, filters, featureClass],
   )
   // Tab counts follow the current search, so a tab shows how many matches it holds.
   const counts = useMemo(() => {
@@ -207,6 +217,7 @@ export function GlossaryPage() {
       action: 0,
       rule: 0,
       spell: 0,
+      feature: 0,
       homebrew: 0,
     }
     for (const { entry } of matches)
@@ -396,6 +407,20 @@ export function GlossaryPage() {
                 ? t('glossary.noResults', { query: query.trim() })
                 : t('glossary.resultCount', { count: rows.length })}
             </p>
+            {tab === 'feature' && (
+              <Select
+                aria-label={t('glossary.filter.class')}
+                className="gl-feature-class"
+                data={[
+                  { value: '', label: t('glossary.feature.allClasses') },
+                  ...featureClasses.map((c) => ({ value: c, label: t(`srd.class.${c}`) })),
+                ]}
+                value={featureClass ?? ''}
+                onChange={(value) => setFeatureClass((value || null) as FeatureClass | null)}
+                allowDeselect={false}
+                comboboxProps={{ withinPortal: true }}
+              />
+            )}
             {tab === 'spell' && (
               <button
                 type="button"

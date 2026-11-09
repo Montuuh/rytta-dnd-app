@@ -406,15 +406,6 @@ function OriginStep(props: StepProps) {
           </SimpleGrid>
         </fieldset>
       )}
-      <TextInput
-        maxLength={500}
-        label={t('wizard.languages')}
-        value={build.languages}
-        onChange={(event) => {
-          const languages = event.currentTarget.value
-          update((current) => ({ ...current, languages }))
-        }}
-      />
     </Stack>
   )
 }
@@ -780,7 +771,8 @@ function DetailsStep(props: StepProps) {
   const labels = useCharacterLabels()
   const { draft } = props
   const { build } = draft
-  const text = (field: 'alignment' | 'appearance' | 'proficiencies' | 'notes') => ({
+  // RYT-072: alignment, languages and appearance moved to the sheet's Notes block.
+  const text = (field: 'proficiencies' | 'notes') => ({
     value: build[field],
     onChange: (event: { currentTarget: { value: string } }) => {
       const value = event.currentTarget.value
@@ -806,7 +798,6 @@ function DetailsStep(props: StepProps) {
           {t('sheet.acSummary', { value: build.acOverride ?? defaultArmorClass(build) })}
         </Text>
       </Paper>
-      <TextInput maxLength={40} label={t('sheet.alignment')} {...text('alignment')} />
       <Textarea
         autosize
         minRows={2}
@@ -992,13 +983,6 @@ function DetailsStep(props: StepProps) {
           </Button>
         </Stack>
       </section>
-      <Textarea
-        autosize
-        minRows={2}
-        maxLength={2000}
-        label={t('sheet.appearance')}
-        {...text('appearance')}
-      />
       <Textarea autosize minRows={3} maxLength={4000} label={t('sheet.notes')} {...text('notes')} />
     </Stack>
   )

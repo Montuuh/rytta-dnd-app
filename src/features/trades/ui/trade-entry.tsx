@@ -1,6 +1,8 @@
 import { Button, Menu, Text, UnstyledButton } from '@mantine/core'
 import { ArrowLeftRight, ChevronDown, Handshake } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useCampaign } from '@/features/campaigns'
+import { CharacterPortrait, useCampaignPortraits } from '@/features/inventory'
 import { useTrades } from './context'
 import { SummaryList } from './dialogs'
 
@@ -30,6 +32,8 @@ export function TradeButton({ partnerId, name }: { partnerId: string; name: stri
 export function TradeLauncher() {
   const { t } = useTranslation()
   const trades = useTrades()
+  const campaign = useCampaign()
+  const portraits = useCampaignPortraits(campaign.id)
   if (!trades?.state?.character) return null
   const { partners, trade } = trades.state
   return (
@@ -55,6 +59,15 @@ export function TradeLauncher() {
         {partners.map((partner) => (
           <Menu.Item
             key={partner.id}
+            leftSection={
+              <CharacterPortrait
+                campaignId={campaign.id}
+                characterId={partner.id}
+                name={partner.name}
+                path={portraits.get(partner.id) ?? null}
+                size={32}
+              />
+            }
             disabled={partner.busy}
             className="user-copy trade-menu-item"
             onClick={() => trades.invite(partner.id, partner.name)}

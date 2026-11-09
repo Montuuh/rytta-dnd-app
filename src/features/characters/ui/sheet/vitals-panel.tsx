@@ -1,225 +1,25 @@
-import { GlossaryTerm } from '@/features/glossary'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import {
-  ActionIcon,
   Button,
   Group,
   Modal,
   NumberInput,
-  Paper,
-  RingProgress,
   SegmentedControl,
   Stack,
   Text,
   UnstyledButton,
 } from '@mantine/core'
-import { Delete, Heart, Minus, Plus, Shield, Swords } from 'lucide-react'
+import { Delete } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import {
-  applyHp,
-  initiative,
-  passivePerception,
-  proficiencyBonus,
-  signed,
-} from '../../domain/rules'
-import type { Build, SheetRow, Vitals } from '../../domain/sheet'
+import { applyHp } from '../../domain/rules'
+import type { Vitals } from '../../domain/sheet'
+import { toneOf } from './hp-tone'
 
-export type SheetProps = {
-  build: Build
-  sheet: SheetRow
-  vitals: Vitals
-  canEdit: boolean
-  pending: boolean
-  commit: (values: Vitals) => void
-}
-type HpMode = 'damage' | 'heal' | 'temp'
+export type HpMode = 'damage' | 'heal' | 'temp'
 const quickAmounts = [1, 5, 10] as const
 const maxAmount = 9999
 
-function toneOf(current: number, max: number) {
-  const ratio = (current / Math.max(1, max)) * 100
-  return ratio > 50 ? 'healthy' : ratio > 25 ? 'wounded' : 'critical'
-}
-
-export function VitalsPanel({
-  build,
-  sheet,
-  vitals,
-  canEdit,
-  pending,
-  commit,
-  exhaustion,
-}: SheetProps & { exhaustion: number | undefined }) {
-  const { t } = useTranslation()
-  const [mode, setMode] = useState<HpMode | null>(null)
-  const opener = useRef<HTMLElement | null>(null)
-  const ratio = Math.round((vitals.current_hp / sheet.max_hp) * 100)
-  const tempRatio = Math.min(100 - ratio, Math.round((vitals.temp_hp / sheet.max_hp) * 100))
-  const tone = toneOf(vitals.current_hp, sheet.max_hp)
-  const stats = [
-    {
-      key: 'ac',
-      term: 'rule.armor-class',
-      label: t('sheet.acLong'),
-      value: String(sheet.armor_class),
-    },
-    {
-      key: 'init',
-      term: 'rule.initiative',
-      label: t('sheet.initiative'),
-      value: signed(initiative(build)),
-    },
-    {
-      key: 'speed',
-      term: 'rule.speed',
-      label: t('sheet.speed'),
-      value: t('sheet.speedValue', { value: build.speed }),
-    },
-    {
-      key: 'prof',
-      term: 'rule.proficiency',
-      label: t('sheet.proficiency'),
-      value: signed(proficiencyBonus(sheet.level)),
-    },
-    {
-      key: 'pp',
-      term: 'rule.passive-perception',
-      label: t('sheet.passivePerception'),
-      value: String(passivePerception(build, sheet.level)),
-    },
-  ]
-  const step = (delta: number) =>
-    commit(applyHp(vitals, sheet.max_hp, delta < 0 ? 'damage' : 'heal', Math.abs(delta)))
-  const open = (next: HpMode, target: HTMLElement) => {
-    opener.current = target
-    setMode(next)
-  }
-  return (
-    <Stack gap="sm">
-      <Paper p="md" className={`hp-panel hp-${tone}`}>
-        <div className="hp-head">
-          <RingProgress
-            size={132}
-            thickness={11}
-            roundCaps
-            className="hp-ring"
-            role="img"
-            rootColor="var(--app-bg)"
-            sections={[
-              { value: ratio, color: 'var(--hp-tone)' },
-              ...(tempRatio > 0 ? [{ value: tempRatio, color: 'var(--info)' }] : []),
-            ]}
-            aria-label={t('sheet.hpRing', { current: vitals.current_hp, max: sheet.max_hp })}
-            label={
-              <Text className="hp-value" ta="center" aria-hidden="true">
-                <span className="hp-current">{vitals.current_hp}</span>
-                <span className="hp-max">/{sheet.max_hp}</span>
-              </Text>
-            }
-          />
-          <div className="hp-meta">
-            <Text size="sm" c="dimmed" id="hp-label">
-              <GlossaryTerm id="rule.hit-points">{t('sheet.hp')}</GlossaryTerm>
-            </Text>
-            <Text size="sm" className="hp-temp">
-              {vitals.temp_hp > 0 ? t('sheet.tempValue', { value: vitals.temp_hp }) : ' '}
-            </Text>
-            {exhaustion !== undefined && exhaustion > 0 && (
-              <Text size="sm" className="sheet-exhaustion">
-                <GlossaryTerm id="condition.exhaustion">
-                  {t('sheet.exhaustion', { value: exhaustion })}
-                </GlossaryTerm>
-              </Text>
-            )}
-            {canEdit && (
-              <Group gap="xs" wrap="nowrap" mt={6}>
-                <ActionIcon
-                  size={48}
-                  variant="default"
-                  aria-label={t('sheet.quickDamage', { value: 1 })}
-                  disabled={pending || vitals.current_hp + vitals.temp_hp === 0}
-                  onClick={() => step(-1)}
-                >
-                  <Minus size={20} aria-hidden="true" />
-                </ActionIcon>
-                <ActionIcon
-                  size={48}
-                  variant="default"
-                  aria-label={t('sheet.quickHeal', { value: 1 })}
-                  disabled={pending || vitals.current_hp >= sheet.max_hp}
-                  onClick={() => step(1)}
-                >
-                  <Plus size={20} aria-hidden="true" />
-                </ActionIcon>
-              </Group>
-            )}
-          </div>
-        </div>
-        {canEdit && (
-          <div className="hp-actions" role="group" aria-label={t('sheet.hpMode')}>
-            <Button
-              variant="light"
-              className="hp-action is-damage"
-              leftSection={<Swords size={18} aria-hidden="true" />}
-              onClick={(event) => open('damage', event.currentTarget)}
-            >
-              {t('sheet.damage')}
-            </Button>
-            <Button
-              variant="light"
-              className="hp-action is-heal"
-              leftSection={<Heart size={18} aria-hidden="true" />}
-              onClick={(event) => open('heal', event.currentTarget)}
-            >
-              {t('sheet.heal')}
-            </Button>
-            <Button
-              variant="light"
-              className="hp-action is-temp"
-              leftSection={<Shield size={18} aria-hidden="true" />}
-              onClick={(event) => open('temp', event.currentTarget)}
-            >
-              {t('sheet.setTemp')}
-            </Button>
-          </div>
-        )}
-      </Paper>
-      <dl className="sheet-stats">
-        {stats.map((stat) => (
-          <div key={stat.key} className="sheet-stat">
-            <dt>
-              <GlossaryTerm id={stat.term}>{stat.label}</GlossaryTerm>
-            </dt>
-            <dd>{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
-      {mode && (
-        <HpDialog
-          initialMode={mode}
-          vitals={vitals}
-          max={sheet.max_hp}
-          pending={pending}
-          close={() => {
-            setMode(null)
-            requestAnimationFrame(() => opener.current?.focus())
-          }}
-          apply={(chosen, amount) => {
-            const next =
-              chosen === 'temp'
-                ? { ...vitals, temp_hp: amount }
-                : applyHp(vitals, sheet.max_hp, chosen, amount)
-            commit(next)
-            setMode(null)
-            requestAnimationFrame(() => opener.current?.focus())
-          }}
-        />
-      )}
-    </Stack>
-  )
-}
-
-function HpDialog({
+export function HpDialog({
   initialMode,
   vitals,
   max,

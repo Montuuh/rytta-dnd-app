@@ -1,7 +1,7 @@
 export { InventoryPage } from './ui/inventory-page'
 export { CharacterPortrait } from './ui/portrait'
 export { SheetAttacks } from './ui/sheet-attacks'
-export { inventoryQuery } from './api'
+export { inventoryQuery, useCampaignPortraits } from './api'
 export { ItemIcon } from './ui/item-icon'
 export { carriedTenths, encumbrance, formatPounds } from './domain/encumbrance'
 export { itemCategories, itemPropertiesSchema, rarities, slotKinds } from './domain/item'

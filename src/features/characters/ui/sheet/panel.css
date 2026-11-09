@@ -1,0 +1,732 @@
+/* RYT-073 table panel sheet. The HP ring is the one bold element; everything else stays
+   quiet: plain stat cells, ability medals and tiles that open a sheet. Tokens only. */
+
+.panel-sheet {
+  padding-bottom: 8px;
+}
+.panel-sheet .sheet-identity h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.15;
+}
+
+.panel-layout {
+  display: grid;
+  gap: 16px;
+}
+.panel-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+@media (min-width: 48em) {
+  .panel-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* Hero: ring, stat cells, inspiration and HP actions */
+.panel-hero {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--app-raised);
+  border: 1px solid var(--app-border);
+  --hp-tone: var(--success);
+}
+.panel-hero.hp-wounded {
+  --hp-tone: var(--warn);
+}
+.panel-hero.hp-critical {
+  --hp-tone: var(--danger);
+}
+.panel-hp {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.panel-hp .hp-ring {
+  flex-shrink: 0;
+}
+.panel-hp .hp-ring svg circle {
+  transition: stroke-dasharray 320ms ease-out;
+}
+.panel-hp-meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.panel-hp .hp-current {
+  font-size: clamp(2rem, 1.7rem + 1.2vw, 2.6rem);
+}
+.panel-input {
+  max-width: 10rem;
+}
+.panel-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.panel-stat {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.panel-stat dt {
+  font-size: 0.8125rem;
+  color: var(--app-muted);
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.25;
+}
+/* Smaller label text: the term's invisible hit area grows to keep 44px (WCAG 2.5.8). */
+.panel-stat dt .glossary-term::after {
+  inset: -14px -3px;
+}
+.panel-stat dd {
+  margin: 2px 0 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-stat);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.panel-stat[data-key='ac'] dd {
+  color: var(--app-accent);
+}
+.panel-sheet[data-editing] .panel-stats {
+  grid-template-columns: minmax(0, 1fr);
+}
+.panel-sheet[data-editing] .panel-stat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.panel-sheet[data-editing] .panel-stat dd {
+  margin: 0;
+}
+.panel-stat-edit .stepper-value {
+  font-size: 1.25rem;
+}
+.panel-hp-row {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+.panel-inspiration .mantine-Switch-body {
+  min-height: 44px;
+  align-items: center;
+}
+.panel-hero .hp-actions {
+  margin-top: 0;
+}
+.panel-lock {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-accent) 8%, var(--app-surface));
+  border: 1px solid color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+}
+.panel-lock svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--app-accent);
+}
+
+/* Steppers and counters */
+.stepper-value {
+  min-width: 2.5ch;
+  text-align: center;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+.counter {
+  min-width: 0;
+}
+.counter-meter {
+  flex: 1 1 80px;
+  min-width: 60px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+}
+.counter-meter span {
+  display: block;
+  height: 100%;
+  background: var(--app-accent);
+  transition: width 200ms ease-out;
+}
+.counter-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Abilities with their saves */
+.panel-section-title {
+  margin: 0 0 8px;
+  font-size: var(--fs-h3);
+}
+.ability-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 62em) {
+  .ability-strip:not([data-editing]) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.ability-strip.is-compact {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.ability-medal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px 8px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  text-align: center;
+  min-width: 0;
+}
+.ability-medal[data-proficient] {
+  border-color: var(--app-accent);
+}
+.ability-medal .ability-mod {
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(1.8rem, 1.6rem + 0.8vw, 2.3rem);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.ability-strip.is-compact .ability-mod {
+  font-size: 1.35rem;
+}
+.ability-score {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ability-medal .ability-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.ability-medal[data-proficient] .ability-save {
+  color: var(--app-accent);
+}
+.ability-save-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ability-strip[data-editing] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ability-strip[data-editing] .ability-medal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  text-align: start;
+}
+.ability-strip[data-editing] .ability-name {
+  min-width: 3.5ch;
+}
+.ability-save-toggle .mantine-Checkbox-body {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* Tiles */
+.panel-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.panel-tile-item[data-wide] {
+  grid-column: 1 / -1;
+}
+.panel-tile {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  color: var(--app-text);
+  cursor: pointer;
+  align-content: start;
+  transition:
+    background-color 140ms ease-out,
+    border-color 140ms ease-out;
+}
+.panel-tile:hover {
+  background: var(--app-hover);
+}
+.panel-tile:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.panel-tile:active {
+  border-color: var(--app-accent);
+}
+.panel-tile {
+  position: relative;
+}
+.panel-tile-title {
+  display: block;
+  padding-inline-end: 26px;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+/* The chevron sits in the corner so long titles at 150% text never push it out. */
+.panel-tile-title svg {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 12px;
+  color: var(--app-muted);
+}
+.panel-tile-glance {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.glance-meters {
+  display: grid;
+  gap: 6px;
+}
+.glance-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(56px, 34%) 4.5ch;
+  align-items: center;
+  gap: 8px;
+}
+.glance-meter-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--app-text);
+}
+.glance-meter-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+}
+.glance-meter-bar span {
+  display: block;
+  height: 100%;
+  background: var(--app-accent);
+}
+.glance-meter-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Edit bar and dock */
+.panel-editbar {
+  position: static;
+  display: grid;
+  gap: 4px 12px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--app-raised);
+  border: 2px solid var(--app-accent);
+}
+.panel-editbar-hint a {
+  color: var(--app-accent);
+}
+.panel-editbar-actions {
+  justify-content: flex-end;
+}
+.panel-editbar-title:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.panel-editbar-end {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 0;
+  border-top: 1px solid var(--app-border);
+}
+@media (min-width: 48em) {
+  .panel-editbar {
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .panel-editbar-end {
+    display: none;
+  }
+  .panel-editbar-actions {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+  }
+}
+.panel-dock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--app-raised);
+  border: 1px solid var(--app-border);
+}
+.panel-dock-rest {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  padding-block: 6px;
+}
+/* Long labels ("Descanso corto" at 150% text) wrap instead of being clipped. */
+.panel-dock-rest .mantine-Button-label {
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.15;
+  text-align: start;
+}
+.panel-dock-rest[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.panel-dock-note {
+  flex-basis: 100%;
+  padding-inline: 4px;
+}
+
+.panel-wrap-button,
+.creation-wizard .wizard-actions .mantine-Button-root {
+  height: auto;
+  min-height: 44px;
+  padding-block: 6px;
+}
+.panel-wrap-button .mantine-Button-label,
+.creation-wizard .wizard-actions .mantine-Button-label {
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.15;
+  text-align: start;
+}
+
+/* Switches, checkboxes and radios keep a 44px row (sheets are portalled out of the page);
+   the label grows to the full row so a tap anywhere on it toggles. */
+.panel-sheet .mantine-Checkbox-label,
+.block-sheet .mantine-Checkbox-label,
+.block-sheet .mantine-Radio-label,
+.block-sheet .mantine-Switch-label {
+  padding-block: 12px;
+  cursor: pointer;
+}
+.panel-hero .hp-action {
+  height: auto;
+  min-height: 44px;
+  padding-block: 6px;
+}
+.panel-hero .hp-action .mantine-Button-label {
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.15;
+}
+.panel-danger-button.panel-danger-button {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+/* Tablets: the sticky edit bar never hides the control that keyboard focus moves to. */
+@media (min-width: 48em) {
+  :root:has(.panel-sheet[data-editing]) {
+    scroll-padding-top: 220px;
+  }
+}
+.panel-sheet .mantine-Switch-body,
+.panel-sheet .mantine-Checkbox-body,
+.block-sheet .mantine-Switch-body,
+.block-sheet .mantine-Checkbox-body,
+.block-sheet .mantine-Radio-body {
+  min-height: 44px;
+  align-items: center;
+}
+.panel-radios .mantine-Radio-root {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* Block sheets and their lists */
+.block-sheet-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+}
+.resource-row {
+  display: grid;
+  gap: 2px;
+}
+.feature-list,
+.library-list,
+.history-list,
+.history-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.feature-row,
+.library-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+.feature-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.panel-inline-form {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.panel-link {
+  align-self: flex-start;
+}
+.skill-cycle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px;
+  border-radius: 50%;
+}
+.skill-cycle:focus-visible {
+  outline: 2px solid var(--app-focus);
+}
+.panel-sheet .skill-row {
+  grid-template-columns: 24px minmax(0, 1fr) auto 4ch;
+  min-height: 44px;
+}
+
+/* History */
+.history-list {
+  display: grid;
+  gap: 4px;
+}
+.history-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+.history-glyph {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  color: var(--app-accent);
+}
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.history-lines {
+  display: grid;
+  gap: 2px;
+  margin-top: 2px;
+  font-size: var(--fs-meta);
+}
+
+/* Creation: three doors, choice tiles and the quick summary */
+.creation-doors {
+  display: grid;
+  gap: 10px;
+}
+.creation-door {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  min-height: 56px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  cursor: pointer;
+}
+.creation-door[data-checked] {
+  border: 2px solid var(--app-accent);
+  padding: 13px;
+  background: var(--app-raised);
+}
+.creation-door:has(.creation-door-input:focus-visible),
+.choice-tile:has(.creation-door-input:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.creation-door-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.creation-door-glyph {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--app-bg);
+  color: var(--app-accent);
+}
+.creation-door-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.creation-door-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.15rem;
+}
+.creation-door-tag {
+  font-family: inherit;
+  font-size: var(--fs-meta);
+  color: var(--app-accent);
+}
+.creation-door-hint {
+  color: var(--app-text);
+  line-height: 1.4;
+}
+.creation-door-time {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 48em) {
+  .choice-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 62em) {
+  .choice-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.choice-tile {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  cursor: pointer;
+}
+.choice-tile[data-checked] {
+  border: 2px solid var(--app-accent);
+  padding: 9px 11px;
+  background: var(--app-raised);
+}
+.choice-tile-name {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.1rem;
+}
+.choice-tile-meta {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.quick-summary {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--app-raised);
+  border: 1px solid var(--app-border);
+}
+.quick-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.quick-facts div {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 30%) minmax(0, 1fr);
+  gap: 10px;
+}
+.quick-facts dt {
+  color: var(--app-muted);
+}
+.quick-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-hp .hp-ring svg circle,
+  .counter-meter span,
+  .panel-tile {
+    transition: none;
+  }
+}

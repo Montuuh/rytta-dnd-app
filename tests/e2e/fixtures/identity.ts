@@ -71,6 +71,8 @@ export async function identityFixture(
     reserve?: string[]
     /** RYT-044: names of archived Player characters (up to two). */
     archived?: string[]
+    /** RYT-070: the character fights a live encounter (Players are locked). */
+    inEncounter?: boolean
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -236,6 +238,28 @@ export async function identityFixture(
     tracker_uses: {},
     revision: 0,
   })
+  // RYT-070 history log, newest last.
+  const history: {
+    id: string
+    at: string
+    kind: string
+    actor_id: string
+    character: string
+    changes: { field: string; before: unknown; after: unknown }[]
+  }[] = []
+  const record = (
+    character: string,
+    kind: string,
+    changes: { field: string; before: unknown; after: unknown }[],
+  ) =>
+    history.push({
+      id: crypto.randomUUID(),
+      at: new Date(Date.now() + history.length).toISOString(),
+      kind,
+      actor_id: currentId,
+      character,
+      changes,
+    })
   const sheets = new Map<string, SheetRow>(
     characters.map((c) => [c.id, options.sheet === 'complete' ? sampleSheet() : blankSheet()]),
   )
@@ -489,11 +513,85 @@ export async function identityFixture(
         }),
       )
     }
+    // RYT-070/072/074 RPCs: the play lock, the history, renames and visible portraits.
+    if (method === 'get_character_play_lock') {
+      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      return respond({
+        in_encounter: Boolean(options.inEncounter),
+        locked: Boolean(options.inEncounter) && !dm,
+      })
+    }
+    if (method === 'get_character_history') {
+      // The audit rows of the party fixture, turned into field changes like the RPC does.
+      const quiet = ['id', 'campaign_id', 'character_id', 'revision', 'user_id', 'created_at']
+      const audited = characterEvents
+        .filter((e) => e.character_id === body.target_character && e.kind.endsWith(':UPDATE'))
+        .map((e) => ({
+          id: e.id,
+          at: e.created_at,
+          kind: e.kind,
+          actor_id: e.actor_id ?? '',
+          character: e.character_id,
+          changes: Object.keys(e.after_value)
+            .filter(
+              (field) =>
+                !quiet.includes(field) &&
+                JSON.stringify(e.before_value?.[field]) !== JSON.stringify(e.after_value[field]),
+            )
+            .map((field) => ({
+              field,
+              before: e.before_value?.[field] ?? null,
+              after: e.after_value[field],
+            })),
+        }))
+      return respond(
+        [...audited, ...history]
+          .filter((item) => item.character === body.target_character)
+          .sort((a, b) => a.at.localeCompare(b.at))
+          .map(({ character: _character, ...item }) => ({
+            ...item,
+            actor: item.actor_id === actor ? 'self' : item.actor_id === dmId ? 'dm' : 'player',
+            actor_name: null,
+          }))
+          .reverse(),
+      )
+    }
+    if (method === 'rename_character') {
+      const character = characters.find((c) => c.id === body.target_character)!
+      const name = String(body.new_name).trim()
+      record(character.id, 'characters:UPDATE', [
+        { field: 'name', before: character.name, after: name },
+      ])
+      character.name = name
+      return respond(name)
+    }
+    if (method === 'list_character_portraits')
+      return respond(
+        portraitPath
+          ? characters
+              .filter((c) => c.campaign_id === body.target_campaign && c.user_id !== null)
+              .slice(0, 1)
+              .map((c) => ({ character_id: c.id, portrait_path: portraitPath }))
+          : [],
+      )
     if (method === 'save_character_sheet') {
       const row = sheets.get(String(body.target_character))!
       if (row.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
       const completing = row.status === 'draft' && body.mark_complete === true
+      const nextBuild = body.new_build as Record<string, unknown>
+      const changes = [
+        ...(['level', 'max_hp'] as const)
+          .filter((field) => row[field] !== Number(body[`new_${field}`]))
+          .map((field) => ({ field, before: row[field], after: Number(body[`new_${field}`]) })),
+        ...[...new Set([...Object.keys(row.build), ...Object.keys(nextBuild)])]
+          .filter((key) => JSON.stringify(row.build[key]) !== JSON.stringify(nextBuild[key]))
+          .map((key) => ({
+            field: `build.${key}`,
+            before: row.build[key] ?? null,
+            after: nextBuild[key] ?? null,
+          })),
+      ]
       Object.assign(row, {
         level: Number(body.new_level),
         max_hp: Number(body.new_max_hp),
@@ -504,12 +602,24 @@ export async function identityFixture(
       })
       const state = vitals.get(String(body.target_character))!
       if (completing) state.current_hp = row.max_hp
+      if (changes.length) record(String(body.target_character), 'character_sheets:UPDATE', changes)
       return respond(row.revision)
     }
     if (method === 'set_character_vitals') {
       const state = vitals.get(String(body.target_character))!
       if (state.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
+      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (
+        options.inEncounter &&
+        !dm &&
+        (body.new_current_hp !== state.current_hp || body.new_temp_hp !== state.temp_hp)
+      )
+        return respond({ message: 'Encounter locked' }, 400)
+      if (body.new_current_hp !== state.current_hp)
+        record(String(body.target_character), 'character_vitals:UPDATE', [
+          { field: 'current_hp', before: state.current_hp, after: body.new_current_hp },
+        ])
       Object.assign(state, {
         current_hp: body.new_current_hp,
         temp_hp: body.new_temp_hp,

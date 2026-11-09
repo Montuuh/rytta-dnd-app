@@ -17,11 +17,24 @@ async function audit(page: Page, path: string) {
   await capture(page, path)
 }
 
-test('the assigned Player creates a 5.5e character through the wizard', async ({ page }, info) => {
+test('the assigned Player creates a 5.5e character through the full wizard', async ({
+  page,
+}, info) => {
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  await page.getByRole('link', { name: 'Crear tu personaje' }).click()
+  // RYT-072: "Create" opens the three doors over the party list.
+  const create = page.getByRole('button', { name: 'Crear tu personaje' })
+  await create.click()
+  const doors = page.getByRole('dialog', { name: 'Nueva ficha para Arin' })
+  await expect(doors.getByRole('radio', { name: /^Rápida/ })).toBeChecked()
+  await audit(page, info.outputPath('doors.png'))
+  await page.keyboard.press('Escape')
+  await expect(create).toBeFocused()
+  await create.click()
+  await doors.getByText('Completa', { exact: true }).click()
+  await expect(doors.getByRole('radio', { name: /^Completa/ })).toBeChecked()
+  await doors.getByRole('button', { name: 'Empezar' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase y nivel')
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   await expect(page).toHaveTitle('Editor de ficha · Rytta')
@@ -81,6 +94,58 @@ test('the assigned Player creates a 5.5e character through the wizard', async ({
   await expect(page.getByText('Bardo de nivel 1', { exact: false })).toBeVisible()
 })
 
+test('RYT-072 quick sheet: class, species and name, then the sheet', async ({ page }, info) => {
+  await identityFixture(page, { player: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Crear tu personaje' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase')
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  await page.getByRole('radiogroup', { name: 'Clase' }).getByText('Monje', { exact: true }).click()
+  await expect(page.getByRole('radio', { name: /^Monje/ })).toBeChecked()
+  await audit(page, info.outputPath('quick-class.png'))
+  await page.getByRole('button', { name: 'Siguiente' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Especie')
+  await expect(page.getByRole('radio', { name: /^Humano/ })).toBeChecked()
+  await page.getByRole('button', { name: 'Siguiente' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nombre y retrato')
+  const name = page.getByLabel('Nombre del personaje')
+  await name.fill('')
+  await expect(page.getByRole('button', { name: 'Crear ficha' })).toBeDisabled()
+  await name.fill('Ilsa Brezo')
+  const summary = page.getByRole('region', { name: 'Lo que ha preparado Rytta' })
+  await expect(summary).toContainText('Humano, Criminal')
+  await expect(summary).toContainText('Artes marciales')
+  await audit(page, info.outputPath('quick-name.png'))
+  await page.getByRole('button', { name: 'Crear ficha' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Ilsa Brezo' })).toBeVisible()
+  await expect(page.getByText('Monje de nivel 1', { exact: false })).toBeVisible()
+  await expect(page.locator('.hp-current')).toHaveText('10')
+})
+
+test('RYT-072 blank sheet: name, class and level only', async ({ page }, info) => {
+  await identityFixture(page, { player: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Crear tu personaje' }).click()
+  await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ficha en blanco')
+  await page.getByRole('combobox', { name: 'Clase' }).click()
+  await page.getByRole('option', { name: 'Paladín' }).click()
+  for (let step = 0; step < 4; step++)
+    await page.getByRole('button', { name: 'Subir nivel' }).click()
+  await expect(page.locator('.stepper-value')).toHaveText('5')
+  await audit(page, info.outputPath('blank.png'))
+  await page.getByRole('button', { name: 'Crear ficha' }).click()
+  await expect(page.getByText('Paladín de nivel 5', { exact: false })).toBeVisible()
+  // RYT-071: class resources follow the level (Lay on Hands = 5 × level, as a counter).
+  const resources = page.getByRole('button', { name: /^Recursos/ })
+  await expect(resources).toContainText('Imponer las manos')
+  await expect(resources).toContainText('25/25')
+})
+
 for (const language of ['es', 'en'] as const)
   for (const scheme of ['dark', 'light'] as const)
     test(`${language} ${scheme} character sheet at 150%`, async ({ page }, info) => {
@@ -98,7 +163,7 @@ for (const language of ['es', 'en'] as const)
       await expect(page.locator('.hp-current')).toHaveText('30')
       await page.addStyleTag({ content: 'html { font-size: 150%; }' })
       const es = language === 'es'
-      await audit(page, info.outputPath(`sheet-summary-${language}-${scheme}-150.png`))
+      await audit(page, info.outputPath(`sheet-panel-${language}-${scheme}-150.png`))
       const damage = page.getByRole('button', { name: es ? 'Daño' : 'Damage', exact: true })
       await damage.click()
       await page.getByRole('dialog').getByRole('textbox').fill('8')
@@ -109,25 +174,36 @@ for (const language of ['es', 'en'] as const)
         .click()
       await expect(page.locator('.hp-current')).toHaveText('27')
       await expect(damage).toBeFocused()
-      for (const tab of es ? ['Rasgos', 'Conjuros', 'Notas'] : ['Features', 'Spells', 'Notes']) {
-        await page.getByRole('tab', { name: tab }).click()
-        await audit(page, info.outputPath(`sheet-${tab}-${language}-${scheme}-150.png`))
+      // RYT-073: each tile opens its block in a sheet; Escape returns focus to the tile.
+      for (const tile of es
+        ? ['Recursos', 'Habilidades', 'Rasgos y dotes', 'Conjuros', 'Notas']
+        : ['Resources', 'Skills', 'Features and feats', 'Spells', 'Notes']) {
+        const opener = page.getByRole('button', { name: new RegExp(`^${tile}`) })
+        await opener.click()
+        await expect(page.getByRole('dialog', { name: tile })).toBeVisible()
+        await audit(page, info.outputPath(`sheet-${tile}-${language}-${scheme}-150.png`))
+        await page.keyboard.press('Escape')
+        await expect(page.getByRole('dialog')).toHaveCount(0)
+        await expect(opener).toBeFocused()
       }
-      await page.getByRole('tab', { name: es ? 'Conjuros' : 'Spells' }).click()
       await page
-        .getByRole('button', { name: es ? 'Gastar un espacio de nivel 1' : 'Spend a level 1 slot' })
-        .first()
+        .getByRole('button', { name: new RegExp(`^${es ? 'Recursos' : 'Resources'}`) })
         .click()
-      await expect(page.getByText('2/4')).toBeVisible()
+      const spend = page.getByRole('button', {
+        name: es ? 'Gastar un espacio de nivel 1' : 'Spend a level 1 slot',
+      })
+      await spend.first().click()
+      await expect(page.getByRole('dialog').getByText('2/4')).toBeVisible()
       fixture.staleVitals()
-      await page
-        .getByRole('button', { name: es ? 'Gastar un espacio de nivel 1' : 'Spend a level 1 slot' })
-        .first()
-        .click()
-      await expect(page.getByRole('alert')).toContainText(
-        es ? 'La ficha cambió en otro dispositivo' : 'This sheet changed on another device',
-      )
-      await page.getByRole('tab', { name: es ? 'Rasgos' : 'Features' }).click()
+      await spend.first().click()
+      const stale = es
+        ? 'La ficha cambió en otro dispositivo'
+        : 'This sheet changed on another device'
+      // The error shows inside the open sheet, then on the page once the sheet closes.
+      await expect(page.getByRole('dialog').getByRole('alert')).toContainText(stale)
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('dialog')).toHaveCount(0)
+      await expect(page.getByRole('alert')).toContainText(stale)
       const longRest = page.getByRole('button', { name: es ? 'Descanso largo' : 'Long rest' })
       await longRest.click()
       await expect(page.getByRole('dialog')).toBeVisible()
@@ -145,7 +221,7 @@ for (const language of ['es', 'en'] as const)
       await expect(page).toHaveTitle(es ? 'Ficha de personaje · Rytta' : 'Character sheet · Rytta')
     })
 
-test('DM sees every sheet and Party summaries; unknown characters are not found', async ({
+test('DM sees every sheet and Party summaries, edits in place; unknown characters are not found', async ({
   page,
 }, info) => {
   await identityFixture(page, { sheet: 'complete' })
@@ -154,14 +230,81 @@ test('DM sees every sheet and Party summaries; unknown characters are not found'
   await expect(page.getByText('PG 30/38 +5')).toBeVisible()
   await capture(page, info.outputPath('party-summary.png'))
   await page.getByRole('link', { name: 'Ver ficha' }).click()
-  await expect(page.getByRole('link', { name: 'Editar ficha' })).toBeVisible()
-  await page.getByRole('link', { name: 'Editar ficha' }).click()
-  await expect(page.getByRole('button', { name: 'Guardar cambios' })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Detalles y revisión' }).click()
-  await expect(page.getByRole('button', { name: 'Guardar cambios' })).toBeVisible()
-  await audit(page, info.outputPath('wizard-edit.png'))
+  // RYT-073 (P12): the pencil edits the sheet in place and saves once.
+  const pencil = page.getByRole('button', { name: 'Editar la ficha' })
+  await pencil.click()
+  const bar = page.getByRole('region', { name: 'Editando la ficha' })
+  await expect(bar).toBeVisible()
+  await page.getByRole('button', { name: 'Subir nivel' }).click()
+  await page.getByRole('button', { name: 'Subir puntuación de Sabiduría' }).click()
+  await audit(page, info.outputPath('sheet-edit.png'))
+  await bar.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(bar).toHaveCount(0)
+  await expect(page.getByText('Bardo de nivel 6', { exact: false })).toBeVisible()
   await page.goto(`./#/campaign/${campaignId}/party/40000000-0000-4000-8000-000000000099`)
   await expect(page.getByText('Este personaje no existe o no tienes acceso.')).toBeVisible()
+})
+
+test('RYT-070 a Player in a live encounter cannot change HP or rest', async ({ page }, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete', inEncounter: true })
+  await page.goto(sheetUrl)
+  await expect(page.getByRole('note')).toContainText('Hay un encuentro en curso')
+  await expect(page.getByRole('button', { name: 'Daño', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Descanso largo' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await audit(page, info.outputPath('sheet-locked.png'))
+  await page.getByRole('button', { name: /^Recursos/ }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(
+    dialog.locator('section', { hasText: 'Dados de golpe' }).locator('.pip').first(),
+  ).toBeDisabled()
+  // Resources stay with the Player during the fight.
+  await dialog.getByRole('button', { name: 'Gastar un espacio de nivel 1' }).first().click()
+  await expect(dialog.getByText('2/4')).toBeVisible()
+})
+
+test('RYT-071/073 personalise blocks and resources, add from the library, read the history', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await expect(page.locator('.hp-current')).toHaveText('30')
+  const personalise = page.getByRole('button', { name: 'Personalizar la ficha' })
+  await personalise.click()
+  const drawer = page.getByRole('dialog', { name: 'Personalizar la ficha' })
+  await drawer.getByRole('switch', { name: 'Notas' }).dispatchEvent('click')
+  await expect(page.getByRole('button', { name: /^Notas/ })).toHaveCount(0)
+  await drawer.getByLabel('Nombre del contador').fill('Suerte')
+  await drawer
+    .locator('label')
+    .filter({ hasText: /^Contador$/ })
+    .click()
+  await audit(page, info.outputPath('personalise.png'))
+  await drawer.getByRole('button', { name: 'Añadir recurso' }).click()
+  await expect(page.getByRole('button', { name: /^Recursos/ })).toContainText('Suerte')
+  await page.keyboard.press('Escape')
+  await expect(personalise).toBeFocused()
+  await page.getByRole('button', { name: /^Conjuros/ }).click()
+  await page.getByRole('button', { name: 'Añadir desde la biblioteca' }).click()
+  const library = page.getByRole('dialog', { name: 'Biblioteca' })
+  await library.getByLabel('Buscar').fill('curar heridas')
+  await audit(page, info.outputPath('library.png'))
+  await library.getByRole('button', { name: 'Añadir Curar heridas', exact: true }).click()
+  // aria-disabled keeps keyboard focus on the row once it is added.
+  await expect(
+    library.getByRole('button', { name: 'Curar heridas ya está en la ficha', exact: true }),
+  ).toHaveAttribute('aria-disabled', 'true')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Conjuros' })).toContainText('Curar heridas')
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: /^Historial/ }).click()
+  const history = page.getByRole('dialog', { name: 'Historial' })
+  await expect(history).toContainText('Conjuros: añadido Curar heridas')
+  await expect(history).toContainText('Tú')
+  await audit(page, info.outputPath('history.png'))
 })
 
 test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', async ({
@@ -199,10 +342,14 @@ test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', a
   await expect(page.locator('.hp-current')).toHaveText('35')
   await expect(damage).toBeFocused()
 
-  await page.getByRole('button', { name: 'Gastar un dado de golpe (1/5)' }).click()
-  await expect(page.locator('.pip-count').first()).toHaveText('4/5')
-  await page.getByRole('button', { name: 'Recuperar un dado de golpe (5/5)' }).click()
-  await expect(page.locator('.pip-count').first()).toHaveText('5/5')
+  await page.getByRole('button', { name: /^Recursos/ }).click()
+  const dice = page.getByRole('dialog').locator('section', { hasText: 'Dados de golpe' })
+  await dice.getByRole('button', { name: 'Gastar un dado de golpe (1/5)' }).click()
+  await expect(dice.locator('.pip-count')).toHaveText('4/5')
+  await dice.getByRole('button', { name: 'Recuperar un dado de golpe (5/5)' }).click()
+  await expect(dice.locator('.pip-count')).toHaveText('5/5')
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: /^Condiciones/ }).click()
 
   const poisoned = page.getByRole('checkbox', { name: 'Envenenado', exact: true })
   await page
@@ -210,7 +357,7 @@ test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', a
     .filter({ hasText: /^Envenenado$/ })
     .click()
   await expect(poisoned).toBeChecked()
-  await expect(page.getByText('Toca una condición para activarla o quitarla.')).toBeVisible()
+  await expect(page.getByRole('dialog').locator('.condition-links')).toContainText('Envenenado')
   // A checked chip is filled with the accent and keeps AA text contrast in dark and light themes
   // (on-accent token). Each theme is set with its own scheme (RYT-069).
   for (const [scheme, theme] of [

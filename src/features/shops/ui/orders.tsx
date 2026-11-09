@@ -25,7 +25,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { HoldSeal } from '@/features/inventory'
+import { useCampaign } from '@/features/campaigns'
+import { CharacterPortrait, HoldSeal, useCampaignPortraits } from '@/features/inventory'
 import { GoldAmount, ItemGlyph } from './visuals'
 import {
   askedLinePrice,
@@ -184,6 +185,8 @@ export function OrderCard({
   onAction: (action: ShopAction) => void
 }) {
   const { t, i18n } = useTranslation()
+  const campaign = useCampaign()
+  const portraits = useCampaignPortraits(campaign.id)
   const [panel, setPanelState] = useState<Panel>(null)
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [note, setNote] = useState('')
@@ -279,16 +282,26 @@ export function OrderCard({
           </span>
           <OrderStatusBadge status={order.status} role={role} />
         </Group>
-        <div className="order-heading">
-          <Title order={3} size="h4" className="user-copy" id={`order-${order.id}`}>
-            {t(titleKey, { character: order.character.name, shop: order.shop.name })}
-          </Title>
-          <Text size="xs" c="dimmed">
-            {new Date(order.created_at).toLocaleString(i18n.language, {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-            })}
-          </Text>
+        <div className="order-heading order-heading-with-face">
+          {/* RYT-074: who placed the order, at a glance. */}
+          <CharacterPortrait
+            campaignId={campaign.id}
+            characterId={order.character.id}
+            name={order.character.name}
+            path={portraits.get(order.character.id) ?? null}
+            size={40}
+          />
+          <div>
+            <Title order={3} size="h4" className="user-copy" id={`order-${order.id}`}>
+              {t(titleKey, { character: order.character.name, shop: order.shop.name })}
+            </Title>
+            <Text size="xs" c="dimmed">
+              {new Date(order.created_at).toLocaleString(i18n.language, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}
+            </Text>
+          </div>
         </div>
         <ul className="order-lines">
           {order.lines.map((line) => (

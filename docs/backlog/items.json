@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-07",
+  "updatedAt": "2026-11-09",
   "items": [
     {
       "id": "RYT-000",
@@ -2788,6 +2788,206 @@
         "docs/evidence/ui-review-current.json",
         "tests/e2e/scaffold.spec.ts",
         "tests/e2e/identity.spec.ts"
+      ]
+    },
+    {
+      "id": "RYT-070",
+      "title": "Sheet play lock during encounters and a sheet change history for DM and player",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-024", "RYT-031", "RYT-007"],
+      "sources": [
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
+        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09 (P7): players may change their HP, damage and temporary HP only when no encounter is active; during an active encounter only the DM; the same for short and long rests. Keep a good history of max HP, abilities, level-up, spells and skills changes.",
+        "User 2026-11-09: the lock applies when the character is a combatant of an encounter in initiative or active; the history is read-only and visible to the DM and the player."
+      ],
+      "scope": "Server-side lock in set_character_vitals for non-DM callers while their character is a combatant of a live encounter (current HP, temporary HP and hit dice); a lock query for the sheet; get_character_history returning field-level changes for the DM and the assigned player; the sheet shows the lock and a History block.",
+      "acceptance": [
+        "A Player whose character is a combatant of an encounter in initiative or active cannot change current HP, temporary HP or hit dice ('Encounter locked'); the DM always can; outside a live encounter the Player can.",
+        "The sheet hides damage, heal, temporary HP and rest actions for a locked Player and says why; DM controls are unchanged.",
+        "get_character_history returns read-only field-level changes (who, when, before → after) for sheet, play state and identity to the DM and the assigned Player; anon, outsiders, other Players and a cross-campaign DM are denied.",
+        "Denial tests for anon, outsider, player and cross-campaign DM; PRE first, then production."
+      ],
+      "validation": [
+        "npm run check",
+        "database tests",
+        "PRE then production migration",
+        "npm run test:e2e"
+      ],
+      "evidence": [
+        "docs/decisions/035-character-sheet-redesign.md",
+        "docs/evidence/RYT-073/validation.md",
+        "docs/evidence/RYT-073/design-flow.md",
+        "supabase/migrations/20261112120000_sheet_play_lock_history.sql",
+        "tests/database/sheet-play-lock.test.ts",
+        "tests/e2e/character-sheet.spec.ts",
+        "tests/e2e/characters.spec.ts",
+        "docs/evidence/ui-review/ryt-073/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-071",
+      "title": "SRD 5.2.1 class features in the glossary, class resources by level and a library picker",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-008", "RYT-024"],
+      "sources": [
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
+        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09 (P5): import every official SRD 5.2.1 spell and class feature of all levels and classes.",
+        "User 2026-11-09 (P6): class resources are added when the class is chosen and grow with the level; they can be removed.",
+        "User 2026-11-09: class features are added by class and level automatically; others can be added from the library."
+      ],
+      "scope": "232 class and SRD subclass features (English and official Spanish) as glossary category 'feature'; class resources with level scaling; features and resources follow class and level on the sheet unless removed; spells and features are added from the glossary.",
+      "acceptance": [
+        "The glossary lists 232 class features with class, subclass and level, both languages, never auto-linked.",
+        "Choosing a class adds its resources and features up to the level; levelling up adds new ones and raises maxima; removed ones stay removed.",
+        "Spells and features can be added from the glossary filtered by class and level."
+      ],
+      "validation": ["npm run check", "content contract tests", "unit tests for progression"],
+      "evidence": [
+        "docs/decisions/035-character-sheet-redesign.md",
+        "docs/evidence/RYT-073/validation.md",
+        "docs/evidence/RYT-073/design-flow.md",
+        "scripts/glossary/class_features.py",
+        "src/features/glossary/domain/content.test.ts",
+        "src/features/characters/domain/progression.test.ts",
+        "docs/evidence/ui-review/ryt-073/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-072",
+      "title": "Three ways to create a sheet: quick, full and blank",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-024", "RYT-071"],
+      "sources": [
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
+        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09 (P2 A, P3 A, P4, P8, P11): three doors sheet; quick build in three steps asking class, species and name at level 1; blank sheet needs name, class and level; the full wizard drops alignment, languages and appearance."
+      ],
+      "scope": "Creation chooser sheet with three explained paths; quick build in three steps with smart defaults and a summary; blank sheet form; simplified full wizard.",
+      "acceptance": [
+        "Creating a sheet opens a chooser with Quick (recommended), Full and Blank, each explained.",
+        "Quick asks class, species and name (and an optional portrait) and creates a complete level 1 sheet with defaults shown in a summary.",
+        "Blank asks name, class and level and opens the sheet.",
+        "The full wizard no longer asks alignment, languages or appearance; they stay editable on the sheet."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/035-character-sheet-redesign.md",
+        "docs/evidence/RYT-073/validation.md",
+        "docs/evidence/RYT-073/design-flow.md",
+        "tests/e2e/character-sheet.spec.ts",
+        "src/features/characters/domain/progression.test.ts",
+        "tests/database/sheet-play-lock.test.ts",
+        "docs/evidence/ui-review/ryt-073/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-073",
+      "title": "Character sheet redesign: table panel with tiles, sheets, inline editing and personalisation",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-024", "RYT-070", "RYT-071"],
+      "sources": [
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
+        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09 (P1 B, P10, P12): table panel with an HP ring, stats and tiles that open a sheet; only proficient skills with 'Show all 18'; edit in place with a pencil."
+      ],
+      "scope": "New sheet layout: identity header, HP ring with AC, initiative, speed, proficiency and passive Perception, tiles with a glance of each block that open a bottom/side sheet, inline edit mode, a Personalise drawer for blocks and resources (pips or counter), rests in a dock.",
+      "acceptance": [
+        "Abilities, saves, level, AC, initiative, speed, proficiency and passive Perception are visible without opening anything at 390px.",
+        "Every other block is a tile with a glance that opens its detail sheet; Escape and close return focus.",
+        "Personalise hides blocks and adds, removes or restores resources; custom resources as pips or a counter.",
+        "Edit mode changes the build in place and saves once.",
+        "Only proficient skills unless 'Show all 18'."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/035-character-sheet-redesign.md",
+        "docs/evidence/RYT-073/validation.md",
+        "docs/evidence/RYT-073/design-flow.md",
+        "tests/e2e/character-sheet.spec.ts",
+        "tests/e2e/glossary.spec.ts",
+        "docs/evidence/ui-review/ryt-073/review.md",
+        "docs/evidence/ui-review-current.json"
+      ]
+    },
+    {
+      "id": "RYT-074",
+      "title": "Portrait editor with crop or letterbox and portraits everywhere a character appears",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-024"],
+      "sources": [
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
+        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09 (P9): the editor always opens; letterbox with black bars."
+      ],
+      "scope": "Portrait editor dialog (crop with drag, pinch, wheel, zoom slider and keyboard; or fit with black bars) before upload; portraits in trades, tabletop tokens without combat, the creation flows and shop rows.",
+      "acceptance": [
+        "Choosing an image always opens the editor; Crop and Fit (black bars) produce a 512 px square WebP.",
+        "Keyboard: arrows pan, +/− zoom, Escape cancels.",
+        "Portraits appear in trade windows and partner picker, tabletop free tokens, the quick and full creation flows and shop orders."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/035-character-sheet-redesign.md",
+        "docs/evidence/RYT-073/validation.md",
+        "docs/evidence/RYT-073/design-flow.md",
+        "tests/e2e/inventory.spec.ts",
+        "tests/database/sheet-play-lock.test.ts",
+        "tests/database/combat-media.test.ts",
+        "docs/evidence/ui-review/ryt-073/review.md",
+        "docs/evidence/ui-review-current.json"
       ]
     }
   ]

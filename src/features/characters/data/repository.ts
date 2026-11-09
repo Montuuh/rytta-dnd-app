@@ -5,6 +5,8 @@ import { partyMemberSchema } from '../domain/party'
 import { rosterEntrySchema, rosterError } from '../domain/roster'
 import {
   buildSchema,
+  historyItemSchema,
+  playLockSchema,
   sheetRowSchema,
   sheetSummarySchema,
   vitalsSchema,
@@ -278,6 +280,12 @@ export async function changeSheet(campaignId: string, action: SheetAction) {
       mark_complete: action.complete,
       request_id,
     })
+  } else if (action.kind === 'rename') {
+    result = await db.rpc('rename_character', {
+      target_campaign,
+      target_character,
+      new_name: z.string().trim().min(1).max(100).parse(action.name),
+    })
   } else {
     const v = vitalsSchema.parse(action.values)
     result = await db.rpc('set_character_vitals', {
@@ -301,10 +309,43 @@ export async function changeSheet(campaignId: string, action: SheetAction) {
     throw new Error(
       message.includes('Stale revision')
         ? 'stale'
-        : message.includes('Forbidden')
-          ? 'forbidden'
-          : 'unavailable',
+        : message.includes('Encounter locked')
+          ? 'locked'
+          : message.includes('Forbidden')
+            ? 'forbidden'
+            : 'unavailable',
     )
   }
   return result.data
+}
+
+export async function getPlayLock(campaignId: string, characterId: string, signal: AbortSignal) {
+  const db = await client()
+  const result = await db
+    .rpc('get_character_play_lock', {
+      target_campaign: z.uuid().parse(campaignId),
+      target_character: z.uuid().parse(characterId),
+    })
+    .abortSignal(signal)
+  if (result.error) throw result.error
+  return playLockSchema.parse(result.data)
+}
+export const historyPageSize = 30
+export async function getHistory(
+  campaignId: string,
+  characterId: string,
+  before: string | null,
+  signal: AbortSignal,
+) {
+  const db = await client()
+  const result = await db
+    .rpc('get_character_history', {
+      target_campaign: z.uuid().parse(campaignId),
+      target_character: z.uuid().parse(characterId),
+      before_at: before,
+      page_size: historyPageSize,
+    })
+    .abortSignal(signal)
+  if (result.error) throw result.error
+  return historyItemSchema.array().max(50).parse(result.data)
 }

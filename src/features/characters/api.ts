@@ -1,12 +1,21 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  infiniteQueryOptions,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { z } from 'zod'
 import { rosterOf } from './domain/roster'
 import { useAuth } from '@/features/auth'
 import {
   changeCharacter,
   changeSheet,
+  getHistory,
   getPartyOverview,
+  getPlayLock,
   getSheet,
+  historyPageSize,
   listAssignments,
   listCharacters,
   listRoster,
@@ -238,6 +247,21 @@ export const sheetQuery = (userId: string, campaignId: string, characterId: stri
     queryFn: ({ signal }) => getSheet(campaignId, characterId, signal),
     refetchInterval: 20_000,
   })
+/** RYT-070: refreshed often so the sheet unlocks soon after the DM ends an encounter. */
+export const playLockQuery = (userId: string, campaignId: string, characterId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'characters', 'lock', characterId],
+    queryFn: ({ signal }) => getPlayLock(campaignId, characterId, signal),
+    refetchInterval: 10_000,
+  })
+export const historyQuery = (userId: string, campaignId: string, characterId: string) =>
+  infiniteQueryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'characters', 'history', characterId],
+    queryFn: ({ signal, pageParam }) => getHistory(campaignId, characterId, pageParam, signal),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) =>
+      last.length >= historyPageSize ? (last[last.length - 1]?.at ?? null) : null,
+  })
 export const sheetSummariesQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'characters', 'sheet-summaries'],
@@ -259,7 +283,8 @@ export function useSheetAction(campaignId: string) {
     },
     onSettled: async (_data, error) => {
       if (controller?.getSnapshot().user?.id !== userId) return
-      if (!error || error.message === 'stale') await cache.invalidateQueries({ queryKey: scope })
+      if (!error || error.message === 'stale' || error.message === 'locked')
+        await cache.invalidateQueries({ queryKey: scope })
     },
   })
 }

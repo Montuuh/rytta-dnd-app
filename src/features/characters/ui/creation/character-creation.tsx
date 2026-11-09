@@ -3,9 +3,11 @@ import { Alert, Button, Group, Paper, Progress, Stack, Text, Title } from '@mant
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView } from '@/features/campaigns'
+import { useSrdLibrary } from '@/features/glossary'
+import { CharacterPortrait } from '@/features/inventory'
 import { sheetQuery, useSheetAction } from '../../api'
 import {
   creationSteps,
@@ -17,6 +19,11 @@ import {
   type CreationStep,
 } from '../../domain/creation'
 import type { SheetDraft, SheetRow } from '../../domain/sheet'
+import { syncProgression } from '../../domain/progression'
+import { BlankSheet } from './blank-sheet'
+import { CreationChooserPanel } from './chooser'
+import { isCreationMode } from './modes'
+import { QuickBuild } from './quick-build'
 import { CreationStepView } from './steps'
 import { newRequestId } from '@/shared/lib/request-id'
 
@@ -37,6 +44,8 @@ export function CharacterCreationPage() {
   const campaign = useCampaign()
   const { playerPreview } = useCampaignView()
   const query = useQuery(sheetQuery(state.user!.id, campaign.id, characterId))
+  const [params] = useSearchParams()
+  const mode = params.get('mode')
   const sheetPath = `/campaign/${campaign.id}/party/${characterId}`
   const back = (
     <Button
@@ -88,6 +97,21 @@ export function CharacterCreationPage() {
         </Paper>
       </Stack>
     )
+  const { sheet, character } = query.data
+  // RYT-072: a sheet never started offers the three doors; quick and blank have their own flows.
+  if (!sheet.build && sheet.status === 'draft') {
+    if (mode === 'quick')
+      return <QuickBuild sheet={sheet} name={character.name} sheetPath={sheetPath} />
+    if (mode === 'blank')
+      return <BlankSheet sheet={sheet} name={character.name} sheetPath={sheetPath} />
+    if (!isCreationMode(mode))
+      return (
+        <Stack>
+          {back}
+          <CreationChooserPanel name={character.name} characterPath={sheetPath} />
+        </Stack>
+      )
+  }
   return (
     <Wizard
       key={query.data.sheet.character_id}
@@ -114,6 +138,7 @@ function Wizard({
   const navigate = useNavigate()
   const campaign = useCampaign()
   const action = useSheetAction(campaign.id)
+  const library = useSrdLibrary()
   const [draft, setDraft] = useState(() => fromRow(sheet))
   const [revision, setRevision] = useState(sheet.revision)
   // Resume a draft at the first step that still needs input.
@@ -152,7 +177,20 @@ function Wizard({
         kind: 'save',
         characterId: sheet.character_id,
         expectedRevision: revision,
-        draft: normalizeDraft(draft),
+        // RYT-071: finishing adds the class resources and features of the class and level.
+        draft: normalizeDraft(
+          complete && library
+            ? {
+                ...draft,
+                build: syncProgression(
+                  { ...draft.build, origin: draft.build.origin ?? 'full' },
+                  draft.level,
+                  library.features,
+                  { resource: (key) => t(`panel.resource.${key}` as 'panel.resource.monk-focus') },
+                ),
+              }
+            : draft,
+        ),
         complete,
         requestId: newRequestId(),
       },
@@ -187,17 +225,33 @@ function Wizard({
           </Button>
         )}
       </Group>
-      <div>
-        <Text className="eyebrow user-copy" mb={4}>
-          {t(editing ? 'wizard.editTitle' : 'wizard.title', { name })}
-        </Text>
-        <Title order={1} ref={heading} tabIndex={-1}>
-          {t(`wizard.step.${current}`)}
-        </Title>
-        <Text size="sm" c="dimmed" mt={4}>
-          {t('wizard.progress', { current: index + 1, total: steps.length })}
-        </Text>
-        <Progress value={((index + 1) / steps.length) * 100} size="sm" mt="xs" aria-hidden="true" />
+      <div className="wizard-head">
+        {/* RYT-074: the portrait can be set from the wizard too. */}
+        <CharacterPortrait
+          campaignId={campaign.id}
+          characterId={sheet.character_id}
+          name={name}
+          path={sheet.portrait_path ?? null}
+          size={64}
+          editable
+        />
+        <div>
+          <Text className="eyebrow user-copy" mb={4}>
+            {t(editing ? 'wizard.editTitle' : 'wizard.title', { name })}
+          </Text>
+          <Title order={1} ref={heading} tabIndex={-1}>
+            {t(`wizard.step.${current}`)}
+          </Title>
+          <Text size="sm" c="dimmed" mt={4}>
+            {t('wizard.progress', { current: index + 1, total: steps.length })}
+          </Text>
+          <Progress
+            value={((index + 1) / steps.length) * 100}
+            size="sm"
+            mt="xs"
+            aria-hidden="true"
+          />
+        </div>
       </div>
       {editing && (
         <nav aria-label={t('wizard.progress', { current: index + 1, total: steps.length })}>

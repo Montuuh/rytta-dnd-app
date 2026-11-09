@@ -2,6 +2,8 @@ import { homebrewEntryId, type HomebrewEntry } from './homebrew'
 import type {
   GlossaryLanguage,
   IndexRow,
+  FeatureClass,
+  FeatureSubclass,
   SpellClass,
   SpellSchool,
   SrdCategory,
@@ -30,6 +32,7 @@ export type GlossaryEntry = {
     ritual: boolean
   }
   ability?: AbilityId
+  feature?: { classKey: FeatureClass; level: number; subclass: FeatureSubclass | null }
   homebrew?: HomebrewEntry
 }
 
@@ -71,6 +74,8 @@ export function buildCatalog(
         ritual: row.ri === 1,
       }
     if (row.ab) entry.ability = row.ab
+    if (row.cat === 'feature' && row.fc && row.lv !== undefined)
+      entry.feature = { classKey: row.fc, level: row.lv, subclass: row.sb ?? null }
     return entry
   })
   const houseRules = new Map<string, HomebrewEntry[]>()

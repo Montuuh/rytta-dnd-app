@@ -87,3 +87,7 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 45. [ADR 034: one color scheme per theme, and Settings as a drawer](decisions/034-one-scheme-per-theme.md) and
     [RYT-069 verification](evidence/RYT-069/validation.md): dark and light themes chosen by
     class color contrast, Parchment, theme swatch tiles and a right-hand Settings drawer.
+46. [ADR 035: table panel sheet, three ways to create, class progression, play lock and history](decisions/035-character-sheet-redesign.md)
+    and [RYT-070–074 verification](evidence/RYT-073/validation.md): quick, full and blank
+    creation, SRD 5.2.1 class features in the glossary, class resources by level, the sheet as an
+    HP ring with tiles, the encounter HP lock, the sheet history and the portrait editor.

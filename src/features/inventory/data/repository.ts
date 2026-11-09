@@ -354,3 +354,20 @@ export async function syncListingPrices(
   if (result.error) throw new Error(lifecycleError(result.error.message))
   return z.object({ updated: z.number().int() }).parse(result.data)
 }
+
+/** RYT-074: portrait paths the caller may show (assigned characters for members, all for DMs). */
+export async function listCampaignPortraits(campaignId: string, signal?: AbortSignal) {
+  const db = await client()
+  const result = await db
+    .rpc('list_character_portraits', { target_campaign: z.uuid().parse(campaignId) })
+    .abortSignal(signal ?? new AbortController().signal)
+  if (result.error) throw result.error
+  return new Map(
+    z
+      .object({ character_id: z.uuid(), portrait_path: z.string().max(200) })
+      .array()
+      .max(500)
+      .parse(result.data)
+      .map((row) => [row.character_id, row.portrait_path]),
+  )
+}

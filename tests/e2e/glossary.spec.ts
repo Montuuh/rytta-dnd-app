@@ -71,13 +71,13 @@ test('keyboard search finds a condition in either language and shows its quick f
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(glossaryUrl)
   await expect(page.getByRole('heading', { level: 1, name: 'Glosario' })).toBeVisible()
-  await expect(page.getByText('550 entradas')).toBeVisible()
+  await expect(page.getByText('782 entradas')).toBeVisible()
   await evidence(page, info.project.name, 'index')
   await page.locator('body').press('/')
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
   await expect(search).toBeFocused()
   // English name in a Spanish interface.
-  // Real typing on the 550-entry "All" tab must keep every keystroke (ui-ux F1).
+  // Real typing on the 782-entry "All" tab must keep every keystroke (ui-ux F1).
   await search.pressSequentially('grappled', { delay: 40 })
   await expect(search).toHaveValue('grappled')
   await expect(page.getByText('1 entrada', { exact: true })).toBeVisible()
@@ -132,11 +132,12 @@ test('a rules term on the character sheet opens its definition in place', async 
   await identityFixture(page, { player: true, sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
-  const term = page.getByRole('button', { name: 'Atletismo: ver definición' })
+  // RYT-073: the stat cells beside the HP ring link their rules (skills live in their block).
+  const term = page.getByRole('button', { name: 'Iniciativa: ver definición' })
   await term.click()
-  const sheet = page.getByRole('dialog', { name: 'Atletismo' })
+  const sheet = page.getByRole('dialog', { name: 'Iniciativa' })
   await expect(sheet).toBeVisible()
-  await expect(sheet).toContainText('Prueba de Fuerza (Atletismo).')
+  await expect(sheet.locator('.gl-sheet-headword')).toHaveText('Iniciativa')
   await page.keyboard.press('Escape')
   await expect(term).toBeFocused()
   // Nested terms keep a history with a back control.
@@ -698,7 +699,7 @@ test('a category chosen right after typing survives the delayed ?q= update', asy
   await identityFixture(page, { player: true, modules: ['party', 'glossary'] })
   await page.goto(glossaryUrl)
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
-  await expect(page.getByText('550 entradas')).toBeVisible()
+  await expect(page.getByText('782 entradas')).toBeVisible()
   await search.fill('a')
   await page.waitForTimeout(250)
   // Choose a tab just before the 300 ms search mirror writes ?q= (it used to drop ?cat=).

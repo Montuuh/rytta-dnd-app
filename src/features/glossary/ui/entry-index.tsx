@@ -56,15 +56,17 @@ function Row({
           )}
         </span>
         <span className="gl-row-meta">
-          {spell
-            ? spell.level === 0
-              ? t('glossary.spell.cantripShort')
-              : t('glossary.spell.levelShort', { level: spell.level })
-            : entry.edition === 'homebrew'
-              ? t('glossary.homebrewTag')
-              : entry.edition === '2014'
-                ? '2014'
-                : null}
+          {entry.feature
+            ? t('glossary.spell.levelShort', { level: entry.feature.level })
+            : spell
+              ? spell.level === 0
+                ? t('glossary.spell.cantripShort')
+                : t('glossary.spell.levelShort', { level: spell.level })
+              : entry.edition === 'homebrew'
+                ? t('glossary.homebrewTag')
+                : entry.edition === '2014'
+                  ? '2014'
+                  : null}
         </span>
       </Link>
     </li>

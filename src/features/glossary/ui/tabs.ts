@@ -1,6 +1,14 @@
 import type { GlossaryCategory, GlossaryEntry } from '../domain/catalog'
 
-export const glossaryTabs = ['all', 'condition', 'action', 'rule', 'spell', 'homebrew'] as const
+export const glossaryTabs = [
+  'all',
+  'condition',
+  'action',
+  'rule',
+  'spell',
+  'feature',
+  'homebrew',
+] as const
 export type GlossaryTab = (typeof glossaryTabs)[number]
 export const isGlossaryTab = (value: string | null): value is GlossaryTab =>
   (glossaryTabs as readonly string[]).includes(value ?? '')

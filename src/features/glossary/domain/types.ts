@@ -20,6 +20,7 @@ export const srdCategories = [
   'property',
   'mastery',
   'spell',
+  'feature',
 ] as const
 export type SrdCategory = (typeof srdCategories)[number]
 
@@ -62,6 +63,39 @@ export const spellClasses = [
   'wizard',
 ] as const
 export type SpellClass = (typeof spellClasses)[number]
+
+/** Every class (features); spellClasses lists only the eight with a spell list. */
+export const featureClasses = [
+  'barbarian',
+  'bard',
+  'cleric',
+  'druid',
+  'fighter',
+  'monk',
+  'paladin',
+  'ranger',
+  'rogue',
+  'sorcerer',
+  'warlock',
+  'wizard',
+] as const
+export type FeatureClass = (typeof featureClasses)[number]
+/** The one SRD 5.2.1 subclass of each class. */
+export const featureSubclasses = [
+  'berserker',
+  'lore',
+  'life',
+  'land',
+  'champion',
+  'open-hand',
+  'devotion',
+  'hunter',
+  'thief',
+  'draconic',
+  'fiend',
+  'evoker',
+] as const
+export type FeatureSubclass = (typeof featureSubclasses)[number]
 
 export const abilityIds = [
   'strength',
@@ -128,12 +162,14 @@ export const indexRowSchema = z
     ea: z.array(name).min(1).optional(),
     sa: z.array(name).min(1).optional(),
     nl: z.literal(1).optional(),
-    lv: z.number().int().min(0).max(9).optional(),
+    lv: z.number().int().min(0).max(20).optional(),
     sc: z.enum(spellSchools).optional(),
     cl: z.array(z.enum(spellClasses)).min(1).optional(),
     co: z.literal(1).optional(),
     ri: z.literal(1).optional(),
     ab: z.enum(abilityIds).optional(),
+    fc: z.enum(featureClasses).optional(),
+    sb: z.enum(featureSubclasses).optional(),
     ed: z.literal('2014').optional(),
   })
   .strict()

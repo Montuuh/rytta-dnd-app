@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import {
   archiveDefinition,
@@ -7,6 +7,7 @@ import {
   syncListingPrices,
   loadCatalogue,
   itemImageUrl,
+  listCampaignPortraits,
   listRoster,
   loadInventory,
   portraitUrl,
@@ -26,6 +27,21 @@ export const rosterQuery = (userId: string, campaignId: string) =>
     queryFn: ({ signal }) => listRoster(campaignId, signal),
     refetchInterval: 20_000,
   })
+export const campaignPortraitsQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'portraits'],
+    queryFn: ({ signal }) => listCampaignPortraits(campaignId, signal),
+    refetchInterval: 60_000,
+  })
+/** Map of character id → portrait path for every face this viewer may see in a campaign. */
+export function useCampaignPortraits(campaignId: string) {
+  const { state } = useAuth()
+  const query = useQuery({
+    ...campaignPortraitsQuery(state.user?.id ?? 'anon', campaignId),
+    enabled: Boolean(state.user),
+  })
+  return query.data ?? new Map<string, string>()
+}
 export const portraitQuery = (userId: string, path: string | null) =>
   queryOptions({
     queryKey: ['private', userId, 'portrait', path],

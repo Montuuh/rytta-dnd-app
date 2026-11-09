@@ -604,13 +604,13 @@ test('RYT-031 DM opens the per-character history from the sheet; Players do not 
     .getByRole('switch', { name: 'Visible al grupo · Arin', exact: true })
     .click({ force: true })
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
-  const open = page.getByRole('button', { name: 'Historial', exact: true })
+  // RYT-070 moved the per-character history into the sheet's History block.
+  const open = page.getByRole('button', { name: /^Historial/ })
   await open.click()
-  const drawer = page.getByRole('dialog', { name: 'Historial de Arin' })
+  const drawer = page.getByRole('dialog', { name: 'Historial' })
   await expect(drawer).toBeVisible()
-  await expect(drawer.getByText('Recursos actualizados', { exact: true })).toBeVisible()
-  await expect(drawer.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
-  await expect(drawer.getByText('Ahora oculto al grupo', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('Oro: 15 → 25', { exact: true })).toBeVisible()
+  await expect(drawer.getByText('Visible al grupo: no', { exact: true })).toBeVisible()
   await expect(drawer.getByText('Bea', { exact: true })).toHaveCount(0)
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'sheet-history', false)
@@ -619,9 +619,10 @@ test('RYT-031 DM opens the per-character history from the sheet; Players do not 
   await expect(open).toBeFocused()
 })
 
-test('RYT-031 Player sheet has no history control', async ({ page }) => {
+test('RYT-070 the assigned Player also reads the history of their sheet', async ({ page }) => {
   await identityFixture(page, { player: true, party: true, sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
   await expect(page.getByRole('heading', { name: 'Arin', level: 1 })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Historial', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: /^Historial/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Historial' })).toContainText('Solo lectura')
 })

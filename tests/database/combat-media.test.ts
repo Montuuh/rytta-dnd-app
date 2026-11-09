@@ -348,7 +348,7 @@ describe('RYT-043 combat images and health bands', () => {
     expect(await visible('creature-images', forged)).toBe(true)
   })
 
-  it('lets teammates read the current portrait of a visible combatant only', async () => {
+  it('lets teammates read the current portrait of an assigned character, never an old one', async () => {
     const s = await setup()
     const portrait = `public/${s.c}/${s.arin}/${randomUUID()}.webp`
     const old = `public/${s.c}/${s.arin}/${randomUUID()}.webp`
@@ -356,16 +356,14 @@ describe('RYT-043 combat images and health bands', () => {
     await upload('character-portraits', old)
     await upload('character-portraits', portrait)
     await db.query('select public.set_character_portrait($1,$2,$3)', [s.c, s.arin, portrait])
-    // Before any fight only the owner and the DM read it (RYT-004 rule).
+    // RYT-074 (user decision 2026-11-09) widened the RYT-043 rule: every active member reads the
+    // current portrait of an assigned character, in or out of combat.
     await asUser(peer)
-    expect(await visible('character-portraits', portrait)).toBe(false)
+    expect(await visible('character-portraits', portrait)).toBe(true)
     await asUser(dm)
     expect(await visible('character-portraits', portrait)).toBe(true)
     const e = await pub.create(s.c, 'Duel')
     await pub.add(s.c, e, [{ kind: 'character', character_id: s.arin }])
-    await asUser(peer)
-    expect(await visible('character-portraits', portrait)).toBe(false)
-    await asUser(dm)
     await pub.status(s.c, e, 'active')
     await asUser(peer)
     expect(await visible('character-portraits', portrait)).toBe(true)
@@ -374,14 +372,6 @@ describe('RYT-043 combat images and health bands', () => {
     await expect(
       upload('character-portraits', `public/${s.c}/${s.arin}/${randomUUID()}.webp`),
     ).rejects.toThrow(/row-level security/)
-    // A hidden character is not shown to teammates.
-    await asUser(dm)
-    const arin = (await pub.state(s.c, e)).combatants.find((c) => c.name === 'Arin')!.id
-    await pub.update(s.c, arin, { hidden: true })
-    await asUser(peer)
-    expect(await visible('character-portraits', portrait)).toBe(false)
-    await asUser(dm)
-    await pub.update(s.c, arin, { hidden: false })
     await asUser(otherDm)
     await one("select public.create_campaign('Portrait DM') id")
     for (const user of [outsider, otherDm]) {

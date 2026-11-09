@@ -1,38 +1,11 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { Text } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { Camera } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { portraitQuery, usePortraitUpload } from '../api'
-
-/** Center-crop to a 512px WebP square before upload; keeps uploads small and uniform. */
-async function toPortrait(file: File) {
-  const bitmap = await createImageBitmap(file)
-  const side = Math.min(bitmap.width, bitmap.height)
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = Math.min(512, side)
-  canvas
-    .getContext('2d')!
-    .drawImage(
-      bitmap,
-      (bitmap.width - side) / 2,
-      (bitmap.height - side) / 2,
-      side,
-      side,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    )
-  return new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('invalid'))),
-      'image/webp',
-      0.85,
-    ),
-  )
-}
+import { PortraitEditor } from './portrait-editor'
 
 const initials = (name: string) =>
   name
@@ -62,7 +35,12 @@ export function CharacterPortrait({
   const inputId = useId()
   const url = useQuery(portraitQuery(state.user!.id, path))
   const upload = usePortraitUpload(campaignId, characterId)
-  const [unreadable, setUnreadable] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const label = useRef<HTMLLabelElement>(null)
+  const close = () => {
+    setFile(null)
+    requestAnimationFrame(() => label.current?.focus())
+  }
   return (
     <div className="portrait" style={{ width: size, height: size }}>
       <div className="portrait-medallion" aria-hidden={!url.data}>
@@ -82,19 +60,18 @@ export function CharacterPortrait({
             accept="image/webp,image/png,image/jpeg"
             className="visually-hidden"
             disabled={upload.isPending}
-            onChange={async (event) => {
-              const file = event.currentTarget.files?.[0]
+            onChange={(event) => {
+              const chosen = event.currentTarget.files?.[0]
               event.currentTarget.value = ''
-              if (!file) return
-              setUnreadable(false)
-              try {
-                upload.mutate(await toPortrait(file))
-              } catch {
-                setUnreadable(true)
+              // RYT-074: the editor always opens to crop or fit the image before upload.
+              if (chosen) {
+                upload.reset()
+                setFile(chosen)
               }
             }}
           />
           <label
+            ref={label}
             htmlFor={inputId}
             className="portrait-edit"
             data-pending={upload.isPending || undefined}
@@ -104,7 +81,17 @@ export function CharacterPortrait({
           </label>
         </>
       )}
-      {(upload.isError || unreadable) && (
+      {file && (
+        <PortraitEditor
+          file={file}
+          name={name}
+          pending={upload.isPending}
+          error={upload.isError}
+          onCancel={close}
+          onSave={(image) => upload.mutate(image, { onSuccess: close })}
+        />
+      )}
+      {upload.isError && !file && (
         <Text size="xs" role="alert" className="portrait-error">
           {t('inventory.portrait.error')}
         </Text>

@@ -21,7 +21,7 @@ const blockText = (blocks: Block[]) =>
 describe('RYT-008 bundled SRD content contract', () => {
   it('covers the SRD 5.2.1 rules glossary, rules terms and every spell', () => {
     const count = (cat: string) => rows.filter((r) => r.cat === cat).length
-    expect(rows.length).toBe(550)
+    expect(rows.length).toBe(782)
     expect(count('condition')).toBe(15)
     expect(count('action')).toBe(12)
     expect(count('spell')).toBe(339)
@@ -30,6 +30,20 @@ describe('RYT-008 bundled SRD content contract', () => {
     expect(count('damage')).toBe(13)
     expect(count('property')).toBe(10)
     expect(count('mastery')).toBe(8)
+    expect(count('feature')).toBe(232)
+  })
+
+  it('RYT-071 class features: every class and SRD subclass, levels 1–20, never auto-linked', () => {
+    const features = rows.filter((r) => r.cat === 'feature')
+    expect(new Set(features.map((r) => r.fc)).size).toBe(12)
+    expect(new Set(features.filter((r) => r.sb).map((r) => r.sb)).size).toBe(12)
+    for (const row of features) {
+      expect(row.nl, row.id).toBe(1)
+      expect(row.fc, row.id).toBeDefined()
+      expect(row.lv! >= 1 && row.lv! <= 20, row.id).toBe(true)
+    }
+    for (const row of rows.filter((r) => r.cat !== 'feature'))
+      expect(row.fc === undefined && row.sb === undefined && (row.lv ?? 0) <= 9, row.id).toBe(true)
   })
 
   it('has a valid body for every id in both languages and nothing else', () => {
@@ -49,7 +63,7 @@ describe('RYT-008 bundled SRD content contract', () => {
     // The SRD reuses a few words (Reach, Alcance, Fuerza, Fuego); those are never auto-linked.
     for (const language of ['en', 'es'] as const) {
       const seen = new Map<string, string>()
-      for (const row of rows) {
+      for (const row of rows.filter((r) => r.cat !== 'feature')) {
         const key = `${row.cat === 'spell' ? 'spell' : 'term'}:${row[language].toLocaleLowerCase()}`
         const previous = seen.get(key)
         if (previous)

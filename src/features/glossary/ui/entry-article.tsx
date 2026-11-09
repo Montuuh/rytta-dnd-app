@@ -285,6 +285,20 @@ export function EntryArticle({
         </p>
       )}
       {body && <SpellBlock entry={entry} body={body} />}
+      {entry.feature && (
+        <p className="gl-spell-line">
+          {entry.feature.subclass
+            ? t('glossary.feature.subclassLine', {
+                subclass: t(`srd.subclass.${entry.feature.subclass}`),
+                className: t(`srd.class.${entry.feature.classKey}`),
+                level: entry.feature.level,
+              })
+            : t('glossary.feature.line', {
+                className: t(`srd.class.${entry.feature.classKey}`),
+                level: entry.feature.level,
+              })}
+        </p>
+      )}
       <Facts facts={facts} selfId={entry.id} />
       <div className="gl-prose">
         {homebrew

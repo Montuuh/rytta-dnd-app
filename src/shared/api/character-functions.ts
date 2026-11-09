@@ -74,6 +74,25 @@ export type CharacterFunctions = {
     }
     Returns: number
   }
+  // RYT-070: the play lock during encounters and the read-only sheet history.
+  list_character_portraits: { Args: { target_campaign: string }; Returns: Json }
+  rename_character: {
+    Args: { target_campaign: string; target_character: string; new_name: string }
+    Returns: string
+  }
+  get_character_play_lock: {
+    Args: { target_campaign: string; target_character: string }
+    Returns: Json
+  }
+  get_character_history: {
+    Args: {
+      target_campaign: string
+      target_character: string
+      before_at: string | null
+      page_size: number
+    }
+    Returns: Json
+  }
   set_character_vitals: {
     Args: {
       target_campaign: string

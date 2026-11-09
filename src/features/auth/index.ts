@@ -1,3 +1,5 @@
 export { AuthProvider } from './auth-provider'
 export { useAuth } from './auth-context'
 export type { Identity } from './domain/auth'
+export { useUsername } from './username-api'
+export { UsernamePrompt, UsernameSettings } from './ui/username-prompt'

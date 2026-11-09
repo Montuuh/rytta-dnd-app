@@ -22,6 +22,7 @@ import {
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { config } from '@/shared/lib/config'
+import { UsernameSettings, useAuth } from '@/features/auth'
 import './settings-panel.css'
 import {
   classThemes,
@@ -248,13 +249,19 @@ function LanguagePicker({ labelledBy, describedBy }: { labelledBy: string; descr
 
 /**
  * RYT-069: the settings content, shown in the right-hand Settings drawer (app/layout.tsx).
- * Language comes first, then the theme tiles.
+ * The signed-in account's username (RYT-078) comes first, then language and the theme tiles.
  */
 export function SettingsPanel() {
   const { t } = useTranslation()
+  const { state } = useAuth()
   const demo = config.VITE_DATA_MODE === 'demo'
   return (
     <div className="settings-panel">
+      {state.user && (
+        <Section title={t('username.section')} help={t('username.sectionHelp')}>
+          {() => <UsernameSettings />}
+        </Section>
+      )}
       <Section title={t('preferences.language')} help={t('settings.languageHelp')}>
         {(ids) => <LanguagePicker {...ids} />}
       </Section>

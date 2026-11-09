@@ -73,6 +73,8 @@ export async function identityFixture(
     archived?: string[]
     /** RYT-070: the character fights a live encounter (Players are locked). */
     inEncounter?: boolean
+    /** RYT-078: the signed-in account's username; null shows the hub prompt. */
+    username?: string | null
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -326,6 +328,14 @@ export async function identityFixture(
     },
   ]
   const calls: { method: string; body: Record<string, unknown> }[] = []
+  // RYT-078: usernames held by accounts; 'Taken_Name' belongs to someone outside the fixture.
+  const usernames = new Map<string, string>([
+    ['00000000-0000-4000-8000-0000000000ff', 'Taken_Name'],
+  ])
+  const initialUsername = options.username === undefined ? 'Table_Hero' : options.username
+  if (initialUsername) usernames.set(currentId, initialUsername)
+  const usernameHeldByOther = (name: string, actor: string) =>
+    [...usernames].some(([id, held]) => id !== actor && held.toLowerCase() === name.toLowerCase())
   let failList = false
   let glossaryEntries: {
     id: string
@@ -888,6 +898,19 @@ export async function identityFixture(
           created_at: '2026-10-27T01:20:00Z',
         })
       return respond(Boolean(body.enabled))
+    }
+    if (method === 'get_my_username') return respond(usernames.get(actor) ?? null)
+    if (method === 'username_available') {
+      const name = String(body.candidate).trim()
+      return respond(/^[A-Za-z0-9_]{3,24}$/.test(name) && !usernameHeldByOther(name, actor))
+    }
+    if (method === 'set_my_username') {
+      const name = String(body.new_username).trim()
+      if (!/^[A-Za-z0-9_]{3,24}$/.test(name)) return respond({ message: 'Invalid username' }, 400)
+      if (usernameHeldByOther(name, actor)) return respond({ message: 'Username taken' }, 400)
+      usernames.set(actor, name)
+      members = members.map((m) => (m.user_id === actor ? { ...m, display_name: name } : m))
+      return respond(name)
     }
     if (method === 'list_campaign_members') return respond(members)
     if (method === 'campaign_invitations') return respond(sent)

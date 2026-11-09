@@ -17,6 +17,7 @@ import { bestiaryEs } from './bestiary-es'
 import { builderEs } from './builder-es'
 import { tabletopEs } from './tabletop-es'
 import { panelEs } from './panel-es'
+import { usernameEs } from './username-es'
 
 export const es = {
   ...identityEs,
@@ -37,6 +38,7 @@ export const es = {
   ...builderEs,
   ...tabletopEs,
   ...panelEs,
+  ...usernameEs,
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
   'module.shops': 'Tiendas',

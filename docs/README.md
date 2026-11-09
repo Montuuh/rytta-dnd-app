@@ -91,3 +91,6 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-070–074 verification](evidence/RYT-073/validation.md): quick, full and blank
     creation, SRD 5.2.1 class features in the glossary, class resources by level, the sheet as an
     HP ring with tiles, the encounter HP lock, the sheet history and the portrait editor.
+47. [ADR 036: one username per account](decisions/036-account-username.md)
+    and [RYT-078 verification](evidence/RYT-078/validation.md): account vs campaign decision,
+    the profiles RPCs, the Settings section, the hub prompt and member names.

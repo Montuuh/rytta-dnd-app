@@ -23,7 +23,7 @@ import {
   membersQuery,
   type Campaign,
 } from '@/features/campaigns'
-import { useAuth } from '@/features/auth'
+import { useAuth, useUsername } from '@/features/auth'
 import { SettingsPanel } from '@/pages/settings-panel'
 
 /** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
@@ -190,6 +190,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
 export function Layout() {
   const { t } = useTranslation()
   const { state, controller } = useAuth()
+  const username = useUsername().data
   const live = config.VITE_DATA_MODE === 'supabase'
   const [online, setOnline] = useState(navigator.onLine)
   useEffect(() => {
@@ -407,7 +408,7 @@ export function Layout() {
                       leftSection={<UserRound size={18} aria-hidden="true" />}
                       aria-label={
                         state.user
-                          ? `${t('account.profile')} · ${t('auth.account', { email: state.user.email })}`
+                          ? `${t('account.profile')} · ${username ? `${username} · ` : ''}${t('auth.account', { email: state.user.email })}`
                           : `${t('account.profile')} · ${t('account.menu')}`
                       }
                     >
@@ -417,7 +418,10 @@ export function Layout() {
                   <Menu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
                     {state.user && (
                       <>
-                        <Menu.Label className="user-copy">{state.user.email}</Menu.Label>
+                        <Menu.Label className="user-copy">
+                          {username && <span className="user-name">{username}</span>}
+                          <span className="user-email">{state.user.email}</span>
+                        </Menu.Label>
                         <Menu.Item
                           component={NavLink}
                           to="/"

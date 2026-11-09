@@ -1,0 +1,103 @@
+/* RYT-078 username field: a fixed status line keeps the layout still while feedback changes. */
+.username-form {
+  display: grid;
+  gap: 6px;
+}
+.username-input {
+  min-height: 44px;
+  font-size: 1rem;
+}
+/* An invalid name keeps readable text; the border and the message carry the error. */
+.username-form .username-input:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.username-form .username-input[data-error] {
+  --input-color: var(--app-text);
+  color: var(--app-text);
+}
+.username-skeleton {
+  display: grid;
+  gap: 8px;
+}
+.username-prompt-done {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.username-prompt-done:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 4px;
+}
+.username-form .username-status {
+  min-height: 1.5em;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--app-muted);
+}
+.username-form .username-status[data-error] {
+  color: var(--danger);
+}
+.username-status-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.username-status-line svg {
+  flex-shrink: 0;
+}
+/* An unchanged name: the button stays focusable but reads as unavailable. */
+.username-submit[data-inert] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.username-status-line[data-kind='ok'] {
+  color: var(--success);
+}
+.username-actions {
+  margin-top: 6px;
+}
+.username-actions .mantine-Button-root {
+  min-height: 44px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .username-spin {
+    animation: username-spin 0.9s linear infinite;
+  }
+}
+@keyframes username-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.username-prompt {
+  border: 1px solid var(--app-border);
+  background: var(--app-raised);
+  border-radius: var(--mantine-radius-md);
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+  max-width: 560px;
+}
+.username-prompt-title {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  margin: 0;
+}
+.username-prompt-copy {
+  color: var(--app-muted);
+}
+.username-load-error .username-status[data-error] {
+  color: var(--danger);
+}
+.username-load-error {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.username-load-error .mantine-Button-root {
+  min-height: 44px;
+}

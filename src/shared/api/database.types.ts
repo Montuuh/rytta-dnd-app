@@ -6,6 +6,7 @@ import type { ItemFunctions } from './item-functions'
 import type { TradeFunctions } from './trade-functions'
 import type { CombatFunctions } from './combat-functions'
 import type { TabletopFunctions } from './tabletop-functions'
+import type { ProfileFunctions } from './profile-functions'
 import type { GlossaryEntriesTable, GlossaryFunctions } from './glossary-functions'
 
 type Functions = GeneratedDatabase['public']['Functions']
@@ -156,6 +157,7 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       TradeFunctions &
       CombatFunctions &
       TabletopFunctions &
+      ProfileFunctions &
       GlossaryFunctions & {
         list_my_invitations: Omit<Functions['list_my_invitations'], 'Returns'> & {
           Returns: (Functions['list_my_invitations']['Returns'][number] & {

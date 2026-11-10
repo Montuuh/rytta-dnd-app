@@ -38,7 +38,7 @@ hosted authentication and permissions still require real multi-account verificat
 
 ```sh
 npm run check           # Types, lint, architecture/docs contracts, unit/SQL tests, build
-npm run test:e2e        # Production subpath checks in phone/tablet/desktop
+npm run test:e2e        # Production subpath checks at phone and tablet (desktop for wide layouts)
 npm run format         # Format source and docs
 npm run format:check
 npm run test:db         # PostgreSQL policies without Docker

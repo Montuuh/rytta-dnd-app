@@ -18,8 +18,10 @@ The steps below also serve as setup instructions for new environments.
 3. Keep VITE_DATA_MODE=demo for the architecture preview. For future live data, set
    repository variables VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY and
    VITE_DATA_MODE=supabase. Never use secret/service-role keys.
-4. Push the intended revision to main to trigger Publish Pages, or dispatch it manually. Quality checks run first.
-5. The workflow takes base_path from configure-pages, builds dist and publishes it.
+4. Push the intended revision to main, or dispatch the Quality workflow manually. Its `checks`
+   job and the four `e2e` shards run in parallel; the `deploy` job runs only on main after both
+   pass, so a failing check never publishes.
+5. The deploy job takes base_path from configure-pages, builds dist and publishes it.
 6. Verify public assets/favicon, refreshed /#/inventory, mobile navigation and browser errors.
    Real-data releases additionally require staging Auth/RLS tests.
 

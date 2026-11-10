@@ -61,7 +61,7 @@ Install Chromium with `npx playwright install chromium` before npm run test:e2e.
 Tests build demo and Supabase-contract variants at the Pages subpath and require free ports
 4173 and 4174; an unknown server is never reused. The latter uses intercepted HTTP fixtures
 and never signs in to Google or connects to hosted Supabase.
-Language × scheme matrices run in full at 390px; tablet and desktop run the es/dark base.
+Language × scheme matrices run in full at 390px; tablet and desktop run the es/dark base. Signed-in specs run at desktop only when they assert wide layouts (list in playwright.config.ts). CI splits e2e into four parallel shards.
 Raw reports go to ignored test-results/ and playwright-report/. Review screenshots there are
 opt-in with RYT_CAPTURE=1 (inspect changed UI at 390px and tablet); RYT_EVIDENCE=1 writes the
 ticket screenshots under docs/evidence/. Preserve selected evidence under docs/evidence/.

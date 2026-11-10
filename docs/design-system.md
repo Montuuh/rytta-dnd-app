@@ -63,7 +63,7 @@ the compass is decorative. Self-host future fonts and document licenses.
 
 ## Verification
 
-Playwright covers 1440px desktop, 820px tablet and a 390px touch phone profile.
+Playwright covers an 820px tablet and a 390px touch phone profile; 1440px desktop runs the demo specs and the signed-in specs with wide-layout assertions.
 Inspect captures and exercise keyboard, drawer/Escape, direct links, 150% text and reduced motion.
 Axe supplements visual/touch review; mobile Chromium emulation does not verify iOS Safari.
 Every interface change requires the independent ui-ux verdict described in [UI review](ui-review.md).

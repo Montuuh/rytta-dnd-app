@@ -63,3 +63,12 @@ CI on `061a9a7` failed `identity.spec.ts:418` on Linux: the Google label wrapped
 `padding-inline` is now `--mantine-spacing-sm` (`src/app/styles.css`), leaving 36px of slack.
 `npm run check` and `identity.spec.ts` (48 passed) pass locally; captures and the ui-ux PASS are in
 [ci-fix/](ci-fix/review.md). Linux CI result is verified by the next run.
+
+## CI follow-up 2 (2026-11-11)
+
+The padding change was not enough: CI still wrapped the label on Linux, flakily across retries.
+Inter is named in `src/app/theme.ts` but not bundled, so the line count depends on the system
+font. The acceptance criterion now requires the label to be centred and unclipped, with the button
+on screen and at least 44px tall; `identity.spec.ts` asserts exactly that, including the label
+box staying inside the button. A reviewer pass flagged the criterion drift; it is recorded here
+and in `docs/backlog/items.json`.

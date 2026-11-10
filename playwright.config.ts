@@ -49,14 +49,31 @@ export default defineConfig({
         '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,encounter-builder,tabletop,username,rest}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
+    // Rytta targets phones and tablets. Signed-in journeys run at 820px and 390px; the desktop
+    // project keeps only the specs with laptop-specific layout assertions.
     ...[
-      { name: 'identity-desktop', viewport: { width: 1440, height: 1000 } },
-      { name: 'identity-tablet', viewport: { width: 820, height: 1180 } },
-      { name: 'identity-mobile', viewport: { width: 390, height: 844 } },
-    ].map(({ name, viewport }) => ({
+      {
+        name: 'identity-desktop',
+        viewport: { width: 1440, height: 1000 },
+        // Wide layouts (>= 992px, also landscape tablets): glossary side-by-side reader and the
+        // full-width tabletop library and editor.
+        specs: 'identity,combat,bestiary,encounter-builder,glossary,tabletop',
+      },
+      {
+        name: 'identity-tablet',
+        viewport: { width: 820, height: 1180 },
+        specs:
+          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,encounter-builder,tabletop,username,rest',
+      },
+      {
+        name: 'identity-mobile',
+        viewport: { width: 390, height: 844 },
+        specs:
+          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,encounter-builder,tabletop,username,rest',
+      },
+    ].map(({ name, viewport, specs }) => ({
       name,
-      testMatch:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,encounter-builder,tabletop,username,rest}.spec.ts',
+      testMatch: `**/{${specs}}.spec.ts`,
       use: {
         ...devices['Desktop Chrome'],
         viewport,

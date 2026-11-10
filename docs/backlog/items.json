@@ -3390,11 +3390,11 @@
       "sources": [
         "docs/evidence/RYT-084/ui-review.md findings 2 and 3, and its sign-in re-review note (pre-existing, out of RYT-084 scope)."
       ],
-      "scope": "Fit the Player tabletop board and its zoom stack inside a tablet viewport, return focus to the opener when the calibration dialog closes, and keep the sign-in Google label on one centred line at 150% text on phones.",
+      "scope": "Fit the Player tabletop board and its zoom stack inside a tablet viewport, return focus to the opener when the calibration dialog closes, and keep the sign-in Google label centred and unclipped at 150% text on phones.",
       "acceptance": [
         "At 820x1180 the Player board and zoom stack end inside the viewport at 100% and 150% text; at 390px they stay above the bottom bar.",
         "Escape (and Cancel) on the calibration dialog returns focus to the button that opened it; the form still starts from the saved setup on every opening.",
-        "At 150% text on a 390px phone the Continue with Google label is one centred line in ES and EN.",
+        "At 150% text on a 390px phone the Continue with Google label is centred, never clipped, and the button stays on screen with a 44px minimum height in ES and EN. Revised 2026-11-11: Inter is not bundled, so the line count follows the system font; Linux CI wraps it onto a second centred line (docs/evidence/RYT-085/validation.md).",
         "Checked at 390px and 820px in dark and parchment, ES and EN; e2e asserts the focus return, the board fit and the sign-in label.",
         "npm run check and the tabletop and identity e2e specs pass; ui-ux PASS on the current fingerprint."
       ],

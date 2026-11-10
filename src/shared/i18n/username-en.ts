@@ -19,13 +19,15 @@ export const usernameEn = {
   'username.error.offline': 'You are offline. Reconnect to save it.',
   'username.error.unavailable': 'We could not load your username.',
   'username.promptTitle': 'Choose your username',
+  'username.doneTitle': 'Your username is ready',
   'username.promptCopy':
-    'Your DMs will see it instead of your email. It is the same in every campaign, and you can change it in App setup.',
+    'Your DMs will see it instead of your email. It is the same in every campaign, and you can change it in Profile › App setup.',
   'username.promptSave': 'Use this name',
   'username.later': 'Later',
   'username.close': 'Close',
   'username.retry': 'Try again',
   'username.checkFailed': 'We could not check this name now. You can still save it.',
   'username.error.saveFailed': 'We could not save your username. Try again.',
-  'username.promptDone': 'Done: your DMs will see you as {{name}}. You can change it in App setup.',
+  'username.promptDone':
+    'Your DMs will see you as {{name}}. You can change it in Profile › App setup.',
 }

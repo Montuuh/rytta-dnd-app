@@ -44,7 +44,8 @@ export function suggestUsername(email: string): string {
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
     .slice(0, 24)
-  const padded = cleaned.length >= 3 ? cleaned : `${cleaned}_player`.replace(/^_/, '').slice(0, 24)
+  // A neutral pad: the person may be a DM or a Player.
+  const padded = cleaned.length >= 3 ? cleaned : `${cleaned || 'user'}_1`.slice(0, 24)
   return usernameProblem(padded) ? `${padded}_1`.slice(0, 24) : padded
 }
 

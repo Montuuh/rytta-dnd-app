@@ -1,89 +1,101 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Skeleton, Text, Title } from '@mantine/core'
+import { Button, Group, Modal, Skeleton, Text } from '@mantine/core'
 import { Check, LoaderCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth-context'
 import { suggestUsername } from '../domain/username'
 import { useUsername } from '../username-api'
 import { UsernameForm } from './username-form'
-
-const laterKey = (userId: string) => `rytta-username-later-${userId}`
-function readLater(userId: string) {
-  try {
-    return sessionStorage.getItem(laterKey(userId)) === '1'
-  } catch {
-    return false
-  }
-}
+import { laterKey, readLater } from '../domain/username-later'
 
 /**
- * RYT-078: asks for a username while the account has none; "Later" holds for this session.
- * After saving, the card stays to confirm the name and takes focus until it is closed.
+ * RYT-078: on every sign-in, a dialog asks for a username while the account has none. "Later"
+ * (or Escape) closes it until the next sign-in; an account with a username changes it only in
+ * Settings. After saving, the dialog confirms the name and takes focus until it is closed.
  */
-export function UsernamePrompt({ onDismiss }: { onDismiss?: () => void } = {}) {
+export function UsernameDialog({
+  suspended = false,
+  onClosed,
+}: {
+  /** While true (the Settings drawer, which holds the same field, is open) the dialog waits. */
+  suspended?: boolean
+  onClosed?: () => void
+} = {}) {
   const { t } = useTranslation()
   const { state } = useAuth()
   const user = state.user
   const username = useUsername()
   const [later, setLater] = useState(() => (user ? readLater(user.id) : false))
-  // Once the prompt was shown, the name arriving in the cache means it was just saved here.
+  // Once the dialog asked, the name arriving in the cache means it was just saved here.
   const [asked, setAsked] = useState(false)
-  if (username.data === null && !asked) setAsked(true)
+  if (username.data === null && !asked && !later && !suspended) setAsked(true)
   const saved = asked && username.data ? username.data : null
-  const done = useRef<HTMLDivElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
   useEffect(() => {
-    if (saved) done.current?.focus()
+    if (saved) closeButton.current?.focus()
   }, [saved])
-  if (!user || later) return null
-  if (!saved && username.data !== null) return null
+  const opened = Boolean(user) && !later && !suspended && (username.data === null || saved !== null)
+  const close = () => {
+    if (user && !saved)
+      try {
+        sessionStorage.setItem(laterKey(user.id), '1')
+      } catch {
+        /* Dismissal still holds for this page. */
+      }
+    setLater(true)
+    requestAnimationFrame(() => onClosed?.())
+  }
+  // Mounted only while open: the enter transition then always starts fresh, also when a lazy
+  // route suspends during the first render.
+  if (!opened || !user) return null
   return (
-    <section className="username-prompt" aria-labelledby="username-prompt-title">
-      <Title order={2} id="username-prompt-title" className="username-prompt-title">
-        {t('username.promptTitle')}
-      </Title>
-      {saved ? (
-        <div ref={done} tabIndex={-1} className="username-prompt-done" role="status">
-          <Text className="username-status-line" data-kind="ok">
-            <Check size={16} strokeWidth={3} aria-hidden="true" />
-            {t('username.promptDone', { name: saved })}
-          </Text>
-          <Button
-            variant="subtle"
-            onClick={() => {
-              setLater(true)
-              onDismiss?.()
-            }}
-          >
-            {t('username.close')}
-          </Button>
+    <Modal.Root opened onClose={close} closeOnClickOutside={false} centered returnFocus={false}>
+      <Modal.Overlay />
+      {/* No Modal.Body: the dialog is labelled by its title and not described by every control. */}
+      <Modal.Content>
+        {/* A div, not a second banner landmark. */}
+        <Modal.Header component="div">
+          <Modal.Title className="username-dialog-title">
+            {saved ? t('username.doneTitle') : t('username.promptTitle')}
+          </Modal.Title>
+        </Modal.Header>
+        <div className="username-dialog-body">
+          {saved ? (
+            <>
+              <p className="username-done-line" role="status">
+                <Check
+                  size={16}
+                  strokeWidth={3}
+                  aria-hidden="true"
+                  className="username-done-icon"
+                />
+                <span>{t('username.promptDone', { name: saved })}</span>
+              </p>
+              <Group justify="flex-end" className="username-actions">
+                <Button ref={closeButton} onClick={close}>
+                  {t('username.close')}
+                </Button>
+              </Group>
+            </>
+          ) : (
+            <>
+              <Text className="username-prompt-copy">{t('username.promptCopy')}</Text>
+              <UsernameForm
+                current={null}
+                initial={suggestUsername(user.email)}
+                submitLabel={t('username.promptSave')}
+                autoFocus
+                extraAction={
+                  <Button variant="default" onClick={close}>
+                    {t('username.later')}
+                  </Button>
+                }
+              />
+            </>
+          )}
         </div>
-      ) : (
-        <>
-          <Text className="username-prompt-copy">{t('username.promptCopy')}</Text>
-          <UsernameForm
-            current={null}
-            initial={suggestUsername(user.email)}
-            submitLabel={t('username.promptSave')}
-            extraAction={
-              <Button
-                variant="subtle"
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem(laterKey(user.id), '1')
-                  } catch {
-                    /* Dismissal still holds for this page. */
-                  }
-                  setLater(true)
-                  onDismiss?.()
-                }}
-              >
-                {t('username.later')}
-              </Button>
-            }
-          />
-        </>
-      )}
-    </section>
+      </Modal.Content>
+    </Modal.Root>
   )
 }
 

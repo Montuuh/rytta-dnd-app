@@ -8,7 +8,7 @@ import { useSetUsername, useUsernameAvailability } from '../username-api'
 import './username-form.css'
 
 /**
- * RYT-078: one field for the account's username, used in Settings and in the hub's first-run
+ * RYT-078: one field for the account's username, used in Settings and in the sign-in
  * prompt. Format is checked locally once the field was left or submitted; availability is asked
  * of the server after a short pause. A fixed status line announces the result politely.
  */

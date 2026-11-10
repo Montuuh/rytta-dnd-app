@@ -23,7 +23,7 @@ import {
   membersQuery,
   type Campaign,
 } from '@/features/campaigns'
-import { useAuth, useUsername } from '@/features/auth'
+import { UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { SettingsPanel } from '@/pages/settings-panel'
 
 /** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
@@ -208,6 +208,10 @@ export function Layout() {
   const [pickerOpened, setPickerOpened] = useState(false)
   const [opened, { open, close }] = useDisclosure(false)
   const [settingsOpened, settings] = useDisclosure(false)
+  // RYT-078: true from opening the Settings drawer until its exit transition ends (focus is back
+  // on the profile button), so the username dialog opens only after the drawer is fully gone.
+  const [settingsShown, setSettingsShown] = useState(false)
+  if (settingsOpened && !settingsShown) setSettingsShown(true)
   const menuButton = useRef<HTMLButtonElement>(null)
   const previewSwitch = useRef<HTMLInputElement>(null)
   const restoreMenuFocus = useRef(false)
@@ -503,10 +507,20 @@ export function Layout() {
           // A light veil keeps the page readable, so a new theme shows behind the panel.
           overlayProps={{ backgroundOpacity: 0.3 }}
           returnFocus={false}
-          onExitTransitionEnd={() => menuButton.current?.focus()}
+          onExitTransitionEnd={() => {
+            menuButton.current?.focus()
+            setSettingsShown(false)
+          }}
         >
           <SettingsPanel />
         </Drawer>
+        {/* RYT-078: asks for a missing username after every sign-in, on any page. */}
+        {live && state.user && (
+          <UsernameDialog
+            suspended={settingsOpened || settingsShown}
+            onClosed={() => mainRef.current?.focus()}
+          />
+        )}
       </div>
     </CampaignViewContext.Provider>
   )

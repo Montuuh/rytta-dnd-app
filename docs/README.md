@@ -93,4 +93,4 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     HP ring with tiles, the encounter HP lock, the sheet history and the portrait editor.
 47. [ADR 036: one username per account](decisions/036-account-username.md)
     and [RYT-078 verification](evidence/RYT-078/validation.md): account vs campaign decision,
-    the profiles RPCs, the Settings section, the hub prompt and member names.
+    the profiles RPCs, the Settings section, the sign-in dialog and member names.

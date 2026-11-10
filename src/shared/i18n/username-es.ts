@@ -22,13 +22,14 @@ export const usernameEs = {
   'username.error.offline': 'Estás sin conexión. Reconecta para guardarlo.',
   'username.error.unavailable': 'No pudimos cargar tu nombre de usuario.',
   'username.promptTitle': 'Elige tu nombre de usuario',
+  'username.doneTitle': 'Ya tienes nombre de usuario',
   'username.promptCopy':
-    'Tus DM lo verán en lugar de tu correo. Es el mismo en todas tus campañas y puedes cambiarlo en Ajustes.',
+    'Tus DM lo verán en lugar de tu correo. Es el mismo en todas tus campañas y puedes cambiarlo en Perfil › Ajustes.',
   'username.promptSave': 'Usar este nombre',
   'username.later': 'Más tarde',
   'username.close': 'Cerrar',
   'username.retry': 'Reintentar',
   'username.checkFailed': 'No pudimos comprobar este nombre ahora. Puedes guardarlo igualmente.',
   'username.error.saveFailed': 'No pudimos guardar tu nombre. Inténtalo de nuevo.',
-  'username.promptDone': 'Listo: tus DM te verán como {{name}}. Puedes cambiarlo en Ajustes.',
+  'username.promptDone': 'Tus DM te verán como {{name}}. Puedes cambiarlo en Perfil › Ajustes.',
 } satisfies Record<keyof typeof usernameEn, string>

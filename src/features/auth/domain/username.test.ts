@@ -14,7 +14,7 @@ describe('RYT-078 username rules', () => {
   })
   it('suggests a valid name from the email', () => {
     expect(suggestUsername('maria.peña@example.com')).toBe('maria_pena')
-    expect(suggestUsername('jo@example.com')).toBe('jo_player')
+    expect(suggestUsername('jo@example.com')).toBe('jo_1')
     expect(suggestUsername('admin@example.com')).toBe('admin_1')
     expect(usernameProblem(suggestUsername('a.very.long.email.local.part.here@x.io'))).toBeNull()
   })

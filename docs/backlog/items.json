@@ -3109,7 +3109,7 @@
     },
     {
       "id": "RYT-078",
-      "title": "One username per account: Settings, hub prompt and member names",
+      "title": "One username per account: Settings, sign-in dialog and member names",
       "priority": "P1",
       "owner": "fullstack",
       "recommendedModel": {
@@ -3119,14 +3119,15 @@
       "status": "done",
       "dependsOn": ["RYT-002", "RYT-069"],
       "sources": [
-        "User 2026-11-09: design and implement a username; decide whether it should be global per account or per campaign."
+        "User 2026-11-09: design and implement a username; decide whether it should be global per account or per campaign.",
+        "User 2026-11-10: after every sign-in on the web, a missing username opens a dialog to assign one; an existing username changes only in Settings."
       ],
       "scope": "Decide account vs campaign username (ADR 036: one per account). profiles table reached only through get_my_username, username_available and set_my_username; private.member_name feeds list_campaign_members and get_character_history. Settings drawer section, hub first-run prompt with an email-based suggestion and Later, username in the account menu. PRE mirror.",
       "acceptance": [
         "A signed-in account has at most one username, 3–24 letters, digits or _, unique without regard to case, never a reserved name.",
         "Anon executes no username RPC; no signed-in user reads or writes profiles rows directly; another campaign's DM, outsiders and Players cannot list a campaign's member names.",
         "DMs see the username in the members list and the sheet history, else the Google name, else the email.",
-        "The hub asks for a username while none is set, with a valid suggestion and Later for the session; Settings shows and changes it with inline format, availability and error feedback announced politely.",
+        "After every sign-in, on any page, a dialog asks for a username while none is set, with a valid suggestion; Later or Escape closes it until the session ends and the next sign-in asks again; an account with a username is never asked and changes it only in Settings, with inline format, availability and error feedback announced politely.",
         "The account menu shows the username above the email."
       ],
       "validation": [
@@ -3146,7 +3147,7 @@
         "tests/e2e/username.spec.ts",
         "docs/evidence/RYT-078/validation.md",
         "docs/evidence/RYT-078/design-flow.md",
-        "docs/evidence/RYT-078/hub-prompt-identity-mobile.png",
+        "docs/evidence/RYT-078/dialog-identity-mobile.png",
         "docs/evidence/RYT-078/settings-identity-tablet.png",
         "docs/evidence/ui-review/ryt-078/review.md",
         "docs/evidence/ui-review-current.json"

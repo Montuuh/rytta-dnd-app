@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import {
   Alert,
   Badge,
@@ -20,7 +20,7 @@ import { ArrowRight, Inbox, Mail, Plus, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { PageHead } from '@/shared/ui/page-head'
-import { UsernamePrompt, useAuth } from '@/features/auth'
+import { useAuth } from '@/features/auth'
 import { campaignsQuery, invitationsQuery, useCampaignAction } from '../api'
 import { createCampaignSchema, type Invitation } from '../domain/campaign'
 import { ActionFeedback, QueryFeedback } from './feedback'
@@ -35,7 +35,6 @@ export function CampaignHub() {
   const create = useCampaignAction()
   const [opened, setOpened] = useState(false)
   const [decline, setDecline] = useState<Invitation | null>(null)
-  const heading = useRef<HTMLHeadingElement>(null)
   const form = useForm({
     initialValues: { name: '', description: '' },
     validate: {
@@ -53,7 +52,6 @@ export function CampaignHub() {
       <PageHead
         title={t('hub.title')}
         description={t('hub.intro')}
-        headingRef={heading}
         actions={
           <Button
             leftSection={<Plus size={18} aria-hidden="true" />}
@@ -66,8 +64,6 @@ export function CampaignHub() {
           </Button>
         }
       />
-      {/* When the prompt closes, focus returns to the page heading instead of the body. */}
-      <UsernamePrompt onDismiss={() => requestAnimationFrame(() => heading.current?.focus())} />
       <QueryFeedback pending={campaigns.isPending} error={campaigns.isError} retry={refresh} />
       {!campaigns.isError &&
         campaigns.data &&

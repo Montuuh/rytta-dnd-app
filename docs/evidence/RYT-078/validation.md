@@ -12,9 +12,9 @@ Design flow: [design-flow.md](design-flow.md).
   (RLS on, no client grants, unique on `lower(username)`, 3–24 `[A-Za-z0-9_]`, reserved names),
   `get_my_username`, `username_available`, `set_my_username`, and `private.member_name` used by
   `list_campaign_members` and `get_character_history` (signatures and grants unchanged).
-- **Interface:** "Your username" first in the Settings drawer; a hub card while the account has
-  none (suggestion from the email, "Use this name", "Later" for the session, a focused
-  confirmation after saving); the username above the email in the account menu and in the
+- **Interface:** "Your username" first in the Settings drawer; a dialog after every sign-in, on any
+  page, while the account has none (suggestion from the email, "Use this name", "Later" or Escape
+  until the session ends, a focused confirmation after saving; amended 2026-11-10 from a hub card); the username above the email in the account menu and in the
   Profile button's accessible name.
 
 ## Database environments
@@ -38,17 +38,21 @@ their apply time.
 | `tests/database/profiles.test.ts` (PGlite) | 6 pass: anon denied every RPC and the table; validation, case-insensitive uniqueness, reserved names; no direct row access for a signed-in user; members list shows the username to the campaign DM and refuses the Player, an outsider and another campaign's DM; fallback Google name → username in the sheet history; PRE mirror with separate rows and anon denied |
 | `tests/database/pre.test.ts` | The ETL now copies 39 tables (adds `profiles`) |
 | `src/features/auth/domain/username.test.ts` | Rules and email suggestions |
-| `tests/e2e/username.spec.ts` (identity projects, 390 / 820 / 1440) | 12 pass: prompt, suggestion, too short, reserved while typing, taken, available, `aria-describedby`, axe in the error and available states, focused confirmation, Close and Later return focus to the heading, Later holds on reload, Settings current/invalid/available/saved with focus kept on the button, load error with a keyboard retry that keeps focus and then focuses the field |
-| `npm run test:e2e` | Final run on the reviewed source: 530 passed, 0 failed, 55 skipped (matrix limits). An earlier run concurrent with the ui-ux browser review had 4 mobile failures in `combat.spec.ts` / `glossary.spec.ts` (not touched here) that passed alone (48/48) and in the final run |
+| `tests/e2e/username.spec.ts` (identity projects, 390 / 820 / 1440) | 18 pass: the dialog after sign-in with a neutral suggestion, too short, reserved while typing, taken, available, `aria-describedby`, axe on the whole dialog in error, available and saved states, saved title with focus on Close and focus on the page after; the dialog on a campaign route; it waits for the Settings drawer and keeps focus after it closes; Later and Escape hold on reload and a new sign-in asks again; an account with a username is never asked; Settings current/invalid/available/saved with focus kept on the button; load error with a keyboard retry |
+| `npm run test:e2e` | Final run on the reviewed source (sign-in dialog): 536 passed, 0 failed, 55 skipped (matrix limits). An earlier run concurrent with a ui-ux browser review had 4 mobile failures in `combat.spec.ts` / `glossary.spec.ts` (not touched here) that passed alone and in later runs |
 
-Screenshots: `hub-prompt-identity-{desktop,tablet,mobile}.png`, `settings-identity-{desktop,tablet,mobile}.png`.
+Screenshots: `dialog-identity-{desktop,tablet,mobile}.png`, `settings-identity-{desktop,tablet,mobile}.png`.
 
 ## UI review
 
 Independent `ui-ux` review: [review.md](../ui-review/ryt-078/review.md). Round 1 CHANGES_REQUIRED
 (R78-1 save button lost focus, R78-2 load error without retry, P3s), round 2 CHANGES_REQUIRED
-(R78-5 the retry unmounted itself, R78-6 load error colour), round 3 **PASS** on source
-`32abd5de2e2270de7ab9876cf29401a3c51fceab1a7ea6e2243cfeff8074eef9`; `npm run check:ui-review` passes.
+(R78-5 the retry unmounted itself, R78-6 load error colour), round 3 PASS. The sign-in dialog amendment: round 4 CHANGES_REQUIRED (R78-7 focus escaped
+behind the dialog when it opened as Settings closed), round 5 **PASS** on source
+`bb6896e118b06ac90fd4271ad7a470efee23743d67c17a780a6d6f2923819696`; `npm run check:ui-review` passes.
+
+Open P3 notes: the overlay leaves the ~15 px scrollbar gutter uncovered at 820 px; "Later" is
+kept per browser tab (`sessionStorage`), so a new tab of the same session asks again.
 
 ## Not tested
 

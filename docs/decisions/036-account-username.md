@@ -44,10 +44,14 @@ the username names the person behind them. A per-campaign nickname can be added 
 - **Settings drawer:** "Your username" is the first section for a signed-in account, with the
   field, a fixed status line (`aria-live="polite"`) for the format rule, availability (checked
   after a 350 ms pause), the current name, errors and the saved confirmation, and "Save username".
-- **Hub prompt:** while the account has no username, the campaigns hub shows a card above the
-  campaigns: what the name is for, the field prefilled with a suggestion from the email (accents
-  dropped, padded to 3 characters, never reserved), "Use this name" and "Later". "Later" holds for
-  the browser session; the prompt never blocks the hub.
+- **Dialog after every sign-in** (amended 2026-11-10 at the user's request): while the account
+  has no username, a dialog opens on whatever page the app loads, with what the name is for, the
+  field focused and prefilled with a suggestion from the email (accents dropped, padded to 3
+  characters, never reserved), "Use this name" and "Later". "Later" or Escape closes it until the
+  session ends (it does not come back on reload); signing out forgets it, so the next sign-in asks
+  again. Clicking outside does not close it. After saving it confirms the name, and closing returns
+  focus to the page. An account that has a username is never asked: it changes only in Settings.
+  This replaces the first version's card on the campaigns hub.
 - **Account menu:** the username above the email.
 - Errors are inline under the field and tied to it (`aria-invalid`, `aria-describedby`); the
   server stays authoritative for taken and reserved names.

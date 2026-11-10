@@ -20,17 +20,6 @@
   display: grid;
   gap: 8px;
 }
-.username-prompt-done {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.username-prompt-done:focus-visible {
-  outline: 2px solid var(--app-focus);
-  outline-offset: 4px;
-}
 .username-form .username-status {
   min-height: 1.5em;
   margin: 0;
@@ -73,19 +62,35 @@
     transform: rotate(360deg);
   }
 }
-.username-prompt {
-  border: 1px solid var(--app-border);
-  background: var(--app-raised);
-  border-radius: var(--mantine-radius-md);
-  padding: 16px;
+.username-dialog-body {
   display: grid;
-  gap: 10px;
-  max-width: 560px;
+  gap: 12px;
+  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md);
 }
-.username-prompt-title {
+/* The saved name reads as text; only the icon carries the success colour. */
+.username-done-line {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--app-text);
+  line-height: 1.5;
+}
+.username-done-icon {
+  flex-shrink: 0;
+  margin-top: 0.2em;
+  color: var(--success);
+}
+/* Phones: the dialog's two actions stack full width, primary first. */
+@media (max-width: 30em) {
+  .username-dialog-body .username-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+.mantine-Modal-title.username-dialog-title {
   font-family: var(--mantine-font-family-headings);
   font-size: var(--fs-h3);
-  margin: 0;
 }
 .username-prompt-copy {
   color: var(--app-muted);

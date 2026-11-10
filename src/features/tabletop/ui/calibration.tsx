@@ -30,8 +30,34 @@ export function CalibrationDialog({
   campaignId: string
   current: Calibration | null
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const phone = usePhone()
+  // Stays mounted while closed so Mantine returns focus to the opener; the form inside
+  // unmounts on close and starts from the saved setup on every opening.
+  return (
+    <Modal
+      closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
+      opened={opened}
+      onClose={onClose}
+      title={t('tabletop.setup.title')}
+      size="lg"
+      fullScreen={phone}
+    >
+      <CalibrationForm onClose={onClose} campaignId={campaignId} current={current} />
+    </Modal>
+  )
+}
+
+function CalibrationForm({
+  onClose,
+  campaignId,
+  current,
+}: {
+  onClose: () => void
+  campaignId: string
+  current: Calibration | null
+}) {
+  const { t, i18n } = useTranslation()
   const action = useTabletopAction(campaignId)
   const [c, setC] = useState<Calibration>(current ?? defaultCalibration)
   // "Other" sends focus to the exact field below it.
@@ -47,174 +73,165 @@ export function CalibrationDialog({
     ? String(c.baseMm)
     : 'other'
   return (
-    <Modal
-      closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
-      opened={opened}
-      onClose={onClose}
-      title={t('tabletop.setup.title')}
-      size="lg"
-      fullScreen={phone}
-    >
-      <div className="tt-form">
-        <p className="tt-note">{t('tabletop.setup.intro')}</p>
-        <TileGroup
-          legend={t('tabletop.setup.diagonal')}
-          className="tt-tiles-compact"
-          value={tv}
-          onChange={(value) =>
-            value === 'other'
-              ? exactDiagonal.current?.focus()
-              : setC({ ...c, diagonalIn: Number(value) })
-          }
-          options={[
-            ...tvSizes.map((size) => ({
-              value: String(size),
-              content: <span>{t('tabletop.setup.inches', { value: size })}</span>,
-            })),
-            { value: 'other', content: <span>{t('tabletop.setup.other')}</span> },
-          ]}
-        />
-        <NumberInput
-          ref={exactDiagonal}
-          hideControls
-          label={t('tabletop.setup.diagonalExact')}
-          value={c.diagonalIn}
-          min={5}
-          max={200}
-          decimalScale={1}
-          suffix="″"
-          onChange={(v) => setC({ ...c, diagonalIn: Number(v) || c.diagonalIn })}
-        />
-        <fieldset className="tt-fieldset">
-          <legend>{t('tabletop.setup.resolution')}</legend>
-          <div className="tt-row">
-            <NumberInput
-              hideControls
-              label={t('tabletop.setup.width')}
-              value={c.pxW}
-              min={320}
-              max={16384}
-              allowDecimal={false}
-              suffix=" px"
-              onChange={(v) => setC({ ...c, pxW: Number(v) || c.pxW })}
-            />
-            <NumberInput
-              hideControls
-              label={t('tabletop.setup.height')}
-              value={c.pxH}
-              min={240}
-              max={16384}
-              allowDecimal={false}
-              suffix=" px"
-              onChange={(v) => setC({ ...c, pxH: Number(v) || c.pxH })}
-            />
-          </div>
-          <Button
-            variant="default"
-            leftSection={<MonitorSmartphone size={18} aria-hidden="true" />}
-            onClick={() =>
-              setC({ ...c, ...reportedResolution(window.screen, window.devicePixelRatio || 1) })
-            }
-          >
-            {t('tabletop.setup.thisScreen')}
-          </Button>
-          <p className="tt-note">{t('tabletop.setup.thisScreenHelp')}</p>
-        </fieldset>
-        <TileGroup
-          legend={t('tabletop.setup.base')}
-          className="tt-tiles-compact tt-base-tiles"
-          value={base}
-          onChange={(value) =>
-            value === 'other' ? exactBase.current?.focus() : setC({ ...c, baseMm: Number(value) })
-          }
-          options={[
-            ...baseSizes.map((size) => ({
-              value: String(size),
-              content: (
-                <span className="tt-base-tile">
-                  <span
-                    className="tt-base-disc"
-                    style={{ ['--mm' as string]: String(size) }}
-                    aria-hidden="true"
-                  />
-                  <span>
-                    {size === 25.4
-                      ? t('tabletop.setup.inch')
-                      : t('tabletop.setup.mm', { value: size })}
-                  </span>
-                </span>
-              ),
-            })),
-            { value: 'other', content: <span>{t('tabletop.setup.other')}</span> },
-          ]}
-        />
-        <NumberInput
-          ref={exactBase}
-          hideControls
-          label={t('tabletop.setup.baseExact')}
-          value={c.baseMm}
-          min={10}
-          max={80}
-          decimalScale={1}
-          suffix=" mm"
-          onChange={(v) => setC({ ...c, baseMm: Number(v) || c.baseMm })}
-        />
-        <div>
-          <p className="tt-slider-label" id="tt-fine">
-            {t('tabletop.setup.fine', {
-              value: new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(c.fine),
-            })}
-          </p>
-          <Slider
-            thumbLabel={t('tabletop.setup.fineLabel')}
-            value={c.fine}
-            min={0.9}
-            max={1.1}
-            step={0.005}
-            label={(v) => `${Math.round(v * 1000) / 10}%`}
-            onChange={(fine) => setC({ ...c, fine })}
+    <div className="tt-form">
+      <p className="tt-note">{t('tabletop.setup.intro')}</p>
+      <TileGroup
+        legend={t('tabletop.setup.diagonal')}
+        className="tt-tiles-compact"
+        value={tv}
+        onChange={(value) =>
+          value === 'other'
+            ? exactDiagonal.current?.focus()
+            : setC({ ...c, diagonalIn: Number(value) })
+        }
+        options={[
+          ...tvSizes.map((size) => ({
+            value: String(size),
+            content: <span>{t('tabletop.setup.inches', { value: size })}</span>,
+          })),
+          { value: 'other', content: <span>{t('tabletop.setup.other')}</span> },
+        ]}
+      />
+      <NumberInput
+        ref={exactDiagonal}
+        hideControls
+        label={t('tabletop.setup.diagonalExact')}
+        value={c.diagonalIn}
+        min={5}
+        max={200}
+        decimalScale={1}
+        suffix="″"
+        onChange={(v) => setC({ ...c, diagonalIn: Number(v) || c.diagonalIn })}
+      />
+      <fieldset className="tt-fieldset">
+        <legend>{t('tabletop.setup.resolution')}</legend>
+        <div className="tt-row">
+          <NumberInput
+            hideControls
+            label={t('tabletop.setup.width')}
+            value={c.pxW}
+            min={320}
+            max={16384}
+            allowDecimal={false}
+            suffix=" px"
+            onChange={(v) => setC({ ...c, pxW: Number(v) || c.pxW })}
           />
-          <p className="tt-note">{t('tabletop.setup.fineHelp')}</p>
+          <NumberInput
+            hideControls
+            label={t('tabletop.setup.height')}
+            value={c.pxH}
+            min={240}
+            max={16384}
+            allowDecimal={false}
+            suffix=" px"
+            onChange={(v) => setC({ ...c, pxH: Number(v) || c.pxH })}
+          />
         </div>
-        <Switch
-          label={t('tabletop.setup.flip')}
-          description={t('tabletop.setup.flipHelp')}
-          checked={c.flip}
-          onChange={(e) => setC({ ...c, flip: e.currentTarget.checked })}
+        <Button
+          variant="default"
+          leftSection={<MonitorSmartphone size={18} aria-hidden="true" />}
+          onClick={() =>
+            setC({ ...c, ...reportedResolution(window.screen, window.devicePixelRatio || 1) })
+          }
+        >
+          {t('tabletop.setup.thisScreen')}
+        </Button>
+        <p className="tt-note">{t('tabletop.setup.thisScreenHelp')}</p>
+      </fieldset>
+      <TileGroup
+        legend={t('tabletop.setup.base')}
+        className="tt-tiles-compact tt-base-tiles"
+        value={base}
+        onChange={(value) =>
+          value === 'other' ? exactBase.current?.focus() : setC({ ...c, baseMm: Number(value) })
+        }
+        options={[
+          ...baseSizes.map((size) => ({
+            value: String(size),
+            content: (
+              <span className="tt-base-tile">
+                <span
+                  className="tt-base-disc"
+                  style={{ ['--mm' as string]: String(size) }}
+                  aria-hidden="true"
+                />
+                <span>
+                  {size === 25.4
+                    ? t('tabletop.setup.inch')
+                    : t('tabletop.setup.mm', { value: size })}
+                </span>
+              </span>
+            ),
+          })),
+          { value: 'other', content: <span>{t('tabletop.setup.other')}</span> },
+        ]}
+      />
+      <NumberInput
+        ref={exactBase}
+        hideControls
+        label={t('tabletop.setup.baseExact')}
+        value={c.baseMm}
+        min={10}
+        max={80}
+        decimalScale={1}
+        suffix=" mm"
+        onChange={(v) => setC({ ...c, baseMm: Number(v) || c.baseMm })}
+      />
+      <div>
+        <p className="tt-slider-label" id="tt-fine">
+          {t('tabletop.setup.fine', {
+            value: new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(c.fine),
+          })}
+        </p>
+        <Slider
+          thumbLabel={t('tabletop.setup.fineLabel')}
+          value={c.fine}
+          min={0.9}
+          max={1.1}
+          step={0.005}
+          label={(v) => `${Math.round(v * 1000) / 10}%`}
+          onChange={(fine) => setC({ ...c, fine })}
         />
-        <output className="tt-result" aria-live="polite">
-          <span className="tt-result-main">
-            {t('tabletop.setup.result', { cols: fit.cols, rows: fit.rows })}
-          </span>
-          <span className="tt-result-meta">
-            {t('tabletop.setup.resultMeta', {
-              ppi: number.format(pixelsPerInch(c)),
-              square: number.format(squarePx(c)),
-              width: number.format(inches.width * 2.54),
-              height: number.format(inches.height * 2.54),
-            })}
-          </span>
-        </output>
-        {action.isError && (
-          <p className="tt-error" role="alert">
-            {t('tabletop.error.save')}
-          </p>
-        )}
-        <div className="tt-dialog-foot">
-          <Button variant="subtle" onClick={onClose}>
-            {t('tabletop.cancel')}
-          </Button>
-          <Button
-            onClick={() =>
-              action.mutate({ kind: 'live', patch: { screen: toSetup(c) } }, { onSuccess: onClose })
-            }
-            loading={action.isPending}
-          >
-            {t('tabletop.setup.save')}
-          </Button>
-        </div>
+        <p className="tt-note">{t('tabletop.setup.fineHelp')}</p>
       </div>
-    </Modal>
+      <Switch
+        label={t('tabletop.setup.flip')}
+        description={t('tabletop.setup.flipHelp')}
+        checked={c.flip}
+        onChange={(e) => setC({ ...c, flip: e.currentTarget.checked })}
+      />
+      <output className="tt-result" aria-live="polite">
+        <span className="tt-result-main">
+          {t('tabletop.setup.result', { cols: fit.cols, rows: fit.rows })}
+        </span>
+        <span className="tt-result-meta">
+          {t('tabletop.setup.resultMeta', {
+            ppi: number.format(pixelsPerInch(c)),
+            square: number.format(squarePx(c)),
+            width: number.format(inches.width * 2.54),
+            height: number.format(inches.height * 2.54),
+          })}
+        </span>
+      </output>
+      {action.isError && (
+        <p className="tt-error" role="alert">
+          {t('tabletop.error.save')}
+        </p>
+      )}
+      <div className="tt-dialog-foot">
+        <Button variant="subtle" onClick={onClose}>
+          {t('tabletop.cancel')}
+        </Button>
+        <Button
+          onClick={() =>
+            action.mutate({ kind: 'live', patch: { screen: toSetup(c) } }, { onSuccess: onClose })
+          }
+          loading={action.isPending}
+        >
+          {t('tabletop.setup.save')}
+        </Button>
+      </div>
+    </div>
   )
 }
 

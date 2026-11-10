@@ -3375,6 +3375,35 @@
         "docs/evidence/RYT-084/sheet-after-tablet.webp",
         "docs/evidence/RYT-084/ui-review.md"
       ]
+    },
+    {
+      "id": "RYT-085",
+      "title": "Fix three low UI issues left by the RYT-084 review",
+      "priority": "P3",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "claude-sonnet-5-5",
+        "reasoningEffort": "medium"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-084"],
+      "sources": [
+        "docs/evidence/RYT-084/ui-review.md findings 2 and 3, and its sign-in re-review note (pre-existing, out of RYT-084 scope)."
+      ],
+      "scope": "Fit the Player tabletop board and its zoom stack inside a tablet viewport, return focus to the opener when the calibration dialog closes, and keep the sign-in Google label on one centred line at 150% text on phones.",
+      "acceptance": [
+        "At 820x1180 the Player board and zoom stack end inside the viewport at 100% and 150% text; at 390px they stay above the bottom bar.",
+        "Escape (and Cancel) on the calibration dialog returns focus to the button that opened it; the form still starts from the saved setup on every opening.",
+        "At 150% text on a 390px phone the Continue with Google label is one centred line in ES and EN.",
+        "Checked at 390px and 820px in dark and parchment, ES and EN; e2e asserts the focus return, the board fit and the sign-in label.",
+        "npm run check and the tabletop and identity e2e specs pass; ui-ux PASS on the current fingerprint."
+      ],
+      "validation": [
+        "npm run check",
+        "npx playwright test tests/e2e/tabletop.spec.ts tests/e2e/identity.spec.ts",
+        "390px and 820px probes and captures, both themes and languages"
+      ],
+      "evidence": ["docs/evidence/RYT-085/validation.md", "docs/evidence/RYT-085/ui-review.md"]
     }
   ]
 }

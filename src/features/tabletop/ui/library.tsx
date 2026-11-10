@@ -276,14 +276,12 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
           onCreated={open}
         />
       )}
-      {setup && (
-        <CalibrationDialog
-          opened
-          campaignId={campaignId}
-          current={calibration}
-          onClose={() => setSetup(false)}
-        />
-      )}
+      <CalibrationDialog
+        opened={setup}
+        campaignId={campaignId}
+        current={calibration}
+        onClose={() => setSetup(false)}
+      />
     </div>
   )
 }

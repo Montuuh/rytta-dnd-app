@@ -124,9 +124,18 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   if (size(info) === 'desktop')
     expect((await page.locator('.tt-library').boundingBox())!.width).toBeGreaterThan(1380)
 
-  // Calibration: a 55-inch 4K screen and one-inch bases hold 47 × 26 whole squares.
-  await page.getByRole('button', { name: 'Configurar la mesa' }).click()
+  // RYT-085: Escape closes the setup and focus goes back to the button that opened it.
+  const setupButton = page.getByRole('button', { name: 'Configurar la mesa' })
   const setup = page.getByRole('dialog', { name: 'Configuración de la pantalla de mesa' })
+  await setupButton.focus()
+  await page.keyboard.press('Enter')
+  await expect(setup).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(setup).toHaveCount(0)
+  await expect(setupButton).toBeFocused()
+
+  // Calibration: a 55-inch 4K screen and one-inch bases hold 47 × 26 whole squares.
+  await setupButton.click()
   await setup.locator('label', { hasText: '55″' }).click()
   await setup.getByLabel('Ancho', { exact: true }).fill('3840')
   await setup.getByLabel('Alto', { exact: true }).fill('2160')
@@ -659,6 +668,16 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   expect(
     server.calls.filter((c) => c.method === 'get_tabletop').every((c) => c.body.as_table === true),
   ).toBe(true)
+  // RYT-085: the board and its zoom stack fit the viewport (above the phone bottom bar).
+  const fit = await page.evaluate(() => {
+    const frame = document.querySelector('.tt-player-board')!.getBoundingClientRect()
+    const zoom = document.querySelector('.tt-zoom')!.getBoundingClientRect()
+    const bar = document.querySelector('.bottom-nav')?.getBoundingClientRect()
+    const limit = bar && bar.height > 0 ? bar.top : innerHeight
+    return { frame: frame.bottom, zoom: zoom.bottom, limit }
+  })
+  expect(fit.frame).toBeLessThanOrEqual(fit.limit)
+  expect(fit.zoom).toBeLessThanOrEqual(fit.limit)
   // A private measure: the switch, then a drag.
   await page.getByLabel('Medir').check()
   await audit(page, 'main', '.tt-world')

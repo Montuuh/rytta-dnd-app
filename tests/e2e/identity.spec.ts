@@ -469,11 +469,20 @@ for (const language of ['es', 'en'] as const)
           exact: true,
         })
         .click()
-      await expect(
-        page.getByRole('button', {
-          name: language === 'es' ? 'Continuar con Google' : 'Continue with Google',
-        }),
-      ).toBeVisible()
+      const google = page.getByRole('button', {
+        name: language === 'es' ? 'Continuar con Google' : 'Continue with Google',
+      })
+      await expect(google).toBeVisible()
+      // RYT-085: at 150% text on a phone the sign-in label stays on one centred line.
+      await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+      const label = await google.evaluate((button) => {
+        const text = button.querySelector('.mantine-Button-label')!
+        const range = document.createRange()
+        range.selectNodeContents(text)
+        const tops = new Set([...range.getClientRects()].map((r) => Math.round(r.top)))
+        return { lines: tops.size, align: getComputedStyle(text).textAlign }
+      })
+      expect(label).toEqual({ lines: 1, align: 'center' })
       const audit = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
         .analyze()

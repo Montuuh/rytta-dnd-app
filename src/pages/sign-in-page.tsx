@@ -14,7 +14,7 @@ export function SignInPage() {
     setBusy(false)
   }
   return (
-    <Paper p="xl" className="sign-in-card">
+    <Paper p={{ base: 'md', sm: 'xl' }} className="sign-in-card">
       <Stack gap="lg">
         <Compass size={48} strokeWidth={1} aria-hidden="true" />
         <Title order={1}>{t('auth.title')}</Title>
@@ -29,7 +29,7 @@ export function SignInPage() {
             )}
           </Alert>
         )}
-        <Button onClick={() => void signIn()} loading={busy}>
+        <Button className="sign-in-google" onClick={() => void signIn()} loading={busy}>
           {t('auth.google')}
         </Button>
         {state.issue === 'connection' && (

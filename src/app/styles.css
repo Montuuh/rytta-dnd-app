@@ -336,6 +336,10 @@ h2[tabindex='-1']:focus {
   max-width: 560px;
   margin: 5vh auto;
 }
+/* Large text can wrap the sign-in label: keep its lines centred under each other. */
+.sign-in-google .mantine-Button-label {
+  text-align: center;
+}
 .account-row {
   width: 100%;
 }

@@ -2212,9 +2212,11 @@ html.tt-table-mode body {
   height: calc(100dvh - 15rem - var(--bottom-nav-h));
   min-height: 20rem;
 }
+/* Tablets keep the page head, its hint and the measure row above the board and have no
+   bottom bar: the board fills the rest so the zoom stack stays on screen without scrolling. */
 @media (min-width: 48em) {
   .tt-player-board {
-    height: calc(100dvh - 14rem);
+    height: calc(100dvh - 19.5rem);
   }
 }
 

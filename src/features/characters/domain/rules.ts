@@ -156,6 +156,52 @@ export function applyHp(vitals: Vitals, maxHp: number, kind: 'damage' | 'heal', 
   }
 }
 
+/**
+ * RYT-080: what a rest would give this character back (the sheet's pre-check before asking the
+ * group). A short rest heals only through hit dice spent in the panel, so it reports the dice
+ * available instead of hit points. PostgreSQL applies the rest; this only previews it.
+ */
+export function restRecovery(
+  vitals: Vitals,
+  build: Build,
+  maxHp: number,
+  level: number,
+  kind: 'short' | 'long',
+) {
+  const resets = (reset: string) => reset === 'short' || (kind === 'long' && reset === 'long')
+  const canRest = vitals.current_hp > 0
+  const diceLeft = Math.max(0, level - vitals.hit_dice_spent)
+  const hurt = canRest && vitals.current_hp < maxHp
+  return {
+    canRest,
+    hp:
+      kind === 'long' && hurt ? { before: vitals.current_hp, after: maxHp, max: maxHp } : undefined,
+    dice:
+      kind === 'long' && canRest && vitals.hit_dice_spent > 0
+        ? { before: diceLeft, after: level, die: build.hitDie }
+        : undefined,
+    healDice:
+      kind === 'short' && hurt && diceLeft > 0 ? { left: diceLeft, die: build.hitDie } : undefined,
+    trackers: canRest
+      ? build.trackers
+          .filter((tracker) => resets(tracker.reset) && (vitals.tracker_uses[tracker.id] ?? 0) > 0)
+          .map((tracker) => ({
+            id: tracker.id,
+            key: tracker.key,
+            name: tracker.name,
+            before: Math.max(0, tracker.max - (vitals.tracker_uses[tracker.id] ?? 0)),
+            after: tracker.max,
+          }))
+      : [],
+    slots:
+      canRest && (kind === 'long' || build.casterKind === 'pact')
+        ? vitals.slots_used
+            .map((count, index) => ({ level: index + 1, count }))
+            .filter((slot) => slot.count > 0)
+        : [],
+  }
+}
+
 /** 2024 rests: a long rest restores HP, all hit dice, slots and uses; a short rest restores
  * short-rest uses and pact slots. Exhaustion stays a DM-controlled resource. */
 export function applyRest(vitals: Vitals, build: Build, maxHp: number, kind: 'short' | 'long') {

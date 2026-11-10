@@ -467,3 +467,90 @@
     transition: none;
   }
 }
+
+/* RYT-081: "New character" closes the party list (DM and Player). A dashed card: it is a place
+   for a character, not another character. */
+.party-new-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 88px;
+  padding: 16px 18px;
+  border: 1.5px dashed var(--app-border);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--app-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.party-new-card:hover {
+  background: var(--app-surface);
+  border-color: var(--app-accent);
+}
+.party-new-card:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.party-new-card[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+.party-new-card[aria-disabled='true'] .party-new-ring {
+  border-color: var(--app-border);
+  color: var(--app-muted);
+}
+.party-new-card[aria-disabled='true']:hover {
+  background: transparent;
+  border-color: var(--app-border);
+}
+.party-new-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1.5px dashed var(--app-accent);
+  color: var(--app-accent);
+}
+.party-new-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.party-new-title {
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+}
+.party-new-hint {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.party-benched-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+/* RYT-079: an absent character reads as away, not as an error. */
+.roster-state[data-absent] {
+  color: var(--app-muted);
+  font-style: italic;
+}
+.roster-slot[data-absent] .roster-medallion {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+.roster-row[data-state='absent'] .portrait {
+  filter: grayscale(1);
+}
+
+/* The roster notice's close button meets the 44 px target. */
+.roster-notice .mantine-Alert-closeButton {
+  min-width: 44px;
+  min-height: 44px;
+}

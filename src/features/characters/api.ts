@@ -134,6 +134,26 @@ export function useArchiveAction(campaignId: string) {
   })
 }
 
+/** RYT-079: the DM marks a character absent or present; the campaign lists refresh. */
+export function useAbsentAction(campaignId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (action: { characterId: string; absent: boolean }) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new Error('unavailable')
+      return changeCharacter(campaignId, { kind: 'absent', ...action })
+    },
+    onSuccess: () => {
+      if (controller?.getSnapshot().user?.id === userId)
+        void cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+    },
+  })
+}
+
 /**
  * RYT-044: switch the active character. Switches run one at a time (mutation scope), so
  * arrowing through the radio group sends them in order and the last choice wins.

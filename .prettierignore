@@ -9,3 +9,5 @@ docs/evidence
 src/features/glossary/content/
 # Generated SRD content (scripts/bestiary/build_bestiary.py)
 src/features/bestiary/content/
+# Third-party builds copied as published (public/vendor/*/NOTICE.md)
+public/vendor/

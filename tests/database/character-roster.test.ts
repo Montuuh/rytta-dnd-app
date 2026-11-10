@@ -383,13 +383,13 @@ describe('RYT-044 character roster', () => {
     expect(
       (await db.query('select 1 from public.character_sheets where character_id=$1', [bram])).rows,
     ).toEqual([])
-    // The campaign DM sees benched characters but cannot create own or switch a Player's.
+    // The campaign DM sees benched characters but cannot create own ones. Choosing a Player's
+    // active character is allowed since RYT-079 (tests/database/group-rest.test.ts).
     await asUser(dm)
     expect(
       (await db.query('select is_active from public.characters where id=$1', [bram])).rows,
     ).toEqual([{ is_active: false }])
     await expect(pub.create(c, 'Dm hero')).rejects.toThrow(/Forbidden/)
-    await expect(pub.activate(c, bram)).rejects.toThrow(/Character unavailable/)
     await expect(pub.activate(c, foreign)).rejects.toThrow(/Character unavailable/)
     // Direct writes stay closed for every client role.
     for (const actor of [player, dm]) {

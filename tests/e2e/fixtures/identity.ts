@@ -75,6 +75,8 @@ export async function identityFixture(
     inEncounter?: boolean
     /** RYT-078: the signed-in account's username; null shows the hub prompt. */
     username?: string | null
+    /** RYT-079: the DM marked Arin absent (the Player is benched). */
+    absent?: boolean
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -144,6 +146,8 @@ export async function identityFixture(
     is_active: boolean
     /** RYT-044: archived characters leave the roster and every campaign list. */
     archived_at?: string | null
+    /** RYT-079: the DM marked the character absent; never active while set. */
+    absent?: boolean
     created_at: string
     character_resources: {
       gold: number
@@ -210,6 +214,10 @@ export async function identityFixture(
       created_at: `2026-10-26T0${index}:00:00Z`,
       character_resources: { gold: 1, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
     })
+  if (options.absent && characters[0]) {
+    characters[0].absent = true
+    characters[0].is_active = false
+  }
   const sharesLive = new Map<string, boolean>(characters.map((c) => [c.id, c.id !== catoId]))
   type SheetRow = {
     status: string
@@ -294,7 +302,264 @@ export async function identityFixture(
     characters.map((c) => c.id),
     Boolean(options.inventory),
   )
+  // RYT-080 group rest state (one request at a time) and the rest maths of the SQL.
+  type Rest = {
+    id: string
+    kind: 'short' | 'long'
+    status: 'open' | 'done' | 'rejected' | 'cancelled' | 'expired'
+    requested_by: string
+    requester_character: string | null
+    created_at: string
+    expires_at: string
+    resolved_at: string | null
+    revision: number
+    outcome: Record<string, unknown>[] | null
+  }
+  let rest: Rest | null = null
+  const restVotes = new Map<
+    string,
+    { vote: string; dice_spent: number; dice_roll: number | null }
+  >()
+  const restParty = () =>
+    characters.filter((c) => c.campaign_id === campaignId && c.is_active && !c.archived_at)
+  const hpOf = (id: string) => Number(vitals.get(id)!.current_hp)
+  const restEffect = (id: string, kind: 'short' | 'long', spentIn: number, roll: number | null) => {
+    const sheet = sheets.get(id)!
+    const v = vitals.get(id)! as VitalsRow & {
+      current_hp: number
+      temp_hp: number
+      hit_dice_spent: number
+      slots_used: number[]
+      tracker_uses: Record<string, number>
+    }
+    const b = sheet.build as {
+      trackers?: { id: string; key?: string; name: string; max: number; reset: string }[]
+      baseAbilities?: { con?: number }
+      bonuses?: { con?: number }
+      hitDie?: number
+      casterKind?: string
+    }
+    const trackers = b.trackers ?? []
+    const con = Math.floor(
+      (Math.min(30, (b.baseAbilities?.con ?? 10) + (b.bonuses?.con ?? 0)) - 10) / 2,
+    )
+    const die = [6, 8, 10, 12].includes(b.hitDie ?? 0) ? b.hitDie! : 0
+    const can = v.current_hp > 0
+    const spent = kind === 'short' && can ? Math.max(0, spentIn) : 0
+    const resets = (reset: string) => reset === 'short' || (kind === 'long' && reset === 'long')
+    const gain = spent > 0 ? Math.max(spent, (roll ?? 0) + con * spent) : 0
+    const hpAfter =
+      kind === 'long'
+        ? can
+          ? sheet.max_hp
+          : v.current_hp
+        : Math.min(sheet.max_hp, v.current_hp + gain)
+    const tempAfter = kind === 'long' && can ? 0 : v.temp_hp
+    const diceAfter =
+      kind === 'long'
+        ? can
+          ? 0
+          : v.hit_dice_spent
+        : Math.min(sheet.level, v.hit_dice_spent + spent)
+    const uses = v.tracker_uses ?? {}
+    const usesAfter = can
+      ? Object.fromEntries(
+          Object.entries(uses).filter(([key]) =>
+            trackers.some((t) => t.id === key && !resets(t.reset)),
+          ),
+        )
+      : uses
+    const slotsBack =
+      can && (kind === 'long' || b.casterKind === 'pact') ? v.slots_used : Array(9).fill(0)
+    return {
+      can_rest: can,
+      max_hp: sheet.max_hp,
+      hp_before: v.current_hp,
+      hp_after: hpAfter,
+      temp_before: v.temp_hp,
+      temp_after: tempAfter,
+      hit_die: die,
+      con_mod: con,
+      dice_left_before: Math.max(0, sheet.level - v.hit_dice_spent),
+      dice_left_after: Math.max(0, sheet.level - diceAfter),
+      dice_spent: spent,
+      trackers: can
+        ? trackers
+            .filter((t) => resets(t.reset) && (uses[t.id] ?? 0) > 0 && t.max > 0)
+            .map((t) => ({
+              id: t.id,
+              key: t.key ?? null,
+              name: t.name,
+              max: t.max,
+              before: Math.max(0, t.max - (uses[t.id] ?? 0)),
+              after: t.max,
+            }))
+        : [],
+      slots: slotsBack,
+      apply: () => {
+        if (!can) return
+        if (hpAfter !== v.current_hp)
+          record(id, 'character_vitals:UPDATE', [
+            { field: 'current_hp', before: v.current_hp, after: hpAfter },
+          ])
+        Object.assign(v, {
+          current_hp: hpAfter,
+          temp_hp: tempAfter,
+          hit_dice_spent: diceAfter,
+          slots_used: kind === 'long' || b.casterKind === 'pact' ? Array(9).fill(0) : v.slots_used,
+          tracker_uses: usesAfter,
+          revision: v.revision + 1,
+          ...(kind === 'long' ? { death_successes: 0, death_failures: 0 } : {}),
+        })
+      },
+    }
+  }
+  const strip = (effect: ReturnType<typeof restEffect>) => {
+    const { apply: _apply, ...rest } = effect
+    return rest
+  }
+  const restExpire = () => {
+    if (rest?.status === 'open' && Date.parse(rest.expires_at) <= Date.now())
+      Object.assign(rest, {
+        status: 'expired',
+        resolved_at: new Date().toISOString(),
+        revision: rest.revision + 1,
+      })
+  }
+  const restFinish = () => {
+    if (!rest) return
+    const current = rest
+    current.outcome = restParty().map((c) => {
+      const vote = restVotes.get(c.id)
+      const effect = restEffect(c.id, current.kind, vote?.dice_spent ?? 0, vote?.dice_roll ?? null)
+      const shown = strip(effect)
+      effect.apply()
+      return {
+        id: c.id,
+        name: c.name,
+        user_id: c.user_id,
+        shares: c.user_id === null || (sharesLive.get(c.id) ?? true),
+        vote: vote?.vote ?? null,
+        rested: shown.can_rest,
+        effect: shown,
+      }
+    })
+    Object.assign(current, {
+      status: 'done',
+      resolved_at: new Date().toISOString(),
+      revision: current.revision + 1,
+    })
+  }
+  const restSettle = () => {
+    if (!rest || rest.status !== 'open') return
+    const voters = restParty().filter((c) => hpOf(c.id) > 0)
+    const votes = voters.map((c) => restVotes.get(c.id)?.vote)
+    if (votes.includes('no')) {
+      rest.outcome = restParty().map((c) => ({
+        id: c.id,
+        name: c.name,
+        user_id: c.user_id,
+        shares: c.user_id === null || (sharesLive.get(c.id) ?? true),
+        vote: restVotes.get(c.id)?.vote ?? null,
+        rested: false,
+      }))
+      Object.assign(rest, {
+        status: 'rejected',
+        resolved_at: new Date().toISOString(),
+        revision: rest.revision + 1,
+      })
+    } else if (voters.length > 0 && votes.every((vote) => vote === 'yes')) restFinish()
+  }
+  const restVote = (id: string, vote: string, spent: number | null, roll: number | null) => {
+    if (!rest || rest.status !== 'open') return 'Rest closed'
+    if (hpOf(id) <= 0) return 'Cannot rest'
+    let diceSpent = 0
+    let diceRoll: number | null = null
+    if (rest.kind === 'short' && vote === 'yes') {
+      const sheet = sheets.get(id)!
+      const die = Number((sheet.build as { hitDie?: number }).hitDie ?? 0)
+      diceSpent = spent ?? 0
+      const left = sheet.level - Number(vitals.get(id)!.hit_dice_spent)
+      if (diceSpent < 0 || diceSpent > left) return 'Invalid dice'
+      if (diceSpent > 0 && (roll === null || roll < diceSpent || roll > diceSpent * die))
+        return 'Invalid dice'
+      diceRoll = diceSpent > 0 ? roll : null
+    }
+    restVotes.set(id, { vote, dice_spent: diceSpent, dice_roll: diceRoll })
+    rest.revision += 1
+    restSettle()
+    return null
+  }
+  const restStateFor = (viewer: string) => {
+    if (!rest) return null
+    const current = rest
+    const dm = members.find((m) => m.user_id === viewer)?.role === 'dm'
+    const visible = (userId: string | null, shares: boolean) =>
+      dm || userId === viewer || userId === null || shares
+    const participants =
+      current.status === 'open'
+        ? restParty()
+            .map((c) => {
+              const vote = restVotes.get(c.id)
+              const shares = visible(c.user_id, sharesLive.get(c.id) ?? true)
+              return {
+                id: c.id,
+                name: c.name,
+                own: c.user_id === viewer,
+                dm_controlled: c.user_id === null,
+                controlled: c.user_id === viewer || (dm && c.user_id === null),
+                vote: (vote?.vote as 'yes' | 'no' | undefined) ?? null,
+                dice_spent: vote?.dice_spent ?? 0,
+                dice_roll: shares ? (vote?.dice_roll ?? null) : null,
+                can_rest: hpOf(c.id) > 0,
+                shares,
+                effect: shares
+                  ? strip(
+                      restEffect(
+                        c.id,
+                        current.kind,
+                        vote?.dice_spent ?? 0,
+                        vote?.dice_roll ?? null,
+                      ),
+                    )
+                  : null,
+                sort: c.user_id === viewer ? '0' : c.user_id === null ? '2' : '1',
+              }
+            })
+            .sort((a, b) => a.sort.localeCompare(b.sort) || a.name.localeCompare(b.name))
+            .map(({ sort: _sort, ...person }) => person)
+        : (current.outcome ?? []).map((o) => {
+            const userId = o.user_id as string | null
+            const shares = visible(userId, Boolean(o.shares))
+            return {
+              id: o.id,
+              name: o.name,
+              own: userId === viewer,
+              dm_controlled: userId === null,
+              controlled: false,
+              vote: o.vote ?? null,
+              rested: Boolean(o.rested),
+              shares,
+              effect: shares ? (o.effect ?? null) : null,
+            }
+          })
+    return {
+      id: current.id,
+      kind: current.kind,
+      status: current.status,
+      created_at: current.created_at,
+      expires_at: current.expires_at,
+      resolved_at: current.resolved_at,
+      revision: current.revision,
+      requester_name: characters.find((c) => c.id === current.requester_character)?.name ?? null,
+      mine: current.requested_by === viewer,
+      dm,
+      can_cancel: current.status === 'open' && (dm || current.requested_by === viewer),
+      participants,
+    }
+  }
   let portraitPath: string | null = null
+  let nextVitalsStale = false
   let sent: { id: string; email: string; expires_at: string }[] = []
   const characterEvents: {
     id: string
@@ -617,6 +882,11 @@ export async function identityFixture(
     }
     if (method === 'set_character_vitals') {
       const state = vitals.get(String(body.target_character))!
+      // staleVitals(): the next write meets another device's change, whatever refetch ran since.
+      if (nextVitalsStale) {
+        nextVitalsStale = false
+        return respond({ message: 'Stale revision' }, 400)
+      }
       if (state.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
       const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
@@ -684,9 +954,10 @@ export async function identityFixture(
                     name: c.name,
                     is_active: c.is_active,
                     archived_at: c.archived_at ?? null,
+                    absent: Boolean(c.absent),
                     created_at: c.created_at,
                   }
-                : { id: c.id, name: c.name, user_id: c.user_id },
+                : { id: c.id, name: c.name, user_id: c.user_id, absent: Boolean(c.absent) },
           ),
       )
     }
@@ -745,12 +1016,40 @@ export async function identityFixture(
       const target = characters.find(
         (c) => c.id === body.target_character && c.campaign_id === body.target_campaign,
       )
-      if (!target || target.user_id !== actor)
+      const isDm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (!target || !(target.user_id === actor || (isDm && target.user_id)))
         return respond({ message: 'Character unavailable' }, 403)
+      const owner = target.user_id
+      const benched =
+        !characters.some((c) => c.user_id === owner && c.is_active) &&
+        characters.some((c) => c.user_id === owner && c.absent && !c.archived_at)
+      if (target.absent || (!isDm && benched)) return respond({ message: 'Character absent' }, 400)
       for (const c of characters)
-        if (c.campaign_id === target.campaign_id && c.user_id === actor)
+        if (c.campaign_id === target.campaign_id && c.user_id === owner)
           c.is_active = c.id === target.id
       return respond(target.id)
+    }
+    // RYT-079: the DM marks a character absent (out of play) or present again.
+    if (method === 'set_character_absent') {
+      if (members.find((m) => m.user_id === actor)?.role !== 'dm')
+        return respond({ message: 'Forbidden' }, 403)
+      const target = characters.find((c) => c.id === body.target_character)
+      if (!target || target.archived_at) return respond({ message: 'Character unavailable' }, 400)
+      if (body.make_absent && options.inEncounter && target.id === characterId)
+        return respond({ message: 'Character in combat' }, 400)
+      if (body.make_absent) {
+        target.absent = true
+        target.is_active = false
+      } else if (target.absent) {
+        target.absent = false
+        target.is_active =
+          !target.user_id ||
+          !characters.some((c) => c.user_id === target.user_id && c.is_active && c.id !== target.id)
+      }
+      record(target.id, 'characters:UPDATE', [
+        { field: 'absent', before: !body.make_absent, after: Boolean(body.make_absent) },
+      ])
+      return respond({ id: target.id, absent: Boolean(target.absent), is_active: target.is_active })
     }
     if (method === 'create_character') {
       const id = '40000000-0000-4000-8000-' + String(characters.length + 2).padStart(12, '0')
@@ -1017,10 +1316,118 @@ export async function identityFixture(
       glossaryEntries = glossaryEntries.filter((e) => e.id !== body.entry_id)
       return respond({ id: body.entry_id, deleted: true })
     }
+    // RYT-080 group rest: the SQL rules (supabase/migrations/20261114120000) in memory.
+    if (method === 'get_rest_state') {
+      restExpire()
+      const recent =
+        rest &&
+        (rest.status === 'open' ||
+          Date.now() - Date.parse(rest.resolved_at ?? rest.created_at) < 10 * 60_000)
+      return respond(recent ? restStateFor(actor) : null)
+    }
+    if (method === 'request_rest') {
+      const isDm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (rest && rest.id === body.request_id) {
+        if (rest.requested_by !== actor || rest.kind !== body.rest_kind)
+          return respond({ message: 'Request mismatch' }, 400)
+        return respond(restStateFor(actor))
+      }
+      const mine = characters.find((c) => c.user_id === actor && c.is_active && !c.archived_at)
+      if (!isDm && !mine) return respond({ message: 'Character unavailable' }, 400)
+      if (!isDm && options.inEncounter) return respond({ message: 'Character in combat' }, 400)
+      restExpire()
+      if (rest?.status === 'open') return respond({ message: 'Rest open' }, 400)
+      const now = Date.now()
+      rest = {
+        id: String(body.request_id),
+        kind: body.rest_kind as 'short' | 'long',
+        status: 'open',
+        requested_by: actor,
+        requester_character: mine?.id ?? null,
+        created_at: new Date(now).toISOString(),
+        expires_at: new Date(now + 10 * 60_000).toISOString(),
+        resolved_at: null,
+        revision: 0,
+        outcome: null,
+      }
+      restVotes.clear()
+      if (mine && rest.kind === 'long' && Number(vitals.get(mine.id)!.current_hp) > 0) {
+        restVotes.set(mine.id, { vote: 'yes', dice_spent: 0, dice_roll: null })
+        restSettle()
+      }
+      return respond(restStateFor(actor))
+    }
+    if (method === 'vote_rest') {
+      restExpire()
+      if (!rest || rest.id !== body.target_request)
+        return respond({ message: 'Rest unavailable' }, 400)
+      if (rest.status !== 'open') return respond({ message: 'Rest closed' }, 400)
+      const isDm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      const target = restParty().find((c) => c.id === body.target_character)
+      if (!target) return respond({ message: 'Character unavailable' }, 400)
+      if (!(target.user_id === actor || (isDm && target.user_id === null)))
+        return respond({ message: 'Forbidden' }, 403)
+      const error = restVote(
+        target.id,
+        String(body.vote_value),
+        body.spent as number | null,
+        body.roll as number | null,
+      )
+      if (error) return respond({ message: error }, 400)
+      return respond(restStateFor(actor))
+    }
+    if (method === 'resolve_rest_now' || method === 'cancel_rest') {
+      restExpire()
+      const isDm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (!rest || rest.id !== body.target_request)
+        return respond({ message: 'Rest unavailable' }, 400)
+      if (!(isDm || (method === 'cancel_rest' && rest.requested_by === actor)))
+        return respond({ message: 'Forbidden' }, 403)
+      if (rest.status !== 'open') return respond({ message: 'Rest closed' }, 400)
+      if (method === 'resolve_rest_now') restFinish()
+      else
+        Object.assign(rest, {
+          status: 'cancelled',
+          resolved_at: new Date().toISOString(),
+          revision: rest.revision + 1,
+        })
+      return respond(restStateFor(actor))
+    }
     return respond({ message: 'Unhandled test route' }, 500)
   })
   return {
     calls,
+    /** RYT-080: a teammate (or the DM for an unassigned character) votes on the open rest. */
+    restVote: (
+      character: string,
+      vote: 'yes' | 'no',
+      spent: number | null = null,
+      roll: number | null = null,
+    ) => restVote(character, vote, spent, roll),
+    /** RYT-080: someone else (the DM, or a Player's character) asks for a rest. */
+    openRest: (kind: 'short' | 'long', requester: { user: string; character: string | null }) => {
+      const now = Date.now()
+      rest = {
+        id: crypto.randomUUID(),
+        kind,
+        status: 'open',
+        requested_by: requester.user,
+        requester_character: requester.character,
+        created_at: new Date(now).toISOString(),
+        expires_at: new Date(now + 10 * 60_000).toISOString(),
+        resolved_at: null,
+        revision: 0,
+        outcome: null,
+      }
+      restVotes.clear()
+      if (requester.character && kind === 'long')
+        restVotes.set(requester.character, { vote: 'yes', dice_spent: 0, dice_roll: null })
+    },
+    /** RYT-080: the open rest request runs out of time. */
+    expireRest: () => {
+      if (rest?.status === 'open') rest.expires_at = new Date(Date.now() - 1000).toISOString()
+    },
+    vitalsOf: (character: string) => vitals.get(character),
     maxResources: () => {
       characters[0]!.character_resources = {
         gold: Number.MAX_SAFE_INTEGER,
@@ -1046,6 +1453,7 @@ export async function identityFixture(
     },
     staleVitals: () => {
       vitals.get(characterId)!.revision += 1
+      nextVitalsStale = true
     },
     staleResources: () => {
       characters[0]!.character_resources.revision += 1

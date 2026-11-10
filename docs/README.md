@@ -94,3 +94,7 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 47. [ADR 036: one username per account](decisions/036-account-username.md)
     and [RYT-078 verification](evidence/RYT-078/validation.md): account vs campaign decision,
     the profiles RPCs, the Settings section, the sign-in dialog and member names.
+48. [ADR 037: group rest with a vote, absent characters and the new-character card](decisions/037-group-rest-and-absence.md)
+    and [RYT-079–082 verification](evidence/RYT-080/validation.md): rests asked of the table and
+    voted around the fire, server-side rests with short-rest hit dice, 3D dice, the DM's absence
+    and active-character choices, and New character in the party list.

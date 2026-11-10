@@ -37,16 +37,16 @@ export async function listCharacters(campaignId: string, signal: AbortSignal, pl
 }
 /**
  * RYT-044: every character the caller may read in the roster sense: Player characters (active,
- * in reserve or archived) and archived DM characters. RLS scopes the rows.
+ * in reserve, absent or archived) and, for the DM, the unassigned ones too (RYT-079: the DM marks
+ * them absent from the roster listing). RLS scopes the rows.
  */
 export async function listRoster(campaignId: string, signal: AbortSignal, playerId?: string) {
   const db = await client()
   const campaign = z.uuid().parse(campaignId)
   let query = db
     .from('characters')
-    .select('id, campaign_id, user_id, name, is_active, archived_at, created_at')
+    .select('id, campaign_id, user_id, name, is_active, archived_at, absent, created_at')
     .eq('campaign_id', campaign)
-    .or('user_id.not.is.null,archived_at.not.is.null')
     .order('created_at')
     .order('id')
     .abortSignal(signal)
@@ -153,6 +153,13 @@ export async function changeCharacter(
         target_character: z.uuid().parse(action.characterId),
       })
       break
+    case 'absent':
+      result = await db.rpc('set_character_absent', {
+        target_campaign,
+        target_character: z.uuid().parse(action.characterId),
+        make_absent: z.boolean().parse(action.absent),
+      })
+      break
     case 'archive':
     case 'restore':
       result = await db.rpc(action.kind === 'archive' ? 'archive_character' : 'restore_character', {
@@ -196,7 +203,7 @@ export async function getSheet(campaignId: string, characterId: string, signal: 
   const [owner, sheet, vitals] = await Promise.all([
     db
       .from('characters')
-      .select('id, name, user_id')
+      .select('id, name, user_id, absent')
       .eq('campaign_id', campaign)
       .eq('id', character)
       .abortSignal(signal)
@@ -221,7 +228,13 @@ export async function getSheet(campaignId: string, characterId: string, signal: 
   if (!owner.data || !sheet.data || !vitals.data) return null
   return {
     character: z
-      .object({ id: z.uuid(), name: z.string(), user_id: z.uuid().nullable() })
+      .object({
+        id: z.uuid(),
+        name: z.string(),
+        user_id: z.uuid().nullable(),
+        // RYT-079: an absent character's sheet is read-only for its Player.
+        absent: z.boolean().default(false),
+      })
       .parse(owner.data),
     sheet: sheetRowSchema.parse(sheet.data),
     vitals: vitalsSchema.parse(vitals.data),

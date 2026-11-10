@@ -16,6 +16,30 @@ export type CharacterFunctions = {
     Args: { target_campaign: string; target_character: string }
     Returns: string
   }
+  // RYT-079: the DM marks a character absent or present.
+  set_character_absent: {
+    Args: { target_campaign: string; target_character: string; make_absent: boolean }
+    Returns: Json
+  }
+  // RYT-080: the group rest with a vote.
+  get_rest_state: { Args: { target_campaign: string }; Returns: Json }
+  request_rest: {
+    Args: { target_campaign: string; rest_kind: string; request_id: string }
+    Returns: Json
+  }
+  vote_rest: {
+    Args: {
+      target_campaign: string
+      target_request: string
+      target_character: string
+      vote_value: string
+      spent: number | null
+      roll: number | null
+    }
+    Returns: Json
+  }
+  resolve_rest_now: { Args: { target_campaign: string; target_request: string }; Returns: Json }
+  cancel_rest: { Args: { target_campaign: string; target_request: string }; Returns: Json }
   archive_character: {
     Args: { target_campaign: string; target_character: string }
     Returns: Json

@@ -204,17 +204,29 @@ for (const language of ['es', 'en'] as const)
       await page.keyboard.press('Escape')
       await expect(page.getByRole('dialog')).toHaveCount(0)
       await expect(page.getByRole('alert')).toContainText(stale)
+      // RYT-080: a rest is asked of the group; Arin is the only character at the table, so the
+      // requester's own yes settles it at once.
       const longRest = page.getByRole('button', { name: es ? 'Descanso largo' : 'Long rest' })
       await longRest.click()
-      await expect(page.getByRole('dialog')).toBeVisible()
+      await expect(
+        page.getByRole('dialog', {
+          name: es ? '¿Pedir un descanso largo al grupo?' : 'Ask the group for a long rest?',
+        }),
+      ).toBeVisible()
       await page.keyboard.press('Escape')
       await expect(page.getByRole('dialog')).toHaveCount(0)
       await expect(longRest).toBeFocused()
       await longRest.click()
       await page
         .getByRole('dialog')
-        .getByRole('button', { name: es ? 'Descanso largo' : 'Long rest' })
+        .getByRole('button', { name: es ? 'Pedir descanso' : 'Ask for the rest' })
         .click()
+      const panel = page.getByRole('dialog', { name: es ? 'Descanso del grupo' : 'Group rest' })
+      await expect(
+        panel.getByRole('heading', { name: es ? 'El grupo ha descansado' : 'The group rested' }),
+      ).toBeVisible()
+      await audit(page, info.outputPath(`rest-done-${language}-${scheme}-150.png`))
+      await page.keyboard.press('Escape')
       await expect(page.getByRole('dialog')).toHaveCount(0)
       await expect(longRest).toBeFocused()
       await expect(page.locator('.hp-current')).toHaveText('38')

@@ -26,6 +26,8 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           // RYT-044 roster: the Player's character in play, and archived characters.
           is_active: boolean
           archived_at: string | null
+          // RYT-079: the DM marked the character as not coming to the session.
+          absent: boolean
         }
       }
       character_resources: Omit<ResourceTable, 'Row' | 'Insert' | 'Update'> & {

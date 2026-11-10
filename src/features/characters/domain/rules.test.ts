@@ -8,6 +8,7 @@ import {
   passivePerception,
   pointBuySpent,
   proficiencyBonus,
+  restRecovery,
   saveBonus,
   skillBonus,
   slotsFor,
@@ -120,6 +121,40 @@ describe('play state', () => {
     const long = applyRest(vitals, { ...build, casterKind: 'full' }, 20, 'long')
     expect(long).toMatchObject({ current_hp: 20, temp_hp: 0, hit_dice_spent: 0 })
     expect(long.tracker_uses).toEqual({ none: 1 })
+  })
+  it('previews what a rest gives back before asking the group (RYT-080)', () => {
+    const build = {
+      ...emptyBuild(),
+      hitDie: 10 as const,
+      trackers: [
+        { id: 'short', name: 'S', max: 2, reset: 'short' as const },
+        { id: 'long', name: 'L', max: 3, reset: 'long' as const },
+      ],
+    }
+    const hurt = {
+      ...vitals,
+      current_hp: 8,
+      hit_dice_spent: 1,
+      tracker_uses: { short: 2, long: 1 },
+    }
+    const long = restRecovery(hurt, build, 20, 3, 'long')
+    expect(long).toMatchObject({
+      canRest: true,
+      hp: { before: 8, after: 20, max: 20 },
+      dice: { before: 2, after: 3, die: 10 },
+    })
+    expect(long.trackers.map((t) => [t.id, t.before, t.after])).toEqual([
+      ['short', 0, 2],
+      ['long', 2, 3],
+    ])
+    const short = restRecovery(hurt, build, 20, 3, 'short')
+    expect(short.hp).toBeUndefined()
+    expect(short.healDice).toEqual({ left: 2, die: 10 })
+    expect(short.trackers.map((t) => t.id)).toEqual(['short'])
+    // At 0 HP nothing comes back.
+    const down = restRecovery({ ...hurt, current_hp: 0 }, build, 20, 3, 'long')
+    expect(down).toMatchObject({ canRest: false, trackers: [], slots: [] })
+    expect(down.hp).toBeUndefined()
   })
 })
 

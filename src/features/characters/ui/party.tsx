@@ -49,7 +49,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
 import { Link } from 'react-router'
-import { ArchiveDialog, FirstCharacter, RosterLink } from './roster'
+import { ArchiveDialog, CreateCharacterDialog, FirstCharacter, RosterLink } from './roster'
+import { rosterLimit } from '../domain/roster'
 import { CreationChooser } from './creation/chooser'
 import {
   useOwnRoster,
@@ -129,7 +130,19 @@ export function CharacterParty() {
   const [archiving, setArchiving] = useState<Character | null>(null)
   const [archivedNotice, setArchivedNotice] = useState<string | null>(null)
   const archivedNoticeRef = useRef<HTMLDivElement>(null)
-  const onboarding = !dm && !playerPreview && query.data?.length === 0
+  // RYT-079: the DM marked the Player absent; their character is out of the party today.
+  const benched = !dm && !playerPreview && Boolean(own.roster?.benched)
+  const onboarding = !dm && !playerPreview && !benched && query.data?.length === 0
+  // RYT-081: "New character" closes the party list, for the DM and the Player alike.
+  const [creatingOwn, setCreatingOwn] = useState(false)
+  const newCard = useRef<HTMLButtonElement>(null)
+  const ownUsed = own.roster?.entries.length ?? 0
+  const showNewCard =
+    !playerPreview &&
+    !query.isError &&
+    query.data !== undefined &&
+    (dm || (!onboarding && Boolean(own.roster)))
+  const ownFull = !dm && ownUsed >= rosterLimit
   return (
     <Stack gap="lg">
       <PageHead
@@ -145,12 +158,6 @@ export function CharacterParty() {
                   (entry) => entry.user_id && !entry.is_active && !entry.archived_at,
                 )}
               />
-              <Button
-                leftSection={<Plus size={18} aria-hidden="true" />}
-                onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
-              >
-                {t('characters.create')}
-              </Button>
             </div>
           ) : (
             own.roster &&
@@ -213,8 +220,17 @@ export function CharacterParty() {
           </Button>
         </Alert>
       )}
+      {benched && (
+        <Alert role="status" className="party-benched">
+          <Text>{t('characters.benched')}</Text>
+          <Link to={`/campaign/${campaign.id}/party/roster`} className="party-benched-link">
+            {t('characters.benchedLink')}
+          </Link>
+        </Alert>
+      )}
       {!query.isError &&
         query.data?.length === 0 &&
+        !benched &&
         // RYT-044: a Player without characters is guided to create the first one.
         (!dm && !playerPreview ? (
           <FirstCharacter withArchived={(own.roster?.archived.length ?? 0) > 0} archivedLink />
@@ -224,7 +240,9 @@ export function CharacterParty() {
           </Paper>
         ))}
       {!query.isError && (
-        <div className={`party-grid ${(query.data?.length ?? 0) > 1 ? 'is-many' : 'is-single'}`}>
+        <div
+          className={`party-grid ${(query.data?.length ?? 0) + (showNewCard ? 1 : 0) > 1 ? 'is-many' : 'is-single'}`}
+        >
           {query.data?.map((character) => {
             const own = !!viewerId && character.user_id === viewerId
             const summary = summaries.data?.find((item) => item.character_id === character.id)
@@ -355,7 +373,46 @@ export function CharacterParty() {
               </Paper>
             )
           })}
+          {showNewCard && (
+            <button
+              ref={newCard}
+              type="button"
+              className="party-new-card"
+              aria-disabled={ownFull || undefined}
+              aria-labelledby="party-new-card-title"
+              aria-describedby="party-new-card-hint"
+              onClick={(event) => {
+                if (ownFull) return
+                if (dm) open({ kind: 'create' }, event.currentTarget)
+                else setCreatingOwn(true)
+              }}
+            >
+              <span className="party-new-ring" aria-hidden="true">
+                <Plus size={26} />
+              </span>
+              <span className="party-new-text">
+                <span className="party-new-title" id="party-new-card-title">
+                  {t('characters.newCard')}
+                </span>
+                <span className="party-new-hint" id="party-new-card-hint">
+                  {dm
+                    ? t('characters.newCardDm')
+                    : ownFull
+                      ? t('characters.newCardFull', { limit: rosterLimit })
+                      : t('characters.newCardPlayer', { used: ownUsed, limit: rosterLimit })}
+                </span>
+              </span>
+            </button>
+          )}
         </div>
+      )}
+      {creatingOwn && (
+        <CreateCharacterDialog
+          onClose={() => {
+            setCreatingOwn(false)
+            focusWhenReady(() => newCard.current)
+          }}
+        />
       )}
       {/* RYT-034: start a trade with any assigned character (Player or Player preview). */}
       <Group justify="flex-end">

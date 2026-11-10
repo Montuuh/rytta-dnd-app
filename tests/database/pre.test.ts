@@ -56,8 +56,8 @@ describe('public to pre bulk refresh', () => {
     // RYT-034 added trades and trade_offer_items; RYT-007 added five combat tables and
     // private.combat_requests; RYT-008 added glossary_entries; RYT-044 added
     // private.character_requests; RYT-055 added five tabletop tables and private.tabletop_requests;
-    // RYT-078 added profiles.
-    expect(report.rows[0]!.result.tables).toHaveLength(39)
+    // RYT-078 added profiles; RYT-080 added rest_requests and private.rest_votes.
+    expect(report.rows[0]!.result.tables).toHaveLength(41)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

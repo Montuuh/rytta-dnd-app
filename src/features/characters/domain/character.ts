@@ -32,3 +32,5 @@ export type CharacterAction =
   | { kind: 'createOwn'; name: string; requestId: string }
   | { kind: 'activate'; characterId: string }
   | { kind: 'archive' | 'restore'; characterId: string }
+  // RYT-079: the DM marks a character absent or present.
+  | { kind: 'absent'; characterId: string; absent: boolean }

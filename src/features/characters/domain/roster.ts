@@ -11,6 +11,8 @@ export const rosterEntrySchema = z.object({
   name: z.string().trim().min(1).max(100),
   is_active: z.boolean(),
   archived_at: z.string().nullable(),
+  /** RYT-079: the DM marked the character as not coming to the session. */
+  absent: z.boolean().default(false),
   created_at: z.string(),
 })
 export type RosterEntry = z.infer<typeof rosterEntrySchema>
@@ -25,8 +27,15 @@ export function rosterOf<T extends RosterEntry>(entries: readonly T[], userId: s
     archived: own.filter((entry) => entry.archived_at),
     active: active.find((entry) => entry.is_active) ?? null,
     free: Math.max(0, rosterLimit - active.length),
+    /** RYT-079: the DM marked the Player's character absent and none is active: the Player
+     * cannot switch until the DM marks it present or picks another one. */
+    benched: !active.some((entry) => entry.is_active) && active.some((entry) => entry.absent),
   }
 }
+
+/** DM view: characters without a Player that are still in the campaign (not archived). */
+export const unassignedOf = <T extends RosterEntry>(entries: readonly T[]) =>
+  entries.filter((entry) => !entry.user_id && !entry.archived_at)
 
 /** DM view: assigned characters grouped by Player, in the members' order, active one first. */
 export function rostersByPlayer<T extends RosterEntry>(
@@ -61,9 +70,10 @@ export function canRestore(entry: RosterEntry, entries: readonly RosterEntry[]) 
   return rosterOf(entries, entry.user_id).free > 0
 }
 
-export type RosterError = 'limit' | 'trading' | 'combat' | 'active' | 'unavailable'
+export type RosterError = 'limit' | 'trading' | 'combat' | 'active' | 'absent' | 'unavailable'
 /** Maps server messages of the roster RPCs to user-facing error kinds. */
 export function rosterError(message: string): RosterError {
+  if (message.includes('Character absent')) return 'absent'
   if (message.includes('Character limit')) return 'limit'
   if (message.includes('Trade busy')) return 'trading'
   if (message.includes('Character in combat')) return 'combat'

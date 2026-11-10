@@ -29,12 +29,13 @@ import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
 import { CharacterPortrait, SheetAttacks } from '@/features/inventory'
+import { RestRequestDialog, type RecoveryView } from '@/features/rest'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
 import { charactersQuery, playLockQuery, sheetQuery, useSheetAction } from '../../api'
 import { syncProgression } from '../../domain/progression'
 import {
-  applyRest,
+  restRecovery,
   defaultArmorClass,
   signed,
   skillBonus,
@@ -131,7 +132,9 @@ export function CharacterSheetPage() {
     )
   const { character, sheet, vitals } = query.data
   // RYT-028: a DM previewing a Player keeps DM write access; the RPCs still authorize server-side.
-  const canEdit = realDm || character.user_id === userId
+  // RYT-079: an absent character is read-only for its Player until the DM marks it present.
+  const canEdit = realDm || (character.user_id === userId && !character.absent)
+  const absentOwner = !realDm && character.user_id === userId && character.absent
   const characterPath = `${party}/${character.id}`
   if (sheet.status === 'draft' || !sheet.build)
     return (
@@ -174,6 +177,8 @@ export function CharacterSheetPage() {
       build={sheet.build}
       vitals={vitals}
       canEdit={canEdit}
+      absentOwner={absentOwner}
+      ownSheet={character.user_id === userId}
       locked={Boolean(lock.data?.locked)}
       exhaustion={exhaustion}
       characterPath={characterPath}
@@ -200,17 +205,22 @@ function SheetPanel({
   build: savedBuild,
   vitals,
   canEdit,
+  absentOwner,
+  ownSheet,
   locked,
   exhaustion,
   characterPath,
   refresh,
 }: {
   back: ReactNode
-  character: { id: string; name: string }
+  character: { id: string; name: string; user_id: string | null }
   sheet: SheetRow
   build: Build
   vitals: Vitals
   canEdit: boolean
+  absentOwner: boolean
+  /** The viewer plays this character (the rest preview speaks to them). */
+  ownSheet: boolean
   locked: boolean
   exhaustion: number | undefined
   characterPath: string
@@ -415,6 +425,24 @@ function SheetPanel({
     setRest(null)
     requestAnimationFrame(() => restOpener.current?.focus())
   }
+  // RYT-080: what this character would get back; the DM asks for the group without one.
+  const recovery = rest ? restRecovery(shownVitals, build, shown.maxHp, shown.level, rest) : null
+  const restPreview: RecoveryView | null =
+    recovery && ownSheet
+      ? {
+          ...recovery,
+          trackers: recovery.trackers.map((tracker) => ({
+            id: tracker.id,
+            label: tracker.key
+              ? t(`panel.resource.${tracker.key}` as 'panel.resource.monk-focus', {
+                  defaultValue: tracker.name,
+                })
+              : tracker.name,
+            before: tracker.before,
+            after: tracker.after,
+          })),
+        }
+      : null
   return (
     <Stack gap="md" className="character-sheet panel-sheet" data-editing={editing || undefined}>
       <Group justify="space-between" wrap="nowrap" gap="xs" className="sheet-header">
@@ -455,7 +483,7 @@ function SheetPanel({
           </Text>
           {!canEdit && (
             <Text size="sm" c="dimmed">
-              {t('sheet.readOnly')}
+              {absentOwner ? t('sheet.absentReadOnly') : t('sheet.readOnly')}
             </Text>
           )}
         </div>
@@ -638,33 +666,13 @@ function SheetPanel({
           </Group>
         </Stack>
       </Modal>
-      {rest && (
-        <Modal
-          opened
-          onClose={closeRest}
-          title={t(rest === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}
-          closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-        >
-          <Stack>
-            <Text>{t(`sheet.restConfirm.${rest}`)}</Text>
-            <Group justify="flex-end">
-              <Button variant="subtle" onClick={closeRest}>
-                {t('action.cancel')}
-              </Button>
-              <Button
-                data-autofocus
-                disabled={action.isPending}
-                onClick={() => {
-                  commit(applyRest(shownVitals, build, shown.maxHp, rest), 'sheet.restDone')
-                  closeRest()
-                }}
-              >
-                {t(rest === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}
-              </Button>
-            </Group>
-          </Stack>
-        </Modal>
-      )}
+      <RestRequestDialog
+        kind={rest}
+        preview={restPreview}
+        canRest={shownVitals.current_hp > 0}
+        opener={restOpener}
+        onClose={closeRest}
+      />
       <Text size="sm" c="dimmed" className="srd-license">
         {t('srd.license')}
       </Text>

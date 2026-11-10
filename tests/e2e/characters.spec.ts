@@ -125,7 +125,7 @@ test('RYT-044 a linked Player can receive a second character, which waits in res
     .getByRole('button', { name: 'Vincular jugador', exact: true })
     .click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Crear personaje', exact: true }).click()
+  await page.getByRole('button', { name: 'Nuevo personaje', exact: true }).click()
   await page.getByLabel('Nombre del personaje').fill('Second hero')
   await page
     .getByRole('dialog')
@@ -154,7 +154,7 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
 }) => {
   const f = await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/party`)
-  const create = page.getByRole('button', { name: 'Crear personaje', exact: true })
+  const create = page.getByRole('button', { name: 'Nuevo personaje', exact: true })
   await create.click()
   await expect(page.getByLabel('Nombre del personaje')).toBeFocused()
   await page.keyboard.press('Escape')
@@ -340,7 +340,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(card.getByText('Sin jugador', { exact: true })).toBeVisible()
   await expect(more).toBeFocused()
-  await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Nuevo personaje', exact: true })).toBeVisible()
   await expect(page.getByText('CAMPAÑA ACTUAL')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Volver a mi cuenta', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Invitar jugador', exact: true })).toHaveCount(0)
@@ -349,7 +349,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   await expect(
     page.getByRole('status').filter({ hasText: 'Estás viendo la mesa como Arin' }),
   ).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Crear personaje', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Nuevo personaje', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByText('Vista de Arin')).toBeVisible()
   await expect(page.getByText('Este jugador todavía no tiene personaje.')).toBeVisible()
@@ -401,7 +401,7 @@ test('localhost sends all REST reads and RPC writes to the PRE schema', async ({
   await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Crear personaje', exact: true }).click()
+  await page.getByRole('button', { name: 'Nuevo personaje', exact: true }).click()
   await page.getByLabel('Nombre del personaje').fill('PRE only')
   await page
     .getByRole('dialog')

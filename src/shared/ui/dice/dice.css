@@ -1,0 +1,17 @@
+/* RYT-082: the 3D dice roll over everything (dialogs included) and never take taps. */
+.dice-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+.dice-stage.is-rolling {
+  opacity: 1;
+}
+.dice-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

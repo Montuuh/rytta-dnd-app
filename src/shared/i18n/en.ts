@@ -16,6 +16,7 @@ import { bestiaryEn } from './bestiary-en'
 import { builderEn } from './builder-en'
 import { tabletopEn } from './tabletop-en'
 import { panelEn } from './panel-en'
+import { restEn } from './rest-en'
 import { usernameEn } from './username-en'
 export const en = {
   ...identityEn,
@@ -36,6 +37,7 @@ export const en = {
   ...builderEn,
   ...tabletopEn,
   ...panelEn,
+  ...restEn,
   ...usernameEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',

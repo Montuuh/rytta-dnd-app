@@ -24,6 +24,7 @@ import {
   type Campaign,
 } from '@/features/campaigns'
 import { UsernameDialog, useAuth, useUsername } from '@/features/auth'
+import { RestBanner, RestProvider } from '@/features/rest'
 import { SettingsPanel } from '@/pages/settings-panel'
 
 /** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
@@ -287,241 +288,249 @@ export function Layout() {
         exitPreview,
       }}
     >
-      <div
-        className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
-      >
-        <a
-          className="skip-link"
-          href="#main-content"
-          onClick={(event) => {
-            event.preventDefault()
-            mainRef.current?.focus()
-          }}
+      <RestProvider campaignId={live && campaign ? campaign.id : null}>
+        <div
+          className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
         >
-          {t('nav.skip')}
-        </a>
-        <div className="workspace">
-          <header className="app-header">
-            <div className="topbar">
-              <div className="brand-bar">
-                <span className="brand-emblem" aria-hidden="true">
-                  <Compass size={22} strokeWidth={1.7} />
-                </span>
-                <div className="brand-copy">
-                  <span className="brand-title">RYTTA</span>
-                  {campaign ? (
-                    <Text
-                      size="sm"
-                      fw={600}
-                      className="header-campaign-name user-copy"
-                      title={campaign.name}
+          <a
+            className="skip-link"
+            href="#main-content"
+            onClick={(event) => {
+              event.preventDefault()
+              mainRef.current?.focus()
+            }}
+          >
+            {t('nav.skip')}
+          </a>
+          <div className="workspace">
+            <header className="app-header">
+              <div className="topbar">
+                <div className="brand-bar">
+                  <span className="brand-emblem" aria-hidden="true">
+                    <Compass size={22} strokeWidth={1.7} />
+                  </span>
+                  <div className="brand-copy">
+                    <span className="brand-title">RYTTA</span>
+                    {campaign ? (
+                      <Text
+                        size="sm"
+                        fw={600}
+                        className="header-campaign-name user-copy"
+                        title={campaign.name}
+                      >
+                        {campaign.name}
+                      </Text>
+                    ) : (
+                      <span className="brand-subtitle">{t('brand.tag')}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="header-actions">
+                  {campaign?.role === 'dm' && (
+                    <Popover
+                      opened={pickerOpened}
+                      onDismiss={() => setPickerOpened(false)}
+                      position="bottom-end"
+                      withinPortal
+                      withRoles={false}
+                      trapFocus
+                      returnFocus={false}
+                      onExitTransitionEnd={() => previewSwitch.current?.focus()}
                     >
-                      {campaign.name}
-                    </Text>
-                  ) : (
-                    <span className="brand-subtitle">{t('brand.tag')}</span>
+                      <Popover.Target>
+                        <div className="preview-switch">
+                          <Switch
+                            ref={previewSwitch}
+                            size="md"
+                            checked={playerPreview}
+                            onChange={(event) => togglePreview(event.currentTarget.checked)}
+                            // Phones show the short label; the accessible name stays the full one.
+                            aria-label={t('shell.playerSwitch')}
+                            label={
+                              <>
+                                <span className="preview-switch-full">
+                                  {t('shell.playerSwitch')}
+                                </span>
+                                <span className="preview-switch-short" aria-hidden="true">
+                                  {t('shell.playerSwitchShort')}
+                                </span>
+                              </>
+                            }
+                            title={t('shell.playerSwitchHint')}
+                            thumbIcon={<Eye size={12} aria-hidden="true" />}
+                          />
+                        </div>
+                      </Popover.Target>
+                      <Popover.Dropdown
+                        maw="calc(100vw - 32px)"
+                        role="dialog"
+                        aria-label={t('shell.choosePlayerView')}
+                      >
+                        <Stack gap={4}>
+                          <Text size="sm" fw={600}>
+                            {t('shell.choosePlayerView')}
+                          </Text>
+                          {previewPlayers.length === 0 ? (
+                            <Text size="sm" c="dimmed">
+                              {t('shell.noPlayers')}
+                            </Text>
+                          ) : (
+                            previewPlayers.map((member) => (
+                              <Button
+                                key={member.user_id}
+                                variant="subtle"
+                                justify="flex-start"
+                                className="user-copy"
+                                onClick={() => enterPreview(member.user_id, member.display_name)}
+                              >
+                                {member.display_name}
+                              </Button>
+                            ))
+                          )}
+                        </Stack>
+                      </Popover.Dropdown>
+                    </Popover>
                   )}
+                  <Menu
+                    opened={opened}
+                    onChange={(value) => {
+                      if (value) {
+                        restoreMenuFocus.current = true
+                        open()
+                      } else close()
+                    }}
+                    position="bottom-end"
+                    width={260}
+                    withinPortal
+                    withInitialFocusPlaceholder={false}
+                    returnFocus={false}
+                    onExitTransitionEnd={() => {
+                      if (restoreMenuFocus.current) menuButton.current?.focus()
+                    }}
+                  >
+                    <Menu.Target>
+                      <Button
+                        ref={menuButton}
+                        variant="subtle"
+                        className="account-button profile-trigger-btn"
+                        leftSection={<UserRound size={18} aria-hidden="true" />}
+                        aria-label={
+                          state.user
+                            ? `${t('account.profile')} · ${username ? `${username} · ` : ''}${t('auth.account', { email: state.user.email })}`
+                            : `${t('account.profile')} · ${t('account.menu')}`
+                        }
+                      >
+                        <span className="profile-label">{t('account.profile')}</span>
+                      </Button>
+                    </Menu.Target>
+                    <Menu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
+                      {state.user && (
+                        <>
+                          <Menu.Label className="user-copy">
+                            {username && <span className="user-name">{username}</span>}
+                            <span className="user-email">{state.user.email}</span>
+                          </Menu.Label>
+                          <Menu.Item
+                            component={NavLink}
+                            to="/"
+                            leftSection={<Compass size={18} aria-hidden="true" />}
+                          >
+                            {t('hub.title')}
+                          </Menu.Item>
+                          <Menu.Divider />
+                        </>
+                      )}
+                      {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
+                      <Menu.Item
+                        leftSection={<Settings size={18} aria-hidden="true" />}
+                        aria-haspopup="dialog"
+                        // The drawer takes focus; it hands it back to the trigger when it closes.
+                        onClick={() => {
+                          restoreMenuFocus.current = false
+                          settings.open()
+                        }}
+                      >
+                        {t('nav.settings')}
+                      </Menu.Item>
+                      {state.user && (
+                        <>
+                          <Menu.Divider />
+                          <Menu.Item
+                            leftSection={<LogOut size={18} aria-hidden="true" />}
+                            onClick={() => void controller?.signOut()}
+                          >
+                            {t('auth.signOut')}
+                          </Menu.Item>
+                        </>
+                      )}
+                    </Menu.Dropdown>
+                  </Menu>
                 </div>
               </div>
-              <div className="header-actions">
-                {campaign?.role === 'dm' && (
-                  <Popover
-                    opened={pickerOpened}
-                    onDismiss={() => setPickerOpened(false)}
-                    position="bottom-end"
-                    withinPortal
-                    withRoles={false}
-                    trapFocus
-                    returnFocus={false}
-                    onExitTransitionEnd={() => previewSwitch.current?.focus()}
-                  >
-                    <Popover.Target>
-                      <div className="preview-switch">
-                        <Switch
-                          ref={previewSwitch}
-                          size="md"
-                          checked={playerPreview}
-                          onChange={(event) => togglePreview(event.currentTarget.checked)}
-                          // Phones show the short label; the accessible name stays the full one.
-                          aria-label={t('shell.playerSwitch')}
-                          label={
-                            <>
-                              <span className="preview-switch-full">{t('shell.playerSwitch')}</span>
-                              <span className="preview-switch-short" aria-hidden="true">
-                                {t('shell.playerSwitchShort')}
-                              </span>
-                            </>
-                          }
-                          title={t('shell.playerSwitchHint')}
-                          thumbIcon={<Eye size={12} aria-hidden="true" />}
-                        />
-                      </div>
-                    </Popover.Target>
-                    <Popover.Dropdown
-                      maw="calc(100vw - 32px)"
-                      role="dialog"
-                      aria-label={t('shell.choosePlayerView')}
-                    >
-                      <Stack gap={4}>
-                        <Text size="sm" fw={600}>
-                          {t('shell.choosePlayerView')}
-                        </Text>
-                        {previewPlayers.length === 0 ? (
-                          <Text size="sm" c="dimmed">
-                            {t('shell.noPlayers')}
-                          </Text>
-                        ) : (
-                          previewPlayers.map((member) => (
-                            <Button
-                              key={member.user_id}
-                              variant="subtle"
-                              justify="flex-start"
-                              className="user-copy"
-                              onClick={() => enterPreview(member.user_id, member.display_name)}
-                            >
-                              {member.display_name}
-                            </Button>
-                          ))
-                        )}
-                      </Stack>
-                    </Popover.Dropdown>
-                  </Popover>
-                )}
-                <Menu
-                  opened={opened}
-                  onChange={(value) => {
-                    if (value) {
-                      restoreMenuFocus.current = true
-                      open()
-                    } else close()
-                  }}
-                  position="bottom-end"
-                  width={260}
-                  withinPortal
-                  withInitialFocusPlaceholder={false}
-                  returnFocus={false}
-                  onExitTransitionEnd={() => {
-                    if (restoreMenuFocus.current) menuButton.current?.focus()
-                  }}
-                >
-                  <Menu.Target>
-                    <Button
-                      ref={menuButton}
-                      variant="subtle"
-                      className="account-button profile-trigger-btn"
-                      leftSection={<UserRound size={18} aria-hidden="true" />}
-                      aria-label={
-                        state.user
-                          ? `${t('account.profile')} · ${username ? `${username} · ` : ''}${t('auth.account', { email: state.user.email })}`
-                          : `${t('account.profile')} · ${t('account.menu')}`
-                      }
-                    >
-                      <span className="profile-label">{t('account.profile')}</span>
-                    </Button>
-                  </Menu.Target>
-                  <Menu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
-                    {state.user && (
-                      <>
-                        <Menu.Label className="user-copy">
-                          {username && <span className="user-name">{username}</span>}
-                          <span className="user-email">{state.user.email}</span>
-                        </Menu.Label>
-                        <Menu.Item
-                          component={NavLink}
-                          to="/"
-                          leftSection={<Compass size={18} aria-hidden="true" />}
-                        >
-                          {t('hub.title')}
-                        </Menu.Item>
-                        <Menu.Divider />
-                      </>
-                    )}
-                    {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
-                    <Menu.Item
-                      leftSection={<Settings size={18} aria-hidden="true" />}
-                      aria-haspopup="dialog"
-                      // The drawer takes focus; it hands it back to the trigger when it closes.
-                      onClick={() => {
-                        restoreMenuFocus.current = false
-                        settings.open()
-                      }}
-                    >
-                      {t('nav.settings')}
-                    </Menu.Item>
-                    {state.user && (
-                      <>
-                        <Menu.Divider />
-                        <Menu.Item
-                          leftSection={<LogOut size={18} aria-hidden="true" />}
-                          onClick={() => void controller?.signOut()}
-                        >
-                          {t('auth.signOut')}
-                        </Menu.Item>
-                      </>
-                    )}
-                  </Menu.Dropdown>
-                </Menu>
-              </div>
+              {showNav && (
+                <div className="nav-tabs-row">
+                  <TopNavigation entries={entries} />
+                </div>
+              )}
+            </header>
+            {/* The preview and group-rest notices stick together under the header (RYT-080). */}
+            <div className="top-notices">
+              {playerPreview && (
+                <div className="preview-banner" role="status">
+                  <Eye size={18} aria-hidden="true" />
+                  <Text size="sm" fw={600} className="user-copy preview-banner-text">
+                    {previewLabel
+                      ? t('shell.previewBanner', { name: previewLabel })
+                      : t('shell.previewBannerGeneric')}
+                  </Text>
+                  <Button size="compact-md" variant="filled" onClick={exitPreview}>
+                    {t('shell.exitPreview')}
+                  </Button>
+                </div>
+              )}
+              {live && campaign && <RestBanner />}
             </div>
-            {showNav && (
-              <div className="nav-tabs-row">
-                <TopNavigation entries={entries} />
-              </div>
-            )}
-          </header>
-          {playerPreview && (
-            <div className="preview-banner" role="status">
-              <Eye size={18} aria-hidden="true" />
-              <Text size="sm" fw={600} className="user-copy preview-banner-text">
-                {previewLabel
-                  ? t('shell.previewBanner', { name: previewLabel })
-                  : t('shell.previewBannerGeneric')}
-              </Text>
-              <Button size="compact-md" variant="filled" onClick={exitPreview}>
-                {t('shell.exitPreview')}
-              </Button>
-            </div>
+            <main id="main-content" ref={mainRef} tabIndex={-1}>
+              {live && !online && (
+                <Alert role="status" mb="lg">
+                  {t('campaign.offline')}
+                </Alert>
+              )}
+              <SettingsDrawerContext.Provider value={settings.open}>
+                <Outlet key={state.user?.id ?? 'guest'} />
+              </SettingsDrawerContext.Provider>
+            </main>
+            <footer className="page-footer">{t('brand.footer')}</footer>
+          </div>
+          {showNav && <BottomNavigation entries={entries} />}
+          <Drawer
+            opened={settingsOpened}
+            onClose={settings.close}
+            position="right"
+            // A medium panel beside the page; phones keep a strip of the page visible.
+            size="calc(min(100vw - 1.5rem, 30rem))"
+            title={t('nav.settings')}
+            className="settings-drawer"
+            closeButtonProps={{ 'aria-label': t('settings.close'), size: 44 }}
+            // A light veil keeps the page readable, so a new theme shows behind the panel.
+            overlayProps={{ backgroundOpacity: 0.3 }}
+            returnFocus={false}
+            onExitTransitionEnd={() => {
+              menuButton.current?.focus()
+              setSettingsShown(false)
+            }}
+          >
+            <SettingsPanel />
+          </Drawer>
+          {/* RYT-078: asks for a missing username after every sign-in, on any page. */}
+          {live && state.user && (
+            <UsernameDialog
+              suspended={settingsOpened || settingsShown}
+              onClosed={() => mainRef.current?.focus()}
+            />
           )}
-          <main id="main-content" ref={mainRef} tabIndex={-1}>
-            {live && !online && (
-              <Alert role="status" mb="lg">
-                {t('campaign.offline')}
-              </Alert>
-            )}
-            <SettingsDrawerContext.Provider value={settings.open}>
-              <Outlet key={state.user?.id ?? 'guest'} />
-            </SettingsDrawerContext.Provider>
-          </main>
-          <footer className="page-footer">{t('brand.footer')}</footer>
         </div>
-        {showNav && <BottomNavigation entries={entries} />}
-        <Drawer
-          opened={settingsOpened}
-          onClose={settings.close}
-          position="right"
-          // A medium panel beside the page; phones keep a strip of the page visible.
-          size="calc(min(100vw - 1.5rem, 30rem))"
-          title={t('nav.settings')}
-          className="settings-drawer"
-          closeButtonProps={{ 'aria-label': t('settings.close'), size: 44 }}
-          // A light veil keeps the page readable, so a new theme shows behind the panel.
-          overlayProps={{ backgroundOpacity: 0.3 }}
-          returnFocus={false}
-          onExitTransitionEnd={() => {
-            menuButton.current?.focus()
-            setSettingsShown(false)
-          }}
-        >
-          <SettingsPanel />
-        </Drawer>
-        {/* RYT-078: asks for a missing username after every sign-in, on any page. */}
-        {live && state.user && (
-          <UsernameDialog
-            suspended={settingsOpened || settingsShown}
-            onClosed={() => mainRef.current?.focus()}
-          />
-        )}
-      </div>
+      </RestProvider>
     </CampaignViewContext.Provider>
   )
 }

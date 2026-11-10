@@ -3152,6 +3152,158 @@
         "docs/evidence/ui-review/ryt-078/review.md",
         "docs/evidence/ui-review-current.json"
       ]
+    },
+    {
+      "id": "RYT-079",
+      "title": "Absent characters and the DM choosing a Player's active character",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-044", "RYT-070"],
+      "sources": [
+        "User 2026-11-10: rest requests checked first, confirmed, then voted by every active Player in a lobby that shows what each character gets back; the DM marks characters as not coming; Create character inside the party list, for Players too.",
+        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+      ],
+      "scope": "characters.absent (DM only, set_character_absent) forces is_active off so every campaign list leaves the character out; benched Players cannot switch, new or restored characters join in reserve; guard triggers make the sheet read-only for the Player and refuse encounters; set_active_character lets the DM choose any present character of a Player. 3-dot menu in Players' characters (absent/present, make active), a No player section, Absent states in rosters, the benched notice in Party and My characters, the read-only sheet note. PRE mirror.",
+      "acceptance": [
+        "Only the campaign DM marks a character absent or present; anon, outsiders, Players and a DM of another campaign are refused.",
+        "An absent character is out of the party, encounters, rests, trades and shops, and stays in the Player's My characters and the DM's listing.",
+        "A character in an open trade or a live encounter cannot be marked absent; an absent character cannot be archived.",
+        "The Player of an absent character reads the sheet only, cannot switch characters and is told why in Party, My characters and the sheet.",
+        "The DM can make any present character of a Player the active one from the 3-dot menu."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "tests/database/group-rest.test.ts",
+        "390px and tablet screenshots",
+        "independent ui-ux PASS",
+        "production migration applied and verified"
+      ],
+      "evidence": [
+        "docs/decisions/037-group-rest-and-absence.md",
+        "supabase/migrations/20261114120000_group_rest_absence.sql",
+        "docs/evidence/RYT-080/validation.md",
+        "docs/evidence/RYT-080/design-flow.md",
+        "docs/evidence/ui-review/ryt-080/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/database/group-rest.test.ts",
+        "tests/e2e/rest.spec.ts",
+        "src/features/characters/ui/roster.tsx"
+      ]
+    },
+    {
+      "id": "RYT-080",
+      "title": "Group rest with a vote: check, request, Hoguera panel and server-side rests",
+      "priority": "P1",
+      "owner": "fullstack",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-073", "RYT-079"],
+      "sources": [
+        "User 2026-11-10: rest requests checked first, confirmed, then voted by every active Player in a lobby that shows what each character gets back; the DM marks characters as not coming; Create character inside the party list, for Players too.",
+        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+      ],
+      "scope": "rest_requests (members read for realtime) and private.rest_votes; request_rest, vote_rest, resolve_rest_now, cancel_rest, get_rest_state; private.rest_effect mirrors applyRest and adds the short-rest dice healing. Sheet rest buttons ask the group after the recovery check; a fixed notice under the header; the Hoguera panel with votes, recovery per character, dice and DM actions; outcomes. PRE mirror.",
+      "acceptance": [
+        "Tapping a rest checks what the character would get back, warns when nothing comes back, and asks before sending; an open request leads to the panel instead.",
+        "Any Player with a character at the table (not in a live encounter) or the DM asks; one open request per campaign; it expires after 10 minutes; the requester and the DM can cancel.",
+        "Every active character with HP votes (the DM for unassigned ones); one Not now rejects; all yes rests every voter in one transaction; the DM can rest the group at once.",
+        "The panel shows each vote around the fire and what each character gets back (HP, hit dice, resources, slots), hiding the numbers of a teammate who does not share the live sheet.",
+        "Characters at 0 HP show Cannot rest and get nothing back; absent characters are not in the panel.",
+        "Short rests take the hit dice spent and the total rolled; Rytta adds CON per die (at least 1 per die) and validates the total."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "tests/database/group-rest.test.ts",
+        "390px and tablet screenshots",
+        "impeccable critique and audit",
+        "independent ui-ux PASS",
+        "production migration applied and verified"
+      ],
+      "evidence": [
+        "docs/decisions/037-group-rest-and-absence.md",
+        "supabase/migrations/20261114120000_group_rest_absence.sql",
+        "docs/evidence/RYT-080/validation.md",
+        "docs/evidence/RYT-080/design-flow.md",
+        "docs/evidence/ui-review/ryt-080/review.md",
+        "docs/evidence/ui-review-current.json",
+        "tests/database/group-rest.test.ts",
+        "src/features/rest/domain/rest.test.ts",
+        "src/features/characters/domain/rules.test.ts",
+        "tests/e2e/rest.spec.ts",
+        "src/features/rest/ui/rest-panel.tsx"
+      ]
+    },
+    {
+      "id": "RYT-081",
+      "title": "New character card at the end of the party list",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-044"],
+      "sources": [
+        "User 2026-11-10: rest requests checked first, confirmed, then voted by every active Player in a lobby that shows what each character gets back; the DM marks characters as not coming; Create character inside the party list, for Players too.",
+        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+      ],
+      "scope": "The DM's header Create character button becomes a New character card closing the party list; Players get the same card for their own roster (up to four).",
+      "acceptance": [
+        "The DM and Players see New character after the party cards; the DM creates an unassigned character, a Player one of their own.",
+        "With four characters the Player's card says why it is unavailable; Player preview shows no card.",
+        "Escape returns focus to the card."
+      ],
+      "validation": ["npm run test:e2e", "390px and tablet screenshots", "independent ui-ux PASS"],
+      "evidence": [
+        "docs/decisions/037-group-rest-and-absence.md",
+        "docs/evidence/RYT-080/validation.md",
+        "docs/evidence/ui-review/ryt-080/review.md",
+        "tests/e2e/rest.spec.ts",
+        "tests/e2e/characters.spec.ts",
+        "src/features/characters/ui/party.tsx"
+      ]
+    },
+    {
+      "id": "RYT-082",
+      "title": "3D dice for hit dice rolls",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-080"],
+      "sources": [
+        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+      ],
+      "scope": "Roll for me in the short-rest dice rolls 3D dice over the screen (vendored MIT dice-box, loaded on first use, Rytta amber, only the roller sees them) and fills the total; reduced motion, no WebGL or a failure roll evenly without animation.",
+      "acceptance": [
+        "Roll for me fills the total of the chosen hit dice; the library loads only on the first roll.",
+        "Reduced motion shows no animation; failures still produce an even roll.",
+        "The vendored build keeps its MIT, Apache-2.0 and zlib notices."
+      ],
+      "validation": ["npm run test:e2e", "manual check of the 3D roll"],
+      "evidence": [
+        "docs/decisions/037-group-rest-and-absence.md",
+        "docs/evidence/RYT-080/validation.md",
+        "docs/evidence/ui-review/ryt-080/review.md",
+        "public/vendor/dice-box/NOTICE.md",
+        "public/vendor/dice-box/LICENSE",
+        "src/shared/ui/dice/roll-dice.ts",
+        "tests/e2e/rest.spec.ts"
+      ]
     }
   ]
 }

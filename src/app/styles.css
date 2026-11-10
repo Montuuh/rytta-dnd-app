@@ -209,10 +209,15 @@ h2[tabindex='-1']:focus {
   padding-inline-start: 8px;
   cursor: pointer;
 }
-.preview-banner {
+.top-notices {
   position: sticky;
   top: 0;
   z-index: 85;
+}
+.top-notices:empty {
+  display: none;
+}
+.preview-banner {
   display: flex;
   align-items: center;
   flex-wrap: wrap;

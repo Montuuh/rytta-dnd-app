@@ -23,6 +23,8 @@ import {
   PenLine,
   Plus,
   ScrollText,
+  UserCheck,
+  UserX,
   UsersRound,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -37,6 +39,7 @@ import { newRequestId } from '@/shared/lib/request-id'
 import {
   characterRosterQuery,
   sheetSummariesQuery,
+  useAbsentAction,
   useActivateCharacter,
   useArchiveAction,
   useCreateOwnCharacter,
@@ -46,7 +49,9 @@ import {
   canRestore,
   rosterLimit,
   rosterOf,
+  rosterError,
   rostersByPlayer,
+  unassignedOf,
   type RosterEntry,
 } from '../domain/roster'
 import type { SheetSummary } from '../domain/sheet'
@@ -173,6 +178,7 @@ export function CharacterRosterPage() {
         ) : (
           <PlayerRoster
             entries={own?.entries ?? []}
+            benched={Boolean(own?.benched)}
             hasArchived={archived.length > 0}
             summaries={summaries.data}
             onNotice={setNotice}
@@ -242,12 +248,15 @@ type NoticeProps = {
 /** The Player's own roster: a native radio group of character cards plus free slots. */
 function PlayerRoster({
   entries,
+  benched,
   hasArchived,
   summaries,
   onNotice,
   noticeRef,
 }: {
   entries: Entry[]
+  /** RYT-079: the DM marked the Player absent; switching waits for the DM. */
+  benched: boolean
   hasArchived: boolean
   summaries: SheetSummary[] | undefined
 } & NoticeProps) {
@@ -266,7 +275,21 @@ function PlayerRoster({
   if (entries.length === 0) return <FirstCharacter withArchived={hasArchived} />
   return (
     <>
-      <div role="radiogroup" aria-label={t('roster.choose')} aria-describedby={`${groupId}-count`}>
+      {benched && (
+        <Alert role="status" className="roster-benched">
+          {t('roster.benched')}
+        </Alert>
+      )}
+      <div
+        role="radiogroup"
+        aria-label={t('roster.choose')}
+        aria-describedby={benched ? `${groupId}-count ${groupId}-benched` : `${groupId}-count`}
+      >
+        {benched && (
+          <span id={`${groupId}-benched`} className="visually-hidden">
+            {t('roster.benchedRadio')}
+          </span>
+        )}
         <SlotGrid label={null} used={entries.length} countId={`${groupId}-count`}>
           {entries.map((entry) => (
             <RosterCard
@@ -279,7 +302,12 @@ function PlayerRoster({
                 name: `${groupId}-active`,
                 checked: selected === entry.id,
                 pending: activate.isPending && activate.variables === entry.id,
+                disabled: benched || entry.absent,
                 onSelect: () => {
+                  if (benched || entry.absent) {
+                    onNotice({ tone: 'error', text: t('roster.benchedRadio') })
+                    return
+                  }
                   onNotice({ tone: 'pending', text: t('roster.switching', { name: entry.name }) })
                   activate.mutate(entry.id, {
                     onSuccess: () =>
@@ -368,7 +396,9 @@ function DmRosters({
         </Button>
       </Alert>
     )
-  if (players.length === 0) return <Text c="dimmed">{t('characters.noPlayers')}</Text>
+  const unassigned = unassignedOf(entries)
+  if (players.length === 0 && unassigned.length === 0)
+    return <Text c="dimmed">{t('characters.noPlayers')}</Text>
   return (
     <Stack gap="lg">
       {rostersByPlayer(entries, players).map(({ player, entries: own }) => {
@@ -390,8 +420,10 @@ function DmRosters({
                     key={entry.id}
                     entry={entry}
                     summary={find(summaries, entry)}
-                    state={entry.is_active ? 'active' : 'reserve'}
-                    actions={<CardMenu entry={entry} onNotice={onNotice} noticeRef={noticeRef} />}
+                    state={entry.absent ? 'absent' : entry.is_active ? 'active' : 'reserve'}
+                    actions={
+                      <CardMenu dm entry={entry} onNotice={onNotice} noticeRef={noticeRef} />
+                    }
                   />
                 ))}
               </ul>
@@ -399,6 +431,26 @@ function DmRosters({
           </section>
         )
       })}
+      {unassigned.length > 0 && (
+        <section aria-labelledby="roster-unassigned" className="roster-player">
+          <div className="roster-player-head">
+            <Title order={2} id="roster-unassigned" className="roster-player-name">
+              {t('roster.unassigned')}
+            </Title>
+          </div>
+          <ul className="roster-rows">
+            {unassigned.map((entry) => (
+              <RosterRow
+                key={entry.id}
+                entry={entry}
+                summary={find(summaries, entry)}
+                state={entry.absent ? 'absent' : 'active'}
+                actions={<CardMenu dm entry={entry} onNotice={onNotice} noticeRef={noticeRef} />}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
     </Stack>
   )
 }
@@ -529,7 +581,13 @@ function RosterCard({
 }: {
   entry: Entry
   summary: SheetSummary | undefined
-  radio?: { name: string; checked: boolean; pending: boolean; onSelect: () => void }
+  radio?: {
+    name: string
+    checked: boolean
+    pending: boolean
+    disabled?: boolean
+    onSelect: () => void
+  }
 } & Partial<NoticeProps>) {
   const { t } = useTranslation()
   const campaign = useCampaign()
@@ -560,14 +618,24 @@ function RosterCard({
           {meta}
         </span>
       )}
-      <span className="roster-state">
-        {active ? <Check size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
-        {t(active ? 'roster.active' : 'roster.reserve')}
+      <span className="roster-state" data-absent={entry.absent || undefined}>
+        {entry.absent ? (
+          <UserX size={14} aria-hidden="true" />
+        ) : active ? (
+          <Check size={14} aria-hidden="true" />
+        ) : (
+          <Moon size={14} aria-hidden="true" />
+        )}
+        {t(entry.absent ? 'roster.absent' : active ? 'roster.active' : 'roster.reserve')}
       </span>
     </>
   )
   return (
-    <li className="roster-slot" data-active={active || undefined}>
+    <li
+      className="roster-slot"
+      data-active={active || undefined}
+      data-absent={entry.absent || undefined}
+    >
       <div
         className="roster-card"
         role={radio ? undefined : 'group'}
@@ -581,6 +649,7 @@ function RosterCard({
               name={radio.name}
               value={entry.id}
               checked={radio.checked}
+              aria-disabled={radio.disabled || undefined}
               onChange={radio.onSelect}
               aria-labelledby={`${id}-name`}
               aria-describedby={meta ? `${id}-meta` : undefined}
@@ -615,7 +684,7 @@ function RosterRow({
 }: {
   entry: Entry
   summary: SheetSummary | undefined
-  state: 'active' | 'reserve' | 'archived'
+  state: 'active' | 'reserve' | 'archived' | 'absent'
   owner?: string
   /** A short reason under the meta line (for example "No free slot"). */
   note?: string
@@ -643,13 +712,21 @@ function RosterRow({
             {[owner, meta ?? t('roster.draft')].filter(Boolean).join(', ')}
           </span>
           {state !== 'archived' && (
-            <span className="roster-state">
-              {state === 'active' ? (
+            <span className="roster-state" data-absent={state === 'absent' || undefined}>
+              {state === 'absent' ? (
+                <UserX size={14} aria-hidden="true" />
+              ) : state === 'active' ? (
                 <Check size={14} aria-hidden="true" />
               ) : (
                 <Moon size={14} aria-hidden="true" />
               )}
-              {t(state === 'active' ? 'roster.active' : 'roster.reserve')}
+              {t(
+                state === 'absent'
+                  ? 'roster.absent'
+                  : state === 'active'
+                    ? 'roster.active'
+                    : 'roster.reserve',
+              )}
             </span>
           )}
           {note && <span className="roster-row-note">{note}</span>}
@@ -663,13 +740,71 @@ function RosterRow({
   )
 }
 
-/** Card menu with "Archive character"; the active character explains why it cannot go. */
-function CardMenu({ entry, onNotice, noticeRef }: { entry: Entry } & NoticeProps) {
+/**
+ * Card menu with "Archive character"; the active character explains why it cannot go. For the DM
+ * (RYT-079) it also marks the character absent or present and makes a Player's character active.
+ */
+function CardMenu({
+  entry,
+  dm = false,
+  onNotice,
+  noticeRef,
+}: { entry: Entry; dm?: boolean } & NoticeProps) {
   const { t } = useTranslation()
+  const campaign = useCampaign()
   const trigger = useRef<HTMLButtonElement>(null)
   const [archiving, setArchiving] = useState(false)
+  const absent = useAbsentAction(campaign.id)
+  const activate = useActivateCharacter(campaign.id)
   const hintId = useId()
-  const blocked = Boolean(entry.user_id) && entry.is_active
+  const blocked = (Boolean(entry.user_id) && entry.is_active) || entry.absent
+  const canActivate = dm && Boolean(entry.user_id) && !entry.is_active && !entry.absent
+  const toggleAbsent = () => {
+    const next = !entry.absent
+    absent.mutate(
+      { characterId: entry.id, absent: next },
+      {
+        onSuccess: () => {
+          onNotice({
+            tone: 'done',
+            text: t(next ? 'roster.absentDone' : 'roster.presentDone', { name: entry.name }),
+          })
+          focusWhenReady(() => trigger.current ?? noticeRef.current)
+        },
+        onError: (error) => {
+          const kind = rosterError(error.message)
+          onNotice({
+            tone: 'error',
+            text:
+              kind === 'trading'
+                ? t('roster.errorAbsentTrade', { name: entry.name })
+                : kind === 'combat'
+                  ? t('roster.errorAbsentCombat', { name: entry.name })
+                  : t('roster.errorAbsent'),
+            returnTo: () => trigger.current,
+          })
+        },
+      },
+    )
+  }
+  const makeActive = () =>
+    activate.mutate(entry.id, {
+      onSuccess: () => {
+        onNotice({ tone: 'done', text: t('roster.activeDone', { name: entry.name }) })
+        focusWhenReady(() => trigger.current ?? noticeRef.current)
+      },
+      onError: (error) =>
+        onNotice({
+          tone: 'error',
+          text:
+            error.message === 'trading'
+              ? t('roster.errorTrade', { name: entry.name })
+              : error.message === 'combat'
+                ? t('roster.errorCombat', { name: entry.name })
+                : t('roster.errorMakeActive', { name: entry.name }),
+          returnTo: () => trigger.current,
+        }),
+    })
   return (
     <>
       <Menu position="bottom-end" withinPortal withInitialFocusPlaceholder={false}>
@@ -686,6 +821,30 @@ function CardMenu({ entry, onNotice, noticeRef }: { entry: Entry } & NoticeProps
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>
+          {dm && (
+            <Menu.Item
+              leftSection={
+                entry.absent ? (
+                  <UserCheck size={18} aria-hidden="true" />
+                ) : (
+                  <UserX size={18} aria-hidden="true" />
+                )
+              }
+              className="roster-menu-item"
+              onClick={toggleAbsent}
+            >
+              {t(entry.absent ? 'roster.markPresent' : 'roster.markAbsent')}
+            </Menu.Item>
+          )}
+          {canActivate && (
+            <Menu.Item
+              leftSection={<Check size={18} aria-hidden="true" />}
+              className="roster-menu-item"
+              onClick={makeActive}
+            >
+              {t('roster.makeActive')}
+            </Menu.Item>
+          )}
           {/* For the active character the item stays reachable by arrow keys (aria-disabled,
               not disabled) and carries the reason as its description. */}
           <Menu.Item
@@ -705,7 +864,7 @@ function CardMenu({ entry, onNotice, noticeRef }: { entry: Entry } & NoticeProps
           </Menu.Item>
           {blocked && (
             <Menu.Label id={hintId} className="roster-menu-hint">
-              {t('roster.archiveActiveHint')}
+              {t(entry.absent ? 'roster.archiveAbsentHint' : 'roster.archiveActiveHint')}
             </Menu.Label>
           )}
         </Menu.Dropdown>

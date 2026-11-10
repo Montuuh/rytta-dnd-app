@@ -415,7 +415,7 @@
   border: 1px solid var(--app-border);
 }
 .panel-dock-rest {
-  flex: 1 1 0;
+  flex: 1 1 8.5rem;
   min-width: 0;
   min-height: 44px;
   height: auto;

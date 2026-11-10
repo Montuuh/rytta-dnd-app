@@ -55,3 +55,11 @@ ui-ux: PASS on fingerprint `f90663fe…` ([ui-review.md](ui-review.md)). One low
 pre-existing: the board height is a fixed offset, so a scene title that wraps to two lines pushes
 the zoom stack under the phone bottom bar or past a tablet viewport. Left for a follow-up ticket
 (fill the remaining space instead of a fixed offset).
+
+## CI follow-up (2026-11-10)
+
+CI on `061a9a7` failed `identity.spec.ts:418` on Linux: the Google label wrapped to two lines at
+150% text (the Linux fallback font is wider; locally only 6px of slack remained). The button's
+`padding-inline` is now `--mantine-spacing-sm` (`src/app/styles.css`), leaving 36px of slack.
+`npm run check` and `identity.spec.ts` (48 passed) pass locally; captures and the ui-ux PASS are in
+[ci-fix/](ci-fix/review.md). Linux CI result is verified by the next run.

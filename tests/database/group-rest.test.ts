@@ -295,9 +295,9 @@ describe('RYT-079 absence', () => {
     await pub.status(s.c, e, 'ended')
     await pub.absent(s.c, s.arin, true)
     await expect(pub.encounter(s.c, [s.arin])).rejects.toThrow(/Character absent/)
-    await expect(
-      db.query('select public.archive_character($1,$2)', [s.c, s.arin]),
-    ).rejects.toThrow(/Character absent/)
+    await expect(db.query('select public.archive_character($1,$2)', [s.c, s.arin])).rejects.toThrow(
+      /Character absent/,
+    )
     // History names the change.
     await asUser(player)
     const history = await result<{ changes: { field: string }[] }[]>(
@@ -343,7 +343,12 @@ describe('RYT-080 group rest', () => {
     await expect(pub.request(s.c, 'long')).rejects.toThrow(/Rest open/)
     const mine = opened.participants.find((p) => p.id === s.arin)!
     expect(mine).toMatchObject({ own: true, controlled: true, vote: 'yes' })
-    expect(mine.effect).toMatchObject({ hp_before: 10, hp_after: 24, dice_left_before: 1, dice_left_after: 3 })
+    expect(mine.effect).toMatchObject({
+      hp_before: 10,
+      hp_after: 24,
+      dice_left_before: 1,
+      dice_left_after: 3,
+    })
     expect(mine.effect!.trackers.map((t) => [t.id, t.before, t.after])).toEqual([
       ['ki', 0, 3],
       ['luck', 0, 2],
@@ -440,9 +445,10 @@ describe('RYT-080 group rest', () => {
     expect((await pub.cancel(s.c, third.id)).status).toBe('cancelled')
     const fourth = await pub.request(s.c, 'long')
     await asSystem()
-    await db.query("update public.rest_requests set expires_at = now() - interval '1 second' where id=$1", [
-      fourth.id,
-    ])
+    await db.query(
+      "update public.rest_requests set expires_at = now() - interval '1 second' where id=$1",
+      [fourth.id],
+    )
     await asUser(player)
     expect((await pub.state(s.c))!.status).toBe('expired')
     await expect(pub.vote(s.c, fourth.id, s.arin, 'yes')).rejects.toThrow(/Rest closed/)

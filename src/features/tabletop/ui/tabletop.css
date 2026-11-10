@@ -29,10 +29,12 @@
   height: calc(100dvh - var(--tt-chrome, 9.5rem) + 3rem);
 }
 /* The phone editor is a full-screen instrument: the back arrow leaves it, so the app's bottom bar
-   and footer step aside while it is open. */
-.app-layout:has(.tt-editor.is-phone) .bottom-nav,
-.app-layout:has(.tt-editor) .page-footer {
+   and the space kept for it step aside while it is open. */
+.app-layout:has(.tt-editor.is-phone) .bottom-nav {
   display: none;
+}
+.app-layout:has(.tt-editor) .workspace {
+  padding-bottom: 0;
 }
 .tt-head {
   display: flex;

@@ -118,7 +118,7 @@ export function CharacterRosterPage() {
       </Button>
       <PageHead
         title={title}
-        description={dm ? t('roster.dmLede') : playerPreview ? undefined : t('roster.lede')}
+        description={dm || playerPreview ? undefined : t('roster.lede')}
         refresh={
           <RefreshControl
             onRefresh={() => void roster.refetch()}

@@ -1,6 +1,6 @@
 export const identityEn = {
-  'auth.title': 'Your next adventure starts here.',
-  'auth.intro': 'Sign in to create a campaign or join your table.',
+  'auth.title': 'Sign in to Rytta',
+  'auth.intro': 'Create a campaign or join your table.',
   'auth.google': 'Continue with Google',
   'auth.open': 'New to Rytta? Your account is created when you first sign in.',
   'auth.problem': 'Sign-in needs attention',
@@ -13,7 +13,6 @@ export const identityEn = {
   'auth.signOut': 'Sign out',
   'auth.account': 'Signed in as {{email}}',
   'hub.title': 'My campaigns',
-  'hub.intro': 'Choose your table, or begin a new story.',
   'hub.create': 'Create campaign',
   'hub.name': 'Campaign name',
   'hub.description': 'Description (optional)',
@@ -44,8 +43,6 @@ export const identityEn = {
   'campaign.offline':
     'You are offline. Information may be out of date; reconnect before making changes.',
   'members.title': 'Members & invitations',
-  'members.intro':
-    'Manage campaign access and roles. Invitations grant the Player role; characters are managed in Party.',
   'members.list': 'Members',
   'members.you': 'You',
   'members.invite': 'Invite player',
@@ -88,7 +85,6 @@ export const identityEn = {
     'Check your connection and refresh. Your access or this invitation may have changed. Check the result before repeating an action.',
   'query.error': 'We could not load this information.',
   'dm.commandCenter': 'DM command center',
-  'dm.commandIntro': 'Members, modules, storeroom and history of your campaign.',
   'dm.modulePlannedReason': 'cannot be shown to Players yet',
   'dm.panelAll': 'All panels',
   'dm.panelMembers': 'Members',

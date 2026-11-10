@@ -3,7 +3,15 @@ import { readFile, access } from 'node:fs/promises'
 const backlog = JSON.parse(await readFile('docs/backlog/items.json', 'utf8'))
 const ids = new Set(backlog.items.map((item) => item.id))
 const allowed = ['planned', 'ready', 'in_progress', 'review', 'done', 'blocked']
-const recommendedModels = ['gpt-6-astra', 'gpt-6.1-sol']
+// Claude models for new tickets; the GPT ids stay valid for tickets planned before ADR 038.
+const recommendedModels = [
+  'claude-opus-5-5',
+  'claude-sonnet-5-5',
+  'claude-haiku-5-5',
+  'claude-fable-5-1',
+  'gpt-6-astra',
+  'gpt-6.1-sol',
+]
 const recommendedEfforts = ['low', 'medium', 'high', 'xhigh', 'max']
 if (ids.size !== backlog.items.length) throw new Error('Duplicate backlog ID')
 for (const item of backlog.items) {
@@ -38,7 +46,10 @@ function visit(id, ancestry = []) {
 }
 for (const id of ids) visit(id)
 for (const file of [
-  'AGENTS.md',
+  'CLAUDE.md',
+  'src/CLAUDE.md',
+  'supabase/CLAUDE.md',
+  'docs/CLAUDE.md',
   'docs/README.md',
   'docs/architecture.md',
   'docs/security.md',

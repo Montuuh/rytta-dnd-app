@@ -51,7 +51,6 @@ export function CampaignHub() {
     <Stack gap="xl">
       <PageHead
         title={t('hub.title')}
-        description={t('hub.intro')}
         actions={
           <Button
             leftSection={<Plus size={18} aria-hidden="true" />}

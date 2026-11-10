@@ -3,8 +3,6 @@ export const inventoryEs = {
   'catalogue.search': 'Buscar objetos',
   'catalogue.title': 'Almacén de objetos',
   'catalogue.create': 'Nuevo objeto',
-  'catalogue.intro':
-    'Prepara objetos para tu campaña y después entrégalos o añádelos a una tienda.',
   'catalogue.edit': 'Editar',
   'catalogue.give': 'Dar a personajes',
   'catalogue.addToShop': 'Añadir a tienda',

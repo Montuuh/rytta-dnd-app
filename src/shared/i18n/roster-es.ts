@@ -2,9 +2,8 @@ import type { rosterEn } from './roster-en'
 // RYT-044 Player character roster, the active character and archiving.
 export const rosterEs = {
   'roster.title': 'Mis personajes',
-  'roster.lede': 'Elige con quién juegas. Solo tu personaje activo se une al grupo.',
+  'roster.lede': 'Solo tu personaje activo se une al grupo.',
   'roster.dmTitle': 'Personajes de los jugadores',
-  'roster.dmLede': 'Cada jugador tiene un personaje activo. El resto espera en reserva.',
   'roster.previewTitle': 'Personajes de {{name}}',
   'roster.back': 'Volver a Grupo',
   'roster.choose': 'Personaje activo',

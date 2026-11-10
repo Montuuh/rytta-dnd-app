@@ -21,7 +21,7 @@ test-results/
 supabase/.temp/
 supabase/.branches/
 .husky/_/
-.cursor
+.cursor/
 
 # Editor directories and files
 .vscode/*
@@ -55,3 +55,7 @@ art/bestiary/source/*.png
 art/sprites/source/*/
 # Office lock files (an open catalogue workbook).
 ~$*
+
+# Claude Code personal settings and hook markers
+.claude/settings.local.json
+.pw-dev/

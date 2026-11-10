@@ -62,14 +62,16 @@ src/shared/              Generic API, validation and UI primitives
 supabase/                Local config, migrations and scoped agent guidance
 tests/                   PostgreSQL policies and browser checks
 docs/                    Product, architecture, backlog, ADRs and evidence
-.agents/skills/          Reusable project workflows
-.codex/agents/           Producer, frontend, backend and reviewer roles
-.codex/hooks.json        Read-only session context hook
-.cursor/rules/           Optional editor adapters to canonical guidance
+CLAUDE.md                Agent contract (scoped CLAUDE.md in src/, supabase/, docs/)
+.claude/skills/          Project skills (/rytta-start, /rytta-feature, ...)
+.claude/agents/          Producer, frontend, backend, reviewer, security and ui-ux subagents
+.claude/rules/           Path-scoped rules
+.claude/hooks/           Session context, guard and post-edit hooks
+.mcp.json                context7 and Playwright MCP servers
 ```
 
 Start with the [documentation index](docs/README.md).
-Invoke `$rytta-producer` to prepare the next delivery from the
+Run `/rytta-start` or `/rytta-producer` in Claude Code to prepare the next delivery from the
 [backlog](docs/backlog/items.json). [Deployment instructions](docs/deployment.md)
 cover GitHub Pages and Vercel. The Rytta Supabase project is connected and its initial
 schema is applied. The frontend is published at <https://montuuh.github.io/rytta-dnd-app/>.

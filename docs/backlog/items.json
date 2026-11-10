@@ -3304,6 +3304,77 @@
         "src/shared/ui/dice/roll-dice.ts",
         "tests/e2e/rest.spec.ts"
       ]
+    },
+    {
+      "id": "RYT-083",
+      "title": "Claude Code setup: migrate from Codex/Cursor and extend skills, hooks, agents and MCP",
+      "priority": "P1",
+      "owner": "producer",
+      "recommendedModel": {
+        "id": "claude-opus-5-5",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-000"],
+      "sources": [
+        "User 2026-11-10: \"migra desde la estructura de chat gpt codex a la de claude. Amplia tambien el setup de claude, añade skills, hooks, agents, MCP, skills, etc.\"",
+        "User 2026-11-10: \"añade una skill de quitar ai slop, que sirva para que no ponga texto inútil o solo informativo en la web. AI Code Slop Remover se llama.\""
+      ],
+      "scope": "Move the agent contract, skills, roles, rules and hooks to the Claude Code layout (CLAUDE.md, .claude/skills, .claude/agents, .claude/rules, .claude/hooks, .mcp.json), remove .codex/.agents/.cursor, add new skills, guard and post-edit hooks, a security reviewer and MCP servers, and update the validators and docs (ADR 038).",
+      "acceptance": [
+        "CLAUDE.md is the contract; scoped CLAUDE.md files replace the scoped AGENTS.md files; AGENTS.md only points to CLAUDE.md.",
+        "Nine project skills (including ai-code-slop-remover with its read-only scanner) and six subagents load from .claude/ with valid frontmatter; reviewers are read-only.",
+        "PreToolUse guard denies the contract violations and ignores heredoc text; PostToolUse formats, lints and reminds the ui-ux review.",
+        "npm run check:ai validates the layout and the guard decisions; npm run check passes.",
+        ".codex, .agents and .cursor are removed and docs describe the new workflow."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run format:check",
+        "/rytta-preview capture of a signed-in fixture screen"
+      ],
+      "evidence": [
+        "docs/decisions/038-claude-code-setup.md",
+        "docs/ai-workflow.md",
+        "docs/evidence/RYT-083/validation.md",
+        "scripts/check-ai.mjs"
+      ]
+    },
+    {
+      "id": "RYT-084",
+      "title": "Remove merely informative page intros and brand slogans",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "claude-sonnet-5-5",
+        "reasoningEffort": "medium"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-083"],
+      "sources": [
+        "User 2026-11-10: \"Audit the intros\" then \"Apply all\" (ai-code-slop-remover audit of page intros and brand copy)."
+      ],
+      "scope": "Cut page intros that repeat the title or describe visible controls (hub, DM command center, Party, roster DM, storeroom, shops, glossary, tabletop), shorten auth title, roster, bestiary, calibration and Player map hints, drop the header tagline and footer slogan, delete unused brand/intro keys, show the pinch hint on phones and keep bottom-bar clearance without the footer.",
+      "acceptance": [
+        "The cut keys are gone from both catalogs and no screen renders an empty lede.",
+        "Kept facts stay: who sees the bestiary, only the active character joins the party, the Player members hint, licence and demo texts.",
+        "The Player map pinch hint shows on phones.",
+        "On phones the last content stays clear of the bottom bar without the footer (>= 8px gap).",
+        "npm run check and npm run test:e2e pass; ui-ux PASS on the current fingerprint."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "390px and 820px captures before and after",
+        "bottom clearance probe"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-084/validation.md",
+        "docs/evidence/RYT-084/sheet-before-mobile.webp",
+        "docs/evidence/RYT-084/sheet-after-mobile.webp",
+        "docs/evidence/RYT-084/sheet-after-tablet.webp",
+        "docs/evidence/RYT-084/ui-review.md"
+      ]
     }
   ]
 }

@@ -185,7 +185,7 @@ export function CampaignMembers({
     <Stack gap="xl">
       <PageHead
         title={t(dm ? 'campaign.manage' : 'members.title')}
-        description={t(dm ? 'dm.commandIntro' : 'members.playerHint')}
+        description={dm ? undefined : t('members.playerHint')}
         compactOnPhone={dm}
         refresh={
           dm && <RefreshControl onRefresh={refreshAll} fetching={fetching} updatedAt={updatedAt} />

@@ -224,8 +224,6 @@ export const combatEs = {
   'combat.add.lair': 'Añadir acciones de guarida (iniciativa 20)',
   'combat.add.added_one': '{{count}} combatiente añadido.',
   'combat.add.added_other': '{{count}} combatientes añadidos.',
-  'combat.bestiary.intro':
-    'Criaturas homebrew que reutilizas entre encuentros. Solo los DM las ven.',
   'combat.bestiary.empty': 'Aún no hay criaturas. Guarda las que uses a menudo.',
   'combat.bestiary.new': 'Nueva criatura',
   'combat.bestiary.edit': 'Editar {{name}}',

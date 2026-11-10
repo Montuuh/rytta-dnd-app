@@ -1,9 +1,8 @@
 // RYT-044 Player character roster, the active character and archiving.
 export const rosterEn = {
   'roster.title': 'My characters',
-  'roster.lede': 'Choose who you play. Only your active character joins the party.',
+  'roster.lede': 'Only your active character joins the party.',
   'roster.dmTitle': 'Players’ characters',
-  'roster.dmLede': 'Each player has one active character. The rest wait in reserve.',
   'roster.previewTitle': 'Characters of {{name}}',
   'roster.back': 'Back to Party',
   'roster.choose': 'Active character',

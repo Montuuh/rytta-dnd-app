@@ -171,7 +171,7 @@ export function Storefront() {
 
   return (
     <Stack gap="lg" className="storefront">
-      <PageHead title={t('shop.title')} description={t('shop.intro')}>
+      <PageHead title={t('shop.title')}>
         {playerPreview && previewLabel && (
           <Text c="dimmed" mt="xs">
             {t('shop.previewReadOnly', { name: previewLabel })}

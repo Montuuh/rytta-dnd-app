@@ -15,9 +15,7 @@ test('Google sign-in uses PKCE and an exact Pages callback; no private requests 
 }) => {
   const fixture = await identityFixture(page, { signedIn: false })
   await page.goto('./')
-  await expect(
-    page.getByRole('heading', { name: 'Tu próxima aventura empieza aquí.' }),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Entra en Rytta' })).toBeVisible()
   expect(fixture.calls.filter((c) => c.method.startsWith('list_'))).toEqual([])
   const request = page.waitForRequest('https://rytta-test.supabase.co/auth/v1/authorize**')
   await page.getByRole('button', { name: 'Continuar con Google' }).click()

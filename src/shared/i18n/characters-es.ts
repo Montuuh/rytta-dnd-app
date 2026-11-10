@@ -17,8 +17,6 @@ export const charactersEs = {
   'account.exit': 'Volver a mi cuenta',
   'account.settings': 'Preferencias',
   'characters.title': 'Grupo',
-  'characters.intro': 'Crea personajes, vincula a sus jugadores y gestiona sus recursos.',
-  'characters.playerIntro': 'Tu personaje activo, sus recursos y tus compañeros de mesa.',
   'characters.rules': 'Homebrew · Oro entero, raciones de comida y agua · Agotamiento manual',
   'characters.create': 'Crear personaje',
   'characters.name': 'Nombre del personaje',

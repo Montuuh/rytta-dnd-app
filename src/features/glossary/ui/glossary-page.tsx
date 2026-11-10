@@ -331,7 +331,6 @@ export function GlossaryPage() {
       ) : (
         <PageHead
           title={t('module.glossary')}
-          description={t('glossary.intro')}
           actions={
             glossary.canEdit && (
               <button

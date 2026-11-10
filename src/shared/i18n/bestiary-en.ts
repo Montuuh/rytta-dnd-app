@@ -2,8 +2,7 @@
 export const bestiaryEn = {
   'dm.panelBestiary': 'Bestiary',
   'bestiary.title': 'Bestiary',
-  'bestiary.intro':
-    'The 330 SRD 5.2.1 creatures and your campaign’s own. Only DMs see this section.',
+  'bestiary.intro': 'Only DMs see this section.',
   'bestiary.new': 'New creature',
   'bestiary.search': 'Search creatures',
   'bestiary.searchPlaceholder': 'Goblin, red dragon, wolf…',

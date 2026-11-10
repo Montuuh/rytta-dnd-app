@@ -99,7 +99,6 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
     <div className="tt-library">
       <PageHead
         title={t('tabletop.title')}
-        description={t('tabletop.intro')}
         actions={
           <Button
             ref={newScene}

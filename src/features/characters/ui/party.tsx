@@ -147,7 +147,6 @@ export function CharacterParty() {
     <Stack gap="lg">
       <PageHead
         title={t('characters.title')}
-        description={onboarding ? undefined : t(dm ? 'characters.intro' : 'characters.playerIntro')}
         actions={
           dm ? (
             // One wrapper: on phones each PageHead action takes the whole second row.

@@ -168,13 +168,6 @@ h2[tabindex='-1']:focus {
   line-height: 1.15;
   color: var(--app-text);
 }
-.brand-subtitle {
-  font-size: var(--fs-tag);
-  letter-spacing: 0.14em;
-  color: var(--app-muted);
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
-}
 .header-campaign-name {
   color: var(--app-accent);
   line-height: 1.25;
@@ -465,12 +458,6 @@ main h3 {
   flex-shrink: 0;
   color: var(--app-accent);
 }
-.page-footer {
-  padding: 16px 24px 28px;
-  font-size: var(--fs-tag);
-  color: var(--app-muted);
-  text-align: center;
-}
 .skip-link {
   position: fixed;
   top: 12px;
@@ -657,10 +644,6 @@ main h3 {
   }
   .desktop-break {
     display: none;
-  }
-  .page-footer {
-    padding-inline: 12px;
-    padding-block: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2063,8 +2046,9 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
     border-top: 1px solid var(--app-border);
     box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.22);
   }
-  .has-bottom-nav .page-footer {
-    padding-bottom: calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom));
+  /* The last content clears the fixed bottom bar (the workspace has no footer). */
+  .has-bottom-nav .workspace {
+    padding-bottom: calc(var(--bottom-nav-h) + 32px + env(safe-area-inset-bottom));
   }
   .has-bottom-nav .undo-fuse {
     bottom: calc(var(--bottom-nav-h) + 10px + env(safe-area-inset-bottom));
@@ -4798,11 +4782,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   /* Inside a campaign the emblem is the brand; the campaign name takes the wordmark's place. */
   .campaign-layout .brand-title {
     display: none;
-  }
-  .brand-subtitle {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .preview-switch .mantine-Switch-label {
     white-space: nowrap;

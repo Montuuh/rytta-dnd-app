@@ -17,10 +17,7 @@ export function SignInPage() {
     <Paper p="xl" className="sign-in-card">
       <Stack gap="lg">
         <Compass size={48} strokeWidth={1} aria-hidden="true" />
-        <div>
-          <Text className="eyebrow">RYTTA</Text>
-          <Title order={1}>{t('auth.title')}</Title>
-        </div>
+        <Title order={1}>{t('auth.title')}</Title>
         <Text c="dimmed">{t('auth.intro')}</Text>
         {state.issue && (
           <Alert color="red" role="alert" title={t('auth.problem')}>

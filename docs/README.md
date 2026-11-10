@@ -6,7 +6,7 @@
 4. [Security](security.md): current policies and future transaction contracts.
 5. [Design system](design-system.md): Mantine and touch interaction.
 6. [Development](development.md) and [deployment](deployment.md).
-7. [AI workflow](ai-workflow.md): producer, roles, skills and hooks.
+7. [AI workflow](ai-workflow.md): Claude Code skills, subagents, hooks and MCP.
 8. [Backlog guide](backlog/README.md) and [canonical tickets](backlog/items.json).
 9. [ADR 001](decisions/001-foundation.md).
 10. [Verification evidence](evidence/scaffold-validation.md).
@@ -98,3 +98,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-079–082 verification](evidence/RYT-080/validation.md): rests asked of the table and
     voted around the fire, server-side rests with short-rest hit dice, 3D dice, the DM's absence
     and active-character choices, and New character in the party list.
+49. [ADR 038: Claude Code as the agent platform](decisions/038-claude-code-setup.md)
+    and [RYT-083 verification](evidence/RYT-083/validation.md).

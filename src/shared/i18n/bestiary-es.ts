@@ -2,8 +2,7 @@
 export const bestiaryEs = {
   'dm.panelBestiary': 'Bestiario',
   'bestiary.title': 'Bestiario',
-  'bestiary.intro':
-    'Las 330 criaturas del SRD 5.2.1 y las de tu campaña. Solo los DM ven esta sección.',
+  'bestiary.intro': 'Solo los DM ven esta sección.',
   'bestiary.new': 'Nueva criatura',
   'bestiary.search': 'Buscar criatura',
   'bestiary.searchPlaceholder': 'Goblin, dragón rojo, lobo…',

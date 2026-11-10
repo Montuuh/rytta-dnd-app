@@ -203,9 +203,6 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
               </Badge>
             )}
           </Group>
-          <Text size="sm" c="dimmed" mt={4}>
-            {t('catalogue.intro')}
-          </Text>
         </div>
         <Button
           ref={newButton}

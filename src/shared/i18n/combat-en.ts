@@ -224,7 +224,6 @@ export const combatEn = {
   'combat.add.lair': 'Add lair actions (initiative 20)',
   'combat.add.added_one': '{{count}} combatant added.',
   'combat.add.added_other': '{{count}} combatants added.',
-  'combat.bestiary.intro': 'Homebrew creatures you reuse across encounters. Only DMs see them.',
   'combat.bestiary.empty': 'No creatures yet. Save the ones you use often.',
   'combat.bestiary.new': 'New creature',
   'combat.bestiary.edit': 'Edit {{name}}',

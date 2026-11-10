@@ -311,7 +311,7 @@ export function Layout() {
                   </span>
                   <div className="brand-copy">
                     <span className="brand-title">RYTTA</span>
-                    {campaign ? (
+                    {campaign && (
                       <Text
                         size="sm"
                         fw={600}
@@ -320,8 +320,6 @@ export function Layout() {
                       >
                         {campaign.name}
                       </Text>
-                    ) : (
-                      <span className="brand-subtitle">{t('brand.tag')}</span>
                     )}
                   </div>
                 </div>
@@ -500,7 +498,6 @@ export function Layout() {
                 <Outlet key={state.user?.id ?? 'guest'} />
               </SettingsDrawerContext.Provider>
             </main>
-            <footer className="page-footer">{t('brand.footer')}</footer>
           </div>
           {showNav && <BottomNavigation entries={entries} />}
           <Drawer

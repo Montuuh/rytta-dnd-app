@@ -23,7 +23,6 @@ export const shopsEs = {
   'commerce.error.forbidden': 'No puedes hacer esto en esta campaña.',
   'commerce.error.unavailable': 'No se pudo completar. Revisa la conexión e inténtalo de nuevo.',
   'shop.title': 'Tiendas',
-  'shop.intro': 'Mira lo que te ofrecen los mercaderes y compra con tu oro.',
   'shop.previewReadOnly': 'Vista de {{name}}. Las compras están desactivadas en esta vista.',
   'shop.emptyTitle': 'Aún no hay tiendas abiertas para ti',
   'shop.emptyHelp': 'Cuando el DM revele un mercader, aparecerá aquí.',

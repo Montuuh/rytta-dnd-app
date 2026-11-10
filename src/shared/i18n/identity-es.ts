@@ -1,7 +1,7 @@
 import type { identityEn } from './identity-en'
 export const identityEs = {
-  'auth.title': 'Tu próxima aventura empieza aquí.',
-  'auth.intro': 'Entra para crear una campaña o unirte a tu mesa.',
+  'auth.title': 'Entra en Rytta',
+  'auth.intro': 'Crea una campaña o únete a tu mesa.',
   'auth.google': 'Continuar con Google',
   'auth.open': '¿Primera vez en Rytta? Tu cuenta se crea cuando entras por primera vez.',
   'auth.problem': 'Revisa el inicio de sesión',
@@ -14,7 +14,6 @@ export const identityEs = {
   'auth.signOut': 'Cerrar sesión',
   'auth.account': 'Sesión de {{email}}',
   'hub.title': 'Mis campañas',
-  'hub.intro': 'Elige tu mesa o empieza una nueva historia.',
   'hub.create': 'Crear campaña',
   'hub.name': 'Nombre de la campaña',
   'hub.description': 'Descripción (opcional)',
@@ -45,8 +44,6 @@ export const identityEs = {
   'campaign.offline':
     'Estás sin conexión. La información puede estar desactualizada; reconecta antes de hacer cambios.',
   'members.title': 'Miembros e invitaciones',
-  'members.intro':
-    'Gestiona quién entra en la campaña y sus permisos. Las invitaciones dan el rol Jugador; los personajes se gestionan en Grupo.',
   'members.list': 'Miembros',
   'members.you': 'Tú',
   'members.invite': 'Invitar jugador',
@@ -90,7 +87,6 @@ export const identityEs = {
     'Comprueba tu conexión y actualiza. Tus permisos o esta invitación pueden haber cambiado. Revisa el resultado antes de repetir una acción.',
   'query.error': 'No se pudo cargar esta información.',
   'dm.commandCenter': 'Centro de mando DM',
-  'dm.commandIntro': 'Miembros, módulos, almacén e historial de tu campaña.',
   'dm.modulePlannedReason': 'aún no se puede mostrar a los jugadores',
   'dm.panelAll': 'Todos los paneles',
   'dm.panelMembers': 'Miembros',

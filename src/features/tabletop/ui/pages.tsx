@@ -97,7 +97,6 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
       <PageHead
         title={scene?.name ?? t('module.tabletop')}
         description={scene ? t('tabletop.player.lede') : undefined}
-        compactOnPhone
       />
       {query.isError && !view ? (
         <p className="tt-state" role="alert">

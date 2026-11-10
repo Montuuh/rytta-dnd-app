@@ -6,7 +6,6 @@ export const tabletopEs = {
   'summary.tabletop':
     'El mapa de batalla en la pantalla de la mesa, con niebla, puertas y medición.',
   'tabletop.title': 'Mesa',
-  'tabletop.intro': 'Mapas para la pantalla de la mesa: una casilla bajo cada miniatura.',
   'tabletop.hiddenModule': 'El DM aún no ha abierto la mesa.',
   'tabletop.loading': 'Desplegando el mapa…',
   'tabletop.retry': 'Reintentar',
@@ -617,8 +616,7 @@ export const tabletopEs = {
   'tabletop.setup.start': 'Configurar la mesa',
   'tabletop.setup.adjust': 'Ajustar',
   'tabletop.setup.title': 'Configuración de la pantalla de mesa',
-  'tabletop.setup.intro':
-    'Una casilla del mapa coincidirá con la peana de una miniatura sobre la pantalla tumbada en la mesa.',
+  'tabletop.setup.intro': 'Cada casilla medirá lo que una peana.',
   'tabletop.setup.diagonal': 'Tamaño de la pantalla',
   'tabletop.setup.inches': '{{value}}″',
   'tabletop.setup.other': 'Otro',
@@ -663,7 +661,7 @@ export const tabletopEs = {
   'tabletop.table.ruler': 'Regla',
   'tabletop.table.mute': 'Silenciar',
   'tabletop.table.unmute': 'Activar sonido',
-  'tabletop.player.lede': 'El mapa de la mesa. Pellizca para acercar.',
+  'tabletop.player.lede': 'Pellizca para acercar.',
   'tabletop.player.nothing': 'Cuando el DM ponga una escena en la mesa aparecerá aquí.',
   'tabletop.player.measure': 'Medir',
   'tabletop.player.board': 'Mapa de {{name}}',

@@ -2,7 +2,6 @@ export const inventoryEn = {
   'catalogue.search': 'Search items',
   'catalogue.title': 'Item storeroom',
   'catalogue.create': 'New item',
-  'catalogue.intro': 'Prepare campaign items, then give them to characters or add them to a shop.',
   'catalogue.edit': 'Edit',
   'catalogue.give': 'Give to characters',
   'catalogue.addToShop': 'Add to shop',

@@ -20,7 +20,6 @@ export const shopsEn = {
   'commerce.error.forbidden': 'You cannot do this in this campaign.',
   'commerce.error.unavailable': 'Could not complete it. Check your connection and try again.',
   'shop.title': 'Shops',
-  'shop.intro': 'Browse what the merchants offer you and buy with your gold.',
   'shop.previewReadOnly': 'Viewing as {{name}}. Purchases are disabled in this view.',
   'shop.emptyTitle': 'No shops open for you yet',
   'shop.emptyHelp': 'When your DM reveals a merchant, it appears here.',

@@ -1,7 +1,6 @@
 import type { glossaryEn } from './glossary-en'
 
 export const glossaryEs = {
-  'glossary.intro': 'Reglas, estados y conjuros del SRD 5.5e, y el homebrew de tu campaña.',
   'glossary.searchLabel': 'Buscar en el glosario',
   'glossary.searchPlaceholder': 'Agarrado, bola de fuego, cobertura…',
   'glossary.searchShortcut': 'Pulsa / para buscar',

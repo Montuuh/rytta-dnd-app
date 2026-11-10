@@ -37,14 +37,14 @@ async function prepare(page: Page, modules = ['party', 'combat', 'tabletop'], pl
 }
 
 /** A prepared scene on the table: a free token, a hidden one, a note, an event and a secret door. */
-function seedScene(server: ReturnType<typeof tabletopServer>) {
+function seedScene(server: ReturnType<typeof tabletopServer>, name = 'Puente de Vado') {
   const scene = server.act('save_tabletop_scene', {
     target_campaign: campaignId,
     target_scene: null,
     expected_revision: null,
     request_id: 'scene',
     fields: {
-      name: 'Puente de Vado',
+      name,
       map_kind: 'blank',
       ground: 'grass',
       cols: 20,
@@ -669,15 +669,7 @@ test('RYT-055 Players read the scene on the table only while the module is open'
     server.calls.filter((c) => c.method === 'get_tabletop').every((c) => c.body.as_table === true),
   ).toBe(true)
   // RYT-085: the board and its zoom stack fit the viewport (above the phone bottom bar).
-  const fit = await page.evaluate(() => {
-    const frame = document.querySelector('.tt-player-board')!.getBoundingClientRect()
-    const zoom = document.querySelector('.tt-zoom')!.getBoundingClientRect()
-    const bar = document.querySelector('.bottom-nav')?.getBoundingClientRect()
-    const limit = bar && bar.height > 0 ? bar.top : innerHeight
-    return { frame: frame.bottom, zoom: zoom.bottom, limit }
-  })
-  expect(fit.frame).toBeLessThanOrEqual(fit.limit)
-  expect(fit.zoom).toBeLessThanOrEqual(fit.limit)
+  await expectBoardFits(page)
   // A private measure: the switch, then a drag.
   await page.getByLabel('Medir').check()
   await audit(page, 'main', '.tt-world')
@@ -689,6 +681,31 @@ test('RYT-055 the tabletop stays closed to Players until the DM opens it', async
   await page.goto(`./#/campaign/${campaignId}/tabletop`)
   await expect(page.getByText('El DM aún no ha abierto la mesa.')).toBeVisible({ timeout: 15_000 })
 })
+
+test('RYT-086 the Player board fits below a scene title that wraps', async ({ page }, info) => {
+  const { server } = await prepare(page, ['party', 'tabletop'], true)
+  const name = 'La Cripta del Rey Hechicero bajo las Colinas de Ceniza y el Puente Roto'
+  seedScene(server, name)
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  const title = page.getByRole('heading', { level: 1, name })
+  await expect(title).toBeVisible({ timeout: 15_000 })
+  // The title wraps on phones and tablets; the board takes the room that is left.
+  if (size(info) !== 'desktop') expect((await title.boundingBox())!.height).toBeGreaterThan(60)
+  await expectBoardFits(page)
+})
+
+/** The Player board and its zoom stack end above the phone bottom bar, or inside the viewport. */
+async function expectBoardFits(page: Page) {
+  const fit = await page.evaluate(() => {
+    const frame = document.querySelector('.tt-player-board')!.getBoundingClientRect()
+    const zoom = document.querySelector('.tt-zoom')!.getBoundingClientRect()
+    const bar = document.querySelector('.bottom-nav')?.getBoundingClientRect()
+    const limit = bar && bar.height > 0 ? bar.top : innerHeight
+    return { frame: frame.bottom, zoom: zoom.bottom, limit }
+  })
+  expect(fit.frame).toBeLessThanOrEqual(fit.limit)
+  expect(fit.zoom).toBeLessThanOrEqual(fit.limit)
+}
 
 async function openPanel(page: Page, info: TestInfo, name: string) {
   if (phone(info)) {

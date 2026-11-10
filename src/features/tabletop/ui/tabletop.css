@@ -2208,15 +2208,28 @@ html.tt-table-mode body {
   align-items: center;
   gap: 0.75rem;
 }
-.tt-player-board {
-  height: calc(100dvh - 15rem - var(--bottom-nav-h));
-  min-height: 20rem;
+/* RYT-086: the board takes whatever room the page head (however its title wraps) and the
+   measure row leave in the viewport, above the phone bottom bar, so the zoom stack stays on
+   screen. The page scrolls only once that room drops below the floor. */
+.workspace:has(.tt-player-board) {
+  box-sizing: border-box;
 }
-/* Tablets keep the page head, its hint and the measure row above the board and have no
-   bottom bar: the board fills the rest so the zoom stack stays on screen without scrolling. */
-@media (min-width: 48em) {
-  .tt-player-board {
-    height: calc(100dvh - 19.5rem);
+.workspace:has(.tt-player-board) > main {
+  display: flex;
+  flex-direction: column;
+}
+.tt-player:has(.tt-player-board) {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+.tt-player-board {
+  flex: 1 0 0;
+  min-height: min(20rem, 40dvh);
+}
+@media (max-width: 47.99em) {
+  .has-bottom-nav .workspace:has(.tt-player-board) {
+    padding-bottom: calc(var(--bottom-nav-h) + 16px + env(safe-area-inset-bottom));
   }
 }
 

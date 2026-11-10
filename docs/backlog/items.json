@@ -3404,6 +3404,34 @@
         "390px and 820px probes and captures, both themes and languages"
       ],
       "evidence": ["docs/evidence/RYT-085/validation.md", "docs/evidence/RYT-085/ui-review.md"]
+    },
+    {
+      "id": "RYT-086",
+      "title": "Let the Player board fill the space below the page head",
+      "priority": "P3",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "claude-sonnet-5-5",
+        "reasoningEffort": "medium"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-085"],
+      "sources": [
+        "docs/evidence/RYT-085/ui-review.md finding 1: the fixed rem offset breaks when the scene title wraps."
+      ],
+      "scope": "Size the Player tabletop board by the room left below the page head and the measure row instead of a fixed viewport offset, so a wrapped scene title never pushes the zoom stack under the phone bottom bar or past the tablet viewport.",
+      "acceptance": [
+        "With one- and two-line scene titles the Player board and its zoom stack end above the bottom bar at 390px and inside the viewport at 820x1180, at 100% and 150% text.",
+        "Short titles keep about the board RYT-085 delivered (390px: ends at 748 instead of 752, with no page scroll); the board keeps a min(20rem, 40dvh) floor and the page scrolls only below it.",
+        "Checked at 390px and 820px in dark and parchment, ES and EN; the RYT-085 e2e fit assertion also runs with a long title.",
+        "npm run check and the tabletop e2e spec pass; ui-ux PASS on the current fingerprint."
+      ],
+      "validation": [
+        "npm run check",
+        "npx playwright test tests/e2e/tabletop.spec.ts",
+        "390px and 820px probes with one- and two-line titles, 100% and 150% text, both themes and languages"
+      ],
+      "evidence": ["docs/evidence/RYT-086/validation.md", "docs/evidence/RYT-086/ui-review.md"]
     }
   ]
 }

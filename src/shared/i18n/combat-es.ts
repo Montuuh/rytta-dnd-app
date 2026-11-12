@@ -345,4 +345,6 @@ export const combatEs = {
   'combat.death.announce.up': '{{name}} saca un 20 natural y vuelve con 1 punto de golpe.',
   'combat.error.notYourTurn': 'Las salvaciones de muerte se tiran en tu turno.',
   'combat.error.alreadyRolled': 'Ya tiraste esta ronda. El DM puede deshacer un error.',
+  'combat.error.alreadyModified':
+    'Esta criatura ya tiene una versión de la campaña. Ábrela para cambiarla.',
 } satisfies Record<keyof typeof combatEn, string>

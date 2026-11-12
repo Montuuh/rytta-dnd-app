@@ -89,7 +89,8 @@
   padding: 0;
   list-style: none;
 }
-@media (min-width: 36em) {
+/* Six across when the block itself has room (RYT-088: it can sit beside the creature's plate). */
+@container (min-width: 26rem) {
   .sb-abilities {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }

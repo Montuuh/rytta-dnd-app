@@ -38,10 +38,14 @@ export function CreatureConsole({
   const catalog = useCreatureCatalog(campaign.id)
   const item = combatant.template_id
     ? catalog.items.find((i) => i.key === `hb:${combatant.template_id}`)
+    : undefined
+  // RYT-089: an official creature already in the fight keeps its stat block, even when the campaign
+  // removed it from its bestiary since.
+  const block = item
+    ? catalog.blockFor(item)
     : combatant.srd_id
-      ? catalog.items.find((i) => i.key === `srd:${combatant.srd_id}`)
-      : undefined
-  const block = catalog.blockFor(item)
+      ? catalog.officialBlock(combatant.srd_id)
+      : null
   const trackers = combatant.trackers ?? []
   return (
     <Stack gap="md">

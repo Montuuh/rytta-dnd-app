@@ -22,6 +22,7 @@ import { TileGroup } from './bestiary-widgets'
 import { bandGlyphs, formatXp, listOf, type SuggestPrefs } from './builder-parts'
 import { itemArt, npcEntryFor, useSpellLabel, type useCreatureCatalog } from './creatures'
 import type { Run } from './helpers'
+import { OfficialElsewhere } from './official-bestiary'
 import { Token } from './token'
 
 type Catalog = ReturnType<typeof useCreatureCatalog>
@@ -42,6 +43,7 @@ const nextSeed = (n: number) => (n * 48271 + 1) % 2147483647
  * what was already shown while there are alternatives. Choices survive closing the dialog.
  */
 export function SuggestDialog({
+  campaignId,
   encounterId,
   encounterName,
   balance,
@@ -54,6 +56,7 @@ export function SuggestDialog({
   onClose,
   onAdded,
 }: {
+  campaignId: string
   encounterId: string
   encounterName: string
   balance: Balance
@@ -273,6 +276,8 @@ export function SuggestDialog({
             <Text className="bld-empty">{t('builder.suggest.noRoom')}</Text>
           ) : crowded ? (
             <Text className="bld-empty">{t('builder.suggest.crowded')}</Text>
+          ) : ideas.length === 0 && catalog.official?.downloaded === false ? (
+            <OfficialElsewhere campaignId={campaignId} total={catalog.officialCount} />
           ) : ideas.length === 0 ? (
             <Text className="bld-empty">{t('builder.suggest.none')}</Text>
           ) : (

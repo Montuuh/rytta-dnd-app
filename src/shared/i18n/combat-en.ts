@@ -342,4 +342,6 @@ export const combatEn = {
   'combat.death.announce.up': '{{name}} rolls a natural 20 and is back with 1 hit point.',
   'combat.error.notYourTurn': 'You roll death saves on your turn.',
   'combat.error.alreadyRolled': 'You already rolled this round. The DM can undo a mistake.',
+  'combat.error.alreadyModified':
+    'This creature already has a campaign version. Open it to change it.',
 } as const

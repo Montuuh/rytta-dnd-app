@@ -78,6 +78,17 @@ object exists. SQL tests deny anon, outsiders, Players and DMs of another campai
 mirror. Players and the table never receive `srd_id`, so SRD art never reveals which creature an NPC
 is.
 
+Campaign bestiary (ADR 039, RYT-089): `campaign_srd_bestiary` and `campaign_srd_removed` are DM-only
+reads under RLS with no direct writes; `set_srd_bestiary` (download, remove one, remove all) is
+DM-only, campaign-locked, idempotent, validates the action and the creature id and keeps at most 1000
+removed creatures. Removing deletes only that campaign's versions (`srd_override`) of the removed
+creatures, never "based on" or homebrew templates, and refreshes running fights that use them.
+`save_combatant_template` creates a version only for a creature in the campaign's bestiary, once
+(partial unique index). The state helper runs with its caller's rights and is not executable by
+`authenticated`. SQL tests deny anon, outsiders, former members, Players and DMs of another campaign
+and scan the PRE copy for production references. Known limit: a deleted version's image stays in the
+private bucket (the storage router needs the template to delete it), as for deleted templates.
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite

@@ -60,4 +60,6 @@ export type CombatFunctions = {
   }>
   list_creature_srd_images: Call<object>
   set_creature_srd_image: Mutation<{ target_srd: string; new_path: string | null }>
+  get_srd_bestiary: Call<object>
+  set_srd_bestiary: Mutation<{ action: string; target_srd: string | null }>
 }

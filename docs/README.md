@@ -100,3 +100,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and active-character choices, and New character in the party list.
 49. [ADR 038: Claude Code as the agent platform](decisions/038-claude-code-setup.md)
     and [RYT-083 verification](evidence/RYT-083/validation.md).
+50. [ADR 039: each campaign has its own bestiary; the DM downloads the official one](decisions/039-campaign-bestiary.md):
+    the campaign's official bestiary, versions edited in place and removals.

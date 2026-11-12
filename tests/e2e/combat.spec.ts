@@ -1381,10 +1381,10 @@ test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broke
   await page.evaluate(() => (document.documentElement.style.fontSize = ''))
   await audit(page)
   await evidence(page, info.project.name, 'dm-console-order', 'RYT-043')
-  // The detail opens on the combatant's token, with its image described.
+  // The DM's detail opens on the creature's portrait (RYT-088), named for what it opens.
   await row(page, 'Goblin 2').locator('.combat-row-main').click()
   const detail = page.locator('.combat-detail:visible')
-  await expect(detail.getByRole('img', { name: 'Imagen de Goblin 2' })).toBeVisible()
+  await expect(detail.getByRole('button', { name: 'Ver la imagen de Goblin 2' })).toBeVisible()
   // ui-ux F4: "CA 10" and "Iniciativa 16" never split from their value.
   for (const pair of await detail.locator('.combat-meta > span').all())
     expect(
@@ -1467,20 +1467,17 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
 
   // Add: the image is cropped to WebP, stored privately and attached with the revision.
   await picker.setInputFiles({ name: 'goblin.png', mimeType: 'image/png', buffer: png })
-  await expect(card.locator('.combat-creature-image .combat-token img')).toHaveAttribute(
-    'src',
-    /goblin/,
-    {
-      timeout: 15_000,
-    },
-  )
+  await expect(card.locator('.bst-plate-photo img')).toHaveAttribute('src', /goblin/, {
+    timeout: 15_000,
+  })
   await expect(card.getByRole('alert')).toHaveCount(0)
   await expect(card.getByRole('status')).toHaveText('Imagen de Goblin guardada')
   expect([...server.uploads]).toEqual([
     expect.stringMatching(new RegExp(`^pre/${campaignId}/${goblin.id}/.+\\.webp$`)),
   ])
-  // RYT-053: with an image the token opens a menu (view, change, remove) instead of the picker.
-  const token = card.getByRole('button', { name: 'Imagen de Goblin: ver o cambiar' })
+  // RYT-088: with an image the stat block leads with its plate; the pencil in its corner opens the
+  // menu (change, remove) and keeps the focus after the save.
+  const token = card.getByRole('button', { name: 'Cambiar la imagen de Goblin' })
   await expect(token).toBeFocused()
   await audit(page)
   await evidence(page, info.project.name, 'bestiary', 'RYT-043')
@@ -1945,4 +1942,52 @@ test('RYT-045 death saves pass axe in English and light theme, and fit 150% text
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await expectTouchTargets(page, '.combat-handoff:visible')
   await evidence(page, info.project.name, 'death-saves-150', 'RYT-045')
+})
+
+test('RYT-088 the DM opens a creature in a fight on its portrait, which opens the viewer', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  server.seedActive()
+  const encounter = server.encounters[0]!
+  // An SRD creature: the DM's projection carries srd_id, so its bundled art stands in.
+  const owlbear = encounter.combatants.find((c) => c.name === 'Goblin 1')!
+  Object.assign(owlbear, { name: 'Oso lechuza', srd_id: 'owlbear' })
+  await page.goto(`./#/campaign/${campaignId}/combat/${encounter.id}?view=console`)
+  await row(page, 'Oso lechuza').click()
+  const detail = page.locator('.combat-detail:visible')
+  const portrait = detail.getByRole('button', { name: 'Ver la imagen de Oso lechuza' })
+  await expect(portrait.locator('img')).toHaveAttribute('src', /bestiary\/art\/owlbear\.webp$/, {
+    timeout: 15_000,
+  })
+  // The hit points keep their place under the header.
+  await expect(detail.locator('.combat-detail-name')).toHaveText('Oso lechuza')
+  await expectTouchTargets(page, '.combat-detail:visible .bst-plate-open')
+  await audit(page)
+  await evidence(page, info.project.name, 'combat-portrait', 'RYT-088')
+  // The viewer shows the credit and no change action in a fight; Escape returns to the portrait.
+  await portrait.click()
+  const viewer = page.locator('.bst-art-viewer')
+  await expect(viewer.getByText('© Rytta', { exact: true })).toBeVisible()
+  await expect(viewer.getByRole('button', { name: 'Cambiar la imagen…' })).toHaveCount(0)
+  // Escape closes only the viewer: the detail (a sheet on phones and tablets) stays open.
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(detail).toBeVisible()
+  await expect(portrait).toBeFocused()
+  // A creature without any image keeps its token. Phones and tablets show the detail in a sheet.
+  if ((info.project.use.viewport?.width ?? 1440) < 992) {
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.combat-detail:visible')).toHaveCount(0)
+  }
+  await row(page, 'Goblin 2').click()
+  await expect(page.locator('.combat-detail:visible .combat-token')).toBeVisible()
+  await expect(page.locator('.combat-detail:visible .bst-plate')).toHaveCount(0)
+  expect(errors).toEqual([])
 })

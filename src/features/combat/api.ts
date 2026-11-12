@@ -7,6 +7,7 @@ import {
   imageBuckets,
   loadCombatState,
   loadEncounters,
+  loadSrdBestiary,
   loadSrdImages,
   loadTemplates,
   subscribeEncounters,
@@ -63,6 +64,15 @@ export const srdImagesQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: [...combatScope(userId, campaignId), 'srd-images'],
     queryFn: ({ signal }) => loadSrdImages(campaignId, signal),
+    staleTime: 30_000,
+    retry: 1,
+  })
+
+/** RYT-089: whether this campaign downloaded the official bestiary, and what its DM removed. */
+export const srdBestiaryQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: [...combatScope(userId, campaignId), 'srd-bestiary'],
+    queryFn: ({ signal }) => loadSrdBestiary(campaignId, signal),
     staleTime: 30_000,
     retry: 1,
   })

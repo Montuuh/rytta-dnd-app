@@ -1,1031 +1,2021 @@
 {
   "aboleth": {
-    "icon": "delapouite/floating-tentacles"
+    "generated": "aboleth.png",
+    "replaced": {
+      "icon": "delapouite/floating-tentacles"
+    }
   },
   "adult-black-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#2b2622"
+    "generated": "adult-black-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#2b2622"
+    }
   },
   "adult-blue-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#2f5f93"
+    "generated": "adult-blue-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#2f5f93"
+    }
   },
   "adult-brass-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#9a6b1f"
+    "generated": "adult-brass-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#9a6b1f"
+    }
   },
   "adult-bronze-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#7a5230"
+    "generated": "adult-bronze-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#7a5230"
+    }
   },
   "adult-copper-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#a04f2a"
+    "generated": "adult-copper-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#a04f2a"
+    }
   },
   "adult-gold-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#a77a0e"
+    "generated": "adult-gold-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#a77a0e"
+    }
   },
   "adult-green-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#3c6b33"
+    "generated": "adult-green-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#3c6b33"
+    }
   },
   "adult-red-dragon": {
-    "wesnoth": "monsters/fire-dragon.webp"
+    "generated": "adult-red-dragon.png",
+    "replaced": {
+      "wesnoth": "monsters/fire-dragon.webp"
+    }
   },
   "adult-silver-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#5d6f7d"
+    "generated": "adult-silver-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#5d6f7d"
+    }
   },
   "adult-white-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#6f8fa6"
+    "generated": "adult-white-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#6f8fa6"
+    }
   },
   "air-elemental": {
-    "icon": "lorc/tornado"
+    "generated": "air-elemental.png",
+    "replaced": {
+      "icon": "lorc/tornado"
+    }
   },
   "allosaurus": {
-    "commons": "File:Allosaurus anax.jpg",
-    "focus": [0.22, 0.45]
+    "generated": "allosaurus.png",
+    "replaced": {
+      "commons": "File:Allosaurus anax.jpg",
+      "focus": [0.22, 0.45]
+    }
   },
   "ancient-black-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#2b2622"
+    "generated": "ancient-black-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#2b2622"
+    }
   },
   "ancient-blue-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#2f5f93"
+    "generated": "ancient-blue-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#2f5f93"
+    }
   },
   "ancient-brass-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#9a6b1f"
+    "generated": "ancient-brass-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#9a6b1f"
+    }
   },
   "ancient-bronze-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#7a5230"
+    "generated": "ancient-bronze-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#7a5230"
+    }
   },
   "ancient-copper-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#a04f2a"
+    "generated": "ancient-copper-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#a04f2a"
+    }
   },
   "ancient-gold-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#a77a0e"
+    "generated": "ancient-gold-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#a77a0e"
+    }
   },
   "ancient-green-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#3c6b33"
+    "generated": "ancient-green-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#3c6b33"
+    }
   },
   "ancient-red-dragon": {
-    "wesnoth": "monsters/fire-dragon.webp"
+    "generated": "ancient-red-dragon.png",
+    "replaced": {
+      "wesnoth": "monsters/fire-dragon.webp"
+    }
   },
   "ancient-silver-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#5d6f7d"
+    "generated": "ancient-silver-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#5d6f7d"
+    }
   },
   "ancient-white-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#6f8fa6"
+    "generated": "ancient-white-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#6f8fa6"
+    }
   },
   "animated-armor": {
-    "commons": "File:Lossy-page1-2122px-Hästrustning - Livrustkammaren - 72697 aaa.jpg"
+    "generated": "animated-armor.png",
+    "replaced": {
+      "commons": "File:Lossy-page1-2122px-Hästrustning - Livrustkammaren - 72697 aaa.jpg"
+    }
   },
   "animated-flying-sword": {
-    "commons": "File:Hand-and-a-Half Sword MET DP146428.jpg"
+    "generated": "animated-flying-sword.png",
+    "replaced": {
+      "commons": "File:Hand-and-a-Half Sword MET DP146428.jpg"
+    }
   },
   "animated-rug-of-smothering": {
-    "commons": "File:Vasnetsov samolet.jpg"
+    "generated": "animated-rug-of-smothering.png",
+    "replaced": {
+      "commons": "File:Vasnetsov samolet.jpg"
+    }
   },
   "ankheg": {
-    "wesnoth": "monsters/ant-giant.webp"
+    "generated": "ankheg.png",
+    "replaced": {
+      "wesnoth": "monsters/ant-giant.webp"
+    }
   },
   "ankylosaurus": {
-    "commons": "File:Ankylosaurus dinosaur.png",
-    "focus": [0.38, 0.6]
+    "generated": "ankylosaurus.png",
+    "replaced": {
+      "commons": "File:Ankylosaurus dinosaur.png",
+      "focus": [0.38, 0.6]
+    }
   },
   "ape": {
-    "commons": "File:015 Chimpanzee at Kibale forest National Park Photo by Giles Laurent.jpg"
+    "generated": "ape.png",
+    "replaced": {
+      "commons": "File:015 Chimpanzee at Kibale forest National Park Photo by Giles Laurent.jpg"
+    }
   },
   "archelon": {
-    "commons": "File:Archelon ischyros Wieland, 1896.jpg"
+    "generated": "archelon.png",
+    "replaced": {
+      "commons": "File:Archelon ischyros Wieland, 1896.jpg"
+    }
   },
   "archmage": {
-    "wesnoth": "humans/mage-arch.webp"
+    "generated": "archmage.png",
+    "replaced": {
+      "wesnoth": "humans/mage-arch.webp"
+    }
   },
   "assassin": {
-    "wesnoth": "humans/assassin.webp"
+    "generated": "assassin.png",
+    "replaced": {
+      "wesnoth": "humans/assassin.webp"
+    }
   },
   "awakened-shrub": {
-    "commons": "File:Cytisus scoparius2.jpg"
+    "generated": "awakened-shrub.png",
+    "replaced": {
+      "commons": "File:Cytisus scoparius2.jpg"
+    }
   },
   "awakened-tree": {
-    "wesnoth": "woses/wose.webp"
+    "generated": "awakened-tree.png",
+    "replaced": {
+      "wesnoth": "woses/wose.webp"
+    }
   },
   "axe-beak": {
-    "commons": "File:Gastornis 1917 white background.jpg"
+    "generated": "axe-beak.png",
+    "replaced": {
+      "commons": "File:Gastornis 1917 white background.jpg"
+    }
   },
   "azer-sentinel": {
-    "wesnoth": "dwarves/sentinel.webp"
+    "generated": "azer-sentinel.png",
+    "replaced": {
+      "wesnoth": "dwarves/sentinel.webp"
+    }
   },
   "baboon": {
-    "commons": "File:Olive baboon Ngorongoro.jpg"
+    "generated": "baboon.png",
+    "replaced": {
+      "commons": "File:Olive baboon Ngorongoro.jpg"
+    }
   },
   "badger": {
-    "commons": "File:European badger (Meles meles taxus) Drenthe.jpg"
+    "generated": "badger.png",
+    "replaced": {
+      "commons": "File:European badger (Meles meles taxus) Drenthe.jpg"
+    }
   },
   "balor": {
-    "commons": "File:Asmodeus.jpg"
+    "generated": "balor.png",
+    "replaced": {
+      "commons": "File:Asmodeus.jpg"
+    }
   },
   "bandit": {
-    "wesnoth": "humans/bandit.webp"
+    "generated": "bandit.png",
+    "replaced": {
+      "wesnoth": "humans/bandit.webp"
+    }
   },
   "bandit-captain": {
-    "wesnoth": "humans/outlaw.webp"
+    "generated": "bandit-captain.png",
+    "replaced": {
+      "wesnoth": "humans/outlaw.webp"
+    }
   },
   "barbed-devil": {
-    "commons": "File:ABRAXAS INFERNAL DICTIONARY.jpg"
+    "generated": "barbed-devil.png",
+    "replaced": {
+      "commons": "File:ABRAXAS INFERNAL DICTIONARY.jpg"
+    }
   },
   "basilisk": {
-    "commons": "File:Basilisk aldrovandi.jpg"
+    "generated": "basilisk.png",
+    "replaced": {
+      "commons": "File:Basilisk aldrovandi.jpg"
+    }
   },
   "bat": {
-    "commons": "File:Big-eared-townsend-fledermaus.jpg"
+    "generated": "bat.png",
+    "replaced": {
+      "commons": "File:Big-eared-townsend-fledermaus.jpg"
+    }
   },
   "bearded-devil": {
-    "commons": "File:Agares.jpg"
+    "generated": "bearded-devil.png",
+    "replaced": {
+      "commons": "File:Agares.jpg"
+    }
   },
   "behir": {
-    "wesnoth": "monsters/sea-serpent.webp"
+    "generated": "behir.png",
+    "replaced": {
+      "wesnoth": "monsters/sea-serpent.webp"
+    }
   },
   "berserker": {
-    "wesnoth": "dwarves/ulfserker.webp"
+    "generated": "berserker.png",
+    "replaced": {
+      "wesnoth": "dwarves/ulfserker.webp"
+    }
   },
   "black-bear": {
-    "commons": "File:Vancouver Island black bear (Ursus americanus vancouveri) Tofino 4.jpg"
+    "generated": "black-bear.png",
+    "replaced": {
+      "commons": "File:Vancouver Island black bear (Ursus americanus vancouveri) Tofino 4.jpg"
+    }
   },
   "black-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#2b2622"
+    "generated": "black-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#2b2622"
+    }
   },
   "black-pudding": {
-    "wesnoth": "monsters/giant-mudcrawler.webp"
+    "generated": "black-pudding.png",
+    "replaced": {
+      "wesnoth": "monsters/giant-mudcrawler.webp"
+    }
   },
   "blink-dog": {
-    "icon": "lorc/hound"
+    "generated": "blink-dog.png",
+    "replaced": {
+      "icon": "lorc/hound"
+    }
   },
   "blood-hawk": {
-    "commons": "File:Red-tailed Hawk (45812546121).jpg"
+    "generated": "blood-hawk.png",
+    "replaced": {
+      "commons": "File:Red-tailed Hawk (45812546121).jpg"
+    }
   },
   "blue-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#2f5f93"
+    "generated": "blue-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#2f5f93"
+    }
   },
   "boar": {
-    "commons": "File:Wildschwein, Nähe Pulverstampftor (cropped).jpg"
+    "generated": "boar.png",
+    "replaced": {
+      "commons": "File:Wildschwein, Nähe Pulverstampftor (cropped).jpg"
+    }
   },
   "bone-devil": {
-    "commons": "File:Buer-blog.jpg"
+    "generated": "bone-devil.png",
+    "replaced": {
+      "commons": "File:Buer-blog.jpg"
+    }
   },
   "brass-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#9a6b1f"
+    "generated": "brass-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#9a6b1f"
+    }
   },
   "bronze-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#7a5230"
+    "generated": "bronze-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#7a5230"
+    }
   },
   "brown-bear": {
-    "commons": "File:2010-kodiak-bear-1.jpg"
+    "generated": "brown-bear.png",
+    "replaced": {
+      "commons": "File:2010-kodiak-bear-1.jpg"
+    }
   },
   "bugbear-stalker": {
-    "wesnoth": "orcs/assassin.webp"
+    "generated": "bugbear-stalker.png",
+    "replaced": {
+      "wesnoth": "orcs/assassin.webp"
+    }
   },
   "bugbear-warrior": {
-    "wesnoth": "orcs/grunt.webp"
+    "generated": "bugbear-warrior.png",
+    "replaced": {
+      "wesnoth": "orcs/grunt.webp"
+    }
   },
   "bulette": {
-    "icon": "lorc/shark-jaws"
+    "generated": "bulette.png",
+    "replaced": {
+      "icon": "lorc/shark-jaws"
+    }
   },
   "camel": {
-    "commons": "File:07. Camel Profile, near Silverton, NSW, 07.07.2007.jpg"
+    "generated": "camel.png",
+    "replaced": {
+      "commons": "File:07. Camel Profile, near Silverton, NSW, 07.07.2007.jpg"
+    }
   },
   "cat": {
-    "commons": "File:Siam lilacpoint.jpg"
+    "generated": "cat.png",
+    "replaced": {
+      "commons": "File:Siam lilacpoint.jpg"
+    }
   },
   "centaur-trooper": {
-    "commons": "File:Terracotta lekythos (oil flask) with centaur battling a warrior MET DP161810.jpg"
+    "generated": "centaur-trooper.png",
+    "replaced": {
+      "commons": "File:Terracotta lekythos (oil flask) with centaur battling a warrior MET DP161810.jpg"
+    }
   },
   "chain-devil": {
-    "icon": "lorc/crossed-chains"
+    "generated": "chain-devil.png",
+    "replaced": {
+      "icon": "lorc/crossed-chains"
+    }
   },
   "chimera": {
-    "commons": "File:Chimera Apulia Louvre K362.jpg"
+    "generated": "chimera.png",
+    "replaced": {
+      "commons": "File:Chimera Apulia Louvre K362.jpg"
+    }
   },
   "chuul": {
-    "wesnoth": "monsters/scorpion-rock.webp"
+    "generated": "chuul.png",
+    "replaced": {
+      "wesnoth": "monsters/scorpion-rock.webp"
+    }
   },
   "clay-golem": {
-    "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
+    "generated": "clay-golem.png",
+    "replaced": {
+      "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
+    }
   },
   "cloaker": {
-    "commons": "File:Dharavandhoo Thila - Manata Black Pearl.JPG"
+    "generated": "cloaker.png",
+    "replaced": {
+      "commons": "File:Dharavandhoo Thila - Manata Black Pearl.JPG"
+    }
   },
   "cloud-giant": {
-    "icon": "delapouite/giant"
+    "generated": "cloud-giant.png",
+    "replaced": {
+      "icon": "delapouite/giant"
+    }
   },
   "cockatrice": {
-    "commons": "File:DragonTransom.jpg"
+    "generated": "cockatrice.png",
+    "replaced": {
+      "commons": "File:DragonTransom.jpg"
+    }
   },
   "commoner": {
-    "wesnoth": "humans/peasant.webp"
+    "generated": "commoner.png",
+    "replaced": {
+      "wesnoth": "humans/peasant.webp"
+    }
   },
   "constrictor-snake": {
-    "commons": "File:Red-tailed boa (Boa constrictor constrictor) Rio Napo.jpg"
+    "generated": "constrictor-snake.png",
+    "replaced": {
+      "commons": "File:Red-tailed boa (Boa constrictor constrictor) Rio Napo.jpg"
+    }
   },
   "copper-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#a04f2a"
+    "generated": "copper-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#a04f2a"
+    }
   },
   "couatl": {
-    "commons": "File:Quetzalcóatl como la serpiente emplumada y el dios del viento Ehécatl, en el folio 19.jpg"
+    "generated": "couatl.png",
+    "replaced": {
+      "commons": "File:Quetzalcóatl como la serpiente emplumada y el dios del viento Ehécatl, en el folio 19.jpg"
+    }
   },
   "crab": {
-    "commons": "File:Cancer pagurus.jpg"
+    "generated": "crab.png",
+    "replaced": {
+      "commons": "File:Cancer pagurus.jpg"
+    }
   },
   "crocodile": {
-    "commons": "File:Nile crocodile head.jpg"
+    "generated": "crocodile.png",
+    "replaced": {
+      "commons": "File:Nile crocodile head.jpg"
+    }
   },
   "cultist": {
-    "wesnoth": "humans/dark-adept.webp"
+    "generated": "cultist.png",
+    "replaced": {
+      "wesnoth": "humans/dark-adept.webp"
+    }
   },
   "cultist-fanatic": {
-    "wesnoth": "humans/necromancer.webp"
+    "generated": "cultist-fanatic.png",
+    "replaced": {
+      "wesnoth": "humans/necromancer.webp"
+    }
   },
   "darkmantle": {
-    "icon": "lucasms/cloak"
+    "generated": "darkmantle.png",
+    "replaced": {
+      "icon": "lucasms/cloak"
+    }
   },
   "death-dog": {
-    "commons": "File:Orthos Staatliche Antikensammlungen 2620.jpg"
+    "generated": "death-dog.png",
+    "replaced": {
+      "commons": "File:Orthos Staatliche Antikensammlungen 2620.jpg"
+    }
   },
   "deer": {
-    "commons": "File:Cervus elaphus Luc Viatour 6.jpg"
+    "generated": "deer.png",
+    "replaced": {
+      "commons": "File:Cervus elaphus Luc Viatour 6.jpg"
+    }
   },
   "deva": {
-    "commons": "File:Angel of the Annunciation MET DP167921.jpg"
+    "generated": "deva.png",
+    "replaced": {
+      "commons": "File:Angel of the Annunciation MET DP167921.jpg"
+    }
   },
   "dire-wolf": {
-    "wesnoth": "wolves/wolf-great.webp"
+    "generated": "dire-wolf.png",
+    "replaced": {
+      "wesnoth": "wolves/wolf-great.webp"
+    }
   },
   "djinni": {
-    "wesnoth": "monsters/jinn.webp"
+    "generated": "djinni.png",
+    "replaced": {
+      "wesnoth": "monsters/jinn.webp"
+    }
   },
   "doppelganger": {
-    "commons": "File:Dante Gabriel Rossetti - How They Met Themselves (1860-64 circa).jpg"
+    "generated": "doppelganger.png",
+    "replaced": {
+      "commons": "File:Dante Gabriel Rossetti - How They Met Themselves (1860-64 circa).jpg"
+    }
   },
   "draft-horse": {
-    "commons": "File:Aa shirehorse.jpg"
+    "generated": "draft-horse.png",
+    "replaced": {
+      "commons": "File:Aa shirehorse.jpg"
+    }
   },
   "dragon-turtle": {
-    "commons": "File:Dragon Turtle.jpg"
+    "generated": "dragon-turtle.png",
+    "replaced": {
+      "commons": "File:Dragon Turtle.jpg"
+    }
   },
   "dretch": {
-    "commons": "File:Amduscias.jpg"
+    "generated": "dretch.png",
+    "replaced": {
+      "commons": "File:Amduscias.jpg"
+    }
   },
   "drider": {
-    "icon": "carl-olsen/spider-face"
+    "generated": "drider.png",
+    "replaced": {
+      "icon": "carl-olsen/spider-face"
+    }
   },
   "druid": {
-    "wesnoth": "elves/druid.webp"
+    "generated": "druid.png",
+    "replaced": {
+      "wesnoth": "elves/druid.webp"
+    }
   },
   "dryad": {
-    "wesnoth": "elves/shyde.webp"
+    "generated": "dryad.png",
+    "replaced": {
+      "wesnoth": "elves/shyde.webp"
+    }
   },
   "dust-mephit": {
-    "commons": "File:Dust devil.jpg"
+    "generated": "dust-mephit.png",
+    "replaced": {
+      "commons": "File:Dust devil.jpg"
+    }
   },
   "eagle": {
-    "commons": "File:Bald eagle about to fly in Alaska (2016).jpg"
+    "generated": "eagle.png",
+    "replaced": {
+      "commons": "File:Bald eagle about to fly in Alaska (2016).jpg"
+    }
   },
   "earth-elemental": {
-    "icon": "delapouite/rock-golem"
+    "generated": "earth-elemental.png",
+    "replaced": {
+      "icon": "delapouite/rock-golem"
+    }
   },
   "efreeti": {
-    "commons": "File:Brooklyn Museum - Arghan Div Brings the Chest of Armor to Hamza.jpg"
+    "generated": "efreeti.png",
+    "replaced": {
+      "commons": "File:Brooklyn Museum - Arghan Div Brings the Chest of Armor to Hamza.jpg"
+    }
   },
   "elephant": {
-    "commons": "File:178 Male African bush elephant in Etosha National Park Photo by Giles Laurent.jpg"
+    "generated": "elephant.png",
+    "replaced": {
+      "commons": "File:178 Male African bush elephant in Etosha National Park Photo by Giles Laurent.jpg"
+    }
   },
   "elk": {
-    "commons": "File:Jasper.Wapiti-Hirsch.P1033401.jpg"
+    "generated": "elk.png",
+    "replaced": {
+      "commons": "File:Jasper.Wapiti-Hirsch.P1033401.jpg"
+    }
   },
   "erinyes": {
-    "commons": "File:Abigor.jpg"
+    "generated": "erinyes.png",
+    "replaced": {
+      "commons": "File:Abigor.jpg"
+    }
   },
   "ettercap": {
-    "icon": "delapouite/spider-mask"
+    "generated": "ettercap.png",
+    "replaced": {
+      "icon": "delapouite/spider-mask"
+    }
   },
   "ettin": {
-    "icon": "delapouite/ogre"
+    "generated": "ettin.png",
+    "replaced": {
+      "icon": "delapouite/ogre"
+    }
   },
   "fire-elemental": {
-    "wesnoth": "monsters/fire_guardian.webp"
+    "generated": "fire-elemental.png",
+    "replaced": {
+      "wesnoth": "monsters/fire_guardian.webp"
+    }
   },
   "fire-giant": {
-    "commons": "File:The giant with the flaming sword by Dollman.jpg"
+    "generated": "fire-giant.png",
+    "replaced": {
+      "commons": "File:The giant with the flaming sword by Dollman.jpg"
+    }
   },
   "flesh-golem": {
-    "commons": "File:Frankenstein, or the Modern Prometheus (Revised Edition, 1831) Creature.jpg"
+    "generated": "flesh-golem.png",
+    "replaced": {
+      "commons": "File:Frankenstein, or the Modern Prometheus (Revised Edition, 1831) Creature.jpg"
+    }
   },
   "flying-snake": {
-    "commons": "File:Chrysopelea ornata.jpg"
+    "generated": "flying-snake.png",
+    "replaced": {
+      "commons": "File:Chrysopelea ornata.jpg"
+    }
   },
   "frog": {
-    "commons": "File:Red-eyed Leaf Frog (49661076226).jpg"
+    "generated": "frog.png",
+    "replaced": {
+      "commons": "File:Red-eyed Leaf Frog (49661076226).jpg"
+    }
   },
   "frost-giant": {
-    "commons": "File:Kulturen - Riesin Holdrykka.jpg"
+    "generated": "frost-giant.png",
+    "replaced": {
+      "commons": "File:Kulturen - Riesin Holdrykka.jpg"
+    }
   },
   "gargoyle": {
-    "commons": "File:Notre-Dame Rzygacze.JPG"
+    "generated": "gargoyle.png",
+    "replaced": {
+      "commons": "File:Notre-Dame Rzygacze.JPG"
+    }
   },
   "gelatinous-cube": {
-    "commons": "File:Gelatinous Cube illustration by Tara Quinn.png"
+    "generated": "gelatinous-cube.png",
+    "replaced": {
+      "commons": "File:Gelatinous Cube illustration by Tara Quinn.png"
+    }
   },
   "ghast": {
-    "icon": "delapouite/shambling-zombie"
+    "generated": "ghast.png",
+    "replaced": {
+      "icon": "delapouite/shambling-zombie"
+    }
   },
   "ghost": {
-    "wesnoth": "undead/ghost.webp"
+    "generated": "ghost.png",
+    "replaced": {
+      "wesnoth": "undead/ghost.webp"
+    }
   },
   "ghoul": {
-    "wesnoth": "undead/ghoul.webp"
+    "generated": "ghoul.png",
+    "replaced": {
+      "wesnoth": "undead/ghoul.webp"
+    }
   },
   "giant-ape": {
-    "commons": "File:Gorille des plaines de l'ouest à l'Espace Zoologique.jpg"
+    "generated": "giant-ape.png",
+    "replaced": {
+      "commons": "File:Gorille des plaines de l'ouest à l'Espace Zoologique.jpg"
+    }
   },
   "giant-badger": {
-    "commons": "File:Honey Badger.jpg"
+    "generated": "giant-badger.png",
+    "replaced": {
+      "commons": "File:Honey Badger.jpg"
+    }
   },
   "giant-bat": {
-    "commons": "File:047 Indian flying fox in Keoladeo National Park Photo by Giles Laurent.jpg"
+    "generated": "giant-bat.png",
+    "replaced": {
+      "commons": "File:047 Indian flying fox in Keoladeo National Park Photo by Giles Laurent.jpg"
+    }
   },
   "giant-boar": {
-    "wesnoth": "monsters/woodland_boar.webp"
+    "generated": "giant-boar.png",
+    "replaced": {
+      "wesnoth": "monsters/woodland_boar.webp"
+    }
   },
   "giant-centipede": {
-    "commons": "File:Scolopendra gigantea.jpg"
+    "generated": "giant-centipede.png",
+    "replaced": {
+      "commons": "File:Scolopendra gigantea.jpg"
+    }
   },
   "giant-constrictor-snake": {
-    "commons": "File:Python reticulatus сетчатый питон-2.jpg"
+    "generated": "giant-constrictor-snake.png",
+    "replaced": {
+      "commons": "File:Python reticulatus сетчатый питон-2.jpg"
+    }
   },
   "giant-crab": {
-    "commons": "File:Macrocheira kaempferi.jpg"
+    "generated": "giant-crab.png",
+    "replaced": {
+      "commons": "File:Macrocheira kaempferi.jpg"
+    }
   },
   "giant-crocodile": {
-    "commons": "File:SaltwaterCrocodile('Maximo').jpg"
+    "generated": "giant-crocodile.png",
+    "replaced": {
+      "commons": "File:SaltwaterCrocodile('Maximo').jpg"
+    }
   },
   "giant-eagle": {
-    "commons": "File:015 Wild Golden Eagle in flight at Pfyn-Finges (Switzerland) Photo by Giles Laurent.jpg"
+    "generated": "giant-eagle.png",
+    "replaced": {
+      "commons": "File:015 Wild Golden Eagle in flight at Pfyn-Finges (Switzerland) Photo by Giles Laurent.jpg"
+    }
   },
   "giant-elk": {
-    "commons": "File:Megaloceros by Knight.jpg"
+    "generated": "giant-elk.png",
+    "replaced": {
+      "commons": "File:Megaloceros by Knight.jpg"
+    }
   },
   "giant-fire-beetle": {
-    "commons": "File:Photuris lucicrescens.jpg"
+    "generated": "giant-fire-beetle.png",
+    "replaced": {
+      "commons": "File:Photuris lucicrescens.jpg"
+    }
   },
   "giant-frog": {
-    "commons": "File:Conraua goliath photo from iNaturalist 539752953.jpg"
+    "generated": "giant-frog.png",
+    "replaced": {
+      "commons": "File:Conraua goliath photo from iNaturalist 539752953.jpg"
+    }
   },
   "giant-goat": {
-    "commons": "File:Markhor Schraubenziege Capra falconeri Zoo Augsburg-02.jpg"
+    "generated": "giant-goat.png",
+    "replaced": {
+      "commons": "File:Markhor Schraubenziege Capra falconeri Zoo Augsburg-02.jpg"
+    }
   },
   "giant-hyena": {
-    "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
+    "generated": "giant-hyena.png",
+    "replaced": {
+      "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
+    }
   },
   "giant-lizard": {
-    "commons": "File:202306 Varanus komodoensis.jpg"
+    "generated": "giant-lizard.png",
+    "replaced": {
+      "commons": "File:202306 Varanus komodoensis.jpg"
+    }
   },
   "giant-octopus": {
-    "commons": "File:Enteroctopus dolfeini.jpg"
+    "generated": "giant-octopus.png",
+    "replaced": {
+      "commons": "File:Enteroctopus dolfeini.jpg"
+    }
   },
   "giant-owl": {
-    "commons": "File:Bubo bubo 3 (Martin Mecnarowski).jpg"
+    "generated": "giant-owl.png",
+    "replaced": {
+      "commons": "File:Bubo bubo 3 (Martin Mecnarowski).jpg"
+    }
   },
   "giant-rat": {
-    "wesnoth": "monsters/giant-rat.webp"
+    "generated": "giant-rat.png",
+    "replaced": {
+      "wesnoth": "monsters/giant-rat.webp"
+    }
   },
   "giant-scorpion": {
-    "commons": "File:Female Emperor Scorpion.jpg"
+    "generated": "giant-scorpion.png",
+    "replaced": {
+      "commons": "File:Female Emperor Scorpion.jpg"
+    }
   },
   "giant-seahorse": {
-    "commons": "File:Sketchbook of fishes - 18. (Pot bellied) Sea horse - William Buelow Gould, c1832.jpg"
+    "generated": "giant-seahorse.png",
+    "replaced": {
+      "commons": "File:Sketchbook of fishes - 18. (Pot bellied) Sea horse - William Buelow Gould, c1832.jpg"
+    }
   },
   "giant-shark": {
-    "commons": "File:White shark.jpg"
+    "generated": "giant-shark.png",
+    "replaced": {
+      "commons": "File:White shark.jpg"
+    }
   },
   "giant-spider": {
-    "wesnoth": "monsters/giant-spider.webp"
+    "generated": "giant-spider.png",
+    "replaced": {
+      "wesnoth": "monsters/giant-spider.webp"
+    }
   },
   "giant-toad": {
-    "commons": "File:Canetoadmale.jpg"
+    "generated": "giant-toad.png",
+    "replaced": {
+      "commons": "File:Canetoadmale.jpg"
+    }
   },
   "giant-venomous-snake": {
-    "commons": "File:12 - The Mystical King Cobra and Coffee Forests.jpg"
+    "generated": "giant-venomous-snake.png",
+    "replaced": {
+      "commons": "File:12 - The Mystical King Cobra and Coffee Forests.jpg"
+    }
   },
   "giant-vulture": {
-    "commons": "File:Buitre negro (1).jpg"
+    "generated": "giant-vulture.png",
+    "replaced": {
+      "commons": "File:Buitre negro (1).jpg"
+    }
   },
   "giant-wasp": {
-    "commons": "File:Vespa mandarinia.jpg"
+    "generated": "giant-wasp.png",
+    "replaced": {
+      "commons": "File:Vespa mandarinia.jpg"
+    }
   },
   "giant-weasel": {
-    "commons": "File:Järv1.jpg"
+    "generated": "giant-weasel.png",
+    "replaced": {
+      "commons": "File:Järv1.jpg"
+    }
   },
   "giant-wolf-spider": {
-    "commons": "File:Wolf spider tunnel.jpg"
+    "generated": "giant-wolf-spider.png",
+    "replaced": {
+      "commons": "File:Wolf spider tunnel.jpg"
+    }
   },
   "gibbering-mouther": {
-    "icon": "lorc/carnivore-mouth"
+    "generated": "gibbering-mouther.png",
+    "replaced": {
+      "icon": "lorc/carnivore-mouth"
+    }
   },
   "glabrezu": {
-    "commons": "File:Astaroth.jpg"
+    "generated": "glabrezu.png",
+    "replaced": {
+      "commons": "File:Astaroth.jpg"
+    }
   },
   "gladiator": {
-    "wesnoth": "humans/royal-warrior.webp"
+    "generated": "gladiator.png",
+    "replaced": {
+      "wesnoth": "humans/royal-warrior.webp"
+    }
   },
   "gnoll-warrior": {
-    "icon": "caro-asercion/hyena-head"
+    "generated": "gnoll-warrior.png",
+    "replaced": {
+      "icon": "caro-asercion/hyena-head"
+    }
   },
   "goat": {
-    "commons": "File:Hausziege 04.jpg"
+    "generated": "goat.png",
+    "replaced": {
+      "commons": "File:Hausziege 04.jpg"
+    }
   },
   "goblin-boss": {
-    "wesnoth": "goblins/rouser.webp"
+    "generated": "goblin-boss.png",
+    "replaced": {
+      "wesnoth": "goblins/rouser.webp"
+    }
   },
   "goblin-minion": {
-    "wesnoth": "goblins/spearman-2.webp"
+    "generated": "goblin-minion.png",
+    "replaced": {
+      "wesnoth": "goblins/spearman-2.webp"
+    }
   },
   "goblin-warrior": {
-    "wesnoth": "goblins/spearman.webp"
+    "generated": "goblin-warrior.png",
+    "replaced": {
+      "wesnoth": "goblins/spearman.webp"
+    }
   },
   "gold-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#a77a0e"
+    "generated": "gold-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#a77a0e"
+    }
   },
   "gorgon": {
-    "commons": "File:Catoblepas 1657 (22295803).jpg"
+    "generated": "gorgon.png",
+    "replaced": {
+      "commons": "File:Catoblepas 1657 (22295803).jpg"
+    }
   },
   "gray-ooze": {
-    "wesnoth": "monsters/mudcrawler.webp"
+    "generated": "gray-ooze.png",
+    "replaced": {
+      "wesnoth": "monsters/mudcrawler.webp"
+    }
   },
   "green-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#3c6b33"
+    "generated": "green-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#3c6b33"
+    }
   },
   "green-hag": {
-    "commons": "File:11 The Hag of the Mill was a bony, thin pole of a hag with odd feet.jpg"
+    "generated": "green-hag.png",
+    "replaced": {
+      "commons": "File:11 The Hag of the Mill was a bony, thin pole of a hag with odd feet.jpg"
+    }
   },
   "grick": {
-    "icon": "lorc/worm-mouth"
+    "generated": "grick.png",
+    "replaced": {
+      "icon": "lorc/worm-mouth"
+    }
   },
   "griffon": {
-    "wesnoth": "monsters/gryphon.webp"
+    "generated": "griffon.png",
+    "replaced": {
+      "wesnoth": "monsters/gryphon.webp"
+    }
   },
   "grimlock": {
-    "icon": "delapouite/goblin-head"
+    "generated": "grimlock.png",
+    "replaced": {
+      "icon": "delapouite/goblin-head"
+    }
   },
   "guard": {
-    "wesnoth": "humans/spearman.webp"
+    "generated": "guard.png",
+    "replaced": {
+      "wesnoth": "humans/spearman.webp"
+    }
   },
   "guard-captain": {
-    "wesnoth": "humans/lieutenant.webp"
+    "generated": "guard-captain.png",
+    "replaced": {
+      "wesnoth": "humans/lieutenant.webp"
+    }
   },
   "guardian-naga": {
-    "commons": "File:Naga182.JPG"
+    "generated": "guardian-naga.png",
+    "replaced": {
+      "commons": "File:Naga182.JPG"
+    }
   },
   "half-dragon": {
-    "wesnoth": "drakes/clasher.webp"
+    "generated": "half-dragon.png",
+    "replaced": {
+      "wesnoth": "drakes/clasher.webp"
+    }
   },
   "harpy": {
-    "icon": "lorc/harpy"
+    "generated": "harpy.png",
+    "replaced": {
+      "icon": "lorc/harpy"
+    }
   },
   "hawk": {
-    "commons": "File:Northern Goshawk ad M2.jpg"
+    "generated": "hawk.png",
+    "replaced": {
+      "commons": "File:Northern Goshawk ad M2.jpg"
+    }
   },
   "hell-hound": {
-    "wesnoth": "wolves/wolf-red.webp"
+    "generated": "hell-hound.png",
+    "replaced": {
+      "wesnoth": "wolves/wolf-red.webp"
+    }
   },
   "hezrou": {
-    "commons": "File:Bael.jpg"
+    "generated": "hezrou.png",
+    "replaced": {
+      "commons": "File:Bael.jpg"
+    }
   },
   "hill-giant": {
-    "commons": "File:Rhinegold and the Valkyries p 032.jpg"
+    "generated": "hill-giant.png",
+    "replaced": {
+      "commons": "File:Rhinegold and the Valkyries p 032.jpg"
+    }
   },
   "hippogriff": {
-    "commons": "File:Roger délivrant Angélique by Louis-Édouard Rioult.jpg"
+    "generated": "hippogriff.png",
+    "replaced": {
+      "commons": "File:Roger délivrant Angélique by Louis-Édouard Rioult.jpg"
+    }
   },
   "hippopotamus": {
-    "commons": "File:Portrait Hippopotamus in the water.jpg"
+    "generated": "hippopotamus.png",
+    "replaced": {
+      "commons": "File:Portrait Hippopotamus in the water.jpg"
+    }
   },
   "hobgoblin-captain": {
-    "wesnoth": "orcs/warlord.webp"
+    "generated": "hobgoblin-captain.png",
+    "replaced": {
+      "wesnoth": "orcs/warlord.webp"
+    }
   },
   "hobgoblin-warrior": {
-    "wesnoth": "orcs/warrior.webp"
+    "generated": "hobgoblin-warrior.png",
+    "replaced": {
+      "wesnoth": "orcs/warrior.webp"
+    }
   },
   "homunculus": {
-    "icon": "lorc/imp"
+    "generated": "homunculus.png",
+    "replaced": {
+      "icon": "lorc/imp"
+    }
   },
   "horned-devil": {
-    "commons": "File:Azazel.jpg"
+    "generated": "horned-devil.png",
+    "replaced": {
+      "commons": "File:Azazel.jpg"
+    }
   },
   "hunter-shark": {
-    "commons": "File:White shark.jpg"
+    "generated": "hunter-shark.png",
+    "replaced": {
+      "commons": "File:White shark.jpg"
+    }
   },
   "hydra": {
-    "commons": "File:Lernaean Hydra Getty Villa 83.AE.346.jpg"
+    "generated": "hydra.png",
+    "replaced": {
+      "commons": "File:Lernaean Hydra Getty Villa 83.AE.346.jpg"
+    }
   },
   "hyena": {
-    "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
+    "generated": "hyena.png",
+    "replaced": {
+      "commons": "File:Spotted hyena (Crocuta crocuta).jpg"
+    }
   },
   "ice-devil": {
-    "commons": "File:Beelzebub.png"
+    "generated": "ice-devil.png",
+    "replaced": {
+      "commons": "File:Beelzebub.png"
+    }
   },
   "ice-mephit": {
-    "icon": "delapouite/ice-golem"
+    "generated": "ice-mephit.png",
+    "replaced": {
+      "icon": "delapouite/ice-golem"
+    }
   },
   "imp": {
-    "commons": "File:Imp with cards - illustration from Le grand Etteilla.jpg"
+    "generated": "imp.png",
+    "replaced": {
+      "commons": "File:Imp with cards - illustration from Le grand Etteilla.jpg"
+    }
   },
   "incubus": {
-    "commons": "File:Incubus.jpg"
+    "generated": "incubus.png",
+    "replaced": {
+      "commons": "File:Incubus.jpg"
+    }
   },
   "invisible-stalker": {
-    "icon": "delapouite/invisible"
+    "generated": "invisible-stalker.png",
+    "replaced": {
+      "icon": "delapouite/invisible"
+    }
   },
   "iron-golem": {
-    "commons": "File:Comparable to the Group of Polygnotos ARV extra - death of Talos - draped youths 02.jpg"
+    "generated": "iron-golem.png",
+    "replaced": {
+      "commons": "File:Comparable to the Group of Polygnotos ARV extra - death of Talos - draped youths 02.jpg"
+    }
   },
   "jackal": {
-    "commons": "File:033 Golden jackal in Keoladeo National Park Photo by Giles Laurent.jpg"
+    "generated": "jackal.png",
+    "replaced": {
+      "commons": "File:033 Golden jackal in Keoladeo National Park Photo by Giles Laurent.jpg"
+    }
   },
   "killer-whale": {
-    "commons": "File:Killerwhales jumping.jpg"
+    "generated": "killer-whale.png",
+    "replaced": {
+      "commons": "File:Killerwhales jumping.jpg"
+    }
   },
   "knight": {
-    "wesnoth": "humans/knight.webp"
+    "generated": "knight.png",
+    "replaced": {
+      "wesnoth": "humans/knight.webp"
+    }
   },
   "kobold-warrior": {
-    "wesnoth": "saurians/skirmisher.webp"
+    "generated": "kobold-warrior.png",
+    "replaced": {
+      "wesnoth": "saurians/skirmisher.webp"
+    }
   },
   "kraken": {
-    "commons": "File:Le Poulpe Colossal.jpg"
+    "generated": "kraken.png",
+    "replaced": {
+      "commons": "File:Le Poulpe Colossal.jpg"
+    }
   },
   "lamia": {
-    "commons": "File:The knight and the mermaid.jpg"
+    "generated": "lamia.png",
+    "replaced": {
+      "commons": "File:The knight and the mermaid.jpg"
+    }
   },
   "lemure": {
-    "commons": "File:Bifrons.png"
+    "generated": "lemure.png",
+    "replaced": {
+      "commons": "File:Bifrons.png"
+    }
   },
   "lich": {
-    "wesnoth": "undead/lich.webp"
+    "generated": "lich.png",
+    "replaced": {
+      "wesnoth": "undead/lich.webp"
+    }
   },
   "lion": {
-    "commons": "File:020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg"
+    "generated": "lion.png",
+    "replaced": {
+      "commons": "File:020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg"
+    }
   },
   "lizard": {
-    "commons": "File:Hemidactylus platyurus (Flat-tailed House Gecko) on white background, focus stacking.jpg"
+    "generated": "lizard.png",
+    "replaced": {
+      "commons": "File:Hemidactylus platyurus (Flat-tailed House Gecko) on white background, focus stacking.jpg"
+    }
   },
   "mage": {
-    "wesnoth": "humans/mage.webp"
+    "generated": "mage.png",
+    "replaced": {
+      "wesnoth": "humans/mage.webp"
+    }
   },
   "magma-mephit": {
-    "icon": "sbed/lava"
+    "generated": "magma-mephit.png",
+    "replaced": {
+      "icon": "sbed/lava"
+    }
   },
   "magmin": {
-    "wesnoth": "monsters/fire_wraith_A.webp"
+    "generated": "magmin.png",
+    "replaced": {
+      "wesnoth": "monsters/fire_wraith_A.webp"
+    }
   },
   "mammoth": {
-    "commons": "File:Woolly mammoth (Mammuthus primigenius) - Mauricio Antón.jpg"
+    "generated": "mammoth.png",
+    "replaced": {
+      "commons": "File:Woolly mammoth (Mammuthus primigenius) - Mauricio Antón.jpg"
+    }
   },
   "manticore": {
-    "commons": "File:Martigora ca 1652 (21203315).jpg"
+    "generated": "manticore.png",
+    "replaced": {
+      "commons": "File:Martigora ca 1652 (21203315).jpg"
+    }
   },
   "marilith": {
-    "icon": "skoll/cobra"
+    "generated": "marilith.png",
+    "replaced": {
+      "icon": "skoll/cobra"
+    }
   },
   "mastiff": {
-    "commons": "File:Westgort Anticipation 17 months.JPG"
+    "generated": "mastiff.png",
+    "replaced": {
+      "commons": "File:Westgort Anticipation 17 months.JPG"
+    }
   },
   "medusa": {
-    "commons": "File:Gorgona pushkin.jpg"
+    "generated": "medusa.png",
+    "replaced": {
+      "commons": "File:Gorgona pushkin.jpg"
+    }
   },
   "merfolk-skirmisher": {
-    "wesnoth": "merfolk/fighter.webp"
+    "generated": "merfolk-skirmisher.png",
+    "replaced": {
+      "wesnoth": "merfolk/fighter.webp"
+    }
   },
   "merrow": {
-    "wesnoth": "merfolk/brawler.webp"
+    "generated": "merrow.png",
+    "replaced": {
+      "wesnoth": "merfolk/brawler.webp"
+    }
   },
   "mimic": {
-    "icon": "delapouite/mimic-chest"
+    "generated": "mimic.png",
+    "replaced": {
+      "icon": "delapouite/mimic-chest"
+    }
   },
   "minotaur-of-baphomet": {
-    "commons": "File:Tondo Minotaur London E4 MAN.jpg"
+    "generated": "minotaur-of-baphomet.png",
+    "replaced": {
+      "commons": "File:Tondo Minotaur London E4 MAN.jpg"
+    }
   },
   "minotaur-skeleton": {
-    "icon": "lorc/minotaur"
+    "generated": "minotaur-skeleton.png",
+    "replaced": {
+      "icon": "lorc/minotaur"
+    }
   },
   "mule": {
-    "commons": "File:Pack Mules Waiting (15755930793).jpg"
+    "generated": "mule.png",
+    "replaced": {
+      "commons": "File:Pack Mules Waiting (15755930793).jpg"
+    }
   },
   "mummy": {
-    "icon": "delapouite/mummy-head"
+    "generated": "mummy.png",
+    "replaced": {
+      "icon": "delapouite/mummy-head"
+    }
   },
   "mummy-lord": {
-    "wesnoth": "undead/ancient-lich.webp"
+    "generated": "mummy-lord.png",
+    "replaced": {
+      "wesnoth": "undead/ancient-lich.webp"
+    }
   },
   "nalfeshnee": {
-    "commons": "File:Aamon.jpg"
+    "generated": "nalfeshnee.png",
+    "replaced": {
+      "commons": "File:Aamon.jpg"
+    }
   },
   "night-hag": {
-    "commons": "File:Lapland witches.jpg"
+    "generated": "night-hag.png",
+    "replaced": {
+      "commons": "File:Lapland witches.jpg"
+    }
   },
   "nightmare": {
-    "wesnoth": "monsters/nightmare.webp"
+    "generated": "nightmare.png",
+    "replaced": {
+      "wesnoth": "monsters/nightmare.webp"
+    }
   },
   "noble": {
-    "wesnoth": "humans/general.webp"
+    "generated": "noble.png",
+    "replaced": {
+      "wesnoth": "humans/general.webp"
+    }
   },
   "ochre-jelly": {
-    "icon": "delapouite/jelly"
+    "generated": "ochre-jelly.png",
+    "replaced": {
+      "icon": "delapouite/jelly"
+    }
   },
   "octopus": {
-    "commons": "File:Octopus2.jpg"
+    "generated": "octopus.png",
+    "replaced": {
+      "commons": "File:Octopus2.jpg"
+    }
   },
   "ogre": {
-    "wesnoth": "monsters/ogre.webp"
+    "generated": "ogre.png",
+    "replaced": {
+      "wesnoth": "monsters/ogre.webp"
+    }
   },
   "ogre-zombie": {
-    "wesnoth": "undead/zombie-troll.webp"
+    "generated": "ogre-zombie.png",
+    "replaced": {
+      "wesnoth": "undead/zombie-troll.webp"
+    }
   },
   "oni": {
-    "commons": "File:Kobo Daishi Practicing the Tantra, with Demon and Wolf, by Hokusai.jpg"
+    "generated": "oni.png",
+    "replaced": {
+      "commons": "File:Kobo Daishi Practicing the Tantra, with Demon and Wolf, by Hokusai.jpg"
+    }
   },
   "otyugh": {
-    "icon": "lorc/tentacles-skull"
+    "generated": "otyugh.png",
+    "replaced": {
+      "icon": "lorc/tentacles-skull"
+    }
   },
   "owl": {
-    "commons": "File:American Barn Owl (Tyto furcata guatemalae), Orange Walk.jpg"
+    "generated": "owl.png",
+    "replaced": {
+      "commons": "File:American Barn Owl (Tyto furcata guatemalae), Orange Walk.jpg"
+    }
   },
   "owlbear": {
-    "icon": "lorc/owl"
+    "generated": "owlbear.png",
+    "replaced": {
+      "icon": "lorc/owl"
+    }
   },
   "panther": {
-    "commons": "File:Black Panther - India.jpg"
+    "generated": "panther.png",
+    "replaced": {
+      "commons": "File:Black Panther - India.jpg"
+    }
   },
   "pegasus": {
-    "commons": "File:Lakonian Black-Figure Kylix; detached fragments.jpg"
+    "generated": "pegasus.png",
+    "replaced": {
+      "commons": "File:Lakonian Black-Figure Kylix; detached fragments.jpg"
+    }
   },
   "phase-spider": {
-    "wesnoth": "monsters/jumping-spider.webp"
+    "generated": "phase-spider.png",
+    "replaced": {
+      "wesnoth": "monsters/jumping-spider.webp"
+    }
   },
   "piranha": {
-    "commons": "File:Pygocentrus nattereri - Karlsruhe Zoo 01.jpg"
+    "generated": "piranha.png",
+    "replaced": {
+      "commons": "File:Pygocentrus nattereri - Karlsruhe Zoo 01.jpg"
+    }
   },
   "pirate": {
-    "wesnoth": "humans/outlaw+female.webp"
+    "generated": "pirate.png",
+    "replaced": {
+      "wesnoth": "humans/outlaw+female.webp"
+    }
   },
   "pirate-captain": {
-    "commons": "File:Edward Teach Commonly Call'd Black Beard (bw) (cropped).jpg"
+    "generated": "pirate-captain.png",
+    "replaced": {
+      "commons": "File:Edward Teach Commonly Call'd Black Beard (bw) (cropped).jpg"
+    }
   },
   "pit-fiend": {
-    "commons": "File:Codex Gigas fol 290r Devil.jpg"
+    "generated": "pit-fiend.png",
+    "replaced": {
+      "commons": "File:Codex Gigas fol 290r Devil.jpg"
+    }
   },
   "planetar": {
-    "commons": "File:GuidoReni MichaelDefeatsSatan.jpg"
+    "generated": "planetar.png",
+    "replaced": {
+      "commons": "File:GuidoReni MichaelDefeatsSatan.jpg"
+    }
   },
   "plesiosaurus": {
-    "commons": "File:Plesiosaurus 3DB.jpg"
+    "generated": "plesiosaurus.png",
+    "replaced": {
+      "commons": "File:Plesiosaurus 3DB.jpg"
+    }
   },
   "polar-bear": {
-    "commons": "File:Polar Bear - Alaska (cropped).jpg"
+    "generated": "polar-bear.png",
+    "replaced": {
+      "commons": "File:Polar Bear - Alaska (cropped).jpg"
+    }
   },
   "pony": {
-    "commons": "File:Gracie-rhs2005.jpg"
+    "generated": "pony.png",
+    "replaced": {
+      "commons": "File:Gracie-rhs2005.jpg"
+    }
   },
   "priest": {
-    "wesnoth": "humans/mage-white.webp"
+    "generated": "priest.png",
+    "replaced": {
+      "wesnoth": "humans/mage-white.webp"
+    }
   },
   "priest-acolyte": {
-    "wesnoth": "humans/mage-light.webp"
+    "generated": "priest-acolyte.png",
+    "replaced": {
+      "wesnoth": "humans/mage-light.webp"
+    }
   },
   "pseudodragon": {
-    "commons": "File:DnD Dragon.png"
+    "generated": "pseudodragon.png",
+    "replaced": {
+      "commons": "File:DnD Dragon.png"
+    }
   },
   "pteranodon": {
-    "commons": "File:Pteranodon hharder.jpg"
+    "generated": "pteranodon.png",
+    "replaced": {
+      "commons": "File:Pteranodon hharder.jpg"
+    }
   },
   "purple-worm": {
-    "commons": "File:Allghoikhorkhoi.jpg"
+    "generated": "purple-worm.png",
+    "replaced": {
+      "commons": "File:Allghoikhorkhoi.jpg"
+    }
   },
   "quasit": {
-    "commons": "File:Caim in human form.jpg"
+    "generated": "quasit.png",
+    "replaced": {
+      "commons": "File:Caim in human form.jpg"
+    }
   },
   "rakshasa": {
-    "commons": "File:The three-headed rakshasa Trishiras sits in lalitasana on a throne facing a fire altar in which a severed head is burning.jpg"
+    "generated": "rakshasa.png",
+    "replaced": {
+      "commons": "File:The three-headed rakshasa Trishiras sits in lalitasana on a throne facing a fire altar in which a severed head is burning.jpg"
+    }
   },
   "rat": {
-    "commons": "File:Brown Rat (Rattus norvegicus).jpg"
+    "generated": "rat.png",
+    "replaced": {
+      "commons": "File:Brown Rat (Rattus norvegicus).jpg"
+    }
   },
   "raven": {
-    "commons": "File:Corvus corax clarionensis, Point Reyes National Seashore.jpg"
+    "generated": "raven.png",
+    "replaced": {
+      "commons": "File:Corvus corax clarionensis, Point Reyes National Seashore.jpg"
+    }
   },
   "red-dragon-wyrmling": {
-    "wesnoth": "drakes/burner.webp"
+    "generated": "red-dragon-wyrmling.png",
+    "replaced": {
+      "wesnoth": "drakes/burner.webp"
+    }
   },
   "reef-shark": {
-    "commons": "File:Caribbean reef shark.jpg"
+    "generated": "reef-shark.png",
+    "replaced": {
+      "commons": "File:Caribbean reef shark.jpg"
+    }
   },
   "remorhaz": {
-    "wesnoth": "monsters/big-icemonax.webp"
+    "generated": "remorhaz.png",
+    "replaced": {
+      "wesnoth": "monsters/big-icemonax.webp"
+    }
   },
   "rhinoceros": {
-    "commons": "File:081 White rhinoceros (male) in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"
+    "generated": "rhinoceros.png",
+    "replaced": {
+      "commons": "File:081 White rhinoceros (male) in the Kalahari Desert of Namibia Photo by Giles Laurent.jpg"
+    }
   },
   "riding-horse": {
-    "commons": "File:Nokota Horses cropped.jpg"
+    "generated": "riding-horse.png",
+    "replaced": {
+      "commons": "File:Nokota Horses cropped.jpg"
+    }
   },
   "roc": {
-    "commons": "File:Edward Julius Detmold49.jpg"
+    "generated": "roc.png",
+    "replaced": {
+      "commons": "File:Edward Julius Detmold49.jpg"
+    }
   },
   "roper": {
-    "wesnoth": "monsters/deep-tentacle.webp"
+    "generated": "roper.png",
+    "replaced": {
+      "wesnoth": "monsters/deep-tentacle.webp"
+    }
   },
   "rust-monster": {
-    "icon": "lorc/long-antennae-bug"
+    "generated": "rust-monster.png",
+    "replaced": {
+      "icon": "lorc/long-antennae-bug"
+    }
   },
   "saber-toothed-tiger": {
-    "commons": "File:Smilodon Knight.jpg"
+    "generated": "saber-toothed-tiger.png",
+    "replaced": {
+      "commons": "File:Smilodon Knight.jpg"
+    }
   },
   "sahuagin-warrior": {
-    "icon": "delapouite/fish-monster"
+    "generated": "sahuagin-warrior.png",
+    "replaced": {
+      "icon": "delapouite/fish-monster"
+    }
   },
   "salamander": {
-    "commons": "File:A salamander unharmed in the fire.jpg"
+    "generated": "salamander.png",
+    "replaced": {
+      "commons": "File:A salamander unharmed in the fire.jpg"
+    }
   },
   "satyr": {
-    "icon": "delapouite/harp"
+    "generated": "satyr.png",
+    "replaced": {
+      "icon": "delapouite/harp"
+    }
   },
   "scorpion": {
-    "commons": "File:Scorpion Photograph By Shantanu Kuveskar.jpg"
+    "generated": "scorpion.png",
+    "replaced": {
+      "commons": "File:Scorpion Photograph By Shantanu Kuveskar.jpg"
+    }
   },
   "scout": {
-    "wesnoth": "humans/huntsman.webp"
+    "generated": "scout.png",
+    "replaced": {
+      "wesnoth": "humans/huntsman.webp"
+    }
   },
   "sea-hag": {
-    "icon": "cathelineau/witch-face"
+    "generated": "sea-hag.png",
+    "replaced": {
+      "icon": "cathelineau/witch-face"
+    }
   },
   "seahorse": {
-    "commons": "File:Hippocampus hippocampus (on Ascophyllum nodosum).jpg"
+    "generated": "seahorse.png",
+    "replaced": {
+      "commons": "File:Hippocampus hippocampus (on Ascophyllum nodosum).jpg"
+    }
   },
   "shadow": {
-    "wesnoth": "undead/shadow.webp"
+    "generated": "shadow.png",
+    "replaced": {
+      "wesnoth": "undead/shadow.webp"
+    }
   },
   "shambling-mound": {
-    "icon": "lorc/ent-mouth"
+    "generated": "shambling-mound.png",
+    "replaced": {
+      "icon": "lorc/ent-mouth"
+    }
   },
   "shield-guardian": {
-    "icon": "delapouite/golem-head"
+    "generated": "shield-guardian.png",
+    "replaced": {
+      "icon": "delapouite/golem-head"
+    }
   },
   "shrieker-fungus": {
-    "commons": "File:Amanita muscaria Aberystwyth 2023.jpg"
+    "generated": "shrieker-fungus.png",
+    "replaced": {
+      "commons": "File:Amanita muscaria Aberystwyth 2023.jpg"
+    }
   },
   "silver-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#5d6f7d"
+    "generated": "silver-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#5d6f7d"
+    }
   },
   "skeleton": {
-    "wesnoth": "undead/skeleton.webp"
+    "generated": "skeleton.png",
+    "replaced": {
+      "wesnoth": "undead/skeleton.webp"
+    }
   },
   "solar": {
-    "icon": "lorc/angel-wings"
+    "generated": "solar.png",
+    "replaced": {
+      "icon": "lorc/angel-wings"
+    }
   },
   "specter": {
-    "wesnoth": "undead/spectre.webp"
+    "generated": "specter.png",
+    "replaced": {
+      "wesnoth": "undead/spectre.webp"
+    }
   },
   "sphinx-of-lore": {
-    "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
+    "generated": "sphinx-of-lore.png",
+    "replaced": {
+      "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
+    }
   },
   "sphinx-of-valor": {
-    "commons": "File:Sphinx with the third pyramid.jpg"
+    "generated": "sphinx-of-valor.png",
+    "replaced": {
+      "commons": "File:Sphinx with the third pyramid.jpg"
+    }
   },
   "sphinx-of-wonder": {
-    "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
+    "generated": "sphinx-of-wonder.png",
+    "replaced": {
+      "commons": "File:Sphinx CdM Paris DeRidder865 n2.jpg"
+    }
   },
   "spider": {
-    "commons": "File:Araneus diadematus (Clerck, 1757).JPG"
+    "generated": "spider.png",
+    "replaced": {
+      "commons": "File:Araneus diadematus (Clerck, 1757).JPG"
+    }
   },
   "spirit-naga": {
-    "wesnoth": "nagas/naga-ophidian.webp"
+    "generated": "spirit-naga.png",
+    "replaced": {
+      "wesnoth": "nagas/naga-ophidian.webp"
+    }
   },
   "sprite": {
-    "wesnoth": "elves/sylph.webp"
+    "generated": "sprite.png",
+    "replaced": {
+      "wesnoth": "elves/sylph.webp"
+    }
   },
   "spy": {
-    "wesnoth": "humans/thief.webp"
+    "generated": "spy.png",
+    "replaced": {
+      "wesnoth": "humans/thief.webp"
+    }
   },
   "steam-mephit": {
-    "icon": "delapouite/steam"
+    "generated": "steam-mephit.png",
+    "replaced": {
+      "icon": "delapouite/steam"
+    }
   },
   "stirge": {
-    "icon": "delapouite/amber-mosquito"
+    "generated": "stirge.png",
+    "replaced": {
+      "icon": "delapouite/amber-mosquito"
+    }
   },
   "stone-giant": {
-    "commons": "File:Kulturen - Riesin Holdrykka.jpg"
+    "generated": "stone-giant.png",
+    "replaced": {
+      "commons": "File:Kulturen - Riesin Holdrykka.jpg"
+    }
   },
   "stone-golem": {
-    "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
+    "generated": "stone-golem.png",
+    "replaced": {
+      "commons": "File:Golem – Mikoláš Aleš (Staré pověsti české).jpg"
+    }
   },
   "storm-giant": {
-    "icon": "lorc/lightning-storm"
+    "generated": "storm-giant.png",
+    "replaced": {
+      "icon": "lorc/lightning-storm"
+    }
   },
   "succubus": {
-    "icon": "lorc/wing-cloak"
+    "generated": "succubus.png",
+    "replaced": {
+      "icon": "lorc/wing-cloak"
+    }
   },
   "swarm-of-bats": {
-    "wesnoth": "monsters/bat-dread.webp"
+    "generated": "swarm-of-bats.png",
+    "replaced": {
+      "wesnoth": "monsters/bat-dread.webp"
+    }
   },
   "swarm-of-crawling-claws": {
-    "icon": "darkzaitzev/severed-hand"
+    "generated": "swarm-of-crawling-claws.png",
+    "replaced": {
+      "icon": "darkzaitzev/severed-hand"
+    }
   },
   "swarm-of-insects": {
-    "commons": "File:Locusta-migratoria-wanderheuschrecke.jpg"
+    "generated": "swarm-of-insects.png",
+    "replaced": {
+      "commons": "File:Locusta-migratoria-wanderheuschrecke.jpg"
+    }
   },
   "swarm-of-piranhas": {
-    "wesnoth": "monsters/caribe-hunter.webp"
+    "generated": "swarm-of-piranhas.png",
+    "replaced": {
+      "wesnoth": "monsters/caribe-hunter.webp"
+    }
   },
   "swarm-of-rats": {
-    "icon": "delapouite/rat"
+    "generated": "swarm-of-rats.png",
+    "replaced": {
+      "icon": "delapouite/rat"
+    }
   },
   "swarm-of-ravens": {
-    "wesnoth": "monsters/raven.webp"
+    "generated": "swarm-of-ravens.png",
+    "replaced": {
+      "wesnoth": "monsters/raven.webp"
+    }
   },
   "swarm-of-venomous-snakes": {
-    "commons": "File:Bildstein-Fornsalen 01.jpg"
+    "generated": "swarm-of-venomous-snakes.png",
+    "replaced": {
+      "commons": "File:Bildstein-Fornsalen 01.jpg"
+    }
   },
   "tarrasque": {
-    "commons": "File:Tarasque in Tarascon 02.jpg"
+    "generated": "tarrasque.png",
+    "replaced": {
+      "commons": "File:Tarasque in Tarascon 02.jpg"
+    }
   },
   "tiger": {
-    "commons": "File:Bengal tiger (Panthera tigris tigris) female 3 crop.jpg"
+    "generated": "tiger.png",
+    "replaced": {
+      "commons": "File:Bengal tiger (Panthera tigris tigris) female 3 crop.jpg"
+    }
   },
   "tough": {
-    "wesnoth": "humans/ruffian.webp"
+    "generated": "tough.png",
+    "replaced": {
+      "wesnoth": "humans/ruffian.webp"
+    }
   },
   "tough-boss": {
-    "wesnoth": "humans/thug.webp"
+    "generated": "tough-boss.png",
+    "replaced": {
+      "wesnoth": "humans/thug.webp"
+    }
   },
   "treant": {
-    "wesnoth": "woses/ancient-wose.png"
+    "generated": "treant.png",
+    "replaced": {
+      "wesnoth": "woses/ancient-wose.png"
+    }
   },
   "triceratops": {
-    "commons": "File:Triceratops - 1904.jpg"
+    "generated": "triceratops.png",
+    "replaced": {
+      "commons": "File:Triceratops - 1904.jpg"
+    }
   },
   "troll": {
-    "wesnoth": "trolls/troll.png"
+    "generated": "troll.png",
+    "replaced": {
+      "wesnoth": "trolls/troll.png"
+    }
   },
   "troll-limb": {
-    "icon": "skoll/troll"
+    "generated": "troll-limb.png",
+    "replaced": {
+      "icon": "skoll/troll"
+    }
   },
   "tyrannosaurus-rex": {
-    "commons": "File:Reconstruction of Tyrannosaurus mcraeensis.png",
-    "focus": [0.22, 0.45]
+    "generated": "tyrannosaurus-rex.png",
+    "replaced": {
+      "commons": "File:Reconstruction of Tyrannosaurus mcraeensis.png",
+      "focus": [0.22, 0.45]
+    }
   },
   "unicorn": {
-    "commons": "File:Oftheunicorn.jpg"
+    "generated": "unicorn.png",
+    "replaced": {
+      "commons": "File:Oftheunicorn.jpg"
+    }
   },
   "vampire": {
-    "commons": "File:Philip Burne-Jones - The Vampire.jpg"
+    "generated": "vampire.png",
+    "replaced": {
+      "commons": "File:Philip Burne-Jones - The Vampire.jpg"
+    }
   },
   "vampire-familiar": {
-    "wesnoth": "humans/footpad.webp"
+    "generated": "vampire-familiar.png",
+    "replaced": {
+      "wesnoth": "humans/footpad.webp"
+    }
   },
   "vampire-spawn": {
-    "wesnoth": "undead/soulless.webp"
+    "generated": "vampire-spawn.png",
+    "replaced": {
+      "wesnoth": "undead/soulless.webp"
+    }
   },
   "venomous-snake": {
-    "commons": "File:Bitis gabonica.jpg"
+    "generated": "venomous-snake.png",
+    "replaced": {
+      "commons": "File:Bitis gabonica.jpg"
+    }
   },
   "violet-fungus": {
-    "commons": "File:2008-08-22 Cortinarius violaceus (L.) Gray 18241.jpg"
+    "generated": "violet-fungus.png",
+    "replaced": {
+      "commons": "File:2008-08-22 Cortinarius violaceus (L.) Gray 18241.jpg"
+    }
   },
   "vrock": {
-    "wesnoth": "monsters/herald.webp"
+    "generated": "vrock.png",
+    "replaced": {
+      "wesnoth": "monsters/herald.webp"
+    }
   },
   "vulture": {
-    "commons": "File:Gyps fulvus in flight - Spain.jpg"
+    "generated": "vulture.png",
+    "replaced": {
+      "commons": "File:Gyps fulvus in flight - Spain.jpg"
+    }
   },
   "warhorse": {
-    "commons": "File:Scotland Forever crop.jpg"
+    "generated": "warhorse.png",
+    "replaced": {
+      "commons": "File:Scotland Forever crop.jpg"
+    }
   },
   "warhorse-skeleton": {
-    "wesnoth": "undead/skeletal_rider.webp"
+    "generated": "warhorse-skeleton.png",
+    "replaced": {
+      "wesnoth": "undead/skeletal_rider.webp"
+    }
   },
   "warrior-infantry": {
-    "wesnoth": "humans/spearman-2.webp"
+    "generated": "warrior-infantry.png",
+    "replaced": {
+      "wesnoth": "humans/spearman-2.webp"
+    }
   },
   "warrior-veteran": {
-    "wesnoth": "humans/swordsman.webp"
+    "generated": "warrior-veteran.png",
+    "replaced": {
+      "wesnoth": "humans/swordsman.webp"
+    }
   },
   "water-elemental": {
-    "commons": "File:Baden Undine Kurpark.jpg"
+    "generated": "water-elemental.png",
+    "replaced": {
+      "commons": "File:Baden Undine Kurpark.jpg"
+    }
   },
   "weasel": {
-    "commons": "File:Mustela nivalis -British Wildlife Centre-4.jpg"
+    "generated": "weasel.png",
+    "replaced": {
+      "commons": "File:Mustela nivalis -British Wildlife Centre-4.jpg"
+    }
   },
   "werebear": {
-    "icon": "sparker/bear-face"
+    "generated": "werebear.png",
+    "replaced": {
+      "icon": "sparker/bear-face"
+    }
   },
   "wereboar": {
-    "icon": "caro-asercion/boar"
+    "generated": "wereboar.png",
+    "replaced": {
+      "icon": "caro-asercion/boar"
+    }
   },
   "wererat": {
-    "icon": "delapouite/rat"
+    "generated": "wererat.png",
+    "replaced": {
+      "icon": "delapouite/rat"
+    }
   },
   "weretiger": {
-    "icon": "delapouite/tiger-head"
+    "generated": "weretiger.png",
+    "replaced": {
+      "icon": "delapouite/tiger-head"
+    }
   },
   "werewolf": {
-    "commons": "File:WeirdTalesv36n2pg038 The Werewolf Howls.png"
+    "generated": "werewolf.png",
+    "replaced": {
+      "commons": "File:WeirdTalesv36n2pg038 The Werewolf Howls.png"
+    }
   },
   "white-dragon-wyrmling": {
-    "icon": "lorc/dragon-spiral",
-    "ink": "#6f8fa6"
+    "generated": "white-dragon-wyrmling.png",
+    "replaced": {
+      "icon": "lorc/dragon-spiral",
+      "ink": "#6f8fa6"
+    }
   },
   "wight": {
-    "commons": "File:Giant draugr by Kim Diaz Holm (cropped).jpg"
+    "generated": "wight.png",
+    "replaced": {
+      "commons": "File:Giant draugr by Kim Diaz Holm (cropped).jpg"
+    }
   },
   "will-o-wisp": {
-    "commons": "File:Will-o-the-wisp and snake by Hermann Hendrich 1823.jpg"
+    "generated": "will-o-wisp.png",
+    "replaced": {
+      "commons": "File:Will-o-the-wisp and snake by Hermann Hendrich 1823.jpg"
+    }
   },
   "winter-wolf": {
-    "commons": "File:Arctic Wolf in Aulavik National Park 04 (cropped).jpg"
+    "generated": "winter-wolf.png",
+    "replaced": {
+      "commons": "File:Arctic Wolf in Aulavik National Park 04 (cropped).jpg"
+    }
   },
   "wolf": {
-    "commons": "File:Eurasian wolf 2.jpg"
+    "generated": "wolf.png",
+    "replaced": {
+      "commons": "File:Eurasian wolf 2.jpg"
+    }
   },
   "worg": {
-    "wesnoth": "wolves/wolf-dark.webp"
+    "generated": "worg.png",
+    "replaced": {
+      "wesnoth": "wolves/wolf-dark.webp"
+    }
   },
   "wraith": {
-    "wesnoth": "undead/wraith.webp"
+    "generated": "wraith.png",
+    "replaced": {
+      "wesnoth": "undead/wraith.webp"
+    }
   },
   "wyvern": {
-    "wesnoth": "monsters/wyvern.webp"
+    "generated": "wyvern.png",
+    "replaced": {
+      "wesnoth": "monsters/wyvern.webp"
+    }
   },
   "xorn": {
-    "icon": "lorc/crystal-growth"
+    "generated": "xorn.png",
+    "replaced": {
+      "icon": "lorc/crystal-growth"
+    }
   },
   "young-black-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#2b2622"
+    "generated": "young-black-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#2b2622"
+    }
   },
   "young-blue-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#2f5f93"
+    "generated": "young-blue-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#2f5f93"
+    }
   },
   "young-brass-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#9a6b1f"
+    "generated": "young-brass-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#9a6b1f"
+    }
   },
   "young-bronze-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#7a5230"
+    "generated": "young-bronze-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#7a5230"
+    }
   },
   "young-copper-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#a04f2a"
+    "generated": "young-copper-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#a04f2a"
+    }
   },
   "young-gold-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#a77a0e"
+    "generated": "young-gold-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#a77a0e"
+    }
   },
   "young-green-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#3c6b33"
+    "generated": "young-green-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#3c6b33"
+    }
   },
   "young-red-dragon": {
-    "wesnoth": "monsters/fire-dragon.webp"
+    "generated": "young-red-dragon.png",
+    "replaced": {
+      "wesnoth": "monsters/fire-dragon.webp"
+    }
   },
   "young-silver-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#5d6f7d"
+    "generated": "young-silver-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#5d6f7d"
+    }
   },
   "young-white-dragon": {
-    "icon": "lorc/dragon-head",
-    "ink": "#6f8fa6"
+    "generated": "young-white-dragon.png",
+    "replaced": {
+      "icon": "lorc/dragon-head",
+      "ink": "#6f8fa6"
+    }
   },
   "zombie": {
-    "wesnoth": "undead/walking-corpse.webp"
+    "generated": "zombie.png",
+    "replaced": {
+      "wesnoth": "undead/walking-corpse.webp"
+    }
   }
 }

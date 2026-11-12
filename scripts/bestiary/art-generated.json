@@ -1,0 +1,3962 @@
+{
+  "aboleth": {
+    "file": "art/bestiary/source/aboleth.png",
+    "sha256": "df27a9905ff7926db546416c33d2738595ff430092e0bd8ca08f55e713d08a73",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:44:32Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-black-dragon": {
+    "file": "art/bestiary/source/adult-black-dragon.png",
+    "sha256": "2258851c37888bfd9327a70379aad08fa1a3dd31164e7a0839deb0eb0086928a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:03:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-blue-dragon": {
+    "file": "art/bestiary/source/adult-blue-dragon.png",
+    "sha256": "90874462a5cfd88cd3a24883a6b4f23b3a517c02f5171a8447b2f347312df320",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:04:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-brass-dragon": {
+    "file": "art/bestiary/source/adult-brass-dragon.png",
+    "sha256": "9b70cb04226123432c2969e6b8293aaa1349d2db3c2beced190123030a55b0b2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:04:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-bronze-dragon": {
+    "file": "art/bestiary/source/adult-bronze-dragon.png",
+    "sha256": "b41abc0d5893fad1db0ff4a2e2eb8fb547437228f1dea73119a69cb1fc9b82c5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:05:05Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-copper-dragon": {
+    "file": "art/bestiary/source/adult-copper-dragon.png",
+    "sha256": "3b9cf570ab034ba69ab2231b32acec48246c8e5848c1855c93831f9b1547c56e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:05:27Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-gold-dragon": {
+    "file": "art/bestiary/source/adult-gold-dragon.png",
+    "sha256": "1592de0cf7f7a3d354ed87b178de1c91819e64800e8318960e23422b740af9f5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:05:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-green-dragon": {
+    "file": "art/bestiary/source/adult-green-dragon.png",
+    "sha256": "2a2a0c8bc3db254e3467094327d87809f973aa25d8688c9f0ae50af6b2f0887a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:06:08Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-red-dragon": {
+    "file": "art/bestiary/source/adult-red-dragon.png",
+    "sha256": "278c5e80939eae252ce58e8e49636959d3441d48c4e2f526a0808970369bc408",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:45:54Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-silver-dragon": {
+    "file": "art/bestiary/source/adult-silver-dragon.png",
+    "sha256": "7abae05e1396c4ae6563d2a2583d609ad8a3f63e3d759cb5b2f61bdf088cf70a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:06:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "adult-white-dragon": {
+    "file": "art/bestiary/source/adult-white-dragon.png",
+    "sha256": "f14686662489190d4e336b86e5b10367444b1a46e3a81ee5edc86f92530ccc66",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:07:07Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "air-elemental": {
+    "file": "art/bestiary/source/air-elemental.png",
+    "sha256": "fd98bda1e2d15568d8e75737bf580b10f82263dd8bf2ada157bff0696f318857",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:43:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "allosaurus": {
+    "file": "art/bestiary/source/allosaurus.png",
+    "sha256": "678b6ba7801162eefecb437dffb0813e3b1375fdabb4c55229a36c373671e947",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:19:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-black-dragon": {
+    "file": "art/bestiary/source/ancient-black-dragon.png",
+    "sha256": "657328ac87f5690c8bea26423095ca9c13722fd0d77a0083df846a23d82af427",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:07:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-blue-dragon": {
+    "file": "art/bestiary/source/ancient-blue-dragon.png",
+    "sha256": "e44d0bb43bcb3d00c1505c1933a3aae11fd6899f4963236b7d75f2b4e8a41370",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:07:29Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-brass-dragon": {
+    "file": "art/bestiary/source/ancient-brass-dragon.png",
+    "sha256": "616310ae4ed8157b28ef51324f42605abf36f69e718c40667521b34c748b036f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:07:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-bronze-dragon": {
+    "file": "art/bestiary/source/ancient-bronze-dragon.png",
+    "sha256": "04e9b7348aa150e6ba77cacd02989862f080018728faafc781b8fc7027511f29",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:08:06Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-copper-dragon": {
+    "file": "art/bestiary/source/ancient-copper-dragon.png",
+    "sha256": "a5b05c019a4d19d1929dc01409e93b1c8cd4d293cdf97cfa4e0179b75549179b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:08:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-gold-dragon": {
+    "file": "art/bestiary/source/ancient-gold-dragon.png",
+    "sha256": "46e3e9c3f8b87f774fa4113a8d04e49c6c3dfed9ac85f4ea4f6243b775d94ba3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:08:48Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-green-dragon": {
+    "file": "art/bestiary/source/ancient-green-dragon.png",
+    "sha256": "d772b22d9dbfc47def9215c2f581ada8eb2335cbdca312a83b3d30ac36cc5eed",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:09:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-red-dragon": {
+    "file": "art/bestiary/source/ancient-red-dragon.png",
+    "sha256": "e39472f83cf6152d9f3b54c8d0b1dcca4b5937d9d40f746577b9d554ff8708a4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:29:56Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-silver-dragon": {
+    "file": "art/bestiary/source/ancient-silver-dragon.png",
+    "sha256": "f4673fab5b41073dfa0d38c5552d4d15d10331c108329f3544bb980c9f582e27",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:09:24Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ancient-white-dragon": {
+    "file": "art/bestiary/source/ancient-white-dragon.png",
+    "sha256": "ce9d3ce962a1b4364e88d37f67ed80eb68ab27187be604ba72c2cd73120dd194",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:09:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "animated-armor": {
+    "file": "art/bestiary/source/animated-armor.png",
+    "sha256": "349aaac5ebbdf84c5d8b1ec433ae30d8899c95ade67c4e55c685baec9d6c73c7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:10:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "animated-flying-sword": {
+    "file": "art/bestiary/source/animated-flying-sword.png",
+    "sha256": "dc9fe1bc912d5a26e39eb678bdaeb48d346fe28e7da7f9a0adb12bb5df0a504e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:10:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "animated-rug-of-smothering": {
+    "file": "art/bestiary/source/animated-rug-of-smothering.png",
+    "sha256": "7fe9fbb1631b3139d5dad7a7a21b17b99476153cc0f9f367f8025329803b4e8d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:10:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ankheg": {
+    "file": "art/bestiary/source/ankheg.png",
+    "sha256": "088d27b093f45137c21b23583a9a0bdbc7508c15717d0bfd90819cc6b33e6d96",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:19:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ankylosaurus": {
+    "file": "art/bestiary/source/ankylosaurus.png",
+    "sha256": "5de56ef105132023f7698ef0304b61ed1d984432e492c7a357a110dd8754a40b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:20:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ape": {
+    "file": "art/bestiary/source/ape.png",
+    "sha256": "21d5e1c4465990846dc9114281196d81e0483fe7666a7264d5c5a3d126079300",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:13:02Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "archelon": {
+    "file": "art/bestiary/source/archelon.png",
+    "sha256": "f1e43f55390dc13c900910153d5839732a27983ed8de3e5ea5e916417c50b304",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:20:16Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "archmage": {
+    "file": "art/bestiary/source/archmage.png",
+    "sha256": "82cd86c918f8701928363d6283cf3cc1a736a8accb3c0127995db72641f8af7c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:17:37Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "assassin": {
+    "file": "art/bestiary/source/assassin.png",
+    "sha256": "699e06e9ce26c5e02089db551a1581d3f805ac990fbf80d302797ad2bd755e88",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:17:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "awakened-shrub": {
+    "file": "art/bestiary/source/awakened-shrub.png",
+    "sha256": "025fa5e53912c9a7d8bc0618b3a12b7980db870fb624e508394ffd8ce7d514d0",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:43:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "awakened-tree": {
+    "file": "art/bestiary/source/awakened-tree.png",
+    "sha256": "d7324224c9023edba5d58433d105b3850b023468217881872f39b8c33a6fa195",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:46:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "axe-beak": {
+    "file": "art/bestiary/source/axe-beak.png",
+    "sha256": "ae71be422a603941dde7ebd357c024c2180b6e821ff35cbcd0bfc7c7fcb3e4c3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:20:41Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "azer-sentinel": {
+    "file": "art/bestiary/source/azer-sentinel.png",
+    "sha256": "56bac1f85b22e5d84ca13c7d025f62517aff75d1802acc7a2d17f182f40412fe",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:09:51Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "baboon": {
+    "file": "art/bestiary/source/baboon.png",
+    "sha256": "04ddcf2bf99ae2c5aba96e036f7a974f67d38831a28caafbe9fa1c1ab88614d7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:12:36Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "badger": {
+    "file": "art/bestiary/source/badger.png",
+    "sha256": "c1184be0bb6c30acb8b056903e10a59886690418cbc730c8aa1e45e10ea1b5b4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:13:05Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "balor": {
+    "file": "art/bestiary/source/balor.png",
+    "sha256": "e3aaea04917451770cc284b55e909fab518e76500a972960b92938d5ac98407b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:10:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bandit": {
+    "file": "art/bestiary/source/bandit.png",
+    "sha256": "4921af617131dd3c54e08a3c1a4f14b019e02c2331fa610c6cdef8ea6bc56a6b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:18:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bandit-captain": {
+    "file": "art/bestiary/source/bandit-captain.png",
+    "sha256": "212bb4e2e9f08d2f4755d7d9dc5f58611ede2f8dbe5d3f8bfe27e3793377bef4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:46:58Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "barbed-devil": {
+    "file": "art/bestiary/source/barbed-devil.png",
+    "sha256": "9e33773da787d28347478606f68c02936b874a6a5c7deb5c5cf843d6fce54226",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:12:49Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "basilisk": {
+    "file": "art/bestiary/source/basilisk.png",
+    "sha256": "05b21e9d33e44c19aa2d7e9cc3ae0ef6e8c3da31e39510a2ba7dd3ccf6d32557",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:13:45Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bat": {
+    "file": "art/bestiary/source/bat.png",
+    "sha256": "fb3adc61f3610fce8600c6b720fd7e1efbbf5193a2203269ba0c99ad943ef5f3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:13:49Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bearded-devil": {
+    "file": "art/bestiary/source/bearded-devil.png",
+    "sha256": "0a729c1497508ce0e3b57864315e4072dce1cedf19d69534745b6553da7a2a90",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:10:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "behir": {
+    "file": "art/bestiary/source/behir.png",
+    "sha256": "f4b03b47921ed088017aa03e325f489b128b0362e23232f77d1b4f3a4ac8ce33",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:11:05Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "berserker": {
+    "file": "art/bestiary/source/berserker.png",
+    "sha256": "bddf3dc8cefa9c2d26d303fd534e99d26292d81a8262fe55dda62252c288a737",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:18:37Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "black-bear": {
+    "file": "art/bestiary/source/black-bear.png",
+    "sha256": "3809b5803be91a5a75f2937644ebb4e7a7e86cda53d51b0ec96110314ee1e399",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:14:12Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "black-dragon-wyrmling": {
+    "file": "art/bestiary/source/black-dragon-wyrmling.png",
+    "sha256": "5c0ca6a52adf7e4a1a1d9f5f2e0c346f220d68ac8b1dd433f4a220b99aa9306f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:43:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "black-pudding": {
+    "file": "art/bestiary/source/black-pudding.png",
+    "sha256": "387e86c5f4d4145437ee591d7766c59e29b9afd58d21c84d0fec4a60b93b018b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:21:20Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "blink-dog": {
+    "file": "art/bestiary/source/blink-dog.png",
+    "sha256": "f498fdd909754c4e388893494253e3b7c1f4d16c18f7b6c7f4508009af114acd",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:10:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "blood-hawk": {
+    "file": "art/bestiary/source/blood-hawk.png",
+    "sha256": "99a9a978f0383fa16f8d70683824693fa0a461cc5d286e27f3a65db931b3260c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:14:25Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "blue-dragon-wyrmling": {
+    "file": "art/bestiary/source/blue-dragon-wyrmling.png",
+    "sha256": "472d95ec974e99c70b9db5b3cd3bc3328b808d7a47300a5a25145465a8253a39",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:44:44Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "boar": {
+    "file": "art/bestiary/source/boar.png",
+    "sha256": "41c7ad023491dd2edbcc72013480345dff48f6c316ce2eeaaa41fbc9a2c9d5c1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:14:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bone-devil": {
+    "file": "art/bestiary/source/bone-devil.png",
+    "sha256": "318a675ef33d1911c9a43018015640a69c60d865d0343aaf704ac63be499f7f9",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:14:52Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "brass-dragon-wyrmling": {
+    "file": "art/bestiary/source/brass-dragon-wyrmling.png",
+    "sha256": "4494ff418175c251ecab639aeae73a68a290be9dbd59f74fc990f6c4dc05f0e4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:45:23Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bronze-dragon-wyrmling": {
+    "file": "art/bestiary/source/bronze-dragon-wyrmling.png",
+    "sha256": "34273302ebdd31b1f7e9a3dae5e88d58cb1918bef111b5267c54804047b78fec",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:45:40Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "brown-bear": {
+    "file": "art/bestiary/source/brown-bear.png",
+    "sha256": "e4766be8b7ed630d266252d92f49f331e433cd5873e1aabbd00b5616402a99ac",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:15:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bugbear-stalker": {
+    "file": "art/bestiary/source/bugbear-stalker.png",
+    "sha256": "ff5da2a056dbb50dfefb0a6ddc93fc57f8d4f745c70a475f713f42375ffc4397",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:21:29Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bugbear-warrior": {
+    "file": "art/bestiary/source/bugbear-warrior.png",
+    "sha256": "62d4c7a2f05b05155c50bca974a09daf21b6bad84fcaaefd6c9b1b408139df40",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:21:56Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "bulette": {
+    "file": "art/bestiary/source/bulette.png",
+    "sha256": "03c8ed50eadc52184c0ff1101d8b38595542ff42d4bcf38b3fb4b82868df3f1f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:11:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "camel": {
+    "file": "art/bestiary/source/camel.png",
+    "sha256": "f8ffc72b2dea8bce30933a325e00e86ba255e9efb1a22192862a276c6b6d0c03",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:15:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "cat": {
+    "file": "art/bestiary/source/cat.png",
+    "sha256": "5f37b2520d1d825d0d6fc4ce3597cc40764d7dd4dd2a9f6fcb18ca622405bf7a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:15:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "centaur-trooper": {
+    "file": "art/bestiary/source/centaur-trooper.png",
+    "sha256": "d0c0ed61cc4b142acbd17a649202c68b7056914a3f6f5e09c89f9c3d1f14fb67",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:16:06Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "chain-devil": {
+    "file": "art/bestiary/source/chain-devil.png",
+    "sha256": "b269a531135d18ef3db58b2cd6b8c7417d07ad48ec6638e3a599d36420f2195e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:45:55Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "chimera": {
+    "file": "art/bestiary/source/chimera.png",
+    "sha256": "2582f8bf3282d2ab3ba7e591efd7f952510813c7e82d45b8be2ab267fa31b3ae",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:16:32Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "chuul": {
+    "file": "art/bestiary/source/chuul.png",
+    "sha256": "cd218b2bc5cd60fe6152c938dbaf692d7c834a2c311f672176c19bd5ffcf5f63",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:20:07Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "clay-golem": {
+    "file": "art/bestiary/source/clay-golem.png",
+    "sha256": "b23468dc2aa5168dee8ad16ac12d0cd5b06a311553850e953bfa88a28aff68ae",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:19:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "cloaker": {
+    "file": "art/bestiary/source/cloaker.png",
+    "sha256": "aaad7900fcd51b19e2636702b551b941e0d31fa32b522ecd0a06376647e44962",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:13:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "cloud-giant": {
+    "file": "art/bestiary/source/cloud-giant.png",
+    "sha256": "0e9c64ab64bc1d33cd57a4d5f5fa0026c8bdf34dbeb0dfbc158ed9cb2bf28911",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:46:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "cockatrice": {
+    "file": "art/bestiary/source/cockatrice.png",
+    "sha256": "11903364068200ed84b16745ee6066f81c88e82b352c186588858eaa833617b4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:19:17Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "commoner": {
+    "file": "art/bestiary/source/commoner.png",
+    "sha256": "e158fdbc9edc40fff8bebb382cfc250d43b820ca0b44bf8048ffb60b2a1e468d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:19:01Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "constrictor-snake": {
+    "file": "art/bestiary/source/constrictor-snake.png",
+    "sha256": "a505dbc6983c3647ead0666c0e0922c094788bc52b2000d5149e46508453643c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:19:06Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "copper-dragon-wyrmling": {
+    "file": "art/bestiary/source/copper-dragon-wyrmling.png",
+    "sha256": "e3656bba1f3b8556c57987fd6ec942c2dd42622559c8ad8f34f593655813bdfe",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:46:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "couatl": {
+    "file": "art/bestiary/source/couatl.png",
+    "sha256": "b5b3baf6b317943d3c165c7cc510734d630faf4087782afdef92650f5f727e67",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:19:16Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "crab": {
+    "file": "art/bestiary/source/crab.png",
+    "sha256": "d77f533b1e689ecda812a77552d32fe52b3cb213edc33829bd2a6495fb81e639",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:20:02Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "crocodile": {
+    "file": "art/bestiary/source/crocodile.png",
+    "sha256": "7bbac539972eb052ab103c3b00476ea14ede0a2ad165c28b698baf3b54657a82",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:20:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "cultist": {
+    "file": "art/bestiary/source/cultist.png",
+    "sha256": "8296377b14c3f83a9fb235cd01f773f979d3e48c6219ee53450aed2fa6ed3166",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:47:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "cultist-fanatic": {
+    "file": "art/bestiary/source/cultist-fanatic.png",
+    "sha256": "e00d7fd97c59f8492f596620578e0e002e3322e52b6be44f2874d9ca88b2db47",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:47:32Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "darkmantle": {
+    "file": "art/bestiary/source/darkmantle.png",
+    "sha256": "8fdd0db55714526c358f0cad3457c7265d60c9e4df9c070facc7f9c0db128db7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:13:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "death-dog": {
+    "file": "art/bestiary/source/death-dog.png",
+    "sha256": "f291a10343df86b41dc23584d352ffe4f11253759c8268aadc968d9243f7f046",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:20:36Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "deer": {
+    "file": "art/bestiary/source/deer.png",
+    "sha256": "c911c83a4aec7d4ac1a3a63dd8cef49ef91334165fd44df2f18407dfe52d34ae",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:21:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "deva": {
+    "file": "art/bestiary/source/deva.png",
+    "sha256": "a3fc5f379cd8a3bae87b9de4baddf7e430a23295680835e530acfe10ef29d37c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:21:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "dire-wolf": {
+    "file": "art/bestiary/source/dire-wolf.png",
+    "sha256": "7d8d18f26a39260b67d4e895e5e9644e44d59bc46cff239e2790caa3179da6dc",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:47:43Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "djinni": {
+    "file": "art/bestiary/source/djinni.png",
+    "sha256": "e84991858aed7363b058dffdde2070256226b106d78d5fc7968c88f14b853688",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:22:11Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "doppelganger": {
+    "file": "art/bestiary/source/doppelganger.png",
+    "sha256": "5961043aefb0bd32f4d33cfe69d9869bf6f5a46e2e34964c0976739025767eed",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:21:33Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "draft-horse": {
+    "file": "art/bestiary/source/draft-horse.png",
+    "sha256": "dd9d0f9b519b27a914e0311647426daaed43a41568407ead99098fbce7fb6fe5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:21:45Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "dragon-turtle": {
+    "file": "art/bestiary/source/dragon-turtle.png",
+    "sha256": "8620c11819b397714aac81cf09fb1026e125defa0d17703c45b9e666cff6b78d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:11:13Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "dretch": {
+    "file": "art/bestiary/source/dretch.png",
+    "sha256": "80e396ff0df9717e50c676a0fc8afaca4c561a8c21ac01491ffa786375cf3aa7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:21:59Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "drider": {
+    "file": "art/bestiary/source/drider.png",
+    "sha256": "3e28b5ca0d49b3683fffe4255725ef8af9a28bb5f4a233ef39cecbd9b0c5fe7e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:47:08Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "druid": {
+    "file": "art/bestiary/source/druid.png",
+    "sha256": "0e45ff9cd1923fe76ba6cb47a70399c2aa430d5d21564255279b969354d806fa",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:19:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "dryad": {
+    "file": "art/bestiary/source/dryad.png",
+    "sha256": "298ca8bb65d814c98d35e2786528720aaae0659c4b22b70d06f58ba99f2b0e76",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:48:03Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "dust-mephit": {
+    "file": "art/bestiary/source/dust-mephit.png",
+    "sha256": "4e9391d13dccb0d131cb685974950ec5185233ccf96a674c1dd8980b39858ee7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:47:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "eagle": {
+    "file": "art/bestiary/source/eagle.png",
+    "sha256": "84c0075648745b03029238b6597baa39db8bb034e2a55dcf83f3b72e64a3cd18",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:22:13Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "earth-elemental": {
+    "file": "art/bestiary/source/earth-elemental.png",
+    "sha256": "fa4a303f34012958d7c1562a80c0dd0fcb12b3875f0dfc99bf8efd7fc2be3916",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:51:21Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "efreeti": {
+    "file": "art/bestiary/source/efreeti.png",
+    "sha256": "ead82ab9980b8fc073e0f4c526b86146235488a92374038a8268cebf3bbbee36",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:13:58Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "elephant": {
+    "file": "art/bestiary/source/elephant.png",
+    "sha256": "41546b9920bdb798f8b516e357be4b7244a4197a446ce05b3bf6bf9d7a9b5e2a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:22:25Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "elk": {
+    "file": "art/bestiary/source/elk.png",
+    "sha256": "1bded2bb5f54b69644b976b471a4bf192ad11fd70f6d685471160fdc14d001ea",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:22:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "erinyes": {
+    "file": "art/bestiary/source/erinyes.png",
+    "sha256": "894f31e8766b4f2769285c44d51a94710867876ca76f523940fe72b636b9d6c9",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:11:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ettercap": {
+    "file": "art/bestiary/source/ettercap.png",
+    "sha256": "5b456b2b5e2fdd621dd38554dec509b1ce96e1e8d273ef6263a43e5c703c06b8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:51:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ettin": {
+    "file": "art/bestiary/source/ettin.png",
+    "sha256": "20f3cf18882ca66b1b32dd1179a887489762c40d0bf40e7af3c96b01f2704605",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:52:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "fire-elemental": {
+    "file": "art/bestiary/source/fire-elemental.png",
+    "sha256": "e113ebfbdcc3089e2fab3c8649ad5e739f64f77d275f25f11ce04d14c1d8fe0e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:48:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "fire-giant": {
+    "file": "art/bestiary/source/fire-giant.png",
+    "sha256": "82fb18b7def5f7c256c6c5a3d436e279b26147f2a586f03782559adb282c71c3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:22:28Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "flesh-golem": {
+    "file": "art/bestiary/source/flesh-golem.png",
+    "sha256": "9a6d7b2be31b831400bc492091d58a7c4e71f5334300198662d4413e3dc0a1dc",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:22:45Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "flying-snake": {
+    "file": "art/bestiary/source/flying-snake.png",
+    "sha256": "d711a0e9a7b3f8568cc16c9aea5e7666cd9ae3053f91c4365612a83c95246509",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:12:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "frog": {
+    "file": "art/bestiary/source/frog.png",
+    "sha256": "80682c5138809d58b00fdfc81d7f4a88155c84c3b0cb7ab3ce124b3950286ca7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:22:52Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "frost-giant": {
+    "file": "art/bestiary/source/frost-giant.png",
+    "sha256": "960c48ebd84531ea1d8dc59b8b340ade0c54900a2ea03012f0d0b0c6561419b2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:52:27Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gargoyle": {
+    "file": "art/bestiary/source/gargoyle.png",
+    "sha256": "4277dfeab52101f62f5edf32cc7d2d073b912aa87be8df7cccf37c1f009c812a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:23:28Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gelatinous-cube": {
+    "file": "art/bestiary/source/gelatinous-cube.png",
+    "sha256": "acbea8525e0471f7e7710a972441e23ab19dcf577d2bfee6c64add659c9bb522",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:30:21Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ghast": {
+    "file": "art/bestiary/source/ghast.png",
+    "sha256": "7fce55487d4396f0a0bea3e5c68957e027dedf903dad3e919b0eafcc9398e59a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:13:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ghost": {
+    "file": "art/bestiary/source/ghost.png",
+    "sha256": "f6e80f3d3f19b583503c18b2fbd02901749aeee01c7f7f3704c992702344a15e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:48:36Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ghoul": {
+    "file": "art/bestiary/source/ghoul.png",
+    "sha256": "0e092d55db6dee3743a67bd533aeb59d4311f1ae28c347df5a7a294ba8c0ed48",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:48:48Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-ape": {
+    "file": "art/bestiary/source/giant-ape.png",
+    "sha256": "0d6e1b1a5c4a4f7b5528e8d2c8e1dbf2782db233620c4bd1460182487bd3b1a7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:23:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-badger": {
+    "file": "art/bestiary/source/giant-badger.png",
+    "sha256": "a06b46952caac489a38d634eb35a049cb94ed2d46de31b9c8b499e120e0055e4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:15:05Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-bat": {
+    "file": "art/bestiary/source/giant-bat.png",
+    "sha256": "fc455404d2ae879ca3eabb59e229e7cd1069ba89e9067cda6df279d766ebef34",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:23:58Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-boar": {
+    "file": "art/bestiary/source/giant-boar.png",
+    "sha256": "7caca6bcfeb5b06e9c85f500e7e1d5909281e01e9bae865e52e94c167fc31877",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:49:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-centipede": {
+    "file": "art/bestiary/source/giant-centipede.png",
+    "sha256": "df7f5f45f930b3aac487e424a46e14dafb50982bba74405f2d78f543bb608312",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:24:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-constrictor-snake": {
+    "file": "art/bestiary/source/giant-constrictor-snake.png",
+    "sha256": "beee431cf40158e11e55d9d468df34df9bb543b1295a7096e3447a5cf1ab07ac",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:24:24Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-crab": {
+    "file": "art/bestiary/source/giant-crab.png",
+    "sha256": "987588952a71e327f14e760c4f1f792e63e1b8bab9914945287a61cd932f345f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:24:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-crocodile": {
+    "file": "art/bestiary/source/giant-crocodile.png",
+    "sha256": "d087f48eb6536bd79190ffe78cdfba43bc57d3dc38a0aaa4e07f1994de5efd34",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:24:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-eagle": {
+    "file": "art/bestiary/source/giant-eagle.png",
+    "sha256": "b0cdeaae98f3fd04e752c040f67d8e50edc2c1320710dc9eaf85e0d21c1ff339",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:35:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-elk": {
+    "file": "art/bestiary/source/giant-elk.png",
+    "sha256": "217d31121d7282ff2ffd4f5d8f2a9c9f1c1e236e699ebe8bd8e7df707db83b51",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:20:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-fire-beetle": {
+    "file": "art/bestiary/source/giant-fire-beetle.png",
+    "sha256": "3ea44774da0df4f19ac86dc2605dd61bd6f153cda84dffc1ac67ab1dbed214f1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:36:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-frog": {
+    "file": "art/bestiary/source/giant-frog.png",
+    "sha256": "eedae3ce38e9627f9b8c99af9cf9b63da02ac1618d5624a5229561c674d2600b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:36:10Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-goat": {
+    "file": "art/bestiary/source/giant-goat.png",
+    "sha256": "05e326edbd597521df11669a238ba953ad4bd87fd9e43bf484aa16ff80e7cfb8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:25:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-hyena": {
+    "file": "art/bestiary/source/giant-hyena.png",
+    "sha256": "e79ce6632554f160066b984e6084b99213ee2684667c5fd029df7515b3082dc7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:36:28Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-lizard": {
+    "file": "art/bestiary/source/giant-lizard.png",
+    "sha256": "e8b923a7e5528e2e23825a6305aaf052c38f9b4b258b44fc4443acfbd56bbe54",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:25:23Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-octopus": {
+    "file": "art/bestiary/source/giant-octopus.png",
+    "sha256": "ec362422675bab17f3ca0910a4c0becbf3bfad9ea01a6f6ce8140862341b74e1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:25:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-owl": {
+    "file": "art/bestiary/source/giant-owl.png",
+    "sha256": "0bf067829aa7ea19bcdbf2b9d6fea113b0f33bdc626f3f7e609cc38647240f4c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:00:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-rat": {
+    "file": "art/bestiary/source/giant-rat.png",
+    "sha256": "66744647b0f57b5cf9ae7a99e58e78c0fe99b3a2e298b2873de6d1124a4fd71c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:49:12Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-scorpion": {
+    "file": "art/bestiary/source/giant-scorpion.png",
+    "sha256": "c59c7df6beab5af9d600090840150306c4feae5ae9808eebc35312c8a394cd07",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:25:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-seahorse": {
+    "file": "art/bestiary/source/giant-seahorse.png",
+    "sha256": "54bed6b60dbd8b009897071e901da565ddfc1f8e2bc94538af2f43f0f0aa02fa",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:23:06Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-shark": {
+    "file": "art/bestiary/source/giant-shark.png",
+    "sha256": "fce5710db07f65d42b034686536d9db6719d5f9f6d02bf782359beb7b0a1bde2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:26:05Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-spider": {
+    "file": "art/bestiary/source/giant-spider.png",
+    "sha256": "dab56fbb9cc8184822686b0fba74f19ca289d5a16c9f788869993a84c2eb4b10",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:49:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-toad": {
+    "file": "art/bestiary/source/giant-toad.png",
+    "sha256": "3aaf832e50e1c2ef54dd55fa019b9aaa17f4dd0f7094ff60564c287b02221d2d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:01:10Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-venomous-snake": {
+    "file": "art/bestiary/source/giant-venomous-snake.png",
+    "sha256": "eecb6ed7c5b310445b3c565e6a56111277fc0cbe0e1d178b8abd19d31ccaf7ac",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:26:16Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-vulture": {
+    "file": "art/bestiary/source/giant-vulture.png",
+    "sha256": "90006892dd32c50ae7a9b5881e54e331e5e86946c9b3b0700d5eb0db44e1f560",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:01:25Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-wasp": {
+    "file": "art/bestiary/source/giant-wasp.png",
+    "sha256": "c893d61e9422d6417340f8a96110c0ef4fa7847b97b3f73e90bb859ba84bbb6d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:01:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-weasel": {
+    "file": "art/bestiary/source/giant-weasel.png",
+    "sha256": "a0889c6467b53680cad4b2cdfeafe663e9572663fb875658632379070c478adb",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:02:13Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "giant-wolf-spider": {
+    "file": "art/bestiary/source/giant-wolf-spider.png",
+    "sha256": "e595a1bebea86017459a12c0ccd194cb48c29381f7e68043a2c6d50db6c2159d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:26:35Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gibbering-mouther": {
+    "file": "art/bestiary/source/gibbering-mouther.png",
+    "sha256": "74fe0c725309eb2bd6f5b4c21e8d05a609f7e426a6b89f1de046a2e836bb4b17",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:52:56Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "glabrezu": {
+    "file": "art/bestiary/source/glabrezu.png",
+    "sha256": "0c08ecad437cc4c2e9a5a2b5d3ad0a7d7f353d11e63952a63fd795cc0c6e0b78",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:28:21Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gladiator": {
+    "file": "art/bestiary/source/gladiator.png",
+    "sha256": "325a247e48c78b3518b80ac8e3982359ab1b8b6c0cd94e405697a87193b64ac1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:30:39Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gnoll-warrior": {
+    "file": "art/bestiary/source/gnoll-warrior.png",
+    "sha256": "179f0084b28d97276b335613c39e2f034894e77ac2216ebe0cf8f1d90241dad1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:02:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "goat": {
+    "file": "art/bestiary/source/goat.png",
+    "sha256": "6424f90959642c7d07f27b88b87c4b90373667a81d92c362c7bb6069398fe8c2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:27:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "goblin-boss": {
+    "file": "art/bestiary/source/goblin-boss.png",
+    "sha256": "e99d4debad0935ba2e737e974475f091cfea2648971414c3767d2ddb84a9244d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:20:34Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "goblin-minion": {
+    "file": "art/bestiary/source/goblin-minion.png",
+    "sha256": "3e97dddcc2021b3b60ade5d7a7a27c1cdfa58c07e6cf00fb889892efc4553be2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:30:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "goblin-warrior": {
+    "file": "art/bestiary/source/goblin-warrior.png",
+    "sha256": "6564c1e68a2bcbf0cd1b9955abda3c73de0dfddd7bbb6fee58be42755beb7bc3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:33:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gold-dragon-wyrmling": {
+    "file": "art/bestiary/source/gold-dragon-wyrmling.png",
+    "sha256": "4bcf2c5c767ea18e3245efaa392491fbe4c78ec9492d489c8d1509fbfa8a36dd",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:53:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gorgon": {
+    "file": "art/bestiary/source/gorgon.png",
+    "sha256": "65a3d78364d6331902c611b669b4d72a4fa6fb0944c177d714d8e4ae24254a20",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:15:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "gray-ooze": {
+    "file": "art/bestiary/source/gray-ooze.png",
+    "sha256": "33722f9d5c18ed1af5814805ea2c011c55473262e80725588ac2fe31373c5f34",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:20:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "green-dragon-wyrmling": {
+    "file": "art/bestiary/source/green-dragon-wyrmling.png",
+    "sha256": "11bf2dfd90e0d4920f89ad689f8dfb28c7c3864a4f0e90b16aad1c002c664b8d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:53:24Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "green-hag": {
+    "file": "art/bestiary/source/green-hag.png",
+    "sha256": "0056fc570914d211981777ebfd2a63326254c66310c6fec117875747890ae2f4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:23:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "grick": {
+    "file": "art/bestiary/source/grick.png",
+    "sha256": "6ab28606d3147a3e627fb5b37b44d5d28791061779576ff9bbadf596152c7a4f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:53:55Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "griffon": {
+    "file": "art/bestiary/source/griffon.png",
+    "sha256": "15e3c3d056a409341b6daf9cfa8a5c22f6cddd894fb90a11407f9765310bb415",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:20:02Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "grimlock": {
+    "file": "art/bestiary/source/grimlock.png",
+    "sha256": "79c3c65f225cbef832061255a1b39a461f4259223e3fe8531647b323530062c0",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:02:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "guard": {
+    "file": "art/bestiary/source/guard.png",
+    "sha256": "c42266daeefea49dd29533682d935e8f8069e255aa8a0943c510104ebc9faa48",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:30:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "guard-captain": {
+    "file": "art/bestiary/source/guard-captain.png",
+    "sha256": "d0259dfc008bd32f09f7e66f2e6de405e1ea6e35f2f84bd8445be66b54abd663",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:13:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "guardian-naga": {
+    "file": "art/bestiary/source/guardian-naga.png",
+    "sha256": "3487266ae3d2e9e692394f27e91b40109a1bc113eb08efd27d05975ab46ff4b7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:15:52Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "half-dragon": {
+    "file": "art/bestiary/source/half-dragon.png",
+    "sha256": "1a5d47f7f88c75a8118679fdabbb2d21bc2330437a761eaf221cf2a75a55ec68",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:33:24Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "harpy": {
+    "file": "art/bestiary/source/harpy.png",
+    "sha256": "d7b60b95bbe01d7aaca8660ab07e0b519f86e7b2363af6d1d34522f0d8e9060d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:54:18Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hawk": {
+    "file": "art/bestiary/source/hawk.png",
+    "sha256": "3af87fe037505137d7202b472afffd91f62da9fa419d645dc951736186adf8b2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:27:17Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hell-hound": {
+    "file": "art/bestiary/source/hell-hound.png",
+    "sha256": "e8fa62727262f525b633db50685cfd9445ce32df0a0d3f8bcd6581e5009d85a5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:16:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hezrou": {
+    "file": "art/bestiary/source/hezrou.png",
+    "sha256": "386ddf8aa2c00549548da8e8ca5a771f0f1c207537545d555d1fe04c32695cad",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:27:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hill-giant": {
+    "file": "art/bestiary/source/hill-giant.png",
+    "sha256": "e0ba938e4265dd045eaf3b4f920829b1d845e96f393712686a1d3b627d6db027",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:23:51Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hippogriff": {
+    "file": "art/bestiary/source/hippogriff.png",
+    "sha256": "5bce80de452b05533406eed191212603f5e48e996f17e818897921eb0682967f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:21:04Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hippopotamus": {
+    "file": "art/bestiary/source/hippopotamus.png",
+    "sha256": "b95af2ede377f381866e09f1222321593e6430b4b4cee1adaf8b3e62d1d34d14",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:27:54Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hobgoblin-captain": {
+    "file": "art/bestiary/source/hobgoblin-captain.png",
+    "sha256": "291e80964d31064df3cb4d06b0a7f936d900c7e3fdb8ccbb58418181769a2203",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:21:33Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hobgoblin-warrior": {
+    "file": "art/bestiary/source/hobgoblin-warrior.png",
+    "sha256": "6fc4c0cb6d51292d1f81d2f27d9f7f08d927fb94c885cb4b2b72b61b1a002e7c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:21:48Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "homunculus": {
+    "file": "art/bestiary/source/homunculus.png",
+    "sha256": "9857538f41e2315eb67869d699ece1390f1c72e908a6f9f251d6d6559ae5a0eb",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:03:03Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "horned-devil": {
+    "file": "art/bestiary/source/horned-devil.png",
+    "sha256": "7cf9f9f0ee04b7458634e5277dc133cded70c918d2b5a0f4d374c0c09fe380fb",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:16:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hunter-shark": {
+    "file": "art/bestiary/source/hunter-shark.png",
+    "sha256": "df16f5bd1412855c9034cfd2919d0d31ac1bf83e5b55b6b25a7baa328169125a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:28:06Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hydra": {
+    "file": "art/bestiary/source/hydra.png",
+    "sha256": "63fe7ef1900d47696348cd202fc166a4d40359410a29e65b7e3ea95dc6bab5ef",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:28:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "hyena": {
+    "file": "art/bestiary/source/hyena.png",
+    "sha256": "e358d1241aa14932018f329eb5a24cf821ff6c130212292bef2dd8112e6fdbc7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:28:37Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ice-devil": {
+    "file": "art/bestiary/source/ice-devil.png",
+    "sha256": "4cddf87fc58ef356ad227a013ee265c86851fff11f459b6d1c3754fe96d8fc6b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:29:02Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ice-mephit": {
+    "file": "art/bestiary/source/ice-mephit.png",
+    "sha256": "3d50e9cf5871e26e4db5c2316a323b6692d2e019b8fb5db23a89b5a6acfee956",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:54:49Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "imp": {
+    "file": "art/bestiary/source/imp.png",
+    "sha256": "472a97fd12bd55c43c0ff11da055684b21204b47ebd589349d2115ec3dfb68cd",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:23:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "incubus": {
+    "file": "art/bestiary/source/incubus.png",
+    "sha256": "e975bfddb96b91124d5f79212cb73d020404b65fd713b29383f7cf80960288f7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:16:33Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "invisible-stalker": {
+    "file": "art/bestiary/source/invisible-stalker.png",
+    "sha256": "7e3a3a6dad3a7ca543124f856090c32da3686a913b186ba6dfea477ee0e63fc0",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:03:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "iron-golem": {
+    "file": "art/bestiary/source/iron-golem.png",
+    "sha256": "6b6d3923fdb53c1eeaed3d2796c9e8bb02e27b53c8f14f07532df10bc1bad372",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:29:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "jackal": {
+    "file": "art/bestiary/source/jackal.png",
+    "sha256": "2c7512c9b185cddbac29e6f273e768a6e9a4f08511edb044eb434c9a2d8d8f3c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:29:34Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "killer-whale": {
+    "file": "art/bestiary/source/killer-whale.png",
+    "sha256": "4de5d815309985f0d8f8178808c51f40fd7e0de38d44f96af226de3e649ccc72",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:29:44Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "knight": {
+    "file": "art/bestiary/source/knight.png",
+    "sha256": "7cf342064e1681109cb1758a4b9e9bd14524e6c9d3f1e3142df7e8954078c75a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:20:56Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "kobold-warrior": {
+    "file": "art/bestiary/source/kobold-warrior.png",
+    "sha256": "1e18c8cef05796b92c72b8cef812fa6ab45d5dcaa253b1b27f90616f2334310c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:43:49Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "kraken": {
+    "file": "art/bestiary/source/kraken.png",
+    "sha256": "7d1ea09c319ae9aae068005995becdaff283c64a5f7641d6af4b5de9846ff77f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:22:07Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "lamia": {
+    "file": "art/bestiary/source/lamia.png",
+    "sha256": "c44202a03f1278c1a0e285fdbefb059f0c482de2b3c0ff1541ea2b2827cf6351",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:17:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "lemure": {
+    "file": "art/bestiary/source/lemure.png",
+    "sha256": "6e45f57adf264d587b4d24deaddd43fcfc254e5d0d233b775613143f9e3d013f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:30:01Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "lich": {
+    "file": "art/bestiary/source/lich.png",
+    "sha256": "f9dbec07dc1881398bbaea63660accf32def81f1a4a678d41e7f85fa2e830f3f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:21:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "lion": {
+    "file": "art/bestiary/source/lion.png",
+    "sha256": "4822c7223afb4643d77a415e5da1bf88540ffb49bdf2983e4dbfef753d81843e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:30:21Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "lizard": {
+    "file": "art/bestiary/source/lizard.png",
+    "sha256": "c18722d5f0f43787dffefccd83b791b9ebefb4525b9da43f25186f44169d9f0a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:30:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mage": {
+    "file": "art/bestiary/source/mage.png",
+    "sha256": "4159e9b4f369c0c7d16394940bdf8ddc8c5b80f449392761335576682118d574",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:12:59Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "magma-mephit": {
+    "file": "art/bestiary/source/magma-mephit.png",
+    "sha256": "a78c0b68ebf14dae834efc675ff1e81343fd0b38f45ce847750fca0e1c93fd71",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:54:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "magmin": {
+    "file": "art/bestiary/source/magmin.png",
+    "sha256": "d056f139c5748494c17e9242fd4f5eeaec8965429273b591b5bfdfbcd092c2a6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:22:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mammoth": {
+    "file": "art/bestiary/source/mammoth.png",
+    "sha256": "450ebf58099988409d098aaff952d1f8a3afba2a64ab538d9ae576397c9cc669",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:22:44Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "manticore": {
+    "file": "art/bestiary/source/manticore.png",
+    "sha256": "0119e0e41ce145129b44ae4bddda8fac9a5c1f9ba2952ac7f700d56b1ae188c1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:24:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "marilith": {
+    "file": "art/bestiary/source/marilith.png",
+    "sha256": "f44158117fa6199971a40a8a3d32387d58a31aa8bbb9b8fec7ed64360c56ba67",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:55:20Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mastiff": {
+    "file": "art/bestiary/source/mastiff.png",
+    "sha256": "e4e9edf33da6e445e861b45e9f20ed20462bae7d68a16b5ad2f4f93f02d7fba5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:30:54Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "medusa": {
+    "file": "art/bestiary/source/medusa.png",
+    "sha256": "4536c66e5a0c7ad59e3fb0f8362d9b8d1755272e408ce3abffd4f7f3052e5475",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:31:12Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "merfolk-skirmisher": {
+    "file": "art/bestiary/source/merfolk-skirmisher.png",
+    "sha256": "adfcd9e6d4cc57eb945fe7917eb78bd9ae0cc644b95e9389f056b8aa323092b6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:22:01Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "merrow": {
+    "file": "art/bestiary/source/merrow.png",
+    "sha256": "4efc74e8dc7a5be82c33312d6d4a0b8c8e05a2c04799f68b59ad32374d892ca3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:00:34Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mimic": {
+    "file": "art/bestiary/source/mimic.png",
+    "sha256": "8f52e397a73eaeabe85289fac86cfc458e82723cd4546e8ac537e704ffb5b6fa",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:31:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "minotaur-of-baphomet": {
+    "file": "art/bestiary/source/minotaur-of-baphomet.png",
+    "sha256": "bd9896bc5c097f433a0122a76b5e84336caf01504e6406ab85cdde584c7c8e1b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:17:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "minotaur-skeleton": {
+    "file": "art/bestiary/source/minotaur-skeleton.png",
+    "sha256": "0c74c6628dd7208845ce06302012610d58e7d9990b334be513ebb5af4bd6b9b0",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:55:45Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mule": {
+    "file": "art/bestiary/source/mule.png",
+    "sha256": "66706ccacf6e12feb325c4639b674745b65d9050213a9851060f874e8e81a245",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:31:35Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mummy": {
+    "file": "art/bestiary/source/mummy.png",
+    "sha256": "be65955b772c398e72072634340225e38e5eb7efe0a29d5167a1990319b2dc81",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:03:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "mummy-lord": {
+    "file": "art/bestiary/source/mummy-lord.png",
+    "sha256": "f82484a036a3427e57dcd471e9fff18e21617288e7b449ba0ffa07ac1ee4a5f5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:13:03Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "nalfeshnee": {
+    "file": "art/bestiary/source/nalfeshnee.png",
+    "sha256": "a3b38aa0e1cda900dc76c8ec9be7db319d200f55aa5dfca3999d2186ab35757a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:04:28Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "night-hag": {
+    "file": "art/bestiary/source/night-hag.png",
+    "sha256": "963792d6958fc76df74ace6f2a0510ee025359e5caa7ed408df179889033991c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:00:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "nightmare": {
+    "file": "art/bestiary/source/nightmare.png",
+    "sha256": "5ff527db2105f9bd022466d0ccf70fbc96df200b8ee38df88e30b820e578cd7a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:23:08Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "noble": {
+    "file": "art/bestiary/source/noble.png",
+    "sha256": "2d1cbfc1e3aad450516dd2825c683abeb65043a0092372ac401a39b542d4fd7d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:13:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ochre-jelly": {
+    "file": "art/bestiary/source/ochre-jelly.png",
+    "sha256": "b91518e54280e87f00e49d0c9ecb087e3ea94e3375f752d715c076bff21cde06",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:56:17Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "octopus": {
+    "file": "art/bestiary/source/octopus.png",
+    "sha256": "421cce347681eda7de627cc82fb7d9912676ff834cdf8e05552af4ea83f17f7d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:04:23Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ogre": {
+    "file": "art/bestiary/source/ogre.png",
+    "sha256": "805a63dea5067ab750aa6c7fc076bef992139930a3e1c179141198d17a8497c9",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:22:23Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "ogre-zombie": {
+    "file": "art/bestiary/source/ogre-zombie.png",
+    "sha256": "5ae27f19448891067af266fe2350b785fe005202e8b0574e3edc7bdaaef37201",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:33:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "oni": {
+    "file": "art/bestiary/source/oni.png",
+    "sha256": "8330f3f207e3a373b15cd2714883d3aa6fde0e0bb283f5449c5983a3d95fdad7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:17:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "otyugh": {
+    "file": "art/bestiary/source/otyugh.png",
+    "sha256": "c804c7311ecf45aa49f98646d67f60d22185a24e0001c50120b034ef039a4b05",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:56:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "owl": {
+    "file": "art/bestiary/source/owl.png",
+    "sha256": "c0770f30dec69c468ff10d034dbbc8419af2d3e051397d19f2d65e3a0efb9cf5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:04:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "owlbear": {
+    "file": "art/bestiary/source/owlbear.png",
+    "sha256": "2c04a76198c6039de9a7a82dad76c3fef31b597ee7913d134e6e1347c24fae8f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:56:51Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "panther": {
+    "file": "art/bestiary/source/panther.png",
+    "sha256": "c9da536dec3b6bd5f380319eca0ca299bf7fe0bd77ffd17df145bc1817a38065",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:04:41Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pegasus": {
+    "file": "art/bestiary/source/pegasus.png",
+    "sha256": "8ec204f6fb769d47a8029e858693a92eb5162d69e0843aa7fd51ca8db49f9d32",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:05:18Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "phase-spider": {
+    "file": "art/bestiary/source/phase-spider.png",
+    "sha256": "ed54649343428c6265905892ef420f0d773cf6e42003c32124664834c47d9ddc",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:36:37Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "piranha": {
+    "file": "art/bestiary/source/piranha.png",
+    "sha256": "dfa22089b41841f40536e2816c0c5107b93e14a535cd7c8846d84133194cdfa8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:05:33Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pirate": {
+    "file": "art/bestiary/source/pirate.png",
+    "sha256": "a1382d5664616c10812a4a129bdf625b0fdabe76b5d645d434288b40df7d28df",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:14:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pirate-captain": {
+    "file": "art/bestiary/source/pirate-captain.png",
+    "sha256": "b0ffb5f7613d52ff6c6cb6b815983644ca77a7cfd57954fbc6acf66e30d8fe39",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:23:18Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pit-fiend": {
+    "file": "art/bestiary/source/pit-fiend.png",
+    "sha256": "c10a826089c02b5f04affcf197b8094f5023edfe26dab7c0b85c7773559eb6e6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:18:02Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "planetar": {
+    "file": "art/bestiary/source/planetar.png",
+    "sha256": "7f634659bd7b06eb3544e6babde332d98d5502262de0b8ae11c6df1f0dd36b1e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:00:48Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "plesiosaurus": {
+    "file": "art/bestiary/source/plesiosaurus.png",
+    "sha256": "620b0cc2a4d95e40397bee68652c1b818210baf5ec485ef99779f0a5d186eb4e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:00:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "polar-bear": {
+    "file": "art/bestiary/source/polar-bear.png",
+    "sha256": "b80dbf0bbf9d221f9808a50474b033b33d265ebf3d0af7ae8d8d4291504327cd",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:05:48Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pony": {
+    "file": "art/bestiary/source/pony.png",
+    "sha256": "8f5f66fa636fcbd5a8a2ebf72fae1faa709906f83ab1ec87ef1fce4b445e2384",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:05:59Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "priest": {
+    "file": "art/bestiary/source/priest.png",
+    "sha256": "24c4b7c22ef19d08b09db8140da85a8b9c127eb158812b9c9a8297e4adb4f658",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:22:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "priest-acolyte": {
+    "file": "art/bestiary/source/priest-acolyte.png",
+    "sha256": "d7b1a0c934cd259a67e54340120630d49896e73bd21ba3e015a015d34cc66724",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:14:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pseudodragon": {
+    "file": "art/bestiary/source/pseudodragon.png",
+    "sha256": "5db5a826837ceb0087c7f452818b59a8df9ca418bbd5d158924a506ab083ba35",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:23:49Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "pteranodon": {
+    "file": "art/bestiary/source/pteranodon.png",
+    "sha256": "b8d74bf59701dfcd69d481cea0142ef20b114d918acd2a52a2b1a1070344e1e6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:03:21Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "purple-worm": {
+    "file": "art/bestiary/source/purple-worm.png",
+    "sha256": "fd426788ab8f9bf2752bf53bd2ac419c47e4490093cdeea92d6d12f9a8635034",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:17:22Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "quasit": {
+    "file": "art/bestiary/source/quasit.png",
+    "sha256": "1d8613c1bff51a369ac32fdad61d3d718f1ec7666d653efeffaf97ca44c891d7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:17:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "rakshasa": {
+    "file": "art/bestiary/source/rakshasa.png",
+    "sha256": "dafeeb9fe1ba460c3e330561dda0708ccdf12bbb00060f4593e39935f4bb9ff0",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:17:51Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "rat": {
+    "file": "art/bestiary/source/rat.png",
+    "sha256": "549846376dc6e6874c7e1b48a6547e9337933cb106dc2c8a5a174fad73f1fdca",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:18:04Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "raven": {
+    "file": "art/bestiary/source/raven.png",
+    "sha256": "192311e57721cfa5e85de54cb759eff9238f702348aba8ad9bf471ff5d133c60",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:19:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "red-dragon-wyrmling": {
+    "file": "art/bestiary/source/red-dragon-wyrmling.png",
+    "sha256": "a6362d0f481652719f353476e984a2d67ed3eea025f3931df93352ce293e458f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:18:12Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "reef-shark": {
+    "file": "art/bestiary/source/reef-shark.png",
+    "sha256": "308a90989d9928d38c32c0094f1dd7cea3ea121f4dab8d29889c01846ae9e113",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:19:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "remorhaz": {
+    "file": "art/bestiary/source/remorhaz.png",
+    "sha256": "0972beebcb9039e325b00b9f0f9aab251ad85bc48f3fe53f9d10f178d17fe924",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:18:41Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "rhinoceros": {
+    "file": "art/bestiary/source/rhinoceros.png",
+    "sha256": "81bb550af253e149463874707a5b024f3e855734e556101732fe96658b472429",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:19:54Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "riding-horse": {
+    "file": "art/bestiary/source/riding-horse.png",
+    "sha256": "f054f99071cbb9b5f97021a330d363b702357325abb6f97d8a7543b2e0bf044c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:20:11Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "roc": {
+    "file": "art/bestiary/source/roc.png",
+    "sha256": "8885332e4609d5c03e493f2baffcd8d8cfab624bedf5a9087c81676d9a7f2d6a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:37:01Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "roper": {
+    "file": "art/bestiary/source/roper.png",
+    "sha256": "638ca93377f406057e4105cd9884eac3f27e4a7e550d9a6e2c06b17dc435b789",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:35:16Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "rust-monster": {
+    "file": "art/bestiary/source/rust-monster.png",
+    "sha256": "94ae0911321613ffd4d9897a98ae85935a299e33c9acbefb55ac3fa1a5b24494",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:57:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "saber-toothed-tiger": {
+    "file": "art/bestiary/source/saber-toothed-tiger.png",
+    "sha256": "b5b2e6286c05488a08b0e0247e183e495c917ff16dd121987bb72b0340123c3d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:28:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "sahuagin-warrior": {
+    "file": "art/bestiary/source/sahuagin-warrior.png",
+    "sha256": "39fca08d4e2142792f06b33e29e2d12b5e6817644f0adabc56064ce9112d48c1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:57:35Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "salamander": {
+    "file": "art/bestiary/source/salamander.png",
+    "sha256": "17b7d4f9f817d9ed46790097648e034bfd631fad61ceb0a3a865c19ad8f8232e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:35:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "satyr": {
+    "file": "art/bestiary/source/satyr.png",
+    "sha256": "737e50c5c23912ec6220e3c61a20f837c4dcf009a08ebdcf7685ac3150064fef",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:57:52Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "scorpion": {
+    "file": "art/bestiary/source/scorpion.png",
+    "sha256": "546b274c84a00a080e7eb2f04adc6e89640e13c6d59d3b707ef51a0c277609cf",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:36:30Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "scout": {
+    "file": "art/bestiary/source/scout.png",
+    "sha256": "fba59a8afd192b71420ce64a311751b6a932774c5214e05dbb6b14be5d31d45c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:15:11Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "sea-hag": {
+    "file": "art/bestiary/source/sea-hag.png",
+    "sha256": "f77c192902c83c87a77ed963f241bd78534d24459c8c51a988f5365ab117e294",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:04:11Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "seahorse": {
+    "file": "art/bestiary/source/seahorse.png",
+    "sha256": "d7c655e32510a2945bccfd75bd751b34d35e9abba65dc675d2de84c15895745b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:36:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "shadow": {
+    "file": "art/bestiary/source/shadow.png",
+    "sha256": "d71cd7ffd9a172713ef5cbc685a7ebedc24f1549aee95a0d9ef4198727e75b44",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:17:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "shambling-mound": {
+    "file": "art/bestiary/source/shambling-mound.png",
+    "sha256": "7721b7e6e97fba2a28e4b3df1e12842852d7019c32f5ec935a5f8b5a86e8acae",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:58:15Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "shield-guardian": {
+    "file": "art/bestiary/source/shield-guardian.png",
+    "sha256": "b2feb7dfbbb6284069f5a8a38912681e5ff2ff7336218d688e7003642c3bf062",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:04:23Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "shrieker-fungus": {
+    "file": "art/bestiary/source/shrieker-fungus.png",
+    "sha256": "b300517a5ce3019e5a8d5bb6d2f26f28f24621e8d4990af12dba12b0138b1f10",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:37:13Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "silver-dragon-wyrmling": {
+    "file": "art/bestiary/source/silver-dragon-wyrmling.png",
+    "sha256": "008b7d88e199e91bf30f806625486063247774d8f10f6cdebd6c0fc592d3a0c7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:58:35Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "skeleton": {
+    "file": "art/bestiary/source/skeleton.png",
+    "sha256": "d0230a767fd73faf12c021a1eb2035b542b905a46dd2b9fa3414e0cc5cd2aa69",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:22:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "solar": {
+    "file": "art/bestiary/source/solar.png",
+    "sha256": "cc068fa4daab2eda352001d14aca5f40e34bc1f5b53b199b77b6f052eba0e9c8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:04:49Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "specter": {
+    "file": "art/bestiary/source/specter.png",
+    "sha256": "01d10e9308b8f0a0b08c2b9772fe9373eea918ae1bc5cceb26ed2bf0da639fb2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:43:01Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "sphinx-of-lore": {
+    "file": "art/bestiary/source/sphinx-of-lore.png",
+    "sha256": "3262a5c992c68c131da45c6c9a2d1285b919a28667c3555586bdfb485ee09dff",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:37:25Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "sphinx-of-valor": {
+    "file": "art/bestiary/source/sphinx-of-valor.png",
+    "sha256": "4c3bca3fc2bf4b87be3b2808d8fd7fab7a5aa8f754c48e57b3792b915fd3fdfa",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:05:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "sphinx-of-wonder": {
+    "file": "art/bestiary/source/sphinx-of-wonder.png",
+    "sha256": "66ff34c70a14e1d8239a25cd55dc1e842abfa4737c97d0d982f195230fc8df84",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:05:24Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "spider": {
+    "file": "art/bestiary/source/spider.png",
+    "sha256": "ec3e6295a240527a44f1c80f6f62b2f5e574188af78235c162766b9b0ef19f37",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:38:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "spirit-naga": {
+    "file": "art/bestiary/source/spirit-naga.png",
+    "sha256": "acd6fbcb8210a18f4a1a4a3013579189d70d1de8992762d8007abd72dd3aa3dc",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:43:23Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "sprite": {
+    "file": "art/bestiary/source/sprite.png",
+    "sha256": "fe6dbecaa18a0feeebe5e2fd5dd6dfaa37d3d50803de0663948779acdf7ac0c8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:44:24Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "spy": {
+    "file": "art/bestiary/source/spy.png",
+    "sha256": "be2ac6fb691385a198d97c67938f2a37eb1b5dbd3d1ccfaae977f78e85118082",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:15:44Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "steam-mephit": {
+    "file": "art/bestiary/source/steam-mephit.png",
+    "sha256": "ff4f5e885312f657179318c66049a675b357a778c6cb50aefd53d059316b8251",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:58:58Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "stirge": {
+    "file": "art/bestiary/source/stirge.png",
+    "sha256": "9fbdf2c1a8a69965f4865cfd70e1b35b664c7b431f0b182ae405808f37ba92cf",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:06:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "stone-giant": {
+    "file": "art/bestiary/source/stone-giant.png",
+    "sha256": "8edc982064e80032d58d25987cef0d23d776ca7ba3d3fdfff17f0c19bb5ff973",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:59:11Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "stone-golem": {
+    "file": "art/bestiary/source/stone-golem.png",
+    "sha256": "4401aaebc535ae89e6f7325abd5a06ba2fac94a3b24d1933329887a1fc83afb9",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:05:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "storm-giant": {
+    "file": "art/bestiary/source/storm-giant.png",
+    "sha256": "c20d81e036389d3088205ee4d9d60257fe5c5bf164ae137b41b4d9b8d6b7fc1f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:59:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "succubus": {
+    "file": "art/bestiary/source/succubus.png",
+    "sha256": "90cb075ce2d1ad9c34e8df1d3d695257c11958ec8346c0cc3424d9dde3d6b18e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T16:59:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-bats": {
+    "file": "art/bestiary/source/swarm-of-bats.png",
+    "sha256": "531a186edd7040a07b56e3abb218ce0fd18cef6d11061219ed18dc31a072e849",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:28:43Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-crawling-claws": {
+    "file": "art/bestiary/source/swarm-of-crawling-claws.png",
+    "sha256": "fc2e4753359c27589546a430d307bc33db39fd6b32a0ffbe83f88df3c20925b3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:00:18Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-insects": {
+    "file": "art/bestiary/source/swarm-of-insects.png",
+    "sha256": "733503e4b93f73bb90a0874799a1310ae1925bfb5f0e3e7ea6435451d2f7043d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:06:27Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-piranhas": {
+    "file": "art/bestiary/source/swarm-of-piranhas.png",
+    "sha256": "37b3aa6867fc3c05905fd2bb916b4fc090a77505478a45311daa82980b22176f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:03:38Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-rats": {
+    "file": "art/bestiary/source/swarm-of-rats.png",
+    "sha256": "6699d96ec935348c26f984a2d5aa30be3d62122f0f17e79c06a81c259e53421d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:00:46Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-ravens": {
+    "file": "art/bestiary/source/swarm-of-ravens.png",
+    "sha256": "4fae6d6a4cf7203a21f2f6ce6174703adc75ca18f7a374c8b8439dc174d49932",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:03:59Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "swarm-of-venomous-snakes": {
+    "file": "art/bestiary/source/swarm-of-venomous-snakes.png",
+    "sha256": "60c50afc4212c030f67c68367316b1bb38ba8cbac08619a39937bc0de2657c0b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:01:04Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "tarrasque": {
+    "file": "art/bestiary/source/tarrasque.png",
+    "sha256": "1983a88235dcb18e9e8585ea612a67db1493b7485ed5ec6d1278b509ac68a3db",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:06:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "tiger": {
+    "file": "art/bestiary/source/tiger.png",
+    "sha256": "850647738d55720426c30d54b8ff8ec15d861846831ad86faf1ae07db490c6d5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:38:44Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "tough": {
+    "file": "art/bestiary/source/tough.png",
+    "sha256": "fc62dfe221f79994dc428eb4fa813060850eaad5628dad796642eb703b3f6b50",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:22:56Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "tough-boss": {
+    "file": "art/bestiary/source/tough-boss.png",
+    "sha256": "9a64f30c3de4b08cb95bef61fcd0ea39db8d81f10db8217ec9a0b9c9656246d4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:15:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "treant": {
+    "file": "art/bestiary/source/treant.png",
+    "sha256": "04800f024947b23c83d09623c0eb74ee598bce58b00de251f9f691b7635af44c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:16:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "triceratops": {
+    "file": "art/bestiary/source/triceratops.png",
+    "sha256": "5faeec18e7f5b89f61ac5327717d9f2dc5c696db024b5835ad2b9680b9aad912",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:04:03Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "troll": {
+    "file": "art/bestiary/source/troll.png",
+    "sha256": "1caf5aa9bfd24f683d74091b61f07a03b4a48656908a1e468d710f9bdfcb827d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:23:21Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "troll-limb": {
+    "file": "art/bestiary/source/troll-limb.png",
+    "sha256": "fec633d83478ef42448873ab0c49b3787a321bcb988cb1065903889410a2c6b8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:01:18Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "tyrannosaurus-rex": {
+    "file": "art/bestiary/source/tyrannosaurus-rex.png",
+    "sha256": "557473b2bfd20bdca00162357d951efd92240c5bbabb98289650da83c3fd1a28",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:18:26Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "unicorn": {
+    "file": "art/bestiary/source/unicorn.png",
+    "sha256": "58c23b762047ef396d75d720062e63f85a02769c80e389f2770e9470a0068fc5",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:18:45Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "vampire": {
+    "file": "art/bestiary/source/vampire.png",
+    "sha256": "4834c7497d189c65914855f616da2e9c84e31473f3b722ce80850696755a49fa",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:19:07Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "vampire-familiar": {
+    "file": "art/bestiary/source/vampire-familiar.png",
+    "sha256": "f73e1218c119d5a7a55512ea4ad231bfe28f73b45255f0b0fd5ab91b5664fba3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:19:04Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "vampire-spawn": {
+    "file": "art/bestiary/source/vampire-spawn.png",
+    "sha256": "a4b5c7d79bfda252d988926f4e233f611fa617fb67cd24869a94e15ceba6ce5c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:44:50Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "venomous-snake": {
+    "file": "art/bestiary/source/venomous-snake.png",
+    "sha256": "20410cb986f202202cb359b49b7cbc9466a2ad123f1c28ccad1699fcd55be6f2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:38:57Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "violet-fungus": {
+    "file": "art/bestiary/source/violet-fungus.png",
+    "sha256": "7fff1c5c43dfdb79383eff122655e87c61dad7303959f263ef7c1d6ed9d4647f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:39:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "vrock": {
+    "file": "art/bestiary/source/vrock.png",
+    "sha256": "993459d19c84fb9d1923bbdfca1977ec5ed16309759be1758cddf5f1a165812f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:28:54Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "vulture": {
+    "file": "art/bestiary/source/vulture.png",
+    "sha256": "841cdfa8a66c10c7019816613b2d0a663358429e21ce10c8ad8ef115706bbb9b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T12:39:36Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "warhorse": {
+    "file": "art/bestiary/source/warhorse.png",
+    "sha256": "9a9a889dff78f5748ff81f6dceecfcb941b8f031ad14cd961eaa073ead5a0ce1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:19:16Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "warhorse-skeleton": {
+    "file": "art/bestiary/source/warhorse-skeleton.png",
+    "sha256": "48d08481d14cf89fa668bdd8d6a1b30f20bf56f8a8620710a7a7869ea6fdfa15",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:16:19Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "warrior-infantry": {
+    "file": "art/bestiary/source/warrior-infantry.png",
+    "sha256": "da44f78f9f359c371697b4c11c5a7952f0f31be9788c44d23c63fe2fb6cf7a14",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:23:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "warrior-veteran": {
+    "file": "art/bestiary/source/warrior-veteran.png",
+    "sha256": "fe5845d263a8b61ea0e851a9608ccdd8f7d3bc6ddbfe90e25ecbe97d60b2eca7",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:23:48Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "water-elemental": {
+    "file": "art/bestiary/source/water-elemental.png",
+    "sha256": "c9bd6f81a530170e287e2a4a3caf516511d91f51aff70b09ec0f1682f9fd80b8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:01:53Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "weasel": {
+    "file": "art/bestiary/source/weasel.png",
+    "sha256": "01b7077dd587b680955530a5dfec3d080044979442d806a9206ec8762ab13d9d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:08:42Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "werebear": {
+    "file": "art/bestiary/source/werebear.png",
+    "sha256": "696747207587d6b1c9fac1c94769fba5729df4adc3ddd4e358227d7c58dfa3cf",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:07:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "wereboar": {
+    "file": "art/bestiary/source/wereboar.png",
+    "sha256": "655beab929a21cb7a40bf5a9e579efd2b2b367eff9dc89c6527db3466464d690",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:07:27Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "wererat": {
+    "file": "art/bestiary/source/wererat.png",
+    "sha256": "80c35ea3a543681f126562786c5f0fc30086a90f1d2ca58bf893b95518c08d2e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:02:51Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "weretiger": {
+    "file": "art/bestiary/source/weretiger.png",
+    "sha256": "00fb605fecd6831aa895e027cbbc4038891ad6536ad327be3638fa49e98295e3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:07:47Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "werewolf": {
+    "file": "art/bestiary/source/werewolf.png",
+    "sha256": "912e4896cca19de6f42f79ea42918f457c5d4dff7968a77f02d8099ef58be9ae",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:29:09Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "white-dragon-wyrmling": {
+    "file": "art/bestiary/source/white-dragon-wyrmling.png",
+    "sha256": "abde8fc22e41608c0a6738cdc4395bcf8607e2967df155a1455314bbed938ce6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:03:12Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "wight": {
+    "file": "art/bestiary/source/wight.png",
+    "sha256": "ba5d3e225bb6fe71d4b56d1b7f032d115383b072cefd8fbf408579194caecbd4",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:20:55Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "will-o-wisp": {
+    "file": "art/bestiary/source/will-o-wisp.png",
+    "sha256": "0089153d1fc6f392af979f04b95f6ecbb8f42577d2251a4de1a454c2f6c47626",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:19:22Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "winter-wolf": {
+    "file": "art/bestiary/source/winter-wolf.png",
+    "sha256": "b2bb27875c1fbd5115daf81a7a2f00e2f84923ba280b2e926bbd6e397c78e75a",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:09:02Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "wolf": {
+    "file": "art/bestiary/source/wolf.png",
+    "sha256": "f1a8fed31e66223dab63e037373bf45f629e7a782c1a08f66e7612e6dffffeda",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T13:09:31Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "worg": {
+    "file": "art/bestiary/source/worg.png",
+    "sha256": "6b6317ddd613df199363b1f4e06f10b1cedc1eb80b79e5d49404420df91a52f6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:18:17Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "wraith": {
+    "file": "art/bestiary/source/wraith.png",
+    "sha256": "1ede033ce24f7bc91d01f0d04bbb08175b92ef8a72f854d39a8513947232e6d2",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:45:14Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "wyvern": {
+    "file": "art/bestiary/source/wyvern.png",
+    "sha256": "d0941fd94c4f6a8a5a51c7540a3c403a855f6c71423c84d1720875b6406ee4a6",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:24:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "xorn": {
+    "file": "art/bestiary/source/xorn.png",
+    "sha256": "7e8f8942318a0e34d24eabc3674326aea3bf43e9a67526f46dcc6265244e260e",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T17:03:32Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-black-dragon": {
+    "file": "art/bestiary/source/young-black-dragon.png",
+    "sha256": "b9f688be86529b04fe665d305636c34b454975238d561fc2a00b8ad4b02c0ff9",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:08:00Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-blue-dragon": {
+    "file": "art/bestiary/source/young-blue-dragon.png",
+    "sha256": "036edbe47cc7db40be403098046a32baf1d3a6c8f294a873e3f8f408f17df7d8",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:08:22Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-brass-dragon": {
+    "file": "art/bestiary/source/young-brass-dragon.png",
+    "sha256": "c8d006aba13b3d09fcb040191a70d9bc9cbe85af28787f35458668ebe61894e3",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:08:45Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-bronze-dragon": {
+    "file": "art/bestiary/source/young-bronze-dragon.png",
+    "sha256": "61b39fd2fc8fb3c5556ab3abbffac53e492a12b6a96bb750f3034a0105af512f",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:09:07Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-copper-dragon": {
+    "file": "art/bestiary/source/young-copper-dragon.png",
+    "sha256": "1dc08a84f312d2c9ef81f6412577c59f8771663440ded4c2165a7dd58ff0281d",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:09:28Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-gold-dragon": {
+    "file": "art/bestiary/source/young-gold-dragon.png",
+    "sha256": "9dff5a2a9c1e8607f0a25e32b1cbd270535ff31e79c771c5474ed89dafbbbb2c",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:09:43Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-green-dragon": {
+    "file": "art/bestiary/source/young-green-dragon.png",
+    "sha256": "92c288dd1ccb1ab30cfaec1f6ce1c4eb76793113fdbe1c868d13da5db1b175c1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:09:59Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-red-dragon": {
+    "file": "art/bestiary/source/young-red-dragon.png",
+    "sha256": "3ab7faac0fb4a0b13e1644948d4c5b17c1f461655df507e8f234dfc667b13db1",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T14:45:32Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-silver-dragon": {
+    "file": "art/bestiary/source/young-silver-dragon.png",
+    "sha256": "ba6ada9b96524ac7e17c27dbd97da1db27097a5b1fb6b7f9a70ee9b0aae3938b",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:10:17Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "young-white-dragon": {
+    "file": "art/bestiary/source/young-white-dragon.png",
+    "sha256": "6d361cf2ac1f33d9b069891ed70033f4306e9242ffbe90a8b4a23e4a6dea4dac",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-11T18:10:41Z"
+    },
+    "imported": "2026-11-12"
+  },
+  "zombie": {
+    "file": "art/bestiary/source/zombie.png",
+    "sha256": "daaa25e96d382d5d3e7929f636389dd86f028b007d1b00cc4d6f5b1ae1da21f9",
+    "width": 1254,
+    "height": 1254,
+    "c2pa": {
+      "agent": "ChatGPT",
+      "version": "gpt-image",
+      "created": "2026-11-12T16:31:00Z"
+    },
+    "imported": "2026-11-12"
+  }
+}

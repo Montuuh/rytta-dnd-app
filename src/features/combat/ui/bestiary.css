@@ -476,8 +476,12 @@ html:has(.bst:not([data-split])) {
 }
 .bst-sheet {
   background: var(--app-surface);
+  /* The sheet's sticky header: the 44px close button (rem, so it grows with the text) and its padding. */
+  --bst-sheet-head: calc(2.75rem + 12px);
 }
 .bst-sheet-body {
+  /* A little air under the header, which Mantine leaves flush against the body. */
+  padding-top: 12px;
   padding-bottom: 0;
 }
 .bst-attribution {
@@ -849,7 +853,7 @@ html:has(.bst:not([data-split])) {
 }
 /* Phone stat block sheet: a slimmer header, the creature's own name heads the sheet. */
 .bst-sheet .mantine-Drawer-header {
-  min-height: 56px;
+  min-height: var(--bst-sheet-head);
   padding-block: 6px;
 }
 
@@ -1009,4 +1013,257 @@ html:has(.bst:not([data-split])) {
 [data-mantine-color-scheme='dark'] .bst-row .combat-token-face img,
 [data-mantine-color-scheme='dark'] .bst-detail-inner .combat-image-picker .combat-token-face img {
   filter: brightness(0.88) saturate(0.92);
+}
+
+/* RYT-088: the stat block leads with the creature's plate, the viewer's print on its raised mat.
+   Phones stack it above the name; wider panes (tablet sheet, laptops' side pane) keep it in its own
+   column, stuck while the stat block scrolls past. The square is reserved before the
+   image arrives. */
+.bst-detail-frame {
+  container: bst-detail / inline-size;
+  width: 100%;
+  min-width: 0;
+}
+.bst-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.combat-creature-image.is-plate {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  justify-self: center;
+  align-self: center;
+  /* Pixels and screen height, not rem: larger text never makes the picture larger, and a short
+     phone keeps the stat block in reach. */
+  width: min(100%, 416px, 44svh);
+  min-width: 0;
+}
+@container bst-detail (min-width: 34rem) {
+  .bst-detail-body.has-plate {
+    display: grid;
+    /* The stat block keeps 20rem (its three-column core); the plate takes the rest, up to 17.5rem. */
+    grid-template-columns: minmax(11rem, 17.5rem) minmax(20rem, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .bst-detail-body.has-plate > .combat-creature-image.is-plate {
+    position: sticky;
+    top: 12px;
+    width: 100%;
+    align-self: start;
+  }
+  /* Laptops: below the actions pinned to the top of the viewport. */
+  .bst-detail .bst-detail-body.has-plate > .combat-creature-image.is-plate {
+    top: 81px;
+  }
+  /* Sheets: below the sheet's own sticky header. */
+  .bst-sheet .bst-detail-body.has-plate > .combat-creature-image.is-plate {
+    top: calc(var(--bst-sheet-head) + 12px);
+  }
+}
+.bst-plate {
+  position: relative;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--app-raised);
+  box-shadow: inset 0 0 0 1px var(--app-border);
+}
+.bst-plate-open {
+  display: block;
+  width: 100%;
+  border-radius: 3px;
+  cursor: zoom-in;
+}
+.bst-plate-open:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 6px;
+}
+.bst-plate-photo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  background: var(--app-surface);
+  color: var(--app-muted);
+}
+.bst-plate-photo {
+  box-shadow: 0 2px 10px color-mix(in srgb, black 35%, transparent);
+}
+.bst-plate-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bst-plate .bst-art-corner {
+  width: 16px;
+  height: 16px;
+}
+.bst-plate-glyph {
+  width: 40%;
+  height: 40%;
+  opacity: 0.55;
+}
+/* The print lifts and presses with its corners. */
+@media (prefers-reduced-motion: no-preference) {
+  .bst-plate-photo {
+    transition:
+      transform 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+  .bst-plate-photo img {
+    animation: bst-art-develop 220ms ease-out;
+  }
+  .bst-plate-open:active .bst-plate-photo {
+    transform: scale(0.99);
+    transition-duration: 80ms;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .bst-plate-open:hover .bst-plate-photo {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px color-mix(in srgb, black 45%, transparent);
+  }
+}
+/* The pencil sits in the mat's corner, over the print's edge, always visible (touch has no hover). */
+.bst-plate-edit.mantine-ActionIcon-root {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+  border: 1px solid var(--app-border);
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, black 45%, transparent);
+}
+/* The ring sits on the print: a band of the surface under it keeps it visible on light parchment. */
+.bst-plate-edit.mantine-ActionIcon-root:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 7px var(--app-surface);
+}
+.bst-plate-edit.mantine-ActionIcon-root[data-disabled] {
+  cursor: progress;
+}
+/* Dim rooms: the bright parchment prints are toned down a little, like the list's. */
+[data-mantine-color-scheme='dark'] .bst-plate-photo img {
+  filter: brightness(0.9) saturate(0.94);
+}
+/* The combat portrait: a small mat beside the combatant's name. */
+.bst-plate.is-small {
+  width: 112px;
+  flex: none;
+  padding: 6px;
+  border-radius: 6px;
+}
+.bst-plate.is-small .bst-art-corner {
+  width: 10px;
+  height: 10px;
+}
+.bst-plate.is-small .bst-plate-open:focus-visible {
+  outline-offset: 4px;
+}
+/* Phones: a smaller portrait leaves the name and its details room beside it. */
+@media (max-width: 30em) {
+  .bst-plate.is-small {
+    width: 88px;
+    padding: 5px;
+  }
+}
+.bst-plate.is-dimmed .bst-plate-photo img {
+  filter: grayscale(0.85) brightness(0.7);
+}
+.bst-plate.is-hidden {
+  outline: 2px dashed var(--app-muted);
+  outline-offset: -2px;
+}
+
+/* RYT-089: a campaign without the official bestiary. With no creatures the list is one invitation;
+   with creatures of its own, a line above them. A campaign version is marked as modified. */
+.bst-official-empty {
+  gap: 12px;
+  padding-block: 40px;
+}
+.bst-official-empty .mantine-Button-root,
+.bst-official-line .mantine-Button-root {
+  min-height: 44px;
+}
+.bst-official-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px dashed var(--app-border);
+  border-radius: 12px;
+}
+.bst-source-badge.is-version {
+  border-style: dashed;
+  border-color: var(--app-accent);
+  color: var(--app-text);
+}
+
+/* The panel head wraps as two rows on phones (title, then the actions at full width),
+   and a campaign version is one margin note with its way back instead of two pills. */
+.bst-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.bst-head-title {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.bst-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bst-head-actions .mantine-Button-root {
+  min-height: 44px;
+}
+@media (max-width: 30em) {
+  .bst-head-actions {
+    flex: 1 1 100%;
+  }
+  .bst-head-actions > .mantine-Button-root {
+    flex: 1 1 auto;
+  }
+}
+.bst-version-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  padding-left: 10px;
+  border-left: 2px solid var(--app-accent);
+  font-family: var(--mantine-font-family-headings);
+  font-style: italic;
+  color: var(--app-muted);
+}
+.bst-version-note-text {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.bst-version-note .mantine-Button-root {
+  min-height: 44px;
+  font-family: var(--mantine-font-family);
+  font-style: normal;
+}
+/* A destructive menu item in the theme's own danger colour (AA in both themes). */
+.bst-menu-danger {
+  color: var(--danger);
+}
+/* Confirmation dialogs: no orphaned last word in the title or the body at 390px. */
+.bst-dialog-title {
+  text-wrap: balance;
+}
+.bst-dialog-body {
+  text-wrap: pretty;
 }

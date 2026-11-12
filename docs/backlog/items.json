@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-10",
+  "updatedAt": "2026-11-12",
   "items": [
     {
       "id": "RYT-000",
@@ -3432,6 +3432,118 @@
         "390px and 820px probes with one- and two-line titles, 100% and 150% text, both themes and languages"
       ],
       "evidence": ["docs/evidence/RYT-086/validation.md", "docs/evidence/RYT-086/ui-review.md"]
+    },
+    {
+      "id": "RYT-087",
+      "title": "Bestiary art prompts name the official D&D creature",
+      "priority": "P3",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "gpt-6.1-sol",
+        "reasoningEffort": "medium"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-067"],
+      "sources": [
+        "User 2026-11-11: the creature prompts must refer explicitly to Dungeons & Dragons so the pictures follow the official creatures; update the Excel so every row has the right prompt."
+      ],
+      "scope": "Every row of the bestiary art tracker names the creature as the official Dungeons & Dragons (5th edition, 2024 rules) creature, asks for its official D&D design and adds an accuracy line; the decision is recorded in ADR 030 and the tracker's rules.",
+      "acceptance": [
+        "All 330 prompts name the creature (English name) as the official Dungeons & Dragons creature and keep its description, the accuracy line and the shared Rytta style, framing and background.",
+        "Statuses and notes in the tracker are kept.",
+        "No prompt names an artist, asks for an official book's art style or tells the author to attach official art."
+      ],
+      "validation": [
+        "art_catalogue.py run: 330 rows, every prompt with the D&D reference",
+        "check:docs"
+      ],
+      "evidence": [
+        "docs/decisions/030-bestiary-art.md",
+        "art/bestiary/catalogue.csv",
+        "scripts/bestiary/art_catalogue.py"
+      ]
+    },
+    {
+      "id": "RYT-088",
+      "title": "Painted bestiary art imported and the stat block led by its plate",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "claude-opus-5-5",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-067", "RYT-087"],
+      "sources": [
+        "User 2026-11-12: 330 pictures generated in art/bestiary/source; import them into Rytta and give the image more emphasis on the enemies' stat block, so it reads well.",
+        "User 2026-11-12, options artifact 2odTnthjLD9c5wqPTi2TUP: P1 A plate above the name on phones, P2 B two columns on tablets, P3 A portrait in the combat header, P4 A matted plate with photo corners, P5 A tap opens the image and a pencil changes it."
+      ],
+      "scope": "Import the 330 painted pictures with the RYT-067 importer (credits, provenance, catalogue). The DM's stat block leads with the creature's plate: above the name on phones, in a sticky column beside the stat block when the pane is at least 34rem wide; the DM's combat detail of a creature shows a 112px portrait. Tapping the print opens the viewer; a 44px pencil changes the image or opens change and restore/remove. Creatures without any image keep the token picker beside the name; Players and the table are unchanged.",
+      "acceptance": [
+        "Every SRD creature shows its painted picture, credited to Rytta with its C2PA provenance logged; refused files are reported.",
+        "On a 390px phone the plate fills the width above the name and AC, HP and initiative stay on the first screen at normal text size.",
+        "From 34rem the plate keeps its own sticky column and the stat block keeps at least 20rem; abilities go to six columns when the block itself has room.",
+        "The print opens the viewer and returns focus to it; the pencil changes the image, or offers change and restore/remove when the DM has their own image; save and remove notices and focus survive the token turning into the plate.",
+        "The DM's combat detail opens on the creature's portrait (dimmed when defeated, dashed when hidden); creatures without an image and Players keep the token.",
+        "Both themes and languages, 44px targets, keyboard focus, Escape and 150% text work."
+      ],
+      "validation": [
+        "import_art.py --check and import of 330 files",
+        "npm run check",
+        "bestiary, combat and encounter-builder e2e at 390px, 820px and 1440px",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/decisions/030-bestiary-art.md",
+        "docs/bestiary-art-credits.md",
+        "scripts/bestiary/art-generated.json",
+        "docs/evidence/RYT-088/plate-mobile.png",
+        "docs/evidence/RYT-088/plate-tablet.png",
+        "docs/evidence/RYT-088/combat-portrait-mobile.png",
+        "tests/e2e/bestiary.spec.ts",
+        "tests/e2e/combat.spec.ts",
+        "docs/evidence/RYT-088/validation.md",
+        "docs/evidence/ui-review/ryt-088/review.md"
+      ]
+    },
+    {
+      "id": "RYT-089",
+      "title": "A bestiary per campaign: download the official one, edit creatures in place",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "claude-opus-5-5",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-053", "RYT-054"],
+      "sources": [
+        "User 2026-11-12: make the bestiary per campaign; the DM imports the basic SRD bestiaries with a 'download official bestiary' button; changes to creatures are per campaign and never modify the official bestiary.",
+        "User 2026-11-12 (options page answers): P1 link, P2 all at once, P3 edit in place, P4 existing campaigns start empty, P5 everywhere, P6 one or all can be removed."
+      ],
+      "scope": "Per-campaign official bestiary (download, remove one or all, bring back) and campaign versions of official creatures edited in place, with RLS, RPCs and denial tests; the bestiary, adding to fights and the encounter builder list only the campaign's creatures; PRE rehearsal and production migration.",
+      "acceptance": [
+        "A new or existing campaign lists only its own creatures until its DM downloads the official bestiary; the download asks with the count and lists the 330 SRD creatures.",
+        "Editing an official creature saves a campaign version listed in its place and marked Modified; going back to the official deletes it after a question; the official catalogue never changes.",
+        "The DM removes one official creature or all of them (deleting their campaign versions after a question) and brings them back; creatures already in a fight keep their stat block.",
+        "The list, the add-to-fight search and the encounter builder use the campaign's bestiary.",
+        "Only the campaign DM reads or changes it: anon, outsiders, Players and other DMs are refused; writes go through idempotent RPCs.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; independent ui-ux PASS."
+      ],
+      "validation": [
+        "tests/database/campaign-bestiary.test.ts and npm run test:db",
+        "npm run check",
+        "bestiary, bestiary-official, combat and encounter-builder e2e at 390px, 820px (and 1440px for the existing laptop specs)",
+        "impeccable critique and audit",
+        "independent ui-ux PASS",
+        "hosted PRE rehearsal and production migration with advisors"
+      ],
+      "evidence": [
+        "docs/decisions/039-campaign-bestiary.md",
+        "docs/evidence/RYT-089/validation.md",
+        "docs/evidence/ui-review/ryt-089/review.md"
+      ]
     }
   ]
 }

@@ -43,6 +43,8 @@ export type CreatureListItem = {
   artId?: string | null
   /** The side a campaign creature joins fights on (its token's shape). */
   side?: 'enemy' | 'ally'
+  /** RYT-089: the campaign's version of the official creature `srdId`, listed in its place. */
+  version?: boolean
 }
 
 export function srdItems(rows: MonsterRow[], language: BestiaryLanguage): CreatureListItem[] {
@@ -95,7 +97,8 @@ export function filterCreatures(
   const words = query ? query.split(' ') : []
   const scored: { item: CreatureListItem; score: number }[] = []
   for (const item of items) {
-    if (filters.source === 'srd' && item.source !== 'srd') continue
+    // RYT-089: a campaign version of an official creature still belongs to the official catalogue.
+    if (filters.source === 'srd' && item.source !== 'srd' && !item.version) continue
     if (filters.source === 'homebrew' && item.source !== 'homebrew') continue
     if (filters.source === 'favorites' && !favorites.has(item.key)) continue
     if (filters.types.length && (!item.type || !filters.types.includes(item.type))) continue

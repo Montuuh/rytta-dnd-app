@@ -43,6 +43,7 @@ import {
   type HpMode,
 } from '../domain/combat'
 import { AmountDialog } from './amount-dialog'
+import { CreaturePortrait } from './creature-art'
 import { CreatureConsole } from './creature-console'
 import { sideLabel, useReturnFocus, type Run } from './helpers'
 import { HpMeter, Pips, StateBadge } from './parts'
@@ -76,7 +77,11 @@ export function CombatantDetail(props: Props) {
     <Stack gap="md" className="combat-detail">
       <Group justify="space-between" align="flex-start" wrap="nowrap">
         <div className="combat-detail-head">
-          <CombatantToken combatant={combatant} size={72} showActive={false} described />
+          {dm && combatant.kind === 'npc' ? (
+            <CreaturePortrait combatant={combatant} />
+          ) : (
+            <CombatantToken combatant={combatant} size={72} showActive={false} described />
+          )}
           <div>
             <Title order={3} className="combat-detail-name">
               {combatant.name}

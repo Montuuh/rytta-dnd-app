@@ -6,6 +6,7 @@ import {
   combatStateSchema,
   encounterListSchema,
   mutationResultSchema,
+  srdBestiarySchema,
   srdImageListSchema,
   templateListSchema,
   type CombatAction,
@@ -64,6 +65,16 @@ export async function loadSrdImages(campaignId: string, signal: AbortSignal) {
     .abortSignal(signal)
   if (result.error) throw new Error(combatErrorCode(result.error.message))
   return srdImageListSchema.parse(result.data)
+}
+
+/** RYT-089: the campaign's official bestiary: downloaded or not, and the creatures removed. */
+export async function loadSrdBestiary(campaignId: string, signal: AbortSignal) {
+  const db = await client()
+  const result = await db
+    .rpc('get_srd_bestiary', { target_campaign: uuid(campaignId) })
+    .abortSignal(signal)
+  if (result.error) throw new Error(combatErrorCode(result.error.message))
+  return srdBestiarySchema.parse(result.data)
 }
 
 const srdId = (value: string) =>
@@ -332,6 +343,14 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
         target_campaign,
         target_srd: srdId(action.srdId),
         new_path: action.path,
+        request_id,
+      })
+      break
+    case 'srdBestiary':
+      result = await db.rpc('set_srd_bestiary', {
+        target_campaign,
+        action: action.action === 'removeAll' ? 'remove_all' : action.action,
+        target_srd: action.action === 'remove' ? srdId(action.srdId) : null,
         request_id,
       })
       break

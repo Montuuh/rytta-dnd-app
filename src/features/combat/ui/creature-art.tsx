@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react'
 import {
+  ActionIcon,
   Anchor,
   Button,
   Loader,
@@ -11,26 +12,133 @@ import {
   VisuallyHidden,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, Eye, ImageIcon, ImagePlus, RotateCcw, Trash2 } from 'lucide-react'
+import { ExternalLink, ImagePlus, Pencil, RotateCcw, Trash2, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import type { CreatureArt, CreatureType } from '@/features/bestiary'
+import {
+  creatureArtQuery,
+  creatureArtUrl,
+  type CreatureArt,
+  type CreatureType,
+} from '@/features/bestiary'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { combatImageQuery, useCombatAction, useCreatureImageUpload } from '../api'
+import type { Combatant } from '../domain/combat'
 import { typeGlyphs } from './bestiary-glyphs'
 import { toSquareWebp } from './square-image'
-import { Token } from './token'
+import { CombatantToken, Token } from './token'
 
 /** Where a new image is attached: a campaign creature (with its revision) or an SRD creature. */
 export type ArtTarget = { templateId: string; revision: number } | { srdId: string }
 
 /**
- * The creature's token at the head of its stat block (RYT-053, ADR 030). With an image, tapping it
- * opens a short menu anchored to the token: view the image (a matted plate with its credit), change
- * it, and restore the bundled art (SRD creature with the DM's own image) or remove it (campaign
- * creature). Without any image the token is the file picker itself, as before (RYT-043). The private
- * image wins over the bundled art; a campaign copy of an SRD creature shows that creature's art until
- * the DM chooses another image.
+ * What the last save or removal said, and whether focus should follow it. The stat block keeps it:
+ * the first image of a campaign creature turns the token beside the name into the plate above it
+ * (RYT-088), which mounts the control again, and the notice and the focus must survive that move.
+ */
+export type ArtNotice = { text: string; refocus: boolean }
+
+/**
+ * The private image when it can be read, otherwise the bundled art (RYT-053). While the signed URL
+ * of a private image is on its way the plate shows a loader in the space it keeps.
+ */
+function usePlateImage(imagePath: string | null, art: string | null) {
+  const { state } = useAuth()
+  const own = useQuery(combatImageQuery(state.user?.id ?? 'anonymous', 'creature', imagePath))
+  // Every address that failed stays failed, so two broken images never swap back and forth.
+  const [broken, setBroken] = useState<ReadonlySet<string>>(() => new Set())
+  const ownGone = !imagePath || own.isError || (own.data !== undefined && broken.has(own.data))
+  const loading = Boolean(imagePath) && own.isPending
+  const src = !ownGone && own.data ? own.data : art && !broken.has(art) ? art : null
+  const fail = (url: string) => setBroken((before) => new Set(before).add(url))
+  return { src: loading ? null : src, loading, fail }
+}
+
+/**
+ * RYT-088: the creature's illustration as a specimen plate, the print on a raised mat held by four
+ * photo corners like the viewer. The print itself is the button that opens the viewer; an overlay
+ * (the pencil) sits in the mat's corner. Without a readable image it keeps its square with the
+ * creature type glyph, so nothing moves.
+ */
+function ArtPlate({
+  name,
+  src,
+  loading,
+  glyph: Glyph,
+  small = false,
+  dimmed = false,
+  hidden = false,
+  openRef,
+  onOpen,
+  onError,
+  children,
+}: {
+  name: string
+  src: string | null
+  loading: boolean
+  glyph?: LucideIcon
+  /** The combat portrait: a smaller mat and corners. */
+  small?: boolean
+  /** A defeated combatant: the print fades like its token. */
+  dimmed?: boolean
+  /** DM only: the combatant is hidden from Players; the mat is dashed like the token's ring. */
+  hidden?: boolean
+  openRef?: Ref<HTMLButtonElement>
+  onOpen: () => void
+  onError: (src: string) => void
+  children?: ReactNode
+}) {
+  const { t } = useTranslation()
+  return (
+    <div
+      className={[
+        'bst-plate',
+        small ? 'is-small' : '',
+        dimmed ? 'is-dimmed' : '',
+        hidden ? 'is-hidden' : '',
+      ].join(' ')}
+      data-pending={loading || undefined}
+    >
+      <UnstyledButton
+        ref={openRef}
+        className="bst-plate-open"
+        aria-label={t('bestiary.art.open', { name })}
+        onClick={onOpen}
+      >
+        <span className="bst-plate-photo">
+          {loading ? (
+            <Loader size="sm" />
+          ) : src ? (
+            <img
+              src={src}
+              alt=""
+              width={720}
+              height={720}
+              decoding="async"
+              draggable={false}
+              onError={() => onError(src)}
+            />
+          ) : Glyph ? (
+            <Glyph className="bst-plate-glyph" aria-hidden="true" strokeWidth={1.75} />
+          ) : null}
+          <span className="bst-art-corner is-tl" aria-hidden="true" />
+          <span className="bst-art-corner is-tr" aria-hidden="true" />
+          <span className="bst-art-corner is-bl" aria-hidden="true" />
+          <span className="bst-art-corner is-br" aria-hidden="true" />
+        </span>
+      </UnstyledButton>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * The creature's image at the head of its stat block (RYT-053, ADR 030). With an image it is a plate
+ * (RYT-088): tapping the print opens the viewer with its credit, and the pencil in the corner changes
+ * it, or opens a short menu to change it and restore the bundled art (SRD creature with the DM's own
+ * image) or remove it (campaign creature). Without any image the token is the file picker itself, as
+ * before (RYT-043). The private image wins over the bundled art; a campaign copy of an SRD creature
+ * shows that creature's art until the DM chooses another image.
  */
 export function CreatureArtControl({
   campaignId,
@@ -41,6 +149,8 @@ export function CreatureArtControl({
   imagePath,
   art,
   credit,
+  notice,
+  onNotice,
   onViewing,
 }: {
   campaignId: string
@@ -53,6 +163,8 @@ export function CreatureArtControl({
   /** Bundled art of the SRD creature (or of the one a campaign creature was copied from). */
   art: { thumb: string; full: string } | null
   credit: CreatureArt | null
+  notice: ArtNotice | null
+  onNotice: (notice: ArtNotice | null) => void
   /** The viewer or the remove question opened or closed: a sheet underneath leaves Escape to it. */
   onViewing?: (open: boolean) => void
 }) {
@@ -61,10 +173,10 @@ export function CreatureArtControl({
   const errorId = useId()
   const input = useRef<HTMLInputElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
+  const edit = useRef<HTMLButtonElement>(null)
   const upload = useCreatureImageUpload(campaignId)
   const action = useCombatAction(campaignId)
   const [unreadable, setUnreadable] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
   const [viewing, setViewingState] = useState(false)
   const [confirming, setConfirming] = useState(false)
   // What the last request did, so a failure names it (saving or removing).
@@ -82,23 +194,24 @@ export function CreatureArtControl({
     if (!overlay) return
     return () => reportViewing.current?.(false)
   }, [overlay])
-  // After a save the control may change shape (picker <-> menu button): focus follows it.
-  const refocusAfterSave = useRef(false)
   const failed = unreadable || upload.isError || action.isError
   const pending = upload.isPending || action.isPending
   const srd = 'srdId' in target
   const hasImage = Boolean(imagePath) || Boolean(art)
   const glyph = type ? typeGlyphs[type] : undefined
+  const plate = usePlateImage(imagePath, art?.full ?? null)
+  // After a save the control may change shape (picker <-> plate, pencil <-> menu), or mount again in
+  // the plate's place: focus follows it once.
   useEffect(() => {
-    if (!refocusAfterSave.current) return
-    refocusAfterSave.current = false
-    ;(hasImage ? trigger.current : input.current)?.focus()
+    if (!notice?.refocus) return
+    ;(hasImage ? edit.current : input.current)?.focus()
+    onNotice({ text: notice.text, refocus: false })
   })
 
   const choose = async (file: File | undefined) => {
     if (!file) return
     setUnreadable(false)
-    setNotice(null)
+    onNotice(null)
     upload.reset()
     action.reset()
     setLastOp('save')
@@ -109,66 +222,65 @@ export function CreatureArtControl({
       setUnreadable(true)
       return
     }
-    upload.mutate(
-      { target, image },
-      {
-        onSuccess: () => {
-          refocusAfterSave.current = true
-          setNotice(t('combat.image.saved', { name }))
-        },
-      },
+    // The promise, not mutate's callbacks: the first image turns the token into the plate, which can
+    // mount this control again before they would run. Failures show through the mutation's state.
+    upload.mutateAsync({ target, image }).then(
+      () => onNotice({ text: t('combat.image.saved', { name }), refocus: true }),
+      () => undefined,
     )
   }
   const clear = () => {
-    setNotice(null)
+    onNotice(null)
     upload.reset()
     action.reset()
     setLastOp('clear')
-    action.mutate(
-      'srdId' in target
-        ? { kind: 'srdImage', srdId: target.srdId, path: null }
-        : {
-            kind: 'templateImage',
-            templateId: target.templateId,
-            revision: target.revision,
-            path: null,
-          },
-      {
-        onSuccess: () => {
-          refocusAfterSave.current = true
-          setNotice(t(srd ? 'bestiary.art.restored' : 'bestiary.art.removed', { name }))
-        },
-      },
-    )
+    // Removing a campaign creature's only image turns the plate back into the token: as above.
+    action
+      .mutateAsync(
+        'srdId' in target
+          ? { kind: 'srdImage', srdId: target.srdId, path: null }
+          : {
+              kind: 'templateImage',
+              templateId: target.templateId,
+              revision: target.revision,
+              path: null,
+            },
+      )
+      .then(
+        () =>
+          onNotice({
+            text: t(srd ? 'bestiary.art.restored' : 'bestiary.art.removed', { name }),
+            refocus: true,
+          }),
+        () => undefined,
+      )
   }
-  // Overlays opened from the menu give focus back to the token, which outlives them.
+  // Overlays give focus back to what opened them: the viewer to the print, the remove question to
+  // the pencil; both outlive them.
   const refocus = () => window.setTimeout(() => trigger.current?.focus(), 0)
+  const refocusEdit = () => window.setTimeout(() => edit.current?.focus(), 0)
 
-  const token = (
-    <Token
-      name={name}
-      side={side}
-      imageKind="creature"
-      path={imagePath}
-      art={art?.thumb}
-      size={64}
-      glyph={glyph}
-      described
+  const pencil = (
+    <ActionIcon
+      ref={edit}
+      className="bst-plate-edit"
+      variant="default"
+      radius="xl"
+      size={44}
+      // Busy, not disabled: a disabled button would drop the focus while the image saves.
+      data-disabled={pending || undefined}
+      aria-disabled={pending || undefined}
+      aria-label={t('bestiary.art.edit', { name })}
+      aria-describedby={failed ? errorId : undefined}
+      // Without the DM's own image the only choice is a new file: the pencil opens it directly.
+      onClick={imagePath || pending ? undefined : () => input.current?.click()}
     >
-      <span className={`combat-image-seal${hasImage ? ' is-quiet' : ''}`} aria-hidden="true">
-        {pending ? (
-          <Loader size={14} color="currentColor" />
-        ) : hasImage ? (
-          <ImageIcon size={14} strokeWidth={2.25} />
-        ) : (
-          <ImagePlus size={16} strokeWidth={2.25} />
-        )}
-      </span>
-    </Token>
+      {pending ? <Loader size={16} /> : <Pencil size={18} aria-hidden="true" />}
+    </ActionIcon>
   )
 
   return (
-    <div className="combat-creature-image">
+    <div className={hasImage ? 'combat-creature-image is-plate' : 'combat-creature-image'}>
       <input
         ref={input}
         id={inputId}
@@ -189,37 +301,30 @@ export function CreatureArtControl({
         }}
       />
       {hasImage ? (
-        <Menu position="bottom-start" withinPortal zIndex={420} returnFocus>
-          <Menu.Target>
-            <UnstyledButton
-              ref={trigger}
-              className="combat-image-picker"
-              data-pending={pending || undefined}
-              aria-label={t('bestiary.art.trigger', { name })}
-              aria-describedby={failed ? errorId : undefined}
-            >
-              {token}
-            </UnstyledButton>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item
-              leftSection={<Eye size={16} aria-hidden="true" />}
-              onClick={() => setViewing(true)}
-            >
-              {t('bestiary.art.view')}
-            </Menu.Item>
-            <Menu.Item
-              leftSection={<ImagePlus size={16} aria-hidden="true" />}
-              disabled={pending}
-              onClick={() => input.current?.click()}
-            >
-              {t('bestiary.art.change')}
-            </Menu.Item>
-            {imagePath && (
-              <>
+        <ArtPlate
+          name={name}
+          src={plate.src}
+          loading={plate.loading}
+          glyph={glyph}
+          openRef={trigger}
+          onOpen={() => setViewing(true)}
+          onError={plate.fail}
+        >
+          {imagePath ? (
+            <Menu position="bottom-end" withinPortal zIndex={420} returnFocus>
+              <Menu.Target>{pencil}</Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<ImagePlus size={16} aria-hidden="true" />}
+                  disabled={pending}
+                  onClick={() => input.current?.click()}
+                >
+                  {t('bestiary.art.change')}
+                </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
-                  color={srd ? undefined : 'red'}
+                  // The theme's own danger colour: Mantine's red fails AA on the light menu.
+                  className={srd ? undefined : 'bst-menu-danger'}
                   leftSection={
                     srd ? (
                       <RotateCcw size={16} aria-hidden="true" />
@@ -239,10 +344,12 @@ export function CreatureArtControl({
                       : 'bestiary.art.removeAsk',
                   )}
                 </Menu.Item>
-              </>
-            )}
-          </Menu.Dropdown>
-        </Menu>
+              </Menu.Dropdown>
+            </Menu>
+          ) : (
+            pencil
+          )}
+        </ArtPlate>
       ) : (
         <label
           htmlFor={inputId}
@@ -250,11 +357,27 @@ export function CreatureArtControl({
           data-pending={pending || undefined}
           title={t('combat.image.add', { name })}
         >
-          {token}
+          <Token
+            name={name}
+            side={side}
+            imageKind="creature"
+            path={null}
+            size={64}
+            glyph={glyph}
+            described
+          >
+            <span className="combat-image-seal" aria-hidden="true">
+              {pending ? (
+                <Loader size={14} color="currentColor" />
+              ) : (
+                <ImagePlus size={16} strokeWidth={2.25} />
+              )}
+            </span>
+          </Token>
         </label>
       )}
       <Text role="status" size="sm" className="combat-image-status">
-        {pending ? t('combat.image.saving') : (notice ?? '')}
+        {pending ? t('combat.image.saving') : (notice?.text ?? '')}
       </Text>
       {failed && (
         <Text id={errorId} role="alert" size="sm" className="combat-image-error">
@@ -272,7 +395,7 @@ export function CreatureArtControl({
           opened
           onClose={() => {
             setConfirming(false)
-            refocus()
+            refocusEdit()
           }}
           zIndex={430}
           title={t('bestiary.art.removeTitle', { name })}
@@ -282,9 +405,10 @@ export function CreatureArtControl({
           <Group justify="flex-end" mt="lg" className="bst-dialog-actions">
             <Button
               variant="subtle"
+              data-autofocus
               onClick={() => {
                 setConfirming(false)
-                refocus()
+                refocusEdit()
               }}
             >
               {t('action.cancel')}
@@ -295,7 +419,7 @@ export function CreatureArtControl({
               leftSection={<Trash2 size={16} aria-hidden="true" />}
               onClick={() => {
                 setConfirming(false)
-                refocus()
+                refocusEdit()
                 clear()
               }}
             >
@@ -329,7 +453,7 @@ export function CreatureArtControl({
 /**
  * The image at full size on a matted plate, with a museum-style label beneath: the creature's name
  * and, for bundled art, its author, licence and source (the attribution the licence asks for). One
- * quiet action: change the image. Escape and the close button return focus to the token.
+ * quiet action where the image can be changed. Escape and the close button return focus to the plate.
  */
 function ArtViewer({
   name,
@@ -346,7 +470,8 @@ function ArtViewer({
   /** The bundled art's credit, shown whenever the bundled art is what the viewer shows. */
   credit: CreatureArt | null
   srd: boolean
-  onChange: () => void
+  /** Opens the file picker; omitted where the image is only viewed (the combat portrait). */
+  onChange?: () => void
   onClose: () => void
 }) {
   const { t } = useTranslation()
@@ -448,15 +573,67 @@ function ArtViewer({
           )}
         </figcaption>
       </figure>
-      <div className="bst-art-actions">
-        <Button
-          variant="light"
-          leftSection={<ImagePlus size={16} aria-hidden="true" />}
-          onClick={onChange}
-        >
-          {t('bestiary.art.change')}
-        </Button>
-      </div>
+      {onChange && (
+        <div className="bst-art-actions">
+          <Button
+            variant="light"
+            leftSection={<ImagePlus size={16} aria-hidden="true" />}
+            onClick={onChange}
+          >
+            {t('bestiary.art.change')}
+          </Button>
+        </div>
+      )}
     </Modal>
+  )
+}
+
+/**
+ * RYT-088: the DM's detail of a creature in a fight opens on its portrait, a small plate that opens
+ * the viewer. Only the DM's projection names the SRD creature (Players and the table never receive
+ * srd_id); without any image the detail keeps the combatant's token.
+ */
+export function CreaturePortrait({ combatant }: { combatant: Combatant }) {
+  const srdId = combatant.kind === 'npc' ? combatant.srd_id : undefined
+  const credits = useQuery({ ...creatureArtQuery(), enabled: Boolean(srdId) })
+  const credit = (srdId && credits.data?.[srdId]) || null
+  const art =
+    srdId && credit
+      ? { thumb: creatureArtUrl(srdId, 'thumb'), full: creatureArtUrl(srdId, 'full') }
+      : null
+  const path = combatant.image_path ?? null
+  const plate = usePlateImage(path, art?.full ?? null)
+  const [viewing, setViewing] = useState(false)
+  const open = useRef<HTMLButtonElement>(null)
+  const waiting = Boolean(srdId) && credits.isPending
+  if (!path && !art && !waiting)
+    return <CombatantToken combatant={combatant} size={72} showActive={false} described />
+  return (
+    <>
+      <ArtPlate
+        name={combatant.name}
+        src={plate.src}
+        loading={plate.loading || (waiting && !path)}
+        small
+        dimmed={combatant.defeated || combatant.hp_band === 'down'}
+        hidden={combatant.hidden === true}
+        openRef={open}
+        onOpen={() => setViewing(true)}
+        onError={plate.fail}
+      />
+      {viewing && (
+        <ArtViewer
+          name={combatant.name}
+          imagePath={path}
+          art={art}
+          credit={credit}
+          srd={Boolean(srdId)}
+          onClose={() => {
+            setViewing(false)
+            window.setTimeout(() => open.current?.focus(), 0)
+          }}
+        />
+      )}
+    </>
   )
 }

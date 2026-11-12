@@ -75,6 +75,7 @@ export function CreatureEditor({
   traits,
   unplaced = [],
   basedOn,
+  version = false,
   onClose,
   onSaved,
 }: {
@@ -89,6 +90,8 @@ export function CreatureEditor({
   unplaced?: string[]
   /** A customised SRD creature: the title names it. */
   basedOn?: string
+  /** RYT-089: a new campaign version of the official creature `basedOn` (edited in place). */
+  version?: boolean
   onClose: () => void
   /** The saved template id (null for a new one) and the name it was saved with. */
   onSaved: (id: string | null, name: string) => void
@@ -125,11 +128,13 @@ export function CreatureEditor({
   const valid = draft.name.trim().length > 0
   const save = async () => {
     if (!valid || pending) return
+    // RYT-089: an official creature saved without changes stays the official one (no version).
+    if (version && !template && !dirty) return onClose()
     const ok = await run({
       kind: 'saveTemplate',
       templateId: template?.id ?? null,
       revision: template?.revision ?? null,
-      data: input,
+      data: version && !template ? { ...input, srd_override: true } : input,
     })
     if (ok) onSaved(template?.id ?? null, input.name)
   }
@@ -431,7 +436,9 @@ export function CreatureEditor({
         template
           ? t('bestiary.editor.editTitle', { name: template.name })
           : basedOn
-            ? t('bestiary.editor.basedTitle', { name: basedOn })
+            ? t(version ? 'bestiary.editor.versionTitle' : 'bestiary.editor.basedTitle', {
+                name: basedOn,
+              })
             : t('bestiary.editor.newTitle')
       }
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}

@@ -192,7 +192,8 @@ soft glow; defeated tokens use a grey rim and a colourless image; tokens hidden 
 broken rim (DM only). Sizes come from `--token-size` set by the context: 44px in the console order
 (36px on phones),
 60px in the table order (44px on phones), 56–104px for "Now" in the table banner, 36px in the turn
-bar (hidden below 30em) and recap rows, 64px in the bestiary and 72px in the DM detail.
+bar (hidden below 30em) and recap rows, 64px in the bestiary and 72px in the DM detail (a creature
+with art opens on its plate instead, below).
 
 Health without exact numbers is a band, never a bar: a 26px seal (36px in the table, 32px on
 phones) with one glyph per band (heart, heart minus, droplets, cracked heart, heart off, skull, eye
@@ -252,13 +253,17 @@ SRD creature (its editor title says what it is based on); Duplicate stays for ca
 Notices avoid gendered participles ("Saved to the bestiary: X."). Delete says it cannot be undone. Console trackers are 44px: a recharge toggle with a
 battery glyph and its state in words, and daily uses as numbered round pips (crossed when spent).
 
-Creature art (RYT-053, ADR 030): every SRD creature shows bundled art in its list token and at the
-head of its stat block; in the dark theme list and stat block thumbnails are toned down slightly so
-white photos do not glare. With any image the token is a button with a quiet seal (surface disc,
-accent ring) that opens a short menu anchored to it: view, change, then restore the original art
-(SRD creature with the DM's image) or remove the image (campaign creature, which asks first).
-Without one it stays the file picker with the filled accent seal. Saving, saved and removed notices
-show in words under the token. The viewer is a specimen plate from a field journal: the print on the
+Creature art (RYT-053, RYT-088, ADR 030): every SRD creature shows its painted art in its list
+token, and the stat block leads with it as a plate: the print on the raised mat (12px, inset hairline)
+held by four 16px accent photo corners, full width above the name on phones (at most 416px or 44svh)
+and in a sticky 11–17.5rem column beside the stat block from a 34rem pane. In dark themes list
+thumbnails and prints are toned down slightly. The print is a button that opens the viewer; a 44px
+round pencil in the mat's corner changes the image, or opens a short menu (change, then restore the
+original art for an SRD creature with the DM's image, or remove the image of a campaign creature,
+which asks first). Without any image the token beside the name stays the file picker with the filled
+accent seal. Saving, saved and removed notices show in words under the plate or token. The DM's
+combat detail opens on a 112px portrait (88px on phones; dimmed when defeated, dashed when hidden)
+that opens the viewer. The viewer is a specimen plate from a field journal: the print on the
 raised mat, held at its own corners by four accent photo corners, and a museum label beneath (a
 hairline rule above it, italic terms for author, licence and source in 44px rows, underlined links
 with an external-link glyph and "opens in a new tab" for screen readers, and the adaptation note).

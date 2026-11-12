@@ -49,8 +49,9 @@ subject of the picture that replaces it. `python3 -I scripts/bestiary/art_catalo
 an editable Status and Notes, the prompt, and a Progress sheet that counts the statuses) and
 `art/bestiary/catalogue.csv`: one row per creature from the worst fit to the best, with the prompt to
 paste in ChatGPT and the path to save the picture at, `art/bestiary/source/<creature id>.png`. The
-author paints them by hand under the rules of `docs/sprite-art.md` (no artist or product names, no
-third-party references). Edit the review file or the script, not the outputs; running it again keeps
+author paints them by hand under the rules of `docs/sprite-art.md` (no artist names, no third-party
+references), except that each prompt names the official Dungeons & Dragons creature and asks for its
+official design (RYT-087, ADR 030). Edit the review file or the script, not the outputs; running it again keeps
 each row's status (read from the Excel file) and marks saved pictures `generated`.
 
 `python3 -I scripts/bestiary/import_art.py` (`--check` only reports) imports every saved picture: it

@@ -72,9 +72,12 @@ DRAGON_AGES = {
                "majestic and terrifying, wings spread wide, with {traits}",
 }
 
-PROMPT = """Create a square (1:1) illustration of {subject}.
+# The prompts name Dungeons & Dragons on purpose (the author's decision of 2026-11-11, ADR 030): the
+# picture follows the creature's canonical D&D design, and the description pins its defining features.
+PROMPT = """Create a square (1:1) illustration of the {name} from Dungeons & Dragons (5th edition, 2024 rules), faithful to its official D&D design: {description}.
+Accuracy: keep every defining feature of the D&D {name}; no extra or missing heads, limbs, wings or tails, and nothing that is not part of this creature.
 
-Style: hand-painted digital fantasy illustration for a tabletop role-playing game bestiary, confident painterly brushwork, rich but slightly desaturated natural colours, soft dramatic light from the upper left, a clear readable silhouette, detailed but not cluttered. Not a photograph, not a 3D render, not anime, not a cartoon.
+Style: hand-painted digital fantasy illustration for a Dungeons & Dragons bestiary, confident painterly brushwork, rich but slightly desaturated natural colours, soft dramatic light from the upper left, a clear readable silhouette, detailed but not cluttered. Not a photograph, not a 3D render, not anime, not a cartoon.
 Framing: only the subject, whole body visible, centred and filling about 80% of the image, seen in three-quarter view with the head in the upper half. It must still read as a small thumbnail.
 Background: plain warm parchment colour (about #F1E4CC) with a faint darker vignette at the edges and a soft shadow under the subject. No scenery, no frame, no border.
 No text, letters, runes, numbers, labels, watermark or signature."""
@@ -138,8 +141,9 @@ def build_rows() -> list[dict]:
     for m in monsters:
         score, kind, note, subject = review[m["id"]]
         subject = subject or dragon_subject(m["id"])
-        if not subject or kind not in KINDS or not 1 <= score <= 10:
+        if not subject or ": " not in subject or kind not in KINDS or not 1 <= score <= 10:
             raise SystemExit(f"incomplete review: {m['id']}")
+        description = subject.split(": ", 1)[1]
         file = f"{m['id']}.png"
         edits = before.get(m["id"], {"status": "pending", "notes": ""})
         status = edits["status"]
@@ -153,7 +157,7 @@ def build_rows() -> list[dict]:
             "score": score, "creature": m["id"], "name_en": m["en"], "name_es": m["es"], "type": m["type"],
             "cr": m["cr"], "current_kind": KINDS[kind], "current_source": art[m["id"]]["title"],
             "review": note, "file": file, "path": f"art/bestiary/source/{file}", "status": status,
-            "notes": edits["notes"], "prompt": PROMPT.format(subject=subject),
+            "notes": edits["notes"], "prompt": PROMPT.format(name=m["en"], description=description),
         })
     rows.sort(key=lambda r: (r["score"], r["creature"]))
     for i, row in enumerate(rows, start=1):
@@ -314,8 +318,10 @@ def write_xlsx(rows: list[dict]) -> None:
         ("Corrections to send in the same conversation: 'Show the whole creature, centred, smaller in the "
          "frame.' / 'Remove the scenery: plain parchment background only.' / 'Remove the text.' / 'Make it look "
          "like a painted illustration, not a photo or a 3D render.'", False),
-        ("Rules: never name an artist, studio, book or product in a prompt, and never upload someone else's art "
-         "as a reference; only pictures made for Rytta.", False),
+        ("Rules: the prompts name Dungeons & Dragons on purpose, so each creature follows its official design "
+         "(the author's decision, 2026-11-11). Never add an artist's name, never ask for the art style of an "
+         "official book, and never upload official or other third-party art as a reference; only pictures made "
+         "for Rytta.", False),
     ]
     for r, (text, title) in enumerate(lines, start=1):
         cell = guide.cell(row=r, column=1, value=text)

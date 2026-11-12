@@ -32,6 +32,7 @@ import {
 import {
   ArrowDown01,
   ArrowDownAZ,
+  BookMinus,
   Bookmark,
   Check,
   Crown,
@@ -49,7 +50,6 @@ import {
   SlidersHorizontal,
   Swords,
   Trash2,
-  WandSparkles,
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -72,10 +72,17 @@ import type { CombatantTemplate, TemplateInput } from '../domain/combat'
 import { AddToEncounterDialog } from './add-to-encounter'
 import { CreatureEditor } from './creature-editor'
 import { blankDraft, draftFromBlock, type CreatureDraft } from './creature-draft'
-import { CreatureArtControl } from './creature-art'
+import { CreatureArtControl, type ArtNotice } from './creature-art'
 import { itemArt, templateBlock, useCreatureCatalog } from './creatures'
 import { useRunner } from './helpers'
 import { NewCreatureDialog } from './new-creature'
+import {
+  OfficialDialog,
+  OfficialMenu,
+  OfficialMissing,
+  VersionNote,
+  type OfficialAsk,
+} from './official-bestiary'
 import { RunnerError } from './parts'
 import { typeGlyphs } from './bestiary-glyphs'
 import { NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
@@ -146,6 +153,8 @@ type EditorState = {
   unplaced?: string[]
   /** The SRD creature a customised copy starts from (shown in the editor title). */
   basedOn?: string
+  /** RYT-089: a new campaign version of that official creature (edited in place). */
+  version?: boolean
 }
 
 /**
@@ -167,9 +176,12 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const [creating, setCreating] = useState(false)
   const [quick, setQuick] = useState<CombatantTemplate | 'new' | null>(null)
   const [deleting, setDeleting] = useState<CombatantTemplate | null>(null)
+  const [asking, setAsking] = useState<OfficialAsk | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const opener = useRef<HTMLElement | null>(null)
   const pendingSelect = useRef<string | null>(null)
+  // After going back to the official creature, focus waits for its stat block's Edit button.
+  const focusEdit = useRef<string | null>(null)
   const { run, pending, error, trigger, clear } = useRunner(campaignId)
   // Focus returns to the control that opened an overlay, or to the search when it is gone.
   const restore = () => {
@@ -180,7 +192,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   }
   // A dialog over the phone sheet owns Escape: the sheet stays open underneath.
   const [viewingArt, setViewingArt] = useState(false)
-  const overlayOpen = Boolean(adding || editor || quick || deleting) || creating || viewingArt
+  const overlayOpen =
+    Boolean(adding || editor || quick || deleting || asking) || creating || viewingArt
   // "/" jumps to the search from anywhere on the panel, as in the glossary.
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -209,7 +222,13 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       ),
     [catalog.items, filters, deferredQuery, favorites],
   )
-  const selected = catalog.items.find((i) => i.key === selectedKey) ?? null
+  // RYT-089: an official creature that gets a campaign version stays open as that version.
+  const selected =
+    catalog.items.find((i) => i.key === selectedKey) ??
+    (selectedKey?.startsWith('srd:')
+      ? catalog.items.find((i) => i.version && `srd:${i.srdId}` === selectedKey)
+      : undefined) ??
+    null
   const select = (key: string | null) =>
     setParams(
       (current) => {
@@ -231,12 +250,22 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       select(`hb:${latest.id}`)
     }
   })
+  useEffect(() => {
+    if (!focusEdit.current || selected?.key !== focusEdit.current) return
+    focusEdit.current = null
+    // A frame later, once the phone sheet has taken focus back from the closed dialog.
+    requestAnimationFrame(() =>
+      [...document.querySelectorAll<HTMLElement>('[data-bst-edit]')]
+        .find((node) => node.getClientRects().length > 0)
+        ?.focus(),
+    )
+  })
   const noticeAlert = (
     <Alert
       className="combat-alert"
       role="status"
       withCloseButton
-      closeButtonLabel={t('action.cancel')}
+      closeButtonLabel={t('common.close')}
       onClose={() => setNotice(null)}
       mb="sm"
     >
@@ -244,6 +273,61 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     </Alert>
   )
   const blockOf = catalog.blockFor
+  // RYT-089: the campaign's official bestiary and its versions of official creatures.
+  const official = catalog.official
+  const versions = [...catalog.templateById.values()].filter((tp) => tp.srd_override).length
+  // Neither creatures nor the official bestiary yet: the download is the page's one primary action.
+  const empty = !catalog.pending && catalog.items.length === 0 && official?.downloaded === false
+  const ask = (next: OfficialAsk, target: HTMLElement) => {
+    opener.current = target
+    setAsking(next)
+  }
+  const confirmOfficial = async (next: OfficialAsk) => {
+    const srdOf = (item: CreatureListItem) => (item.source === 'srd' ? item.id : item.srdId!)
+    // Going back to the official creature: its key already shows the version, so the open stat
+    // block never closes in between (and keeps its focus) when the version is deleted.
+    const officialKey =
+      next.kind === 'restore' && next.template.srd_id ? `srd:${next.template.srd_id}` : null
+    if (officialKey) select(officialKey)
+    const ok =
+      next.kind === 'restore'
+        ? await run({ kind: 'deleteTemplate', templateId: next.template.id })
+        : next.kind === 'remove'
+          ? await run({ kind: 'srdBestiary', action: 'remove', srdId: srdOf(next.item) })
+          : await run({
+              kind: 'srdBestiary',
+              action: next.kind === 'download' ? 'download' : 'removeAll',
+            })
+    if (!ok) return
+    setAsking(null)
+    if (next.kind === 'download')
+      setNotice(
+        official && official.removed.length > 0
+          ? t('bestiary.official.broughtBack', { count: official.removed.length })
+          : t('bestiary.official.downloaded', { count: catalog.officialCount }),
+      )
+    else if (next.kind === 'removeAll') {
+      if (selected?.source === 'srd' || selected?.version) select(null)
+      setNotice(t('bestiary.official.removedAll'))
+      requestAnimationFrame(() =>
+        document
+          .querySelector<HTMLElement>('.bst-official-empty button, .bst-official-line button')
+          ?.focus(),
+      )
+      return
+    } else if (next.kind === 'remove') {
+      select(null)
+      setNotice(t('bestiary.official.removed', { name: next.item.name }))
+    } else {
+      setNotice(t('bestiary.official.restored', { name: next.template.name }))
+      if (officialKey) {
+        focusEdit.current = officialKey
+        return
+      }
+      select(null)
+    }
+    restore()
+  }
   const templateOf = (item: CreatureListItem | null) =>
     item?.source === 'homebrew' ? (catalog.templateById.get(item.id) ?? null) : null
   const activeFilters =
@@ -299,6 +383,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         setEditor({
           template: null,
           basedOn: selected.name,
+          version: true,
           draft: draftFromBlock(t, catalog.language, block, {
             size: row.size[0],
             type: row.type,
@@ -342,6 +427,11 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         opener.current = target
         setDeleting(templateOf(selected))
       }}
+      onRemove={(target) => ask({ kind: 'remove', item: selected }, target)}
+      onRestore={(target) => {
+        const template = templateOf(selected)
+        if (template) ask({ kind: 'restore', template }, target)
+      }}
       onCopied={() => setNotice(t('bestiary.copied', { name: selected.name }))}
     />
   ) : null
@@ -353,9 +443,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       ref={panelRef}
       data-split={wide || undefined}
     >
-      <Group justify="space-between" align="flex-start" gap="sm" wrap="nowrap">
-        <div>
-          <Group gap="xs">
+      <div className="bst-head">
+        <div className="bst-head-title">
+          <Group gap="xs" wrap="nowrap">
             <PawPrint size={20} className="feature-icon" aria-hidden="true" />
             <Title order={2} id="bestiary-heading">
               {t('bestiary.title')}
@@ -365,29 +455,44 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
             {t('bestiary.intro')}
           </Text>
         </div>
-        <Button
-          leftSection={<Plus size={16} aria-hidden="true" />}
-          onClick={(event) => {
-            opener.current = event.currentTarget
-            setCreating(true)
-          }}
-        >
-          {t('bestiary.new')}
-        </Button>
-      </Group>
+        <div className="bst-head-actions">
+          <Button
+            variant={empty ? 'light' : 'filled'}
+            leftSection={<Plus size={16} aria-hidden="true" />}
+            onClick={(event) => {
+              opener.current = event.currentTarget
+              setCreating(true)
+            }}
+          >
+            {t('bestiary.new')}
+          </Button>
+          {official?.downloaded && <OfficialMenu state={official} onAsk={ask} />}
+        </div>
+      </div>
       <RunnerError error={error} trigger={trigger} onClose={clear} />
       {/* On phones and tablets an open sheet covers the page: the notice shows inside it. */}
       {notice && (wide || !selected) && noticeAlert}
-      <Toolbar
-        filters={filters}
-        setFilters={setFilters}
-        activeFilters={activeFilters}
-        count={results.length}
-        onFirst={() => document.querySelector<HTMLElement>('.bst-row-main')?.focus()}
-        onEnter={() => results[0] && select(results[0].key)}
-      />
+      {/* RYT-089: nothing to search before the campaign has a creature or the official bestiary. */}
+      {(catalog.pending || catalog.items.length > 0 || official?.downloaded) && (
+        <Toolbar
+          official={Boolean(official?.downloaded)}
+          filters={filters}
+          setFilters={setFilters}
+          activeFilters={activeFilters}
+          count={results.length}
+          onFirst={() => document.querySelector<HTMLElement>('.bst-row-main')?.focus()}
+          onEnter={() => results[0] && select(results[0].key)}
+        />
+      )}
       <QueryFeedback pending={catalog.pending} error={catalog.error} retry={catalog.retry} />
-      {!catalog.pending && (
+      {!catalog.pending && official && !official.downloaded && (
+        <OfficialMissing
+          count={catalog.officialCount}
+          compact={catalog.items.length > 0}
+          onDownload={(target) => ask({ kind: 'download' }, target)}
+        />
+      )}
+      {!catalog.pending && (catalog.items.length > 0 || official?.downloaded) && (
         <div className={wide ? 'bst-split' : undefined}>
           <CreatureList
             grouping={filters.query.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
@@ -490,13 +595,16 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           traits={catalog.traits}
           unplaced={editor.unplaced}
           basedOn={editor.basedOn}
+          version={editor.version}
           onClose={() => {
             setEditor(null)
             restore()
           }}
           onSaved={(id, name) => {
             setEditor(null)
-            setNotice(t('bestiary.saved', { name }))
+            setNotice(
+              t(editor.version ? 'bestiary.official.versionSaved' : 'bestiary.saved', { name }),
+            )
             if (id) select(`hb:${id}`)
             else pendingSelect.current = name.trim()
             restore()
@@ -540,6 +648,18 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           }}
         />
       )}
+      <OfficialDialog
+        ask={asking}
+        count={catalog.officialCount}
+        removed={official?.removed.length ?? 0}
+        versions={versions}
+        pending={pending}
+        onConfirm={(next) => void confirmOfficial(next)}
+        onClose={() => {
+          setAsking(null)
+          restore()
+        }}
+      />
       <Modal
         opened={deleting !== null}
         onClose={() => {
@@ -585,6 +705,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
 }
 
 function Toolbar({
+  official,
   filters,
   setFilters,
   activeFilters,
@@ -592,6 +713,8 @@ function Toolbar({
   onFirst,
   onEnter,
 }: {
+  /** RYT-089: the campaign has the official bestiary (its tab is shown). */
+  official: boolean
   filters: CreatureFilters
   setFilters: (next: CreatureFilters) => void
   activeFilters: number
@@ -867,10 +990,9 @@ function Toolbar({
             aria-label={t('bestiary.source.label')}
             value={filters.source}
             onChange={(v) => set({ source: v as CreatureFilters['source'] })}
-            data={(['all', 'srd', 'homebrew', 'favorites'] as const).map((value) => ({
-              value,
-              label: t(`bestiary.source.${value}`),
-            }))}
+            data={(['all', 'srd', 'homebrew', 'favorites'] as const)
+              .filter((value) => official || value !== 'srd')
+              .map((value) => ({ value, label: t(`bestiary.source.${value}`) }))}
           />
           <p className="bst-count-line" role="status" aria-live="polite">
             {t('bestiary.count', { count })}
@@ -1034,8 +1156,12 @@ function CreatureList({
             {item.cr !== null && (
               <span className="bst-cr">{t('bestiary.crShort', { cr: item.cr })}</span>
             )}
-            {item.source === 'homebrew' && (
-              <span className="bst-source-badge is-homebrew">{t('bestiary.badge.homebrew')}</span>
+            {item.version ? (
+              <span className="bst-source-badge is-version">{t('bestiary.badge.version')}</span>
+            ) : (
+              item.source === 'homebrew' && (
+                <span className="bst-source-badge is-homebrew">{t('bestiary.badge.homebrew')}</span>
+              )
             )}
           </span>
         </button>
@@ -1096,6 +1222,8 @@ function CreatureDetail({
   onComplete,
   onDuplicate,
   onDelete,
+  onRemove,
+  onRestore,
   onCopied,
 }: {
   campaignId: string
@@ -1112,6 +1240,10 @@ function CreatureDetail({
   onComplete: (target: HTMLElement) => void
   onDuplicate: (target: HTMLElement) => void
   onDelete: (target: HTMLElement) => void
+  /** RYT-089: removes an official creature (or its campaign version) from the campaign. */
+  onRemove: (target: HTMLElement) => void
+  /** RYT-089: deletes the campaign version, the official creature is listed again. */
+  onRestore: (target: HTMLElement) => void
   onCopied: () => void
 }) {
   const { t } = useTranslation()
@@ -1122,10 +1254,16 @@ function CreatureDetail({
   const based = item.srdId ? catalog.srdName(item.srdId) : null
   const badges = (
     <>
-      <Badge variant="light" className={`bst-source-badge is-${item.source}`}>
-        {t(`bestiary.badge.${item.source}`)}
-      </Badge>
-      {based && <Badge variant="outline">{t('bestiary.basedOn', { name: based })}</Badge>}
+      {item.version ? (
+        <VersionNote onRestore={onRestore} />
+      ) : (
+        <>
+          <Badge variant="light" className={`bst-source-badge is-${item.source}`}>
+            {t(`bestiary.badge.${item.source}`)}
+          </Badge>
+          {based && <Badge variant="outline">{t('bestiary.basedOn', { name: based })}</Badge>}
+        </>
+      )}
       {item.legendary > 0 && (
         <Badge variant="outline">{t('bestiary.legendaryBadge', { count: item.legendary })}</Badge>
       )}
@@ -1134,9 +1272,20 @@ function CreatureDetail({
   // Menu items unmount with the menu: overlays they open return focus to the ⋯ button.
   const more = useRef<HTMLButtonElement>(null)
   const fromMenu = () => more.current ?? document.body
+  // RYT-088: a creature with an image leads with its plate (above the name, or in its own column on
+  // wide panes); without one the token stays the file picker beside the name.
+  const pictured = Boolean(item.imagePath) || Boolean(itemArt(item))
+  // Kept here so a save's notice and focus survive the token turning into the plate; another
+  // creature starts without one.
+  const [artNotice, setArtNotice] = useState<(ArtNotice & { key: string }) | null>(null)
+  const [noticeFor, setNoticeFor] = useState(item.key)
+  if (noticeFor !== item.key) {
+    setNoticeFor(item.key)
+    setArtNotice(null)
+  }
   const media = (
     <CreatureArtControl
-      // A new creature or a new image: the control's notices start fresh.
+      // Another creature: the control's own state (viewer, errors) starts fresh.
       key={item.key}
       campaignId={campaignId}
       name={item.name}
@@ -1148,6 +1297,8 @@ function CreatureDetail({
       imagePath={item.imagePath ?? null}
       art={itemArt(item)}
       credit={catalog.artCredit(item.artId)}
+      notice={artNotice?.key === item.key ? artNotice : null}
+      onNotice={(next) => setArtNotice(next && { ...next, key: item.key })}
       onViewing={onViewArt}
     />
   )
@@ -1162,18 +1313,21 @@ function CreatureDetail({
       </Button>
       <div className="bst-actions-secondary">
         {item.source === 'srd' ? (
+          // RYT-089: editing an official creature keeps the change in this campaign.
           <Button
             variant="light"
-            leftSection={<WandSparkles size={16} aria-hidden="true" />}
+            leftSection={<Pencil size={16} aria-hidden="true" />}
             disabled={!block}
+            data-bst-edit
             onClick={(e) => onCustomise(e.currentTarget)}
           >
-            {t('bestiary.customise')}
+            {t('bestiary.edit')}
           </Button>
         ) : (
           <Button
             variant="light"
             leftSection={<Pencil size={16} aria-hidden="true" />}
+            data-bst-edit
             onClick={(e) => onEdit(e.currentTarget)}
           >
             {t('bestiary.edit')}
@@ -1232,9 +1386,18 @@ function CreatureDetail({
                   {t('bestiary.copyText')}
                 </Menu.Item>
               )}
-              {item.source === 'homebrew' && (
+              {(item.source === 'srd' || item.version) && (
                 <Menu.Item
-                  color="red"
+                  className="bst-menu-danger"
+                  leftSection={<BookMinus size={16} aria-hidden="true" />}
+                  onClick={() => onRemove(fromMenu())}
+                >
+                  {t('bestiary.official.removeOne')}
+                </Menu.Item>
+              )}
+              {item.source === 'homebrew' && !item.version && (
+                <Menu.Item
+                  className="bst-menu-danger"
                   leftSection={<Trash2 size={16} aria-hidden="true" />}
                   onClick={() => onDelete(fromMenu())}
                 >
@@ -1258,58 +1421,75 @@ function CreatureDetail({
     // A quick creature: the core numbers only.
     return (
       <Stack gap="md" className="bst-detail-inner">
-        <header className="sb-head">
-          {media}
-          <div className="sb-title">
-            <Title order={inSheet ? 2 : 3} id={headingId} className="sb-name">
-              {item.name}
-            </Title>
-            <div className="sb-badges">{badges}</div>
-          </div>
-        </header>
         {/* First in the tab order; on phones it sticks to the bottom of the sheet (CSS order). */}
         {actions}
-        <dl className="sb-core">
-          <div>
-            <dt>{t('bestiary.ac')}</dt>
-            <dd>{item.ac}</dd>
+        {/* The same frame as a full stat block, so the plate keeps its column on wide panes. */}
+        <div className="bst-detail-frame">
+          <div className={pictured ? 'bst-detail-body has-plate' : 'bst-detail-body'}>
+            {pictured && media}
+            <Stack gap="md" className="bst-quick">
+              <header className="sb-head">
+                {!pictured && media}
+                <div className="sb-title">
+                  <Title order={inSheet ? 2 : 3} id={headingId} className="sb-name">
+                    {item.name}
+                  </Title>
+                  <div className="sb-badges">{badges}</div>
+                </div>
+              </header>
+              <dl className="sb-core">
+                <div>
+                  <dt>{t('bestiary.ac')}</dt>
+                  <dd>{item.ac}</dd>
+                </div>
+                <div>
+                  <dt>{t('bestiary.hp')}</dt>
+                  <dd>{item.hp}</dd>
+                </div>
+                <div>
+                  <dt>{t('bestiary.initiative')}</dt>
+                  <dd>{signed(item.initiative)}</dd>
+                </div>
+              </dl>
+              {template?.notes && <Text className="combat-notes">{template.notes}</Text>}
+              <Alert
+                variant="light"
+                role="note"
+                icon={<FilePenLine size={18} aria-hidden="true" />}
+              >
+                <Text size="sm">{t('bestiary.quickHint')}</Text>
+                <Button mt="xs" variant="light" onClick={(e) => onComplete(e.currentTarget)}>
+                  {t('bestiary.complete')}
+                </Button>
+              </Alert>
+            </Stack>
           </div>
-          <div>
-            <dt>{t('bestiary.hp')}</dt>
-            <dd>{item.hp}</dd>
-          </div>
-          <div>
-            <dt>{t('bestiary.initiative')}</dt>
-            <dd>{signed(item.initiative)}</dd>
-          </div>
-        </dl>
-        {template?.notes && <Text className="combat-notes">{template.notes}</Text>}
-        <Alert variant="light" role="note" icon={<FilePenLine size={18} aria-hidden="true" />}>
-          <Text size="sm">{t('bestiary.quickHint')}</Text>
-          <Button mt="xs" variant="light" onClick={(e) => onComplete(e.currentTarget)}>
-            {t('bestiary.complete')}
-          </Button>
-        </Alert>
+        </div>
       </Stack>
     )
   }
   return (
     <Stack gap="md" className="bst-detail-inner">
       {actions}
-      <StatBlockView
-        block={block}
-        level={inSheet ? 2 : 3}
-        headingId={headingId}
-        media={media}
-        badges={badges}
-        footnote={
-          row
-            ? t('bestiary.srdPage', { page: row.pages[catalog.language] })
-            : template?.notes
-              ? t('bestiary.notesLine', { notes: template.notes })
-              : undefined
-        }
-      />
+      <div className="bst-detail-frame">
+        <div className={pictured ? 'bst-detail-body has-plate' : 'bst-detail-body'}>
+          {pictured && media}
+          <StatBlockView
+            block={block}
+            level={inSheet ? 2 : 3}
+            headingId={headingId}
+            media={pictured ? undefined : media}
+            badges={badges}
+            footnote={
+              row
+                ? t('bestiary.srdPage', { page: row.pages[catalog.language] })
+                : template?.notes
+                  ? t('bestiary.notesLine', { notes: template.notes })
+                  : undefined
+            }
+          />
+        </div>
+      </div>
     </Stack>
   )
 }

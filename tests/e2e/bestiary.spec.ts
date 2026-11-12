@@ -317,11 +317,12 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   await server.install(page)
   await openBestiary(page)
 
-  // Customise: the SRD wolf becomes a campaign creature that remembers its origin.
+  // Edit (RYT-089): the SRD wolf gets a campaign version that keeps its origin; the official one
+  // never changes.
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
   await pick(page, /^Lobo · Wolf/)
-  await detail(page, info).getByRole('button', { name: 'Personalizar' }).click()
-  let editor = page.getByRole('dialog', { name: 'Nueva criatura' })
+  await detail(page, info).getByRole('button', { name: 'Editar', exact: true }).click()
+  let editor = page.getByRole('dialog', { name: 'Editar Lobo en esta campaña' })
   await expect(editor).toBeVisible()
   await editor.getByRole('textbox', { name: 'Nombre', exact: true }).first().fill('Lobo de sombra')
   // ui-ux R2: tags and alignment come from the SRD type line ("Bestia Mediana, sin alineamiento").
@@ -347,16 +348,19 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   } else await expect(editor.getByRole('heading', { name: 'Lobo de sombra' })).toBeVisible()
   await expect(editor.getByText(/Por sus números parece VD/)).toBeVisible()
   await editor.getByRole('button', { name: 'Guardar criatura' }).click()
-  await expect(page.getByText('Guardado en el bestiario: Lobo de sombra.')).toBeVisible()
+  await expect(page.getByText('Guardado solo en esta campaña: Lobo de sombra.')).toBeVisible()
   const wolf = server.templates.find((t) => t.name === 'Lobo de sombra')!
   expect(wolf).toMatchObject({
     srd_id: 'wolf',
+    srd_override: true,
     hp_formula: '2d8+2',
     challenge: '1/4',
     creature_type: 'beast',
   })
   expect((wolf.stat_block as { sections: unknown[] }).sections.length).toBeGreaterThan(0)
-  await expect(detail(page, info).getByText('Basada en Lobo')).toBeVisible({ timeout: 15_000 })
+  await expect(detail(page, info).getByText('Modificada en esta campaña')).toBeVisible({
+    timeout: 15_000,
+  })
   if (sheet(info)) await page.keyboard.press('Escape')
 
   // Archetype and CR: a leader draft with SRD-median numbers.
@@ -522,7 +526,7 @@ const png = Buffer.from(
   'base64',
 )
 
-test('RYT-053 every SRD creature has art: the DM views it with its credit, changes and restores it', async ({
+test('RYT-053/088 every SRD creature has art: the stat block leads with its plate, which views, changes and restores it', async ({
   page,
 }, info) => {
   test.setTimeout(120_000)
@@ -542,19 +546,24 @@ test('RYT-053 every SRD creature has art: the DM views it with its credit, chang
   )
   await row.locator('.bst-row-main').click()
   const pane = detail(page, info)
-  const token = pane.getByRole('button', { name: 'Imagen de Lobo: ver o cambiar' })
-  await expect(token.locator('img')).toHaveAttribute('src', /bestiary\/thumbs\/wolf\.webp$/)
-  await expectTouchTargets(page, '.bst-detail-inner .combat-image-picker:visible')
-  await evidence(page, info, 'token', 'RYT-053')
+  // RYT-088: the stat block leads with the creature's plate. The print opens the viewer; the pencil
+  // in its corner changes the image.
+  const plate = pane.getByRole('button', { name: 'Ver la imagen de Lobo' })
+  const pencil = pane.getByRole('button', { name: 'Cambiar la imagen de Lobo' })
+  await expect(plate.locator('img')).toHaveAttribute('src', /bestiary\/art\/wolf\.webp$/)
+  await expectTouchTargets(page, '.bst-detail-inner .bst-plate-edit:visible')
+  // Above the name on phones; in its own column beside the stat block on wider panes. (The phone
+  // sheet's own title is also named after the creature.)
+  const heading = pane.locator('.sb-name')
+  const at = (await plate.boundingBox())!
+  const name = (await heading.boundingBox())!
+  if (phone(info)) expect(name.y).toBeGreaterThanOrEqual(at.y + at.height)
+  else expect(name.x).toBeGreaterThanOrEqual(at.x + at.width)
+  await audit(page)
+  await evidence(page, info, 'plate', 'RYT-088')
 
-  // Tap: a short menu anchored to the token. Bundled art has nothing to restore.
-  await token.click()
-  const menu = page.getByRole('menu')
-  await expect(menu.getByRole('menuitem')).toHaveText(['Ver la imagen', 'Cambiar la imagen…'])
-  // The dropdown fades in: let it settle before the evidence capture.
-  if (process.env.RYT_EVIDENCE) await page.waitForTimeout(400)
-  await evidence(page, info, 'menu', 'RYT-053')
-  await menu.getByRole('menuitem', { name: 'Ver la imagen' }).click()
+  // Tap: the viewer opens directly, with the credit of the painted art.
+  await plate.click()
   // The viewer stacks above the phone sheet (also named after the creature).
   const viewer = page.locator('.bst-art-viewer')
   await expect(viewer.getByRole('heading', { name: 'Lobo' })).toBeVisible()
@@ -562,76 +571,75 @@ test('RYT-053 every SRD creature has art: the DM views it with its credit, chang
     'src',
     /bestiary\/art\/wolf\.webp$/,
   )
-  // The credit the licence asks for: author, licence and source.
+  // The credit: author, licence and source.
   for (const term of ['Autoría', 'Licencia', 'Fuente'])
     await expect(viewer.getByText(term, { exact: true })).toBeVisible()
-  await expect(viewer.getByRole('link', { name: 'Wikimedia Commons' })).toHaveAttribute(
+  await expect(viewer.getByText('© Rytta', { exact: true })).toBeVisible()
+  await expect(viewer.getByRole('link', { name: /Créditos de arte de Rytta/ })).toHaveAttribute(
     'href',
-    /^https:\/\/commons\.wikimedia\.org\//,
+    /docs\/bestiary-art-credits\.md$/,
   )
-  await expect(viewer.getByRole('link', { name: /^CC / })).toHaveAttribute('target', '_blank')
   await audit(page, '.bst-art-viewer')
   await expectTouchTargets(page, '.bst-art-viewer button:visible, .bst-art-label a')
-  await evidence(page, info, 'viewer', 'RYT-053')
-  // Escape closes the viewer and gives focus back to the token.
+  await evidence(page, info, 'viewer', 'RYT-088')
+  // Escape closes the viewer and gives focus back to the plate.
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveCount(0)
-  await expect(token).toBeFocused()
+  await expect(plate).toBeFocused()
 
-  // Change: the DM's own image for this campaign replaces the bundled art.
-  await token.click()
+  // Change: without the DM's own image the pencil opens the file picker directly, and the DM's image
+  // for this campaign replaces the bundled art.
   const chooser = page.waitForEvent('filechooser')
-  await page.getByRole('menuitem', { name: 'Cambiar la imagen…' }).click()
+  await pencil.click()
   await (await chooser).setFiles({ name: 'wolf.png', mimeType: 'image/png', buffer: png })
-  // The saved notice is shown in words under the token, on its own line: the heading keeps its width
-  // (ui-ux P1-1).
+  // The saved notice is shown in words under the plate; the heading keeps its width.
   await expect(
     pane.getByRole('status').filter({ hasText: 'Imagen de Lobo guardada' }),
   ).toBeVisible()
-  const heading = pane.getByRole('heading', { name: 'Lobo' }).first()
   expect((await heading.boundingBox())!.width).toBeGreaterThan(60)
   const status = pane.locator('.combat-image-status')
-  expect((await status.boundingBox())!.y).toBeGreaterThan((await token.boundingBox())!.y + 40)
-  await evidence(page, info, 'saved', 'RYT-053')
+  expect((await status.boundingBox())!.y).toBeGreaterThan(at.y + at.height - 1)
+  await evidence(page, info, 'saved', 'RYT-088')
   await expect
     .poll(() => server.srdImages.get('wolf'))
     .toMatch(new RegExp(`^pre/${campaignId}/srd-wolf/[0-9a-f-]{36}\\.webp$`))
-  await expect(token.locator('img')).toHaveAttribute('src', /public-test\/art\//)
-  await expect(token).toBeFocused()
+  await expect(plate.locator('img')).toHaveAttribute('src', /public-test\/art\//)
+  await expect(pencil).toBeFocused()
   // Its viewer says it is the campaign's own image, with no third-party credit.
-  await token.click()
-  await page.getByRole('menuitem', { name: 'Ver la imagen' }).click()
+  await plate.click()
   await expect(viewer).toContainText('Tu imagen para esta criatura en la campaña. Solo la ves tú.')
   await expect(viewer.getByText('Autoría')).toHaveCount(0)
   await page.getByRole('button', { name: 'Cerrar la imagen' }).click()
-  await expect(token).toBeFocused()
+  await expect(plate).toBeFocused()
 
-  // Restore: back to the bundled art.
-  await token.click()
+  // Restore: with the DM's own image the pencil opens a short menu; restoring brings the art back.
+  await pencil.click()
+  await expect(page.getByRole('menuitem')).toHaveText([
+    'Cambiar la imagen…',
+    'Recuperar la ilustración original',
+  ])
   await page.getByRole('menuitem', { name: 'Recuperar la ilustración original' }).click()
   await expect(
     pane.getByRole('status').filter({ hasText: 'Lobo vuelve a tener su ilustración original' }),
   ).toBeAttached()
   await expect.poll(() => server.srdImages.has('wolf')).toBe(false)
-  await expect(token.locator('img')).toHaveAttribute('src', /bestiary\/thumbs\/wolf\.webp$/)
+  await expect(plate.locator('img')).toHaveAttribute('src', /bestiary\/art\/wolf\.webp$/)
   await expect(page.getByRole('menu')).toHaveCount(0)
-  await expect(token).toBeFocused()
+  await expect(pencil).toBeFocused()
   await audit(page)
 
-  // Keyboard: Enter opens the menu and the arrows walk it; Escape closes only the menu (the phone
-  // sheet stays) and focus returns to the token.
+  // Keyboard: Enter on the plate opens the viewer; Escape closes only the viewer (the phone sheet
+  // stays) and focus returns to the plate.
+  await plate.focus()
   await page.keyboard.press('Enter')
-  await expect(page.getByRole('menu')).toBeVisible()
-  await page.keyboard.press('ArrowDown')
-  await expect(page.getByRole('menuitem', { name: 'Ver la imagen' })).toBeFocused()
-  await page.keyboard.press('ArrowDown')
-  await expect(page.getByRole('menuitem', { name: 'Cambiar la imagen…' })).toBeFocused()
+  await expect(viewer).toBeVisible()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('menu')).toHaveCount(0)
-  await expect(token).toBeFocused()
+  await expect(viewer).toHaveCount(0)
+  await expect(plate).toBeFocused()
   if (sheet(info)) await expect(page.locator('.bst-sheet')).toBeVisible()
 
-  // Art that cannot load: the token falls back to the creature type glyph, and the viewer says so.
+  // Art that cannot load: the plate keeps its square with the creature type glyph, and the viewer
+  // says so.
   await page.route('**/bestiary/{thumbs,art}/ogre.webp', (route) => route.fulfill({ status: 404 }))
   if (sheet(info)) {
     await page.keyboard.press('Escape')
@@ -639,10 +647,9 @@ test('RYT-053 every SRD creature has art: the DM views it with its credit, chang
   }
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('ogro')
   await page.locator('.bst-row-main', { hasText: /^Ogro/ }).first().click()
-  const ogre = detail(page, info).getByRole('button', { name: 'Imagen de Ogro: ver o cambiar' })
-  await expect(ogre.locator('.combat-token-glyph')).toBeVisible()
+  const ogre = detail(page, info).getByRole('button', { name: 'Ver la imagen de Ogro' })
+  await expect(ogre.locator('.bst-plate-glyph')).toBeVisible()
   await ogre.click()
-  await page.getByRole('menuitem', { name: 'Ver la imagen' }).click()
   await expect(viewer).toContainText('No se puede mostrar esta imagen ahora.')
   await page.keyboard.press('Escape')
   await expect(ogre).toBeFocused()

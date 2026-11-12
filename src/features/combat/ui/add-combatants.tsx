@@ -30,6 +30,7 @@ import {
 } from './creatures'
 import { InitiativeDialog } from './amount-dialog'
 import type { Run } from './helpers'
+import { OfficialElsewhere } from './official-bestiary'
 import { JoinPreview } from './roster'
 
 /** DM panel: the party in one tap, creatures in batches (custom or from the bestiary), a lair.
@@ -223,6 +224,7 @@ function CreatureForm({
 }) {
   const { t } = useTranslation()
   const catalog = useCreatureCatalog(campaignId)
+  const noOfficial = catalog.official?.downloaded === false
   const spellLabel = useSpellLabel()
   const [picked, setPicked] = useState<CreatureListItem | null>(null)
   const [alias, setAlias] = useState('')
@@ -303,7 +305,7 @@ function CreatureForm({
         <Stack gap="sm" mt={6}>
           <Select
             label={t('combat.add.template')}
-            description={t('combat.add.templateHelp')}
+            description={t(noOfficial ? 'combat.add.templateHelpOwn' : 'combat.add.templateHelp')}
             value={picked?.key ?? null}
             onChange={pick}
             clearable
@@ -316,20 +318,30 @@ function CreatureForm({
               {
                 group: t('bestiary.source.homebrew'),
                 items: catalog.items
-                  .filter((i) => i.source === 'homebrew')
+                  .filter((i) => i.source === 'homebrew' && !i.version)
                   .map((i) => ({ value: i.key, label: i.name })),
               },
               {
                 group: t('bestiary.source.srd'),
+                // RYT-089: a campaign version stays among the official creatures, marked.
                 items: catalog.items
-                  .filter((i) => i.source === 'srd')
+                  .filter((i) => i.source === 'srd' || i.version)
                   .map((i) => ({
                     value: i.key,
-                    label: `${i.name} · ${t('bestiary.crShort', { cr: i.cr })}`,
+                    label: [
+                      i.name,
+                      i.cr ? t('bestiary.crShort', { cr: i.cr }) : null,
+                      i.version ? t('bestiary.badge.version') : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · '),
                   })),
               },
             ].filter((g) => g.items.length > 0)}
           />
+          {noOfficial && (
+            <OfficialElsewhere campaignId={campaignId} total={catalog.officialCount} />
+          )}
           <TextInput
             required
             label={t('combat.add.name')}

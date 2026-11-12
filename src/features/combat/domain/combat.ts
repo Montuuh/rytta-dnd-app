@@ -220,6 +220,8 @@ export const templateSchema = z.object({
   hp_formula: z.string().max(20).optional(),
   challenge: z.string().max(4).optional(),
   creature_type: z.string().max(20).optional(),
+  /** RYT-089: the campaign's version of the official creature srd_id (edited in place). */
+  srd_override: z.boolean().optional(),
   updated_at: z.string().optional(),
   revision: z.number().int(),
 })
@@ -235,6 +237,17 @@ export const srdImageListSchema = z.array(
   }),
 )
 export type SrdImage = z.infer<typeof srdImageListSchema>[number]
+
+/**
+ * RYT-089: whether the campaign downloaded the official (SRD) bestiary, and the official creatures
+ * its DM removed afterwards. Without the download the campaign lists only its own creatures.
+ */
+export const srdBestiarySchema = z.object({
+  downloaded: z.boolean(),
+  downloaded_at: z.string().nullable().optional(),
+  removed: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
+})
+export type SrdBestiary = z.infer<typeof srdBestiarySchema>
 
 export const mutationResultSchema = z
   .object({
@@ -318,6 +331,8 @@ export type TemplateInput = {
   hp_formula?: string | null
   challenge?: string | null
   creature_type?: string | null
+  /** RYT-089: on creation only, the campaign's version of the official creature srd_id. */
+  srd_override?: boolean
 }
 
 export type CombatAction =
@@ -354,6 +369,8 @@ export type CombatAction =
   | { kind: 'deleteTemplate'; templateId: string }
   | { kind: 'templateImage'; templateId: string; revision: number; path: string | null }
   | { kind: 'srdImage'; srdId: string; path: string | null }
+  | { kind: 'srdBestiary'; action: 'download' | 'removeAll' }
+  | { kind: 'srdBestiary'; action: 'remove'; srdId: string }
   | { kind: 'tracker'; combatantId: string; key: string; value: number }
 
 export const combatErrorCodes = [
@@ -372,6 +389,7 @@ export const combatErrorCodes = [
   'initiativeClosed',
   'notYourTurn',
   'alreadyRolled',
+  'alreadyModified',
   'gone',
   'invalid',
   'forbidden',
@@ -395,6 +413,7 @@ export function combatErrorCode(message: string): CombatErrorCode {
     [/Initiative closed/, 'initiativeClosed'],
     [/Not your turn/, 'notYourTurn'],
     [/Already rolled/, 'alreadyRolled'],
+    [/Already modified/, 'alreadyModified'],
     [/(Encounter|Combatant|Effect|Event|Template|Character) unavailable/, 'gone'],
     [/Invalid request|Request mismatch/, 'invalid'],
     [/Forbidden/, 'forbidden'],

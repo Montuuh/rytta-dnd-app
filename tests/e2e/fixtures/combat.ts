@@ -373,6 +373,7 @@ export function combatServer() {
       return project(e, actor, table)
     }
     if (method === 'list_combatant_templates') return dm ? templates : fail('Forbidden')
+    if (method === 'get_srd_bestiary') return dm ? officialState() : fail('Forbidden')
     if (method === 'list_creature_srd_images')
       return dm
         ? [...srdImages].map(([srd_id, image_path]) => ({
@@ -407,8 +408,34 @@ export function combatServer() {
       'set_combatant_template_image',
       'set_combatant_tracker',
       'set_creature_srd_image',
+      'set_srd_bestiary',
     ])
     if (dmOnly.has(method) && !dm) return fail('Forbidden')
+    // RYT-089: the campaign's official bestiary, as set_srd_bestiary does it.
+    if (method === 'set_srd_bestiary') {
+      const srd = body.target_srd === null ? null : String(body.target_srd)
+      const dropVersions = (match: (srd: unknown) => boolean) => {
+        const before = templates.length
+        for (let i = templates.length - 1; i >= 0; i--)
+          if (templates[i]!.srd_override === true && match(templates[i]!.srd_id))
+            templates.splice(i, 1)
+        return before - templates.length
+      }
+      let versions_removed = 0
+      if (body.action === 'download' && srd === null) {
+        official.downloaded = true
+        official.removed.clear()
+      } else if (body.action === 'remove' && srd) {
+        if (!official.downloaded) return fail('Invalid request')
+        official.removed.add(srd)
+        versions_removed = dropVersions((id) => id === srd)
+      } else if (body.action === 'remove_all' && srd === null) {
+        official.downloaded = false
+        official.removed.clear()
+        versions_removed = dropVersions(() => true)
+      } else return fail('Invalid request')
+      return { ...officialState(), versions_removed }
+    }
     if (method === 'create_encounter') {
       const e: Encounter = {
         id: uuid('e1000000'),
@@ -436,6 +463,13 @@ export function combatServer() {
         if (row.revision !== body.expected_revision) return fail('Stale revision')
         Object.assign(row, data, { revision: Number(row.revision) + 1, updated_at })
         return { id: row.id, revision: row.revision }
+      }
+      if (data.srd_override === true) {
+        const srd = String(data.srd_id ?? '')
+        if (!srd || !official.downloaded || official.removed.has(srd))
+          return fail('Invalid request')
+        if (templates.some((t) => t.srd_override === true && t.srd_id === srd))
+          return fail('Already modified')
       }
       const row = { id: uuid('e2000000'), revision: 0, image_path: null, updated_at, ...data }
       templates.push(row)
@@ -891,6 +925,16 @@ export function combatServer() {
   const uploads = new Set<string>()
   /** RYT-053: the DM's own image per SRD creature (srd id -> path). */
   const srdImages = new Map<string, string>()
+  /**
+   * RYT-089: the campaign's official bestiary. Downloaded by default so earlier specs keep the SRD
+   * creatures; specs of the download set `downloaded` to false first.
+   */
+  const official = { downloaded: true, removed: new Set<string>() }
+  const officialState = () => ({
+    downloaded: official.downloaded,
+    downloaded_at: official.downloaded ? '2026-11-12T10:00:00Z' : null,
+    removed: [...official.removed].sort(),
+  })
   /** Every bucket/path a page asked to sign (RYT-043 privacy checks). */
   const signed: string[] = []
   /** Which illustration a stored path shows: a part of the path (an id) to an artwork name. */
@@ -902,6 +946,7 @@ export function combatServer() {
     portraits,
     uploads,
     srdImages,
+    official,
     /** Runs one RPC as `actor` (defaults to the DM), as the browser would. */
     act(method: string, body: Record<string, unknown>, actor = dmId) {
       return handle(actor, method, body)
@@ -988,7 +1033,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image)$/,
+        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_srd_bestiary|set_srd_bestiary)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

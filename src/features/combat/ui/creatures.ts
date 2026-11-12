@@ -22,7 +22,8 @@ import {
   type StatBlock,
 } from '@/features/bestiary'
 import { useGlossaryName } from '@/features/glossary'
-import { srdImagesQuery, templatesQuery } from '../api'
+import { srdBestiaryQuery, srdImagesQuery, templatesQuery } from '../api'
+import { campaignBestiary } from '../domain/campaign-bestiary'
 import type { CombatantTemplate, NpcEntry } from '../domain/combat'
 
 /** A template's stored stat block, when it is readable (ADR 028). */
@@ -63,6 +64,7 @@ export function templateItem(template: CombatantTemplate): CreatureListItem {
     srdId: template.srd_id ?? null,
     imagePath: template.image_path ?? null,
     side: template.side,
+    version: template.srd_override === true || undefined,
   }
 }
 
@@ -79,18 +81,27 @@ export function useCreatureCatalog(campaignId: string) {
   const templates = useQuery(templatesQuery(state.user!.id, campaignId))
   const art = useQuery(creatureArtQuery())
   const srdImages = useQuery(srdImagesQuery(state.user!.id, campaignId))
+  const official = useQuery(srdBestiaryQuery(state.user!.id, campaignId))
   const items = useMemo(() => {
     const own = new Map((srdImages.data ?? []).map((i) => [i.srd_id, i.image_path]))
     const artOf = (id: string | null | undefined) => (id && art.data?.[id] ? id : null)
-    return [
-      ...(templates.data ?? []).map((tp) => ({ ...templateItem(tp), artId: artOf(tp.srd_id) })),
-      ...(index.data ? srdItems(index.data.monsters, language) : []).map((item) => ({
-        ...item,
-        imagePath: own.get(item.id) ?? null,
-        artId: artOf(item.id),
-      })),
-    ]
-  }, [index.data, templates.data, language, art.data, srdImages.data])
+    const srd = (index.data ? srdItems(index.data.monsters, language) : []).map((item) => ({
+      ...item,
+      imagePath: own.get(item.id) ?? null,
+      artId: artOf(item.id),
+    }))
+    const srdById = new Map(srd.map((item) => [item.id, item]))
+    return campaignBestiary(
+      (templates.data ?? []).map((tp) => {
+        const item = { ...templateItem(tp), artId: artOf(tp.srd_id) }
+        // RYT-089: a version keeps its official creature's other-language name (search, gloss).
+        const source = item.version && tp.srd_id ? srdById.get(tp.srd_id) : undefined
+        return source ? { ...item, altName: source.altName } : item
+      }),
+      srd,
+      official.data,
+    )
+  }, [index.data, templates.data, language, art.data, srdImages.data, official.data])
   const rows = useMemo(
     () => new Map((index.data?.monsters ?? []).map((row) => [row.id, row])),
     [index.data],
@@ -112,6 +123,8 @@ export function useCreatureCatalog(campaignId: string) {
       (id && art.data?.[id]) || null,
     rows,
     templateById,
+    /** An official creature's stat block, whether or not this campaign lists it (fights, recaps). */
+    officialBlock: (id: string): StatBlock | null => bodies.data?.monsters[id] ?? null,
     baselines: index.data?.baselines ?? [],
     traits: bodies.data?.traits ?? [],
     blockFor,
@@ -119,15 +132,23 @@ export function useCreatureCatalog(campaignId: string) {
       const row = rows.get(id)
       return row ? row[language] : null
     },
-    pending: index.isPending || templates.isPending,
+    /** RYT-089: the campaign's official bestiary (downloaded, removed creatures). */
+    official: official.data,
+    /** Every official creature in the catalogue, downloaded or not (counts, the download dialog). */
+    officialCount: index.data?.monsters.length ?? 0,
+    pending: index.isPending || templates.isPending || official.isPending,
     bodiesPending: bodies.isPending,
-    error: index.isError || templates.isError || bodies.isError,
+    error: index.isError || templates.isError || bodies.isError || official.isError,
     /** RYT-054: the index or the campaign creatures failed with nothing cached to show. */
-    dataError: (index.isError && !index.data) || (templates.isError && !templates.data),
+    dataError:
+      (index.isError && !index.data) ||
+      (templates.isError && !templates.data) ||
+      (official.isError && !official.data),
     retry: () => {
       void index.refetch()
       void bodies.refetch()
       void templates.refetch()
+      void official.refetch()
     },
   }
 }

@@ -335,6 +335,7 @@ export function EncounterBalance({
       </Collapse>
       {suggesting && (
         <SuggestDialog
+          campaignId={campaignId}
           encounterId={encounterId}
           encounterName={encounterName}
           balance={balance}

@@ -102,3 +102,32 @@ no artist or product names, no third-party references.
   acceptable for this art.
 - The PNG sources (about 2 MB each with their manifest) stay out of git; the shipped WebPs and the
   provenance log are committed. Without the sources, `build_images.py` keeps the imported renditions.
+
+## RYT-087 amendment: the prompts name Dungeons & Dragons (2026-11-11)
+
+At the author's request, every bestiary prompt now names the creature as the official Dungeons &
+Dragons creature (5th edition, 2024 rules) and asks for its official D&D design, followed by the
+description and an accuracy line (no extra or missing heads, limbs, wings or tails). The author
+prefers pictures that match the canonical creatures over the stricter rule of the RYT-067 amendment,
+and accepts that they may resemble official Wizards of the Coast designs. The prompts still name no
+artist, never ask for the art style of an official book and never attach official art; the shared
+Rytta style, framing and background stay. The sprite prompts (`docs/sprite-art.md`) keep their rule.
+
+## RYT-088 amendment: the painted set ships, and the stat block leads with it (2026-11-12)
+
+The 330 painted pictures were imported with `import_art.py` (every source 1254 × 1254 with a ChatGPT
+C2PA manifest; one misnamed file, `glick.png`, renamed to `grick.png`). Every credit is now
+`generated`; the replaced sources stay in `art-selection.json` under `replaced`.
+
+The DM's stat block leads with the picture, chosen by the user from an options page (P1–P5 A, B, A,
+A, A):
+
+- A plate: the print on a raised mat held by four photo corners, the viewer's treatment. Phones show it
+  full width above the name; from a 34rem pane (tablet sheet, laptop side pane) it keeps its own
+  sticky column (11–17.5rem) beside a stat block of at least 20rem. The square is reserved before the
+  image loads; dark themes tone the print down a little.
+- Tapping the print opens the viewer. A 44px pencil in the mat's corner changes the image; with the
+  DM's own image it opens change and restore (SRD) or remove (campaign creature). Creatures without
+  any image keep the token picker beside the name.
+- The DM's combat detail of a creature shows a 112px portrait that opens the viewer (no change there);
+  Players and the table keep tokens, since they never receive `srd_id`.

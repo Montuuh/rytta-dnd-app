@@ -234,6 +234,15 @@ export const inventoryEs = {
   'inventory.portrait.alt': 'Retrato de {{name}}',
   'inventory.portrait.change': 'Cambiar el retrato de {{name}}',
   'inventory.portrait.error': 'No se pudo subir el retrato. Usa una imagen JPG, PNG o WebP.',
+  'inventory.portrait.open': 'Ver el retrato de {{name}}',
+  'inventory.portrait.add': 'Añadir retrato',
+  'inventory.portrait.replace': 'Cambiar retrato',
+  'inventory.portrait.remove': 'Quitar retrato',
+  'inventory.portrait.removeAsk': '¿Quitar el retrato de {{name}}?',
+  'inventory.portrait.removeConfirm': 'Sí, quitar',
+  'inventory.portrait.keep': 'Mantener',
+  'inventory.portrait.removeError': 'No se pudo quitar el retrato. Inténtalo de nuevo.',
+  'inventory.portrait.close': 'Cerrar el retrato',
   'inventory.error.stale':
     'Este objeto cambió en otro dispositivo. La mochila ya está actualizada; vuelve a intentarlo.',
   'inventory.error.conflict':

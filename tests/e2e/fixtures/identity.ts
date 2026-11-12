@@ -784,7 +784,12 @@ export async function identityFixture(
                 class_key: (row.build.classKey as string | undefined) ?? null,
                 class_label: (row.build.classLabel as string | undefined) ?? null,
               }
-            : { character_id: c.id, campaign_id: c.campaign_id, ...row }
+            : {
+                character_id: c.id,
+                campaign_id: c.campaign_id,
+                ...row,
+                portrait_path: portraitPath,
+              }
         }),
       )
     }

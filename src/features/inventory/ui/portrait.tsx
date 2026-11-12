@@ -5,15 +5,8 @@ import { Camera } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { portraitQuery, usePortraitUpload } from '../api'
+import { initials } from './initials'
 import { PortraitEditor } from './portrait-editor'
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join('')
 
 export function CharacterPortrait({
   campaignId,

@@ -3544,6 +3544,49 @@
         "docs/evidence/RYT-089/validation.md",
         "docs/evidence/ui-review/ryt-089/review.md"
       ]
+    },
+    {
+      "id": "RYT-090",
+      "title": "Character sheet led by its portrait: full-bleed plate, quieter stats and abilities",
+      "priority": "P2",
+      "owner": "frontend",
+      "recommendedModel": {
+        "id": "claude-opus-5-5",
+        "reasoningEffort": "high"
+      },
+      "status": "done",
+      "dependsOn": ["RYT-073", "RYT-074"],
+      "sources": [
+        "User 2026-11-12: improve the character sheet visuals; the portrait feels secondary or small; improve the overall frontend and UX of the screen.",
+        "User 2026-11-12, options artifact 8uZMRdqdyT8RPk4Thq5yC7: P1 A full-bleed plate, P2 c AC and initiative featured, P3 b neutral segmented HP bar, P4 b six abilities in one row on phones, P5 b inspiration badge on the portrait, P6 a full-screen viewer, P7 b monogram plus Add portrait, P8 b refresh icon in the top bar."
+      ],
+      "scope": "Redesign the character sheet head: the portrait fills the width above the name with the HP ring on its lower edge, heroic inspiration as a badge on the plate and tapping the plate opens a viewer where the owner changes or removes the portrait; no portrait shows a monogram and, for editors, Add portrait. AC and initiative are featured and the other stats sit on one quiet line; HP actions become one neutral segmented control; abilities fit one row of six on phones; refresh moves next to the pencil. Tablets keep two columns.",
+      "acceptance": [
+        "On a 390px phone the plate fills the width above the name, and HP, AC and initiative stay on the first screen at normal text size.",
+        "Tapping the plate opens the viewer and returns focus to it; editors change or remove the portrait there; viewers without edit rights only see it.",
+        "Without a portrait the plate shows the monogram; editors also see Add portrait, which opens the file picker and the RYT-074 editor.",
+        "Heroic inspiration toggles from a 44px badge on the plate with an accessible name and pressed state.",
+        "Damage, heal and temporary HP open the existing dialog from one segmented control; locked sheets keep the lock note.",
+        "Abilities show six columns on phones with modifier, score and save; proficient saves are marked by more than color.",
+        "Edit mode keeps the AC, speed and level steppers and the max HP input.",
+        "390px and 820px, both themes and languages, keyboard, Escape, 150% text and axe clean; independent ui-ux PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "character-sheet, characters and rest e2e at 390px and 820px",
+        "impeccable critique and audit",
+        "independent ui-ux PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-090/validation.md",
+        "docs/evidence/ui-review/ryt-090/base-mobile-default-es.png",
+        "docs/evidence/ui-review/ryt-090/base-tablet-parchment-es.png",
+        "docs/evidence/ui-review/ryt-090/base-150-long-mobile-default-es.png",
+        "docs/evidence/ui-review/ryt-090/none-mobile-default-es.png",
+        "docs/evidence/ui-review/ryt-090/viewer-mobile-default-es.png",
+        "tests/e2e/character-sheet.spec.ts",
+        "docs/evidence/ui-review/ryt-090/review.md"
+      ]
     }
   ]
 }

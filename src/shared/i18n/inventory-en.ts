@@ -232,6 +232,15 @@ export const inventoryEn = {
   'inventory.portrait.alt': 'Portrait of {{name}}',
   'inventory.portrait.change': 'Change the portrait of {{name}}',
   'inventory.portrait.error': 'The portrait could not be uploaded. Use a JPG, PNG or WebP image.',
+  'inventory.portrait.open': 'View the portrait of {{name}}',
+  'inventory.portrait.add': 'Add portrait',
+  'inventory.portrait.replace': 'Change portrait',
+  'inventory.portrait.remove': 'Remove portrait',
+  'inventory.portrait.removeAsk': 'Remove the portrait of {{name}}?',
+  'inventory.portrait.removeConfirm': 'Yes, remove',
+  'inventory.portrait.keep': 'Keep it',
+  'inventory.portrait.removeError': 'The portrait could not be removed. Try again.',
+  'inventory.portrait.close': 'Close the portrait',
   'inventory.error.stale':
     'This item changed on another device. The satchel is up to date now; try again.',
   'inventory.error.conflict':

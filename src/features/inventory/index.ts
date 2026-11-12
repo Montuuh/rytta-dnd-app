@@ -1,5 +1,6 @@
 export { InventoryPage } from './ui/inventory-page'
 export { CharacterPortrait } from './ui/portrait'
+export { PortraitPlate } from './ui/portrait-plate'
 export { SheetAttacks } from './ui/sheet-attacks'
 export { inventoryQuery, useCampaignPortraits } from './api'
 export { ItemIcon } from './ui/item-icon'

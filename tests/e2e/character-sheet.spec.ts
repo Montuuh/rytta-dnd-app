@@ -396,3 +396,55 @@ test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', a
     ).toEqual([])
   }
 })
+
+test('RYT-090 the portrait plate leads the sheet: add, view, remove and inspiration', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Arin')
+  const inspiration = page.getByRole('button', { name: 'Inspiración heroica' })
+  await expect(inspiration).toHaveAttribute('aria-pressed', 'false')
+  await inspiration.click()
+  await expect(inspiration).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByText('Añadir retrato')).toBeVisible()
+  await audit(page, info.outputPath('sheet-plate-empty.png'))
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
+    'base64',
+  )
+  await page.locator('.sheet-plate input[type=file]').setInputFiles({
+    name: 'arin.png',
+    mimeType: 'image/png',
+    buffer: png,
+  })
+  const editor = page.getByRole('dialog', { name: 'Retrato de Arin' })
+  await editor.getByRole('button', { name: 'Guardar retrato' }).click()
+  await expect(editor).toHaveCount(0)
+  const plate = page.getByRole('button', { name: 'Ver el retrato de Arin' })
+  await expect(plate).toBeFocused()
+  await plate.click()
+  const viewer = page.getByRole('dialog', { name: 'Arin' })
+  await expect(viewer.getByRole('img', { name: 'Retrato de Arin' })).toBeVisible()
+  await audit(page, info.outputPath('sheet-plate-viewer.png'))
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(plate).toBeFocused()
+  await plate.click()
+  await viewer.getByRole('button', { name: 'Quitar retrato' }).click()
+  await expect(viewer.getByText('¿Quitar el retrato de Arin?')).toBeVisible()
+  await viewer.getByRole('button', { name: 'Sí, quitar' }).click()
+  await expect(viewer).toHaveCount(0)
+  await expect(page.getByText('Añadir retrato')).toBeVisible()
+  await expect(page.locator('.sheet-plate input[type=file]')).toBeFocused()
+  // At 150% text the plate grows and the ring stays inside the hero, never clipped.
+  await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+  const hero = await page.locator('.panel-hero').boundingBox()
+  const ring = await page.locator('.sheet-ring').boundingBox()
+  const add = await page.locator('.portrait-plate-add').boundingBox()
+  const name = await page.locator('#sheet-name').boundingBox()
+  expect(ring!.x + ring!.width).toBeLessThanOrEqual(hero!.x + hero!.width)
+  expect(add!.y + add!.height).toBeLessThanOrEqual(name!.y)
+  await audit(page, info.outputPath('sheet-plate-150.png'))
+})

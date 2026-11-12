@@ -28,7 +28,7 @@ import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
-import { CharacterPortrait, SheetAttacks } from '@/features/inventory'
+import { SheetAttacks } from '@/features/inventory'
 import { RestRequestDialog, type RecoveryView } from '@/features/rest'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
@@ -407,7 +407,7 @@ function SheetPanel({
     t('sheet.classLevel', { class: labels.className(build), level: shown.level }) +
       (build.subclass ? ` (${build.subclass})` : ''),
     `${labels.speciesName(build)}, ${labels.backgroundName(build)}`,
-  ].join('. ')
+  ].join('\n')
   const errorKey =
     action.error?.message === 'stale'
       ? 'sheet.stale'
@@ -448,6 +448,11 @@ function SheetPanel({
       <Group justify="space-between" wrap="nowrap" gap="xs" className="sheet-header">
         {back}
         <Group gap="xs" wrap="nowrap" className="sheet-header-actions">
+          <RefreshControl
+            onRefresh={refresh.run}
+            fetching={refresh.fetching}
+            updatedAt={refresh.updatedAt}
+          />
           {canEdit && !editing && (
             <Tooltip label={t('panel.edit')} events={{ hover: true, focus: true, touch: true }}>
               <ActionIcon
@@ -465,36 +470,6 @@ function SheetPanel({
           )}
         </Group>
       </Group>
-      <header className="sheet-identity">
-        <CharacterPortrait
-          campaignId={campaign.id}
-          characterId={character.id}
-          name={character.name}
-          path={sheet.portrait_path ?? null}
-          size={72}
-          editable={canEdit}
-        />
-        <div className="sheet-identity-text">
-          <Title order={1} className="user-copy">
-            {character.name}
-          </Title>
-          <Text c="dimmed" className="user-copy">
-            {subtitle}.
-          </Text>
-          {!canEdit && (
-            <Text size="sm" c="dimmed">
-              {absentOwner ? t('sheet.absentReadOnly') : t('sheet.readOnly')}
-            </Text>
-          )}
-        </div>
-        <div className="sheet-identity-refresh">
-          <RefreshControl
-            onRefresh={refresh.run}
-            fetching={refresh.fetching}
-            updatedAt={refresh.updatedAt}
-          />
-        </div>
-      </header>
       {editing && (
         <div className="panel-editbar" role="region" aria-label={t('panel.editing')}>
           <Text fw={600} ref={editHeading} tabIndex={-1} className="panel-editbar-title">
@@ -525,7 +500,13 @@ function SheetPanel({
       </div>
       <div className="panel-layout">
         <div className="panel-main">
-          <SheetHero {...props} exhaustion={exhaustion} />
+          <SheetHero
+            {...props}
+            exhaustion={exhaustion}
+            name={character.name}
+            subtitle={subtitle}
+            note={canEdit ? null : absentOwner ? t('sheet.absentReadOnly') : t('sheet.readOnly')}
+          />
           <AbilityStrip {...props} />
         </div>
         <section className="panel-tiles-wrap" aria-labelledby="panel-tiles-title">

@@ -186,6 +186,16 @@ export async function uploadPortrait(campaignId: string, characterId: string, im
   if (saved.error) throw new Error(errorCode(saved.error.message))
   return path
 }
+/** RYT-090: clears the sheet's portrait; the stored object stays, as after a replacement. */
+export async function removePortrait(campaignId: string, characterId: string) {
+  const db = await client()
+  const saved = await db.rpc('set_character_portrait', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_character: z.uuid().parse(characterId),
+    new_path: null,
+  })
+  if (saved.error) throw new Error(errorCode(saved.error.message))
+}
 export async function portraitUrl(path: string) {
   const db = await client()
   const signed = await db.storage.from(bucket).createSignedUrl(path, 3600)

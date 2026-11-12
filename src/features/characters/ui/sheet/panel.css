@@ -4,10 +4,6 @@
 .panel-sheet {
   padding-bottom: 8px;
 }
-.panel-sheet .sheet-identity h1 {
-  font-size: var(--fs-h1);
-  line-height: 1.15;
-}
 
 .panel-layout {
   display: grid;
@@ -25,15 +21,23 @@
   }
 }
 
-/* Hero: ring, stat cells, inspiration and HP actions */
+/* RYT-090 hero: the portrait plate leads (full-bleed on phones), the name sits on it and the
+   HP ring rides its lower edge; AC and initiative are featured, the rest is one quiet line. */
 .panel-hero {
+  /* The HP ring's size follows the root text size, like Mantine's rem-based RingProgress. */
+  --sheet-ring: 7.25rem;
+  position: relative;
   display: grid;
   gap: 14px;
-  padding: 16px;
-  border-radius: 16px;
+  padding-bottom: 16px;
+  border-radius: 18px;
   background: var(--app-raised);
   border: 1px solid var(--app-border);
+  overflow: hidden;
   --hp-tone: var(--success);
+}
+.panel-hero > :not(.sheet-plate) {
+  margin-inline: 16px;
 }
 .panel-hero.hp-wounded {
   --hp-tone: var(--warn);
@@ -41,36 +45,286 @@
 .panel-hero.hp-critical {
   --hp-tone: var(--danger);
 }
-.panel-hp {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
+@media (max-width: 47.99em) {
+  .panel-hero {
+    margin-inline: -16px;
+    border-radius: 0;
+    border-inline: 0;
+  }
+  .sheet-header .refresh-stamp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
-.panel-hp .hp-ring {
-  flex-shrink: 0;
+/* The plate grows with long names and 150% text; the top padding keeps its content clear
+   of the inspiration badge. */
+.sheet-plate {
+  --plate-ratio: 80%;
 }
-.panel-hp .hp-ring svg circle {
-  transition: stroke-dasharray 320ms ease-out;
+.sheet-plate .portrait-plate-content {
+  padding-top: 68px;
 }
-.panel-hp-meta {
+@media (min-width: 62em) {
+  .sheet-plate {
+    --plate-ratio: 66%;
+  }
+}
+/* The plate melts into the card so the name reads on any picture. */
+.sheet-plate .portrait-plate-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 36%,
+    color-mix(in srgb, var(--app-raised) 72%, transparent) 70%,
+    var(--app-raised) 100%
+  );
+}
+.sheet-plate .sheet-plate-identity {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  /* The name sits above the strip of plate that the ring overlaps, at full width. */
+  padding: 0 16px calc(var(--sheet-ring) * 0.42 + 8px);
   display: grid;
+  gap: 2px;
+  pointer-events: none;
+  text-shadow:
+    0 0 12px var(--app-raised),
+    0 0 3px var(--app-raised);
+}
+.sheet-plate-identity h1 {
+  margin: 0;
+  font-size: clamp(2rem, 1.6rem + 2vw, 2.75rem);
+  line-height: 1.05;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: balance;
+}
+.sheet-plate-sub {
+  font-size: var(--fs-meta);
+  line-height: 1.35;
+  color: var(--app-text);
+}
+.sheet-inspiration {
+  position: absolute;
+  top: 12px;
+  inset-inline-start: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--app-text);
+  background: color-mix(in srgb, var(--app-bg) 70%, transparent);
+  border: 2px solid color-mix(in srgb, var(--app-text) 35%, transparent);
+  cursor: pointer;
+}
+span.sheet-inspiration,
+.sheet-inspiration[aria-pressed='true'] {
+  background: var(--app-accent);
+  border-color: var(--app-bg);
+  color: var(--app-on-accent);
+}
+span.sheet-inspiration svg,
+.sheet-inspiration[aria-pressed='true'] svg {
+  fill: currentColor;
+}
+span.sheet-inspiration {
+  cursor: default;
+}
+.sheet-inspiration:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+/* Stats and ring share a row while the stats keep 13rem; with larger text they wrap and
+   wrap-reverse keeps the ring on top, riding the plate's edge. */
+.sheet-vitals {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-items: flex-end;
+  gap: 12px;
+}
+.sheet-ring {
+  order: 2;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  align-self: flex-end;
   gap: 4px;
-  min-width: 0;
+  flex: 0 0 auto;
+  max-width: 100%;
+  margin-top: calc(var(--sheet-ring) * -0.42);
+  margin-inline-start: auto;
+  text-align: center;
 }
-.panel-hp .hp-current {
-  font-size: clamp(2rem, 1.7rem + 1.2vw, 2.6rem);
-}
-.panel-input {
+.sheet-ring-meta {
   max-width: 10rem;
 }
-.panel-stats {
+.sheet-ring .hp-ring {
+  border-radius: 50%;
+  background: var(--app-raised);
+  box-shadow: 0 0 0 4px var(--app-raised);
+}
+.sheet-ring .hp-current {
+  font-size: 2rem;
+}
+.sheet-ring .hp-ring svg circle {
+  transition: stroke-dasharray 320ms ease-out;
+}
+.sheet-ring-meta {
+  display: grid;
+  gap: 2px;
+  line-height: 1.3;
+}
+.sheet-featured,
+.sheet-edit-stats {
+  order: 1;
+  flex: 1 1 13rem;
+  min-width: 0;
+  align-self: flex-start;
+}
+.panel-sheet[data-editing] .sheet-edit-stats {
+  flex-basis: 100%;
+}
+.sheet-edit-stats {
+  display: grid;
+  gap: 12px;
+}
+.sheet-featured {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.sheet-featured-cell {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 10px 8px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.sheet-featured-cell dt {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: var(--app-muted);
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+/* Smaller label text: the term's invisible hit area grows to keep 44px (WCAG 2.5.8). */
+.sheet-featured-cell dt .glossary-term::after,
+.sheet-statline dt .glossary-term::after,
+.panel-stat dt .glossary-term::after {
+  inset: -14px -3px;
+}
+.sheet-featured-cell dd {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: 2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sheet-shield {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 52px;
+  font-size: 1.5rem;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-surface));
+  clip-path: polygon(50% 0, 100% 13%, 93% 62%, 50% 100%, 7% 62%, 0 13%);
+}
+.sheet-statline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 0;
+}
+.sheet-statline > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.sheet-statline dt {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.sheet-statline dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sheet-hp-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  overflow: hidden;
+}
+.sheet-hp-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 6px 8px;
+  color: var(--app-text);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.15;
+  transition: background-color 140ms ease-out;
+}
+.sheet-hp-action + .sheet-hp-action {
+  border-inline-start: 1px solid var(--app-border);
+}
+.sheet-hp-action:hover {
+  background: var(--app-hover);
+}
+.sheet-hp-action:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+.sheet-hp-action svg {
+  flex-shrink: 0;
+}
+.sheet-hp-action[data-kind='damage'] svg {
+  color: var(--danger);
+}
+.sheet-hp-action[data-kind='heal'] svg {
+  color: var(--success);
+}
+.sheet-hp-action[data-kind='temp'] svg {
+  color: var(--info);
+}
+/* Edit mode keeps the RYT-073 stat rows with their steppers. */
+.panel-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 0;
 }
 .panel-stat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
   min-width: 0;
   padding: 8px;
   border-radius: 12px;
@@ -78,53 +332,21 @@
   border: 1px solid var(--app-border);
 }
 .panel-stat dt {
+  flex: 1 1 7rem;
   font-size: 0.8125rem;
   color: var(--app-muted);
   overflow-wrap: break-word;
   hyphens: auto;
   line-height: 1.25;
 }
-/* Smaller label text: the term's invisible hit area grows to keep 44px (WCAG 2.5.8). */
-.panel-stat dt .glossary-term::after {
-  inset: -14px -3px;
-}
 .panel-stat dd {
-  margin: 2px 0 0;
-  font-family: Georgia, Cambria, serif;
-  font-size: var(--fs-stat);
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-}
-.panel-stat[data-key='ac'] dd {
-  color: var(--app-accent);
-}
-.panel-sheet[data-editing] .panel-stats {
-  grid-template-columns: minmax(0, 1fr);
-}
-.panel-sheet[data-editing] .panel-stat {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 12px;
-}
-.panel-sheet[data-editing] .panel-stat dd {
   margin: 0;
+}
+.panel-input {
+  max-width: 10rem;
 }
 .panel-stat-edit .stepper-value {
   font-size: 1.25rem;
-}
-.panel-hp-row {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-}
-.panel-inspiration .mantine-Switch-body {
-  min-height: 44px;
-  align-items: center;
-}
-.panel-hero .hp-actions {
-  margin-top: 0;
 }
 .panel-lock {
   display: flex;
@@ -185,13 +407,12 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
 }
-@media (min-width: 62em) {
-  .ability-strip:not([data-editing]) {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
+/* RYT-090: six abilities in one row everywhere; narrow rows drop the "Save" word. */
+.panel-abilities {
+  container-type: inline-size;
 }
 .ability-strip.is-compact {
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -202,8 +423,8 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 10px 6px 8px;
-  border-radius: 14px;
+  padding: 8px 2px 6px;
+  border-radius: 12px;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   text-align: center;
@@ -214,9 +435,31 @@
 }
 .ability-medal .ability-mod {
   font-family: Georgia, Cambria, serif;
-  font-size: clamp(1.8rem, 1.6rem + 0.8vw, 2.3rem);
+  font-size: 1.45rem;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
+}
+/* Narrow rows put the "Save" word above its value instead of beside it. */
+.ability-save-word {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+@container (min-width: 34rem) {
+  .ability-strip {
+    gap: 8px;
+  }
+  .ability-medal {
+    padding: 10px 6px 8px;
+    border-radius: 14px;
+  }
+  .ability-medal .ability-mod {
+    font-size: clamp(1.8rem, 1.6rem + 0.8vw, 2.3rem);
+  }
+  .ability-save-word {
+    display: inline;
+    font-size: inherit;
+  }
 }
 .ability-strip.is-compact .ability-mod {
   font-size: 1.35rem;
@@ -459,16 +702,6 @@
 .block-sheet .mantine-Switch-label {
   padding-block: 12px;
   cursor: pointer;
-}
-.panel-hero .hp-action {
-  height: auto;
-  min-height: 44px;
-  padding-block: 6px;
-}
-.panel-hero .hp-action .mantine-Button-label {
-  white-space: normal;
-  overflow: visible;
-  line-height: 1.15;
 }
 .panel-danger-button.panel-danger-button {
   color: var(--danger);
@@ -724,8 +957,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel-hp .hp-ring svg circle,
+  .sheet-ring .hp-ring svg circle,
   .counter-meter span,
+  .sheet-hp-action,
   .panel-tile {
     transition: none;
   }

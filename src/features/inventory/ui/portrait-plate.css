@@ -1,0 +1,154 @@
+/* RYT-090 portrait plate: the consumer sets its proportions; the art fills it and the
+   content (monogram, overlays) flows on top, so long text grows the plate instead of being
+   clipped. Tokens only. */
+.portrait-plate {
+  position: relative;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  background: var(--app-raised);
+}
+/* The spacer sets the minimum height from the width (--plate-ratio, height/width); taller
+   content grows the plate. aspect-ratio would turn that height into a minimum width. */
+.portrait-plate::before {
+  content: '';
+  grid-area: 1 / 1;
+  padding-top: var(--plate-ratio, 100%);
+}
+.portrait-plate-content {
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* Taps between overlays reach the picture underneath. */
+  pointer-events: none;
+}
+.portrait-plate-content > * {
+  pointer-events: auto;
+}
+.portrait-plate-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.portrait-plate-open {
+  all: unset;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: zoom-in;
+}
+.portrait-plate-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 24%;
+}
+/* The focus ring is drawn above any shade the consumer lays over the art. */
+.portrait-plate-art:has(.portrait-plate-open:focus-visible)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 3px var(--app-focus),
+    inset 0 0 0 6px var(--app-bg);
+}
+.portrait-plate-empty {
+  height: 100%;
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      color-mix(in srgb, var(--app-accent) 26%, var(--app-raised)),
+      transparent 62%
+    ),
+    var(--app-raised);
+}
+.portrait-plate-blank {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-block: auto;
+  padding: 8px 16px;
+}
+.portrait-plate-monogram {
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(3.5rem, 2.6rem + 4vw, 5.5rem);
+  line-height: 1;
+  color: var(--app-accent);
+}
+.portrait-plate-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 6px 16px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px dashed var(--app-accent);
+  color: var(--app-text);
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.portrait-plate-add svg {
+  flex-shrink: 0;
+  color: var(--app-accent);
+}
+.portrait-plate-add:hover {
+  background: var(--app-hover);
+}
+.portrait-plate-add[data-pending] {
+  opacity: 0.6;
+}
+.portrait-plate:has(.portrait-plate-input:focus-visible) .portrait-plate-add {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.portrait-plate-error {
+  position: relative;
+  z-index: 3;
+  margin: 0 12px 12px;
+}
+
+/* Viewer */
+.portrait-viewer-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+}
+.portrait-viewer-image {
+  display: block;
+  width: 100%;
+  max-height: min(72vh, 40rem);
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--app-bg);
+}
+.portrait-viewer-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 10px;
+}
+.portrait-viewer-actions .mantine-Button-root,
+.portrait-viewer-ask .mantine-Button-root {
+  min-height: 44px;
+  height: auto;
+  padding-block: 6px;
+}
+.portrait-viewer-actions .mantine-Button-label,
+.portrait-viewer-ask .mantine-Button-label {
+  white-space: normal;
+  line-height: 1.15;
+}
+.portrait-danger.portrait-danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}

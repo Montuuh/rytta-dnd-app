@@ -11,6 +11,7 @@ import {
   listRoster,
   loadInventory,
   portraitUrl,
+  removePortrait,
   uploadPortrait,
 } from './data/repository'
 import type { InventoryAction } from './domain/item'
@@ -95,6 +96,22 @@ export function usePortraitUpload(campaignId: string, characterId: string) {
     mutationFn: async (image: Blob) => {
       if (!current()) throw new Error('unavailable')
       return uploadPortrait(campaignId, characterId, image)
+    },
+    onSuccess: async () => {
+      await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+    },
+  })
+}
+
+export function usePortraitRemove(campaignId: string, characterId: string) {
+  const { userId, current } = useGuard()
+  const cache = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async () => {
+      if (!current()) throw new Error('unavailable')
+      return removePortrait(campaignId, characterId)
     },
     onSuccess: async () => {
       await cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })

@@ -85,7 +85,8 @@ export function AbilityStrip({ build, level, editing, change }: PanelProps) {
                       {proficient ? `, ${t('sheet.proficient')}` : ''}
                     </span>
                     <span aria-hidden="true">
-                      {t('sheet.saveShort')} {save}
+                      <span className="ability-save-word">{t('sheet.saveShort')} </span>
+                      {save}
                     </span>
                     {proficient && <span className="ability-save-dot" aria-hidden="true" />}
                   </span>

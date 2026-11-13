@@ -30,6 +30,20 @@ async function audit(page: Page, scope = 'body') {
 const detail = (page: Page, info: TestInfo): Locator =>
   sheet(info) ? page.locator('.bst-sheet') : page.locator('.bst-detail')
 
+/** The phone and tablet sheet slides in: a box measured once it has stopped moving. */
+async function settledBox(locator: Locator) {
+  let last = Number.NaN
+  await expect
+    .poll(async () => {
+      const y = (await locator.boundingBox())?.y ?? Number.NaN
+      const still = Math.abs(y - last) < 0.5
+      last = y
+      return still
+    })
+    .toBe(true)
+  return (await locator.boundingBox())!
+}
+
 async function openBestiary(page: Page) {
   await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByRole('heading', { level: 2, name: 'Bestiario' })).toBeVisible({
@@ -71,7 +85,10 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
   await expect(page).toHaveURL(/creature=srd%3Aadult-red-dragon|creature=srd:adult-red-dragon/)
   for (const section of ['Atributos', 'Acciones', 'Acciones legendarias'])
     await expect(pane.getByRole('heading', { name: section, exact: true })).toBeVisible()
-  await expect(pane.getByText('Fuerza 27, modificador +8, salvación +8')).toBeAttached()
+  // RYT-091: short wide sheets show a second copy at the top of the reading; one is always hidden.
+  await expect(
+    pane.locator('.sb-abilities:visible').getByText('Fuerza 27, modificador +8, salvación +8'),
+  ).toBeAttached()
   await expect(pane.getByText(/SRD 5\.2\.1, p\. \d+/)).toBeVisible()
   // Rules terms in the stat block open the glossary.
   await expect(pane.locator('.glossary-term').first()).toBeVisible()
@@ -555,7 +572,7 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   // Above the name on phones; in its own column beside the stat block on wider panes. (The phone
   // sheet's own title is also named after the creature.)
   const heading = pane.locator('.sb-name')
-  const at = (await plate.boundingBox())!
+  const at = await settledBox(plate)
   const name = (await heading.boundingBox())!
   if (phone(info)) expect(name.y).toBeGreaterThanOrEqual(at.y + at.height)
   else expect(name.x).toBeGreaterThanOrEqual(at.x + at.width)
@@ -675,4 +692,160 @@ test('RYT-046 Players never reach the bestiary', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Bestiario' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Bestiario' })).toHaveCount(0)
   expect(templateRequests).toEqual([])
+})
+
+test('RYT-091 the stat block uses the room under its plate: it flows in the pane and keeps a stat column in wide sheets', async ({
+  page,
+}, info) => {
+  test.skip(phone(info), 'Phones keep the plate above the name (RYT-088 test)')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('dragón rojo adulto')
+  await page
+    .locator('.bst-row', { has: page.getByText('Dragón rojo adulto', { exact: true }) })
+    .first()
+    .locator('.bst-row-main')
+    .click()
+  const pane = detail(page, info)
+  const plate = pane.locator('.combat-creature-image.is-plate')
+  await expect(plate.locator('img')).toBeVisible()
+  const box = async (locator: Locator) => (await locator.boundingBox())!
+  const at = await settledBox(plate)
+  const name = await box(pane.locator('.sb-name'))
+  const core = await box(pane.locator('.sb-core'))
+  const abilities = await box(pane.locator('.sb-abilities:visible'))
+  const frame = await box(pane.locator('.bst-detail-frame'))
+  const tiles = await pane
+    .locator('.sb-abilities:visible .sb-ability')
+    .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().y)))
+  // The name sits beside the plate in both layouts.
+  expect(name.x).toBeGreaterThanOrEqual(at.x + at.width)
+  if (sheet(info)) {
+    // Wide sheet: a stat column (plate, numbers, abilities in two rows of three) beside the reading.
+    expect(Math.abs(abilities.x - at.x)).toBeLessThan(2)
+    expect(abilities.width).toBeLessThanOrEqual(at.width + 1)
+    expect(new Set(tiles).size).toBe(2)
+    expect(core.y).toBeGreaterThan(at.y + at.height)
+    // Tall enough for the whole column: it stays in view while the reading scrolls.
+    await page.locator('.bst-sheet').evaluate((node) => (node.scrollTop = 600))
+    await expect.poll(async () => Math.round((await box(plate)).y)).toBe(Math.round(at.y))
+    await expect(pane.locator('.sb-main')).toContainText('Acciones legendarias')
+    // A shorter screen (iPad landscape): the column keeps the plate and the numbers, in view above the
+    // action bar, and the abilities lead the reading as one row of six.
+    await page.setViewportSize({ width: 1024, height: 768 })
+    await page.locator('.bst-sheet').evaluate((node) => (node.scrollTop = 0))
+    const reading = pane.locator('.sb-main .sb-abilities')
+    await expect(reading).toBeVisible()
+    await expect(pane.locator('.sb-aside .sb-abilities')).toBeHidden()
+    const row = await reading
+      .locator('.sb-ability')
+      .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().y)))
+    expect(new Set(row).size).toBe(1)
+    await page.locator('.bst-sheet').evaluate((node) => (node.scrollTop = 900))
+    const column = await box(pane.locator('.sb-aside'))
+    const bar = await box(pane.locator('.bst-actions'))
+    expect(column.y).toBeGreaterThan(0)
+    expect(column.y + column.height).toBeLessThanOrEqual(bar.y)
+    // A notice under the plate makes the column taller than the room: it scrolls with the page
+    // instead of hiding its end under the bar.
+    await pane.locator('.sb-aside').evaluate((node) => {
+      const extra = document.createElement('div')
+      extra.style.height = '200px'
+      node.append(extra)
+    })
+    await expect
+      .poll(() => pane.locator('.sb-aside').evaluate((node) => node.hasAttribute('data-unstuck')))
+      .toBe(true)
+    await expect(pane.locator('.sb-aside')).toHaveCSS('position', 'static')
+  } else {
+    // Side pane: the core numbers beside the plate, everything after them under it at full width.
+    expect(core.x).toBeGreaterThanOrEqual(at.x + at.width)
+    expect(abilities.y).toBeGreaterThanOrEqual(at.y + at.height)
+    expect(abilities.width).toBeGreaterThan(frame.width - 2)
+    expect(new Set(tiles).size).toBe(1)
+    // Shift+Tab back to the pencil scrolls it clear of the pinned actions (WCAG 2.4.11).
+    const term = pane.locator('.sb-main a, .sb-main button').first()
+    await term.focus()
+    await page.evaluate(() => window.scrollBy(0, 400))
+    await page.keyboard.press('Shift+Tab')
+    const pencil = pane.getByRole('button', { name: 'Cambiar la imagen de Dragón rojo adulto' })
+    await expect(pencil).toBeFocused()
+    const bar = await box(pane.locator('.bst-actions'))
+    expect((await box(pencil)).y).toBeGreaterThanOrEqual(bar.y + bar.height)
+  }
+  await audit(page)
+  await expectTouchTargets(page, '.bst-detail-inner .bst-plate-edit:visible')
+  await evidence(page, info, 'stat-block', 'RYT-091')
+})
+
+test('RYT-091 a campaign creature that gets its first image keeps its stat column clear of the action bar', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'identity-tablet', 'The short wide sheet is a tablet layout')
+  const server = combatServer()
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  const score = { score: 20, mod: 5, save: 5 }
+  server.act('save_combatant_template', {
+    target_template: null,
+    expected_revision: null,
+    data: {
+      name: 'Sierpe del pantano',
+      side: 'enemy',
+      max_hp: 256,
+      armor_class: 19,
+      initiative_bonus: 2,
+      legendary_max: 0,
+      notes: '',
+      stat_block: {
+        name: 'Sierpe del pantano',
+        meta: 'Dragón Enorme, caótico malvado',
+        ac: '19',
+        initiative: '+12 (22)',
+        hp: '256 (19d12 + 133)',
+        speed:
+          '12 m, excavar 9 m, trepar 12 m, nadar 12 m, volar 24 m (levitar); en su forma de niebla, 3 m y volar 9 m; en la guarida, trepar 18 m y nadar 18 m',
+        abilities: { str: score, dex: score, con: score, int: score, wis: score, cha: score },
+        details: { languages: 'común, dracónico' },
+        cr: '17',
+        sections: [
+          {
+            kind: 'actions',
+            entries: [
+              { key: 'bite', name: 'Mordisco', text: ['Una dentellada muy larga. '.repeat(40)] },
+            ],
+          },
+        ],
+      },
+    },
+    request_id: crypto.randomUUID(),
+  })
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByText('331 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('sierpe')
+  await page
+    .locator('.bst-row', { has: page.getByText('Sierpe del pantano', { exact: true }) })
+    .first()
+    .locator('.bst-row-main')
+    .click()
+  const pane = detail(page, info)
+  // No image yet: the token beside the name, no stat column.
+  await expect(pane.locator('.sb-aside')).toHaveCount(0)
+  await pane
+    .getByLabel('Añadir una imagen de Sierpe del pantano')
+    .setInputFiles({ name: 'sierpe.png', mimeType: 'image/png', buffer: png })
+  await expect(pane.getByRole('status').filter({ hasText: 'guardada' })).toBeVisible({
+    timeout: 15_000,
+  })
+  // The plate, its notice and a long speed arrive with the column, which no longer fits the short
+  // sheet: it is checked again and scrolls with the page instead of ending under the bar.
+  const aside = pane.locator('.sb-aside')
+  await expect(aside).toBeVisible()
+  await expect.poll(() => aside.evaluate((node) => node.hasAttribute('data-unstuck'))).toBe(true)
+  await expect(aside).toHaveCSS('position', 'static')
 })

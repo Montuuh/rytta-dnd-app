@@ -34,6 +34,7 @@
 }
 .sb-meta {
   margin: 4px 0 0;
+  text-wrap: pretty;
   font-style: italic;
   color: var(--app-muted);
 }
@@ -176,6 +177,7 @@
   color: var(--app-muted);
 }
 .sb-entry p {
+  text-wrap: pretty;
   margin: 0 0 6px;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -216,4 +218,18 @@
     border-inline-start: 0;
     border-top: 1px solid var(--app-border);
   }
+}
+
+/* RYT-091: a block led by its plate keeps two groups, the plate with the numbers a fight uses and the
+   reading. They take no box of their own until a wider frame lays them out (combat bestiary panel);
+   on phones the plate comes first, above the name. */
+.sb-aside,
+.sb-main {
+  display: contents;
+}
+.sb.has-plate > .sb-aside > :first-child {
+  order: -1;
+}
+.sb-abilities.is-reading {
+  display: none;
 }

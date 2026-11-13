@@ -255,8 +255,12 @@ battery glyph and its state in words, and daily uses as numbered round pips (cro
 
 Creature art (RYT-053, RYT-088, ADR 030): every SRD creature shows its painted art in its list
 token, and the stat block leads with it as a plate: the print on the raised mat (12px, inset hairline)
-held by four 16px accent photo corners, full width above the name on phones (at most 416px or 44svh)
-and in a sticky 11–17.5rem column beside the stat block from a 34rem pane. In dark themes list
+held by four 16px accent photo corners, full width above the name on phones (at most 416px or 44svh).
+From a 31rem pane (RYT-091) the plate sits beside the name and the core numbers (hit points on their
+own row) and the rest of the stat block runs underneath at full width; from 44rem it leads a stat
+column with the core numbers and the abilities beside the reading, which stays in view in sheets
+when it fits between the header and the action bar (on short sheets the abilities lead the reading
+and the plate shrinks). In dark themes list
 thumbnails and prints are toned down slightly. The print is a button that opens the viewer; a 44px
 round pencil in the mat's corner changes the image, or opens a short menu (change, then restore the
 original art for an SRD creature with the DM's image, or remove the image of a campaign creature,

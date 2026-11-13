@@ -478,6 +478,13 @@ html:has(.bst:not([data-split])) {
   background: var(--app-surface);
   /* The sheet's sticky header: the 44px close button (rem, so it grows with the text) and its padding. */
   --bst-sheet-head: calc(2.75rem + 12px);
+  /* Its sticky action bar on tablets and phones (measured at 16px and 24px root text). */
+  --bst-sheet-bar: calc(3.125rem + 67px);
+  /* RYT-091: the stat column sizes itself to the sheet's height. A container query follows the page's
+     text size; a media query would keep counting 16px rems. */
+  container: bst-sheet / size;
+  /* Keyboard focus never lands under the sticky header or the action bar. */
+  scroll-padding-block: calc(var(--bst-sheet-head) + 8px) calc(var(--bst-sheet-bar) + 8px);
 }
 .bst-sheet-body {
   /* A little air under the header, which Mantine leaves flush against the body. */
@@ -1016,9 +1023,9 @@ html:has(.bst:not([data-split])) {
 }
 
 /* RYT-088: the stat block leads with the creature's plate, the viewer's print on its raised mat.
-   Phones stack it above the name; wider panes (tablet sheet, laptops' side pane) keep it in its own
-   column, stuck while the stat block scrolls past. The square is reserved before the
-   image arrives. */
+   Phones stack it above the name; quick creatures keep it in its own column on wider panes. Full
+   stat blocks lay it out with their numbers (RYT-091, at the end of this file). The square is
+   reserved before the image arrives. */
 .bst-detail-frame {
   container: bst-detail / inline-size;
   width: 100%;
@@ -1266,4 +1273,142 @@ html:has(.bst:not([data-split])) {
 }
 .bst-dialog-body {
   text-wrap: pretty;
+}
+
+/* RYT-091: a full stat block with its plate, laid out by the frame's width (RYT-088 kept the plate in
+   a column of its own, empty below the picture). Phones keep the plate above the name. */
+@container bst-detail (min-width: 31rem) {
+  /* Hit points first, with the dice on one line; AC and initiative share the next row. */
+  .sb.has-plate .sb-core {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sb.has-plate .sb-core-hp {
+    order: -1;
+    grid-column: 1 / -1;
+    border-inline-start: 0;
+    border-bottom: 1px solid var(--app-border);
+  }
+  .sb.has-plate .sb-core-init {
+    grid-column: auto;
+    border-top: 0;
+    border-inline-start: 1px solid var(--app-border);
+  }
+}
+/* Side panes (31rem to 44rem, laptops from about 1280px): the plate beside the name and the core
+   numbers; the abilities and the reading run underneath at the pane's full width. */
+@container bst-detail (min-width: 31rem) and (max-width: 43.99rem) {
+  .sb.has-plate {
+    display: grid;
+    /* The numbers beside the plate keep 19.5rem; the plate takes the rest, up to 17.5rem. */
+    grid-template-columns: minmax(10rem, 17.5rem) minmax(19.5rem, 1fr);
+    /* A plate taller than the name and the numbers leaves its extra height beside the numbers. */
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'plate head'
+      'plate core';
+    gap: 14px 18px;
+    align-items: start;
+  }
+  .sb.has-plate > .sb-head {
+    grid-area: head;
+  }
+  .sb.has-plate > .sb-aside > .combat-creature-image.is-plate {
+    grid-area: plate;
+    width: 100%;
+    align-self: start;
+  }
+  .sb.has-plate > .sb-aside > .sb-core {
+    grid-area: core;
+  }
+  .sb.has-plate > .sb-aside > .sb-abilities,
+  .sb.has-plate > .sb-main {
+    grid-column: 1 / -1;
+  }
+  .sb.has-plate > .sb-main {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+}
+/* Wide frames (tablet and laptop sheets, 44rem and up): a stat column with the plate, the core numbers
+   and the abilities; the name and the reading on the right, at a comfortable line length. */
+@container bst-detail (min-width: 44rem) {
+  .sb.has-plate {
+    display: grid;
+    grid-template-columns: clamp(17.5rem, 38%, 26rem) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'aside head'
+      'aside main';
+    gap: 14px 24px;
+    align-items: start;
+  }
+  .sb.has-plate > .sb-head {
+    grid-area: head;
+  }
+  .sb.has-plate > .sb-aside,
+  .sb.has-plate > .sb-main {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .sb.has-plate > .sb-aside {
+    grid-area: aside;
+    /* Its own size: three abilities a row, six once the column reaches 26rem. */
+    container-type: inline-size;
+  }
+  .sb.has-plate > .sb-main {
+    grid-area: main;
+    max-inline-size: 72ch;
+  }
+  .sb.has-plate > .sb-aside > :first-child {
+    order: 0;
+  }
+  .sb.has-plate > .sb-aside > .combat-creature-image.is-plate {
+    width: 100%;
+  }
+}
+/* Sheets: the stat column stays in view and fits between the sheet's header and its action bar.
+   Measured at 16px and 24px root text: core numbers 8.75rem + 59px, abilities three a row
+   10.375rem + 50px, 14px gaps; with the header, the bar and 12px of air the column needs the plate
+   plus 25rem + 240px, or plus 14.625rem + 176px without the abilities. */
+@container bst-sheet (min-height: 35rem) {
+  @container bst-detail (min-width: 44rem) {
+    .bst-sheet .sb.has-plate > .sb-aside:not([data-unstuck]) {
+      position: sticky;
+      top: calc(var(--bst-sheet-head) + 12px);
+    }
+  }
+}
+/* Tall sheets (room for a 17.5rem plate and the whole column): the plate gives way only as needed. */
+@container bst-sheet (min-height: 57.5rem) {
+  @container bst-detail (min-width: 44rem) {
+    .bst-sheet .sb.has-plate > .sb-aside > .combat-creature-image.is-plate {
+      width: min(100%, calc(100cqh - 25rem - 240px));
+      align-self: center;
+    }
+  }
+}
+/* Shorter sheets: the column keeps the plate and the core numbers, the abilities lead the reading as
+   one row of six, and the plate shrinks so the column still fits. */
+@container bst-sheet (max-height: 57.49rem) {
+  @container bst-detail (min-width: 44rem) {
+    .bst-sheet .sb.has-plate > .sb-aside > .sb-abilities {
+      display: none;
+    }
+    .bst-sheet .sb.has-plate > .sb-main > .sb-abilities.is-reading {
+      display: grid;
+    }
+    .bst-sheet .sb.has-plate > .sb-aside > .combat-creature-image.is-plate {
+      width: min(100%, max(9rem, calc(100cqh - 14.625rem - 176px)));
+      align-self: center;
+    }
+  }
+}
+/* A control reached by Shift+Tab scrolls clear of the laptop pane's pinned actions (WCAG 2.4.11):
+   RYT-091's plate no longer sticks below them, so the pencil can scroll under the bar. */
+html:has(.bst-actions.is-pinned) {
+  scroll-padding-top: calc(44px + 2rem);
 }

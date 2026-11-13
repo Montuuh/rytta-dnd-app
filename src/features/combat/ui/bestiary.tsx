@@ -1208,6 +1208,37 @@ function CreatureList({
   )
 }
 
+/**
+ * RYT-091: in a sheet, the stat column beside the reading stays in view only when all of it fits
+ * between the sheet's header and its action bar. Its CSS sizes the plate for the usual case; a notice
+ * under the plate or a long speed can still make it taller, and then it scrolls with the page instead
+ * of hiding its end under the bar.
+ */
+function useColumnFit(frame: { current: HTMLDivElement | null }, creature: string) {
+  useEffect(() => {
+    const node = frame.current
+    const sheet = node?.closest<HTMLElement>('.bst-sheet')
+    const aside = node?.querySelector<HTMLElement>('.sb-aside')
+    if (!sheet || !aside) return
+    const check = () => {
+      const head =
+        sheet.querySelector('.mantine-Drawer-header')?.getBoundingClientRect().height ?? 0
+      const bar = sheet.querySelector('.bst-actions')?.getBoundingClientRect().height ?? 0
+      // 12px of air under the header and above the bar.
+      aside.toggleAttribute(
+        'data-unstuck',
+        aside.offsetHeight > sheet.clientHeight - head - bar - 24,
+      )
+    }
+    // The sheet's height and the column's own (a notice under the plate) both decide.
+    const observer = new ResizeObserver(check)
+    observer.observe(sheet)
+    observer.observe(aside)
+    check()
+    return () => observer.disconnect()
+  }, [frame, creature])
+}
+
 function CreatureDetail({
   campaignId,
   item,
@@ -1275,6 +1306,9 @@ function CreatureDetail({
   // RYT-088: a creature with an image leads with its plate (above the name, or in its own column on
   // wide panes); without one the token stays the file picker beside the name.
   const pictured = Boolean(item.imagePath) || Boolean(itemArt(item))
+  // The stat column appears with the first image too (RYT-091): the check follows it.
+  const frame = useRef<HTMLDivElement>(null)
+  useColumnFit(frame, `${item.key}:${block ? 'block' : 'quick'}:${pictured ? 'plate' : 'token'}`)
   // Kept here so a save's notice and focus survive the token turning into the plate; another
   // creature starts without one.
   const [artNotice, setArtNotice] = useState<(ArtNotice & { key: string }) | null>(null)
@@ -1471,14 +1505,15 @@ function CreatureDetail({
   return (
     <Stack gap="md" className="bst-detail-inner">
       {actions}
-      <div className="bst-detail-frame">
-        <div className={pictured ? 'bst-detail-body has-plate' : 'bst-detail-body'}>
-          {pictured && media}
+      <div className="bst-detail-frame" ref={frame}>
+        <div className="bst-detail-body">
+          {/* RYT-091: the plate goes inside the block, which lays it out by the frame's width. */}
           <StatBlockView
             block={block}
             level={inSheet ? 2 : 3}
             headingId={headingId}
             media={pictured ? undefined : media}
+            plate={pictured ? media : undefined}
             badges={badges}
             footnote={
               row

@@ -1,6 +1,6 @@
 # RYT-025 verification
 
-Date: 2026-11-01. Source: branch `claude/ecstatic-clarke-dz03w7`. Decision record:
+Date: 2026-11-01. Source: a feature branch. Decision record:
 [ADR 015](../../decisions/015-design-critique-navigation-widgets.md).
 
 ## Automated checks
@@ -10,7 +10,7 @@ Date: 2026-11-01. Source: branch `claude/ecstatic-clarke-dz03w7`. Decision recor
 | `npm run check` (typecheck, lint, contracts, unit, build) | Pass                                                     |
 | `npm run format:check`                                   | Pass                                                     |
 | `npm run test:e2e` (desktop, tablet, mobile, identity-*) | 177 passed with 2 workers                                |
-| `npm run check:ui-review`                                | Pass (round 3 PASS, see below)                           |
+| The UI review check                                | Pass (round 3 PASS, see below)                           |
 
 The first full e2e run (6 workers on a 4-CPU container) had 70 failures. Most came from
 selectors bound to the replaced controls: header language/theme buttons, `Mostrar a

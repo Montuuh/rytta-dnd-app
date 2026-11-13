@@ -1,6 +1,6 @@
 # RYT-034 verification
 
-Date: 2026-11-03. Branch `worktree-agent-a6444c6beb0bee45b`, merged with `main` at `5f742cb`
+Date: 2026-11-03. A worktree branch, merged with `main` at `5f742cb`
 (RYT-028..033 included). Decision record: [ADR 022](../../decisions/022-player-trades.md).
 
 Migration: `supabase/migrations/20261103150000_player_trades.sql` (additive: two tables, one
@@ -16,7 +16,7 @@ hosted Supabase (PRE or PROD)**; rehearse on PRE, then apply to production.
 | `tests/database/pre.test.ts` | Initially failed: the ETL dry-run table count moved 21 → 23; assertion updated |
 | `tests/e2e/trades.spec.ts` (identity desktop/tablet/mobile, two browser contexts) | 6 passed |
 | Full e2e suite on a temporary config (ports 4773/4774, deleted afterwards) | 304 passed, 2 skipped, 3 failed |
-| Independent `ui-ux` review | Pending (not available to the implementing agent) |
+| Independent UI review | Pending (not available during implementation) |
 
 The 3 failures are the `identity.spec.ts` Google sign-in tests that assert the literal
 `127.0.0.1:4174` callback; they fail only because the temporary config serves on 4774.

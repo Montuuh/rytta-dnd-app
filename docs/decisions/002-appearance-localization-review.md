@@ -15,8 +15,4 @@ the supported language code locally, fail back to Spanish and update document la
 Backend errors are mapped to stable domain codes and localized in the view; private/raw
 server messages are not displayed. User-authored names/descriptions remain untouched.
 
-Create native ui-ux role instructions and integrate their invocation in the implementation
-workflow. The user's request authorizes this recurring review after UI deliveries, without
-authorizing arbitrary parallel implementation. Record the independent verdict and source
-fingerprint; CI rejects stale/missing review. The consistency check cannot prove reviewer
-execution and must never be used to fabricate approval. No unattended model service is added.
+UI deliveries get an independent review before they are done.

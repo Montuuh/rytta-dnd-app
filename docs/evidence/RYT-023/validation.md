@@ -28,7 +28,6 @@ Delivered the DM Command Center, per-campaign active module visibility (`player_
   - `lint` (`oxlint --deny-warnings`): 0 warnings, 0 errors across 98 files
   - `check:architecture`: passed
   - `check:docs`: passed (24 tickets)
-  - `check:ai`: passed
   - `vitest run`: 10 test files passed (56 tests, including PGlite SQL actor-matrix denial tests for `anon`, `outsider`, `player`, `dm`, and cross-campaign `dm` on `set_campaign_modules` and `campaign_revelations`)
   - `vite build`: succeeded
 - `npm run test:e2e`: **PASS (132 passed across desktop, tablet, mobile, identity-desktop, identity-tablet, identity-mobile)**

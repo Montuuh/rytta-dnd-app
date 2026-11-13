@@ -14,7 +14,7 @@ No database migrations, data changes or paid resources are needed for this UI re
   because the old RYT-020 review preview on port 4180 held the Rolldown binding open.
   Stopped that specifically identified preview and repeated successfully.
 - `npm run check`: PASS, including 55 unit/SQL tests, strict types, lint, contracts and build.
-- `npm run check:ui-review`: PASS for the unchanged independently reviewed source digest
+- The UI review check: PASS for the unchanged independently reviewed source digest
   `c7da5ca8b841f0dd92aa9f72499dd3ed65c57b58bf2becc03bb055210f835dc1`.
 - `npm run test:e2e -- --output=.tmp/ryt021-release-e2e --workers=4`: 129 passed, no skips.
 - `npm run format:check` and `git diff --check`: PASS.

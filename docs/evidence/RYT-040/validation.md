@@ -1,7 +1,7 @@
 # Delivery RYT-040: Edit and delete homebrew glossary entries
 
-Date: 2026-11-03. Worktree branch `worktree-agent-a4d68530bd38f1772`, cut from `main` at `c9ed08f`.
-Not pushed or merged. Status set to `review`; the independent ui-ux review is still pending and
+Date: 2026-11-03. A worktree branch, cut from `main` at `c9ed08f`.
+Not pushed or merged. Status set to `review`; the independent UI review is still pending and
 `docs/evidence/ui-review-current.json` was not touched.
 
 ## Outcome
@@ -72,7 +72,7 @@ Paths: `src/features/glossary/**` (api, ui, css), `src/shared/i18n/glossary-{es,
 
 | Check | Result |
 | --- | --- |
-| `npm run check` | exit 0: typecheck, lint, architecture, docs, AI contracts, 205 unit/SQL tests, build |
+| `npm run check` | exit 0: typecheck, lint, architecture, docs, 205 unit/SQL tests, build |
 | `CI=1 npm run test:e2e` | exit 0, 324 passed, 48 skipped (projects not applicable to a spec) |
 | `glossary.spec.ts`, identity desktop, tablet and mobile | all tests pass at every size |
 
@@ -119,9 +119,9 @@ Untested layers: real hosted PostgREST and a real Google session (the e2e uses a
 the RPCs; the PRE probe called the SQL functions directly with a simulated JWT, not through
 PostgREST); real iOS Safari; 150% text and reduced-motion passes for the new overlays were
 reduced-motion only (no 150% text capture of the editor); the conflict flow with two real
-accounts. Independent ui-ux verdict: pending.
+accounts. Independent UI verdict: pending.
 
-## Round 2: independent ui-ux review (CHANGES_REQUIRED) fixes
+## Round 2: independent UI review (CHANGES_REQUIRED) fixes
 
 The review is in `docs/evidence/RYT-040/ui-review.md` (committed as written). Every finding was
 fixed; the focused re-review is pending.
@@ -141,10 +141,10 @@ New captures: `edit-gone-{mobile,tablet}.png`, `editor-150-{mobile,tablet}.png` 
 `house-rule-actions-*` now show the labelled add button. Other captures were regenerated.
 
 Round 2 results: `npm run check` exit 0 (205 unit/SQL tests, build); `CI=1 npm run test:e2e` exit 0,
-336 passed, 48 skipped. The e2e run was retried after other agents held ports 4173/4174 ("already
+336 passed, 48 skipped. The e2e run was retried after other runs held ports 4173/4174 ("already
 used" fails fast); the passing run used its own servers.
 
-## Round 3: ui-ux round 2 findings (N1 to N3)
+## Round 3: UI review round 2 findings (N1 to N3)
 
 The report is the "Round 2" section of `docs/evidence/RYT-040/ui-review.md` (committed as written).
 

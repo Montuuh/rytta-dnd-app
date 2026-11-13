@@ -46,7 +46,7 @@ R2-2 (when the fight ends with the damage dialog open, focus moves to the recap 
 
 ## Verification
 
-Commands (worktree `agent-a423959dcf42b15dc`, Node 24.13, Windows):
+Commands (a worktree, Node 24.13, Windows):
 
 | Command | Result |
 | --- | --- |
@@ -56,7 +56,7 @@ Commands (worktree `agent-a423959dcf42b15dc`, Node 24.13, Windows):
 | `npm run typecheck` / `npm run lint` | first lint run failed: `react(only-export-components)` for the image helper in `token.tsx`; moved to `ui/square-image.ts`, then clean |
 | `npx playwright test combat.spec.ts --project=identity-tablet` (before updating tests) | 14 passed, 1 failed: the RYT-007 flow expected "Malherido" for a goblin at 1/7, which is now the fifth band "A punto de caer" (intended); assertions updated in two places |
 | `npx playwright test combat.spec.ts` (identity desktop, tablet, mobile) | 59 passed, 1 skipped (long press is touch-only) |
-| `npm run check` | passed: typecheck, lint, architecture, docs (45 tickets), AI contracts, 32 unit/SQL files with 234 tests, build |
+| `npm run check` | passed: typecheck, lint, architecture, docs (45 tickets), 32 unit/SQL files with 234 tests, build |
 | `CI=1 npm run test:e2e` | 418 passed, 49 skipped, 1 flaky: `character-sheet.spec.ts` "DM sees every sheet…" (identity-tablet) failed once with `net::ERR_NO_BUFFER_SPACE` on `page.goto` (Windows socket exhaustion under 10 workers) and passed on retry; unrelated to this change |
 
 SQL role matrix (PGlite with real migrations, a PRE copied by the ETL before the migration, a storage
@@ -129,10 +129,10 @@ Untested layers:
   PNG/JPEG/WebP only).
 - The DM "Vista jugador" preview of tokens (presentation transform; images follow the DM's access).
 
-Independent `ui-ux` review: round 1 returned CHANGES_REQUIRED
-([report](ui-review.md), committed as received). Re-review pending.
+Independent UI review: round 1 returned CHANGES_REQUIRED
+(report, committed as received). Re-review pending.
 
-## Round 1 fixes (ui-ux CHANGES_REQUIRED)
+## Round 1 fixes (UI review CHANGES_REQUIRED)
 
 | Finding | Change | Evidence |
 | --- | --- | --- |
@@ -158,7 +158,7 @@ AC on the same line; the name line now wraps and AC moves under the name instead
 
 ## Integration (2026-11-03)
 
-- Independent ui-ux round 2 PASS at fingerprint `e8304614…` (commit `de083d8`); the branch
+- Independent UI review round 2 PASS at fingerprint `e8304614…` (commit `de083d8`); the branch
   contains current main `07ed4fb`.
 - Production: applied `combat_media` via Supabase MCP. Prechecks: no columns/bucket yet; 1 template,
   11 combatants, 2 storage objects. Postchecks: columns, FK (ON DELETE SET NULL) and index present;

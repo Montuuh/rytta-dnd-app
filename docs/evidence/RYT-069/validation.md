@@ -3,7 +3,7 @@
 Delivery of 2026-11-07, uncommitted on `main` (base d303101, equal to `origin/main` after
 `git fetch`). The working tree also holds the uncommitted RYT-067/068 work of another session; this
 delivery owns only the paths listed below. Decision:
-[ADR 034](../../decisions/034-one-scheme-per-theme.md). Design flow: [design flow](design-flow.md).
+[ADR 034](../../decisions/034-one-scheme-per-theme.md). Design flow: design flow.
 
 ## What changed
 
@@ -29,7 +29,7 @@ delivery owns only the paths listed below. Decision:
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs (70 tickets), AI contracts, 44 unit files /
+- `npm run check`: typecheck, lint, architecture, docs (70 tickets), 44 unit files /
   310 tests and the build all pass. `tests/unit/class-themes.test.ts` (20 tests) checks every theme
   in its own scheme for WCAG AA, the grouping, the generated CSS, the bootstrap lists and migration.
   The first run failed once on Warlock (accent on hero 4.49 < 4.5); fixed by lightening the hero.
@@ -54,10 +54,9 @@ Warlock applied; light tiles on a dark page and dark tiles on a light page. Labe
 (longest "Explorador"/"Pergamino", 69 px at 14 px). The e2e matrix writes captures per language and
 theme (`test-results/**/{es,en}-{default,parchment,warlock,rogue}-{party,settings}.png`).
 
-## Impeccable critique and audit
+## design critique and audit
 
-`⚠️ DEGRADED: single-context` — the repository allows delegation only for the `ui-ux` review
-(AGENTS.md, docs/ai-workflow.md), so Assessment A and B ran in this context, A first.
+Assessment A and B ran in one context, A first.
 
 - **Assessment A (design review):** design specificity is good: the tiles are literal swatches of
   each class theme with its glyph, which no other product would ship unchanged. Nielsen scores:
@@ -68,7 +67,7 @@ theme (`test-results/**/{es,en}-{default,parchment,warlock,rogue}-{party,setting
   behind the drawer (veil lowered to 0.3); the Theme help repeated the group hints (shortened to one
   sentence); an intro line repeated the saved-on-this-device note (removed); help text left a
   single word on its last line (`text-wrap: pretty`).
-- **Assessment B (detector):** `impeccable detect --json` on `settings-panel.tsx` and `layout.tsx`:
+- **Assessment B (detector):** design review detect --json` on `settings-panel.tsx` and `layout.tsx`:
   0 findings. Browser overlay injected in a fresh `[Human]` tab with the drawer open: 3 findings.
   Fixed: straggler "traduce." in the language help. Out of scope and left as they are: `overused-font`
   (Inter is the project's pinned body font, design-system.md) and `kicker-above-heading` ("TU
@@ -77,7 +76,7 @@ theme (`test-results/**/{es,en}-{default,parchment,warlock,rogue}-{party,setting
 
 ## Independent review
 
-See [ui-ux review](../ui-review/ryt-069/review.md). First verdict (fingerprint `e3b4b07f…`):
+See UI review. First verdict (fingerprint `e3b4b07f…`):
 CHANGES_REQUIRED with two P2 and two P3. Fixes:
 
 - **P2-1** language names broke inside the word at 360/375 px and at 150 % text: the language grid

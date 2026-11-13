@@ -10,5 +10,5 @@
       }
     ]
   },
-  "ignorePatterns": [".claude/worktrees/**", "**/dist*/**", "public/vendor/**"]
+  "ignorePatterns": ["**/dist*/**", "public/vendor/**"]
 }

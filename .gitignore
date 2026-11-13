@@ -41,7 +41,6 @@ dist-ryt020-review/
 dist-party-button-review/
 
 *.traineddata
-.claude/worktrees/
 
 # Python bytecode (scripts/glossary)
 __pycache__/
@@ -56,9 +55,4 @@ art/sprites/source/*/
 # Office lock files (an open catalogue workbook).
 ~$*
 
-# Claude Code personal settings and hook markers
-.claude/settings.local.json
 .pw-dev/
-# Local mirrors of .claude generated for Codex (ADR 038: .claude is canonical)
-.codex/
-.agents/

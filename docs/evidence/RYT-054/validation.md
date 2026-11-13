@@ -1,7 +1,7 @@
 # RYT-054 verification: encounter builder
 
 Date: 2026-11-05. Decision: [ADR 031](../../decisions/031-encounter-builder.md). Design flow:
-[design-flow.md](design-flow.md). Sources: D&D Sync reviewed in the browser with the user's account
+the review report. Sources: D&D Sync reviewed in the browser with the user's account
 (see [research](../../research.md)); SRD 5.2.1 "Combat Encounters", pages 201–202 (CC-BY-4.0),
 read from the official PDF.
 
@@ -29,17 +29,17 @@ read from the official PDF.
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs (55 tickets), AI contracts, 269 unit tests in
+- `npm run check`: typecheck, lint, architecture, docs (55 tickets), 269 unit tests in
   37 files, build — passed.
 - `npm run test:e2e` (full suite): first run 471 passed, 56 skipped by design, 1 failed (focus return
   after an add on desktop while the save was still pending; fixed with an `aria-disabled` opener).
-  After the ui-ux round 1 fixes: 482 passed, 55 skipped, 0 failed.
+  After the UI review round 1 fixes: 482 passed, 55 skipped, 0 failed.
 - `tests/e2e/encounter-builder.spec.ts` at 390, 820 and 1440px: 120/120 with `--repeat-each=6`
   under parallel load. It covers the flow above, EN light, a fight over the High budget, an add that
   spends High exactly (focus stays on the reading), unrated enemies, and bounding-box overlap checks
   at 100% and 150% text (gauge words and pointer, difficulty rows, party budget). The overlap check
   was shown to fail on the earlier gauge padding ("bld-pointer × Moderada").
-- Impeccable detector: clean on the builder components and stylesheet after the margin-note fix.
+- design review detector: clean on the builder components and stylesheet after the margin-note fix.
 
 ## Not covered
 
@@ -50,14 +50,14 @@ read from the official PDF.
 
 ## Independent review
 
-`ui-ux` ([review](../ui-review/ryt-054/review.md)), applied by an independent agent:
+UI review, applied by an independent reviewer:
 
 - Round 1: CHANGES_REQUIRED (fingerprint `95a44a56…`): focus lost after an add that spends High
   exactly, overlaps at 150% text, the pointer over "Moderada", "no enemies" with unrated enemies, the
   add notice not announced, and copy. All fixed, with new e2e cases (see Checks).
 - Round 2: **PASS** for fingerprint
   `7776f1f397100baa62121ff741813b087c4ecd1d575aab24933691520676437a`, recorded in
-  `docs/evidence/ui-review-current.json`; `npm run check:ui-review` passes.
+  `docs/evidence/ui-review-current.json`; the UI review check passes.
 - Non-blocking follow-ups from round 2: the live region can be written twice on an add (band, then
   notice plus band); the English "none" copy should quote "All the same"; at 100% text on phones the
   party budget wraps "High" to a second row.

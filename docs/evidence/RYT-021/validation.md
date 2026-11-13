@@ -16,7 +16,7 @@ Initial working tree was clean. No backend, production data, release or legacy s
 
 ## Verification
 
-- `npm run check`: PASS, including strict typecheck, lint, architecture/docs/AI contracts,
+- `npm run check`: PASS, including strict typecheck, lint, architecture/docs contracts,
   55 unit/SQL tests across 10 files, and production build.
 - `npm run format:check`: PASS.
 - First focused browser validation: 5 passed, 2 failed. Both failures were new test
@@ -30,12 +30,12 @@ Initial working tree was clean. No backend, production data, release or legacy s
 - Captures inspected directly: baseline phone Members; final phone Party and assignment
   dialog at 150%; final tablet Members in Spanish/dark and assigned Party in English/light
   at 150%.
-- Independent `ui-ux`: PASS, [review](reviewer/review.md). The reviewer ran 14 additional
+- Independent UI review: PASS, review. The reviewer ran 14 additional
   focused browser checks plus a direct keyboard/focus script and inspected rendered captures.
   The occasional skip-link overlay in axe captures was verified as an audit artifact,
   absent in the normal dialog interaction. Reviewer harness attempts and limits are recorded
   in the review report.
-- `npm run check:ui-review` and final `npm run check:docs`: PASS. The approved source digest
+- The UI review check and final `npm run check:docs`: PASS. The approved source digest
   is `c7da5ca8b841f0dd92aa9f72499dd3ed65c57b58bf2becc03bb055210f835dc1`.
   RYT-021 is complete locally; no release was performed.
 

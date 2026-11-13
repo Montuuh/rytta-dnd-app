@@ -887,7 +887,7 @@ def decal_above(slug: str) -> str:
 
 # Fitting options for single objects of a sheet, by file and position (0 = top left).
 OBJECT_EXTRAS: dict[tuple[str, int], dict] = {
-    # The unlit torch casts no light: no warm halo around it (ui-ux RYT-068 round 14).
+    # The unlit torch casts no light: no warm halo around it (UI review RYT-068 round 14).
     ("props/torch-1.png", 1): {"halo": 0.0},
 }
 
@@ -981,7 +981,7 @@ def pilot_rows() -> list[Row]:
     run = {"sizes": [[1, 2], [1, 3], [1, 4], [1, 5]],
            "run": {"cap": 0.24, "end": 0.9, "plain": [0.775, 0.895],
                    "items": [[0.262, 0.415], [0.435, 0.598], [0.614, 0.785]]}}
-    # Not used (ui-ux RYT-066): flames drawn from the side turn sideways on the board, and the chest
+    # Not used (UI review RYT-066): flames drawn from the side turn sideways on the board, and the chest
     # reads as a barrel. Their props keep the drawn sprite until their catalogue sheets arrive.
     skip = {"skip": True}
     small_extras = {1: skip, 6: skip, 8: skip}

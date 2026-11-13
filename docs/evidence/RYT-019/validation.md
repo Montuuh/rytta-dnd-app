@@ -29,7 +29,7 @@ permission, live application-data mutation, commit, push or deployment was perfo
 
 ## Observed validation
 
-- npm run check: PASS, 55 tests plus strict typing, lint, architecture/docs/AI contracts
+- npm run check: PASS, 55 tests plus strict typing, lint, architecture/docs contracts
   and production build.
 - npm run test:e2e: PASS, 111/111 (58.9 seconds), no skips or retries. Includes 390px,
   820px and 1440px projects, Spanish/English, dark/light, 150% text, reduced motion, axe,
@@ -53,13 +53,13 @@ captures show the spinner centered; this was not a persistent application defect
 
 The full suite passed on its first run after updating selectors for the intentionally
 changed menu semantics and logout location. No initial failed application check was hidden.
-Independent ui-ux review is recorded separately; implementation checks do not self-approve UX.
+Independent UI review is recorded separately; implementation checks do not self-approve UX.
 
 Independent final verdict: PASS in reviewer/review.md for source
 621bb1876b44181b3a68041e524c3731e0f74be5712992cac6a8bcf43ae89064.
 The initial report is preserved as reviewer/review-initial.md. The focused re-review
 confirmed the corrected close label in both languages, phone/tablet at 150%, click closure,
-44px targets, focus restoration and clean axe results. npm run check:ui-review passed
+44px targets, focus restoration and clean axe results. the UI review check passed
 with the final manifest, and documentation/format gates passed. RYT-019 is Done.
 
 ## Limits

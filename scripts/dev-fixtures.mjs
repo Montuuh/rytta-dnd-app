@@ -1,6 +1,6 @@
-// Starts Vite against the e2e fixture backend (fake Supabase URL and key) on port 5181, so agents can
-// render signed-in screens without Google login. Pages only show signed-in data when Playwright
-// installs the fixture route mocks (see .claude/skills/rytta-preview).
+// Starts Vite against the e2e fixture backend (fake Supabase URL and key) on port 5181, to render
+// signed-in screens without Google login. Pages only show signed-in data when Playwright installs
+// the fixture route mocks.
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 

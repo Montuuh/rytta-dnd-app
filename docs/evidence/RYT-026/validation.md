@@ -6,7 +6,7 @@ Campaign item catalogue, shared definition editor and images, shop/grant integra
 direct DM gold entry, and accessible Player equipment controls. Owned code: inventory,
 shop integration, Party resources, sheet navigation, app navigation/routes, translations,
 API overlays, the additive migration and relevant tests. No frontend deployment or Git
-push was performed. The pre-existing/externally created `CLAUDE.md` is not part of this work.
+push was performed.
 
 ## Backend evidence
 
@@ -41,7 +41,7 @@ version timestamps differ; they were not reapplied or rewritten.
 ## Automated and rendered evidence
 
 - `npm run check`: PASS, 105 tests (including 58 SQL tests), strict types, lint, architecture,
-  documentation/AI contracts and production build.
+  documentation contracts and production build.
 - Full `npm run test:e2e -- --workers=2`: PASS, 222 tests across desktop, tablet and phone.
 - Subsequent focused runs cover the final equipment focus and partial shop retry corrections:
   campaign-items, inventory and shops: PASS, 69 tests. After the round-3 fixes, `npm run check`
@@ -79,7 +79,7 @@ version timestamps differ; they were not reapplied or rewritten.
    Mantine buttons, colour busy spinners with `currentColor` and dim disabled pick tiles.
 9. Independent review round 4: **PASS** at fingerprint
    `d1b7c6574fd53a0cad8b2c7d209d1bb474ccb054dc6cc7be6f7e9109431ac63e`, recorded in
-   `docs/evidence/ui-review-current.json`; `npm run check:ui-review` passes. Non-blocking P3
+   `docs/evidence/ui-review-current.json`; the UI review check passes. Non-blocking P3
    notes: the dock takes 42% of the drawer at 390px/150% with an error; "Retry" wording on
    first submit in the give/add-to-shop actions; busy cursor resolves to not-allowed.
 

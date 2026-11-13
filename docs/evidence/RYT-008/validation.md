@@ -37,7 +37,7 @@ Date: 2026-11-03. Branch `cl/gifted-bohr-6l74mn` on base `cdc7646`. Decision rec
 
 | Check | Result |
 | --- | --- |
-| `npm run check` (typecheck, lint, architecture, docs, AI contracts, unit + SQL tests, build) | see final run below |
+| `npm run check` (typecheck, lint, architecture, docs, unit + SQL tests, build) | see final run below |
 | `vitest` glossary domain (`content.test.ts`, `glossary.test.ts`) | 21 passed |
 | `vitest tests/database` (includes `glossary.test.ts`, 6 tests) | 82 passed |
 | `playwright test` full suite, all 6 projects | 325 passed, 0 failed (18.7 min) |
@@ -92,8 +92,8 @@ see the PNG files in this folder.
 
 ## UI/UX review
 
-Round 1 (`b1c3af5`): independent `ui-ux` verdict **CHANGES_REQUIRED**, report
-[ui-review.md](ui-review.md). Fixes in the follow-up commit:
+Round 1 (`b1c3af5`): independent UI verdict **CHANGES_REQUIRED**, report
+the review report. Fixes in the follow-up commit:
 
 - F1 (blocker) search dropped keystrokes: the field owns its value and mirrors it to the URL
   after 300 ms; e2e now types with `pressSequentially` (40 ms per key) on the All tab.

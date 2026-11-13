@@ -15,8 +15,8 @@ decisions (what Rytta builds) and lists deliberate non-goals.
 - Character hit points, death saves and conditions already live in `character_vitals` and are
   edited from the sheet (RYT-024). Party live sharing (ADR 020) already defines what teammates
   may see. Combat must not fork that truth.
-- PostgreSQL RLS is authoritative; the browser never performs read-modify-write on shared state
-  (AGENTS.md). Realtime is a hint, not a source of truth (RYT-013).
+- PostgreSQL RLS is authoritative; the browser never performs read-modify-write on shared state.
+  Realtime is a hint, not a source of truth (RYT-013).
 - Touch first, 44px targets, keyboard and Escape, both themes, Spanish and English, no colour-only
   status (design system).
 

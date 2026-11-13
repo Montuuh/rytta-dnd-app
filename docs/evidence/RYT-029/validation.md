@@ -5,7 +5,7 @@ landing and the DM lands on the DM Command Center. See ADR 019.
 
 ## Results (local, worktree branch)
 
-- `npm run check`: typecheck, lint, architecture, docs and AI contracts, 106 unit and PGlite SQL
+- `npm run check`: typecheck, lint, architecture, docs contracts, 106 unit and PGlite SQL
   tests, production build. Passed.
 - `npm run test:e2e`: first full run 238 passed, 5 failed. Three failures were the
   "Our new table" heading assertion (the campaign index no longer renders a page with that
@@ -27,6 +27,6 @@ landing and the DM lands on the DM Command Center. See ADR 019.
   run the denial checks, then production, then confirm `list_migrations`.
 - PGlite is not hosted Supabase; the guarded `pre.*` block of the migration was only exercised
   when PRE does not exist in the PGlite chain.
-- Independent `ui-ux` verdict: pending. This delivery changes navigation and removes pages;
+- Independent UI verdict: pending. This delivery changes navigation and removes pages;
   request the review before marking Done.
 - Keyboard flow was covered by the existing focus tests, not by a new manual pass.

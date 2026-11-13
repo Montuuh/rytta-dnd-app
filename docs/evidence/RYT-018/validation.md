@@ -7,7 +7,7 @@ assignment RPC, tests and new delivery evidence; prior doctrine edits remain ind
 ## Results
 
 - npm run check: PASS, 43 tests including 25 SQL actor/assignment tests; types, lint,
-  architecture/docs/AI contracts and production build passed.
+  architecture/docs contracts and production build passed.
 - npm run test:e2e: PASS, 99/99, no skipped, 44.3 seconds, mobile390/tablet820/desktop1440.
 - Browser matrix covers ES/EN and dark/light at 150%, reduced motion and axe. Screenshots
   are preserved in final/. Settings drawer/modal, account menu, member metadata-only

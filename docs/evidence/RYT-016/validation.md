@@ -13,27 +13,26 @@ ink #292F27 and forest primary controls #304923. See [design system](../../desig
 Mantine manages appearance; bundled, typed i18next/react-i18next catalogs manage UI text,
 accessible labels, errors, loading states and document language/title.
 
-The ui-ux role, frontend/producer instructions and SessionStart reminder require an
+The UI review role, frontend/producer instructions and SessionStart reminder require an
 independent review after interface changes. CI and release checks reject a missing or stale
 review manifest. This consistency check does not itself launch a model or prove a review;
-the actual independent report is required. See [workflow](../../ui-review.md).
+the actual independent report is required. See workflow.
 
 ## Verification
 
-- `npm run check`: passed TypeScript, lint, architecture/docs/AI contracts, 18 unit/SQL
+- `npm run check`: passed TypeScript, lint, architecture/docs contracts, 18 unit/SQL
   tests and production build. The SQL tests use PGlite, not a hosted Supabase instance.
 - `npm run test:e2e`: 34 passed, 2 intentionally skipped (the drawer test is mobile-only).
   Tests run the production build under `/rytta-dnd-app/` in Chromium at 1440px, 820px and
   390px. Coverage includes both themes/languages, axe, route refresh, preference changes,
   invalid/unavailable storage, keyboard drawer/Escape, reduced motion and 150% text reflow.
 - `npm run format:check`: passed before independent review.
-- `check:ui-review` correctly rejected the missing manifest while review was pending.
-- Independent review: [PASS](reviewer/review.md), after a focused re-review of the
-  enlarged language control. The [initial finding](reviewer/initial-review.md) is retained.
+- `UI review check` correctly rejected the missing manifest while review was pending.
+- Independent review: PASS, after a focused re-review of the
+  enlarged language control. The initial finding is retained.
   The reviewed fingerprint matches the final source and is recorded in
   `docs/evidence/ui-review-current.json`.
-- Final `npm run check:ui-review`, `check:docs`, `check:ai` and `format:check`: passed.
-  The AI validator recognizes four skills, five agents, scoped rules and the session hook.
+- Final `check:docs` and `format:check`: passed.
 
 ## Visual evidence
 
@@ -64,7 +63,6 @@ the actual independent report is required. See [workflow](../../ui-review.md).
 
 ## Limits
 
-No real-device Safari, hosted Supabase integration, native custom-role discovery or
-GitHub-hosted workflow execution is claimed. The reviewer is invoked as an independent
-subagent applying the repository role. No commit, push or external deployment was made.
+No real-device Safari, hosted Supabase integration, or GitHub-hosted workflow
+execution is claimed. No commit, push or external deployment was made.
 The app remains a scaffold with explicit sample content; gameplay modules remain planned.

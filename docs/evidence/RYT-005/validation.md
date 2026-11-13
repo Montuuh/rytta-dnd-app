@@ -6,13 +6,12 @@ Delivery of ADR 016 on top of the merged RYT-004 inventory (ADR 014).
 
 The first implementation pass was planned on a local `main` 17 commits behind `origin/main`
 and duplicated RYT-004 with a different schema. It was found before any hosted change, backed
-up outside the repository and discarded. Shops were rebuilt on the RYT-004 tables. AGENTS.md,
-`.claude/hooks/git-sync.mjs` (SessionStart) and the Codex session hook now require
+up outside the repository and discarded. Shops were rebuilt on the RYT-004 tables. Every delivery now starts with
 `git fetch` + `git pull --ff-only` and a hosted migration-history check before planning.
 
 ## Local verification
 
-- `npm run check`: typecheck, lint, architecture, docs and AI contracts, 17 unit/SQL files with
+- `npm run check`: typecheck, lint, architecture, docs contracts, 17 unit/SQL files with
   102 tests, production build.
 - `tests/database/shops.test.ts` (PGlite, 9 tests): denial matrix for anon, outsider, other
   Player and cross-campaign DM on every read and write RPC and on direct table access; hidden
@@ -64,7 +63,7 @@ up outside the repository and discarded. Shops were rebuilt on the RYT-004 table
 
 ## UI review
 
-Independent `ui-ux` review (report: `reviewer/review.md`, screenshots alongside):
+Independent UI review (report: `reviewer/review.md`, screenshots alongside):
 
 1. Initial review: CHANGES_REQUIRED. Majors: focus dropped to the body after the shop editor,
    counter-offer and revert; one-tap archive without confirmation; zero-gold sales allowed;

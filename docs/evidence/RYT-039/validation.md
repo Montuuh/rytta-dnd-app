@@ -23,7 +23,7 @@ that already wraps the combat routes.
 
 | Check | Result |
 | --- | --- |
-| `npm run check` (typecheck, lint, architecture, docs, AI contracts, unit + SQL, build) | passed, 204 tests |
+| `npm run check` (typecheck, lint, architecture, docs, unit + SQL, build) | passed, 204 tests |
 | `playwright test combat -g RYT-039` (identity desktop, tablet, mobile) | 3 passed |
 | `playwright test combat glossary character-sheet` | 63 passed |
 
@@ -46,8 +46,8 @@ override, as in RYT-008.
 
 ## UI/UX review
 
-Independent `ui-ux` verdict: **PASS** on fingerprint `4e3e321d…`, report
-[ui-review.md](ui-review.md). The reviewer checked DM and Player at 390 px, 820 px and 1280 px:
+Independent UI verdict: **PASS** on fingerprint `4e3e321d…`, report
+the review report. The reviewer checked DM and Player at 390 px, 820 px and 1280 px:
 title fonts and pill styling unchanged, no term hit area covering another control, keyboard and
 Escape order (drawer and wide layout), accessible names, axe with the definition open, stacking
 above the drawer, `onlyTopDialog`, and the sticky inline error.

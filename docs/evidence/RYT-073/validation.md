@@ -2,7 +2,7 @@
 
 Delivery of 2026-11-09 on `main` (base 8455b3b, equal to `origin/main` after `git fetch`).
 Decision: [ADR 035](../../decisions/035-character-sheet-redesign.md). Design flow:
-[design flow](design-flow.md). Tickets RYT-070, RYT-071, RYT-072, RYT-073 and RYT-074.
+design flow. Tickets RYT-070, RYT-071, RYT-072, RYT-073 and RYT-074.
 
 ## What changed
 
@@ -31,7 +31,7 @@ Decision: [ADR 035](../../decisions/035-character-sheet-redesign.md). Design flo
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs (75 tickets), AI contracts, 46 test files /
+- `npm run check`: typecheck, lint, architecture, docs (75 tickets), 46 test files /
   330 tests and the build pass.
 - Database (PGlite, `tests/database/sheet-play-lock.test.ts`, 8 tests): lock in initiative and
   active, DM bypass, unlocked teammate outside the encounter, unlocked after `ended`; history
@@ -51,10 +51,10 @@ Decision: [ADR 035](../../decisions/035-character-sheet-redesign.md). Design flo
   so they were load timeouts. Affected specs after the fixes: `character-sheet`, `characters`,
   `inventory`, `glossary` all pass at 1440, 820 and 390 px.
 - Final full `npm run test:e2e` after the review fixes: 515 passed, 0 failed, 55 skipped (4.6 min).
-- Independent `ui-ux` review: CHANGES_REQUIRED (round 1, 15 findings), CHANGES_REQUIRED (round
+- Independent UI review: CHANGES_REQUIRED (round 1, 15 findings), CHANGES_REQUIRED (round
   2, 8 findings), PASS (round 3), PASS (round 4) on fingerprint
   `7b3569be511985335a6c09416573bfed5ced8dcbe3b499a95700c653cc06682d`; see
-  [design flow](design-flow.md) and the [review report](../ui-review/ryt-073/review.md).
+  design flow and the review report.
 - New e2e scenarios: three doors with Escape and focus return; full wizard through the doors;
   quick build (Monk, Human, rename, summary, sheet at HP 10); blank sheet (Paladin 5 with Lay on
   Hands 25/25); every tile at 150 % text in ES/EN dark/light; spend a slot, stale revision,

@@ -35,7 +35,7 @@ Delivery of 2026-11-05 on top of RYT-055–062 (uncommitted on `main`, base 8a86
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs and AI contracts, 294 unit and SQL tests
+- `npm run check`: typecheck, lint, architecture, docs contracts, 294 unit and SQL tests
   (41 files, 10 in `generator.test.ts`), build — passed.
 - `RYT_EVIDENCE=1 RYT_CAPTURE=1 npx playwright test tests/e2e/tabletop.spec.ts` on identity-desktop,
   identity-tablet and identity-mobile: 15 passed. New assertions: full width at 1440 px (library
@@ -48,12 +48,12 @@ Delivery of 2026-11-05 on top of RYT-055–062 (uncommitted on `main`, base 8a86
 ## Design flow
 
 Phases 1–2 (brief and frontend refinement) were not rerun: this is a refinement inside the RYT-055
-art direction (design-flow.md section 2) and the existing generator dialog. Phase 4 (Impeccable
-critique and audit) and phase 5 (independent `ui-ux`) are recorded below.
+art direction (design-flow.md section 2) and the existing generator dialog. Phase 4 (design review
+critique and audit) and phase 5 (independent UI review) are recorded below.
 
-### Impeccable critique and audit (2026-11-05)
+### design critique and audit (2026-11-05)
 
-Method: dual-agent (A design review, B detector and technical audit), isolated sub-agents. The
+Method: two independent reviews (A design review, B detector and technical audit). The
 detector found nothing on the changed markup and styles (exit 0). A scored 27/40 on the Nielsen
 heuristics; B scored 13/20 on the audit. Fixed:
 
@@ -79,9 +79,9 @@ height, deduplicated fog operations when a door reopens, and header alignment on
 Checks after the fixes: `npm run check` passed (295 tests, build); tabletop e2e 15 passed on
 desktop, tablet and mobile (new: previous seed restores the rolled seed).
 
-### Independent ui-ux review
+### Independent UI review
 
-[Report](../ui-review/ryt-063/review.md). Round 1 CHANGES_REQUIRED (room keys under centre notes,
+Report. Round 1 CHANGES_REQUIRED (room keys under centre notes,
 focus lost when "Anterior" disabled itself, the emptied seed field typed a trailing 0); round 2
 CHANGES_REQUIRED (corner keys under the ossuary, clearing and trap notes); round 3 **PASS** for
 fingerprint `2cdf9f3c86d28068e27554515a913c2885fdd2a9591a6dd1ab17c4c8adc6715b`. Fixes between rounds:
@@ -93,5 +93,5 @@ New e2e: previous seed, focus on the exhausted key, typed seed, no room key over
 
 Open P3s (not blocking): a passage key moved to a passage end can cover the next door while Fog or a
 door is in use; a trap note can half cover a passage key; a key may hop corners while a token is
-dragged; plus the Impeccable P3s above. Untested: real TV, iOS Safari, screen readers, 200% text,
+dragged; plus the design review P3s above. Untested: real TV, iOS Safari, screen readers, 200% text,
 non-default class themes, hosted Supabase.

@@ -7,8 +7,8 @@ Date: 2026-11-12. Decision: [ADR 039](../../decisions/039-campaign-bestiary.md).
 - Options page published on 2026-11-12 (six questions). The user chose: link, not copy; one
   download button for all 330 creatures; edit in place; existing campaigns start without the
   official bestiary; the campaign's bestiary rules everywhere; creatures can be removed.
-- Brief with `ui-ux-pro-max`, refinement with `frontend-design`, implementation, then two isolated
-  `impeccable` passes on the rendered result (A: critique, B: detector and technical audit).
+- Design brief, refinement, implementation, then two isolated
+  design review passes on the rendered result (A: critique, B: detector and technical audit).
 
 ## Database
 
@@ -39,9 +39,9 @@ Migration `20261115120000_campaign_bestiary.sql` (tables `campaign_srd_bestiary`
   danger menu items in Parchment. With motion on, the download dialog still shows its title while
   it closes; after going back to the official version focus is on "Editar" at both sizes and
   themes. Evidence: `empty-*`, `download-*` and `version-*` here, and the curated captures in
-  [ui-review/ryt-089](../ui-review/ryt-089/).
+  the review report.
 
-## Impeccable
+## design review
 
 - A (critique): 26/40. Applied: the head wraps as two rows on phones; an untouched official
   creature is not saved as a version; one primary action in the empty state; the official tab is
@@ -73,7 +73,7 @@ Migration `20261115120000_campaign_bestiary.sql` (tables `campaign_srd_bestiary`
 
 ### Round 1 (fingerprint `5dfb0fe5…`): CHANGES_REQUIRED
 
-Joint ui-ux review with RYT-088, report [ui-review/ryt-089/review.md](../ui-review/ryt-089/review.md).
+Joint UI review with RYT-088, see the review report.
 
 - B1 (blocking): without the official bestiary, "Add combatants" said it searched the SRD and the
   encounter ideas advised another creature type. Fixed: the search help names the campaign's own
@@ -98,7 +98,7 @@ bestiary with the download in view); the English restore and removal copy; the v
 group of the add-to-fight search; the retaken capture. Checks on this fingerprint: `npm run check`
 passed (52 files, 361 tests, build); e2e bestiary, bestiary-official, combat and encounter-builder
 at 390/820/1440: 125 passed, 7 skipped. Recorded in `docs/evidence/ui-review-current.json`
-(`npm run check:ui-review` passes).
+(the UI review check passes).
 
 After the PASS, test only: the 44px check of the "Abrir el bestiario" link measured nothing (its
 selector matched no element); the spec now measures the link itself (6 passed at 390 and 820).

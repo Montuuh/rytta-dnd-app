@@ -1,6 +1,6 @@
 # RYT-033 verification
 
-Date: 2026-11-03. Branch `worktree-agent-a870aff3433ab90d0`, based on `main` at `36ec84c`
+Date: 2026-11-03. A worktree branch, based on `main` at `36ec84c`
 (this includes RYT-028 to RYT-030).
 Decision record: [ADR 020](../../decisions/021-settings-class-themes.md).
 Frontend only: no migrations, RPCs or RLS changed.
@@ -13,7 +13,7 @@ Frontend only: no migrations, RPCs or RLS changed.
 | `tests/unit/class-themes.test.ts` (13 themes × 2 schemes, sync and bootstrap) | 30 passed |
 | `npm run test:e2e`, full suite on temporary ports 4473/4474 | 283 passed, 11 skipped, 3 failed (see below) |
 | PKCE sign-in test on standard ports 4173/4174 | 3 passed |
-| Independent `ui-ux` review | Pending (not run by the implementing agent) |
+| Independent UI review | Pending (not run during implementation) |
 
 The full suite ran with a temporary copy of `playwright.config.ts` on ports 4473/4474,
 deleted afterwards. The three Google sign-in tests in `identity.spec.ts` assert the literal
@@ -50,7 +50,7 @@ The first e2e runs found three test problems, all fixed:
 Captured at 390px (Pixel 7 emulation) and 820px (tablet) with Playwright: `settings-*`,
 `party-*`, `menu-*` and `keyboard-focus-*` in this folder. The Settings captures cover Default,
 Warlock, Barbarian and Paladin in dark mode, and Default, Druid, Wizard and Rogue in light
-mode. The implementing agent inspected them.
+mode. They were inspected during implementation.
 
 ## Untested layers
 
@@ -59,4 +59,4 @@ mode. The implementing agent inspected them.
 - The only paint-flash check is reading the code. The theme attribute is set by the inline
   bootstrap and the theme CSS ships in the render-blocking bundle stylesheet. Before the app
   mounts, the browser `theme-color` uses the scheme default; it updates on mount.
-- The independent ui-ux verdict is pending.
+- The independent UI verdict is pending.

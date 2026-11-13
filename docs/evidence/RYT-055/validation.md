@@ -1,7 +1,7 @@
 # RYT-055–062 verification: tabletop
 
 Date: 2026-11-05. Decision: [ADR 032](../../decisions/032-tabletop.md). Analysis:
-[tabletop design](../../tabletop-design.md). Design flow: [design-flow.md](design-flow.md). Sources: the
+[tabletop design](../../tabletop-design.md). Design flow recorded with the review. Sources: the
 D&D Sync Tabletop reviewed panel by panel in the browser with the user's account (see
 [research](../../research.md)); SRD 5.2.1 "Playing on a Grid" and "Creature Size and Space" (pages
 13–14) and the Rules Glossary area entries (CC-BY-4.0). No code, text, art or sound was copied.
@@ -41,14 +41,14 @@ D&D Sync Tabletop reviewed panel by panel in the browser with the user's account
 | RYT-061 | Synthesized ambiences and effects; private tracks; muted table | `audio/engine.test.ts` (plan and fresh cues); database track tests (path, duplicate, readable only while live); e2e ambience and effect reach the live row |
 | RYT-062 | Forty-two original props in six categories, searchable in both languages | `domain/props.ts`, `ui/prop-art.tsx`; e2e search "barril" and place |
 
-## Impeccable critique and audit
+## design critique and audit
 
-Findings and fixes are in [design-flow.md](design-flow.md) section 3 (critique 22/40, audit 12/20 on
+Findings and fixes are in the review report section 3 (critique 22/40, audit 12/20 on
 the first build). Every P1 finding was fixed; the remaining limitations are listed there.
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs (63 tickets), AI contracts, 291 unit and database
+- `npm run check`: typecheck, lint, architecture, docs (63 tickets), 291 unit and database
   tests in 41 files, build — passed.
 - `tests/database/tabletop.test.ts` (PGlite, full chain with a PRE copied before the migration): 5 tests.
   `tests/database/pre.test.ts` now expects 38 copied tables (five tabletop tables and
@@ -63,18 +63,18 @@ the first build). Every P1 finding was fixed; the remaining limitations are list
   no name, number steppers were under 44px, zoom keys nested inside the board image, a phone keyboard move
   opened the inspector sheet and stole focus, and the fixture double-encoded signed URLs. All fixed.
 
-- After the Impeccable fixes: `npm run check` passed again (291 unit and database tests, build);
+- After the design review fixes: `npm run check` passed again (291 unit and database tests, build);
   `tests/e2e/tabletop.spec.ts` 30/30 with `--repeat-each=2` under 6 workers (now also failure and
   retry, undo, the board cursor, move without drag and the area seal). Initial failures while fixing:
   the shortcut scope blocked letters right after the generator closed (fixed by focusing the editor
   title on entry), and a moving-token focus raced the cursor initialisation (fixed with a functional
   update); a broken patch script mangled `calibration.tsx` once and it was restored byte for byte.
 
-- Independent `ui-ux` review round 1 (fingerprint `6090be7e…`): CHANGES_REQUIRED, one P1 (compound
+- Independent UI review round 1 (fingerprint `6090be7e…`): CHANGES_REQUIRED, one P1 (compound
   door writes dropped the first write's result) and seven P2 (every map item a Tab stop, the Area strip
   on phones, compact tablet at 150 % text, blank generator preview on open, focus lost after creation
   dialogs, SVG focus contrast on parchment, long story cards clipped on the table) plus P3 items. All
-  fixed; see [the review](../ui-review/ryt-055/review.md). After the fixes: `npm run check` passed
+  fixed; see the review. After the fixes: `npm run check` passed
   (291 tests, build), the full e2e suite 497 passed, 55 skipped by design, 0 failed; the tabletop spec
   15/15.
 - Round 2 (fingerprint `d4653703…`): CHANGES_REQUIRED with every round-1 finding fixed and two new P2
@@ -82,7 +82,7 @@ the first build). Every P1 finding was fixed; the remaining limitations are list
   Fixed, with e2e checks for the focus return; Delete and H now act on the cursor's item first; a write's
   success clears only its own failure.
 - Round 3 (fingerprint `c36ff3f5…`): **PASS**, recorded in `docs/evidence/ui-review-current.json`;
-  `npm run check:ui-review` passes. Before it: `npm run check` passed (291 tests, build) and the
+  The UI review check passes. Before it: `npm run check` passed (291 tests, build) and the
   tabletop spec 45/45 with `--repeat-each=3` (one mobile run had failed first because the test pressed a
   tool letter while the drawer was still closing; the test now waits for the drawer to go).
 - Open P3 suggestions from the review, not blocking: phone tray words at 11px (the system's label floor

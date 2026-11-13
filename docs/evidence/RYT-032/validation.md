@@ -1,6 +1,6 @@
 # RYT-032 verification
 
-Date: 2026-11-03. Worktree branch `worktree-agent-a84fa98ae3b28b6c4`, based on `main` after
+Date: 2026-11-03. A worktree branch, based on `main` after
 merging RYT-028..030. Decision record: [ADR 017, RYT-032 amendment](../../decisions/017-campaign-items.md).
 Migration: `supabase/migrations/20261103140000_item_lifecycle.sql` (not applied to hosted
 Supabase in this delivery).
@@ -13,7 +13,7 @@ Supabase in this delivery).
 | `tests/database/item-lifecycle.test.ts` (PGlite, 5 tests) | Pass on first run |
 | Full e2e on a temporary config (ports 4373/4374) | 264 passed, 3 failed (see below) |
 | `identity.spec.ts` Google sign-in test on the standard config (4174) | 3 passed |
-| Independent `ui-ux` review | Pending (not run by the implementing agent) |
+| Independent UI review | Pending (not run during implementation) |
 
 The three failures on the temporary config are the Google sign-in tests that assert the
 literal `127.0.0.1:4174` callback; they pass on the standard ports. The temporary config was

@@ -407,7 +407,7 @@ def import_props(rows: list, inspect: bool) -> list[str]:
             specs.setdefault(prop, {k: v for k, v in item.items() if k not in ("sizes", "run")})
             for w, h in item["sizes"]:
                 # Fitted with this sheet's own extras; the board mirrors and turns it for more variety.
-                # Each picture keeps its own halo: an unlit torch casts no light (ui-ux RYT-068 round 14).
+                # Each picture keeps its own halo: an unlit torch casts no light (UI review RYT-068 round 14).
                 pictures.setdefault(prop, {}).setdefault((w, h), []).append((fitted(pic, w, h, item), item.get("halo")))
     if inspect:
         return []

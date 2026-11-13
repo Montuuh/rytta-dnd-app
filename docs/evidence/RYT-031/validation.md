@@ -1,6 +1,6 @@
 # RYT-031 verification
 
-Date: 2026-11-03. Branch `worktree-agent-a8de87a5902d5c475`, fast-forwarded to `main` at
+Date: 2026-11-03. A worktree branch, fast-forwarded to `main` at
 `36ec84c` (RYT-028..030 merged). Decision record: [ADR 020](../../decisions/020-party-live-sharing.md).
 
 Migration: `supabase/migrations/20261103130000_party_live_sharing.sql` (additive). **Not applied
@@ -14,11 +14,11 @@ to hosted Supabase (PRE or PROD)**; it must be rehearsed on PRE and then applied
 | `npx vitest run tests/database` (PGlite, 64 tests incl. 5 new) | Pass |
 | RYT-031 e2e (`characters.spec.ts -g RYT-031`, identity desktop/tablet/mobile) | 12 passed |
 | Full e2e suite on a temporary config (ports 4273/4274, deleted afterwards) | 258 passed, 3 failed |
-| Independent `ui-ux` review | Pending (not run by the implementing agent) |
+| Independent UI review | Pending (not run during implementation) |
 
 The 3 failures are `identity.spec.ts` Google sign-in tests that assert the literal
 `127.0.0.1:4174` callback; they fail only because the temporary config uses port 4274.
-They were not re-run on the default ports (held by parallel agents).
+They were not re-run on the default ports (held by parallel runs).
 
 ## SQL coverage (`tests/database/party-sharing.test.ts`)
 

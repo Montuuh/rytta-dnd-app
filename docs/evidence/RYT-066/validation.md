@@ -9,7 +9,7 @@ Delivery of 2026-11-06 on top of RYT-055–065 (uncommitted on `main`, base 8a86
   `art/sprites/source/`) give 9 tavern props: table, chair, barrel, crate, sack, bookshelf, bar (rebuilt
   for 1 × 2 to 1 × 5), bed and rug. 12 WebPs, 236 KB, in `public/tabletop/props/`. The candle table,
   candles and hearth (flames drawn from the side) and the chest (reads as a barrel) are not used after
-  the ui-ux review; they keep the drawn sprite until their catalogue sheets arrive.
+  the UI review; they keep the drawn sprite until their catalogue sheets arrive.
 - **Import** (`scripts/sprites/import_sheets.py`): finds each prop by its layout position, cleans the
   edge (and keys out a flat background), fits it to its real share of its squares (wall props on the back
   edge), adds a centred contact shadow and, for light sources, a dithered halo that stops at the wall
@@ -33,9 +33,9 @@ Painted maps at 40 px a square with the board's variant rules: [tavern](tavern-p
 [dungeon](dungeon-pictures-42.png) (generated pictures beside drawn sprites); every shipped picture:
 [pictures](pictures.png).
 
-## Impeccable critique and audit (2026-11-06)
+## design critique and audit (2026-11-06)
 
-Method: dual-agent (A design review, B detector and technical audit), isolated sub-agents. Detector:
+Method: two independent reviews (A design review, B detector and technical audit). Detector:
 no findings (exit 0; regex rules only, the app needs a sign-in for URL rules). A scored 26/40
 (renormalised from 13/20 on five applicable heuristics); B scored 16/20.
 
@@ -63,7 +63,7 @@ generator's table spacing puts chairs back to back.
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs and AI contracts, 305 unit and SQL tests
+- `npm run check`: typecheck, lint, architecture, docs contracts, 305 unit and SQL tests
   (`sprites.test.ts` and the orientation tests new), build — passed.
 - `RYT_CAPTURE=1 npx playwright test tests/e2e/tabletop.spec.ts` on identity-desktop, identity-tablet and
   identity-mobile: 18 passed, including the new picture assertions.
@@ -72,9 +72,9 @@ generator's table spacing puts chairs back to back.
 Untested: a real TV, Safari and Firefox decoding, GitHub Pages cache headers, pan and zoom with
 hundreds of pictures, a sheet on a magenta background (the key-out has no fixture yet).
 
-## Independent ui-ux review
+## Independent UI review
 
-Round 1 (CHANGES_REQUIRED, [report](../ui-review/ryt-066/review.md)): flames of the candles, the candle
+Round 1 (CHANGES_REQUIRED, report): flames of the candles, the candle
 table and the hearth drawn from the side, turned sideways or upside down by quarter turns and wall
 rotations, and the chest reading as a barrel. Fixed by leaving those four pictures out (the drawn
 sprites stay) until pictures seen from above arrive. Also fixed: drawn sprites on a mixed map wait with
@@ -82,6 +82,6 @@ the pictures so all props appear together, and a failed picture's fallback is ti
 The renders above are from after this round.
 
 Round 2: **PASS** for fingerprint `fc9f03f0e16c65e76bdee4f2528451df567f795f1d6529d1883a1f07df68286d`
-([report](../ui-review/ryt-066/review.md)). Open P3s (not blocking): small three-quarter details on the
+(report). Open P3s (not blocking): small three-quarter details on the
 chair, bookshelf and bar tap; the drawn chest looks flatter beside painted props; plus the round-1 P3s
 listed above. Untested: a real TV, Safari and Firefox, screen readers, the light theme, 150 % text.

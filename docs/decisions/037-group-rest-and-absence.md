@@ -19,9 +19,7 @@ The user also asked:
 - the DM can mark a character as not at the table today;
 - "Create character" lives in the party list, for the DM as for Players.
 
-Design options were published as an artifact and chosen in two rounds
-(https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8; see the
-[design flow](../evidence/RYT-080/design-flow.md)).
+Design options were published on an options page and chosen in two rounds.
 
 ## Decisions (user answers, 2026-11-10)
 

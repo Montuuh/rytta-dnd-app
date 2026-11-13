@@ -26,7 +26,7 @@ This flow is not yet implemented; see [ADR 004](decisions/004-player-character-a
 
 ## Delivery strategy
 
-This delivery establishes code, contracts, UI primitives, navigation, docs and AI workflows.
+This delivery establishes code, contracts, UI primitives, navigation and docs.
 First playable milestone: identity → campaign invitations → DM resources →
 inventory/equipment/use/undo → merchants. Each is a separate verified slice.
 Quests, glossary and combat follow; atlas, album, stronghold and crafting are later modules.
@@ -42,11 +42,11 @@ Quests, glossary and combat follow; atlas, album, stronghold and crafting are la
 - Google is the only initial identity provider, with open registration and no email allowlist.
   Invitations last seven days and appear inside Rytta; no email notifications are sent.
 - Before affected tickets, settle character reassignment details, public HP visibility, undo limits, resale rounding,
-  supported browser floor and licensed glossary sources.
+  supported browser floor and glossary sources.
 
 ## Non-goals
 
 Remote-play VTT features (dynamic lighting, vision, line of sight, chat, player-moved tokens;
-ADR 032 builds a table-first map instead), IR touch hardware, 3D dice, autonomous DM, subscriptions
-and runtime LLM integration. AI architecture here means development agents and workflows.
+ADR 032 builds a table-first map instead), IR touch hardware, 3D dice, autonomous DM and
+subscriptions.
 No brainstorming item is implicitly promised for the first release.

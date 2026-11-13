@@ -42,7 +42,7 @@ Tools: [scripts/bestiary/README.md](../../../scripts/bestiary/README.md).
   `imported`, kept `keep` and `rejected` rows; a second run skipped both as unchanged; a changed source
   was imported again; a removed source was reported. The credits page diff only adds the ChatGPT
   paragraph and the two rows; prettier passes.
-- `npm run check`: typecheck, lint, architecture, docs, AI contracts, 43 test files / 306 tests
+- `npm run check`: typecheck, lint, architecture, docs, 43 test files / 306 tests
   (including the generated credit schema case), build. Passed.
 - Viewer with a fixture owlbear imported temporarily (a synthetic drawing, reverted after the review),
   identity Playwright projects at 390 × 844 and 820 × 1180, Spanish and English: credit texts, source
@@ -60,9 +60,9 @@ Tools: [scripts/bestiary/README.md](../../../scripts/bestiary/README.md).
 
 ## UI review
 
-Independent `ui-ux` review: **PASS** on source fingerprint
+Independent UI review: **PASS** on source fingerprint
 `87efeec31901efe8af604f550833a5c70918b21e15e8977cfb1830c38e395f02`
-([report](../ui-review/ryt-067/review.md)), browser-tested in Chromium in Spanish and English, dark and
+(report), browser-tested in Chromium in Spanish and English, dark and
 light, at 390, 820 and 1440px and 150% text, with the other three origins as regression checks. Three
 optional P3 notes stay open: the label says "Rytta" several times (shorter note wording suggested), a
 long source link wraps its icon at 390px and 150% text (as Wikimedia Commons already did), and no

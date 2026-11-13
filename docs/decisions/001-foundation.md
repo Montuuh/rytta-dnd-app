@@ -18,7 +18,7 @@ TypeScript/Vite/React/Supabase. Preferred static host: Pages. Scope: architectur
 5. Supabase Auth/Postgres/RLS and SQL RPC transactions; Edge Functions only for secrets/integrations.
 6. Minimal relational foundation, later tables per ticket. No mutable whole-campaign blob.
 7. Explicit demo adapter; backend errors never silently switch to samples.
-8. Versioned agents/skills/rules/checks, no runtime LLM feature or automatic publishing.
+8. Versioned rules and checks, no automatic publishing.
 
 ## Consequences
 

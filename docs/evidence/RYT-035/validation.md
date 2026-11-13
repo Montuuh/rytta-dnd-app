@@ -44,9 +44,9 @@ committed HTTP fixtures (`tests/e2e/fixtures`) against a Supabase-mode build.
 | Wizard "Save and exit" looked like text; SRD template field was empty    | Default button with icon; placeholder                                                    |
 | Party "Satchel" button vs "Inventory" navigation                         | Same name as the destination                                                             |
 
-## Independent ui-ux review
+## Independent UI review
 
-[Report](../ui-review/RYT-035/review.md). The first round on `dd34abb` returned CHANGES_REQUIRED:
+Report. The first round on `dd34abb` returned CHANGES_REQUIRED:
 two blocking findings (phone header and bottom bar wrapping at 150% text, and the DM Command
 Center head filling the first phone screen at 150%), two major (shop title breaking inside
 words, AC shown two ways) and minor items. All were fixed in `c9e651c`, and the focused re-review
@@ -57,7 +57,7 @@ name truncated in the DM header at 150%) is the accepted cost of a one-row heade
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs, AI contracts, 162 unit/SQL tests, build.
+- `npm run check`: typecheck, lint, architecture, docs, 162 unit/SQL tests, build.
 - `npm run test:e2e` (all 6 projects, Chromium 1243 via `executablePath`):
   - Final run on the reviewed source: 309 passed, 2 skipped, 1 failed. The failure was a race in
     the rewritten live-sharing test: it asserted the recorded RPC before the request landed. The

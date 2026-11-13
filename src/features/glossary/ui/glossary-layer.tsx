@@ -91,7 +91,7 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
   // The sheet often opens above another drawer (an item card, a shop listing). Mantine drawers
   // each close on Escape from a window capture listener, in registration order, and only a
   // Drawer.Stack coordinates them. This layer mounts before any page drawer, so its listener
-  // runs first: while a definition is open, Escape closes only the definition (ui-ux R2-1).
+  // runs first: while a definition is open, Escape closes only the definition (UI review R2-1).
   const sheetOpen = useRef(false)
   // While the homebrew editor or delete confirmation is open above the sheet, Escape belongs to it.
   useEffect(() => {

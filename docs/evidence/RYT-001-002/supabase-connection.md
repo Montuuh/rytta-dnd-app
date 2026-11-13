@@ -57,7 +57,7 @@ now targets the generated file and preserves this wrapper.
   HTTP title check showed that an existing Pokémon Ascendant server occupied that port;
   it was left untouched. A dedicated Rytta preview on port 4182 passed the corrected probe.
 - Local `npm run check`: PASS (34 unit/SQL tests, types, lint, contracts and production build).
-  `npm run format:check`, `npm run check:ui-review` and `git diff --check`: PASS.
+  `npm run format:check`, the UI review check and `git diff --check`: PASS.
   The unchanged rendered source retains its independent review. The earlier 73-pass browser
   fixture suite was not repeated for generated types, migration filenames and documentation.
 

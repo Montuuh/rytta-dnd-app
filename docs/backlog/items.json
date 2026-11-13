@@ -1,24 +1,20 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-12",
+  "updatedAt": "2026-11-13",
   "items": [
     {
       "id": "RYT-000",
       "title": "Foundation and delivery system",
       "priority": "P0",
       "owner": "producer",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": [],
       "sources": ["User scaffold request"],
-      "scope": "Scaffold, architecture, permissions baseline, AI workflows and documentation.",
+      "scope": "Scaffold, architecture, permissions baseline and documentation.",
       "acceptance": [
         "Demo runs without credentials and planned modules are explicit.",
         "SQL rejects cross-campaign access and player resource edits.",
-        "Repository guidance, skills, role definitions, hooks and backlog are executable/documented.",
+        "Repository guidance and backlog are documented.",
         "Production subpath navigation and responsive browser checks pass."
       ],
       "validation": [
@@ -39,10 +35,6 @@
       "title": "Identity and session lifecycle",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "review",
       "dependsOn": ["RYT-000"],
       "sources": ["Drive: roles", "User: Google-only open registration and campaign hub"],
@@ -72,10 +64,6 @@
       "title": "Campaign membership and invitations",
       "priority": "P0",
       "owner": "backend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "review",
       "dependsOn": ["RYT-001"],
       "sources": [
@@ -108,10 +96,6 @@
       "title": "Characters and DM resource control",
       "priority": "P0",
       "owner": "backend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-002"],
       "sources": [
@@ -140,10 +124,7 @@
       "evidence": [
         "docs/decisions/004-player-character-assignment.md",
         "docs/decisions/005-homebrew-resources-account-home.md",
-        "docs/evidence/RYT-003/validation.md",
-        "docs/evidence/RYT-003/reviewer/review-initial.md",
-        "docs/evidence/RYT-003/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-003/validation.md"
       ]
     },
     {
@@ -151,10 +132,6 @@
       "title": "Local and production database workflow",
       "priority": "P0",
       "owner": "producer",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-003"],
       "sources": [
@@ -191,10 +168,6 @@
       "title": "Inventory, equipment and use/undo",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-003", "RYT-017"],
       "sources": [
@@ -217,13 +190,11 @@
         "npm run test:db inventory actor matrix",
         "npm run test:e2e",
         "Hosted PRE probe, PROD migration and storage policies",
-        "Independent rendered ui-ux review"
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/014-inventory-equipment.md",
-        "docs/evidence/RYT-004/validation.md",
-        "docs/evidence/RYT-004/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-004/validation.md"
       ]
     },
     {
@@ -231,10 +202,6 @@
       "title": "Merchants, purchases and sales",
       "priority": "P0",
       "owner": "backend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-004"],
       "sources": [
@@ -256,24 +223,15 @@
         "npm run test:db shops actor matrix",
         "npm run test:e2e",
         "Hosted PRE probe and PROD migration",
-        "Independent rendered ui-ux review"
+        "Independent rendered UI review"
       ],
-      "evidence": [
-        "docs/decisions/016-shops-merchants.md",
-        "docs/evidence/RYT-005/validation.md",
-        "docs/evidence/RYT-005/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
-      ]
+      "evidence": ["docs/decisions/016-shops-merchants.md", "docs/evidence/RYT-005/validation.md"]
     },
     {
       "id": "RYT-006",
       "title": "Quest journal",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "medium"
-      },
       "status": "planned",
       "dependsOn": ["RYT-002"],
       "sources": ["Drive: quest register"],
@@ -291,10 +249,6 @@
       "title": "Shared combat overview",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-003", "RYT-013"],
       "sources": [
@@ -315,7 +269,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration",
         "Two-client encounter integration",
@@ -326,8 +280,6 @@
         "docs/combat-design.md",
         "docs/decisions/024-combat.md",
         "docs/evidence/RYT-007/validation.md",
-        "docs/evidence/ui-review/combat/review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-007/dm-active-mobile.png",
         "docs/evidence/RYT-007/dm-active-tablet.png",
         "docs/evidence/RYT-007/player-turn-mobile.png",
@@ -341,10 +293,6 @@
       "title": "SRD 5.5e glossary, in-place term references and campaign homebrew",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
       "dependsOn": ["RYT-002"],
       "sources": [
@@ -353,7 +301,7 @@
       ],
       "scope": "Bundled SRD 5.2.1 rules glossary, abilities, skills, damage types, weapon properties/masteries and all spells in English and official Spanish, with SRD 5.1 (2014) blocks; search, categories, quick facts; inline term references across the app; campaign homebrew entries and house rules in Supabase.",
       "acceptance": [
-        "Select licensed sources and record attribution before import.",
+        "Record source attribution before import.",
         "Keyword search covers aliases and both languages and shows useful empty states.",
         "Every condition and action shows quick facts (action, save, check, effect, end) and the 2014 rule when it differs.",
         "Rules terms on the sheet, party, inventory and shops open the same definition in place, with keyboard, Escape and focus return.",
@@ -366,15 +314,13 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
       "evidence": [
         "docs/evidence/RYT-008/validation.md",
         "docs/decisions/025-glossary.md",
-        "docs/evidence/RYT-008/ui-review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-008/entry-grappled-mobile.png",
         "docs/evidence/RYT-008/entry-grappled-tablet.png",
         "docs/evidence/RYT-008/homebrew-editor-mobile.png",
@@ -396,10 +342,6 @@
       "title": "Campaign memories album",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "planned",
       "dependsOn": ["RYT-002"],
       "sources": ["Drive: memory album"],
@@ -417,10 +359,6 @@
       "title": "Atlas and travel planning discovery",
       "priority": "P2",
       "owner": "producer",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "planned",
       "dependsOn": ["RYT-003"],
       "sources": [
@@ -443,10 +381,6 @@
       "title": "Mano Hundida stronghold",
       "priority": "P2",
       "owner": "backend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "planned",
       "dependsOn": ["RYT-003"],
       "sources": ["Drive: Mano Hundida"],
@@ -465,10 +399,6 @@
       "title": "DM crafting and relationships",
       "priority": "P2",
       "owner": "producer",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "medium"
-      },
       "status": "planned",
       "dependsOn": ["RYT-004"],
       "sources": ["Drive: DM crafting and relationships"],
@@ -486,10 +416,6 @@
       "title": "Realtime and recovery",
       "priority": "P0",
       "owner": "backend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "planned",
       "dependsOn": ["RYT-003"],
       "sources": ["User: multi-device companion", "D&D Sync: live sync"],
@@ -508,10 +434,6 @@
       "title": "Legacy import discovery",
       "priority": "P2",
       "owner": "backend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "planned",
       "dependsOn": ["RYT-004"],
       "sources": ["Legacy Rytta JSON export"],
@@ -530,10 +452,6 @@
       "title": "Live companion release readiness",
       "priority": "P0",
       "owner": "reviewer",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "planned",
       "dependsOn": ["RYT-001", "RYT-002", "RYT-003", "RYT-004", "RYT-005", "RYT-013"],
       "sources": ["User: mobile/tablet and Pages"],
@@ -559,10 +477,6 @@
       "title": "Appearance, localization and independent UI/UX review",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-000"],
       "sources": ["User: dark/light, Spanish/English and UI/UX reviewer"],
@@ -572,29 +486,21 @@
         "Users can choose theme/language; preferences survive routes and reloads.",
         "All scaffold UI, accessible labels, loading/errors and document language/title are localized; user content is preserved.",
         "Both themes/languages pass contrast, touch, keyboard and responsive checks.",
-        "The ui-ux role is invoked after interface changes and returns a recorded independent verdict."
+        "The UI review role is invoked after interface changes and returns a recorded independent verdict."
       ],
       "validation": [
         "npm run check",
         "npm run test:e2e",
-        "npm run check:ui-review",
+        "the UI review check",
         "Independent UI/UX report"
       ],
-      "evidence": [
-        "docs/evidence/RYT-016/validation.md",
-        "docs/evidence/RYT-016/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
-      ]
+      "evidence": ["docs/evidence/RYT-016/validation.md"]
     },
     {
       "id": "RYT-018",
       "title": "Account shell and member character assignment",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-003"],
       "sources": [
@@ -611,14 +517,11 @@
         "npm run check",
         "npm run test:e2e",
         "SQL assignment actor matrix",
-        "Independent ui-ux review"
+        "Independent UI review"
       ],
       "evidence": [
         "docs/decisions/006-shell-member-character-management.md",
-        "docs/evidence/RYT-018/validation.md",
-        "docs/evidence/RYT-018/reviewer/review-initial.md",
-        "docs/evidence/RYT-018/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-018/validation.md"
       ]
     },
     {
@@ -626,10 +529,6 @@
       "title": "Campaign home and compact settings menu",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-018"],
       "sources": [
@@ -641,21 +540,18 @@
         "Join-campaign invitations have clear pending/empty/loading/error states, recipient identity, refresh and working accept/decline actions.",
         "The hamburger opens a content-sized menu containing Settings only; keyboard, outside click, Escape and modal focus restoration work.",
         "Appearance uses moon/sun icons with localized accessible names, selected state and 44px targets.",
-        "Verify phone/tablet, both languages/themes, 150% text, reduced motion and independent ui-ux verdict."
+        "Verify phone/tablet, both languages/themes, 150% text, reduced motion and independent UI verdict."
       ],
       "validation": [
         "npm run check",
         "npm run test:e2e",
         "npm run format:check",
-        "npm run check:ui-review",
-        "Independent rendered ui-ux review"
+        "the UI review check",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/008-campaign-home-compact-settings.md",
-        "docs/evidence/RYT-019/validation.md",
-        "docs/evidence/RYT-019/reviewer/review-initial.md",
-        "docs/evidence/RYT-019/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-019/validation.md"
       ]
     },
     {
@@ -663,10 +559,6 @@
       "title": "Member cards, membership invites and Player POV preview",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-018", "RYT-019"],
       "sources": [
@@ -683,13 +575,11 @@
         "npm run check",
         "npm run test:e2e",
         "SQL revoke/unlink and membership-invite tests",
-        "Independent ui-ux review"
+        "Independent UI review"
       ],
       "evidence": [
         "docs/decisions/009-member-cards-membership-invite-preview.md",
-        "docs/evidence/RYT-020/validation.md",
-        "docs/evidence/RYT-020/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-020/validation.md"
       ]
     },
     {
@@ -697,10 +587,6 @@
       "title": "Single home for character management",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-020"],
       "sources": ["User: simplify the confusing split between Party and Members & invitations"],
@@ -715,14 +601,12 @@
         "npm run check",
         "npm run test:e2e",
         "npm run format:check",
-        "npm run check:ui-review",
-        "Independent rendered ui-ux review"
+        "the UI review check",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/010-character-management-home.md",
-        "docs/evidence/RYT-021/validation.md",
-        "docs/evidence/RYT-021/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-021/validation.md"
       ]
     },
     {
@@ -730,10 +614,6 @@
       "title": "Stacked mobile navbar, warm dark palette and resource ergonomics",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-016", "RYT-019", "RYT-021"],
       "sources": [
@@ -751,14 +631,12 @@
         "npm run check",
         "npm run test:e2e",
         "npm run format:check",
-        "npm run check:ui-review",
-        "Independent rendered ui-ux review"
+        "the UI review check",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/011-warm-dark-stacked-navbar.md",
-        "docs/evidence/RYT-022/validation.md",
-        "docs/evidence/RYT-022/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-022/validation.md"
       ]
     },
     {
@@ -766,10 +644,6 @@
       "title": "DM Command Center, active module visibility and quick revelations queue",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-022"],
       "sources": [
@@ -787,14 +661,12 @@
         "npm run check",
         "npm run test:e2e",
         "npm run format:check",
-        "npm run check:ui-review",
-        "Independent rendered ui-ux review"
+        "the UI review check",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/012-dm-command-center-and-module-visibility.md",
-        "docs/evidence/RYT-023/validation.md",
-        "docs/evidence/RYT-023/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-023/validation.md"
       ]
     },
     {
@@ -802,10 +674,6 @@
       "title": "Character creation wizard and 5.5e character sheet",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-003", "RYT-017"],
       "sources": [
@@ -820,7 +688,7 @@
         "The assigned Player and campaign DMs save the build and play state only through RPCs with revision checks, idempotent request ids, bounded values and audit events; anon, outsiders, other Players, cross-campaign DMs and inactive members are denied.",
         "The wizard covers class and level, origin with 2024 background increases, standard array/point buy/manual abilities, class skills and expertise, HP/AC/speed, spells for casters and details; drafts can be resumed.",
         "The sheet derives modifiers, saves, skills, passive Perception, initiative, spell DC/attack and full/half/pact slots, and supports damage/heal/temp HP, hit dice, death saves, inspiration, conditions, use counters and short/long rests.",
-        "SRD 5.2 data is attributed (CC-BY-4.0); no unlicensed rules text is bundled; Players still cannot change DM resources.",
+        "SRD 5.2 data is attributed (CC-BY-4.0); Players still cannot change DM resources.",
         "Spanish and English, dark and light, 390px/820px/1440px, 150% text, axe and 44px targets pass; Player POV preview is read-only."
       ],
       "validation": [
@@ -828,13 +696,11 @@
         "npm run test:db character sheet actor matrix",
         "npm run test:e2e",
         "Hosted migration and PRE refresh",
-        "Independent rendered ui-ux review"
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/013-character-sheet-and-creation.md",
-        "docs/evidence/RYT-024/validation.md",
-        "docs/evidence/RYT-024/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-024/validation.md"
       ]
     },
     {
@@ -842,10 +708,6 @@
       "title": "Design critique: bottom navigation, folded planned modules and table widgets",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-022", "RYT-023", "RYT-024", "RYT-004"],
       "sources": [
@@ -864,14 +726,12 @@
         "npm run check",
         "npm run test:e2e",
         "npm run format:check",
-        "npm run check:ui-review",
-        "Independent rendered ui-ux review"
+        "the UI review check",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/015-design-critique-navigation-widgets.md",
-        "docs/evidence/RYT-025/validation.md",
-        "docs/evidence/RYT-025/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-025/validation.md"
       ]
     },
     {
@@ -879,10 +739,6 @@
       "title": "Campaign item catalogue, private images and character controls",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-004", "RYT-005"],
       "sources": [
@@ -899,7 +755,7 @@
         "npm run check",
         "npm run test:e2e",
         "Hosted PRE and production migration verification",
-        "Independent ui-ux review"
+        "Independent UI review"
       ],
       "evidence": ["docs/decisions/017-campaign-items.md", "docs/evidence/RYT-026/validation.md"]
     },
@@ -908,10 +764,6 @@
       "title": "DM Command Center storeroom, item manager UX, shop item editing and Party redesign",
       "priority": "P0",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-025", "RYT-026", "RYT-005"],
       "sources": [
@@ -930,14 +782,12 @@
         "npm run check",
         "npm run test:e2e",
         "npm run format:check",
-        "npm run check:ui-review",
-        "Independent rendered ui-ux review"
+        "the UI review check",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/decisions/018-dm-command-center-storeroom.md",
-        "docs/evidence/RYT-027/validation.md",
-        "docs/evidence/RYT-027/reviewer/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-027/validation.md"
       ]
     },
     {
@@ -945,10 +795,6 @@
       "title": "Equipment and sheet quick fixes",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-027"],
       "sources": [
@@ -965,25 +811,16 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
-        "Independent rendered ui-ux review"
+        "independent UI review PASS",
+        "Independent rendered UI review"
       ],
-      "evidence": [
-        "docs/evidence/RYT-028/validation.md",
-        "docs/evidence/ui-review/RYT-028-030/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
-      ]
+      "evidence": ["docs/evidence/RYT-028/validation.md"]
     },
     {
       "id": "RYT-029",
       "title": "Remove campaign discoveries and the Camp module",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-027"],
       "sources": [
@@ -998,7 +835,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
@@ -1009,10 +846,7 @@
         "docs/evidence/RYT-029/player-mobile.png",
         "docs/evidence/RYT-029/player-tablet.png",
         "docs/evidence/RYT-029/dm-mobile.png",
-        "docs/evidence/RYT-029/dm-tablet.png",
-        "docs/evidence/ui-review/RYT-028-030/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-029/dm-tablet.png"
       ]
     },
     {
@@ -1020,10 +854,6 @@
       "title": "Shops ledger clarity and storefront UX",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-027"],
       "sources": [
@@ -1041,8 +871,8 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
-        "Independent rendered ui-ux review"
+        "independent UI review PASS",
+        "Independent rendered UI review"
       ],
       "evidence": [
         "docs/evidence/RYT-030/validation.md",
@@ -1052,10 +882,7 @@
         "docs/evidence/RYT-030/ledger-counter-tablet.png",
         "docs/evidence/RYT-030/player-orders-mobile.png",
         "docs/evidence/RYT-030/player-orders-tablet.png",
-        "docs/decisions/016-shops-merchants.md",
-        "docs/evidence/ui-review/RYT-028-030/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/decisions/016-shops-merchants.md"
       ]
     },
     {
@@ -1063,10 +890,6 @@
       "title": "Party live sharing and sheet audit",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-028", "RYT-029"],
       "sources": [
@@ -1083,7 +906,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
@@ -1095,10 +918,7 @@
         "docs/evidence/RYT-031/party-dm-tablet.png",
         "docs/evidence/RYT-031/sheet-history-mobile.png",
         "docs/evidence/RYT-031/sheet-history-tablet.png",
-        "docs/decisions/020-party-live-sharing.md",
-        "docs/evidence/ui-review/wave2/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/decisions/020-party-live-sharing.md"
       ]
     },
     {
@@ -1106,10 +926,6 @@
       "title": "Storeroom item delete, price sync and editor rework",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-028", "RYT-030"],
       "sources": [
@@ -1127,7 +943,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
@@ -1147,10 +963,7 @@
         "docs/evidence/RYT-032/add-choose-mobile.png",
         "docs/evidence/RYT-032/add-choose-tablet.png",
         "docs/evidence/RYT-032/add-existing-mobile.png",
-        "docs/evidence/RYT-032/add-existing-tablet.png",
-        "docs/evidence/ui-review/wave2/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-032/add-existing-tablet.png"
       ]
     },
     {
@@ -1158,10 +971,6 @@
       "title": "Settings rework and class themes",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-029"],
       "sources": [
@@ -1177,16 +986,13 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-033/validation.md",
         "docs/decisions/021-settings-class-themes.md",
         "tests/unit/class-themes.test.ts",
-        "tests/e2e/preferences.spec.ts",
-        "docs/evidence/ui-review/wave2/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/preferences.spec.ts"
       ]
     },
     {
@@ -1194,10 +1000,6 @@
       "title": "Player trade window",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-031", "RYT-032"],
       "sources": [
@@ -1214,7 +1016,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration",
         "two-browser end-to-end trade"
@@ -1239,10 +1041,7 @@
         "docs/evidence/RYT-034/done-mobile.png",
         "docs/evidence/RYT-034/done-tablet.png",
         "docs/evidence/RYT-034/history-mobile.png",
-        "docs/evidence/RYT-034/history-tablet.png",
-        "docs/evidence/ui-review/final/review.md",
-        "docs/evidence/ui-review/final-r2/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-034/history-tablet.png"
       ]
     },
     {
@@ -1250,10 +1049,6 @@
       "title": "Full frontend and UI/UX review fixes and visual polish",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-033", "RYT-034"],
       "sources": [
@@ -1273,7 +1068,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px, tablet and laptop screenshots for DM and Player",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-035/validation.md",
@@ -1289,9 +1084,7 @@
         "docs/evidence/RYT-035/player-inventory-tablet.png",
         "docs/evidence/RYT-035/player-party-mobile.png",
         "docs/evidence/RYT-035/player-shops-mobile.png",
-        "docs/evidence/RYT-035/settings-laptop.png",
-        "docs/evidence/ui-review/RYT-035/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-035/settings-laptop.png"
       ]
     },
     {
@@ -1299,10 +1092,6 @@
       "title": "Encounter preparation and homebrew bestiary",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-007"],
       "sources": [
@@ -1319,14 +1108,12 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
       "evidence": [
         "docs/evidence/RYT-007/validation.md",
-        "docs/evidence/ui-review/combat/review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-007/dm-prepare-mobile.png",
         "docs/evidence/RYT-007/dm-prepare-tablet.png"
       ]
@@ -1336,10 +1123,6 @@
       "title": "Combat tools: effects, concentration, death saves, area damage and undo",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-007"],
       "sources": [
@@ -1356,14 +1139,12 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests for anon, outsider, player and cross-campaign DM",
         "PRE then reviewed production migration"
       ],
       "evidence": [
         "docs/evidence/RYT-007/validation.md",
-        "docs/evidence/ui-review/combat/review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-007/dm-area-damage-mobile.png",
         "docs/evidence/RYT-007/dm-area-damage-tablet.png",
         "docs/evidence/RYT-007/dm-log-mobile.png",
@@ -1377,10 +1158,6 @@
       "title": "Combat table display",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-007"],
       "sources": [
@@ -1395,13 +1172,11 @@
       "validation": [
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "Public projection policy tests"
       ],
       "evidence": [
         "docs/evidence/RYT-007/validation.md",
-        "docs/evidence/ui-review/combat/review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-007/table-mobile.png",
         "docs/evidence/RYT-007/table-tablet.png"
       ]
@@ -1411,14 +1186,10 @@
       "title": "Link combat conditions to the glossary",
       "priority": "P3",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
       "dependsOn": ["RYT-007", "RYT-008"],
       "sources": [
-        "RYT-008 ui-ux round 6 observation: combat condition labels such as \"Derribado\" do not open their glossary definition.",
+        "RYT-008 UI review round 6 observation: combat condition labels such as \"Derribado\" do not open their glossary definition.",
         "User 2026-11-03: do it as a separate change, directly on main without a PR."
       ],
       "scope": "In the combatant detail (DM and Players), the active condition tags, the Conditions and Concentration titles and the condition named by an effect open the glossary definition in place. The condition picker, effect form, initiative rail and table display stay unlinked.",
@@ -1432,12 +1203,10 @@
         "npm run check",
         "npm run test:e2e (combat, glossary, character-sheet)",
         "390px and tablet screenshots",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-039/validation.md",
-        "docs/evidence/RYT-039/ui-review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-039/condition-terms-mobile.png",
         "docs/evidence/RYT-039/condition-terms-tablet.png",
         "docs/evidence/RYT-039/condition-definition-mobile.png",
@@ -1449,14 +1218,10 @@
       "title": "Edit and delete homebrew glossary entries",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
       "dependsOn": ["RYT-008"],
       "sources": [
-        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks."
       ],
       "scope": "Campaign members allowed by ADR 025 can edit and delete homebrew rules and house rules from the glossary using the existing revision-checked save/delete RPCs.",
       "acceptance": [
@@ -1469,12 +1234,11 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests if RPCs change"
       ],
       "evidence": [
         "docs/evidence/RYT-040/validation.md",
-        "docs/evidence/RYT-040/ui-review.md",
         "docs/evidence/RYT-040/delete-confirm-light-en-mobile.png",
         "docs/evidence/RYT-040/delete-confirm-light-en-tablet.png",
         "docs/evidence/RYT-040/delete-confirm-mobile.png",
@@ -1499,8 +1263,7 @@
         "docs/evidence/RYT-040/house-rule-actions-mobile.png",
         "docs/evidence/RYT-040/house-rule-actions-tablet.png",
         "docs/evidence/RYT-040/sheet-actions-mobile.png",
-        "docs/evidence/RYT-040/sheet-actions-tablet.png",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-040/sheet-actions-tablet.png"
       ]
     },
     {
@@ -1508,14 +1271,10 @@
       "title": "Combat roster changes and turn focus",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-007", "RYT-037", "RYT-038"],
       "sources": [
-        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks."
       ],
       "scope": "The DM can add and remove player characters after combat has started; the DM console focuses the combatant whose turn it is; fullscreen and exit-table-view buttons are removed.",
       "acceptance": [
@@ -1529,7 +1288,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests"
       ],
       "evidence": [
@@ -1551,7 +1310,6 @@
         "docs/evidence/RYT-041/join-en-light-tablet.png",
         "docs/evidence/RYT-041/remove-en-light-mobile.png",
         "docs/evidence/RYT-041/remove-en-light-tablet.png",
-        "docs/evidence/RYT-041/ui-review.md",
         "docs/evidence/RYT-041/remove-dialog-mobile.png",
         "docs/evidence/RYT-041/remove-dialog-tablet.png",
         "docs/evidence/RYT-041/remove-dialog-150-mobile.png",
@@ -1559,8 +1317,7 @@
         "docs/evidence/RYT-041/join-dialog-mobile.png",
         "docs/evidence/RYT-041/join-dialog-tablet.png",
         "docs/evidence/RYT-041/join-dialog-150-mobile.png",
-        "docs/evidence/RYT-041/join-dialog-150-tablet.png",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-041/join-dialog-150-tablet.png"
       ]
     },
     {
@@ -1568,14 +1325,10 @@
       "title": "Single Player combat view",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-041"],
       "sources": [
-        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks."
       ],
       "scope": "Players only use the table view: they enter their own initiative and see the end-of-combat summary there. The DM opens the table view by default and can switch to the DM console for full actions.",
       "acceptance": [
@@ -1589,12 +1342,11 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests if RPCs change"
       ],
       "evidence": [
         "docs/evidence/RYT-042/validation.md",
-        "docs/evidence/RYT-042/ui-review.md",
         "docs/combat-design.md",
         "docs/decisions/024-combat.md",
         "docs/security.md",
@@ -1628,8 +1380,7 @@
         "docs/evidence/RYT-042/summary-en-light-mobile.png",
         "docs/evidence/RYT-042/summary-en-light-tablet.png",
         "docs/evidence/RYT-042/table-turn-en-light-mobile.png",
-        "docs/evidence/RYT-042/table-turn-en-light-tablet.png",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-042/table-turn-en-light-tablet.png"
       ]
     },
     {
@@ -1637,14 +1388,10 @@
       "title": "Combat screen art and readable enemy health",
       "priority": "P2",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-042"],
       "sources": [
-        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents."
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks."
       ],
       "scope": "Rework the combat screens visually: character portraits, creature images and an enemy health display that reads as descriptive bands rather than a pseudo-precise bar.",
       "acceptance": [
@@ -1657,12 +1404,11 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "Storage policy denial tests if storage changes"
       ],
       "evidence": [
         "docs/evidence/RYT-043/validation.md",
-        "docs/evidence/RYT-043/ui-review.md",
         "docs/decisions/027-combat-art-and-health-bands.md",
         "docs/combat-design.md",
         "docs/design-system.md",
@@ -1690,8 +1436,7 @@
         "docs/evidence/RYT-043/player-bands-mobile.png",
         "docs/evidence/RYT-043/player-bands-tablet.png",
         "docs/evidence/RYT-043/summary-en-light-mobile.png",
-        "docs/evidence/RYT-043/summary-en-light-tablet.png",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-043/summary-en-light-tablet.png"
       ]
     },
     {
@@ -1699,14 +1444,10 @@
       "title": "Player character manager with an active character",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-021", "RYT-024"],
       "sources": [
-        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks delivered by subagents.",
+        "User 2026-11-03: improvement list (glossary, combat, character creation flow); roadmap split into small blocks.",
         "User 2026-11-03: archive characters instead of deleting them (RYT-044 second round)."
       ],
       "scope": "Each Player has a character manager in the campaign: create up to 4 characters with name and sheet, choose one active character, and archive or restore characters to free slots; only active characters appear in Party and combat. A Player without characters is prompted to create one.",
@@ -1723,7 +1464,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests",
         "SQL archive invariants and denial tests"
       ],
@@ -1750,7 +1491,6 @@
         "docs/evidence/RYT-044/dm-rosters-mobile.png",
         "docs/evidence/RYT-044/dm-rosters-tablet.png",
         "supabase/migrations/20261105130000_character_archive.sql",
-        "docs/evidence/RYT-044/ui-review.md",
         "docs/evidence/RYT-044/switch-blocked-mobile.png",
         "docs/evidence/RYT-044/switch-blocked-tablet.png",
         "docs/evidence/RYT-044/roster-archive-full-mobile.png",
@@ -1764,8 +1504,7 @@
         "docs/evidence/RYT-044/roster-archive-150-mobile.png",
         "docs/evidence/RYT-044/roster-archive-150-tablet.png",
         "docs/evidence/RYT-044/onboarding-archived-mobile.png",
-        "docs/evidence/RYT-044/onboarding-archived-tablet.png",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-044/onboarding-archived-tablet.png"
       ]
     },
     {
@@ -1773,10 +1512,6 @@
       "title": "Player death saves and end turn in the table view",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6-astra",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-042", "RYT-043"],
       "sources": [
@@ -1793,12 +1528,11 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "SQL denial tests"
       ],
       "evidence": [
         "docs/evidence/RYT-045/validation.md",
-        "docs/evidence/RYT-045/ui-review.md",
         "docs/combat-design.md",
         "docs/decisions/024-combat.md",
         "docs/security.md",
@@ -1820,8 +1554,7 @@
         "docs/evidence/RYT-045/revived-mobile.png",
         "docs/evidence/RYT-045/revived-tablet.png",
         "docs/evidence/RYT-045/stable-mobile.png",
-        "docs/evidence/RYT-045/stable-tablet.png",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-045/stable-tablet.png"
       ]
     },
     {
@@ -1829,10 +1562,6 @@
       "title": "SRD 5.2.1 bestiary catalogue in the DM Command Center",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-04: DM-only bestiary with most D&D monsters imported, homebrew creatures from templates, full stat blocks; implement all phases inside the DM Command Center with strong UX, UI and accessibility for the DM."
@@ -1850,7 +1579,7 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-046/validation.md",
@@ -1865,9 +1594,7 @@
         "docs/evidence/RYT-046/list-mobile.png",
         "docs/evidence/RYT-046/list-tablet.png",
         "docs/evidence/RYT-046/stat-block-mobile.png",
-        "docs/evidence/RYT-046/stat-block-tablet.png",
-        "docs/evidence/RYT-046/ui-review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-046/stat-block-tablet.png"
       ]
     },
     {
@@ -1875,10 +1602,6 @@
       "title": "Homebrew creatures with full stat blocks and editor",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-04: DM-only bestiary with most D&D monsters imported, homebrew creatures from templates, full stat blocks; implement all phases inside the DM Command Center with strong UX, UI and accessibility for the DM."
@@ -1895,7 +1618,7 @@
         "npm run check",
         "npm run test:e2e",
         "SQL denial tests",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-046/validation.md",
@@ -1907,9 +1630,7 @@
         "docs/evidence/RYT-047/editor-mobile.png",
         "docs/evidence/RYT-047/editor-preview-mobile.png",
         "docs/evidence/RYT-047/editor-preview-tablet.png",
-        "docs/evidence/RYT-047/editor-tablet.png",
-        "docs/evidence/RYT-046/ui-review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-047/editor-tablet.png"
       ]
     },
     {
@@ -1917,10 +1638,6 @@
       "title": "Bestiary in combat: alias, rolled hit points, trackers and stat block",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-04: DM-only bestiary with most D&D monsters imported, homebrew creatures from templates, full stat blocks; implement all phases inside the DM Command Center with strong UX, UI and accessibility for the DM."
@@ -1938,7 +1655,7 @@
         "npm run check",
         "npm run test:e2e",
         "SQL denial tests",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-046/validation.md",
@@ -1951,9 +1668,7 @@
         "docs/evidence/RYT-048/add-dialog-mobile.png",
         "docs/evidence/RYT-048/add-dialog-tablet.png",
         "docs/evidence/RYT-048/console-creature-mobile.png",
-        "docs/evidence/RYT-048/console-creature-tablet.png",
-        "docs/evidence/RYT-046/ui-review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-048/console-creature-tablet.png"
       ]
     },
     {
@@ -1961,10 +1676,6 @@
       "title": "Creature templates by archetype and CR, trait library and paste import",
       "priority": "P2",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-04: DM-only bestiary with most D&D monsters imported, homebrew creatures from templates, full stat blocks; implement all phases inside the DM Command Center with strong UX, UI and accessibility for the DM."
@@ -1977,7 +1688,7 @@
         "Pasting a stat block in English or Spanish (2024 or 2014 layout) drafts a creature for review without storing anything until saved.",
         "Unit tests cover the parser and the template maths."
       ],
-      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review PASS"],
       "evidence": [
         "docs/evidence/RYT-046/validation.md",
         "docs/decisions/028-bestiary.md",
@@ -1988,9 +1699,7 @@
         "docs/evidence/RYT-049/archetype-mobile.png",
         "docs/evidence/RYT-049/archetype-tablet.png",
         "docs/evidence/RYT-049/start-mobile.png",
-        "docs/evidence/RYT-049/start-tablet.png",
-        "docs/evidence/RYT-046/ui-review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-049/start-tablet.png"
       ]
     },
     {
@@ -1998,10 +1707,6 @@
       "title": "Bestiary list and toolbar polish in the DM Command Center",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-04: improve the overall frontend and UI/UX of the DM Command Center bestiary."
@@ -2016,23 +1721,14 @@
         "From 62em the stat block actions stay pinned while the stat block scrolls; / focuses the search when no field or dialog has focus.",
         "Axe, touch targets and no horizontal scroll hold at 390px, tablet and laptop sizes."
       ],
-      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
-      "evidence": [
-        "tests/e2e/bestiary.spec.ts",
-        "docs/design-system.md",
-        "docs/evidence/ui-review/ryt-050/review.md",
-        "docs/evidence/ui-review-current.json"
-      ]
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review PASS"],
+      "evidence": ["tests/e2e/bestiary.spec.ts", "docs/design-system.md"]
     },
     {
       "id": "RYT-051",
       "title": "Bestiary instruments across filters, dialogs and editor",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-04: review every bestiary panel, button and form, replace generic buttons and pills with distinctive frontend widgets."
@@ -2045,7 +1741,7 @@
         "Editor abilities are dial tiles with a saving throw seal; the hit die is a row of die tiles.",
         "All instruments are native inputs or ARIA spin buttons with 44px targets, keyboard support and named steppers; axe passes at 390px, tablet and laptop in both themes."
       ],
-      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review PASS"],
       "evidence": [
         "docs/decisions/029-bestiary-instruments.md",
         "tests/e2e/bestiary.spec.ts",
@@ -2054,9 +1750,7 @@
         "docs/evidence/RYT-051/archetype-mobile.png",
         "docs/evidence/RYT-051/archetype-tablet.png",
         "docs/evidence/RYT-051/editor-mobile.png",
-        "docs/evidence/RYT-051/editor-tablet.png",
-        "docs/evidence/ui-review/ryt-051/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-051/editor-tablet.png"
       ]
     },
     {
@@ -2064,13 +1758,9 @@
       "title": "Bestiary critique and audit fixes",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
-        "User 2026-11-04: run the Impeccable critique and audit on the bestiary and fix everything they found (mobile list and filters first, compact navigation)."
+        "User 2026-11-04: run the design critique and audit on the bestiary and fix everything they found (mobile list and filters first, compact navigation)."
       ],
       "dependsOn": ["RYT-051"],
       "scope": "Fix the critique (29/40) and audit (15/20) findings: phone list reach, filters sheet actions, Add to an encounter density and ending, Customise/Duplicate overlap, scannable list tokens, 150% text overflow, copy and content errata, slider and clear-button targets, theme tokens and deferred filtering.",
@@ -2081,16 +1771,14 @@
         "Customise is the only copy action for SRD creatures and its editor title names the source; copy has no gendered participles; delete says it cannot be undone; the Spanish SRD text has no split words.",
         "Slider thumbs and the search clear button have 44px targets; filters use app tokens; filtering is deferred while typing; no horizontal overflow at 390px with 150% text."
       ],
-      "validation": ["npm run check", "npm run test:e2e", "independent ui-ux PASS"],
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review PASS"],
       "evidence": [
         "tests/e2e/bestiary.spec.ts",
         "docs/design-system.md",
         "docs/evidence/RYT-052/mobile-2-scrolled.png",
         "docs/evidence/RYT-052/mobile-3-filters.png",
         "docs/evidence/RYT-052/mobile-4-add.png",
-        "docs/evidence/RYT-052/mobile-6-add-done.png",
-        "docs/evidence/ui-review/ryt-052/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-052/mobile-6-add-done.png"
       ]
     },
     {
@@ -2098,10 +1786,6 @@
       "title": "Art for every SRD creature and the DM's own creature image",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: an image on every bestiary monster from any free source; tapping a creature image (SRD or homebrew) lets the DM view it or change it. The user chose the free mix (Commons, Battle for Wesnoth, game-icons.net) over paid AI art."
@@ -2119,20 +1803,17 @@
         "npm run check",
         "npm run test:e2e",
         "denial SQL tests",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/030-bestiary-art.md",
         "docs/bestiary-art-credits.md",
         "docs/evidence/RYT-053/validation.md",
-        "docs/evidence/RYT-053/design-flow.md",
         "docs/evidence/RYT-053/viewer-mobile.png",
         "docs/evidence/RYT-053/saved-mobile.png",
         "supabase/migrations/20261110120000_bestiary_images.sql",
         "tests/database/bestiary-images.test.ts",
-        "tests/e2e/bestiary.spec.ts",
-        "docs/evidence/ui-review/ryt-053/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/bestiary.spec.ts"
       ]
     },
     {
@@ -2140,10 +1821,6 @@
       "title": "Encounter builder: party XP budget, difficulty gauge and suggestions",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: build the encounter builder module taking ideas from D&D Sync (dndsync.com, reviewed in the browser with the user's account) and improve Rytta's encounter preparation.",
@@ -2164,13 +1841,12 @@
         "npm run test:e2e",
         "unit tests for budget, bands, notes and suggestions",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/031-encounter-builder.md",
         "docs/evidence/RYT-054/validation.md",
-        "docs/evidence/RYT-054/design-flow.md",
         "docs/evidence/RYT-054/gauge-mobile.png",
         "docs/evidence/RYT-054/gauge-tablet.png",
         "docs/evidence/RYT-054/suggest-mobile.png",
@@ -2179,18 +1855,12 @@
         "docs/evidence/RYT-054/over-high-mobile.png",
         "docs/evidence/RYT-054/suggest-150-mobile.png",
         "src/features/combat/domain/difficulty.test.ts",
-        "tests/e2e/encounter-builder.spec.ts",
-        "docs/evidence/ui-review/ryt-054/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/encounter-builder.spec.ts"
       ]
     },
     {
       "owner": "backend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2201,9 +1871,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "supabase/migrations/20261111120000_tabletop.sql",
         "supabase/migrations/20261111130000_tabletop_alias.sql",
@@ -2231,17 +1898,13 @@
         "npm run test:db",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2252,9 +1915,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "src/features/tabletop/domain/generator/generator.test.ts",
         "docs/evidence/RYT-055/generator-mobile.png",
@@ -2273,16 +1933,12 @@
         "unit tests for determinism, connectivity and bounds",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2293,9 +1949,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "src/features/tabletop/domain/geometry.test.ts",
         "tests/database/tabletop.test.ts"
@@ -2309,15 +1962,11 @@
         "Hidden tokens and tokens of hidden combatants or draft encounters never reach the table projection; aliases hide real names and art.",
         "The DM moves tokens by drag or arrow keys with snap; the table shows the active turn and defeated creatures."
       ],
-      "validation": ["npm run test:db", "npm run test:e2e", "independent ui-ux PASS"]
+      "validation": ["npm run test:db", "npm run test:e2e", "independent UI review PASS"]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2328,9 +1977,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "src/features/tabletop/domain/geometry.test.ts",
         "docs/evidence/RYT-055/measure-mobile.png",
@@ -2348,16 +1994,12 @@
       "validation": [
         "unit tests for distance and coverage",
         "npm run test:e2e",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2368,9 +2010,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "tests/database/tabletop.test.ts"
       ],
@@ -2383,15 +2022,11 @@
         "Reveal and hide all; operations are capped and appended server-side.",
         "Secret doors are DM-only until discovered; opening a door can reveal the room behind it."
       ],
-      "validation": ["npm run test:db", "npm run test:e2e", "independent ui-ux PASS"]
+      "validation": ["npm run test:db", "npm run test:e2e", "independent UI review PASS"]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2402,9 +2037,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "tests/database/tabletop.test.ts",
         "docs/evidence/RYT-055/event-mobile.png",
@@ -2419,15 +2051,11 @@
         "Firing an event applies its actions in one transaction and marks it fired; it can be reset.",
         "A shown story card appears on the table and on Players phones; hiding it removes it."
       ],
-      "validation": ["npm run test:db", "npm run test:e2e", "independent ui-ux PASS"]
+      "validation": ["npm run test:db", "npm run test:e2e", "independent UI review PASS"]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2438,9 +2066,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "src/features/tabletop/audio/engine.test.ts",
         "docs/evidence/RYT-055/audio-mobile.png",
@@ -2455,15 +2080,15 @@
         "Uploaded tracks (MP3, OGG, M4A, WebM up to 20 MB) are private to the campaign; members read only the current track.",
         "The DM can also listen locally; a muted table says so."
       ],
-      "validation": ["unit tests for the audio state", "npm run test:e2e", "independent ui-ux PASS"]
+      "validation": [
+        "unit tests for the audio state",
+        "npm run test:e2e",
+        "independent UI review PASS"
+      ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: research, plan, design and implement a tabletop in Rytta (Owlbear, own build or whatever is needed): map generator random or from an upload with a grid computed from the screen size and the miniature size, DM tools for enemies, areas of effect, story, audio, doors, notes, events, fog, measuring distances above all, and props; extract everything useful from the D&D Sync map.",
@@ -2474,9 +2099,6 @@
         "docs/decisions/032-tabletop.md",
         "docs/tabletop-design.md",
         "docs/evidence/RYT-055/validation.md",
-        "docs/evidence/RYT-055/design-flow.md",
-        "docs/evidence/ui-review/ryt-055/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/tabletop.spec.ts",
         "src/features/tabletop/domain/props.ts",
         "src/features/tabletop/ui/prop-art.tsx"
@@ -2489,15 +2111,15 @@
         "At least thirty props in six categories, drawn by Rytta and searchable in both languages.",
         "Props snap to squares, rotate in 90 degree steps and resize in whole squares; hidden props are DM-only."
       ],
-      "validation": ["npm run test:e2e", "390px and tablet screenshots", "independent ui-ux PASS"]
+      "validation": [
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent UI review PASS"
+      ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: the DM table management section is the only panel that may use the whole page width; improve map generation after finding where D&D Sync gets it from; which doctrines to follow when making maps by hand.",
@@ -2512,8 +2134,6 @@
         "tests/e2e/tabletop.spec.ts",
         "docs/evidence/RYT-055/editor-desktop.png",
         "docs/evidence/RYT-055/generator-desktop.png",
-        "docs/evidence/ui-review/ryt-063/review.md",
-        "docs/evidence/ui-review-current.json",
         "docs/evidence/RYT-055/generator-mobile.png",
         "docs/evidence/RYT-055/editor-tablet.png"
       ],
@@ -2532,17 +2152,13 @@
         "unit tests for determinism, connectivity, roles, doors, notes and outlines",
         "npm run check",
         "tabletop e2e at 390px, 820px and 1440px",
-        "Impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: improve the overall map generator, import sprites online or generate them in 2D, make quick procedural maps beautiful with all the assets, using D&D Sync procedural maps as the reference.",
@@ -2554,8 +2170,6 @@
         "tests/e2e/tabletop.spec.ts",
         "docs/evidence/RYT-055/editor-desktop.png",
         "docs/evidence/RYT-055/event-desktop.png",
-        "docs/evidence/ui-review/ryt-064/review.md",
-        "docs/evidence/ui-review-current.json",
         "supabase/migrations/20261111140000_tabletop_look.sql",
         "tests/database/tabletop.test.ts"
       ],
@@ -2572,17 +2186,13 @@
         "npm run check",
         "tabletop e2e at 390px, 820px and 1440px",
         "map renders",
-        "Impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ]
     },
     {
       "owner": "frontend",
       "priority": "P1",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "sources": [
         "User 2026-11-05: the app used to make maps is Dungeon Alchemist; import it directly.",
@@ -2593,8 +2203,6 @@
         "tests/e2e/tabletop.spec.ts",
         "docs/evidence/RYT-064/validation.md",
         "docs/evidence/RYT-055/uvtt-desktop.png",
-        "docs/evidence/ui-review/ryt-064/review.md",
-        "docs/evidence/ui-review-current.json",
         "supabase/migrations/20261111140000_tabletop_look.sql",
         "tests/database/tabletop.test.ts"
       ],
@@ -2610,7 +2218,7 @@
       "validation": [
         "unit tests for parsing, areas, doors and names",
         "tabletop e2e upload at 390px, 820px and 1440px",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ]
     },
     {
@@ -2618,10 +2226,6 @@
       "title": "Tabletop: painted props from generated art and the sprite catalogue",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-064"],
       "sources": [
@@ -2640,7 +2244,7 @@
         "tavern render compared with docs/evidence/RYT-064/tavern-painted-42.png",
         "npm run check",
         "tabletop e2e at 390px, 820px and 1440px",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/sprite-art.md",
@@ -2648,9 +2252,7 @@
         "src/features/tabletop/ui/sprites.test.ts",
         "src/features/tabletop/domain/generator/generator.test.ts",
         "art/sprites/catalogue.csv",
-        "tests/e2e/tabletop.spec.ts",
-        "docs/evidence/ui-review/ryt-066/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/tabletop.spec.ts"
       ]
     },
     {
@@ -2658,10 +2260,6 @@
       "title": "Single-style bestiary art: fit review, ChatGPT catalogue and import",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-053", "RYT-066"],
       "sources": [
@@ -2681,7 +2279,7 @@
         "import run on an isolated copy with valid and invalid pictures",
         "npm run check",
         "viewer at 390px and tablet with an imported sample",
-        "independent ui-ux PASS"
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/030-bestiary-art.md",
@@ -2690,9 +2288,7 @@
         "src/features/bestiary/domain/content.test.ts",
         "docs/evidence/RYT-067/validation.md",
         "docs/evidence/RYT-067/viewer-es-mobile.png",
-        "docs/evidence/RYT-067/viewer-en-tablet.png",
-        "docs/evidence/ui-review/ryt-067/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-067/viewer-en-tablet.png"
       ]
     },
     {
@@ -2700,10 +2296,6 @@
       "title": "Tabletop: the whole sprite catalogue imported, map themes and textured painted maps",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-066"],
       "sources": [
@@ -2725,14 +2317,13 @@
         "renders of every theme compared with the RYT-064/066 painted maps",
         "npm run check",
         "tabletop e2e at 390px, 820px and 1440px",
-        "Impeccable critique and audit on the rendered result",
-        "independent ui-ux PASS"
+        "design critique and audit on the rendered result",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/033-map-art.md",
         "docs/sprite-art.md",
         "docs/evidence/RYT-068/validation.md",
-        "docs/evidence/RYT-068/design-flow.md",
         "docs/evidence/RYT-068/themes.jpg",
         "docs/evidence/RYT-068/webkit-compare.jpg",
         "docs/evidence/RYT-068/secret-door-seams.jpg",
@@ -2741,8 +2332,7 @@
         "src/features/tabletop/ui/materials.test.ts",
         "src/features/tabletop/ui/sprites.test.ts",
         "tests/e2e/tabletop.spec.ts",
-        "art/sprites/catalogue.csv",
-        "docs/evidence/ui-review/ryt-068/review.md"
+        "art/sprites/catalogue.csv"
       ]
     },
     {
@@ -2750,10 +2340,6 @@
       "title": "One color scheme per theme, theme swatch tiles and a Settings drawer",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-033"],
       "sources": [
@@ -2775,17 +2361,14 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/034-one-scheme-per-theme.md",
         "docs/evidence/RYT-069/validation.md",
-        "docs/evidence/RYT-069/design-flow.md",
         "tests/unit/class-themes.test.ts",
         "tests/e2e/preferences.spec.ts",
-        "docs/evidence/ui-review/ryt-069/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/e2e/scaffold.spec.ts",
         "tests/e2e/identity.spec.ts"
       ]
@@ -2795,15 +2378,11 @@
       "title": "Sheet play lock during encounters and a sheet change history for DM and player",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-024", "RYT-031", "RYT-007"],
       "sources": [
-        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
-        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with a page of options.",
+        "Design options page and the user's answers P1–P12 (2026-11-09).",
         "User 2026-11-09 (P7): players may change their HP, damage and temporary HP only when no encounter is active; during an active encounter only the DM; the same for short and long rests. Keep a good history of max HP, abilities, level-up, spells and skills changes.",
         "User 2026-11-09: the lock applies when the character is a combatant of an encounter in initiative or active; the history is read-only and visible to the DM and the player."
       ],
@@ -2823,13 +2402,10 @@
       "evidence": [
         "docs/decisions/035-character-sheet-redesign.md",
         "docs/evidence/RYT-073/validation.md",
-        "docs/evidence/RYT-073/design-flow.md",
         "supabase/migrations/20261112120000_sheet_play_lock_history.sql",
         "tests/database/sheet-play-lock.test.ts",
         "tests/e2e/character-sheet.spec.ts",
-        "tests/e2e/characters.spec.ts",
-        "docs/evidence/ui-review/ryt-073/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/characters.spec.ts"
       ]
     },
     {
@@ -2837,15 +2413,11 @@
       "title": "SRD 5.2.1 class features in the glossary, class resources by level and a library picker",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-008", "RYT-024"],
       "sources": [
-        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
-        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with a page of options.",
+        "Design options page and the user's answers P1–P12 (2026-11-09).",
         "User 2026-11-09 (P5): import every official SRD 5.2.1 spell and class feature of all levels and classes.",
         "User 2026-11-09 (P6): class resources are added when the class is chosen and grow with the level; they can be removed.",
         "User 2026-11-09: class features are added by class and level automatically; others can be added from the library."
@@ -2860,12 +2432,9 @@
       "evidence": [
         "docs/decisions/035-character-sheet-redesign.md",
         "docs/evidence/RYT-073/validation.md",
-        "docs/evidence/RYT-073/design-flow.md",
         "scripts/glossary/class_features.py",
         "src/features/glossary/domain/content.test.ts",
-        "src/features/characters/domain/progression.test.ts",
-        "docs/evidence/ui-review/ryt-073/review.md",
-        "docs/evidence/ui-review-current.json"
+        "src/features/characters/domain/progression.test.ts"
       ]
     },
     {
@@ -2873,15 +2442,11 @@
       "title": "Three ways to create a sheet: quick, full and blank",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-024", "RYT-071"],
       "sources": [
-        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
-        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with a page of options.",
+        "Design options page and the user's answers P1–P12 (2026-11-09).",
         "User 2026-11-09 (P2 A, P3 A, P4, P8, P11): three doors sheet; quick build in three steps asking class, species and name at level 1; blank sheet needs name, class and level; the full wizard drops alignment, languages and appearance."
       ],
       "scope": "Creation chooser sheet with three explained paths; quick build in three steps with smart defaults and a summary; blank sheet form; simplified full wizard.",
@@ -2895,18 +2460,15 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/035-character-sheet-redesign.md",
         "docs/evidence/RYT-073/validation.md",
-        "docs/evidence/RYT-073/design-flow.md",
         "tests/e2e/character-sheet.spec.ts",
         "src/features/characters/domain/progression.test.ts",
-        "tests/database/sheet-play-lock.test.ts",
-        "docs/evidence/ui-review/ryt-073/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/database/sheet-play-lock.test.ts"
       ]
     },
     {
@@ -2914,15 +2476,11 @@
       "title": "Character sheet redesign: table panel with tiles, sheets, inline editing and personalisation",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-024", "RYT-070", "RYT-071"],
       "sources": [
-        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
-        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with a page of options.",
+        "Design options page and the user's answers P1–P12 (2026-11-09).",
         "User 2026-11-09 (P1 B, P10, P12): table panel with an HP ring, stats and tiles that open a sheet; only proficient skills with 'Show all 18'; edit in place with a pencil."
       ],
       "scope": "New sheet layout: identity header, HP ring with AC, initiative, speed, proficiency and passive Perception, tiles with a glance of each block that open a bottom/side sheet, inline edit mode, a Personalise drawer for blocks and resources (pips or counter), rests in a dock.",
@@ -2937,17 +2495,14 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/035-character-sheet-redesign.md",
         "docs/evidence/RYT-073/validation.md",
-        "docs/evidence/RYT-073/design-flow.md",
         "tests/e2e/character-sheet.spec.ts",
-        "tests/e2e/glossary.spec.ts",
-        "docs/evidence/ui-review/ryt-073/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/glossary.spec.ts"
       ]
     },
     {
@@ -2955,15 +2510,11 @@
       "title": "Portrait editor with crop or letterbox and portraits everywhere a character appears",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-024"],
       "sources": [
-        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with an artifact of options.",
-        "Design options artifact https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar and the user's answers P1–P12 (2026-11-09).",
+        "User 2026-11-09: simplify character creation and the sheet; three ways to create (blank, full wizard, quick like D&D Beyond); show abilities, saves, level, AC, initiative, speed, proficiency, passive Perception; configurable tracking; modern widgets; collapsible blocks; class skills linked to the library; players must not change their own HP; better portrait widget; portraits everywhere; ask every design question and start with a page of options.",
+        "Design options page and the user's answers P1–P12 (2026-11-09).",
         "User 2026-11-09 (P9): the editor always opens; letterbox with black bars."
       ],
       "scope": "Portrait editor dialog (crop with drag, pinch, wheel, zoom slider and keyboard; or fit with black bars) before upload; portraits in trades, tabletop tokens without combat, the creation flows and shop rows.",
@@ -2976,18 +2527,15 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/035-character-sheet-redesign.md",
         "docs/evidence/RYT-073/validation.md",
-        "docs/evidence/RYT-073/design-flow.md",
         "tests/e2e/inventory.spec.ts",
         "tests/database/sheet-play-lock.test.ts",
-        "tests/database/combat-media.test.ts",
-        "docs/evidence/ui-review/ryt-073/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/database/combat-media.test.ts"
       ]
     },
     {
@@ -2995,10 +2543,6 @@
       "title": "Choose the table's portion of a larger map: drag the table frame",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-055"],
       "sources": [
@@ -3015,19 +2559,16 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-075/validation.md",
-        "docs/evidence/RYT-075/design-flow.md",
         "docs/evidence/RYT-075/desktop-frame-wait.jpg",
         "docs/evidence/RYT-075/tablet-frame-wait.jpg",
         "docs/evidence/RYT-075/mobile-frame-wait.jpg",
         "src/features/tabletop/domain/geometry.test.ts",
-        "tests/e2e/tabletop.spec.ts",
-        "docs/evidence/ui-review/ryt-075/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/tabletop.spec.ts"
       ]
     },
     {
@@ -3035,10 +2576,6 @@
       "title": "Delete scenes from the tabletop library",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-055"],
       "sources": [
@@ -3053,18 +2590,15 @@
       "validation": [
         "npm run check",
         "npm run test:e2e",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-075/validation.md",
-        "docs/evidence/RYT-075/design-flow.md",
         "docs/evidence/RYT-075/desktop-delete-confirm.jpg",
         "docs/evidence/RYT-075/tablet-delete-confirm.jpg",
         "docs/evidence/RYT-075/mobile-delete-confirm.jpg",
-        "tests/e2e/tabletop.spec.ts",
-        "docs/evidence/ui-review/ryt-075/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/tabletop.spec.ts"
       ]
     },
     {
@@ -3072,10 +2606,6 @@
       "title": "Prop placement: translucent preview, rotation, version and a placing strip",
       "priority": "P1",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-061", "RYT-068"],
       "sources": [
@@ -3093,18 +2623,15 @@
         "npm run check",
         "npm run test:e2e",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/evidence/RYT-075/validation.md",
-        "docs/evidence/RYT-075/design-flow.md",
         "docs/evidence/RYT-075/desktop-prop-ghost.jpg",
         "docs/evidence/RYT-075/tablet-prop-ghost.jpg",
         "src/features/tabletop/domain/geometry.test.ts",
-        "tests/e2e/tabletop.spec.ts",
-        "docs/evidence/ui-review/ryt-075/review.md",
-        "docs/evidence/ui-review-current.json"
+        "tests/e2e/tabletop.spec.ts"
       ]
     },
     {
@@ -3112,10 +2639,6 @@
       "title": "One username per account: Settings, sign-in dialog and member names",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-002", "RYT-069"],
       "sources": [
@@ -3135,8 +2658,8 @@
         "npm run test:e2e",
         "tests/database/profiles.test.ts",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS",
+        "design critique and audit",
+        "independent UI review PASS",
         "production migration applied and verified"
       ],
       "evidence": [
@@ -3146,11 +2669,8 @@
         "src/features/auth/domain/username.test.ts",
         "tests/e2e/username.spec.ts",
         "docs/evidence/RYT-078/validation.md",
-        "docs/evidence/RYT-078/design-flow.md",
         "docs/evidence/RYT-078/dialog-identity-mobile.png",
-        "docs/evidence/RYT-078/settings-identity-tablet.png",
-        "docs/evidence/ui-review/ryt-078/review.md",
-        "docs/evidence/ui-review-current.json"
+        "docs/evidence/RYT-078/settings-identity-tablet.png"
       ]
     },
     {
@@ -3158,15 +2678,11 @@
       "title": "Absent characters and the DM choosing a Player's active character",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-044", "RYT-070"],
       "sources": [
         "User 2026-11-10: rest requests checked first, confirmed, then voted by every active Player in a lobby that shows what each character gets back; the DM marks characters as not coming; Create character inside the party list, for Players too.",
-        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+        "User 2026-11-10 (design rounds 1 and 2): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
       ],
       "scope": "characters.absent (DM only, set_character_absent) forces is_active off so every campaign list leaves the character out; benched Players cannot switch, new or restored characters join in reserve; guard triggers make the sheet read-only for the Player and refuse encounters; set_active_character lets the DM choose any present character of a Player. 3-dot menu in Players' characters (absent/present, make active), a No player section, Absent states in rosters, the benched notice in Party and My characters, the read-only sheet note. PRE mirror.",
       "acceptance": [
@@ -3181,16 +2697,13 @@
         "npm run test:e2e",
         "tests/database/group-rest.test.ts",
         "390px and tablet screenshots",
-        "independent ui-ux PASS",
+        "independent UI review PASS",
         "production migration applied and verified"
       ],
       "evidence": [
         "docs/decisions/037-group-rest-and-absence.md",
         "supabase/migrations/20261114120000_group_rest_absence.sql",
         "docs/evidence/RYT-080/validation.md",
-        "docs/evidence/RYT-080/design-flow.md",
-        "docs/evidence/ui-review/ryt-080/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/database/group-rest.test.ts",
         "tests/e2e/rest.spec.ts",
         "src/features/characters/ui/roster.tsx"
@@ -3201,15 +2714,11 @@
       "title": "Group rest with a vote: check, request, Hoguera panel and server-side rests",
       "priority": "P1",
       "owner": "fullstack",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-073", "RYT-079"],
       "sources": [
         "User 2026-11-10: rest requests checked first, confirmed, then voted by every active Player in a lobby that shows what each character gets back; the DM marks characters as not coming; Create character inside the party list, for Players too.",
-        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+        "User 2026-11-10 (design rounds 1 and 2): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
       ],
       "scope": "rest_requests (members read for realtime) and private.rest_votes; request_rest, vote_rest, resolve_rest_now, cancel_rest, get_rest_state; private.rest_effect mirrors applyRest and adds the short-rest dice healing. Sheet rest buttons ask the group after the recovery check; a fixed notice under the header; the Hoguera panel with votes, recovery per character, dice and DM actions; outcomes. PRE mirror.",
       "acceptance": [
@@ -3225,17 +2734,14 @@
         "npm run test:e2e",
         "tests/database/group-rest.test.ts",
         "390px and tablet screenshots",
-        "impeccable critique and audit",
-        "independent ui-ux PASS",
+        "design critique and audit",
+        "independent UI review PASS",
         "production migration applied and verified"
       ],
       "evidence": [
         "docs/decisions/037-group-rest-and-absence.md",
         "supabase/migrations/20261114120000_group_rest_absence.sql",
         "docs/evidence/RYT-080/validation.md",
-        "docs/evidence/RYT-080/design-flow.md",
-        "docs/evidence/ui-review/ryt-080/review.md",
-        "docs/evidence/ui-review-current.json",
         "tests/database/group-rest.test.ts",
         "src/features/rest/domain/rest.test.ts",
         "src/features/characters/domain/rules.test.ts",
@@ -3248,15 +2754,11 @@
       "title": "New character card at the end of the party list",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-044"],
       "sources": [
         "User 2026-11-10: rest requests checked first, confirmed, then voted by every active Player in a lobby that shows what each character gets back; the DM marks characters as not coming; Create character inside the party list, for Players too.",
-        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+        "User 2026-11-10 (design rounds 1 and 2): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
       ],
       "scope": "The DM's header Create character button becomes a New character card closing the party list; Players get the same card for their own roster (up to four).",
       "acceptance": [
@@ -3264,11 +2766,14 @@
         "With four characters the Player's card says why it is unavailable; Player preview shows no card.",
         "Escape returns focus to the card."
       ],
-      "validation": ["npm run test:e2e", "390px and tablet screenshots", "independent ui-ux PASS"],
+      "validation": [
+        "npm run test:e2e",
+        "390px and tablet screenshots",
+        "independent UI review PASS"
+      ],
       "evidence": [
         "docs/decisions/037-group-rest-and-absence.md",
         "docs/evidence/RYT-080/validation.md",
-        "docs/evidence/ui-review/ryt-080/review.md",
         "tests/e2e/rest.spec.ts",
         "tests/e2e/characters.spec.ts",
         "src/features/characters/ui/party.tsx"
@@ -3279,14 +2784,10 @@
       "title": "3D dice for hit dice rolls",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-080"],
       "sources": [
-        "User 2026-11-10 (design rounds 1 and 2, https://claude.ai/artifact/3n1i1bKVnA6Q7Ea84rRmV8): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
+        "User 2026-11-10 (design rounds 1 and 2): fixed notice, Hoguera panel, unanimity, 10-minute expiry, dice typed or rolled in 3D, absence as a separate state from the 3-dot menu, the DM also chooses a Player's active character, New character card."
       ],
       "scope": "Roll for me in the short-rest dice rolls 3D dice over the screen (vendored MIT dice-box, loaded on first use, Rytta amber, only the roller sees them) and fills the total; reduced motion, no WebGL or a failure roll evenly without animation.",
       "acceptance": [
@@ -3298,7 +2799,6 @@
       "evidence": [
         "docs/decisions/037-group-rest-and-absence.md",
         "docs/evidence/RYT-080/validation.md",
-        "docs/evidence/ui-review/ryt-080/review.md",
         "public/vendor/dice-box/NOTICE.md",
         "public/vendor/dice-box/LICENSE",
         "src/shared/ui/dice/roll-dice.ts",
@@ -3306,53 +2806,14 @@
       ]
     },
     {
-      "id": "RYT-083",
-      "title": "Claude Code setup: migrate from Codex/Cursor and extend skills, hooks, agents and MCP",
-      "priority": "P1",
-      "owner": "producer",
-      "recommendedModel": {
-        "id": "claude-opus-5-5",
-        "reasoningEffort": "high"
-      },
-      "status": "done",
-      "dependsOn": ["RYT-000"],
-      "sources": [
-        "User 2026-11-10: \"migra desde la estructura de chat gpt codex a la de claude. Amplia tambien el setup de claude, añade skills, hooks, agents, MCP, skills, etc.\"",
-        "User 2026-11-10: \"añade una skill de quitar ai slop, que sirva para que no ponga texto inútil o solo informativo en la web. AI Code Slop Remover se llama.\""
-      ],
-      "scope": "Move the agent contract, skills, roles, rules and hooks to the Claude Code layout (CLAUDE.md, .claude/skills, .claude/agents, .claude/rules, .claude/hooks, .mcp.json), remove .codex/.agents/.cursor, add new skills, guard and post-edit hooks, a security reviewer and MCP servers, and update the validators and docs (ADR 038).",
-      "acceptance": [
-        "CLAUDE.md is the contract; scoped CLAUDE.md files replace the scoped AGENTS.md files; AGENTS.md only points to CLAUDE.md.",
-        "Nine project skills (including ai-code-slop-remover with its read-only scanner) and six subagents load from .claude/ with valid frontmatter; reviewers are read-only.",
-        "PreToolUse guard denies the contract violations and ignores heredoc text; PostToolUse formats, lints and reminds the ui-ux review.",
-        "npm run check:ai validates the layout and the guard decisions; npm run check passes.",
-        ".codex, .agents and .cursor are removed and docs describe the new workflow."
-      ],
-      "validation": [
-        "npm run check",
-        "npm run format:check",
-        "/rytta-preview capture of a signed-in fixture screen"
-      ],
-      "evidence": [
-        "docs/decisions/038-claude-code-setup.md",
-        "docs/ai-workflow.md",
-        "docs/evidence/RYT-083/validation.md",
-        "scripts/check-ai.mjs"
-      ]
-    },
-    {
       "id": "RYT-084",
       "title": "Remove merely informative page intros and brand slogans",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "claude-sonnet-5-5",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
-      "dependsOn": ["RYT-083"],
+      "dependsOn": [],
       "sources": [
-        "User 2026-11-10: \"Audit the intros\" then \"Apply all\" (ai-code-slop-remover audit of page intros and brand copy)."
+        "User 2026-11-10: \"Audit the intros\" then \"Apply all\" (audit of page intros and brand copy)."
       ],
       "scope": "Cut page intros that repeat the title or describe visible controls (hub, DM command center, Party, roster DM, storeroom, shops, glossary, tabletop), shorten auth title, roster, bestiary, calibration and Player map hints, drop the header tagline and footer slogan, delete unused brand/intro keys, show the pinch hint on phones and keep bottom-bar clearance without the footer.",
       "acceptance": [
@@ -3360,7 +2821,7 @@
         "Kept facts stay: who sees the bestiary, only the active character joins the party, the Player members hint, licence and demo texts.",
         "The Player map pinch hint shows on phones.",
         "On phones the last content stays clear of the bottom bar without the footer (>= 8px gap).",
-        "npm run check and npm run test:e2e pass; ui-ux PASS on the current fingerprint."
+        "npm run check and npm run test:e2e pass; UI review PASS on the current fingerprint."
       ],
       "validation": [
         "npm run check",
@@ -3372,8 +2833,7 @@
         "docs/evidence/RYT-084/validation.md",
         "docs/evidence/RYT-084/sheet-before-mobile.webp",
         "docs/evidence/RYT-084/sheet-after-mobile.webp",
-        "docs/evidence/RYT-084/sheet-after-tablet.webp",
-        "docs/evidence/RYT-084/ui-review.md"
+        "docs/evidence/RYT-084/sheet-after-tablet.webp"
       ]
     },
     {
@@ -3381,10 +2841,6 @@
       "title": "Fix three low UI issues left by the RYT-084 review",
       "priority": "P3",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "claude-sonnet-5-5",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
       "dependsOn": ["RYT-084"],
       "sources": [
@@ -3396,24 +2852,20 @@
         "Escape (and Cancel) on the calibration dialog returns focus to the button that opened it; the form still starts from the saved setup on every opening.",
         "At 150% text on a 390px phone the Continue with Google label is centred, never clipped, and the button stays on screen with a 44px minimum height in ES and EN. Revised 2026-11-11: Inter is not bundled, so the line count follows the system font; Linux CI wraps it onto a second centred line (docs/evidence/RYT-085/validation.md).",
         "Checked at 390px and 820px in dark and parchment, ES and EN; e2e asserts the focus return, the board fit and the sign-in label.",
-        "npm run check and the tabletop and identity e2e specs pass; ui-ux PASS on the current fingerprint."
+        "npm run check and the tabletop and identity e2e specs pass; UI review PASS on the current fingerprint."
       ],
       "validation": [
         "npm run check",
         "npx playwright test tests/e2e/tabletop.spec.ts tests/e2e/identity.spec.ts",
         "390px and 820px probes and captures, both themes and languages"
       ],
-      "evidence": ["docs/evidence/RYT-085/validation.md", "docs/evidence/RYT-085/ui-review.md"]
+      "evidence": ["docs/evidence/RYT-085/validation.md"]
     },
     {
       "id": "RYT-086",
       "title": "Let the Player board fill the space below the page head",
       "priority": "P3",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "claude-sonnet-5-5",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
       "dependsOn": ["RYT-085"],
       "sources": [
@@ -3424,24 +2876,20 @@
         "With one- and two-line scene titles the Player board and its zoom stack end above the bottom bar at 390px and inside the viewport at 820x1180, at 100% and 150% text.",
         "Short titles keep about the board RYT-085 delivered (390px: ends at 748 instead of 752, with no page scroll); the board keeps a min(20rem, 40dvh) floor and the page scrolls only below it.",
         "Checked at 390px and 820px in dark and parchment, ES and EN; the RYT-085 e2e fit assertion also runs with a long title.",
-        "npm run check and the tabletop e2e spec pass; ui-ux PASS on the current fingerprint."
+        "npm run check and the tabletop e2e spec pass; UI review PASS on the current fingerprint."
       ],
       "validation": [
         "npm run check",
         "npx playwright test tests/e2e/tabletop.spec.ts",
         "390px and 820px probes with one- and two-line titles, 100% and 150% text, both themes and languages"
       ],
-      "evidence": ["docs/evidence/RYT-086/validation.md", "docs/evidence/RYT-086/ui-review.md"]
+      "evidence": ["docs/evidence/RYT-086/validation.md"]
     },
     {
       "id": "RYT-087",
       "title": "Bestiary art prompts name the official D&D creature",
       "priority": "P3",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "gpt-6.1-sol",
-        "reasoningEffort": "medium"
-      },
       "status": "done",
       "dependsOn": ["RYT-067"],
       "sources": [
@@ -3468,15 +2916,11 @@
       "title": "Painted bestiary art imported and the stat block led by its plate",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "claude-opus-5-5",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-067", "RYT-087"],
       "sources": [
         "User 2026-11-12: 330 pictures generated in art/bestiary/source; import them into Rytta and give the image more emphasis on the enemies' stat block, so it reads well.",
-        "User 2026-11-12, options artifact 2odTnthjLD9c5wqPTi2TUP: P1 A plate above the name on phones, P2 B two columns on tablets, P3 A portrait in the combat header, P4 A matted plate with photo corners, P5 A tap opens the image and a pencil changes it."
+        "User 2026-11-12, options page: P1 A plate above the name on phones, P2 B two columns on tablets, P3 A portrait in the combat header, P4 A matted plate with photo corners, P5 A tap opens the image and a pencil changes it."
       ],
       "scope": "Import the 330 painted pictures with the RYT-067 importer (credits, provenance, catalogue). The DM's stat block leads with the creature's plate: above the name on phones, in a sticky column beside the stat block when the pane is at least 34rem wide; the DM's combat detail of a creature shows a 112px portrait. Tapping the print opens the viewer; a 44px pencil changes the image or opens change and restore/remove. Creatures without any image keep the token picker beside the name; Players and the table are unchanged.",
       "acceptance": [
@@ -3491,8 +2935,8 @@
         "import_art.py --check and import of 330 files",
         "npm run check",
         "bestiary, combat and encounter-builder e2e at 390px, 820px and 1440px",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
       "evidence": [
         "docs/decisions/030-bestiary-art.md",
@@ -3503,8 +2947,7 @@
         "docs/evidence/RYT-088/combat-portrait-mobile.png",
         "tests/e2e/bestiary.spec.ts",
         "tests/e2e/combat.spec.ts",
-        "docs/evidence/RYT-088/validation.md",
-        "docs/evidence/ui-review/ryt-088/review.md"
+        "docs/evidence/RYT-088/validation.md"
       ]
     },
     {
@@ -3512,10 +2955,6 @@
       "title": "A bestiary per campaign: download the official one, edit creatures in place",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "claude-opus-5-5",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-053", "RYT-054"],
       "sources": [
@@ -3529,36 +2968,28 @@
         "The DM removes one official creature or all of them (deleting their campaign versions after a question) and brings them back; creatures already in a fight keep their stat block.",
         "The list, the add-to-fight search and the encounter builder use the campaign's bestiary.",
         "Only the campaign DM reads or changes it: anon, outsiders, Players and other DMs are refused; writes go through idempotent RPCs.",
-        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; independent ui-ux PASS."
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; independent UI review PASS."
       ],
       "validation": [
         "tests/database/campaign-bestiary.test.ts and npm run test:db",
         "npm run check",
         "bestiary, bestiary-official, combat and encounter-builder e2e at 390px, 820px (and 1440px for the existing laptop specs)",
-        "impeccable critique and audit",
-        "independent ui-ux PASS",
+        "design critique and audit",
+        "independent UI review PASS",
         "hosted PRE rehearsal and production migration with advisors"
       ],
-      "evidence": [
-        "docs/decisions/039-campaign-bestiary.md",
-        "docs/evidence/RYT-089/validation.md",
-        "docs/evidence/ui-review/ryt-089/review.md"
-      ]
+      "evidence": ["docs/decisions/039-campaign-bestiary.md", "docs/evidence/RYT-089/validation.md"]
     },
     {
       "id": "RYT-090",
       "title": "Character sheet led by its portrait: full-bleed plate, quieter stats and abilities",
       "priority": "P2",
       "owner": "frontend",
-      "recommendedModel": {
-        "id": "claude-opus-5-5",
-        "reasoningEffort": "high"
-      },
       "status": "done",
       "dependsOn": ["RYT-073", "RYT-074"],
       "sources": [
         "User 2026-11-12: improve the character sheet visuals; the portrait feels secondary or small; improve the overall frontend and UX of the screen.",
-        "User 2026-11-12, options artifact 8uZMRdqdyT8RPk4Thq5yC7: P1 A full-bleed plate, P2 c AC and initiative featured, P3 b neutral segmented HP bar, P4 b six abilities in one row on phones, P5 b inspiration badge on the portrait, P6 a full-screen viewer, P7 b monogram plus Add portrait, P8 b refresh icon in the top bar."
+        "User 2026-11-12, options page: P1 A full-bleed plate, P2 c AC and initiative featured, P3 b neutral segmented HP bar, P4 b six abilities in one row on phones, P5 b inspiration badge on the portrait, P6 a full-screen viewer, P7 b monogram plus Add portrait, P8 b refresh icon in the top bar."
       ],
       "scope": "Redesign the character sheet head: the portrait fills the width above the name with the HP ring on its lower edge, heroic inspiration as a badge on the plate and tapping the plate opens a viewer where the owner changes or removes the portrait; no portrait shows a monogram and, for editors, Add portrait. AC and initiative are featured and the other stats sit on one quiet line; HP actions become one neutral segmented control; abilities fit one row of six on phones; refresh moves next to the pencil. Tablets keep two columns.",
       "acceptance": [
@@ -3569,24 +3000,43 @@
         "Damage, heal and temporary HP open the existing dialog from one segmented control; locked sheets keep the lock note.",
         "Abilities show six columns on phones with modifier, score and save; proficient saves are marked by more than color.",
         "Edit mode keeps the AC, speed and level steppers and the max HP input.",
-        "390px and 820px, both themes and languages, keyboard, Escape, 150% text and axe clean; independent ui-ux PASS."
+        "390px and 820px, both themes and languages, keyboard, Escape, 150% text and axe clean; independent UI review PASS."
       ],
       "validation": [
         "npm run check",
         "character-sheet, characters and rest e2e at 390px and 820px",
-        "impeccable critique and audit",
-        "independent ui-ux PASS"
+        "design critique and audit",
+        "independent UI review PASS"
       ],
-      "evidence": [
-        "docs/evidence/RYT-090/validation.md",
-        "docs/evidence/ui-review/ryt-090/base-mobile-default-es.png",
-        "docs/evidence/ui-review/ryt-090/base-tablet-parchment-es.png",
-        "docs/evidence/ui-review/ryt-090/base-150-long-mobile-default-es.png",
-        "docs/evidence/ui-review/ryt-090/none-mobile-default-es.png",
-        "docs/evidence/ui-review/ryt-090/viewer-mobile-default-es.png",
-        "tests/e2e/character-sheet.spec.ts",
-        "docs/evidence/ui-review/ryt-090/review.md"
-      ]
+      "evidence": ["docs/evidence/RYT-090/validation.md", "tests/e2e/character-sheet.spec.ts"]
+    },
+    {
+      "id": "RYT-091",
+      "title": "The creature stat block uses the room under its plate on the web",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "in_progress",
+      "dependsOn": ["RYT-088"],
+      "sources": [
+        "User 2026-11-13: improve the UX of the creature stat block on the web; the space under the creature's picture is unused; make it flex and reuse the space.",
+        "User 2026-11-13, options page: P1 side pane A (flow under the picture), P2 wide sheet B (stat column)."
+      ],
+      "scope": "Bestiary stat block with a plate on wide frames. Side panes (34 to 44rem) flow: the plate sits beside the name and the core numbers, and the abilities, details and sections continue below at full width. Wider frames (44rem and up: tablet and laptop sheets) keep a stat column: plate, core numbers and the six abilities on the left, sticky when it fits the screen height; name, details and sections on the right. Phones, quick creatures, the combat console and the editor preview are unchanged.",
+      "acceptance": [
+        "In the laptop side pane the column under the plate is no longer empty: the abilities, details and sections run under the plate at the pane's full width, with the six abilities in one row.",
+        "In a sheet 44rem or wider the left column holds the plate, AC, HP, initiative, speed and the abilities; it stays in view while the right column scrolls when the screen is tall enough, and scrolls with the page otherwise.",
+        "On a 390px phone the plate stays above the name and AC, HP and initiative stay on the first screen at normal text size.",
+        "The plate keeps its viewer, pencil, notices and focus behaviour from RYT-088; reading order starts with the creature's name.",
+        "390px, 820px, 1024px and 1440px, both themes and languages, keyboard, 150% text and axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "bestiary, bestiary-official, combat and encounter-builder e2e at 390px, 820px and 1440px",
+        "captures at 390, 820, 1024 and 1440 in both themes",
+        "design critique and audit",
+        "independent UI review PASS"
+      ],
+      "evidence": []
     }
   ]
 }

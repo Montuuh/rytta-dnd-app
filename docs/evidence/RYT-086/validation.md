@@ -41,5 +41,5 @@ Screenshots: `board-mobile-default-en-150-two.png`, `board-tablet-parchment-en-1
   on desktop (1440px), where the 71-character title stays on one line; the wrap assertion is now
   limited to phones and tablets, and the fit assertion runs on all three sizes. With the old CSS
   the probe shows the long title past the limit on 390px (877 vs 779) and 820px (1187 vs 1180).
-- ui-ux: see `ui-review.md`.
+- UI review: see `ui-review.md`.
 - Not covered: real devices, iOS Safari dynamic toolbars (`dvh`), hosted Supabase (fixture backend only).

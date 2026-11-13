@@ -52,9 +52,9 @@ RYT-043: a campaign creature adds an image through the picker, changes it from t
 
 ## Design flow and UI/UX review
 
-Brief, refinement and Impeccable critique/audit: [design-flow.md](design-flow.md) (detector clean; the
-P2/P3 findings fixed). Independent `ui-ux` review in
-[ui-review/ryt-053/review.md](../ui-review/ryt-053/review.md): round 1 CHANGES_REQUIRED (P1-1 the
+Brief, refinement and design critique/audit: the review report (detector clean; the
+P2/P3 findings fixed). Independent UI review in
+the review report: round 1 CHANGES_REQUIRED (P1-1 the
 saving/saved line squeezed the stat block heading; P2-2 Escape on the remove question closed the
 phone sheet; P2-3 the filled red confirm failed contrast; P3 copy and screen reader details), round 2
 **PASS** on digest `64f648f8…f3ea13` (recorded in `docs/evidence/ui-review-current.json`). Regression
@@ -62,7 +62,7 @@ checks were added for P1-1 (heading width, status under the token), P2-2 (Escape
 P2-3 (axe with the question open). Open by product decision: restoring the SRD art does not ask
 before discarding the DM's image (ADR 030).
 
-`npm run check`: typecheck, lint, architecture, docs, AI checks, 36 unit/SQL files (256 tests), build.
+`npm run check`: typecheck, lint, architecture, docs, 36 unit/SQL files (256 tests), build.
 `npm run test:e2e` (full suite, final code): 462 passed, 54 skipped by project, 0 failed.
 
 ## Not covered

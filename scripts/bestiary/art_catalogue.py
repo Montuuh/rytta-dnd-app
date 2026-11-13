@@ -311,8 +311,8 @@ def write_xlsx(rows: list[dict]) -> None:
          "or watermark, still readable when shrunk to a fingertip.", False),
         ("4. Download it with ChatGPT's download button (not a screenshot) and save it in the repository folder "
          "art/bestiary/source/ with exactly the name in 'File name to save' (the creature id + .png).", False),
-        ("5. Set Status to 'generated'. When you have a batch, close this file and ask Claude to import them "
-         "(or run 'python3 -I scripts/bestiary/import_art.py'): each imported row turns 'imported'.", False),
+        ("5. Set Status to 'generated'. When you have a batch, close this file and run "
+         "'python3 -I scripts/bestiary/import_art.py': each imported row turns 'imported'.", False),
         ("Other states: 'keep' keeps the current picture (a good portrait you prefer); 'rejected' means "
          "ChatGPT could not get it right yet. Status and notes are kept when the tracker is regenerated.", False),
         ("Corrections to send in the same conversation: 'Show the whole creature, centred, smaller in the "

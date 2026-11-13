@@ -22,7 +22,7 @@ See ADR 003. Registration is open with Google; no email allowlist. Invitations d
 ## Local verification
 
 - `npm run check`: final PASS; 34 tests in 5 files, including 19 SQL tests.
-  Covers compilation, lint, architecture/docs/agent contracts, unit tests and production build.
+  Covers compilation, lint, architecture/docs contracts, unit tests and production build.
 - Focused identity browser pass: 13/13 on 390px phone. Google PKCE URL construction,
   single callback consumption, expired/denied callbacks, create/accept/sign-out, DM invite/
   cancel/promote/handover/leave, scoped routes, Player denial, revoked membership, account
@@ -79,9 +79,9 @@ No secret, SMTP account or additional email-service key is required by this fron
 - `npm run format:check`: PASS. `git diff --check`: PASS.
 - Durable baseline and final mobile/tablet captures: `captures/`. All final ES/EN,
   dark/light and desktop/phone/tablet screenshots are also in `test-results/identity-final/`.
-- Independent `ui-ux` verdict: **PASS** for source digest
+- Independent UI verdict: **PASS** for source digest
   `6bc82848d71c005333324b9318761b2757c56815b7ce31295b970a25831af958`.
-  [Reviewer report](reviewer/review.md): 24 independent browser states at 390px/820px,
+  Reviewer report: 24 independent browser states at 390px/820px,
   ES/EN, dark/light, 150% text and reduced motion; zero axe violations, no overflow,
   measured touch targets at least 44px, focused keyboard/dialog/member/error checks.
   Reviewer-owned screenshots are in `reviewer/`. Hosted integration remains unverified.

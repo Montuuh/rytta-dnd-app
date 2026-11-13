@@ -77,7 +77,7 @@ test('keyboard search finds a condition in either language and shows its quick f
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
   await expect(search).toBeFocused()
   // English name in a Spanish interface.
-  // Real typing on the 782-entry "All" tab must keep every keystroke (ui-ux F1).
+  // Real typing on the 782-entry "All" tab must keep every keystroke (UI review F1).
   await search.pressSequentially('grappled', { delay: 40 })
   await expect(search).toHaveValue('grappled')
   await expect(page.getByText('1 entrada', { exact: true })).toBeVisible()
@@ -85,7 +85,7 @@ test('keyboard search finds a condition in either language and shows its quick f
   await expect(page).toHaveURL(/glossary\/condition\.grappled/)
   const headword = page.getByRole('heading', { name: 'Agarrado', exact: true })
   await expect(headword).toBeVisible()
-  // Enter moves focus to the opened headword (ui-ux F6).
+  // Enter moves focus to the opened headword (UI review F6).
   await expect(headword).toBeFocused()
   await expect(page.getByText('Inglés:')).toBeVisible()
   const facts = page.getByRole('region', { name: 'De un vistazo' })
@@ -99,13 +99,13 @@ test('keyboard search finds a condition in either language and shows its quick f
   await evidence(page, info.project.name, 'entry-grappled')
   // Search by alias, empty state and category tabs.
   if (narrow(page)) {
-    // Back from the reader returns to the same row of the index (ui-ux F4).
+    // Back from the reader returns to the same row of the index (UI review F4).
     await page.getByRole('link', { name: 'Todas las entradas' }).click()
     await expect(page.getByRole('link', { name: /^Agarrado/ })).toBeFocused()
   }
   await search.fill('agotamiento')
   await expect(page.getByRole('link', { name: /Cansancio/ })).toBeVisible()
-  // Arrow keys move between the search field and the results (ui-ux F5).
+  // Arrow keys move between the search field and the results (UI review F5).
   await search.press('ArrowDown')
   await expect(page.getByRole('link', { name: /Cansancio/ })).toBeFocused()
   await page.keyboard.press('ArrowUp')
@@ -153,7 +153,7 @@ test('a rules term on the character sheet opens its definition in place', async 
   await audit(page)
   await evidence(page, info.project.name, 'sheet-reference')
   await page.getByRole('button', { name: /^Volver a Clase de armadura$/i }).click()
-  // Going back keeps keyboard focus on the restored headword (ui-ux F3).
+  // Going back keeps keyboard focus on the restored headword (UI review F3).
   await expect(headword).toHaveText(/^Clase de armadura$/i)
   await expect(headword).toBeFocused()
   // With the module off for Players there is no page link, but definitions still work.
@@ -201,7 +201,7 @@ test('a Player creates, edits and deletes campaign homebrew; house rules join SR
   await evidence(page, info.project.name, 'homebrew-editor')
   await editor.getByRole('button', { name: 'Guardar entrada' }).click()
   await expect(page.getByRole('heading', { name: 'Mano Hundida' })).toBeVisible()
-  // Saving moves focus to the saved headword (ui-ux F6).
+  // Saving moves focus to the saved headword (UI review F6).
   await expect(page.getByRole('heading', { name: 'Mano Hundida' })).toBeFocused()
   // User text is plain and still links rules terms.
   await expect(
@@ -241,7 +241,7 @@ test('the DM edits a house rule where it appears and recovers from a stale revis
     name: 'Añadir una regla de la casa a «Descanso largo»',
   })
   await expect(addRule).toBeVisible()
-  // A visible label, not a bare glyph (ui-ux F5).
+  // A visible label, not a bare glyph (UI review F5).
   await expect(addRule).toContainText('Regla de la casa')
   await entryAction(page, house, 'Descanso duro', 'edit')
   const editor = page.getByRole('dialog', { name: 'Editar entrada' })
@@ -254,7 +254,7 @@ test('the DM edits a house rule where it appears and recovers from a stale revis
   await editor.getByRole('button', { name: 'Guardar cambios' }).click()
   const conflict = editor.getByRole('alert')
   await expect(conflict).toContainText('Esta entrada ha cambiado')
-  // The conflict takes focus so its recovery actions are reachable (ui-ux F2), not body or H1.
+  // The conflict takes focus so its recovery actions are reachable (UI review F2), not body or H1.
   await expect(conflict).toBeFocused()
   await audit(page)
   await evidence(page, info.project.name, 'edit-conflict', 'RYT-040')
@@ -475,7 +475,7 @@ test('closing a dirty editor asks before discarding the edits', async ({ page })
   await expect(ask).toBeVisible()
   await expect(ask.getByRole('button', { name: 'Seguir editando' })).toBeFocused()
   if (phone(page)) {
-    // Phones share the delete confirmation's layout: two full-width rows (ui-ux N3).
+    // Phones share the delete confirmation's layout: two full-width rows (UI review N3).
     const keep = (await ask.getByRole('button', { name: 'Seguir editando' }).boundingBox())!
     const drop = (await ask.getByRole('button', { name: 'Descartar cambios' }).boundingBox())!
     expect(Math.abs(keep.x - drop.x)).toBeLessThan(1)
@@ -648,7 +648,7 @@ test('Escape closes a definition opened from an item card before the card itself
   await term.focus()
   await page.keyboard.press('Enter')
   await expect(page.locator('.gl-sheet-headword')).toHaveText('Cortante')
-  // First Escape closes only the definition and returns focus to the term (ui-ux R2-1).
+  // First Escape closes only the definition and returns focus to the term (UI review R2-1).
   await page.keyboard.press('Escape')
   await expect(page.locator('.gl-sheet-headword')).toHaveCount(0)
   await expect(term).toBeVisible()
@@ -685,7 +685,7 @@ test('a search change from outside the field (the nav item) resets the field', a
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
   await search.pressSequentially('fire', { delay: 20 })
   await expect(page).toHaveURL(/q=fire/)
-  // Tapping the active Glosario destination drops ?q= (ui-ux R2-2).
+  // Tapping the active Glosario destination drops ?q= (UI review R2-2).
   await page.goto(glossaryUrl)
   await expect(search).toHaveValue('')
   await page.waitForTimeout(500)

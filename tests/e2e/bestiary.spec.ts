@@ -250,7 +250,7 @@ test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and ro
   await detail(page, info).getByRole('button', { name: 'Añadir a un encuentro' }).click()
   const dialog = page.getByRole('dialog', { name: 'Añadir Dragón rojo joven a un encuentro' })
   await expect(dialog).toBeVisible()
-  // ui-ux F1: Escape closes only the dialog; the stat block sheet stays and gets focus back.
+  // UI review F1: Escape closes only the dialog; the stat block sheet stays and gets focus back.
   await expect(dialog.getByRole('textbox', { name: 'Cuántas' })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
@@ -325,12 +325,12 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   let editor = page.getByRole('dialog', { name: 'Editar Lobo en esta campaña' })
   await expect(editor).toBeVisible()
   await editor.getByRole('textbox', { name: 'Nombre', exact: true }).first().fill('Lobo de sombra')
-  // ui-ux R2: tags and alignment come from the SRD type line ("Bestia Mediana, sin alineamiento").
+  // UI review R2: tags and alignment come from the SRD type line ("Bestia Mediana, sin alineamiento").
   await expect(editor.getByRole('textbox', { name: 'Etiquetas' })).toHaveValue('')
   await expect(editor.getByRole('textbox', { name: 'Alineamiento' })).toHaveValue(
     'sin alineamiento',
   )
-  // ui-ux F3: closing with changes asks first; keeping on editing keeps the draft.
+  // UI review F3: closing with changes asks first; keeping on editing keeps the draft.
   await page.keyboard.press('Escape')
   const discard = page.getByRole('dialog', { name: '¿Descartar los cambios?' })
   await expect(discard.getByRole('button', { name: 'Seguir editando' })).toBeFocused()

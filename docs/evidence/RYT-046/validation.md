@@ -54,7 +54,7 @@ never reach the tab or its query. axe (WCAG 2.1 AA) on the panel and every dialo
 add dialog and list. Old `combat?tab=bestiary` links redirect (`combat.spec.ts`, RYT-043 image test).
 Screenshots: `docs/evidence/RYT-046..049/*-{mobile,tablet}.png`.
 
-`npm run check`: typecheck, lint, architecture, docs, AI checks, 35 unit/SQL files (252 tests), build.
+`npm run check`: typecheck, lint, architecture, docs, 35 unit/SQL files (252 tests), build.
 `npm run test:e2e` (full suite, 489 tests): 439 passed, 49 skipped by project, 1 failed: `roster.spec.ts`
 "the DM archives an unassigned character…" on the tablet project, a focus timing check outside the
 bestiary that failed under full-suite load and passed 8/8 when repeated alone (desktop and tablet).
@@ -62,7 +62,7 @@ The bestiary and combat specs pass 80/80 on the three identity projects after th
 
 ## UI/UX review
 
-Independent `ui-ux` review in [ui-review.md](ui-review.md): first pass CHANGES_REQUIRED (F1–F14, six
+Independent UI review in the review report: first pass CHANGES_REQUIRED (F1–F14, six
 major), re-review 1 CHANGES_REQUIRED (two regressions R1–R2 introduced by the fixes), re-review 2
 **PASS** on digest `0eb562ba…cdf674` (recorded in `docs/evidence/ui-review-current.json`).
 Deferred non-blocking items, accepted explicitly: R4 (CR slider thumbs have a ~36px invisible hit

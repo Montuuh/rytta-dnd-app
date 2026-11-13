@@ -29,7 +29,7 @@ Painted maps at 40 px a square, 30 × 20, with props drawn as the board draws th
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs and AI contracts, 298 unit and SQL tests
+- `npm run check`: typecheck, lint, architecture, docs contracts, 298 unit and SQL tests
   (42 files; `uvtt.test.ts` new), build — passed.
 - `RYT_EVIDENCE=1 RYT_CAPTURE=1 npx playwright test tests/e2e/tabletop.spec.ts` on identity-desktop,
   identity-tablet and identity-mobile: 18 passed, including the new Dungeon Alchemist import
@@ -41,9 +41,9 @@ Painted maps at 40 px a square, 30 × 20, with props drawn as the board draws th
 Untested: a real Dungeon Alchemist export (the format follows Dungeondraft's published fields; the
 e2e builds an equivalent file), very large exports near 120 squares a side, iOS Safari decoding.
 
-## Impeccable critique and audit (2026-11-05)
+## design critique and audit (2026-11-05)
 
-Method: dual-agent (A design review, B detector and technical audit), isolated sub-agents. Detector:
+Method: two independent reviews (A design review, B detector and technical audit). Detector:
 no findings (exit 0). A scored 26/40; B scored 15/20 on the audit. Fixed:
 
 | Finding | Fix |
@@ -67,9 +67,9 @@ created scene (preview by index, board by item id), and a real Dungeon Alchemist
 Checks after the fixes: `npm run check` passed (299 tests, build); tabletop e2e 18 passed on desktop,
 tablet and mobile.
 
-## Independent ui-ux review, round 1 fixes
+## Independent UI review, round 1 fixes
 
-Round 1 (CHANGES_REQUIRED, [report](../ui-review/ryt-064/review.md)) found ink maps drawn painted on
+Round 1 (CHANGES_REQUIRED, report) found ink maps drawn painted on
 the table and phones (the projection had no recipe), unreadable area numbers in the import preview,
 focus lost while a file was read, and the browser's focus outline swelling to several squares when an
 item was tapped. Fixed:
@@ -89,8 +89,8 @@ item was tapped. Fixed:
 Checks: `npm run check` passed (299 tests, build); tabletop e2e 18 passed on desktop, tablet and mobile.
 
 Round 2: **PASS** for fingerprint `2d35a5e4ff32786619c6f11f699826f69f3e01f723f8245f76b709050e3ada4b`
-([report](../ui-review/ryt-064/review.md)). Open P3s (not blocking): area numbers can overlap on very
+(report). Open P3s (not blocking): area numbers can overlap on very
 dense maps (cap them to their area), the scene name keeps the first file's name when another file is
 picked, Spanish agreement in the import announcement and summary ("1 puertas", "1 áreas", "1 área …
-tomadas", "No se importan 1 ventana"), plain picture uploads are not announced, plus the Impeccable P3s
+tomadas", "No se importan 1 ventana"), plain picture uploads are not announced, plus the design review P3s
 above. Untested: iOS Safari, screen readers, a real Dungeon Alchemist export, 200% text.

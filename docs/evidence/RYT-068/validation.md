@@ -2,7 +2,7 @@
 
 Delivery of 2026-11-07 on top of RYT-066 (uncommitted on `main`, base d303101). Decision:
 [ADR 033](../../decisions/033-map-art.md). Art rules: [generated sprite art](../../sprite-art.md).
-Design flow: [design flow](design-flow.md).
+Design flow: design flow.
 
 ## What changed
 
@@ -44,9 +44,9 @@ Design flow: [design flow](design-flow.md).
 - Stored maps measured at 96 px a square (3840 × 2688): 0.65–2.9 MB WebP with props, painted in
   0.2–0.65 s; an 80 × 80 map at 51 px a square: 0.94 MB.
 
-## Impeccable critique and audit (2026-11-07)
+## design critique and audit (2026-11-07)
 
-Method: dual-agent, isolated sub-agents (A design review with browser captures at 390, 820 and 1440
+Method: two independent reviews (A design review with browser captures at 390, 820 and 1440
 in both themes; B detector, overlay, axe, tap targets, overflow and focus). Detector CLI: no findings
 (exit 0, also without config). Overlay: 3 warnings in the dialog. Axe: 0 violations at every size;
 no horizontal overflow; focus trapped in the dialog. A scored 27/40.
@@ -69,9 +69,9 @@ no horizontal overflow; focus trapped in the dialog. A scored 27/40.
 Left (P3): the halo of a light prop can cross a cave wall; tiny cave decals are noise at TV scale; a
 revealed cavern shows 0.4 of a square of the cavern it touches (no wall between them).
 
-## Independent ui-ux review
+## Independent UI review
 
-Round 1 ([review](../ui-review/ryt-068/review.md)): CHANGES_REQUIRED, four P2 and four P3.
+Round 1: CHANGES_REQUIRED, four P2 and four P3.
 
 | Finding | Fix |
 | --- | --- |
@@ -240,7 +240,7 @@ recipe, already open JSON).
     stalagmites, statues, chains, the cart, the obelisk and the spike trap;
   - side views among the decals: flower patches and grass tufts.
 
-  Floors, effects and the other decals are top-down. The audit page (private artifact) lists every
+  Floors, effects and the other decals are top-down. The private audit page lists every
   variant, where it is used, and a prompt to regenerate it.
 
 ## Second import (2026-11-08)
@@ -265,7 +265,7 @@ recipe, already open JSON).
   the flower patches.
 - **Checks:** `npm run check` passes (310 tests; the others went with RYT-069's changes in this
   working tree), and the tabletop e2e passes 18/18.
-- **ui-ux round 12: CHANGES_REQUIRED, two P2 findings.**
+- **UI review round 12: CHANGES_REQUIRED, two P2 findings.**
   - R12-1: the wall torches (sheet #59, not part of the audit) were front views with flames as
     tongues, so they pointed into the wall once turned with it. The import now leaves the whole
     sheet out, and Rytta draws its top-down torches.
@@ -274,7 +274,7 @@ recipe, already open JSON).
   - Both sheets are pending in the catalogue with stronger prompts. `REDO` in
     `scripts/sprites/catalogue.py` lists the sheets to generate again and what the import leaves out
     meanwhile.
-- **ui-ux round 13: PASS.**
+- **UI review round 13: PASS.**
   - Torches: 26 placed on all four walls show the bracket on the wall edge and the flame inside the
     room.
   - Chests: the six that remain read as chests, never barrels.
@@ -296,7 +296,7 @@ recipe, already open JSON).
     the wall and its handle toward the room.
   - Chests read as chests beside barrels.
 - **Accepted by the author:** two of nine shards and the lavender among the flower patches.
-- **ui-ux round 14: PASS** (bound to asset and code hashes in the review).
+- **UI review round 14: PASS** (bound to asset and code hashes in the review).
   - All four torch variants keep the plate on the wall in all four turns.
   - The eight chests never read as barrels.
   - The market stall reads from above in the library, the inspector and ink.

@@ -66,7 +66,7 @@ the compass is decorative. Self-host future fonts and document licenses.
 Playwright covers an 820px tablet and a 390px touch phone profile; 1440px desktop runs the demo specs and the signed-in specs with wide-layout assertions.
 Inspect captures and exercise keyboard, drawer/Escape, direct links, 150% text and reduced motion.
 Axe supplements visual/touch review; mobile Chromium emulation does not verify iOS Safari.
-Every interface change requires the independent ui-ux verdict described in [UI review](ui-review.md).
+Every interface change gets an independent UI review.
 
 ## DM tools and item lists (RYT-027)
 
@@ -364,7 +364,7 @@ cursor, or under the finger and placed on release. The preview is the exact pict
 be placed. The option strip, never an overlay on the board, holds the prop's name, its turn (two
 quarter-turn keys, R and Shift+R), "Another version", "Change prop" and "Done".
 
-Board art (design-flow.md, section 2): ink-on-parchment and painted map looks, original line-art props
+Board art: ink-on-parchment and painted map looks, original line-art props
 (2.5px outlines at 64px per square), tokens in the combat token shapes with a name plate and a breathing
 amber double ring for the active turn (static with reduced motion), translucent fog for the DM and opaque
 fog with paper fibre and feathered edges on the table and phones, an amber measuring tape over a dark halo

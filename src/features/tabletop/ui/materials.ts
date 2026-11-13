@@ -246,7 +246,7 @@ const underground: Record<string, Materials> = {
     wall: 'wall-cave-rock',
     water: 'water-deep',
     rock: warmRock,
-    // Fewer, larger details: small specks read as noise on a TV (ui-ux RYT-068).
+    // Fewer, larger details: small specks read as noise on a TV (UI review RYT-068).
     decals: [
       { art: 'pebbles', share: 0.03, size: [0.4, 0.6] },
       { art: 'rubble-scatter', share: 0.04, size: [0.5, 0.85], where: 'edge' },

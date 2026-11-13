@@ -37,7 +37,7 @@ Inventory, equipment, use/undo and portraits (ADR 014):
   through the card and paper doll with AC and attack updates and picker focus return;
   hold-to-use needing a sustained press; DM forge from an SRD template with give-to;
   hidden module for Players; portrait upload. 21/21 pass on 1440, 820 and 390 px.
-- Full gates: `npm run check` passes (typecheck, lint, architecture, docs, AI contracts, 14
+- Full gates: `npm run check` passes (typecheck, lint, architecture, docs, 14
   unit/SQL files with 83 tests, build); `prettier --check` passes; `npm run test:e2e` passes
   171/171 (7.5 min) across desktop, tablet, mobile and the identity projects, run with the
   preinstalled Chromium through a local config shim. Re-run on the final reviewed source
@@ -64,7 +64,7 @@ Inventory, equipment, use/undo and portraits (ADR 014):
 
 ## UI review
 
-Independent `ui-ux` review (report: `reviewer/review.md`, screenshots alongside):
+Independent UI review (report: `reviewer/review.md`, screenshots alongside):
 
 1. Initial review: CHANGES_REQUIRED. Blocker: the undo fuse covered item-card controls at
    150% text. Majors: focus dropped to the body after some actions, action errors were

@@ -24,7 +24,7 @@ This document separates observations (what the table needs and what D&D Sync doe
   status (design system).
 - PostgreSQL RLS and security definer RPCs are authoritative; the browser never edits shared state
   read-modify-write. Realtime is a hint; polling and refetch on reconnect keep the truth.
-- No unlicensed rules or art. Every generated map, prop and sound is made by Rytta's own code.
+- Every generated map, prop and sound is made by Rytta's own code.
 
 ## 2. What D&D Sync's Tabletop does (observed)
 

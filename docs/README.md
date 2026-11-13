@@ -6,38 +6,36 @@
 4. [Security](security.md): current policies and future transaction contracts.
 5. [Design system](design-system.md): Mantine and touch interaction.
 6. [Development](development.md) and [deployment](deployment.md).
-7. [AI workflow](ai-workflow.md): Claude Code skills, subagents, hooks and MCP.
-8. [Backlog guide](backlog/README.md) and [canonical tickets](backlog/items.json).
-9. [ADR 001](decisions/001-foundation.md).
-10. [Verification evidence](evidence/scaffold-validation.md).
-11. [Mandatory UI/UX review](ui-review.md) and [UI design flow](ui-design-flow.md).
-12. [ADR 002: appearance and localization](decisions/002-appearance-localization-review.md)
+7. [Backlog guide](backlog/README.md) and [canonical tickets](backlog/items.json).
+8. [ADR 001](decisions/001-foundation.md).
+9. [Verification evidence](evidence/scaffold-validation.md).
+10. [ADR 002: appearance and localization](decisions/002-appearance-localization-review.md)
     and [RYT-016 verification](evidence/RYT-016/validation.md).
-13. [Google and Supabase setup](setup-google-supabase.md) and
+11. [Google and Supabase setup](setup-google-supabase.md) and
     [ADR 003: identity and campaign membership](decisions/003-identity-campaign-membership.md).
-14. [ADR 004: DM-created characters and player assignment](decisions/004-player-character-assignment.md)
+12. [ADR 004: DM-created characters and player assignment](decisions/004-player-character-assignment.md)
     records the RYT-003 character assignment contract.
-15. [ADR 005: resources and account home](decisions/005-homebrew-resources-account-home.md)
+13. [ADR 005: resources and account home](decisions/005-homebrew-resources-account-home.md)
     and [RYT-003 verification](evidence/RYT-003/validation.md).
 
-16. [ADR 006: shell and member character management](decisions/006-shell-member-character-management.md)
+14. [ADR 006: shell and member character management](decisions/006-shell-member-character-management.md)
     and [RYT-018 verification](evidence/RYT-018/validation.md).
-17. [PRE environment and ETL](pre-environment.md),
+15. [PRE environment and ETL](pre-environment.md),
     [ADR 007](decisions/007-shared-project-pre.md) and
     [RYT-017 verification](evidence/RYT-017/validation.md).
-18. [ADR 008: campaign home and compact settings](decisions/008-campaign-home-compact-settings.md)
-19. [ADR 009: member cards, membership invites and Player POV](decisions/009-member-cards-membership-invite-preview.md)
+16. [ADR 008: campaign home and compact settings](decisions/008-campaign-home-compact-settings.md)
+17. [ADR 009: member cards, membership invites and Player POV](decisions/009-member-cards-membership-invite-preview.md)
     and [RYT-019 verification](evidence/RYT-019/validation.md).
 
-20. [ADR 010: one home for character management](decisions/010-character-management-home.md)
+18. [ADR 010: one home for character management](decisions/010-character-management-home.md)
     and [RYT-021 verification](evidence/RYT-021/validation.md).
-21. [ADR 011: warm dark palette, stacked navbar and resource ergonomics](decisions/011-warm-dark-stacked-navbar.md)
+19. [ADR 011: warm dark palette, stacked navbar and resource ergonomics](decisions/011-warm-dark-stacked-navbar.md)
     and [RYT-022 verification](evidence/RYT-022/validation.md).
-22. [ADR 012: DM Command Center, active module visibility and quick revelations queue](decisions/012-dm-command-center-and-module-visibility.md)
+20. [ADR 012: DM Command Center, active module visibility and quick revelations queue](decisions/012-dm-command-center-and-module-visibility.md)
     and [RYT-023 verification](evidence/RYT-023/validation.md).
-23. [ADR 013: character creation wizard and 5.5e character sheet](decisions/013-character-sheet-and-creation.md)
+21. [ADR 013: character creation wizard and 5.5e character sheet](decisions/013-character-sheet-and-creation.md)
     and [RYT-024 verification](evidence/RYT-024/validation.md).
-24. [ADR 014: inventory, equipment, use/undo and portraits](decisions/014-inventory-equipment.md)
+22. [ADR 014: inventory, equipment, use/undo and portraits](decisions/014-inventory-equipment.md)
     and [RYT-004 verification](evidence/RYT-004/validation.md).
 
 Code describes current behavior; tickets describe future work. Research is
@@ -98,7 +96,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-079–082 verification](evidence/RYT-080/validation.md): rests asked of the table and
     voted around the fire, server-side rests with short-rest hit dice, 3D dice, the DM's absence
     and active-character choices, and New character in the party list.
-49. [ADR 038: Claude Code as the agent platform](decisions/038-claude-code-setup.md)
-    and [RYT-083 verification](evidence/RYT-083/validation.md).
-50. [ADR 039: each campaign has its own bestiary; the DM downloads the official one](decisions/039-campaign-bestiary.md):
+49. [ADR 039: each campaign has its own bestiary; the DM downloads the official one](decisions/039-campaign-bestiary.md):
     the campaign's official bestiary, versions edited in place and removals.

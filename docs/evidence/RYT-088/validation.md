@@ -17,13 +17,12 @@ Delivery of 2026-11-12 on `main` (base 21793db, uncommitted together with RYT-08
 
 ## Design flow
 
-1. Brief with `ui-ux-pro-max` (stat block for the DM at the table; reserve the square, load the 720px
+1. Design brief (stat block for the DM at the table; reserve the square, load the 720px
    rendition, keep AC/HP/initiative in reach, no pill or button overuse).
-2. Options page with interactive mockups and the real owlbear art
-   (https://claude.ai/artifact/2odTnthjLD9c5wqPTi2TUP). The user answered P1 A (plate above the name),
+2. Options page with interactive mockups and the real owlbear art. The user answered P1 A (plate above the name),
    P2 B (two columns), P3 A (portrait in the combat header), P4 A (matted plate with photo corners),
    P5 A (tap opens the image, pencil changes it), all the recommended options.
-3. `frontend-design` refinement: 12px mat in `--app-raised`, 16px accent corners (10px on the combat
+3. frontend design refinement refinement: 12px mat in `--app-raised`, 16px accent corners (10px on the combat
    portrait), the viewer's print shadow and no card shadow, a slight dim of the print in dark themes,
    a 1px lift on hover and 0.99 press (none with reduced motion), focus outline around the mat, the
    pencil always visible (touch has no hover), sticky column 12px from the top (81px under the
@@ -46,7 +45,7 @@ Delivery of 2026-11-12 on `main` (base 21793db, uncommitted together with RYT-08
 
 ## Checks
 
-- `npm run check`: typecheck, lint, architecture, docs, AI contracts, 50 test files / 354 tests,
+- `npm run check`: typecheck, lint, architecture, docs, 50 test files / 354 tests,
   build. Passed.
 - E2E, identity projects at 390 × 844, 820 × 1180 and 1440 × 1000: `bestiary.spec.ts`,
   `combat.spec.ts`, `encounter-builder.spec.ts`. First full run: mobile and desktop passed; the 12
@@ -62,7 +61,7 @@ Delivery of 2026-11-12 on `main` (base 21793db, uncommitted together with RYT-08
   [combat 820](combat-portrait-tablet.png). Both themes, keyboard focus on the print and the pencil,
   and 150% text were captured at 390 and 820 with the fixture dev server and inspected (not kept).
 
-## Design review (impeccable)
+## Design review
 
 - Critique and audit by two independent passes on the rendered captures (390 and 820, Hearth and
   Parchment, keyboard focus, 150% text, combat). The detector pass was clean; the heuristic pass scored
@@ -75,10 +74,10 @@ Delivery of 2026-11-12 on `main` (base 21793db, uncommitted together with RYT-08
   phones. The reported combat Escape problem was a false alarm, now asserted in the e2e (Escape closes
   only the viewer, the detail stays open).
 
-## ui-ux review
+## UI review
 
 - Round 1 (joint with RYT-089, fingerprint `5dfb0fe5…`): CHANGES_REQUIRED,
-  [report](../ui-review/ryt-088/review.md).
+  report.
   - B1: the sticky plate slid under the sheet's sticky header (820 tablet, and 1440 at 150% text).
     Fixed: the sheet's header height is a custom property (`--bst-sheet-head`, the 44px close button
     in rem plus its padding) and the plate sticks 12px below it; measured 12px under the header at
@@ -93,7 +92,7 @@ Delivery of 2026-11-12 on `main` (base 21793db, uncommitted together with RYT-08
     initiative button; the portrait takes 16px more than the token) and M2 (laptop pane density:
     AC/HP wrap in the 20rem block beside the plate).
 - Round 2 (joint with RYT-089, fingerprint `4268b5d7…`, unchanged start to end): **PASS**,
-  [report, "Re-review (round 2)"](../ui-review/ryt-088/review.md). B1, B2, M3 and M4 resolved in the
+  report, "Re-review (round 2)". B1, B2, M3 and M4 resolved in the
   browser; no phone stat block lost AC, HP or initiative below the action bar (closest 30.5px). Manifest:
   `docs/evidence/ui-review-current.json` (tickets RYT-088 and RYT-089).
   - n1 (non-blocking, open): in Hearth the danger menu items (`.bst-menu-danger`, shared with RYT-089)

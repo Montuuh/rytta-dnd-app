@@ -26,7 +26,7 @@ Pages, change repository variables or modify production Auth configuration.
 - A separate Supabase-mode build with `/rytta-dnd-app/` base passed. Its phone smoke
   passed root/direct-hash reloads, asset-base validation, zero browser errors and zero
   HTTP responses >=400. Screenshot: `release-production-sign-in-mobile.png`.
-- Current `npm run check:ui-review`, `npm run format:check` and ignored `.env.local`
+- Current the UI review check, `npm run format:check` and ignored `.env.local`
   checks passed. Independent UI approval remains current; no rendered source changed.
 
 ## Confirmed production blockers

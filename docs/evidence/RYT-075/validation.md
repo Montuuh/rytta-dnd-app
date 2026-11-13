@@ -6,7 +6,7 @@ Delivery of 2026-11-09 on `main`. The user asked for three things:
 - the DM can delete scenes from the tabletop;
 - placing a prop shows a translucent preview, lets the sprite turn, and the whole placing UX improves.
 
-Design flow: [design-flow.md](design-flow.md).
+Design flow recorded with the review.
 
 ## What changed
 
@@ -51,9 +51,9 @@ Design flow: [design-flow.md](design-flow.md).
 | `npm run check` (typecheck, lint, contracts, unit and SQL tests, build) | Pass, 332 tests |
 | Tabletop e2e (`tests/e2e/tabletop.spec.ts`, 1440, 820 touch, 390) | 21 passed |
 | Full e2e suite (after the critique and review fixes) | 518 passed, 55 skipped (existing) |
-| Independent ui-ux review | PASS in round 2 for fingerprint `a65d16d1…297a678ec` ([the review](../ui-review/ryt-075/review.md)) |
+| Independent UI review | PASS in round 2 for fingerprint `a65d16d1…297a678ec` (the review) |
 
-ui-ux rounds:
+UI review rounds:
 
 - **Round 1: CHANGES_REQUIRED.** It found four P2 findings.
   - R75-1: closing the delete dialog left focus nowhere.

@@ -13,7 +13,7 @@ legacy sibling edits.
 
 ## Verification
 
-- `npm run check`: PASS, including strict typecheck, lint, architecture/docs/AI contracts,
+- `npm run check`: PASS, including strict typecheck, lint, architecture/docs contracts,
   55 unit/SQL tests across 10 files, and production build.
 - First E2E run (`npm run test:e2e`): 126 passed, 3 failed. The 3 failures were in
   `identity.spec.ts` (`DM invites, cancels and hands over before leaving; campaign routes stay scoped`)
@@ -27,10 +27,10 @@ legacy sibling edits.
   `docs/evidence/RYT-022/`. Refined `.skip-link` off-screen transform and `CharacterEditor`
   vertical stack spacing (`gap="xs"`, `yOffset="2dvh"`) so the 150% resource editor modal fits
   cleanly inside the `390×844` viewport.
-- Independent `ui-ux`: PASS, [review](reviewer/review.md). The reviewer inspected the modified
+- Independent UI review: PASS, review. The reviewer inspected the modified
   source files, rendered screenshots and live Playwright runs (`docs/evidence/RYT-022/reviewer/e2e/`)
   and approved source digest `da5f48cf6f7b173fe9e40be946810ebc9656f77b515ce9f50f94e734898c067b`.
-- `npm run check:ui-review`, `npm run format:check` and final `npm run check:fast`: PASS.
+- The UI review check, `npm run format:check` and final `npm run check:fast`: PASS.
 
 ## Boundaries
 

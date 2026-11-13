@@ -1,6 +1,6 @@
 # Delivery RYT-042: single Player combat view
 
-Date: 2026-11-03. Branch `worktree-agent-ab70fd5aa90f9a870`, cut from `main` at `38b3b14`
+Date: 2026-11-03. A worktree branch, cut from `main` at `38b3b14`
 (RYT-040 and RYT-041 merged; the hosted migration history then ended at `combat_roster`, matching
 the repository). `main` was merged in afterwards at `75652dc` (RYT-044 active characters and the
 glossary e2e stabilization) with no conflicts; every check below after "merge" ran on the merged
@@ -163,12 +163,12 @@ focus ring, and a reopened entry scrolls fully into view above the phone's botto
 - Behaviour change to note: Players can no longer end their own turn, change HP/conditions,
   record death saves or undo from the combat screen (the scope makes the table view their only
   panel). HP and conditions remain editable on the character sheet; the DM runs turns.
-- The independent `ui-ux` review is pending (not self-approved); the ticket is in `review`.
+- The independent UI review is pending (not self-approved); the ticket is in `review`.
 
 ## Review round 1 fixes
 
-The first independent `ui-ux` review of `bda9674` returned CHANGES_REQUIRED
-([ui-review.md](ui-review.md), committed as delivered). Every finding is addressed:
+The first independent UI review of `bda9674` returned CHANGES_REQUIRED
+(the review report, committed as delivered). Every finding is addressed:
 
 | Finding | Change | Test |
 | --- | --- | --- |
@@ -199,7 +199,7 @@ evidence on; no other ticket's screenshots changed. A focused re-review is pendi
 
 ## Integration (2026-11-03)
 
-- Independent ui-ux round 2 PASS at fingerprint `6a616378…` (head `1cc23a3`); the branch already
+- Independent UI review round 2 PASS at fingerprint `6a616378…` (head `1cc23a3`); the branch already
   contains main `75652dc`. Minor follow-ups R2-1..R2-3 from the review are carried into RYT-043.
 - Production: applied `combat_player_initiative` via Supabase MCP. Verified `public` and `pre`
   `set_initiative` carry the new rule ("Initiative closed"), `anon` cannot execute and

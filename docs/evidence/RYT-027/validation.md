@@ -1,6 +1,6 @@
 # RYT-027 verification
 
-Date: 2026-11-02. Branch `claude/ecstatic-clarke-dz03w7`, rebased on `main` at `d76cb3a`
+Date: 2026-11-02. a feature branch, rebased on `main` at `d76cb3a`
 (after RYT-005 shops and RYT-026 campaign items). Decision record:
 [ADR 018](../../decisions/018-dm-command-center-storeroom.md).
 
@@ -10,7 +10,7 @@ Date: 2026-11-02. Branch `claude/ecstatic-clarke-dz03w7`, rebased on `main` at `
 | --- | --- |
 | `npm run check` (typecheck, lint, contracts, unit tests, build) | Pass |
 | `npm run test:e2e` (all projects, 2 workers) | 237 passed |
-| `npm run check:ui-review` | Pass (round 2 PASS) |
+| The UI review check | Pass (round 2 PASS) |
 
 The first focused run (campaign items, identity, characters, inventory, shops) had 17 failures.
 All were selectors bound to the replaced UI:

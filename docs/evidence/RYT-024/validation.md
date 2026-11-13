@@ -26,7 +26,7 @@ Character creation wizard and 5.5e + homebrew character sheet (ADR 013):
   `set_character_resources`, stale revisions, idempotent replays, `Request mismatch`, level,
   JSON type/size, HP, condition and slot limits. `pre.test.ts` now expects 11 cloned tables
   and passes the full ETL suite with the new trigger and helper.
-- `npm run check`: typecheck, lint, architecture, docs, AI contracts, 12 unit/SQL files
+- `npm run check`: typecheck, lint, architecture, docs, 12 unit/SQL files
   (71 tests) and the production build pass. `npm run format:check` passes.
 - `npm run test:e2e` (run with the preinstalled Chromium through a local config shim, since
   the pinned Playwright browser build is not installed in this container): see results below.
@@ -63,7 +63,7 @@ E2E result: **150 passed** (6.9 min) across desktop, tablet, mobile and the thre
 
 ## UI review
 
-Independent `ui-ux` review (report: `reviewer/review.md`, screenshots alongside):
+Independent UI review (report: `reviewer/review.md`, screenshots alongside):
 
 1. Initial review: CHANGES_REQUIRED with three majors (rest dialog focus loss, nested route
    titles reading "page not found", Save and exit blocked by step validation) and minors.

@@ -10,7 +10,7 @@ production database, publication, commit or push was created.
   `npm run check` passed again after the clean install; final `npm run format:check` passed.
 
 - `npm run check`: passed strict TypeScript, Oxlint with warnings denied, feature boundaries,
-  documentation contracts, AI contracts, 15 Vitest tests and production build.
+  documentation contracts, 15 Vitest tests and production build.
 - Unit/database coverage: 5 configuration cases and 10 PostgreSQL policy cases.
   Anonymous/outsider access, role escalation, ownership, player mutation denial, DM edits,
   negative balances, cross-campaign moves, membership FK, atomic bootstrap and same-campaign
@@ -22,8 +22,7 @@ production database, publication, commit or push was created.
   Escape/focus return, 150% text and reduced motion.
 - Screenshots inspected: [desktop](camp-desktop.png), [tablet](camp-tablet.png),
   [mobile](camp-mobile.png). No clipping or horizontal overflow observed in these views.
-- `npm run check:ai`: 4 skills, 4 TOML agents, scoped rules and SessionStart JSON output pass.
-  Git core.hooksPath is `.husky/_`; lifecycle hook activation in Codex is a separate trust step.
+- Git core.hooksPath is `.husky/_`.
 - Dependency audit reported zero vulnerabilities at installation; this is a point-in-time signal.
 - Production entry chunk is about 298 kB minified / 93 kB gzip after route splitting;
   Supabase is loaded separately. This is build evidence, not a real-device performance measurement.
@@ -51,8 +50,6 @@ Docker/Supabase CLI are unavailable here. The migration has not been run through
 Supabase stack or hosted PostgREST/Auth/Storage/Realtime. Bootstrap TS database types are
 handwritten and must be regenerated once the local stack exists. No sign-in or gameplay
 UI is implemented. No iOS Safari/real hardware or GitHub-hosted workflow execution is claimed.
-The SessionStart script was executed directly and its output validated; host trust/activation
-and native custom-agent discovery are not asserted from file creation alone.
 
 These are documented boundaries of the requested foundation, with follow-up tickets,
 not claims that the companion is ready for live campaign use.

@@ -13,7 +13,7 @@ initiative, speed, proficiency and passive Perception at once; decide what to tr
 resources, spell slots, custom pools); class features linked to the library; collapsible blocks
 and modern widgets; Players must not change their own hit points; a portrait editor that crops or
 letterboxes; portraits everywhere. They asked for options first and to be asked every design
-question. The options artifact (https://claude.ai/artifact/JDKP2gkPPZfEPNP7wBnPar) and two
+question. The options page and two
 follow-up rounds produced these decisions (2026-11-09):
 
 | Question             | Decision                                                                                    |

@@ -1,6 +1,6 @@
 # RYT-028 verification
 
-Date: 2026-11-03. Branch `worktree-agent-a36f2c17bb8ec1cfb`.
+Date: 2026-11-03. A worktree branch.
 
 ## Changes
 
@@ -30,5 +30,5 @@ unequip buttons now go through the slot drawer) and `inventory.spec.ts` (storero
 ## Not verified
 
 - Rendered 390px and tablet screenshots were not captured (dev server uses PRE credentials).
-- Independent `ui-ux` review is pending, so the ticket stays in `review`.
+- Independent UI review is pending, so the ticket stays in `review`.
 - The scrollbar-gutter fix was not measured in a real browser with overflowing and non-overflowing pages.

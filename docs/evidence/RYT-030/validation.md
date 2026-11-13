@@ -1,6 +1,6 @@
 # RYT-030 verification
 
-Date: 2026-11-03. Branch `worktree-agent-a4029563949072bb6` on `main` at `002d7f2`.
+Date: 2026-11-03. A worktree branch on `main` at `002d7f2`.
 Decision record: [ADR 016, RYT-030 amendment](../../decisions/016-shops-merchants.md).
 Frontend only: no migrations, RPCs or RLS changed.
 
@@ -11,9 +11,9 @@ Frontend only: no migrations, RPCs or RLS changed.
 | `npm run check` (typecheck, lint, contracts, unit tests, build) | Pass |
 | `npx playwright test tests/e2e/shops.spec.ts` (identity desktop/tablet/mobile) | 15 passed |
 | `npm run test:e2e`, full suite | 240 passed, 3 failed (see below), then 3 passed |
-| Independent `ui-ux` review | Pending (not run by the implementing agent) |
+| Independent UI review | Pending (not run during implementation) |
 
-A parallel agent held ports 4173/4174, so the full suite ran with a temporary copy of
+A parallel run held ports 4173/4174, so the full suite ran with a temporary copy of
 `playwright.config.ts` on ports 5293/5294 (deleted afterwards). Three Google sign-in tests in
 `identity.spec.ts` failed only because they assert the literal `127.0.0.1:4174` callback. Once
 the default ports were free, those three tests passed on the standard config.
@@ -66,5 +66,5 @@ struck through, because `GoldAmount` is inline-flex and blocks `<del>` decoratio
 - Light theme screenshots: tokens are defined, but light theme was not captured.
 - Real touch devices: touch was emulated with Playwright `hasTouch`, and the tooltip tap toggle
   was not exercised.
-- Independent `ui-ux` verdict: pending, so `docs/evidence/ui-review-current.json` was not
+- Independent UI verdict: pending, so `docs/evidence/ui-review-current.json` was not
   updated.

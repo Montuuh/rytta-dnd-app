@@ -1248,17 +1248,17 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   await expect(row(page, 'Arin').locator('.combat-hp-bar')).toHaveCount(1)
   await expect(row(page, 'Arin')).toContainText('24/24 PG')
   await expect(row(page, 'Cato').locator('.combat-band')).toContainText('No compartido')
-  // ui-ux F3: "not shared" is quieter than the name (missing information, not a state).
+  // UI review F3: "not shared" is quieter than the name (missing information, not a state).
   const sizes = await row(page, 'Cato').evaluate((li) => ({
     band: parseFloat(getComputedStyle(li.querySelector('.combat-band-word')!).fontSize),
     name: parseFloat(getComputedStyle(li.querySelector('.combat-row-name')!).fontSize),
   }))
   expect(sizes.band).toBeLessThan(sizes.name)
-  // ui-ux F2: the skull means defeated only; side is the token's shape, not a skull.
+  // UI review F2: the skull means defeated only; side is the token's shape, not a skull.
   for (const name of ['Goblin 1', 'Goblin 2', 'Goblin 3'])
     await expect(row(page, name).locator('svg.lucide-skull')).toHaveCount(0)
   await expect(row(page, 'Goblin 4').locator('svg.lucide-skull')).toHaveCount(1)
-  // ui-ux F6: the lair is a keep with a castle glyph, never a letter.
+  // UI review F6: the lair is a keep with a castle glyph, never a letter.
   const lair = row(page, 'Guarida').locator('.combat-token')
   await expect(lair).toHaveClass(/shape-lair/)
   await expect(lair.locator('.combat-token-glyph')).toHaveCount(1)
@@ -1295,7 +1295,7 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   // 150% text: bands and tokens still fit.
   await page.evaluate(() => (document.documentElement.style.fontSize = '150%'))
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  // ui-ux F7: the "Now" token stays on a line with its label, never alone on its own row.
+  // UI review F7: the "Now" token stays on a line with its label, never alone on its own row.
   const banner = await page.evaluate(() => {
     const actor = document.querySelector('.combat-table-actor:not(.is-next)')!
     const token = actor.querySelector('.combat-token')!.getBoundingClientRect()
@@ -1344,7 +1344,7 @@ test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broke
   await expect(row(page, 'Goblin 3').locator('.combat-hp-bar')).toHaveCount(1)
   await expect(row(page, 'Ogre').locator('.combat-token')).toHaveClass(/is-hidden/)
   await expect(row(page, 'Ogre').locator('.combat-token img')).toHaveAttribute('src', /ogre/)
-  // ui-ux F1: the band phrase never breaks inside ("A / punto de caer") and the bar keeps most of
+  // UI review F1: the band phrase never breaks inside ("A / punto de caer") and the bar keeps most of
   // the row, also on a 390px phone and with 150% text.
   const hpLine = async () =>
     page.locator('.combat-rail:visible .combat-row').evaluateAll((rows) =>
@@ -1385,7 +1385,7 @@ test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broke
   await row(page, 'Goblin 2').locator('.combat-row-main').click()
   const detail = page.locator('.combat-detail:visible')
   await expect(detail.getByRole('button', { name: 'Ver la imagen de Goblin 2' })).toBeVisible()
-  // ui-ux F4: "CA 10" and "Iniciativa 16" never split from their value.
+  // UI review F4: "CA 10" and "Iniciativa 16" never split from their value.
   for (const pair of await detail.locator('.combat-meta > span').all())
     expect(
       await pair.evaluate(
@@ -1445,9 +1445,9 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   })
   const picker = card.getByLabel('Añadir una imagen de Goblin')
   await expect(picker).toHaveAttribute('type', 'file')
-  // ui-ux F5: one accessible name, on the control; no loose duplicate text.
+  // UI review F5: one accessible name, on the control; no loose duplicate text.
   await expect(card.getByText('Añadir una imagen de Goblin')).toHaveCount(0)
-  // ui-ux F4: each stat keeps its label and value together.
+  // UI review F4: each stat keeps its label and value together.
   await expect(card.locator('.sb-core > div').first()).toHaveText('CA15')
   await expectTouchTargets(page, '.combat-image-picker')
   // Keyboard: the picker takes focus and shows the focus ring around the token.
@@ -1494,7 +1494,7 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   await token.click()
   await page.getByRole('menuitem', { name: 'Quitar la imagen…' }).click()
   // Removing asks first (a quiet destructive action, axe-clean); Cancel and Escape keep the image,
-  // and Escape closes only the question, never the phone sheet underneath (ui-ux P2-2).
+  // and Escape closes only the question, never the phone sheet underneath (UI review P2-2).
   const ask = page.getByRole('dialog', { name: '¿Quitar la imagen de Goblin?' })
   // The menu fades out behind the question; audit once it is gone.
   await expect(page.getByRole('menu')).toHaveCount(0)

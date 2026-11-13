@@ -207,10 +207,6 @@ reporting and backup/rollback. Existing JSON exports are not a trusted API.
 - [HashRouter](https://reactrouter.com/api/declarative-routers/HashRouter).
 - [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
   and [Auth redirects](https://supabase.com/docs/guides/auth/redirect-urls).
-- [Codex customization](https://learn.chatgpt.com/docs/customization/overview),
-  [skills](https://learn.chatgpt.com/docs/build-skills),
-  [subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)
-  and [hooks](https://learn.chatgpt.com/docs/hooks).
 
 Package versions were resolved from npm; package-lock.json is the exact installation record.
 
@@ -221,5 +217,4 @@ Reviewed 2026-10-27 for RYT-016:
 [react-i18next useTranslation](https://react.i18next.com/latest/usetranslation-hook) and
 [i18next configuration](https://www.i18next.com/overview/configuration-options).
 Use Mantine's persisted scheme manager and bundled typed catalogs with explicit Spanish
-default, rather than detecting the browser language. Native Codex reviewer definitions
-follow the subagent documentation linked above. Palette selection is Rytta's design choice.
+default, rather than detecting the browser language. Palette selection is Rytta's design choice.

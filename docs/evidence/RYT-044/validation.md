@@ -1,6 +1,6 @@
 # Delivery RYT-044: Player character manager with an active character
 
-Date: 2026-11-03. Branch `worktree-agent-a3efb2b3c019f0796`, cut from `main` at `c9ed08f`.
+Date: 2026-11-03. A worktree branch, cut from `main` at `c9ed08f`.
 Decision record: [ADR 026](../../decisions/026-player-character-roster.md).
 
 ## Outcome
@@ -43,8 +43,8 @@ characters (1 assigned). No rows are deleted.
 | Check | Result |
 | --- | --- |
 | `npx vitest run tests/database` (after the migration) | 14 files, 99 tests passed. Initial run: `pre.test.ts` expected 30 ETL tables, now 31 with `private.character_requests`; count updated |
-| `npm run check` (typecheck, lint, architecture, docs, AI, unit + SQL, build) | passed: 31 files, 217 tests, build OK |
-| `CI=1 npx playwright test roster characters` (identity desktop, tablet, mobile), first run | 63 failed: other agents' servers on ports 4173/4174 during the run, plus real failures below |
+| `npm run check` (typecheck, lint, architecture, docs, unit + SQL, build) | passed: 31 files, 217 tests, build OK |
+| `CI=1 npx playwright test roster characters` (identity desktop, tablet, mobile), first run | 63 failed: other runs' servers on ports 4173/4174 during the run, plus real failures below |
 | same, after fixes | 78 passed, 12 skipped (language matrix limited to 390 px by design) |
 | `CI=1 RYT_EVIDENCE=1 npm run test:e2e` | 330 passed, 48 skipped, 0 failed (first attempt waited on a busy port) |
 
@@ -112,7 +112,7 @@ reserve.
 
 ## Round 2: review findings and archiving
 
-The independent review ([ui-review.md](ui-review.md), CHANGES_REQUIRED on `d9da43a`) is
+The independent review (the review report, CHANGES_REQUIRED on `d9da43a`) is
 committed unedited. How each finding is addressed:
 
 - **F1:** the onboarding dialog returns focus to "Crear mi personaje" after Escape, Cancel or ×.
@@ -255,7 +255,7 @@ Captured with `RYT_EVIDENCE=1` at 390 px (`-mobile`) and 820 px (`-tablet`), all
 
 ## Not verified
 
-- Independent `ui-ux` re-review of round 2: pending (runs separately);
+- Independent UI re-review of round 2: pending (runs separately);
   `docs/evidence/ui-review-current.json` not touched.
 - Production migrations (both RYT-044 files): pending, applied by the integrator after merge.
 - The server does not block editing the sheet of an archived character; only the roster limits
@@ -268,7 +268,7 @@ Captured with `RYT_EVIDENCE=1` at 390 px (`-mobile`) and 820 px (`-tablet`), all
 ## Integration (2026-11-03)
 
 - Merged main (RYT-040, RYT-041 and the glossary e2e stabilization) into the branch; conflict-free.
-  `npm run check` 227 tests; combat/roster/characters e2e 119 passed. Independent ui-ux round 3
+  `npm run check` 227 tests; combat/roster/characters e2e 119 passed. Independent UI review round 3
   PASS at fingerprint `3db35da2…`, unchanged by the later test-only merge.
 - Production: applied `character_roster` and `character_archive` via Supabase MCP. Prechecks:
   3 characters (2 assigned, 1 unassigned), no Player with more than one. Postchecks: columns,

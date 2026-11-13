@@ -85,11 +85,11 @@ export function GlossaryPage() {
   const [featureClass, setFeatureClass] = useState<FeatureClass | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
   // The field owns what is typed; the URL only mirrors it for deep links. Driving the input
-  // from the URL dropped keystrokes while the 550-row list re-rendered (ui-ux F1).
+  // from the URL dropped keystrokes while the 550-row list re-rendered (UI review F1).
   const urlQuery = params.get('q') ?? ''
   const [query, setQuery] = useState(urlQuery)
   // What this page last wrote to ?q= and what it last saw there: a ?q= change it did not
-  // write (the nav item, a link) replaces the typed text (ui-ux R2-2).
+  // write (the nav item, a link) replaces the typed text (UI review R2-2).
   const [writtenQuery, setWrittenQuery] = useState(urlQuery)
   const [seenUrlQuery, setSeenUrlQuery] = useState(urlQuery)
   if (urlQuery !== seenUrlQuery) {

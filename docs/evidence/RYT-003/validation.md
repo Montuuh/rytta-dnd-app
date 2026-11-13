@@ -99,12 +99,12 @@ Realtime belongs to RYT-013; current resources use explicit refresh and 20-secon
 
 ## Independent review
 
-Initial verdict and focused re-review are recorded by `ui-ux` in `reviewer/review.md`.
+Initial verdict and focused re-review are recorded by UI review in `reviewer/review.md`.
 Closure requires its actual PASS and the matching source fingerprint in the current manifest.
 
 ## Final verification after the UI correction
 
-- `npm run check`: PASS, 42 tests; typecheck, lint, architecture/docs/AI contracts and build.
+- `npm run check`: PASS, 42 tests; typecheck, lint, architecture/docs contracts and build.
 - `npm run test:e2e`: PASS, 96/96, no skipped tests (39.2 seconds). Includes maximum safe
   gold and PostgreSQL integer quantities at 150% text in all three viewport projects.
 - Source fingerprint: `a001c30f6d1fda3cf139f5a5fbf4de98dfe94dca24cafff9bbf1e4f6d40639dd`.
@@ -125,7 +125,7 @@ PostgreSQL/browser concurrency probe passed again after this correction.
 
 ## Closure
 
-Independent ui-ux final verdict: **PASS**, 2026-10-28, digest
+Independent UI review final verdict: **PASS**, 2026-10-28, digest
 `a001c30f6d1fda3cf139f5a5fbf4de98dfe94dca24cafff9bbf1e4f6d40639dd`.
 See `reviewer/review.md`; initial CHANGES_REQUIRED is retained in `review-initial.md`.
 Final focused review ran 12 phone/tablet cases at 150% across languages/themes and

@@ -5,7 +5,7 @@ Date: 2026-10-29. Ticket: member cards, membership invites and Player POV previe
 ## Independent UI/UX review
 
 - Verdict: **PASS**
-- Reviewer: ui-ux
+- Reviewer: UI review
 - Source digest: `bf88a9898095d94d4fd6f812679180a70b03773a0481323d5a45b9617ed914e0`
 - Report: `docs/evidence/RYT-020/reviewer/review.md`
 - Evidence: `docs/evidence/RYT-020/reviewer/captures/`, `results.json`
@@ -23,4 +23,4 @@ Date: 2026-10-29. Ticket: member cards, membership invites and Player POV previe
 - Hosted migration `20261029001848_membership_invite_and_unlink_on_revoke` applied to
   public; PRE RPCs remapped and invite execute granted. Unlink-on-revoke verified in both
   schemas.
-- Independent ui-ux review: PASS (digest above).
+- Independent UI review: PASS (digest above).

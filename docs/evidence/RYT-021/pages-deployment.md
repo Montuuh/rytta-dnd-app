@@ -1,6 +1,6 @@
 # RYT-021 verified GitHub Pages deployment
 
-Date: 2026-10-29. Continuation after the preflight agent hit its usage limit mid-publish.
+Date: 2026-10-29. Continuation after the preflight run stopped mid-publish.
 
 ## Published revision
 

@@ -1,6 +1,6 @@
 # Delivery RYT-045: Player death saves and end turn in the table view
 
-Date: 2026-11-03. Branch `worktree-agent-ae5927fd60f8c7f7a`, cut from `main` at `f6e5ea0`
+Date: 2026-11-03. A worktree branch, cut from `main` at `f6e5ea0`
 (RYT-040..044 merged). The hosted migration history ended at `combat_media`, matching the
 repository; no merged work covered this ticket.
 
@@ -170,13 +170,13 @@ query in em, so 150% text on a tablet no longer squeezes "Your turn!" beside the
 
 - Behaviour change: RYT-042 removed Player end turn and death saves; RYT-045 restores those two,
   redesigned for the table view, with stricter server rules for death saves.
-- The independent `ui-ux` review is pending (not self-approved; `ui-review-current.json` not
+- The independent UI review is pending (not self-approved; `ui-review-current.json` not
   touched); the ticket is in `review`.
 
 ## Review round 1 fixes
 
-The first independent `ui-ux` review of `d7f98ba` returned CHANGES_REQUIRED
-([ui-review.md](ui-review.md), committed as delivered in `125fe8f`). Every finding is addressed:
+The first independent UI review of `d7f98ba` returned CHANGES_REQUIRED
+(the review report, committed as delivered in `125fe8f`). Every finding is addressed:
 
 | Finding | Change | Test |
 | --- | --- | --- |
@@ -205,7 +205,7 @@ re-review is pending.
 
 ## Integration (2026-11-04)
 
-- Independent ui-ux round 2 PASS at fingerprint `14cb1244…` (commit `b202c6f`); the branch
+- Independent UI review round 2 PASS at fingerprint `14cb1244…` (commit `b202c6f`); the branch
   contains current main `f6e5ea0`.
 - Production: applied `combat_player_death_saves` via Supabase MCP. `public.record_death_save`
   (Not your turn / Already rolled) and `public.get_combat_state` (death_state) carry the new

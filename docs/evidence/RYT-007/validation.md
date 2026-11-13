@@ -12,12 +12,12 @@ realtime publication entry and a PRE mirror. No existing rows change.
 
 | Check | Result |
 | --- | --- |
-| `npm run check` (typecheck, lint, architecture/docs/AI contracts, 174 unit/SQL tests, build) | Pass |
+| `npm run check` (typecheck, lint, architecture/docs contracts, 174 unit/SQL tests, build) | Pass |
 | `tests/database/combat.test.ts` (PGlite, 8 tests, public and PRE mirror) | Pass |
 | `tests/database/pre.test.ts` | Initially failed: the ETL dry-run table count moved from 23 to 29 (assertion updated) |
 | `src/features/combat/domain/combat.test.ts` (order, ties, DC, preview projection) | Pass |
 | `tests/e2e/combat.spec.ts` on identity desktop, tablet and mobile (2 tests each) | 6 passed |
-| CI `verify` on the first push | Failed only at `check:ui-review` (review pending) |
+| CI `verify` on the first push | Failed only at `UI review check` (review pending) |
 
 On the first runs, the e2e found two real issues, both fixed before review:
 - After typing a missing initiative, the detail drawer popped open.
@@ -95,7 +95,7 @@ not re-run here; only the combat spec was.
 - Screenshots in Spanish, dark theme, at 390px (`*-mobile.png`) and 820px (`*-tablet.png`), captured with `RYT_EVIDENCE=1`:
   - `dm-prepare`, `player-initiative`, `dm-active`, `player-turn`, `dm-area-damage`, `dm-log`, `table`, `summary`.
 - English and light: `player-turn-en-light-*`.
-- The independent `ui-ux` review is in [docs/evidence/ui-review/combat/review.md](../ui-review/combat/review.md):
+- The independent UI review is in the review report:
   - Round 1: CHANGES_REQUIRED (B1–B3, M1–M4 and minors), all fixed.
   - Re-review 1: CHANGES_REQUIRED (N1–N3), fixed.
   - Re-review 2: CHANGES_REQUIRED (the N3 toast covered the turn bar and dialog buttons on phones), fixed.
@@ -149,4 +149,4 @@ not re-run here; only the combat spec was.
   returns `is_active: false` on every combatant. `anon` cannot execute public or PRE; `authenticated` can.
   The PRE copy carries the fix and has no `public.` references.
 - **Not tested:** the e2e suite and the hosted Player/table views on PROD (that campaign has no non-draft encounter).
-  No UI change, so no `ui-ux` review applies.
+  No UI change, so no UI review applies.

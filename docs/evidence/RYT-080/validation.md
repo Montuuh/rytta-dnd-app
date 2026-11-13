@@ -2,7 +2,7 @@
 
 Delivery of 2026-11-10 on `main` (base a1231ce, equal to `origin/main` after `git fetch`).
 Decision: [ADR 037](../../decisions/037-group-rest-and-absence.md). Design flow:
-[design flow](design-flow.md). Tickets RYT-079, RYT-080, RYT-081 and RYT-082.
+design flow. Tickets RYT-079, RYT-080, RYT-081 and RYT-082.
 
 ## What changed
 
@@ -94,15 +94,15 @@ Decision: [ADR 037](../../decisions/037-group-rest-and-absence.md). Design flow:
   step was intermittent (the refetch after the first write could land after the simulated
   change). `staleVitals()` in the fixture now forces the next write to meet the stale revision;
   16/16 repeated runs passed.
-- `npm run check`: typecheck, lint, architecture, docs (83 tickets), AI contracts, 50 test files /
+- `npm run check`: typecheck, lint, architecture, docs (83 tickets), 50 test files /
   354 tests and the build pass.
 
-- Independent `ui-ux` review:
+- Independent UI review:
   - round 1: CHANGES_REQUIRED (2 blockers, 5 majors, 12 minors);
   - round 2: CHANGES_REQUIRED (the dock measurement);
   - round 3: PASS on fingerprint `7f698a7c46c0ebd9c5f622f07ab8c7c05ce93c16ffacda52cfd9c8ec86bad775`.
 
-  See the [design flow](design-flow.md) and the [report](../ui-review/ryt-080/review.md).
+  See the design flow and the report.
 
 ## Not covered
 

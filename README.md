@@ -5,8 +5,7 @@ TypeScript + React + Vite, Mantine UI and Supabase. This repository contains the
 architecture and scaffold; gameplay modules remain planned.
 
 The interface defaults to Spanish and dark mode. Select English or light mode in the
-header or Settings; preferences persist on this device. UI changes require independent
-review by the [ui-ux agent](docs/ui-review.md).
+header or Settings; preferences persist on this device.
 
 ## Start locally
 
@@ -59,20 +58,13 @@ src/app/                 Composition, providers, routing and theme
 src/pages/               Route-level views
 src/features/campaigns/  First vertical module: domain, query and adapters
 src/shared/              Generic API, validation and UI primitives
-supabase/                Local config, migrations and scoped agent guidance
+supabase/                Local config and migrations
 tests/                   PostgreSQL policies and browser checks
 docs/                    Product, architecture, backlog, ADRs and evidence
-CLAUDE.md                Agent contract (scoped CLAUDE.md in src/, supabase/, docs/)
-.claude/skills/          Project skills (/rytta-start, /rytta-feature, ...)
-.claude/agents/          Producer, frontend, backend, reviewer, security and ui-ux subagents
-.claude/rules/           Path-scoped rules
-.claude/hooks/           Session context, guard and post-edit hooks
-.mcp.json                context7 and Playwright MCP servers
 ```
 
 Start with the [documentation index](docs/README.md).
-Run `/rytta-start` or `/rytta-producer` in Claude Code to prepare the next delivery from the
-[backlog](docs/backlog/items.json). [Deployment instructions](docs/deployment.md)
+The [backlog](docs/backlog/items.json) holds the next deliveries. [Deployment instructions](docs/deployment.md)
 cover GitHub Pages and Vercel. The Rytta Supabase project is connected and its initial
 schema is applied. The frontend is published at <https://montuuh.github.io/rytta-dnd-app/>.
 See [deployment evidence](docs/evidence/RYT-001-002/pages-deployment.md) and

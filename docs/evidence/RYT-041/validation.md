@@ -1,6 +1,6 @@
 # Delivery RYT-041: combat roster changes and turn focus
 
-Date: 2026-11-03. Branch `worktree-agent-ad6415396ef8d5d0d`, cut from `main` at `c9ed08f`
+Date: 2026-11-03. A worktree branch, cut from `main` at `c9ed08f`
 (the hosted migration history matched the repository: last applied `combat_state_booleans`).
 
 ## Outcome
@@ -66,7 +66,7 @@ stay but can no longer be undone (the log hides that undo button).
 | Check | Result |
 | --- | --- |
 | `npx vitest run tests/database/combat.test.ts` | first run 4 failed (ambiguous `target_combatant` in the effects loop; a test assumed Arin started without set initiatives); fixed; then 12 passed |
-| `npm run check` (typecheck, lint, architecture, docs, AI contracts, unit + SQL, build) | first lint run failed (`set-state-in-effect` in the turn-follow effect; reworked as derived state); final run on the committed code: passed, 29 files / 209 tests, build OK |
+| `npm run check` (typecheck, lint, architecture, docs, unit + SQL, build) | first lint run failed (`set-state-in-effect` in the turn-follow effect; reworked as derived state); final run on the committed code: passed, 29 files / 209 tests, build OK |
 | `CI=1 npx playwright test tests/e2e/combat.spec.ts` | first runs: "Next turn" lost focus (disabled while pending, a real bug, fixed), axe on the removal dialog ran while the menu was still closing (test now waits), detail tab not open on laptops (test opens it); then 24 passed, later 27 with the English/light test |
 | Full e2e, spare ports (local uncommitted config override, ports 4473/4474) | 314 passed, 48 skipped, 4 failed: `identity.spec.ts:13` on 3 projects (asserts the fixed 4174 callback URL, an artifact of the override) and `shops.spec.ts:146` tablet (passed 5/5 when re-run alone; shops untouched) |
 | `CI=1 npm run test:e2e` (fixed ports 4173/4174, servers started by this run) | first attempts refused (ports busy with other worktrees, fail-fast); final run on the committed code: 318 passed, 48 skipped, 0 failed (4.5 min) |
@@ -133,7 +133,7 @@ review fixes.
 
 ## Handoff and review
 
-First independent `ui-ux` review of `b3f5e50`: CHANGES_REQUIRED, report [ui-review.md](ui-review.md)
+First independent UI review of `b3f5e50`: CHANGES_REQUIRED, see the review report
 (committed as delivered). Every finding is addressed in the follow-up commit:
 
 | Finding | Change | Test |
@@ -150,12 +150,12 @@ Follow-up verification: `npm run check` passed (29 files / 209 tests, build OK).
 spare ports: 35 passed, 1 skipped (the touch test skips the laptop project). `CI=1 npm run
 test:e2e` on the fixed ports: two attempts were refused because another worktree took 4173 first;
 the third run, with servers started by this run, passed 326, skipped 49, failed 0 (3.6 min).
-A focused ui-ux re-review is pending. The ticket
+A focused UI re-review is pending. The ticket
 stays in `review`.
 
 ## Integration (2026-11-03)
 
-- Merged main (RYT-040) into the branch; independent ui-ux integration PASS for the combined
+- Merged main (RYT-040) into the branch; independent UI review integration PASS for the combined
   snapshot `02f8ca80…` (see ui-review.md, "Integration").
 - Fixed a race in `tests/e2e/combat.spec.ts` (axe ran while "Siguiente turno" was still saving).
   `CI=1 npx playwright test combat glossary`: 94 passed, 1 flaky on first run; combat 3×35 and

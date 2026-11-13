@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   Accordion,
   ActionIcon,
@@ -40,9 +40,10 @@ import {
   type BestiaryLanguage,
   type LibraryTrait,
   type SectionKind,
+  type StatBlock,
 } from '@/features/bestiary'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
-import type { CombatantTemplate } from '../domain/combat'
+import type { CombatantTemplate, TemplateInput } from '../domain/combat'
 import {
   draftNumbers,
   draftToTemplate,
@@ -56,7 +57,7 @@ import {
 } from './creature-draft'
 import { CrDial, NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
 import { useRunner } from './helpers'
-import { RunnerError } from './parts'
+import { ErrorAlert, RunnerError } from './parts'
 
 const dieFaces = [4, 6, 8, 10, 12, 20]
 const usageChoices: UsageChoice[] = ['none', 'r6', 'r5', 'r4', 'd1', 'd2', 'd3']
@@ -78,6 +79,8 @@ export function CreatureEditor({
   version = false,
   onClose,
   onSaved,
+  onSubmit,
+  title,
 }: {
   campaignId: string
   initial: CreatureDraft
@@ -95,11 +98,21 @@ export function CreatureEditor({
   onClose: () => void
   /** The saved template id (null for a new one) and the name it was saved with. */
   onSaved: (id: string | null, name: string) => void
+  /** RYT-093: the caller stores the stat block itself (the content library). It resolves to
+   * null once stored, which closes the editor, or to the error to show inside it. */
+  onSubmit?: (result: { block: StatBlock; input: TemplateInput }) => Promise<string | null>
+  title?: string
 }) {
   const { t } = useTranslation()
   const phone = usePhone()
   const wide = useWide()
-  const { run, pending, error, trigger, clear } = useRunner(campaignId)
+  const runner = useRunner(campaignId)
+  const { run, error, trigger, clear } = runner
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  // The save button is disabled while it saves; a failure gives focus back to it.
+  const submitRef = useRef<HTMLButtonElement>(null)
+  const pending = runner.pending || submitting
   const [draft, setDraft] = useState<CreatureDraft>(initial)
   const [view, setView] = useState<'form' | 'preview'>('form')
   const [confirming, setConfirming] = useState(false)
@@ -130,6 +143,15 @@ export function CreatureEditor({
     if (!valid || pending) return
     // RYT-089: an official creature saved without changes stays the official one (no version).
     if (version && !template && !dirty) return onClose()
+    if (onSubmit) {
+      setSubmitting(true)
+      setSubmitError(null)
+      const failure = await onSubmit({ block, input }).finally(() => setSubmitting(false))
+      if (!failure) return onSaved(null, input.name)
+      setSubmitError(failure)
+      requestAnimationFrame(() => submitRef.current?.focus())
+      return
+    }
     const ok = await run({
       kind: 'saveTemplate',
       templateId: template?.id ?? null,
@@ -234,12 +256,14 @@ export function CreatureEditor({
                     pb: numbers.pb,
                   })}
                 />
-                <SideToggle
-                  legend={t('combat.add.side')}
-                  name={draft.name}
-                  value={draft.side}
-                  onChange={(v) => update({ side: v })}
-                />
+                {!onSubmit && (
+                  <SideToggle
+                    legend={t('combat.add.side')}
+                    name={draft.name}
+                    value={draft.side}
+                    onChange={(v) => update({ side: v })}
+                  />
+                )}
               </div>
             </Stack>
           </Accordion.Panel>
@@ -399,20 +423,23 @@ export function CreatureEditor({
             </Stack>
           </Accordion.Panel>
         </Accordion.Item>
-        <Accordion.Item value="notes">
-          <Accordion.Control>{t('bestiary.editor.notes')}</Accordion.Control>
-          <Accordion.Panel>
-            <Textarea
-              autosize
-              minRows={3}
-              label={t('bestiary.editor.notesLabel')}
-              description={t('bestiary.editor.notesHelp')}
-              maxLength={2000}
-              value={draft.notes}
-              onChange={(e) => update({ notes: e.currentTarget.value })}
-            />
-          </Accordion.Panel>
-        </Accordion.Item>
+        {/* Side and DM notes belong to a campaign creature, not to library data. */}
+        {!onSubmit && (
+          <Accordion.Item value="notes">
+            <Accordion.Control>{t('bestiary.editor.notes')}</Accordion.Control>
+            <Accordion.Panel>
+              <Textarea
+                autosize
+                minRows={3}
+                label={t('bestiary.editor.notesLabel')}
+                description={t('bestiary.editor.notesHelp')}
+                maxLength={2000}
+                value={draft.notes}
+                onChange={(e) => update({ notes: e.currentTarget.value })}
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
+        )}
       </Accordion>
     </Stack>
   )
@@ -433,13 +460,14 @@ export function CreatureEditor({
       fullScreen={phone}
       size={wide ? 'min(1240px, 96vw)' : 'xl'}
       title={
-        template
+        title ??
+        (template
           ? t('bestiary.editor.editTitle', { name: template.name })
           : basedOn
             ? t(version ? 'bestiary.editor.versionTitle' : 'bestiary.editor.basedTitle', {
                 name: basedOn,
               })
-            : t('bestiary.editor.newTitle')
+            : t('bestiary.editor.newTitle'))
       }
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       classNames={{ body: 'bst-editor-body' }}
@@ -454,6 +482,11 @@ export function CreatureEditor({
         }}
       >
         <RunnerError error={error} trigger={trigger} onClose={clear} />
+        {submitError && (
+          <ErrorAlert sticky={false} trigger={null} onDismiss={() => setSubmitError(null)}>
+            {submitError}
+          </ErrorAlert>
+        )}
         {!wide && (
           <SegmentedControl
             fullWidth
@@ -493,7 +526,7 @@ export function CreatureEditor({
             <Button variant="subtle" onClick={requestClose}>
               {t('action.cancel')}
             </Button>
-            <Button type="submit" disabled={!valid || pending} loading={pending}>
+            <Button ref={submitRef} type="submit" disabled={!valid || pending} loading={pending}>
               {t('bestiary.editor.save')}
             </Button>
           </Group>

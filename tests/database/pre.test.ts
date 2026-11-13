@@ -57,8 +57,9 @@ describe('public to pre bulk refresh', () => {
     // private.combat_requests; RYT-008 added glossary_entries; RYT-044 added
     // private.character_requests; RYT-055 added five tabletop tables and private.tabletop_requests;
     // RYT-078 added profiles; RYT-080 added rest_requests and private.rest_votes; RYT-089 added
-    // campaign_srd_bestiary and campaign_srd_removed.
-    expect(report.rows[0]!.result.tables).toHaveLength(43)
+    // campaign_srd_bestiary and campaign_srd_removed; RYT-092 added content_packs, content_entries,
+    // private.content_editors and private.content_requests.
+    expect(report.rows[0]!.result.tables).toHaveLength(47)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

@@ -1,0 +1,356 @@
+/* RYT-093 content library: a working desk for editors. Three panes on a laptop (packs, entries,
+   editor), two on a tablet with the packs on a row above, one screen at a time on a phone.
+   Tokens only, so every class theme recolours it. */
+
+.lib-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.lib-center {
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+.lib-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  text-align: center;
+  border: 1px dashed var(--app-border);
+  border-radius: 12px;
+  color: var(--app-muted);
+}
+.lib-empty h2 {
+  color: var(--app-text);
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+}
+
+.lib-grid {
+  display: grid;
+  min-width: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.lib-pane {
+  min-width: 0;
+  padding: 16px;
+}
+.lib-pane-title {
+  margin: 0 0 8px;
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.lib-prompt {
+  color: var(--app-muted);
+}
+
+.lib-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lib-row {
+  display: grid;
+  gap: 2px;
+  min-height: 44px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+.lib-row:hover {
+  background: var(--app-raised);
+}
+.lib-row:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.lib-row.is-current {
+  background: var(--app-raised);
+  border-color: var(--app-accent);
+}
+.lib-row-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.lib-row-meta {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  overflow-wrap: anywhere;
+}
+.lib-row-state {
+  font-size: var(--fs-meta);
+  color: var(--app-accent);
+}
+.lib-row.is-deleted .lib-row-name {
+  color: var(--app-muted);
+  text-decoration: line-through;
+}
+
+.lib-back {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  align-self: flex-start;
+  color: var(--app-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.lib-back:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+.lib-entries-inner,
+.lib-editor-inner,
+.lib-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.lib-pack-head,
+.lib-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 4px 8px;
+}
+.lib-pack-title {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.lib-banner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-raised);
+}
+
+.lib-editor {
+  container-type: inline-size;
+}
+.lib-pair,
+.lib-langs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+@container (min-width: 36rem) {
+  .lib-pair,
+  .lib-langs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.lib-grid-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.lib-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.lib-lang legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 700;
+}
+.lib-lang legend::first-letter {
+  text-transform: uppercase;
+}
+.lib-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 36px;
+  align-items: center;
+}
+.lib-blocks {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lib-block-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+}
+.lib-block-row > div {
+  min-width: 0;
+}
+.lib-json {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+}
+.lib-savebar[hidden] {
+  display: none;
+}
+.lib-savebar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--app-border);
+  background: var(--app-surface);
+}
+.lib-status-error {
+  color: var(--danger);
+}
+.lib-problems {
+  display: grid;
+  gap: 2px;
+  max-height: 40vh;
+  margin: 0;
+  padding-left: 1.2em;
+  overflow: auto;
+  font-size: var(--fs-meta);
+}
+
+/* Laptops: three panes; the entry list scrolls on its own. */
+@media (min-width: 75em) {
+  .lib-grid {
+    grid-template-columns: minmax(14rem, 17rem) minmax(17rem, 22rem) minmax(0, 1fr);
+  }
+  .lib-packs,
+  .lib-entries {
+    border-right: 1px solid var(--app-border);
+  }
+}
+/* Tablets: packs on a row above, entries beside the editor. */
+@media (min-width: 48em) and (max-width: 74.99em) {
+  .lib-grid {
+    grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+    grid-template-areas: 'packs packs' 'entries editor';
+  }
+  .lib-packs {
+    grid-area: packs;
+    border-bottom: 1px solid var(--app-border);
+  }
+  .lib-packs .lib-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .lib-packs .lib-row {
+    border-color: var(--app-border);
+  }
+  .lib-entries {
+    grid-area: entries;
+    border-right: 1px solid var(--app-border);
+  }
+  .lib-editor {
+    grid-area: editor;
+  }
+}
+@media (min-width: 48em) {
+  /* The pack row beside it already shows edition, version and visibility. */
+  .lib-pack-line {
+    display: none;
+  }
+  .lib-entry-list {
+    max-height: max(20rem, calc(100vh - 26rem));
+    overflow: auto;
+    padding-right: 2px;
+  }
+}
+/* Phones: the route shows one pane; the others hide and a back link leads up. */
+@media (max-width: 47.99em) {
+  .lib-grid {
+    border: 0;
+    background: none;
+  }
+  .lib-pane {
+    padding: 0;
+  }
+  .lib-back {
+    display: inline-flex;
+  }
+  .lib-depth-packs .lib-entries,
+  .lib-depth-packs .lib-editor,
+  .lib-depth-entries .lib-packs,
+  .lib-depth-entries .lib-editor,
+  .lib-depth-editor .lib-packs,
+  .lib-depth-editor .lib-entries {
+    display: none;
+  }
+  .lib-savebar {
+    background: var(--app-bg);
+  }
+}
+
+/* Touch targets: tabs, the dismiss control of notices and the classes of a spell. */
+.lib-page .mantine-Tabs-tab {
+  min-height: 44px;
+}
+.lib-page .mantine-Alert-closeButton {
+  min-width: 44px;
+  min-height: 44px;
+}
+.lib-classes {
+  grid-column: 1 / -1;
+}
+.lib-class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+.lib-class-grid .mantine-Checkbox-root,
+.lib-checks .mantine-Checkbox-root {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* The notice's one line sits level with its close button. */
+.lib-notice .mantine-Alert-wrapper {
+  align-items: center;
+}
+.lib-pack-title:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}

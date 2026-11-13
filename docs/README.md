@@ -98,3 +98,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and active-character choices, and New character in the party list.
 49. [ADR 039: each campaign has its own bestiary; the DM downloads the official one](decisions/039-campaign-bestiary.md):
     the campaign's official bestiary, versions edited in place and removals.
+50. [ADR 040: game data is downloaded from a content library](decisions/040-content-library.md):
+    packs and entries behind an endpoint, editors, public and private packs, rollout.

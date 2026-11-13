@@ -4,6 +4,7 @@ import { LoadingScreen } from '@/shared/ui/loading-screen'
 import { Layout, SettingsRoute } from './layout'
 import { CampaignBoundary, CampaignHub } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
+import { LibraryPage } from '@/features/content-library'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
 import { CampaignLanding } from '@/pages/campaign-landing'
@@ -130,6 +131,15 @@ export function AppRouter() {
                       </Route>
                     </Route>
                   </Route>
+                )}
+                {/* RYT-093: the content library, for editor accounts (the database decides). */}
+                {live && (
+                  <>
+                    <Route path="library" element={<LibraryPage />} />
+                    <Route path="library/:packId" element={<LibraryPage />} />
+                    <Route path="library/:packId/:kind" element={<LibraryPage />} />
+                    <Route path="library/:packId/:kind/:entryId" element={<LibraryPage />} />
+                  </>
                 )}
                 {/* The SRD glossary also works outside a campaign (demo and account home). */}
                 <Route element={<StandaloneGlossaryLayer />}>

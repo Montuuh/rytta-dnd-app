@@ -89,6 +89,23 @@ creatures, never "based on" or homebrew templates, and refreshes running fights 
 and scan the PRE copy for production references. Known limit: a deleted version's image stays in the
 private bucket (the storage router needs the template to delete it), as for deleted templates.
 
+Content library (ADR 040, RYT-092): `content_packs` and `content_entries` have RLS on and no grants;
+every read and write goes through security definer RPCs. Writers are the rows of
+`private.content_editors` (RLS on, no grants), granted with owner SQL outside the repository and
+separately in PRE. Signed-in users read published public packs and their own published private
+packs, one kind at a time in pages of 500 (`get_content_entries`); unknown and unreadable packs
+both raise `Forbidden`, and readers never receive drafts, revisions, owners or editors. Editor RPCs
+check revisions or versions, serialise each pack on its row lock and each request id on an advisory
+lock, and store SHA-256 digests of large payloads as idempotency keys. A pack update must send
+every field; `save_content_pack` refuses to change the slug or visibility of a published pack, and
+`set_content_pack_visibility` is the only (immediate) way to change who reads it. Limits: pack
+payload 16 KB with known keys, entry data 128 KB, index 4 KB, 500 entries per import call, 5000 per
+pack and kind. A retried request id replays the caller's earlier result before the editor check (ids
+and counts only), as in RYT-089. Known limits: a PRE refresh copies the editors, the packs (private
+ones too) and the replies from production, so editors are granted again after `pre:sync`; published
+packs cannot be deleted through the API, so a takedown is an owner SQL operation (delete the pack
+row, which cascades to its entries).
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite
@@ -147,7 +164,7 @@ Test simultaneous buys, double taps, retries, stale writes and insufficient fund
 ## Content, media and sessions
 
 Future uploads use private Storage buckets, campaign-scoped policies, signed URLs and
-MIME/size validation. No buckets are created now. No external rules/art assets are imported.
+MIME/size validation. Game data from outside the app reaches it only through the content library.
 Render text safely; rich text needs an explicit sanitizer before HTML support.
 Clear private caches on logout. Do not log tokens or private campaign payloads.
 Restrict Auth redirects to exact deployed URLs. Pages cannot hold backend secrets.

@@ -11,7 +11,16 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { Compass, Eye, LogOut, Menu as MenuIcon, Settings, Shield, UserRound } from 'lucide-react'
+import {
+  Compass,
+  Eye,
+  Library,
+  LogOut,
+  Menu as MenuIcon,
+  Settings,
+  Shield,
+  UserRound,
+} from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { modules } from './modules'
@@ -25,6 +34,7 @@ import {
 } from '@/features/campaigns'
 import { UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
+import { useContentEditor } from '@/features/content-library'
 import { SettingsPanel } from '@/pages/settings-panel'
 
 /** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
@@ -192,6 +202,7 @@ export function Layout() {
   const { t } = useTranslation()
   const { state, controller } = useAuth()
   const username = useUsername().data
+  const contentEditor = useContentEditor()
   const live = config.VITE_DATA_MODE === 'supabase'
   const [online, setOnline] = useState(navigator.onLine)
   useEffect(() => {
@@ -239,9 +250,12 @@ export function Layout() {
   const previousPath = useRef(pathname)
   useEffect(() => {
     if (previousPath.current !== pathname) {
+      // RYT-093: moving inside the content library keeps focus and scroll; the library moves them.
+      const withinLibrary =
+        previousPath.current.startsWith('/library') && pathname.startsWith('/library')
       // An old #/settings link redirects with the drawer open: focus stays inside the dialog.
-      if (!settingsOpened) mainRef.current?.focus()
-      window.scrollTo(0, 0)
+      if (!settingsOpened && !withinLibrary) mainRef.current?.focus()
+      if (!withinLibrary) window.scrollTo(0, 0)
       previousPath.current = pathname
     }
     const modulePath = live ? pathname.replace(/^\/campaign\/[^/]+/, '') || '/' : pathname
@@ -250,13 +264,15 @@ export function Layout() {
         ? 'auth.google'
         : live && pathname === '/'
           ? 'hub.title'
-          : pathname.endsWith('/members')
-            ? 'campaign.manage'
-            : /^\/party\/[^/]+\/create$/.test(modulePath)
-              ? 'wizard.editorTitle'
-              : /^\/party\/[^/]+$/.test(modulePath)
-                ? 'sheet.title'
-                : (modules.find((m) => m.path === modulePath)?.label ?? 'page.notFound')
+          : pathname.startsWith('/library')
+            ? 'library.title'
+            : pathname.endsWith('/members')
+              ? 'campaign.manage'
+              : /^\/party\/[^/]+\/create$/.test(modulePath)
+                ? 'wizard.editorTitle'
+                : /^\/party\/[^/]+$/.test(modulePath)
+                  ? 'sheet.title'
+                  : (modules.find((m) => m.path === modulePath)?.label ?? 'page.notFound')
     document.title = `${t(key)} · Rytta`
   }, [pathname, t, live, state.status, settingsOpened])
   const enterPreview = (userId: string | null, label: string | null) => {
@@ -290,7 +306,7 @@ export function Layout() {
     >
       <RestProvider campaignId={live && campaign ? campaign.id : null}>
         <div
-          className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
+          className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${pathname.startsWith('/library') ? 'library-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
         >
           <a
             className="skip-link"
@@ -435,6 +451,15 @@ export function Layout() {
                           >
                             {t('hub.title')}
                           </Menu.Item>
+                          {contentEditor && (
+                            <Menu.Item
+                              component={NavLink}
+                              to="/library"
+                              leftSection={<Library size={18} aria-hidden="true" />}
+                            >
+                              {t('library.title')}
+                            </Menu.Item>
+                          )}
                           <Menu.Divider />
                         </>
                       )}

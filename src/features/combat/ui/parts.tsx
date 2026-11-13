@@ -60,7 +60,7 @@ export function RunnerError({
 }
 
 /** The alert itself. Placement work runs once per error (not on every poll re-render). */
-function ErrorAlert({
+export function ErrorAlert({
   sticky,
   trigger,
   onDismiss,

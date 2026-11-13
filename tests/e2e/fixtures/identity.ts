@@ -1398,6 +1398,8 @@ export async function identityFixture(
         })
       return respond(restStateFor(actor))
     }
+    // RYT-093: the account menu asks whether the account edits the content library.
+    if (method === 'get_content_library') return respond({ editor: false, packs: [] })
     return respond({ message: 'Unhandled test route' }, 500)
   })
   return {

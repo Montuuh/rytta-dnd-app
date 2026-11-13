@@ -3037,6 +3037,87 @@
         "independent UI review PASS"
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-092",
+      "title": "Content library: a downloadable data endpoint with packs and entries",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "done",
+      "dependsOn": ["RYT-089"],
+      "sources": [
+        "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
+        "User 2026-11-13: content from owned books lives in a private library: visible only to its owner and to the campaigns where it is enabled, never offered to other DMs.",
+        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first."
+      ],
+      "scope": "Supabase tables for content packs (slug, titles in English and Spanish, edition, license and attribution, public or private visibility, owner, draft or published, version) and entries (pack, kind, key, names in both languages, JSON data, revision), with RLS, in production and PRE. Content editors are a platform role granted outside the repository. Read RPCs list the readable packs with counts per kind and return the published entries of one kind with the pack version. Editor-only write RPCs create and edit packs, save, import in batches and delete entries with revision checks and idempotent request ids, and publish a pack, which bumps its version. Public packs are readable by any signed-in user; private packs only by their owner and editors until campaigns can enable them (later ticket). PGlite denial tests, PRE rehearsal and production migration. Non-goals: the manager interface (RYT-093), the app reading the SRD from the library (RYT-094), images.",
+      "acceptance": [
+        "Signed-in users list the published public packs and download one kind's entries in one call together with the pack version; anon is refused.",
+        "Draft packs and private packs are invisible to everyone except editors and the private pack owner.",
+        "Only content editors create, edit, import, delete and publish; every other role is refused, including direct RPC calls; stale revisions are refused and a retried request returns the first result.",
+        "Entry data is a JSON object with size limits per entry and per batch; keys are unique per pack and kind.",
+        "Publishing bumps the pack version, so clients download again only when it changes."
+      ],
+      "validation": [
+        "tests/database/content-library.test.ts and npm run test:db",
+        "npm run check",
+        "security review of the migration and RPCs",
+        "hosted PRE rehearsal and production migration with advisors"
+      ],
+      "evidence": ["docs/decisions/040-content-library.md", "docs/evidence/RYT-092/validation.md"]
+    },
+    {
+      "id": "RYT-093",
+      "title": "Content manager: editors create, edit, import and publish downloadable data",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "in_progress",
+      "dependsOn": ["RYT-092"],
+      "sources": [
+        "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
+        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first."
+      ],
+      "scope": "An editor-only Content library page opened from the account menu (hidden for everyone else): three columns on a laptop (packs, entries of the chosen kind with search, editor), two on a tablet and stacked screens on a phone. Editors create packs and set their visibility, license and attribution; create, edit, revert and delete entries with a form per kind and a JSON tab, English and Spanish side by side (one language is enough; missing ones are flagged); changes stay as drafts until \"Publish version\" sends them together with a summary; bulk import from a Rytta JSON file shows what it adds, updates and refuses before writing; a one-time action uploads the bundled SRD 5.2.1 (creatures and every glossary entry). Non-goals: libraries of other users, image upload, the app reading from the library (RYT-094).",
+      "acceptance": [
+        "An editor creates a pack, adds and edits an entry in English and Spanish and publishes it; a signed-in user who is not an editor then downloads it.",
+        "Uploading the bundled SRD 5.2.1 creates the official pack with every creature, rule, condition, spell and class feature; uploading again updates entries instead of duplicating them.",
+        "Bulk import validates the file (schema, size, duplicate keys) and reports what it adds, updates and refuses before writing anything.",
+        "Users who are not editors never see the manager; a direct link shows a forbidden state.",
+        "390px and 820px plus a laptop width, both themes and languages, keyboard and Escape, axe clean; options page answered before UI; independent UI review PASS."
+      ],
+      "validation": [
+        "unit tests for the entry schemas and the import parser",
+        "content manager e2e at 390px, 820px and 1440px",
+        "npm run check",
+        "design critique and audit",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-093/validation.md"]
+    },
+    {
+      "id": "RYT-094",
+      "title": "The app downloads the SRD from the content library",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-093"],
+      "sources": [
+        "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
+        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first."
+      ],
+      "scope": "The bestiary, combat, encounter builder, glossary, automatic term links and class features read the official SRD pack from the content library through queries keyed by pack version (public pack content may be cached on the device), instead of bundled JSON. The bundled catalogues leave the repository; demo mode keeps a small explicit sample. Creature art stays as it is until a separate decision.",
+      "acceptance": [
+        "Bestiary, combat, encounter builder, glossary and character sheet show the same SRD content as before, loaded from the library.",
+        "A new pack version refreshes the cached content; an unreachable library shows a retryable error and never falls back silently.",
+        "src/features/bestiary/content and src/features/glossary/content no longer exist in the repository.",
+        "390px and 820px plus a laptop width, both themes and languages, keyboard and Escape, axe clean; options page answered before UI; independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "bestiary, combat, encounter-builder, glossary and characters e2e at 390px and 820px",
+        "independent UI review PASS"
+      ],
+      "evidence": []
     }
   ]
 }

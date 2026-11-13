@@ -18,6 +18,7 @@ import { tabletopEn } from './tabletop-en'
 import { panelEn } from './panel-en'
 import { restEn } from './rest-en'
 import { usernameEn } from './username-en'
+import { libraryEn } from './library-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
@@ -39,6 +40,7 @@ export const en = {
   ...panelEn,
   ...restEn,
   ...usernameEn,
+  ...libraryEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',
   'module.shops': 'Shops',

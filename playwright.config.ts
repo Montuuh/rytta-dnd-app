@@ -34,19 +34,19 @@ export default defineConfig({
     {
       name: 'desktop',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     // Rytta targets phones and tablets. Signed-in journeys run at 820px and 390px; the desktop
@@ -57,19 +57,19 @@ export default defineConfig({
         viewport: { width: 1440, height: 1000 },
         // Wide layouts (>= 992px, also landscape tablets): glossary side-by-side reader and the
         // full-width tabletop library and editor.
-        specs: 'identity,combat,bestiary,encounter-builder,glossary,tabletop',
+        specs: 'identity,combat,bestiary,encounter-builder,glossary,tabletop,library',
       },
       {
         name: 'identity-tablet',
         viewport: { width: 820, height: 1180 },
         specs:
-          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest',
+          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library',
       },
       {
         name: 'identity-mobile',
         viewport: { width: 390, height: 844 },
         specs:
-          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest',
+          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library',
       },
     ].map(({ name, viewport, specs }) => ({
       name,

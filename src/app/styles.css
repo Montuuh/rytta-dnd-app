@@ -413,7 +413,8 @@ main {
 .account-layout main {
   max-width: 1040px;
 }
-.campaign-layout main {
+.campaign-layout main,
+.library-layout main {
   max-width: 1360px;
 }
 .dm-panel-tabs {

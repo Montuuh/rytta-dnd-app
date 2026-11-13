@@ -19,6 +19,7 @@ import { tabletopEs } from './tabletop-es'
 import { panelEs } from './panel-es'
 import { restEs } from './rest-es'
 import { usernameEs } from './username-es'
+import { libraryEs } from './library-es'
 
 export const es = {
   ...identityEs,
@@ -41,6 +42,7 @@ export const es = {
   ...panelEs,
   ...restEs,
   ...usernameEs,
+  ...libraryEs,
   'module.party': 'Grupo',
   'module.inventory': 'Inventario',
   'module.shops': 'Tiendas',

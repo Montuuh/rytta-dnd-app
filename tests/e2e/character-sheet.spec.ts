@@ -559,17 +559,28 @@ test('RYT-098 the portrait opens in the full-screen viewer: double tap and pinch
   await expect(remove).toBeVisible()
   await remove.dblclick()
   await expect(remove).toBeVisible()
+  // The confirmation ignores taps for a moment after the question appears. Open the question and
+  // tap the confirmation inside the page, well within that moment, so a slow runner cannot race it.
+  const guarded = await viewer.evaluate(async (node) => {
+    const button = (text: string) =>
+      [...node.querySelectorAll('button')].find((b) => b.textContent?.trim() === text)
+    button('Quitar retrato')!.click()
+    for (let tries = 0; tries < 10 && !button('Sí, quitar'); tries++)
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    const confirm = button('Sí, quitar')
+    const state = confirm?.getAttribute('aria-disabled') ?? null
+    confirm?.click()
+    return state
+  })
+  expect(guarded).toBe('true')
   // Keep sits exactly where Remove was; the confirmation is the other slot.
-  await remove.click()
   const keep = viewer.getByRole('button', { name: 'Mantener' })
   const confirm = viewer.getByRole('button', { name: 'Sí, quitar' })
   await expect(keep).toBeFocused()
   const keepBox = (await keep.boundingBox())!
   for (const side of ['x', 'y', 'width', 'height'] as const)
     expect(Math.abs(keepBox[side] - removeBox[side])).toBeLessThan(1)
-  await expect(confirm).toHaveAttribute('aria-disabled', 'true')
   await expect(confirm).toHaveCSS('opacity', '1')
-  await confirm.click({ force: true })
   await expect(confirm).not.toHaveAttribute('aria-disabled')
   expect(removals).toEqual([])
   await expect(viewer.getByRole('img', { name: 'Retrato de Arin' })).toBeVisible()

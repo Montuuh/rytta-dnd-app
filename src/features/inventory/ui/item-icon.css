@@ -1,0 +1,23 @@
+/* RYT-098: an item picture that opens the viewer. The resets have no specificity so the caller's
+   frame (shop glyph, item card) keeps its own border, background and layout. */
+:where(.item-image-open) {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+.item-image-open {
+  min-width: 44px;
+  min-height: 44px;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+.item-image-open:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}

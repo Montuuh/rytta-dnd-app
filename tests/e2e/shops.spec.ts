@@ -137,6 +137,72 @@ test('a Player negotiates with an approval shop and sells to it', async ({ page 
   await audit(page, info.outputPath('orders-mixed.png'))
 })
 
+test('RYT-098 a listing picture opens the viewer; the rest of the card keeps opening the item', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    inventory: true,
+    modules,
+  })
+  fixture.inventory.definitions.find((d) => d.name === 'Flecha')!.image_path =
+    `pre/${campaignId}/items/arrow.webp`
+  await shopsFixture(page, fixture)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  const arrow = page.locator('.listing-card', { hasText: 'Flecha' })
+  const picture = arrow.getByRole('button', { name: 'Ver la imagen de Flecha' })
+  // Two sibling buttons: the picture and the one that opens the item.
+  await expect(picture.locator('xpath=ancestor::button')).toHaveCount(0)
+  await expect(arrow.locator('.listing-main').getByRole('button')).toHaveCount(0)
+  await picture.click()
+  const viewer = page.getByRole('dialog', { name: 'Flecha', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Imagen de Flecha' })).toBeVisible()
+  await audit(page, info.outputPath('listing-viewer.png'))
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(picture).toBeFocused()
+  // A tap beside the picture opens the item as before; its picture there opens the viewer too, and
+  // Escape over the drawer closes only the viewer.
+  await arrow.locator('.listing-main').click()
+  const detail = page.getByRole('dialog', { name: 'Flecha' }).filter({ hasText: 'Precio' })
+  const inside = detail.getByRole('button', { name: 'Ver la imagen de Flecha' })
+  await inside.click()
+  await expect(page.locator('.image-viewer-content')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.image-viewer-content')).toHaveCount(0)
+  await expect(detail).toBeVisible()
+  await expect(inside).toBeFocused()
+  // Items without a picture keep their glyph inside the card's button.
+  const potion = page.locator('.listing-card', { hasText: 'Poción de curación' })
+  await expect(potion.locator('.listing-main .shop-glyph')).toHaveCount(1)
+  await expect(potion.getByRole('button', { name: /Ver la imagen/ })).toHaveCount(0)
+})
+
+test('RYT-098 the DM stock row keeps its picture beside the button that opens the editor', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, { inventory: true })
+  fixture.inventory.definitions.find((d) => d.name === 'Flecha')!.image_path =
+    `pre/${campaignId}/items/arrow.webp`
+  await shopsFixture(page, fixture)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  const row = page.locator('.stock-row', { hasText: 'Flecha' })
+  const picture = row.getByRole('button', { name: 'Ver la imagen de Flecha' })
+  const main = row.locator('.stock-row-main')
+  await expect(main).toHaveAttribute('aria-expanded', 'false')
+  await expect(main.getByRole('button')).toHaveCount(0)
+  await picture.click()
+  await expect(page.getByRole('dialog', { name: 'Flecha', exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(picture).toBeFocused()
+  await expect(main).toHaveAttribute('aria-expanded', 'false')
+  await main.click()
+  await expect(main).toHaveAttribute('aria-expanded', 'true')
+})
+
 test('a Player without the shops module sees why', async ({ page }) => {
   await identityFixture(page, { player: true, inventory: true })
   await page.goto(shops)

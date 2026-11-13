@@ -302,6 +302,11 @@ html:has(.bst:not([data-split])) {
   outline: 3px solid var(--app-focus);
   outline-offset: 1px;
 }
+/* RYT-098: a picture opens the viewer from its own button where the row's token would sit; the row
+   beside it keeps opening the stat block. The text starts where it does in rows with a glyph. */
+.bst-row.is-pictured > .combat-token {
+  margin-inline-start: 8px;
+}
 .bst-row-text {
   display: flex;
   flex: 1;
@@ -871,56 +876,7 @@ html:has(.bst:not([data-split])) {
   align-items: center;
 }
 
-/* RYT-053 creature art viewer: a specimen plate from a field journal. The print sits on a raised
-   mat, held at its own corners by four photo corners in the accent; a museum label beneath credits
-   the art. On phones the action sits at the foot of the sheet, in thumb reach. */
-.bst-art-title {
-  font-family: var(--mantine-font-family-headings);
-  font-size: var(--fs-h3);
-  font-weight: 600;
-}
-.bst-art-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mantine-spacing-md);
-}
-.bst-art-viewer[data-full-screen] .bst-art-body {
-  min-height: calc(100dvh - 72px);
-}
-.bst-art-figure {
-  display: grid;
-  gap: var(--mantine-spacing-md);
-  margin: 0;
-}
-.bst-art-plate {
-  display: grid;
-  place-items: center;
-  min-height: 200px;
-  padding: 20px;
-  border-radius: 6px;
-  background: var(--app-raised);
-  box-shadow: inset 0 0 0 1px var(--app-border);
-}
-.bst-art-photo {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-  line-height: 0;
-}
-.bst-art-photo img {
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  max-height: min(65vh, 720px);
-  object-fit: contain;
-  box-shadow: 0 2px 10px color-mix(in srgb, black 35%, transparent);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .bst-art-photo img {
-    animation: bst-art-develop 220ms ease-out;
-  }
-}
+/* RYT-053 photo corners of the creature plate; the print develops from sepia. */
 @keyframes bst-art-develop {
   from {
     opacity: 0;
@@ -953,15 +909,10 @@ html:has(.bst:not([data-split])) {
   bottom: -4px;
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
-.bst-art-missing {
-  color: var(--app-muted);
-  text-align: center;
-}
+/* RYT-098: the creature's museum label is the viewer's caption, on the viewer's curtain. */
 .bst-art-label {
   display: grid;
   gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid var(--app-border);
 }
 .bst-art-label dl {
   display: grid;
@@ -1001,20 +952,6 @@ html:has(.bst:not([data-split])) {
 }
 .bst-art-note {
   font-size: var(--fs-meta);
-}
-.bst-art-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-.bst-art-viewer[data-full-screen] .bst-art-actions {
-  position: sticky;
-  bottom: 0;
-  margin-top: auto;
-  padding: var(--mantine-spacing-sm) 0 max(var(--mantine-spacing-sm), env(safe-area-inset-bottom));
-  background: var(--mantine-color-body);
-}
-.bst-art-viewer[data-full-screen] .bst-art-actions > button {
-  flex: 1;
 }
 /* In a dim room the list's bright photos and white plates would glare: tone them down a little. */
 [data-mantine-color-scheme='dark'] .bst-row .combat-token-face img,

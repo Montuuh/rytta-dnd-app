@@ -115,9 +115,5 @@ export const restEn = {
   'characters.benched':
     'The DM marked that you are not coming today, so your character is not in the party.',
   'characters.benchedLink': 'See my characters',
-  'characters.newCard': 'New character',
-  'characters.newCardDm': 'With no player; assign it later',
-  'characters.newCardPlayer': 'You have {{used}} of {{limit}}',
-  'characters.newCardFull': 'All {{limit}} slots are taken: archive one to make another.',
   'panel.field.absent': 'Absent',
 }

@@ -1,10 +1,7 @@
 // RYT-034 player trade window.
 export const tradesEn = {
-  'trade.action': 'Trade',
   'trade.actionWith': 'Trade with {{name}}',
-  'trade.launcher': 'Start a trade',
-  'trade.pickPartner': 'Choose who to trade with',
-  'trade.noPartners': 'No other character in this campaign has a player yet.',
+  'trade.otherOpen': 'You already have a trade in progress',
   'trade.partnerIsBusy': '{{name}} is already trading',
   'trade.sent': 'Invitation sent to {{name}}.',
   'trade.invite.title': '{{name}} wants to trade with you',

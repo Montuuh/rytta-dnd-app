@@ -150,6 +150,28 @@
   place-items: center;
   margin-bottom: 4px;
 }
+/* RYT-098: on the Player's radio cards the medallion is a sibling of the label laid over the
+   space the label keeps for it, so the picture can be its own button. Taps on a medallion without
+   a portrait fall through to the label and choose the character. */
+.roster-medallion-space {
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 4px;
+}
+.roster-medallion-float {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.roster-card:has(.roster-card-menu) .roster-medallion-float {
+  top: calc(2.75rem + 6px);
+}
+.roster-medallion-float .portrait-open {
+  pointer-events: auto;
+}
 /* Reserve and archived characters rest: the medallion dims, the text keeps full contrast. */
 .roster-slot:not([data-active]) .roster-medallion .portrait,
 .roster-row[data-state='archived'] .portrait {
@@ -459,6 +481,25 @@
   font-size: var(--fs-meta);
   font-weight: 400;
 }
+/* The DM's reserve link is a quiet text link beside Party's primary action: accent text, no box,
+   the same 44px hit area. */
+.roster-link[data-quiet] {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 6px;
+  color: var(--app-accent);
+}
+.roster-link[data-quiet]:hover {
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.roster-link[data-quiet] .roster-link-face.is-icon {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .roster-card,
@@ -468,67 +509,6 @@
   }
 }
 
-/* RYT-081: "New character" closes the party list (DM and Player). A dashed card: it is a place
-   for a character, not another character. */
-.party-new-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  min-height: 88px;
-  padding: 16px 18px;
-  border: 1.5px dashed var(--app-border);
-  border-radius: 16px;
-  background: transparent;
-  color: var(--app-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-.party-new-card:hover {
-  background: var(--app-surface);
-  border-color: var(--app-accent);
-}
-.party-new-card:focus-visible {
-  outline: 2px solid var(--app-focus);
-  outline-offset: 2px;
-}
-.party-new-card[aria-disabled='true'] {
-  cursor: not-allowed;
-}
-.party-new-card[aria-disabled='true'] .party-new-ring {
-  border-color: var(--app-border);
-  color: var(--app-muted);
-}
-.party-new-card[aria-disabled='true']:hover {
-  background: transparent;
-  border-color: var(--app-border);
-}
-.party-new-ring {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  border: 1.5px dashed var(--app-accent);
-  color: var(--app-accent);
-}
-.party-new-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.party-new-title {
-  font-family: Georgia, Cambria, 'Times New Roman', serif;
-  font-size: var(--fs-h3);
-  line-height: 1.2;
-}
-.party-new-hint {
-  font-size: var(--fs-meta);
-  color: var(--app-muted);
-}
 .party-benched-link {
   display: inline-flex;
   align-items: center;
@@ -553,4 +533,211 @@
 .roster-notice .mantine-Alert-closeButton {
   min-width: 44px;
   min-height: 44px;
+}
+
+/* RYT-096: free characters the DM prepared. Each card leads with the portrait plate (4:5), then
+   the name in the serif, class and level, and one tonal "Play" button; the footers of a row line
+   up. The welcome shows two cards a row on phones and three from 48em (an odd last card stays in
+   the first column); My characters keeps them smaller than the Player's own roster. */
+.roster-welcome[data-claim] {
+  padding: 28px 12px;
+}
+.roster-welcome[data-claim] .roster-welcome-text {
+  max-width: 60ch;
+}
+@media (min-width: 48em) {
+  .roster-welcome[data-claim] {
+    padding: 32px 24px;
+  }
+}
+/* The frame is the size container, so the column count follows the room and the text size. */
+.claim-frame {
+  container: claim / inline-size;
+  width: 100%;
+}
+.claim-frame[data-layout='welcome'] {
+  max-width: 44rem;
+  margin-top: 4px;
+}
+.claim-grid {
+  --claim-cols: 2;
+  --claim-gap: 12px;
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--claim-cols), minmax(0, 1fr));
+  gap: var(--claim-gap);
+}
+.claim-grid[data-layout='roster'] {
+  --claim-cols: 3;
+  --claim-gap: 10px;
+}
+@media (min-width: 48em) {
+  .claim-grid {
+    --claim-gap: 16px;
+  }
+  .claim-grid[data-layout='welcome'] {
+    --claim-cols: 3;
+  }
+  .claim-grid[data-layout='roster'] {
+    --claim-cols: 5;
+    --claim-gap: 12px;
+  }
+}
+@media (min-width: 62em) {
+  .claim-grid[data-layout='roster'] {
+    --claim-cols: 6;
+  }
+}
+/* Fewer free characters than columns in the welcome: the cards keep their size, centred. */
+.claim-grid[data-layout='welcome'][data-count='1'] {
+  --claim-cols: 1;
+  max-width: 14rem;
+}
+@media (min-width: 48em) {
+  .claim-grid[data-layout='welcome'][data-count='2'] {
+    --claim-cols: 2;
+    max-width: 30rem;
+  }
+}
+/* Large text: fewer columns, so names never break inside a word. The thresholds are in rem, so
+   they follow the text size (two and three columns at 100% on phones, one and two at 150%). */
+@container claim (max-width: 18rem) {
+  .claim-grid[data-layout='welcome'] {
+    --claim-cols: 1;
+  }
+}
+@container claim (max-width: 21rem) {
+  .claim-grid[data-layout='roster'] {
+    --claim-cols: 2;
+  }
+}
+.claim-card {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  overflow: hidden;
+  text-align: center;
+}
+.claim-grid[data-full] .claim-card {
+  grid-template-rows: auto 1fr;
+}
+.claim-plate {
+  --plate-ratio: 125%;
+  border-bottom: 1px solid var(--app-border);
+}
+.claim-plate .portrait-plate-monogram {
+  font-size: clamp(2.75rem, 2rem + 3vw, 4rem);
+}
+.claim-text {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 10px 10px 0;
+}
+.claim-name.claim-name {
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.claim-meta {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.claim-grid[data-full] .claim-text {
+  padding-bottom: 10px;
+}
+.claim-play {
+  margin: 10px 8px 8px;
+  height: auto;
+  min-height: 44px;
+  padding: 8px 10px;
+}
+.claim-play .mantine-Button-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.2;
+}
+/* My characters: small plates, the name at body size. */
+.claim-grid[data-layout='roster'] .claim-card {
+  border-radius: 12px;
+}
+.claim-grid[data-layout='roster'] .portrait-plate-monogram {
+  font-size: 2.25rem;
+}
+.claim-grid[data-layout='roster'] .claim-text {
+  padding: 8px 6px 0;
+}
+.claim-grid[data-layout='roster'][data-full] .claim-text {
+  padding-bottom: 8px;
+}
+.claim-grid[data-layout='roster'] .claim-name.claim-name {
+  font-size: var(--fs-body);
+}
+.claim-grid[data-layout='roster'] .claim-play {
+  margin: 8px 6px 6px;
+}
+/* The claim confirmation: who it is beside the consequence. */
+.claim-ask {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.claim-ask .portrait {
+  flex-shrink: 0;
+}
+.claim-ask-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.claim-or {
+  width: 100%;
+  max-width: 20rem;
+  color: var(--app-muted);
+}
+.claim-or .mantine-Divider-label {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.claim-lost,
+.claim-load-error {
+  width: 100%;
+  max-width: 44rem;
+  text-align: start;
+}
+.claim-lost .mantine-Alert-closeButton {
+  min-width: 44px;
+  min-height: 44px;
+}
+.claim-lost .mantine-Alert-wrapper {
+  align-items: center;
+}
+.claim-lost .mantine-Alert-message {
+  font-size: var(--fs-body);
+}
+.claim-title {
+  text-wrap: balance;
+}
+
+/* My characters: the free characters after the roster. */
+.roster-free {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.roster-free-title {
+  font-size: var(--fs-h3);
+}
+.roster-free-reason {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
 }

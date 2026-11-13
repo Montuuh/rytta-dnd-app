@@ -267,14 +267,35 @@ original art for an SRD creature with the DM's image, or remove the image of a c
 which asks first). Without any image the token beside the name stays the file picker with the filled
 accent seal. Saving, saved and removed notices show in words under the plate or token. The DM's
 combat detail opens on a 112px portrait (88px on phones; dimmed when defeated, dashed when hidden)
-that opens the viewer. The viewer is a specimen plate from a field journal: the print on the
-raised mat, held at its own corners by four accent photo corners, and a museum label beneath (a
-hairline rule above it, italic terms for author, licence and source in 44px rows, underlined links
-with an external-link glyph and "opens in a new tab" for screen readers, and the adaptation note).
-The DM's own image says it is the campaign's; when it cannot load, the viewer shows the bundled art
-with its credit, as the token does. The print develops from sepia in 220ms unless motion is reduced.
-One quiet action, Change image, sticks to the foot of the full-screen sheet on phones. Escape and
-close return focus to the token. No licence badges or art pills.
+that opens the viewer. Creature art opens in the shared image viewer (below) with a museum label as
+its caption: italic terms for author, licence and source in 44px rows, underlined links with an
+external-link glyph and "opens in a new tab" for screen readers, and the adaptation note. The DM's
+own image says it is the campaign's; when it cannot load, the viewer shows the bundled art with its
+credit, as the token does. The plate's print develops from sepia in 220ms unless motion is reduced.
+One quiet action, Change image, sits at the foot of the viewer. Escape and close return focus to the
+print. No licence badges or art pills.
+
+## Image viewer (RYT-098)
+
+Every real picture (character portraits, creature art and tokens, item pictures) opens the same
+full-screen viewer, `ImageViewer` in `src/shared/ui`: a dark curtain that looks the same in every
+theme (its colours are custom properties in `image-viewer.css`; the app and Mantine tokens are
+redeclared inside it with the Hearth values), the whole picture centred with `object-fit: contain` and
+never cropped, a bar with the name in the heading face, a 44px zoom toggle (`aria-pressed`) and a 44px
+close button, an optional caption under the picture (a creature's credit) and optional actions at
+the foot (Change portrait and Remove portrait with an inline question, Change image). A double tap or
+double click zooms 2× where it lands and back; while zoomed a drag pans; two fingers pinch between 1×
+and 4×. The zoom resets when it closes and has no animation with reduced motion. It shows a loader
+while a signed address arrives and one sentence when the picture is missing or broken. Escape closes
+only the topmost viewer, also over a drawer or sheet, and focus returns to the picture that opened it.
+
+The picture is its own button (at least 44px, `aria-haspopup="dialog"`, "View the portrait of …" or
+"View the image of …"), never nested in another control. Where a picture sat inside a row or card
+that acts (bestiary rows, shop listings, the DM's stock rows) it moves beside that button, which keeps
+its action; without a picture the glyph stays inside. Thumbnails under 44px inside a dense control
+(satchel tiles and rows, paper doll sockets, initiative rows, the turn bar, roster chips, rest
+accordion rows) stay as they are: the drawer or detail they open has the viewable picture. Monograms
+and icon fallbacks are never buttons. The tabletop board does not use it.
 
 ## Encounter builder (RYT-054, ADR 031)
 

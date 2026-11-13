@@ -119,34 +119,21 @@
   margin: 0 12px 12px;
 }
 
-/* Viewer */
-.portrait-viewer-title {
-  font-family: Georgia, Cambria, serif;
-  font-size: var(--fs-h3);
+/* Viewer actions (RYT-098): the question and a failure take the whole row above the buttons. */
+.image-viewer-actions > .portrait-viewer-ask,
+.image-viewer-actions > .portrait-viewer-error {
+  flex-basis: 100%;
+  max-width: none;
+  margin: 0;
 }
-.portrait-viewer-image {
-  display: block;
-  width: 100%;
-  max-height: min(72vh, 40rem);
-  object-fit: contain;
-  border-radius: 12px;
-  background: var(--app-bg);
+.portrait-viewer-error.mantine-Text-root {
+  color: var(--danger);
+  font-weight: 600;
 }
-.portrait-viewer-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-  gap: 10px;
-}
-.portrait-viewer-actions .mantine-Button-root,
-.portrait-viewer-ask .mantine-Button-root {
-  min-height: 44px;
-  height: auto;
-  padding-block: 6px;
-}
-.portrait-viewer-actions .mantine-Button-label,
-.portrait-viewer-ask .mantine-Button-label {
-  white-space: normal;
-  line-height: 1.15;
+/* While the confirmation ignores taps it stays as it looks: no dimming, no jump. */
+.image-viewer-actions .portrait-danger.portrait-confirm[aria-disabled='true'] {
+  opacity: 1;
+  cursor: default;
 }
 .portrait-danger.portrait-danger {
   color: var(--danger);

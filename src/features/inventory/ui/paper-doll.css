@@ -1,0 +1,20 @@
+/* RYT-098: the equipped item's picture sits beside the unequip row as its own button. */
+.picker-current {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.picker-current > .picker-row {
+  flex: 1;
+  min-width: 0;
+}
+.picker-picture {
+  flex: none;
+  width: 52px;
+  min-height: 52px;
+  border-radius: 12px;
+  background: var(--app-raised);
+  border: 1px solid var(--app-border);
+  box-shadow: inset 0 0 0 2px
+    color-mix(in srgb, var(--rarity, var(--rarity-common)) 55%, transparent);
+}

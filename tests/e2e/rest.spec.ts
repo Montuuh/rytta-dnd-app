@@ -78,6 +78,38 @@ test('a Player asks the group for a long rest; the table votes around the fire',
   expect(f.vitalsOf(beaId)?.current_hp).toBe(24)
 })
 
+test('RYT-098 a portrait at the fire opens the viewer over the rest panel', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete', party: true })
+  // Bea has a portrait; Arin and Cato keep their monograms.
+  await page.route('**/rest/v1/rpc/list_character_portraits', (route) =>
+    route.fulfill({
+      json: [{ character_id: beaId, portrait_path: `pre/${campaignId}/${beaId}/bea.webp` }],
+    }),
+  )
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await page.getByRole('button', { name: 'Descanso largo' }).click()
+  await page
+    .getByRole('dialog', { name: '¿Pedir un descanso largo al grupo?' })
+    .getByRole('button', { name: 'Pedir descanso' })
+    .click()
+  const panel = page.getByRole('dialog', { name: 'Descanso del grupo' })
+  const seats = panel.getByRole('list', { name: '1 de 3 quieren descansar.' })
+  const bea = seats.getByRole('button', { name: 'Ver el retrato de Bea' })
+  await expect(seats.getByRole('button', { name: /Ver el retrato/ })).toHaveCount(1)
+  await bea.click()
+  const viewer = page.getByRole('dialog', { name: 'Bea', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Retrato de Bea' })).toBeVisible()
+  await audit(page, info.outputPath('rest-viewer.png'))
+  // Escape closes only the viewer; the rest panel stays and focus returns to the portrait.
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(panel).toBeVisible()
+  await expect(bea).toBeFocused()
+})
+
 test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die', async ({
   page,
 }, info) => {
@@ -218,18 +250,6 @@ test('an absent Player reads the sheet only and is told why', async ({ page }, i
   ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Descanso largo' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Editar la ficha' })).toHaveCount(0)
-})
-
-test('"New character" closes the party list for the Player and the DM', async ({ page }, info) => {
-  await identityFixture(page, { player: true, sheet: 'complete' })
-  await page.goto(party)
-  const card = page.getByRole('button', { name: 'Nuevo personaje', exact: true })
-  await expect(card).toHaveAccessibleDescription('Tienes 1 de 4')
-  await audit(page, info.outputPath('party-new-card.png'))
-  await card.click()
-  await expect(page.getByLabel('Nombre del personaje')).toBeFocused()
-  await page.keyboard.press('Escape')
-  await expect(card).toBeFocused()
 })
 
 test('3D dice roll the hit dice and fill the total', async ({ page }) => {

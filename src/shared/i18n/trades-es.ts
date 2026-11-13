@@ -2,11 +2,8 @@ import type { tradesEn } from './trades-en'
 
 // RYT-034 player trade window.
 export const tradesEs = {
-  'trade.action': 'Comerciar',
   'trade.actionWith': 'Comerciar con {{name}}',
-  'trade.launcher': 'Proponer un trueque',
-  'trade.pickPartner': 'Elige con quién comerciar',
-  'trade.noPartners': 'Ningún otro personaje de la campaña tiene jugador todavía.',
+  'trade.otherOpen': 'Ya tienes un trueque en curso',
   'trade.partnerIsBusy': '{{name}} ya está comerciando',
   'trade.sent': 'Invitación enviada a {{name}}.',
   'trade.invite.title': '{{name}} quiere comerciar contigo',

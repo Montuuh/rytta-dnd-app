@@ -1,0 +1,900 @@
+/* RYT-097 Party led by portraits. The Player's own character and the DM's characters are plates
+   with the name on the art; teammates are 4:5 portrait cards. Widgets carry the meaning (HP
+   meter, AC seal, exhaustion dots and pips, the purse ledger); no pills. Tokens only. */
+
+.party-vitals,
+.party-mate {
+  --hp-tone: var(--success);
+}
+.party-vitals[data-tone='wounded'],
+.party-mate[data-tone='wounded'] {
+  --hp-tone: var(--warn);
+}
+.party-vitals[data-tone='critical'],
+.party-mate[data-tone='critical'] {
+  --hp-tone: var(--danger);
+}
+
+/* --- Plate art: the name sits on the picture, which fades into the card. --- */
+.party-plate-art .portrait-plate-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 34%,
+    color-mix(in srgb, var(--app-surface) 70%, transparent) 72%,
+    var(--app-surface) 100%
+  );
+}
+/* Taps on the name reach the picture underneath; only the name link takes them. */
+.portrait-plate .party-plate-identity {
+  position: relative;
+  margin-top: auto;
+  display: grid;
+  gap: 2px;
+  padding: 24px 16px 10px;
+  pointer-events: none;
+  text-shadow:
+    0 0 14px var(--app-surface),
+    0 0 4px var(--app-surface);
+}
+.party-plate-eyebrow.eyebrow {
+  margin: 0 0 2px;
+}
+.party-plate-name.mantine-Title-root {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.3rem + 1.4vw, 2.25rem);
+  line-height: 1.08;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: balance;
+}
+/* The name link reaches 44px without moving the lines around it. */
+.party-plate-name-link {
+  display: inline-block;
+  min-inline-size: 44px;
+  padding-block: 8px;
+  margin-block: -8px;
+  pointer-events: auto;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.party-plate-name-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.party-plate-sub {
+  margin: 0;
+  font-size: var(--fs-meta);
+  line-height: 1.35;
+  color: var(--app-text);
+}
+
+.party-plate-body {
+  container: plate-body / inline-size;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* --- Vitals: big HP figure, an 8px meter under it and the AC seal at the end. --- */
+.party-vitals {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.party-vitals-hp {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.party-hp {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 6px;
+  min-width: 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.party-hp-heart {
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--hp-tone);
+  fill: color-mix(in srgb, var(--hp-tone) 22%, transparent);
+}
+.party-hp-now {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-stat);
+  line-height: 1;
+  color: var(--app-text);
+}
+.party-vitals[data-size='lg'] .party-hp-now {
+  font-size: clamp(2.4rem, 2.1rem + 1.2vw, 3rem);
+}
+.party-hp-max {
+  margin-inline-start: -3px;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.15rem;
+  color: var(--app-muted);
+}
+.party-hp-temp {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--water-accent);
+}
+.party-meter {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--app-text) 12%, var(--app-bg));
+}
+.party-meter-hp {
+  background: var(--hp-tone);
+}
+.party-meter-temp {
+  background: var(--water-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .party-meter > span,
+  .party-mate-band > span {
+    transition: width 320ms ease-out;
+  }
+}
+
+/* Armor class seal: a shield outline with the number inside and the abbreviation under it. */
+.party-seal {
+  flex-shrink: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+/* Sized in rem so the number keeps inside the shield with enlarged text. */
+.party-seal-shield {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  color: var(--app-accent);
+}
+.party-seal-shield svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: color-mix(in srgb, var(--app-accent) 13%, transparent);
+}
+.party-seal-value {
+  position: relative;
+  margin-top: -3px;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--app-text);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.party-seal-label {
+  font-size: var(--fs-tag);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--app-muted);
+}
+.party-vitals[data-size='md'] .party-seal-shield {
+  width: 2.9rem;
+  height: 2.9rem;
+}
+.party-vitals[data-size='md'] .party-seal-value {
+  font-size: 1.15rem;
+}
+
+/* Read-only exhaustion: flame, label and six dots filled in the danger colour. */
+.party-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.party-dots[data-active] {
+  color: var(--exhaustion-accent);
+}
+.party-dots-row {
+  display: inline-flex;
+  gap: 5px;
+}
+.party-dots-row > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, currentColor 60%, transparent);
+}
+.party-dots-row > [data-filled] {
+  background: var(--exhaustion-accent);
+  border-color: var(--exhaustion-accent);
+}
+.party-dots-label {
+  margin-inline-end: 2px;
+}
+.party-dots-more {
+  font-size: var(--fs-tag);
+  font-weight: 700;
+}
+
+.party-conditions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+
+/* --- The purse: three columns with hairline rules; values in the serif. --- */
+.party-ledger {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border-block: 1px solid var(--app-border);
+}
+.party-ledger-cell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 4px 12px;
+  text-align: center;
+}
+.party-ledger-cell + .party-ledger-cell {
+  border-inline-start: 1px solid var(--app-border);
+}
+.party-ledger-cell[data-kind='gold'] {
+  --kind: var(--gold-accent);
+}
+.party-ledger-cell[data-kind='water_units'] {
+  --kind: var(--water-accent);
+}
+.party-ledger-cell[data-kind='rations'] {
+  --kind: var(--rations-accent);
+}
+.party-ledger dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.party-ledger dt svg {
+  flex-shrink: 0;
+  color: var(--kind);
+}
+.party-ledger dd {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.party-ledger-value {
+  max-width: 100%;
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-stat);
+  line-height: 1.1;
+  color: var(--app-text);
+  font-variant-numeric: lining-nums tabular-nums;
+  overflow-wrap: anywhere;
+}
+.party-ledger-steps {
+  display: inline-flex;
+  gap: 6px;
+}
+/* Gold opens its editor: the value and a pencil key under it (where the other columns keep
+   their steppers) are one control. */
+.party-gold-button {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.party-gold-key {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--mantine-radius-default, 8px);
+  color: var(--gold-accent);
+  background: var(--mantine-color-default);
+  border: 1px solid var(--mantine-color-default-border);
+}
+.party-gold-button:hover .party-gold-key {
+  background: var(--mantine-color-default-hover);
+}
+/* Narrow or enlarged text: the ledger becomes rows (label, value, controls). */
+@container plate-body (max-width: 19rem) {
+  .party-ledger {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .party-ledger-cell {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    justify-items: start;
+    align-items: center;
+    padding: 8px 2px;
+    text-align: start;
+  }
+  .party-ledger-cell + .party-ledger-cell {
+    border-inline-start: 0;
+    border-top: 1px solid var(--app-border);
+  }
+  .party-ledger dd,
+  .party-gold-button {
+    grid-auto-flow: column;
+    justify-items: end;
+    align-items: center;
+    justify-self: end;
+    gap: 10px;
+  }
+}
+
+/* --- Player: the own character's plate. --- */
+.party-player {
+  display: grid;
+  gap: 28px;
+  align-items: start;
+}
+.party-player-own {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+@media (min-width: 62em) {
+  .party-player {
+    grid-template-columns: minmax(20rem, 25rem) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 14px 32px;
+  }
+  .party-player-own {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .party-player .party-mates {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    grid-template-rows: subgrid;
+    align-content: start;
+  }
+  .party-player .party-mates > * {
+    align-self: start;
+  }
+}
+.party-hero {
+  container: party-hero / inline-size;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--app-surface);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 38%, var(--app-border));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+.party-hero-inner {
+  display: grid;
+}
+.party-hero-art {
+  --plate-ratio: 68%;
+}
+.party-hero-body {
+  padding: 2px 16px 16px;
+}
+.party-hero-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+.party-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.party-hero-sheet.mantine-Button-root {
+  flex: 1 1 9rem;
+  min-height: 48px;
+  height: auto;
+}
+.party-quiet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 4px;
+  color: var(--app-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--app-accent) 55%, transparent);
+  text-underline-offset: 0.25em;
+}
+.party-quiet-link svg {
+  color: var(--app-accent);
+}
+.party-quiet-link:hover {
+  color: var(--app-accent);
+}
+/* Wide plates (tablets): the portrait stands beside the readings. */
+@container party-hero (min-width: 36rem) {
+  .party-hero-inner {
+    grid-template-columns: minmax(15rem, 0.9fr) minmax(0, 1.1fr);
+  }
+  .party-hero-art {
+    --plate-ratio: 116%;
+  }
+  .party-hero-art .portrait-plate-art::after {
+    background:
+      linear-gradient(to right, transparent 72%, var(--app-surface) 100%),
+      linear-gradient(
+        to bottom,
+        transparent 44%,
+        color-mix(in srgb, var(--app-surface) 70%, transparent) 76%,
+        var(--app-surface) 100%
+      );
+  }
+  .party-hero-body {
+    align-content: center;
+    gap: 18px;
+    padding: 22px 22px 22px 6px;
+  }
+}
+
+/* --- Player: teammates as portrait cards. --- */
+.party-mates {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.party-section-title.mantine-Title-root {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+.party-mates-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  /* Few teammates share the row (their portraits beside the readings); many get 10rem columns. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
+.party-mates-grid > li {
+  container: party-mate / inline-size;
+  min-width: 0;
+}
+.party-mate {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.party-mate-art {
+  --plate-ratio: 125%;
+}
+.party-mate-art .portrait-plate-monogram {
+  font-size: clamp(2.75rem, 2.3rem + 2vw, 3.75rem);
+}
+/* HP along the bottom edge of the picture, in the band's tone. */
+.portrait-plate .party-mate-band {
+  position: absolute;
+  inset: auto 0 0;
+  height: 8px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--app-bg) 72%, transparent);
+}
+.party-mate-band > span {
+  display: block;
+  height: 100%;
+  width: var(--hp);
+  background: var(--hp-tone);
+}
+.party-mate-art .trade-icon {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+}
+.party-mate-body {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  min-width: 0;
+}
+.party-mate-name.mantine-Title-root {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.party-mate-sub,
+.party-mate-note {
+  margin: -2px 0 0;
+  font-size: var(--fs-meta);
+  line-height: 1.3;
+  color: var(--app-muted);
+}
+.party-mate-note {
+  margin-top: 2px;
+  font-style: italic;
+}
+.party-mate-vitals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin-top: 2px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.party-mate-hp,
+.party-mate-ac {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+}
+.party-mate-hp svg {
+  color: var(--hp-tone);
+  fill: color-mix(in srgb, var(--hp-tone) 22%, transparent);
+}
+.party-mate-ac svg {
+  color: var(--app-accent);
+}
+.party-mate-max {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.party-mate-temp {
+  font-size: var(--fs-meta);
+  color: var(--water-accent);
+}
+.party-mate .party-conditions {
+  display: block;
+  line-height: 1.6;
+}
+.party-mate .party-conditions li {
+  display: inline;
+}
+.party-mate .party-conditions li + li::before {
+  content: '\00a0· ';
+  font-weight: 400;
+  color: var(--app-muted);
+}
+.party-mate .party-dots-row {
+  gap: 4px;
+}
+.party-mate .party-dots-row > span {
+  width: 8px;
+  height: 8px;
+}
+/* Wide cards (few teammates, tablets and laptops): the portrait stands beside the readings. */
+@container party-mate (min-width: 20rem) {
+  .party-mate {
+    flex-direction: row;
+  }
+  .party-mate-art {
+    flex: 0 0 min(44%, 12rem);
+  }
+  .party-mate-body {
+    gap: 8px;
+    padding: 14px 16px;
+  }
+  .party-mate-name.mantine-Title-root {
+    font-size: var(--fs-h3);
+  }
+}
+/* Not shared: the picture is dimmed and locked; only who they are remains. */
+.party-mate[data-hidden] .portrait-plate-art img {
+  filter: grayscale(1) brightness(0.6);
+}
+html[data-mantine-color-scheme='light'] .party-mate[data-hidden] .portrait-plate-art img {
+  filter: grayscale(1) opacity(0.5);
+}
+.party-mate[data-hidden] .portrait-plate-empty {
+  background: var(--app-raised);
+}
+.party-plate-art .portrait-plate-empty,
+.party-mate-art .portrait-plate-empty {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-text) 5%, transparent) 0 1px,
+      transparent 1px 11px
+    ),
+    var(--app-raised);
+}
+.party-plate-art .portrait-plate-monogram,
+.party-mate-art .portrait-plate-monogram {
+  display: grid;
+  place-items: center;
+  width: 1.75em;
+  height: 1.75em;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 45%, transparent);
+  background: var(--app-surface);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--app-surface) 45%, transparent);
+}
+.party-mate[data-hidden] .portrait-plate-monogram {
+  color: var(--app-muted);
+}
+.portrait-plate .party-mate-lock {
+  position: absolute;
+  bottom: 8px;
+  inset-inline-start: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  pointer-events: none;
+  color: var(--app-text);
+  background: color-mix(in srgb, var(--app-surface) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-text) 20%, transparent);
+}
+
+/* --- DM: one plate per character with counters. --- */
+.party-dm-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+@media (min-width: 48em) {
+  .party-dm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 75em) {
+  .party-dm-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.party-dm {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.party-dm-art {
+  --plate-ratio: 40%;
+}
+/* Portraits are square crops and store no focal point: show their upper part, where faces are. */
+.party-dm-art .portrait-plate-art img {
+  object-position: 50% 8%;
+}
+/* Without a picture the monogram stands to the side so the name keeps the left. */
+.party-dm-art .portrait-plate-blank {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 8px;
+  margin: 0;
+  align-content: center;
+}
+.party-dm-art .portrait-plate-monogram {
+  font-size: 2.25rem;
+}
+.party-dm-art[data-empty] .party-plate-identity {
+  padding-inline-end: 6.5rem;
+}
+.party-dm-body {
+  padding: 2px 14px 14px;
+  gap: 12px;
+}
+.page-head:has(.party-head-actions) .page-head-main {
+  flex: 1 1 auto;
+}
+.page-head .party-head-actions {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.page-head .party-head-actions > .roster-link {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.page-head .party-head-actions > .party-create {
+  flex: none;
+}
+@media (max-width: 47.99em) {
+  .page-head-actions > .party-head-actions {
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+}
+.party-dm-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+  min-width: 0;
+}
+.party-dm-owner {
+  flex: 1 1 8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.party-dm-owner svg {
+  flex-shrink: 0;
+  color: var(--app-accent);
+}
+.party-dm-owner[data-free] {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--app-muted);
+}
+.party-dm-owner[data-free] svg {
+  color: var(--app-muted);
+}
+.party-dm-more.mantine-ActionIcon-root {
+  margin-inline-end: -8px;
+}
+.party-dm-exhaustion {
+  display: grid;
+  gap: 8px;
+}
+.party-dm-exhaustion-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.party-dm-exhaustion-head svg {
+  color: var(--exhaustion-accent);
+}
+.party-dm-exhaustion-value {
+  margin-inline-start: auto;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.15rem;
+  color: var(--app-text);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.party-dm-exhaustion-value span {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.party-dm-exhaustion .exhaustion-pips {
+  display: grid;
+  grid-template-columns: repeat(6, 44px);
+  gap: 6px;
+}
+.party-dm-exhaustion .exhaustion-pip {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  border: 2px solid var(--app-border);
+  background: var(--app-bg);
+  color: var(--app-muted);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--fs-meta);
+  font-variant-numeric: lining-nums tabular-nums;
+  cursor: pointer;
+}
+.party-dm-exhaustion .exhaustion-pip[data-filled] {
+  background: var(--exhaustion-soft);
+  border-color: var(--exhaustion-accent);
+  color: var(--exhaustion-accent);
+}
+.party-dm-exhaustion .exhaustion-pip:hover:not([data-filled]) {
+  border-color: color-mix(in srgb, var(--exhaustion-accent) 55%, var(--app-border));
+}
+
+/* A sheet still being made: a quiet note and its one action. */
+.party-draft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.party-draft-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-meta);
+  font-style: italic;
+  color: var(--app-muted);
+}
+
+/* --- Shared controls (live sharing switch, steppers, the editor rows). --- */
+.live-share-toggle {
+  flex-shrink: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.live-share-toggle .mantine-Switch-body {
+  align-items: center;
+  min-height: 44px;
+}
+.live-share-toggle .mantine-Switch-track {
+  margin-block: auto;
+}
+.live-share-toggle .mantine-Switch-labelWrapper {
+  display: flex;
+  align-items: center;
+}
+.live-share-toggle .mantine-Switch-label {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--app-text);
+  cursor: pointer;
+}
+.live-share-toggle:not([data-on]) .mantine-Switch-label {
+  color: var(--app-muted);
+}
+.stepper-btn {
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Pending controls keep focus (aria-disabled) but read as unavailable. */
+.stepper-btn[data-inert],
+.exhaustion-pip[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.resource-stepper-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.resource-stepper-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.resource-stepper-buttons {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}

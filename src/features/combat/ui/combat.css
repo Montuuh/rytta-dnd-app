@@ -1385,6 +1385,36 @@ button.combat-row-main:focus-visible {
 .combat-token.is-hidden .combat-token-ring {
   background: repeating-conic-gradient(var(--app-muted) 0 12deg, transparent 12deg 24deg);
 }
+/* RYT-098: a token with a picture that opens the viewer. A token smaller than 44px sits in a 44px
+   button whose negative margin keeps the layout; the focus ring follows the base (round for the
+   party). */
+.combat-token-open {
+  --token-pad: max(0px, calc((44px - var(--token-size)) / 2));
+  width: calc(var(--token-size) + 2 * var(--token-pad));
+  height: calc(var(--token-size) + 2 * var(--token-pad));
+  margin: calc(-1 * var(--token-pad));
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+.combat-token-open.shape-party {
+  border-radius: 50%;
+}
+.combat-token-open > .combat-token-ring {
+  inset: var(--token-pad);
+}
+.combat-token-open > .combat-token-face {
+  inset: calc(var(--token-pad) + var(--ring-width));
+}
+.combat-token-open:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 3px;
+}
 
 .combat-rail.is-large .combat-token {
   --token-size: 60px;

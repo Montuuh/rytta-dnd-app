@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Castle,
@@ -13,9 +13,10 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { creatureArtQuery, creatureArtUrl } from '@/features/bestiary'
+import { creatureArtQuery, creatureArtUrl, type CreatureArt } from '@/features/bestiary'
 import { combatImageQuery } from '../api'
 import { monogram, type Combatant, type HpBand } from '../domain/combat'
+import { ArtViewer } from './art-viewer'
 
 type TokenSide = 'party' | 'ally' | 'enemy' | 'lair'
 
@@ -25,6 +26,9 @@ type TokenSide = 'party' | 'ally' | 'enemy' | 'lair'
  * lair is a crenellated keep, so the side reads by shape as well as by the ring's colour. Without an
  * image (or when it cannot load) the token shows an engraved monogram, or the keep glyph for the
  * lair; both are decorative because the name is always printed next to the token.
+ *
+ * RYT-098: a viewable token that shows a picture is its own button (at least 44px to the touch)
+ * that opens the viewer; monograms and glyphs never are. Only where it sits outside another control.
  */
 export function Token({
   name,
@@ -39,6 +43,9 @@ export function Token({
   described = false,
   children,
   glyph: Glyph,
+  viewable = false,
+  fullArt,
+  credit,
 }: {
   /** The image is the subject here (not just beside the printed name): give it alt text. */
   described?: boolean
@@ -59,6 +66,12 @@ export function Token({
   children?: ReactNode
   /** Without an image, a glyph instead of the monogram (the bestiary list: creature type). */
   glyph?: LucideIcon
+  /** The picture opens the viewer (not inside another control). */
+  viewable?: boolean
+  /** The bundled art at full size for the viewer; the token shows the thumbnail. */
+  fullArt?: string | null
+  /** The bundled art's credit, shown in the viewer under it. */
+  credit?: CreatureArt | null
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
@@ -68,17 +81,34 @@ export function Token({
   // The bundled art stands in when there is no private image or it cannot be read.
   const ownGone = !path || url.isError || (url.data !== undefined && failed === url.data)
   const src = own ?? (art && ownGone && failed !== art ? art : null)
-  return (
-    <span
+  const [viewing, setViewing] = useState(false)
+  const opener = useRef<HTMLButtonElement>(null)
+  const open = viewable && Boolean(src)
+  const Root = open ? 'button' : 'span'
+  const token = (
+    <Root
+      ref={open ? opener : undefined}
       className={[
         'combat-token',
         `shape-${side}`,
         active ? 'is-active' : '',
         defeated ? 'is-defeated' : '',
         hidden ? 'is-hidden' : '',
+        open ? 'combat-token-open' : '',
       ].join(' ')}
       // Without a size the surrounding layout sets --token-size (the table banner scales it).
       style={size ? ({ '--token-size': `${size}px` } as CSSProperties) : undefined}
+      {...(open && {
+        type: 'button' as const,
+        'aria-haspopup': 'dialog' as const,
+        'aria-label': t(
+          imageKind === 'character' ? 'inventory.portrait.open' : 'bestiary.art.open',
+          {
+            name,
+          },
+        ),
+        onClick: () => setViewing(true),
+      })}
     >
       <span className="combat-token-ring" aria-hidden="true" />
       <span className="combat-token-face">
@@ -86,9 +116,9 @@ export function Token({
           <img
             src={src}
             // Next to a printed name the image adds nothing for screen readers (empty alt); where
-            // the image is the subject (detail, bestiary) it is described.
+            // the image is the subject (detail, bestiary) it is described. A button names itself.
             alt={
-              described
+              described && !open
                 ? t(imageKind === 'character' ? 'combat.image.portrait' : 'combat.image.creature', {
                     name,
                   })
@@ -111,7 +141,24 @@ export function Token({
         )}
       </span>
       {children}
-    </span>
+    </Root>
+  )
+  if (!open) return token
+  return (
+    <>
+      {token}
+      {viewing && (
+        <ArtViewer
+          name={name}
+          imageKind={imageKind}
+          imagePath={path}
+          art={fullArt ?? art}
+          credit={credit}
+          returnFocus={opener}
+          onClose={() => setViewing(false)}
+        />
+      )}
+    </>
   )
 }
 
@@ -121,17 +168,21 @@ export function CombatantToken({
   size,
   showActive = true,
   described = false,
+  viewable = false,
 }: {
   combatant: Combatant
   size?: number
   showActive?: boolean
   described?: boolean
+  /** RYT-098: a picture opens the viewer (only outside another control). */
+  viewable?: boolean
 }) {
   // The DM's projection names the SRD creature an NPC came from: its bundled art stands in for a
   // missing image (RYT-053). Players and the table never receive srd_id, so they keep the monogram.
   const srdId = combatant.kind === 'npc' ? combatant.srd_id : undefined
   const credits = useQuery({ ...creatureArtQuery(), enabled: Boolean(srdId) })
-  const art = srdId && credits.data?.[srdId] ? creatureArtUrl(srdId, 'thumb') : null
+  const credit = (srdId && credits.data?.[srdId]) || null
+  const art = srdId && credit ? creatureArtUrl(srdId, 'thumb') : null
   return (
     <Token
       name={combatant.name}
@@ -144,6 +195,9 @@ export function CombatantToken({
       defeated={combatant.defeated || combatant.hp_band === 'down'}
       hidden={combatant.hidden === true}
       described={described}
+      viewable={viewable}
+      fullArt={srdId && credit ? creatureArtUrl(srdId, 'full') : null}
+      credit={credit}
     />
   )
 }

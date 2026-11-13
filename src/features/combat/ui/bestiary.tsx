@@ -62,6 +62,7 @@ import {
   signed,
   statBlockToText,
   StatBlockView,
+  type CreatureArt,
   type CreatureFilters,
   type CreatureListItem,
   type CreatureType,
@@ -498,6 +499,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
             grouping={filters.query.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
             altLang={catalog.language === 'es' ? 'en' : 'es'}
             items={results}
+            artCredit={catalog.artCredit}
             selectedKey={selectedKey}
             favorites={favorites}
             toggleFavorite={toggle}
@@ -1068,9 +1070,12 @@ function CreatureList({
   emptyText,
   clear,
   altLang,
+  artCredit,
 }: {
   altLang: string
   items: CreatureListItem[]
+  /** The credit of an SRD creature's bundled art, for the viewer. */
+  artCredit: (id: string | null | undefined) => CreatureArt | null
   grouping: Grouping
   selectedKey: string | null
   favorites: ReadonlySet<string>
@@ -1098,11 +1103,17 @@ function CreatureList({
         </Button>
       </div>
     )
-  // Arrow keys move between rows across groups; Home and End jump to the ends.
+  // Arrow keys move between rows across groups (from a row or its picture); Home and End jump to
+  // the ends.
   const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
     const rows = [...event.currentTarget.querySelectorAll<HTMLElement>('.bst-row-main')]
-    const at = rows.indexOf(document.activeElement as HTMLElement)
+    const active = document.activeElement
+    const at = rows.findIndex(
+      (row) =>
+        row === active ||
+        (active?.matches('.combat-token-open') && row.closest('.bst-row')?.contains(active)),
+    )
     if (at < 0) return
     event.preventDefault()
     const next =
@@ -1117,23 +1128,38 @@ function CreatureList({
     const favorite = favorites.has(item.key)
     const current = item.key === selectedKey
     const alt = item.altName && item.altName !== item.name ? item.altName : null
+    const art = itemArt(item)
+    // RYT-098: a creature with a picture shows it as its own button beside the row, which keeps
+    // opening the stat block; a type glyph stays inside the row.
+    const pictured = Boolean(item.imagePath) || Boolean(art)
+    const token = (
+      <Token
+        name={item.name}
+        side={item.side ?? 'enemy'}
+        imageKind="creature"
+        path={item.imagePath ?? null}
+        art={art?.thumb}
+        size={44}
+        glyph={item.type ? typeGlyphs[item.type] : undefined}
+        viewable={pictured}
+        fullArt={art?.full}
+        credit={pictured ? artCredit(item.artId) : null}
+      />
+    )
     return (
-      <li key={item.key} className="bst-row" data-current={current || undefined}>
+      <li
+        key={item.key}
+        className={pictured ? 'bst-row is-pictured' : 'bst-row'}
+        data-current={current || undefined}
+      >
+        {pictured && token}
         <button
           type="button"
           className="bst-row-main"
           aria-current={current ? 'true' : undefined}
           onClick={(event) => select(item.key, event.currentTarget)}
         >
-          <Token
-            name={item.name}
-            side={item.side ?? 'enemy'}
-            imageKind="creature"
-            path={item.imagePath ?? null}
-            art={itemArt(item)?.thumb}
-            size={44}
-            glyph={item.type ? typeGlyphs[item.type] : undefined}
-          />
+          {!pictured && token}
           <span className="bst-row-text">
             <span className="bst-row-name">{item.name}</span>
             {alt && (

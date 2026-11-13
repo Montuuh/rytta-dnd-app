@@ -126,6 +126,30 @@ Archiving (`archive_character` / `restore_character`, owner or campaign DM, idem
 the campaign lock) frees a slot without deleting data; archived characters are never active,
 do not count towards the limit and can be restored only while a slot is free.
 
+Free characters (RYT-096): only characters the DM created that never had a Player are offered.
+`characters.ever_assigned` is set by a trigger the first time `user_id` is set (any path) and is
+never cleared; a character whose Player left or was unassigned goes back to the DM, who can still
+assign it by hand. The migration backfilled it from assignments and the `character_events`
+history, with the audit trigger disabled for that statement only. `private.is_free_character` is
+the single rule: unassigned, never assigned, no pending, unexpired character invitation (the DM chose someone;
+revoking or declining it frees the character), not archived, present and not a combatant of any
+encounter that has not ended, so a live fight is never handed to a Player and the DM's draft or
+hidden preparation does not leak. `list_claimable_characters` (id, name, sheet status, class and
+level truncated to client limits, portrait path) and `claim_character` are security definer RPCs
+for active Players only; anon, outsiders, former members, DMs (they assign instead) and members of
+another campaign are refused (`Forbidden`). A claim takes the campaign lock (shared with the combat
+and invitation RPCs), then the character, and links it to the caller below the limit (active only
+when the caller has none; a benched Player's claim stays in reserve, RYT-079). The existing
+`characters:UPDATE` audit trigger records it with the Player as actor. Claiming an own character
+again returns it unchanged; any other character that is not free raises `Character unavailable`,
+so the later of two concurrent claims fails. Idempotency is state-based (no request id): a claimed
+character keeps `ever_assigned`, so a retry that arrives after the DM unassigned it is refused.
+Active Players also read the current portrait of free characters; no Player-facing RPC returns
+`ever_assigned`. Party overview
+(RYT-097): `get_party_overview` returns Players every active, assigned teammate; for one the DM does
+not share live, HP, AC, exhaustion and conditions are null on the server (name, class, level and
+sheet status remain). Unassigned characters stay DM-only there.
+
 RYT-003 revokes all client character/resource writes. `create_character`,
 `unassign_character`, `invite_character_player` and `set_character_resources` lock the
 campaign first, then check active DM membership. Resource edits compare expected revision,

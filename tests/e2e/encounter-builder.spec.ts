@@ -322,3 +322,32 @@ test('RYT-054 enemies typed in without a challenge rating are named, not "no ene
     card.getByRole('heading', { level: 2, name: 'Enemigos sin valor de desafío' }),
   ).toBeVisible({ timeout: 15_000 })
 })
+
+test('RYT-098 the art of a creature in the ledger opens the viewer with its credit', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await prepare(page, (server, encounterId) =>
+    server.act('add_combatants', {
+      target_encounter: encounterId,
+      entries: [npc('Ogro', 'ogre', { max_hp: 68, armor_class: 11 })],
+      request_id: 'ogre',
+    }),
+  )
+  const card = page.getByRole('region', { name: 'Dificultad del encuentro' })
+  await card.getByRole('button', { name: 'Grupo y criaturas' }).click()
+  const picture = card.getByRole('button', { name: 'Ver la imagen de Ogro' })
+  // The row is not a control: its 36px token sits in a 44px button.
+  await expectTouchTargets(card, '.combat-token-open')
+  await picture.click()
+  const viewer = page.getByRole('dialog', { name: 'Ogro', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Imagen de Ogro' })).toHaveAttribute(
+    'src',
+    /bestiary\/art\/ogre\.webp$/,
+  )
+  await expect(viewer.getByText('Licencia', { exact: true })).toBeVisible()
+  await audit(page, '.image-viewer-content')
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(picture).toBeFocused()
+})

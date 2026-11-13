@@ -34,6 +34,13 @@ export const identityEs = {
   'hub.refresh': 'Actualizar',
   'hub.invalidName': 'Escribe un nombre de entre 1 y 100 caracteres.',
   'hub.invalidDescription': 'Usa un máximo de 2000 caracteres.',
+  'hub.more': 'Más acciones · {{name}}',
+  'hub.left': 'Has abandonado {{name}}.',
+  // RYT-095: one confirmation to leave a campaign, from My campaigns or the profile menu.
+  'leave.title': '¿Abandonar {{name}}?',
+  'leave.body': 'Tus personajes vuelven al DM. Para volver necesitarás una nueva invitación.',
+  'leave.lastDm': 'Nombra a otro DM antes de irte.',
+  'leave.error': 'No se pudo abandonar la campaña. Revisa la conexión y vuelve a intentarlo.',
   'campaign.role.dm': 'DM',
   'campaign.role.player': 'Jugador',
   'campaign.current': 'CAMPAÑA ACTUAL',
@@ -69,8 +76,6 @@ export const identityEs = {
     '¿Cambiar a {{name}} al rol {{role}}? Los DMs pueden gestionar todo el contenido, los miembros y los roles de la campaña.',
   'members.confirmRemove':
     '¿Retirar a {{name}} de esta campaña? Perderá el acceso y se desvincularán sus personajes; los recursos se conservan.',
-  'members.confirmLeave':
-    '¿Salir de esta campaña? Se desvincularán tus personajes y se conservarán los recursos. Necesitarás otra invitación para volver.',
   'members.characters': 'Personajes',
   'members.unassigned': 'Personajes sin jugador',
   'members.noneCharacters': 'Sin personaje vinculado.',

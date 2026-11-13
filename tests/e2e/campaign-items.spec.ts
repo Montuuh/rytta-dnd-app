@@ -651,3 +651,44 @@ test('RYT-032 Players keep the direct forge from the satchel', async ({ page }) 
   await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Nombre' })).toBeVisible()
   await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Valor (po)' })).toHaveCount(0)
 })
+
+test('RYT-098 the chosen picture opens the viewer from the forge and the give drawer', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { inventory: true })
+  fixture.inventory.definitions.find((d) => d.name === 'Espada larga')!.image_path =
+    `pre/${campaignId}/items/sword.webp`
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(url)
+  // The storeroom row keeps opening the editor; the give drawer's picture opens the viewer.
+  await rowAction(page, 'Espada larga', 'Dar Espada larga a personajes', 'Dar a personajes')
+  const give = page.getByRole('dialog', { name: 'Dar a personajes' })
+  const sword = give.getByRole('button', { name: 'Ver la imagen de Espada larga' })
+  await sword.click()
+  await expect(page.getByRole('dialog', { name: 'Espada larga', exact: true })).toBeVisible()
+  await audit(page, info.outputPath('give-viewer.png'))
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.image-viewer-content')).toHaveCount(0)
+  await expect(give).toBeVisible()
+  await expect(sword).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(give).toHaveCount(0)
+
+  // A picture chosen in the forge can be checked full size before saving.
+  await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
+  await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Moonstone')
+  await page
+    .locator('input[type=file]')
+    .setInputFiles({ name: 'moon.png', mimeType: 'image/png', buffer: png })
+  const preview = page.getByRole('button', { name: 'Ver la imagen de Moonstone' })
+  await preview.click()
+  const viewer = page.getByRole('dialog', { name: 'Moonstone', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Imagen de Moonstone' })).toHaveAttribute(
+    'src',
+    /^blob:/,
+  )
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(preview).toBeFocused()
+  await expect(page.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Moonstone')
+})

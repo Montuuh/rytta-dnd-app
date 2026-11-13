@@ -70,6 +70,7 @@ export function Campfire({
                   name={person.name}
                   path={portraits.get(person.id) ?? null}
                   size={size}
+                  viewable
                 />
                 <span className="rest-seat-mark" aria-hidden="true">
                   <Icon size={12} strokeWidth={3} />

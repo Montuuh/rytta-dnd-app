@@ -5,6 +5,7 @@ import {
   identityFixture,
   campaignId,
   characterId,
+  freeIds,
   reserveIds,
 } from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
@@ -131,9 +132,8 @@ test('switching the active character changes who appears in Party', async ({ pag
   await page.getByRole('link', { name: 'Volver a Grupo' }).click()
   await expect(page.getByRole('heading', { name: 'Bram', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toHaveCount(0)
-  // Teammates keep showing only active, shared characters.
+  // Teammates keep showing (RYT-097 decides how unshared ones appear; see characters.spec.ts).
   await expect(page.getByRole('heading', { name: 'Bea', exact: true })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Cato', exact: true })).toHaveCount(0)
   // The benched character is still the owner's to edit.
   await page.goto(rosterPath)
   await page.getByRole('link', { name: 'Ficha de Arin' }).click()
@@ -418,4 +418,143 @@ test('a Player with only archived characters can restore one or create another',
   // With no other character, the restored one becomes the active one.
   await expect(page.getByRole('radio', { name: 'Old' })).toBeChecked()
   expect(f.calls.filter((c) => c.method === 'restore_character')).toHaveLength(1)
+})
+
+// RYT-096: a Player claims a free character the DM prepared.
+test('RYT-096 a Player without characters plays as a free character in two taps', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, {
+    player: true,
+    noCharacters: true,
+    free: ['Mirabel', 'Tor'],
+  })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const welcome = page.getByRole('region', { name: '¿Con quién vas a jugar?' })
+  await expect(welcome.getByRole('heading', { level: 3 })).toHaveText(['Mirabel', 'Tor'])
+  await expect(welcome).toContainText('Bardo de nivel 5')
+  await expect(welcome).toContainText('Ficha sin terminar')
+  // The free characters come first, each with a short "Play" named for the character; creating
+  // one is the second choice.
+  const buttons = welcome.getByRole('button')
+  await expect(buttons).toHaveText(['Jugar', 'Jugar', 'Crear mi personaje'])
+  await expect(buttons.nth(0)).toHaveAccessibleName('Jugar con Mirabel')
+  await expect(buttons.nth(1)).toHaveAccessibleName('Jugar con Tor')
+  await axeAndTargets(page)
+  const play = welcome.getByRole('button', { name: 'Jugar con Mirabel' })
+  await play.click()
+  const dialog = page.getByRole('dialog', { name: '¿Jugar con Mirabel?' })
+  await expect(dialog).toContainText('Pasa a ser tuyo; el DM puede desvincularlo.')
+  const confirm = dialog.getByRole('button', { name: 'Jugar con Mirabel' })
+  await expect(confirm).toBeFocused()
+  await axeAndTargets(page)
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(play).toBeFocused()
+  expect(f.calls.filter((c) => c.method === 'claim_character')).toHaveLength(0)
+  // Two taps: Play as Mirabel, then confirm.
+  await play.click()
+  await confirm.click()
+  // Mirabel is the Player's active character in the party, and takes focus.
+  await expect(welcome).toHaveCount(0)
+  const claimed = f.calls.filter((c) => c.method === 'claim_character')
+  expect(claimed).toHaveLength(1)
+  expect(claimed[0]!.body).toEqual({ target_campaign: campaignId, target_character: freeIds[0] })
+  await expect(page.getByRole('heading', { name: 'Mirabel', exact: true })).toBeFocused()
+  await expect(page.getByRole('link', { name: 'Mis personajes, 1 en total' })).toBeVisible()
+  await page.getByRole('link', { name: 'Mis personajes, 1 en total' }).click()
+  await expect(page.getByRole('radio', { name: 'Mirabel' })).toBeChecked()
+  // Tor is still free and is offered beside the roster.
+  const free = page.getByRole('region', { name: 'Personajes libres' })
+  await expect(free.getByRole('button', { name: 'Jugar con Tor' })).toBeEnabled()
+})
+
+test('RYT-096 a Player with characters claims one from My characters', async ({ page }) => {
+  const f = await identityFixture(page, { player: true, free: ['Mirabel'] })
+  await page.goto(rosterPath)
+  const free = page.getByRole('region', { name: 'Personajes libres' })
+  await expect(free.getByRole('heading', { level: 3, name: 'Mirabel' })).toBeVisible()
+  await axeAndTargets(page)
+  await free.getByRole('button', { name: 'Jugar con Mirabel' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Jugar con Mirabel' }).click()
+  await expect(page.getByText('Ahora juegas con Mirabel.')).toBeVisible()
+  // Arin stays active; Mirabel waits in reserve and takes focus in the roster.
+  const mirabel = page.getByRole('radio', { name: 'Mirabel' })
+  await expect(mirabel).toBeFocused()
+  await expect(mirabel).not.toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Arin' })).toBeChecked()
+  await expect(free).toHaveCount(0)
+  expect(f.calls.filter((c) => c.method === 'claim_character')).toHaveLength(1)
+})
+
+test('RYT-096 a character someone else took first says so and leaves the list', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, { player: true, free: ['Mirabel', 'Tor'] })
+  await page.goto(rosterPath)
+  const free = page.getByRole('region', { name: 'Personajes libres' })
+  await expect(free.getByRole('heading', { level: 3 })).toHaveText(['Mirabel', 'Tor'])
+  f.failNextClaim('Character unavailable')
+  await free.getByRole('button', { name: 'Jugar con Mirabel' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Jugar con Mirabel' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  const lost = free.getByRole('status').filter({ hasText: 'Mirabel ya no está libre.' })
+  await expect(lost).toBeFocused()
+  await expect(free.getByRole('heading', { level: 3 })).toHaveText(['Tor'])
+  await expect(page.getByRole('radio', { name: 'Mirabel' })).toHaveCount(0)
+  await axeAndTargets(page)
+  await lost.getByRole('button', { name: 'Cerrar' }).click()
+  await expect(free.getByRole('button', { name: 'Jugar con Tor' })).toBeFocused()
+})
+
+test('RYT-096 with four characters the claim waits for a free slot', async ({ page }) => {
+  const f = await identityFixture(page, {
+    player: true,
+    reserve: ['Bram', 'Cora', 'Dax'],
+    free: ['Mirabel'],
+  })
+  await page.goto(rosterPath)
+  const free = page.getByRole('region', { name: 'Personajes libres' })
+  // The cards still show who is free, without a way to claim them, under one note.
+  await expect(free.getByRole('heading', { level: 3, name: 'Mirabel' })).toBeVisible()
+  await expect(free.getByRole('button', { name: /Jugar/ })).toHaveCount(0)
+  await expect(free).toContainText(
+    'Los cuatro huecos están ocupados. Archiva un personaje para jugar con uno de estos.',
+  )
+  // The section says it once; the roster's own "slots taken" line steps aside.
+  await expect(
+    page.getByText('Los cuatro huecos están ocupados. Archiva un personaje para liberar uno.'),
+  ).toHaveCount(0)
+  await axeAndTargets(page)
+  expect(f.calls.filter((c) => c.method === 'claim_character')).toHaveLength(0)
+})
+
+test('RYT-096 a claim refused for the limit explains it in the dialog', async ({ page }) => {
+  const f = await identityFixture(page, { player: true, reserve: ['Bram'], free: ['Mirabel'] })
+  await page.goto(rosterPath)
+  f.failNextClaim('Character limit')
+  await page.getByRole('button', { name: 'Jugar con Mirabel' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Jugar con Mirabel?' })
+  const confirm = dialog.getByRole('button', { name: 'Jugar con Mirabel' })
+  await confirm.click()
+  await expect(dialog.getByRole('alert')).toHaveText(
+    'Los cuatro huecos están ocupados. Archiva un personaje para jugar con Mirabel.',
+  )
+  await expect(dialog.getByRole('alert')).toBeFocused()
+  await expect(confirm).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Jugar con Mirabel' })).toBeFocused()
+})
+
+test('RYT-096 the DM and the DM Player view never list free characters', async ({ page }) => {
+  const f = await identityFixture(page, { linkedPlayer: true, free: ['Mirabel'] })
+  await page.goto(rosterPath)
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Personajes de los jugadores' }),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Personajes libres' })).toHaveCount(0)
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Personajes de Arin' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Jugar con/ })).toHaveCount(0)
+  expect(f.calls.filter((c) => c.method === 'list_claimable_characters')).toHaveLength(0)
 })

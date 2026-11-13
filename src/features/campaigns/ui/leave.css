@@ -1,0 +1,61 @@
+/* RYT-095 leaving a campaign: the menu item, its blocked state, the confirmation and the outcome
+   on My campaigns. Tokens only; both schemes and every class theme. */
+.leave-item {
+  color: var(--danger);
+}
+/* aria-disabled (not disabled) keeps the item reachable; it still reads as unavailable. */
+.leave-item[data-blocked] {
+  color: var(--app-muted);
+  cursor: not-allowed;
+}
+.leave-hint {
+  max-width: 16rem;
+  white-space: normal;
+  text-transform: none;
+  font-size: var(--fs-meta);
+}
+.leave-title {
+  text-wrap: balance;
+}
+.leave-body {
+  text-wrap: pretty;
+}
+/* One row from 36em; stacked full-width on phones with the confirmation on top. */
+.leave-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+@media (max-width: 36em) {
+  .leave-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+/* My campaigns: the card's role and its ⋯ menu share the first row. */
+.campaign-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* The 44px menu button sits in the card's corner without growing the row. */
+  margin: -10px -10px -6px 0;
+}
+.campaign-left {
+  outline: none;
+}
+.campaign-left:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.campaign-left .mantine-Alert-closeButton {
+  min-width: 44px;
+  min-height: 44px;
+}
+.campaign-left .mantine-Alert-wrapper {
+  align-items: center;
+}
+.campaign-left .mantine-Alert-message {
+  font-size: var(--fs-body);
+}

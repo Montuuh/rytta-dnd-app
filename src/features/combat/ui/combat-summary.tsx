@@ -104,6 +104,7 @@ export function CombatSummary({
                         imageKind={row.kind === 'character' ? 'character' : 'creature'}
                         path={combatant?.image_path}
                         defeated={fate === 'dead' || fate === 'defeated'}
+                        viewable
                       />
                       <div className="combat-recap-id">
                         <Text component="span" className="combat-recap-name">

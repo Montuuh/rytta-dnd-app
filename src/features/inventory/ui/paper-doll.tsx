@@ -19,6 +19,8 @@ import {
   type ItemStack,
 } from '../domain/item'
 import { ItemIcon } from './item-icon'
+import { useItemPicture } from './item-picture'
+import './paper-doll.css'
 
 const slotIcons: Record<EquipmentSlot, string> = {
   head: 'crown',
@@ -143,6 +145,8 @@ export function PaperDoll({
       })
     : []
   const current = picking ? equipped.get(picking) : undefined
+  // RYT-098: the equipped item's picture opens the viewer beside the unequip row, never inside it.
+  const pictured = useItemPicture(current?.definition.image_path)
   return (
     <div className="paper-doll-view">
       <div className="paper-doll" role="list" aria-label={t('inventory.view.equipment')}>
@@ -218,23 +222,37 @@ export function PaperDoll({
         >
           <Stack gap="xs">
             {current && (
-              <UnstyledButton
-                className="picker-row picker-remove"
-                disabled={pending}
-                onClick={() => {
-                  onUnequip(current.stack)
-                  closePicker()
-                }}
-              >
-                <ItemIcon
-                  icon={current.definition.icon}
-                  imagePath={current.definition.image_path}
-                  size={22}
-                />
-                <span className="user-copy">
-                  {t('inventory.socket.unequip', { name: current.definition.name })}
-                </span>
-              </UnstyledButton>
+              <div className="picker-current">
+                {pictured && (
+                  <ItemIcon
+                    icon={current.definition.icon}
+                    imagePath={current.definition.image_path}
+                    size={40}
+                    viewable
+                    name={current.definition.name}
+                    frame={`picker-picture rarity-${current.definition.rarity}`}
+                  />
+                )}
+                <UnstyledButton
+                  className="picker-row picker-remove"
+                  disabled={pending}
+                  onClick={() => {
+                    onUnequip(current.stack)
+                    closePicker()
+                  }}
+                >
+                  {!pictured && (
+                    <ItemIcon
+                      icon={current.definition.icon}
+                      imagePath={current.definition.image_path}
+                      size={22}
+                    />
+                  )}
+                  <span className="user-copy">
+                    {t('inventory.socket.unequip', { name: current.definition.name })}
+                  </span>
+                </UnstyledButton>
+              </div>
             )}
             {!current &&
               candidates.map((stack) => {

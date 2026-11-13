@@ -11,6 +11,7 @@ import { useAuth } from '@/features/auth'
 import {
   changeCharacter,
   changeSheet,
+  claimCharacter,
   getHistory,
   getPartyOverview,
   getPlayLock,
@@ -18,6 +19,7 @@ import {
   historyPageSize,
   listAssignments,
   listCharacters,
+  listClaimable,
   listRoster,
   listSheetSummaries,
 } from './data/repository'
@@ -49,6 +51,50 @@ export const characterRosterQuery = (userId: string, campaignId: string, filterU
     queryFn: ({ signal }) => listRoster(campaignId, signal, filterUserId),
     refetchInterval: 20_000,
   })
+
+/** RYT-096: the DM's free characters an active Player may claim. 'forbidden' (a DM, a former
+ * member) is final, so it is not retried. */
+export const claimableCharactersQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'characters', 'claimable'],
+    queryFn: ({ signal }) => listClaimable(campaignId, signal),
+    refetchInterval: 20_000,
+    retry: (count, error) => error.message !== 'forbidden' && count < 1,
+  })
+
+/**
+ * RYT-096: a Player claims a free character. The refresh is not awaited, so the caller can close
+ * its dialog and move focus while the rosters, the party and the portraits reload. A character
+ * someone else took ('unavailable') refreshes the free list.
+ */
+export function useClaimCharacter(campaignId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (characterId: string) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new Error('failed')
+      return claimCharacter(campaignId, characterId)
+    },
+    onSuccess: () => {
+      if (controller?.getSnapshot().user?.id === userId)
+        void cache.invalidateQueries({ queryKey: ['private', userId, 'campaign', campaignId] })
+    },
+    onError: (error) => {
+      if (
+        error.message === 'unavailable' &&
+        userId &&
+        controller?.getSnapshot().user?.id === userId
+      )
+        void cache.invalidateQueries({
+          queryKey: claimableCharactersQuery(userId, campaignId).queryKey,
+        })
+    },
+  })
+}
 
 /** One Player's roster (the viewer's or the previewed Player's); null owner disables it. */
 export function useOwnRoster(campaignId: string, ownerId: string | null) {

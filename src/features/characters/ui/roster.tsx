@@ -4,6 +4,8 @@ import {
   ActionIcon,
   Alert,
   Button,
+  Divider,
+  Group,
   Menu,
   Modal,
   Stack,
@@ -31,17 +33,19 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
-import { CharacterPortrait } from '@/features/inventory'
+import { CharacterPortrait, PortraitPlate } from '@/features/inventory'
 import { PageHead } from '@/shared/ui/page-head'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
 import {
   characterRosterQuery,
+  claimableCharactersQuery,
   sheetSummariesQuery,
   useAbsentAction,
   useActivateCharacter,
   useArchiveAction,
+  useClaimCharacter,
   useCreateOwnCharacter,
 } from '../api'
 import { isClassKey } from '../domain/rules'
@@ -52,6 +56,7 @@ import {
   rosterError,
   rostersByPlayer,
   unassignedOf,
+  type ClaimableCharacter,
   type RosterEntry,
 } from '../domain/roster'
 import type { SheetSummary } from '../domain/sheet'
@@ -185,6 +190,9 @@ export function CharacterRosterPage() {
             noticeRef={noticeRef}
           />
         ))}
+      {roster.data && !dm && !playerPreview && own && own.entries.length > 0 && (
+        <FreeCharacters used={own.entries.length} onNotice={setNotice} />
+      )}
       {roster.data && !playerPreview && archived.length > 0 && (
         <ArchivedSection
           archived={archived}
@@ -263,6 +271,8 @@ function PlayerRoster({
   const { t } = useTranslation()
   const campaign = useCampaign()
   const activate = useActivateCharacter(campaign.id)
+  // With free characters waiting, their section says the roster is full (RYT-096).
+  const freeWaiting = (useClaimable().data?.length ?? 0) > 0
   const [creating, setCreating] = useState(false)
   const createButton = useRef<HTMLButtonElement>(null)
   const groupId = useId()
@@ -272,7 +282,16 @@ function PlayerRoster({
   const nameOf = (id?: string) => entries.find((entry) => entry.id === id)?.name ?? ''
   // No character in the roster: no empty radio group. With archived ones, the welcome points
   // to them (the Archived section below opens by default).
-  if (entries.length === 0) return <FirstCharacter withArchived={hasArchived} />
+  if (entries.length === 0)
+    return (
+      <FirstCharacter
+        withArchived={hasArchived}
+        onClaimed={(id, name) => {
+          onNotice({ tone: 'done', text: t('roster.claimed', { name }) })
+          focusWhenReady(() => rosterRadio(id), { timeout: 5000 })
+        }}
+      />
+    )
   return (
     <>
       {benched && (
@@ -353,7 +372,7 @@ function PlayerRoster({
           <EmptySlots count={rosterLimit - entries.length - 1} />
         </SlotGrid>
       </div>
-      {entries.length >= rosterLimit && (
+      {entries.length >= rosterLimit && !freeWaiting && (
         <Text size="sm" c="dimmed">
           {t('roster.full')}
         </Text>
@@ -594,22 +613,26 @@ function RosterCard({
   const id = useId()
   const active = radio ? radio.checked : entry.is_active
   const { complete, meta } = useMeta(summary)
+  // RYT-098: the picture opens the viewer, so it is never inside the radio's label.
+  const medallion = (
+    <span className="roster-medallion">
+      <CharacterPortrait
+        campaignId={campaign.id}
+        characterId={entry.id}
+        name={entry.name}
+        path={entry.portraitPath}
+        size={76}
+        viewable
+      />
+      {active && (
+        <span className="roster-check" aria-hidden="true">
+          {radio?.pending ? <Hourglass size={14} /> : <Check size={14} strokeWidth={3} />}
+        </span>
+      )}
+    </span>
+  )
   const body = (
     <>
-      <span className="roster-medallion">
-        <CharacterPortrait
-          campaignId={campaign.id}
-          characterId={entry.id}
-          name={entry.name}
-          path={entry.portraitPath}
-          size={76}
-        />
-        {active && (
-          <span className="roster-check" aria-hidden="true">
-            {radio?.pending ? <Hourglass size={14} /> : <Check size={14} strokeWidth={3} />}
-          </span>
-        )}
-      </span>
       <span id={`${id}-name`} className="roster-name user-copy">
         {entry.name}
       </span>
@@ -642,22 +665,31 @@ function RosterCard({
         aria-labelledby={radio ? undefined : `${id}-name`}
       >
         {radio ? (
-          <label className="roster-choice is-choice">
-            <input
-              type="radio"
-              className="roster-input"
-              name={radio.name}
-              value={entry.id}
-              checked={radio.checked}
-              aria-disabled={radio.disabled || undefined}
-              onChange={radio.onSelect}
-              aria-labelledby={`${id}-name`}
-              aria-describedby={meta ? `${id}-meta` : undefined}
-            />
-            {body}
-          </label>
+          <>
+            <label className="roster-choice is-choice">
+              <input
+                type="radio"
+                className="roster-input"
+                name={radio.name}
+                value={entry.id}
+                checked={radio.checked}
+                aria-disabled={radio.disabled || undefined}
+                onChange={radio.onSelect}
+                aria-labelledby={`${id}-name`}
+                aria-describedby={meta ? `${id}-meta` : undefined}
+              />
+              {/* Holds the medallion's place; taps there still choose the character. */}
+              <span className="roster-medallion-space" aria-hidden="true" />
+              {body}
+            </label>
+            {/* A sibling of the label, laid over that place. */}
+            <div className="roster-medallion-float">{medallion}</div>
+          </>
         ) : (
-          <div className="roster-choice">{body}</div>
+          <div className="roster-choice">
+            {medallion}
+            {body}
+          </div>
         )}
         <div className="roster-card-foot">
           <SheetLink entry={entry} complete={complete} />
@@ -703,6 +735,7 @@ function RosterRow({
           name={entry.name}
           path={entry.portraitPath}
           size={44}
+          viewable
         />
         <div className="roster-row-text">
           <span id={`${id}-name`} className="roster-row-name user-copy">
@@ -1048,15 +1081,19 @@ function ArchivedSection({
   )
 }
 
-/** First-character onboarding: what the Player sees on Party with an empty roster. The rings
- * only picture the four slots; the button is the one action. */
+/** First-character onboarding: what the Player sees on Party with an empty roster. Free
+ * characters the DM prepared come first (RYT-096), then creating one is the second choice;
+ * without them the rings picture the four slots and the button is the one action. */
 export function RosterWelcome({
   onCreate,
+  onClaimed,
   ctaRef,
   withArchived = false,
   archivedLink = false,
 }: {
   onCreate: () => void
+  /** A free character became the Player's; the caller moves focus to it. */
+  onClaimed: (id: string, name: string) => void
   ctaRef?: RefObject<HTMLButtonElement | null>
   /** The Player only has archived characters: offer them alongside creating a new one. */
   withArchived?: boolean
@@ -1066,53 +1103,403 @@ export function RosterWelcome({
   const { t } = useTranslation()
   const campaign = useCampaign()
   const id = useId()
+  const claimable = useClaimable()
+  const [lost, setLost] = useState<string | null>(null)
+  const scope = useRef<HTMLElement>(null)
+  const free = claimable.data ?? []
+  const claiming = free.length > 0
+  const loading = claimable.isPending && claimable.fetchStatus !== 'idle'
   return (
-    <section className="roster-welcome" aria-labelledby={`${id}-title`}>
-      <div className="roster-welcome-slots" aria-hidden="true">
-        {Array.from({ length: rosterLimit }, (_, index) => (
-          <span key={index} className="roster-ring" />
-        ))}
-      </div>
+    <section
+      ref={scope}
+      className="roster-welcome"
+      data-claim={claiming || undefined}
+      aria-labelledby={`${id}-title`}
+    >
+      {!claiming && (
+        <div className="roster-welcome-slots" aria-hidden="true">
+          {Array.from({ length: rosterLimit }, (_, index) => (
+            <span key={index} className="roster-ring" />
+          ))}
+        </div>
+      )}
       <Title order={2} id={`${id}-title`} className="roster-welcome-title">
         {t('roster.welcomeTitle')}
       </Title>
-      <Text className="roster-welcome-text">
-        {t(withArchived ? 'roster.welcomeArchived' : 'roster.welcomeText')}
-      </Text>
-      <div className="roster-welcome-actions">
-        <Button
-          ref={ctaRef}
-          size="lg"
-          leftSection={<Plus size={20} aria-hidden="true" />}
-          onClick={onCreate}
-          className="roster-welcome-cta"
-        >
-          {t(withArchived ? 'roster.welcomeCtaNew' : 'roster.welcomeCta')}
+      {loading ? (
+        <Text role="status" className="roster-welcome-text">
+          {t('common.loading')}
+        </Text>
+      ) : (
+        <>
+          <Text className="roster-welcome-text">
+            {t(
+              claiming
+                ? 'roster.claimLede'
+                : withArchived
+                  ? 'roster.welcomeArchived'
+                  : 'roster.welcomeText',
+            )}
+          </Text>
+          <LostNotice name={lost} scope={scope} onClose={() => setLost(null)} />
+          <ClaimLoadError query={claimable} />
+          {claiming && (
+            <>
+              <ClaimCards
+                characters={free}
+                layout="welcome"
+                onClaimed={(character, claimedId) => onClaimed(claimedId, character.name)}
+                onLost={(character) => setLost(character.name)}
+              />
+              <Divider label={t('roster.claimOr')} labelPosition="center" className="claim-or" />
+            </>
+          )}
+          <div className="roster-welcome-actions">
+            <Button
+              ref={ctaRef}
+              size="lg"
+              variant={claiming ? 'default' : 'filled'}
+              leftSection={<Plus size={20} aria-hidden="true" />}
+              onClick={onCreate}
+              className="roster-welcome-cta"
+            >
+              {t(withArchived ? 'roster.welcomeCtaNew' : 'roster.welcomeCta')}
+            </Button>
+            {withArchived && archivedLink && (
+              <Button
+                component={Link}
+                to={`/campaign/${campaign.id}/party/roster`}
+                size="lg"
+                variant="light"
+                leftSection={<ArchiveRestore size={20} aria-hidden="true" />}
+              >
+                {t('roster.welcomeArchivedLink')}
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+/** RYT-096: the free characters of the campaign for an active Player; never fetched for a DM or
+ * the DM's Player view, where the server would refuse anyway. */
+function useClaimable() {
+  const { state } = useAuth()
+  const campaign = useCampaign()
+  const { playerPreview } = useCampaignView()
+  return useQuery({
+    ...claimableCharactersQuery(state.user!.id, campaign.id),
+    enabled: campaign.role === 'player' && !playerPreview,
+  })
+}
+
+/** The roster radio of a character, where focus lands once it joins the Player's roster. */
+const rosterRadio = (id: string) =>
+  document.querySelector<HTMLElement>(`.roster-page input[type="radio"][value="${id}"]`)
+
+/** A failed list keeps creating available and offers a retry; 'forbidden' is not a failure
+ * the Player can fix, so the free characters simply do not show. */
+function ClaimLoadError({ query }: { query: ReturnType<typeof useClaimable> }) {
+  const { t } = useTranslation()
+  if (!query.isError || query.error.message === 'forbidden') return null
+  return (
+    <Alert color="red" role="alert" className="claim-load-error">
+      <Group justify="space-between" align="center" gap="xs">
+        <span>{t('roster.claimLoadError')}</span>
+        <Button variant="subtle" onClick={() => void query.refetch()}>
+          {t('common.retry')}
         </Button>
-        {withArchived && archivedLink && (
-          <Button
-            component={Link}
-            to={`/campaign/${campaign.id}/party/roster`}
-            size="lg"
-            variant="light"
-            leftSection={<ArchiveRestore size={20} aria-hidden="true" />}
-          >
-            {t('roster.welcomeArchivedLink')}
-          </Button>
-        )}
+      </Group>
+    </Alert>
+  )
+}
+
+/** "<name> is no longer free": a dismissable status above the cards that takes focus, since the
+ * card the Player chose has left the list. Closing it moves to the first card or the next action
+ * inside `scope`. */
+function LostNotice({
+  name,
+  scope,
+  onClose,
+}: {
+  name: string | null
+  scope: RefObject<HTMLElement | null>
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (name) ref.current?.focus()
+  }, [name])
+  if (!name) return null
+  return (
+    <Alert
+      ref={ref}
+      tabIndex={-1}
+      role="status"
+      className="claim-lost user-copy"
+      withCloseButton
+      closeButtonLabel={t('roster.dismiss')}
+      onClose={() => {
+        onClose()
+        focusWhenReady(() =>
+          scope.current?.querySelector<HTMLElement>('.claim-play, .roster-welcome-cta'),
+        )
+      }}
+    >
+      {t('roster.claimLost', { name })}
+    </Alert>
+  )
+}
+
+/**
+ * RYT-096: free characters as cards: the portrait plate (4:5, the monogram without a portrait,
+ * tap to view), the name, class and level, and one tonal "Play" button that asks first. With a
+ * full roster the cards lose that button; the section's note says how to make room.
+ */
+function ClaimCards({
+  characters,
+  layout,
+  full = false,
+  onClaimed,
+  onLost,
+}: {
+  characters: ClaimableCharacter[]
+  layout: 'welcome' | 'roster'
+  /** A full roster: the cards show who is free, without a way to claim them. */
+  full?: boolean
+  onClaimed: (character: ClaimableCharacter, id: string) => void
+  onLost: (character: ClaimableCharacter) => void
+}) {
+  const { t } = useTranslation()
+  const campaign = useCampaign()
+  const metaOf = useClaimMeta()
+  const [asking, setAsking] = useState<{
+    character: ClaimableCharacter
+    trigger: HTMLElement
+  } | null>(null)
+  // The claimed card stays busy until the lists reload without it.
+  const [claimed, setClaimed] = useState<string | null>(null)
+  return (
+    <>
+      <div className="claim-frame" data-layout={layout}>
+        <ul
+          className="claim-grid"
+          data-layout={layout}
+          data-count={Math.min(characters.length, 3)}
+          data-full={full || undefined}
+        >
+          {characters.map((character) => (
+            <li key={character.id} className="claim-card">
+              <PortraitPlate
+                campaignId={campaign.id}
+                characterId={character.id}
+                name={character.name}
+                path={character.portrait_path}
+                className="claim-plate"
+              />
+              <div className="claim-text">
+                <Title order={3} className="claim-name user-copy">
+                  {character.name}
+                </Title>
+                <Text className="claim-meta user-copy">{metaOf(character)}</Text>
+              </div>
+              {!full && (
+                <Button
+                  variant="light"
+                  className="claim-play"
+                  // A short label keeps the buttons one size; the name is in the accessible name.
+                  aria-label={t('roster.claimPlay', { name: character.name })}
+                  loading={claimed === character.id}
+                  onClick={(event) => {
+                    if (claimed) return
+                    setAsking({ character, trigger: event.currentTarget })
+                  }}
+                >
+                  {t('roster.claimShort')}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
+      {asking && (
+        <ClaimDialog
+          character={asking.character}
+          onClose={() => {
+            const { trigger } = asking
+            setAsking(null)
+            focusWhenReady(() => trigger)
+          }}
+          onClaimed={(id) => {
+            setAsking(null)
+            setClaimed(asking.character.id)
+            onClaimed(asking.character, id)
+          }}
+          onLost={() => {
+            setAsking(null)
+            onLost(asking.character)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+/** Class and level of a free character with a finished sheet; otherwise the sheet is unfinished. */
+function useClaimMeta() {
+  const { t } = useTranslation()
+  return (character: ClaimableCharacter) =>
+    character.sheet_status === 'complete' && character.level
+      ? t('sheet.classLevel', {
+          class:
+            character.class_key && isClassKey(character.class_key)
+              ? t(`srd.class.${character.class_key}`)
+              : (character.class_label ?? ''),
+          level: character.level,
+        })
+      : t('roster.draft')
+}
+
+/** "Play as <name>?": the one line of consequence, then the claim. Someone else taking the
+ * character first closes the dialog (the list says so); other failures stay here. */
+function ClaimDialog({
+  character,
+  onClose,
+  onClaimed,
+  onLost,
+}: {
+  character: ClaimableCharacter
+  onClose: () => void
+  onClaimed: (id: string) => void
+  onLost: () => void
+}) {
+  const { t } = useTranslation()
+  const campaign = useCampaign()
+  const claim = useClaimCharacter(campaign.id)
+  const metaOf = useClaimMeta()
+  const errorRef = useRef<HTMLDivElement>(null)
+  const kind = claim.error?.message
+  const shown = claim.isError && kind !== 'unavailable'
+  useEffect(() => {
+    if (shown) errorRef.current?.focus()
+  }, [shown])
+  const name = character.name
+  return (
+    <Modal
+      opened
+      centered
+      onClose={() => !claim.isPending && onClose()}
+      title={<span className="claim-title user-copy">{t('roster.claimTitle', { name })}</span>}
+      closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+    >
+      <Stack>
+        <div className="claim-ask">
+          <CharacterPortrait
+            campaignId={campaign.id}
+            characterId={character.id}
+            name={name}
+            path={character.portrait_path}
+            size={64}
+          />
+          <div className="claim-ask-text">
+            <Text className="claim-meta user-copy">{metaOf(character)}</Text>
+            <Text>{t('roster.claimBody')}</Text>
+          </div>
+        </div>
+        {shown && (
+          <Alert ref={errorRef} tabIndex={-1} color="red" role="alert">
+            {kind === 'limit'
+              ? t('roster.errorClaimLimit', { name })
+              : kind === 'forbidden'
+                ? t('roster.errorClaimForbidden')
+                : t('roster.errorClaim', { name })}
+          </Alert>
+        )}
+        <div className="roster-dialog-actions">
+          <Button variant="subtle" disabled={claim.isPending} onClick={onClose}>
+            {t('action.cancel')}
+          </Button>
+          <Button
+            data-autofocus
+            loading={claim.isPending}
+            disabled={kind === 'limit' || kind === 'forbidden'}
+            className="claim-confirm"
+            onClick={() =>
+              claim.mutate(character.id, {
+                onSuccess: onClaimed,
+                onError: (error) => {
+                  if (error.message === 'unavailable') onLost()
+                },
+              })
+            }
+          >
+            {t('roster.claimPlay', { name })}
+          </Button>
+        </div>
+      </Stack>
+    </Modal>
+  )
+}
+
+/** RYT-096 on My characters: the free characters, smaller than the Player's own. With four
+ * characters they stay without a claim button, under the note that archiving one makes room. */
+function FreeCharacters({
+  used,
+  onNotice,
+}: {
+  used: number
+  onNotice: (notice: Notice | null) => void
+}) {
+  const { t } = useTranslation()
+  const claimable = useClaimable()
+  const [lost, setLost] = useState<string | null>(null)
+  const scope = useRef<HTMLElement>(null)
+  const id = useId()
+  const free = claimable.data ?? []
+  const failed = claimable.isError && claimable.error.message !== 'forbidden'
+  const full = used >= rosterLimit
+  if (!free.length && !lost && !failed) return null
+  return (
+    <section ref={scope} className="roster-free" aria-labelledby={`${id}-title`}>
+      <Title order={2} id={`${id}-title`} className="roster-free-title">
+        {t('roster.free')}
+      </Title>
+      {full && free.length > 0 && (
+        <Text className="roster-free-reason">{t('roster.claimFull')}</Text>
+      )}
+      <LostNotice name={lost} scope={scope} onClose={() => setLost(null)} />
+      <ClaimLoadError query={claimable} />
+      {free.length > 0 && (
+        <ClaimCards
+          characters={free}
+          layout="roster"
+          full={full}
+          onClaimed={(character, claimedId) => {
+            onNotice({ tone: 'done', text: t('roster.claimed', { name: character.name }) })
+            focusWhenReady(() => rosterRadio(claimedId), { timeout: 5000 })
+          }}
+          onLost={(character) => setLost(character.name)}
+        />
+      )}
     </section>
   )
 }
 
 /** Onboarding for a Player with no characters in the roster: the welcome plus its dialog.
- * Closing the dialog returns focus to the call to action. */
+ * Closing the dialog returns focus to the call to action. A claimed character takes focus where
+ * it appears: its card on Party by default. */
 export function FirstCharacter({
   withArchived = false,
   archivedLink = false,
+  onClaimed = (id) =>
+    focusWhenReady(() => document.getElementById(`character-${id}`), { timeout: 5000 }),
 }: {
   withArchived?: boolean
   archivedLink?: boolean
+  onClaimed?: (id: string, name: string) => void
 }) {
   const [creating, setCreating] = useState(false)
   const cta = useRef<HTMLButtonElement>(null)
@@ -1123,6 +1510,7 @@ export function FirstCharacter({
         withArchived={withArchived}
         archivedLink={archivedLink}
         onCreate={() => setCreating(true)}
+        onClaimed={onClaimed}
       />
       {creating && (
         <CreateCharacterDialog
@@ -1212,6 +1600,7 @@ export function RosterLink({ entries, dm }: { entries: Entry[]; dm: boolean }) {
     <Link
       to={`/campaign/${campaign.id}/party/roster`}
       className="roster-link"
+      data-quiet={dm || undefined}
       aria-label={
         count === 0
           ? label

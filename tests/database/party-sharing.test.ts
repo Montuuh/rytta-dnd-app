@@ -128,7 +128,8 @@ describe('RYT-031 party live sharing', () => {
     await toggle(c, Cato, false)
     await asUser(player)
     const rows = await overview(c)
-    expect(rows.map((row) => row.id)).toEqual([Arin, Bea])
+    // RYT-097: a non-shared teammate (Cato) is listed too, without live fields.
+    expect(rows.map((row) => row.id)).toEqual([Arin, Bea, Cato])
     for (const row of rows) expect(Object.keys(row).sort()).toEqual(liveColumns)
     const bea = rows.find((row) => row.id === Bea)!
     expect(bea).toMatchObject({
@@ -159,17 +160,33 @@ describe('RYT-031 party live sharing', () => {
     ).toHaveLength(0)
   })
 
-  it('hides non-shared and unassigned characters from Players; the hidden owner still sees itself', async () => {
+  it('hides the live state of non-shared and every unassigned character from Players; the hidden owner still sees itself', async () => {
     const { c, Cato, Npc } = await setup()
     await asUser(dm)
     await toggle(c, Cato, false)
     await asUser(peer)
-    const ids = (await overview(c)).map((row) => row.id)
-    expect(ids).not.toContain(Cato)
-    expect(ids).not.toContain(Npc)
+    const rows = await overview(c)
+    expect(rows.map((row) => row.id)).not.toContain(Npc)
+    // RYT-097: the non-shared teammate keeps name, class and level only.
+    expect(rows.find((row) => row.id === Cato)).toMatchObject({
+      name: 'Cato',
+      is_own: false,
+      shares_live: false,
+      current_hp: null,
+      max_hp: null,
+      temp_hp: null,
+      armor_class: null,
+      exhaustion: null,
+      conditions: null,
+    })
     await asUser(hidden)
     const own = await overview(c)
-    expect(own.find((row) => row.id === Cato)).toMatchObject({ is_own: true, shares_live: false })
+    expect(own.find((row) => row.id === Cato)).toMatchObject({
+      is_own: true,
+      shares_live: false,
+      max_hp: 1,
+      armor_class: 10,
+    })
   })
 
   it('gives the DM every character with its sharing flag and audits only real toggles', async () => {
@@ -242,7 +259,11 @@ describe('RYT-031 party live sharing', () => {
     await toggle(c, Cato, false, 'pre')
     await asUser(player)
     expect((await overview(c, 'pre')).map((row) => row.id)).toContain(Arin)
-    expect((await overview(c, 'pre')).map((row) => row.id)).not.toContain(Cato)
+    expect((await overview(c, 'pre')).find((row) => row.id === Cato)).toMatchObject({
+      shares_live: false,
+      current_hp: null,
+      max_hp: null,
+    })
     await expect(toggle(c, Arin, true, 'pre')).rejects.toThrow(/Forbidden/)
     // PRE helpers authorize only against PRE membership.
     await expect(overview(c)).rejects.toThrow(/Forbidden/)

@@ -1,6 +1,13 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { beaId, campaignId, characterId, identityFixture, peerId } from './fixtures/identity.ts'
+import {
+  beaId,
+  campaignId,
+  catoId,
+  characterId,
+  identityFixture,
+  peerId,
+} from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
 import { tradeServer } from './fixtures/trades.ts'
 
@@ -42,7 +49,7 @@ test('RYT-034 two Players trade items and gold with a double confirmation', asyn
   await arin.goto(`./#/campaign/${campaignId}/party`)
   await bea.goto(`./#/campaign/${campaignId}/party`)
 
-  // 1. Arin invites Bea from her teammate card.
+  // 1. Arin invites Bea from the trade icon on her portrait.
   const beaCard = arin.getByRole('article', { name: 'Bea' })
   await beaCard.getByRole('button', { name: 'Comerciar con Bea' }).click()
   await expect(arin.getByText('Invitación enviada a Bea.')).toBeVisible()
@@ -159,9 +166,12 @@ test('RYT-034 declined invitations and phone bottom-sheet picker', async ({ brow
   })
   await arin.goto(`./#/campaign/${campaignId}/party`)
   await bea.goto(`./#/campaign/${campaignId}/party`)
-  // Launcher: a character picker, including characters that are not shared live.
-  await arin.getByRole('button', { name: 'Proponer un trueque' }).click()
-  await arin.getByRole('menuitem', { name: 'Bea' }).click()
+  // RYT-097: no general launcher; every teammate carries its own trade icon.
+  await expect(arin.getByRole('button', { name: 'Proponer un trueque' })).toHaveCount(0)
+  await arin
+    .getByRole('article', { name: 'Bea' })
+    .getByRole('button', { name: 'Comerciar con Bea' })
+    .click()
   const invite = bea.getByRole('dialog', { name: 'Arin wants to trade with you' })
   await expect(invite).toBeVisible({ timeout: 15_000 })
   await audit(bea)
@@ -207,11 +217,53 @@ test('RYT-034 declined invitations and phone bottom-sheet picker', async ({ brow
   // Escape minimizes the window to the dock; the dock brings it back.
   await arin.keyboard.press('Escape')
   await expect(arinWindow).toBeHidden()
-  await arin.getByRole('button', { name: 'Volver al trueque con Bea' }).click()
+  await arin
+    .getByRole('complementary', { name: 'Trueque en curso' })
+    .getByRole('button', { name: 'Volver al trueque con Bea' })
+    .click()
   await expect(arinWindow).toBeVisible()
   await arinWindow.getByRole('button', { name: 'Cancelar el trueque' }).click()
   await expect(arinWindow).toBeHidden()
   await expect(bea.getByText('Arin cancelled the trade.')).toBeVisible({ timeout: 10_000 })
   await arinContext.close()
   await beaContext.close()
+})
+
+test('RYT-097 trading starts from the portrait icon, also with an unshared teammate', async ({
+  page,
+}) => {
+  const server = tradeServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+  await server.install(page, characterId)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const cato = page.getByRole('article', { name: 'Cato' })
+  await expect(cato).toContainText('Estado no compartido')
+  await cato.getByRole('button', { name: 'Comerciar con Cato' }).click()
+  await expect(page.getByText('Invitación enviada a Cato.')).toBeVisible()
+  expect(server.calls.find((c) => c.method === 'invite_trade')?.body).toMatchObject({
+    to_character: catoId,
+  })
+  // While that invitation is open the other icon stays focusable and says why it waits.
+  const bea = page
+    .getByRole('article', { name: 'Bea' })
+    .getByRole('button', { name: 'Comerciar con Bea' })
+  await expect(bea).toHaveAttribute('aria-disabled', 'true')
+  await expect(bea).toHaveAccessibleDescription('Ya tienes un trueque en curso')
+  // Pressing it does nothing (the click is forced: Playwright waits for aria-disabled controls).
+  await bea.click({ force: true })
+  expect(server.calls.filter((c) => c.method === 'invite_trade')).toHaveLength(1)
+  // The icon on Cato's portrait brings the open invitation back.
+  await expect(cato.getByRole('button', { name: 'Volver al trueque con Cato' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  // Party only: the toast's close button is the trade layer's (reported separately).
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include('main')
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+        .analyze()
+    ).violations,
+  ).toEqual([])
+  await expectTouchTargets(page, 'main button:visible:not(.glossary-term)')
 })

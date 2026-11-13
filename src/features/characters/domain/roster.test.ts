@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   canRestore,
+  claimError,
+  claimableCharacterSchema,
   playersWithFreeSlots,
   rosterEntrySchema,
   rosterError,
@@ -73,5 +75,34 @@ describe('RYT-044 roster domain', () => {
     expect(rosterError('Character in combat')).toBe('combat')
     expect(rosterError('Active character')).toBe('active')
     expect(rosterError('Forbidden')).toBe('unavailable')
+  })
+
+  it('RYT-096 maps claim errors and parses the free characters', () => {
+    expect(claimError('Character unavailable')).toBe('unavailable')
+    expect(claimError('Character limit')).toBe('limit')
+    expect(claimError('Forbidden')).toBe('forbidden')
+    expect(claimError('Failed to fetch')).toBe('failed')
+    const free = {
+      id: newRequestId(),
+      name: 'Mirabel',
+      sheet_status: 'complete',
+      class_key: 'bard',
+      class_label: 'Bardo',
+      level: 5,
+      portrait_path: null,
+    }
+    expect(claimableCharacterSchema.parse(free)).toEqual(free)
+    expect(
+      claimableCharacterSchema.parse({
+        ...free,
+        sheet_status: null,
+        class_key: null,
+        class_label: null,
+        level: null,
+      }).sheet_status,
+    ).toBeNull()
+    expect(claimableCharacterSchema.safeParse({ ...free, sheet_status: 'lost' }).success).toBe(
+      false,
+    )
   })
 })

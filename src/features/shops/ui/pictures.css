@@ -1,0 +1,23 @@
+/* RYT-098: an item picture that opens the viewer is its own button beside the one that opens the
+   item or its editor, so the two never nest. Without a picture the glyph stays inside that button. */
+.listing-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.listing-lead > .listing-main {
+  flex: 1;
+  min-width: 0;
+}
+.stock-row-lead {
+  display: flex;
+  align-items: center;
+}
+.stock-row-lead.is-pictured {
+  padding-inline-start: 12px;
+}
+.stock-row-lead > .stock-row-main {
+  flex: 1;
+  min-width: 0;
+}

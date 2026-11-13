@@ -1202,6 +1202,66 @@ function seedArt(server: ReturnType<typeof combatServer>) {
   return { id, goblin: goblin.id, ogre: ogre.id, paths }
 }
 
+test('RYT-098 portraits open the viewer from the table banner and the detail, not from the order rows', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  const art = seedArt(server)
+  await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
+  await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
+  // The table's "Now" token is a picture of its own.
+  const now = page
+    .locator('.combat-table-actor:not(.is-next)')
+    .getByRole('button', { name: 'Ver el retrato de Arin' })
+  await now.click()
+  // The detail is a sheet named after Arin too: the viewer is the one on the curtain.
+  const viewer = page.locator('.image-viewer-content')
+  await expect(viewer.getByRole('img', { name: 'Retrato de Arin' })).toHaveAttribute(
+    'src',
+    /art\/ranger\.svg/,
+  )
+  await audit(page)
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(now).toBeFocused()
+
+  // The console's order rows are dense controls: their tokens stay inside and the row opens the
+  // detail, whose larger portrait opens the viewer.
+  await view(page, 'Consola del DM')
+  await expect(row(page, 'Arin').getByRole('button', { name: /Ver el retrato/ })).toHaveCount(0)
+  await row(page, 'Arin').click()
+  const detail = page.locator('.combat-detail:visible')
+  const portrait = detail.getByRole('button', { name: 'Ver el retrato de Arin' })
+  await expectTouchTargets(page, '.combat-detail:visible .combat-token-open')
+  await portrait.click()
+  await expect(viewer).toBeVisible()
+  // Over the phone and tablet sheet, Escape closes only the viewer.
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(detail).toBeVisible()
+  await expect(portrait).toBeFocused()
+  // A monogram is never a button.
+  if ((page.viewportSize()?.width ?? 1440) < 992) {
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.combat-detail:visible')).toHaveCount(0)
+  }
+  await row(page, 'Bea').click()
+  await expect(page.locator('.combat-detail:visible .combat-token-monogram')).toHaveText('B')
+  await expect(page.locator('.combat-detail:visible .combat-token-open')).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
 test('RYT-043 Players read enemy health as named bands and see tokens, never numbers or secrets', async ({
   page,
 }, info) => {
@@ -1973,7 +2033,7 @@ test('RYT-088 the DM opens a creature in a fight on its portrait, which opens th
   await evidence(page, info.project.name, 'combat-portrait', 'RYT-088')
   // The viewer shows the credit and no change action in a fight; Escape returns to the portrait.
   await portrait.click()
-  const viewer = page.locator('.bst-art-viewer')
+  const viewer = page.locator('.image-viewer-content')
   await expect(viewer.getByText('© Rytta', { exact: true })).toBeVisible()
   await expect(viewer.getByRole('button', { name: 'Cambiar la imagen…' })).toHaveCount(0)
   // Escape closes only the viewer: the detail (a sheet on phones and tablets) stays open.

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import {
   identityFixture,
@@ -132,12 +132,21 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await expect(currentNav.getByText('Inventario', { exact: false })).toHaveCount(0)
   await expect(currentNav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/members`)
+  // RYT-095: the command center uses the same confirmation as My campaigns.
   await page.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
-  await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
+  await page
+    .getByRole('dialog', { name: '¿Abandonar The Sunken Coast?' })
+    .getByRole('button', { name: 'Abandonar campaña', exact: true })
+    .click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' }),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toHaveCount(0)
   expect(
     f.calls.some((c) => c.method === 'change_campaign_member' && c.body.new_role === null),
   ).toBe(true)
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
 })
 
 test('RYT-029: the campaign index lands the DM on the command center and Players on Party', async ({
@@ -504,3 +513,247 @@ for (const language of ['es', 'en'] as const)
       })
     })
   }
+
+// RYT-095: leaving a campaign from My campaigns and from the profile menu.
+const leaveTargets =
+  'main button:visible, [role="menu"] [role="menuitem"]:visible, [role="dialog"] button:visible'
+async function axeClean(page: Page) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  const audit = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()
+  expect(
+    audit.violations.map(
+      (v) =>
+        `${v.id}: ${v.nodes.map((n) => `${n.target.join(' ')} ${n.failureSummary}`).join(' | ')}`,
+    ),
+  ).toEqual([])
+}
+
+test('RYT-095 a Player leaves from the campaign card menu', async ({ page }) => {
+  const f = await identityFixture(page, { player: true })
+  await page.goto('./')
+  const more = page.getByRole('button', { name: 'Más acciones · The Sunken Coast', exact: true })
+  await more.click()
+  const menu = page.getByRole('menu')
+  await expect(menu.getByRole('menuitem')).toHaveText(['Abrir campaña', 'Abandonar campaña'])
+  // Contrast is measured once the menu has faded in.
+  await expect(menu).toHaveCSS('opacity', '1')
+  await axeClean(page)
+  await expectTouchTargets(page, leaveTargets)
+  await menu.getByRole('menuitem', { name: 'Abandonar campaña' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Abandonar The Sunken Coast?' })
+  await expect(dialog).toContainText(
+    'Tus personajes vuelven al DM. Para volver necesitarás una nueva invitación.',
+  )
+  await expect(dialog.locator('button', { hasText: /^Cancelar$/ })).toBeFocused()
+  // The menu fades out under the dialog; measure once it is gone.
+  await expect(menu).toHaveCount(0)
+  await axeClean(page)
+  await expectTouchTargets(page, leaveTargets)
+  // Escape and Cancel close without leaving and return focus to the ⋯ button.
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(more).toBeFocused()
+  // Keyboard: Enter opens the menu on Open, ArrowDown moves to Leave campaign.
+  await page.keyboard.press('Enter')
+  await expect(menu.getByRole('menuitem', { name: 'Abrir campaña' })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(menu.getByRole('menuitem', { name: 'Abandonar campaña' })).toBeFocused()
+  await page.keyboard.press('Enter')
+  await dialog.locator('button', { hasText: /^Cancelar$/ }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(more).toBeFocused()
+  expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
+  await more.click()
+  await menu.getByRole('menuitem', { name: 'Abandonar campaña' }).click()
+  await dialog.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
+  // The outcome takes focus, the card is gone and the campaign's pages are closed.
+  const left = page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' })
+  await expect(left).toBeFocused()
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Winter at the Keep' })).toBeVisible()
+  const leave = f.calls.filter((c) => c.method === 'change_campaign_member')
+  expect(leave).toHaveLength(1)
+  expect(leave[0]!.body).toEqual({
+    target_campaign: campaignId,
+    target_user: playerId,
+    new_role: null,
+  })
+  await axeClean(page)
+  // Dismissing the outcome moves focus to the page heading and does not come back on reload.
+  await left.getByRole('button', { name: 'Cerrar' }).click()
+  await expect(left).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Mis campañas' })).toBeFocused()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Winter at the Keep' })).toBeVisible()
+  await expect(page.getByText('Has abandonado')).toHaveCount(0)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(page.getByText('Esta campaña no está disponible para tu cuenta.')).toBeVisible()
+})
+
+test('RYT-095 a Player leaves from the profile menu inside the campaign', async ({ page }) => {
+  const f = await identityFixture(page, { player: true })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+  const profile = page.getByRole('button', { name: /Sesión de player@example.com/ })
+  await profile.click()
+  // Leave belongs to the open campaign, above the account items; Sign out stays last.
+  await expect(page.getByRole('menuitem')).toHaveText([
+    'Mis campañas',
+    'Abandonar campaña',
+    'Ajustes',
+    'Cerrar sesión',
+  ])
+  await expect(page.getByRole('menu')).toContainText('The Sunken Coast')
+  const item = page.getByRole('menuitem', { name: 'Abandonar campaña' })
+  await expect(item).toBeEnabled()
+  await expect(item).not.toHaveAttribute('aria-disabled')
+  await expectTouchTargets(page, leaveTargets)
+  await item.click()
+  const dialog = page.getByRole('dialog', { name: '¿Abandonar The Sunken Coast?' })
+  await expect(dialog.locator('button', { hasText: /^Cancelar$/ })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(profile).toBeFocused()
+  await profile.click()
+  await item.click()
+  await dialog.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
+  await expect(page).toHaveURL(/#\/$/)
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' }),
+  ).toBeFocused()
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toHaveCount(0)
+  expect(
+    f.calls.filter((c) => c.method === 'change_campaign_member' && c.body.new_role === null),
+  ).toHaveLength(1)
+  // Outside a campaign the profile menu has no leave action.
+  await profile.click()
+  await expect(page.getByRole('menuitem', { name: 'Abandonar campaña' })).toHaveCount(0)
+})
+
+test('RYT-095 the only DM is told to name another DM; with a co-DM they can leave', async ({
+  page,
+}) => {
+  const f = await identityFixture(page)
+  await page.goto('./')
+  // My campaigns: the DM's own campaign blocks Leave with the reason; their Player campaign does not.
+  await page.getByRole('button', { name: 'Más acciones · The Sunken Coast', exact: true }).click()
+  const blocked = page.getByRole('menuitem', { name: 'Abandonar campaña' })
+  await expect(blocked).toHaveAttribute('aria-disabled', 'true')
+  await expect(blocked).toHaveAccessibleDescription('Nombra a otro DM antes de irte.')
+  await expect(page.getByRole('menu')).toContainText('Nombra a otro DM antes de irte.')
+  await expect(page.getByRole('menu')).toHaveCSS('opacity', '1')
+  await axeClean(page)
+  // Reachable by the arrow keys, so the reason is read; choosing it does nothing.
+  await page.keyboard.press('ArrowDown')
+  await expect(blocked).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(blocked).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Más acciones · Winter at the Keep', exact: true }).click()
+  await expect(
+    page
+      .getByRole('menu', { name: 'Más acciones · Winter at the Keep' })
+      .getByRole('menuitem', { name: 'Abandonar campaña' }),
+  ).not.toHaveAttribute('aria-disabled')
+  await page.keyboard.press('Escape')
+  // Inside the campaign: the profile menu says the same; the Player view has no leave action.
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const profile = page.getByRole('button', { name: /Sesión de dm@example.com/ })
+  await profile.click()
+  await expect(page.getByRole('menuitem', { name: 'Abandonar campaña' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await expect(
+    page.getByRole('menuitem', { name: 'Abandonar campaña' }),
+  ).toHaveAccessibleDescription('Nombra a otro DM antes de irte.')
+  await page.keyboard.press('Escape')
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await profile.click()
+  await expect(page.getByRole('menuitem', { name: 'Ajustes' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Abandonar campaña' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
+})
+
+test('RYT-095 a DM with a co-DM leaves; the server still keeps one DM', async ({ page }) => {
+  const f = await identityFixture(page, { twoDms: true })
+  // The member list says two DMs, but the other one stepped down meanwhile: the server refuses.
+  let refuse = true
+  await page.route('**/rest/v1/rpc/change_campaign_member', async (route) => {
+    if (!refuse) return route.fallback()
+    refuse = false
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'P0001', message: 'Keep at least one DM' }),
+    })
+  })
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const profile = page.getByRole('button', { name: /Sesión de dm@example.com/ })
+  await profile.click()
+  const item = page.getByRole('menuitem', { name: 'Abandonar campaña' })
+  await expect(item).not.toHaveAttribute('aria-disabled')
+  await item.click()
+  const dialog = page.getByRole('dialog', { name: '¿Abandonar The Sunken Coast?' })
+  const confirm = dialog.getByRole('button', { name: 'Abandonar campaña', exact: true })
+  await confirm.click()
+  await expect(dialog.getByRole('alert')).toHaveText('Nombra a otro DM antes de irte.')
+  await expect(dialog.getByRole('alert')).toBeFocused()
+  await expect(confirm).toBeDisabled()
+  await dialog.locator('button', { hasText: /^Cancelar$/ }).click()
+  await expect(profile).toBeFocused()
+  // A fresh confirmation goes through.
+  await profile.click()
+  await item.click()
+  await confirm.click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' }),
+  ).toBeFocused()
+  // The refused call never reached the fixture backend; the second one did.
+  expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(1)
+})
+
+test('RYT-095 a failed leave keeps the dialog open with a retry', async ({ page, context }) => {
+  const f = await identityFixture(page, { player: true })
+  await page.goto('./')
+  const more = page.getByRole('button', { name: 'Más acciones · The Sunken Coast', exact: true })
+  await more.click()
+  await page.getByRole('menuitem', { name: 'Abandonar campaña' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Abandonar The Sunken Coast?' })
+  const confirm = dialog.getByRole('button', { name: 'Abandonar campaña', exact: true })
+  // Offline: nothing is sent and the dialog says how to recover.
+  await context.setOffline(true)
+  await confirm.click()
+  const error = dialog.getByRole('alert')
+  await expect(error).toHaveText(
+    'No se pudo abandonar la campaña. Revisa la conexión y vuelve a intentarlo.',
+  )
+  await expect(error).toBeFocused()
+  expect(f.calls.filter((c) => c.method === 'change_campaign_member')).toHaveLength(0)
+  await axeClean(page)
+  // A server failure keeps the user in place too.
+  await context.setOffline(false)
+  let fail = true
+  await page.route('**/rest/v1/rpc/change_campaign_member', async (route) => {
+    if (!fail) return route.fallback()
+    fail = false
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Service unavailable' }),
+    })
+  })
+  await confirm.click()
+  await expect(error).toBeVisible()
+  await expect(confirm).toBeEnabled()
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast', exact: true })).toBeAttached()
+  // The same button retries.
+  await confirm.click()
+  await expect(dialog).toHaveCount(0)
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' }),
+  ).toBeFocused()
+})

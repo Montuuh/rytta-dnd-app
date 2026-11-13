@@ -23,8 +23,8 @@ test('the assigned Player creates a 5.5e character through the full wizard', asy
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  // RYT-072: "Create" opens the three doors over the party list.
-  const create = page.getByRole('button', { name: 'Crear tu personaje' })
+  // RYT-072: the sheet action opens the three doors over the party list (RYT-097 wording).
+  const create = page.getByRole('button', { name: 'Terminar ficha' })
   await create.click()
   const doors = page.getByRole('dialog', { name: 'Nueva ficha para Arin' })
   await expect(doors.getByRole('radio', { name: /^Rápida/ })).toBeChecked()
@@ -98,7 +98,7 @@ test('RYT-072 quick sheet: class, species and name, then the sheet', async ({ pa
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  await page.getByRole('button', { name: 'Crear tu personaje' }).click()
+  await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase')
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
@@ -128,7 +128,7 @@ test('RYT-072 blank sheet: name, class and level only', async ({ page }, info) =
   await identityFixture(page, { player: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  await page.getByRole('button', { name: 'Crear tu personaje' }).click()
+  await page.getByRole('button', { name: 'Terminar ficha' }).click()
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ficha en blanco')
@@ -239,9 +239,12 @@ test('DM sees every sheet and Party summaries, edits in place; unknown character
   await identityFixture(page, { sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/party`)
   await expect(page.getByText('Bardo de nivel 5')).toBeVisible()
-  await expect(page.getByText('PG 30/38 +5')).toBeVisible()
+  // RYT-097: the DM plate reads HP as one meter and its name opens the sheet.
+  await expect(
+    page.getByRole('img', { name: '30 de 38 puntos de golpe, +5 temporales' }),
+  ).toBeVisible()
   await capture(page, info.outputPath('party-summary.png'))
-  await page.getByRole('link', { name: 'Ver ficha' }).click()
+  await page.getByRole('link', { name: 'Arin', exact: true }).click()
   // RYT-073 (P12): the pencil edits the sheet in place and saves once.
   const pencil = page.getByRole('button', { name: 'Editar la ficha' })
   await pencil.click()
@@ -447,4 +450,132 @@ test('RYT-090 the portrait plate leads the sheet: add, view, remove and inspirat
   expect(ring!.x + ring!.width).toBeLessThanOrEqual(hero!.x + hero!.width)
   expect(add!.y + add!.height).toBeLessThanOrEqual(name!.y)
   await audit(page, info.outputPath('sheet-plate-150.png'))
+})
+
+test('RYT-098 the portrait opens in the full-screen viewer: double tap and pinch zoom, the same curtain in Parchment', async ({
+  page,
+}, info) => {
+  await page.addInitScript(() => localStorage.setItem('rytta-theme', 'parchment'))
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Arin')
+  await page.locator('.sheet-plate input[type=file]').setInputFiles({
+    name: 'arin.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  })
+  await page.getByRole('button', { name: 'Guardar retrato' }).click()
+  const plate = page.getByRole('button', { name: 'Ver el retrato de Arin' })
+  await expect(plate).toBeFocused()
+  await expect(plate).toHaveAttribute('aria-haspopup', 'dialog')
+
+  await plate.click()
+  const viewer = page.getByRole('dialog', { name: 'Arin', exact: true })
+  const picture = viewer.getByRole('img', { name: 'Retrato de Arin' })
+  // The whole picture, never cropped, on a dark curtain even in a light theme; no animation with
+  // reduced motion.
+  await expect(picture).toHaveCSS('object-fit', 'contain')
+  expect(
+    await picture.evaluate((img) => parseFloat(getComputedStyle(img).transitionDuration)),
+  ).toBeLessThan(0.001)
+  await expect(viewer).toHaveCSS('background-color', 'rgb(13, 10, 7)')
+  await expect(viewer.getByRole('button', { name: 'Cerrar la imagen' })).toBeFocused()
+  await audit(page, info.outputPath('viewer-parchment.png'))
+  await expectTouchTargets(page, '.image-viewer-content button:visible')
+
+  const scale = () => picture.evaluate((img) => new DOMMatrix(getComputedStyle(img).transform).a)
+  const zoom = viewer.getByRole('button', { name: 'Ampliar' })
+  await expect(zoom).toHaveAttribute('aria-pressed', 'false')
+  // A double tap zooms 2× where it lands; another one shows the whole picture again.
+  const stage = viewer.locator('.image-viewer-stage')
+  const box = (await stage.boundingBox())!
+  const at = { x: box.x + box.width / 2 + 30, y: box.y + box.height / 2 }
+  await page.touchscreen.tap(at.x, at.y)
+  await page.touchscreen.tap(at.x, at.y)
+  await expect.poll(scale).toBe(2)
+  await expect(zoom).toHaveAttribute('aria-pressed', 'true')
+  await stage.dblclick({ position: { x: box.width / 2, y: box.height / 2 } })
+  await expect.poll(scale).toBe(1)
+  await expect(zoom).toHaveAttribute('aria-pressed', 'false')
+  // Two fingers pinch between 1× and 4×.
+  const pinch = (from: number, to: number) =>
+    stage.evaluate(
+      (node, [from, to]) => {
+        const r = node.getBoundingClientRect()
+        const [cx, cy] = [r.left + r.width / 2, r.top + r.height / 2]
+        const fire = (type: string, pointerId: number, dx: number) =>
+          node.dispatchEvent(
+            new PointerEvent(type, {
+              pointerId,
+              pointerType: 'touch',
+              isPrimary: pointerId === 1,
+              clientX: cx + (pointerId === 1 ? -dx : dx),
+              clientY: cy,
+              bubbles: true,
+            }),
+          )
+        fire('pointerdown', 1, from!)
+        fire('pointerdown', 2, from!)
+        fire('pointermove', 1, to!)
+        fire('pointermove', 2, to!)
+        fire('pointerup', 1, to!)
+        fire('pointerup', 2, to!)
+      },
+      [from, to],
+    )
+  await pinch(40, 120)
+  await expect.poll(scale).toBe(3)
+  await pinch(20, 200)
+  await expect.poll(scale).toBe(4)
+  // The zoom key works from the keyboard too.
+  await zoom.press('Enter')
+  await expect.poll(scale).toBe(1)
+  await zoom.press('Enter')
+  await expect.poll(scale).toBe(2)
+
+  // Escape closes the viewer and gives focus back to the portrait; it opens again whole.
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(plate).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(viewer).toBeVisible()
+  await expect.poll(scale).toBe(1)
+
+  // A double tap on Remove never removes: Keep takes Remove's place, so the second tap keeps it,
+  // and the confirmation ignores taps for a moment after the question appears.
+  const removals: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('/rpc/set_character_portrait')) removals.push(request.url())
+  })
+  const remove = viewer.getByRole('button', { name: 'Quitar retrato' })
+  const removeBox = (await remove.boundingBox())!
+  const middle = { x: removeBox.x + removeBox.width / 2, y: removeBox.y + removeBox.height / 2 }
+  await page.touchscreen.tap(middle.x, middle.y)
+  await page.touchscreen.tap(middle.x, middle.y)
+  await expect(remove).toBeVisible()
+  await remove.dblclick()
+  await expect(remove).toBeVisible()
+  // Keep sits exactly where Remove was; the confirmation is the other slot.
+  await remove.click()
+  const keep = viewer.getByRole('button', { name: 'Mantener' })
+  const confirm = viewer.getByRole('button', { name: 'Sí, quitar' })
+  await expect(keep).toBeFocused()
+  const keepBox = (await keep.boundingBox())!
+  for (const side of ['x', 'y', 'width', 'height'] as const)
+    expect(Math.abs(keepBox[side] - removeBox[side])).toBeLessThan(1)
+  await expect(confirm).toHaveAttribute('aria-disabled', 'true')
+  await expect(confirm).toHaveCSS('opacity', '1')
+  await confirm.click({ force: true })
+  await expect(confirm).not.toHaveAttribute('aria-disabled')
+  expect(removals).toEqual([])
+  await expect(viewer.getByRole('img', { name: 'Retrato de Arin' })).toBeVisible()
+  await keep.click()
+  await expect(remove).toBeFocused()
+  await viewer.getByRole('button', { name: 'Cerrar la imagen' }).click()
+  await expect(viewer).toHaveCount(0)
+  await expect(plate).toBeFocused()
 })

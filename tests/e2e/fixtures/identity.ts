@@ -21,6 +21,13 @@ export const archivedIds = [
   '40000000-0000-4000-8000-0000000000f1',
   '40000000-0000-4000-8000-0000000000f2',
 ]
+/** RYT-096 free characters the DM prepared (fixture option `free`, up to four). */
+export const freeIds = [
+  '40000000-0000-4000-8000-000000000a01',
+  '40000000-0000-4000-8000-000000000a02',
+  '40000000-0000-4000-8000-000000000a03',
+  '40000000-0000-4000-8000-000000000a04',
+]
 export const storageKey = 'sb-rytta-test-auth-token'
 export function session(id = dmId) {
   const email = id === dmId ? 'dm@example.com' : 'player@example.com'
@@ -77,6 +84,8 @@ export async function identityFixture(
     username?: string | null
     /** RYT-079: the DM marked Arin absent (the Player is benched). */
     absent?: boolean
+    /** RYT-096: names of free (unassigned) characters the DM prepared; the first has a sheet. */
+    free?: string[]
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -214,6 +223,17 @@ export async function identityFixture(
       created_at: `2026-10-26T0${index}:00:00Z`,
       character_resources: { gold: 1, water_units: 0, rations: 0, exhaustion: 0, revision: 0 },
     })
+  // RYT-096: free characters, unassigned and in play (the DM's), oldest first.
+  for (const [index, name] of (options.free ?? []).entries())
+    characters.push({
+      id: freeIds[index]!,
+      campaign_id: campaignId,
+      user_id: null,
+      name,
+      is_active: true,
+      created_at: `2026-10-25T0${index}:00:00Z`,
+      character_resources: { gold: 10, water_units: 2, rations: 2, exhaustion: 0, revision: 0 },
+    })
   if (options.absent && characters[0]) {
     characters[0].absent = true
     characters[0].is_active = false
@@ -286,6 +306,7 @@ export async function identityFixture(
         : blankVitals(),
     ]),
   )
+  if (options.free?.length) sheets.set(freeIds[0]!, sampleSheet())
   if (options.party) {
     sheets.set(beaId, { ...sampleSheet(), max_hp: 24, armor_class: 16 })
     vitals.set(beaId, {
@@ -602,6 +623,8 @@ export async function identityFixture(
   const usernameHeldByOther = (name: string, actor: string) =>
     [...usernames].some(([id, held]) => id !== actor && held.toLowerCase() === name.toLowerCase())
   let failList = false
+  // RYT-096: the next claim fails with this server message (a lost race takes the character).
+  let nextClaimError: string | null = null
   let glossaryEntries: {
     id: string
     campaign_id: string
@@ -996,6 +1019,60 @@ export async function identityFixture(
       }
       return respond({ id: target.id, archived: false })
     }
+    // RYT-096 free characters: active Players only; same limit and active rule as assign_character.
+    if (method === 'list_claimable_characters' || method === 'claim_character') {
+      const player =
+        body.target_campaign === campaignId &&
+        members.find((m) => m.user_id === actor)?.role === 'player'
+      if (!player) return respond({ code: '42501', message: 'Forbidden' }, 403)
+      const free = (c: FixtureCharacter) =>
+        c.campaign_id === body.target_campaign && !c.user_id && !c.archived_at && !c.absent
+      if (method === 'list_claimable_characters')
+        return respond(
+          characters.filter(free).map((c) => {
+            const sheet = sheets.get(c.id)
+            return {
+              id: c.id,
+              name: c.name,
+              sheet_status: sheet?.status ?? null,
+              class_key: (sheet?.build.classKey as string | undefined) ?? null,
+              class_label: (sheet?.build.classLabel as string | undefined) ?? null,
+              level: sheet?.level ?? null,
+              portrait_path: null,
+            }
+          }),
+        )
+      const target = characters.find(
+        (c) => c.id === body.target_character && c.campaign_id === body.target_campaign,
+      )
+      if (nextClaimError) {
+        const message = nextClaimError
+        nextClaimError = null
+        // Another Player won the race for this character.
+        if (message === 'Character unavailable' && target && free(target)) target.user_id = peerId
+        return respond({ code: 'P0001', message }, 400)
+      }
+      if (target && target.user_id === actor && !target.archived_at) return respond(target.id)
+      if (!target || !free(target))
+        return respond({ code: 'P0001', message: 'Character unavailable' }, 400)
+      const owned = characters.filter(
+        (c) => c.campaign_id === target.campaign_id && c.user_id === actor && !c.archived_at,
+      )
+      if (owned.length >= 4) return respond({ code: 'P0001', message: 'Character limit' }, 400)
+      characterEvents.unshift({
+        id: '60000000-0000-4000-8000-' + String(characterEvents.length + 1).padStart(12, '0'),
+        campaign_id: target.campaign_id,
+        character_id: target.id,
+        actor_id: actor,
+        kind: 'characters:UPDATE',
+        before_value: { name: target.name, user_id: null },
+        after_value: { name: target.name, user_id: actor },
+        created_at: '2026-10-27T01:12:00Z',
+      })
+      target.user_id = actor
+      target.is_active = !owned.some((c) => c.is_active)
+      return respond(target.id)
+    }
     // RYT-044 roster RPCs: limit 4 per Player, exactly one active character.
     if (method === 'create_own_character') {
       const owned = characters.filter(
@@ -1150,32 +1227,33 @@ export async function identityFixture(
     }
     if (method === 'get_party_overview') {
       const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      // RYT-097: Players get every assigned character; for teammates the DM does not share,
+      // every live field is null. Unassigned characters never reach Players.
       return respond(
         characters
           .filter((c) => c.campaign_id === body.target_campaign && c.is_active)
-          .filter(
-            (c) =>
-              dm || c.user_id === actor || (c.user_id !== null && sharesLive.get(c.id) !== false),
-          )
+          .filter((c) => dm || c.user_id !== null)
           .map((c) => {
             const sheet = sheets.get(c.id)
             const state = vitals.get(c.id)
+            const shares = sharesLive.get(c.id) !== false
+            const live = dm || c.user_id === actor || shares
             return {
               id: c.id,
               name: c.name,
               is_own: c.user_id === actor,
               is_assigned: c.user_id !== null,
-              shares_live: sharesLive.get(c.id) !== false,
+              shares_live: shares,
               sheet_status: sheet?.status ?? null,
               class_key: (sheet?.build.classKey as string | undefined) ?? null,
               class_label: (sheet?.build.classLabel as string | undefined) ?? null,
               level: sheet?.level ?? null,
-              current_hp: (state?.current_hp as number | undefined) ?? null,
-              max_hp: sheet?.max_hp ?? null,
-              temp_hp: (state?.temp_hp as number | undefined) ?? null,
-              armor_class: sheet?.armor_class ?? null,
-              exhaustion: c.character_resources.exhaustion,
-              conditions: (state?.conditions as string[] | undefined) ?? [],
+              current_hp: live ? ((state?.current_hp as number | undefined) ?? null) : null,
+              max_hp: live ? (sheet?.max_hp ?? null) : null,
+              temp_hp: live ? ((state?.temp_hp as number | undefined) ?? null) : null,
+              armor_class: live ? (sheet?.armor_class ?? null) : null,
+              exhaustion: live ? c.character_resources.exhaustion : null,
+              conditions: live ? ((state?.conditions as string[] | undefined) ?? []) : null,
             }
           }),
       )
@@ -1249,16 +1327,30 @@ export async function identityFixture(
       )
     }
     if (method === 'change_campaign_member') {
+      // The member list belongs to the main campaign; in the others the account is a Player.
+      const own = body.target_campaign === campaignId
+      // RYT-095: a member may leave (role null); a campaign always keeps one DM.
+      const dms = members.filter((m) => m.role === 'dm')
+      if (
+        own &&
+        body.new_role !== 'dm' &&
+        dms.length <= 1 &&
+        dms.some((m) => m.user_id === body.target_user)
+      )
+        return respond({ code: 'P0001', message: 'Keep at least one DM' }, 400)
       if (!body.new_role) {
         characters = characters.map((c) =>
-          c.user_id === body.target_user ? { ...c, user_id: null, is_active: true } : c,
+          c.user_id === body.target_user && c.campaign_id === body.target_campaign
+            ? { ...c, user_id: null, is_active: true }
+            : c,
         )
       }
-      members = body.new_role
-        ? members.map((m) =>
-            m.user_id === body.target_user ? { ...m, role: String(body.new_role) } : m,
-          )
-        : members.filter((m) => m.user_id !== body.target_user)
+      if (own)
+        members = body.new_role
+          ? members.map((m) =>
+              m.user_id === body.target_user ? { ...m, role: String(body.new_role) } : m,
+            )
+          : members.filter((m) => m.user_id !== body.target_user)
       if (body.target_user === currentId)
         campaigns = body.new_role
           ? campaigns.map((c) =>
@@ -1465,6 +1557,13 @@ export async function identityFixture(
     staleResources: () => {
       characters[0]!.character_resources.revision += 1
       characters[0]!.character_resources.gold = 70
+    },
+    /** RYT-096: the next claim fails with this server message ('Character unavailable' also
+     * hands the character to another Player, as a lost race would). */
+    failNextClaim: (
+      message: 'Character unavailable' | 'Character limit' | 'Forbidden' = 'Character unavailable',
+    ) => {
+      nextClaimError = message
     },
     failCampaigns: () => {
       failList = true

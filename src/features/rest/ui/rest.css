@@ -152,6 +152,8 @@
 }
 .rest-seat-mark {
   position: absolute;
+  /* RYT-098: the portrait under the mark opens the viewer. */
+  pointer-events: none;
   right: -4px;
   bottom: -4px;
   width: 22px;

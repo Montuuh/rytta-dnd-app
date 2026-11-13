@@ -277,6 +277,8 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
     name: def.name,
     category: def.category,
     icon: def.icon,
+    // As private.shop_item_json: the item's picture travels with the listing.
+    image_path: def.image_path ?? null,
     rarity: def.rarity,
     weight_tenths: def.weight_tenths,
     description: def.description,

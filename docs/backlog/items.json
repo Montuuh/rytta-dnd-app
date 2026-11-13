@@ -3127,6 +3127,151 @@
         "independent UI review PASS"
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-095",
+      "title": "A member leaves a campaign from My campaigns or the profile menu",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-002"],
+      "sources": [
+        "User 2026-11-13: you cannot leave a campaign.",
+        "User 2026-11-13, options page 819TKMGV5tM87WgG8RQ8RM: accepted every recommendation: P1 A portrait plate, P2 A DM plate with counters, P3 A unshared teammates appear without live state, P4 A trade icon on the portrait, P5 A full-screen viewer, P6 A the image is its own button, P7 A a player claims a free character directly, P8 B free characters also in My characters, P9 A leave from the campaign card and the profile menu.",
+        "Observation 2026-11-13: change_campaign_member already lets an active member remove themselves; the only Leave control sits in the DM Command Center, which Players cannot reach."
+      ],
+      "scope": "Each campaign card in My campaigns gets a ⋯ menu with Open and Leave campaign; inside a campaign the profile menu offers Leave campaign. Both open one confirmation naming the campaign and the consequence (characters return to the DM, a new invitation is needed to come back). After leaving, the private campaign caches are dropped and the user lands on My campaigns with a status message. The only DM of a campaign sees the action disabled with the reason. The DM Command Center leave box keeps working.",
+      "acceptance": [
+        "A Player leaves from the campaign card menu and from the profile menu inside the campaign; the campaign disappears from My campaigns and its pages are no longer reachable.",
+        "The confirmation names the campaign and the consequence; Cancel and Escape return focus to the trigger.",
+        "The only DM cannot leave and is told to name another DM first; a DM with a co-DM can leave.",
+        "A failed leave (offline, server error) keeps the user in place with a retryable error.",
+        "390px and 820px, both themes and languages, keyboard, 44px targets, axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "identity e2e at 390px and 820px",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-097/validation.md",
+        "docs/evidence/RYT-095/01-hub-menu-mobile-default.png",
+        "docs/evidence/RYT-095/02-leave-dialog-mobile-parchment.png",
+        "docs/evidence/RYT-095/03-profile-menu-mobile-default.png",
+        "docs/evidence/RYT-095/05-last-dm-menu-tablet-default.png",
+        "tests/e2e/identity.spec.ts"
+      ]
+    },
+    {
+      "id": "RYT-096",
+      "title": "A Player claims a free character the DM prepared",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-044"],
+      "sources": [
+        "User 2026-11-13: a Player without a linked character should first see the unlinked characters already created; would it be good to let them assign one to themselves?",
+        "User 2026-11-13, options page 819TKMGV5tM87WgG8RQ8RM: accepted every recommendation: P1 A portrait plate, P2 A DM plate with counters, P3 A unshared teammates appear without live state, P4 A trade icon on the portrait, P5 A full-screen viewer, P6 A the image is its own button, P7 A a player claims a free character directly, P8 B free characters also in My characters, P9 A leave from the campaign card and the profile menu."
+      ],
+      "scope": "Unassigned, non-archived characters of the campaign are free. list_claimable_characters(campaign) returns them (id, name, sheet status, class, level, portrait path) to active Players; claim_character(campaign, character) assigns one to the caller in one transaction with the campaign lock, the four-character limit, the same active-character rule as assign_character and revocation of pending character invitations; claiming your own character again succeeds without change. Players may read the portraits of free characters. The Player welcome shows the free characters first (portrait, name, class) with Play as <name>, then Create my character; My characters lists them too while the Player has fewer than four. A short confirmation precedes the claim; a race lost to another Player refreshes the list with a message. The audit history records the assignment.",
+      "acceptance": [
+        "A Player with no characters sees the DM's free characters before the create action and claims one in two taps; it becomes their active character and the party shows it.",
+        "In My characters a Player with fewer than four characters sees the free ones and can claim one; at four the claim is unavailable with the reason.",
+        "Two Players claiming the same character: one succeeds, the other sees it is no longer free and the list refreshes.",
+        "Anon, outsiders, inactive members, DMs (they assign instead) and a Player of another campaign cannot list or claim; archived and assigned characters cannot be claimed.",
+        "390px and 820px, both themes and languages, keyboard, axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "PGlite denial tests for anon, outsider, player of another campaign, cross-campaign DM and DM",
+        "roster and characters e2e at 390px and 820px",
+        "PRE then production migration with advisors",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-097/validation.md",
+        "supabase/migrations/20261117120000_party_claim_characters.sql",
+        "tests/database/party-claim.test.ts",
+        "docs/evidence/RYT-096/01-welcome-free-mobile-default.png",
+        "docs/evidence/RYT-096/02-claim-dialog-mobile-default.png",
+        "docs/evidence/RYT-096/03-my-characters-free-mobile-default.png",
+        "docs/evidence/RYT-096/05-lost-race-tablet-parchment.png",
+        "tests/e2e/roster.spec.ts"
+      ]
+    },
+    {
+      "id": "RYT-097",
+      "title": "Party led by portraits: plates for the own character, the teammates and the DM",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-098", "RYT-031"],
+      "sources": [
+        "User 2026-11-13: redesign the Party panel; the big New character button is useless; use the space for bigger character images and some sheet facts; the Trade button is not needed because you can trade with a specific character directly.",
+        "User 2026-11-13, options page 819TKMGV5tM87WgG8RQ8RM: accepted every recommendation: P1 A portrait plate, P2 A DM plate with counters, P3 A unshared teammates appear without live state, P4 A trade icon on the portrait, P5 A full-screen viewer, P6 A the image is its own button, P7 A a player claims a free character directly, P8 B free characters also in My characters, P9 A leave from the campaign card and the profile menu."
+      ],
+      "scope": "Player: the own active character is a plate led by its portrait (name over the art, HP meter, AC seal, exhaustion pips, gold, water and rations ledger, View sheet and Inventory). Teammates are 4:5 portrait cards with an HP band on the image edge, class and level, HP, AC, exhaustion and conditions; a round trade icon sits on the portrait corner. Assigned teammates the DM does not share live appear with a dimmed portrait, name, class and level and no live state; get_party_overview returns them to Players with every live field null. DM: each character is a plate with art, owner, the live-sharing switch and ⋯ menu, HP meter, AC and inline gold, water and rations counters (hold for ×5) and exhaustion pips. The dashed New character card and the general Trade launcher are removed; the DM creates from a compact header action beside the reserve; Players create from My characters. Every portrait opens the shared image viewer.",
+      "acceptance": [
+        "No New character card and no general Trade button remain on Party; the DM creates a character from the header action and a Player from My characters.",
+        "The Player's own plate shows the portrait, HP, AC, exhaustion and resources on the first 390px screen; teammates show their portraits, HP band, AC and conditions.",
+        "A teammate the DM does not share shows name, class and level only; no HP, AC, exhaustion or condition reaches the Player's browser for that character.",
+        "Trading starts from the icon on a teammate's portrait, including teammates without live sharing.",
+        "The DM changes gold, water, rations and exhaustion on the plate with the existing transactional RPCs.",
+        "Tapping any portrait opens the image viewer; Escape returns focus to it.",
+        "390px and 820px plus a laptop width, both themes and languages, keyboard, 150% text and axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "PGlite tests for get_party_overview field nulling",
+        "characters, trades and rest e2e at 390px, 820px and 1440px",
+        "design critique and audit",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-097/validation.md",
+        "docs/decisions/041-party-portraits-claim-leave.md",
+        "docs/evidence/RYT-097/player-mobile-default-es.webp",
+        "docs/evidence/RYT-097/player-tablet-default-es.webp",
+        "docs/evidence/RYT-097/dm-mobile-default-es.webp",
+        "docs/evidence/RYT-097/player-mobile-parchment-es-unshared-portrait.webp",
+        "tests/database/party-claim.test.ts",
+        "tests/e2e/characters.spec.ts",
+        "tests/e2e/trades.spec.ts"
+      ]
+    },
+    {
+      "id": "RYT-098",
+      "title": "One image viewer for every portrait, creature and item picture",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-088"],
+      "sources": [
+        "User 2026-11-13: clicking any image, of another character or a creature, should open it large, in every panel that has an image.",
+        "User 2026-11-13, options page 819TKMGV5tM87WgG8RQ8RM: accepted every recommendation: P1 A portrait plate, P2 A DM plate with counters, P3 A unshared teammates appear without live state, P4 A trade icon on the portrait, P5 A full-screen viewer, P6 A the image is its own button, P7 A a player claims a free character directly, P8 B free characters also in My characters, P9 A leave from the campaign card and the profile menu."
+      ],
+      "scope": "A shared full-screen viewer (dark scrim, whole image without cropping, name and optional caption or actions, double tap or pinch to zoom, Escape and close return focus) replaces the creature art viewer and the sheet portrait viewer and opens from character portraits, creature art and tokens, and item pictures across Party, sheet, roster, inventory, shops, trades, rest, bestiary, encounter builder and combat. Where a picture sits inside a control that already acts, the picture becomes its own button (at least 44px) and the rest of the row keeps its action; tokens smaller than 44px open the viewer from their detail. Monograms and glyph fallbacks are not viewable. The tabletop board is excluded.",
+      "acceptance": [
+        "Every listed surface opens the same viewer for a real picture; the creature credit and the sheet portrait Replace and Remove actions still work inside it.",
+        "Rows and tiles keep their own action when tapped outside the picture; no button is nested in another.",
+        "Escape closes only the viewer when it is over a drawer or sheet; focus returns to the picture.",
+        "Loading, unavailable and broken-image states are shown; signed URLs never leak to other users.",
+        "390px and 820px, both themes and languages, keyboard, reduced motion and axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "bestiary, characters, character-sheet, inventory, shops and combat e2e at 390px and 820px",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-097/validation.md",
+        "docs/evidence/RYT-098/viewer-portrait-default-390.webp",
+        "docs/evidence/RYT-098/viewer-creature-default-es-820.webp",
+        "docs/evidence/RYT-098/viewer-portrait-remove-ask-390.webp",
+        "docs/evidence/RYT-098/bestiary-rows-parchment-390.webp",
+        "tests/e2e/character-sheet.spec.ts",
+        "tests/e2e/inventory.spec.ts"
+      ]
     }
   ]
 }

@@ -1,18 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react'
-import {
-  ActionIcon,
-  Anchor,
-  Button,
-  Loader,
-  Menu,
-  Modal,
-  Group,
-  Text,
-  UnstyledButton,
-  VisuallyHidden,
-} from '@mantine/core'
+import { ActionIcon, Button, Loader, Menu, Modal, Group, Text, UnstyledButton } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, ImagePlus, Pencil, RotateCcw, Trash2, type LucideIcon } from 'lucide-react'
+import { ImagePlus, Pencil, RotateCcw, Trash2, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
@@ -21,9 +10,9 @@ import {
   type CreatureArt,
   type CreatureType,
 } from '@/features/bestiary'
-import { usePhone } from '@/shared/ui/use-viewport'
 import { combatImageQuery, useCombatAction, useCreatureImageUpload } from '../api'
 import type { Combatant } from '../domain/combat'
+import { ArtViewer } from './art-viewer'
 import { typeGlyphs } from './bestiary-glyphs'
 import { toSquareWebp } from './square-image'
 import { CombatantToken, Token } from './token'
@@ -102,6 +91,7 @@ function ArtPlate({
       <UnstyledButton
         ref={openRef}
         className="bst-plate-open"
+        aria-haspopup="dialog"
         aria-label={t('bestiary.art.open', { name })}
         onClick={onOpen}
       >
@@ -432,159 +422,19 @@ export function CreatureArtControl({
         <ArtViewer
           name={name}
           imagePath={imagePath}
-          art={art}
+          art={art?.full}
           credit={credit}
-          srd={srd}
+          ownNote={srd ? 'srd' : 'campaign'}
+          returnFocus={trigger}
           onChange={() => {
             setViewing(false)
             refocus()
             input.current?.click()
           }}
-          onClose={() => {
-            setViewing(false)
-            refocus()
-          }}
+          onClose={() => setViewing(false)}
         />
       )}
     </div>
-  )
-}
-
-/**
- * The image at full size on a matted plate, with a museum-style label beneath: the creature's name
- * and, for bundled art, its author, licence and source (the attribution the licence asks for). One
- * quiet action where the image can be changed. Escape and the close button return focus to the plate.
- */
-function ArtViewer({
-  name,
-  imagePath,
-  art,
-  credit,
-  srd,
-  onChange,
-  onClose,
-}: {
-  name: string
-  imagePath: string | null
-  art: { thumb: string; full: string } | null
-  /** The bundled art's credit, shown whenever the bundled art is what the viewer shows. */
-  credit: CreatureArt | null
-  srd: boolean
-  /** Opens the file picker; omitted where the image is only viewed (the combat portrait). */
-  onChange?: () => void
-  onClose: () => void
-}) {
-  const { t } = useTranslation()
-  const phone = usePhone()
-  const { state } = useAuth()
-  const own = useQuery(combatImageQuery(state.user?.id ?? 'anonymous', 'creature', imagePath))
-  const [broken, setBroken] = useState<string | null>(null)
-  // The private image when it can be read; otherwise the bundled art, as the token does.
-  const ownFailed = own.isError || (own.data !== undefined && broken === own.data)
-  const showingOwn = Boolean(imagePath) && !ownFailed
-  const src = showingOwn ? own.data : art?.full
-  const loading = showingOwn && own.isPending
-  const unavailable = !src || broken === src
-  const external = <VisuallyHidden>{t('bestiary.art.newTab')}</VisuallyHidden>
-  return (
-    <Modal
-      opened
-      onClose={onClose}
-      fullScreen={phone}
-      size="xl"
-      zIndex={430}
-      returnFocus={false}
-      title={<span className="bst-art-title">{name}</span>}
-      classNames={{ content: 'bst-art-viewer', body: 'bst-art-body' }}
-      closeButtonProps={{ 'aria-label': t('bestiary.art.close'), size: 44 }}
-    >
-      <figure className="bst-art-figure">
-        <div className="bst-art-plate" aria-busy={loading || undefined}>
-          {loading ? (
-            <span role="status">
-              <Loader />
-              <VisuallyHidden>{t('bestiary.art.loading')}</VisuallyHidden>
-            </span>
-          ) : unavailable ? (
-            <Text className="bst-art-missing">{t('bestiary.art.unavailable')}</Text>
-          ) : (
-            // Photo corners hold the print itself, not the mat around it.
-            <span className="bst-art-photo">
-              <img
-                src={src}
-                alt={t('combat.image.creature', { name })}
-                // Uploads are 512px squares; bundled art carries its own size.
-                width={showingOwn ? 512 : credit?.width}
-                height={showingOwn ? 512 : credit?.height}
-                decoding="async"
-                draggable={false}
-                onError={() => setBroken(src ?? null)}
-              />
-              <span className="bst-art-corner is-tl" aria-hidden="true" />
-              <span className="bst-art-corner is-tr" aria-hidden="true" />
-              <span className="bst-art-corner is-bl" aria-hidden="true" />
-              <span className="bst-art-corner is-br" aria-hidden="true" />
-            </span>
-          )}
-        </div>
-        <figcaption className="bst-art-label">
-          {!showingOwn && credit ? (
-            <>
-              <dl>
-                <div>
-                  <dt>{t('bestiary.art.author')}</dt>
-                  <dd>{credit.author}</dd>
-                </div>
-                <div>
-                  <dt>{t('bestiary.art.license')}</dt>
-                  <dd>
-                    {credit.licenseUrl ? (
-                      <Anchor href={credit.licenseUrl} target="_blank" rel="noopener noreferrer">
-                        {credit.license}
-                        <ExternalLink size={14} aria-hidden="true" />
-                        {external}
-                      </Anchor>
-                    ) : (
-                      credit.license
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('bestiary.art.source')}</dt>
-                  <dd>
-                    <Anchor href={credit.source} target="_blank" rel="noopener noreferrer">
-                      {t(`bestiary.art.origin.${credit.origin}`)}
-                      <ExternalLink size={14} aria-hidden="true" />
-                      {external}
-                    </Anchor>
-                  </dd>
-                </div>
-              </dl>
-              <Text size="sm" c="dimmed" className="bst-art-note">
-                {t(
-                  credit.origin === 'generated' ? 'bestiary.art.generated' : 'bestiary.art.adapted',
-                )}
-              </Text>
-            </>
-          ) : (
-            <Text size="sm" c="dimmed">
-              {t(srd ? 'bestiary.art.ownSrd' : 'bestiary.art.own')}
-            </Text>
-          )}
-        </figcaption>
-      </figure>
-      {onChange && (
-        <div className="bst-art-actions">
-          <Button
-            variant="light"
-            leftSection={<ImagePlus size={16} aria-hidden="true" />}
-            onClick={onChange}
-          >
-            {t('bestiary.art.change')}
-          </Button>
-        </div>
-      )}
-    </Modal>
   )
 }
 
@@ -625,13 +475,11 @@ export function CreaturePortrait({ combatant }: { combatant: Combatant }) {
         <ArtViewer
           name={combatant.name}
           imagePath={path}
-          art={art}
+          art={art?.full}
           credit={credit}
-          srd={Boolean(srdId)}
-          onClose={() => {
-            setViewing(false)
-            window.setTimeout(() => open.current?.focus(), 0)
-          }}
+          ownNote={srdId ? 'srd' : 'campaign'}
+          returnFocus={open}
+          onClose={() => setViewing(false)}
         />
       )}
     </>

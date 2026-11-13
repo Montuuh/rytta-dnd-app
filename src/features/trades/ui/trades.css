@@ -599,28 +599,53 @@ button.trade-slot.filled:hover,
   color: var(--gold-accent);
 }
 
-/* Party entry points. */
-.teammate-trade {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  width: 100%;
-  margin-top: 4px;
-  border-top: 1px solid var(--app-border);
+/* RYT-097 Party entry point: a round icon that sits on a teammate's portrait, so it carries its
+   own translucent ground over any picture. The consumer positions it. */
+.trade-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--app-text);
+  background: color-mix(in srgb, var(--app-surface) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-text) 22%, transparent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+.trade-icon:hover:not([aria-disabled='true']) {
   color: var(--app-accent);
-  font-weight: 600;
+  background: var(--app-surface);
+  border-color: var(--app-accent);
 }
-.teammate-trade:hover:not(:disabled) {
-  background: var(--app-hover);
+/* Over light art the ring needs its own dark backing to keep 3:1 (same double ring as portraits). */
+.trade-icon:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 7px var(--app-bg);
 }
-.teammate-trade:disabled {
+/* A trade with this teammate is open: the icon brings it back. */
+.trade-icon[data-active] {
+  color: var(--app-on-accent);
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+}
+.trade-icon[aria-disabled='true'] {
   color: var(--app-muted);
   cursor: not-allowed;
 }
-.trade-menu-item {
-  min-height: 44px;
+.trade-icon[aria-busy='true'] {
+  cursor: progress;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trade-icon {
+    transition: none;
+  }
 }
 .trade-history {
   display: flex;

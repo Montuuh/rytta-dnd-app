@@ -33,6 +33,13 @@ export const identityEn = {
   'hub.refresh': 'Refresh',
   'hub.invalidName': 'Enter a name of 1–100 characters.',
   'hub.invalidDescription': 'Use no more than 2,000 characters.',
+  'hub.more': 'More actions · {{name}}',
+  'hub.left': 'You left {{name}}.',
+  // RYT-095: one confirmation to leave a campaign, from My campaigns or the profile menu.
+  'leave.title': 'Leave {{name}}?',
+  'leave.body': 'Your characters go back to the DM. You will need a new invitation to come back.',
+  'leave.lastDm': 'Make another member a DM before you leave.',
+  'leave.error': 'Could not leave the campaign. Check your connection and try again.',
   'campaign.role.dm': 'DM',
   'campaign.role.player': 'Player',
   'campaign.current': 'CURRENT CAMPAIGN',
@@ -68,8 +75,6 @@ export const identityEn = {
     'Change {{name}} to {{role}}? DMs can manage all campaign content, members and roles.',
   'members.confirmRemove':
     'Remove {{name}} from this campaign? Their access will end and their characters will be unlinked; resources are preserved.',
-  'members.confirmLeave':
-    'Leave this campaign? Your characters will be unlinked and resources preserved. You will need a new invitation to return.',
   'members.characters': 'Characters',
   'members.unassigned': 'Unassigned characters',
   'members.noneCharacters': 'No linked character.',

@@ -192,5 +192,60 @@ test('the Player sets a portrait that shows in the satchel and the sheet', async
   await editor.getByText('Encajar con bandas negras').click()
   await editor.getByRole('button', { name: 'Guardar retrato' }).click()
   await expect(editor).toHaveCount(0)
-  await expect(page.getByRole('img', { name: 'Retrato de Arin' }).first()).toBeVisible()
+  // RYT-098: the medallion opens the viewer; the camera beside it stays its own control.
+  const portrait = page.getByRole('button', { name: 'Ver el retrato de Arin' })
+  await expect(portrait).toBeVisible()
+  await expect(page.locator('.inventory-head label.portrait-edit')).toBeVisible()
+  await expect(portrait.locator('label, input')).toHaveCount(0)
+  await portrait.click()
+  const viewer = page.getByRole('dialog', { name: 'Arin', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Retrato de Arin' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(portrait).toBeFocused()
+})
+
+test('RYT-098 item pictures open the viewer from the item and the slot; the tile keeps opening the item', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  const named = (name: string) => fixture.inventory.definitions.find((d) => d.name === name)!
+  named('Espada larga').image_path = `pre/${campaignId}/items/sword.webp`
+  named('Armadura de cuero').image_path = `pre/${campaignId}/items/leather.webp`
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(url)
+  // A tap on the tile still opens the item; the picture in its drawer opens the viewer.
+  await page.getByRole('button', { name: /Espada larga, cantidad 1/ }).click()
+  const card = page.getByRole('dialog', { name: 'Objeto' })
+  const picture = card.getByRole('button', { name: 'Ver la imagen de Espada larga' })
+  await expect(picture).toHaveAttribute('aria-haspopup', 'dialog')
+  await picture.click()
+  const viewer = page.getByRole('dialog', { name: 'Espada larga', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Imagen de Espada larga' })).toBeVisible()
+  await audit(page, info.outputPath('item-viewer.png'))
+  // Over the drawer, Escape closes only the viewer and focus returns to the picture.
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(card).toBeVisible()
+  await expect(picture).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(card).toHaveCount(0)
+  // An item without a picture keeps its icon, which is not a button.
+  await page.getByRole('button', { name: /Poción de curación, cantidad 3/ }).click()
+  await expect(card.getByRole('button', { name: /Ver la imagen/ })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+
+  // The equipped armour's picture sits beside the row that unequips it, never inside it.
+  await page.locator('.view-switch').getByText('Equipo', { exact: true }).click()
+  await page.getByRole('button', { name: 'Torso: Armadura de cuero' }).click()
+  const slot = page.getByRole('dialog', { name: 'Torso' })
+  const armour = slot.getByRole('button', { name: 'Ver la imagen de Armadura de cuero' })
+  await expect(slot.getByRole('button', { name: 'Quitar Armadura de cuero' })).toBeVisible()
+  await expect(armour.locator('xpath=ancestor::button')).toHaveCount(0)
+  await armour.click()
+  await expect(page.getByRole('dialog', { name: 'Armadura de cuero', exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(slot).toBeVisible()
+  await expect(armour).toBeFocused()
+  await audit(page, info.outputPath('slot-picture.png'))
 })

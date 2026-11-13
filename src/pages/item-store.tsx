@@ -712,9 +712,14 @@ function GiveItem({
     >
       <Stack>
         <Group gap="sm" wrap="nowrap">
-          <span className={`store-glyph rarity-${item.rarity}`} aria-hidden="true">
-            <ItemIcon icon={item.icon} imagePath={item.image_path} size={22} />
-          </span>
+          <ItemIcon
+            icon={item.icon}
+            imagePath={item.image_path}
+            size={22}
+            viewable
+            name={item.name}
+            frame={`store-glyph rarity-${item.rarity}`}
+          />
           <Text fw={600} className="user-copy">
             {item.name}
           </Text>

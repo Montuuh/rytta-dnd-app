@@ -1,14 +1,17 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { Alert, Button, Group, Loader, Modal, Stack, Text } from '@mantine/core'
+import { Alert, Button, Loader, Text } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { ImagePlus, ImageUp, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { usePhone } from '@/shared/ui/use-viewport'
+import { ImageViewer } from '@/shared/ui/image-viewer'
 import { portraitQuery, usePortraitRemove, usePortraitUpload } from '../api'
 import { initials } from './initials'
 import { PortraitEditor } from './portrait-editor'
 import './portrait-plate.css'
+
+/** How long the remove confirmation ignores taps after the question appears (ms). */
+const confirmDelay = 400
 
 /** RYT-090: a character's portrait as a plate that fills its box. Tapping it opens a viewer
  * where editors change or remove it; without a portrait it shows the monogram and, for
@@ -32,7 +35,6 @@ export function PortraitPlate({
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
-  const phone = usePhone()
   const inputId = useId()
   const url = useQuery(portraitQuery(state.user!.id, path))
   const upload = usePortraitUpload(campaignId, characterId)
@@ -43,6 +45,22 @@ export function PortraitPlate({
   const [file, setFile] = useState<File | null>(null)
   const opener = useRef<HTMLButtonElement>(null)
   const input = useRef<HTMLInputElement>(null)
+  const keep = useRef<HTMLButtonElement>(null)
+  const removeButton = useRef<HTMLButtonElement>(null)
+  // The viewer teaches double taps (zoom): a double tap on Remove must never remove. Keep takes
+  // Remove's place and the confirmation ignores taps for a moment after the question appears.
+  const askedAt = useRef(0)
+  const [armed, setArmed] = useState(true)
+  // The question takes the place of Remove: focus moves into it and back.
+  const ask = (next: boolean) => {
+    setAsking(next)
+    if (next) {
+      askedAt.current = performance.now()
+      setArmed(false)
+      window.setTimeout(() => setArmed(true), confirmDelay)
+    }
+    requestAnimationFrame(() => (next ? keep : removeButton).current?.focus())
+  }
   const src = url.data && broken !== url.data ? url.data : null
   const loading = Boolean(path) && url.isPending
   // Focus goes back to the plate, or to "Add portrait" once the portrait is gone; after a
@@ -138,75 +156,74 @@ export function PortraitPlate({
           }}
         />
       )}
-      <Modal
+      <ImageViewer
         opened={viewer && Boolean(src)}
         onClose={closeViewer}
-        fullScreen={phone}
-        size="lg"
-        title={<span className="portrait-viewer-title user-copy">{name}</span>}
-        classNames={{ content: 'portrait-viewer', body: 'portrait-viewer-body' }}
-        closeButtonProps={{ 'aria-label': t('inventory.portrait.close'), size: 44 }}
-      >
-        <Stack gap="md">
-          {src && (
-            <img
-              className="portrait-viewer-image"
-              src={src}
-              alt={t('inventory.portrait.alt', { name })}
-            />
-          )}
-          {editable &&
-            (asking ? (
-              <Stack gap="sm" className="portrait-viewer-ask">
-                <Text className="user-copy">{t('inventory.portrait.removeAsk', { name })}</Text>
-                <Group gap="sm" justify="flex-end">
-                  <Button variant="default" data-autofocus onClick={() => setAsking(false)}>
-                    {t('inventory.portrait.keep')}
-                  </Button>
+        title={name}
+        src={src}
+        alt={t('inventory.portrait.alt', { name })}
+        actions={
+          editable ? (
+            <>
+              {remove.isError && (
+                <Text role="alert" className="portrait-viewer-error">
+                  {t('inventory.portrait.removeError')}
+                </Text>
+              )}
+              {asking ? (
+                <>
+                  <Text className="portrait-viewer-ask user-copy">
+                    {t('inventory.portrait.removeAsk', { name })}
+                  </Text>
+                  {/* Confirm sits where Change was and Keep where Remove was. */}
                   <Button
                     variant="default"
-                    className="portrait-danger"
+                    className="portrait-danger portrait-confirm"
                     loading={remove.isPending}
-                    onClick={() =>
+                    aria-disabled={!armed || undefined}
+                    onClick={() => {
+                      if (performance.now() - askedAt.current < confirmDelay) return
                       remove.mutate(undefined, {
                         onSuccess: () => {
                           closeViewer()
                           refocus()
                         },
                       })
-                    }
+                    }}
                   >
                     {t('inventory.portrait.removeConfirm')}
                   </Button>
-                </Group>
-              </Stack>
-            ) : (
-              <div className="portrait-viewer-actions">
-                <Button
-                  leftSection={<ImageUp size={18} aria-hidden="true" />}
-                  onClick={() => {
-                    closeViewer()
-                    input.current?.click()
-                  }}
-                >
-                  {t('inventory.portrait.replace')}
-                </Button>
-                <Button
-                  variant="default"
-                  leftSection={<Trash2 size={18} aria-hidden="true" />}
-                  onClick={() => setAsking(true)}
-                >
-                  {t('inventory.portrait.remove')}
-                </Button>
-              </div>
-            ))}
-          {remove.isError && (
-            <Alert color="red" role="alert">
-              {t('inventory.portrait.removeError')}
-            </Alert>
-          )}
-        </Stack>
-      </Modal>
+                  <Button ref={keep} variant="default" onClick={() => ask(false)}>
+                    {t('inventory.portrait.keep')}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="default"
+                    leftSection={<ImageUp size={18} aria-hidden="true" />}
+                    onClick={() => {
+                      closeViewer()
+                      input.current?.click()
+                    }}
+                  >
+                    {t('inventory.portrait.replace')}
+                  </Button>
+                  <Button
+                    ref={removeButton}
+                    variant="default"
+                    className="portrait-danger"
+                    leftSection={<Trash2 size={18} aria-hidden="true" />}
+                    onClick={() => ask(true)}
+                  >
+                    {t('inventory.portrait.remove')}
+                  </Button>
+                </>
+              )}
+            </>
+          ) : undefined
+        }
+      />
       {file && (
         <PortraitEditor
           file={file}

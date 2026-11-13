@@ -2,7 +2,12 @@ import { z } from 'zod'
 import { config } from '@/shared/lib/config'
 import { characterSchema, resourceSchema, type CharacterAction } from '../domain/character'
 import { partyMemberSchema } from '../domain/party'
-import { rosterEntrySchema, rosterError } from '../domain/roster'
+import {
+  claimableCharacterSchema,
+  claimError,
+  rosterEntrySchema,
+  rosterError,
+} from '../domain/roster'
 import {
   buildSchema,
   historyItemSchema,
@@ -72,6 +77,27 @@ export async function listRoster(campaignId: string, signal: AbortSignal, player
     .array()
     .parse(characters.data)
     .map((entry) => ({ ...entry, portraitPath: portraits.get(entry.id) ?? null }))
+}
+/** RYT-096: the campaign's free characters, for an active Player (anyone else: 'forbidden'). */
+export async function listClaimable(campaignId: string, signal: AbortSignal) {
+  const { data, error } = await (
+    await client()
+  )
+    .rpc('list_claimable_characters', { target_campaign: z.uuid().parse(campaignId) })
+    .abortSignal(signal)
+  if (error) throw new Error(claimError(error.message))
+  return claimableCharacterSchema.array().parse(data)
+}
+/** RYT-096: an active Player takes a free character; returns its id (also when already theirs). */
+export async function claimCharacter(campaignId: string, characterId: string) {
+  const { data, error } = await (
+    await client()
+  ).rpc('claim_character', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_character: z.uuid().parse(characterId),
+  })
+  if (error) throw new Error(claimError(error.message))
+  return z.uuid().parse(data)
 }
 /** RYT-031: own + shared teammates for Players, every character (with sharing flag) for DMs. */
 export async function getPartyOverview(campaignId: string, signal: AbortSignal) {

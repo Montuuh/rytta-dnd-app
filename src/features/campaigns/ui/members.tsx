@@ -37,6 +37,8 @@ import { auditFamily } from '../domain/audit'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { PageHead } from '@/shared/ui/page-head'
 import { campaignModules, implementedModuleKeys } from './module-catalog'
+import { LeaveCampaignDialog } from './leave'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 
 type Confirmation = { action: CampaignAction; message: string }
 type DmPanel = 'members' | 'modules' | 'items' | 'bestiary' | 'audit'
@@ -92,6 +94,9 @@ export function CampaignMembers({
   const trigger = useRef<HTMLElement | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  // RYT-095: the same confirmation as My campaigns and the profile menu.
+  const [leaving, setLeaving] = useState(false)
+  const leaveButton = useRef<HTMLButtonElement>(null)
   const inviteForm = useForm({
     initialValues: { email: '' },
     validate: {
@@ -156,24 +161,12 @@ export function CampaignMembers({
           {t(lastDm ? 'members.lastDm' : 'members.leaveHint')}
         </Text>
         <Button
+          ref={leaveButton}
           variant="outline"
           color="red"
           leftSection={<LogOut size={18} aria-hidden="true" />}
           disabled={lastDm || action.isPending}
-          onClick={(event) =>
-            openConfirmation(
-              {
-                action: {
-                  kind: 'member',
-                  campaignId: campaign.id,
-                  userId: user.id,
-                  role: null,
-                },
-                message: t('members.confirmLeave'),
-              },
-              event.currentTarget,
-            )
-          }
+          onClick={() => setLeaving(true)}
         >
           {t('members.leave')}
         </Button>
@@ -545,6 +538,16 @@ export function CampaignMembers({
         </>
       )}
       {!playerPreview && !dm && leaveBox}
+      {leaving && (
+        <LeaveCampaignDialog
+          campaign={campaign}
+          onClose={() => {
+            setLeaving(false)
+            focusWhenReady(() => leaveButton.current)
+          }}
+          onLeft={() => setLeaving(false)}
+        />
+      )}
       <Modal
         opened={inviteOpen}
         onClose={closeInvite}

@@ -582,7 +582,7 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   // Tap: the viewer opens directly, with the credit of the painted art.
   await plate.click()
   // The viewer stacks above the phone sheet (also named after the creature).
-  const viewer = page.locator('.bst-art-viewer')
+  const viewer = page.locator('.image-viewer-content')
   await expect(viewer.getByRole('heading', { name: 'Lobo' })).toBeVisible()
   await expect(viewer.getByRole('img', { name: 'Imagen de Lobo' })).toHaveAttribute(
     'src',
@@ -596,8 +596,8 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
     'href',
     /docs\/bestiary-art-credits\.md$/,
   )
-  await audit(page, '.bst-art-viewer')
-  await expectTouchTargets(page, '.bst-art-viewer button:visible, .bst-art-label a')
+  await audit(page, '.image-viewer-content')
+  await expectTouchTargets(page, '.image-viewer-content button:visible, .bst-art-label a')
   await evidence(page, info, 'viewer', 'RYT-088')
   // Escape closes the viewer and gives focus back to the plate.
   await page.keyboard.press('Escape')
@@ -671,6 +671,45 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   await page.keyboard.press('Escape')
   await expect(ogre).toBeFocused()
   expect(errors).toEqual([])
+})
+
+test('RYT-098 a picture in the list opens the viewer; the row beside it keeps opening the stat block', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
+  const row = page.locator('.bst-row', { hasText: /^Lobo/ }).first()
+  const picture = row.getByRole('button', { name: 'Ver la imagen de Lobo' })
+  const main = row.locator('.bst-row-main')
+  // Two sibling buttons, never one inside the other.
+  await expect(main.getByRole('button')).toHaveCount(0)
+  await expect(picture.locator('xpath=ancestor::button')).toHaveCount(0)
+  await expectTouchTargets(row, '.combat-token-open')
+  await picture.click()
+  const viewer = page.getByRole('dialog', { name: 'Lobo', exact: true })
+  await expect(viewer.getByRole('img', { name: 'Imagen de Lobo' })).toHaveAttribute(
+    'src',
+    /bestiary\/art\/wolf\.webp$/,
+  )
+  await expect(viewer.getByText('Autoría', { exact: true })).toBeVisible()
+  await audit(page, '.image-viewer-content')
+  await evidence(page, info, 'row-viewer', 'RYT-098')
+  // The picture did not select the creature; Escape returns focus to it.
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(picture).toBeFocused()
+  await expect(main).not.toHaveAttribute('aria-current', 'true')
+  // Arrow keys still move between rows from the picture.
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('.bst-row-main').nth(1)).toBeFocused()
+  // A tap on the row beside the picture opens the stat block, as before.
+  await main.click()
+  await expect(main).toHaveAttribute('aria-current', 'true')
+  await expect(detail(page, info).locator('.sb-name')).toHaveText('Lobo')
 })
 
 test('RYT-046 Players never reach the bestiary', async ({ page }) => {

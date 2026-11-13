@@ -695,6 +695,8 @@ function SellPanel({
               imagePath={definition.image_path}
               icon={definition.icon}
               rarity={definition.rarity}
+              viewable
+              name={definition.name}
             />
             <div className="sell-row-body">
               <Text fw={600} className="user-copy">

@@ -5,9 +5,10 @@ import { Link } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatPounds } from '@/features/inventory'
+import { formatPounds, useItemPicture } from '@/features/inventory'
 import { maxPurchasable, type Listing } from '../domain/shops'
 import { GoldAmount, ItemGlyph } from './visuals'
+import './pictures.css'
 
 type Ownership = { owned: number; equipped: number }
 
@@ -33,28 +34,43 @@ export function ListingCard({
   const soldOut = listing.stock === 0
   const discounted = listing.unit_price !== listing.price
   const remaining = maxPurchasable(listing) - inCart
+  const pictured = useItemPicture(listing.item.image_path)
   return (
     <article className={`listing-card ${soldOut ? 'is-sold-out' : ''}`}>
-      <button
-        type="button"
-        className="listing-main"
-        onClick={(event) => onOpen(event.currentTarget)}
-      >
-        <ItemGlyph
-          imagePath={listing.item.image_path}
-          icon={listing.item.icon}
-          rarity={listing.item.rarity}
-        />
-        <span className="listing-body">
-          <span className="listing-name user-copy">{listing.item.name}</span>
-          <span className="listing-meta">
-            {t('shop.itemMeta', {
-              rarity: t(`inventory.rarity.${listing.item.rarity}`),
-              weight: formatPounds(listing.item.weight_tenths / 10, i18n.language),
-            })}
+      {/* RYT-098: a picture is its own button beside the one that opens the item. */}
+      <div className="listing-lead">
+        {pictured && (
+          <ItemGlyph
+            imagePath={listing.item.image_path}
+            icon={listing.item.icon}
+            rarity={listing.item.rarity}
+            viewable
+            name={listing.item.name}
+          />
+        )}
+        <button
+          type="button"
+          className="listing-main"
+          onClick={(event) => onOpen(event.currentTarget)}
+        >
+          {!pictured && (
+            <ItemGlyph
+              imagePath={listing.item.image_path}
+              icon={listing.item.icon}
+              rarity={listing.item.rarity}
+            />
+          )}
+          <span className="listing-body">
+            <span className="listing-name user-copy">{listing.item.name}</span>
+            <span className="listing-meta">
+              {t('shop.itemMeta', {
+                rarity: t(`inventory.rarity.${listing.item.rarity}`),
+                weight: formatPounds(listing.item.weight_tenths / 10, i18n.language),
+              })}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
       <div className="price-tag" aria-label={t('shop.priceLabel', { value: listing.unit_price })}>
         {discounted && (
           <span className="price-was" aria-hidden="true">
@@ -137,6 +153,8 @@ export function ListingDrawer({
               icon={listing.item.icon}
               rarity={listing.item.rarity}
               size={26}
+              viewable
+              name={listing.item.name}
             />
             <Stack gap={0}>
               <Text fw={600}>{t(`inventory.category.${listing.item.category}`)}</Text>

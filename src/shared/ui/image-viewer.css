@@ -1,0 +1,200 @@
+/* RYT-098 image viewer: a dark curtain that looks the same in every theme. The viewer's own
+   palette is the Hearth one (contrast-tested); the app and Mantine tokens are redeclared inside
+   it so captions and actions read on the curtain in light themes too. */
+.image-viewer {
+  --viewer-scrim: #0d0a07;
+  --viewer-bar: rgba(13, 10, 7, 0.86);
+  --viewer-text: #f5ebd6;
+  --viewer-muted: #cbb699;
+  --viewer-accent: #eda145;
+  --viewer-focus: #f6c478;
+  --viewer-line: #3a2b1f;
+  --viewer-control: #2a1f16;
+  --viewer-control-hover: #3a2a1e;
+  --viewer-control-border: #4d3828;
+  --viewer-danger: #eb7b6e;
+
+  --app-bg: var(--viewer-scrim);
+  --app-surface: var(--viewer-control);
+  --app-raised: var(--viewer-control);
+  --app-hover: var(--viewer-control-hover);
+  --app-border: var(--viewer-control-border);
+  --app-text: var(--viewer-text);
+  --app-muted: var(--viewer-muted);
+  --app-accent: var(--viewer-accent);
+  --app-focus: var(--viewer-focus);
+  --app-on-accent: #181009;
+  --danger: var(--viewer-danger);
+  --mantine-color-body: var(--viewer-scrim);
+  --mantine-color-text: var(--viewer-text);
+  --mantine-color-dimmed: var(--viewer-muted);
+  --mantine-color-anchor: var(--viewer-accent);
+  --mantine-color-default: var(--viewer-control);
+  --mantine-color-default-hover: var(--viewer-control-hover);
+  --mantine-color-default-color: var(--viewer-text);
+  --mantine-color-default-border: var(--viewer-control-border);
+  color-scheme: dark;
+  color: var(--viewer-text);
+}
+.image-viewer .image-viewer-overlay {
+  background: var(--viewer-scrim);
+}
+/* The page keeps a stable scrollbar gutter, which no layer can cover and which shows the page's
+   own background: while the viewer is open that background is the curtain's (--viewer-scrim, which
+   the root cannot read), so no strip of the theme shows at the edge. */
+html:has(.image-viewer-content) {
+  background-color: #0d0a07;
+}
+.image-viewer .image-viewer-content {
+  display: flex;
+  flex-direction: column;
+  background: var(--viewer-scrim);
+  color: var(--viewer-text);
+  overflow: hidden;
+  /* Papers carry a border by default; the curtain runs to the edges. */
+  border: 0;
+}
+
+/* The bar: the name in the heading face and the controls at the end, clear of a notch. */
+.image-viewer .image-viewer-bar {
+  flex: none;
+  gap: 4px;
+  min-height: 60px;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 8px
+    max(16px, env(safe-area-inset-left));
+  background: var(--viewer-bar);
+  border-bottom: 1px solid var(--viewer-line);
+  color: var(--viewer-text);
+}
+.image-viewer .image-viewer-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--viewer-text);
+  overflow-wrap: anywhere;
+}
+.image-viewer-control.mantine-ActionIcon-root {
+  flex: none;
+  color: var(--viewer-text);
+  background: transparent;
+}
+@media (hover: hover) {
+  .image-viewer-control.mantine-ActionIcon-root:hover {
+    background: var(--viewer-control-hover);
+  }
+}
+.image-viewer-control.mantine-ActionIcon-root[aria-pressed='true'] {
+  background: var(--viewer-control);
+  box-shadow: inset 0 0 0 1px var(--viewer-control-border);
+  color: var(--viewer-accent);
+}
+.image-viewer :focus-visible {
+  outline: 3px solid var(--viewer-focus);
+  outline-offset: 2px;
+}
+
+/* The picture takes the room left by the bar, the caption and the actions; a long caption
+   scrolls the body instead of shrinking the picture below half the screen. */
+.image-viewer-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.image-viewer-figure {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+.image-viewer-stage {
+  position: relative;
+  flex: 1 0 auto;
+  min-height: 52dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: zoom-in;
+}
+.image-viewer-stage[data-zoomed] {
+  cursor: grab;
+}
+.image-viewer-stage[data-zoomed][data-moving] {
+  cursor: grabbing;
+}
+.image-viewer-picture {
+  position: absolute;
+  inset: 0;
+  /* Centred when a small picture's size is capped. */
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  -webkit-touch-callout: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .image-viewer-picture {
+    transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .image-viewer-stage[data-moving] .image-viewer-picture {
+    transition: none;
+  }
+}
+.image-viewer-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px;
+}
+.image-viewer-missing.mantine-Text-root {
+  max-width: 22rem;
+  color: var(--viewer-muted);
+  text-align: center;
+}
+
+/* Caption and actions start at the title's left edge; the caption keeps a readable measure. */
+.image-viewer-caption {
+  flex: none;
+  width: min(100%, 40rem);
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  color: var(--viewer-muted);
+  font-size: var(--fs-meta);
+}
+.image-viewer-actions {
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  background: var(--viewer-bar);
+  border-top: 1px solid var(--viewer-line);
+}
+.image-viewer-actions > * {
+  flex: 1 1 11rem;
+  max-width: 20rem;
+}
+.image-viewer-actions .mantine-Button-root {
+  min-height: 44px;
+  height: auto;
+  padding-block: 6px;
+}
+.image-viewer-actions .mantine-Button-label {
+  white-space: normal;
+  line-height: 1.15;
+}

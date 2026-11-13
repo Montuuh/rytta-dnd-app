@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hpTone, partyMemberSchema, sharedTeammates, type PartyMember } from './party'
+import { hpTone, partyMemberSchema, partyTeammates, teammateLive, type PartyMember } from './party'
 import { newRequestId } from '@/shared/lib/request-id'
 
 const row = (patch: Partial<PartyMember>): PartyMember =>
@@ -21,17 +21,54 @@ const row = (patch: Partial<PartyMember>): PartyMember =>
     conditions: [],
     ...patch,
   })
+/** What get_party_overview returns to a Player for a teammate the DM does not share. */
+const unshared = (patch: Partial<PartyMember> = {}) =>
+  row({
+    shares_live: false,
+    current_hp: null,
+    max_hp: null,
+    temp_hp: null,
+    armor_class: null,
+    exhaustion: null,
+    conditions: null,
+    ...patch,
+  })
 
-describe('party live sharing', () => {
-  it('keeps only assigned, shared teammates other than the viewer', () => {
+describe('party teammates', () => {
+  it('keeps every assigned teammate other than the viewer, shared or not', () => {
     const own = row({ is_own: true })
     const preview = row({})
-    const hidden = row({ shares_live: false })
+    const hidden = unshared()
     const npc = row({ is_assigned: false })
     const mate = row({})
-    expect(sharedTeammates([own, preview, hidden, npc, mate], new Set([preview.id]))).toEqual([
+    expect(partyTeammates([own, preview, hidden, npc, mate], new Set([preview.id]))).toEqual([
+      hidden,
       mate,
     ])
+  })
+  it('gives live state only for shared, finished sheets', () => {
+    expect(teammateLive(row({ current_hp: 9, max_hp: 24, temp_hp: 3, exhaustion: 2 }))).toEqual({
+      current: 9,
+      max: 24,
+      temp: 3,
+      armorClass: 14,
+      exhaustion: 2,
+      conditions: [],
+      ratio: 38,
+      tone: 'wounded',
+    })
+    expect(teammateLive(unshared())).toBeNull()
+    expect(teammateLive(row({ sheet_status: 'draft' }))).toBeNull()
+    expect(teammateLive(row({ sheet_status: null }))).toBeNull()
+    expect(teammateLive(row({ current_hp: null }))).toBeNull()
+  })
+  it('hides the live state of an unshared teammate even when the data is present', () => {
+    // A DM previewing a Player receives every field; sharing still decides what is shown.
+    expect(teammateLive(row({ shares_live: false }))).toBeNull()
+  })
+  it('accepts unshared rows with null live fields and keeps their identity', () => {
+    const hidden = unshared({ name: 'Cato', class_key: 'fighter', level: 4 })
+    expect(hidden).toMatchObject({ name: 'Cato', class_key: 'fighter', level: 4 })
   })
   it('rejects unknown conditions; economic fields are not part of the contract', () => {
     expect(() => row({ conditions: ['exhaustion' as never] })).toThrow()

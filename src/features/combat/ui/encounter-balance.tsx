@@ -478,7 +478,13 @@ function Ledgers({
         (c.template_id && origin === `hb:${c.template_id}`),
     )
     const item = catalog.items.find((i) => i.key === origin)
-    return { combatant, art: item ? itemArt(item)?.thumb : null }
+    const art = item ? itemArt(item) : null
+    return {
+      combatant,
+      art: art?.thumb ?? null,
+      fullArt: art?.full ?? null,
+      credit: item ? catalog.artCredit(item.artId) : null,
+    }
   }
   return (
     <div className="bld-ledgers">
@@ -524,7 +530,7 @@ function Ledgers({
         ) : (
           <ul className="bld-rows">
             {balance.groups.map((group) => {
-              const { combatant, art } = tokenFor(group.key)
+              const { combatant, art, fullArt, credit } = tokenFor(group.key)
               return (
                 <li key={group.key} className={`bld-row${group.excluded ? ' is-excluded' : ''}`}>
                   <Token
@@ -534,6 +540,9 @@ function Ledgers({
                     path={combatant?.image_path}
                     art={art}
                     size={36}
+                    viewable
+                    fullArt={fullArt}
+                    credit={credit}
                   />
                   <span className="bld-row-what">
                     <span className="bld-row-name">

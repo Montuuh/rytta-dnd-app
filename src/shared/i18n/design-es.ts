@@ -26,7 +26,6 @@ export const designEs = {
   'characters.moreFor': 'Más acciones para {{name}}',
   'characters.holdHint': 'Mantén pulsado para cambiar de 5 en 5',
   'characters.exhaustionLevel': 'Agotamiento: nivel {{level}} de 6',
-  'characters.exhaustionPip': 'Agotamiento nivel {{level}}',
   'sheet.hpRing': '{{current}} de {{max}} puntos de golpe',
   'sheet.hpPreview': 'Quedará en {{value}} PG',
   'sheet.tempPreview': 'Tendrás {{value}} PG temporales',

@@ -242,7 +242,6 @@ export const inventoryEs = {
   'inventory.portrait.removeConfirm': 'Sí, quitar',
   'inventory.portrait.keep': 'Mantener',
   'inventory.portrait.removeError': 'No se pudo quitar el retrato. Inténtalo de nuevo.',
-  'inventory.portrait.close': 'Cerrar el retrato',
   'inventory.error.stale':
     'Este objeto cambió en otro dispositivo. La mochila ya está actualizada; vuelve a intentarlo.',
   'inventory.error.conflict':

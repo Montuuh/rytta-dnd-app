@@ -100,3 +100,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     the campaign's official bestiary, versions edited in place and removals.
 50. [ADR 040: game data is downloaded from a content library](decisions/040-content-library.md):
     packs and entries behind an endpoint, editors, public and private packs, rollout.
+51. [ADR 041: a party led by portraits, free characters, leaving a campaign and one image viewer](decisions/041-party-portraits-claim-leave.md)
+    and [RYT-095–098 verification](evidence/RYT-097/validation.md).

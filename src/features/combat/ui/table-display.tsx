@@ -127,7 +127,7 @@ export function TableDisplay({
               text, narrow banner) it moves under them and the token stays by the label (F7). */}
           <div className="combat-table-actor">
             <div className="combat-table-actor-grid">
-              {active && <CombatantToken combatant={active} />}
+              {active && <CombatantToken combatant={active} viewable />}
               <Text className="combat-table-label">{t('combat.turn.now')}</Text>
               <Text className="combat-table-active">
                 {yours ? t('combat.turn.yours') : (active?.name ?? '—')}
@@ -178,7 +178,7 @@ export function TableDisplay({
           ) : (
             <div className="combat-table-actor is-next">
               <div className="combat-table-actor-grid">
-                {upNext && <CombatantToken combatant={upNext} showActive={false} />}
+                {upNext && <CombatantToken combatant={upNext} showActive={false} viewable />}
                 <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
                 <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
               </div>

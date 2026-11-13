@@ -1,0 +1,28 @@
+/* RYT-098: a viewable portrait is its own button around the medallion. A medallion smaller than
+   44px sits centred in a 44px button that overflows the portrait's box, so the layout keeps its
+   size; the focus ring is round. */
+.portrait-open {
+  --portrait-pad: max(0px, calc((44px - var(--portrait-size, 44px)) / 2));
+  all: unset;
+  position: absolute;
+  inset: calc(-1 * var(--portrait-pad));
+  display: block;
+  border-radius: 50%;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+.portrait-open > .portrait-medallion {
+  position: absolute;
+  inset: var(--portrait-pad);
+  width: auto;
+  height: auto;
+}
+.portrait-open:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .portrait-open:hover > .portrait-medallion {
+    border-color: var(--app-accent-secondary);
+  }
+}

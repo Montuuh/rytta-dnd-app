@@ -31,7 +31,12 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLongPress } from '@/shared/ui/use-long-press'
-import { DefinitionEditor, itemCategories, type ItemCategory } from '@/features/inventory'
+import {
+  DefinitionEditor,
+  itemCategories,
+  useItemPicture,
+  type ItemCategory,
+} from '@/features/inventory'
 import type {
   AdminItem,
   AdminListing,
@@ -42,6 +47,7 @@ import type {
 } from '../domain/shops'
 import { AccessChips } from './shop-controls'
 import { GoldAmount, ItemGlyph } from './visuals'
+import './pictures.css'
 
 /** − / + with a hold for ×10, the same stepper feel as Party resources (ADR 015). */
 function Stepper({
@@ -147,60 +153,75 @@ function ListingRow({
   const [draft, setDraft] = useState(initial)
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
   const panelId = `listing-panel-${listing.id}`
+  const pictured = useItemPicture(item.image_path)
   const names = listing.access
     .map((id) => characters.find((c) => c.id === id)?.name)
     .filter(Boolean)
     .join(', ')
   return (
     <li className={`stock-row ${expanded ? 'is-expanded' : ''}`}>
-      <UnstyledButton
-        id={`listing-main-${listing.id}`}
-        className="stock-row-main"
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        onClick={() => {
-          // Unsaved edits survive collapsing (the row says so); a clean editor reopens
-          // from the server row so it never shows stale values.
-          if (!expanded && !dirty) setDraft(initial)
-          onToggle()
-        }}
-      >
-        <ItemGlyph imagePath={item.image_path} icon={item.icon} rarity={item.rarity} />
-        <span className="stock-row-body">
-          <span className="stock-row-name user-copy">{item.name}</span>
-          <span className="stock-row-meta">
-            {listing.stock === null
-              ? t('shop.stockUnlimited')
-              : listing.stock === 0
-                ? t('shop.soldOut')
-                : t('admin.listing.stockCount', { count: listing.stock })}
+      {/* RYT-098: a picture is its own button beside the one that opens the editor. */}
+      <div className={pictured ? 'stock-row-lead is-pictured' : 'stock-row-lead'}>
+        {pictured && (
+          <ItemGlyph
+            imagePath={item.image_path}
+            icon={item.icon}
+            rarity={item.rarity}
+            viewable
+            name={item.name}
+          />
+        )}
+        <UnstyledButton
+          id={`listing-main-${listing.id}`}
+          className="stock-row-main"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={() => {
+            // Unsaved edits survive collapsing (the row says so); a clean editor reopens
+            // from the server row so it never shows stale values.
+            if (!expanded && !dirty) setDraft(initial)
+            onToggle()
+          }}
+        >
+          {!pictured && (
+            <ItemGlyph imagePath={item.image_path} icon={item.icon} rarity={item.rarity} />
+          )}
+          <span className="stock-row-body">
+            <span className="stock-row-name user-copy">{item.name}</span>
+            <span className="stock-row-meta">
+              {listing.stock === null
+                ? t('shop.stockUnlimited')
+                : listing.stock === 0
+                  ? t('shop.soldOut')
+                  : t('admin.listing.stockCount', { count: listing.stock })}
+            </span>
+            {dirty && !expanded && (
+              <Badge variant="filled" size="sm" className="unsaved-badge">
+                {t('admin.listing.unsaved')}
+              </Badge>
+            )}
+            {listing.visibility !== 'shop' && (
+              <Badge
+                variant="outline"
+                size="sm"
+                leftSection={
+                  listing.visibility === 'hidden' ? (
+                    <EyeOff size={12} aria-hidden="true" />
+                  ) : (
+                    <Users size={12} aria-hidden="true" />
+                  )
+                }
+              >
+                {listing.visibility === 'hidden'
+                  ? t('admin.visibility.listing.hidden')
+                  : t('admin.visibility.onlyFor', { names: names || '—' })}
+              </Badge>
+            )}
           </span>
-          {dirty && !expanded && (
-            <Badge variant="filled" size="sm" className="unsaved-badge">
-              {t('admin.listing.unsaved')}
-            </Badge>
-          )}
-          {listing.visibility !== 'shop' && (
-            <Badge
-              variant="outline"
-              size="sm"
-              leftSection={
-                listing.visibility === 'hidden' ? (
-                  <EyeOff size={12} aria-hidden="true" />
-                ) : (
-                  <Users size={12} aria-hidden="true" />
-                )
-              }
-            >
-              {listing.visibility === 'hidden'
-                ? t('admin.visibility.listing.hidden')
-                : t('admin.visibility.onlyFor', { names: names || '—' })}
-            </Badge>
-          )}
-        </span>
-        <GoldAmount value={listing.price} size="sm" />
-        <ChevronDown size={18} aria-hidden="true" className="stock-row-chevron" />
-      </UnstyledButton>
+          <GoldAmount value={listing.price} size="sm" />
+          <ChevronDown size={18} aria-hidden="true" className="stock-row-chevron" />
+        </UnstyledButton>
+      </div>
       <Collapse expanded={expanded} id={panelId}>
         {expanded && (
           <Stack gap="md" className="stock-row-editor">

@@ -121,9 +121,14 @@ export function ItemCard({
     >
       <article className={`item-card rarity-${definition.rarity}`} aria-labelledby="item-card-name">
         <header className="item-card-head">
-          <span className="item-card-icon">
-            <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={40} />
-          </span>
+          <ItemIcon
+            icon={definition.icon}
+            imagePath={definition.image_path}
+            size={40}
+            viewable
+            name={definition.name}
+            frame="item-card-icon"
+          />
           <div>
             <h3 id="item-card-name" className="item-card-name user-copy">
               {definition.name}

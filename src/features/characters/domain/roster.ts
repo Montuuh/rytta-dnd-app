@@ -70,6 +70,28 @@ export function canRestore(entry: RosterEntry, entries: readonly RosterEntry[]) 
   return rosterOf(entries, entry.user_id).free > 0
 }
 
+/** RYT-096: a free character (unassigned, not archived, present) an active Player may claim. */
+export const claimableCharacterSchema = z.object({
+  id: z.uuid(),
+  name: z.string().trim().min(1).max(100),
+  sheet_status: z.enum(['draft', 'complete']).nullable(),
+  class_key: z.string().max(40).nullable(),
+  class_label: z.string().max(100).nullable(),
+  level: z.number().int().min(1).max(20).nullable(),
+  portrait_path: z.string().max(200).nullable(),
+})
+export type ClaimableCharacter = z.infer<typeof claimableCharacterSchema>
+
+/** RYT-096: `unavailable` means someone else took the character (or it was archived, marked
+ * absent or deleted); `failed` is anything else, such as a lost connection. */
+export type ClaimError = 'unavailable' | 'limit' | 'forbidden' | 'failed'
+export function claimError(message: string): ClaimError {
+  if (message.includes('Character unavailable')) return 'unavailable'
+  if (message.includes('Character limit')) return 'limit'
+  if (message.includes('Forbidden')) return 'forbidden'
+  return 'failed'
+}
+
 export type RosterError = 'limit' | 'trading' | 'combat' | 'active' | 'absent' | 'unavailable'
 /** Maps server messages of the roster RPCs to user-facing error kinds. */
 export function rosterError(message: string): RosterError {

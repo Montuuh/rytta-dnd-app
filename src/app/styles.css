@@ -487,115 +487,6 @@ main h3 {
   max-width: 650px;
   padding: 32px;
 }
-.character-card {
-  min-width: 0;
-  background: var(--app-surface);
-  border-color: var(--app-border);
-}
-.character-owner-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--app-raised);
-  border: 1px solid var(--app-border);
-}
-.character-owner-bar.is-assigned {
-  border-color: var(--app-accent);
-}
-.character-owner-info {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-}
-.resource-cell {
-  min-width: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--app-raised);
-  border: 1px solid var(--app-border);
-}
-.resource-cell-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  min-width: 0;
-}
-.resource-cell-body {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-}
-.resource-inline-steppers {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.resource-label {
-  overflow-wrap: anywhere;
-  min-width: 0;
-}
-.resource-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  background: var(--gold-soft);
-  color: var(--gold-accent);
-}
-.resource-cell-gold .resource-icon {
-  background: var(--gold-soft);
-  color: var(--gold-accent);
-}
-.resource-cell-water_units .resource-icon {
-  background: var(--water-soft);
-  color: var(--water-accent);
-}
-.resource-cell-rations .resource-icon {
-  background: var(--rations-soft);
-  color: var(--rations-accent);
-}
-.resource-cell-exhaustion .resource-icon {
-  background: var(--exhaustion-soft);
-  color: var(--exhaustion-accent);
-}
-.resource-cell-wide {
-  grid-column: 1 / -1;
-}
-.resource-value {
-  overflow-wrap: anywhere;
-  font-variant-numeric: tabular-nums;
-}
-.resource-stepper-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-.resource-stepper-input {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.resource-stepper-buttons {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.stepper-btn {
-  min-width: 44px;
-  min-height: 44px;
-}
 .mantine-Menu-item {
   min-height: 44px;
 }
@@ -638,17 +529,6 @@ main h3 {
   }
   main .mantine-Paper-root {
     padding: 14px;
-  }
-  .resource-cell {
-    padding: 8px 10px;
-  }
-  .resource-icon {
-    width: 30px;
-    height: 30px;
-  }
-  .character-owner-bar {
-    padding: 8px 10px;
-    gap: 8px;
   }
   .desktop-break {
     display: none;
@@ -757,23 +637,6 @@ main h3 {
 .hp-temp {
   color: var(--info);
   min-height: 1.4em;
-}
-.hp-bar .mantine-Progress-section,
-.hp-bar.mantine-Progress-root .mantine-Progress-section {
-  background: var(--hp-tone, var(--success));
-}
-.hp-panel .hp-bar,
-.sheet-summary .hp-bar {
-  background: var(--app-bg);
-}
-.sheet-summary .hp-bar.hp-healthy {
-  --hp-tone: var(--success);
-}
-.sheet-summary .hp-bar.hp-wounded {
-  --hp-tone: var(--warn);
-}
-.sheet-summary .hp-bar.hp-critical {
-  --hp-tone: var(--danger);
 }
 .sheet-exhaustion {
   color: var(--exhaustion-accent);
@@ -953,23 +816,6 @@ main h3 {
   min-height: 44px;
   padding-right: 4px;
   text-transform: none;
-}
-.sheet-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--app-raised);
-  border: 1px solid var(--app-border);
-}
-.sheet-summary-info {
-  flex: 1 1 180px;
-  display: grid;
-  gap: 4px;
-  min-width: 0;
 }
 .choice-card {
   min-height: 44px;
@@ -2215,64 +2061,6 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
 .audit-event {
   overflow-wrap: anywhere;
 }
-/* RYT-025 Party: glanceable resource values, hold steppers and exhaustion track. */
-.resource-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
-}
-.resource-cell .resource-value {
-  font-family: Georgia, Cambria, serif;
-  font-size: var(--fs-h2);
-  font-weight: 500;
-  line-height: 1.1;
-}
-.resource-value-max {
-  font-size: var(--fs-meta);
-  color: var(--app-muted);
-  margin-left: 2px;
-}
-.exhaustion-track {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-}
-.exhaustion-pips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.exhaustion-pip {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 2px solid var(--app-border);
-  background: var(--app-bg);
-  color: var(--app-muted);
-  font-weight: 700;
-  font-size: var(--fs-meta);
-  font-variant-numeric: tabular-nums;
-}
-button.exhaustion-pip {
-  cursor: pointer;
-}
-button.exhaustion-pip:disabled {
-  cursor: progress;
-  opacity: 0.6;
-}
-.exhaustion-pip[data-filled] {
-  background: var(--exhaustion-soft);
-  border-color: var(--exhaustion-accent);
-  color: var(--exhaustion-accent);
-}
-.stepper-btn {
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-}
 /* RYT-025 character sheet: HP ring, number pad, hit-die pips, condition chips. */
 .hp-head {
   display: flex;
@@ -2499,12 +2287,6 @@ button.exhaustion-pip:disabled {
 .dm-tabs[data-orientation='vertical'] .mantine-Tabs-tabLabel {
   flex: 1;
   text-align: start;
-}
-/* Pending controls keep focus (aria-disabled) but read as unavailable. */
-.stepper-btn[data-inert],
-.exhaustion-pip[aria-disabled='true'] {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* RYT-005 shops. The merchant's price tag is the one decorative element; item glyphs reuse
@@ -3651,196 +3433,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
 .satchel-add-row {
   color: var(--app-muted);
 }
-/* RYT-027 Party: same width for DM and Players, hero card, compact resources. */
-.party-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(0, 1fr);
-}
-@media (min-width: 62em) {
-  .party-grid.is-many {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (min-width: 90em) {
-  .party-grid.is-many {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-.character-card {
-  container-type: inline-size;
-}
-.character-card.is-own {
-  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
-  background: linear-gradient(160deg, var(--app-hero), var(--app-surface) 60%);
-}
-.character-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
-.character-head-text {
-  flex: 1;
-  min-width: 0;
-}
-.character-head-text .eyebrow {
-  margin-bottom: 2px;
-}
-.character-body {
-  display: grid;
-  gap: 12px;
-}
-@container (min-width: 44rem) {
-  .character-body {
-    grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr);
-    align-items: start;
-  }
-}
-.sheet-summary {
-  align-items: stretch;
-}
-.sheet-summary-info {
-  gap: 8px;
-}
-.sheet-summary-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-.vital-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.vital-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--app-bg);
-  border: 1px solid var(--app-border);
-  font-weight: 600;
-  font-size: var(--fs-meta);
-  font-variant-numeric: tabular-nums;
-}
-.vital-chip svg {
-  color: var(--app-accent);
-}
-.vital-chip.is-hp svg {
-  color: var(--hp-tone, var(--success));
-}
-.sheet-summary.hp-healthy {
-  --hp-tone: var(--success);
-}
-.sheet-summary.hp-wounded {
-  --hp-tone: var(--warn);
-}
-.sheet-summary.hp-critical {
-  --hp-tone: var(--danger);
-}
-/* Compact resource tiles: icon | label over value | steppers, on one 64px band. */
-.resource-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-  gap: 8px;
-}
-.resource-cell {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  grid-template-rows: auto auto;
-  column-gap: 10px;
-  row-gap: 0;
-  align-items: center;
-  padding: 8px 10px;
-}
-.resource-cell .resource-cell-header,
-.resource-cell .resource-cell-body {
-  display: contents;
-}
-.resource-cell .resource-icon {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-}
-.resource-cell .resource-label {
-  grid-column: 2;
-  grid-row: 1;
-  font-size: var(--fs-tag);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* DM tiles carry steppers, so they need a wider minimum to keep the label on one line. */
-.resource-grid:has(.resource-inline-steppers) {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-}
-.character-owner-info {
-  margin: 2px 0;
-}
-.character-owner-info .mantine-Badge-root {
-  flex-shrink: 1;
-  max-width: 100%;
-  height: auto;
-  min-height: var(--badge-height);
-  padding-block: 2px;
-  overflow: visible;
-}
-/* Large text: the assignment badge wraps instead of truncating. */
-.character-owner-info .mantine-Badge-label {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  line-height: 1.25;
-}
-.character-owner-share {
-  margin-left: auto;
-  display: inline-flex;
-}
-.resource-cell .resource-value {
-  grid-column: 2;
-  grid-row: 2;
-  justify-self: start;
-}
-.resource-cell .resource-inline-steppers {
-  grid-column: 3;
-  grid-row: 1 / span 2;
-}
-.resource-cell .exhaustion-track {
-  grid-column: 2 / -1;
-  grid-row: 2;
-  gap: 6px 10px;
-}
-.resource-cell .exhaustion-pip {
-  width: 40px;
-  height: 40px;
-}
-.resource-cell button.exhaustion-pip {
-  width: 44px;
-  height: 44px;
-}
-/* Read-only exhaustion for Players: a quiet meter, not something that looks pressable. */
-.resource-cell span.exhaustion-pip {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border-width: 1px;
-  font-size: 0;
-}
-.resource-cell span.exhaustion-pip span {
-  display: none;
-}
-.resource-cell .resource-value.mantine-Button-root {
-  padding-inline: 4px;
-  min-height: 44px;
-  font-family: Georgia, Cambria, serif;
-  font-size: var(--fs-h2);
-  font-weight: 500;
-}
 .item-store .mantine-Alert-closeButton {
   min-width: 44px;
   min-height: 44px;
@@ -3858,182 +3450,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   -webkit-box-orient: vertical;
   overflow-wrap: break-word;
 }
-.resource-cell .resource-value.mantine-Button-root .mantine-Button-label {
-  gap: 6px;
-}
-/* RYT-031 party live sharing: teammate live cards, DM share toggle, sheet history drawer. */
-.party-live {
-  display: grid;
-  gap: 12px;
-}
-.party-live-head {
-  display: grid;
-  gap: 2px;
-}
-.party-live-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
-}
-.teammate-card {
-  --hp-tone: var(--app-border);
-  position: relative;
-  display: grid;
-  gap: 10px;
-  height: 100%;
-  padding: 14px 14px 12px 18px;
-  border-radius: 14px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
-  overflow: hidden;
-}
-/* The left edge is the HP tone, readable across the table at a glance. */
-.teammate-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 5px;
-  background: var(--hp-tone);
-}
-.teammate-card.hp-healthy {
-  --hp-tone: var(--success);
-}
-.teammate-card.hp-wounded {
-  --hp-tone: var(--warn);
-}
-.teammate-card.hp-critical {
-  --hp-tone: var(--danger);
-}
-.teammate-card .hp-bar {
-  background: var(--app-bg);
-}
-.teammate-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.teammate-id {
-  flex: 1;
-  min-width: 0;
-}
-.teammate-name.mantine-Title-root {
-  font-size: var(--fs-h3);
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-.ac-shield {
-  position: relative;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 48px;
-  color: var(--app-muted);
-}
-.ac-shield svg {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-}
-.ac-shield span {
-  position: relative;
-  margin-top: -3px;
-  font-weight: 800;
-  font-size: var(--fs-body);
-  font-variant-numeric: tabular-nums;
-  color: var(--app-text);
-}
-.teammate-hp {
-  display: grid;
-  gap: 6px;
-}
-.teammate-hp-row {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-}
-.teammate-hp-row svg {
-  align-self: center;
-  color: var(--hp-tone);
-}
-.teammate-hp-value {
-  font-weight: 800;
-  font-size: var(--fs-h3);
-  font-variant-numeric: tabular-nums;
-}
-.teammate-hp-max {
-  font-weight: 500;
-  font-size: var(--fs-meta);
-  color: var(--app-muted);
-}
-.teammate-temp {
-  font-size: var(--fs-meta);
-  font-weight: 600;
-  color: var(--info);
-}
-.teammate-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-}
-.teammate-exhaustion {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--app-muted);
-}
-.teammate-exhaustion[data-active] {
-  color: var(--exhaustion-accent);
-}
-.teammate-pip {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.5px solid currentColor;
-  opacity: 0.55;
-}
-.teammate-pip[data-filled] {
-  background: var(--exhaustion-accent);
-  border-color: var(--exhaustion-accent);
-  opacity: 1;
-}
-.teammate-pip-more {
-  font-size: var(--fs-tag);
-  font-weight: 700;
-}
-.teammate-conditions {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.teammate-conditions li {
-  padding: 2px 8px;
-  border-radius: 6px;
-  border-inline-start: 3px solid var(--warn);
-  background: var(--warn-soft);
-  font-size: var(--fs-tag);
-  font-weight: 600;
-}
-.live-share-toggle {
-  flex-shrink: 0;
-}
-.live-share-toggle:not([data-on]) {
-  color: var(--app-muted);
-}
-.live-hidden-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 .audit-diffs {
   list-style: none;
   margin: 0;
@@ -4047,11 +3463,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
 .sheet-header-actions {
   flex-shrink: 1;
   min-width: 0;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .teammate-card .hp-bar .mantine-Progress-section {
-    transition: width 400ms ease-out;
-  }
 }
 
 /* Tooltips follow the warm-hearth tokens instead of Mantine's default grey/black. */
@@ -4575,83 +3986,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   }
 }
 
-/* RYT-035 Party cards: no holes in the DM resource grid and a one-row exhaustion track. */
-.resource-grid:has(.resource-inline-steppers) .resource-cell-gold {
-  grid-column: 1 / -1;
-}
-.resource-cell.resource-cell-exhaustion {
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  row-gap: 8px;
-}
-.resource-cell.resource-cell-exhaustion .resource-icon {
-  grid-row: 1;
-}
-.resource-cell.resource-cell-exhaustion .exhaustion-track {
-  display: contents;
-}
-.resource-cell.resource-cell-exhaustion .exhaustion-track > .resource-value {
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-}
-.resource-cell.resource-cell-exhaustion .exhaustion-pips {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: repeat(6, 44px);
-  justify-content: start;
-  gap: 6px;
-}
-.resource-cell.resource-cell-exhaustion .exhaustion-pips:has(span.exhaustion-pip) {
-  grid-template-columns: repeat(6, 22px);
-  grid-column: 2 / -1;
-}
-.resource-cell .resource-label {
-  white-space: normal;
-}
-.character-owner-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-.live-share-toggle {
-  margin-top: 6px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-.live-share-toggle .mantine-Switch-body {
-  align-items: center;
-  min-height: 44px;
-}
-.live-share-toggle .mantine-Switch-track {
-  margin-block: auto;
-}
-.live-share-toggle .mantine-Switch-label {
-  font-size: var(--fs-meta);
-  font-weight: 600;
-  color: var(--app-text);
-  cursor: pointer;
-}
-.live-share-toggle:not([data-on]) .mantine-Switch-label {
-  color: var(--app-muted);
-}
-.live-share-toggle .mantine-Switch-labelWrapper {
-  display: flex;
-  align-items: center;
-}
-/* Read-only exhaustion (Players, teammates) is the same quiet dot meter everywhere. */
-.resource-cell span.exhaustion-pip {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-.resource-cell.resource-cell-exhaustion .exhaustion-pips:has(span.exhaustion-pip) {
-  grid-template-columns: repeat(6, 14px);
-  align-items: center;
-  gap: 8px;
-}
 /* Laptops: satchel tiles grow with the screen instead of leaving a field of empty space. */
 @media (min-width: 62em) {
   .satchel-grid {
@@ -4713,9 +4047,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   .dm-tabs-panel {
     padding-top: 14px;
   }
-}
-.live-share-toggle .mantine-Switch-label {
-  white-space: nowrap;
 }
 @media (max-width: 47.99em) {
   .dm-tabs:not([data-orientation='vertical']) .mantine-Tabs-tabLabel {
@@ -4859,16 +4190,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
 }
 .balance {
   padding-bottom: calc(12px + 1.5em);
-}
-.teammate-ac {
-  flex-shrink: 0;
-  align-self: flex-start;
-}
-/* Party cards stack the sheet summary above the resources at every width: no empty column. */
-@container (min-width: 44rem) {
-  .character-body {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 /* Sheet stat tiles: values line up at the bottom and phones use two columns, the odd last
    tile spanning both, so no empty cell is left. */

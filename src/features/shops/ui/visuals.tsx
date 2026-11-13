@@ -27,21 +27,34 @@ export function EmptyNote({ icon: Icon, children }: { icon: LucideIcon; children
   )
 }
 
-/** The RYT-004 item icon in a small frame tinted by rarity, matching satchel tiles. */
+/**
+ * The RYT-004 item icon in a small frame tinted by rarity, matching satchel tiles. RYT-098: with
+ * `viewable` and the item's name, a real picture makes the frame a button that opens the viewer.
+ */
 export function ItemGlyph({
   icon,
   imagePath,
   rarity,
   size = 22,
+  viewable = false,
+  name,
 }: {
   icon: string
   imagePath?: string | null
   rarity: Rarity
   size?: number
+  /** Only outside another control. */
+  viewable?: boolean
+  name?: string
 }) {
   return (
-    <span className={`shop-glyph rarity-${rarity}`} aria-hidden="true">
-      <ItemIcon imagePath={imagePath} icon={icon} size={size} />
-    </span>
+    <ItemIcon
+      imagePath={imagePath}
+      icon={icon}
+      size={size}
+      viewable={viewable}
+      name={name}
+      frame={`shop-glyph rarity-${rarity}`}
+    />
   )
 }

@@ -290,6 +290,7 @@ export function OrderCard({
             name={order.character.name}
             path={portraits.get(order.character.id) ?? null}
             size={40}
+            viewable
           />
           <div>
             <Title order={3} size="h4" className="user-copy" id={`order-${order.id}`}>

@@ -121,9 +121,5 @@ export const restEs = {
   'characters.benched':
     'El DM ha marcado que hoy no vienes, así que tu personaje no está en el grupo.',
   'characters.benchedLink': 'Ver mis personajes',
-  'characters.newCard': 'Nuevo personaje',
-  'characters.newCardDm': 'Sin jugador; luego lo asignas',
-  'characters.newCardPlayer': 'Tienes {{used}} de {{limit}}',
-  'characters.newCardFull': 'Tienes los {{limit}}: archiva uno para crear otro.',
   'panel.field.absent': 'Ausente',
 } satisfies Record<keyof typeof restEn, string>

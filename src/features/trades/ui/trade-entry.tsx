@@ -1,82 +1,62 @@
-import { Button, Menu, Text, UnstyledButton } from '@mantine/core'
-import { ArrowLeftRight, ChevronDown, Handshake } from 'lucide-react'
+import { useId } from 'react'
+import { Loader, Text, Tooltip, UnstyledButton } from '@mantine/core'
+import { ArrowLeftRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useCampaign } from '@/features/campaigns'
-import { CharacterPortrait, useCampaignPortraits } from '@/features/inventory'
 import { useTrades } from './context'
 import { SummaryList } from './dialogs'
 
-/** "Trade" on a teammate card. Renders nothing where the viewer does not act as a character. */
+/** RYT-097: the round trade icon on a teammate's portrait. Renders nothing where the viewer does
+ * not act as a character or the teammate cannot trade. It stays focusable while unavailable so
+ * the reason can be read. */
 export function TradeButton({ partnerId, name }: { partnerId: string; name: string }) {
   const { t } = useTranslation()
   const trades = useTrades()
+  const reasonId = useId()
   const partner = trades?.state?.partners.find((p) => p.id === partnerId)
   if (!trades?.state?.character || !partner) return null
   const active = trades.state.trade
   const withThem = active?.partner.character_id === partnerId
-  const busy = partner.busy && !withThem
+  const inviting = trades.inviting === partnerId
+  const reason = withThem
+    ? null
+    : partner.busy
+      ? t('trade.partnerIsBusy', { name })
+      : active
+        ? t('trade.otherOpen')
+        : null
+  const unavailable = Boolean(reason) || trades.inviting !== null
+  const label = withThem ? t('trade.dock.openLabel', { name }) : t('trade.actionWith', { name })
   return (
-    <UnstyledButton
-      className="teammate-trade"
-      aria-label={busy ? undefined : t('trade.actionWith', { name })}
-      disabled={trades.inviting !== null || (Boolean(active) && !withThem) || busy}
-      onClick={() => (withThem ? trades.reopen() : trades.invite(partnerId, name))}
+    <Tooltip
+      label={reason ?? label}
+      // A tap leaves focus on the icon: only a reason to wait is worth showing there.
+      events={{ hover: true, focus: Boolean(reason), touch: Boolean(reason) }}
+      withinPortal
     >
-      <ArrowLeftRight size={18} aria-hidden="true" />
-      <span>{busy ? t('trade.partnerIsBusy', { name }) : t('trade.action')}</span>
-    </UnstyledButton>
-  )
-}
-
-/** Character picker for starting a trade with any assigned character of the campaign. */
-export function TradeLauncher() {
-  const { t } = useTranslation()
-  const trades = useTrades()
-  const campaign = useCampaign()
-  const portraits = useCampaignPortraits(campaign.id)
-  if (!trades?.state?.character) return null
-  const { partners, trade } = trades.state
-  return (
-    <Menu position="bottom-end" withinPortal>
-      <Menu.Target>
-        <Button
-          variant="light"
-          size="md"
-          leftSection={<Handshake size={18} aria-hidden="true" />}
-          rightSection={<ChevronDown size={16} aria-hidden="true" />}
-          disabled={Boolean(trade) || trades.inviting !== null}
-        >
-          {t('trade.launcher')}
-        </Button>
-      </Menu.Target>
-      <Menu.Dropdown maw="calc(100vw - 32px)">
-        <Menu.Label>{t('trade.pickPartner')}</Menu.Label>
-        {partners.length === 0 && (
-          <Text size="sm" c="dimmed" px="sm" py="xs">
-            {t('trade.noPartners')}
-          </Text>
+      <UnstyledButton
+        className="trade-icon"
+        data-active={withThem || undefined}
+        aria-label={label}
+        aria-describedby={reason ? reasonId : undefined}
+        aria-disabled={unavailable || undefined}
+        aria-busy={inviting || undefined}
+        onClick={() => {
+          if (withThem) trades.reopen()
+          else if (!unavailable) trades.invite(partnerId, name)
+        }}
+      >
+        {inviting ? (
+          <Loader size={18} color="currentColor" aria-hidden="true" />
+        ) : (
+          <ArrowLeftRight size={20} aria-hidden="true" />
         )}
-        {partners.map((partner) => (
-          <Menu.Item
-            key={partner.id}
-            leftSection={
-              <CharacterPortrait
-                campaignId={campaign.id}
-                characterId={partner.id}
-                name={partner.name}
-                path={portraits.get(partner.id) ?? null}
-                size={32}
-              />
-            }
-            disabled={partner.busy}
-            className="user-copy trade-menu-item"
-            onClick={() => trades.invite(partner.id, partner.name)}
-          >
-            {partner.busy ? t('trade.partnerIsBusy', { name: partner.name }) : partner.name}
-          </Menu.Item>
-        ))}
-      </Menu.Dropdown>
-    </Menu>
+        {reason && (
+          <span id={reasonId} className="visually-hidden">
+            {reason}
+          </span>
+        )}
+      </UnstyledButton>
+    </Tooltip>
   )
 }
 

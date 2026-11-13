@@ -19,6 +19,7 @@ import { panelEn } from './panel-en'
 import { restEn } from './rest-en'
 import { usernameEn } from './username-en'
 import { libraryEn } from './library-en'
+import { viewerEn } from './viewer-en'
 export const en = {
   ...identityEn,
   ...charactersEn,
@@ -41,6 +42,7 @@ export const en = {
   ...restEn,
   ...usernameEn,
   ...libraryEn,
+  ...viewerEn,
   'module.party': 'Party',
   'module.inventory': 'Inventory',
   'module.shops': 'Shops',

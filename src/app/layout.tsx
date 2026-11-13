@@ -29,9 +29,13 @@ import { useQuery } from '@tanstack/react-query'
 import {
   CampaignViewContext,
   campaignsQuery,
+  leaveBlock,
+  LeaveCampaignDialog,
+  LeaveCampaignItem,
   membersQuery,
   type Campaign,
 } from '@/features/campaigns'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
@@ -218,6 +222,8 @@ export function Layout() {
   const [previewUserId, setPreviewUserId] = useState<string | null>(null)
   const [previewLabel, setPreviewLabel] = useState<string | null>(null)
   const [pickerOpened, setPickerOpened] = useState(false)
+  // RYT-095: the campaign being left from the profile menu (kept while the caches drop).
+  const [leaving, setLeaving] = useState<{ id: string; name: string } | null>(null)
   const [opened, { open, close }] = useDisclosure(false)
   const [settingsOpened, settings] = useDisclosure(false)
   // RYT-078: true from opening the Settings drawer until its exit transition ends (focus is back
@@ -463,6 +469,22 @@ export function Layout() {
                           <Menu.Divider />
                         </>
                       )}
+                      {/* RYT-095: leaving belongs to the open campaign, in its own group above the
+                          account items; never from the DM's Player view. */}
+                      {live && state.user && campaign && !playerPreview && (
+                        <>
+                          <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
+                          <LeaveCampaignItem
+                            block={leaveBlock(campaign.role, members.data, members.isError)}
+                            onSelect={() => {
+                              // The dialog takes focus; it hands it back to the trigger on cancel.
+                              restoreMenuFocus.current = false
+                              setLeaving({ id: campaign.id, name: campaign.name })
+                            }}
+                          />
+                          <Menu.Divider />
+                        </>
+                      )}
                       {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
                       <Menu.Item
                         leftSection={<Settings size={18} aria-hidden="true" />}
@@ -544,6 +566,16 @@ export function Layout() {
           >
             <SettingsPanel />
           </Drawer>
+          {leaving && (
+            <LeaveCampaignDialog
+              campaign={leaving}
+              onClose={() => {
+                setLeaving(null)
+                focusWhenReady(() => menuButton.current)
+              }}
+              onLeft={() => setLeaving(null)}
+            />
+          )}
           {/* RYT-078: asks for a missing username after every sign-in, on any page. */}
           {live && state.user && (
             <UsernameDialog

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, campaignId, characterId, playerId } from './fixtures/identity.ts'
+import { identityFixture, beaId, campaignId, characterId, playerId } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 import type { Page } from '@playwright/test'
 
@@ -165,14 +165,10 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
     .getByRole('dialog')
     .getByRole('button', { name: 'Crear personaje', exact: true })
     .click()
-  const card = page
-    .locator('.character-card')
-    .filter({ has: page.getByRole('heading', { name: 'New hero' }) })
+  const card = page.getByRole('article', { name: 'New hero', exact: true })
   await expect(card.getByText('Sin jugador')).toBeVisible()
   await expect(card.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
-  const arin = page
-    .locator('.character-card')
-    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  const arin = page.getByRole('article', { name: 'Arin', exact: true })
   await arin.getByRole('button', { name: /Editar oro de Arin/ }).click()
   await page.getByRole('textbox', { name: 'Oro', exact: true }).fill('26')
   await page.getByRole('button', { name: 'Guardar oro' }).click()
@@ -202,6 +198,16 @@ test('Player sees own resources read-only; account menu returns home without lea
   await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Crear personaje' })).toHaveCount(0)
+  // RYT-097: Players create from My characters; Party has no New character card or launcher.
+  await expect(page.getByRole('button', { name: 'Nuevo personaje' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Proponer un trueque' })).toHaveCount(0)
+  // A blank sheet offers its one way forward instead of View sheet.
+  // RYT-097: the plate uses the roster's wording for an unfinished sheet.
+  await expect(page.getByText('Ficha sin terminar', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Terminar ficha' })).toBeVisible()
+  const ledger = page.getByRole('article', { name: 'Arin', exact: true }).locator('.party-ledger')
+  await expect(ledger).toContainText('Oro25')
+  await expect(ledger.getByRole('button')).toHaveCount(0)
   const menu = page.getByRole('button', { name: /Sesión de player@example.com/ })
   await menu.click()
   // Wait for the dropdown before Escape; pressing it mid-transition left the menu open in CI.
@@ -294,10 +300,10 @@ test('maximum valid resources remain readable within cards at 150% text', async 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(
     await page
-      .locator('.resource-cell')
+      .locator('.party-ledger-cell')
       .evaluateAll((cells) => cells.every((el) => el.scrollWidth <= el.clientWidth)),
   ).toBe(true)
-  await expect(page.locator('.resource-value').first()).toHaveText(
+  await expect(page.locator('.party-ledger-value').first()).toHaveText(
     Number.MAX_SAFE_INTEGER.toLocaleString('es'),
   )
   await capture(page, info.outputPath('max-resources-150.png'))
@@ -319,9 +325,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
     .getByRole('link', { name: 'Grupo', exact: true })
     .click()
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
-  const card = page
-    .locator('.character-card')
-    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  const card = page.getByRole('article', { name: 'Arin', exact: true })
   // Keyboard: open the card menu, pick the action, Escape returns focus to the menu trigger.
   const more = card.getByRole('button', { name: 'Más acciones para Arin', exact: true })
   await more.focus()
@@ -438,13 +442,20 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
     'aria-current',
     'page',
   )
-  const arin = page
-    .locator('.character-card')
-    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
-  await arin.getByRole('button', { name: 'Agotamiento nivel 2 · Arin', exact: true }).click()
+  const arin = page.getByRole('article', { name: 'Arin', exact: true })
+  await arin
+    .getByRole('button', { name: '2 · Subir agotamiento a nivel 2 · Arin', exact: true })
+    .click()
   await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(2)
-  // Pressing the current top level steps down one level.
-  await arin.getByRole('button', { name: 'Agotamiento nivel 2 · Arin', exact: true }).click()
+  // RYT-097: the current top pip says that pressing it steps down one level.
+  const top = arin.locator('.exhaustion-pip').nth(1)
+  await expect(top).toHaveText('2')
+  await expect(top).toHaveAccessibleName('2 · Bajar agotamiento a nivel 1 · Arin')
+  await expect(top).toHaveAttribute('title', 'Bajar agotamiento a nivel 1')
+  await expect(arin.locator('.exhaustion-pip').nth(2)).toHaveAccessibleName(
+    '3 · Subir agotamiento a nivel 3 · Arin',
+  )
+  await top.click()
   await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(1)
   await capture(page, info.outputPath('ryt-025-party.png'))
 })
@@ -454,9 +465,7 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
 }) => {
   await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}/party`)
-  const arin = page
-    .locator('.character-card')
-    .filter({ has: page.getByRole('heading', { name: 'Arin', exact: true }) })
+  const arin = page.getByRole('article', { name: 'Arin', exact: true })
   const gold = arin.getByRole('button', { name: /Editar oro de Arin/ })
   await gold.focus()
   await page.keyboard.press('Enter')
@@ -469,11 +478,14 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await page.keyboard.press('Escape')
   await expect(gold).toContainText('2600')
   await expect(gold).toBeFocused()
-  const pip = arin.getByRole('button', { name: 'Agotamiento nivel 1 · Arin', exact: true })
+  // The pip's name follows the level it would set next, so hold it by position.
+  const pip = arin.locator('.exhaustion-pip').first()
+  await expect(pip).toHaveAccessibleName('1 · Subir agotamiento a nivel 1 · Arin')
   await pip.focus()
   await page.keyboard.press('Space')
   await expect(arin.locator('.exhaustion-pip[data-filled]')).toHaveCount(1)
   await expect(pip).toBeFocused()
+  await expect(pip).toHaveAccessibleName('1 · Bajar agotamiento a nivel 0 · Arin')
 
   const preview = page.getByRole('switch', { name: 'Vista jugador', exact: true })
   await preview.focus()
@@ -530,28 +542,57 @@ async function axeAndTargets(page: Page) {
   )
 }
 
-test('RYT-031 Player sees shared teammates live state without their resources', async ({
+test('RYT-031/097 Player sees teammates; live state only for those the DM shares', async ({
   page,
 }, info) => {
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   const f = await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+  const overview = page.waitForResponse('**/rest/v1/rpc/get_party_overview')
   await page.goto(`./#/campaign/${campaignId}/party`)
   await expect(page.getByRole('heading', { name: 'Arin', exact: true })).toBeVisible()
+  // The own plate leads with HP, AC, exhaustion and the purse.
+  const own = page.getByRole('article', { name: 'Arin', exact: true })
+  await expect(
+    own.getByRole('img', { name: '30 de 38 puntos de golpe, +5 temporales' }),
+  ).toBeVisible()
+  await expect(own.getByRole('img', { name: 'Clase de armadura 14' })).toBeVisible()
+  await expect(own.getByRole('img', { name: 'Agotamiento: nivel 0 de 6' })).toBeVisible()
+  await expect(own.locator('.party-ledger')).toContainText('Agua3')
   const party = page.getByRole('region', { name: 'Compañeros', exact: true })
   await expect(party).toBeVisible()
   const bea = party.getByRole('article', { name: 'Bea' })
   await expect(bea).toBeVisible()
   await expect(bea.getByText('/24', { exact: true })).toBeVisible()
-  await expect(bea.getByText('+3 temporales', { exact: true })).toBeVisible()
+  await expect(
+    bea.getByRole('img', { name: '9 de 24 puntos de golpe, +3 temporales' }),
+  ).toBeVisible()
   await expect(bea.getByRole('img', { name: 'Clase de armadura 16' })).toBeVisible()
   await expect(bea.getByRole('img', { name: 'Agotamiento: nivel 2 de 6' })).toBeVisible()
   await expect(bea.getByRole('list', { name: 'Estados de Bea' })).toContainText('Envenenado')
-  await expect(bea.getByRole('progressbar', { name: '9 de 24 puntos de golpe' })).toBeVisible()
-  await expect(party.getByRole('article', { name: 'Cato' })).toHaveCount(0)
-  // Own card keeps resources; teammates never show gold, water or rations.
+  await expect(bea.locator('.party-mate-band')).toBeVisible()
+  // RYT-097: an unshared teammate shows who they are and no live state; none reaches the page.
+  const cato = party.getByRole('article', { name: 'Cato' })
+  await expect(cato).toContainText('Bardo de nivel 5')
+  await expect(cato).toContainText('Estado no compartido')
+  await expect(cato.getByRole('img')).toHaveCount(0)
+  await expect(cato.getByRole('list')).toHaveCount(0)
+  await expect(cato.locator('.party-mate-band')).toHaveCount(0)
+  const row = ((await (await overview).json()) as { name: string }[]).find(
+    (member) => member.name === 'Cato',
+  )
+  expect(row).toMatchObject({
+    shares_live: false,
+    current_hp: null,
+    max_hp: null,
+    temp_hp: null,
+    armor_class: null,
+    exhaustion: null,
+    conditions: null,
+  })
+  // The own plate keeps resources; teammates never show gold, water or rations.
   await expect(party.getByText('777')).toHaveCount(0)
-  await expect(page.getByText('Cato', { exact: true })).toHaveCount(0)
+  await expect(party.getByText('555')).toHaveCount(0)
   expect(f.calls.some((c) => c.method === 'get_party_overview')).toBe(true)
   await axeAndTargets(page)
   await evidence(page, info.project.name, 'party-player')
@@ -570,10 +611,10 @@ test('RYT-031 DM toggles live sharing per character with a labelled 44px control
 }, info) => {
   const f = await identityFixture(page, { party: true, sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  // RYT-035: a labelled switch ("Visible al grupo") instead of an icon-only toggle.
-  const cato = page.getByRole('switch', { name: 'Visible al grupo · Cato', exact: true })
+  // RYT-035: a labelled switch ("En vivo") instead of an icon-only toggle.
+  const cato = page.getByRole('switch', { name: 'En vivo · Cato', exact: true })
   await expect(cato).not.toBeChecked()
-  const bea = page.getByRole('switch', { name: 'Visible al grupo · Bea', exact: true })
+  const bea = page.getByRole('switch', { name: 'En vivo · Bea', exact: true })
   await expect(bea).toBeChecked()
   await bea.focus()
   await page.keyboard.press('Space')
@@ -586,8 +627,7 @@ test('RYT-031 DM toggles live sharing per character with a labelled 44px control
   await cato.click({ force: true })
   await expect(cato).toBeChecked()
   const box = await page
-    .locator('.character-card')
-    .filter({ has: page.getByRole('heading', { name: 'Cato', exact: true }) })
+    .getByRole('article', { name: 'Cato', exact: true })
     .locator('.live-share-toggle')
     .boundingBox()
   expect(box!.height).toBeGreaterThanOrEqual(44)
@@ -600,9 +640,7 @@ test('RYT-031 DM opens the per-character history from the sheet; Players do not 
 }, info) => {
   await identityFixture(page, { party: true, sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/party`)
-  await page
-    .getByRole('switch', { name: 'Visible al grupo · Arin', exact: true })
-    .click({ force: true })
+  await page.getByRole('switch', { name: 'En vivo · Arin', exact: true }).click({ force: true })
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
   // RYT-070 moved the per-character history into the sheet's History block.
   const open = page.getByRole('button', { name: /^Historial/ })
@@ -625,4 +663,76 @@ test('RYT-070 the assigned Player also reads the history of their sheet', async 
   await expect(page.getByRole('heading', { name: 'Arin', level: 1 })).toBeVisible()
   await page.getByRole('button', { name: /^Historial/ }).click()
   await expect(page.getByRole('dialog', { name: 'Historial' })).toContainText('Solo lectura')
+})
+
+test('RYT-097 the DM creates from the head and changes counters on the plate', async ({
+  page,
+}, info) => {
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const f = await identityFixture(page, { party: true, sheet: 'complete' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const create = page.getByRole('button', { name: 'Nuevo personaje', exact: true })
+  await expect(create).toHaveText('Personaje')
+  await expect(page.locator('.party-new-card')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Proponer un trueque' })).toHaveCount(0)
+  await create.click()
+  await expect(page.getByLabel('Nombre del personaje')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(create).toBeFocused()
+  const bea = page.getByRole('article', { name: 'Bea', exact: true })
+  await expect(bea.getByText('Jugador: Bea P.', { exact: true })).toBeVisible()
+  await expect(
+    bea.getByRole('img', { name: '9 de 24 puntos de golpe, +3 temporales' }),
+  ).toBeVisible()
+  await expect(bea.getByRole('img', { name: 'Clase de armadura 16' })).toBeVisible()
+  // Water, rations and exhaustion change on the plate through the resource RPC.
+  await bea.getByRole('button', { name: 'Aumentar Raciones de agua · Bea', exact: true }).click()
+  await expect(bea.locator('.party-ledger-cell[data-kind="water_units"]')).toContainText('10')
+  await bea.getByRole('button', { name: 'Reducir Raciones de comida · Bea', exact: true }).click()
+  await expect(bea.locator('.party-ledger-cell[data-kind="rations"]')).toContainText('7')
+  await bea
+    .getByRole('button', { name: '3 · Subir agotamiento a nivel 3 · Bea', exact: true })
+    .click()
+  await expect(bea.locator('.exhaustion-pip[data-filled]')).toHaveCount(3)
+  await expect
+    .poll(() => f.calls.filter((c) => c.method === 'set_character_resources').length)
+    .toBe(3)
+  await axeAndTargets(page)
+  await capture(page, info.outputPath('ryt-097-dm.png'))
+  // The name on the art leads to the sheet.
+  await bea.getByRole('link', { name: 'Bea', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Bea', level: 1 })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('RYT-097 a teammate portrait opens the viewer and Escape returns to it', async ({ page }) => {
+  await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+  await page.route('**/rest/v1/rpc/list_character_portraits', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { character_id: beaId, portrait_path: `${campaignId}/${beaId}.png` },
+        { character_id: characterId, portrait_path: `${campaignId}/${characterId}.png` },
+      ]),
+    }),
+  )
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const bea = page.getByRole('article', { name: 'Bea' })
+  const portrait = bea.getByRole('button', { name: 'Ver el retrato de Bea', exact: true })
+  await portrait.click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(portrait).toBeFocused()
+  // The own plate's portrait opens the same viewer; keyboard order is portrait, then actions.
+  const own = page.getByRole('article', { name: 'Arin', exact: true })
+  const mine = own.getByRole('button', { name: 'Ver el retrato de Arin', exact: true })
+  await mine.focus()
+  await page.keyboard.press('Tab')
+  await expect(own.getByRole('link', { name: 'Ver ficha' })).toBeFocused()
+  await mine.press('Enter')
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(mine).toBeFocused()
 })

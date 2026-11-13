@@ -16,6 +16,12 @@ export type CharacterFunctions = {
     Args: { target_campaign: string; target_character: string }
     Returns: string
   }
+  // RYT-096: an active Player lists and claims the DM's free characters.
+  list_claimable_characters: { Args: { target_campaign: string }; Returns: Json }
+  claim_character: {
+    Args: { target_campaign: string; target_character: string }
+    Returns: string
+  }
   // RYT-079: the DM marks a character absent or present.
   set_character_absent: {
     Args: { target_campaign: string; target_character: string; make_absent: boolean }

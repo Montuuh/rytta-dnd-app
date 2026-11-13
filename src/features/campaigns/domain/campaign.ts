@@ -85,3 +85,20 @@ export class MembershipError extends Error {
     this.reason = reason
   }
 }
+
+/** RYT-095: why the viewer cannot leave yet. A DM waits for the member list ('checking') and is
+ * blocked as the only DM; a list that failed to load does not block, because PostgreSQL keeps at
+ * least one DM anyway. Presentation only. */
+export type LeaveBlock = 'checking' | 'last-dm' | null
+export function leaveBlock(
+  role: Campaign['role'],
+  members: readonly Pick<Member, 'role'>[] | undefined,
+  failed = false,
+): LeaveBlock {
+  if (role !== 'dm' || failed) return null
+  if (!members) return 'checking'
+  return members.filter((member) => member.role === 'dm').length <= 1 ? 'last-dm' : null
+}
+
+/** Router state My campaigns reads after a member leaves (RYT-095). */
+export const leftCampaignState = z.object({ leftCampaign: z.string().min(1).max(100) })

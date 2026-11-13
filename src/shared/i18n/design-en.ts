@@ -24,7 +24,6 @@ export const designEn = {
   'characters.moreFor': 'More actions for {{name}}',
   'characters.holdHint': 'Press and hold to change by 5',
   'characters.exhaustionLevel': 'Exhaustion: level {{level}} of 6',
-  'characters.exhaustionPip': 'Exhaustion level {{level}}',
   'sheet.hpRing': '{{current}} of {{max}} hit points',
   'sheet.hpPreview': 'Will be {{value}} HP',
   'sheet.tempPreview': 'You will have {{value}} temporary HP',

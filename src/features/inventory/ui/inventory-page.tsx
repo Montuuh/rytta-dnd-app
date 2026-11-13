@@ -122,6 +122,7 @@ export function InventoryPage() {
       path={data?.holder.portraitPath ?? character.portraitPath}
       size={size}
       editable={editable}
+      viewable
     />
   )
   const errorText = (code: string) =>

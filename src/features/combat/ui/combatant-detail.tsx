@@ -80,7 +80,7 @@ export function CombatantDetail(props: Props) {
           {dm && combatant.kind === 'npc' ? (
             <CreaturePortrait combatant={combatant} />
           ) : (
-            <CombatantToken combatant={combatant} size={72} showActive={false} described />
+            <CombatantToken combatant={combatant} size={72} showActive={false} described viewable />
           )}
           <div>
             <Title order={3} className="combat-detail-name">

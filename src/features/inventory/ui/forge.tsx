@@ -15,6 +15,7 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
+import { ViewerButton } from '@/shared/ui/image-viewer'
 import { useTranslation } from 'react-i18next'
 import { formatPounds } from '../domain/encumbrance'
 import {
@@ -75,6 +76,7 @@ function ForgePreview({
 }) {
   const { t, i18n } = useTranslation()
   const p = draft.properties
+  const name = draft.name.trim() || t('forge.unnamed')
   const facts = [
     draft.category === 'weapon' && p.dice
       ? `${p.dice} ${t(`inventory.damage.${p.damageType ?? 'slashing'}`)}`
@@ -90,17 +92,29 @@ function ForgePreview({
   ].filter(Boolean)
   return (
     <section className={`forge-preview rarity-${draft.rarity}`} aria-label={t('forge.preview')}>
-      <span className="forge-preview-glyph" aria-hidden="true">
-        {image ? (
+      {/* RYT-098: the chosen picture opens the viewer, so it can be checked before saving. */}
+      {image ? (
+        <ViewerButton
+          src={image}
+          title={name}
+          alt={t('viewer.alt', { name })}
+          label={t('viewer.open', { name })}
+          className="item-image-open forge-preview-glyph"
+        >
           <img src={image} alt="" />
-        ) : (
-          <ItemIcon icon={draft.icon} imagePath={imagePath} size={44} />
-        )}
-      </span>
+        </ViewerButton>
+      ) : (
+        <ItemIcon
+          icon={draft.icon}
+          imagePath={imagePath}
+          size={44}
+          viewable
+          name={name}
+          frame="forge-preview-glyph"
+        />
+      )}
       <span className="forge-preview-body">
-        <span className="forge-preview-name user-copy">
-          {draft.name.trim() || t('forge.unnamed')}
-        </span>
+        <span className="forge-preview-name user-copy">{name}</span>
         <span className="forge-preview-kind">
           <span className="forge-preview-rarity">{t(`inventory.rarity.${draft.rarity}`)}</span>{' '}
           {t(`inventory.category.${draft.category}`)}

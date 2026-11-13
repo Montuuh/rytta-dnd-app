@@ -40,6 +40,8 @@ export const draftQuery = (userId: string, entryId: string) =>
   queryOptions({
     queryKey: [...root(userId), 'entry', entryId],
     queryFn: ({ signal }) => loadDraft(entryId, signal),
+    // Opening an entry always checks the server: edits must start from its latest revision.
+    staleTime: 0,
   })
 
 /** Whether the signed-in account may open the content library (presentation only: RLS decides). */

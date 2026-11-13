@@ -229,13 +229,20 @@
   bottom: 0;
   z-index: 2;
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
   padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--app-border);
   background: var(--app-surface);
+}
+/* A long status wraps in its own column; Guardar keeps its place on the right. */
+.lib-savebar > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.lib-savebar > :not(:first-child) {
+  flex: none;
 }
 .lib-status-error {
   color: var(--danger);

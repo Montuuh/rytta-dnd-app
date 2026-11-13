@@ -194,6 +194,9 @@ export const libraryEn = {
   'library.revertTitle': 'Revert “{{name}}” to the published version?',
   'library.revertBody': 'The saved draft of this entry is lost.',
   'library.conflict': 'This entry changed while you were editing.',
-  'library.takeServer': 'Load the new version',
+  'library.takeServer': 'Discard my changes',
   'library.unsavedRow': 'unsaved',
+  'library.keepMine': 'Save my changes over it',
+  'library.notSaved': 'Not saved: the entry changed.',
+  'library.notDone': 'Not done: the entry changed. Try again.',
 }

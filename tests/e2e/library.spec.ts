@@ -134,11 +134,61 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   await page.route(failure, (route) => route.fulfill({ status: 500, body: '{}' }))
   await blockEditor.getByRole('button', { name: 'Guardar criatura' }).click()
   await expect(blockEditor.getByRole('alert')).toContainText('No se pudo contactar con el servidor')
+  await expect(blockEditor.getByRole('button', { name: 'Guardar criatura' })).toBeFocused()
+  // Discarding after the failure leaves the entry as it was: nothing waits to be saved.
+  await page.keyboard.press('Escape')
+  await page
+    .getByRole('dialog', { name: '¿Descartar los cambios?' })
+    .getByRole('button', {
+      name: 'Descartar cambios',
+    })
+    .click()
+  await expect(blockEditor).toHaveCount(0)
+  await expect(page.getByText(/^Lobo · Bestia Mediana/)).toBeVisible()
+  await expect(page.getByText('Cambios sin guardar')).toHaveCount(0)
+  // The next attempt stores it and closes.
+  await editBlock.click()
+  await blockEditor.getByRole('textbox', { name: 'Nombre', exact: true }).first().fill('Lobo gris')
   await page.unroute(failure)
   await blockEditor.getByRole('button', { name: 'Guardar criatura' }).click()
   await expect(blockEditor).toHaveCount(0)
   await expect(editBlock).toBeFocused()
   await expect(page.getByText(/^Lobo gris · Bestia Mediana/)).toBeVisible()
+
+  // Another editor saves while a stat block is open on a clean form: the stat block editor stays
+  // open and the form takes the new version, but the block never replaces that save silently.
+  // It joins the form under the conflict banner, which can store it on top.
+  const wolf = server.entries().find((e) => e.key === 'wolf')!
+  const blockName = blockEditor.getByRole('textbox', { name: 'Nombre', exact: true }).first()
+  await editBlock.click()
+  await blockName.fill('Lobo pardo')
+  Object.assign(wolf, { name_en: 'Grey wolf', revision: wolf.revision + 1 })
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
+  await expect(page.getByRole('textbox', { name: 'Nombre (inglés)' })).toHaveValue('Grey wolf')
+  await expect(blockEditor).toBeVisible()
+  await blockEditor.getByRole('button', { name: 'Guardar criatura' }).click()
+  await expect(blockEditor).toHaveCount(0)
+  const keepMine = page.getByRole('button', { name: 'Guardar mis cambios encima' })
+  await expect(keepMine).toBeFocused()
+  expect((wolf.data.es as { name: string }).name).toBe('Lobo gris')
+  await keepMine.click()
+  await expect(page.getByRole('status').filter({ hasText: /^Guardado\.$/ })).toBeVisible()
+  expect(wolf.name_en).toBe('Grey wolf')
+  expect((wolf.data.es as { name: string }).name).toBe('Lobo pardo')
+
+  // With edits of its own, a stat block refused as stale joins them under the conflict banner.
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Wolf')
+  Object.assign(wolf, { name_es: 'Lobo ajeno', revision: wolf.revision + 1 })
+  await editBlock.click()
+  await blockName.fill('Lobo mío')
+  await blockEditor.getByRole('button', { name: 'Guardar criatura' }).click()
+  await expect(blockEditor).toHaveCount(0)
+  await expect(keepMine).toBeFocused()
+  await expect(page.getByRole('status').filter({ hasText: /^No se ha guardado/ })).toBeVisible()
+  await keepMine.click()
+  await expect(page.getByRole('status').filter({ hasText: /^Guardado\.$/ })).toBeVisible()
+  expect(wolf.name_en).toBe('Wolf')
+  expect((wolf.data.es as { name: string }).name).toBe('Lobo mío')
 
   if (phone(info.project.name)) {
     // One screen at a time: the editor replaces the list, and its back link returns to it.
@@ -218,29 +268,52 @@ test('glossary entries change as drafts: text, JSON, leave guard, discard, delet
     await expect(leave).toHaveCount(0)
   }
 
-  // Browser back cannot be stopped: the edits wait for the entry and can be dropped there.
+  // Browser back cannot be stopped: the edits wait for the entry and can be dropped there. Focus
+  // moves to the row just left.
+  await page.getByRole('textbox', { name: 'Nivel' }).focus()
   await page.goBack()
   await expect(page.locator('#lib-entry-title')).toHaveCount(0)
-  await expect(page.getByRole('link', { name: /^Lanza helada.*sin guardar/ })).toBeVisible()
+  const keptRow = page.getByRole('link', { name: /^Lanza helada.*sin guardar/ })
+  await expect(keptRow).toBeVisible()
+  await expect(keptRow).toBeFocused()
   await page.goForward()
   await expect(page.getByRole('textbox', { name: 'Nivel' })).toHaveValue('3')
   await expect(page.getByText('Cambios sin guardar recuperados.')).toBeVisible()
   await page.getByRole('button', { name: 'Descartarlos' }).click()
   await expect(page.getByRole('textbox', { name: 'Nivel' })).toHaveValue('2')
   await expect(page.getByText('Cambios sin guardar recuperados.')).toHaveCount(0)
+  // The row's mark goes with them.
+  await expect(page.getByRole('link', { name: /sin guardar/ })).toHaveCount(0)
 
   // Someone else saves first: these edits are refused instead of saved over it.
+  const conflict = page.getByText('Esta entrada ha cambiado mientras editabas.')
   await name.fill('Lanza mía')
   const stored = server.entries().find((e) => e.key === 'frost-lance')!
   Object.assign(stored, { name_es: 'Lanza ajena', revision: stored.revision + 1 })
   await save.click()
   await expect(
-    page.getByRole('status').filter({ hasText: /^Cambió mientras editabas/ }),
+    page.getByRole('status').filter({ hasText: /^No se ha guardado: la entrada cambió/ }),
   ).toBeVisible()
-  await expect(page.getByText('Esta entrada ha cambiado mientras editabas.')).toBeVisible()
+  await expect(conflict).toBeVisible()
+  // The refused save leads to the banner's two ways out.
+  await expect(page.getByRole('button', { name: 'Guardar mis cambios encima' })).toBeFocused()
   expect(stored.name_es).toBe('Lanza ajena')
-  await page.getByRole('button', { name: 'Cargar la versión nueva' }).click()
+  await page.getByRole('button', { name: 'Descartar mis cambios' }).click()
   await expect(name).toHaveValue('Lanza ajena')
+  await expect(conflict).toHaveCount(0)
+
+  // Edits kept from before another save come back with the conflict, and can be saved over it.
+  await name.fill('Lanza mía')
+  await page.goBack()
+  Object.assign(stored, { name_es: 'Lanza de otra', revision: stored.revision + 1 })
+  await page.goForward()
+  await expect(conflict).toBeVisible()
+  await expect(name).toHaveValue('Lanza mía')
+  await page.getByRole('button', { name: 'Guardar mis cambios encima' }).click()
+  await expect(page.getByRole('status').filter({ hasText: /^Guardado\.$/ })).toBeVisible()
+  await expect(conflict).toHaveCount(0)
+  await expect(page.locator('#lib-entry-title')).toBeFocused()
+  expect(stored.name_es).toBe('Lanza mía')
 
   // Going back to the published entry asks first.
   await page.getByRole('button', { name: 'Volver a la publicada' }).click()
@@ -267,6 +340,30 @@ test('glossary entries change as drafts: text, JSON, leave guard, discard, delet
   await undo.click()
   await expect(page.getByText('Se borra al publicar la próxima versión.')).toHaveCount(0)
   await expect(page.getByRole('textbox', { name: 'Nombre (español)' })).toBeEnabled()
+
+  // Another editor's save reaches a clean form without taking focus from the field in use.
+  const level = page.getByRole('textbox', { name: 'Nivel' })
+  const latest = server.entries().find((e) => e.key === 'frost-lance')!
+  await level.focus()
+  Object.assign(latest, {
+    data: { ...latest.data, index: { ...(latest.data.index as object), lv: 5 } },
+    revision: latest.revision + 1,
+  })
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
+  await expect(level).toHaveValue('5')
+  await expect(level).toBeFocused()
+
+  // Another editor deletes the entry while it has edits here: its way back takes focus, and
+  // undoing the delete keeps the edits under the conflict banner.
+  await name.fill('Lanza conservada')
+  Object.assign(latest, { deleted: true, revision: latest.revision + 1 })
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
+  await expect(undo).toBeFocused()
+  await undo.click()
+  await expect(page.getByRole('button', { name: 'Guardar mis cambios encima' })).toBeFocused()
+  await expect(name).toHaveValue('Lanza conservada')
+  await page.getByRole('button', { name: 'Descartar mis cambios' }).click()
+  await expect(name).toHaveValue('Lanza de escarcha')
   await audit(page)
   await capture(page, `docs/evidence/RYT-093/spell-${info.project.name}.png`)
 })
@@ -278,6 +375,15 @@ test('a new subclass and a content file land as drafts after a report', async ({
   const server = libraryServer({ sample: true })
   await server.install(page)
   await page.goto(`./#/library/${homebrewPackId}/subclass`)
+  // Changing the kind keeps focus on its select.
+  const kindSelect = page.getByRole('combobox', { name: 'Tipo' })
+  await kindSelect.click()
+  await page.getByRole('option', { name: /^Conjuros/ }).click()
+  await expect(page).toHaveURL(/\/spell$/)
+  await expect(kindSelect).toBeFocused()
+  await kindSelect.click()
+  await page.getByRole('option', { name: /^Subclases/ }).click()
+  await expect(page).toHaveURL(/\/subclass$/)
   await page.getByRole('button', { name: 'Nueva entrada' }).click()
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Círculo de las Mareas')
   await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Circle of Tides')
@@ -364,6 +470,19 @@ test('a new pack names itself, and a published pack keeps its identifier', async
     visibility: 'private',
     version: 0,
   })
+  // A new pack opens with focus on its heading. Asking to delete it moves focus to Cancel, and
+  // Escape brings it back to the delete button.
+  await expect(page.locator('#lib-entries-title')).toBeFocused()
+  await page.getByRole('button', { name: 'Editar paquete' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Borrar paquete' }).click()
+  await expect(page.getByRole('dialog', { name: '¿Borrar Mis criaturas?' })).toBeVisible()
+  await expect(page.getByRole('dialog').locator('button', { hasText: 'Cancelar' })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: 'Borrar paquete' }),
+  ).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 
   await page.goto(`./#/library/${homebrewPackId}/spell`)
   const editButton = page.getByRole('button', { name: 'Editar paquete' })
@@ -377,6 +496,15 @@ test('a new pack names itself, and a published pack keeps its identifier', async
   await expect(editButton).toBeFocused()
   await editButton.click()
   await edit.getByRole('radio', { name: /Público/ }).check()
+  // A failed save keeps the dialog open and moves focus to its reason.
+  const packFailure = '**/rest/v1/rpc/save_content_pack'
+  await page.route(packFailure, (route) => route.fulfill({ status: 500, body: '{}' }))
+  await edit.getByRole('button', { name: 'Guardar' }).click()
+  await expect(edit.getByRole('alert')).toBeFocused()
+  // A retry that fails again announces its reason again.
+  await edit.getByRole('button', { name: 'Guardar' }).click()
+  await expect(edit.getByRole('alert')).toBeFocused()
+  await page.unroute(packFailure)
   await edit.getByRole('button', { name: 'Guardar' }).click()
   await expect(edit).toHaveCount(0)
   // Who can read a published pack changes through its own call, after the metadata.

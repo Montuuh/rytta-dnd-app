@@ -33,7 +33,7 @@ import { srdSlug } from '../domain/srd'
 import { ImportDialog, PackDialog, PublishDialog, SrdDialog } from './dialogs'
 import { EntryEditor } from './entry-editor'
 import { entryMeta, kindLabel, packLine } from './labels'
-import { hasKeptEdits, keepEdits } from './unsaved'
+import { hasKeptEdits, keepEdits, useKeptEditsVersion } from './unsaved'
 import './library.css'
 
 type Dialog =
@@ -134,6 +134,14 @@ export function LibraryPage() {
   }, [])
 
   const packs = library.data?.packs ?? []
+  // After a delete, focus moves to the pack list once the deleted pack has left it.
+  const deletedPack = useRef<string | null>(null)
+  useEffect(() => {
+    const gone = deletedPack.current
+    if (!gone || !library.data || library.data.packs.some((p) => p.id === gone)) return
+    deletedPack.current = null
+    ;(document.getElementById('lib-packs-title') ?? titleRef.current)?.focus()
+  }, [library.data])
   const pack = packs.find((p) => p.id === params.packId) ?? null
   const depth = !pack ? 'packs' : params.entryId ? 'editor' : 'entries'
   // Phones show one pane: the editor starts at the top, and the list comes back where it was,
@@ -147,8 +155,22 @@ export function LibraryPage() {
     return () => window.removeEventListener('scroll', keep)
   }, [phone])
   useLayoutEffect(() => {
-    if (!phone) return
-    if (depth === 'entries' && previousDepth.current === 'editor') {
+    const active = document.activeElement
+    if (!phone) {
+      // Side by side, focus only moves when the change removed the focused element (browser back
+      // from an entry, for one): to the row just left, else the heading of the pane shown.
+      if (previousDepth.current !== null && (!active || active === document.body)) {
+        const row = params.entryId
+          ? null
+          : document.querySelector<HTMLElement>(`[data-entry="${lastEntry.current}"]`)
+        const target =
+          depth === 'packs'
+            ? (document.querySelector<HTMLElement>(`[data-pack="${lastPack.current}"]`) ??
+              document.getElementById('lib-packs-title'))
+            : (row ?? document.getElementById('lib-entries-title'))
+        target?.focus({ preventScroll: true })
+      }
+    } else if (depth === 'entries' && previousDepth.current === 'editor') {
       window.scrollTo(0, listScroll.current)
       const row = document.querySelector<HTMLElement>(`[data-entry="${lastEntry.current}"]`)
       ;(row ?? document.getElementById('lib-entries-title'))?.focus({ preventScroll: true })
@@ -302,7 +324,7 @@ export function LibraryPage() {
           <section className="lib-pane lib-entries" aria-labelledby="lib-entries-title">
             {pack && kind ? (
               <EntryPane
-                key={`${pack.id}:${kind}`}
+                key={pack.id}
                 pack={pack}
                 kind={kind}
                 language={language}
@@ -381,13 +403,16 @@ export function LibraryPage() {
           pack={dialog.pack}
           onClose={closeDialog}
           onSaved={(id) => {
-            closeDialog()
-            if (!dialog.pack) go(`/library/${id}`)
+            if (dialog.pack) return closeDialog()
+            // A new pack opens, with focus on its heading.
+            setDialog(null)
+            go(`/library/${id}`)
+            focusEntries()
           }}
           onDeleted={() => {
+            deletedPack.current = dialog.pack?.id ?? null
             setDialog(null)
             go('/library')
-            requestAnimationFrame(() => titleRef.current?.focus())
           }}
         />
       )}
@@ -465,12 +490,20 @@ function EntryPane({
 }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
+  // Another kind starts with an empty search.
+  const [searchKind, setSearchKind] = useState(kind)
+  if (searchKind !== kind) {
+    setSearchKind(kind)
+    setQuery('')
+  }
   const drafts = useQuery(draftsQuery(userId, pack.id, kind))
   const counts = pack.drafts ?? pack.kinds
   const kinds = [...new Set([...Object.keys(counts), ...knownKinds, kind])].map((value) => ({
     value,
     label: counts[value] ? `${kindLabel(t, value)} · ${counts[value]}` : kindLabel(t, value),
   }))
+  // Rows mark entries with kept edits: repaint when that changes.
+  useKeptEditsVersion()
   const rows = sortRows(drafts.data ?? [], query, language)
   const title = packTitle(pack, language)
   return (
@@ -516,7 +549,6 @@ function EntryPane({
         data={kinds}
         value={kind}
         allowDeselect={false}
-        searchable
         onChange={(value) => value && guard.go(`/library/${pack.id}/${value}`)}
       />
       <TextInput

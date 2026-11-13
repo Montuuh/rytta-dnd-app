@@ -176,11 +176,12 @@ function EntryForm({
     draft ? fromDraft(draft) : { kind, key: '', name_en: '', name_es: '', data: {} },
   )
   const editsKey = { userId, packId: pack.id, kind, entryId: draft?.id ?? 'new' }
+  // Edits kept from an earlier visit come back with the revision they started from: when the
+  // entry changed since, the conflict banner offers both ways out instead of losing them.
+  const [kept] = useState(() => keptEdits(editsKey))
   // The server revision the form's edits start from; saves are checked against it.
-  const [baseRevision, setBaseRevision] = useState(draft?.revision ?? 0)
-  const [entry, setEntry] = useState<EntryInput>(
-    () => keptEdits(editsKey, draft?.revision ?? 0) ?? baseline,
-  )
+  const [baseRevision, setBaseRevision] = useState(kept?.revision ?? draft?.revision ?? 0)
+  const [entry, setEntry] = useState<EntryInput>(kept?.entry ?? baseline)
   // Edits kept from an earlier visit: offered back, with a way to drop them.
   const [restored, setRestored] = useState(() => !same(entry, baseline))
   const [synced, setSynced] = useState(draft?.revision ?? 0)
@@ -195,7 +196,10 @@ function EntryForm({
   const [status, setStatus] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const [confirm, setConfirm] = useState<'deleteEntry' | 'revertEntry' | null>(null)
   // Where focus goes once a delete or a discard reaches the form (the button pressed is gone).
-  const focusNext = useRef<'heading' | 'restore' | null>(null)
+  const focusNext = useRef<'heading' | 'restore' | 'conflict' | null>(null)
+  const keepMineRef = useRef<HTMLButtonElement>(null)
+  // The last failure's code: a stale stat block save joins the form instead of failing in place.
+  const lastCode = useRef<string | null>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const restoreRef = useRef<HTMLButtonElement>(null)
   const dirty = !same(entry, baseline)
@@ -210,7 +214,7 @@ function EntryForm({
       setBaseRevision(draft.revision)
       if (!same(next, entry)) {
         setEntry(next)
-        setGeneration((value) => value + 1)
+        if (!same(next.data, entry.data)) setGeneration((value) => value + 1)
       }
       setFollow(false)
     }
@@ -239,9 +243,22 @@ function EntryForm({
   const problem = entryProblem(entry)
   const pending = action.isPending
   const deleted = draft?.state === 'deleted'
+  // Deleted elsewhere while focus was in the (now disabled) fields: the way back takes it.
+  useEffect(() => {
+    if (!deleted) return
+    if (!document.activeElement || document.activeElement === document.body)
+      restoreRef.current?.focus()
+  }, [deleted])
   const conflict = !!draft && dirty && !deleted && draft.revision !== baseRevision
+  // A save refused as stale leads to the banner and its two ways out, once it shows.
+  useEffect(() => {
+    if (focusNext.current !== 'conflict' || !conflict) return
+    focusNext.current = null
+    keepMineRef.current?.focus()
+  }, [conflict])
   const takeServer = () => {
     if (!draft) return
+    focusNext.current = null
     const next = fromDraft(draft)
     setBaseline(next)
     setEntry(next)
@@ -255,14 +272,20 @@ function EntryForm({
     setEntry(next)
     setStatus(null)
   }
-  const fail = (error: unknown) => {
-    const text = t(`library.error.${libraryErrorCode(error instanceof Error ? error.message : '')}`)
+  const fail = (error: unknown, saving = false) => {
+    const code = libraryErrorCode(error instanceof Error ? error.message : '')
+    lastCode.current = code
+    const stale = saving && code === 'stale'
+    // A stale save is explained by the conflict banner, which also offers the ways out.
+    const text = t(stale ? 'library.notSaved' : `library.error.${code}`)
     setStatus({ tone: 'error', text })
+    if (stale && conflict) keepMineRef.current?.focus()
+    else if (stale) focusNext.current = 'conflict'
     return text
   }
 
-  /** Null once stored, otherwise the reason it was not. */
-  const save = async (next: EntryInput = entry): Promise<string | null> => {
+  /** Null once stored, otherwise the reason it was not. `over` saves on top of that revision. */
+  const save = async (next: EntryInput = entry, over?: number): Promise<string | null> => {
     if (pending) return t('library.saving')
     const reason = entryProblem(next)
     if (reason) {
@@ -277,7 +300,7 @@ function EntryForm({
         kind: 'saveEntry',
         packId: pack.id,
         entryId: draft?.id ?? null,
-        revision: draft ? baseRevision : null,
+        revision: draft ? (over ?? baseRevision) : null,
         input: next,
       })
       setBaseline(next)
@@ -290,21 +313,52 @@ function EntryForm({
       else setStatus({ tone: 'ok', text: t('library.saved') })
       return null
     } catch (error) {
-      return fail(error)
+      return fail(error, true)
     }
+  }
+  // A stat block reaches the form only once stored: after a failed save, discarding it in the
+  // stat block editor leaves the form as it was.
+  const storeBlock = async (next: EntryInput, openedOn: number) => {
+    lastCode.current = null
+    // Checked against the revision the stat block editor opened on: another editor's save since
+    // then is never replaced silently, even when the form has followed it.
+    const failure = await save(next, openedOn)
+    // Refused because the entry changed meanwhile: the block joins the form on its old base, so
+    // the conflict banner offers both ways out. Any other failure stays in the stat block editor.
+    if (!failure || lastCode.current === 'stale') {
+      setEntry(next)
+      if (failure) setBaseRevision(openedOn)
+      return null
+    }
+    setStatus(null)
+    return failure
+  }
+  const keepMine = async () => {
+    if (!draft) return
+    focusNext.current = null
+    const failure = await save(entry, draft.revision)
+    if (!failure) headingRef.current?.focus()
   }
   const change = async (kind: 'deleteEntry' | 'revertEntry') => {
     if (!draft || pending) return
+    lastCode.current = null
     try {
       const result = await action.mutateAsync({ kind, entryId: draft.id, revision: draft.revision })
       setConfirm(null)
       setStatus(null)
       if ('deleted' in result && result.deleted) return onGone()
-      setFollow(true)
-      focusNext.current = kind === 'deleteEntry' ? 'restore' : 'heading'
+      // Restoring an entry someone else deleted while it had edits here keeps them: they come
+      // back under the conflict banner instead of being replaced by the restored version.
+      const keep = kind === 'revertEntry' && draft.state === 'deleted' && dirty
+      if (keep) focusNext.current = 'conflict'
+      else {
+        setFollow(true)
+        focusNext.current = kind === 'deleteEntry' ? 'restore' : 'heading'
+      }
     } catch (error) {
       setConfirm(null)
       fail(error)
+      if (lastCode.current === 'stale') setStatus({ tone: 'error', text: t('library.notDone') })
     }
   }
   const openJson = () => {
@@ -362,6 +416,7 @@ function EntryForm({
             {draft.state === 'changed' && (
               <Button
                 variant="subtle"
+                color="red"
                 leftSection={<Undo2 size={18} aria-hidden="true" />}
                 onClick={() => setConfirm('revertEntry')}
               >
@@ -382,9 +437,14 @@ function EntryForm({
       {conflict && (
         <div className="lib-banner">
           <span>{t('library.conflict')}</span>
-          <Button variant="light" onClick={takeServer}>
-            {t('library.takeServer')}
-          </Button>
+          <Group gap="xs" wrap="wrap">
+            <Button ref={keepMineRef} variant="light" onClick={() => void keepMine()}>
+              {t('library.keepMine')}
+            </Button>
+            <Button variant="subtle" color="red" onClick={takeServer}>
+              {t('library.takeServer')}
+            </Button>
+          </Group>
         </div>
       )}
       {restored && dirty && !deleted && !conflict && (
@@ -407,7 +467,12 @@ function EntryForm({
       {deleted && (
         <div className="lib-banner">
           <span>{t('library.deletedNote')}</span>
-          <Button ref={restoreRef} variant="light" onClick={() => void change('revertEntry')}>
+          <Button
+            ref={restoreRef}
+            data-restore
+            variant="light"
+            onClick={() => void change('revertEntry')}
+          >
             {t('library.restore')}
           </Button>
         </div>
@@ -425,7 +490,7 @@ function EntryForm({
           <Tabs.Tab value="json">{t('library.json')}</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="form" pt="md">
-          <fieldset className="lib-fields" key={generation} disabled={deleted}>
+          <fieldset className="lib-fields" disabled={deleted}>
             <NameFields
               entry={entry}
               isNew={!draft}
@@ -440,9 +505,9 @@ function EntryForm({
               }}
             />
             {family === 'creature' ? (
-              <CreatureFields entry={entry} onChange={update} onStore={save} />
+              <CreatureFields entry={entry} revision={baseRevision} onStore={storeBlock} />
             ) : (
-              <TextFields entry={entry} onChange={update} />
+              <TextFields entry={entry} generation={generation} onChange={update} />
             )}
           </fieldset>
         </Tabs.Panel>
@@ -549,9 +614,12 @@ function NameFields({
 /** Summary and text per language, plus the listing fields of spells and class features. */
 function TextFields({
   entry,
+  generation,
   onChange,
 }: {
   entry: EntryInput
+  /** Changes when the data changed outside these fields (server, JSON tab, discard). */
+  generation: number
   onChange: (next: EntryInput) => void
 }) {
   const { t } = useTranslation()
@@ -635,6 +703,7 @@ function TextFields({
           <LanguageText
             key={lang}
             entry={entry}
+            generation={generation}
             language={lang}
             help={lang === languages[0]}
             onChange={onChange}
@@ -647,11 +716,13 @@ function TextFields({
 
 function LanguageText({
   entry,
+  generation,
   language,
   help,
   onChange,
 }: {
   entry: EntryInput
+  generation: number
   language: ContentLanguage
   /** The writing help shows once, under the first language. */
   help: boolean
@@ -661,6 +732,12 @@ function LanguageText({
   const es = language === 'es'
   // The text keeps its own paragraph breaks while typing; the blocks follow it.
   const [text, setText] = useState(() => bodyText(entry.data, language))
+  // Data changed elsewhere: the text starts again from it, in place, so no field loses focus.
+  const [shown, setShown] = useState(generation)
+  if (shown !== generation) {
+    setShown(generation)
+    setText(bodyText(entry.data, language))
+  }
   const index = indexOf(entry.data)
   const aliasField = es ? 'sa' : 'ea'
   const tables = tableCount(bodyOf(entry.data, language)?.blocks)
@@ -718,23 +795,34 @@ function LanguageText({
 /** Listing numbers and the two stat blocks, written with the bestiary's creature editor. */
 function CreatureFields({
   entry,
-  onChange,
+  revision,
   onStore,
 }: {
   entry: EntryInput
-  onChange: (next: EntryInput) => void
-  onStore: (next: EntryInput) => Promise<string | null>
+  /** The revision the form's edits start from. */
+  revision: number
+  onStore: (next: EntryInput, openedOn: number) => Promise<string | null>
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState<BestiaryLanguage | null>(null)
+  const openedOn = useRef(0)
   // The editor unmounts on close: give focus back to the button that opened it (found again by
   // its language, since a save that syncs the form re-creates the fields).
   const close = () => {
     const language = open
     setOpen(null)
-    requestAnimationFrame(() =>
-      document.querySelector<HTMLElement>(`.lib-blocks [data-block="${language}"]`)?.focus(),
-    )
+    requestAnimationFrame(() => {
+      // Unless the form already moved focus on purpose (to the conflict banner).
+      if (document.activeElement && document.activeElement !== document.body) return
+      const button = document.querySelector<HTMLElement>(`.lib-blocks [data-block="${language}"]`)
+      // A deleted entry's fields are disabled: its way back takes focus instead.
+      const target =
+        button && !button.matches(':disabled')
+          ? button
+          : (document.querySelector<HTMLElement>('[data-restore]') ??
+            document.getElementById('lib-entry-title'))
+      target?.focus()
+    })
   }
   const monsters = useQuery(monsterIndexQuery())
   const bodies = useQuery({ ...monsterBodiesQuery(open ?? 'es'), enabled: !!open })
@@ -781,7 +869,10 @@ function CreatureFields({
               <Button
                 variant="light"
                 data-block={language}
-                onClick={() => setOpen(language)}
+                onClick={() => {
+                  openedOn.current = revision
+                  setOpen(language)
+                }}
                 disabled={!name(language)}
               >
                 {t(block ? 'library.editBlock' : 'library.createBlock')}
@@ -829,8 +920,7 @@ function CreatureFields({
                 },
               ),
             }
-            onChange(next)
-            return onStore(next)
+            return onStore(next, openedOn.current)
           }}
         />
       )}

@@ -197,6 +197,9 @@ export const libraryEs = {
   'library.revertTitle': '¿Volver a la versión publicada de «{{name}}»?',
   'library.revertBody': 'Se pierde el borrador guardado de esta entrada.',
   'library.conflict': 'Esta entrada ha cambiado mientras editabas.',
-  'library.takeServer': 'Cargar la versión nueva',
+  'library.takeServer': 'Descartar mis cambios',
   'library.unsavedRow': 'sin guardar',
+  'library.keepMine': 'Guardar mis cambios encima',
+  'library.notSaved': 'No se ha guardado: la entrada cambió.',
+  'library.notDone': 'No se ha hecho: la entrada cambió. Vuelve a intentarlo.',
 } satisfies Record<keyof typeof libraryEn, string>

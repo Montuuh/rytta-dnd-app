@@ -62,7 +62,7 @@ width. A selection is kept here:
 - `05-wolf-laptop-default.png`, `05-wolf-mobile-parchment.png`, `06-statblock-tablet-default.png`
 - `07-spell-laptop-default.png`, `07-spell-tablet-parchment.png`, `08-json-laptop-parchment.png`
 - `09-import-mobile-default.png`, `10-leave-tablet-parchment.png`, `12-en-spell-mobile.png`
-- `13-restored-mobile-parchment.png`
+- `13-restored-mobile-parchment.png`, `14-conflict-mobile-default.png`
 
 ## Design critique and audit
 
@@ -119,15 +119,68 @@ The third round asked for changes as well. Fixed:
 - Phones focus the screen that replaces the pressed link.
 - Kept edits belong to the account that made them, and their rows say "sin guardar".
 
-The fourth round passed (2026-11-13). No blocker or major finding is open. These minor findings
-remain as recommendations:
-- A conflict can only be resolved by loading the other version; there is no keep-mine option, and
-  the save bar's stale message repeats the banner with other advice.
-- The "sin guardar" row mark can lag after "Descartarlos" until the list repaints.
-- A failed save in the pack dialog leaves focus on the page.
-- After a failed stat block save, a mouse click can leave focus on the page.
-- On tablet and laptop, browser back leaves focus on the page.
-- "Volver a la publicada" is not red.
+The fourth round passed (2026-11-13), and that version shipped in b167cba. Its recommended minor
+findings were fixed afterwards:
+- A conflict offers "Guardar mis cambios encima" as well as "Descartar mis cambios". The save bar
+  only says "No se ha guardado.".
+- Kept edits made before another save come back with the conflict instead of being dropped.
+- Opening an entry always checks the server for its latest revision.
+- The "sin guardar" row mark updates as soon as kept edits are saved or discarded.
+- A failed write in a dialog moves focus to its reason.
+- A failed stat block save gives focus back to its save button, after a click too.
+- On tablet and laptop, browser back moves focus to the row just left.
+- "Volver a la publicada" is red.
+
+The fifth round asked for changes. Its major finding was already in b167cba: after a failed stat
+block save, discarding the block left it in the entry form, and the next save stored it. Fixed:
+- A stat block reaches the form only once it is stored.
+- A stale save says why in the save bar and in the stat block editor.
+- Focus lands on the entry heading after saving over a conflict, and on the reason when a pack
+  save fails again.
+- The kind select keeps focus when the kind changes.
+- A new pack opens with focus on its heading; deleting a pack focuses the pack list.
+
+The sixth round asked for changes. Its major finding came from the fifth round's fix: when another
+save reached an open entry, the form re-created its fields and closed the stat block editor, losing
+the block. Fixed:
+- Only the fields that keep their own text start again on a server update. An open stat block
+  editor stays, and on a clean form it stores the block on top of the newer version.
+- A stat block refused as stale joins the entry's edits under the conflict banner.
+- A save refused as stale moves focus to the banner's first action, and its message is shorter.
+- Other stat block failures stay in the stat block editor only.
+- Deleting a pack focuses the pack list once the pack has left it.
+- The kind select no longer reopens its list when focus returns to it.
+
+The seventh round asked for changes. Its major finding came from the sixth round's fix: once a
+clean form had followed another editor's save, a stat block opened before that save replaced it
+without warning. Fixed:
+- A stat block saves against the revision its editor opened on. Another editor's save since then
+  sends it to the conflict banner, never over that save silently.
+- The pack delete confirmation moves focus to Cancelar and back.
+- A refused save always lands focus on the banner without leaving a later jump behind.
+- Name fields keep focus when the server changes only names.
+- A stale delete or revert says it was not done.
+
+The full e2e suite passed again: 512 passed, 0 failed, 45 skipped. The eighth round passed
+(2026-11-13) with no blocker or major finding open. Its minor recommendations were fixed:
+- Only each language's text starts again when another editor's save changes a clean form, in
+  place, so every field keeps focus.
+- The save bar no longer wraps: a long status wraps in its own column and Guardar stays on the
+  right.
+- When another editor deletes the entry while it has edits or an open stat block here, focus
+  moves to "Deshacer borrado". Undoing that delete keeps the edits under the conflict banner.
+
+The ninth round passed (2026-11-13). It was checked on a clean worktree of 6d69029 with only these
+changes:
+- `npm run check`: 406 unit and database tests, plus build.
+- `tests/e2e/library.spec.ts`: 15 passed.
+- Full e2e: 561 passed. The 3 Google sign-in redirect checks failed only because that run used
+  test port 4194, while the spec expects 4174.
+
+Minor recommendations left:
+- At 820 px with 150% text, a long error makes the sticky save bar up to 234 px tall.
+- If someone else restores an entry another editor deleted before you press "Deshacer borrado",
+  focus is lost and the message still asks to try again.
 
 ## Not verified
 

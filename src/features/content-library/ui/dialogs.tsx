@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   Alert,
   Button,
@@ -40,6 +40,19 @@ import { kindLabel } from './labels'
 
 const errorText = (t: TFunction, error: unknown) =>
   t(`library.error.${libraryErrorCode(error instanceof Error ? error.message : '')}`)
+
+/** A failed write: focus moves to its reason, because the pressed button was disabled meanwhile. */
+function FailureAlert({ children }: { children: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.focus()
+  }, [children])
+  return (
+    <Alert ref={ref} tabIndex={-1} color="red" role="alert">
+      {children}
+    </Alert>
+  )
+}
 
 function Dialog({
   title,
@@ -114,6 +127,18 @@ export function PackDialog({
   const [slugTouched, setSlugTouched] = useState(!!pack)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  // The confirmation replaces the form inside the same dialog: move focus by hand both ways.
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const deleteRef = useRef<HTMLButtonElement>(null)
+  const asked = useRef(false)
+  const failed = useRef(false)
+  useEffect(() => {
+    if (confirming) {
+      asked.current = true
+      cancelRef.current?.focus()
+    } else if (asked.current && !failed.current) deleteRef.current?.focus()
+    failed.current = false
+  }, [confirming])
   const published = !!pack && pack.version > 0
   const set = (patch: Partial<PackInput>) => {
     setError(null)
@@ -126,6 +151,8 @@ export function PackDialog({
   }
   const valid = !!input.slug && (!!input.title_es.trim() || !!input.title_en.trim())
   const save = async () => {
+    // A retry that fails again shows (and announces) its reason anew.
+    setError(null)
     try {
       // A published pack changes who can read it only through its own, deliberate call.
       const result = await action.mutateAsync({
@@ -148,10 +175,13 @@ export function PackDialog({
   }
   const remove = async () => {
     if (!pack) return
+    setError(null)
     try {
       await action.mutateAsync({ kind: 'deletePack', packId: pack.id, revision: pack.revision! })
       onDeleted()
     } catch (caught) {
+      // The reason takes focus (FailureAlert), not the delete button.
+      failed.current = true
       setConfirming(false)
       setError(errorText(t, caught))
     }
@@ -167,7 +197,7 @@ export function PackDialog({
       >
         <Text>{t('library.deletePackBody')}</Text>
         <Group justify="flex-end" mt="md">
-          <Button variant="subtle" data-autofocus onClick={() => setConfirming(false)}>
+          <Button ref={cancelRef} variant="subtle" onClick={() => setConfirming(false)}>
             {t('library.cancel')}
           </Button>
           <Button
@@ -279,14 +309,15 @@ export function PackDialog({
               />
             </Stack>
           </Radio.Group>
-          {error && (
-            <Alert color="red" role="alert">
-              {error}
-            </Alert>
-          )}
+          {error && <FailureAlert>{error}</FailureAlert>}
           <Group justify="space-between" mt="sm">
             {pack && !published ? (
-              <Button variant="subtle" color="red" onClick={() => setConfirming(true)}>
+              <Button
+                ref={deleteRef}
+                variant="subtle"
+                color="red"
+                onClick={() => setConfirming(true)}
+              >
                 {t('library.deletePack')}
               </Button>
             ) : (
@@ -453,11 +484,7 @@ export function ImportDialog({
           />
         )}
         {progress && <ProgressLine label={progress.label} progress={progress.value} />}
-        {error && (
-          <Alert color="red" role="alert">
-            {error}
-          </Alert>
-        )}
+        {error && <FailureAlert>{error}</FailureAlert>}
         <Group justify="flex-end">
           <Button variant="subtle" onClick={onClose} disabled={busy}>
             {t('library.cancel')}
@@ -547,11 +574,7 @@ export function SrdDialog({
           <Text>{t('library.srdBody', { title, count })}</Text>
         )}
         {progress && <ProgressLine label={t('library.importing', progress)} progress={progress} />}
-        {error && (
-          <Alert color="red" role="alert">
-            {error}
-          </Alert>
-        )}
+        {error && <FailureAlert>{error}</FailureAlert>}
         <Group justify="flex-end">
           <Button variant="subtle" data-autofocus onClick={onClose} disabled={busy}>
             {t('library.cancel')}
@@ -587,6 +610,7 @@ export function PublishDialog({
   // The change list stops at 1000 rows; past that, the pack's own count is exact.
   const truncated = rows.length >= 1000
   const publish = async () => {
+    setError(null)
     try {
       const result = await action.mutateAsync({
         kind: 'publish',
@@ -651,11 +675,7 @@ export function PublishDialog({
           </>
         )}
         {pack.visibility === 'public' && <Text size="sm">{t('library.publishPublic')}</Text>}
-        {error && (
-          <Alert color="red" role="alert">
-            {error}
-          </Alert>
-        )}
+        {error && <FailureAlert>{error}</FailureAlert>}
         <Group justify="flex-end">
           <Button variant="subtle" data-autofocus onClick={onClose} disabled={action.isPending}>
             {t('library.cancel')}

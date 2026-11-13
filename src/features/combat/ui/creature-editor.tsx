@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Accordion,
   ActionIcon,
@@ -110,9 +110,15 @@ export function CreatureEditor({
   const { run, error, trigger, clear } = runner
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  // The save button is disabled while it saves; a failure gives focus back to it.
+  // The save button is disabled while it saves; a failure gives focus back to it once enabled.
   const submitRef = useRef<HTMLButtonElement>(null)
+  const refocus = useRef(false)
   const pending = runner.pending || submitting
+  useEffect(() => {
+    if (pending || !refocus.current) return
+    refocus.current = false
+    submitRef.current?.focus()
+  }, [pending, submitError])
   const [draft, setDraft] = useState<CreatureDraft>(initial)
   const [view, setView] = useState<'form' | 'preview'>('form')
   const [confirming, setConfirming] = useState(false)
@@ -148,8 +154,8 @@ export function CreatureEditor({
       setSubmitError(null)
       const failure = await onSubmit({ block, input }).finally(() => setSubmitting(false))
       if (!failure) return onSaved(null, input.name)
+      refocus.current = true
       setSubmitError(failure)
-      requestAnimationFrame(() => submitRef.current?.focus())
       return
     }
     const ok = await run({

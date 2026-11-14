@@ -1,3 +1,5 @@
+import type { Attack, EquipmentSlot, Equipped } from '@/features/inventory'
+import type { StatBreakdown } from '../../domain/rules'
 import type { Build, SheetDraft, SheetRow, Vitals } from '../../domain/sheet'
 
 export type PanelNotice =
@@ -8,10 +10,17 @@ export type PanelNotice =
 export type PanelProps = {
   campaignId: string
   characterId: string
+  name: string
   build: Build
   level: number
   maxHp: number
   armorClass: number
+  ac: StatBreakdown
+  speed: StatBreakdown
+  init: StatBreakdown
+  equipped: Map<EquipmentSlot, Equipped>
+  carriedTenths: number
+  attacks: Attack[]
   sheet: SheetRow
   vitals: Vitals
   canEdit: boolean
@@ -22,4 +31,5 @@ export type PanelProps = {
   commit: (values: Vitals, notice?: PanelNotice) => void
   /** Build changes: into the edit draft while editing, otherwise saved at once. */
   change: (update: (draft: SheetDraft) => SheetDraft, notice?: PanelNotice) => void
+  onStartEdit?: () => void
 }

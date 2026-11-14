@@ -67,7 +67,15 @@ export function chooseClass(build: Build, key: string, label: string): Build {
 }
 export function chooseSpecies(build: Build, key: string, label: string, name: Namer): Build {
   const features = withoutSeeds(build.features, 'species')
-  if (!isSpeciesKey(key)) return { ...build, speciesKey: 'custom', speciesLabel: label, features }
+  if (!isSpeciesKey(key)) {
+    const clean = label.trim()
+    return {
+      ...build,
+      speciesKey: key === 'custom' || clean ? 'custom' : '',
+      speciesLabel: clean,
+      features,
+    }
+  }
   const entry = species[key]
   return {
     ...build,
@@ -95,8 +103,17 @@ export function chooseBackground(build: Build, key: string, label: string, name:
       ([skill]) => !backgroundSkills(build).includes(skill as Skill),
     ),
   )
-  if (!isBackgroundKey(key))
-    return { ...build, backgroundKey: 'custom', backgroundLabel: label, features, bonuses, skills }
+  if (!isBackgroundKey(key)) {
+    const clean = label.trim()
+    return {
+      ...build,
+      backgroundKey: key === 'custom' || clean ? 'custom' : '',
+      backgroundLabel: clean,
+      features,
+      bonuses,
+      skills,
+    }
+  }
   const entry = backgrounds[key]
   for (const skill of entry.skills) skills[skill] = 'proficient'
   return {

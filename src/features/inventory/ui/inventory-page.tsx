@@ -333,6 +333,7 @@ export function InventoryPage() {
           dexterity={data.holder.dex}
           strength={data.holder.str}
           level={data.holder.level}
+          monkLevel={data.holder.monkLevel}
           canEdit={canEdit}
           pending={action.isPending}
           portrait={portrait(112)}

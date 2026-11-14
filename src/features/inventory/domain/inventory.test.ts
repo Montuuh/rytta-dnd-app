@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { armorClass, attacks, canEquip, equippedBySlot, slotsFor } from './equipment'
+import {
+  armorClass,
+  attacks,
+  canEquip,
+  equippedBySlot,
+  martialArtsDie,
+  slotsFor,
+} from './equipment'
 import { carriedTenths, encumbrance } from './encumbrance'
 import {
   definitionSchema,
@@ -152,5 +159,101 @@ describe('boundaries', () => {
     expect(undoRemainingMs(event, at(60), true, 'dm')).toBe(Number.POSITIVE_INFINITY)
     expect(undoRemainingMs({ ...event, kind: 'equip' }, at(1), true, 'dm')).toBe(0)
     expect(undoRemainingMs({ ...event, undone_by: uuid() }, at(1), true, 'dm')).toBe(0)
+  })
+})
+
+describe('equipment bonuses and monk martial arts', () => {
+  it('applies magic armor acBonus and non-armor item acBonus', () => {
+    const leatherPlus1 = definition({
+      name: 'Leather Armor +1',
+      category: 'armor',
+      slot_kind: 'body',
+      properties: { base: 11, acBonus: 1 },
+    })
+    const ring = definition({
+      name: 'Ring of Protection',
+      category: 'gear',
+      slot_kind: 'ring',
+      properties: { acBonus: 1 },
+    })
+    const defs = new Map([leatherPlus1, ring].map((d) => [d.id, d]))
+    const worn = equippedBySlot([stack(leatherPlus1, 1, 'body'), stack(ring, 1, 'ring_1')], defs)
+    expect(armorClass(16, worn)).toBe(16)
+  })
+
+  it('adds weapon and global item bonuses to attacks and scales Monk martial arts', () => {
+    const magicSword = definition({
+      name: 'Longsword +2',
+      category: 'weapon',
+      slot_kind: 'one_hand',
+      properties: {
+        dice: '1d8',
+        versatileDice: '1d10',
+        damageType: 'slashing',
+        attackBonus: 2,
+        damageBonus: 1,
+      },
+    })
+    const wraps = definition({
+      name: 'Wraps of Unarmed Power',
+      category: 'gear',
+      slot_kind: 'hands',
+      properties: { attackBonus: 1, damageBonus: 1 },
+    })
+    const defs = new Map([magicSword, wraps].map((d) => [d.id, d]))
+    const equipped = equippedBySlot(
+      [stack(magicSword, 1, 'main_hand'), stack(wraps, 1, 'hands')],
+      defs,
+    )
+
+    expect([1, 5, 11, 17].map(martialArtsDie)).toEqual(['1d6', '1d8', '1d10', '1d12'])
+
+    const monkLines = attacks({ str: 10, dex: 16 }, 3, equipped, {
+      monkLevel: 5,
+      includeUnarmed: true,
+      unarmedName: 'Unarmed strike',
+    })
+    expect(monkLines).toMatchObject([
+      {
+        name: 'Longsword +2',
+        ability: 'dex',
+        abilityMod: 3,
+        proficiency: 3,
+        itemAttackBonus: 3,
+        itemDamageBonus: 2,
+        attack: 9,
+        damageBonus: 5,
+      },
+      {
+        name: 'Unarmed strike',
+        unarmed: true,
+        dice: '1d8',
+        ability: 'dex',
+        abilityMod: 3,
+        proficiency: 3,
+        itemAttackBonus: 1,
+        itemDamageBonus: 1,
+        attack: 7,
+        damageBonus: 4,
+      },
+    ])
+
+    const shield = definition({
+      category: 'shield',
+      slot_kind: 'shield',
+      properties: { acBonus: 2 },
+    })
+    const defsWithShield = new Map([...defs, [shield.id, shield]])
+    const armoredMonk = equippedBySlot(
+      [stack(magicSword, 1, 'main_hand'), stack(shield, 1, 'off_hand')],
+      defsWithShield,
+    )
+    const fallbackLines = attacks({ str: 10, dex: 16 }, 3, armoredMonk, {
+      monkLevel: 5,
+      includeUnarmed: true,
+      unarmedName: 'Unarmed strike',
+    })
+    expect(fallbackLines[0]).toMatchObject({ ability: 'str', abilityMod: 0, attack: 5 })
+    expect(fallbackLines[1]).toMatchObject({ dice: '1', ability: 'str', abilityMod: 0, attack: 3 })
   })
 })

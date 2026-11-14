@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import type { EquipmentSlot, Equipped, ItemDefinition, ItemStack } from '@/features/inventory'
 import {
+  acBreakdown,
   applyHp,
   applyRest,
   bonusesValid,
   emptyBuild,
+  initiativeBreakdown,
   modifier,
   passivePerception,
   pointBuySpent,
@@ -12,6 +15,7 @@ import {
   saveBonus,
   skillBonus,
   slotsFor,
+  speedBreakdown,
   spellcasting,
   standardArrayValid,
   suggestedMaxHp,
@@ -24,6 +28,7 @@ import {
   initialDraft,
   validateStep,
 } from './creation'
+import { blankDraft, quickDraft } from './quick'
 import { buildSchema, sheetRowSchema, vitalsSchema, type Vitals } from './sheet'
 
 const name = (kind: string, key: string) => `${kind}:${key}`
@@ -236,5 +241,284 @@ describe('sheet boundaries', () => {
       { death_failures: 4 },
     ])
       expect(vitalsSchema.safeParse({ ...vitals, ...bad }).success).toBe(false)
+  })
+})
+
+function equipItem(partial: Partial<ItemDefinition>, slot: EquipmentSlot): Equipped {
+  const defId = `90000000-0000-4000-8000-000000000001`
+  const definition: ItemDefinition = {
+    id: defId,
+    campaign_id: '20000000-0000-4000-8000-000000000001',
+    name: 'Item',
+    category: 'gear',
+    icon: 'package',
+    rarity: 'common',
+    weight_tenths: 10,
+    value_gp: null,
+    description: '',
+    slot_kind:
+      slot === 'ring_1' || slot === 'ring_2'
+        ? 'ring'
+        : slot === 'main_hand' || slot === 'off_hand'
+          ? 'one_hand'
+          : slot,
+    properties: {},
+    origin: 'dm',
+    archived: false,
+    created_by: null,
+    revision: 0,
+    ...partial,
+  }
+  const stack: ItemStack = {
+    id: `91000000-0000-4000-8000-000000000001`,
+    campaign_id: definition.campaign_id,
+    character_id: '40000000-0000-4000-8000-000000000001',
+    definition_id: defId,
+    quantity: 1,
+    equipped_slot: slot,
+    source: 'dm',
+    notes: '',
+    revision: 0,
+  }
+  return { stack, definition }
+}
+
+describe('stat breakdowns and origin drafts', () => {
+  it('computes AC breakdowns across unarmored features, gear, feats, bonuses and overrides', () => {
+    const monk = {
+      ...emptyBuild(),
+      classKey: 'monk',
+      baseAbilities: { str: 10, dex: 16, con: 12, int: 10, wis: 16, cha: 10 },
+    }
+    const monkAc = acBreakdown(monk)
+    expect(monkAc).toMatchObject({ total: 16, base: 10, formula: '10+3+3', modified: true })
+    expect(monkAc.parts.map((p) => p.labelKey)).toEqual([
+      'panel.mod.base',
+      'panel.mod.dex',
+      'panel.mod.monkUnarmored',
+    ])
+
+    const shield = equipItem(
+      { name: 'Shield', category: 'shield', slot_kind: 'shield', properties: { acBonus: 2 } },
+      'off_hand',
+    )
+    const monkWithShield = acBreakdown(monk, new Map([['off_hand', shield]]))
+    expect(monkWithShield).toMatchObject({ total: 15, formula: '10+3+2', modified: true })
+
+    const barbarian = {
+      ...emptyBuild(),
+      classKey: 'barbarian',
+      baseAbilities: { str: 16, dex: 14, con: 16, int: 8, wis: 10, cha: 10 },
+    }
+    const barbWithShield = acBreakdown(barbarian, new Map([['off_hand', shield]]))
+    expect(barbWithShield).toMatchObject({ total: 17, formula: '10+2+3+2', modified: true })
+
+    const draconic = {
+      ...emptyBuild(),
+      classKey: 'sorcerer',
+      subclassKey: 'draconic',
+      baseAbilities: { str: 8, dex: 14, con: 14, int: 10, wis: 10, cha: 18 },
+    }
+    expect(acBreakdown(draconic, undefined, 3)).toMatchObject({ total: 16, formula: '10+2+4' })
+
+    const fighter = {
+      ...emptyBuild(),
+      classKey: 'fighter',
+      baseAbilities: { str: 16, dex: 14, con: 14, int: 10, wis: 10, cha: 10 },
+      features: [
+        { id: 'f1', name: 'Fighting Style: Defense', source: 'class' as const, description: '' },
+      ],
+    }
+    const chainPlus1 = equipItem(
+      {
+        name: 'Chain Mail +1',
+        category: 'armor',
+        slot_kind: 'body',
+        properties: { base: 16, dexCap: 0, acBonus: 1 },
+      },
+      'body',
+    )
+    const ring = equipItem(
+      {
+        name: 'Ring of Protection',
+        category: 'gear',
+        slot_kind: 'ring',
+        properties: { acBonus: 1 },
+      },
+      'ring_1',
+    )
+    const fighterAc = acBreakdown(
+      { ...fighter, acBonus: 2 },
+      new Map([
+        ['body', chainPlus1],
+        ['off_hand', shield],
+        ['ring_1', ring],
+      ]),
+    )
+    expect(fighterAc).toMatchObject({ total: 23, formula: '16+1+2+1+1+2', modified: true })
+
+    const dualWielder = {
+      ...emptyBuild(),
+      features: [{ id: 'f2', name: 'Dual Wielder', source: 'feat' as const, description: '' }],
+    }
+    const swordA = equipItem(
+      {
+        name: 'Shortsword',
+        category: 'weapon',
+        slot_kind: 'one_hand',
+        properties: { dice: '1d6' },
+      },
+      'main_hand',
+    )
+    const swordB = equipItem(
+      { name: 'Scimitar', category: 'weapon', slot_kind: 'one_hand', properties: { dice: '1d6' } },
+      'off_hand',
+    )
+    expect(
+      acBreakdown(
+        dualWielder,
+        new Map([
+          ['main_hand', swordA],
+          ['off_hand', swordB],
+        ]),
+      ),
+    ).toMatchObject({ total: 11, formula: '10+1', modified: true })
+
+    const overridden = acBreakdown(
+      { ...fighter, acOverride: 25 },
+      new Map([
+        ['body', chainPlus1],
+        ['off_hand', shield],
+      ]),
+    )
+    expect(overridden).toMatchObject({
+      total: 25,
+      autoTotal: 20,
+      overridden: true,
+      modified: true,
+    })
+  })
+
+  it('computes speed breakdown with class features, feats, gear and inventory encumbrance', () => {
+    const monk = {
+      ...emptyBuild(),
+      classKey: 'monk',
+      speed: 30,
+      baseAbilities: { str: 10, dex: 14, con: 10, int: 10, wis: 14, cha: 10 },
+      features: [{ id: 's1', name: 'Speedy', source: 'feat' as const, description: '' }],
+    }
+    const boots = equipItem(
+      {
+        name: 'Boots of Striding',
+        category: 'gear',
+        slot_kind: 'feet',
+        properties: { speedBonus: 10 },
+      },
+      'feet',
+    )
+    const light = speedBreakdown(monk, 5, {
+      equipped: new Map([['feet', boots]]),
+      carriedTenths: 400,
+    })
+    expect(light).toMatchObject({ total: 60, formula: '30+10+10+10', modified: true })
+
+    const armor = equipItem(
+      { name: 'Leather Armor', category: 'armor', slot_kind: 'body', properties: { base: 11 } },
+      'body',
+    )
+    expect(
+      speedBreakdown(monk, 5, { equipped: new Map([['body', armor]]), carriedTenths: 600 }),
+    ).toMatchObject({ total: 30, formula: '30+10−10' })
+
+    const heavyBarb = {
+      ...emptyBuild(),
+      classKey: 'barbarian',
+      speed: 30,
+      baseAbilities: { str: 10, dex: 10, con: 14, int: 10, wis: 10, cha: 10 },
+    }
+    expect(speedBreakdown(heavyBarb, 5, { carriedTenths: 1100 })).toMatchObject({
+      total: 20,
+      formula: '30+10−20',
+    })
+    expect(speedBreakdown(heavyBarb, 5, { carriedTenths: 1600 })).toMatchObject({
+      total: 5,
+      formula: '30+10−35',
+    })
+
+    const plate = equipItem(
+      {
+        name: 'Plate Armor',
+        category: 'armor',
+        slot_kind: 'body',
+        properties: { base: 18, dexCap: 0 },
+      },
+      'body',
+    )
+    expect(speedBreakdown(heavyBarb, 5, { equipped: new Map([['body', plate]]) })).toMatchObject({
+      total: 30,
+      modified: false,
+    })
+  })
+
+  it('computes initiative breakdown with Dexterity and Alert proficiency', () => {
+    const build = {
+      ...emptyBuild(),
+      baseAbilities: { str: 10, dex: 16, con: 10, int: 10, wis: 10, cha: 10 },
+      features: [{ id: 'a1', name: 'Alert', source: 'feat' as const, description: '' }],
+    }
+    expect(initiativeBreakdown(build, 5)).toMatchObject({
+      total: 6,
+      base: 3,
+      formula: '+3+3',
+      modified: true,
+    })
+    expect(initiativeBreakdown({ ...build, features: [] }, 5)).toMatchObject({
+      total: 3,
+      formula: '',
+      modified: false,
+    })
+  })
+
+  it('supports optional origin on blankDraft and keeps unarmored quickDraft unlocked', () => {
+    const names = { resource: (key: string) => key }
+    const blankPlain = blankDraft({
+      classKey: 'fighter',
+      classLabel: 'Fighter',
+      level: 1,
+      library: [],
+      names,
+    })
+    expect(blankPlain.build.speciesKey).toBe('')
+    expect(blankPlain.build.backgroundKey).toBe('')
+
+    const blankOrigin = blankDraft({
+      classKey: 'fighter',
+      classLabel: 'Fighter',
+      level: 1,
+      speciesKey: 'elf',
+      speciesLabel: 'Elf',
+      backgroundKey: 'acolyte',
+      backgroundLabel: 'Acolyte',
+      name,
+      library: [],
+      names,
+    })
+    expect(blankOrigin.build.speciesKey).toBe('elf')
+    expect(blankOrigin.build.backgroundKey).toBe('acolyte')
+    expect(blankOrigin.build.features.some((f) => f.source === 'feat')).toBe(true)
+
+    for (const classKey of ['monk', 'barbarian'] as const) {
+      const quick = quickDraft({
+        classKey,
+        classLabel: classKey,
+        speciesKey: 'human',
+        speciesLabel: 'Human',
+        backgroundLabel: (key) => key,
+        name,
+        library: [],
+        names,
+      })
+      expect(quick.build.acOverride).toBeNull()
+    }
   })
 })

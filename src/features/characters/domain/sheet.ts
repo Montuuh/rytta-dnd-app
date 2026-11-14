@@ -78,6 +78,7 @@ export const buildSchema = z.object({
   skills: z.partialRecord(z.enum(skillKeys as [Skill, ...Skill[]]), z.enum(proficiencyLevels)),
   hitDie: z.union([z.literal(6), z.literal(8), z.literal(10), z.literal(12)]),
   speed: z.number().int().min(0).max(200),
+  acBonus: z.number().int().min(-20).max(20).optional(),
   acOverride: z.number().int().min(0).max(99).nullable(),
   casterKind: z.enum(casterKinds),
   spellAbility: z.enum(abilityKeys).nullable(),
@@ -157,7 +158,13 @@ export type SheetSummary = z.infer<typeof sheetSummarySchema> & {
   temp_hp: number
 }
 
-export type SheetDraft = { build: Build; level: number; maxHp: number; armorClass: number }
+export type SheetDraft = {
+  name?: string
+  build: Build
+  level: number
+  maxHp: number
+  armorClass: number
+}
 export type SheetAction =
   | {
       kind: 'save'

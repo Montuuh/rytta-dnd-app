@@ -43,18 +43,25 @@ export function AttackLines({
   strength,
   dexterity,
   level,
+  monkLevel,
 }: {
   stacks: ItemStack[]
   definitions: Map<string, ItemDefinition>
   strength: number
   dexterity: number
   level: number
+  monkLevel?: number
 }) {
   const { t } = useTranslation()
   const lines = attacks(
     { str: strength, dex: dexterity },
     proficiencyBonus(level),
     equippedBySlot(stacks, definitions),
+    {
+      monkLevel,
+      includeUnarmed: true,
+      unarmedName: t('inventory.attacks.unarmed'),
+    },
   )
   if (lines.length === 0)
     return (
@@ -64,33 +71,46 @@ export function AttackLines({
     )
   return (
     <ul className="attack-lines">
-      {lines.map((line) => (
-        <li key={line.stackId}>
-          <span className="attack-name user-copy">{line.name}</span>
-          <span
-            className="attack-bonus"
-            aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
-          >
-            {signed(line.attack)}
-          </span>
-          <span className="attack-damage">
-            {line.dice}
-            {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
-            {line.damageType && (
-              <>
-                {' '}
-                <GlossaryTerm id={glossaryIds.damage(line.damageType)}>
-                  {t(`inventory.damage.${line.damageType}`)}
-                </GlossaryTerm>
-              </>
-            )}
-            {line.versatileDice
-              ? ` · ${t('inventory.attacks.twoHands', { dice: line.versatileDice })}`
-              : ''}
-            {line.range ? ` · ${line.range} ${t('inventory.card.feet')}` : ''}
-          </span>
-        </li>
-      ))}
+      {lines.map((line) => {
+        const hitParts = [
+          `${signed(line.abilityMod)} ${t(`srd.abilityShort.${line.ability}`)}`,
+          t('inventory.attacks.partProf', { value: signed(line.proficiency) }),
+          ...(line.itemAttackBonus
+            ? [t('inventory.attacks.partItem', { value: signed(line.itemAttackBonus) })]
+            : []),
+        ].join(' ')
+        return (
+          <li key={line.stackId}>
+            <span className="attack-name user-copy">{line.name}</span>
+            <span
+              className="attack-bonus"
+              aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
+            >
+              {signed(line.attack)}
+            </span>
+            <span className="attack-damage">
+              {line.dice}
+              {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
+              {line.damageType && (
+                <>
+                  {' '}
+                  <GlossaryTerm id={glossaryIds.damage(line.damageType)}>
+                    {t(`inventory.damage.${line.damageType}`)}
+                  </GlossaryTerm>
+                </>
+              )}
+              {line.itemDamageBonus
+                ? ` · ${t('inventory.attacks.partDamage', { value: signed(line.itemDamageBonus) })}`
+                : ''}
+              {line.versatileDice
+                ? ` · ${t('inventory.attacks.twoHands', { dice: line.versatileDice })}`
+                : ''}
+              {line.range ? ` · ${line.range} ${t('inventory.card.feet')}` : ''}
+            </span>
+            <span className="attack-breakdown">{hitParts}</span>
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -103,6 +123,7 @@ export function PaperDoll({
   effectiveAc,
   strength,
   level,
+  monkLevel,
   canEdit,
   pending,
   portrait,
@@ -115,6 +136,7 @@ export function PaperDoll({
   effectiveAc?: number
   strength: number
   level: number
+  monkLevel?: number
   canEdit: boolean
   pending: boolean
   portrait: React.ReactNode
@@ -208,6 +230,7 @@ export function PaperDoll({
             strength={strength}
             dexterity={dexterity}
             level={level}
+            monkLevel={monkLevel}
           />
         </div>
       </div>

@@ -4,13 +4,15 @@ import { useAuth } from '@/features/auth'
 import { inventoryQuery } from '../api'
 import { AttackLines } from './paper-doll'
 
-/** Attack lines from equipped weapons, rendered inside the character sheet. */
+/** Attack lines from equipped weapons and unarmed strike, rendered inside the character sheet. */
 export function SheetAttacks({
   campaignId,
   characterId,
+  monkLevel,
 }: {
   campaignId: string
   characterId: string
+  monkLevel?: number
 }) {
   const { state } = useAuth()
   const query = useQuery(inventoryQuery(state.user!.id, campaignId, characterId))
@@ -22,6 +24,7 @@ export function SheetAttacks({
       strength={query.data.holder.str}
       dexterity={query.data.holder.dex}
       level={query.data.holder.level}
+      monkLevel={monkLevel ?? query.data.holder.monkLevel}
     />
   )
 }

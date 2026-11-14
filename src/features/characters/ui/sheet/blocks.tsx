@@ -26,7 +26,7 @@ import { removeFeature } from '../../domain/progression'
 import { resourceSpec } from '../../domain/resources'
 import { isClassKey, signed, skillBonus, slotsFor, spellcasting } from '../../domain/rules'
 import { featureSources, type Feature, type Spell } from '../../domain/sheet'
-import { conditionKeys, skillAbilities, skillKeys, type Skill } from '../../domain/srd'
+import { conditionKeys, skillAbilities, skillKeys, subclassOf, type Skill } from '../../domain/srd'
 import { Pips } from './pips'
 import type { PanelProps } from './panel-types'
 import { Counter } from './widgets'
@@ -247,21 +247,6 @@ export function SkillsBlock({ build, level, editing, change }: PanelProps) {
       </Text>
     </Stack>
   )
-}
-
-const subclassOf: Record<string, string> = {
-  barbarian: 'berserker',
-  bard: 'lore',
-  cleric: 'life',
-  druid: 'land',
-  fighter: 'champion',
-  monk: 'open-hand',
-  paladin: 'devotion',
-  ranger: 'hunter',
-  rogue: 'thief',
-  sorcerer: 'draconic',
-  warlock: 'fiend',
-  wizard: 'evoker',
 }
 
 function FeatureRow({

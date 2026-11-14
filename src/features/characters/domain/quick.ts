@@ -119,8 +119,8 @@ export function quickDraft(choice: QuickChoice): SheetDraft {
   )
   for (const skill of picks.slice(0, entry.skillCount)) skills[skill] = 'proficient'
   build = { ...build, skills }
-  const ac = unarmoredClass(build)
-  build = { ...build, acOverride: ac === defaultArmorClass(build) ? null : ac }
+  const ac = defaultArmorClass(build)
+  build = { ...build, acOverride: null }
   build = syncProgression(build, 1, choice.library, choice.names)
   return {
     build,
@@ -134,21 +134,43 @@ export type BlankChoice = {
   classKey: string
   classLabel: string
   level: number
+  speciesKey?: string
+  speciesLabel?: string
+  backgroundKey?: string
+  backgroundLabel?: string
+  name?: Namer
   library: LibraryFeature[]
   names: ProgressionNames
 }
 
-/** RYT-072 blank sheet: name, class and level; every score at 10, filled in on the sheet. */
+/** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
 export function blankDraft(choice: BlankChoice): SheetDraft {
   const level = Math.min(20, Math.max(1, Math.trunc(choice.level)))
   let build: Build = { ...emptyBuild(), abilityMethod: 'manual', origin: 'blank' }
   build = chooseClass(build, choice.classKey, choice.classLabel)
+  const namer: Namer = choice.name ?? ((_, key) => key)
+  if (choice.speciesKey || choice.speciesLabel?.trim()) {
+    build = chooseSpecies(
+      build,
+      choice.speciesKey ?? '',
+      choice.speciesLabel ?? choice.speciesKey ?? '',
+      namer,
+    )
+  }
+  if (choice.backgroundKey || choice.backgroundLabel?.trim()) {
+    build = chooseBackground(
+      build,
+      choice.backgroundKey ?? '',
+      choice.backgroundLabel ?? choice.backgroundKey ?? '',
+      namer,
+    )
+  }
   if (isClassKey(build.classKey))
     build = syncProgression(build, level, choice.library, choice.names)
   return {
     build,
     level,
     maxHp: suggestedMaxHp(build.hitDie, level, finalAbilities(build).con),
-    armorClass: unarmoredClass(build),
+    armorClass: defaultArmorClass(build, undefined, level),
   }
 }

@@ -7,11 +7,11 @@ import { Link } from 'react-router'
 import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
-import { classKeys } from '../../domain/srd'
+import { backgroundKeys, classKeys, speciesKeys } from '../../domain/srd'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
 
-/** RYT-072 blank sheet: name, class and level; everything else is filled in on the sheet. */
+/** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
 export function BlankSheet({
   sheet,
   name: characterName,
@@ -26,13 +26,23 @@ export function BlankSheet({
   const [name, setName] = useState(characterName)
   const [classKey, setClassKey] = useState<string>('fighter')
   const [custom, setCustom] = useState('')
+  const [speciesKey, setSpeciesKey] = useState<string>('')
+  const [customSpecies, setCustomSpecies] = useState('')
+  const [backgroundKey, setBackgroundKey] = useState<string>('')
+  const [customBackground, setCustomBackground] = useState('')
   const [level, setLevel] = useState(1)
   const { create, action } = useCreateSheet(sheet, characterName, sheetPath)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus(), [])
   const isCustom = classKey === 'custom'
+  const isCustomSpecies = speciesKey === 'custom'
+  const isCustomBackground = backgroundKey === 'custom'
   const valid =
-    name.trim().length > 0 && (!isCustom || custom.trim().length > 0) && library !== null
+    name.trim().length > 0 &&
+    (!isCustom || custom.trim().length > 0) &&
+    (!isCustomSpecies || customSpecies.trim().length > 0) &&
+    (!isCustomBackground || customBackground.trim().length > 0) &&
+    library !== null
   return (
     <Stack gap="md" className="creation-wizard blank-sheet">
       <Button
@@ -64,6 +74,19 @@ export function BlankSheet({
             blankDraft({
               classKey,
               classLabel: isCustom ? custom.trim() : t(`srd.class.${classKey as 'monk'}`),
+              speciesKey: speciesKey || undefined,
+              speciesLabel: isCustomSpecies
+                ? customSpecies.trim()
+                : speciesKey
+                  ? t(`srd.species.${speciesKey as 'human'}`)
+                  : undefined,
+              backgroundKey: backgroundKey || undefined,
+              backgroundLabel: isCustomBackground
+                ? customBackground.trim()
+                : backgroundKey
+                  ? t(`srd.background.${backgroundKey as 'acolyte'}`)
+                  : undefined,
+              name: (kind, key) => t(`srd.${kind}.${key}` as 'srd.trait.darkvision'),
               level,
               library: library.features,
               names: {
@@ -101,6 +124,51 @@ export function BlankSheet({
               maxLength={60}
               value={custom}
               onChange={(event) => setCustom(event.currentTarget.value)}
+            />
+          )}
+          <Select
+            label={t('wizard.species')}
+            data={[
+              { value: '', label: t('creation.originLater') },
+              ...speciesKeys.map((key) => ({ value: key, label: t(`srd.species.${key}`) })),
+              { value: 'custom', label: t('wizard.customSpecies') },
+            ]}
+            value={speciesKey}
+            allowDeselect={false}
+            onChange={(value) => setSpeciesKey(value ?? '')}
+            comboboxProps={{ withinPortal: true }}
+          />
+          {isCustomSpecies && (
+            <TextInput
+              label={t('wizard.customName')}
+              required
+              maxLength={60}
+              value={customSpecies}
+              onChange={(event) => setCustomSpecies(event.currentTarget.value)}
+            />
+          )}
+          <Select
+            label={t('wizard.background')}
+            data={[
+              { value: '', label: t('creation.originLater') },
+              ...backgroundKeys.map((key) => ({
+                value: key,
+                label: t(`srd.background.${key}`),
+              })),
+              { value: 'custom', label: t('wizard.customBackground') },
+            ]}
+            value={backgroundKey}
+            allowDeselect={false}
+            onChange={(value) => setBackgroundKey(value ?? '')}
+            comboboxProps={{ withinPortal: true }}
+          />
+          {isCustomBackground && (
+            <TextInput
+              label={t('wizard.customName')}
+              required
+              maxLength={60}
+              value={customBackground}
+              onChange={(event) => setCustomBackground(event.currentTarget.value)}
             />
           )}
           <div>

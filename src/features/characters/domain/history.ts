@@ -116,7 +116,9 @@ function buildLines(field: string, before: unknown, after: unknown): HistoryLine
   }
   if (typeof after === 'number' || typeof before === 'number')
     return num(after) === null
-      ? []
+      ? field === 'acBonus'
+        ? [{ key: 'number', field, before: num(before), after: 0 }]
+        : []
       : [{ key: 'number', field, before: num(before), after: num(after)! }]
   if (typeof after === 'string' || typeof before === 'string')
     return [{ key: 'text', field, before: str(before), after: str(after) }]

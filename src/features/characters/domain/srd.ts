@@ -208,6 +208,21 @@ export const classes = {
 export type ClassKey = keyof typeof classes
 export const classKeys = Object.keys(classes) as ClassKey[]
 
+export const subclassOf: Record<ClassKey, string> = {
+  barbarian: 'berserker',
+  bard: 'lore',
+  cleric: 'life',
+  druid: 'land',
+  fighter: 'champion',
+  monk: 'open-hand',
+  paladin: 'devotion',
+  ranger: 'hunter',
+  rogue: 'thief',
+  sorcerer: 'draconic',
+  warlock: 'fiend',
+  wizard: 'evoker',
+}
+
 export const species = {
   dragonborn: {
     speed: 30,

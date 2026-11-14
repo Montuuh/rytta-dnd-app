@@ -77,12 +77,23 @@ function ForgePreview({
   const { t, i18n } = useTranslation()
   const p = draft.properties
   const name = draft.name.trim() || t('forge.unnamed')
+  const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`
   const facts = [
     draft.category === 'weapon' && p.dice
       ? `${p.dice} ${t(`inventory.damage.${p.damageType ?? 'slashing'}`)}`
       : null,
+    draft.category === 'weapon' && p.attackBonus
+      ? `${signed(p.attackBonus)} ${t('inventory.forge.attackShort')}`
+      : null,
+    draft.category === 'weapon' && p.damageBonus
+      ? `${signed(p.damageBonus)} ${t('inventory.forge.damageShort')}`
+      : null,
     draft.category === 'armor' ? `${t('inventory.card.armor')} ${p.base ?? 10}` : null,
     draft.category === 'shield' ? `+${p.acBonus ?? 2} ${t('inventory.card.shield')}` : null,
+    draft.category !== 'shield' && p.acBonus
+      ? `${signed(p.acBonus)} ${t('inventory.forge.acShort')}`
+      : null,
+    p.speedBonus ? `${signed(p.speedBonus)} ${t('inventory.card.feet')}` : null,
     t('forge.weightUnit', { value: formatPounds(draft.weight_tenths / 10, i18n.language) }),
     dm
       ? draft.value_gp === null
@@ -400,6 +411,13 @@ export function Forge({
                   value={p.base ?? 10}
                   onChange={(value) => setProps({ base: value ?? undefined })}
                 />
+                <Stepper
+                  label={t('inventory.forge.acBonus')}
+                  min={-5}
+                  max={10}
+                  value={p.acBonus ?? 0}
+                  onChange={(value) => setProps({ acBonus: value ? value : undefined })}
+                />
                 <NativeSelect
                   label={t('inventory.forge.dexCap')}
                   value={p.dexCap === null || p.dexCap === undefined ? 'none' : String(p.dexCap)}
@@ -465,6 +483,20 @@ export function Forge({
                     })
                   }
                 />
+                <Stepper
+                  label={t('inventory.forge.attackBonus')}
+                  min={-5}
+                  max={10}
+                  value={p.attackBonus ?? 0}
+                  onChange={(value) => setProps({ attackBonus: value ? value : undefined })}
+                />
+                <Stepper
+                  label={t('inventory.forge.damageBonus')}
+                  min={-5}
+                  max={10}
+                  value={p.damageBonus ?? 0}
+                  onChange={(value) => setProps({ damageBonus: value ? value : undefined })}
+                />
                 <Checkbox
                   label={t('inventory.forge.finesse')}
                   checked={p.finesse ?? false}
@@ -478,6 +510,34 @@ export function Forge({
               </SimpleGrid>
             </fieldset>
           )}
+          {draft.slot_kind !== 'none' &&
+            draft.category !== 'armor' &&
+            draft.category !== 'shield' && (
+              <fieldset className="plain-fieldset forge-props">
+                <legend>
+                  <Text fw={600} size="sm" mb={6}>
+                    {t('inventory.forge.modifiers')}
+                  </Text>
+                </legend>
+                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+                  <Stepper
+                    label={t('inventory.forge.acBonus')}
+                    min={-5}
+                    max={10}
+                    value={p.acBonus ?? 0}
+                    onChange={(value) => setProps({ acBonus: value ? value : undefined })}
+                  />
+                  <Stepper
+                    label={t('inventory.forge.speedBonus')}
+                    min={-30}
+                    max={60}
+                    step={5}
+                    value={p.speedBonus ?? 0}
+                    onChange={(value) => setProps({ speedBonus: value ? value : undefined })}
+                  />
+                </SimpleGrid>
+              </fieldset>
+            )}
           <Textarea
             autosize
             minRows={2}

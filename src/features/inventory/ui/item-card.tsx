@@ -62,7 +62,19 @@ export function ItemCard({
           ? t('inventory.card.armorCapped', { base: props.base, cap: props.dexCap })
           : t('inventory.card.armorDex', { base: props.base }),
     ])
-  if (props.acBonus !== undefined) facts.push([t('inventory.card.shield'), `+${props.acBonus}`])
+  const signed = (value: number) => `${value > 0 ? '+' : ''}${value}`
+  if (props.acBonus !== undefined && (definition.category === 'shield' || props.acBonus !== 0))
+    facts.push([
+      definition.category === 'shield' ? t('inventory.card.shield') : t('inventory.forge.acBonus'),
+      signed(props.acBonus),
+    ])
+  if (props.attackBonus) facts.push([t('inventory.forge.attackBonus'), signed(props.attackBonus)])
+  if (props.damageBonus) facts.push([t('inventory.forge.damageBonus'), signed(props.damageBonus)])
+  if (props.speedBonus)
+    facts.push([
+      t('inventory.forge.speedBonus'),
+      `${signed(props.speedBonus)} ${t('inventory.card.feet')}`,
+    ])
   if (props.dice)
     facts.push([
       t('inventory.card.damage'),

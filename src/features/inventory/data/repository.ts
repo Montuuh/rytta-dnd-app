@@ -32,6 +32,7 @@ const holderSchema = z.object({
   dex: z.coerce.number().int().nullable(),
   str_bonus: z.coerce.number().int().nullable(),
   dex_bonus: z.coerce.number().int().nullable(),
+  class_key: z.string().nullable().optional(),
 })
 export type Holder = {
   armorClass?: number
@@ -39,6 +40,7 @@ export type Holder = {
   portraitPath: string | null
   str: number
   dex: number
+  monkLevel: number
 }
 
 export async function loadInventory(campaignId: string, characterId: string, signal: AbortSignal) {
@@ -71,7 +73,7 @@ export async function loadInventory(campaignId: string, characterId: string, sig
     db
       .from('character_sheets')
       .select(
-        'level, armor_class, portrait_path, str:build->baseAbilities->>str, dex:build->baseAbilities->>dex, str_bonus:build->bonuses->>str, dex_bonus:build->bonuses->>dex',
+        'level, armor_class, portrait_path, str:build->baseAbilities->>str, dex:build->baseAbilities->>dex, str_bonus:build->bonuses->>str, dex_bonus:build->bonuses->>dex, class_key:build->>classKey',
       )
       .eq('campaign_id', campaign)
       .eq('character_id', character)
@@ -91,6 +93,7 @@ export async function loadInventory(campaignId: string, characterId: string, sig
       portraitPath: h.portrait_path,
       str: Math.min(30, (h.str ?? 10) + (h.str_bonus ?? 0)),
       dex: Math.min(30, (h.dex ?? 10) + (h.dex_bonus ?? 0)),
+      monkLevel: h.class_key === 'monk' ? h.level : 0,
     } satisfies Holder,
   }
 }

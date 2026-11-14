@@ -684,3 +684,113 @@ test('RYT-098 the portrait opens in the full-screen viewer: double tap and pinch
   await expect(viewer).toHaveCount(0)
   await expect(plate).toBeFocused()
 })
+
+test('RYT-101 blank sheet keeps species and background optional and lets the player edit identity and auto AC on the sheet', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Terminar ficha' }).click()
+  await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ficha en blanco')
+  await page.getByRole('combobox', { name: 'Clase' }).click()
+  await page.getByRole('option', { name: 'Guerrero' }).click()
+  await page.getByRole('button', { name: 'Crear ficha' }).click()
+
+  const completeOrigin = page.getByRole('button', { name: 'Completar raza y trasfondo' })
+  await expect(completeOrigin).toBeVisible()
+  await audit(page, info.outputPath('blank-unset-origin.png'))
+
+  await completeOrigin.click()
+  const bar = page.getByRole('region', { name: 'Editando la ficha' })
+  await expect(bar).toBeVisible()
+  await page.getByLabel('Nombre del personaje').fill('Kaelen Senda')
+  await page.getByRole('combobox', { name: 'Clase', exact: true }).click()
+  await page.getByRole('option', { name: 'Monje' }).click()
+  await page.getByRole('combobox', { name: 'Especie', exact: true }).click()
+  await page.getByRole('option', { name: 'Elfo' }).click()
+  await page.getByRole('combobox', { name: 'Trasfondo', exact: true }).click()
+  await page.getByRole('option', { name: 'Acólito' }).click()
+
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Subir nivel' }).click()
+  for (let i = 0; i < 6; i++)
+    await page.getByRole('button', { name: 'Subir puntuación de Destreza' }).click()
+  for (let i = 0; i < 4; i++)
+    await page.getByRole('button', { name: 'Subir puntuación de Sabiduría' }).click()
+  await page.getByRole('button', { name: 'Subir Bonificador a la CA' }).click()
+  await bar.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(bar).toHaveCount(0)
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Kaelen Senda' })).toBeVisible()
+  await expect(page.locator('.sheet-plate-sub')).toContainText(/Monje de nivel 5\s+Elfo, Acólito/)
+  await expect(completeOrigin).toHaveCount(0)
+
+  const acButton = page.getByRole('button', { name: /Clase de Armadura 16/i })
+  await expect(acButton).toContainText('10+3+2+1')
+  const speedButton = page.getByRole('button', { name: /Velocidad 40 pies/ })
+  await expect(speedButton).toContainText('30+10')
+
+  await acButton.click()
+  const acTooltip = page.locator('.stat-breakdown')
+  await expect(acTooltip).toContainText('Defensa sin armadura (Monje: 10 + DES + SAB)')
+  await expect(acTooltip).toContainText('Bonificador en ficha')
+  await audit(page, info.outputPath('monk-ac-breakdown.png'))
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.stat-breakdown')).toHaveCount(0)
+
+  await speedButton.click()
+  await expect(page.locator('.stat-breakdown')).toContainText('Movimiento sin armadura (Monje)')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.stat-breakdown')).toHaveCount(0)
+})
+
+test('RYT-101 equipped gear, attack bonuses and encumbrance flow into sheet breakdowns', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  const byName = (name: string) => fixture.inventory.definitions.find((d) => d.name === name)!
+  const leather = byName('Armadura de cuero')
+  const shield = byName('Escudo')
+  const sword = byName('Espada larga')
+  const ring = byName('Anillo de la marea')
+  leather.weight_tenths = 300
+  ring.properties = { ...(ring.properties as Record<string, unknown>), acBonus: 1 }
+  sword.properties = {
+    ...(sword.properties as Record<string, unknown>),
+    attackBonus: 1,
+    damageBonus: 1,
+  }
+  for (const [def, slot] of [
+    [shield, 'off_hand'],
+    [sword, 'main_hand'],
+    [ring, 'ring_1'],
+  ] as const) {
+    fixture.inventory.stacks.find((s) => s.definition_id === def.id)!.equipped_slot = slot
+  }
+
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+
+  await page.getByRole('button', { name: 'Editar la ficha' }).click()
+  const bar = page.getByRole('region', { name: 'Editando la ficha' })
+  await page.getByRole('switch', { name: 'Fijar CA manual' }).click()
+  await bar.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(bar).toHaveCount(0)
+
+  const acButton = page.getByRole('button', { name: /Clase de Armadura 16/i })
+  await expect(acButton).toContainText('13+2+1')
+  const speedButton = page.getByRole('button', { name: /Velocidad 20 pies/ })
+  await expect(speedButton).toContainText('30−10')
+
+  await speedButton.click()
+  await expect(page.locator('.stat-breakdown')).toContainText('Cargado (peso > 5 × FUE)')
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('button', { name: /^Ataques/ }).click()
+  const attacksDrawer = page.getByRole('dialog', { name: 'Ataques' })
+  await expect(attacksDrawer).toContainText('Espada larga')
+  await expect(attacksDrawer).toContainText('Objeto +1')
+  await audit(page, info.outputPath('sheet-gear-attacks.png'))
+})

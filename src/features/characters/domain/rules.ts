@@ -1,3 +1,4 @@
+import { encumbrance, type EquipmentSlot, type Equipped } from '@/features/inventory'
 import type { Abilities, Build, Vitals } from './sheet'
 import {
   abilityKeys,
@@ -21,6 +22,71 @@ export const modifier = (score: number) => Math.floor((score - 10) / 2)
 export const proficiencyBonus = (level: number) => 2 + Math.floor((Math.max(1, level) - 1) / 4)
 export const signed = (value: number) => (value >= 0 ? `+${value}` : `${value}`)
 
+export type ModifierPart = {
+  key: string
+  labelKey?: string
+  label?: string
+  value: number
+}
+
+export type StatBreakdown = {
+  total: number
+  base: number
+  formula: string
+  modified: boolean
+  overridden?: boolean
+  autoTotal?: number
+  parts: ModifierPart[]
+}
+
+const normalizeFeature = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+
+const isFeatureRemoved = (build: Build, ref: string) => {
+  const removed = build.removed ?? []
+  return removed.includes(`feature:${ref}`) || removed.includes(ref)
+}
+
+function hasFeature(build: Build, ref: string, names: string[]) {
+  return build.features.some((f) => f.ref === ref || names.includes(normalizeFeature(f.name)))
+}
+
+function hasFeatName(build: Build, names: string[]) {
+  return build.features.some((f) => names.includes(normalizeFeature(f.name)))
+}
+
+function hasFightingStyleDefense(build: Build) {
+  return build.features.some((f) => {
+    const n = normalizeFeature(f.name)
+    if (
+      n === 'defense' ||
+      n === 'defensa' ||
+      n === 'fighting style: defense' ||
+      n === 'estilo de combate: defensa'
+    )
+      return true
+    if (
+      f.ref &&
+      [
+        'feature.fighter-fighting-style',
+        'feature.paladin-fighting-style',
+        'feature.ranger-fighting-style',
+        'feature.fighter-champion-additional-fighting-style',
+      ].includes(f.ref)
+    ) {
+      const desc = normalizeFeature(`${f.name} ${f.description}`)
+      return /\b(defense|defensa)\b/.test(desc)
+    }
+    return false
+  })
+}
+
+const formatTerm = (value: number) => (value >= 0 ? `+${value}` : `−${Math.abs(value)}`)
+
 export function finalAbilities(build: Pick<Build, 'baseAbilities' | 'bonuses'>): Abilities {
   return Object.fromEntries(
     abilityKeys.map((key) => [key, Math.min(30, build.baseAbilities[key] + build.bonuses[key])]),
@@ -38,8 +104,331 @@ export function skillBonus(build: Build, level: number, skill: Skill) {
 }
 export const passivePerception = (build: Build, level: number) =>
   10 + skillBonus(build, level, 'perception')
-export const initiative = (build: Build) => modifier(finalAbilities(build).dex)
-export const defaultArmorClass = (build: Build) => 10 + modifier(finalAbilities(build).dex)
+
+export function initiativeBreakdown(build: Build, level = 1): StatBreakdown {
+  const dex = modifier(finalAbilities(build).dex)
+  const parts: ModifierPart[] = [{ key: 'dex', labelKey: 'panel.mod.dex', value: dex }]
+  if (hasFeatName(build, ['alert', 'alerta'])) {
+    parts.push({ key: 'alert', labelKey: 'panel.mod.alert', value: proficiencyBonus(level) })
+  }
+  const total = parts.reduce((sum, part) => sum + part.value, 0)
+  const modified = parts.length > 1
+  const formula = modified
+    ? `${signed(dex)}${parts
+        .slice(1)
+        .map((p) => formatTerm(p.value))
+        .join('')}`
+    : ''
+  return { total, base: dex, formula, modified, parts }
+}
+
+export const initiative = (build: Build, level = 1) => initiativeBreakdown(build, level).total
+
+export function acBreakdown(
+  build: Build,
+  equipped?: Map<EquipmentSlot, Equipped>,
+  level = 1,
+): StatBreakdown {
+  const scores = finalAbilities(build)
+  const dex = modifier(scores.dex)
+  const con = modifier(scores.con)
+  const wis = modifier(scores.wis)
+  const cha = modifier(scores.cha)
+  const eq = equipped ?? new Map<EquipmentSlot, Equipped>()
+  const body = eq.get('body')?.definition
+  const armor = body?.category === 'armor' ? body.properties : null
+  const offHand = eq.get('off_hand')?.definition
+  const shield = offHand?.category === 'shield' ? offHand : null
+  const shieldBonus = shield ? (shield.properties.acBonus ?? 2) : 0
+
+  const parts: ModifierPart[] = []
+  const extraParts: ModifierPart[] = []
+  let formulaHead = 10
+  let formulaHeadExtras: ModifierPart[] = []
+  let hasExternal = false
+
+  if (armor) {
+    hasExternal = true
+    const armorBase = armor.base ?? 10
+    const dexMod = typeof armor.dexCap === 'number' ? Math.min(dex, armor.dexCap) : dex
+    parts.push({ key: 'armor', label: body!.name, value: armorBase })
+    if (dexMod !== 0) parts.push({ key: 'dex', labelKey: 'panel.mod.dex', value: dexMod })
+    formulaHead = armorBase + dexMod
+    if ((armor.acBonus ?? 0) !== 0) {
+      const magicPart: ModifierPart = {
+        key: 'armor-magic',
+        labelKey: 'panel.mod.magicBonus',
+        value: armor.acBonus!,
+      }
+      parts.push(magicPart)
+      extraParts.push(magicPart)
+    }
+    if (shield && shieldBonus !== 0) {
+      const shieldPart: ModifierPart = { key: 'shield', label: shield.name, value: shieldBonus }
+      parts.push(shieldPart)
+      extraParts.push(shieldPart)
+    }
+    if (!extraParts.length && dexMod !== 0) {
+      formulaHead = armorBase
+      formulaHeadExtras = [{ key: 'dex', labelKey: 'panel.mod.dex', value: dexMod }]
+    }
+  } else {
+    const monkEligible =
+      !shield &&
+      (build.features.some((f) => f.ref === 'feature.monk-unarmored-defense') ||
+        (hasFeature(build, 'feature.monk-unarmored-defense', [
+          'defensa sin armadura',
+          'unarmored defense',
+        ]) &&
+          build.classKey === 'monk') ||
+        (build.classKey === 'monk' && !isFeatureRemoved(build, 'feature.monk-unarmored-defense')))
+    const barbEligible =
+      build.features.some((f) => f.ref === 'feature.barbarian-unarmored-defense') ||
+      (hasFeature(build, 'feature.barbarian-unarmored-defense', [
+        'defensa sin armadura',
+        'unarmored defense',
+      ]) &&
+        build.classKey === 'barbarian') ||
+      (build.classKey === 'barbarian' &&
+        !isFeatureRemoved(build, 'feature.barbarian-unarmored-defense'))
+    const draconicEligible =
+      hasFeature(build, 'feature.sorcerer-draconic-draconic-resilience', [
+        'draconic resilience',
+        'resiliencia draconica',
+      ]) ||
+      (build.classKey === 'sorcerer' &&
+        (build.subclassKey === 'draconic' || normalizeFeature(build.subclass).includes('drac')) &&
+        level >= 3 &&
+        !isFeatureRemoved(build, 'feature.sorcerer-draconic-draconic-resilience'))
+
+    const baseAc = 10 + dex + shieldBonus
+    const monkAc = monkEligible ? 10 + dex + wis : -999
+    const barbAc = barbEligible ? 10 + dex + con + shieldBonus : -999
+    const draconicAc = draconicEligible ? 10 + dex + cha + shieldBonus : -999
+
+    parts.push({ key: 'base', labelKey: 'panel.mod.base', value: 10 })
+    if (dex !== 0) {
+      const dexPart: ModifierPart = { key: 'dex', labelKey: 'panel.mod.dex', value: dex }
+      parts.push(dexPart)
+      formulaHeadExtras.push(dexPart)
+    }
+
+    const bestUnarmored = Math.max(baseAc, monkAc, barbAc, draconicAc)
+    if (bestUnarmored > baseAc) {
+      hasExternal = true
+      if (monkAc === bestUnarmored && wis > 0) {
+        const part: ModifierPart = {
+          key: 'monk-unarmored',
+          labelKey: 'panel.mod.monkUnarmored',
+          value: wis,
+        }
+        parts.push(part)
+        formulaHeadExtras.push(part)
+      } else if (barbAc === bestUnarmored && con > 0) {
+        const part: ModifierPart = {
+          key: 'barbarian-unarmored',
+          labelKey: 'panel.mod.barbarianUnarmored',
+          value: con,
+        }
+        parts.push(part)
+        formulaHeadExtras.push(part)
+      } else if (draconicAc === bestUnarmored && cha > 0) {
+        const part: ModifierPart = {
+          key: 'draconic-resilience',
+          labelKey: 'panel.mod.draconicResilience',
+          value: cha,
+        }
+        parts.push(part)
+        formulaHeadExtras.push(part)
+      }
+    }
+
+    if (shield && shieldBonus !== 0) {
+      hasExternal = true
+      const shieldPart: ModifierPart = { key: 'shield', label: shield.name, value: shieldBonus }
+      parts.push(shieldPart)
+      extraParts.push(shieldPart)
+    }
+  }
+
+  for (const [slot, entry] of eq) {
+    if (slot === 'body' && armor) continue
+    if (slot === 'off_hand' && shield) continue
+    const bonus = entry.definition.properties.acBonus ?? 0
+    if (bonus !== 0) {
+      hasExternal = true
+      const part: ModifierPart = {
+        key: `item-${slot}`,
+        label: entry.definition.name,
+        value: bonus,
+      }
+      parts.push(part)
+      extraParts.push(part)
+    }
+  }
+
+  if (armor && hasFightingStyleDefense(build)) {
+    hasExternal = true
+    const part: ModifierPart = {
+      key: 'defense',
+      labelKey: 'panel.mod.fightingDefense',
+      value: 1,
+    }
+    parts.push(part)
+    extraParts.push(part)
+  }
+
+  const mainWeapon = eq.get('main_hand')?.definition
+  const offWeapon = eq.get('off_hand')?.definition
+  if (
+    !shield &&
+    mainWeapon?.category === 'weapon' &&
+    !mainWeapon.properties.ranged &&
+    offWeapon?.category === 'weapon' &&
+    !offWeapon.properties.ranged &&
+    hasFeatName(build, ['dual wielder', 'combatiente con dos armas', 'lucha con dos armas'])
+  ) {
+    hasExternal = true
+    const part: ModifierPart = {
+      key: 'dual-wielder',
+      labelKey: 'panel.mod.dualWielder',
+      value: 1,
+    }
+    parts.push(part)
+    extraParts.push(part)
+  }
+
+  if ((build.acBonus ?? 0) !== 0) {
+    hasExternal = true
+    const part: ModifierPart = {
+      key: 'manual-bonus',
+      labelKey: 'panel.mod.manualBonus',
+      value: build.acBonus!,
+    }
+    parts.push(part)
+    extraParts.push(part)
+  }
+
+  const autoTotal = Math.max(
+    0,
+    Math.min(
+      99,
+      parts.reduce((sum, part) => sum + part.value, 0),
+    ),
+  )
+  const terms = [...formulaHeadExtras, ...extraParts]
+  const modified = hasExternal && terms.length > 0
+  const formula = modified ? `${formulaHead}${terms.map((p) => formatTerm(p.value)).join('')}` : ''
+
+  if (build.acOverride !== null) {
+    return {
+      total: build.acOverride,
+      base: autoTotal,
+      formula: '',
+      modified: true,
+      overridden: true,
+      autoTotal,
+      parts: [{ key: 'override', labelKey: 'panel.mod.manualOverride', value: build.acOverride }],
+    }
+  }
+
+  return {
+    total: autoTotal,
+    base: formulaHead,
+    formula,
+    modified,
+    overridden: false,
+    autoTotal,
+    parts,
+  }
+}
+
+export const defaultArmorClass = (
+  build: Build,
+  equipped?: Map<EquipmentSlot, Equipped>,
+  level = 1,
+) => acBreakdown(build, equipped, level).total
+
+export function speedBreakdown(
+  build: Build,
+  level = 1,
+  options?: { equipped?: Map<EquipmentSlot, Equipped>; carriedTenths?: number },
+): StatBreakdown {
+  const base = build.speed
+  const parts: ModifierPart[] = [{ key: 'base', labelKey: 'panel.mod.baseSpeed', value: base }]
+  const eq = options?.equipped ?? new Map<EquipmentSlot, Equipped>()
+  const armor =
+    eq.get('body')?.definition.category === 'armor' ? eq.get('body')?.definition.properties : null
+  const shield = eq.get('off_hand')?.definition.category === 'shield'
+
+  const monkEligible =
+    !armor &&
+    !shield &&
+    (build.features.some((f) => f.ref === 'feature.monk-unarmored-movement') ||
+      (build.classKey === 'monk' &&
+        level >= 2 &&
+        !isFeatureRemoved(build, 'feature.monk-unarmored-movement')))
+  if (monkEligible) {
+    const monkBonus =
+      level >= 18 ? 30 : level >= 14 ? 25 : level >= 10 ? 20 : level >= 6 ? 15 : level >= 2 ? 10 : 0
+    if (monkBonus > 0)
+      parts.push({ key: 'monk-speed', labelKey: 'panel.mod.monkMovement', value: monkBonus })
+  }
+
+  const barbEligible =
+    (!armor || armor.dexCap !== 0) &&
+    (build.features.some((f) => f.ref === 'feature.barbarian-fast-movement') ||
+      (build.classKey === 'barbarian' &&
+        level >= 5 &&
+        !isFeatureRemoved(build, 'feature.barbarian-fast-movement')))
+  if (barbEligible) {
+    parts.push({ key: 'barbarian-speed', labelKey: 'panel.mod.barbarianFast', value: 10 })
+  }
+
+  if (hasFeatName(build, ['speedy', 'veloz', 'mobile', 'movilidad'])) {
+    parts.push({ key: 'speedy', labelKey: 'panel.mod.speedy', value: 10 })
+  }
+
+  for (const [slot, entry] of eq) {
+    const bonus = entry.definition.properties.speedBonus ?? 0
+    if (bonus !== 0) {
+      parts.push({
+        key: `item-speed-${slot}`,
+        label: entry.definition.name,
+        value: bonus,
+      })
+    }
+  }
+
+  if (typeof options?.carriedTenths === 'number') {
+    const enc = encumbrance(options.carriedTenths, finalAbilities(build).str)
+    if (enc.status === 'encumbered') {
+      parts.push({ key: 'encumbered', labelKey: 'panel.mod.encumbered', value: -10 })
+    } else if (enc.status === 'heavy') {
+      parts.push({ key: 'heavy', labelKey: 'panel.mod.heavyEncumbered', value: -20 })
+    } else if (enc.status === 'over') {
+      const running = Math.max(
+        0,
+        parts.reduce((sum, p) => sum + p.value, 0),
+      )
+      const drop = Math.max(0, running - 5)
+      if (drop > 0) parts.push({ key: 'over', labelKey: 'panel.mod.overCapacity', value: -drop })
+    }
+  }
+
+  const total = Math.max(
+    0,
+    parts.reduce((sum, part) => sum + part.value, 0),
+  )
+  const modified = parts.length > 1
+  const formula = modified
+    ? `${base}${parts
+        .slice(1)
+        .map((p) => formatTerm(p.value))
+        .join('')}`
+    : ''
+  return { total, base, formula, modified, parts }
+}
 export function spellcasting(build: Build, level: number) {
   if (build.casterKind === 'none' || !build.spellAbility) return null
   const mod = modifier(finalAbilities(build)[build.spellAbility])

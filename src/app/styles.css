@@ -1651,6 +1651,11 @@ html[data-mantine-color-scheme='light'] {
   font-size: var(--fs-meta);
   color: var(--app-muted);
 }
+.attack-breakdown {
+  grid-column: 1 / -1;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
 .picker-row {
   display: flex;
   align-items: center;

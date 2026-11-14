@@ -57,7 +57,10 @@ export const itemPropertiesSchema = z.object({
   dexCap: z.number().int().min(0).max(10).nullable().optional(),
   strReq: optionalInt(0, 30),
   stealthDisadvantage: z.boolean().optional(),
-  acBonus: optionalInt(0, 10),
+  acBonus: optionalInt(-5, 10),
+  attackBonus: optionalInt(-5, 10),
+  damageBonus: optionalInt(-5, 10),
+  speedBonus: optionalInt(-30, 60),
   dice: z
     .string()
     .regex(/^\d{1,2}d\d{1,3}$/)

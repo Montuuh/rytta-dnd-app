@@ -40,7 +40,7 @@ export function Stepper({
       clampBehavior="strict"
       allowDecimal={Boolean(decimalScale)}
       decimalScale={decimalScale}
-      allowNegative={false}
+      allowNegative={min < 0}
       hideControls
       disabled={disabled}
       placeholder={placeholder}

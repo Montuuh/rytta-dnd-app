@@ -301,4 +301,112 @@ describe('RYT-004 inventory', () => {
     expect(await quantity(stack.item_id)).toBe(2)
     expect(await quantity(held.item_id)).toBe(0)
   })
+
+  it('recomputes AC with Monk/Barbarian Unarmored Defense, magic items, Fighting Style Defense and build.acBonus', async () => {
+    const { c, ch } = await setup()
+    const ac = async () =>
+      (
+        await one<{ armor_class: number }>(
+          'select armor_class from public.character_sheets where character_id=$1',
+          [ch],
+        )
+      ).armor_class
+    const revision = async () =>
+      (
+        await one<{ revision: number }>(
+          'select revision from public.character_sheets where character_id=$1',
+          [ch],
+        )
+      ).revision
+
+    await asUser(player)
+    await db.query('select public.save_character_sheet($1,$2,$3,5,40,10,$4,true,$5)', [
+      c,
+      ch,
+      await revision(),
+      JSON.stringify({
+        classKey: 'monk',
+        baseAbilities: { str: 10, dex: 16, con: 12, int: 10, wis: 16, cha: 10 },
+        bonuses: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
+        acBonus: 1,
+        acOverride: null,
+        features: [
+          {
+            id: 'srd-monk-unarmored-defense',
+            name: 'Defensa sin armadura',
+            ref: 'feature.monk-unarmored-defense',
+            source: 'class',
+            description: '',
+          },
+        ],
+      }),
+      randomUUID(),
+    ])
+    expect(await ac()).toBe(17) // 10 + DEX 3 + WIS 3 + acBonus 1
+
+    await asUser(dm)
+    const ring = (
+      await define(c, {
+        name: 'Anillo de protección',
+        category: 'gear',
+        slot_kind: 'ring',
+        properties: { acBonus: 1 },
+      })
+    ).id
+    const shield = (
+      await define(c, {
+        name: 'Escudo',
+        category: 'shield',
+        slot_kind: 'shield',
+        properties: { acBonus: 2 },
+      })
+    ).id
+    const magicArmor = (
+      await define(c, {
+        name: 'Cuero +1',
+        category: 'armor',
+        slot_kind: 'body',
+        properties: { base: 11, dexCap: null, acBonus: 1 },
+      })
+    ).id
+    const r = await grant(c, ch, ring)
+    const s = await grant(c, ch, shield)
+    const m = await grant(c, ch, magicArmor)
+
+    await asUser(player)
+    await equip(c, r.item_id, r.revision, 'ring_1')
+    expect(await ac()).toBe(18) // +1 ring
+
+    // Shield disables Monk Unarmored Defense: falls back to 10 + DEX 3 + Shield 2 + Ring 1 + acBonus 1 = 17
+    const heldShield = await equip(c, s.item_id, s.revision, 'off_hand')
+    expect(await ac()).toBe(17)
+
+    // Switch to Barbarian with Fighting Style: Defense not active unarmored -> 10 + DEX 3 + CON 1 + Shield 2 + Ring 1 + acBonus 1 = 18
+    await db.query('select public.save_character_sheet($1,$2,$3,5,45,10,$4,true,$5)', [
+      c,
+      ch,
+      await revision(),
+      JSON.stringify({
+        classKey: 'barbarian',
+        baseAbilities: { str: 16, dex: 16, con: 14, int: 10, wis: 10, cha: 10 },
+        bonuses: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 },
+        acBonus: 0,
+        acOverride: null,
+        features: [{ id: 'f1', name: 'Defensa', source: 'feat', description: '' }],
+      }),
+      randomUUID(),
+    ])
+    expect(await ac()).toBe(18) // 10 + DEX 3 + CON 2 + Shield 2 + Ring 1
+
+    // Equip magic armor (+1) + Fighting Style Defense (+1) + Shield (+2) + Ring (+1): 11 + DEX 3 + armorBonus 1 + Shield 2 + Ring 1 + Defense 1 = 19
+    await equip(c, m.item_id, m.revision, 'body')
+    expect(await ac()).toBe(19)
+    await result('select public.unequip_item($1,$2,$3,$4) result', [
+      c,
+      heldShield.item_id,
+      heldShield.revision,
+      randomUUID(),
+    ])
+    expect(await ac()).toBe(17)
+  })
 })

@@ -769,7 +769,7 @@ export async function identityFixture(
         return respond(
           visible
             .filter((c) => c.id === eq('character_id'))
-            .map(() => ({
+            .map((c) => ({
               level: 5,
               armor_class: options.armorClassOverride,
               portrait_path: portraitPath,
@@ -777,6 +777,7 @@ export async function identityFixture(
               dex: '16',
               str_bonus: '0',
               dex_bonus: '0',
+              class_key: (sheets.get(c.id)?.build?.classKey as string | undefined) ?? null,
             })),
         )
     }

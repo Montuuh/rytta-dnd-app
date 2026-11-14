@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   ActionIcon,
   Alert,
@@ -28,18 +28,28 @@ import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
-import { SheetAttacks } from '@/features/inventory'
+import {
+  attacks,
+  carriedTenths,
+  equippedBySlot,
+  inventoryQuery,
+  proficiencyBonus,
+  SheetAttacks,
+} from '@/features/inventory'
 import { RestRequestDialog, type RecoveryView } from '@/features/rest'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
 import { charactersQuery, playLockQuery, sheetQuery, useSheetAction } from '../../api'
 import { syncProgression } from '../../domain/progression'
 import {
+  acBreakdown,
+  finalAbilities,
+  initiativeBreakdown,
   restRecovery,
-  defaultArmorClass,
   signed,
   skillBonus,
   slotsFor,
+  speedBreakdown,
   spellcasting,
 } from '../../domain/rules'
 import type { Build, SheetBlock, SheetDraft, SheetRow, Vitals } from '../../domain/sheet'
@@ -191,7 +201,8 @@ export function CharacterSheetPage() {
   )
 }
 
-const fromSheet = (sheet: SheetRow, build: Build): SheetDraft => ({
+const fromSheet = (sheet: SheetRow, build: Build, name: string): SheetDraft => ({
+  name,
   build,
   level: sheet.level,
   maxHp: sheet.max_hp,
@@ -227,10 +238,19 @@ function SheetPanel({
   refresh: { run: () => void; fetching: boolean; updatedAt: number }
 }) {
   const { t } = useTranslation()
+  const { state } = useAuth()
   const campaign = useCampaign()
   const action = useSheetAction(campaign.id)
   const labels = useCharacterLabels()
   const library = useSrdLibrary()
+  const inventory = useQuery(inventoryQuery(state.user!.id, campaign.id, character.id))
+  const definitions = useMemo(
+    () => new Map((inventory.data?.definitions ?? []).map((d) => [d.id, d])),
+    [inventory.data?.definitions],
+  )
+  const stacks = inventory.data?.stacks
+  const equipped = useMemo(() => equippedBySlot(stacks ?? [], definitions), [stacks, definitions])
+  const carried = useMemo(() => carriedTenths(stacks ?? [], definitions), [stacks, definitions])
   const [draft, setDraft] = useState<SheetDraft | null>(null)
   const [notice, setNotice] = useState<PanelNotice | null>(null)
   const [open, setOpen] = useState<TileKey | null>(null)
@@ -256,9 +276,10 @@ function SheetPanel({
   const pencil = useRef<HTMLButtonElement>(null)
   const editHeading = useRef<HTMLParagraphElement>(null)
   const editing = draft !== null
-  const saved = fromSheet(sheet, savedBuild)
+  const saved = fromSheet(sheet, savedBuild, character.name)
   const shown = draft ?? saved
   const build = shown.build
+  const shownName = shown.name ?? character.name
   const dirty = draft !== null && JSON.stringify(draft) !== JSON.stringify(saved)
   useLeaveGuard(dirty, setLeaving)
   const openLibrary = (tab: LibraryTab) => {
@@ -293,34 +314,59 @@ function SheetPanel({
     return {
       ...next,
       build: synced,
-      armorClass: synced.acOverride ?? defaultArmorClass(synced),
+      armorClass: acBreakdown(synced, equipped, next.level).total,
     }
   }
-  const save = (next: SheetDraft, done?: PanelNotice, then?: () => void) => {
+  const validName = shownName.trim().length > 0
+  const save = async (next: SheetDraft, done?: PanelNotice, then?: () => void) => {
     // One write at a time: controls stay focusable while saving and taps wait for the result.
     if (action.isPending) return
+    const nextName = (next.name ?? character.name).trim()
+    if (!nextName) return
     setNotice(null)
     const progressed = progress(next)
     // A save that also brought class features or resources up to date says so (legacy sheets).
     const synced =
       JSON.stringify([progressed.build.features, progressed.build.trackers]) !==
       JSON.stringify([next.build.features, next.build.trackers])
-    action.mutate(
-      {
-        kind: 'save',
-        characterId: character.id,
-        expectedRevision: sheet.revision,
-        draft: progressed,
-        complete: true,
-        requestId: newRequestId(),
-      },
-      {
-        onSuccess: () => {
-          setNotice(synced ? 'panel.synced' : (done ?? 'sheet.saved'))
-          then?.()
-        },
-      },
-    )
+    const sheetChanged =
+      JSON.stringify({
+        build: progressed.build,
+        level: progressed.level,
+        maxHp: progressed.maxHp,
+        armorClass: progressed.armorClass,
+      }) !==
+      JSON.stringify({
+        build: saved.build,
+        level: saved.level,
+        maxHp: saved.maxHp,
+        armorClass: saved.armorClass,
+      })
+    const nameChanged = nextName !== character.name
+    try {
+      if (sheetChanged || !nameChanged) {
+        await action.mutateAsync({
+          kind: 'save',
+          characterId: character.id,
+          expectedRevision: sheet.revision,
+          draft: progressed,
+          complete: true,
+          requestId: newRequestId(),
+        })
+      }
+      if (nameChanged) {
+        await action.mutateAsync({
+          kind: 'rename',
+          characterId: character.id,
+          name: nextName,
+          requestId: newRequestId(),
+        })
+      }
+      setNotice(synced ? 'panel.synced' : (done ?? 'sheet.saved'))
+      then?.()
+    } catch {
+      // Mutation state exposes error feedback inside the panel alert.
+    }
   }
   const commit = (values: Vitals, done?: PanelNotice) => {
     setNotice(null)
@@ -359,15 +405,31 @@ function SheetPanel({
   }
   const change: PanelProps['change'] = (update, done) => {
     if (draft) setDraft((current) => (current ? update(current) : current))
-    else save(update(saved), done)
+    else void save(update(saved), done)
   }
+  const ac = acBreakdown(build, equipped, shown.level)
+  const speed = speedBreakdown(build, shown.level, { equipped, carriedTenths: carried })
+  const init = initiativeBreakdown(build, shown.level)
+  const monkLevel = build.classKey === 'monk' ? shown.level : 0
+  const attackList = attacks(finalAbilities(build), proficiencyBonus(shown.level), equipped, {
+    monkLevel,
+    includeUnarmed: true,
+    unarmedName: t('inventory.attacks.unarmed'),
+  })
   const props: PanelProps = {
     campaignId: campaign.id,
     characterId: character.id,
+    name: shownName,
     build,
     level: shown.level,
     maxHp: shown.maxHp,
-    armorClass: draft ? (build.acOverride ?? defaultArmorClass(build)) : sheet.armor_class,
+    armorClass: draft || inventory.data ? ac.total : sheet.armor_class,
+    ac,
+    speed,
+    init,
+    equipped,
+    carriedTenths: carried,
+    attacks: attackList,
     sheet,
     vitals: shownVitals,
     canEdit,
@@ -376,6 +438,7 @@ function SheetPanel({
     locked,
     commit,
     change,
+    onStartEdit: canEdit && !editing && !action.isPending ? startEditing : undefined,
   }
   const hidden = new Set(build.layout?.hidden ?? [])
   const caster = build.casterKind !== 'none' || build.spells.length > 0
@@ -396,7 +459,9 @@ function SheetPanel({
   const detail: Record<TileKey, ReactNode> = {
     resources: <ResourcesBlock {...props} onPersonalise={() => setPersonalise(true)} />,
     skills: <SkillsBlock {...props} />,
-    attacks: <SheetAttacks campaignId={campaign.id} characterId={character.id} />,
+    attacks: (
+      <SheetAttacks campaignId={campaign.id} characterId={character.id} monkLevel={monkLevel} />
+    ),
     features: <FeaturesBlock {...props} onLibrary={() => openLibrary('features')} />,
     conditions: <ConditionsBlock {...props} exhaustion={exhaustion} />,
     spells: <SpellsBlock {...props} onLibrary={() => openLibrary('spells')} />,
@@ -481,11 +546,12 @@ function SheetPanel({
           </Text>
           <EditActions
             pending={action.isPending}
+            disabled={!validName}
             onCancel={() => {
               action.reset()
               stopEditing()
             }}
-            onSave={() => save(draft, 'sheet.saved', stopEditing)}
+            onSave={() => void save(draft, 'sheet.saved', stopEditing)}
           />
         </div>
       )}
@@ -503,7 +569,7 @@ function SheetPanel({
           <SheetHero
             {...props}
             exhaustion={exhaustion}
-            name={character.name}
+            name={shownName}
             subtitle={subtitle}
             note={canEdit ? null : absentOwner ? t('sheet.absentReadOnly') : t('sheet.readOnly')}
           />
@@ -547,11 +613,12 @@ function SheetPanel({
         <div className="panel-editbar-end" role="group" aria-label={t('panel.editing')}>
           <EditActions
             pending={action.isPending}
+            disabled={!validName}
             onCancel={() => {
               action.reset()
               stopEditing()
             }}
-            onSave={() => save(draft, 'sheet.saved', stopEditing)}
+            onSave={() => void save(draft, 'sheet.saved', stopEditing)}
           />
         </div>
       )}
@@ -664,14 +731,17 @@ function SheetPanel({
 /** Cancel and save for edit mode (the bar at the top and its copy at the end on phones). */
 function EditActions({
   pending,
+  disabled,
   onCancel,
   onSave,
 }: {
   pending: boolean
+  disabled?: boolean
   onCancel: () => void
   onSave: () => void
 }) {
   const { t } = useTranslation()
+  const blocked = pending || Boolean(disabled)
   return (
     <Group gap="xs" className="panel-editbar-actions">
       <Button
@@ -688,9 +758,9 @@ function EditActions({
         leftSection={
           pending ? <Loader size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />
         }
-        aria-disabled={pending || undefined}
+        aria-disabled={blocked || undefined}
         aria-busy={pending || undefined}
-        onClick={() => !pending && onSave()}
+        onClick={() => !blocked && onSave()}
       >
         {t('panel.saveChanges')}
       </Button>
@@ -765,6 +835,11 @@ function useGlance(props: PanelProps, exhaustion: number | undefined): Record<Ti
     .join(', ')
   const casting = spellcasting(build, level)
   const firstNotes = build.notes.split('\n').find((line) => line.trim())
+  const weaponAttacks = props.attacks.filter((line) => !line.unarmed)
+  const attackSummary = (weaponAttacks.length ? weaponAttacks : props.attacks.slice(0, 1))
+    .slice(0, 2)
+    .map((line) => `${line.name} ${signed(line.attack)}`)
+    .join(', ')
   return {
     resources: <span className="glance-meters">{resourceLines}</span>,
     skills:
@@ -773,7 +848,7 @@ function useGlance(props: PanelProps, exhaustion: number | undefined): Record<Ti
         : skills.length > 2
           ? t('panel.glance.skillsMore', { list: topSkills, count: skills.length - 2 })
           : topSkills,
-    attacks: t('panel.glance.attacks'),
+    attacks: attackSummary || t('panel.glance.attacks'),
     features:
       build.features.length === 0
         ? t('sheet.noFeatures')

@@ -98,7 +98,8 @@ export const tabletopEs = {
   'tabletop.frame.here': 'Centrar la mesa aquí',
   'tabletop.frame.hereShort': 'Centrar mesa',
   'tabletop.measure.hint': 'Arrastra por el mapa, o toca una casilla tras otra.',
-  'tabletop.measure.keyboard': 'Usa las flechas para moverte e Intro para marcar un punto. Supr borra la ruta y Esc cierra la regla.',
+  'tabletop.measure.keyboard':
+    'Usa las flechas para moverte e Intro para marcar un punto. Supr borra la ruta y Esc cierra la regla.',
   'tabletop.measure.feet_one': '{{count}} pie',
   'tabletop.measure.feet_other': '{{count}} pies',
   'tabletop.measure.feetShort_one': '{{count}} pie',

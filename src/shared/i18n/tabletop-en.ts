@@ -94,7 +94,8 @@ export const tabletopEn = {
   'tabletop.frame.here': 'Centre the table here',
   'tabletop.frame.hereShort': 'Centre table',
   'tabletop.measure.hint': 'Drag across the map, or tap one square after another.',
-  'tabletop.measure.keyboard': 'Use the arrow keys to move and Enter to mark a point. Delete clears the route and Escape closes the ruler.',
+  'tabletop.measure.keyboard':
+    'Use the arrow keys to move and Enter to mark a point. Delete clears the route and Escape closes the ruler.',
   'tabletop.measure.feet_one': '{{count}} ft',
   'tabletop.measure.feet_other': '{{count}} ft',
   'tabletop.measure.feetShort_one': '{{count}} ft',

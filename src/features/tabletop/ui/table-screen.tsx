@@ -151,10 +151,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
           <p>{t('tabletop.table.nothingHelp')}</p>
         </div>
       ) : (
-        <div
-          className="tt-table-world"
-          style={{ transform: worldTransform }}
-        >
+        <div className="tt-table-world" style={{ transform: worldTransform }}>
           <Board
             scene={scene}
             items={view.items}

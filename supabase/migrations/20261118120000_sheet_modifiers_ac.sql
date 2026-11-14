@@ -188,17 +188,8 @@ end;
 $fn$;
 revoke all on function private.recompute_armor_class(uuid, uuid) from public, anon, authenticated;
 
-drop trigger if exists sheets_armor_class on public.character_sheets;
-create trigger sheets_armor_class after update of build, level on public.character_sheets
+create or replace trigger sheets_armor_class after update of build, level on public.character_sheets
   for each row execute function private.sheet_armor_class_follows_equipment();
-
-alter table public.character_sheets disable trigger sheets_audit;
-update public.character_sheets
-  set build = jsonb_set(build, '{acOverride}', 'null'::jsonb)
-  where build ->> 'origin' = 'quick'
-    and build ->> 'classKey' in ('monk', 'barbarian')
-    and jsonb_typeof(build -> 'acOverride') = 'number';
-alter table public.character_sheets enable trigger sheets_audit;
 
 select count(*) from (
   select private.recompute_armor_class(s.campaign_id, s.character_id)

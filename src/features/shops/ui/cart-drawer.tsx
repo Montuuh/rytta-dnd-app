@@ -1,5 +1,7 @@
 import {
   ActionIcon,
+  Alert,
+  Title,
   Button,
   Drawer,
   Group,
@@ -23,121 +25,175 @@ import { GoldAmount } from './visuals'
 
 type Props = {
   opened: boolean
-  shop: StorefrontShop
-  lines: CartLine[]
-  note: string
+  groups: { shop: StorefrontShop; lines: CartLine[]; note: string }[]
+  error: string
+  receipt?: string
   gold: number
   tenths: number
   strength: number | null
   busy: boolean
   onClose: () => void
-  onChange: (lines: CartLine[]) => void
-  onNote: (note: string) => void
+  onChange: (shopId: string, lines: CartLine[]) => void
+  onNote: (shopId: string, note: string) => void
   onSubmit: () => void
 }
 
 /** Checkout review: gold and load before → after, so nothing about the purchase surprises. */
 export function CartDrawer(props: Props) {
-  const { opened, shop, lines, note, gold, tenths, strength, busy } = props
+  const { opened, groups, gold, tenths, strength, busy } = props
   const { t, i18n } = useTranslation()
   const phone = usePhone()
-  const approval = shop.mode === 'approval'
-  const total = cartTotal(lines, shop.listings, shop.mode)
-  const after = gold - total
-  const addedTenths = cartTenths(lines, shop.listings)
+  const approval = groups.some(({ shop }) => shop.mode === 'approval')
+  const immediate = groups.some(({ shop }) => shop.mode === 'auto')
+  const mixed = approval && immediate
+  const sumMode = (mode: StorefrontShop['mode']) =>
+    groups.reduce(
+      (sum, { shop, lines }) =>
+        sum + (shop.mode === mode ? cartTotal(lines, shop.listings, mode) : 0),
+      0,
+    )
+  const charge = sumMode('auto')
+  const requested = sumMode('approval')
+  const total = charge + requested
+  const after = gold - charge
+  const addedTenths = groups.reduce(
+    (sum, { shop, lines }) =>
+      sum + (shop.mode === 'auto' || !immediate ? cartTenths(lines, shop.listings) : 0),
+    0,
+  )
   // The same 5e variant thresholds as the inventory Balanza (ADR 014); informative only.
   const load = strength === null ? null : encumbrance(tenths + addedTenths, strength)
-  const update = (listingId: string, patch: Partial<CartLine>) =>
-    props.onChange(
-      lines.map((line) => (line.listingId === listingId ? { ...line, ...patch } : line)),
-    )
-  const blocked = lines.length === 0 || !shop.is_open || (!approval && after < 0)
+  const blocked = !groups.length || groups.some(({ shop }) => !shop.is_open) || after < 0
   return (
     <Drawer
       opened={opened}
       onClose={props.onClose}
       position={phone ? 'bottom' : 'right'}
       size={phone ? 'auto' : 'md'}
-      title={t('cart.title', { shop: shop.name })}
+      title={t('cart.title')}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
       <Stack gap="md">
-        {lines.length === 0 && <Text>{t('cart.empty')}</Text>}
-        {lines.map((line) => {
-          const listing = shop.listings.find((l) => l.id === line.listingId)
-          if (!listing) return null
+        {groups.length === 0 && <Text>{t('cart.empty')}</Text>}
+        {groups.map(({ shop, lines, note }) => {
+          const update = (listingId: string, patch: Partial<CartLine>) =>
+            props.onChange(
+              shop.id,
+              lines.map((line) => (line.listingId === listingId ? { ...line, ...patch } : line)),
+            )
           return (
-            <div className="cart-line" key={line.listingId}>
-              <Group justify="space-between" wrap="nowrap" gap="xs">
-                <Text fw={600} className="user-copy">
-                  {listing.item.name}
+            <Stack key={shop.id} gap="xs" component="section">
+              <Title order={3} size="h4" className="user-copy">
+                {shop.name}
+              </Title>
+              {mixed && (
+                <Text size="sm" c="dimmed">
+                  {t(`shop.mode.${shop.mode}`)}
                 </Text>
-                <ActionIcon
-                  variant="subtle"
-                  color="red"
-                  size={44}
-                  aria-label={t('cart.removeNamed', { name: listing.item.name })}
-                  onClick={() =>
-                    props.onChange(lines.filter((l) => l.listingId !== line.listingId))
-                  }
-                >
-                  <Trash2 size={18} />
-                </ActionIcon>
-              </Group>
-              <Group align="end" gap="sm" wrap="wrap">
-                <NumberInput
-                  hideControls
-                  label={t('shop.quantity')}
-                  min={1}
-                  max={maxPurchasable(listing)}
-                  allowDecimal={false}
-                  value={line.quantity}
-                  onChange={(value) =>
-                    update(line.listingId, {
-                      quantity: Math.max(1, Math.min(maxPurchasable(listing), Number(value) || 1)),
-                    })
-                  }
-                  w={110}
+              )}
+              {!shop.is_open && <Text c="dimmed">{t('shop.closedHelp')}</Text>}
+              {lines.map((line) => {
+                const listing = shop.listings.find((l) => l.id === line.listingId)
+                if (!listing) return null
+                return (
+                  <div className="cart-line" key={line.listingId}>
+                    <Group justify="space-between" wrap="nowrap" gap="xs">
+                      <Text fw={600} className="user-copy">
+                        {listing.item.name}
+                      </Text>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        size={44}
+                        disabled={busy}
+                        aria-label={t('cart.removeNamed', { name: listing.item.name })}
+                        onClick={() =>
+                          props.onChange(
+                            shop.id,
+                            lines.filter((l) => l.listingId !== line.listingId),
+                          )
+                        }
+                      >
+                        <Trash2 size={18} />
+                      </ActionIcon>
+                    </Group>
+                    <Group align="end" gap="sm" wrap="wrap">
+                      <NumberInput
+                        disabled={busy}
+                        hideControls
+                        label={t('shop.quantity')}
+                        min={1}
+                        max={maxPurchasable(listing)}
+                        allowDecimal={false}
+                        value={line.quantity}
+                        onChange={(value) =>
+                          update(line.listingId, {
+                            quantity: Math.max(
+                              1,
+                              Math.min(maxPurchasable(listing), Number(value) || 1),
+                            ),
+                          })
+                        }
+                        w={110}
+                      />
+                      {shop.mode === 'approval' ? (
+                        <NumberInput
+                          disabled={busy}
+                          hideControls
+                          label={t('cart.offerEach')}
+                          description={t('cart.listEach', { value: listing.unit_price })}
+                          placeholder={String(listing.unit_price)}
+                          min={0}
+                          max={1_000_000_000}
+                          allowDecimal={false}
+                          value={line.offeredPrice ?? ''}
+                          onChange={(value) =>
+                            update(line.listingId, {
+                              offeredPrice: value === '' ? null : Number(value),
+                            })
+                          }
+                          w={150}
+                        />
+                      ) : (
+                        <Text size="sm" c="dimmed" pb={10}>
+                          {t('cart.each', { value: listing.unit_price })}
+                        </Text>
+                      )}
+                    </Group>
+                  </div>
+                )
+              })}
+              {shop.mode === 'approval' && (
+                <Textarea
+                  disabled={busy}
+                  label={t('cart.noteLabel')}
+                  description={t('cart.noteHelp')}
+                  maxLength={500}
+                  value={note}
+                  onChange={(event) => props.onNote(shop.id, event.currentTarget.value)}
                 />
-                {approval ? (
-                  <NumberInput
-                    hideControls
-                    label={t('cart.offerEach')}
-                    description={t('cart.listEach', { value: listing.unit_price })}
-                    placeholder={String(listing.unit_price)}
-                    min={0}
-                    max={1_000_000_000}
-                    allowDecimal={false}
-                    value={line.offeredPrice ?? ''}
-                    onChange={(value) =>
-                      update(line.listingId, { offeredPrice: value === '' ? null : Number(value) })
-                    }
-                    w={150}
-                  />
-                ) : (
-                  <Text size="sm" c="dimmed" pb={10}>
-                    {t('cart.each', { value: listing.unit_price })}
-                  </Text>
-                )}
-              </Group>
-            </div>
+              )}
+            </Stack>
           )
         })}
-        {approval && lines.length > 0 && (
-          <Textarea
-            label={t('cart.noteLabel')}
-            description={t('cart.noteHelp')}
-            maxLength={500}
-            value={note}
-            onChange={(event) => props.onNote(event.currentTarget.value)}
-          />
-        )}
-        {lines.length > 0 && (
+        {groups.length > 0 && (
           <Stack gap={8} className="cart-summary" aria-live="polite">
             <Group justify="space-between">
-              <Text fw={600}>{t(approval ? 'cart.requestTotal' : 'cart.total')}</Text>
+              <Text fw={600}>{t(approval && !mixed ? 'cart.requestTotal' : 'cart.total')}</Text>
               <GoldAmount value={total} size="lg" />
             </Group>
+            {mixed && (
+              <Group justify="space-between">
+                <Text>{t('cart.payNow')}</Text>
+                <GoldAmount value={charge} />
+              </Group>
+            )}
+            {mixed && (
+              <Group justify="space-between">
+                <Text>{t('cart.awaitApproval')}</Text>
+                <GoldAmount value={requested} />
+              </Group>
+            )}
             <Group justify="space-between" wrap="nowrap">
               <Text size="sm" c="dimmed">
                 {t('cart.goldChange')}
@@ -145,7 +201,7 @@ export function CartDrawer(props: Props) {
               <span className={`balance-change ${after < 0 ? 'is-short' : ''}`}>
                 <GoldAmount value={gold} size="sm" />
                 <ArrowRight size={14} aria-label={t('cart.becomes')} />
-                <GoldAmount value={Math.max(0, after)} size="sm" />
+                <GoldAmount value={Math.max(0, immediate ? after : gold - requested)} size="sm" />
               </span>
             </Group>
             <Group justify="space-between" wrap="wrap" gap={4}>
@@ -177,19 +233,28 @@ export function CartDrawer(props: Props) {
             )}
           </Stack>
         )}
-        {!shop.is_open && <Text c="dimmed">{t('shop.closedHelp')}</Text>}
-        {!approval && after < 0 && lines.length > 0 && (
+        {after < 0 && (
           <Text role="alert" className="load-over">
             {t('cart.shortBy', { value: -after })}
           </Text>
         )}
-        {approval && lines.length > 0 && (
+        {approval && !mixed && (
           <Text size="sm" c="dimmed">
             {t('cart.approvalHelp')}
           </Text>
         )}
+        {props.receipt && <Text role="status">{props.receipt}</Text>}
+        {props.error && (
+          <Alert color="red" role="alert">
+            {props.error}
+          </Alert>
+        )}
         <Button size="lg" disabled={blocked} loading={busy} onClick={props.onSubmit}>
-          {approval ? t('cart.sendRequest') : t('cart.buyFor', { value: total })}
+          {mixed
+            ? t('cart.confirmMixed')
+            : approval
+              ? t('cart.sendRequest')
+              : t('cart.buyFor', { value: total })}
         </Button>
       </Stack>
     </Drawer>

@@ -112,8 +112,23 @@ export function Storefront() {
   const entries = holdings.stacks
   const gold = front.data?.gold ?? 0
   const canBuy = !playerPreview && !!shop?.is_open
-  const lines = shop ? reconcileCart(carts[shop.id] ?? [], shop.listings) : []
-  const units = lines.reduce((sum, line) => sum + line.quantity, 0)
+  const groups = shops.flatMap((merchant) => {
+    const items = reconcileCart(carts[merchant.id] ?? [], merchant.listings)
+    return items.length ? [{ shop: merchant, lines: items, note: notes[merchant.id] ?? '' }] : []
+  })
+  const lines = groups.find((group) => group.shop.id === shop?.id)?.lines ?? []
+  const units = groups.reduce(
+    (sum, group) => sum + group.lines.reduce((n, line) => n + line.quantity, 0),
+    0,
+  )
+  const total = groups.reduce(
+    (sum, group) => sum + cartTotal(group.lines, group.shop.listings, group.shop.mode),
+    0,
+  )
+  const [checkingOut, setCheckingOut] = useState(false)
+  const submitting = useRef(false)
+  const attempts = useRef(new Map<string, { payload: string; requestId: string }>())
+  const [checkoutError, setCheckoutError] = useState('')
   const openOrders = (orders.data ?? []).filter(isOpenOrder)
 
   const setParam = (key: string, value: string) =>
@@ -125,11 +140,13 @@ export function Storefront() {
       },
       { replace: true },
     )
-  const setLines = (next: CartLine[]) =>
-    shop && setCarts((prior) => ({ ...prior, [shop.id]: next }))
+  const setLines = (shopId: string, next: CartLine[]) =>
+    setCarts((prior) => ({ ...prior, [shopId]: next }))
   const add = (listingId: string, quantity: number) => {
     const current = lines.find((line) => line.listingId === listingId)
+    if (!shop) return
     setLines(
+      shop.id,
       current
         ? lines.map((line) =>
             line.listingId === listingId ? { ...line, quantity: line.quantity + quantity } : line,
@@ -142,28 +159,60 @@ export function Storefront() {
     setNotice(null)
     action.mutate(next, { onSuccess: (result) => onDone?.(result.order) })
   }
-  const checkout = () => {
-    if (!shop || !character) return
-    perform(
-      {
-        kind: 'checkout',
-        shopId: shop.id,
-        characterId: character.id,
-        lines,
-        note: notes[shop.id] ?? '',
-        requestId: newRequestId(),
-      },
-      (result) => {
-        setLines([])
-        setNotes((prior) => ({ ...prior, [shop.id]: '' }))
-        setCartOpen(false)
-        setNotice(
-          result?.status === 'completed'
-            ? { text: t('shop.notice.bought', { value: result.total }), inventoryLink: true }
-            : { text: t('shop.notice.requested', { shop: shop.name }) },
-        )
-      },
-    )
+  const openCart = () => {
+    setCheckoutError('')
+    setNotice(null)
+    setCartOpen(true)
+  }
+  const checkout = async () => {
+    if (!character || playerPreview || !groups.length || submitting.current) return
+    submitting.current = true
+    setCheckingOut(true)
+    setCheckoutError('')
+    setNotice(null)
+    const receipts: string[] = []
+    let bought = false
+    try {
+      for (const group of groups) {
+        const { shop: merchant, lines: items, note } = group
+        const payload = JSON.stringify([character.id, items, note])
+        const previous = attempts.current.get(merchant.id)
+        const requestId = previous?.payload === payload ? previous.requestId : newRequestId()
+        attempts.current.set(merchant.id, { payload, requestId })
+        try {
+          const { order } = await action.mutateAsync({
+            kind: 'checkout',
+            shopId: merchant.id,
+            characterId: character.id,
+            lines: items,
+            note,
+            requestId,
+          })
+          if (!order) throw new ShopError('unavailable')
+          attempts.current.delete(merchant.id)
+          setLines(merchant.id, [])
+          setNotes((prior) => ({ ...prior, [merchant.id]: '' }))
+          if (order.status === 'completed') {
+            bought = true
+            receipts.push(t('shop.notice.bought', { value: order.total }))
+          } else {
+            receipts.push(t('shop.notice.requested', { shop: merchant.name }))
+          }
+        } catch (error) {
+          setCheckoutError(
+            merchant.name +
+              ' · ' +
+              t(`commerce.error.${error instanceof ShopError ? error.code : 'unavailable'}`),
+          )
+          return
+        }
+      }
+      setCartOpen(false)
+    } finally {
+      if (receipts.length) setNotice({ text: receipts.join(' '), inventoryLink: bought })
+      submitting.current = false
+      setCheckingOut(false)
+    }
   }
   const detail = shop?.listings.find((l) => l.id === detailId) ?? null
   const kinds = itemCategories.filter((k) => shop?.listings.some((l) => l.item.category === k))
@@ -220,23 +269,23 @@ export function Storefront() {
               <GoldAmount value={gold} size="lg" />
             </div>
             {/* An empty cart is nothing to open; the dock takes over on the buy tab. */}
-            {canBuy && units > 0 && tab !== 'buy' && (
+            {!playerPreview && units > 0 && tab !== 'buy' && (
               <Button
                 leftSection={<ShoppingBag size={18} aria-hidden="true" />}
-                onClick={() => setCartOpen(true)}
+                onClick={openCart}
                 aria-label={t('cart.openNamed', {
                   count: units,
-                  value: cartTotal(lines, shop.listings, shop.mode),
+                  value: total,
                 })}
               >
                 {t('cart.button', {
                   count: units,
-                  value: cartTotal(lines, shop.listings, shop.mode),
+                  value: total,
                 })}
               </Button>
             )}
           </div>
-          {notice && (
+          {notice && !cartOpen && (
             <Alert
               role="status"
               withCloseButton
@@ -251,7 +300,7 @@ export function Storefront() {
               )}
             </Alert>
           )}
-          {action.error && (
+          {action.error && action.variables?.kind !== 'checkout' && (
             <Alert color="red" role="alert">
               {t(
                 `commerce.error.${action.error instanceof ShopError ? action.error.code : 'unavailable'}`,
@@ -404,17 +453,17 @@ export function Storefront() {
               </Stack>
             </Tabs.Panel>
           </Tabs>
-          {canBuy && units > 0 && tab === 'buy' && (
+          {!playerPreview && units > 0 && tab === 'buy' && (
             <div className="cart-dock">
               <Button
                 fullWidth
                 size="lg"
                 leftSection={<ShoppingBag size={18} aria-hidden="true" />}
-                onClick={() => setCartOpen(true)}
+                onClick={openCart}
               >
                 {t('cart.review', {
                   count: units,
-                  value: cartTotal(lines, shop.listings, shop.mode),
+                  value: total,
                 })}
               </Button>
             </div>
@@ -433,16 +482,18 @@ export function Storefront() {
           />
           <CartDrawer
             opened={cartOpen}
-            shop={shop}
-            lines={lines}
-            note={notes[shop.id] ?? ''}
+            groups={groups}
+            error={checkoutError}
+            receipt={cartOpen ? notice?.text : undefined}
             gold={gold}
             tenths={holdings.tenths}
             strength={holdings.strength}
-            busy={action.isPending}
-            onClose={() => setCartOpen(false)}
+            busy={checkingOut}
+            onClose={() => {
+              if (!submitting.current) setCartOpen(false)
+            }}
             onChange={setLines}
-            onNote={(note) => setNotes((prior) => ({ ...prior, [shop.id]: note }))}
+            onNote={(id, note) => setNotes((prior) => ({ ...prior, [id]: note }))}
             onSubmit={checkout}
           />
         </>

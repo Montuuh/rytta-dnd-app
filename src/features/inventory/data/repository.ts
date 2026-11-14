@@ -8,6 +8,7 @@ import {
   type InventoryAction,
 } from '../domain/item'
 import { newRequestId } from '@/shared/lib/request-id'
+import { uploadBytes, uploadExtension, uploadTypes } from '@/shared/lib/image-encode'
 
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw new Error('Demo is read-only')
@@ -259,10 +260,11 @@ export async function itemImageUrl(path: string) {
   return z.url().parse(result.data.signedUrl)
 }
 export async function uploadItemImage(campaignId: string, definitionId: string, image: Blob) {
-  if (image.type !== 'image/webp' || image.size > 1_048_576) throw new Error('invalid')
+  if (!(uploadTypes as readonly string[]).includes(image.type) || image.size > uploadBytes)
+    throw new Error('invalid')
   const db = await client()
   const { activeSchema } = await import('@/shared/api/supabase')
-  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(definitionId)}/${newRequestId()}.webp`
+  const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(definitionId)}/${newRequestId()}.${uploadExtension(image.type)}`
   const result = await db.storage
     .from('item-images')
     .upload(path, image, { contentType: image.type })

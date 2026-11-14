@@ -400,6 +400,100 @@ test('RYT-025 sheet widgets: HP number pad, hit-die pips and condition chips', a
   }
 })
 
+test('RYT-099 a large photo is saved as a sharp 1024px portrait under 1 MB', async ({ page }) => {
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.goto(sheetUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Arin')
+  // A 2400x1600 photo with fine detail, drawn in the page (no binary fixture in the repository).
+  const photo = await page.evaluate(async () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 2400
+    canvas.height = 1600
+    const context = canvas.getContext('2d')!
+    const gradient = context.createLinearGradient(0, 0, 2400, 1600)
+    gradient.addColorStop(0, '#6e3410')
+    gradient.addColorStop(1, '#f6c478')
+    context.fillStyle = gradient
+    context.fillRect(0, 0, 2400, 1600)
+    context.strokeStyle = '#140f0b'
+    for (let x = 0; x < 2400; x += 6) {
+      context.beginPath()
+      context.moveTo(x, 0)
+      context.lineTo(x + 400, 1600)
+      context.stroke()
+    }
+    const blob = await new Promise<Blob>((resolve) =>
+      canvas.toBlob((b) => resolve(b!), 'image/png'),
+    )
+    const bytes = new Uint8Array(await blob.arrayBuffer())
+    let binary = ''
+    for (const byte of bytes) binary += String.fromCharCode(byte)
+    return btoa(binary)
+  })
+  const uploaded = page.waitForRequest(
+    (request) =>
+      request.method() === 'POST' &&
+      request.url().includes('/storage/v1/object/character-portraits/'),
+  )
+  await page.locator('.sheet-plate input[type=file]').setInputFiles({
+    name: 'photo.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(photo, 'base64'),
+  })
+  const editor = page.getByRole('dialog', { name: 'Retrato de Arin' })
+  await editor.getByRole('button', { name: 'Guardar retrato' }).click()
+  const request = await uploaded
+  const body = request.postDataBuffer()!
+  // The upload is multipart: take the WebP file out of it by its RIFF header.
+  const start = body.indexOf('RIFF')
+  expect(start).toBeGreaterThanOrEqual(0)
+  const webp = body.subarray(start, start + 8 + body.readUInt32LE(start + 4))
+  expect(webp.subarray(8, 12).toString()).toBe('WEBP')
+  expect(webp.length).toBeLessThanOrEqual(1_048_576)
+  const size = await page.evaluate(async (base64) => {
+    const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/webp' }))
+    return { width: bitmap.width, height: bitmap.height }
+  }, webp.toString('base64'))
+  expect(size).toEqual({ width: 1024, height: 1024 })
+  await expect(editor).toHaveCount(0)
+})
+
+test('RYT-099 cancelling while the portrait is being prepared uploads nothing', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.goto(sheetUrl)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Arin')
+  const uploads: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('/storage/v1/object/character-portraits/'))
+      uploads.push(request.url())
+  })
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
+    'base64',
+  )
+  await page.locator('.sheet-plate input[type=file]').setInputFiles({
+    name: 'arin.png',
+    mimeType: 'image/png',
+    buffer: png,
+  })
+  const editor = page.getByRole('dialog', { name: 'Retrato de Arin' })
+  await expect(editor.getByRole('button', { name: 'Guardar retrato' })).toBeEnabled()
+  // Save, then Cancel in the same moment: the picture is still being encoded when the editor closes.
+  await editor.evaluate((node) => {
+    const button = (text: string) =>
+      [...node.querySelectorAll('button')].find((b) => b.textContent?.trim() === text)!
+    button('Guardar retrato').click()
+    button('Cancelar').click()
+  })
+  await expect(editor).toHaveCount(0)
+  await page.waitForTimeout(1000)
+  expect(uploads).toEqual([])
+  await expect(page.getByText('Añadir retrato')).toBeVisible()
+})
+
 test('RYT-090 the portrait plate leads the sheet: add, view, remove and inspiration', async ({
   page,
 }, info) => {

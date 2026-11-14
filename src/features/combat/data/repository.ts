@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Json } from '@/shared/api/database.generated'
 import { config } from '@/shared/lib/config'
+import { uploadBytes, uploadExtension, uploadTypes } from '@/shared/lib/image-encode'
 import {
   combatErrorCode,
   combatStateSchema,
@@ -389,11 +390,12 @@ export async function uploadCreatureImage(
   target: { templateId: string } | { srdId: string },
   image: Blob,
 ) {
-  if (image.type !== 'image/webp' || image.size > 1_048_576) throw new Error('invalid')
+  if (!(uploadTypes as readonly string[]).includes(image.type) || image.size > uploadBytes)
+    throw new Error('invalid')
   const db = await client()
   const { activeSchema } = await import('@/shared/api/supabase')
   const folder = 'templateId' in target ? uuid(target.templateId) : `srd-${srdId(target.srdId)}`
-  const path = `${activeSchema()}/${uuid(campaignId)}/${folder}/${crypto.randomUUID()}.webp`
+  const path = `${activeSchema()}/${uuid(campaignId)}/${folder}/${crypto.randomUUID()}.${uploadExtension(image.type)}`
   const result = await db.storage
     .from(imageBuckets.creature.bucket)
     .upload(path, image, { contentType: image.type })

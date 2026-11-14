@@ -9,8 +9,9 @@ import {
 import { Button, Group, Modal, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { usePhone } from '@/shared/ui/use-viewport'
+import { canvasToUpload, drawSmooth, encodeWithin, uploadSide } from '@/shared/lib/image-encode'
 
-/** RYT-074 portrait output: a 512px WebP square, like the previous centre crop. */
+/** The on-screen working square; the saved portrait is drawn again at uploadSide (RYT-099). */
 const out = 512
 const maxZoom = 4
 type Mode = 'crop' | 'fit'
@@ -25,26 +26,45 @@ function cropRect(width: number, height: number, view: View) {
   const cy = Math.min(Math.max(view.cy, half), height - half)
   return { sx: cx - half, sy: cy - half, side, cx, cy, scale }
 }
-/** The whole image inside the square, centred, with black bars on the short sides. */
-function fitRect(width: number, height: number) {
-  const scale = out / Math.max(width, height)
+/** The whole image inside a square of `size`, centred, with black bars on the short sides. */
+function fitRect(width: number, height: number, size: number) {
+  const scale = size / Math.max(width, height)
   const w = width * scale
   const h = height * scale
-  return { dx: (out - w) / 2, dy: (out - h) / 2, w, h }
+  return { dx: (size - w) / 2, dy: (size - h) / 2, w, h }
 }
 
-function paint(canvas: HTMLCanvasElement, bitmap: ImageBitmap, mode: Mode, view: View) {
+/** Paints the square at `size`. The saved portrait halves large photos in steps (`final`); the
+ * live preview draws in one high-quality pass so dragging stays smooth. */
+function paint(
+  canvas: HTMLCanvasElement,
+  bitmap: ImageBitmap,
+  mode: Mode,
+  view: View,
+  size = out,
+  final = false,
+) {
   const context = canvas.getContext('2d')
   if (!context) return
   context.fillStyle = '#000'
-  context.fillRect(0, 0, out, out)
+  context.fillRect(0, 0, size, size)
+  context.imageSmoothingEnabled = true
+  context.imageSmoothingQuality = 'high'
+  const where = placement(bitmap, mode, view, size)
+  if (final) drawSmooth(context, bitmap, ...where)
+  else context.drawImage(bitmap, ...where)
+}
+
+type Placement = [number, number, number, number, number, number, number, number]
+
+/** Source rectangle in the photo, then destination rectangle in a square of `size`. */
+function placement(bitmap: ImageBitmap, mode: Mode, view: View, size: number): Placement {
   if (mode === 'fit') {
-    const { dx, dy, w, h } = fitRect(bitmap.width, bitmap.height)
-    context.drawImage(bitmap, dx, dy, w, h)
-    return
+    const { dx, dy, w, h } = fitRect(bitmap.width, bitmap.height, size)
+    return [0, 0, bitmap.width, bitmap.height, dx, dy, w, h]
   }
   const { sx, sy, side } = cropRect(bitmap.width, bitmap.height, view)
-  context.drawImage(bitmap, sx, sy, side, side, 0, 0, out, out)
+  return [sx, sy, side, side, 0, 0, size, size]
 }
 
 /** Always opened after choosing an image (P9): crop a square or keep it whole with bars. */
@@ -188,17 +208,39 @@ export function PortraitEditor({
     return () => element.removeEventListener('wheel', onWheel)
   }, [mode, bitmap])
 
+  // Encoding the 1024px square takes a moment on phones: Save shows it, and a cancel meanwhile
+  // (Cancel, Escape, closing) drops the result instead of uploading it.
+  const [encoding, setEncoding] = useState(false)
+  const live = useRef(true)
+  useEffect(() => {
+    live.current = true
+    return () => {
+      live.current = false
+    }
+  }, [])
+  const cancel = () => {
+    live.current = false
+    onCancel()
+  }
   const save = () => {
-    if (!bitmap) return
-    const target = document.createElement('canvas')
-    target.width = target.height = out
-    paint(target, bitmap, mode, view)
-    target.toBlob((blob) => blob && onSave(blob), 'image/webp', 0.85)
+    if (!bitmap || encoding) return
+    setEncoding(true)
+    void encodeWithin((scale) => {
+      const target = document.createElement('canvas')
+      target.width = target.height = Math.round(uploadSide * scale)
+      paint(target, bitmap, mode, view, target.width, true)
+      return target
+    }, canvasToUpload)
+      .then(
+        (image) => live.current && onSave(image),
+        () => live.current && setUnreadable(true),
+      )
+      .finally(() => live.current && setEncoding(false))
   }
   return (
     <Modal
       opened
-      onClose={onCancel}
+      onClose={cancel}
       fullScreen={phone}
       size="lg"
       title={
@@ -210,7 +252,7 @@ export function PortraitEditor({
         <Stack>
           <Text role="alert">{t('portrait.unreadable')}</Text>
           <Group justify="flex-end">
-            <Button onClick={onCancel}>{t('panel.close')}</Button>
+            <Button onClick={cancel}>{t('panel.close')}</Button>
           </Group>
         </Stack>
       ) : (
@@ -289,10 +331,10 @@ export function PortraitEditor({
             </Text>
           )}
           <Group justify="flex-end">
-            <Button variant="subtle" onClick={onCancel}>
+            <Button variant="subtle" onClick={cancel}>
               {t('action.cancel')}
             </Button>
-            <Button onClick={save} loading={pending} disabled={!bitmap}>
+            <Button onClick={save} loading={pending || encoding} disabled={!bitmap}>
               {t('portrait.save')}
             </Button>
           </Group>

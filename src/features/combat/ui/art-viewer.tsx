@@ -103,9 +103,9 @@ export function ArtViewer({
       })}
       loading={showingOwn && own.isPending}
       unavailable={!src}
-      // Uploads are 512px squares; bundled art carries its own size.
-      width={showingOwn ? 512 : credit?.width}
-      height={showingOwn ? 512 : credit?.height}
+      // New uploads are 1024px squares (older ones 512; the viewer reads the real size on load).
+      width={showingOwn ? 1024 : credit?.width}
+      height={showingOwn ? 1024 : credit?.height}
       onError={setBroken}
       returnFocus={returnFocus}
       caption={caption}

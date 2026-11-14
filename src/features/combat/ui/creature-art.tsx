@@ -167,6 +167,8 @@ export function CreatureArtControl({
   const upload = useCreatureImageUpload(campaignId)
   const action = useCombatAction(campaignId)
   const [unreadable, setUnreadable] = useState(false)
+  // Preparing the 1024px picture takes a moment on phones: it reads as saving from the tap (RYT-099).
+  const [encoding, setEncoding] = useState(false)
   const [viewing, setViewingState] = useState(false)
   const [confirming, setConfirming] = useState(false)
   // What the last request did, so a failure names it (saving or removing).
@@ -185,7 +187,7 @@ export function CreatureArtControl({
     return () => reportViewing.current?.(false)
   }, [overlay])
   const failed = unreadable || upload.isError || action.isError
-  const pending = upload.isPending || action.isPending
+  const pending = upload.isPending || action.isPending || encoding
   const srd = 'srdId' in target
   const hasImage = Boolean(imagePath) || Boolean(art)
   const glyph = type ? typeGlyphs[type] : undefined
@@ -206,11 +208,14 @@ export function CreatureArtControl({
     action.reset()
     setLastOp('save')
     let image: Blob
+    setEncoding(true)
     try {
       image = await toSquareWebp(file)
     } catch {
       setUnreadable(true)
       return
+    } finally {
+      setEncoding(false)
     }
     // The promise, not mutate's callbacks: the first image turns the token into the plate, which can
     // mount this control again before they would run. Failures show through the mutation's state.

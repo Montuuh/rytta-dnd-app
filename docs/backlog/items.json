@@ -3272,6 +3272,36 @@
         "tests/e2e/character-sheet.spec.ts",
         "tests/e2e/inventory.spec.ts"
       ]
+    },
+    {
+      "id": "RYT-099",
+      "title": "Uploaded pictures stay sharp in the plates and the full-screen viewer",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-098"],
+      "sources": [
+        "User 2026-11-14: why do uploaded photos have such low resolution and quality?",
+        "User 2026-11-14: make the fix, commit and push."
+      ],
+      "scope": "Portraits and DM creature images are saved as 1024px squares and item pictures with a 1024px long side, drawn with high-quality smoothing and halving steps, encoded as WebP from quality 0.9 down to 0.75 within the 1 MB bucket limit and shrunk rather than blurred when still too heavy. Browsers without a WebP encoder upload JPEG, or PNG for item art. Earlier uploads keep their size until replaced.",
+      "acceptance": [
+        "A large photo uploaded as a portrait is stored as a 1024x1024 picture under 1 MB.",
+        "Creature and item pictures follow the same encoder; item art keeps transparency.",
+        "A browser without a WebP encoder can still upload portraits, creature and item pictures.",
+        "The portrait editor stays smooth while dragging and zooming.",
+        "Independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "character-sheet, bestiary, combat, campaign-items and inventory e2e at 390px and 820px",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-099/validation.md",
+        "src/shared/lib/image-encode.test.ts",
+        "tests/e2e/character-sheet.spec.ts"
+      ]
     }
   ]
 }

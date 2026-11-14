@@ -18,6 +18,13 @@ import { ItemIcon } from './item-icon'
 import { CharacterPortrait } from './portrait'
 import { PriceSyncDialog } from './price-sync'
 import { newRequestId } from '@/shared/lib/request-id'
+import {
+  canvasToUpload,
+  drawSmooth,
+  encodeWithin,
+  hasTransparency,
+  uploadSide,
+} from '@/shared/lib/image-encode'
 
 export type GiveOutcome = { given: string[]; failed: string[] }
 type PendingSync = {
@@ -35,18 +42,30 @@ async function toItemImage(file: File) {
     throw new Error('invalid')
   const bitmap = await createImageBitmap(file)
   try {
-    const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height))
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale))
-    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-    for (const quality of [0.85, 0.65, 0.45]) {
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/webp', quality),
-      )
-      if (blob?.type === 'image/webp' && blob.size <= 1_048_576) return blob
-    }
-    throw new Error('invalid')
+    const fit = Math.min(1, uploadSide / Math.max(bitmap.width, bitmap.height))
+    // See-through item art stays PNG where WebP cannot be encoded; opaque art goes JPEG (RYT-099).
+    const alpha = file.type !== 'image/jpeg' && hasTransparency(bitmap)
+    return await encodeWithin(
+      (scale) => {
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(bitmap.width * fit * scale))
+        canvas.height = Math.max(1, Math.round(bitmap.height * fit * scale))
+        drawSmooth(
+          canvas.getContext('2d')!,
+          bitmap,
+          0,
+          0,
+          bitmap.width,
+          bitmap.height,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        )
+        return canvas
+      },
+      (canvas, quality) => canvasToUpload(canvas, quality, alpha),
+    )
   } finally {
     bitmap.close()
   }

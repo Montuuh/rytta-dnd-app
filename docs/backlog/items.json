@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-13",
+  "updatedAt": "2026-11-14",
   "items": [
     {
       "id": "RYT-000",
@@ -3332,6 +3332,41 @@
         "docs/evidence/RYT-099/sheet-1440-whole.webp",
         "docs/evidence/RYT-099/party-1440-whole.webp",
         "docs/evidence/RYT-099/sheet-1440-parchment.webp"
+      ]
+    },
+    {
+      "id": "RYT-101",
+      "title": "Tabletop exploration, lighting and reliable map tools",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-059", "RYT-085"],
+      "sources": [
+        "User 2026-11-14: fix map ruler, doors and area steppers; overhaul lighting and fog with remembered exploration.",
+        "User 2026-11-14: only the DM moves tokens; Players activate lights and effects."
+      ],
+      "scope": "Repair pointer and area controls; shared party vision, persistent exploration and darkness, bounded door light spill, DM-configured token light and reveal actions with authorised Player activation.",
+      "acceptance": [
+        "Ruler works with drag, taps and keyboard; area steppers change five feet.",
+        "Doors toggle by pointer and keyboard and block sight/light when closed.",
+        "DM controls vision and lighting; explored cells remain known without light.",
+        "Only DM moves tokens; Players activate only permitted effects on their own active character.",
+        "Server filters unseen tokens and private geometry; PRE and production remain isolated.",
+        "390px and 820px ES/EN themes, keyboard and independent UI review pass."
+      ],
+      "validation": [
+        "npm run check",
+        "tabletop browser tests",
+        "database denial and visibility tests",
+        "PRE then production validation",
+        "independent UI review"
+      ],
+      "evidence": [
+        "docs/decisions/042-tabletop-visibility.md",
+        "docs/evidence/RYT-101/validation.md",
+        "docs/evidence/RYT-101/player-mobile-default-es.png",
+        "docs/evidence/RYT-101/settings-tablet-default-es.png",
+        "docs/evidence/RYT-101/party-mobile.png"
       ]
     }
   ]

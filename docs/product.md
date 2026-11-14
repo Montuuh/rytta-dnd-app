@@ -46,7 +46,8 @@ Quests, glossary and combat follow; atlas, album, stronghold and crafting are la
 
 ## Non-goals
 
-Remote-play VTT features (dynamic lighting, vision, line of sight, chat, player-moved tokens;
-ADR 032 builds a table-first map instead), IR touch hardware, 3D dice, autonomous DM and
+Remote-play chat, player-moved tokens, IR touch hardware, 3D dice, autonomous DM and
 subscriptions.
+The in-person table supports shared exploration and light; only the DM moves miniatures
+on the digital map ([ADR 042](decisions/042-tabletop-visibility.md)).
 No brainstorming item is implicitly promised for the first release.

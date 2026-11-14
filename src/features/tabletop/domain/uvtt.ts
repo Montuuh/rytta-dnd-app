@@ -6,7 +6,7 @@ import type { ItemPatch, Room } from './model'
 // The file carries the map picture (base64 PNG), the grid (squares and pixels per square), walls
 // as polylines, portals (doors and windows) and lights, all in squares. Rytta keeps the picture and
 // the grid, turns doors into door items, and splits the floor into reveal areas along the walls
-// so fog can be lifted room by room. Lights are already painted into the picture.
+// so fog can be lifted room by room. Light positions become editable sources.
 
 const num = z.number().finite()
 const point = z.object({ x: num, y: num })
@@ -37,7 +37,7 @@ export const uvttSchema = z.object({
     .optional()
     .default([]),
   lights: z
-    .array(z.object({ position: point }).passthrough())
+    .array(z.object({ position: point, range: num.nonnegative().optional() }).passthrough())
     .max(5000)
     .optional()
     .default([]),
@@ -96,6 +96,7 @@ export interface UvttLayout {
   doors: ItemPatch[]
   windows: number
   lights: number
+  lightSources: ItemPatch[]
 }
 
 /** The scene a Universal VTT file describes: grid, reveal areas from the walls, door items. */
@@ -216,6 +217,24 @@ export function uvttLayout(file: Uvtt): UvttLayout {
       data: { state: 'closed', ...(joins.length ? { rooms: joins } : {}) },
     })
   }
+  const lightSources: ItemPatch[] = file.lights
+    .filter(
+      (l) =>
+        l.position.x - ox >= 0 &&
+        l.position.y - oy >= 0 &&
+        l.position.x - ox < cols &&
+        l.position.y - oy < rows,
+    )
+    .map((l) => ({
+      kind: 'prop',
+      x: Number((l.position.x - ox - 0.5).toFixed(3)),
+      y: Number((l.position.y - oy - 0.5).toFixed(3)),
+      w: 1,
+      h: 1,
+      rotation: 0,
+      data: { prop: 'torch', light_radius: Math.min(24, (l.range ?? 8) / 2), light_on: true },
+    }))
+  if (doors.length + lightSources.length > 600) throw new Error('size')
   return {
     cols,
     rows,
@@ -224,7 +243,8 @@ export function uvttLayout(file: Uvtt): UvttLayout {
     dropped,
     doors: doors.slice(0, 600),
     windows: portals.filter((p) => !p.door).length,
-    lights: file.lights.length,
+    lights: lightSources.length,
+    lightSources,
   }
 }
 

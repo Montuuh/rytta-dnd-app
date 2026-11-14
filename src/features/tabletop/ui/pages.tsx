@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { PlayerEffects } from './visibility'
+import { useMemo, useRef, useState } from 'react'
 import { Button, Drawer, Switch } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -9,7 +10,7 @@ import { useCampaign } from '@/features/campaigns'
 import { combatStateQuery, useCombatRealtime } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
 import { tabletopQuery, useTabletopRealtime } from '../api'
-import { cellCenter, measurePath, type Point } from '../domain/geometry'
+import { cellCenter, clamp, measurePath, type Point } from '../domain/geometry'
 import { Board } from './board'
 import { TabletopEditor } from './editor'
 import { TabletopLibrary } from './library'
@@ -62,9 +63,11 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
   const combat = useQuery(combatStateQuery(userId, campaignId, null, false))
   const view = query.data
   const scene = view?.scene ?? null
+  const [cursor, setCursor] = useState<Point | null>(null)
   const [measuring, setMeasuring] = useState(false)
   const [points, setPoints] = useState<Point[]>([])
   const [dismissed, setDismissed] = useState<string | null>(null)
+  const origin = useRef<Point | null>(null)
   const [start, setStart] = useState<Point | null>(null)
   const [end, setEnd] = useState<Point | null>(null)
   const board = useBoardView(
@@ -72,14 +75,22 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
     {
       onStart: (p) => {
         if (!measuring) return false
-        setStart(cellCenter(p))
+        origin.current = cellCenter(p)
+        setStart(origin.current)
         return true
       },
       onMove: (p) => setEnd(cellCenter(p)),
+      onCancel: () => {
+        origin.current = null
+        setStart(null)
+        setEnd(null)
+      },
       onEnd: (p, moved) => {
         const at = cellCenter(p)
         setEnd(null)
-        setPoints((list) => (moved ? [start ?? at, at] : [...list, at]).slice(-16))
+        const from = origin.current ?? at
+        setPoints((list) => (moved ? [from, at] : [...list, at]).slice(-16))
+        origin.current = null
         setStart(null)
       },
     },
@@ -90,7 +101,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
     [combat.data],
   )
   const shown = end && start ? [start, end] : points
-  const route = measurePath(points)
+  const route = measurePath(shown)
   const card = view?.card && dismissed !== view.card.id ? view.card : null
   return (
     <div className="tt-library tt-player">
@@ -116,13 +127,20 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
               {t('tabletop.stale')}
             </p>
           )}
+          {(scene.visibility?.vision || scene.visibility?.lighting) && (
+            <PlayerEffects
+              campaignId={campaignId}
+              items={view.items}
+              lighting={!!scene.visibility.lighting}
+            />
+          )}
           <div className="tt-player-tools">
             <Switch
               label={t('tabletop.player.measure')}
               checked={measuring}
               onChange={(e) => setMeasuring(e.currentTarget.checked)}
             />
-            {points.length > 1 && (
+            {shown.length > 1 && (
               <span className="tt-readout-feet" aria-live="polite">
                 {t('tabletop.measure.feet', { count: route.feet })}
               </span>
@@ -137,7 +155,35 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             <div
               className={`tt-viewport ${measuring ? 'tool-measure' : 'tool-select'}`}
               {...board.bind}
-              role="img"
+              role={measuring ? 'application' : 'img'}
+              tabIndex={measuring ? 0 : undefined}
+              onFocus={() => {
+                if (measuring) setCursor((p) => p ?? cellCenter(board.center()))
+              }}
+              onKeyDown={(e) => {
+                if (!measuring) return
+                const at = cursor ?? cellCenter(board.center())
+                const dx = Number(e.key === 'ArrowRight') - Number(e.key === 'ArrowLeft'),
+                  dy = Number(e.key === 'ArrowDown') - Number(e.key === 'ArrowUp')
+                if (dx || dy) {
+                  const next: Point = [
+                    clamp(at[0] + dx, 0.5, scene.cols - 0.5),
+                    clamp(at[1] + dy, 0.5, scene.rows - 0.5),
+                  ]
+                  setCursor(next)
+                  board.reveal(next[0] - 0.5, next[1] - 0.5)
+                } else if (e.key === 'Enter' || e.key === ' ')
+                  setPoints((p) => [...p, at].slice(-16))
+                else if (e.key === 'Escape') {
+                  setMeasuring(false)
+                  setCursor(null)
+                  e.currentTarget
+                    .closest('.tt-player')
+                    ?.querySelector<HTMLInputElement>('.tt-player-tools input')
+                    ?.focus()
+                } else return
+                e.preventDefault()
+              }}
               aria-label={t('tabletop.player.board', { name: scene.name })}
             >
               <div
@@ -154,6 +200,17 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
                   overlay={
                     <>
                       {view.live.measure && <MeasureTape points={view.live.measure.points} />}
+                      {measuring && cursor && (
+                        <rect
+                          x={cursor[0] - 0.5}
+                          y={cursor[1] - 0.5}
+                          width={1}
+                          height={1}
+                          fill="none"
+                          stroke="var(--app-focus)"
+                          strokeWidth={0.07}
+                        />
+                      )}
                       <MeasureTape points={shown} />
                       <PingRipple ping={view.live.ping} />
                     </>

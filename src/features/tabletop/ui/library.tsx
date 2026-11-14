@@ -738,16 +738,13 @@ function UploadScene({
                     {t('tabletop.upload.uvttDropped', { count: picked.layout.dropped })}
                   </span>
                 )}
-                {picked.layout.windows + picked.layout.lights > 0 && (
+                {picked.layout.windows > 0 && (
                   <span className="tt-result-sub">
                     {t('tabletop.upload.uvttSkipped', {
                       list: new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(
                         [
                           picked.layout.windows
                             ? t('tabletop.upload.uvttWindows', { count: picked.layout.windows })
-                            : '',
-                          picked.layout.lights
-                            ? t('tabletop.upload.uvttLights', { count: picked.layout.lights })
                             : '',
                         ].filter(Boolean),
                       ),
@@ -850,7 +847,7 @@ function UploadScene({
                     ...(picked.layout
                       ? {
                           rooms: picked.layout.rooms,
-                          items: picked.layout.doors,
+                          items: [...picked.layout.doors, ...picked.layout.lightSources],
                           fog_enabled: picked.layout.rooms.length > 1,
                         }
                       : {}),

@@ -10,6 +10,7 @@ import { fromSetup, squareCss } from '../domain/calibration'
 import { Board } from './board'
 import { U } from './palette'
 import { TableRuler } from './calibration'
+import { TableMeasure } from './table-measure'
 import { MeasureTape, PingRipple, StoryPlate } from './overlays'
 
 /**
@@ -30,6 +31,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const [started, setStarted] = useState(false)
   const [muted, setMuted] = useState(false)
   const [ruler, setRuler] = useState(false)
+  const rulerButton = useRef<HTMLButtonElement>(null)
   // A shared measure fades from the table after ten minutes.
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -110,6 +112,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const cy = view?.live.view_y ?? (scene ? scene.rows / 2 : 0)
   const x = size.w / 2 - cx * U * z
   const y = size.h / 2 - cy * U * z
+  const worldTransform = `translate(${x}px, ${y}px) scale(${z})`
   const combatants = useMemo(
     () => new Map((combat.data?.combatants ?? []).map((c) => [c.id, c])),
     [combat.data],
@@ -150,7 +153,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       ) : (
         <div
           className="tt-table-world"
-          style={{ transform: `translate(${x}px, ${y}px) scale(${z})` }}
+          style={{ transform: worldTransform }}
         >
           <Board
             scene={scene}
@@ -165,6 +168,19 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
             }
           />
         </div>
+      )}
+      {ruler && scene && (
+        <TableMeasure
+          key={scene.id}
+          cols={scene.cols}
+          rows={scene.rows}
+          transform={worldTransform}
+          flipped={Boolean(calibration?.flip)}
+          onClose={() => {
+            setRuler(false)
+            rulerButton.current?.focus()
+          }}
+        />
       )}
       {view?.card && <StoryPlate card={view.card} fit />}
       {ruler && calibration && (
@@ -204,7 +220,8 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
               className="tt-status-button"
               onClick={() => setRuler((r) => !r)}
               aria-pressed={ruler}
-              disabled={!calibration}
+              ref={rulerButton}
+              disabled={!scene}
             >
               <Ruler size={14} aria-hidden="true" />
               {t('tabletop.table.ruler')}

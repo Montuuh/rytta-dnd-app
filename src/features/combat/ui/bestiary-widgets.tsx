@@ -1,4 +1,4 @@
-import { useId, type KeyboardEvent, type ReactNode, type Ref } from 'react'
+import { useId, useState, type KeyboardEvent, type ReactNode, type Ref } from 'react'
 import { ActionIcon, NumberInput } from '@mantine/core'
 import { Check, Minus, Plus, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -263,6 +263,8 @@ export function NumberDial({
   autoFocus,
   ariaLabel,
   className,
+  step: increment = 1,
+  commitOnBlur = false,
 }: {
   label: ReactNode
   /** Plain text for the stepper names when `label` is not a string. */
@@ -276,18 +278,35 @@ export function NumberDial({
   inputRef?: Ref<HTMLInputElement>
   autoFocus?: boolean
   className?: string
+  step?: number
+  /** Keep a typed value local until Enter or focus leaves the dial. Buttons commit immediately. */
+  commitOnBlur?: boolean
 }) {
   const { t } = useTranslation()
+  const [draft, setDraft] = useState<number | string | null>(null)
+  const displayed = draft ?? value
   const name = ariaLabel ?? (typeof label === 'string' ? label : '')
-  const current = typeof value === 'number' ? value : min
-  const step = (by: number) => onChange(Math.min(max, Math.max(min, current + by)))
-  return (
+  const current = typeof displayed === 'number' ? displayed : min
+  const bounded = (n: number) => Math.min(max, Math.max(min, n))
+  const commit = (next: number | string | null) => {
+    setDraft(null)
+    if (next === null || next === '' || !Number.isFinite(Number(next))) return
+    const number = bounded(Number(next))
+    if (number !== value) onChange(number)
+  }
+  const step = (by: number) => {
+    const next = bounded(current + by * increment)
+    if (commitOnBlur) commit(next)
+    else onChange(next)
+  }
+  const dial = (
     <NumberInput
       ref={inputRef}
       data-autofocus={autoFocus || undefined}
       className={`bst-dial ${className ?? ''}`}
       classNames={{ input: 'bst-dial-input', label: 'bst-dial-label' }}
       hideControls
+      step={increment}
       allowDecimal={false}
       min={min}
       max={max}
@@ -304,8 +323,18 @@ export function NumberDial({
       }
       aria-label={ariaLabel}
       description={description}
-      value={value}
-      onChange={onChange}
+      value={displayed}
+      onChange={commitOnBlur ? setDraft : onChange}
+      onKeyDown={
+        commitOnBlur
+          ? (event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                event.currentTarget.blur()
+              }
+            }
+          : undefined
+      }
       leftSectionWidth={48}
       rightSectionWidth={48}
       leftSectionPointerEvents="all"
@@ -329,6 +358,16 @@ export function NumberDial({
         </StepButton>
       }
     />
+  )
+  if (!commitOnBlur) return dial
+  return (
+    <div
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) commit(draft)
+      }}
+    >
+      {dial}
+    </div>
   )
 }
 

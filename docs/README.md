@@ -102,3 +102,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     packs and entries behind an endpoint, editors, public and private packs, rollout.
 51. [ADR 041: a party led by portraits, free characters, leaving a campaign and one image viewer](decisions/041-party-portraits-claim-leave.md)
     and [RYT-095–098 verification](evidence/RYT-097/validation.md).
+52. [ADR 042: shared exploration at the physical table](decisions/042-tabletop-visibility.md):
+    movement, player effects, light, doors and remembered terrain.

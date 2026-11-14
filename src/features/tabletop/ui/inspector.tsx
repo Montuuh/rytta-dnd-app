@@ -1,3 +1,4 @@
+import { LightFields } from './visibility'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button, Select, Switch, Textarea, TextInput } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
@@ -76,6 +77,14 @@ export function Inspector(props: InspectorProps) {
         {item.kind === 'note' && <NoteFields {...props} item={item} />}
         {item.kind === 'event' && <EventFields {...props} item={item} />}
         {item.kind === 'area' && <AreaFields {...props} item={item} />}
+        {(item.kind === 'token' || item.kind === 'prop') && (
+          <LightFields
+            item={item}
+            onPatch={props.onPatch}
+            busy={props.busy}
+            characterLinked={Boolean(item.character_id || props.combatant?.character_id)}
+          />
+        )}
         {(item.kind === 'token' || item.kind === 'prop' || item.kind === 'area') && (
           <Switch
             label={t('tabletop.inspector.hidden')}

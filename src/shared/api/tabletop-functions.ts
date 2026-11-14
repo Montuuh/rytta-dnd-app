@@ -4,6 +4,12 @@ import type { Json } from './database.generated'
 type Call<A> = { Args: A & { target_campaign: string }; Returns: Json }
 type Mutation<A> = Call<A & { request_id: string }>
 export type TabletopFunctions = {
+  set_tabletop_visibility: Mutation<{
+    target_scene: string
+    settings: Json
+    expected_revision: number
+  }>
+  activate_tabletop_effect: Mutation<{ target_item: string; effect: string }>
   get_tabletop: Call<{ target_scene: string | null; as_table: boolean }>
   list_tabletop_scenes: Call<object>
   get_tabletop_library: Call<object>

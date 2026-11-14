@@ -125,10 +125,12 @@ export function useTabletopAction(campaignId: string) {
       if (!known.length) return
       const key = [...tabletopScope(userId, campaignId), 'view']
       // Kept so a failed write puts the board back the way the server has it.
-      const previous = cache.getQueriesData<TabletopView>({ queryKey: key })
-      cache.setQueriesData<TabletopView>({ queryKey: key }, (view) =>
-        patchItems(view, action.sceneId, known),
-      )
+      const editors = {
+        queryKey: key,
+        predicate: (q: { queryKey: readonly unknown[] }) => q.queryKey.at(-1) === 'self',
+      }
+      const previous = cache.getQueriesData<TabletopView>(editors)
+      cache.setQueriesData<TabletopView>(editors, (view) => patchItems(view, action.sceneId, known))
       return { previous }
     },
     onError: (_error, _action, context) => {

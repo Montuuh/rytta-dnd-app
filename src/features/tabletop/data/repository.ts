@@ -16,6 +16,9 @@ import {
   type ItemPatch,
   type LivePatch,
   type SceneFields,
+  type Visibility,
+  type MapEffect,
+  visibilitySchema,
 } from '../domain/model'
 
 // ADR 032 adapter: RPCs, the private tabletop-media bucket and realtime on tabletop_live.
@@ -69,6 +72,13 @@ export async function loadLibrary(campaignId: string, signal: AbortSignal) {
 }
 
 export type TabletopAction =
+  | {
+      kind: 'visibility'
+      sceneId: string
+      settings: Partial<Pick<Visibility, 'vision' | 'lighting' | 'radius'>>
+      revision: number
+    }
+  | { kind: 'effect'; itemId: string; effect: MapEffect | 'off'; requestId: string }
   | { kind: 'saveScene'; sceneId: string | null; fields: SceneFields; revision: number | null }
   | { kind: 'deleteScene'; sceneId: string }
   | { kind: 'putItems'; sceneId: string; items: ItemPatch[] }
@@ -92,6 +102,28 @@ export async function changeTabletop(campaignId: string, action: TabletopAction)
   const target_campaign = uuid(campaignId)
   const request_id = crypto.randomUUID()
   switch (action.kind) {
+    case 'visibility': {
+      const result = await db.rpc('set_tabletop_visibility', {
+        target_campaign,
+        target_scene: uuid(action.sceneId),
+        settings: json(action.settings),
+        expected_revision: action.revision,
+        request_id,
+      })
+      if (result.error) fail(result.error.message)
+      return visibilitySchema.parse(result.data)
+    }
+    case 'effect': {
+      const result = await db.rpc('activate_tabletop_effect', {
+        target_campaign,
+        target_item: uuid(action.itemId),
+        effect: action.effect,
+        request_id: uuid(action.requestId),
+      })
+      if (result.error) fail(result.error.message)
+      return z.object({ ok: z.literal(true) }).parse(result.data)
+    }
+
     case 'saveScene': {
       const result = await db.rpc('save_tabletop_scene', {
         target_campaign,

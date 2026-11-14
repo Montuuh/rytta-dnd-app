@@ -17,6 +17,7 @@ import { Token, type Combatant } from '@/features/combat'
 import { useCampaign } from '@/features/campaigns'
 import { useCampaignPortraits } from '@/features/inventory'
 import { mediaQuery } from '../api'
+import { cellMaskPath } from '../domain/visibility'
 import { areaCells, areaPath, circlePath, stillHidden, stillRevealed } from '../domain/geometry'
 import {
   isPassage,
@@ -102,7 +103,10 @@ export const Board = memo(function Board(props: BoardProps) {
   const items = shown.map((item) =>
     props.drag && item.id === props.drag.id ? { ...item, x: props.drag.x, y: props.drag.y } : item,
   )
-  const below = items.filter((i) => i.kind === 'area' || i.kind === 'prop' || i.kind === 'door')
+  const below = [
+    ...items.filter((i) => i.kind === 'area' || i.kind === 'prop'),
+    ...items.filter((i) => i.kind === 'door'),
+  ]
   const art = usePropArt(painted, props.items)
   // Pictures of props without a line drawing are printed in ink on ink maps (RYT-068).
   const ink = `ink${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
@@ -204,7 +208,18 @@ export const Board = memo(function Board(props: BoardProps) {
           onActivate={props.onItemActivate}
         />
       ))}
-      {scene.fog_enabled && <FogLayer scene={scene} fog={scene.fog} opaque={mode !== 'dm'} />}
+      {(scene.fog_enabled || scene.visibility?.vision) && (
+        <FogLayer
+          scene={scene}
+          fog={scene.visibility?.vision ? { base: 'hidden', ops: [] } : scene.fog}
+          revealed={
+            scene.visibility?.vision || scene.visibility?.lighting ? scene.visibility.explored : []
+          }
+          opaque={mode !== 'dm'}
+        />
+      )}
+      {scene.visibility?.lighting && <LightingLayer scene={scene} opaque={mode !== 'dm'} />}
+
       <svg
         className="tt-layer tt-top"
         viewBox={`0 0 ${scene.cols} ${scene.rows}`}
@@ -215,6 +230,31 @@ export const Board = memo(function Board(props: BoardProps) {
         {/* Room keys sit above the fog so the DM reads them on any map. */}
         {mode === 'dm' && (
           <RoomNumbers scene={scene} items={props.items} passages={props.showPassages} />
+        )}
+        {mode === 'player' && scene.visibility?.lighting && (
+          <g className="tt-own-token-outlines" fill="none" pointerEvents="none">
+            {tokens
+              .filter((item) => item.controllable)
+              .map((item) => (
+                <g
+                  key={item.id}
+                  transform={`translate(${item.x + item.w / 2} ${item.y + item.h / 2})`}
+                >
+                  <ellipse
+                    rx={item.w * 0.46}
+                    ry={item.h * 0.46}
+                    stroke="#140f0b"
+                    strokeWidth={0.16}
+                  />
+                  <ellipse
+                    rx={item.w * 0.46}
+                    ry={item.h * 0.46}
+                    stroke="#f6c478"
+                    strokeWidth={0.085}
+                  />
+                </g>
+              ))}
+          </g>
         )}
         {pins.map((item) => (
           <PinShape
@@ -720,6 +760,12 @@ function DoorShape({
         className="tt-hit"
         x={-length / 2}
         y={-0.35}
+        style={{
+          x: `min(${-length / 2}px, calc(-0.344px / var(--tt-z, 1)))`,
+          y: `min(-0.35px, calc(-0.344px / var(--tt-z, 1)))`,
+          width: `max(${length}px, calc(0.688px / var(--tt-z, 1)))`,
+          height: `max(0.7px, calc(0.688px / var(--tt-z, 1)))`,
+        }}
         width={length}
         height={0.7}
         fill="transparent"
@@ -1093,9 +1139,11 @@ export function FogLayer({
   scene,
   fog,
   opaque,
+  revealed = [],
 }: {
   scene: Pick<Scene, 'cols' | 'rows'>
   fog: Fog
+  revealed?: readonly number[]
   opaque: boolean
 }) {
   const id = useId().replace(/:/g, '')
@@ -1154,6 +1202,7 @@ export function FogLayer({
                   ))}
                 </g>
               ))}
+            <path d={cellMaskPath(revealed, scene.cols, scene.rows)} fill="black" />
           </g>
         </mask>
         <pattern
@@ -1180,6 +1229,35 @@ export function FogLayer({
         height={scene.rows}
         fill={opaque ? `url(#${id}-fibre)` : `url(#${id}-hatch)`}
         mask={`url(#${id}-mask)`}
+      />
+    </svg>
+  )
+}
+
+function LightingLayer({ scene, opaque }: { scene: Scene; opaque: boolean }) {
+  const id = `light${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
+  const v = scene.visibility!
+  return (
+    <svg
+      className="tt-fog tt-lighting"
+      viewBox={`0 0 ${scene.cols} ${scene.rows}`}
+      width={scene.cols * U}
+      height={scene.rows * U}
+      aria-hidden="true"
+    >
+      <defs>
+        <mask id={id} maskUnits="userSpaceOnUse" x={0} y={0} width={scene.cols} height={scene.rows}>
+          <rect width={scene.cols} height={scene.rows} fill="white" />
+          <path d={cellMaskPath(v.lit, scene.cols, scene.rows)} fill="#777" />
+          <path d={cellMaskPath(v.bright, scene.cols, scene.rows)} fill="black" />
+        </mask>
+      </defs>
+      <rect
+        width={scene.cols}
+        height={scene.rows}
+        fill="#080a12"
+        opacity={opaque ? 0.82 : 0.35}
+        mask={`url(#${id})`}
       />
     </svg>
   )

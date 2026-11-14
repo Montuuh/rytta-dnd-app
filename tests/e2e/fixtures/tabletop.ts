@@ -163,6 +163,23 @@ export function tabletopServer(options: { visibleCombatant?: (id: string) => boo
     if (body.target_campaign && body.target_campaign !== campaignId) return { error: 'Forbidden' }
     if (method === 'get_tabletop')
       return view(actor, body.target_scene as string | null, Boolean(body.as_table))
+    if (method === 'activate_tabletop_effect') {
+      const item = items.find((i) => i.id === body.target_item && i.controllable)
+      if (
+        !item ||
+        (body.effect !== 'off' &&
+          !(item.data.map_actions as string[] | undefined)?.includes(body.effect as string))
+      )
+        return { error: 'Forbidden' }
+      const key = body.request_id as string
+      if (requests.has(key)) return requests.get(key)
+      if (body.effect !== 'reveal')
+        item.data = { ...item.data, light_on: body.effect !== 'off', light_radius: 4 }
+      bump()
+      const result = { ok: true }
+      requests.set(key, result)
+      return result
+    }
     if (!dm) return { error: 'Forbidden' }
     if (method === 'list_tabletop_scenes')
       return {
@@ -191,6 +208,25 @@ export function tabletopServer(options: { visibleCombatant?: (id: string) => boo
   }
   function mutate(method: string, body: Json): unknown {
     switch (method) {
+      case 'set_tabletop_visibility': {
+        const scene = scenes.find((s) => s.id === body.target_scene)!
+        if (scene.revision !== body.expected_revision) return { error: 'Stale revision' }
+        scene.visibility = {
+          vision: false,
+          lighting: false,
+          radius: 12,
+          explored: [],
+          visible: [],
+          lit: [],
+          bright: [],
+          ...((scene.visibility as Json) ?? {}),
+          ...(body.settings as Json),
+        }
+        scene.revision++
+        bump()
+        return scene.visibility
+      }
+
       case 'save_tabletop_scene': {
         const fields = { ...(body.fields as Json) }
         const initial = (fields.items as Json[] | undefined) ?? []
@@ -422,7 +458,7 @@ export function tabletopServer(options: { visibleCombatant?: (id: string) => boo
         })
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(get_tabletop|list_tabletop_scenes|get_tabletop_library|save_tabletop_scene|delete_tabletop_scene|put_tabletop_items|delete_tabletop_items|change_tabletop_fog|set_tabletop_live|save_tabletop_card|delete_tabletop_card|add_tabletop_track|delete_tabletop_track|fire_tabletop_event)$/,
+        /\/rest\/v1\/rpc\/(set_tabletop_visibility|activate_tabletop_effect|get_tabletop|list_tabletop_scenes|get_tabletop_library|save_tabletop_scene|delete_tabletop_scene|put_tabletop_items|delete_tabletop_items|change_tabletop_fog|set_tabletop_live|save_tabletop_card|delete_tabletop_card|add_tabletop_track|delete_tabletop_track|fire_tabletop_event)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

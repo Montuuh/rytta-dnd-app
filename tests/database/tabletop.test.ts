@@ -603,3 +603,206 @@ describe('RYT-055 tabletop', () => {
     expect(constraint.def).toMatch(/tabletop/)
   })
 })
+
+describe('RYT-101 visibility and Player effects', () => {
+  for (const schema of ['public', 'pre'])
+    it(`${schema}: permission boundaries, doors, remembered exploration and light`, async () => {
+      const a = api(schema)
+      const { c, arin } = await setup(schema)
+      await modules(c, ['party', 'tabletop'], schema)
+      const scene = await a.save(
+        c,
+        null,
+        {
+          name: 'Two rooms',
+          cols: 16,
+          rows: 8,
+          fog_enabled: true,
+          rooms: [
+            { id: 'west', rects: [[0, 0, 6, 8]] },
+            { id: 'east', rects: [[7, 0, 9, 8]] },
+          ],
+        },
+        null,
+      )
+      const [token, door, enemy] = await a.put(c, scene.id, [
+        {
+          kind: 'token',
+          character_id: arin,
+          x: 4,
+          y: 3,
+          label: 'Arin',
+          data: { map_actions: ['torch', 'light', 'reveal'] },
+        },
+        { kind: 'door', x: 6.5, y: 3.5, w: 1, h: 0.25, rotation: 90, data: { state: 'closed' } },
+        { kind: 'token', x: 8, y: 3, label: 'Unseen enemy', data: {} },
+      ])
+      await a.live(c, { scene_id: scene.id })
+      const configure = (settings: Json, revision: number) =>
+        res(`select ${schema}.set_tabletop_visibility($1,$2,$3,$4,$5) result`, [
+          c,
+          scene.id,
+          JSON.stringify(settings),
+          revision,
+          randomUUID(),
+        ])
+      const effect = (who: string, name: string, key = randomUUID()) =>
+        res(`select ${schema}.activate_tabletop_effect($1,$2,$3,$4) result`, [c, who, name, key])
+      await configure({ vision: true, lighting: true, radius: 12 }, 0)
+      await asUser(player)
+      let view = await a.view(c, null, true)
+      expect((view.scene!.visibility as { explored: number[] }).explored).toContain(3 * 16 + 4)
+      expect(view.items.map((i) => i.id)).not.toContain(enemy!.id)
+      expect(view.scene).not.toHaveProperty('rooms')
+      await expect(configure({ vision: false }, 1)).rejects.toThrow(/Forbidden/)
+      await expect(a.put(c, scene.id, [{ id: token!.id, x: 9 }])).rejects.toThrow(/Forbidden/)
+      await expect(effect(enemy!.id, 'torch')).rejects.toThrow(/Forbidden/)
+      await expect(effect(token!.id, 'arbitrary')).rejects.toThrow(/Forbidden/)
+      const key = randomUUID()
+      expect(await effect(token!.id, 'torch', key)).toEqual({ ok: true })
+      expect(await effect(token!.id, 'torch', key)).toEqual({ ok: true })
+      await expect(effect(token!.id, 'light', key)).rejects.toThrow(/mismatch/)
+      view = await a.view(c, null, true)
+      type Mask = { explored: number[]; lit: number[]; visible: number[] }
+      const mask = () => view.scene!.visibility as Mask
+      expect(mask().lit).toContain(3 * 16 + 5)
+      expect(mask().lit).not.toContain(3 * 16 + 8)
+      const known = [...mask().explored]
+      await asUser(dm)
+      await db.query(`select ${schema}.set_character_absent($1,$2,true)`, [c, arin])
+      await asUser(player)
+      view = await a.view(c, null, true)
+      expect(mask().lit).toEqual([])
+      expect(mask().explored).toEqual(expect.arrayContaining(known))
+      await expect(effect(token!.id, 'light')).rejects.toThrow(/Forbidden/)
+      await asUser(dm)
+      await db.query(`select ${schema}.set_character_absent($1,$2,false)`, [c, arin])
+      await asUser(player)
+      view = await a.view(c, null, true)
+      expect(mask().lit).toContain(3 * 16 + 5)
+      await effect(token!.id, 'off')
+      view = await a.view(c, null, true)
+      expect(mask().lit).toEqual([])
+      expect(mask().explored).toEqual(expect.arrayContaining(known))
+      await asUser(dm)
+      await a.put(c, scene.id, [{ id: door!.id, data: { state: 'open' } }])
+      await asUser(player)
+      await effect(token!.id, 'light')
+      view = await a.view(c, null, true)
+      expect(mask().lit).toContain(3 * 16 + 8)
+      expect(mask().lit).not.toContain(3 * 16 + 10)
+      expect(mask().visible).not.toContain(3 * 16 + 10)
+      expect(view.items.map((i) => i.id)).toContain(enemy!.id)
+      await effect(token!.id, 'reveal')
+      view = await a.view(c, null, true)
+      expect(mask().explored).toContain(3 * 16 + 10)
+      await asUser(dm)
+      await a.put(c, scene.id, [{ id: door!.id, data: { state: 'closed' } }])
+      await asUser(player)
+      view = await a.view(c, null, true)
+      expect(mask().explored).toContain(3 * 16 + 10)
+      expect(mask().visible).not.toContain(3 * 16 + 8)
+      expect(view.items.map((i) => i.id)).not.toContain(enemy!.id)
+      await asUser(dm)
+      await a.put(c, scene.id, [{ id: token!.id, data: { map_actions: [] } }])
+      await asUser(player)
+      await expect(effect(token!.id, 'torch')).rejects.toThrow(/Forbidden/)
+      for (const who of [outsider, otherDm]) {
+        await asUser(who)
+        await expect(effect(token!.id, 'torch')).rejects.toThrow(/Forbidden/)
+        await expect(configure({ vision: false }, 1)).rejects.toThrow(/Forbidden/)
+      }
+      await asAnon()
+      await expect(effect(token!.id, 'torch')).rejects.toThrow(/permission denied/)
+      await expect(configure({ vision: false }, 1)).rejects.toThrow(/permission denied/)
+      await asUser(dm)
+      await expect(configure({ radius: 1.5 }, 1)).rejects.toThrow(/Invalid/)
+      await expect(configure({ vision: false }, 0)).rejects.toThrow(/Stale/)
+    })
+})
+
+it('security probe: unseen light masks and stale character vision', async () => {
+  const { c, arin } = await setup()
+  await modules(c, ['party', 'tabletop'])
+  const scene = await pub.save(
+    c,
+    null,
+    {
+      name: 'Probe',
+      cols: 24,
+      rows: 12,
+      fog_enabled: true,
+      rooms: [
+        { id: 'west', rects: [[0, 0, 8, 12]] },
+        { id: 'east', rects: [[9, 0, 15, 12]] },
+      ],
+    },
+    null,
+  )
+  const [, enemy, torch] = await pub.put(c, scene.id, [
+    { kind: 'token', character_id: arin, x: 3, y: 3, data: { map_actions: ['torch'] } },
+    { kind: 'token', x: 4, y: 3, label: 'Enemy', data: {} },
+    { kind: 'prop', x: 18, y: 3, data: { prop: 'torch' } },
+  ])
+  await pub.live(c, { scene_id: scene.id })
+  await db.query('select public.set_tabletop_visibility($1,$2,$3,$4,$5)', [
+    c,
+    scene.id,
+    JSON.stringify({ vision: true, lighting: false, radius: 12 }),
+    0,
+    randomUUID(),
+  ])
+  await asUser(player)
+  let view = await pub.view(c, null, true)
+  expect(view.items.some((i) => i.id === enemy!.id)).toBe(true)
+  await asUser(dm)
+  await db.query('select public.set_character_absent($1,$2,true)', [c, arin])
+  await asUser(player)
+  view = await pub.view(c, null, true)
+  expect
+    .soft(
+      view.items.some((i) => i.id === enemy!.id),
+      'A now-absent character must not continue providing vision',
+    )
+    .toBe(false)
+  await asUser(dm)
+  await db.query('select public.set_character_absent($1,$2,false)', [c, arin])
+  await db.query('select public.set_tabletop_visibility($1,$2,$3,$4,$5)', [
+    c,
+    scene.id,
+    JSON.stringify({ vision: true, lighting: true, radius: 12 }),
+    1,
+    randomUUID(),
+  ])
+  await asUser(player)
+  view = await pub.view(c, null, true)
+  const vis = view.scene!.visibility as { lit: number[]; explored: number[] }
+  expect(vis.explored.includes(3 * 24 + 18)).toBe(false)
+  expect(view.items.some((i) => i.id === torch!.id)).toBe(false)
+  expect
+    .soft(vis.lit.includes(3 * 24 + 18), 'Unseen lamp footprint must not reach Player JSON')
+    .toBe(false)
+  await asUser(dm)
+  await db.query('select public.set_tabletop_visibility($1,$2,$3,$4,$5)', [
+    c,
+    scene.id,
+    JSON.stringify({ vision: false, lighting: false }),
+    2,
+    randomUUID(),
+  ])
+  await db.query('select public.set_tabletop_visibility($1,$2,$3,$4,$5)', [
+    c,
+    scene.id,
+    JSON.stringify({ vision: true, lighting: true }),
+    3,
+    randomUUID(),
+  ])
+  await asUser(player)
+  view = await pub.view(c, null, true)
+  expect
+    .soft(
+      (view.scene!.visibility as { explored: number[] }).explored.includes(3 * 24 + 18),
+      'Disabling and restoring visibility must not explore a distant unseen room',
+    )
+    .toBe(false)
+})

@@ -2515,3 +2515,62 @@ html.tt-table-mode body {
     display: none;
   }
 }
+
+.tt-visibility-settings {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+.tt-visibility-settings .mantine-Checkbox-body {
+  min-height: 44px;
+  align-items: center;
+}
+.tt-player-effects {
+  flex-shrink: 0;
+  max-height: 28dvh;
+  overflow-y: auto;
+}
+.tt-effect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.tt-player-effects .tt-fieldset {
+  margin: 0 0 0.5rem;
+}
+
+.tt-table-measure {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+.tt-table-distance {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 5;
+  padding: 0.35em 0.65em;
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: clamp(1.25rem, calc(var(--tt-sq, 40px) * 0.45), 2rem);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.tt-ruler-wrap {
+  pointer-events: none;
+}
+
+.tt-visibility-settings .mantine-Switch-label,
+.tt-player-tools .mantine-Switch-label,
+.tt-visibility-settings .mantine-Checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.tt-visibility-settings .mantine-Switch-body,
+.tt-player-tools .mantine-Switch-body {
+  align-items: center;
+}

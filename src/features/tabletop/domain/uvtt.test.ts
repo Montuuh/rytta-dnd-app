@@ -65,6 +65,14 @@ describe('RYT-065 Universal VTT import', () => {
     const layout = uvttLayout(parseUvtt(JSON.stringify(sample)))
     expect(layout).toMatchObject({ cols: 10, rows: 6, pixelsPerSquare: 72, windows: 1, lights: 1 })
     // Outside, room A and room B (the pillar's inside is too small to be an area).
+    expect(layout.lightSources).toEqual([
+      expect.objectContaining({
+        kind: 'prop',
+        x: 1.5,
+        y: 1.5,
+        data: { prop: 'torch', light_radius: 2, light_on: true },
+      }),
+    ])
     expect(layout.rooms).toHaveLength(3)
     const areaOf = (x: number, y: number) =>
       layout.rooms.find((r) =>

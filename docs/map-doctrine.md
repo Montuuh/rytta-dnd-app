@@ -76,7 +76,9 @@ one **reward off the main path**.
 
 - **One reveal area per part.** Each room, passage, cavern or clearing should be revealable on
   its own. Rytta's generator stores these areas. On an uploaded map, use the room or box fog tools.
-- **Doors sit on the line between two areas**, so opening one reveals what lies beyond.
+- **Doors sit on the line between two areas.** In manual fog mode, opening a linked
+  door can uncover the next area. With dynamic vision or lighting, opening it lets
+  sight and limited light pass; it does not reveal the whole room.
 - **Events go on thresholds.** An ambush event can reveal the room and its hidden creatures at once.
 
 ## 7. Outdoors
@@ -115,7 +117,7 @@ private to the campaign. Rytta never bundles them.
 | Purpose                  | Furniture by room purpose (store, library, barracks, shrine, tombs), against the walls, flanking pairs                   |
 | Chokepoints and sizes    | Rooms from a wish list (large, ordinary, small); passages one square or two                                              |
 | Secrets out of the image | Secret doors are drawn as wall; the door is a hidden item; the passage square behind one is in no reveal area            |
-| Reveal areas             | Rooms, passages, caverns and clearings are fog areas; doors reveal both sides                                            |
+| Reveal areas             | Rooms, passages, caverns and clearings are fog areas; linked doors can reveal both sides in manual mode                  |
 | Notes                    | DM notes for the entrance, the goal, treasure, places and, optionally, traps                                             |
 | Readable                 | One traced wall line, a light band and hatching outside, low-contrast floor stones                                       |
 | Outdoors                 | Clearings with a purpose on a trail, a stream with a bridge, trees spaced by dart throwing                               |

@@ -115,6 +115,23 @@ export const recipeSchema = z
   .passthrough()
 export type Recipe = z.infer<typeof recipeSchema>
 
+export const mapEffects = ['torch', 'light', 'reveal'] as const
+export type MapEffect = (typeof mapEffects)[number]
+export const visibilitySchema = z.object({
+  vision: z.boolean(),
+  lighting: z.boolean(),
+  radius: z.number().int().min(1).max(24),
+  explored: z.array(z.number().int().nonnegative()),
+  visible: z.array(z.number().int().nonnegative()),
+  lit: z.array(z.number().int().nonnegative()),
+  bright: z.array(z.number().int().nonnegative()),
+})
+export type Visibility = z.infer<typeof visibilitySchema>
+const lightFields = {
+  light_radius: num.min(0).max(24).optional(),
+  light_on: z.boolean().optional(),
+}
+
 export const sceneSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1).max(80),
@@ -131,6 +148,7 @@ export const sceneSchema = z.object({
   grid_visible: z.boolean(),
   fog_enabled: z.boolean(),
   fog: fogSchema,
+  visibility: visibilitySchema.optional(),
   revision: z.number().int(),
   updated_at: z.string(),
   /** DM only. */
@@ -142,12 +160,18 @@ export const sceneSchema = z.object({
 export type Scene = z.infer<typeof sceneSchema>
 
 const tokenData = z.object({
+  ...lightFields,
+  map_actions: z.array(z.enum(mapEffects)).optional(),
   color: z.enum(tokenColors).optional(),
   size: z.enum(creatureSizes).optional(),
   srd_id: z.string().max(80).optional(),
   shape: z.enum(['round', 'square', 'hex']).optional(),
 })
-const propData = z.object({ prop: z.string().max(40), tint: z.string().max(20).optional() })
+const propData = z.object({
+  ...lightFields,
+  prop: z.string().max(40),
+  tint: z.string().max(20).optional(),
+})
 const doorData = z.object({
   state: z.enum(doorStates),
   secret: z.boolean().optional(),
@@ -173,6 +197,7 @@ export type AreaData = z.infer<typeof areaData>
 
 const itemBase = {
   id: z.uuid(),
+  controllable: z.boolean().optional(),
   x: num,
   y: num,
   w: num,

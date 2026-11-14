@@ -264,6 +264,7 @@ export function AreaOptions({
               : 'tabletop.area.length',
         )}
         value={value.size}
+        step={5}
         min={5}
         max={500}
         onChange={(size) =>
@@ -278,6 +279,7 @@ export function AreaOptions({
           className="tt-dial"
           label={t('tabletop.area.width')}
           value={value.width}
+          step={5}
           min={5}
           max={100}
           onChange={(width) =>

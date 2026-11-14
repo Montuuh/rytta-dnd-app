@@ -261,6 +261,7 @@ function EditorBody({
   const [engine] = useState(() => new TableAudio())
   const pressed = useRef<Item | null>(null)
   const tapped = useRef<Item | null>(null)
+  const measureOrigin = useRef<Point | null>(null)
   const [measureStart, setMeasureStart] = useState<Point | null>(null)
   const byId = useMemo(() => new Map(combatants.map((c) => [c.id, c])), [combatants])
   const selected = items.find((i) => i.id === selectedId) ?? null
@@ -547,6 +548,8 @@ function EditorBody({
   const placeAt = (p: Point) => {
     const [cx, cy] = [Math.floor(p[0]), Math.floor(p[1])]
     if (tool === 'door') {
+      const door = itemAt(p)
+      if (door?.kind === 'door') return activate(door)
       const edge = nearestEdge(p)
       put(
         [
@@ -669,6 +672,10 @@ function EditorBody({
           aimProp([p[0], p[1] - lift.current])
           return true
         }
+        if (tool === 'door' && item?.kind === 'door') {
+          tapped.current = item
+          return true
+        }
         if (tool === 'select') {
           // A waiting move takes the next tap, wherever it lands.
           if (moving) return true
@@ -688,7 +695,8 @@ function EditorBody({
           return true
         }
         if (tool === 'measure') {
-          setMeasureStart(snap ? cellCenter(p) : p)
+          measureOrigin.current = snap ? cellCenter(p) : p
+          setMeasureStart(measureOrigin.current)
           return true
         }
         if (tool === 'area') {
@@ -777,10 +785,17 @@ function EditorBody({
         }
         if (tool === 'measure') {
           const at = snap ? cellCenter(p) : p
-          const start = measureStart ?? at
+          const start = measureOrigin.current ?? at
+          measureOrigin.current = null
           setMeasureStart(null)
           setMeasureEnd(null)
           addRoute(start, at, moved)
+          return
+        }
+        if (tool === 'door' && tapped.current?.kind === 'door') {
+          const door = tapped.current
+          tapped.current = null
+          if (!moved) activate(door)
           return
         }
         if (tool === 'area') return
@@ -821,6 +836,8 @@ function EditorBody({
         setDrag(null)
         setStroke(null)
         setBox(null)
+        measureOrigin.current = null
+        setMeasureStart(null)
         setMeasureEnd(null)
       },
     },
@@ -832,13 +849,16 @@ function EditorBody({
       const next =
         item.data.state === 'open' ? 'closed' : item.data.state === 'locked' ? 'locked' : 'open'
       if (next === item.data.state) {
-        if (!phone) setSelectedId(item.id)
+        setSelectedId(item.id)
         return say(t('tabletop.door.isLocked'))
       }
       // Opening a door reveals the rooms it joins when the scene has fog: one action, in order,
       // so a door that fails to open reveals nothing.
       const reveal: TabletopAction[] =
-        next === 'open' && scene.fog_enabled
+        next === 'open' &&
+        scene.fog_enabled &&
+        !scene.visibility?.vision &&
+        !scene.visibility?.lighting
           ? (item.data.rooms ?? []).map((room) => ({
               kind: 'fog' as const,
               sceneId: scene.id,
@@ -1260,7 +1280,7 @@ function EditorBody({
       case 'measure':
         return (
           <MeasureReadout
-            points={measure}
+            points={measurePoints}
             snap={snap}
             onSnap={setSnap}
             shared={share}

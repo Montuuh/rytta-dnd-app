@@ -1,3 +1,4 @@
+import { VisibilitySettings } from './visibility'
 import { useMemo, useState } from 'react'
 import { Button, FileButton, Select, Slider, Switch, Textarea, TextInput } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { monsterIndexQuery } from '@/features/bestiary'
+import { characterRosterQuery } from '@/features/characters'
 import {
   combatStateQuery,
   encountersQuery,
@@ -108,6 +110,7 @@ export function TokensPanel({
   const { state } = useAuth()
   const userId = state.user!.id
   const encounters = useQuery(encountersQuery(userId, campaignId))
+  const roster = useQuery(characterRosterQuery(userId, campaignId))
   const list = (encounters.data ?? []).filter((e) => e.status !== 'ended')
   const live = list.find((e) => e.status === 'active' || e.status === 'initiative')
   const [chosen, setChosen] = useState<string | null>(null)
@@ -123,6 +126,13 @@ export function TokensPanel({
   )
   const placed = new Set(items.filter((i) => i.combatant_id).map((i) => i.combatant_id))
   const combatants = (fight.data?.combatants ?? []).filter((c) => c.kind !== 'lair')
+  const party = (roster.data ?? []).filter((c) => c.is_active && !c.archived_at && !c.absent)
+  const placedCharacters = new Set([
+    ...items.filter((i) => i.kind === 'token').map((i) => i.character_id),
+    ...combatants.filter((c) => placed.has(c.id)).map((c) => c.character_id),
+  ])
+  const onMap = (c: Combatant) =>
+    placed.has(c.id) || (!!c.character_id && placedCharacters.has(c.character_id))
   const tokenFor = (c: Combatant): ItemPatch => {
     const size = (c.srd_id ? sizes.get(c.srd_id) : undefined) ?? 'medium'
     const squares = sizeSquares[size]
@@ -133,16 +143,53 @@ export function TokensPanel({
       label: c.name,
       hidden: Boolean(c.hidden),
       combatant_id: c.id,
+      ...(c.character_id ? { character_id: c.character_id } : {}),
       data: { size, ...(c.srd_id ? { srd_id: c.srd_id } : {}) },
     }
   }
   const unplacedEnemies = combatants.filter((c) => c.side === 'enemy' && !placed.has(c.id))
-  const unplacedParty = combatants.filter((c) => c.side !== 'enemy' && !placed.has(c.id))
+  const unplacedParty = combatants.filter((c) => c.side !== 'enemy' && !onMap(c))
   const [name, setName] = useState('')
   const [color, setColor] = useState<TokenColor>('crimson')
   const [size, setSize] = useState<CreatureSize>('medium')
   return (
     <div className="tt-panel-body">
+      {party.length > 0 && (
+        <section className="tt-section" aria-labelledby="tt-party">
+          <h3 id="tt-party" className="tt-section-title">
+            {t('tabletop.tokens.party')}
+          </h3>
+          <ul className="tt-list">
+            {party.map((character) => (
+              <li key={character.id} className="tt-list-row">
+                <span className="tt-list-name">{character.name}</span>
+                {placedCharacters.has(character.id) ? (
+                  <span className="tt-placed">{t('tabletop.tokens.onMap')}</span>
+                ) : (
+                  <Button
+                    variant="subtle"
+                    aria-label={t('tabletop.tokens.placeOne', { name: character.name })}
+                    onClick={() =>
+                      onPlace([
+                        {
+                          kind: 'token',
+                          character_id: character.id,
+                          label: character.name.slice(0, 80),
+                          w: 1,
+                          h: 1,
+                          data: { size: 'medium' },
+                        },
+                      ])
+                    }
+                  >
+                    {t('tabletop.tokens.place')}
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section className="tt-section" aria-labelledby="tt-fight">
         <h3 id="tt-fight" className="tt-section-title">
           {t('tabletop.tokens.fight')}
@@ -201,7 +248,7 @@ export function TokensPanel({
                       {c.hidden ? ` · ${t('tabletop.token.hidden')}` : ''}
                     </span>
                   </span>
-                  {placed.has(c.id) ? (
+                  {onMap(c) ? (
                     <span className="tt-placed">{t('tabletop.tokens.onMap')}</span>
                   ) : (
                     <Button
@@ -786,6 +833,7 @@ export function ScenePanel({
   )
   return (
     <div className="tt-panel-body">
+      <VisibilitySettings campaignId={campaignId} scene={scene} />
       <TextInput
         label={t('tabletop.scene.name')}
         value={name}

@@ -5,6 +5,9 @@ VTT, battle-map renderer" ([product](../product.md)). Builds on ADR 024 (combat)
 art), ADR 028 (bestiary) and ADR 030 (bestiary art). Design analysis:
 [tabletop design](../tabletop-design.md).
 
+[ADR 042](042-tabletop-visibility.md) supersedes the original exclusions for shared
+vision, lighting and imported light sources. Manual fog remains available.
+
 ## Context
 
 The user asked for a tabletop in Rytta: a map generator (random or from an upload) whose grid

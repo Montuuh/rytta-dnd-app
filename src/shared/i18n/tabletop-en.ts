@@ -1,5 +1,24 @@
 // ADR 032 tabletop. Units are joined to their numbers by a no-break space so "35 ft" never splits.
 export const tabletopEn = {
+  'tabletop.visibility.title': 'Visibility and light',
+  'tabletop.visibility.vision': 'Party vision',
+  'tabletop.visibility.lighting': 'Lighting',
+  'tabletop.visibility.radius': 'Sight range (feet)',
+  'tabletop.visibility.help':
+    'Place party tokens to explore. Visited ground is remembered; without light it stays dark.',
+  'tabletop.visibility.noWalls':
+    'This map has no defined walls: light is limited by radius and doors.',
+  'tabletop.visibility.source': 'Light and effects',
+  'tabletop.visibility.lit': 'Light on',
+  'tabletop.visibility.lightRadius': 'Bright light radius (feet)',
+  'tabletop.visibility.allow': 'Actions the Player can use',
+  'tabletop.visibility.torch': 'Light torch',
+  'tabletop.visibility.light': 'Cast Light',
+  'tabletop.visibility.reveal': 'Reveal surroundings (30 feet)',
+  'tabletop.visibility.off': 'Extinguish light',
+  'tabletop.visibility.resources': 'Spend uses and resources on the sheet or in inventory.',
+  'tabletop.visibility.applied': 'Effect applied to the map.',
+
   'module.tabletop': 'Tabletop',
   'summary.tabletop': 'The battle map on the table screen, with fog, doors and measuring.',
   'tabletop.title': 'Tabletop',
@@ -75,6 +94,7 @@ export const tabletopEn = {
   'tabletop.frame.here': 'Centre the table here',
   'tabletop.frame.hereShort': 'Centre table',
   'tabletop.measure.hint': 'Drag across the map, or tap one square after another.',
+  'tabletop.measure.keyboard': 'Use the arrow keys to move and Enter to mark a point. Delete clears the route and Escape closes the ruler.',
   'tabletop.measure.feet_one': '{{count}} ft',
   'tabletop.measure.feet_other': '{{count}} ft',
   'tabletop.measure.feetShort_one': '{{count}} ft',
@@ -192,6 +212,7 @@ export const tabletopEn = {
   'tabletop.color.slate': 'Slate',
   'tabletop.color.ivory': 'Ivory',
   'tabletop.color.ochre': 'Ochre',
+  'tabletop.tokens.party': 'Party characters',
   'tabletop.tokens.fight': 'From combat',
   'tabletop.tokens.noFight': 'Prepare an encounter in Combat to place its creatures here.',
   'tabletop.tokens.encounter': 'Encounter',

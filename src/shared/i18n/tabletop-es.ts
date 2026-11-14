@@ -2,6 +2,25 @@ import type { tabletopEn } from './tabletop-en'
 
 // ADR 032 mesa de juego. Las unidades van unidas a su cifra con un espacio duro («35 pies»).
 export const tabletopEs = {
+  'tabletop.visibility.title': 'Visibilidad y luz',
+  'tabletop.visibility.vision': 'Visión del grupo',
+  'tabletop.visibility.lighting': 'Iluminación',
+  'tabletop.visibility.radius': 'Alcance de visión (pies)',
+  'tabletop.visibility.help':
+    'Coloca las fichas del grupo para explorar. Lo visitado se recuerda; sin luz queda oscuro.',
+  'tabletop.visibility.noWalls':
+    'Este mapa no tiene paredes definidas: la luz se limita por radio y puertas.',
+  'tabletop.visibility.source': 'Luz y efectos',
+  'tabletop.visibility.lit': 'Luz encendida',
+  'tabletop.visibility.lightRadius': 'Radio de luz intensa (pies)',
+  'tabletop.visibility.allow': 'Acciones que puede usar el jugador',
+  'tabletop.visibility.torch': 'Encender antorcha',
+  'tabletop.visibility.light': 'Lanzar Luz',
+  'tabletop.visibility.reveal': 'Revelar entorno (30 pies)',
+  'tabletop.visibility.off': 'Apagar luz',
+  'tabletop.visibility.resources': 'Descuenta los usos en la ficha o el inventario.',
+  'tabletop.visibility.applied': 'Efecto aplicado al mapa.',
+
   'module.tabletop': 'Mesa',
   'summary.tabletop':
     'El mapa de batalla en la pantalla de la mesa, con niebla, puertas y medición.',
@@ -79,6 +98,7 @@ export const tabletopEs = {
   'tabletop.frame.here': 'Centrar la mesa aquí',
   'tabletop.frame.hereShort': 'Centrar mesa',
   'tabletop.measure.hint': 'Arrastra por el mapa, o toca una casilla tras otra.',
+  'tabletop.measure.keyboard': 'Usa las flechas para moverte e Intro para marcar un punto. Supr borra la ruta y Esc cierra la regla.',
   'tabletop.measure.feet_one': '{{count}} pie',
   'tabletop.measure.feet_other': '{{count}} pies',
   'tabletop.measure.feetShort_one': '{{count}} pie',
@@ -196,6 +216,7 @@ export const tabletopEs = {
   'tabletop.color.slate': 'Pizarra',
   'tabletop.color.ivory': 'Marfil',
   'tabletop.color.ochre': 'Ocre',
+  'tabletop.tokens.party': 'Personajes del grupo',
   'tabletop.tokens.fight': 'Del combate',
   'tabletop.tokens.noFight': 'Prepara un encuentro en Combate para colocar aquí sus criaturas.',
   'tabletop.tokens.encounter': 'Encuentro',

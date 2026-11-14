@@ -1,6 +1,6 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { campaignId, identityFixture, playerId } from './fixtures/identity.ts'
+import { campaignId, characterId, identityFixture, playerId } from './fixtures/identity.ts'
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
@@ -606,6 +606,18 @@ test('RYT-055 the table screen shows only what the table may see', async ({ page
   await expect(table.locator('.tt-door')).toHaveCount(0)
   await expect(table.locator('.tt-fog.is-opaque')).toHaveCount(1)
   await expect(page.getByRole('status')).toContainText('Puente de Vado')
+  const ruler = page.getByRole('button', { name: 'Regla', exact: true })
+  await ruler.click()
+  const surface = table.locator('.tt-table-measure')
+  await expect(surface).toBeFocused()
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('Enter')
+  await expect(surface.locator('.tt-tape-feet')).toHaveText('10 pies')
+  await expect(table.locator('.tt-table-distance')).toBeInViewport({ ratio: 1 })
+  await page.keyboard.press('Escape')
+  await expect(ruler).toBeFocused()
   // The calibrated square: 32-inch 1080p with one-inch bases is about 68.8 CSS pixels at 1×.
   const token = (await table.locator('.tt-token', { hasText: 'Centinela' }).boundingBox())!
   expect(token.width).toBeGreaterThan(60)
@@ -672,6 +684,13 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   await expectBoardFits(page)
   // A private measure: the switch, then a drag.
   await page.getByLabel('Medir').check()
+  const world = (await page.locator('.tt-world').boundingBox())!
+  const sq = world.width / 20
+  await page.mouse.move(world.x + 3.5 * sq, world.y + 3.5 * sq)
+  await page.mouse.down()
+  await page.mouse.move(world.x + 10.5 * sq, world.y + 3.5 * sq, { steps: 6 })
+  await page.mouse.up()
+  await expect(page.locator('.tt-readout-feet')).toHaveText('35 pies')
   await audit(page, 'main', '.tt-world')
   void playerId
 })
@@ -895,3 +914,239 @@ test('RYT-056–062 story cards, audio, props, areas, fog and events from the ed
   await expect(alert).toHaveCount(0)
   expect(errors).toEqual([])
 })
+
+test('RYT-101 the DM places a party character and grants map actions without an encounter', async ({
+  page,
+}, info) => {
+  const { server } = await prepare(page, ['party', 'tabletop'])
+  const id = seedScene(server)
+  await page.goto(`./#/campaign/${campaignId}/tabletop/${id}`)
+  if (phone(info)) {
+    await page.getByRole('button', { name: 'Paneles' }).click()
+    await page.getByRole('menuitem', { name: 'Fichas' }).click()
+  }
+  if (info.project.name === 'identity-tablet')
+    await page.getByRole('button', { name: 'Fichas', exact: true }).click()
+  const party = page.getByRole('region', { name: 'Personajes del grupo' })
+  await expect(party).toBeVisible()
+  if (process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-101/party-${size(info)}.png` })
+  await party.getByRole('button', { name: 'Colocar Arin' }).click()
+  await expect.poll(() => server.items.filter((i) => i.character_id === characterId).length).toBe(1)
+  const token = page.locator('.tt-token').filter({ hasText: 'Arin' })
+  await token.focus()
+  await token.press('Enter')
+  const allowTorch = page.getByRole('checkbox', { name: 'Encender antorcha' })
+  await allowTorch.click()
+  await expect(allowTorch).toBeChecked()
+  await expect
+    .poll(() => server.items.find((i) => i.character_id === characterId)?.data.map_actions)
+    .toEqual(['torch'])
+})
+
+test('RYT-101 pointer ruler, door and five-foot area controls', async ({ page }, info) => {
+  const { server } = await prepare(page)
+  const id = seedScene(server)
+  await page.goto(`./#/campaign/${campaignId}/tabletop/${id}`)
+  const board = page.locator('.tt-viewport')
+  await expect(board).toBeVisible()
+  await board.focus()
+  await page.keyboard.press('m')
+  await expect(page.getByRole('radio', { name: 'Medir' })).toHaveAttribute('aria-checked', 'true')
+  const world = await page.locator('.tt-world').boundingBox()
+  const square = world!.width / 20
+  const x = world!.x + square * 3.5,
+    y = world!.y + square * 3.5
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x + square * 3, y, { steps: 6 })
+  await page.mouse.up()
+  await expect(page.locator('.tt-readout-feet')).toHaveText('15 pies')
+  await board.focus()
+  await page.keyboard.press('v')
+  const door = board.locator('.tt-door')
+  await door.focus()
+  await door.click()
+  await expect.poll(() => server.items.find((i) => i.kind === 'door')?.data.state).toBe('open')
+  await board.focus()
+  await page.keyboard.press('a')
+  const radius = page.getByRole('textbox', { name: 'Radio (pies)', exact: true })
+  await expect(radius).toBeVisible()
+  const initial = Number(await radius.inputValue())
+  await page.getByRole('button', { name: 'Sumar a Radio (pies)', exact: true }).click()
+  await expect(radius).toHaveValue(String(initial + 5))
+  await page.getByRole('button', { name: 'Restar a Radio (pies)', exact: true }).click()
+  await expect(radius).toHaveValue(String(initial))
+  if (process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-101/map-tools-${size(info)}.png` })
+})
+
+test('RYT-101 Player measures seven squares by drag, touch and keyboard', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === 'identity-desktop', 'Player phone and tablet use touch.')
+  const { server } = await prepare(page, ['party', 'combat', 'tabletop'], true)
+  seedScene(server)
+  const own = server.items.find((item) => item.kind === 'token' && !item.hidden)!
+  own.controllable = true
+  const other = server.items.find((item) => item.kind === 'token' && item.hidden)!
+  other.hidden = false
+  server.scenes[0]!.visibility = {
+    vision: true,
+    lighting: true,
+    radius: 12,
+    explored: [],
+    visible: [],
+    lit: [],
+    bright: [],
+  }
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await expect(page.locator('.tt-world .tt-token')).toHaveCount(2)
+  const outlines = page.locator('.tt-own-token-outlines > g')
+  await expect(outlines).toHaveCount(1)
+  await expect(outlines).toHaveAttribute('transform', 'translate(4.5 4.5)')
+  const measure = page.getByRole('switch', { name: 'Medir' })
+  await measure.check()
+  const board = page.getByRole('application')
+  const readout = page.locator('.tt-player-tools .tt-readout-feet')
+  const clear = page.getByRole('button', { name: 'Borrar la medida' })
+  const [x, y] = await squareAt(page, 20, 3, 3)
+  const [endX] = await squareAt(page, 20, 10, 3)
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(endX, y, { steps: 7 })
+  await page.mouse.up()
+  await expect(readout).toHaveText('35 pies')
+  await clear.click()
+  await page.touchscreen.tap(x, y)
+  await page.touchscreen.tap(endX, y)
+  await expect(readout).toHaveText('35 pies')
+  await clear.click()
+  await board.focus()
+  await page.keyboard.press('Enter')
+  for (let i = 0; i < 7; i++) await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('Enter')
+  await expect(readout).toHaveText('35 pies')
+  await page.keyboard.press('Escape')
+  await expect(measure).toBeFocused()
+})
+
+for (const language of ['es', 'en'])
+  for (const theme of ['default', 'parchment']) {
+    test(`RYT-101 shared light controls ${language} ${theme}`, async ({ page }, info) => {
+      test.skip(
+        info.project.name === 'identity-desktop' ||
+          (info.project.name === 'identity-tablet' && (language !== 'es' || theme !== 'default')),
+        'Full matrix at 390px',
+      )
+      const { server } = await prepare(page)
+      await page.addInitScript(
+        ({ language, theme }) => {
+          localStorage.setItem('rytta-language', language)
+          localStorage.setItem('rytta-theme', theme)
+        },
+        { language, theme },
+      )
+      const id = seedScene(server)
+      await page.goto(`./#/campaign/${campaignId}/tabletop/${id}`)
+      await expect(page.locator('.tt-viewport')).toBeVisible()
+      if (phone(info)) {
+        await page
+          .getByRole('button', { name: language === 'es' ? 'Paneles' : 'Panels', exact: true })
+          .click()
+        await page
+          .getByRole('menuitem', { name: language === 'es' ? 'Escena' : 'Scene', exact: true })
+          .click()
+      } else
+        await page
+          .getByRole('button', { name: language === 'es' ? 'Escena' : 'Scene', exact: true })
+          .click()
+      const vision = page.getByRole('switch', {
+        name: language === 'es' ? 'Visión del grupo' : 'Party vision',
+      })
+      await vision.click()
+      await expect
+        .poll(() => (server.scenes[0]!.visibility as { vision: boolean } | undefined)?.vision)
+        .toBe(true)
+      const radius = page.getByRole('textbox', {
+        name: language === 'es' ? 'Alcance de visión (pies)' : 'Sight range (feet)',
+      })
+      await radius.focus()
+      await radius.press('ControlOrMeta+a')
+      await radius.pressSequentially('120', { delay: 100 })
+      await expect(radius).toHaveValue('120')
+      await radius.press('Enter')
+      await expect.poll(() => (server.scenes[0]!.visibility as { radius: number }).radius).toBe(24)
+      const lighting = page.getByRole('switch', {
+        name: language === 'es' ? 'Iluminación' : 'Lighting',
+        exact: true,
+      })
+      await lighting.click()
+      await expect
+        .poll(() => (server.scenes[0]!.visibility as { lighting: boolean } | undefined)?.lighting)
+        .toBe(true)
+      await audit(page, 'body', '.tt-world')
+      if (process.env.RYT_EVIDENCE)
+        await page.screenshot({
+          path: `docs/evidence/RYT-101/settings-${size(info)}-${theme}-${language}.png`,
+        })
+      if (phone(info)) await page.keyboard.press('Escape')
+      const token = server.items.find((i) => i.kind === 'token' && !i.hidden)!
+      token.controllable = true
+      token.data = { map_actions: ['torch', 'light', 'reveal'], light_radius: 4, light_on: false }
+      // The campfire illuminates the ford; the party previously visited the approach.
+      const around = (x: number, y: number, radius: number) =>
+        Array.from({ length: 240 }, (_, i) => i).filter(
+          (i) => Math.hypot((i % 20) - x, Math.floor(i / 20) - y) <= radius,
+        )
+      const lit = around(3, 7, 5)
+      server.scenes[0]!.visibility = {
+        vision: true,
+        lighting: true,
+        radius: 12,
+        explored: [...new Set([...lit, ...around(9, 5, 3)])],
+        visible: lit,
+        lit,
+        bright: around(3, 7, 2),
+      }
+      const playerPage = await page.context().newPage()
+      await playerPage.addInitScript(
+        ({ language, theme }) => {
+          localStorage.setItem('rytta-language', language)
+          localStorage.setItem('rytta-theme', theme)
+        },
+        { language, theme },
+      )
+      await identityFixture(playerPage, {
+        party: true,
+        sheet: 'complete',
+        modules: ['party', 'combat', 'tabletop'],
+        player: true,
+      })
+      await server.install(playerPage)
+      await combatServer().install(playerPage)
+      await playerPage.goto(`./#/campaign/${campaignId}/tabletop`)
+      const torch = playerPage.getByRole('button', {
+        name: language === 'es' ? 'Encender antorcha' : 'Light torch',
+        exact: true,
+      })
+      await torch.click()
+      await expect.poll(() => token.data.light_on).toBe(true)
+      await expect(playerPage.locator('.tt-lighting')).toHaveCount(1)
+      await playerPage
+        .getByRole('button', { name: language === 'es' ? 'Apagar luz' : 'Extinguish light' })
+        .click()
+      await expect.poll(() => token.data.light_on).toBe(false)
+      await playerPage.getByRole('button', { name: /Revelar entorno|Reveal surroundings/ }).focus()
+      await playerPage.keyboard.press('Enter')
+      await expect(
+        playerPage.getByRole('status').filter({ hasText: /Efecto aplicado|Effect applied/ }),
+      ).toBeVisible()
+      await audit(playerPage, 'main')
+      await expectTouchTargets(playerPage.locator('.tt-player-effects'), 'button:visible')
+      if (process.env.RYT_EVIDENCE)
+        await playerPage.screenshot({
+          path: `docs/evidence/RYT-101/player-${size(info)}-${theme}-${language}.png`,
+        })
+    })
+  }

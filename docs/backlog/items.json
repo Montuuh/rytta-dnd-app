@@ -3302,6 +3302,37 @@
         "src/shared/lib/image-encode.test.ts",
         "tests/e2e/character-sheet.spec.ts"
       ]
+    },
+    {
+      "id": "RYT-100",
+      "title": "Portraits are never cropped on the sheet and the own Party plate",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-097", "RYT-099"],
+      "sources": [
+        "User 2026-11-14: the picture does not look right on the sheet, it seems cut; on the Party view at high resolutions (PC) the player picture is cut too."
+      ],
+      "scope": "PortraitPlate gains a whole fit: the square portrait keeps its full height, centred on a blurred, dimmed copy of itself with feathered side edges. The sheet hero and the own Party plate use it; the own plate is square on laptops and in the tablet side layout. Cropped plates anchor near the top so heads stay.",
+      "acceptance": [
+        "A full-body square portrait shows from head to feet on the sheet at 390, 820 and 1440 and on the own Party plate at 390, 820 and 1440.",
+        "No hard seam between the portrait and its backdrop in Hearth or Parchment.",
+        "Teammate, claim and DM plates keep heads in view.",
+        "Independent UI review PASS."
+      ],
+      "validation": [
+        "npm run check",
+        "character-sheet, characters, roster, trades and inventory e2e at 390px, 820px and 1440px",
+        "captures before and after",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-099/validation.md",
+        "docs/evidence/RYT-099/before-sheet-1440.webp",
+        "docs/evidence/RYT-099/sheet-1440-whole.webp",
+        "docs/evidence/RYT-099/party-1440-whole.webp",
+        "docs/evidence/RYT-099/sheet-1440-parchment.webp"
+      ]
     }
   ]
 }

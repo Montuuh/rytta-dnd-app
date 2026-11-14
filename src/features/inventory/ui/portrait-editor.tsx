@@ -9,7 +9,13 @@ import {
 import { Button, Group, Modal, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { usePhone } from '@/shared/ui/use-viewport'
-import { canvasToUpload, drawSmooth, encodeWithin, uploadSide } from '@/shared/lib/image-encode'
+import {
+  afterPaint,
+  canvasToUpload,
+  drawSmooth,
+  encodeWithin,
+  uploadSide,
+} from '@/shared/lib/image-encode'
 
 /** The on-screen working square; the saved portrait is drawn again at uploadSide (RYT-099). */
 const out = 512
@@ -211,6 +217,8 @@ export function PortraitEditor({
   // Encoding the 1024px square takes a moment on phones: Save shows it, and a cancel meanwhile
   // (Cancel, Escape, closing) drops the result instead of uploading it.
   const [encoding, setEncoding] = useState(false)
+  // A second tap can land before the loader renders: the ref, not the state, keeps it to one save.
+  const busy = useRef(false)
   const live = useRef(true)
   useEffect(() => {
     live.current = true
@@ -222,20 +230,27 @@ export function PortraitEditor({
     live.current = false
     onCancel()
   }
-  const save = () => {
-    if (!bitmap || encoding) return
+  const save = async () => {
+    if (!bitmap || busy.current) return
+    busy.current = true
     setEncoding(true)
-    void encodeWithin((scale) => {
-      const target = document.createElement('canvas')
-      target.width = target.height = Math.round(uploadSide * scale)
-      paint(target, bitmap, mode, view, target.width, true)
-      return target
-    }, canvasToUpload)
-      .then(
-        (image) => live.current && onSave(image),
-        () => live.current && setUnreadable(true),
-      )
-      .finally(() => live.current && setEncoding(false))
+    // Save shows its loader first: the drawing below blocks the page for a moment on phones.
+    await afterPaint()
+    if (!live.current) return
+    try {
+      const image = await encodeWithin((scale) => {
+        const target = document.createElement('canvas')
+        target.width = target.height = Math.round(uploadSide * scale)
+        paint(target, bitmap, mode, view, target.width, true)
+        return target
+      }, canvasToUpload)
+      if (live.current) onSave(image)
+    } catch {
+      if (live.current) setUnreadable(true)
+    } finally {
+      busy.current = false
+      if (live.current) setEncoding(false)
+    }
   }
   return (
     <Modal
@@ -334,7 +349,7 @@ export function PortraitEditor({
             <Button variant="subtle" onClick={cancel}>
               {t('action.cancel')}
             </Button>
-            <Button onClick={save} loading={pending || encoding} disabled={!bitmap}>
+            <Button onClick={() => void save()} loading={pending || encoding} disabled={!bitmap}>
               {t('portrait.save')}
             </Button>
           </Group>

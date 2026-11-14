@@ -55,6 +55,7 @@ export function SheetHero(props: HeroProps) {
     <section className={`panel-hero hp-${tone}`} aria-labelledby="sheet-name">
       <PortraitPlate
         className="sheet-plate"
+        fit="whole"
         campaignId={props.campaignId}
         characterId={props.characterId}
         name={props.name}

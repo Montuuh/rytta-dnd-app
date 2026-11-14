@@ -45,7 +45,37 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 24%;
+  /* Portraits are squares; a crop keeps the top, where heads are. */
+  object-position: 50% 10%;
+}
+/* RYT-099 'whole': the square portrait keeps its full height (heads and feet) and stands centred
+   on a blurred copy of itself; its side edges fade into that copy instead of a hard seam. A plate
+   taller than wide trims only the sides. */
+.portrait-plate[data-fit='whole'] .portrait-plate-open {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.portrait-plate[data-fit='whole'] .portrait-plate-open img {
+  flex: none;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+  object-position: 50% 50%;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+}
+.portrait-plate-backdrop {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  pointer-events: none;
+  filter: blur(28px) saturate(1.1) brightness(0.74);
+}
+html[data-mantine-color-scheme='light'] .portrait-plate-backdrop {
+  filter: blur(28px) saturate(1.05) brightness(0.98);
 }
 /* The focus ring is drawn above any shade the consumer lays over the art. */
 .portrait-plate-art:has(.portrait-plate-open:focus-visible)::before {

@@ -82,6 +82,11 @@ export async function encodeWithin<T>(
 const toBlob = (canvas: HTMLCanvasElement, type: string, quality: number) =>
   new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality))
 
+/** Resolves once the browser has painted, so a saving state shows before heavy synchronous
+ * drawing blocks the page (a rAF callback runs before the paint, its timeout after it). */
+export const afterPaint = () =>
+  new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)))
+
 let webpEncoder: boolean | undefined
 /** Safari decodes WebP but cannot encode it from a canvas; asked once per page. */
 const encodesWebp = () =>

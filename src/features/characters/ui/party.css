@@ -372,6 +372,10 @@
   min-width: 0;
 }
 @media (min-width: 62em) {
+  /* The own plate's column is narrow on laptops: a square plate shows the whole portrait. */
+  .party-player-own .party-hero-art {
+    --plate-ratio: 100%;
+  }
   .party-player {
     grid-template-columns: minmax(20rem, 25rem) minmax(0, 1fr);
     grid-template-rows: auto auto;
@@ -449,7 +453,7 @@
     grid-template-columns: minmax(15rem, 0.9fr) minmax(0, 1.1fr);
   }
   .party-hero-art {
-    --plate-ratio: 116%;
+    --plate-ratio: 100%;
   }
   .party-hero-art .portrait-plate-art::after {
     background:

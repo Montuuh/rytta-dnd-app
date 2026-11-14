@@ -44,3 +44,29 @@ pictures are sharp enough for the portrait plates and the full-screen viewer.
   appears once the first draw ends (about 0.5 s on a slow phone), and a cancel after the upload
   has started still lets it finish (older behaviour).
 - Not covered: Safari's JPEG/PNG fallback on a real device (Chromium encodes WebP).
+
+## Follow-up (2026-11-14)
+
+- The portrait editor's Save now lets the loader paint before the 1024px drawing starts (one frame),
+  and a ref keeps a quick double tap to one save. A cancel during that frame drops the save.
+
+## RYT-100: portraits are never cropped on the sheet and the own Party plate
+
+- Cause: portraits are squares; the sheet plate (landscape) and the own Party plate (a 16:11 banner,
+  also in the narrow laptop column) filled their boxes with a centred crop anchored at 24 % of the
+  height. A full-body figure lost the top of the head, and its legs went under the name's fade.
+- Change: `PortraitPlate` gains `fit="whole"`. The square keeps its full height, centred, on a
+  blurred and dimmed copy of itself; its side edges fade into that copy. The sheet hero and the own
+  Party plate use it; on laptops and in the tablet side layout the own plate is square, so the
+  portrait fills it. Cropped plates (teammates, claim cards, DM bands) now anchor near the top
+  (10 %), so heads stay.
+- Captures with a full-body square portrait, before and after:
+  `before-sheet-1440.webp`, `sheet-1440-whole.webp`, `sheet-1440-parchment.webp`,
+  `before-party-1440.webp`, `party-1440-whole.webp`, `party-1440-parchment.webp`,
+  `party-820-whole.webp`, `sheet-390-whole.webp`, `party-390-whole.webp`.
+- Checks: `npm run check` passed (413 tests); character-sheet, characters, roster, trades and
+  inventory e2e at 390, 820 and 1440: 128 passed, 10 skipped, 0 failed.
+- Independent UI review (round 3, RYT-099 follow-up and RYT-100): PASS. The loader shows 2–31 ms
+  after the tap at 1×–6× CPU; the whole figure shows on the sheet and the own plate at 390, 820,
+  1440 and 1920 in both themes. Noted, not changed: on the sheet the lower third of a full-body
+  figure sits under the fade that keeps the name legible.

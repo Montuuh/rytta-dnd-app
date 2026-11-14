@@ -99,6 +99,7 @@ export function HeroPlate({
       <div className="party-hero-inner">
         <PortraitPlate
           className="party-plate-art party-hero-art"
+          fit="whole"
           campaignId={campaign.id}
           characterId={character.id}
           name={character.name}

@@ -22,6 +22,7 @@ export function PortraitPlate({
   name,
   path,
   editable = false,
+  fit = 'cover',
   className,
   children,
 }: {
@@ -30,6 +31,8 @@ export function PortraitPlate({
   name: string
   path: string | null
   editable?: boolean
+  /** 'whole' never crops: the square portrait sits on a soft copy of itself (RYT-099). */
+  fit?: 'cover' | 'whole'
   className?: string
   children?: ReactNode
 }) {
@@ -88,8 +91,15 @@ export function PortraitPlate({
     refocus()
   }
   return (
-    <div className={`portrait-plate ${className ?? ''}`} data-empty={!src || undefined}>
+    <div
+      className={`portrait-plate ${className ?? ''}`}
+      data-empty={!src || undefined}
+      data-fit={fit}
+    >
       <div className="portrait-plate-art">
+        {src && fit === 'whole' && (
+          <img className="portrait-plate-backdrop" src={src} alt="" aria-hidden="true" />
+        )}
         {src ? (
           <button
             ref={opener}

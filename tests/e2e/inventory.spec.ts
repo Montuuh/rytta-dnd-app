@@ -141,8 +141,38 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await expect(page.getByRole('link', { name: 'Almacén de objetos' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
   await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
-  await page.getByRole('combobox', { name: 'Partir de una plantilla del SRD' }).click()
-  await page.getByRole('option', { name: 'Daga' }).click()
+  const picker = page.getByRole('combobox', { name: 'Partir de una plantilla del SRD' })
+  await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Custom')
+  await picker.click()
+  expect(
+    await picker.evaluate((field) => parseFloat(getComputedStyle(field).fontSize)),
+  ).toBeGreaterThanOrEqual(16)
+  const options = page.getByRole('dialog').getByRole('listbox')
+  await expect(options).toBeVisible()
+  const viewport = page.viewportSize()!
+  await page.setViewportSize({ ...viewport, height: viewport.height - 260 })
+  await picker.fill('xyzxyz')
+  await picker.press('Enter')
+  await expect(options).toBeVisible()
+  await picker.fill('dag')
+  await expect(options.getByRole('option')).toHaveCount(1)
+  await expect(picker).toBeFocused()
+  expect(
+    await options.getByRole('option').evaluate((option) => {
+      const box = option.getBoundingClientRect()
+      return option.contains(
+        document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+      )
+    }),
+  ).toBe(true)
+  await capture(page, info.outputPath('template-search.png'))
+  await picker.press('Escape')
+  await expect(options).toBeHidden()
+  await picker.tap()
+  await picker.fill('dag')
+  await options.getByRole('option', { name: 'Daga' }).tap()
+  await expect(options).toBeHidden()
+  await page.setViewportSize(viewport)
   await expect(page.getByLabel('Nombre')).toHaveValue('Daga')
   await expect(page.getByLabel('Dados de daño')).toHaveValue('1d4')
   await audit(page, info.outputPath('forge.png'))

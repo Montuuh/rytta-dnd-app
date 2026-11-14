@@ -6,7 +6,8 @@ import {
   Drawer,
   Loader,
   NativeSelect,
-  Select,
+  Combobox,
+  useCombobox,
   SimpleGrid,
   Stack,
   Text,
@@ -146,6 +147,83 @@ function ForgePreview({
   )
 }
 
+/** Keep results in the drawer's scroll flow as the software keyboard resizes the viewport. */
+function TemplatePicker({ dm, onPick }: { dm: boolean; onPick: (key: string) => void }) {
+  const { t } = useTranslation()
+  const [selected, setSelected] = useState('')
+  const [query, setQuery] = useState('')
+  const list = useCombobox({ onDropdownClose: () => list.resetSelectedOption() })
+  const label = t('inventory.forge.template')
+  const options = srdEquipment.map(({ key }) => ({
+    key,
+    label: t(`srdItem.${key}` as 'srdItem.dagger'),
+  }))
+  const matches = options.filter((item) =>
+    item.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  )
+  return (
+    <Combobox
+      store={list}
+      onOptionSubmit={(key) => {
+        setSelected(key)
+        setQuery('')
+        list.closeDropdown()
+        onPick(key)
+      }}
+    >
+      <div>
+        <Combobox.EventsTarget withExpandedAttribute>
+          <TextInput
+            label={label}
+            description={t(
+              dm ? 'inventory.forge.templateHint' : 'inventory.forge.templateHintPlayer',
+            )}
+            placeholder={t('inventory.forge.templatePlaceholder')}
+            value={
+              list.dropdownOpened
+                ? query
+                : (options.find((item) => item.key === selected)?.label ?? '')
+            }
+            onClick={() => list.openDropdown()}
+            onFocus={() => list.openDropdown()}
+            onBlur={() => {
+              list.closeDropdown()
+              setQuery('')
+            }}
+            onChange={(event) => {
+              setQuery(event.currentTarget.value)
+              list.resetSelectedOption()
+              list.openDropdown()
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setQuery('')
+              if (event.key === 'Enter' && list.dropdownOpened) event.preventDefault()
+            }}
+          />
+        </Combobox.EventsTarget>
+        {list.dropdownOpened && (
+          <Combobox.Options aria-label={label} className="forge-template-options">
+            {matches.map((item) => (
+              <Combobox.Option
+                key={item.key}
+                value={item.key}
+                aria-selected={item.key === selected}
+              >
+                {item.label}
+              </Combobox.Option>
+            ))}
+            {matches.length === 0 && (
+              <Combobox.Option value="" disabled>
+                {t('store.noResults')}
+              </Combobox.Option>
+            )}
+          </Combobox.Options>
+        )}
+      </div>
+    </Combobox>
+  )
+}
+
 /** The forge: create or edit an item, optionally from an SRD template, then hand it out. */
 export function Forge({
   definition,
@@ -253,18 +331,9 @@ export function Forge({
           <ForgePreview draft={draft} dm={dm} image={image} imagePath={imagePath} />
           {giveFirst && giveBlock}
           {!definition && (
-            <Select
-              searchable
-              placeholder={t('inventory.forge.templatePlaceholder')}
-              label={t('inventory.forge.template')}
-              description={t(
-                dm ? 'inventory.forge.templateHint' : 'inventory.forge.templateHintPlayer',
-              )}
-              data={srdEquipment.map((item) => ({
-                value: item.key,
-                label: t(`srdItem.${item.key}` as 'srdItem.dagger'),
-              }))}
-              onChange={(key) => {
+            <TemplatePicker
+              dm={dm}
+              onPick={(key) => {
                 const template = srdEquipment.find((item) => item.key === key)
                 if (!template) return
                 const { key: templateKey, ...rest } = template

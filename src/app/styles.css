@@ -376,6 +376,25 @@ h2[tabindex='-1']:focus {
 .mantine-Input-input {
   min-height: 44px;
 }
+/* Touch keyboards should not trigger focus zoom on compact form controls. */
+@media (any-pointer: coarse) {
+  :where(input, textarea, select).mantine-Input-input {
+    font-size: max(16px, 1rem, var(--input-fz, 1rem));
+  }
+}
+.forge-template-options {
+  max-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+}
+.forge-template-options [role='option'] {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 0.75rem;
+}
 .mantine-Button-root {
   max-width: 100%;
   height: auto;
@@ -3741,6 +3760,10 @@ html[data-mantine-color-scheme='light'] .order-counter {
   z-index: 2;
   padding: 10px 0 4px;
   background: var(--mantine-color-body);
+}
+/* Leave the drawer's visible height available to search results above the keyboard. */
+.forge-drawer:has(.forge-template-options) :is(.forge-preview, .forge-dock) {
+  position: static;
 }
 /* RYT-032 DM "Add item" chooser, delete impact and price sync. */
 .danger-solid {

@@ -111,8 +111,8 @@ export const shopTypes: readonly ShopType[] = [
     name: { en: 'Bowyer and Fletcher', es: 'Arquería' },
     icon: 'bow-arrow',
     description: {
-      en: 'Bows, crossbows, wooden and thrown weapons, and ammunition.',
-      es: 'Arcos, ballestas, armas de madera y arrojadizas, y munición.',
+      en: 'Bows, crossbows, thrown weapons and ammunition.',
+      es: 'Arcos, ballestas, armas arrojadizas y munición.',
     },
     stock: [
       'shortbow',
@@ -133,10 +133,6 @@ export const shopTypes: readonly ShopType[] = [
       'firearmBullets',
       'quiver',
       'crossbowBoltCase',
-      'club',
-      'greatclub',
-      'quarterstaff',
-      'woodcarversTools',
     ],
   },
   {
@@ -148,6 +144,9 @@ export const shopTypes: readonly ShopType[] = [
       es: 'Equipo de aventureros de uso diario: luz, cuerda, recipientes y útiles de escritura.',
     },
     stock: [
+      'club',
+      'greatclub',
+      'quarterstaff',
       'backpack',
       'pouch',
       'sack',

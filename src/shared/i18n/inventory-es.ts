@@ -295,8 +295,10 @@ export const inventoryEs = {
   'items.container.reductionShort': '−{{percent}} % de carga',
   'items.container.holds': 'Capacidad',
   'items.container.holdsReduced': '{{weight}} · aligera la carga un {{percent}} %',
+  'items.container.holdsUnearned': '{{weight}} · aligera solo si viene del DM o de una tienda',
   'items.container.relief':
     '{{name}} ahorra {{saved}}: un {{percent}} % de hasta {{capacity}} de objetos sin equipar.',
+  'items.container.unearned': '{{name}} solo aligera la carga si viene del DM o de una tienda.',
   'items.add.search': 'Buscar objetos básicos',
   'items.add.placeholder': 'Cuerda, antorcha, raciones…',
   'items.add.noMatch': 'Ningún objeto básico coincide con «{{query}}».',

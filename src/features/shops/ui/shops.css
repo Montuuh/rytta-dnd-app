@@ -210,6 +210,11 @@
   display: flex;
   align-items: flex-end;
   aspect-ratio: 16 / 9;
+  /* A wide page would make a 3:1 banner taller than half a laptop screen, and large text must
+     not grow the cap. The explicit width
+     keeps the cap from narrowing the banner through its aspect ratio. */
+  width: 100%;
+  max-height: min(16.25rem, 33vh);
   background: var(--app-raised);
   color: var(--banner-ink);
 }
@@ -362,6 +367,7 @@
   display: block;
   width: 100%;
   aspect-ratio: 3 / 1;
+  max-height: min(16.25rem, 33vh);
   padding: 0;
   border: 1px solid var(--app-border);
   border-radius: 12px;

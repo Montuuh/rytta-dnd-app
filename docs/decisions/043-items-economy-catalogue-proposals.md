@@ -83,7 +83,9 @@ description}}` with the same limits as the record's own fields; name and descrip
     most applies: saved = percent x min(loose weight without the container, capacity).
     Equipped gear and the container's own weight are never reduced. The SRD Backpack has
     capacity only (30 lb, no reduction); the three homebrew tiers reduce 10, 20 and 30 % up to
-    40, 60 and 90 lb. The load bar names the container and the saving.
+    40, 60 and 90 lb. The load bar names the container and the saving. Like supplies, the
+    saving needs a container given by the DM or bought in a shop (decision 2026-11-16): one a
+    Player added on their own keeps its weight, lightens nothing, and the load bar says why.
 11. **Pictures (RYT-106).** Members may also read the picture of a live basic item and of
     their own creations; the other readers of ADR 017 are unchanged. Satchel, storeroom,
     storefront, DM proposal review, add-item search and the Player's own trade rows show the picture with the

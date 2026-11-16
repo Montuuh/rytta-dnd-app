@@ -369,6 +369,9 @@
   flex-shrink: 0;
   color: var(--success);
 }
+.balance-relief.is-idle svg {
+  color: var(--app-muted);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .forge-second-chevron {

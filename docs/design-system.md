@@ -80,7 +80,7 @@ Amounts (RYT-104, ADR 043): every gp field is the inventory `GpInput`: two decim
 interface language's separator, the decimal keypad on phones, and half-typed decimals ("12,")
 kept until they parse. Weights are `WeightFields`: one fieldset with two linked fields (the
 reader's unit first, "=" between, 1 lb = 0.5 kg); editing either updates the other. Shop images
-(RYT-107, ADR 044) are a header banner of fixed aspect with the name on a fixed dark scrim and
+(RYT-107, ADR 044) are a header banner of fixed aspect, at most 260px or a third of the viewport tall, with the name on a fixed dark scrim and
 cream ink in every theme, never a page background; the picture is its own button to the image
 viewer.
 

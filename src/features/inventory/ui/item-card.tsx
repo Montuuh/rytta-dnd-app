@@ -56,7 +56,7 @@ export function ItemCard({
     [t('inventory.card.category'), t(`inventory.category.${definition.category}`)],
   ]
   // RYT-104: what one unit gives when used, and what a container holds. Units a Player added
-  // by themselves never feed supplies, so their card does not promise it.
+  // by themselves never feed supplies or lighten the load, so their card does not promise it.
   if (stack.source !== 'player' && (props.rations || props.water))
     facts.push([
       t('items.supplies.perUnit'),
@@ -71,10 +71,15 @@ export function ItemCard({
     facts.push([
       t('items.container.holds'),
       props.container.loadReductionPercent
-        ? t('items.container.holdsReduced', {
-            weight: format(props.container.capacityLb, 1),
-            percent: props.container.loadReductionPercent,
-          })
+        ? t(
+            stack.source === 'player'
+              ? 'items.container.holdsUnearned'
+              : 'items.container.holdsReduced',
+            {
+              weight: format(props.container.capacityLb, 1),
+              percent: props.container.loadReductionPercent,
+            },
+          )
         : format(props.container.capacityLb, 1),
     ])
   if (props.base !== undefined)

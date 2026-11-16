@@ -94,7 +94,8 @@ Current case (ADR 043): `items-player-authoring-close-pre.sql` gives PRE the swi
 `20261121120000_items_player_authoring_close.sql` (gp with cents, Player item authoring
 closed). Without it, a refreshed PRE behaves like part 1 only: whole gold, Players can still
 create items and the catalogue's cent prices fail to import. A test keeps the maintenance DDL
-identical to the migration's. Retire the rerun step once part 2 is applied to production.
+identical to the migration's. Part 2 reached production on 2026-11-16, so a refresh now copies the tightened switches and
+the rerun step is retired.
 
 ## Copy contract
 

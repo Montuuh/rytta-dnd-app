@@ -1,6 +1,6 @@
 # Delivery RYT-107: reachable create action, shop types that pre-stock and a shop banner
 
-Status: review (2026-11-16; waiting only for part 2 in production with the release). Decision record: ADR 044. Database rollout, shared checks and
+Status: done (2026-11-16; part 2 applied to production with the release). Decision record: ADR 044. Database rollout, shared checks and
 untested layers are in [RYT-104 validation](../RYT-104/validation.md).
 
 ## Outcome
@@ -45,6 +45,10 @@ Independent UI review round 1 found the shop add-items search unusable at 150 % 
 390px (major); it was fixed and round 2 passed. Round 2 noted that "show all" in the shop
 add-items dock leaves focus on the document body (non-blocking, planned as RYT-108).
 
-Remaining before Done: part 2 (`20261121120000_items_player_authoring_close.sql`) applied to
-production together with the frontend release, performed by the user, and stocking a shop with
-cent-priced catalogue items verified there.
+Part 2 (`20261121120000_items_player_authoring_close.sql`) was applied to production on 2026-11-16
+(hosted version `20261116081923`) right after the pull request merged, and the frontend deployed
+from main with the Quality workflow green. Verified in production: `money_scale()` returns 2,
+Player authoring is closed, `anon` and `authenticated` cannot execute either switch and the 88
+existing item definitions are unchanged.
+Not exercised in production with real accounts: stocking a shop with cent-priced catalogue
+items and uploading a shop image.

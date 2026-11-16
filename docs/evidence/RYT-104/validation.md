@@ -1,6 +1,6 @@
 # Delivery RYT-104: decimal gold, weight units, translations, catalogue import, containers and food
 
-Status: review (2026-11-16; waiting only for part 2 in production with the release). Decision record: ADR 043. Delivered together with RYT-102, RYT-103,
+Status: done (2026-11-16; part 2 applied to production with the release). Decision record: ADR 043. Delivered together with RYT-102, RYT-103,
 RYT-105, RYT-106 and RYT-107 in one integration; this file holds the shared database rollout,
 checks and untested layers that the other five files reference.
 
@@ -33,7 +33,7 @@ kept: online translation, a pp/sp/cp purse, autonomous release.
 | Worn backpack applies capacity and reduction; carried but not worn does not | Changed by decision: a container works while carried (it has no equipment slot); only the container that saves most applies; equipped gear and the container itself are never reduced. Acceptance amended in the backlog |
 | Food or drink adds rations or water once per idempotency key; undo restores item and supply | Met, with two recorded rules: supplies come only from `dm` or `shop` stacks, and undo raises `Undo conflict` once the supply was spent |
 | Denial tests for anon, outsider, Player and cross-campaign DM on every new table, column, storage path and RPC | Met on PGlite (`tests/database/items-economy.test.ts` and the updated inventory, item-lifecycle, shops, trades, characters and PRE suites) |
-| PRE migration and tests before the production migration; production verified afterwards | Part 1 met. Part 2 is pending by design: it ships with the frontend release (see `docs/deployment.md`) |
+| PRE migration and tests before the production migration; production verified afterwards | Met. Part 1 applied ahead of the release; part 2 applied with it on 2026-11-16 and its switches verified in production (see Handoff) |
 | 390px and 820px, both themes, both languages, keyboard and Escape, axe; independent UI review PASS | Met. Captures and axe clean; independent UI review PASS on the current source in round 2 (see below) |
 
 ## Verification
@@ -108,6 +108,10 @@ signed URLs (shop images), PostgREST serialisation of `numeric` amounts, the new
 accounts on hosted PRE and production, light themes other than Parchment, 1440px, and real
 concurrency. PGlite runs real SQL, grants and RLS with an `auth.uid` shim only.
 
-Remaining before Done: part 2 (`20261121120000_items_player_authoring_close.sql`) applied to
-production together with the frontend release, performed by the user, and verified
-(`money_scale()` 2, Player `save_item_definition` refused, catalogue imports with cents).
+Part 2 (`20261121120000_items_player_authoring_close.sql`) was applied to production on 2026-11-16
+(hosted version `20261116081923`) right after the pull request merged, and the frontend deployed
+from main with the Quality workflow green. Verified in production: `money_scale()` returns 2,
+Player authoring is closed, `anon` and `authenticated` cannot execute either switch and the 88
+existing item definitions are unchanged.
+Not exercised in production with real accounts: a Player `save_item_definition` call and a
+catalogue import with cent prices; both are covered by the SQL tests and by PRE.

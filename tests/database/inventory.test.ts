@@ -95,8 +95,12 @@ describe('RYT-004 inventory', () => {
     const granted = await grant(c, ch, def, 3)
     await asUser(player)
     expect(
-      (await db.query('select name, value_gp::float8 value_gp from public.item_definitions where id=$1', [def]))
-        .rows,
+      (
+        await db.query(
+          'select name, value_gp::float8 value_gp from public.item_definitions where id=$1',
+          [def],
+        )
+      ).rows,
     ).toEqual([{ name: 'Poción de curación', value_gp: 50 }])
     const key = randomUUID()
     const used = await use(c, granted.item_id, granted.revision, 1, key)

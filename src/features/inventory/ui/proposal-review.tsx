@@ -76,6 +76,14 @@ export function ProposalReview({
   const { state } = useAuth()
   const phone = usePhone()
   const { format } = useWeightFormat()
+  /** Who the proposal is for; a Player named like their character is not repeated. */
+  const proposedFor = (p: ItemProposal) => {
+    const character = p.character_name ?? ''
+    const player = p.proposer_name ?? ''
+    return !player || player.toLocaleLowerCase() === character.toLocaleLowerCase()
+      ? t('items.review.fromOne', { character })
+      : t('items.review.from', { character, player })
+  }
   const query = useQuery(proposalsQuery(state.user!.id, campaignId, null))
   const resolve = useResolveProposal(campaignId)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -207,12 +215,7 @@ export function ProposalReview({
               {nameOf(p)} <span className="proposal-qty">×{p.quantity}</span>
             </span>
             <span className="store-row-meta">
-              {p.status === 'pending'
-                ? t('items.review.from', {
-                    character: p.character_name ?? '',
-                    player: p.proposer_name ?? '',
-                  })
-                : t(`items.proposals.status.${p.status}`)}
+              {p.status === 'pending' ? proposedFor(p) : t(`items.proposals.status.${p.status}`)}
             </span>
           </span>
           {p.status === 'pending' ? (
@@ -297,12 +300,7 @@ export function ProposalReview({
             <dl className="item-card-facts">
               <div>
                 <dt>{t('items.review.for')}</dt>
-                <dd className="user-copy">
-                  {t('items.review.from', {
-                    character: proposal.character_name ?? '',
-                    player: proposal.proposer_name ?? '',
-                  })}
-                </dd>
+                <dd className="user-copy">{proposedFor(proposal)}</dd>
               </div>
               <div>
                 <dt>{t('inventory.card.weight')}</dt>

@@ -68,10 +68,12 @@ export function ListingCard({
           <span className="listing-body">
             <span className="listing-name user-copy">{name}</span>
             <span className="listing-meta">
-              {t('shop.itemMeta', {
-                rarity: t(`inventory.rarity.${listing.item.rarity}`),
-                weight: weight(itemPounds(listing.item)),
-              })}
+              {itemPounds(listing.item) > 0
+                ? t('shop.itemMeta', {
+                    rarity: t(`inventory.rarity.${listing.item.rarity}`),
+                    weight: weight(itemPounds(listing.item)),
+                  })
+                : t(`inventory.rarity.${listing.item.rarity}`)}
             </span>
           </span>
         </button>

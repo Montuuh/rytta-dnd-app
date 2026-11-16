@@ -48,8 +48,9 @@ export const lifecycleEn = {
   'addItem.pickGroup': 'Storeroom items',
   'addItem.give': 'Give {{amount}} to {{name}}',
   'addItem.take': 'Add {{amount}} to the satchel',
-  'addItem.taken': '{{item}} ×{{amount}} added to your satchel.',
+  'addItem.taken': 'Added to your satchel: {{item}} ×{{amount}}.',
+  'addItem.takeError': 'Could not add it to your satchel. You can retry.',
   'addItem.pickFirst': 'Choose an item first',
-  'addItem.given': '{{item}} ×{{amount}} given to {{name}}.',
+  'addItem.given': 'Given to {{name}}: {{item}} ×{{amount}}.',
   'addItem.error': 'Could not give the item. You can retry.',
 } as const

@@ -5,8 +5,10 @@ import { Link } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatPounds, useItemPicture } from '@/features/inventory'
-import { maxPurchasable, type Listing } from '../domain/shops'
+import { useItemPicture, useWeightFormat } from '@/features/inventory'
+import { localizedDescription, localizedName } from '@/shared/lib/translations'
+import { itemPounds, maxPurchasable, type Listing } from '../domain/shops'
+import { useGp } from './use-gp'
 import { GoldAmount, ItemGlyph } from './visuals'
 import './pictures.css'
 
@@ -31,6 +33,9 @@ export function ListingCard({
   onAdd: () => void
 }) {
   const { t, i18n } = useTranslation()
+  const gp = useGp()
+  const { format: weight } = useWeightFormat()
+  const name = localizedName(listing.item, i18n.language)
   const soldOut = listing.stock === 0
   const discounted = listing.unit_price !== listing.price
   const remaining = maxPurchasable(listing) - inCart
@@ -45,7 +50,7 @@ export function ListingCard({
             icon={listing.item.icon}
             rarity={listing.item.rarity}
             viewable
-            name={listing.item.name}
+            name={name}
           />
         )}
         <button
@@ -61,20 +66,23 @@ export function ListingCard({
             />
           )}
           <span className="listing-body">
-            <span className="listing-name user-copy">{listing.item.name}</span>
+            <span className="listing-name user-copy">{name}</span>
             <span className="listing-meta">
               {t('shop.itemMeta', {
                 rarity: t(`inventory.rarity.${listing.item.rarity}`),
-                weight: formatPounds(listing.item.weight_tenths / 10, i18n.language),
+                weight: weight(itemPounds(listing.item)),
               })}
             </span>
           </span>
         </button>
       </div>
-      <div className="price-tag" aria-label={t('shop.priceLabel', { value: listing.unit_price })}>
+      <div
+        className="price-tag"
+        aria-label={t('shop.priceLabel', { value: gp(listing.unit_price) })}
+      >
         {discounted && (
           <span className="price-was" aria-hidden="true">
-            {listing.price.toLocaleString(i18n.language)}
+            {gp(listing.price)}
           </span>
         )}
         <GoldAmount value={listing.unit_price} />
@@ -102,7 +110,7 @@ export function ListingCard({
           leftSection={<Plus size={16} aria-hidden="true" />}
           disabled={soldOut || remaining <= 0}
           onClick={onAdd}
-          aria-label={t('shop.addNamed', { name: listing.item.name })}
+          aria-label={t('shop.addNamed', { name })}
           className="listing-add"
         >
           {inCart > 0 ? t('shop.inCart', { count: inCart }) : t('shop.add')}
@@ -130,8 +138,12 @@ export function ListingDrawer({
   onAdd: (quantity: number) => void
 }) {
   const { t, i18n } = useTranslation()
+  const gp = useGp()
+  const { format: weight } = useWeightFormat()
   const phone = usePhone()
   const [quantity, setQuantity] = useState(1)
+  const name = listing ? localizedName(listing.item, i18n.language) : ''
+  const description = listing ? localizedDescription(listing.item, i18n.language) : ''
   const max = listing ? maxPurchasable(listing) - inCart : 0
   return (
     <Drawer
@@ -142,7 +154,7 @@ export function ListingDrawer({
       }}
       position={phone ? 'bottom' : 'right'}
       size={phone ? 'auto' : 'md'}
-      title={listing ? <span className="user-copy">{listing.item.name}</span> : ''}
+      title={listing ? <span className="user-copy">{name}</span> : ''}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
       {listing && (
@@ -154,7 +166,7 @@ export function ListingDrawer({
               rarity={listing.item.rarity}
               size={26}
               viewable
-              name={listing.item.name}
+              name={name}
             />
             <Stack gap={0}>
               <Text fw={600}>{t(`inventory.category.${listing.item.category}`)}</Text>
@@ -163,9 +175,9 @@ export function ListingDrawer({
               </Text>
             </Stack>
           </Group>
-          {listing.item.description && (
+          {description && (
             <Text className="user-copy item-description">
-              <GlossaryText text={listing.item.description} />
+              <GlossaryText text={description} />
             </Text>
           )}
           <dl className="fact-list">
@@ -174,14 +186,14 @@ export function ListingDrawer({
               <GoldAmount value={listing.unit_price} />
               {listing.unit_price !== listing.price && (
                 <Text span size="sm" c="dimmed" ml={8}>
-                  {t('shop.listPrice', { value: listing.price })}
+                  {t('shop.listPrice', { value: gp(listing.price) })}
                 </Text>
               )}
             </dd>
             <dt>{t('inventory.card.weight')}</dt>
             <dd>
               {t('shop.weightEach', {
-                weight: formatPounds(listing.item.weight_tenths / 10, i18n.language),
+                weight: weight(itemPounds(listing.item)),
               })}
             </dd>
             <dt>{t('shop.youOwn')}</dt>

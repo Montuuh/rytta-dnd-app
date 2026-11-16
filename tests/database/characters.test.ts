@@ -66,7 +66,7 @@ describe('RYT-003 complete migration chain', () => {
     expect(
       (
         await db.query(
-          'select gold,exhaustion from public.character_resources where character_id=$1',
+          'select gold::float8 gold,exhaustion from public.character_resources where character_id=$1',
           [ch],
         )
       ).rows,
@@ -194,7 +194,7 @@ describe('RYT-003 complete migration chain', () => {
     expect(
       (
         await db.query(
-          'select ch.user_id, r.gold from public.characters ch join public.character_resources r on r.character_id=ch.id where ch.id=$1',
+          'select ch.user_id, r.gold::float8 gold from public.characters ch join public.character_resources r on r.character_id=ch.id where ch.id=$1',
           [ch],
         )
       ).rows,
@@ -218,7 +218,7 @@ describe('RYT-003 complete migration chain', () => {
     expect(
       (
         await db.query(
-          'select gold,revision from public.character_resources where character_id=$1',
+          'select gold::float8 gold,revision from public.character_resources where character_id=$1',
           [ch],
         )
       ).rows,
@@ -231,8 +231,9 @@ describe('RYT-003 complete migration chain', () => {
     await edit(c, ch, 0, 20, key)
     await expect(edit(c, ch, 0, 21, key)).rejects.toThrow(/Request mismatch/)
     await expect(edit(c, ch, 0)).rejects.toThrow(/Stale revision/)
-    for (const value of [-1, 9007199254740992])
-      await expect(edit(c, ch, 1, value)).rejects.toThrow(/check constraint/)
+    // RYT-104: gold is numeric(12,2); the RPC refuses negative, oversized and sub-cent amounts.
+    for (const value of [-1, 9007199254740992, 10000000000, 1.005])
+      await expect(edit(c, ch, 1, value)).rejects.toThrow(/Invalid request/)
     for (const column of ['new_water', 'new_rations', 'new_exhaustion']) {
       const args = { new_water: 3, new_rations: 4, new_exhaustion: 12, [column]: -1 }
       await expect(

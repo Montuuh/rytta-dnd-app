@@ -31,7 +31,12 @@ import {
   type ShopDraft,
   draftOf,
 } from '../domain/shops'
-import { CreateShopDialog, RenameShopDialog } from './editors'
+import { RenameShopDialog } from './editors'
+import { ShopThumb } from './shop-image'
+import { CreateShopDrawer, StockFromTypeDrawer } from './shop-stocking'
+import { ShopKind } from './shop-type-picker'
+import type { StockOutcome } from './use-stocking'
+import { useGp } from './use-gp'
 import { Ledger } from './ledger'
 import { PriceModifiers } from './price-modifiers'
 import { ShopControls } from './shop-controls'
@@ -42,12 +47,14 @@ type Dialog =
   | { kind: 'create' }
   | { kind: 'rename'; shop: AdminShop }
   | { kind: 'add'; shop: AdminShop }
+  | { kind: 'stock'; shop: AdminShop }
   | { kind: 'editItem'; definitionId: string }
   | { kind: 'archive'; target: 'shop' | 'listing'; id: string; name: string }
   | null
 
 export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }) {
   const { t } = useTranslation()
+  const gp = useGp()
   const { state } = useAuth()
   const campaign = useCampaign()
   const admin = useQuery(shopAdminQuery(state.user!.id, campaign.id))
@@ -129,6 +136,16 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
     }
   }
   const key = () => newRequestId()
+  const stockedNotice = (outcome: StockOutcome, name: string, created: boolean) => {
+    const base = created
+      ? outcome.listed > 0
+        ? t('admin.notice.shopStocked', { name, count: outcome.listed })
+        : t('admin.notice.shopCreated', { name })
+      : t('admin.notice.stocked', { name, count: outcome.listed })
+    return outcome.unavailable.length > 0
+      ? `${base} ${t('admin.notice.stockSkipped', { count: outcome.unavailable.length })}`
+      : base
+  }
   const data = admin.data
   const saveShop = (shop: AdminShop, draft: ShopDraft, message: string) =>
     perform(
@@ -187,6 +204,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
                 setDialog({ kind: 'archive', target: 'shop', id: shop.id, name: shop.name })
               }
               onAddItems={(shop) => setDialog({ kind: 'add', shop })}
+              onStockFromType={(shop) => setDialog({ kind: 'stock', shop })}
               onEditItem={(definitionId) => setDialog({ kind: 'editItem', definitionId })}
               saveAsync={saveAsync}
               onAction={perform}
@@ -208,7 +226,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
                   (result) =>
                     result.order &&
                     setNotice(
-                      t(`order.notice.${result.order.status}`, { value: result.order.total }),
+                      t(`order.notice.${result.order.status}`, { value: gp(result.order.total) }),
                     ),
                 )
               }
@@ -217,30 +235,29 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
         </Tabs>
       )}
       {dialog?.kind === 'create' && (
-        <CreateShopDialog
-          busy={action.isPending}
+        <CreateShopDrawer
+          campaignId={campaign.id}
+          onClose={(created) => {
+            // A shop whose stocking did not finish still exists: show it.
+            if (created) setParam('shop', created)
+            setDialog(null)
+          }}
+          onCreated={(outcome, name) => {
+            setParam('shop', outcome.shopId)
+            setNotice(stockedNotice(outcome, name, true))
+            setDialog(null)
+          }}
+        />
+      )}
+      {dialog?.kind === 'stock' && (
+        <StockFromTypeDrawer
+          campaignId={campaign.id}
+          shop={dialog.shop}
           onClose={() => setDialog(null)}
-          onCreate={(name, visibility) =>
-            perform(
-              {
-                kind: 'saveShop',
-                shopId: null,
-                revision: null,
-                draft: {
-                  name,
-                  description: '',
-                  visibility,
-                  mode: 'auto',
-                  resale_percent: 50,
-                  is_open: true,
-                  access: [],
-                },
-                requestId: key(),
-              },
-              t('admin.notice.shopCreated', { name }),
-              (result) => result.id && setParam('shop', result.id),
-            )
-          }
+          onStocked={(outcome) => {
+            setNotice(stockedNotice(outcome, dialog.shop.name, false))
+            setDialog(null)
+          }}
         />
       )}
       {dialog?.kind === 'rename' && (
@@ -357,6 +374,7 @@ function ShopsTab({
   onRename,
   onArchiveShop,
   onAddItems,
+  onStockFromType,
   onEditItem,
   saveAsync,
   onAction,
@@ -370,12 +388,14 @@ function ShopsTab({
   onRename: (shop: AdminShop) => void
   onArchiveShop: (shop: AdminShop) => void
   onAddItems: (shop: AdminShop) => void
+  onStockFromType: (shop: AdminShop) => void
   onEditItem: (definitionId: string) => void
   saveAsync: (action: ShopAction, message: string) => Promise<unknown>
   onAction: (action: ShopAction, message: string, onDone?: () => void) => void
   onRemoveListing: (listingId: string, name: string) => void
 }) {
   const { t } = useTranslation()
+  const campaign = useCampaign()
   const shop = data.shops.find((s) => s.id === selectedId) ?? data.shops[0] ?? null
   if (!shop)
     return (
@@ -402,7 +422,13 @@ function ShopsTab({
             aria-current={s.id === shop.id ? 'true' : undefined}
             onClick={() => onSelect(s.id)}
           >
-            <span className="user-copy admin-shop-name">{s.name}</span>
+            <span className="admin-shop-head">
+              <ShopThumb path={s.image_path} kind={s.kind} />
+              <span className="admin-shop-title">
+                <span className="user-copy admin-shop-name">{s.name}</span>
+                <ShopKind kind={s.kind} className="admin-shop-kind" />
+              </span>
+            </span>
             <span className="admin-shop-meta">
               {s.visibility === 'hidden' ? (
                 <EyeOff size={14} aria-hidden="true" />
@@ -438,6 +464,7 @@ function ShopsTab({
       <section className="admin-shop-detail" aria-labelledby={`shop-${shop.id}`}>
         <ShopControls
           key={shop.id}
+          campaignId={campaign.id}
           shop={shop}
           characters={data.characters}
           saveDraft={(draft, revision) =>
@@ -460,6 +487,7 @@ function ShopsTab({
           data={data}
           busy={busy}
           onAdd={() => onAddItems(shop)}
+          onStockFromType={() => onStockFromType(shop)}
           onEditItem={onEditItem}
           onSave={(listing, draft, name, done) =>
             onAction(

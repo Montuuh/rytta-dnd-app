@@ -22,12 +22,17 @@ import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowUpDown,
+  Bookmark,
+  BookmarkCheck,
   Check,
   Ellipsis,
   Gift,
+  GitMerge,
+  Inbox,
   LayoutGrid,
   List,
   Minus,
+  PackagePlus,
   Pencil,
   Plus,
   Search,
@@ -39,24 +44,32 @@ import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
+  BasicImport,
   catalogueQuery,
   categoryIcons,
   CharacterPortrait,
   DefinitionEditor,
   DeleteItemDialog,
-  formatPounds,
   ItemIcon,
   itemCategories,
+  MergeItems,
+  ProposalReview,
   rarities,
   rarityPips,
   rosterQuery,
+  unitPounds,
   useInventoryAction,
+  useItemTemplate,
+  usePendingProposalCount,
+  useWeightFormat,
   type GiveOutcome,
   type ItemCategory,
   type ItemDefinition,
 } from '@/features/inventory'
 import { CatalogueShopPicker } from '@/features/shops'
+import { formatGp } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
+import { localizedName } from '@/shared/lib/translations'
 
 type View = 'list' | 'grid'
 type Sort = 'name' | 'category' | 'rarity' | 'value'
@@ -87,6 +100,15 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   const [give, setGive] = useState<ItemDefinition | null>(null)
   const [shop, setShop] = useState<ItemDefinition | null>(null)
   const [removing, setRemoving] = useState<ItemDefinition | null>(null)
+  // RYT-104/105: basic catalogue import, proposal review and duplicate merges.
+  const [importing, setImporting] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
+  const [merging, setMerging] = useState<ItemDefinition | null>(null)
+  const pendingProposals = usePendingProposalCount(campaignId, true)
+  const template = useItemTemplate(campaignId)
+  const templateRequests = useRef(new Map<string, string>())
+  const { format } = useWeightFormat()
+  const nameOf = (item: ItemDefinition) => localizedName(item, i18n.language)
   const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null)
   const phone = usePhone()
   // Overlays opened from a ⋯ menu would otherwise "restore" focus to a menu item that no
@@ -118,6 +140,36 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     }
   }
   const all = useMemo(() => (query.data ?? []).filter((item) => !item.archived), [query.data])
+  // Catalogue keys already in the campaign, archived ones too: the import skips them.
+  const importedKeys = useMemo(
+    () => new Set((query.data ?? []).flatMap((item) => (item.basic_key ? [item.basic_key] : []))),
+    [query.data],
+  )
+  const toggleTemplate = (item: ItemDefinition) => {
+    const next = !item.is_template
+    const key = `${item.id}:${item.revision}:${next}`
+    if (!templateRequests.current.has(key)) templateRequests.current.set(key, newRequestId())
+    template.mutate(
+      {
+        definitionId: item.id,
+        template: next,
+        revision: item.revision,
+        requestId: templateRequests.current.get(key)!,
+      },
+      {
+        onSuccess: () =>
+          setNotice({
+            tone: 'ok',
+            text: t(next ? 'items.template.on' : 'items.template.off', { name: nameOf(item) }),
+          }),
+        onError: (error) =>
+          setNotice({
+            tone: 'warn',
+            text: t(error.message === 'stale' ? 'inventory.error.stale' : 'items.template.error'),
+          }),
+      },
+    )
+  }
   const counts = useMemo(() => {
     const map = new Map<string, number>()
     for (const item of all) map.set(item.category, (map.get(item.category) ?? 0) + 1)
@@ -128,10 +180,12 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     const filtered = all.filter(
       (item) =>
         (category === 'all' || item.category === category) &&
-        item.name.toLocaleLowerCase().includes(needle),
+        [item.name, localizedName(item, i18n.language)].some((name) =>
+          name.toLocaleLowerCase().includes(needle),
+        ),
     )
     const byName = (a: ItemDefinition, b: ItemDefinition) =>
-      a.name.localeCompare(b.name, i18n.language)
+      localizedName(a, i18n.language).localeCompare(localizedName(b, i18n.language), i18n.language)
     return filtered.sort((a, b) => {
       if (sort === 'category')
         return (
@@ -163,30 +217,65 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     if (repriced)
       setNotice({
         tone: 'ok',
-        text: t('lifecycle.syncDone', { name: item.name, count: repriced }),
+        text: t('lifecycle.syncDone', { name: nameOf(item), count: repriced }),
       })
     else if (outcome?.failed.length)
       setNotice({
         tone: 'warn',
-        text: t('store.givePartial', { name: item.name, names: outcome.failed.join(', ') }),
+        text: t('store.givePartial', { name: nameOf(item), names: outcome.failed.join(', ') }),
       })
     else if (outcome?.given.length)
       setNotice({
         tone: 'ok',
-        text: t('store.createdFor', { name: item.name, names: outcome.given.join(', ') }),
+        text: t('store.createdFor', { name: nameOf(item), names: outcome.given.join(', ') }),
       })
-    else setNotice({ tone: 'ok', text: t('catalogue.savedName', { name: item.name }) })
+    else setNotice({ tone: 'ok', text: t('catalogue.savedName', { name: nameOf(item) }) })
   }
   const meta = (item: ItemDefinition) =>
     [
       t(`inventory.category.${item.category}`),
       t(`inventory.rarity.${item.rarity}`),
-      t('store.weight', { value: formatPounds(item.weight_tenths / 10, i18n.language) }),
+      format(unitPounds(item)),
     ].join(' · ')
   const value = (item: ItemDefinition) =>
     item.value_gp === null
       ? t('store.noValue')
-      : t('store.value', { value: item.value_gp.toLocaleString(i18n.language) })
+      : t('store.value', { value: formatGp(item.value_gp, i18n.language) })
+  const actionProps = (item: ItemDefinition) => ({
+    item,
+    name: nameOf(item),
+    onTrigger: remember,
+    onEdit: () => setEditor({ item }),
+    onGive: () => setGive(item),
+    onShop: () => setShop(item),
+    onDelete: () => setRemoving(item),
+    onMerge: () => setMerging(item),
+    onTemplate: () => toggleTemplate(item),
+  })
+  const importButton = (variant: 'quiet' | 'light') =>
+    variant === 'quiet' ? (
+      <UnstyledButton
+        className="quiet-link store-desk-link"
+        onClick={(event) => {
+          remember(event.currentTarget)
+          setImporting(true)
+        }}
+      >
+        <PackagePlus size={18} aria-hidden="true" />
+        {t('items.import.open')}
+      </UnstyledButton>
+    ) : (
+      <Button
+        variant="light"
+        leftSection={<PackagePlus size={18} aria-hidden="true" />}
+        onClick={(event) => {
+          remember(event.currentTarget)
+          setImporting(true)
+        }}
+      >
+        {t('items.import.open')}
+      </Button>
+    )
   const filtersActive = category !== 'all' || search.trim().length > 0
 
   return (
@@ -215,6 +304,25 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           {t('catalogue.create')}
         </Button>
       </Group>
+      <div className="store-desk">
+        <UnstyledButton
+          className="store-desk-link"
+          data-waiting={pendingProposals > 0 || undefined}
+          onClick={(event) => {
+            remember(event.currentTarget)
+            setReviewing(true)
+          }}
+        >
+          <Inbox size={18} aria-hidden="true" />
+          <span>{t('items.review.open')}</span>
+          {pendingProposals > 0 && (
+            <span className="store-desk-count">
+              {t('items.review.waiting', { count: pendingProposals })}
+            </span>
+          )}
+        </UnstyledButton>
+        {all.length > 0 && importButton('quiet')}
+      </div>
 
       <div className="store-toolbar">
         <TextInput
@@ -328,7 +436,8 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
       {query.data && items.length === 0 && (
         <Stack align="center" gap="xs" py="xl" className="store-empty">
           <ItemIcon icon="package" size={36} />
-          <Text>{t(all.length ? 'store.noResults' : 'catalogue.empty')}</Text>
+          <Text>{t(all.length ? 'store.noResults' : 'items.import.empty')}</Text>
+          {all.length === 0 && importButton('light')}
           {filtersActive && (
             <Button
               variant="subtle"
@@ -353,7 +462,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                   remember(event.currentTarget)
                   setEditor({ item })
                 }}
-                title={t('store.editItem', { name: item.name })}
+                title={t('store.editItem', { name: nameOf(item) })}
               >
                 <span className={`store-glyph rarity-${item.rarity}`} aria-hidden="true">
                   <ItemIcon icon={item.icon} imagePath={item.image_path} size={22} />
@@ -361,7 +470,13 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                 <span className="store-row-body">
                   <span className="store-row-name user-copy">
                     <VisuallyHidden>{t('catalogue.edit')}: </VisuallyHidden>
-                    {item.name}
+                    {nameOf(item)}
+                    {item.is_template && (
+                      <span className="store-template-mark" title={t('items.template.mark')}>
+                        <BookmarkCheck size={14} aria-hidden="true" />
+                        <VisuallyHidden> · {t('items.template.mark')}</VisuallyHidden>
+                      </span>
+                    )}
                   </span>
                   {/* Phones keep the price beside, not inside, the ellipsized meta line, so it
                       never hides and the name keeps the full width (RYT-027 R2-1, R3-1). */}
@@ -386,15 +501,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                   </span>
                 )}
               </UnstyledButton>
-              <ItemActions
-                item={item}
-                compact={phone}
-                onTrigger={remember}
-                onEdit={() => setEditor({ item })}
-                onGive={() => setGive(item)}
-                onShop={() => setShop(item)}
-                onDelete={() => setRemoving(item)}
-              />
+              <ItemActions {...actionProps(item)} compact={phone} />
             </li>
           ))}
         </ul>
@@ -409,14 +516,17 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                   remember(event.currentTarget)
                   setEditor({ item })
                 }}
-                title={t('store.editItem', { name: item.name })}
+                title={t('store.editItem', { name: nameOf(item) })}
               >
                 <span className="store-tile-icon" aria-hidden="true">
                   <ItemIcon icon={item.icon} imagePath={item.image_path} size={30} />
                 </span>
                 <span className="store-tile-name user-copy">
                   <VisuallyHidden>{t('catalogue.edit')}: </VisuallyHidden>
-                  {item.name}
+                  {nameOf(item)}
+                  {item.is_template && (
+                    <VisuallyHidden> · {t('items.template.mark')}</VisuallyHidden>
+                  )}
                 </span>
                 <span className="store-tile-meta" data-empty={item.value_gp === null || undefined}>
                   {value(item)}
@@ -426,15 +536,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                 </span>
               </UnstyledButton>
               <div className="store-tile-menu">
-                <ItemActions
-                  item={item}
-                  compact
-                  onTrigger={remember}
-                  onEdit={() => setEditor({ item })}
-                  onGive={() => setGive(item)}
-                  onShop={() => setShop(item)}
-                  onDelete={() => setRemoving(item)}
-                />
+                <ItemActions {...actionProps(item)} compact />
               </div>
             </li>
           ))}
@@ -474,7 +576,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           }}
           onDone={(names) => {
             setGive(null)
-            setNotice({ tone: 'ok', text: t('store.givenTo', { name: give.name, names }) })
+            setNotice({ tone: 'ok', text: t('store.givenTo', { name: nameOf(give), names }) })
             returnFocus()
           }}
         />
@@ -491,7 +593,51 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             setRemoving(null)
             // The row is gone: land on "New item" rather than a detached trigger.
             trigger.current = null
-            setNotice({ tone: 'ok', text: t('lifecycle.deleted', { name: item.name }) })
+            setNotice({ tone: 'ok', text: t('lifecycle.deleted', { name: nameOf(item) }) })
+            returnFocus()
+          }}
+        />
+      )}
+      {importing && (
+        <BasicImport
+          campaignId={campaignId}
+          imported={importedKeys}
+          onClose={() => {
+            setImporting(false)
+            returnFocus()
+          }}
+          onDone={(text) => {
+            setImporting(false)
+            setNotice({ tone: 'ok', text })
+            returnFocus()
+          }}
+        />
+      )}
+      {reviewing && (
+        <ProposalReview
+          campaignId={campaignId}
+          items={all}
+          onClose={() => {
+            setReviewing(false)
+            returnFocus()
+          }}
+          onNotice={(text) => setNotice({ tone: 'ok', text })}
+        />
+      )}
+      {merging && (
+        <MergeItems
+          campaignId={campaignId}
+          source={merging}
+          items={all}
+          onClose={() => {
+            setMerging(null)
+            returnFocus()
+          }}
+          onDone={(text) => {
+            setMerging(null)
+            // The duplicate's row is gone: land on "New item".
+            trigger.current = null
+            setNotice({ tone: 'ok', text })
             returnFocus()
           }}
         />
@@ -510,26 +656,33 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   )
 }
 
-/** Give and Shop as icon buttons on wide rows; everything folds into one menu when compact. */
+/** Give and Shop as icon buttons on wide rows; the rest (and everything when compact) sits in one
+ * menu: the template flag, merging a duplicate and delete (RYT-104/105). */
 function ItemActions({
   item,
+  name,
   compact,
   onTrigger,
   onEdit,
   onGive,
   onShop,
   onDelete,
+  onMerge,
+  onTemplate,
 }: {
   item: ItemDefinition
+  name: string
   compact: boolean
   onTrigger: (target: HTMLElement | null) => void
   onEdit: () => void
   onGive: () => void
   onShop: () => void
   onDelete: () => void
+  onMerge: () => void
+  onTemplate: () => void
 }) {
   const { t } = useTranslation()
-  const shopable = item.origin !== 'player'
+  const shopable = item.origin !== 'player' || item.value_gp !== null
   const menuButton = useRef<HTMLButtonElement>(null)
   // Run the chosen action only after the menu has closed and returned focus to its ⋯ button,
   // so the overlay that opens next remembers a real element (RYT-027 review F1).
@@ -537,14 +690,14 @@ function ItemActions({
   const choose = (run: () => void) => () => {
     pending.current = run
   }
-  if (!compact)
-    return (
-      <div className="store-row-actions">
+  return (
+    <div className="store-row-actions">
+      {!compact && (
         <Tooltip label={t('catalogue.give')} openDelay={300} withinPortal>
           <ActionIcon
             variant="subtle"
             size={44}
-            aria-label={t('store.giveItem', { name: item.name })}
+            aria-label={t('store.giveItem', { name })}
             onClick={(event) => {
               onTrigger(event.currentTarget)
               onGive()
@@ -553,83 +706,98 @@ function ItemActions({
             <Gift size={19} aria-hidden="true" />
           </ActionIcon>
         </Tooltip>
-        {shopable && (
-          <Tooltip label={t('catalogue.addToShop')} openDelay={300} withinPortal>
-            <ActionIcon
-              variant="subtle"
-              size={44}
-              aria-label={t('store.shopItem', { name: item.name })}
-              onClick={(event) => {
-                onTrigger(event.currentTarget)
-                onShop()
-              }}
-            >
-              <Store size={19} aria-hidden="true" />
-            </ActionIcon>
-          </Tooltip>
-        )}
-        <Tooltip label={t('store.delete')} openDelay={300} withinPortal>
+      )}
+      {!compact && shopable && (
+        <Tooltip label={t('catalogue.addToShop')} openDelay={300} withinPortal>
           <ActionIcon
             variant="subtle"
-            color="red"
             size={44}
-            className="store-delete"
-            aria-label={t('store.deleteItem', { name: item.name })}
+            aria-label={t('store.shopItem', { name })}
             onClick={(event) => {
               onTrigger(event.currentTarget)
-              onDelete()
+              onShop()
             }}
           >
-            <Trash2 size={19} aria-hidden="true" />
+            <Store size={19} aria-hidden="true" />
           </ActionIcon>
         </Tooltip>
-      </div>
-    )
-  return (
-    <Menu
-      position="bottom-end"
-      withinPortal
-      withInitialFocusPlaceholder={false}
-      onExitTransitionEnd={() => {
-        const run = pending.current
-        pending.current = null
-        run?.()
-      }}
-    >
-      <Menu.Target>
-        <ActionIcon
-          ref={menuButton}
-          variant="subtle"
-          size={44}
-          onClick={() => onTrigger(menuButton.current)}
-          aria-label={t('store.actionsFor', { name: item.name })}
-          title={t('common.moreActions')}
-        >
-          <Ellipsis size={20} aria-hidden="true" />
-        </ActionIcon>
-      </Menu.Target>
-      <Menu.Dropdown>
-        <Menu.Item leftSection={<Pencil size={18} aria-hidden="true" />} onClick={choose(onEdit)}>
-          {t('catalogue.edit')}
-        </Menu.Item>
-        <Menu.Item leftSection={<Gift size={18} aria-hidden="true" />} onClick={choose(onGive)}>
-          {t('catalogue.give')}
-        </Menu.Item>
-        {shopable && (
-          <Menu.Item leftSection={<Store size={18} aria-hidden="true" />} onClick={choose(onShop)}>
-            {t('catalogue.addToShop')}
+      )}
+      <Menu
+        position="bottom-end"
+        withinPortal
+        withInitialFocusPlaceholder={false}
+        onExitTransitionEnd={() => {
+          const run = pending.current
+          pending.current = null
+          run?.()
+        }}
+      >
+        <Menu.Target>
+          <ActionIcon
+            ref={menuButton}
+            variant="subtle"
+            size={44}
+            onClick={() => onTrigger(menuButton.current)}
+            aria-label={t('store.actionsFor', { name })}
+            title={t('common.moreActions')}
+          >
+            <Ellipsis size={20} aria-hidden="true" />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          {compact && (
+            <>
+              <Menu.Item
+                leftSection={<Pencil size={18} aria-hidden="true" />}
+                onClick={choose(onEdit)}
+              >
+                {t('catalogue.edit')}
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<Gift size={18} aria-hidden="true" />}
+                onClick={choose(onGive)}
+              >
+                {t('catalogue.give')}
+              </Menu.Item>
+              {shopable && (
+                <Menu.Item
+                  leftSection={<Store size={18} aria-hidden="true" />}
+                  onClick={choose(onShop)}
+                >
+                  {t('catalogue.addToShop')}
+                </Menu.Item>
+              )}
+            </>
+          )}
+          <Menu.Item
+            leftSection={
+              item.is_template ? (
+                <BookmarkCheck size={18} aria-hidden="true" />
+              ) : (
+                <Bookmark size={18} aria-hidden="true" />
+              )
+            }
+            onClick={onTemplate}
+          >
+            {t(item.is_template ? 'items.template.remove' : 'items.template.add')}
           </Menu.Item>
-        )}
-        <Menu.Divider />
-        <Menu.Item
-          color="red"
-          leftSection={<Trash2 size={18} aria-hidden="true" />}
-          onClick={choose(onDelete)}
-        >
-          {t('store.delete')}
-        </Menu.Item>
-      </Menu.Dropdown>
-    </Menu>
+          <Menu.Item
+            leftSection={<GitMerge size={18} aria-hidden="true" />}
+            onClick={choose(onMerge)}
+          >
+            {t('items.merge.open')}
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Item
+            color="var(--danger)"
+            leftSection={<Trash2 size={18} aria-hidden="true" />}
+            onClick={choose(onDelete)}
+          >
+            {t('store.delete')}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    </div>
   )
 }
 
@@ -647,7 +815,7 @@ function GiveItem({
   onDone: (names: string) => void
 }) {
   const { state } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const roster = useQuery(rosterQuery(state.user!.id, campaignId))
   const action = useInventoryAction(campaignId)
   const [selected, setSelected] = useState<string[]>([])
@@ -717,11 +885,11 @@ function GiveItem({
             imagePath={item.image_path}
             size={22}
             viewable
-            name={item.name}
+            name={localizedName(item, i18n.language)}
             frame={`store-glyph rarity-${item.rarity}`}
           />
           <Text fw={600} className="user-copy">
-            {item.name}
+            {localizedName(item, i18n.language)}
           </Text>
         </Group>
         {roster.isPending && <Text role="status">{t('common.loading')}</Text>}

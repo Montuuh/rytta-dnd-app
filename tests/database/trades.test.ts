@@ -317,7 +317,7 @@ describe('RYT-034 player trades', () => {
     expect(
       (
         await db.query(
-          "select 1 from public.character_events where kind='character_resources:UPDATE' and character_id=$1 and (after_value->>'gold')::int = 80",
+          "select 1 from public.character_events where kind='character_resources:UPDATE' and character_id=$1 and (after_value->>'gold')::numeric = 80",
           [s.Arin],
         )
       ).rows,

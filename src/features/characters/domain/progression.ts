@@ -1,7 +1,7 @@
 import type { Build, Feature, Tracker } from './sheet'
-import { classResourceId, classResources } from './resources'
-import { finalAbilities, isClassKey, modifier } from './rules'
-import { abilityKeys, type Ability } from './srd'
+import { featRefs, grantedResources, resourceId, traitRef, type ResourceSpec } from './resources'
+import { finalAbilities, isSpeciesKey, modifier } from './rules'
+import { abilityKeys, species, type Ability } from './srd'
 
 export type RestKind = 'short' | 'long' | 'none'
 
@@ -22,7 +22,8 @@ export const removedFeature = (ref: string) => `feature:${ref}`
 /** Ids of features Rytta manages from the class and level (others are the player's own). */
 export const managedFeatureId = (ref: string) => `srd-${ref.replace(/^feature\./, '')}`
 const isManaged = (feature: Feature) => feature.id.startsWith('srd-') && Boolean(feature.ref)
-const maxTrackers = 30
+/** Resources a sheet holds (the sheet schema's limit). */
+export const maxTrackers = 30
 /** Accent- and case-insensitive name, to adopt entries typed by hand before RYT-071. */
 const plain = (name: string) =>
   name.normalize('NFD').replace(/\p{M}/gu, '').trim().toLocaleLowerCase()
@@ -33,6 +34,45 @@ function modifiers(build: Build): Record<Ability, number> {
     Ability,
     number
   >
+}
+
+/** Maximum, reset, display and turn mark follow the spec; the name and a chosen display stay. */
+function withSpec(
+  tracker: Tracker,
+  spec: ResourceSpec,
+  level: number,
+  mods: Record<Ability, number>,
+): Tracker {
+  const { per: _per, ...rest } = tracker
+  return {
+    ...rest,
+    max: Math.min(999, Math.max(1, spec.max(level, mods))),
+    reset: spec.reset(level),
+    display: tracker.display ?? spec.display,
+    ...(spec.per ? { per: spec.per } : {}),
+  }
+}
+
+/** Seeded species traits (`species-<trait>`) and background feats (`background-<feat>`) get the
+ * glossary entry of their trait or feat; the player's own entries are untouched. */
+function linkOriginFeatures(build: Build): Feature[] {
+  const traits: readonly string[] = isSpeciesKey(build.speciesKey)
+    ? species[build.speciesKey].traits
+    : []
+  return build.features.map((feature) => {
+    if (feature.ref) return feature
+    if (feature.source === 'species' && feature.id.startsWith('species-')) {
+      const trait = feature.id.slice('species-'.length)
+      return traits.includes(trait)
+        ? { ...feature, ref: traitRef(build.speciesKey, trait) }
+        : feature
+    }
+    if (feature.source === 'feat' && feature.id.startsWith('background-')) {
+      const ref = featRefs[feature.id.slice('background-'.length)]
+      return ref ? { ...feature, ref } : feature
+    }
+    return feature
+  })
 }
 
 /** SRD features of the build's class (and SRD subclass) up to a level, in level order. */
@@ -58,16 +98,27 @@ export function syncProgression(
   library: LibraryFeature[],
   names: ProgressionNames,
 ): Build {
+  return syncProgressionReport(build, level, library, names).build
+}
+
+/**
+ * The synced build and how many granted resources were left out because the sheet already holds
+ * `maxTrackers`; the sheet says so instead of dropping them silently.
+ */
+export function syncProgressionReport(
+  build: Build,
+  level: number,
+  library: LibraryFeature[],
+  names: ProgressionNames,
+): { build: Build; leftOut: number } {
   const removed = new Set(build.removed ?? [])
   const mods = modifiers(build)
-  const specs = isClassKey(build.classKey)
-    ? classResources.filter(
-        (spec) =>
-          spec.classKey === build.classKey &&
-          level >= spec.from &&
-          !removed.has(removedTracker(spec.key)),
-      )
-    : []
+  // RYT-102: species traits and feats link to their glossary entries, so their trackers (and the
+  // player) find the rules text; this also covers sheets seeded before the entries existed.
+  build = { ...build, features: linkOriginFeatures(build) }
+  const specs = grantedResources(build, level).filter(
+    (spec) => !removed.has(removedTracker(spec.key)),
+  )
   const wanted = new Map(specs.map((spec) => [spec.key, spec]))
   const trackers: Tracker[] = []
   for (const original of build.trackers) {
@@ -86,23 +137,28 @@ export function syncProgression(
     const spec = wanted.get(tracker.key!)
     if (!spec) continue
     wanted.delete(tracker.key!)
-    trackers.push({
-      ...tracker,
-      max: Math.min(999, Math.max(1, spec.max(level, mods))),
-      reset: spec.reset(level),
-      display: tracker.display ?? spec.display,
-    })
+    trackers.push(withSpec(tracker, spec, level, mods))
   }
+  let leftOut = 0
   for (const spec of wanted.values()) {
-    if (trackers.length >= maxTrackers) break
-    trackers.push({
-      id: classResourceId(spec.key),
-      key: spec.key,
-      name: names.resource(spec.key),
-      max: Math.min(999, Math.max(1, spec.max(level, mods))),
-      reset: spec.reset(level),
-      display: spec.display,
-    })
+    if (trackers.length >= maxTrackers) {
+      leftOut += 1
+      continue
+    }
+    trackers.push(
+      withSpec(
+        {
+          id: resourceId(spec),
+          key: spec.key,
+          name: names.resource(spec.key),
+          max: 1,
+          reset: 'long',
+        },
+        spec,
+        level,
+        mods,
+      ),
+    )
   }
   const rows = classFeaturesFor(build, level, library).filter(
     (row) => !removed.has(removedFeature(row.id)),
@@ -129,7 +185,7 @@ export function syncProgression(
       ref: row.id,
       level: row.level,
     }))
-  return { ...build, trackers, features: [...kept, ...added].slice(0, 120) }
+  return { build: { ...build, trackers, features: [...kept, ...added].slice(0, 120) }, leftOut }
 }
 
 /** Removing a managed resource or feature remembers it so levelling up does not add it back. */

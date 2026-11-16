@@ -58,8 +58,8 @@ describe('public to pre bulk refresh', () => {
     // private.character_requests; RYT-055 added five tabletop tables and private.tabletop_requests;
     // RYT-078 added profiles; RYT-080 added rest_requests and private.rest_votes; RYT-089 added
     // campaign_srd_bestiary and campaign_srd_removed; RYT-092 added content_packs, content_entries,
-    // private.content_editors and private.content_requests.
-    expect(report.rows[0]!.result.tables).toHaveLength(47)
+    // private.content_editors and private.content_requests; RYT-105 added item_proposals.
+    expect(report.rows[0]!.result.tables).toHaveLength(48)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })
@@ -83,7 +83,7 @@ describe('public to pre bulk refresh', () => {
       character,
       randomUUID(),
     ])
-    expect((await db.query('select gold from pre.character_resources')).rows).toEqual([
+    expect((await db.query('select gold::float8 gold from pre.character_resources')).rows).toEqual([
       { gold: 99 },
     ])
     expect((await db.query('select * from public.character_resources')).rows).toEqual(baseline.rows)
@@ -113,7 +113,7 @@ describe('public to pre bulk refresh', () => {
     await db.exec('begin isolation level repeatable read')
     await expect(db.query('select pre_admin.refresh(true,false)')).rejects.toThrow(/Unsupported/)
     await db.exec('rollback')
-    expect((await db.query('select gold from pre.character_resources')).rows).toEqual([
+    expect((await db.query('select gold::float8 gold from pre.character_resources')).rows).toEqual([
       { gold: 99 },
     ])
     await db.exec('drop view public.unsupported_view')
@@ -158,10 +158,10 @@ describe('public to pre bulk refresh', () => {
       [backupId],
     )
     expect(restored.rows[0]!.result.backupId).toBeTruthy()
-    expect((await db.query('select gold from pre.character_resources')).rows).toEqual([
+    expect((await db.query('select gold::float8 gold from pre.character_resources')).rows).toEqual([
       { gold: 99 },
     ])
-    expect((await db.query('select gold from public.character_resources')).rows).toEqual([
+    expect((await db.query('select gold::float8 gold from public.character_resources')).rows).toEqual([
       { gold: 0 },
     ])
     await expect(db.query('select pre_admin.restore($1)', [backupId])).rejects.toThrow(

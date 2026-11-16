@@ -9,6 +9,7 @@ import {
   Flame,
   HandFist,
   HandHeart,
+  Languages,
   Leaf,
   Moon,
   Music,
@@ -22,6 +23,12 @@ import {
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { config } from '@/shared/lib/config'
+import {
+  defaultWeightUnit,
+  setWeightUnit,
+  useStoredWeightUnit,
+  type WeightUnit,
+} from '@/shared/lib/weight'
 import { UsernameSettings, useAuth } from '@/features/auth'
 import './settings-panel.css'
 import {
@@ -248,6 +255,52 @@ function LanguagePicker({ labelledBy, describedBy }: { labelledBy: string; descr
 }
 
 /**
+ * RYT-104: the unit for item weights and loads, per account. "By language" forgets the choice,
+ * so the unit follows the interface language again (kg in Spanish, lb in English).
+ */
+function WeightPicker({ labelledBy, describedBy }: { labelledBy: string; describedBy?: string }) {
+  const { t, i18n } = useTranslation()
+  const stored = useStoredWeightUnit()
+  const current = stored ?? 'auto'
+  // "By language" carries the language glyph; the unit it gives today is its hint.
+  const options: { value: WeightUnit | 'auto'; label: string; hint: string; mark: ReactNode }[] = [
+    {
+      value: 'auto',
+      label: t('settings.weightAuto'),
+      hint: t('settings.weightAutoHint', { unit: defaultWeightUnit(i18n.language) }),
+      mark: <Languages size={20} strokeWidth={1.8} />,
+    },
+    { value: 'kg', label: t('settings.weightKg'), hint: t('settings.weightKgHint'), mark: 'kg' },
+    { value: 'lb', label: t('settings.weightLb'), hint: t('settings.weightLbHint'), mark: 'lb' },
+  ]
+  return (
+    <div
+      role="radiogroup"
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
+      className="language-picker weight-picker"
+    >
+      {options.map(({ value, label, hint, mark }) => (
+        <ChoiceCard
+          key={value}
+          name="weight-unit"
+          value={value}
+          checked={current === value}
+          onSelect={() => setWeightUnit(value === 'auto' ? null : value)}
+          label={label}
+          hint={hint}
+          className="language-card"
+        >
+          <span className="language-monogram" aria-hidden="true">
+            {mark}
+          </span>
+        </ChoiceCard>
+      ))}
+    </div>
+  )
+}
+
+/**
  * RYT-069: the settings content, shown in the right-hand Settings drawer (app/layout.tsx).
  * The signed-in account's username (RYT-078) comes first, then language and the theme tiles.
  */
@@ -267,6 +320,9 @@ export function SettingsPanel() {
       </Section>
       <Section title={t('settings.theme')} help={t('settings.themeHelp')}>
         {(ids) => <ThemePicker {...ids} />}
+      </Section>
+      <Section title={t('settings.weight')} help={t('settings.weightHelp')}>
+        {(ids) => <WeightPicker {...ids} />}
       </Section>
       <Text className="settings-saved">{t('preferences.saved')}</Text>
       {/* Demo data must stay explicit; a live installation shows no setup internals. */}

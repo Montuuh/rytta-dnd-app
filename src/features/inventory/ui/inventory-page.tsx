@@ -15,12 +15,22 @@ import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
-import { inventoryQuery, rosterQuery, useInventoryAction } from '../api'
+import { newRequestId } from '@/shared/lib/request-id'
+import { localizedName } from '@/shared/lib/translations'
+import { inventoryQuery, rosterQuery, useInventoryAction, useProposeItem } from '../api'
 import { canEquip, equippedBySlot, slotsFor } from '../domain/equipment'
-import type { DefinitionDraft, InventoryEvent, ItemDefinition, ItemStack } from '../domain/item'
+import type {
+  DefinitionDraft,
+  InventoryEvent,
+  ItemDefinition,
+  ItemStack,
+  Supplies,
+} from '../domain/item'
 import { AddItemChooser } from './add-item-chooser'
 import { DefinitionEditor } from './definition-editor'
-import { Forge } from './forge'
+import { Forge, type ForgeExtra } from './forge'
+import { PlayerAddItem } from './player-add-item'
+import { ProposalShelf } from './proposal-shelf'
 import { ItemCard } from './item-card'
 import { Ledger } from './ledger'
 import { PaperDoll } from './paper-doll'
@@ -32,7 +42,7 @@ type View = 'satchel' | 'equipment' | 'ledger'
 const viewIcons = { satchel: Backpack, equipment: Shirt, ledger: BookOpen }
 
 export function InventoryPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const userId = state.user!.id
   const campaign = useCampaign()
@@ -65,6 +75,10 @@ export function InventoryPage() {
   const [card, setCard] = useState<string | null>(null)
   const [forge, setForge] = useState<{ definition: ItemDefinition | null } | null>(null)
   const [adding, setAdding] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [proposing, setProposing] = useState<{ name: string } | null>(null)
+  const propose = useProposeItem(campaign.id)
+  const proposalRequest = useRef({ payload: '', id: newRequestId() })
   const [fuse, setFuse] = useState<(FuseEntry & { characterId: string }) | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +92,7 @@ export function InventoryPage() {
         ? opener.current.focus()
         : heading.current?.focus(),
     )
-  const dismissFuse = useCallback(() => setFuse(null), [])
+  const dismissFuse = useCallback(() => setFuse(null), [setFuse])
 
   if (!dm && !enabled)
     return (
@@ -134,6 +148,8 @@ export function InventoryPage() {
           occupied: 'inventory.error.occupied',
           insufficient: 'inventory.error.insufficient',
           forbidden: 'inventory.error.forbidden',
+          tooMany: 'items.propose.tooMany',
+          cents: 'inventory.error.cents',
         } as const
       )[code as 'stale'] ?? 'inventory.error.unavailable',
     )
@@ -163,7 +179,22 @@ export function InventoryPage() {
     setError(null)
     setForge({ definition })
   }
-  const nameOf = (stack: ItemStack) => definitions.get(stack.definition_id)?.name ?? ''
+  const nameOf = (stack: ItemStack) => {
+    const definition = definitions.get(stack.definition_id)
+    return definition ? localizedName(definition, i18n.language) : ''
+  }
+  // RYT-104: food and drink report what they added to the character's supplies.
+  const suppliesText = (supplies: Supplies | undefined) =>
+    supplies && (supplies.rations > 0 || supplies.water > 0)
+      ? [
+          supplies.rations > 0
+            ? t('items.supplies.gainedRations', { count: supplies.rations })
+            : '',
+          supplies.water > 0 ? t('items.supplies.gainedWater', { count: supplies.water }) : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
+      : ''
   const equip = (stack: ItemStack, slot?: ItemStack['equipped_slot']) => {
     const definition = definitions.get(stack.definition_id)
     if (!definition) return
@@ -180,7 +211,7 @@ export function InventoryPage() {
     run({ kind: 'equip', itemId: stack.id, expectedRevision: stack.revision, slot: target }, () => {
       setCard(null)
       setNotice(
-        t('inventory.equipped', { name: definition.name, slot: t(`inventory.slot.${target}`) }),
+        t('inventory.equipped', { name: nameOf(stack), slot: t(`inventory.slot.${target}`) }),
       )
       if (!slot) restoreFocus(stack.quantity === 1)
     })
@@ -189,32 +220,35 @@ export function InventoryPage() {
     id === userId
       ? t('inventory.ledger.you')
       : (members.data?.find((m) => m.user_id === id)?.display_name ?? t('inventory.ledger.someone'))
-  const save = (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => {
-    const definition = forge?.definition ?? null
-    action.mutate(
+  const sendProposal = (draft: DefinitionDraft, extra: ForgeExtra) => {
+    const payload = {
+      name: draft.name,
+      description: draft.description,
+      ...(draft.translations ? { translations: draft.translations } : {}),
+      category: draft.category,
+      icon: draft.icon,
+      rarity: draft.rarity,
+      slot_kind: draft.slot_kind,
+      properties: draft.properties,
+      weight_lb: draft.weight_lb,
+      ...(extra.suggestedGp === null ? {} : { suggested_value_gp: extra.suggestedGp }),
+    }
+    const key = JSON.stringify([payload, extra.amount])
+    if (proposalRequest.current.payload !== key)
+      proposalRequest.current = { payload: key, id: newRequestId() }
+    setError(null)
+    propose.mutate(
       {
-        kind: 'define',
-        definitionId: definition?.id ?? null,
-        expectedRevision: definition?.revision ?? null,
-        draft,
+        draft: payload,
+        characterId: character.id,
+        quantity: extra.amount,
+        requestId: proposalRequest.current.id,
       },
       {
         onError: (failure) => setError(errorText(failure.message)),
-        onSuccess: async (result) => {
-          const definitionId = 'definitionId' in result ? result.definitionId : definition!.id
-          for (const target of give.characterIds)
-            await action.mutateAsync({
-              kind: 'grant',
-              characterId: target,
-              definitionId,
-              amount: give.amount,
-            })
-          setForge(null)
-          setNotice(
-            t(definition ? 'inventory.forge.saved' : 'inventory.forge.created', {
-              name: draft.name,
-            }),
-          )
+        onSuccess: () => {
+          setProposing(null)
+          setNotice(t('items.propose.sent', { name: draft.name }))
           restoreFocus()
         },
       },
@@ -290,7 +324,7 @@ export function InventoryPage() {
           {notice}
         </Text>
       )}
-      {error && !openStack && !forge && (
+      {error && !openStack && !forge && !proposing && (
         <Alert color="red" role="alert">
           {error}
         </Alert>
@@ -316,13 +350,20 @@ export function InventoryPage() {
           }}
           onAdd={(target) => {
             opener.current = target
-            // DMs choose between an existing storeroom item and a new one (RYT-032).
-            if (dm && !playerPreview) {
-              action.reset()
-              setError(null)
-              setAdding(true)
-            } else openForge(null)
+            action.reset()
+            setError(null)
+            // DMs choose between an existing storeroom item and a new one (RYT-032); Players
+            // search the catalogue first and propose what is missing (RYT-105).
+            if (dm && !playerPreview) setAdding(true)
+            else setSearching(true)
           }}
+        />
+      )}
+      {data && view === 'satchel' && (
+        <ProposalShelf
+          campaignId={campaign.id}
+          characterId={character.id}
+          canCancel={canEdit && !(dm && !playerPreview)}
         />
       )}
       {data && view === 'equipment' && (
@@ -395,7 +436,13 @@ export function InventoryPage() {
                   amount: 1,
                 },
                 (result) => {
-                  withFuse(t('inventory.fuse.used', { name: nameOf(openStack) }))(result)
+                  const gained = 'supplies' in result ? suppliesText(result.supplies) : ''
+                  withFuse(
+                    [t('inventory.fuse.used', { name: nameOf(openStack) }), gained]
+                      .filter(Boolean)
+                      .join(' '),
+                  )(result)
+                  if (gained) setNotice(gained)
                   // The last unit leaves the satchel with its card; keep focus on the page.
                   if (openStack.quantity === 1) {
                     setCard(null)
@@ -467,45 +514,77 @@ export function InventoryPage() {
           }}
         />
       )}
-      {forge && !dm && (
-        <Forge
-          definition={forge.definition}
-          dm={dm && !playerPreview}
-          targets={visibleRoster.map((c) => ({
-            id: c.id,
-            name: c.name,
-            portrait: (
-              <CharacterPortrait
-                campaignId={campaign.id}
-                characterId={c.id}
-                name={c.name}
-                path={c.portraitPath}
-                size={40}
-              />
-            ),
-          }))}
-          pending={action.isPending}
-          error={error}
-          onSave={save}
+      {searching && (
+        <PlayerAddItem
+          campaignId={campaign.id}
+          character={{ id: character.id, name: character.name }}
           onClose={() => {
-            setForge(null)
+            setSearching(false)
+            restoreFocus()
+          }}
+          onDone={(message) => {
+            setSearching(false)
+            setNotice(message)
+            restoreFocus()
+          }}
+          onPropose={(name) => {
+            setSearching(false)
+            propose.reset()
+            setError(null)
+            setProposing({ name })
+          }}
+        />
+      )}
+      {proposing && (
+        <Forge
+          campaignId={campaign.id}
+          definition={null}
+          initial={{
+            name: proposing.name,
+            category: 'gear',
+            icon: 'package',
+            rarity: 'common',
+            weight_lb: 0,
+            value_gp: null,
+            description: '',
+            translations: null,
+            slot_kind: 'none',
+            properties: {},
+          }}
+          mode="proposal"
+          title={t('items.propose.titleFor', { name: character.name })}
+          targets={[]}
+          pending={propose.isPending}
+          error={error}
+          onSave={sendProposal}
+          onClose={() => {
+            if (propose.isPending) return
+            setProposing(null)
+            setError(null)
             restoreFocus()
           }}
         />
       )}
-      {fuse && fuse.characterId === character.id && canEdit && !openStack && !forge && !adding && (
-        <UndoFuse
-          entry={fuse}
-          pending={action.isPending}
-          onDismiss={dismissFuse}
-          onUndo={() =>
-            run({ kind: 'undo', eventId: fuse.eventId }, () => {
-              setFuse(null)
-              setNotice(t('inventory.undo.done'))
-            })
-          }
-        />
-      )}
+      {fuse &&
+        fuse.characterId === character.id &&
+        canEdit &&
+        !openStack &&
+        !forge &&
+        !adding &&
+        !searching &&
+        !proposing && (
+          <UndoFuse
+            entry={fuse}
+            pending={action.isPending}
+            onDismiss={dismissFuse}
+            onUndo={() =>
+              run({ kind: 'undo', eventId: fuse.eventId }, () => {
+                setFuse(null)
+                setNotice(t('inventory.undo.done'))
+              })
+            }
+          />
+        )}
     </Stack>
   )
 }

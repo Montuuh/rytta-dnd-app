@@ -11,6 +11,20 @@ type Stack = Fixture['inventory']['stacks'][number]
 const uuid = (group: string, n: number) =>
   `${group}000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 export const shopIds = { market: uuid('71', 1), smith: uuid('71', 2), vault: uuid('71', 3) }
+/** RYT-107: localhost previews and e2e runs read the PRE environment's image paths. */
+export const shopImagePath = (shopId: string, n = 1) =>
+  `pre/${campaignId}/${shopId}/${uuid('7f', n)}.webp`
+
+// A bright market stall, the worst case for text on the banner scrim.
+const bannerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdf6e3"/><stop offset="1" stop-color="#f3d9a4"/></linearGradient></defs>
+<rect width="1200" height="400" fill="url(#sky)"/>
+<circle cx="980" cy="90" r="54" fill="#fff7d6"/>
+<path d="M120 170 L360 110 L600 170 Z" fill="#b5462f"/><path d="M600 170 L840 110 L1080 170 Z" fill="#2f6b5a"/>
+<rect x="140" y="170" width="440" height="190" fill="#e8c48a"/><rect x="620" y="170" width="440" height="190" fill="#d9b77e"/>
+<g fill="#fff">${Array.from({ length: 11 }, (_, i) => `<rect x="${120 + i * 44}" y="170" width="22" height="34"/>`).join('')}</g>
+<rect x="0" y="360" width="1200" height="40" fill="#c99a5b"/>
+</svg>`
 
 type Listing = {
   id: string
@@ -26,6 +40,8 @@ type Shop = {
   id: string
   name: string
   description: string
+  kind: string | null
+  image_path: string | null
   visibility: 'hidden' | 'party' | 'selected'
   mode: 'auto' | 'approval'
   resale_percent: number
@@ -58,7 +74,17 @@ type Order = {
   lines: Line[]
 }
 
-export async function shopsFixture(page: Page, fixture: Fixture, options: { gold?: number } = {}) {
+export async function shopsFixture(
+  page: Page,
+  fixture: Fixture,
+  options: {
+    gold?: number
+    /** RYT-107: the market shows a banner image. */
+    shopImage?: boolean
+    /** RYT-107: a fourth, empty shop with a type, to stock it from that type. */
+    emptyShop?: boolean
+  } = {},
+) {
   const { stacks, definitions, events } = fixture.inventory
   let counter = 100
   const next = (group: string) => uuid(group, counter++)
@@ -73,6 +99,8 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
       id: shopIds.market,
       name: 'Mercado del puerto',
       description: 'Puestos de pescadores y buhoneros.',
+      kind: 'generalStore',
+      image_path: options.shopImage ? shopImagePath(shopIds.market) : null,
       visibility: 'party',
       mode: 'auto',
       resale_percent: 50,
@@ -85,6 +113,8 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
       id: shopIds.smith,
       name: 'El Yunque de Ámbar',
       description: 'Herrería enana que acepta encargos.',
+      kind: 'blacksmith',
+      image_path: null,
       visibility: 'party',
       mode: 'approval',
       resale_percent: 30,
@@ -97,6 +127,8 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
       id: shopIds.vault,
       name: 'Bóveda del contrabandista',
       description: '',
+      kind: null,
+      image_path: null,
       visibility: 'hidden',
       mode: 'auto',
       resale_percent: 0,
@@ -106,6 +138,21 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
       revision: 0,
     },
   ]
+  if (options.emptyShop)
+    shops.push({
+      id: uuid('71', 4),
+      name: 'La Jarra Alegre',
+      description: '',
+      kind: 'tavern',
+      image_path: null,
+      visibility: 'hidden',
+      mode: 'auto',
+      resale_percent: 50,
+      is_open: true,
+      access: [],
+      modifiers: [],
+      revision: 0,
+    })
   const listing = (
     shop: string,
     def: Definition,
@@ -281,7 +328,9 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
     image_path: def.image_path ?? null,
     rarity: def.rarity,
     weight_tenths: def.weight_tenths,
+    weight_lb: def.weight_lb ?? Number(def.weight_tenths ?? 0) / 10,
     description: def.description,
+    translations: def.translations ?? null,
     slot_kind: def.slot_kind,
     properties: def.properties,
   })
@@ -323,15 +372,41 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
       created_at: o.created_at,
       updated_at: o.created_at,
       closed_at: null,
-      shop: { id: shop.id, name: shop.name, mode: shop.mode },
+      shop: { id: shop.id, name: shop.name, mode: shop.mode, kind: shop.kind },
       character: { id: characterId, name: 'Arin' },
       lines: o.lines.map(({ listing_id: _listing, ...l }) => ({
         ...l,
         item_name: definition(l.definition_id).name,
+        translations: definition(l.definition_id).translations ?? null,
         icon: definition(l.definition_id).icon,
       })),
     }
   }
+
+  // RYT-107 shop images: uploads land, removals succeed and signed reads serve the stall.
+  const uploaded = new Set<string>()
+  await page.route('https://rytta-test.supabase.co/storage/v1/object/**', async (route) => {
+    const url = new URL(route.request().url())
+    const path = decodeURIComponent(url.pathname)
+    if (path.includes('/object/sign/shop-images/'))
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ signedURL: '/object/public-test/shop-banner.svg?token=fixture' }),
+      })
+    if (path.includes('/object/public-test/shop-banner.svg'))
+      return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: bannerSvg })
+    if (path.includes('/object/shop-images')) {
+      const name = path.split('/object/shop-images/')[1]
+      if (name) uploaded.add(name)
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(name ? { Key: `shop-images/${name}` } : []),
+      })
+    }
+    return route.fallback()
+  })
 
   await page.route('https://rytta-test.supabase.co/rest/v1/rpc/**', async (route) => {
     const request = route.request()
@@ -380,6 +455,8 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
               id: s.id,
               name: s.name,
               description: s.description,
+              kind: s.kind,
+              image_path: s.image_path,
               mode: s.mode,
               is_open: s.is_open,
               resale_percent: s.resale_percent,
@@ -411,7 +488,13 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
           characters: [{ id: characterId, name: 'Arin', gold }],
           items: definitions
             .filter((d) => !d.archived && d.origin !== 'player')
-            .map((d) => ({ ...item(d), value_gp: d.value_gp, origin: d.origin })),
+            .map((d) => ({
+              ...item(d),
+              value_gp: d.value_gp,
+              origin: d.origin,
+              basic_key: d.basic_key ?? null,
+              is_template: Boolean(d.is_template),
+            })),
           shops: shops
             .filter((s) => !archived.has(s.id))
             .map((s) => ({
@@ -518,11 +601,74 @@ export async function shopsFixture(page: Page, fixture: Fixture, options: { gold
         return respond(result(order))
       }
       case 'save_shop': {
-        const draft = body.definition as Omit<Shop, 'id' | 'modifiers' | 'revision'>
+        if (actor !== dmId) return fail('Forbidden')
+        // As in SQL: a missing kind keeps the saved one and an empty string clears it.
+        const { kind, ...draft } = body.definition as Omit<
+          Shop,
+          'id' | 'modifiers' | 'revision' | 'image_path' | 'kind'
+        > & { kind?: string }
         const existing = shops.find((s) => s.id === body.target_shop)
-        if (existing) Object.assign(existing, draft, { revision: existing.revision + 1 })
-        else shops.push({ ...draft, id: next('71'), modifiers: [], revision: 0 })
+        if (existing)
+          Object.assign(existing, draft, {
+            revision: existing.revision + 1,
+            ...(kind === undefined ? {} : { kind: kind.trim() || null }),
+          })
+        else
+          shops.push({
+            ...draft,
+            kind: kind?.trim() || null,
+            image_path: null,
+            id: next('71'),
+            modifiers: [],
+            revision: 0,
+          })
         return respond(existing?.id ?? shops.at(-1)!.id)
+      }
+      // RYT-107: the catalogue import is the inventory fixture's (fixtures/basic-import.ts, with
+      // replays by request id); bulk listings skip definitions the shop already lists, as in SQL.
+      case 'import_basic_items': {
+        if (actor !== dmId) return fail('Forbidden')
+        const reply = fixture.inventory.importBasic(body)
+        return 'error' in reply ? fail(reply.error) : respond(reply.data)
+      }
+      case 'add_listings': {
+        if (actor !== dmId) return fail('Forbidden')
+        const created: { definition_id: string; listing_id: string }[] = []
+        const skipped: { definition_id: string; listing_id: string }[] = []
+        for (const entry of body.items as { definition_id: string; price?: number }[]) {
+          const existing = listings.find(
+            (l) => l.shop_id === body.target_shop && l.definition_id === entry.definition_id,
+          )
+          if (existing) {
+            skipped.push({ definition_id: entry.definition_id, listing_id: existing.id })
+            continue
+          }
+          const row = listing(
+            String(body.target_shop),
+            definition(entry.definition_id),
+            Number(entry.price ?? definition(entry.definition_id).value_gp ?? 0),
+            null,
+          )
+          listings.push(row)
+          created.push({ definition_id: entry.definition_id, listing_id: row.id })
+        }
+        return respond({
+          created,
+          skipped,
+          created_count: created.length,
+          skipped_count: skipped.length,
+        })
+      }
+      case 'set_shop_image': {
+        if (actor !== dmId) return fail('Forbidden')
+        const shop = shops.find((s) => s.id === body.target_shop && !archived.has(s.id))
+        if (!shop) return fail('Shop unavailable')
+        if (shop.revision !== body.expected_revision) return fail('Stale revision')
+        const path = (body.new_path as string | null) ?? null
+        if (path && !uploaded.has(path)) return fail('Image unavailable')
+        shop.image_path = path
+        shop.revision += 1
+        return respond({ id: shop.id, image_path: path, revision: shop.revision })
       }
       case 'save_listing': {
         const draft = body.definition as Omit<Listing, 'id' | 'shop_id' | 'revision'>

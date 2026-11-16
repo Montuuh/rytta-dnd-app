@@ -3,7 +3,13 @@ import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView } from '@/features/campaigns'
 import { charactersQuery } from '@/features/characters'
 import { carriedTenths, inventoryQuery } from '@/features/inventory'
-import { changeShop, getShopAdmin, getStorefront, listOrders } from './data/repository'
+import {
+  changeShop,
+  getShopAdmin,
+  getStorefront,
+  listOrders,
+  shopImageUrl,
+} from './data/repository'
 import { ShopError, type ShopAction } from './domain/shops'
 
 export const storefrontQuery = (userId: string, campaignId: string, characterId: string) =>
@@ -82,4 +88,25 @@ export function useHoldings(characterId: string | undefined) {
     tenths: data ? carriedTenths(data.stacks, definitions) : 0,
     strength: data?.holder.str ?? null,
   }
+}
+
+/** RYT-107: the shop image's signed address, renewed before its five minutes run out. */
+export const shopImageQuery = (userId: string | undefined, path?: string | null) =>
+  queryOptions({
+    queryKey: ['private', userId, 'shop-image', path],
+    queryFn: () => shopImageUrl(path!),
+    enabled: Boolean(userId && path),
+    staleTime: 240_000,
+    refetchInterval: 240_000,
+    retry: false,
+  })
+
+/**
+ * A shop picture to show: `src` once the address arrived, `pending` while it is on its way.
+ * No path, a path from the other environment or a broken address all fall back to the sign.
+ */
+export function useShopPicture(path: string | null | undefined) {
+  const { state } = useAuth()
+  const query = useQuery(shopImageQuery(state.user?.id, path))
+  return { src: query.data ?? null, pending: Boolean(path) && query.isPending }
 }

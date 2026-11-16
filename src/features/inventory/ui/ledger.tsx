@@ -1,3 +1,4 @@
+import { localizedName } from '@/shared/lib/translations'
 import { useEffect, useState } from 'react'
 import { Text, UnstyledButton } from '@mantine/core'
 import { Undo2 } from 'lucide-react'
@@ -50,7 +51,9 @@ export function Ledger({
           (event.after_value.definition_id as string | undefined)
         const definition = definitionId ? definitions.get(definitionId) : undefined
         const remaining = undoRemainingMs(event, now, dm, userId)
-        const name = definition?.name ?? t('inventory.ledger.unknownItem')
+        const name = definition
+          ? localizedName(definition, i18n.language)
+          : t('inventory.ledger.unknownItem')
         return (
           <li
             key={event.id}

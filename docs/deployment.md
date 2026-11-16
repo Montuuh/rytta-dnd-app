@@ -37,6 +37,30 @@ Secrets stay server-side. Storage policies and Realtime setup are later tickets.
 Set backup/restore ownership and retention before real campaigns.
 PKCE callbacks return to the deployed base URL with query parameters; never implicit fragments.
 
+## Releases with a paired migration
+
+Some database changes ship in two parts: an additive part applied ahead of time and a part the
+deployed frontend cannot follow, applied together with the frontend release. Current case
+(ADR 043, RYT-104/105/107): part 1 `20261120120000_items_decimal_catalogue_proposals.sql` is
+applied to production (hosted history 2026-11-16, version `20261116002653`); part 2
+`20261121120000_items_player_authoring_close.sql` is not. Release order:
+
+1. Confirm the hosted history has part 1 and not part 2, and that `private.money_scale()`
+   returns 0 in production.
+2. Push the frontend to main and wait for the Quality workflow to deploy it.
+3. Apply part 2 right after the deployment finishes. Between the two steps the new frontend
+   runs on whole gold (a typed cent amount is refused, never rounded) and the API still lets
+   Players create items; no data is lost.
+4. Verify `money_scale()` is 2, a Player receives `Forbidden` from `save_item_definition`, and
+   the basic catalogue imports with cent prices. Retire the PRE rerun step in
+   [PRE environment](pre-environment.md).
+
+Before part 2, do not merge item definitions in production: a `merge` ledger row cannot be
+parsed by the previous frontend. After part 2, rolling back to the previous frontend is not
+safe: it parses gold as integers and cannot read cent amounts or `merge` rows. Fix forward
+instead; a corrective migration can return both switches to their part-1 values but does not
+remove amounts already stored with cents.
+
 ## Vercel fallback
 
 Vite preset, npm ci, npm run build, output dist, base /. Same hash routes work without

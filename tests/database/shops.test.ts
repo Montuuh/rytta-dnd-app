@@ -438,16 +438,26 @@ describe('RYT-005 sales and revert', () => {
     await asUser(player)
     await checkout(s.c, s.market, s.ch, [{ listing_id: s.swordListing, quantity: 3 }])
     const sold = await sell(s.c, s.market, s.ch, [{ definition_id: s.sword, quantity: 2 }])
-    // 15 * 50% = 7.5 → 7 per unit; gold 200 - 45 + 14.
-    expect(sold).toMatchObject({ status: 'completed', total: 14, gold: 169 })
+    // 15 * 50% = 7.50 per unit (RYT-104 rounds half up to 0.01 gp); gold 200 - 45 + 15.
+    expect(sold).toMatchObject({ status: 'completed', total: 15, gold: 170 })
     await asUser(player)
     await expect(
       sell(s.c, s.market, s.ch, [{ definition_id: s.sword, quantity: 2 }]),
     ).rejects.toThrow(/Insufficient items/)
-    // A Player-created definition (no price, source player) cannot mint gold.
+    // A legacy Player-created definition (no price, source player) cannot mint gold. Players can
+    // no longer create them (RYT-105), so the rows are seeded as they were left by RYT-004.
+    await db.exec('reset role')
+    const trinket = (
+      await db.query<{ id: string }>(
+        "insert into public.item_definitions(campaign_id,name,category,origin,created_by) values ($1,'Lucky pebble','treasure','player',$2) returning id",
+        [s.c, player],
+      )
+    ).rows[0]!.id
+    await db.query(
+      "insert into public.inventory_items(campaign_id,character_id,definition_id,quantity,source) values ($1,$2,$3,5,'player')",
+      [s.c, s.ch, trinket],
+    )
     await asUser(player)
-    const trinket = await definition(s.c, { name: 'Lucky pebble', category: 'treasure' })
-    await db.query('select public.grant_item($1,$2,$3,5,$4)', [s.c, s.ch, trinket, randomUUID()])
     await expect(
       sell(s.c, s.market, s.ch, [{ definition_id: trinket, quantity: 1 }]),
     ).rejects.toThrow(/Insufficient items/)
@@ -460,7 +470,7 @@ describe('RYT-005 sales and revert', () => {
       sold.order_id,
       randomUUID(),
     ])
-    expect(reverted).toMatchObject({ status: 'reverted', gold: 155, refunded: 14 })
+    expect(reverted).toMatchObject({ status: 'reverted', gold: 155, refunded: 15 })
     expect((await stacks(s.ch)).find((x) => x.name === 'Longsword')!.quantity).toBe(3)
   })
 

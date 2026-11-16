@@ -1,3 +1,5 @@
+import { formatGp } from '@/shared/lib/money'
+import { localizedName } from '@/shared/lib/translations'
 import { Alert, Button, Modal, Text } from '@mantine/core'
 import { Check, Coins, Handshake } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -97,7 +99,7 @@ export function InvitePopup({
 }
 
 function SummaryList({ side }: { side: TradeSummarySide | undefined }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   if (!side || (side.items.length === 0 && side.gold === 0))
     return (
       <Text size="sm" c="dimmed">
@@ -112,7 +114,7 @@ function SummaryList({ side }: { side: TradeSummarySide | undefined }) {
             <ItemIcon icon={item.icon} size={20} />
           </span>
           <span className="user-copy">
-            {item.quantity} × {item.name}
+            {item.quantity} × {localizedName(item, i18n.language)}
           </span>
         </li>
       ))}
@@ -121,7 +123,7 @@ function SummaryList({ side }: { side: TradeSummarySide | undefined }) {
           <span className="trade-summary-icon gold" aria-hidden="true">
             <Coins size={20} />
           </span>
-          <span>{t('trade.window.gp', { gold: side.gold })}</span>
+          <span>{t('trade.window.gp', { gold: formatGp(side.gold, i18n.language) })}</span>
         </li>
       )}
     </ul>

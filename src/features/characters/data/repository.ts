@@ -211,6 +211,9 @@ export async function changeCharacter(
   if (result.error) {
     const message = result.error.message
     if (message.includes('Stale revision')) throw new Error('stale')
+    // Gold with cents before the server's release migration: 'Invalid request', detail 'amount'.
+    if (message.includes('Invalid request') && result.error.details === 'amount')
+      throw new Error('cents')
     throw new Error(rosterError(message))
   }
   return action.kind === 'createOwn' || action.kind === 'activate'

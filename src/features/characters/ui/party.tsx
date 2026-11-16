@@ -19,8 +19,9 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
-import { useCampaignPortraits } from '@/features/inventory'
+import { GpInput, useCampaignPortraits } from '@/features/inventory'
 import { TradeHistory } from '@/features/trades'
+import { MAX_GP, roundGp } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { PageHead } from '@/shared/ui/page-head'
@@ -392,27 +393,43 @@ function CharacterEditor({
           )}
           {editor.kind === 'resources' &&
             fields.map((field, index) => {
-              const maxVal = field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
+              const gold = field === 'gold'
+              const maxVal = gold ? MAX_GP : 2147483647
               const label = t(`characters.${field}`)
               const step = (delta: number) => {
                 const raw = Number(form.values[field])
-                const current = Number.isFinite(raw) ? Math.trunc(raw) : 0
+                // Gold keeps its copper (12.5 + 1 = 13.5); the counters are whole.
+                const current = Number.isFinite(raw) ? (gold ? raw : Math.trunc(raw)) : 0
                 const next = Math.min(maxVal, Math.max(0, current + delta))
-                form.setFieldValue(field, next)
+                form.setFieldValue(field, gold ? roundGp(next) : next)
               }
               return (
                 <div key={field} className="resource-stepper-row">
-                  <NumberInput
-                    data-autofocus={index === 0 || undefined}
-                    label={label}
-                    required
-                    min={0}
-                    max={maxVal}
-                    allowDecimal={false}
-                    hideControls
-                    className="resource-stepper-input"
-                    {...form.getInputProps(field)}
-                  />
+                  {gold ? (
+                    <GpInput
+                      data-autofocus={index === 0 || undefined}
+                      label={label}
+                      required
+                      max={maxVal}
+                      className="resource-stepper-input"
+                      value={typeof form.values.gold === 'number' ? form.values.gold : null}
+                      // An emptied field stays empty ('') so validation asks for a value.
+                      onChange={(value) => form.setFieldValue('gold', (value ?? '') as number)}
+                      error={form.errors.gold}
+                    />
+                  ) : (
+                    <NumberInput
+                      data-autofocus={index === 0 || undefined}
+                      label={label}
+                      required
+                      min={0}
+                      max={maxVal}
+                      allowDecimal={false}
+                      hideControls
+                      className="resource-stepper-input"
+                      {...form.getInputProps(field)}
+                    />
+                  )}
                   <div className="resource-stepper-buttons">
                     <ActionIcon
                       type="button"
@@ -442,7 +459,13 @@ function CharacterEditor({
             })}
           {action.isError && (
             <Alert role="alert" color="red">
-              {t(action.error.message === 'stale' ? 'characters.stale' : 'characters.unavailable')}
+              {t(
+                action.error.message === 'stale'
+                  ? 'characters.stale'
+                  : action.error.message === 'cents'
+                    ? 'inventory.error.cents'
+                    : 'characters.unavailable',
+              )}
             </Alert>
           )}
           <Group justify="flex-end">

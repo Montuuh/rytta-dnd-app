@@ -20,6 +20,7 @@ import { DefinitionEditor, type GiveOutcome } from './definition-editor'
 import { ItemIcon } from './item-icon'
 import { Stepper } from './stepper'
 import { newRequestId } from '@/shared/lib/request-id'
+import { localizedName } from '@/shared/lib/translations'
 
 type Step = 'choose' | 'existing' | 'create'
 
@@ -53,8 +54,19 @@ export function AddItemChooser({
   const items = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase()
     return (catalogue.data ?? [])
-      .filter((item) => !item.archived && item.name.toLocaleLowerCase().includes(needle))
-      .sort((a, b) => a.name.localeCompare(b.name, i18n.language))
+      .filter(
+        (item) =>
+          !item.archived &&
+          [item.name, localizedName(item, i18n.language)].some((name) =>
+            name.toLocaleLowerCase().includes(needle),
+          ),
+      )
+      .sort((a, b) =>
+        localizedName(a, i18n.language).localeCompare(
+          localizedName(b, i18n.language),
+          i18n.language,
+        ),
+      )
   }, [catalogue.data, search, i18n.language])
   const item = catalogue.data?.find((d) => d.id === picked && !d.archived) ?? null
   const give = async () => {
@@ -71,7 +83,13 @@ export function AddItemChooser({
         amount: quantity,
         requestId: requests.current.get(key),
       })
-      onDone(t('addItem.given', { item: item.name, amount: quantity, name: character.name }))
+      onDone(
+        t('addItem.given', {
+          item: localizedName(item, i18n.language),
+          amount: quantity,
+          name: character.name,
+        }),
+      )
     } catch {
       setFailed(true)
     }
@@ -201,7 +219,9 @@ export function AddItemChooser({
                       <ItemIcon icon={entry.icon} imagePath={entry.image_path} size={22} />
                     </span>
                     <span className="store-row-body">
-                      <span className="store-row-name user-copy">{entry.name}</span>
+                      <span className="store-row-name user-copy">
+                        {localizedName(entry, i18n.language)}
+                      </span>
                       <span className="store-row-meta">
                         {t(`inventory.category.${entry.category}`)} ·{' '}
                         {t(`inventory.rarity.${entry.rarity}`)}

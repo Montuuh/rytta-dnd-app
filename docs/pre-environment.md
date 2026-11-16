@@ -82,6 +82,20 @@ execute refresh, inspect backups or access snapshots. Do not grant them those pr
 The CLI has no automatic retry: after a timeout/unknown response, inspect the database
 before repeating a refresh. Successful API reports contain counts and backup IDs, not data.
 
+## PRE ahead of production
+
+Sometimes PRE must run a change before its production migration is applied. The change then
+ships as an owner-only file in `supabase/maintenance/` that remaps the same DDL to PRE and
+changes nothing in `public` / `private`. A refresh copies production functions, so after every
+`pre:sync` until the migration reaches production, run that file again through the trusted
+administrator connection or the Dashboard SQL Editor.
+
+Current case (ADR 043): `items-player-authoring-close-pre.sql` gives PRE the switches of
+`20261121120000_items_player_authoring_close.sql` (gp with cents, Player item authoring
+closed). Without it, a refreshed PRE behaves like part 1 only: whole gold, Players can still
+create items and the catalogue's cent prices fail to import. A test keeps the maintenance DDL
+identical to the migration's. Retire the rerun step once part 2 is applied to production.
+
 ## Copy contract
 
 The source is the live public/private schema, not a hand-maintained table list. A stable

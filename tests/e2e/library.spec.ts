@@ -47,10 +47,10 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   const upload = page.getByRole('dialog', { name: 'Subir el SRD 5.2.1' })
   await expect(upload.locator('button', { hasText: 'Cancelar' })).toBeFocused()
   await expect(
-    upload.getByText(/con 1161 entradas: criaturas, sus rasgos y todo el glosario/),
+    upload.getByText(/con 1217 entradas: criaturas, sus rasgos y todo el glosario/),
   ).toBeVisible()
   await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 1161 entradas' }).click()
+  await upload.getByRole('button', { name: 'Subir 1217 entradas' }).click()
   await expect(upload).toHaveCount(0, { timeout: 30_000 })
   await expect(page.getByRole('status').filter({ hasText: 'Subido como borrador.' })).toBeVisible()
   expect(server.packs).toHaveLength(1)
@@ -59,7 +59,7 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
     visibility: 'public',
     license: 'CC-BY-4.0',
   })
-  expect(server.entries()).toHaveLength(1161)
+  expect(server.entries()).toHaveLength(1217)
   await expect(page.locator('#lib-entries-title')).toBeFocused()
 
   // The SRD opens on its creatures, sorted by their Spanish names.
@@ -71,13 +71,13 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   expect(names).toEqual([...names].sort(new Intl.Collator('es').compare))
 
   // Publishing sends every draft as version 1.
-  await expect(page.locator('.lib-banner')).toContainText('1161 cambios sin publicar')
+  await expect(page.locator('.lib-banner')).toContainText('1217 cambios sin publicar')
   await page.getByRole('button', { name: 'Publicar versión 1' }).click()
   const publish = page.getByRole('dialog', { name: /Publicar la versión 1/ })
   await expect(publish.locator('button', { hasText: 'Cancelar' })).toBeFocused()
   // The fixture lists every change; the hosted list stops at 1000 (the pack count is shown then).
-  await expect(publish.getByText('1161 cambios sin publicar')).toBeVisible()
-  await expect(publish.getByText('y 1149 más')).toBeVisible()
+  await expect(publish.getByText('1217 cambios sin publicar')).toBeVisible()
+  await expect(publish.getByText('y 1205 más')).toBeVisible()
   await audit(page, '[role="dialog"]')
   await publish.getByRole('button', { name: 'Publicar', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Versión 1 publicada.' })).toBeVisible()

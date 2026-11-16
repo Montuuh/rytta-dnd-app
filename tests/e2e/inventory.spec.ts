@@ -37,7 +37,7 @@ for (const [language, scheme] of [
     const potion = page.getByRole('button', { name: /Poción de curación, (cantidad|quantity) 3/ })
     await expect(potion).toBeVisible()
     await page.addStyleTag({ content: 'html { font-size: 150%; }' })
-    await expect(page.getByRole('meter')).toHaveAttribute('aria-valuemax', '210')
+    await expect(page.getByRole('meter')).toHaveAttribute('aria-valuemax', es ? '105' : '210')
     await audit(page, info.outputPath(`satchel-${language}-${scheme}-150.png`))
     await potion.click()
     await expect(page.getByRole('dialog')).toBeVisible()
@@ -129,10 +129,15 @@ test('hold-to-use needs a sustained press; a tap does nothing', async ({ page })
   await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeFocused()
 })
 
-test('the DM forges from an SRD template, gives it out and sees the hidden-module note', async ({
+test('the DM forges from an existing item, gives it out and sees the hidden-module note', async ({
   page,
 }, info) => {
-  await identityFixture(page, { sheet: 'complete' })
+  await identityFixture(page, {
+    sheet: 'complete',
+    inventory: true,
+    catalogue: true,
+    modules: ['party'],
+  })
   await page.goto(url)
   await expect(
     page.getByText('Los jugadores todavía no ven este módulo.', { exact: false }),
@@ -141,7 +146,8 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await expect(page.getByRole('link', { name: 'Almacén de objetos' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
   await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
-  const picker = page.getByRole('combobox', { name: 'Partir de una plantilla del SRD' })
+  // RYT-104: the static SRD list is gone; the helper searches the campaign, templates first.
+  const picker = page.getByRole('combobox', { name: 'Partir de un objeto existente' })
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Custom')
   await picker.click()
   expect(
@@ -149,12 +155,13 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   ).toBeGreaterThanOrEqual(16)
   const options = page.getByRole('dialog').getByRole('listbox')
   await expect(options).toBeVisible()
+  await expect(options.getByRole('option').first()).toContainText('Plantilla')
   const viewport = page.viewportSize()!
   await page.setViewportSize({ ...viewport, height: viewport.height - 260 })
   await picker.fill('xyzxyz')
   await picker.press('Enter')
   await expect(options).toBeVisible()
-  await picker.fill('dag')
+  await picker.fill('espada')
   await expect(options.getByRole('option')).toHaveCount(1)
   await expect(picker).toBeFocused()
   expect(
@@ -169,27 +176,32 @@ test('the DM forges from an SRD template, gives it out and sees the hidden-modul
   await picker.press('Escape')
   await expect(options).toBeHidden()
   await picker.tap()
-  await picker.fill('dag')
-  await options.getByRole('option', { name: 'Daga' }).tap()
+  await picker.fill('espada')
+  await options.getByRole('option', { name: /Espada larga/ }).tap()
   await expect(options).toBeHidden()
   await page.setViewportSize(viewport)
-  await expect(page.getByLabel('Nombre')).toHaveValue('Daga')
-  await expect(page.getByLabel('Dados de daño')).toHaveValue('1d4')
+  await expect(page.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue(
+    'Espada larga',
+  )
+  await expect(page.getByLabel('Dados de daño')).toHaveValue('1d8')
+  await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Espada del alba')
   await audit(page, info.outputPath('forge.png'))
   await page.getByRole('dialog').getByRole('button', { name: 'Forjar objeto' }).click()
-  await expect(page.getByRole('status')).toContainText('Objeto guardado: Daga')
-  const row = page.locator('.store-row').filter({ hasText: 'Daga' })
-  const give = row.getByRole('button', { name: 'Dar Daga a personajes', exact: true })
+  await expect(page.getByRole('status')).toContainText('Objeto guardado: Espada del alba')
+  const row = page.locator('.store-row').filter({ hasText: 'Espada del alba' })
+  const give = row.getByRole('button', { name: 'Dar Espada del alba a personajes', exact: true })
   if (await give.count()) await give.click()
   else {
-    await row.getByRole('button', { name: 'Acciones para Daga', exact: true }).click()
+    await row.getByRole('button', { name: 'Acciones para Espada del alba', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Dar a personajes', exact: true }).click()
   }
   await page.getByRole('dialog').getByRole('button', { name: 'Arin', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Dar a personajes' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.goto(url)
-  await expect(page.getByRole('button', { name: /Daga, (cantidad|quantity) 1/ })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: /Espada del alba, (cantidad|quantity) 1/ }),
+  ).toBeVisible()
 })
 
 test('Players cannot open the module until the DM turns it on', async ({ page }) => {

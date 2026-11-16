@@ -306,7 +306,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
     page.getByRole('status').filter({ hasText: 'Poción de curación guardado' }),
   ).toBeVisible()
   await expect(potionRow).toBeFocused()
-  await expect(potionRow).toContainText('56 po')
+  await expect(potionRow).toContainText('56,10 po')
 
   // Several catalog items at once from the icon grid.
   await page.getByRole('button', { name: 'Añadir objeto' }).click()
@@ -369,15 +369,15 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await page.keyboard.press('Escape')
   await expect(pending.getByRole('button', { name: 'Contraofertar', exact: true })).toBeFocused()
   await pending.getByRole('button', { name: 'Contraofertar', exact: true }).click()
-  await pending.getByRole('button', { name: 'Mitad: 18' }).click()
+  await pending.getByRole('button', { name: 'Mitad: 17,50' }).click()
   await audit(page, info.outputPath('counter.png'))
-  await pending.getByRole('button', { name: 'Contraofertar 36 po' }).click()
+  await pending.getByRole('button', { name: 'Contraofertar 35 po' }).click()
   await expect(pending).toBeFocused()
   await expect(page.getByRole('status').filter({ hasText: 'Contraoferta enviada' })).toBeVisible()
   // The countered order stays in view as a counter-offer: asked total struck, new total shown.
   await expect(pending).toHaveClass(/order-counter/)
   await expect(pending.locator('.order-kind')).toHaveText('Contraoferta de compra')
-  await expect(pending.locator('.order-flow')).toContainText('36 po')
+  await expect(pending.locator('.order-flow')).toContainText('35 po')
   await audit(page, info.outputPath('ledger-counter.png'))
   await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY')
 
@@ -410,4 +410,197 @@ test('the DM panel fits at 150% text with the stock editor open', async ({ page 
     .getByRole('button', { name: 'Contraofertar', exact: true })
     .click()
   await audit(page, info.outputPath('ledger-150.png'))
+})
+
+test('RYT-107 the DM creates a shop from a type and a retry finishes its stock without duplicates', async ({
+  page,
+}, info) => {
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  const fixture = await identityFixture(page, { inventory: true })
+  await shopsFixture(page, fixture)
+  const saves: string[] = []
+  let failures = 1
+  await page.route('**/rpc/save_shop', (route) => {
+    saves.push(route.request().postDataJSON().request_id)
+    return route.fallback()
+  })
+  await page.route('**/rpc/add_listings', (route) =>
+    failures-- > 0
+      ? route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+      : route.fallback(),
+  )
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  const list = page.getByRole('navigation', { name: 'Tiendas' })
+  // The admin list shows each shop's type as a glyph and word.
+  await expect(list.getByRole('button', { name: /Mercado del puerto/ })).toContainText(
+    'Tienda de abastos',
+  )
+  await list.getByRole('button', { name: 'Nueva tienda' }).click()
+  const create = page.getByRole('dialog', { name: 'Nueva tienda' })
+  const empty = create.getByRole('radio', { name: /Vacía/ })
+  await expect(empty).toBeChecked()
+  // Native radios: one Tab stop and arrow keys move the choice.
+  await empty.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(create.getByRole('radio', { name: /Herrería/ })).toBeChecked()
+  await create.getByRole('radio', { name: /Taberna y posada/ }).check()
+  await expect(create.getByLabel('Nombre')).toHaveValue('Taberna y posada')
+  await create.getByLabel('Nombre').fill('La Jarra Alegre')
+  const review = create.getByRole('button', { name: /Revisar los objetos/ })
+  await review.click()
+  await expect(review).toHaveAttribute('aria-expanded', 'true')
+  await create.locator('.stock-review-list input[type="checkbox"]').first().uncheck()
+  const submit = create.getByRole('button', { name: /Crear con \d+ objetos/ })
+  const count = Number((await submit.textContent())!.match(/(\d+)/)![1])
+  await audit(page, info.outputPath('create-typed.png'))
+  await submit.click()
+  // The shop exists; the stock failed. The drawer stays with a retry that only stocks it.
+  await expect(create.getByRole('alert')).toContainText('La tienda La Jarra Alegre ya existe')
+  await expect(create.getByLabel('Nombre')).toBeDisabled()
+  await create.getByRole('button', { name: /Terminar de llenar/ }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: `La Jarra Alegre creada con ${count} objetos` }),
+  ).toBeVisible()
+  expect(saves).toHaveLength(1)
+  await expect(page.getByRole('heading', { level: 2, name: 'La Jarra Alegre' })).toBeVisible()
+  await expect(page.locator('.stock-row')).toHaveCount(count)
+  expect(errors).toEqual([])
+})
+
+test('RYT-107 an empty shop is stocked from its type; the add-items header keeps New item in view', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { inventory: true })
+  await shopsFixture(page, fixture, { emptyShop: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${shops}?shop=71000000-0000-4000-8000-000000000004`)
+  await expect(page.getByText('Estantes vacíos')).toBeVisible()
+  await page.getByRole('button', { name: 'Llenar según un tipo' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Llenar La Jarra Alegre según su tipo' })
+  await expect(drawer.getByRole('radio', { name: /Taberna y posada/ })).toBeChecked()
+  // The drawer opens on the chosen type, not on Close.
+  await expect(drawer.getByRole('radio', { name: /Taberna y posada/ })).toBeFocused()
+  await audit(page, info.outputPath('stock-from-type.png'))
+  await drawer.getByRole('button', { name: /Llenar con \d+ objetos/ }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'objetos nuevos en los estantes' }),
+  ).toBeVisible()
+  await expect(page.locator('.stock-row', { hasText: 'Cerveza' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Añadir objeto' }).click()
+  const picker = page.getByRole('dialog', { name: 'Añadir a La Jarra Alegre' })
+  const forge = picker.getByRole('button', { name: 'Crear objeto' })
+  const inView = async () => {
+    const box = (await forge.boundingBox())!
+    return box.y >= 0 && box.y + box.height <= page.viewportSize()!.height
+  }
+  expect(await inView()).toBe(true)
+  await picker.evaluate((node) => {
+    const content = node.closest('.mantine-Drawer-content') ?? node
+    content.scrollTo(0, 10_000)
+  })
+  expect(await inView()).toBe(true)
+  // A pick the search hides still counts, and the dock says so.
+  await picker.locator('.pick-tile').first().click()
+  await expect(picker.getByRole('button', { name: 'Añadir 1 objeto' })).toBeVisible()
+  await picker.getByLabel('Buscar objetos').fill('Martillo lunar')
+  await expect(picker.getByText(/No tienes .Martillo lunar. en el almacén/)).toBeVisible()
+  await expect(picker.getByText('1 objeto elegido no se ve con esta búsqueda.')).toBeVisible()
+  // One create action: the pinned one now names the search; the old "Create it" is gone.
+  await expect(picker.getByRole('button', { name: /^Crear/ })).toHaveCount(1)
+  const named = picker.getByRole('button', { name: 'Crear «Martillo lunar»' })
+  await expect(named).toBeVisible()
+  await audit(page, info.outputPath('picker-no-match.png'))
+  await picker.getByRole('button', { name: 'Ver todos' }).click()
+  await expect(picker.getByLabel('Buscar objetos')).toHaveValue('')
+  await expect(picker.getByText(/no se ve con esta búsqueda/)).toHaveCount(0)
+  await picker.getByLabel('Buscar objetos').fill('Martillo lunar')
+  // It opens the forge with the searched name.
+  await named.click()
+  await expect(
+    page.getByRole('dialog').getByRole('textbox', { name: 'Nombre', exact: true }),
+  ).toHaveValue('Martillo lunar')
+})
+
+test('RYT-104 a Spanish price field keeps the comma while cents are typed', async ({ page }) => {
+  const fixture = await identityFixture(page, { inventory: true })
+  await shopsFixture(page, fixture)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  const potionRow = page.getByRole('button', { name: /^Poción de curación/ })
+  await potionRow.click()
+  const price = page.getByRole('textbox', { name: 'Precio', exact: true })
+  await price.selectText()
+  // Character by character, as on a phone keypad: "12," must not lose its comma.
+  await price.pressSequentially('12,')
+  await expect(price).toHaveValue('12, po')
+  await price.pressSequentially('5')
+  await expect(price).toHaveValue('12,5 po')
+  // Settled, a price with cents shows both of them (RYT-104).
+  await price.blur()
+  await expect(price).toHaveValue('12,50 po')
+  await page.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Poción de curación guardado' }),
+  ).toBeVisible()
+  await expect(potionRow).toContainText('12,50 po')
+})
+
+test('RYT-107 the DM uploads, keeps and removes the shop image', async ({ page }, info) => {
+  const fixture = await identityFixture(page, { inventory: true })
+  await shopsFixture(page, fixture)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  const field = page.getByRole('group', { name: 'Imagen de la tienda' })
+  await field.locator('input[type="file"]').setInputFiles({
+    name: 'stall.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    ),
+  })
+  await expect(field.getByRole('status')).toHaveText('Imagen guardada.')
+  await expect(
+    field.getByRole('button', { name: 'Ver la imagen de Mercado del puerto' }),
+  ).toBeVisible()
+  await field.getByRole('button', { name: 'Quitar imagen' }).click()
+  await field.getByRole('button', { name: 'Conservar' }).click()
+  await expect(field.getByRole('button', { name: 'Quitar imagen' })).toBeFocused()
+  await audit(page, info.outputPath('admin-image.png'))
+  await field.getByRole('button', { name: 'Quitar imagen' }).click()
+  await field.getByRole('button', { name: 'Quitar', exact: true }).click()
+  await expect(field.getByRole('status')).toHaveText('Imagen quitada.')
+  await expect(field.getByText('Añadir una imagen')).toBeVisible()
+})
+
+test('RYT-107 a Player sees the shop banner with its type; tapping it opens the viewer', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    inventory: true,
+    modules,
+  })
+  await shopsFixture(page, fixture, { shopImage: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  const banner = page.locator('.shop-banner')
+  await expect(banner).toContainText('Tienda de abastos')
+  await expect(banner.getByRole('combobox', { name: /Mercado del puerto/ })).toBeVisible()
+  await audit(page, info.outputPath('storefront-banner.png'))
+  const open = banner.getByRole('button', { name: 'Ver la imagen de Mercado del puerto' })
+  await expect(open.locator('xpath=ancestor::button')).toHaveCount(0)
+  // The name and badges sit on the picture's foot; a tap above them opens it.
+  await open.click({ position: { x: 24, y: 12 } })
+  await expect(page.getByRole('dialog', { name: 'Mercado del puerto', exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(open).toBeFocused()
+  // A shop without an image keeps the sign, with its type.
+  await page.goto(`${shops}?shop=${shopIds.smith}`)
+  await expect(page.locator('.shop-banner')).toHaveCount(0)
+  await expect(page.locator('.shop-sign')).toContainText('Herrería')
 })

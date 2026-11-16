@@ -57,19 +57,13 @@ import { skillKeys } from '../../domain/srd'
 import { CreationChooser } from '../creation/chooser'
 import { useCharacterLabels } from '../labels'
 import { AbilityStrip } from './abilities'
-import {
-  ConditionsBlock,
-  FeaturesBlock,
-  NotesBlock,
-  ResourcesBlock,
-  SkillsBlock,
-  SpellsBlock,
-} from './blocks'
+import { ConditionsBlock, FeaturesBlock, NotesBlock, SkillsBlock, SpellsBlock } from './blocks'
 import { SheetHero } from './hero'
 import { HistoryBlock } from './history-block'
 import { LibraryPicker, type LibraryTab } from './library'
 import type { PanelNotice, PanelProps } from './panel-types'
 import { PersonaliseDrawer } from './personalise'
+import { ResourcesBlock } from './resources-block'
 import { BlockSheet } from './widgets'
 import './panel.css'
 
@@ -818,10 +812,14 @@ function useGlance(props: PanelProps, exhaustion: number | undefined): Record<Ti
     0,
   )
   const resourceLines = [
-    ...build.trackers.slice(0, 4).map((tracker) => {
-      const used = Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
-      return meter(tracker.id, tracker.name, tracker.max - used, tracker.max)
-    }),
+    // Once-per-turn marks stay inside the sheet; the glance shows pools.
+    ...build.trackers
+      .filter((tracker) => !tracker.per)
+      .slice(0, 4)
+      .map((tracker) => {
+        const used = Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
+        return meter(tracker.id, tracker.name, tracker.max - used, tracker.max)
+      }),
     ...(slotMax > 0 ? [meter('slots', t('sheet.slots'), slotLeft, slotMax)] : []),
     meter('dice', t('sheet.hitDice'), level - Math.min(level, vitals.hit_dice_spent), level),
   ]

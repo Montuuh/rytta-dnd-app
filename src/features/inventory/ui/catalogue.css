@@ -1,0 +1,377 @@
+/* RYT-104/105 catalogue: linked weight fields, second language, proposals, import and merges. */
+
+/* Weight: one figure in two units, the reader's first, joined by an equals sign. */
+.weight-pair {
+  display: grid;
+  gap: 6px;
+}
+.weight-pair-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+}
+.weight-pair-equals {
+  padding-bottom: 0.7rem;
+  color: var(--app-muted);
+  font-family: var(--mantine-font-family-headings);
+}
+@media (max-width: 30em) {
+  .weight-pair-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Stacked on phones, the sign stays between the two fields so they read as one weight. */
+  .weight-pair-equals {
+    justify-self: center;
+    padding: 0;
+    margin: -4px 0 -6px;
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+}
+
+/* "Start from an existing item" results. */
+.start-option {
+  gap: 10px;
+}
+.start-option-name {
+  flex: 1;
+  min-width: 0;
+}
+.start-option-kind {
+  color: var(--app-muted);
+  font-size: var(--fs-tag);
+}
+
+/* The optional second language: a quiet disclosure, closed until it holds text. */
+.forge-second {
+  border-top: 1px solid var(--app-border);
+  padding-top: 6px;
+}
+.forge-second-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  color: var(--app-text);
+  text-align: start;
+}
+.forge-second-toggle:hover {
+  background: var(--app-raised);
+}
+.forge-second-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.forge-second-title {
+  font-weight: 600;
+}
+.forge-second-hint {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.forge-second-chevron {
+  flex-shrink: 0;
+  color: var(--app-muted);
+  transition: transform 160ms ease;
+}
+.forge-second-toggle[aria-expanded='true'] .forge-second-chevron {
+  transform: rotate(180deg);
+}
+
+/* Player add: description of the pick above the amount, and the route to a proposal. */
+.pick-description {
+  display: -webkit-box;
+  margin-bottom: 8px;
+  overflow: hidden;
+  color: var(--app-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.propose-link {
+  align-self: flex-start;
+}
+
+/* The Player's proposals beside the satchel: a short ledger, the status in words. */
+.proposal-shelf {
+  display: grid;
+  gap: 8px;
+}
+.shelf-title {
+  font-size: var(--fs-h3);
+}
+.proposal-list,
+.review-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  list-style: none;
+  overflow: hidden;
+}
+.proposal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--app-border);
+}
+.proposal-row:last-child,
+.review-list > li:last-child .review-row {
+  border-bottom: 0;
+}
+.proposal-body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.proposal-name {
+  font-weight: 600;
+}
+.proposal-qty {
+  color: var(--app-muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.proposal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.proposal-row[data-status='accepted'] .proposal-status,
+.proposal-row[data-status='merged'] .proposal-status {
+  color: var(--success);
+}
+.proposal-row[data-status='rejected'] .proposal-status {
+  color: var(--danger);
+}
+.proposal-note {
+  font-style: italic;
+}
+
+/* DM review rows: the whole row opens the proposal. */
+.review-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-text);
+}
+.review-row:hover {
+  background: var(--app-raised);
+}
+.review-row:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Storeroom desk: proposals waiting and the basic import, quiet links under the heading. */
+.store-desk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  margin: -4px 0 10px;
+}
+.store-desk-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--app-muted);
+}
+.store-desk-link:hover {
+  color: var(--app-text);
+}
+.store-desk-link[data-waiting] {
+  color: var(--app-text);
+  font-weight: 600;
+}
+.store-desk-count {
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+  font-size: var(--fs-tag);
+  font-variant-numeric: tabular-nums;
+}
+.store-template-mark {
+  display: inline-flex;
+  margin-inline-start: 6px;
+  color: var(--app-accent-secondary);
+  vertical-align: -1px;
+}
+
+/* Basic import: one painted checkbox tile per category, with what is new and what is there. */
+.import-legend {
+  margin-bottom: 6px;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.import-all {
+  margin-bottom: 10px;
+}
+.import-all .mantine-Checkbox-body {
+  align-items: center;
+  min-height: 44px;
+}
+.import-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr));
+  gap: 6px;
+}
+.import-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 34px 8px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  color: var(--app-muted);
+  cursor: pointer;
+}
+.import-tile:hover {
+  background: var(--app-raised);
+}
+.import-tile[data-checked] {
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-surface));
+  color: var(--app-text);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
+}
+.import-tile[data-complete] {
+  cursor: default;
+  border-style: dashed;
+}
+.import-tile:has(.forge-radio:focus-visible) {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.import-tile-copy {
+  display: grid;
+  min-width: 0;
+}
+.import-tile-name {
+  color: var(--app-text);
+  font-weight: 600;
+}
+.import-tile-count {
+  font-size: var(--fs-meta);
+}
+.import-tile-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.import-tile[data-checked] .import-tile-check {
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.import-tile[data-complete] .import-tile-check {
+  color: var(--success);
+}
+.import-credit {
+  font-style: italic;
+}
+.import-update {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.import-update .mantine-Alert-root {
+  justify-self: stretch;
+}
+.import-update .mantine-Button-root {
+  min-height: 44px;
+  max-width: 100%;
+  height: auto;
+  white-space: normal;
+}
+
+/* Merge: what goes and what stays, then the impact in plain lines. */
+.merge-pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.merge-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.merge-side[data-role='source'] {
+  border-style: dashed;
+}
+.merge-side[data-role='target'] {
+  border-color: var(--app-accent);
+}
+.merge-side > span {
+  display: grid;
+  min-width: 0;
+}
+.merge-side-label {
+  color: var(--app-muted);
+  font-size: var(--fs-tag);
+}
+.merge-side-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.merge-arrow {
+  color: var(--app-muted);
+}
+.merge-impact {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-inline-start: 1.1rem;
+}
+
+/* Load bar: the container that lightens the load, named under the track. */
+.balance-relief {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1.6em;
+  color: var(--app-muted);
+}
+.balance-relief svg {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forge-second-chevron {
+    transition: none;
+  }
+}

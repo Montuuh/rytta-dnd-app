@@ -1,0 +1,3443 @@
+{
+  "attribution": "Entries with source \"srd\" adapt the System Reference Document 5.2.1 by Wizards of the Coast LLC (English and Spanish editions), licensed under CC-BY-4.0: https://creativecommons.org/licenses/by/4.0/legalcode. Entries and descriptions marked \"rytta\" are original to this project.",
+  "items": [
+    {
+      "key": "padded",
+      "source": "srd",
+      "name": {
+        "en": "Padded Armor",
+        "es": "Armadura acolchada"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 8,
+      "costCp": 500,
+      "properties": {
+        "base": 11,
+        "dexCap": null,
+        "stealthDisadvantage": true,
+        "armorType": "light"
+      }
+    },
+    {
+      "key": "leather",
+      "source": "srd",
+      "name": {
+        "en": "Leather Armor",
+        "es": "Armadura de cuero"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 10,
+      "costCp": 1000,
+      "properties": {
+        "base": 11,
+        "dexCap": null,
+        "armorType": "light"
+      }
+    },
+    {
+      "key": "studdedLeather",
+      "source": "srd",
+      "name": {
+        "en": "Studded Leather Armor",
+        "es": "Armadura de cuero tachonado"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 13,
+      "costCp": 4500,
+      "properties": {
+        "base": 12,
+        "dexCap": null,
+        "armorType": "light"
+      }
+    },
+    {
+      "key": "hide",
+      "source": "srd",
+      "name": {
+        "en": "Hide Armor",
+        "es": "Armadura de pieles"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 12,
+      "costCp": 1000,
+      "properties": {
+        "base": 12,
+        "dexCap": 2,
+        "armorType": "medium"
+      }
+    },
+    {
+      "key": "chainShirt",
+      "source": "srd",
+      "name": {
+        "en": "Chain Shirt",
+        "es": "Camisa de malla"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 20,
+      "costCp": 5000,
+      "properties": {
+        "base": 13,
+        "dexCap": 2,
+        "armorType": "medium"
+      }
+    },
+    {
+      "key": "scaleMail",
+      "source": "srd",
+      "name": {
+        "en": "Scale Mail",
+        "es": "Cota de escamas"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 45,
+      "costCp": 5000,
+      "properties": {
+        "base": 14,
+        "dexCap": 2,
+        "stealthDisadvantage": true,
+        "armorType": "medium"
+      }
+    },
+    {
+      "key": "breastplate",
+      "source": "srd",
+      "name": {
+        "en": "Breastplate",
+        "es": "Coraza"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 20,
+      "costCp": 40000,
+      "properties": {
+        "base": 14,
+        "dexCap": 2,
+        "armorType": "medium"
+      }
+    },
+    {
+      "key": "halfPlate",
+      "source": "srd",
+      "name": {
+        "en": "Half Plate Armor",
+        "es": "Media armadura"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 40,
+      "costCp": 75000,
+      "properties": {
+        "base": 15,
+        "dexCap": 2,
+        "stealthDisadvantage": true,
+        "armorType": "medium"
+      }
+    },
+    {
+      "key": "ringMail",
+      "source": "srd",
+      "name": {
+        "en": "Ring Mail",
+        "es": "Cota guarnecida"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 40,
+      "costCp": 3000,
+      "properties": {
+        "base": 14,
+        "dexCap": 0,
+        "stealthDisadvantage": true,
+        "armorType": "heavy"
+      }
+    },
+    {
+      "key": "chainMail",
+      "source": "srd",
+      "name": {
+        "en": "Chain Mail",
+        "es": "Cota de malla"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 55,
+      "costCp": 7500,
+      "properties": {
+        "base": 16,
+        "dexCap": 0,
+        "strReq": 13,
+        "stealthDisadvantage": true,
+        "armorType": "heavy"
+      }
+    },
+    {
+      "key": "splint",
+      "source": "srd",
+      "name": {
+        "en": "Splint Armor",
+        "es": "Armadura de bandas"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 60,
+      "costCp": 20000,
+      "properties": {
+        "base": 17,
+        "dexCap": 0,
+        "strReq": 15,
+        "stealthDisadvantage": true,
+        "armorType": "heavy"
+      }
+    },
+    {
+      "key": "plate",
+      "source": "srd",
+      "name": {
+        "en": "Plate Armor",
+        "es": "Armadura de placas"
+      },
+      "descriptionSource": "rytta",
+      "category": "armor",
+      "icon": "shirt",
+      "slot_kind": "body",
+      "weightLb": 65,
+      "costCp": 150000,
+      "properties": {
+        "base": 18,
+        "dexCap": 0,
+        "strReq": 15,
+        "stealthDisadvantage": true,
+        "armorType": "heavy"
+      }
+    },
+    {
+      "key": "shield",
+      "source": "srd",
+      "name": {
+        "en": "Shield",
+        "es": "Escudo"
+      },
+      "descriptionSource": "rytta",
+      "category": "shield",
+      "icon": "shield",
+      "slot_kind": "shield",
+      "weightLb": 6,
+      "costCp": 1000,
+      "properties": {
+        "acBonus": 2
+      }
+    },
+    {
+      "key": "club",
+      "source": "srd",
+      "name": {
+        "en": "Club",
+        "es": "Garrote"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 10,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "bludgeoning",
+        "light": true,
+        "mastery": "slow",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "dagger",
+      "source": "srd",
+      "name": {
+        "en": "Dagger",
+        "es": "Daga"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 1,
+      "costCp": 200,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "piercing",
+        "finesse": true,
+        "light": true,
+        "thrown": true,
+        "range": "20/60",
+        "mastery": "nick",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "greatclub",
+      "source": "srd",
+      "name": {
+        "en": "Greatclub",
+        "es": "Garrote grande"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "two_hands",
+      "weightLb": 10,
+      "costCp": 20,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "bludgeoning",
+        "mastery": "push",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "handaxe",
+      "source": "srd",
+      "name": {
+        "en": "Handaxe",
+        "es": "Hacha de mano"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "axe",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "slashing",
+        "light": true,
+        "thrown": true,
+        "range": "20/60",
+        "mastery": "vex",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "javelin",
+      "source": "srd",
+      "name": {
+        "en": "Javelin",
+        "es": "Jabalina"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 50,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "piercing",
+        "thrown": true,
+        "range": "30/120",
+        "mastery": "slow",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "lightHammer",
+      "source": "srd",
+      "name": {
+        "en": "Light Hammer",
+        "es": "Martillo ligero"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 200,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "bludgeoning",
+        "light": true,
+        "thrown": true,
+        "range": "20/60",
+        "mastery": "nick",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "mace",
+      "source": "srd",
+      "name": {
+        "en": "Mace",
+        "es": "Maza"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "bludgeoning",
+        "mastery": "sap",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "quarterstaff",
+      "source": "srd",
+      "name": {
+        "en": "Quarterstaff",
+        "es": "Bastón"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "wand-sparkles",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 20,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "bludgeoning",
+        "versatileDice": "1d8",
+        "mastery": "topple",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "sickle",
+      "source": "srd",
+      "name": {
+        "en": "Sickle",
+        "es": "Hoz"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 100,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "slashing",
+        "light": true,
+        "mastery": "nick",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "spear",
+      "source": "srd",
+      "name": {
+        "en": "Spear",
+        "es": "Lanza"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 3,
+      "costCp": 100,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "piercing",
+        "thrown": true,
+        "range": "20/60",
+        "versatileDice": "1d8",
+        "mastery": "sap",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "dart",
+      "source": "srd",
+      "name": {
+        "en": "Dart",
+        "es": "Dardo"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "target",
+      "slot_kind": "one_hand",
+      "weightLb": 0.25,
+      "costCp": 5,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "piercing",
+        "finesse": true,
+        "thrown": true,
+        "range": "20/60",
+        "ranged": true,
+        "mastery": "vex",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "lightCrossbow",
+      "source": "srd",
+      "name": {
+        "en": "Light Crossbow",
+        "es": "Ballesta ligera"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "two_hands",
+      "weightLb": 5,
+      "costCp": 2500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "80/320",
+        "loading": true,
+        "ammunition": "bolts",
+        "mastery": "slow",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "shortbow",
+      "source": "srd",
+      "name": {
+        "en": "Shortbow",
+        "es": "Arco corto"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "two_hands",
+      "weightLb": 2,
+      "costCp": 2500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "80/320",
+        "ammunition": "arrows",
+        "mastery": "vex",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "sling",
+      "source": "srd",
+      "name": {
+        "en": "Sling",
+        "es": "Honda"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "one_hand",
+      "weightLb": 0,
+      "costCp": 10,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "bludgeoning",
+        "ranged": true,
+        "range": "30/120",
+        "ammunition": "slingBullets",
+        "mastery": "slow",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "battleaxe",
+      "source": "srd",
+      "name": {
+        "en": "Battleaxe",
+        "es": "Hacha de guerra"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "axe",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 1000,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "slashing",
+        "versatileDice": "1d10",
+        "mastery": "topple",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "flail",
+      "source": "srd",
+      "name": {
+        "en": "Flail",
+        "es": "Mangual"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 1000,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "bludgeoning",
+        "mastery": "sap",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "glaive",
+      "source": "srd",
+      "name": {
+        "en": "Glaive",
+        "es": "Guja"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "two_hands",
+      "weightLb": 6,
+      "costCp": 2000,
+      "properties": {
+        "dice": "1d10",
+        "damageType": "slashing",
+        "heavy": true,
+        "reach": true,
+        "mastery": "graze",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "greataxe",
+      "source": "srd",
+      "name": {
+        "en": "Greataxe",
+        "es": "Hacha a dos manos"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "axe",
+      "slot_kind": "two_hands",
+      "weightLb": 7,
+      "costCp": 3000,
+      "properties": {
+        "dice": "1d12",
+        "damageType": "slashing",
+        "heavy": true,
+        "mastery": "cleave",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "greatsword",
+      "source": "srd",
+      "name": {
+        "en": "Greatsword",
+        "es": "Espadón"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "two_hands",
+      "weightLb": 6,
+      "costCp": 5000,
+      "properties": {
+        "dice": "2d6",
+        "damageType": "slashing",
+        "heavy": true,
+        "mastery": "graze",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "halberd",
+      "source": "srd",
+      "name": {
+        "en": "Halberd",
+        "es": "Alabarda"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "axe",
+      "slot_kind": "two_hands",
+      "weightLb": 6,
+      "costCp": 2000,
+      "properties": {
+        "dice": "1d10",
+        "damageType": "slashing",
+        "heavy": true,
+        "reach": true,
+        "mastery": "cleave",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "lance",
+      "source": "srd",
+      "name": {
+        "en": "Lance",
+        "es": "Lanza de caballería"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "two_hands",
+      "weightLb": 6,
+      "costCp": 1000,
+      "properties": {
+        "dice": "1d10",
+        "damageType": "piercing",
+        "heavy": true,
+        "reach": true,
+        "mastery": "topple",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "longsword",
+      "source": "srd",
+      "name": {
+        "en": "Longsword",
+        "es": "Espada larga"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 3,
+      "costCp": 1500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "slashing",
+        "versatileDice": "1d10",
+        "mastery": "sap",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "maul",
+      "source": "srd",
+      "name": {
+        "en": "Maul",
+        "es": "Maza a dos manos"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "two_hands",
+      "weightLb": 10,
+      "costCp": 1000,
+      "properties": {
+        "dice": "2d6",
+        "damageType": "bludgeoning",
+        "heavy": true,
+        "mastery": "topple",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "morningstar",
+      "source": "srd",
+      "name": {
+        "en": "Morningstar",
+        "es": "Lucero del alba"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 1500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "piercing",
+        "mastery": "sap",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "pike",
+      "source": "srd",
+      "name": {
+        "en": "Pike",
+        "es": "Pica"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "two_hands",
+      "weightLb": 18,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d10",
+        "damageType": "piercing",
+        "heavy": true,
+        "reach": true,
+        "mastery": "push",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "rapier",
+      "source": "srd",
+      "name": {
+        "en": "Rapier",
+        "es": "Estoque"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 2500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "piercing",
+        "finesse": true,
+        "mastery": "vex",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "scimitar",
+      "source": "srd",
+      "name": {
+        "en": "Scimitar",
+        "es": "Cimitarra"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 3,
+      "costCp": 2500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "slashing",
+        "finesse": true,
+        "light": true,
+        "mastery": "nick",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "shortsword",
+      "source": "srd",
+      "name": {
+        "en": "Shortsword",
+        "es": "Espada corta"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 1000,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "piercing",
+        "finesse": true,
+        "light": true,
+        "mastery": "vex",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "trident",
+      "source": "srd",
+      "name": {
+        "en": "Trident",
+        "es": "Tridente"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "piercing",
+        "thrown": true,
+        "range": "20/60",
+        "versatileDice": "1d10",
+        "mastery": "topple",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "warhammer",
+      "source": "srd",
+      "name": {
+        "en": "Warhammer",
+        "es": "Martillo de guerra"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "hammer",
+      "slot_kind": "one_hand",
+      "weightLb": 5,
+      "costCp": 1500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "bludgeoning",
+        "versatileDice": "1d10",
+        "mastery": "push",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "warPick",
+      "source": "srd",
+      "name": {
+        "en": "War Pick",
+        "es": "Pico de guerra"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "pickaxe",
+      "slot_kind": "one_hand",
+      "weightLb": 2,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "piercing",
+        "versatileDice": "1d10",
+        "mastery": "sap",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "whip",
+      "source": "srd",
+      "name": {
+        "en": "Whip",
+        "es": "Látigo"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "sword",
+      "slot_kind": "one_hand",
+      "weightLb": 3,
+      "costCp": 200,
+      "properties": {
+        "dice": "1d4",
+        "damageType": "slashing",
+        "finesse": true,
+        "reach": true,
+        "mastery": "slow",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "blowgun",
+      "source": "srd",
+      "name": {
+        "en": "Blowgun",
+        "es": "Cerbatana"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "one_hand",
+      "weightLb": 1,
+      "costCp": 1000,
+      "properties": {
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "25/100",
+        "loading": true,
+        "ammunition": "needles",
+        "flatDamage": 1,
+        "mastery": "vex",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "handCrossbow",
+      "source": "srd",
+      "name": {
+        "en": "Hand Crossbow",
+        "es": "Ballesta de mano"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "one_hand",
+      "weightLb": 3,
+      "costCp": 7500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "30/120",
+        "light": true,
+        "loading": true,
+        "ammunition": "bolts",
+        "mastery": "vex",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "heavyCrossbow",
+      "source": "srd",
+      "name": {
+        "en": "Heavy Crossbow",
+        "es": "Ballesta pesada"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "two_hands",
+      "weightLb": 18,
+      "costCp": 5000,
+      "properties": {
+        "dice": "1d10",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "100/400",
+        "heavy": true,
+        "loading": true,
+        "ammunition": "bolts",
+        "mastery": "push",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "longbow",
+      "source": "srd",
+      "name": {
+        "en": "Longbow",
+        "es": "Arco largo"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "two_hands",
+      "weightLb": 2,
+      "costCp": 5000,
+      "properties": {
+        "dice": "1d8",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "150/600",
+        "heavy": true,
+        "ammunition": "arrows",
+        "mastery": "slow",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "musket",
+      "source": "srd",
+      "name": {
+        "en": "Musket",
+        "es": "Mosquete"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "two_hands",
+      "weightLb": 10,
+      "costCp": 50000,
+      "properties": {
+        "dice": "1d12",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "40/120",
+        "loading": true,
+        "ammunition": "firearmBullets",
+        "mastery": "slow",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "pistol",
+      "source": "srd",
+      "name": {
+        "en": "Pistol",
+        "es": "Pistola"
+      },
+      "descriptionSource": "rytta",
+      "category": "weapon",
+      "icon": "bow-arrow",
+      "slot_kind": "one_hand",
+      "weightLb": 3,
+      "costCp": 25000,
+      "properties": {
+        "dice": "1d10",
+        "damageType": "piercing",
+        "ranged": true,
+        "range": "30/90",
+        "loading": true,
+        "ammunition": "firearmBullets",
+        "mastery": "vex",
+        "proficiency": "martial"
+      }
+    },
+    {
+      "key": "acid",
+      "source": "srd",
+      "name": {
+        "en": "Acid",
+        "es": "Ácido"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "alchemistsFire",
+      "source": "srd",
+      "name": {
+        "en": "Alchemist's Fire",
+        "es": "Fuego de alquimista"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flame",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "arrows",
+      "source": "srd",
+      "name": {
+        "en": "Arrow",
+        "es": "Flecha"
+      },
+      "descriptionSource": "srd",
+      "category": "ammo",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 0.05,
+      "costCp": 5,
+      "properties": {},
+      "pack": {
+        "quantity": 20,
+        "weightLb": 1,
+        "costCp": 100
+      }
+    },
+    {
+      "key": "bolts",
+      "source": "srd",
+      "name": {
+        "en": "Bolt",
+        "es": "Virote"
+      },
+      "descriptionSource": "srd",
+      "category": "ammo",
+      "icon": "target",
+      "slot_kind": "none",
+      "weightLb": 0.075,
+      "costCp": 5,
+      "properties": {},
+      "pack": {
+        "quantity": 20,
+        "weightLb": 1.5,
+        "costCp": 100
+      }
+    },
+    {
+      "key": "firearmBullets",
+      "source": "srd",
+      "name": {
+        "en": "Firearm Bullet",
+        "es": "Bala de arma de fuego"
+      },
+      "descriptionSource": "srd",
+      "category": "ammo",
+      "icon": "target",
+      "slot_kind": "none",
+      "weightLb": 0.2,
+      "costCp": 30,
+      "properties": {},
+      "pack": {
+        "quantity": 10,
+        "weightLb": 2,
+        "costCp": 300
+      }
+    },
+    {
+      "key": "slingBullets",
+      "source": "srd",
+      "name": {
+        "en": "Sling Bullet",
+        "es": "Proyectil de honda"
+      },
+      "descriptionSource": "srd",
+      "category": "ammo",
+      "icon": "target",
+      "slot_kind": "none",
+      "weightLb": 0.075,
+      "costCp": 1,
+      "properties": {},
+      "pack": {
+        "quantity": 20,
+        "weightLb": 1.5,
+        "costCp": 4
+      }
+    },
+    {
+      "key": "needles",
+      "source": "srd",
+      "name": {
+        "en": "Needle",
+        "es": "Dardo de cerbatana"
+      },
+      "descriptionSource": "srd",
+      "category": "ammo",
+      "icon": "target",
+      "slot_kind": "none",
+      "weightLb": 0.02,
+      "costCp": 2,
+      "properties": {},
+      "pack": {
+        "quantity": 50,
+        "weightLb": 1,
+        "costCp": 100
+      }
+    },
+    {
+      "key": "antitoxin",
+      "source": "srd",
+      "name": {
+        "en": "Antitoxin",
+        "es": "Antitoxina"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "arcaneFocusCrystal",
+      "source": "srd",
+      "name": {
+        "en": "Crystal (Arcane Focus)",
+        "es": "Cristal (canalizador arcano)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "gem",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "arcaneFocusOrb",
+      "source": "srd",
+      "name": {
+        "en": "Orb (Arcane Focus)",
+        "es": "Orbe (canalizador arcano)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "sparkles",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 2000,
+      "properties": {}
+    },
+    {
+      "key": "arcaneFocusRod",
+      "source": "srd",
+      "name": {
+        "en": "Rod (Arcane Focus)",
+        "es": "Vara (canalizador arcano)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "wand-sparkles",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "arcaneFocusStaff",
+      "source": "srd",
+      "name": {
+        "en": "Staff (Arcane Focus)",
+        "es": "Bastón (canalizador arcano)"
+      },
+      "descriptionSource": "srd",
+      "category": "weapon",
+      "icon": "wand-sparkles",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "bludgeoning",
+        "versatileDice": "1d8",
+        "mastery": "topple",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "arcaneFocusWand",
+      "source": "srd",
+      "name": {
+        "en": "Wand (Arcane Focus)",
+        "es": "Varita (canalizador arcano)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "wand-sparkles",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "backpack",
+      "source": "srd",
+      "name": {
+        "en": "Backpack",
+        "es": "Mochila"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 200,
+      "properties": {
+        "container": {
+          "capacityLb": 30,
+          "loadReductionPercent": 0
+        }
+      }
+    },
+    {
+      "key": "ballBearings",
+      "source": "srd",
+      "name": {
+        "en": "Ball Bearings",
+        "es": "Bolas de metal"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "barrel",
+      "source": "srd",
+      "name": {
+        "en": "Barrel",
+        "es": "Barril"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 70,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "basket",
+      "source": "srd",
+      "name": {
+        "en": "Basket",
+        "es": "Cesta"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 40,
+      "properties": {
+        "container": {
+          "capacityLb": 40,
+          "loadReductionPercent": 0
+        }
+      }
+    },
+    {
+      "key": "bedroll",
+      "source": "srd",
+      "name": {
+        "en": "Bedroll",
+        "es": "Petate"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "tent",
+      "slot_kind": "none",
+      "weightLb": 7,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "bell",
+      "source": "srd",
+      "name": {
+        "en": "Bell",
+        "es": "Campana"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "blanket",
+      "source": "srd",
+      "name": {
+        "en": "Blanket",
+        "es": "Manta"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "tent",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 50,
+      "properties": {}
+    },
+    {
+      "key": "blockAndTackle",
+      "source": "srd",
+      "name": {
+        "en": "Block and Tackle",
+        "es": "Polipasto"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "link",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "book",
+      "source": "srd",
+      "name": {
+        "en": "Book",
+        "es": "Libro"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "book-open",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "glassBottle",
+      "source": "srd",
+      "name": {
+        "en": "Glass Bottle",
+        "es": "Botella de cristal"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "bucket",
+      "source": "srd",
+      "name": {
+        "en": "Bucket",
+        "es": "Cubo"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 5,
+      "properties": {}
+    },
+    {
+      "key": "burglarsPack",
+      "source": "srd",
+      "name": {
+        "en": "Burglar's Pack",
+        "es": "Paquete de ladrón"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 42,
+      "costCp": 1600,
+      "properties": {}
+    },
+    {
+      "key": "caltrops",
+      "source": "srd",
+      "name": {
+        "en": "Caltrops",
+        "es": "Abrojos"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "candle",
+      "source": "srd",
+      "name": {
+        "en": "Candle",
+        "es": "Vela"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flame",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 1,
+      "properties": {}
+    },
+    {
+      "key": "crossbowBoltCase",
+      "source": "srd",
+      "name": {
+        "en": "Crossbow Bolt Case",
+        "es": "Estuche para virotes de ballesta"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "mapOrScrollCase",
+      "source": "srd",
+      "name": {
+        "en": "Map or Scroll Case",
+        "es": "Estuche para mapas o pergaminos"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "scroll",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "chain",
+      "source": "srd",
+      "name": {
+        "en": "Chain",
+        "es": "Cadena"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "link",
+      "slot_kind": "none",
+      "weightLb": 10,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "chest",
+      "source": "srd",
+      "name": {
+        "en": "Chest",
+        "es": "Cofre"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 25,
+      "costCp": 500,
+      "properties": {
+        "container": {
+          "capacityLb": 300,
+          "loadReductionPercent": 0
+        }
+      }
+    },
+    {
+      "key": "climbersKit",
+      "source": "srd",
+      "name": {
+        "en": "Climber's Kit",
+        "es": "Útiles de escalada"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "pickaxe",
+      "slot_kind": "none",
+      "weightLb": 12,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "fineClothes",
+      "source": "srd",
+      "name": {
+        "en": "Fine Clothes",
+        "es": "Ropas de calidad"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "shirt",
+      "slot_kind": "none",
+      "weightLb": 6,
+      "costCp": 1500,
+      "properties": {}
+    },
+    {
+      "key": "travelersClothes",
+      "source": "srd",
+      "name": {
+        "en": "Traveler's Clothes",
+        "es": "Ropas de viaje"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "shirt",
+      "slot_kind": "none",
+      "weightLb": 4,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "componentPouch",
+      "source": "srd",
+      "name": {
+        "en": "Component Pouch",
+        "es": "Saquito de componentes"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "sparkles",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "costume",
+      "source": "srd",
+      "name": {
+        "en": "Costume",
+        "es": "Disfraz"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "shirt",
+      "slot_kind": "none",
+      "weightLb": 4,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "crowbar",
+      "source": "srd",
+      "name": {
+        "en": "Crowbar",
+        "es": "Palanqueta"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "wrench",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "diplomatsPack",
+      "source": "srd",
+      "name": {
+        "en": "Diplomat's Pack",
+        "es": "Paquete de diplomático"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 39,
+      "costCp": 3900,
+      "properties": {}
+    },
+    {
+      "key": "druidicFocusSprigOfMistletoe",
+      "source": "srd",
+      "name": {
+        "en": "Sprig of Mistletoe (Druidic Focus)",
+        "es": "Rama de muérdago (canalizador druídico)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "sparkles",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "druidicFocusWoodenStaff",
+      "source": "srd",
+      "name": {
+        "en": "Wooden Staff (Druidic Focus)",
+        "es": "Bastón de madera (canalizador druídico)"
+      },
+      "descriptionSource": "srd",
+      "category": "weapon",
+      "icon": "wand-sparkles",
+      "slot_kind": "one_hand",
+      "weightLb": 4,
+      "costCp": 500,
+      "properties": {
+        "dice": "1d6",
+        "damageType": "bludgeoning",
+        "versatileDice": "1d8",
+        "mastery": "topple",
+        "proficiency": "simple"
+      }
+    },
+    {
+      "key": "druidicFocusYewWand",
+      "source": "srd",
+      "name": {
+        "en": "Yew Wand (Druidic Focus)",
+        "es": "Varita de tejo (canalizador druídico)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "wand-sparkles",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "dungeoneersPack",
+      "source": "srd",
+      "name": {
+        "en": "Dungeoneer's Pack",
+        "es": "Paquete de explorador de mazmorras"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 55,
+      "costCp": 1200,
+      "properties": {}
+    },
+    {
+      "key": "entertainersPack",
+      "source": "srd",
+      "name": {
+        "en": "Entertainer's Pack",
+        "es": "Paquete de artista"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 58.5,
+      "costCp": 4000,
+      "properties": {}
+    },
+    {
+      "key": "explorersPack",
+      "source": "srd",
+      "name": {
+        "en": "Explorer's Pack",
+        "es": "Paquete de explorador"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 55,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "flask",
+      "source": "srd",
+      "name": {
+        "en": "Flask",
+        "es": "Frasco"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 2,
+      "properties": {}
+    },
+    {
+      "key": "grapplingHook",
+      "source": "srd",
+      "name": {
+        "en": "Grappling Hook",
+        "es": "Garfio de escalada"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "link",
+      "slot_kind": "none",
+      "weightLb": 4,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "healersKit",
+      "source": "srd",
+      "name": {
+        "en": "Healer's Kit",
+        "es": "Útiles de sanador"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "heart-pulse",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 500,
+      "properties": {
+        "usesPerItem": 10
+      }
+    },
+    {
+      "key": "holySymbolAmulet",
+      "source": "srd",
+      "name": {
+        "en": "Amulet (Holy Symbol)",
+        "es": "Amuleto (símbolo sagrado)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "medal",
+      "slot_kind": "neck",
+      "weightLb": 1,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "holySymbolEmblem",
+      "source": "srd",
+      "name": {
+        "en": "Emblem (Holy Symbol)",
+        "es": "Emblema (símbolo sagrado)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "medal",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "holySymbolReliquary",
+      "source": "srd",
+      "name": {
+        "en": "Reliquary (Holy Symbol)",
+        "es": "Relicario (símbolo sagrado)"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "medal",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "holyWater",
+      "source": "srd",
+      "name": {
+        "en": "Holy Water",
+        "es": "Agua bendita"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "droplets",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "huntingTrap",
+      "source": "srd",
+      "name": {
+        "en": "Hunting Trap",
+        "es": "Trampa para cazar"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "bone",
+      "slot_kind": "none",
+      "weightLb": 25,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "ink",
+      "source": "srd",
+      "name": {
+        "en": "Ink",
+        "es": "Tinta"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "inkPen",
+      "source": "srd",
+      "name": {
+        "en": "Ink Pen",
+        "es": "Pluma"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 2,
+      "properties": {}
+    },
+    {
+      "key": "jug",
+      "source": "srd",
+      "name": {
+        "en": "Jug",
+        "es": "Jarro"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 4,
+      "costCp": 2,
+      "properties": {}
+    },
+    {
+      "key": "ladder",
+      "source": "srd",
+      "name": {
+        "en": "Ladder",
+        "es": "Escalera"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 25,
+      "costCp": 10,
+      "properties": {}
+    },
+    {
+      "key": "lamp",
+      "source": "srd",
+      "name": {
+        "en": "Lamp",
+        "es": "Lámpara"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "lamp",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 50,
+      "properties": {}
+    },
+    {
+      "key": "bullseyeLantern",
+      "source": "srd",
+      "name": {
+        "en": "Bullseye Lantern",
+        "es": "Linterna de ojo de buey"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "lamp",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "lantern",
+      "source": "srd",
+      "name": {
+        "en": "Hooded Lantern",
+        "es": "Linterna sorda"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "lamp",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "lock",
+      "source": "srd",
+      "name": {
+        "en": "Lock",
+        "es": "Cerradura"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "key",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "magnifyingGlass",
+      "source": "srd",
+      "name": {
+        "en": "Magnifying Glass",
+        "es": "Lupa"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "glasses",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10000,
+      "properties": {}
+    },
+    {
+      "key": "manacles",
+      "source": "srd",
+      "name": {
+        "en": "Manacles",
+        "es": "Esposas"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "link",
+      "slot_kind": "none",
+      "weightLb": 6,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "map",
+      "source": "srd",
+      "name": {
+        "en": "Map",
+        "es": "Mapa"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "map",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "mirror",
+      "source": "srd",
+      "name": {
+        "en": "Mirror",
+        "es": "Espejo"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "glasses",
+      "slot_kind": "none",
+      "weightLb": 0.5,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "net",
+      "source": "srd",
+      "name": {
+        "en": "Net",
+        "es": "Red"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "shell",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "oil",
+      "source": "srd",
+      "name": {
+        "en": "Oil",
+        "es": "Aceite"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 10,
+      "properties": {}
+    },
+    {
+      "key": "paper",
+      "source": "srd",
+      "name": {
+        "en": "Paper",
+        "es": "Papel"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "scroll",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 20,
+      "properties": {}
+    },
+    {
+      "key": "parchment",
+      "source": "srd",
+      "name": {
+        "en": "Parchment",
+        "es": "Pergamino"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "scroll",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10,
+      "properties": {}
+    },
+    {
+      "key": "perfume",
+      "source": "srd",
+      "name": {
+        "en": "Perfume",
+        "es": "Perfume"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "sparkles",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "basicPoison",
+      "source": "srd",
+      "name": {
+        "en": "Basic Poison",
+        "es": "Veneno básico"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "skull",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10000,
+      "properties": {}
+    },
+    {
+      "key": "pole",
+      "source": "srd",
+      "name": {
+        "en": "Pole",
+        "es": "Vara"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 7,
+      "costCp": 5,
+      "properties": {}
+    },
+    {
+      "key": "ironPot",
+      "source": "srd",
+      "name": {
+        "en": "Iron Pot",
+        "es": "Olla de hierro"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 10,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "potionOfHealing",
+      "source": "srd",
+      "name": {
+        "en": "Potion of Healing",
+        "es": "Poción de curación"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 0.5,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "pouch",
+      "source": "srd",
+      "name": {
+        "en": "Pouch",
+        "es": "Bolsa"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "coins",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 50,
+      "properties": {
+        "container": {
+          "capacityLb": 6,
+          "loadReductionPercent": 0
+        }
+      }
+    },
+    {
+      "key": "priestsPack",
+      "source": "srd",
+      "name": {
+        "en": "Priest's Pack",
+        "es": "Paquete de sacerdote"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 29,
+      "costCp": 3300,
+      "properties": {}
+    },
+    {
+      "key": "quiver",
+      "source": "srd",
+      "name": {
+        "en": "Quiver",
+        "es": "Aljaba"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "portableRam",
+      "source": "srd",
+      "name": {
+        "en": "Portable Ram",
+        "es": "Ariete portátil"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "hammer",
+      "slot_kind": "none",
+      "weightLb": 35,
+      "costCp": 400,
+      "properties": {}
+    },
+    {
+      "key": "rations",
+      "source": "srd",
+      "name": {
+        "en": "Rations",
+        "es": "Raciones"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 50,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "robe",
+      "source": "srd",
+      "name": {
+        "en": "Robe",
+        "es": "Túnica"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "shirt",
+      "slot_kind": "none",
+      "weightLb": 4,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "rope",
+      "source": "srd",
+      "name": {
+        "en": "Rope",
+        "es": "Cuerda"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "link",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "sack",
+      "source": "srd",
+      "name": {
+        "en": "Sack",
+        "es": "Saco"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 0.5,
+      "costCp": 1,
+      "properties": {
+        "container": {
+          "capacityLb": 30,
+          "loadReductionPercent": 0
+        }
+      }
+    },
+    {
+      "key": "scholarsPack",
+      "source": "srd",
+      "name": {
+        "en": "Scholar's Pack",
+        "es": "Paquete de erudito"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 22,
+      "costCp": 4000,
+      "properties": {}
+    },
+    {
+      "key": "shovel",
+      "source": "srd",
+      "name": {
+        "en": "Shovel",
+        "es": "Pala"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "pickaxe",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "signalWhistle",
+      "source": "srd",
+      "name": {
+        "en": "Signal Whistle",
+        "es": "Silbato de supervivencia"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 5,
+      "properties": {}
+    },
+    {
+      "key": "spellScrollCantrip",
+      "source": "srd",
+      "name": {
+        "en": "Spell Scroll (Cantrip)",
+        "es": "Pergamino de conjuro (truco)"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "scroll",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 3000,
+      "properties": {}
+    },
+    {
+      "key": "spellScrollLevel1",
+      "source": "srd",
+      "name": {
+        "en": "Spell Scroll (Level 1)",
+        "es": "Pergamino de conjuro (nivel 1)"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "scroll",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "ironSpikes",
+      "source": "srd",
+      "name": {
+        "en": "Iron Spikes",
+        "es": "Puntas de hierro"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "pickaxe",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "spyglass",
+      "source": "srd",
+      "name": {
+        "en": "Spyglass",
+        "es": "Catalejo"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "glasses",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 100000,
+      "properties": {}
+    },
+    {
+      "key": "string",
+      "source": "srd",
+      "name": {
+        "en": "String",
+        "es": "Cordel"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "link",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10,
+      "properties": {}
+    },
+    {
+      "key": "tent",
+      "source": "srd",
+      "name": {
+        "en": "Tent",
+        "es": "Tienda"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "tent",
+      "slot_kind": "none",
+      "weightLb": 20,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "tinderbox",
+      "source": "srd",
+      "name": {
+        "en": "Tinderbox",
+        "es": "Yesquero"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "flame",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 50,
+      "properties": {}
+    },
+    {
+      "key": "torch",
+      "source": "srd",
+      "name": {
+        "en": "Torch",
+        "es": "Antorcha"
+      },
+      "descriptionSource": "srd",
+      "category": "consumable",
+      "icon": "flame",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 1,
+      "properties": {}
+    },
+    {
+      "key": "vial",
+      "source": "srd",
+      "name": {
+        "en": "Vial",
+        "es": "Vial"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "waterskin",
+      "source": "srd",
+      "name": {
+        "en": "Waterskin",
+        "es": "Cantimplora"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "droplets",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 20,
+      "properties": {
+        "water": 4
+      }
+    },
+    {
+      "key": "ridingSaddle",
+      "source": "srd",
+      "name": {
+        "en": "Riding Saddle",
+        "es": "Silla de monta"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 25,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "militarySaddle",
+      "source": "srd",
+      "name": {
+        "en": "Military Saddle",
+        "es": "Silla militar"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 30,
+      "costCp": 2000,
+      "properties": {}
+    },
+    {
+      "key": "exoticSaddle",
+      "source": "srd",
+      "name": {
+        "en": "Exotic Saddle",
+        "es": "Silla exótica"
+      },
+      "descriptionSource": "srd",
+      "category": "gear",
+      "icon": "package",
+      "slot_kind": "none",
+      "weightLb": 40,
+      "costCp": 6000,
+      "properties": {}
+    },
+    {
+      "key": "feed",
+      "source": "srd",
+      "name": {
+        "en": "Feed (1 day)",
+        "es": "Alimento para animales (1 día)"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "apple",
+      "slot_kind": "none",
+      "weightLb": 10,
+      "costCp": 5,
+      "properties": {}
+    },
+    {
+      "key": "alchemistsSupplies",
+      "source": "srd",
+      "name": {
+        "en": "Alchemist's Supplies",
+        "es": "Suministros de alquimista"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "flask-conical",
+      "slot_kind": "none",
+      "weightLb": 8,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "brewersSupplies",
+      "source": "srd",
+      "name": {
+        "en": "Brewer's Supplies",
+        "es": "Suministros de cervecero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 9,
+      "costCp": 2000,
+      "properties": {}
+    },
+    {
+      "key": "calligraphersSupplies",
+      "source": "srd",
+      "name": {
+        "en": "Calligrapher's Supplies",
+        "es": "Suministros de calígrafo"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "carpentersTools",
+      "source": "srd",
+      "name": {
+        "en": "Carpenter's Tools",
+        "es": "Herramientas de carpintero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "hammer",
+      "slot_kind": "none",
+      "weightLb": 6,
+      "costCp": 800,
+      "properties": {}
+    },
+    {
+      "key": "cartographersTools",
+      "source": "srd",
+      "name": {
+        "en": "Cartographer's Tools",
+        "es": "Herramientas de cartógrafo"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "map",
+      "slot_kind": "none",
+      "weightLb": 6,
+      "costCp": 1500,
+      "properties": {}
+    },
+    {
+      "key": "cobblersTools",
+      "source": "srd",
+      "name": {
+        "en": "Cobbler's Tools",
+        "es": "Herramientas de zapatero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "footprints",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "cooksUtensils",
+      "source": "srd",
+      "name": {
+        "en": "Cook's Utensils",
+        "es": "Útiles de cocinero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 8,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "glassblowersTools",
+      "source": "srd",
+      "name": {
+        "en": "Glassblower's Tools",
+        "es": "Herramientas de soplador de vidrio"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 3000,
+      "properties": {}
+    },
+    {
+      "key": "jewelersTools",
+      "source": "srd",
+      "name": {
+        "en": "Jeweler's Tools",
+        "es": "Herramientas de joyero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "gem",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "leatherworkersTools",
+      "source": "srd",
+      "name": {
+        "en": "Leatherworker's Tools",
+        "es": "Herramientas de curtidor"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "wrench",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "masonsTools",
+      "source": "srd",
+      "name": {
+        "en": "Mason's Tools",
+        "es": "Herramientas de albañil"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "pickaxe",
+      "slot_kind": "none",
+      "weightLb": 8,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "paintersSupplies",
+      "source": "srd",
+      "name": {
+        "en": "Painter's Supplies",
+        "es": "Suministros de pintor"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "pottersTools",
+      "source": "srd",
+      "name": {
+        "en": "Potter's Tools",
+        "es": "Herramientas de alfarero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 1000,
+      "properties": {}
+    },
+    {
+      "key": "smithsTools",
+      "source": "srd",
+      "name": {
+        "en": "Smith's Tools",
+        "es": "Herramientas de herrero"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "anvil",
+      "slot_kind": "none",
+      "weightLb": 8,
+      "costCp": 2000,
+      "properties": {}
+    },
+    {
+      "key": "tinkersTools",
+      "source": "srd",
+      "name": {
+        "en": "Tinker's Tools",
+        "es": "Herramientas de manitas"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "wrench",
+      "slot_kind": "none",
+      "weightLb": 10,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "weaversTools",
+      "source": "srd",
+      "name": {
+        "en": "Weaver's Tools",
+        "es": "Herramientas de tejedor"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "ribbon",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "woodcarversTools",
+      "source": "srd",
+      "name": {
+        "en": "Woodcarver's Tools",
+        "es": "Herramientas de ebanista"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "wrench",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "disguiseKit",
+      "source": "srd",
+      "name": {
+        "en": "Disguise Kit",
+        "es": "Útiles para disfrazarse"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "glasses",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "forgeryKit",
+      "source": "srd",
+      "name": {
+        "en": "Forgery Kit",
+        "es": "Útiles para falsificar"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 5,
+      "costCp": 1500,
+      "properties": {}
+    },
+    {
+      "key": "gamingSetDice",
+      "source": "srd",
+      "name": {
+        "en": "Dice",
+        "es": "Dados"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "gift",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10,
+      "properties": {}
+    },
+    {
+      "key": "gamingSetDragonchess",
+      "source": "srd",
+      "name": {
+        "en": "Dragonchess",
+        "es": "Ajedrez dragón"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "gift",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "gamingSetPlayingCards",
+      "source": "srd",
+      "name": {
+        "en": "Playing Cards",
+        "es": "Naipes"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "gift",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 50,
+      "properties": {}
+    },
+    {
+      "key": "gamingSetThreeDragonAnte",
+      "source": "srd",
+      "name": {
+        "en": "Three-Dragon Ante",
+        "es": "Apuesta de los tres dragones"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "gift",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 100,
+      "properties": {}
+    },
+    {
+      "key": "herbalismKit",
+      "source": "srd",
+      "name": {
+        "en": "Herbalism Kit",
+        "es": "Útiles de herborista"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "apple",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 500,
+      "properties": {}
+    },
+    {
+      "key": "bagpipes",
+      "source": "srd",
+      "name": {
+        "en": "Bagpipes",
+        "es": "Gaita"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 6,
+      "costCp": 3000,
+      "properties": {}
+    },
+    {
+      "key": "drum",
+      "source": "srd",
+      "name": {
+        "en": "Drum",
+        "es": "Tambor"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 3,
+      "costCp": 600,
+      "properties": {}
+    },
+    {
+      "key": "dulcimer",
+      "source": "srd",
+      "name": {
+        "en": "Dulcimer",
+        "es": "Dulcémele"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 10,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "flute",
+      "source": "srd",
+      "name": {
+        "en": "Flute",
+        "es": "Flauta"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "horn",
+      "source": "srd",
+      "name": {
+        "en": "Horn",
+        "es": "Cuerno"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 300,
+      "properties": {}
+    },
+    {
+      "key": "lute",
+      "source": "srd",
+      "name": {
+        "en": "Lute",
+        "es": "Laúd"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 3500,
+      "properties": {}
+    },
+    {
+      "key": "lyre",
+      "source": "srd",
+      "name": {
+        "en": "Lyre",
+        "es": "Lira"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 3000,
+      "properties": {}
+    },
+    {
+      "key": "panFlute",
+      "source": "srd",
+      "name": {
+        "en": "Pan Flute",
+        "es": "Flauta de pan"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 1200,
+      "properties": {}
+    },
+    {
+      "key": "shawm",
+      "source": "srd",
+      "name": {
+        "en": "Shawm",
+        "es": "Chirimía"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 200,
+      "properties": {}
+    },
+    {
+      "key": "viol",
+      "source": "srd",
+      "name": {
+        "en": "Viol",
+        "es": "Viola"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "feather",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 3000,
+      "properties": {}
+    },
+    {
+      "key": "navigatorsTools",
+      "source": "srd",
+      "name": {
+        "en": "Navigator's Tools",
+        "es": "Herramientas de navegante"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "compass",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "poisonersKit",
+      "source": "srd",
+      "name": {
+        "en": "Poisoner's Kit",
+        "es": "Útiles de envenenador"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "skull",
+      "slot_kind": "none",
+      "weightLb": 2,
+      "costCp": 5000,
+      "properties": {}
+    },
+    {
+      "key": "thievesTools",
+      "source": "srd",
+      "name": {
+        "en": "Thieves' Tools",
+        "es": "Herramientas de ladrón"
+      },
+      "descriptionSource": "srd",
+      "category": "tool",
+      "icon": "key",
+      "slot_kind": "none",
+      "weightLb": 1,
+      "costCp": 2500,
+      "properties": {}
+    },
+    {
+      "key": "ale",
+      "source": "srd",
+      "name": {
+        "en": "Ale (mug)",
+        "es": "Cerveza (jarra)"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 4,
+      "properties": {
+        "water": 1
+      }
+    },
+    {
+      "key": "bread",
+      "source": "srd",
+      "name": {
+        "en": "Bread (loaf)",
+        "es": "Pan (hogaza)"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "apple",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 2,
+      "properties": {
+        "rations": 0.5
+      }
+    },
+    {
+      "key": "cheese",
+      "source": "srd",
+      "name": {
+        "en": "Cheese (wedge)",
+        "es": "Queso (cuña)"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "apple",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10,
+      "properties": {
+        "rations": 0.5
+      }
+    },
+    {
+      "key": "wineCommon",
+      "source": "srd",
+      "name": {
+        "en": "Common Wine (bottle)",
+        "es": "Vino común (botella)"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 20,
+      "properties": {
+        "water": 1.5
+      }
+    },
+    {
+      "key": "wineFine",
+      "source": "srd",
+      "name": {
+        "en": "Fine Wine (bottle)",
+        "es": "Vino de calidad (botella)"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "amphora",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 1000,
+      "properties": {
+        "water": 1.5
+      }
+    },
+    {
+      "key": "mealSqualid",
+      "source": "srd",
+      "name": {
+        "en": "Squalid Meal",
+        "es": "Comida miserable"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 1,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "mealPoor",
+      "source": "srd",
+      "name": {
+        "en": "Poor Meal",
+        "es": "Comida pobre"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 2,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "mealModest",
+      "source": "srd",
+      "name": {
+        "en": "Modest Meal",
+        "es": "Comida modesta"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 10,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "mealComfortable",
+      "source": "srd",
+      "name": {
+        "en": "Comfortable Meal",
+        "es": "Comida cómoda"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 20,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "mealWealthy",
+      "source": "srd",
+      "name": {
+        "en": "Wealthy Meal",
+        "es": "Comida lujosa"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 30,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "mealAristocratic",
+      "source": "srd",
+      "name": {
+        "en": "Aristocratic Meal",
+        "es": "Comida aristocrática"
+      },
+      "descriptionSource": "rytta",
+      "category": "consumable",
+      "icon": "drumstick",
+      "slot_kind": "none",
+      "weightLb": 0,
+      "costCp": 60,
+      "properties": {
+        "rations": 1
+      }
+    },
+    {
+      "key": "reinforcedBackpack",
+      "source": "rytta",
+      "name": {
+        "en": "Reinforced Backpack",
+        "es": "Mochila reforzada"
+      },
+      "descriptionSource": "rytta",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 6,
+      "costCp": 1500,
+      "properties": {
+        "container": {
+          "capacityLb": 40,
+          "loadReductionPercent": 10
+        }
+      }
+    },
+    {
+      "key": "expeditionPack",
+      "source": "rytta",
+      "name": {
+        "en": "Expedition Pack",
+        "es": "Mochila de expedición"
+      },
+      "descriptionSource": "rytta",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 7,
+      "costCp": 6000,
+      "properties": {
+        "container": {
+          "capacityLb": 60,
+          "loadReductionPercent": 20
+        }
+      }
+    },
+    {
+      "key": "masterExplorersPack",
+      "source": "rytta",
+      "name": {
+        "en": "Master Explorer's Pack",
+        "es": "Mochila de maestro explorador"
+      },
+      "descriptionSource": "rytta",
+      "category": "gear",
+      "icon": "backpack",
+      "slot_kind": "none",
+      "weightLb": 8,
+      "costCp": 25000,
+      "properties": {
+        "container": {
+          "capacityLb": 90,
+          "loadReductionPercent": 30
+        }
+      }
+    }
+  ]
+}

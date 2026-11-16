@@ -573,7 +573,11 @@ export function restRecovery(
       kind === 'short' && hurt && diceLeft > 0 ? { left: diceLeft, die: build.hitDie } : undefined,
     trackers: canRest
       ? build.trackers
-          .filter((tracker) => resets(tracker.reset) && (vitals.tracker_uses[tracker.id] ?? 0) > 0)
+          // Once-per-turn marks clear on any rest too, but they are not worth announcing.
+          .filter(
+            (tracker) =>
+              !tracker.per && resets(tracker.reset) && (vitals.tracker_uses[tracker.id] ?? 0) > 0,
+          )
           .map((tracker) => ({
             id: tracker.id,
             key: tracker.key,

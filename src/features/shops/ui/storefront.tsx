@@ -60,6 +60,8 @@ import {
   reconcileCart,
   sellableUnits,
   ShopError,
+  sumGp,
+  toCents,
   type SaleLine,
   type CartLine,
   type OrderResult,
@@ -71,6 +73,10 @@ import { ListingCard, ListingDrawer } from './listing-card'
 import { OrderCard } from './orders'
 import { EmptyNote, GoldAmount, ItemGlyph } from './visuals'
 import { newRequestId } from '@/shared/lib/request-id'
+import { localizedName } from '@/shared/lib/translations'
+import { useGp } from './use-gp'
+import { ShopBanner, ShopThumb } from './shop-image'
+import { ShopKind } from './shop-type-picker'
 
 type Notice = { text: string; inventoryLink?: boolean }
 /** Shelves up to this size are scanned by eye; a search field only adds a step. */
@@ -78,6 +84,7 @@ const SEARCH_FROM = 6
 
 export function Storefront() {
   const { t } = useTranslation()
+  const gp = useGp()
   const { state } = useAuth()
   const campaign = useCampaign()
   const { playerPreview, previewLabel } = useCampaignView()
@@ -121,9 +128,8 @@ export function Storefront() {
     (sum, group) => sum + group.lines.reduce((n, line) => n + line.quantity, 0),
     0,
   )
-  const total = groups.reduce(
-    (sum, group) => sum + cartTotal(group.lines, group.shop.listings, group.shop.mode),
-    0,
+  const total = sumGp(
+    groups.map((group) => cartTotal(group.lines, group.shop.listings, group.shop.mode)),
   )
   const [checkingOut, setCheckingOut] = useState(false)
   const submitting = useRef(false)
@@ -194,7 +200,7 @@ export function Storefront() {
           setNotes((prior) => ({ ...prior, [merchant.id]: '' }))
           if (order.status === 'completed') {
             bought = true
-            receipts.push(t('shop.notice.bought', { value: order.total }))
+            receipts.push(t('shop.notice.bought', { value: gp(order.total) }))
           } else {
             receipts.push(t('shop.notice.requested', { shop: merchant.name }))
           }
@@ -275,12 +281,12 @@ export function Storefront() {
                 onClick={openCart}
                 aria-label={t('cart.openNamed', {
                   count: units,
-                  value: total,
+                  value: gp(total),
                 })}
               >
                 {t('cart.button', {
                   count: units,
-                  value: total,
+                  value: gp(total),
                 })}
               </Button>
             )}
@@ -411,7 +417,7 @@ export function Storefront() {
                     (result) =>
                       setNotice(
                         result?.status === 'completed'
-                          ? { text: t('shop.notice.sold', { value: result.total }) }
+                          ? { text: t('shop.notice.sold', { value: gp(result.total) }) }
                           : { text: t('shop.notice.saleRequested', { shop: shop.name }) },
                       ),
                   )
@@ -444,7 +450,7 @@ export function Storefront() {
                         (result) =>
                           result &&
                           setNotice({
-                            text: t(`order.notice.${result.status}`, { value: result.total }),
+                            text: t(`order.notice.${result.status}`, { value: gp(result.total) }),
                           }),
                       )
                     }
@@ -463,7 +469,7 @@ export function Storefront() {
               >
                 {t('cart.review', {
                   count: units,
-                  value: total,
+                  value: gp(total),
                 })}
               </Button>
             </div>
@@ -617,7 +623,11 @@ function ShopPicker({
               aria-selected={s.id === shop.id}
               className="shop-picker-option"
             >
-              <ShopSeal shop={s} size="sm" />
+              {s.image_path ? (
+                <ShopThumb path={s.image_path} kind={s.kind} />
+              ) : (
+                <ShopSeal shop={s} size="sm" />
+              )}
               <span className="shop-picker-option-body">
                 <span className="shop-picker-option-name user-copy">{s.name}</span>
                 <span className="shop-picker-option-meta">
@@ -643,50 +653,70 @@ function ShopHeader({
   onSelect: (id: string) => void
 }) {
   const { t } = useTranslation()
-  return (
-    <Paper p="lg" className={`shop-header shop-sign${shop.is_open ? '' : ' is-closed'}`}>
-      <ShopSeal shop={shop} />
-      <div className="shop-sign-body">
-        {/* Name first, mode badge beside it while it fits; flex-wrap moves it below. */}
-        <div className="shop-title-row">
-          <Title order={2} className="shop-title">
-            {shops.length > 1 ? (
-              <ShopPicker shop={shop} shops={shops} onSelect={onSelect} />
-            ) : (
-              <span className="user-copy">{shop.name}</span>
-            )}
-          </Title>
-          <div className="shop-title-badges">
-            <ModeHint shop={shop} />
-            {!shop.is_open && (
-              <Badge variant="outline" leftSection={<Lock size={14} aria-hidden="true" />}>
-                {t('shop.closed')}
-              </Badge>
-            )}
-            {shop.modifier !== 0 && (
-              <Badge
-                variant="filled"
-                className={shop.modifier < 0 ? 'modifier-discount' : 'modifier-markup'}
-              >
-                {shop.modifier < 0
-                  ? t('shop.discount', { value: -shop.modifier })
-                  : t('shop.markup', { value: shop.modifier })}
-              </Badge>
-            )}
-          </div>
+  const title = (
+    <>
+      <ShopKind kind={shop.kind} className="shop-sign-kind" />
+      {/* Name first, mode badge beside it while it fits; flex-wrap moves it below. */}
+      <div className="shop-title-row">
+        <Title order={2} className="shop-title">
+          {shops.length > 1 ? (
+            <ShopPicker shop={shop} shops={shops} onSelect={onSelect} />
+          ) : (
+            <span className="user-copy">{shop.name}</span>
+          )}
+        </Title>
+        <div className="shop-title-badges">
+          <ModeHint shop={shop} />
+          {!shop.is_open && (
+            <Badge variant="outline" leftSection={<Lock size={14} aria-hidden="true" />}>
+              {t('shop.closed')}
+            </Badge>
+          )}
+          {shop.modifier !== 0 && (
+            <Badge
+              variant="filled"
+              className={shop.modifier < 0 ? 'modifier-discount' : 'modifier-markup'}
+            >
+              {shop.modifier < 0
+                ? t('shop.discount', { value: -shop.modifier })
+                : t('shop.markup', { value: shop.modifier })}
+            </Badge>
+          )}
         </div>
-        {shop.description && (
-          <Text c="dimmed" className="user-copy shop-description">
-            <GlossaryText text={shop.description} />
-          </Text>
-        )}
-        {!shop.is_open && (
-          <Text size="sm" className="shop-closed-note">
-            {t('shop.closedHelp')}
-          </Text>
-        )}
       </div>
-    </Paper>
+    </>
+  )
+  const details = (
+    <>
+      {shop.description && (
+        <Text c="dimmed" className="user-copy shop-description">
+          <GlossaryText text={shop.description} />
+        </Text>
+      )}
+      {!shop.is_open && (
+        <Text size="sm" className="shop-closed-note">
+          {t('shop.closedHelp')}
+        </Text>
+      )}
+    </>
+  )
+  const closed = shop.is_open ? '' : ' is-closed'
+  return (
+    <ShopBanner
+      path={shop.image_path}
+      name={shop.name}
+      fallback={
+        <Paper p="lg" className={`shop-header shop-sign${closed}`}>
+          <ShopSeal shop={shop} />
+          <div className="shop-sign-body">
+            {title}
+            {details}
+          </div>
+        </Paper>
+      }
+      overlay={<div className={`shop-banner-title${closed}`}>{title}</div>}
+      after={shop.description || !shop.is_open ? details : null}
+    />
   )
 }
 
@@ -705,7 +735,8 @@ function SellPanel({
   busy: boolean
   onSell: (lines: SaleLine[], note: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const gp = useGp()
   const [amounts, setAmounts] = useState<Record<string, number>>({})
   const [note, setNote] = useState('')
   if (shop.resale_percent === 0)
@@ -724,10 +755,12 @@ function SellPanel({
       offeredPrice: null,
     }))
     .filter((line) => line.quantity > 0)
-  const total = chosen.reduce(
-    (sum, line) => sum + (shop.buyback[line.definitionId] ?? 0) * line.quantity,
-    0,
-  )
+  const total =
+    chosen.reduce(
+      (sum, line) => sum + toCents(shop.buyback[line.definitionId] ?? 0) * line.quantity,
+      0,
+    ) / 100
+  const nameOf = (definition: ItemDefinition) => localizedName(definition, i18n.language)
   if (rows.length === 0)
     return (
       <EmptyNote icon={HandCoins}>
@@ -747,22 +780,22 @@ function SellPanel({
               icon={definition.icon}
               rarity={definition.rarity}
               viewable
-              name={definition.name}
+              name={nameOf(definition)}
             />
             <div className="sell-row-body">
               <Text fw={600} className="user-copy">
-                {definition.name}
+                {nameOf(definition)}
               </Text>
               <Text size="xs" c="dimmed">
                 {t('sell.offerEach', {
-                  value: shop.buyback[definition.id] ?? 0,
+                  value: gp(shop.buyback[definition.id] ?? 0),
                   count: available,
                 })}
               </Text>
             </div>
             <NumberInput
               hideControls
-              aria-label={t('sell.quantityNamed', { name: definition.name })}
+              aria-label={t('sell.quantityNamed', { name: nameOf(definition) })}
               min={0}
               max={available}
               allowDecimal={false}
@@ -782,7 +815,7 @@ function SellPanel({
       {worthless.length > 0 && (
         <Text size="sm" c="dimmed" className="user-copy">
           {t('sell.notBought', {
-            names: worthless.map(({ definition }) => definition.name).join(', '),
+            names: worthless.map(({ definition }) => nameOf(definition)).join(', '),
           })}
         </Text>
       )}
@@ -809,7 +842,7 @@ function SellPanel({
           setNote('')
         }}
       >
-        {shop.mode === 'approval' ? t('sell.request') : t('sell.sellFor', { value: total })}
+        {shop.mode === 'approval' ? t('sell.request') : t('sell.sellFor', { value: gp(total) })}
       </Button>
     </Stack>
   )

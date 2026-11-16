@@ -1,5 +1,14 @@
 import { z } from 'zod'
-import { abilityKeys, casterKinds, conditionKeys, skillKeys, type Ability, type Skill } from './srd'
+import {
+  abilityKeys,
+  casterKinds,
+  choiceKeys,
+  conditionKeys,
+  skillKeys,
+  type Ability,
+  type ChoiceKey,
+  type Skill,
+} from './srd'
 
 const id = z.string().min(1).max(40)
 const text = (max: number) => z.string().max(max)
@@ -39,6 +48,8 @@ export const trackerSchema = z.object({
   key: z.string().min(1).max(60).optional(),
   /** Pips for small pools (Ki, Rage); a counter for large ones (Lay on Hands). */
   display: z.enum(trackerDisplays).optional(),
+  /** RYT-102: a once-per-turn mark (reset `short`, so any rest clears it on the server too). */
+  per: z.literal('turn').optional(),
 })
 export const spellSchema = z.object({
   id,
@@ -98,6 +109,9 @@ export const buildSchema = z.object({
   layout: z.object({ hidden: z.array(z.enum(sheetBlocks)).max(sheetBlocks.length) }).optional(),
   /** RYT-072: how the sheet was created. */
   origin: z.enum(creationOrigins).optional(),
+  /** RYT-102: options picked for species traits (`giantAncestry: 'fire'`); unknown values are
+   * kept but grant nothing. */
+  choices: z.partialRecord(z.enum(choiceKeys as [ChoiceKey, ...ChoiceKey[]]), text(40)).optional(),
 })
 export type Build = z.infer<typeof buildSchema>
 export type Feature = z.infer<typeof featureSchema>

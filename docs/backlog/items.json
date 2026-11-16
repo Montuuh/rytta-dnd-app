@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-14",
+  "updatedAt": "2026-11-16",
   "items": [
     {
       "id": "RYT-000",
@@ -3368,6 +3368,280 @@
         "docs/evidence/RYT-101/settings-tablet-default-es.png",
         "docs/evidence/RYT-101/party-mobile.png"
       ]
+    },
+    {
+      "id": "RYT-102",
+      "title": "Sheet: default trackers for limited-use features and resource-spending abilities",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-071"],
+      "sources": [
+        "User 2026-11-15: list of shop, item and sheet improvements. Default trackers for every limited-use class, subclass, species and feat feature (Savage Attacker, Goliath Giant Ancestry, Large Form, Breath Weapon...), once-per-turn features, and abilities that spend a resource (Monk Flurry of Blows, Patient Defense, Step of the Wind, Channel Divinity options...) as separate entries.",
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2, after 4 major and 8 minor round-1 findings were fixed; RYT-104 record). Stays in review: the first acceptance criterion is only partly met (no test enumerates every limited-use SRD 5.2.1 feature); add the test or record a decision amending the criterion."
+      ],
+      "scope": "Every limited-use class, subclass, species and feat feature of SRD 5.2.1 gets a default tracker with its uses, recharge (short rest, long rest, per turn) and level scaling: Savage Attacker, Goliath Giant Ancestry with its ancestry choice, Large Form, Breath Weapon and the rest. Once-per-turn features get a per-turn mark cleared by hand or by any rest. Abilities that spend a shared resource (Monk Flurry of Blows, Patient Defense and Step of the Wind from Focus; Channel Divinity options) are separate glossary-backed entries that spend from the parent resource instead of owning uses. Existing characters pick the trackers up on sync without duplicates and removed trackers stay removed. Non-goals: backend or migration changes, homebrew feature authoring, automatic rule effects beyond spending and recharging, autonomous release.",
+      "acceptance": [
+        "A unit test lists every limited-use SRD 5.2.1 class, subclass, species and feat feature and fails if one has no default tracker definition.",
+        "A Goliath picks a Giant Ancestry and gets only that ancestry tracker with uses equal to the proficiency bonus, recharging on a long rest; Large Form appears from level 5.",
+        "Savage Attacker and other once-per-turn features show a light per-turn mark cleared by \"New turn\" on the sheet or by any rest (decision 2026-11-16, ADR 045: no server-side per-turn reset; originally a reset at the start of the next turn).",
+        "A Monk sees Flurry of Blows, Patient Defense and Step of the Wind as separate entries with glossary text; using one spends Focus and is refused when Focus is empty; Channel Divinity options spend Channel Divinity the same way.",
+        "An existing character synced after the update gains the missing trackers once; syncing again or levelling up creates no duplicates, keeps spent uses and does not restore removed trackers.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for tracker definitions, level scaling and sync deduplication",
+        "npm run check",
+        "npm run test:e2e (character-sheet at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-102/validation.md"]
+    },
+    {
+      "id": "RYT-103",
+      "title": "Basic items catalogue: bilingual SRD 5.2.1 equipment, backpack tiers and shop presets",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-026"],
+      "sources": [
+        "User 2026-11-15: list of shop, item and sheet improvements. A basic items catalogue with names, descriptions, effects, weight and cost, homebrew backpack tiers and shop types with default stock.",
+        "User decisions 2026-11-15: money in gp with two decimals; an item proposed by a Player reaches the inventory only when the DM accepts; 1 lb = 0.5 kg with a per-user unit preference (default kg in Spanish, lb in English); the second language of own items is optional and typed by hand, no online translation service.",
+        "Close-out 2026-11-16: every acceptance criterion met (the second as amended on 2026-11-15); the surfaces that use the catalogue passed the independent UI review on the current source (RYT-104 record)."
+      ],
+      "scope": "A versioned, bilingual (English and Spanish) catalogue of SRD 5.2.1 equipment that a character carries (weapons, armour, adventuring gear, tools, tack, food and drink; mounts, vehicles, services and trade goods are out of scope, decision 2026-11-15) with a stable key, name, description, effects, weight in lb with decimals and cost in cp, plus homebrew backpack tiers labelled as homebrew. Shop type presets (for example general store, blacksmith, alchemist, tavern) list default stock by catalogue key. Only CC-BY-4.0 SRD 5.2.1 text, with the attribution kept beside the data. Data, schema and tests only. Non-goals: database tables, import into campaigns (RYT-104), UI, online translation, a pp/sp/cp purse, autonomous release.",
+      "acceptance": [
+        "A schema validates every entry: unique stable key, both languages present, non-negative weight in lb with decimals, non-negative integer cost in cp and a known category.",
+        "Every carried SRD 5.2.1 equipment entry is present once under a unique key, a test pins sample SRD numbers, and every catalogue item is stocked by at least one shop preset (decision 2026-11-15: carried goods only; generic \"varies\" rows are replaced by their concrete variants).",
+        "Homebrew backpack tiers are flagged as homebrew, carry capacity and load reduction values and never claim SRD origin.",
+        "Every shop preset references only existing catalogue keys and has at least one item.",
+        "The CC-BY-4.0 attribution for SRD 5.2.1 ships with the data; no non-SRD text is included."
+      ],
+      "validation": ["unit tests for the catalogue schema, keys and shop presets", "npm run check"],
+      "evidence": ["docs/evidence/RYT-103/validation.md"]
+    },
+    {
+      "id": "RYT-104",
+      "title": "Items model: decimal gold, weight units, translations, catalogue import, containers and food",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "review",
+      "dependsOn": ["RYT-103", "RYT-026", "RYT-032"],
+      "sources": [
+        "User 2026-11-15: list of shop, item and sheet improvements. Decimal gold, weight in lb or kg, optional translations, descriptions everywhere, importing the basic catalogue, own items as templates, backpacks as containers and food and drink that add rations and water.",
+        "User decisions 2026-11-15: money in gp with two decimals; an item proposed by a Player reaches the inventory only when the DM accepts; 1 lb = 0.5 kg with a per-user unit preference (default kg in Spanish, lb in English); the second language of own items is optional and typed by hand, no online translation service.",
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Only remaining item: part 2 of the migration (20261121120000_items_player_authoring_close.sql) applied to production together with the frontend release, performed by the user, and verified."
+      ],
+      "scope": "Money is gp with two decimals everywhere (item prices, shop listings, purchases, sales, trades and character gold), stored exactly and validated server-side. Item weight keeps three decimals; entry accepts lb or kg both ways (1 lb = 0.5 kg) and a per-user unit preference defaults to kg in Spanish and lb in English. Items gain an optional hand-typed second-language name and description; the description is shown everywhere an item is shown. The DM imports the basic catalogue (RYT-103) as real campaign items, idempotent by catalogue key, replacing the static template list; own items can be flagged \"use as template\" and feed the creation helper. Backpacks get a container property (capacity, load reduction) applied to encumbrance while carried (decision 2026-11-16, ADR 043: containers have no equipment slot). Food and drink items add rations or water when used, through transactional idempotent RPCs with undo. Backward-compatible production migration tested in PRE first. Non-goals: online translation, a pp/sp/cp purse, Player item creation changes (RYT-105), autonomous release.",
+      "acceptance": [
+        "Existing whole-gold prices, balances, purchases, sales and trades read the same after the migration; new values keep two decimals end to end and the database refuses more precision or negative amounts.",
+        "Weight typed as 1 lb shows as 0.5 kg and the reverse; values round-trip with three decimals; the unit preference persists per user and defaults by language.",
+        "An item with a second-language name and description shows it in that language and falls back to the other one when missing; no request leaves for a translation service.",
+        "Importing the basic catalogue twice creates each item once and updates changed entries by key; the static template list is gone and the creation helper offers imported and \"use as template\" items.",
+        "A carried container lightens the load by its percentage of min(loose weight without the container, capacity); only the container that saves most applies; equipped gear and the container itself are never reduced (decision 2026-11-16, ADR 043; originally \"only while worn\").",
+        "Using a food or drink item adds rations or water once per idempotency key and undo restores both the item and the supply.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every new table, column, storage path and RPC; RLS stays authoritative.",
+        "PRE migration and tests pass before the reviewed production migration; production history and data are verified afterwards.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for decimal money, weight precision, import idempotency, consumption and undo, and denial cases",
+        "npm run check",
+        "npm run test:e2e",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-104/validation.md"]
+    },
+    {
+      "id": "RYT-105",
+      "title": "Players search the campaign catalogue and propose new items for DM review",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "review",
+      "dependsOn": ["RYT-104"],
+      "sources": [
+        "User 2026-11-15: list of shop, item and sheet improvements. Players search existing campaign items first and otherwise propose one; the DM reviews, edits, accepts, merges or rejects; the DM merges duplicate definitions.",
+        "User decisions 2026-11-15: money in gp with two decimals; an item proposed by a Player reaches the inventory only when the DM accepts; 1 lb = 0.5 kg with a per-user unit preference (default kg in Spanish, lb in English); the second language of own items is optional and typed by hand, no online translation service.",
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Only remaining item: part 2 of the migration (20261121120000_items_player_authoring_close.sql) applied to production together with the frontend release, performed by the user, and verified."
+      ],
+      "scope": "A Player adding an item searches the campaign catalogue they can see first and picks an existing definition; when nothing fits they send a proposal (name, description, weight, price, optional picture). The DM gets a review panel to edit, accept, merge into an existing item or reject each proposal; an accepted or merged proposal reaches the Player inventory only then, through a transactional idempotent RPC. The DM can also merge duplicate item definitions, moving every inventory row, listing and trade reference to the kept item. Direct Player item creation is closed at release. Non-goals: online translation, a pp/sp/cp purse, autonomous release.",
+      "acceptance": [
+        "Player search returns only items visible to that Player in the campaign; hidden DM items never appear in results or responses.",
+        "A proposal is pending and adds nothing to the inventory until the DM accepts or merges it; rejecting notifies the Player in the app and adds nothing.",
+        "Accepting or merging twice with the same idempotency key grants once; editing before accepting stores the edited definition.",
+        "Merging duplicate definitions moves inventory, shop listings and closed order lines to the kept item without losing quantities, then archives the duplicate; it is refused while open orders or live trades reference the duplicate (decision 2026-11-16, ADR 043).",
+        "A Player can no longer create a campaign item directly through the UI or the API.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every new table, column, storage path and RPC; RLS stays authoritative.",
+        "PRE migration and tests pass before the reviewed production migration.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for search visibility, proposal lifecycle, merge and denial cases",
+        "npm run check",
+        "npm run test:e2e",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-105/validation.md"]
+    },
+    {
+      "id": "RYT-106",
+      "title": "Item pictures show for DM and Players on every item surface",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-104", "RYT-026", "RYT-098"],
+      "sources": [
+        "User 2026-11-15: list of shop, item and sheet improvements. Check that item pictures show for the DM and the Players.",
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Stays in review: the first acceptance criterion needs the surface matrix before and after the fixes and only the after state was recorded; accept the after matrix by decision or reconstruct the before column. The cart drawer shows the icon only; confirm it is outside the listed surfaces."
+      ],
+      "scope": "Verify that uploaded item pictures (RYT-026) show for the DM and for Players allowed to see the item in the storeroom, satchel, storefront and trades, with the category icon fallback when there is no picture or it fails to load, and that they open in the shared image viewer. Fix the gaps found. Non-goals: a new upload flow, new storage buckets, autonomous release.",
+      "acceptance": [
+        "A matrix in the evidence lists storeroom, satchel, storefront and trades for DM and Player with the result before and after fixes.",
+        "An item with a picture shows it on every listed surface for the DM and for a Player who can see the item, except the partner side of a trade, which shows the category icon because the trade state carries no picture (decision 2026-11-16, ADR 043); a Player who cannot see the item gets no signed URL.",
+        "An item without a picture, or with a broken one, shows the category icon fallback without layout shift.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (campaign-items, inventory, merchants and trades at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-106/validation.md"]
+    },
+    {
+      "id": "RYT-107",
+      "title": "Shops: reachable create action, shop types that pre-stock and a shop banner image",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "review",
+      "dependsOn": ["RYT-103", "RYT-104", "RYT-030", "RYT-098"],
+      "sources": [
+        "User 2026-11-15: list of shop, item and sheet improvements. The create-item action in the add-items drawer needs scrolling; shop types with default stock; a shop image.",
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Only remaining item: part 2 of the migration (20261121120000_items_player_authoring_close.sql) applied to production together with the frontend release, performed by the user, and verified."
+      ],
+      "scope": "The create-item action in the add-items drawer stays visible without scrolling. Creating a shop lets the DM pick a shop type that pre-stocks it from the imported basic catalogue, editable before saving. A shop can have an image in a private bucket, visible only to members who can see the shop, shown as a header banner with a scrim that keeps text contrast (not a full background) and opened in the shared image viewer. Non-goals: online translation, a pp/sp/cp purse, public image URLs, autonomous release.",
+      "acceptance": [
+        "At 390px and 820px the create-item action of the add-items drawer is visible without scrolling, with long and empty item lists.",
+        "Choosing a shop type pre-stocks the new shop with its default items once; retrying the creation does not duplicate stock.",
+        "A shop image uploads to a private bucket and shows as a header banner with a scrim; text over it meets WCAG AA contrast in both themes; tapping it opens the shared image viewer.",
+        "Members who cannot see the shop never receive its image or a signed URL; images respect the PRE and production environments.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every new table, column, storage path and RPC; RLS stays authoritative.",
+        "PRE migration and tests pass before the reviewed production migration.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL and storage policy tests for shop images and denial cases",
+        "npm run check",
+        "npm run test:e2e (merchants at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-107/validation.md"]
+    },
+    {
+      "id": "RYT-108",
+      "title": "Accessible notification close buttons and focus after \"show all\" in the shop add-items dock",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-107"],
+      "sources": [
+        "Independent UI review of RYT-102..RYT-107, round 2 on 2026-11-16 (RYT-104 record): two non-blocking notes. Notification close buttons have no accessible name across the app (pre-existing); \"show all\" in the shop add-items dock leaves focus on the document body.",
+        "Close-out 2026-11-16: optional copy pass over the pre-existing explanatory hints in shops and trades that were deliberately left during RYT-107."
+      ],
+      "scope": "Every notification close button in the app gets a translated accessible name (English and Spanish). After \"show all\" in the shop add-items dock, focus moves to a defined element in the expanded list instead of the document body. Optional, only if the user confirms: remove or rewrite the pre-existing explanatory hints in shops and trades that do not help the user act, decide or recover. Non-goals: notification redesign, new shop behaviour, backend changes, autonomous release.",
+      "acceptance": [
+        "Every notification close button exposes a translated accessible name in English and Spanish; a browser spec fails if one is missing.",
+        "After \"show all\" in the shop add-items dock, keyboard focus lands on a defined element of the expanded list and never on the document body; a browser spec asserts it.",
+        "If the copy pass is confirmed: each removed or rewritten hint in shops and trades is listed in the evidence with its reason; no hint that explains a destructive or irreversible action is removed.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (shops, trades and one notification surface at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-109",
+      "title": "Players read only the item fields they need: partner pictures in trades and protected value_gp",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-105", "RYT-106"],
+      "sources": [
+        "Close-out 2026-11-16 of RYT-105 and RYT-106: the trade state carries no image_path or description, so the partner side of a trade shows only the category icon (amendment recorded in RYT-106); Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record)."
+      ],
+      "scope": "The trade state exposes, for each item on the partner side, the picture reference and description a member of that trade may see, and the trades UI shows them with the category icon fallback and the shared image viewer. value_gp of item definitions is no longer readable by a Player through the table API for items they carry (column-level grants or a restricted view or RPC), while basic-item prices, shop prices and DM access keep working. Reviewed backward-compatible migration tested in PRE first. Non-goals: new upload flows, shop pricing changes, autonomous release.",
+      "acceptance": [
+        "Both sides of a trade show the item picture and description to the trade members; a member of another trade or an outsider gets neither, nor a signed URL.",
+        "A Player selecting value_gp of a non-basic definition they carry through the table API gets no value; basic-item prices, storefront prices and the DM storeroom still show their values.",
+        "The deployed frontend keeps working between the migration and the release, or the migration ships with the release (documented in the evidence).",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every changed column, RPC and storage path; RLS stays authoritative.",
+        "PRE migration and tests pass before the reviewed production migration; production verified afterwards.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for trade item visibility, value_gp column access and denial cases",
+        "npm run check",
+        "npm run test:e2e (trades, inventory and shops at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-110",
+      "title": "Sheet: Metamagic options and Font of Magic conversions",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-102"],
+      "sources": [
+        "Close-out 2026-11-16 of RYT-102: recorded limit, Metamagic options and Font of Magic conversions are not implemented."
+      ],
+      "scope": "A Sorcerer sees the Metamagic options they know as entries that spend Sorcery Points, using the RYT-102 model of options paid from a resource, with glossary text; Font of Magic converts Sorcery Points into spell slots and spell slots into Sorcery Points with the SRD 5.2.1 costs and limits. Non-goals: automatic spell effects, homebrew Metamagic, backend or migration changes, autonomous release.",
+      "acceptance": [
+        "Each known Metamagic option is a separate entry with glossary text; using it spends its SRD cost in Sorcery Points and is refused when the points are not enough.",
+        "Font of Magic creates a spell slot for its SRD point cost within the SRD level limit and turns an unexpended slot into points equal to its level; both are refused when not payable.",
+        "Sync adds the new entries once, keeps spent points and stays within the tracker cap.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for Metamagic costs, Font of Magic conversions and sync",
+        "npm run check",
+        "npm run test:e2e (character-sheet at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-111",
+      "title": "Creation wizard: species options such as Giant Ancestry",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-102"],
+      "sources": [
+        "Close-out 2026-11-16 of RYT-102: species options (for example the Goliath Giant Ancestry) are chosen on the sheet, not in the creation wizard."
+      ],
+      "scope": "The creation wizard asks for the species options that SRD 5.2.1 species require (for example Goliath Giant Ancestry and lineage choices) and stores them in build.choices exactly as the sheet does, so the new character starts with the right trackers. The sheet keeps letting the player change the choice. Non-goals: homebrew species, backend or migration changes, autonomous release.",
+      "acceptance": [
+        "Picking a species with a required option in the wizard asks for it before finishing, with glossary text for each choice; the wizard cannot finish without it.",
+        "The created character has the same build.choices and trackers as when the option is chosen on the sheet; changing it later on the sheet still works.",
+        "Existing characters without the choice keep working and can still choose on the sheet.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for wizard choices and resulting trackers",
+        "npm run check",
+        "npm run test:e2e (characters and character-sheet at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
     }
   ]
 }

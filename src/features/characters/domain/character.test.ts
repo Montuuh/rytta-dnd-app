@@ -18,11 +18,16 @@ describe('PostgREST character boundary', () => {
         false,
       )
   })
-  it('rejects unsafe external balances and retains manual homebrew exhaustion above six', () => {
+  it('rejects unsafe external balances, keeps cents and retains manual homebrew exhaustion above six', () => {
     expect(characterSchema.parse(row).character_resources.exhaustion).toBe(12)
-    for (const gold of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1])
+    for (const gold of [-1, 1.005, 10_000_000_000, null, '5'])
       expect(
         characterSchema.safeParse({ ...row, character_resources: [{ ...resource, gold }] }).success,
       ).toBe(false)
+    // RYT-104: gold keeps cents.
+    expect(
+      characterSchema.parse({ ...row, character_resources: [{ ...resource, gold: 12.05 }] })
+        .character_resources.gold,
+    ).toBe(12.05)
   })
 })

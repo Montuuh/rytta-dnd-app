@@ -1,3 +1,4 @@
+import { localizedName } from '@/shared/lib/translations'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { useRef, useState } from 'react'
 import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
@@ -143,7 +144,7 @@ export function PaperDoll({
   onEquip: (stack: ItemStack, slot: EquipmentSlot) => void
   onUnequip: (stack: ItemStack, done?: () => void) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const phone = usePhone()
   const [picking, setPicking] = useState<EquipmentSlot | null>(null)
   const opener = useRef<HTMLElement | null>(null)
@@ -187,7 +188,10 @@ export function PaperDoll({
                 aria-disabled={pending || undefined}
                 aria-label={
                   entry
-                    ? t('inventory.socket.filled', { slot: label, name: entry.definition.name })
+                    ? t('inventory.socket.filled', {
+                        slot: label,
+                        name: localizedName(entry.definition, i18n.language),
+                      })
                     : blocked
                       ? t('inventory.socket.blocked', { slot: label })
                       : t('inventory.socket.empty', { slot: label })
@@ -205,7 +209,7 @@ export function PaperDoll({
                 />
               </UnstyledButton>
               <span className="socket-label" aria-hidden="true">
-                {entry ? entry.definition.name : label}
+                {entry ? localizedName(entry.definition, i18n.language) : label}
               </span>
             </div>
           )
@@ -252,7 +256,7 @@ export function PaperDoll({
                     imagePath={current.definition.image_path}
                     size={40}
                     viewable
-                    name={current.definition.name}
+                    name={localizedName(current.definition, i18n.language)}
                     frame={`picker-picture rarity-${current.definition.rarity}`}
                   />
                 )}
@@ -272,7 +276,9 @@ export function PaperDoll({
                     />
                   )}
                   <span className="user-copy">
-                    {t('inventory.socket.unequip', { name: current.definition.name })}
+                    {t('inventory.socket.unequip', {
+                      name: localizedName(current.definition, i18n.language),
+                    })}
                   </span>
                 </UnstyledButton>
               </div>
@@ -291,7 +297,7 @@ export function PaperDoll({
                     }}
                   >
                     <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={22} />
-                    <span className="user-copy">{definition.name}</span>
+                    <span className="user-copy">{localizedName(definition, i18n.language)}</span>
                     {stack.quantity > 1 && <span className="picker-count">×{stack.quantity}</span>}
                   </UnstyledButton>
                 )

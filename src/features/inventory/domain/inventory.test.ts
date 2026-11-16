@@ -7,7 +7,7 @@ import {
   martialArtsDie,
   slotsFor,
 } from './equipment'
-import { carriedTenths, encumbrance } from './encumbrance'
+import { carriedLoad, carriedTenths, encumbrance } from './encumbrance'
 import {
   definitionSchema,
   undoRemainingMs,
@@ -15,7 +15,8 @@ import {
   type ItemDefinition,
   type ItemStack,
 } from './item'
-import { srdEquipment } from './srd-equipment'
+import catalogue from '../content/basic-items.json'
+import { basicItemCatalogueSchema, toDefinitionDraft } from './basic-items'
 
 const campaign = '20000000-0000-4000-8000-000000000001'
 const character = '40000000-0000-4000-8000-000000000001'
@@ -70,6 +71,70 @@ describe('encumbrance', () => {
     const arrow = definition({ weight_tenths: 1 })
     const defs = new Map([rope, arrow].map((d) => [d.id, d]))
     expect(carriedTenths([stack(rope, 1, 'belt'), stack(arrow, 20)], defs)).toBe(70)
+  })
+  it('prefers the exact pounds over the legacy tenths', () => {
+    const needle = definition({ weight_tenths: 0, weight_lb: 0.02 })
+    const defs = new Map([[needle.id, needle]])
+    expect(carriedLoad([stack(needle, 50)], defs)).toMatchObject({ rawPounds: 1, pounds: 1 })
+  })
+  const pack = (percent: number, lb: number, capacityLb = 30) =>
+    definition({
+      name: `Pack ${percent}`,
+      weight_lb: lb,
+      properties: { container: { capacityLb, loadReductionPercent: percent } },
+    })
+  it('applies only the best container, to loose weight up to its capacity', () => {
+    const small = pack(10, 5)
+    const large = pack(30, 6)
+    const plain = pack(0, 5)
+    const iron = definition({ name: 'Iron', weight_lb: 50 })
+    const defs = new Map([small, large, plain, iron].map((d) => [d.id, d]))
+    const load = carriedLoad([stack(small), stack(large), stack(plain), stack(iron)], defs)
+    // 66 lb in all; without the 6 lb pack 60 lb are loose, but it only holds 30: 30 % of 30 = 9.
+    expect(load).toMatchObject({ rawPounds: 66, pounds: 57 })
+    expect(load.relief).toEqual({
+      definitionId: large.id,
+      name: 'Pack 30',
+      percent: 30,
+      capacityLb: 30,
+      savedPounds: 9,
+    })
+    expect(carriedTenths([stack(small), stack(large), stack(plain), stack(iron)], defs)).toBe(570)
+  })
+  it('never reduces equipped gear or the container itself', () => {
+    const backpack = pack(50, 5)
+    const armor = definition({ name: 'Plate', weight_lb: 65, slot_kind: 'body' })
+    const rope = definition({ name: 'Rope', weight_lb: 10 })
+    const defs = new Map([backpack, armor, rope].map((d) => [d.id, d]))
+    const load = carriedLoad([stack(backpack), stack(armor, 1, 'body'), stack(rope)], defs)
+    // Only the 10 lb rope is loose: 50 % of 10 = 5.
+    expect(load).toMatchObject({ rawPounds: 80, pounds: 75 })
+    expect(load.relief?.savedPounds).toBe(5)
+    // Nothing loose besides the pack: no relief at all.
+    expect(carriedLoad([stack(backpack), stack(armor, 1, 'body')], defs).relief).toBeNull()
+  })
+  it('picks the container that saves the most, not the highest percent', () => {
+    const pouch = pack(80, 1, 2)
+    const sack = pack(40, 2, 40)
+    const ore = definition({ name: 'Ore', weight_lb: 30 })
+    const defs = new Map([pouch, sack, ore].map((d) => [d.id, d]))
+    const load = carriedLoad([stack(pouch), stack(sack), stack(ore)], defs)
+    // Pouch: 80 % of 2 = 1.6. Sack: 40 % of min(31, 40) = 12.4.
+    expect(load.relief).toMatchObject({ definitionId: sack.id, savedPounds: 12.4 })
+    expect(load).toMatchObject({ rawPounds: 33, pounds: 20.6 })
+  })
+  it('gives no relief without a reducing container', () => {
+    const backpack = definition({
+      weight_lb: 5,
+      properties: { container: { capacityLb: 30, loadReductionPercent: 0 } },
+    })
+    const defs = new Map([[backpack.id, backpack]])
+    expect(carriedLoad([stack(backpack, 2)], defs)).toEqual({
+      rawPounds: 10,
+      pounds: 10,
+      relief: null,
+    })
+    expect(carriedLoad([stack(backpack, 0)], defs).relief).toBeNull()
   })
 })
 
@@ -130,14 +195,18 @@ describe('equipment', () => {
 })
 
 describe('boundaries', () => {
-  it('keeps every SRD template valid for the definition schema', () => {
-    for (const template of srdEquipment)
-      expect(
-        definitionSchema.safeParse(
-          definition({ ...template, name: template.key, rarity: 'common', description: '' }),
-        ).success,
-      ).toBe(true)
-    expect(new Set(srdEquipment.map((t) => t.key)).size).toBe(srdEquipment.length)
+  it('keeps every basic catalogue item valid for the definition schema', () => {
+    for (const item of basicItemCatalogueSchema.parse(catalogue).items) {
+      const draft = toDefinitionDraft(item, 'es', '')
+      const parsed = definitionSchema.safeParse(definition({ ...draft, origin: 'srd' }))
+      expect(parsed.success, item.key).toBe(true)
+      expect(parsed.data?.properties, item.key).toEqual(draft.properties)
+    }
+  })
+  it('reads gold with cents and refuses more precision', () => {
+    expect(definitionSchema.parse(definition({ value_gp: 0.05 })).value_gp).toBe(0.05)
+    expect(definitionSchema.safeParse(definition({ value_gp: 0.005 })).success).toBe(false)
+    expect(definitionSchema.safeParse(definition({ value_gp: -1 })).success).toBe(false)
   })
   it('mirrors the undo window: DMs always, Players own events for ten minutes', () => {
     const event: InventoryEvent = {

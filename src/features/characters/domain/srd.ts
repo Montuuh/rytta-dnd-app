@@ -250,6 +250,34 @@ export type SpeciesKey = keyof typeof species
 export const speciesKeys = Object.keys(species) as SpeciesKey[]
 export type TraitKey = (typeof species)[SpeciesKey]['traits'][number]
 
+/** RYT-102 traits with options the player picks; the choice lives in `build.choices`. */
+export const traitChoices = {
+  draconicAncestry: {
+    species: 'dragonborn',
+    options: [
+      'black',
+      'blue',
+      'brass',
+      'bronze',
+      'copper',
+      'gold',
+      'green',
+      'red',
+      'silver',
+      'white',
+    ],
+  },
+  elvenLineage: { species: 'elf', options: ['drow', 'high', 'wood'] },
+  gnomishLineage: { species: 'gnome', options: ['forest', 'rock'] },
+  giantAncestry: {
+    species: 'goliath',
+    options: ['cloud', 'fire', 'frost', 'hill', 'stone', 'storm'],
+  },
+  fiendishLegacy: { species: 'tiefling', options: ['abyssal', 'chthonic', 'infernal'] },
+} as const satisfies Record<string, { species: SpeciesKey; options: readonly string[] }>
+export type ChoiceKey = keyof typeof traitChoices
+export const choiceKeys = Object.keys(traitChoices) as ChoiceKey[]
+
 export const backgrounds = {
   acolyte: {
     abilities: ['int', 'wis', 'cha'],

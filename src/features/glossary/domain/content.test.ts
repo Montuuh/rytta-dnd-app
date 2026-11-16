@@ -18,10 +18,12 @@ const blockText = (blocks: Block[]) =>
     )
     .join(' ')
 
+const origin = (id: string) => /^feature\.(species|feat)-/.test(id)
+
 describe('RYT-008 bundled SRD content contract', () => {
   it('covers the SRD 5.2.1 rules glossary, rules terms and every spell', () => {
     const count = (cat: string) => rows.filter((r) => r.cat === cat).length
-    expect(rows.length).toBe(782)
+    expect(rows.length).toBe(838)
     expect(count('condition')).toBe(15)
     expect(count('action')).toBe(12)
     expect(count('spell')).toBe(339)
@@ -30,11 +32,12 @@ describe('RYT-008 bundled SRD content contract', () => {
     expect(count('damage')).toBe(13)
     expect(count('property')).toBe(10)
     expect(count('mastery')).toBe(8)
-    expect(count('feature')).toBe(232)
+    // 232 class features, 6 options split from them (RYT-102), 33 species traits, 17 feats.
+    expect(count('feature')).toBe(288)
   })
 
   it('RYT-071 class features: every class and SRD subclass, levels 1–20, never auto-linked', () => {
-    const features = rows.filter((r) => r.cat === 'feature')
+    const features = rows.filter((r) => r.cat === 'feature' && !origin(r.id))
     expect(new Set(features.map((r) => r.fc)).size).toBe(12)
     expect(new Set(features.filter((r) => r.sb).map((r) => r.sb)).size).toBe(12)
     for (const row of features) {
@@ -42,8 +45,32 @@ describe('RYT-008 bundled SRD content contract', () => {
       expect(row.fc, row.id).toBeDefined()
       expect(row.lv! >= 1 && row.lv! <= 20, row.id).toBe(true)
     }
-    for (const row of rows.filter((r) => r.cat !== 'feature'))
+    for (const row of rows.filter((r) => r.cat !== 'feature' || origin(r.id)))
       expect(row.fc === undefined && row.sb === undefined && (row.lv ?? 0) <= 9, row.id).toBe(true)
+  })
+
+  it('RYT-102 species traits and feats: no class, never auto-linked; split options keep a parent', () => {
+    const traits = rows.filter((r) => r.id.startsWith('feature.species-'))
+    const feats = rows.filter((r) => r.id.startsWith('feature.feat-'))
+    expect(traits).toHaveLength(33)
+    expect(feats).toHaveLength(17)
+    for (const row of [...traits, ...feats]) {
+      expect(row.cat, row.id).toBe('feature')
+      expect(row.nl, row.id).toBe(1)
+    }
+    expect(rows.find((r) => r.id === 'feature.species-goliath-giant-ancestry')?.es).toBe(
+      'Linaje gigante',
+    )
+    expect(rows.find((r) => r.id === 'feature.feat-savage-attacker')?.es).toBe('Atacante salvaje')
+    for (const id of [
+      'feature.monk-flurry-of-blows',
+      'feature.monk-patient-defense',
+      'feature.monk-step-of-the-wind',
+      'feature.cleric-divine-spark',
+      'feature.cleric-turn-undead',
+      'feature.paladin-divine-sense',
+    ])
+      expect(rows.find((r) => r.id === id)?.lv, id).toBeGreaterThan(0)
   })
 
   it('has a valid body for every id in both languages and nothing else', () => {

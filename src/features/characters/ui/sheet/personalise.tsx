@@ -14,10 +14,19 @@ import {
 import { RotateCcw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { removeTracker, removedTracker, restoreTracker } from '../../domain/progression'
-import { classResources } from '../../domain/resources'
+import { grantedResources, resourceSpec } from '../../domain/resources'
 import { restKinds, sheetBlocks, trackerDisplays, type SheetBlock } from '../../domain/sheet'
 import type { PanelProps } from './panel-types'
 import { BlockSheet } from './widgets'
+
+const resourceLine = (source: 'class' | 'species' | 'feat' | undefined) =>
+  source === 'species'
+    ? 'panel.speciesResourceLine'
+    : source === 'feat'
+      ? 'panel.featResourceLine'
+      : source === 'class'
+        ? 'panel.classResourceLine'
+        : 'panel.ownResourceLine'
 
 /** RYT-073 Personalise: which blocks the sheet shows and which resources it tracks. */
 export function PersonaliseDrawer({
@@ -39,11 +48,8 @@ export function PersonaliseDrawer({
   const [max, setMax] = useState<number | string>(3)
   const [reset, setReset] = useState<(typeof restKinds)[number]>('long')
   const [display, setDisplay] = useState<(typeof trackerDisplays)[number]>('pips')
-  const removed = classResources.filter(
-    (spec) =>
-      spec.classKey === build.classKey &&
-      level >= spec.from &&
-      (build.removed ?? []).includes(removedTracker(spec.key)),
+  const removed = grantedResources(build, level).filter((spec) =>
+    (build.removed ?? []).includes(removedTracker(spec.key)),
   )
   const toggle = (block: SheetBlock, visible: boolean) =>
     change((draft) => {
@@ -99,10 +105,12 @@ export function PersonaliseDrawer({
                     {tracker.name}
                   </Text>
                   <Text size="sm" c="dimmed">
-                    {t(tracker.key ? 'panel.classResourceLine' : 'panel.ownResourceLine', {
-                      max: tracker.max,
-                      reset: t(`sheet.reset.${tracker.reset}`),
-                    })}
+                    {tracker.per === 'turn'
+                      ? t('panel.turnResourceLine')
+                      : t(resourceLine(resourceSpec(tracker.key)?.source), {
+                          max: tracker.max,
+                          reset: t(`sheet.reset.${tracker.reset}`),
+                        })}
                   </Text>
                 </div>
                 <ActionIcon

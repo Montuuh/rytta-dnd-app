@@ -55,6 +55,12 @@ export function Providers({ children }: PropsWithChildren) {
           '--mantine-color-body': 'var(--app-bg)',
           '--mantine-color-text': 'var(--app-text)',
           '--mantine-color-dimmed': 'var(--app-muted)',
+          // Disabled controls on the theme's paper instead of Mantine's cold grey (dark themes
+          // already repaint the dark-* slots these read).
+          '--mantine-color-disabled': 'var(--app-raised)',
+          '--mantine-color-disabled-color':
+            'color-mix(in srgb, var(--app-muted) 82%, var(--app-raised))',
+          '--mantine-color-disabled-border': 'var(--app-border)',
           ...dangerVariables,
         },
         dark: {

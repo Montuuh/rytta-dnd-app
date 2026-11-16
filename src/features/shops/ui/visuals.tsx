@@ -3,14 +3,15 @@ import { Text } from '@mantine/core'
 import { Coins, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ItemIcon, type Rarity } from '@/features/inventory'
+import { formatGp } from '@/shared/lib/money'
 
-/** Whole gold with a coin glyph; the accessible text always names the unit. */
+/** Gold (to the copper) with a coin glyph; the accessible text always names the unit. */
 export function GoldAmount({ value, size = 'md' }: { value: number; size?: 'sm' | 'md' | 'lg' }) {
   const { t, i18n } = useTranslation()
   return (
     <span className={`gold-amount gold-amount-${size}`}>
       <Coins size={size === 'lg' ? 22 : size === 'md' ? 18 : 15} aria-hidden="true" />
-      <span>{t('gold.amount', { value: value.toLocaleString(i18n.language) })}</span>
+      <span>{t('gold.amount', { value: formatGp(value, i18n.language) })}</span>
     </span>
   )
 }

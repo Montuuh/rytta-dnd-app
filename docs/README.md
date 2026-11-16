@@ -104,3 +104,12 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-095–098 verification](evidence/RYT-097/validation.md).
 52. [ADR 042: shared exploration at the physical table](decisions/042-tabletop-visibility.md):
     movement, player effects, light, doors and remembered terrain.
+53. [ADR 043: gp with cents, weights in lb or kg, a basic catalogue and Player proposals](decisions/043-items-economy-catalogue-proposals.md)
+    and verification of [RYT-103](evidence/RYT-103/validation.md),
+    [RYT-104](evidence/RYT-104/validation.md), [RYT-105](evidence/RYT-105/validation.md) and
+    [RYT-106](evidence/RYT-106/validation.md): two-part database rollout, imported catalogue,
+    proposals, merges, supplies and containers.
+54. [ADR 044: shop types that pre-stock and a shop banner image](decisions/044-shop-types-and-images.md)
+    and [RYT-107 verification](evidence/RYT-107/validation.md).
+55. [ADR 045: default trackers for species, feats and subclasses](decisions/045-sheet-default-trackers.md)
+    and [RYT-102 verification](evidence/RYT-102/validation.md).

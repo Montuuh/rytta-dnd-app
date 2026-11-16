@@ -95,7 +95,7 @@ describe('RYT-004 inventory', () => {
     const granted = await grant(c, ch, def, 3)
     await asUser(player)
     expect(
-      (await db.query('select name, value_gp from public.item_definitions where id=$1', [def]))
+      (await db.query('select name, value_gp::float8 value_gp from public.item_definitions where id=$1', [def]))
         .rows,
     ).toEqual([{ name: 'Poción de curación', value_gp: 50 }])
     const key = randomUUID()
@@ -131,23 +131,17 @@ describe('RYT-004 inventory', () => {
     await expect(undo(c, first.event_id)).rejects.toThrow(/Undo conflict/)
   })
 
-  it('keeps Players away from prices and DM stacks, but lets them add their own items', async () => {
+  // RYT-105 closed direct Player authoring (20261121120000); the legacy own-item path is covered
+  // at the intermediate migration in items-economy.test.ts.
+  it('keeps Players away from prices, DM stacks and item creation', async () => {
     const { c, ch, def } = await setup()
     await grant(c, ch, def, 1)
     await asUser(player)
     await expect(define(c, { ...potion, value_gp: 5 })).rejects.toThrow(/Forbidden/)
     await expect(grant(c, ch, def, 10)).rejects.toThrow(/Forbidden/)
-    const own = (
-      await define(c, { name: 'Amuleto de la abuela', category: 'treasure', origin: 'dm' })
-    ).id
-    expect(
-      await one('select origin, value_gp from public.item_definitions where id=$1', [own]),
-    ).toEqual({ origin: 'player', value_gp: null })
-    const added = await grant(c, ch, own, 2)
-    expect(
-      await one('select source, quantity from public.inventory_items where id=$1', [added.item_id]),
-    ).toEqual({ source: 'player', quantity: 2 })
-    await expect(use(c, added.item_id, added.revision)).rejects.toThrow(/Not usable/)
+    await expect(
+      define(c, { name: 'Amuleto de la abuela', category: 'treasure', origin: 'dm' }),
+    ).rejects.toThrow(/Forbidden/)
     await expect(
       result('select public.save_item_definition($1,$2,0,$3,$4) result', [
         c,

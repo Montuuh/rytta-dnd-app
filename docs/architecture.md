@@ -161,6 +161,24 @@ The board is a CSS-transformed world (map image or ground, SVG layers, DOM token
 rendering dependency; the generator and Web Audio engine are original code in the feature. The table screen
 (`/tabletop-table`) renders outside the app layout at the calibrated square size.
 
+ADR 043 (RYT-103–106) makes gold gp with two decimals (`numeric(12,2)`, parsed by
+`shared/lib/money.ts`) and weight `weight_lb` with three decimals, shown in lb or kg by
+`shared/lib/weight.ts` with a per-account device preference; `shared/lib/translations.ts` picks
+an item's optional second-language text. The bilingual basic catalogue is bundled data of the
+`inventory` feature (`content/basic-items*.json`, built by `scripts/items`) imported as campaign
+definitions by `import_basic_items`; it replaces the static templates. Players search with
+`search_campaign_items` and propose through `item_proposals`, resolved by the DM; merges,
+supplies from food and drink, and carried containers in the encumbrance are server or pure
+domain rules. The database ships in two migrations: an additive part 1 and a part 2 that flips
+two private switches (money scale, Player authoring) together with the frontend release.
+
+ADR 044 (RYT-107) adds shop types (`shops/domain/shop-types.ts`) that pre-stock a shop through
+`save_shop`, `import_basic_items` and `add_listings` with per-step request ids, and a shop image
+in the private `shop-images` bucket shown as a banner. ADR 045 (RYT-102) adds species, feat and
+subclass trackers, once-per-turn marks and options paid from a parent resource to
+`characters/domain/resources.ts`, with species and feat glossary entries from
+`scripts/glossary/origin_features.py`; no backend change.
+
 Future domains: quests, media, maps/routes, strongholds and relationships.
 Owned records carry campaign_id; cross-record FKs include campaign_id.
 Economic operations use server prices, transactional locking/revision checks, idempotency

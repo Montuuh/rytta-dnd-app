@@ -106,12 +106,55 @@ ones too) and the replies from production, so editors are granted again after `p
 packs cannot be deleted through the API, so a takedown is an owner SQL operation (delete the pack
 row, which cascades to its entries).
 
+Items economy (ADR 043 and ADR 044, RYT-104–107, migrations `20261120120000` and
+`20261121120000`): money is gp with two decimals (`numeric(12,2)`), validated on the server.
+RPCs refuse negative amounts, values over the column limit and more decimals than the private
+switch `private.money_scale()` allows (0 while only part 1 is applied, 2 after part 2); nothing
+is rounded silently. Derived prices use the same scale: the per-character modifier rounds half
+up and resale rounds down. The second switch, `private.items_player_authoring()`, closes Player
+creation and editing of definitions in part 2. Neither switch is executable by clients.
+
+- `item_proposals` has RLS on, no policies and no grants by design; it is read through
+  `list_item_proposals` (DM: the campaign; Player: own characters; every pending one first, then
+  at most 50 closed) and written by `propose_item` (assigned Player or DM; never a price, origin,
+  template flag or catalogue key; 20 pending and 100 per 24 hours per character),
+  `cancel_item_proposal` (proposer, own pending only) and `resolve_item_proposal` (DM; accept and
+  merge need an explicit quantity 1..1000). An accepted item is created by the DM and granted
+  as a `dm` stack, so the Player owns neither its price nor its edits.
+- A Player's own definition is frozen for them once it has a price, a `dm`/`shop` stack or a
+  live listing. A Player may grant only basic catalogue items (`basic_key` set) to their own
+  character, as `source = player` stacks that never sell or mint supplies.
+- `use_item` adds rations or water only from `dm` or `shop` stacks; `undo_inventory_event`
+  removes exactly what was added or raises `Undo conflict` once it was spent.
+- DM only: `import_basic_items` (500 per call; the idempotency payload stores the SHA-256 of the
+  items), `set_item_template`, `merge_item_definitions` (refused while open orders or live trades
+  reference the duplicate), `add_listings` (200 per call, atomic) and `set_shop_image`.
+  `search_campaign_items` gives Players live basic items, their own creations and what their
+  characters carry, with `value_gp` only for basic items.
+- Every write locks the campaign row, authorizes with `auth.uid()`, checks revisions where a row
+  is edited and records actor, payload and result in `private.inventory_requests`; a different
+  payload under the same request id is refused. Anon executes none of the functions; outsiders,
+  inactive members and DMs of another campaign get `Forbidden` or nothing.
+- Item pictures: members also read the picture of live basic items and of their own creations.
+  Shop pictures live in the private `shop-images` bucket at `{env}/{campaign}/{shop}/{uuid}.{ext}`
+  (1 MB, WebP/PNG/JPEG, immutable). The campaign DM uploads, deletes and reads (also unattached
+  uploads); a member reads only the current image of a shop one of their non-archived characters
+  sees. The global router dispatches `pre/` objects to `pre_private` helpers.
+- Known and accepted: Players can read `value_gp` of definitions they carry directly from
+  `item_definitions` (a pre-existing RLS read); the client never shows it. Partner items in a
+  trade show the icon only because the trade state carries no picture.
+- SQL tests on PGlite deny anon, outsider, Player and cross-campaign DM and run the PRE mirror.
+  Not tested: real Storage uploads and signed URLs for shop images, PostgREST numeric
+  serialisation and real concurrency.
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite
-campaign/character FK. Money uses whole gold; water and food use whole rations. Exhaustion is a manual
+campaign/character FK. Money uses gp with two decimals (whole gold until migration
+`20261121120000` switches the scale, ADR 043); water and food use whole rations. Exhaustion is a manual
 homebrew counter, without edition effects or a gameplay cap. SQL integers bound rations
-and exhaustion to 0..2147483647; gold/revision stay within JavaScript safe integers.
+and exhaustion to 0..2147483647; gold stays within 0..9999999999.99 and revisions within
+JavaScript safe integers.
 
 RYT-044 (ADR 026): a Player owns at most four characters per campaign and exactly one is
 active. A partial unique index and a deferred constraint trigger enforce both in PostgreSQL;
@@ -179,8 +222,8 @@ These are deployment prerequisites, not permission to modify hosted data.
 - undo_inventory_event (RYT-004, implemented): once-only compensating event linked to its
   original; Players only their own events within 10 minutes, DMs any; rejected when the
   stack revision moved after the event instead of restoring a snapshot.
-- Player-created item definitions carry no price and land in `source = player` stacks so
-  future resale cannot mint gold. Portrait objects are private and authorized per
+- Player-created item definitions carry no price set by the Player and land in
+  `source = player` stacks so resale cannot mint gold; only the DM prices accepted proposals. Portrait objects are private and authorized per
   character through `private.can_access_portrait`.
 
 Test simultaneous buys, double taps, retries, stale writes and insufficient funds.

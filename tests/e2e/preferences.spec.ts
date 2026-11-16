@@ -46,14 +46,25 @@ test('the profile menu opens the Settings drawer over the page; toggles live the
   const width = (await veil.boundingBox())!.width
   expect(box.width).toBeLessThanOrEqual(481)
   expect(box.width).toBeLessThan(width)
-  // RYT-069: language first, then the theme; the theme carries its own scheme.
-  await expect(settings.getByRole('radiogroup')).toHaveCount(2)
+  // RYT-069: language first, then the theme; the theme carries its own scheme. RYT-104 adds the
+  // weight unit after them: by language (the default), kg or lb.
+  await expect(settings.getByRole('radiogroup')).toHaveCount(3)
   const groups = await settings
     .getByRole('radiogroup')
     .evaluateAll((list) => list.map((el) => el.getAttribute('class')))
-  expect(groups).toEqual(['language-picker', 'theme-picker'])
-  for (const group of ['Tema', 'Idioma'])
+  expect(groups).toEqual(['language-picker', 'theme-picker', 'language-picker weight-picker'])
+  for (const group of ['Tema', 'Idioma', 'Peso'])
     await expect(settings.getByRole('radiogroup', { name: group })).toBeVisible()
+  const weight = settings.getByRole('radiogroup', { name: 'Peso' })
+  await expect(weight.getByRole('radio')).toHaveCount(3)
+  await expect(weight.getByRole('radio', { name: /Según el idioma/ })).toBeChecked()
+  // "By language" carries the language glyph, not a second "kg" (RYT-104).
+  await expect(weight.locator('.language-monogram svg')).toHaveCount(1)
+  await weight.getByText('Libras (lb)', { exact: true }).click()
+  await expect(weight.getByRole('radio', { name: /Libras/ })).toBeChecked()
+  await weight.getByText('Según el idioma', { exact: true }).click()
+  await expect(weight.getByRole('radio', { name: /Según el idioma/ })).toBeChecked()
+  expect(await page.evaluate(() => localStorage.getItem('rytta.weight-unit'))).toBeNull()
   const themes = settings.getByRole('radiogroup', { name: 'Tema' })
   await expect(themes.getByRole('group', { name: 'Oscuros' }).getByRole('radio')).toHaveCount(10)
   await expect(themes.getByRole('group', { name: 'Claros' }).getByRole('radio')).toHaveCount(4)

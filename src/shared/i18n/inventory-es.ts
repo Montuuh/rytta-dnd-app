@@ -336,6 +336,7 @@ export const inventoryEs = {
   'items.review.pending_other': '{{count}} por revisar',
   'items.review.recent': 'Respondidas hace poco',
   'items.review.from': 'Para {{character}} · {{player}}',
+  'items.review.fromOne': 'Para {{character}}',
   'items.review.for': 'Propuesta',
   'items.review.suggested': 'Precio sugerido',
   'items.review.noSuggestion': 'Ninguno',

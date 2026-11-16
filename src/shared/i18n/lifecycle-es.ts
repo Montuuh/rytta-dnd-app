@@ -50,6 +50,8 @@ export const lifecycleEs = {
   'addItem.empty': 'El almacén está vacío. Crea un objeto nuevo.',
   'addItem.pickGroup': 'Objetos del almacén',
   'addItem.give': 'Dar {{amount}} a {{name}}',
+  'addItem.take': 'Añadir {{amount}} a la mochila',
+  'addItem.taken': '{{item}} ×{{amount}} añadido a tu mochila.',
   'addItem.pickFirst': 'Elige primero un objeto',
   'addItem.given': '{{item}} ×{{amount}} entregado a {{name}}.',
   'addItem.error': 'No se pudo dar el objeto. Puedes reintentarlo.',

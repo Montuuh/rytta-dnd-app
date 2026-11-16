@@ -661,7 +661,7 @@ test('RYT-105 Players search basic items first and propose what is missing', asy
   await drawer.getByRole('button', { name: /Raciones/ }).click()
   await expect(drawer).toContainText('Comida seca para un día de viaje.')
   await drawer.getByRole('button', { name: 'Aumentar Cantidad', exact: true }).click()
-  await drawer.getByRole('button', { name: /Dar 2 a Arin/ }).click()
+  await drawer.getByRole('button', { name: /Añadir 2 a la mochila/ }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   // Units a Player added never feed supplies, so their card does not promise rations.
   await page.getByRole('button', { name: /Raciones, cantidad 2/ }).click()

@@ -235,8 +235,10 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     [
       t(`inventory.category.${item.category}`),
       t(`inventory.rarity.${item.rarity}`),
-      format(unitPounds(item)),
-    ].join(' · ')
+      unitPounds(item) > 0 ? format(unitPounds(item)) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ')
   const value = (item: ItemDefinition) =>
     item.value_gp === null
       ? t('store.noValue')

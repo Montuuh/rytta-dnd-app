@@ -76,10 +76,9 @@ export function PlayerAddItem({
         requestId: requests.current.get(key),
       })
       onDone(
-        t('addItem.given', {
+        t('addItem.taken', {
           item: localizedName(item, i18n.language),
           amount: quantity,
-          name: character.name,
         }),
       )
     } catch {
@@ -162,7 +161,12 @@ export function PlayerAddItem({
             entries={items.map((entry) => ({
               id: entry.id,
               name: localizedName(entry, i18n.language),
-              meta: `${t(`inventory.category.${entry.category}`)} · ${format(entry.weight_lb)}`,
+              meta: [
+                t(`inventory.category.${entry.category}`),
+                entry.weight_lb > 0 ? format(entry.weight_lb) : null,
+              ]
+                .filter(Boolean)
+                .join(' · '),
               icon: entry.icon,
               imagePath: entry.image_path,
               rarity: entry.rarity,
@@ -205,7 +209,7 @@ export function PlayerAddItem({
               {item
                 ? failed
                   ? t('common.retry')
-                  : t('addItem.give', { amount: amount ?? 1, name: character.name })
+                  : t('addItem.take', { amount: amount ?? 1 })
                 : t('addItem.pickFirst')}
             </Button>
           </div>

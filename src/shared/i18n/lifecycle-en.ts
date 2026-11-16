@@ -47,6 +47,8 @@ export const lifecycleEn = {
   'addItem.empty': 'The storeroom is empty. Create a new item instead.',
   'addItem.pickGroup': 'Storeroom items',
   'addItem.give': 'Give {{amount}} to {{name}}',
+  'addItem.take': 'Add {{amount}} to the satchel',
+  'addItem.taken': '{{item}} ×{{amount}} added to your satchel.',
   'addItem.pickFirst': 'Choose an item first',
   'addItem.given': '{{item}} ×{{amount}} given to {{name}}.',
   'addItem.error': 'Could not give the item. You can retry.',

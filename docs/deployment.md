@@ -40,10 +40,11 @@ PKCE callbacks return to the deployed base URL with query parameters; never impl
 ## Releases with a paired migration
 
 Some database changes ship in two parts: an additive part applied ahead of time and a part the
-deployed frontend cannot follow, applied together with the frontend release. Current case
-(ADR 043, RYT-104/105/107): part 1 `20261120120000_items_decimal_catalogue_proposals.sql` is
-applied to production (hosted history 2026-11-16, version `20261116002653`); part 2
-`20261121120000_items_player_authoring_close.sql` is not. Release order:
+deployed frontend cannot follow, applied together with the frontend release. Latest case
+(ADR 043, RYT-104/105/107), completed on 2026-11-16: part 1
+`20261120120000_items_decimal_catalogue_proposals.sql` (hosted version `20261116002653`) and
+part 2 `20261121120000_items_player_authoring_close.sql` (hosted version `20261116081923`) are
+both applied to production. Release order for a paired migration:
 
 1. Confirm the hosted history has part 1 and not part 2, and that `private.money_scale()`
    returns 0 in production.

@@ -1,6 +1,6 @@
 # Delivery RYT-105: Players search the campaign catalogue and propose new items
 
-Status: review (2026-11-16; waiting only for part 2 in production with the release). Decision record: ADR 043. Database rollout, shared checks and
+Status: done (2026-11-16; part 2 applied to production with the release). Decision record: ADR 043. Database rollout, shared checks and
 untested layers are in [RYT-104 validation](../RYT-104/validation.md).
 
 ## Outcome
@@ -25,9 +25,9 @@ proposal-review,merge-items,pick-list}.tsx` and their tests.
 | A proposal adds nothing until accepted or merged; rejecting tells the Player in the app | Met. The Player reads the status and the DM's note on the proposal shelf (no push notification) |
 | Accepting or merging twice with the same key grants once; edits before accepting are stored | Met (SQL tests). Accept and merge need an explicit quantity; the accepted definition belongs to the DM |
 | Merging moves inventory, listings and trade references without losing quantities, then removes the duplicate | Met with recorded rules: the duplicate is archived (history stays readable), closed order lines are repointed, and the merge is refused while open orders or live trades reference the duplicate |
-| A Player can no longer create a campaign item through the UI or the API | UI met. API: closed in PRE through the maintenance file; production stays open until part 2 ships with the frontend release |
+| A Player can no longer create a campaign item through the UI or the API | Met. UI and API: closed in production since part 2 (2026-11-16) |
 | Denial tests for anon, outsider, Player and cross-campaign DM | Met on PGlite |
-| PRE before production | Part 1 met; part 2 pending by design |
+| PRE before production | Met; part 2 applied to production on 2026-11-16 |
 | 390px and 820px, both themes, both languages, keyboard and Escape, axe; independent UI review PASS | Met. Browser specs passed; independent UI review PASS on the current source in round 2 (shared record in RYT-104) |
 
 ## Verification
@@ -48,6 +48,10 @@ directly from the table; column-level protection is planned as RYT-109.
 Independent UI review round 1 found that focus fell to the document body after proposal step
 changes (major); it was fixed and round 2 passed (details in the RYT-104 record).
 
-Remaining before Done: part 2 (`20261121120000_items_player_authoring_close.sql`) applied to
-production together with the frontend release, performed by the user, and Player
-`save_item_definition` verified as refused there.
+Part 2 (`20261121120000_items_player_authoring_close.sql`) was applied to production on 2026-11-16
+(hosted version `20261116081923`) right after the pull request merged, and the frontend deployed
+from main with the Quality workflow green. Verified in production: `money_scale()` returns 2,
+Player authoring is closed, `anon` and `authenticated` cannot execute either switch and the 88
+existing item definitions are unchanged.
+Not exercised in production with a real Player account: the `save_item_definition` refusal,
+which is covered by the SQL tests and by PRE.

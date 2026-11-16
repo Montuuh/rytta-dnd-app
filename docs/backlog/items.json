@@ -3425,12 +3425,12 @@
       "title": "Items model: decimal gold, weight units, translations, catalogue import, containers and food",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-103", "RYT-026", "RYT-032"],
       "sources": [
         "User 2026-11-15: list of shop, item and sheet improvements. Decimal gold, weight in lb or kg, optional translations, descriptions everywhere, importing the basic catalogue, own items as templates, backpacks as containers and food and drink that add rations and water.",
         "User decisions 2026-11-15: money in gp with two decimals; an item proposed by a Player reaches the inventory only when the DM accepts; 1 lb = 0.5 kg with a per-user unit preference (default kg in Spanish, lb in English); the second language of own items is optional and typed by hand, no online translation service.",
-        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Only remaining item: part 2 of the migration (20261121120000_items_player_authoring_close.sql) applied to production together with the frontend release, performed by the user, and verified."
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Part 2 of the migration (20261121120000_items_player_authoring_close.sql) was applied to production on 2026-11-16 (hosted version 20261116081923) with the frontend release; the switches were verified there. The new flows were not exercised in production with real accounts."
       ],
       "scope": "Money is gp with two decimals everywhere (item prices, shop listings, purchases, sales, trades and character gold), stored exactly and validated server-side. Item weight keeps three decimals; entry accepts lb or kg both ways (1 lb = 0.5 kg) and a per-user unit preference defaults to kg in Spanish and lb in English. Items gain an optional hand-typed second-language name and description; the description is shown everywhere an item is shown. The DM imports the basic catalogue (RYT-103) as real campaign items, idempotent by catalogue key, replacing the static template list; own items can be flagged \"use as template\" and feed the creation helper. Backpacks get a container property (capacity, load reduction) applied to encumbrance while carried (decision 2026-11-16, ADR 043: containers have no equipment slot). Food and drink items add rations or water when used, through transactional idempotent RPCs with undo. Backward-compatible production migration tested in PRE first. Non-goals: online translation, a pp/sp/cp purse, Player item creation changes (RYT-105), autonomous release.",
       "acceptance": [
@@ -3458,12 +3458,12 @@
       "title": "Players search the campaign catalogue and propose new items for DM review",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-104"],
       "sources": [
         "User 2026-11-15: list of shop, item and sheet improvements. Players search existing campaign items first and otherwise propose one; the DM reviews, edits, accepts, merges or rejects; the DM merges duplicate definitions.",
         "User decisions 2026-11-15: money in gp with two decimals; an item proposed by a Player reaches the inventory only when the DM accepts; 1 lb = 0.5 kg with a per-user unit preference (default kg in Spanish, lb in English); the second language of own items is optional and typed by hand, no online translation service.",
-        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Only remaining item: part 2 of the migration (20261121120000_items_player_authoring_close.sql) applied to production together with the frontend release, performed by the user, and verified."
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Part 2 of the migration (20261121120000_items_player_authoring_close.sql) was applied to production on 2026-11-16 (hosted version 20261116081923) with the frontend release; the switches were verified there. The new flows were not exercised in production with real accounts."
       ],
       "scope": "A Player adding an item searches the campaign catalogue they can see first and picks an existing definition; when nothing fits they send a proposal (name, description, weight, price, optional picture). The DM gets a review panel to edit, accept, merge into an existing item or reject each proposal; an accepted or merged proposal reaches the Player inventory only then, through a transactional idempotent RPC. The DM can also merge duplicate item definitions, moving every inventory row, listing and trade reference to the kept item. Direct Player item creation is closed at release. Non-goals: online translation, a pp/sp/cp purse, autonomous release.",
       "acceptance": [
@@ -3515,11 +3515,11 @@
       "title": "Shops: reachable create action, shop types that pre-stock and a shop banner image",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-103", "RYT-104", "RYT-030", "RYT-098"],
       "sources": [
         "User 2026-11-15: list of shop, item and sheet improvements. The create-item action in the add-items drawer needs scrolling; shop types with default stock; a shop image.",
-        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Only remaining item: part 2 of the migration (20261121120000_items_player_authoring_close.sql) applied to production together with the frontend release, performed by the user, and verified."
+        "Close-out 2026-11-16: independent UI review PASS on the current source (round 2; RYT-104 record). Part 2 of the migration (20261121120000_items_player_authoring_close.sql) was applied to production on 2026-11-16 (hosted version 20261116081923) with the frontend release; the switches were verified there. The new flows were not exercised in production with real accounts."
       ],
       "scope": "The create-item action in the add-items drawer stays visible without scrolling. Creating a shop lets the DM pick a shop type that pre-stocks it from the imported basic catalogue, editable before saving. A shop can have an image in a private bucket, visible only to members who can see the shop, shown as a header banner with a scrim that keeps text contrast (not a full background) and opened in the shared image viewer. Non-goals: online translation, a pp/sp/cp purse, public image URLs, autonomous release.",
       "acceptance": [

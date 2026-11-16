@@ -293,8 +293,11 @@ export const inventoryEn = {
   'items.container.reductionShort': '−{{percent}} % load',
   'items.container.holds': 'Holds',
   'items.container.holdsReduced': '{{weight}} · lightens the load by {{percent}} %',
+  'items.container.holdsUnearned': '{{weight}} · lightens only from the DM or a shop',
   'items.container.relief':
     '{{name}} saves {{saved}}: {{percent}} % of up to {{capacity}} of unequipped items.',
+  'items.container.unearned':
+    '{{name}} only lightens the load when it comes from the DM or a shop.',
   'items.add.search': 'Search basic items',
   'items.add.placeholder': 'Rope, torch, rations…',
   'items.add.noMatch': 'No basic item matches “{{query}}”.',

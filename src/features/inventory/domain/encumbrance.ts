@@ -19,6 +19,8 @@ export type CarriedLoad = {
   /** The weight that counts toward encumbrance once the relief applies. */
   pounds: number
   relief: LoadRelief | null
+  /** A weight-saving container the Player added on their own, when nothing else lightens the load. */
+  unearned: { definitionId: string; name: string } | null
 }
 
 const round3 = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000
@@ -28,7 +30,8 @@ const round3 = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 
  * `loadReductionPercent` applies to the other unequipped items, up to its `capacityLb`:
  * saved = percent × min(loose weight without the container, capacity). Equipped armor and weapons
  * and the container's own weight are never reduced, and only the container that saves the most
- * applies.
+ * applies. Like supplies, the saving needs a container given by the DM or bought in a shop: one a
+ * Player added on their own carries its weight and lightens nothing.
  */
 export function carriedLoad(
   stacks: ItemStack[],
@@ -37,6 +40,7 @@ export function carriedLoad(
   let rawPounds = 0
   let loosePounds = 0
   const containers: ItemDefinition[] = []
+  let selfAdded: ItemDefinition | null = null
   for (const stack of stacks) {
     if (stack.quantity <= 0) continue
     const definition = definitions.get(stack.definition_id)
@@ -46,8 +50,9 @@ export function carriedLoad(
     if (stack.equipped_slot !== null) continue
     loosePounds += weight
     const container = definition.properties.container
-    if (container && container.loadReductionPercent > 0 && container.capacityLb > 0)
-      containers.push(definition)
+    if (!container || container.loadReductionPercent <= 0 || container.capacityLb <= 0) continue
+    if (stack.source === 'player') selfAdded ??= definition
+    else containers.push(definition)
   }
   let relief: LoadRelief | null = null
   for (const definition of containers) {
@@ -67,6 +72,7 @@ export function carriedLoad(
     rawPounds: round3(rawPounds),
     pounds: round3(rawPounds - (relief?.savedPounds ?? 0)),
     relief,
+    unearned: relief || !selfAdded ? null : { definitionId: selfAdded.id, name: selfAdded.name },
   }
 }
 

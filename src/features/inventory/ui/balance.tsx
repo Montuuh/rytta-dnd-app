@@ -1,5 +1,5 @@
 import { Text } from '@mantine/core'
-import { Feather } from 'lucide-react'
+import { Feather, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { localizedName } from '@/shared/lib/translations'
 import { fromPounds } from '@/shared/lib/weight'
@@ -92,6 +92,19 @@ export function Balance({
               percent: load.relief.percent,
               saved: format(load.relief.savedPounds, 1),
               capacity: format(load.relief.capacityLb, 1),
+            })}
+          </span>
+        </Text>
+      )}
+      {load.unearned && (
+        <Text size="sm" className="balance-relief is-idle">
+          <Info size={16} aria-hidden="true" />
+          <span>
+            {t('items.container.unearned', {
+              name: localizedName(
+                definitions.get(load.unearned.definitionId) ?? load.unearned,
+                i18n.language,
+              ),
             })}
           </span>
         </Text>

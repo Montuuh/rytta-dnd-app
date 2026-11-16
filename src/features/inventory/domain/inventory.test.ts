@@ -123,6 +123,26 @@ describe('encumbrance', () => {
     expect(load.relief).toMatchObject({ definitionId: sack.id, savedPounds: 12.4 })
     expect(load).toMatchObject({ rawPounds: 33, pounds: 20.6 })
   })
+  it('gives no relief for a container the Player added on their own', () => {
+    const backpack = definition({
+      weight_lb: 5,
+      properties: { container: { capacityLb: 30, loadReductionPercent: 10 } },
+    })
+    const rope = definition({ weight_lb: 20 })
+    const defs = new Map([backpack, rope].map((d) => [d.id, d]))
+    const own = { ...stack(backpack), source: 'player' as const }
+    expect(carriedLoad([own, stack(rope)], defs)).toMatchObject({
+      rawPounds: 25,
+      pounds: 25,
+      relief: null,
+      unearned: { definitionId: backpack.id },
+    })
+    // A bought or DM-given one beside it still works, and the note goes away.
+    const load = carriedLoad([own, stack(backpack), stack(rope)], defs)
+    expect(load.relief?.savedPounds).toBe(2.5)
+    expect(load.unearned).toBeNull()
+  })
+
   it('gives no relief without a reducing container', () => {
     const backpack = definition({
       weight_lb: 5,
@@ -133,6 +153,7 @@ describe('encumbrance', () => {
       rawPounds: 10,
       pounds: 10,
       relief: null,
+      unearned: null,
     })
     expect(carriedLoad([stack(backpack, 0)], defs).relief).toBeNull()
   })

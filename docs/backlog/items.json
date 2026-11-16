@@ -3549,12 +3549,14 @@
       "dependsOn": ["RYT-107"],
       "sources": [
         "Independent UI review of RYT-102..RYT-107, round 2 on 2026-11-16 (RYT-104 record): two non-blocking notes. Notification close buttons have no accessible name across the app (pre-existing); \"show all\" in the shop add-items dock leaves focus on the document body.",
-        "Close-out 2026-11-16: optional copy pass over the pre-existing explanatory hints in shops and trades that were deliberately left during RYT-107."
+        "Close-out 2026-11-16: optional copy pass over the pre-existing explanatory hints in shops and trades that were deliberately left during RYT-107.",
+        "Independent UI review of the follow-up fixes on 2026-11-16 (banner height cap, self-added containers): two non-blocking notes. On a phone in landscape with 150 % text the capped shop banner clips its own kind label; at 390px with 150 % text the capacity fact of a self-added container wraps to six lines in a half-width tile."
       ],
       "scope": "Every notification close button in the app gets a translated accessible name (English and Spanish). After \"show all\" in the shop add-items dock, focus moves to a defined element in the expanded list instead of the document body. Optional, only if the user confirms: remove or rewrite the pre-existing explanatory hints in shops and trades that do not help the user act, decide or recover. Non-goals: notification redesign, new shop behaviour, backend changes, autonomous release.",
       "acceptance": [
         "Every notification close button exposes a translated accessible name in English and Spanish; a browser spec fails if one is missing.",
         "After \"show all\" in the shop add-items dock, keyboard focus lands on a defined element of the expanded list and never on the document body; a browser spec asserts it.",
+        "At 844x390 with 150 % text the shop banner shows its kind label, name and badges without clipping; the capacity fact of a self-added container reads in at most three lines at 390px with 150 % text.",
         "If the copy pass is confirmed: each removed or rewritten hint in shops and trades is listed in the evidence with its reason; no hint that explains a destructive or irreversible action is removed.",
         "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],

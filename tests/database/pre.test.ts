@@ -161,9 +161,9 @@ describe('public to pre bulk refresh', () => {
     expect((await db.query('select gold::float8 gold from pre.character_resources')).rows).toEqual([
       { gold: 99 },
     ])
-    expect((await db.query('select gold::float8 gold from public.character_resources')).rows).toEqual([
-      { gold: 0 },
-    ])
+    expect(
+      (await db.query('select gold::float8 gold from public.character_resources')).rows,
+    ).toEqual([{ gold: 0 }])
     await expect(db.query('select pre_admin.restore($1)', [backupId])).rejects.toThrow(
       /unavailable/,
     )

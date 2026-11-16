@@ -5,9 +5,11 @@ import { Alert, Drawer, Group, NumberInput, Stack, Text, UnstyledButton } from '
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Gift, Hand, Pencil, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { formatPounds } from '../domain/encumbrance'
+import { formatGp } from '@/shared/lib/money'
+import { localizedDescription, localizedName } from '@/shared/lib/translations'
 import { slotsFor } from '../domain/equipment'
-import { isUsable, type ItemDefinition, type ItemStack } from '../domain/item'
+import { isUsable, unitPounds, type ItemDefinition, type ItemStack } from '../domain/item'
+import { useWeightFormat } from './use-weight'
 import { HoldSeal } from './hold-seal'
 import { ItemIcon } from './item-icon'
 
@@ -42,17 +44,39 @@ export function ItemCard({
   onClose: () => void
 }) {
   const { t, i18n } = useTranslation()
+  const { format } = useWeightFormat()
   const phone = usePhone()
   const [amount, setAmount] = useState<number | string>(1)
   const count = typeof amount === 'number' && amount >= 1 ? Math.trunc(amount) : 1
   const props = definition.properties
+  const name = localizedName(definition, i18n.language)
+  const description = localizedDescription(definition, i18n.language)
   const facts: [string, ReactNode][] = [
-    [
-      t('inventory.card.weight'),
-      `${formatPounds(definition.weight_tenths / 10, i18n.language)} lb`,
-    ],
+    [t('inventory.card.weight'), format(unitPounds(definition), 3)],
     [t('inventory.card.category'), t(`inventory.category.${definition.category}`)],
   ]
+  // RYT-104: what one unit gives when used, and what a container holds. Units a Player added
+  // by themselves never feed supplies, so their card does not promise it.
+  if (stack.source !== 'player' && (props.rations || props.water))
+    facts.push([
+      t('items.supplies.perUnit'),
+      [
+        props.rations ? t('items.supplies.rationsEach', { count: props.rations }) : null,
+        props.water ? t('items.supplies.waterEach', { count: props.water }) : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    ])
+  if (props.container)
+    facts.push([
+      t('items.container.holds'),
+      props.container.loadReductionPercent
+        ? t('items.container.holdsReduced', {
+            weight: format(props.container.capacityLb, 1),
+            percent: props.container.loadReductionPercent,
+          })
+        : format(props.container.capacityLb, 1),
+    ])
   if (props.base !== undefined)
     facts.push([
       t('inventory.card.armor'),
@@ -118,7 +142,10 @@ export function ItemCard({
       </GlossaryTerm>,
     ])
   if (dm && definition.value_gp !== null)
-    facts.push([t('inventory.card.value'), `${definition.value_gp} ${t('inventory.card.gp')}`])
+    facts.push([
+      t('inventory.card.value'),
+      `${formatGp(definition.value_gp, i18n.language)} ${t('inventory.card.gp')}`,
+    ])
   const equippable = slotsFor(definition.slot_kind).length > 0
   const usable = isUsable(definition.category)
   return (
@@ -138,12 +165,12 @@ export function ItemCard({
             imagePath={definition.image_path}
             size={40}
             viewable
-            name={definition.name}
+            name={name}
             frame="item-card-icon"
           />
           <div>
             <h3 id="item-card-name" className="item-card-name user-copy">
-              {definition.name}
+              {name}
             </h3>
             <Text size="sm" className="item-card-rarity">
               {t(`inventory.rarity.${definition.rarity}`)} · ×{stack.quantity}
@@ -158,9 +185,9 @@ export function ItemCard({
             </div>
           ))}
         </dl>
-        {definition.description && (
+        {description && (
           <Text size="sm" className="item-card-description user-copy preserve-lines">
-            <GlossaryText text={definition.description} />
+            <GlossaryText text={description} />
           </Text>
         )}
         {error && (
@@ -189,7 +216,7 @@ export function ItemCard({
               {usable && (
                 <HoldSeal
                   label={t('inventory.card.useLabel', {
-                    name: definition.name,
+                    name,
                     left: stack.quantity - 1,
                   })}
                   hint={t('inventory.card.holdToUse')}
@@ -245,7 +272,7 @@ export function ItemCard({
                   {t('inventory.card.giveMore', { amount: count })}
                 </UnstyledButton>
               )}
-              {(dm || definition.origin === 'player') && (
+              {dm && (
                 <UnstyledButton className="quiet-link" onClick={actions.edit}>
                   <Pencil size={16} aria-hidden="true" />
                   {t('inventory.card.edit')}

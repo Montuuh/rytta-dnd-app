@@ -1,14 +1,80 @@
-import type { ItemDefinition, ItemStack } from './item'
+import { unitPounds, type ItemDefinition, type ItemStack } from './item'
 
 export type EncumbranceStatus = 'light' | 'encumbered' | 'heavy' | 'over'
-/** Weight in tenths of a pound for every stack, equipped or not. */
-export function carriedTenths(stacks: ItemStack[], definitions: Map<string, ItemDefinition>) {
-  return stacks.reduce(
-    (sum, stack) =>
-      sum + stack.quantity * (definitions.get(stack.definition_id)?.weight_tenths ?? 0),
-    0,
-  )
+
+/** The container that lightens the load: the single one that takes the most weight off. */
+export type LoadRelief = {
+  definitionId: string
+  name: string
+  percent: number
+  /** Most weight, in lb, the container lightens. */
+  capacityLb: number
+  /** Weight, in lb, taken off the load. */
+  savedPounds: number
 }
+
+export type CarriedLoad = {
+  /** Every stack at full weight, equipped or not. */
+  rawPounds: number
+  /** The weight that counts toward encumbrance once the relief applies. */
+  pounds: number
+  relief: LoadRelief | null
+}
+
+const round3 = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000
+
+/**
+ * RYT-104: weight carried, in lb. A container works while carried (it has no equip slot). Its
+ * `loadReductionPercent` applies to the other unequipped items, up to its `capacityLb`:
+ * saved = percent × min(loose weight without the container, capacity). Equipped armor and weapons
+ * and the container's own weight are never reduced, and only the container that saves the most
+ * applies.
+ */
+export function carriedLoad(
+  stacks: ItemStack[],
+  definitions: Map<string, ItemDefinition>,
+): CarriedLoad {
+  let rawPounds = 0
+  let loosePounds = 0
+  const containers: ItemDefinition[] = []
+  for (const stack of stacks) {
+    if (stack.quantity <= 0) continue
+    const definition = definitions.get(stack.definition_id)
+    if (!definition) continue
+    const weight = stack.quantity * unitPounds(definition)
+    rawPounds += weight
+    if (stack.equipped_slot !== null) continue
+    loosePounds += weight
+    const container = definition.properties.container
+    if (container && container.loadReductionPercent > 0 && container.capacityLb > 0)
+      containers.push(definition)
+  }
+  let relief: LoadRelief | null = null
+  for (const definition of containers) {
+    const { loadReductionPercent: percent, capacityLb } = definition.properties.container!
+    const contents = Math.max(0, loosePounds - unitPounds(definition))
+    const savedPounds = round3((percent / 100) * Math.min(contents, capacityLb))
+    if (savedPounds > (relief?.savedPounds ?? 0))
+      relief = {
+        definitionId: definition.id,
+        name: definition.name,
+        percent,
+        capacityLb,
+        savedPounds,
+      }
+  }
+  return {
+    rawPounds: round3(rawPounds),
+    pounds: round3(rawPounds - (relief?.savedPounds ?? 0)),
+    relief,
+  }
+}
+
+/** The weight that counts toward encumbrance, in tenths of a pound (legacy callers). */
+export function carriedTenths(stacks: ItemStack[], definitions: Map<string, ItemDefinition>) {
+  return Math.round(carriedLoad(stacks, definitions).pounds * 10)
+}
+
 /** 5e variant encumbrance: STR×5 encumbered (−10 ft), STR×10 heavily (−20 ft), STR×15 maximum. */
 export function encumbrance(tenths: number, strength: number) {
   const pounds = tenths / 10
@@ -24,5 +90,3 @@ export function encumbrance(tenths: number, strength: number) {
   const speedPenalty = status === 'encumbered' ? 10 : status === 'heavy' ? 20 : 0
   return { pounds, thresholds, status, speedPenalty }
 }
-export const formatPounds = (pounds: number, language: string) =>
-  pounds.toLocaleString(language, { maximumFractionDigits: 1 })

@@ -1,3 +1,4 @@
+import { localizedName } from '@/shared/lib/translations'
 import { useRef } from 'react'
 import { Alert, Button, Group, Loader, Modal, Stack, Text } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -23,7 +24,7 @@ export function DeleteItemDialog({
   onClose: () => void
   onDeleted: (item: ItemDefinition) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const phone = usePhone()
   const impact = useQuery(definitionImpactQuery(state.user!.id, campaignId, item.id))
@@ -52,7 +53,7 @@ export function DeleteItemDialog({
       centered
       fullScreen={phone}
       onClose={() => !archive.isPending && onClose()}
-      title={t('lifecycle.deleteTitle', { name: item.name })}
+      title={t('lifecycle.deleteTitle', { name: localizedName(item, i18n.language) })}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
       <Stack gap="md">

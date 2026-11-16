@@ -1,3 +1,5 @@
+import { formatGp } from '@/shared/lib/money'
+import { localizedName } from '@/shared/lib/translations'
 import { useEffect, useRef, useState, type Ref } from 'react'
 import { Alert, Button, Modal, Text, UnstyledButton, VisuallyHidden } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -17,7 +19,12 @@ import {
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { CharacterPortrait, ItemIcon, useCampaignPortraits } from '@/features/inventory'
+import {
+  CharacterPortrait,
+  ItemIcon,
+  useCampaignPortraits,
+  type CatalogueItem,
+} from '@/features/inventory'
 import { useTradeAction } from '../api'
 import {
   formatCountdown,
@@ -32,6 +39,7 @@ import {
   type TradeItem,
   type TradeSide,
 } from '../domain/trade'
+import { useItemDetails } from './item-details'
 import { ItemPicker } from './item-picker'
 import { Stepper } from './stepper'
 
@@ -58,10 +66,11 @@ export function TradeWindow({
   refresh: () => Promise<Trade | null | undefined>
   onMinimize: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const phone = usePhone()
   const action = useTradeAction(campaignId)
   const portraits = useCampaignPortraits(campaignId)
+  const details = useItemDetails(campaignId)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [error, setError] = useState<TradeErrorCode | null>(null)
   const [picker, setPicker] = useState<{ item: string | null } | null>(null)
@@ -253,6 +262,7 @@ export function TradeWindow({
           own
           confirmed={sealed}
           byId={byId}
+          details={details}
           lines={shown.lines}
           gold={shown.gold}
           purse={purse}
@@ -305,7 +315,7 @@ export function TradeWindow({
           </span>
           <span className="trade-peek-gold">
             <Coins size={16} aria-hidden="true" />
-            {t('trade.window.gp', { gold: trade.partner.gold })}
+            {t('trade.window.gp', { gold: formatGp(trade.partner.gold, i18n.language) })}
           </span>
           <ChevronDown size={18} aria-hidden="true" className="trade-peek-go" />
         </UnstyledButton>
@@ -347,6 +357,7 @@ export function TradeWindow({
       </footer>
       {picker && (
         <ItemPicker
+          details={details}
           items={items}
           lines={shown.lines}
           initialItem={picker.item}
@@ -368,6 +379,7 @@ function OfferColumn({
   own,
   confirmed,
   byId,
+  details,
   lines,
   gold,
   purse,
@@ -380,13 +392,14 @@ function OfferColumn({
   own?: boolean
   confirmed: boolean
   byId: Map<string, TradeItem>
+  details?: Map<string, CatalogueItem>
   lines: OfferLine[]
   gold: number
   purse?: number
   onSlot?: (itemId: string | null) => void
   onGold?: (gold: number) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const headingId = `trade-side-${own ? 'you' : 'partner'}`
   const state = t(confirmed ? 'trade.window.ready' : 'trade.window.editing')
   const firstEmpty = lines.length
@@ -423,12 +436,16 @@ function OfferColumn({
               <>
                 <span className="trade-slot-top" aria-hidden="true">
                   <span className="trade-slot-icon">
-                    <ItemIcon icon={item.icon} size={26} />
+                    <ItemIcon
+                      icon={item.icon}
+                      imagePath={details?.get(item.definition_id)?.image_path}
+                      size={26}
+                    />
                   </span>
                   <span className="trade-slot-qty">×{line.quantity}</span>
                 </span>
                 <span className="trade-slot-name user-copy" aria-hidden="true">
-                  {item.name}
+                  {localizedName(item, i18n.language)}
                 </span>
               </>
             )
@@ -439,7 +456,7 @@ function OfferColumn({
                     data-slot={line.item_id}
                     className={`trade-slot filled rarity-${item.rarity}`}
                     aria-label={t('trade.window.slotItem', {
-                      name: item.name,
+                      name: localizedName(item, i18n.language),
                       quantity: line.quantity,
                     })}
                     onClick={() => onSlot?.(line.item_id)}
@@ -451,7 +468,7 @@ function OfferColumn({
                     className={`trade-slot filled rarity-${item.rarity}`}
                     role="img"
                     aria-label={t('trade.window.slotPartner', {
-                      name: item.name,
+                      name: localizedName(item, i18n.language),
                       quantity: line.quantity,
                     })}
                   >
@@ -496,15 +513,16 @@ function OfferColumn({
               lessLabel={t('trade.window.goldLess')}
               moreLabel={t('trade.window.goldMore')}
               onChange={onGold}
+              decimalScale={2}
             />
             <Text size="sm" c="dimmed" className="trade-purse">
-              {t('trade.window.goldPurse', { gold: purse ?? 0 })}
+              {t('trade.window.goldPurse', { gold: formatGp(purse ?? 0, i18n.language) })}
             </Text>
           </>
         ) : (
           <span className="trade-gold-value">
             <VisuallyHidden>{t('trade.window.goldOf', { name: side.name })}: </VisuallyHidden>
-            {t('trade.window.gp', { gold })}
+            {t('trade.window.gp', { gold: formatGp(gold, i18n.language) })}
           </span>
         )}
       </div>

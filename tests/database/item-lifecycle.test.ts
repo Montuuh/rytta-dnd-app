@@ -63,7 +63,7 @@ const row = async (d: string) => {
   await db.exec('reset role')
   return (
     await db.query<Definition>(
-      'select id, archived, revision::int revision, value_gp from public.item_definitions where id=$1',
+      'select id, archived, revision::int revision, value_gp::float8 value_gp from public.item_definitions where id=$1',
       [d],
     )
   ).rows[0]!
@@ -72,7 +72,7 @@ const listingRow = async (l: string) => {
   await db.exec('reset role')
   return (
     await db.query<{ price: number; archived: boolean; revision: number }>(
-      'select price, archived, revision::int revision from public.shop_listings where id=$1',
+      'select price::float8 price, archived, revision::int revision from public.shop_listings where id=$1',
       [l],
     )
   ).rows[0]!
@@ -272,10 +272,13 @@ describe('RYT-032 PRE mirror', () => {
     // Simulate a PRE copied before this migration, then run only its guarded PRE block.
     await db.exec(`drop function pre.item_definition_impact(uuid,uuid);
       drop function pre.archive_item_definition(uuid,uuid,bigint,uuid);
-      drop function pre.sync_listing_prices(uuid,uuid,uuid[],integer,uuid);`)
+      drop function pre.sync_listing_prices(uuid,uuid,uuid[],numeric,uuid);`)
+    // RYT-104 later made the price argument numeric; replay the block against that signature.
     const migration = readFileSync('supabase/migrations/20261103140000_item_lifecycle.sql', 'utf8')
     await db.exec(
-      migration.slice(migration.indexOf('do $$'), migration.indexOf('comment on function')),
+      migration
+        .slice(migration.indexOf('do $$'), migration.indexOf('comment on function'))
+        .replace('uuid[],integer,uuid', 'uuid[],numeric,uuid'),
     )
     const body = await one<string>(
       "select pg_get_functiondef('pre.archive_item_definition(uuid,uuid,bigint,uuid)'::regprocedure) result",
@@ -300,7 +303,7 @@ describe('RYT-032 PRE mirror', () => {
     ])
     expect(await listingRow(s.marketSword)).toMatchObject({ price: 15 })
     const pre = await db.query<{ price: number }>(
-      'select price from pre.shop_listings where id=$1',
+      'select price::float8 price from pre.shop_listings where id=$1',
       [s.marketSword],
     )
     expect(pre.rows).toEqual([{ price: 77 }])

@@ -23,145 +23,14 @@ import {
   useGlossaryName,
 } from '@/features/glossary'
 import { removeFeature } from '../../domain/progression'
-import { resourceSpec } from '../../domain/resources'
-import { isClassKey, signed, skillBonus, slotsFor, spellcasting } from '../../domain/rules'
+import { isClassKey, signed, skillBonus, spellcasting } from '../../domain/rules'
 import { featureSources, type Feature, type Spell } from '../../domain/sheet'
 import { conditionKeys, skillAbilities, skillKeys, subclassOf, type Skill } from '../../domain/srd'
 import { Pips } from './pips'
 import type { PanelProps } from './panel-types'
-import { Counter } from './widgets'
 
 const newId = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 8)}`
 
-/** Class resources, custom resources, spell slots and hit point dice. */
-export function ResourcesBlock({
-  build,
-  level,
-  vitals,
-  canEdit,
-  locked,
-  commit,
-  onPersonalise,
-}: PanelProps & { onPersonalise: () => void }) {
-  const { t } = useTranslation()
-  const slots = slotsFor(build.casterKind, level)
-  const hitDiceLeft = level - Math.min(level, vitals.hit_dice_spent)
-  return (
-    <Stack gap="lg">
-      {build.trackers.length === 0 && (
-        <Text size="sm" c="dimmed">
-          {t('sheet.noTrackers')}
-        </Text>
-      )}
-      {build.trackers.map((tracker) => {
-        const used = Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
-        const spec = resourceSpec(tracker.key)
-        const set = (next: number) =>
-          commit({ ...vitals, tracker_uses: { ...vitals.tracker_uses, [tracker.id]: next } })
-        return (
-          <section key={tracker.id} className="resource-row" aria-label={tracker.name}>
-            <Group justify="space-between" gap="xs" wrap="nowrap">
-              <Text fw={600} className="user-copy">
-                {spec ? (
-                  <GlossaryTerm id={spec.feature}>{tracker.name}</GlossaryTerm>
-                ) : (
-                  tracker.name
-                )}
-              </Text>
-              <Text size="sm" c="dimmed">
-                {t(`sheet.reset.${tracker.reset}`)}
-              </Text>
-            </Group>
-            {(tracker.display ?? 'pips') === 'counter' || tracker.max > 20 ? (
-              <Counter
-                name={tracker.name}
-                max={tracker.max}
-                used={used}
-                disabled={!canEdit}
-                onChange={set}
-              />
-            ) : (
-              <Pips
-                max={tracker.max}
-                used={used}
-                disabled={!canEdit}
-                spendLabel={t('sheet.useOne', { name: tracker.name })}
-                restoreLabel={t('sheet.restoreOne', { name: tracker.name })}
-                countLabel={t('sheet.usesLeft', { left: tracker.max - used, max: tracker.max })}
-                onChange={set}
-              />
-            )}
-          </section>
-        )
-      })}
-      {slots.some((count) => count > 0) && (
-        <section aria-labelledby="panel-slots">
-          <Text fw={600} id="panel-slots">
-            {t('sheet.slots')}
-          </Text>
-          <Stack gap={0}>
-            {slots.map((max, index) => {
-              if (max === 0) return null
-              const slotLevel = index + 1
-              const used = Math.min(max, vitals.slots_used[index] ?? 0)
-              return (
-                <Group key={slotLevel} gap="xs" wrap="nowrap">
-                  <Text size="sm" w={64}>
-                    {t('sheet.slotLevel', { level: slotLevel })}
-                  </Text>
-                  <Pips
-                    max={max}
-                    used={used}
-                    disabled={!canEdit}
-                    spendLabel={t('sheet.useSlot', { level: slotLevel })}
-                    restoreLabel={t('sheet.restoreSlot', { level: slotLevel })}
-                    countLabel={`${max - used}/${max}`}
-                    onChange={(next) => {
-                      const slots_used = [...vitals.slots_used]
-                      slots_used[index] = next
-                      commit({ ...vitals, slots_used })
-                    }}
-                  />
-                </Group>
-              )
-            })}
-          </Stack>
-        </section>
-      )}
-      <section aria-labelledby="panel-hit-dice">
-        <Text fw={600} id="panel-hit-dice">
-          <GlossaryTerm id="rule.hit-point-dice">{t('sheet.hitDice')}</GlossaryTerm>
-        </Text>
-        <Pips
-          max={level}
-          used={level - hitDiceLeft}
-          // Spending hit dice heals: it follows the HP lock (RYT-070).
-          disabled={!canEdit || locked}
-          spendLabel={t('sheet.spendHitDieLabel')}
-          restoreLabel={t('sheet.recoverHitDieLabel')}
-          countLabel={`${hitDiceLeft}/${level}`}
-          glyph={`d${build.hitDie}`}
-          onChange={(used) => commit({ ...vitals, hit_dice_spent: used })}
-        />
-        {locked && (
-          <Text size="sm" c="dimmed">
-            {t('panel.hitDiceLocked')}
-          </Text>
-        )}
-      </section>
-      {canEdit && (
-        <Button
-          variant="subtle"
-          className="panel-link"
-          leftSection={<Plus size={16} aria-hidden="true" />}
-          onClick={onPersonalise}
-        >
-          {t('panel.manageResources')}
-        </Button>
-      )}
-    </Stack>
-  )
-}
 const nextLevel = {
   undefined: 'proficient',
   proficient: 'expertise',

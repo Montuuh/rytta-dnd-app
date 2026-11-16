@@ -3,7 +3,6 @@ import {
   Badge,
   Button,
   Group,
-  NumberInput,
   Paper,
   Stack,
   Text,
@@ -26,13 +25,18 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useCampaign } from '@/features/campaigns'
-import { CharacterPortrait, HoldSeal, useCampaignPortraits } from '@/features/inventory'
+import { CharacterPortrait, GpInput, HoldSeal, useCampaignPortraits } from '@/features/inventory'
+import { roundGp } from '@/shared/lib/money'
+import { localizedName } from '@/shared/lib/translations'
+import { useGp } from './use-gp'
 import { GoldAmount, ItemGlyph } from './visuals'
 import {
   askedLinePrice,
   effectiveLinePrice,
   isOpenOrder,
+  lineGp,
   orderVariant,
+  toCents,
   type Order,
   type OrderLine,
   type OrderStatus,
@@ -74,6 +78,10 @@ export function OrderStatusBadge({ status, role }: { status: OrderStatus; role: 
     </Badge>
   )
 }
+
+/** The line's item name in the interface language (the original when not translated). */
+const lineName = (line: OrderLine, language: string) =>
+  localizedName({ name: line.item_name, translations: line.translations }, language)
 
 /** The unit price a line moved away from (asked before a counter, list before an offer). */
 const wasPrice = (line: OrderLine) => {
@@ -121,15 +129,17 @@ function CounterLine({
   value: number
   onChange: (value: number) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const gp = useGp()
+  const name = lineName(line, i18n.language)
   const offer = line.offered_price ?? line.unit_price
-  const middle = Math.round((offer + line.unit_price) / 2)
+  const middle = roundGp((offer + line.unit_price) / 2)
   const options = [
-    { key: 'offer', label: t('order.chip.offer', { value: offer }), price: offer },
-    { key: 'middle', label: t('order.chip.middle', { value: middle }), price: middle },
+    { key: 'offer', label: t('order.chip.offer', { value: gp(offer) }), price: offer },
+    { key: 'middle', label: t('order.chip.middle', { value: gp(middle) }), price: middle },
     {
       key: 'list',
-      label: t('order.chip.list', { value: line.unit_price }),
+      label: t('order.chip.list', { value: gp(line.unit_price) }),
       price: line.unit_price,
     },
   ].filter((o, i, all) => all.findIndex((x) => x.price === o.price) === i)
@@ -138,15 +148,10 @@ function CounterLine({
       <Group gap="sm" wrap="nowrap">
         <ItemGlyph icon={line.icon} rarity="common" size={18} />
         <Text fw={600} className="user-copy">
-          {t('order.lineItem', { name: line.item_name, count: line.quantity })}
+          {t('order.lineItem', { name, count: line.quantity })}
         </Text>
       </Group>
-      <Group
-        gap={6}
-        mt={6}
-        role="group"
-        aria-label={t('order.chip.group', { name: line.item_name })}
-      >
+      <Group gap={6} mt={6} role="group" aria-label={t('order.chip.group', { name })}>
         {options.map((o) => (
           <UnstyledButton
             key={o.key}
@@ -157,16 +162,12 @@ function CounterLine({
             {o.label}
           </UnstyledButton>
         ))}
-        <NumberInput
-          hideControls
-          aria-label={t('order.unitPriceFor', { name: line.item_name, count: line.quantity })}
-          min={0}
-          max={100_000_000}
-          allowDecimal={false}
+        <GpInput
+          aria-label={t('order.unitPriceFor', { name, count: line.quantity })}
           value={value}
           suffix={` ${t('gold.short')}`}
-          onChange={(next) => onChange(Number(next) || 0)}
-          w={110}
+          onChange={(next) => onChange(next ?? 0)}
+          w={120}
         />
       </Group>
     </div>
@@ -185,6 +186,7 @@ export function OrderCard({
   onAction: (action: ShopAction) => void
 }) {
   const { t, i18n } = useTranslation()
+  const gp = useGp()
   const campaign = useCampaign()
   const portraits = useCampaignPortraits(campaign.id)
   const [panel, setPanelState] = useState<Panel>(null)
@@ -246,7 +248,8 @@ export function OrderCard({
         ? 'order.saleTitle'
         : 'order.saleRequestTitle'
   const counterPrice = (line: OrderLine) => prices[line.id] ?? line.offered_price ?? line.unit_price
-  const counterTotal = order.lines.reduce((sum, l) => sum + counterPrice(l) * l.quantity, 0)
+  const counterTotal =
+    order.lines.reduce((sum, l) => sum + toCents(counterPrice(l)) * l.quantity, 0) / 100
   const respond = (decision: 'approve' | 'reject') =>
     act({
       kind: 'respond',
@@ -308,7 +311,7 @@ export function OrderCard({
           {order.lines.map((line) => (
             <li key={line.id}>
               <span className="user-copy order-line-name">
-                {t('order.lineItem', { name: line.item_name, count: line.quantity })}
+                {t('order.lineItem', { name: lineName(line, i18n.language), count: line.quantity })}
               </span>
               <span className="order-line-price">
                 {line.final_price === null && wasPrice(line) !== null && (
@@ -317,20 +320,20 @@ export function OrderCard({
                     <span className="visually-hidden">
                       {line.countered_price !== null
                         ? t('order.counterHint', {
-                            asked: askedLinePrice(line),
-                            value: line.countered_price,
+                            asked: gp(askedLinePrice(line)),
+                            value: gp(line.countered_price),
                           })
                         : t('order.offerHint', {
-                            list: line.unit_price,
-                            value: askedLinePrice(line),
+                            list: gp(line.unit_price),
+                            value: gp(askedLinePrice(line)),
                           })}
                     </span>
                     <del className="order-line-was" aria-hidden="true">
-                      {t('gold.amount', { value: (wasPrice(line) ?? 0) * line.quantity })}
+                      {t('gold.amount', { value: gp(lineGp(wasPrice(line) ?? 0, line.quantity)) })}
                     </del>
                   </>
                 )}
-                <GoldAmount value={effectiveLinePrice(line) * line.quantity} size="sm" />
+                <GoldAmount value={lineGp(effectiveLinePrice(line), line.quantity)} size="sm" />
               </span>
               {line.reverted_quantity > 0 && (
                 <Text size="xs" c="dimmed" className="order-line-note">
@@ -344,7 +347,7 @@ export function OrderCard({
         {order.status === 'reverted' && (
           <Text size="sm">
             {t(order.kind === 'purchase' ? 'order.refunded' : 'order.recovered', {
-              value: order.refunded,
+              value: gp(order.refunded),
             })}
           </Text>
         )}
@@ -366,7 +369,7 @@ export function OrderCard({
               leftSection={<CheckCircle2 size={16} aria-hidden="true" />}
               onClick={() => respond('approve')}
             >
-              {t('order.approveFor', { value: order.total })}
+              {t('order.approveFor', { value: gp(order.total) })}
             </Button>
             <Button
               id={`counter-${order.id}`}
@@ -469,7 +472,7 @@ export function OrderCard({
                   setPanel(null, true)
                 }}
               >
-                {t('order.sendCounterFor', { value: counterTotal })}
+                {t('order.sendCounterFor', { value: gp(counterTotal) })}
               </Button>
             </Group>
           </Stack>
@@ -509,7 +512,7 @@ export function OrderCard({
             <Text size="sm">
               {t(order.kind === 'purchase' ? 'order.revertPurchaseHelp' : 'order.revertSaleHelp', {
                 character: order.character.name,
-                value: order.total,
+                value: gp(order.total),
               })}
             </Text>
             <Textarea
@@ -525,7 +528,7 @@ export function OrderCard({
                 {t('common.cancel')}
               </Button>
               <HoldSeal
-                label={t('order.revertSeal', { value: order.total })}
+                label={t('order.revertSeal', { value: gp(order.total) })}
                 hint={t('order.revertHint')}
                 confirmLabel={t('order.revertNow')}
                 disabled={busy}
@@ -560,7 +563,7 @@ export function OrderCard({
                 act({ kind: 'answer', orderId: order.id, accept: true, requestId: key() })
               }
             >
-              {t('order.acceptFor', { value: order.total })}
+              {t('order.acceptFor', { value: gp(order.total) })}
             </Button>
             <Button
               variant="subtle"

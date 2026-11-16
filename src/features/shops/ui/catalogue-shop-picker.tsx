@@ -4,9 +4,10 @@ import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import type { ItemDefinition } from '@/features/inventory'
+import { GpInput, type ItemDefinition } from '@/features/inventory'
 import { shopAdminQuery, useShopAction } from '../api'
 import { newRequestId } from '@/shared/lib/request-id'
+import { localizedName } from '@/shared/lib/translations'
 
 export function CatalogueShopPicker({
   campaignId,
@@ -17,14 +18,14 @@ export function CatalogueShopPicker({
   item: ItemDefinition
   onClose: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const data = useQuery(shopAdminQuery(state.user!.id, campaignId))
   const action = useShopAction(campaignId)
   // Same placement as the other storeroom drawers: right on wide screens, a bottom sheet on phones.
   const phone = usePhone()
   const [shop, setShop] = useState<string | null>(null)
-  const [price, setPrice] = useState<number | string>(item.value_gp ?? 0)
+  const [price, setPrice] = useState<number | null>(item.value_gp ?? 0)
   const [stock, setStock] = useState<number | string>(1)
   const opener = useRef(document.activeElement as HTMLElement | null)
   const dismiss = () => {
@@ -50,7 +51,7 @@ export function CatalogueShopPicker({
     >
       <Stack>
         <Text fw={600} className="user-copy">
-          {item.name}
+          {localizedName(item, i18n.language)}
         </Text>
         {data.isPending && <Text role="status">{t('common.loading')}</Text>}
         {data.isError && (
@@ -67,12 +68,8 @@ export function CatalogueShopPicker({
           onChange={setShop}
           disabled={attempted}
         />
-        <NumberInput
+        <GpInput
           label={t('catalogue.price')}
-          min={0}
-          max={100_000_000}
-          hideControls
-          allowDecimal={false}
           value={price}
           onChange={setPrice}
           disabled={attempted}

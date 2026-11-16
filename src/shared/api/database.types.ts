@@ -85,6 +85,11 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           icon: string
           rarity: string
           weight_tenths: number
+          // RYT-104: weight in lb (three decimals, source of truth), translations, catalogue key.
+          weight_lb: number
+          translations: Json | null
+          basic_key: string | null
+          is_template: boolean
           value_gp: number | null
           description: string
           slot_kind: string

@@ -1,5 +1,6 @@
 import type { Build, Feature, SheetDraft } from './sheet'
 import { buildFits } from './sheet'
+import { featRefs, traitRef } from './resources'
 import {
   bonusesValid,
   defaultArmorClass,
@@ -79,6 +80,8 @@ export function chooseSpecies(build: Build, key: string, label: string, name: Na
   const entry = species[key]
   return {
     ...build,
+    // Trait options belong to a species: a new species starts without them.
+    choices: key === build.speciesKey ? build.choices : undefined,
     speciesKey: key,
     speciesLabel: label,
     speed: entry.speed,
@@ -88,6 +91,7 @@ export function chooseSpecies(build: Build, key: string, label: string, name: Na
         name: name('trait', trait),
         source: 'species',
         description: '',
+        ref: traitRef(key, trait),
       })),
       ...features,
     ],
@@ -129,6 +133,7 @@ export function chooseBackground(build: Build, key: string, label: string, name:
         name: name('feat', entry.feat),
         source: 'feat',
         description: '',
+        ref: featRefs[entry.feat],
       },
     ],
   }

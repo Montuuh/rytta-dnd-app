@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   askedTotal,
-  cartTenths,
+  cartPounds,
   cartTotal,
   effectiveLinePrice,
   filterListings,
+  lineGp,
   maxPurchasable,
   modifiedPrice,
   orderVariant,
@@ -12,6 +13,7 @@ import {
   reconcileCart,
   sellableUnits,
   shopError,
+  sumGp,
   type Listing,
   type OrderLine,
 } from './shops'
@@ -50,13 +52,43 @@ const stack = (
 })
 
 describe('shop pricing', () => {
-  it('rounds modifiers like the server and never goes negative', () => {
+  it('samples modified prices to the copper and never goes negative', () => {
     expect(modifiedPrice(50, -20)).toBe(40)
-    expect(modifiedPrice(15, -50)).toBe(8)
+    expect(modifiedPrice(15, -50)).toBe(7.5)
     expect(modifiedPrice(10, -100)).toBe(0)
-    expect(modifiedPrice(10, 25)).toBe(13)
+    expect(modifiedPrice(10, 25)).toBe(12.5)
+    expect(modifiedPrice(0.05, 10)).toBe(0.06)
   })
-  it('totals carts at list price, or offers in approval shops, with weight in tenths', () => {
+  it('rounds modified prices half up in whole copper, as the server does', () => {
+    // Float maths gives 1.695 → 1.69; 113 cp × 150 % = 169.5 cp → 170 cp.
+    expect(modifiedPrice(1.13, 50)).toBe(1.7)
+    expect(modifiedPrice(0.01, 50)).toBe(0.02)
+    expect(modifiedPrice(0.01, 49)).toBe(0.01)
+    expect(modifiedPrice(2.35, -10)).toBe(2.12)
+    expect(modifiedPrice(19.99, 100)).toBe(39.98)
+  })
+  it('adds decimal gold in copper so totals never drift', () => {
+    expect(sumGp([0.1, 0.2])).toBe(0.3)
+    expect(lineGp(0.1, 3)).toBe(0.3)
+    expect(sumGp([19.99, 0.01, -5.5])).toBe(14.5)
+    const pennies = listing({ unit_price: 0.1, stock: null })
+    const lines = [{ listingId: pennies.id, quantity: 3, offeredPrice: null }]
+    expect(cartTotal(lines, [pennies], 'auto')).toBe(0.3)
+    expect(
+      cartTotal(
+        [{ listingId: pennies.id, quantity: 7, offeredPrice: 0.07 }],
+        [pennies],
+        'approval',
+      ),
+    ).toBe(0.49)
+  })
+  it('weighs carts in lb, preferring weight_lb over the legacy tenths', () => {
+    const rope = listing({}, { weight_tenths: 100, weight_lb: 0.125 })
+    expect(cartPounds([{ listingId: rope.id, quantity: 3, offeredPrice: null }], [rope])).toBe(
+      0.375,
+    )
+  })
+  it('totals carts at list price, or offers in approval shops, with weight in lb', () => {
     const potion = listing()
     const sword = listing({ unit_price: 15, stock: null }, { name: 'Longsword', weight_tenths: 30 })
     const lines = [
@@ -65,7 +97,7 @@ describe('shop pricing', () => {
     ]
     expect(cartTotal(lines, [potion, sword], 'auto')).toBe(95)
     expect(cartTotal(lines, [potion, sword], 'approval')).toBe(75)
-    expect(cartTenths(lines, [potion, sword])).toBe(40)
+    expect(cartPounds(lines, [potion, sword])).toBe(4)
   })
   it('reconciles carts with current stock and removed listings', () => {
     const potion = listing({ stock: 1 })

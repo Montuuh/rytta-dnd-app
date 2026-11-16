@@ -25,7 +25,10 @@ import {
   Minus,
   Pencil,
   Plus,
+  PackageOpen,
+  PackagePlus,
   Search,
+  Store,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -33,21 +36,28 @@ import { useTranslation } from 'react-i18next'
 import { useLongPress } from '@/shared/ui/use-long-press'
 import {
   DefinitionEditor,
+  GpInput,
   itemCategories,
   useItemPicture,
   type ItemCategory,
 } from '@/features/inventory'
-import type {
-  AdminItem,
-  AdminListing,
-  AdminShop,
-  ListingDraft,
-  ListingVisibility,
-  ShopAdmin,
+import {
+  matchesName,
+  modifiedPrice,
+  type AdminItem,
+  type AdminListing,
+  type AdminShop,
+  type ListingDraft,
+  type ListingVisibility,
+  type ShopAdmin,
 } from '../domain/shops'
+import { roundGp } from '@/shared/lib/money'
+import { localizedName } from '@/shared/lib/translations'
 import { AccessChips } from './shop-controls'
-import { GoldAmount, ItemGlyph } from './visuals'
+import { useGp } from './use-gp'
+import { EmptyNote, GoldAmount, ItemGlyph } from './visuals'
 import './pictures.css'
+import './shops.css'
 
 /** − / + with a hold for ×10, the same stepper feel as Party resources (ADR 015). */
 function Stepper({
@@ -56,6 +66,7 @@ function Stepper({
   min,
   max,
   suffix,
+  money = false,
   onChange,
 }: {
   label: string
@@ -63,10 +74,12 @@ function Stepper({
   min: number
   max: number
   suffix?: string
+  /** Gold to the copper: the field takes two decimals, the steps stay whole gold. */
+  money?: boolean
   onChange: (value: number) => void
 }) {
   const { t } = useTranslation()
-  const clamp = (next: number) => Math.max(min, Math.min(max, next))
+  const clamp = (next: number) => roundGp(Math.max(min, Math.min(max, next)))
   const down = useLongPress(
     () => onChange(clamp(value - 1)),
     () => onChange(clamp(value - 10)),
@@ -90,18 +103,30 @@ function Stepper({
         >
           <Minus size={18} />
         </ActionIcon>
-        <NumberInput
-          hideControls
-          aria-label={label}
-          min={min}
-          max={max}
-          allowDecimal={false}
-          value={value}
-          suffix={suffix}
-          onChange={(next) => onChange(clamp(Number(next) || 0))}
-          w={110}
-          classNames={{ input: 'stepper-input' }}
-        />
+        {money ? (
+          <GpInput
+            aria-label={label}
+            max={max}
+            value={value}
+            suffix={suffix}
+            onChange={(next) => onChange(clamp(next ?? 0))}
+            w={120}
+            classNames={{ input: 'stepper-input' }}
+          />
+        ) : (
+          <NumberInput
+            hideControls
+            aria-label={label}
+            min={min}
+            max={max}
+            allowDecimal={false}
+            value={value}
+            suffix={suffix}
+            onChange={(next) => onChange(clamp(Number(next) || 0))}
+            w={110}
+            classNames={{ input: 'stepper-input' }}
+          />
+        )}
         <ActionIcon
           variant="light"
           size={44}
@@ -142,7 +167,9 @@ function ListingRow({
   onRemove: () => void
   onEditItem?: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const gp = useGp()
+  const name = localizedName(item, i18n.language)
   const initial: ListingDraft = {
     definition_id: listing.definition_id,
     price: listing.price,
@@ -168,7 +195,7 @@ function ListingRow({
             icon={item.icon}
             rarity={item.rarity}
             viewable
-            name={item.name}
+            name={name}
           />
         )}
         <UnstyledButton
@@ -187,7 +214,7 @@ function ListingRow({
             <ItemGlyph imagePath={item.image_path} icon={item.icon} rarity={item.rarity} />
           )}
           <span className="stock-row-body">
-            <span className="stock-row-name user-copy">{item.name}</span>
+            <span className="stock-row-name user-copy">{name}</span>
             <span className="stock-row-meta">
               {listing.stock === null
                 ? t('shop.stockUnlimited')
@@ -231,7 +258,7 @@ function ListingRow({
                   variant="light"
                   leftSection={<Pencil size={16} aria-hidden="true" />}
                   onClick={onEditItem}
-                  aria-label={`${t('shop.editItem')}: ${item.name}`}
+                  aria-label={`${t('shop.editItem')}: ${name}`}
                 >
                   {t('shop.editItem')}
                 </Button>
@@ -247,6 +274,7 @@ function ListingRow({
                 min={0}
                 max={100_000_000}
                 suffix={` ${t('gold.short')}`}
+                money
                 onChange={(price) => setDraft({ ...draft, price })}
               />
               <div className="price-quick">
@@ -259,7 +287,7 @@ function ListingRow({
                       variant="default"
                       onClick={() => setDraft({ ...draft, price: item.value_gp ?? 0 })}
                     >
-                      {t('admin.listing.useValue', { value: item.value_gp })}
+                      {t('admin.listing.useValue', { value: gp(item.value_gp) })}
                     </Button>
                   )}
                   {[-10, 10, 25].map((pct) => (
@@ -269,7 +297,7 @@ function ListingRow({
                       onClick={() =>
                         setDraft({
                           ...draft,
-                          price: Math.max(0, Math.round((draft.price * (100 + pct)) / 100)),
+                          price: modifiedPrice(draft.price, pct),
                         })
                       }
                     >
@@ -375,6 +403,7 @@ export function StockList({
   data,
   busy,
   onAdd,
+  onStockFromType,
   onSave,
   onRemove,
   onEditItem,
@@ -383,29 +412,45 @@ export function StockList({
   data: ShopAdmin
   busy: boolean
   onAdd: () => void
+  /** RYT-107: fill an empty shop from a shop type. */
+  onStockFromType: () => void
   onEditItem?: (definitionId: string) => void
   onSave: (listing: AdminListing, draft: ListingDraft, name: string, done: () => void) => void
   onRemove: (listing: AdminListing, name: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [open, setOpen] = useState<string | null>(null)
+  const empty = shop.listings.length === 0
   return (
     <section aria-labelledby={`stock-${shop.id}`}>
       <Group justify="space-between" mt="lg" mb="sm">
         <Title order={3} id={`stock-${shop.id}`}>
           {t('admin.listing.title')}
         </Title>
-        <Button leftSection={<Plus size={16} aria-hidden="true" />} onClick={onAdd}>
+        <Button
+          variant={empty ? 'light' : 'filled'}
+          leftSection={<Plus size={16} aria-hidden="true" />}
+          onClick={onAdd}
+        >
           {t('admin.listing.new')}
         </Button>
       </Group>
-      {shop.listings.length === 0 ? (
-        <Text c="dimmed">{t('admin.listing.empty')}</Text>
+      {empty ? (
+        <div className="stock-empty">
+          <EmptyNote icon={Store}>{t('admin.type.emptyShelves')}</EmptyNote>
+          <Button
+            leftSection={<PackagePlus size={16} aria-hidden="true" />}
+            onClick={onStockFromType}
+          >
+            {t('admin.type.stockFrom')}
+          </Button>
+        </div>
       ) : (
         <ul className="stock-list">
           {shop.listings.map((listing) => {
             const item = data.items.find((i) => i.id === listing.definition_id)
             if (!item) return null
+            const name = localizedName(item, i18n.language)
             return (
               <ListingRow
                 key={listing.id}
@@ -417,14 +462,14 @@ export function StockList({
                 busy={busy}
                 onToggle={() => setOpen(open === listing.id ? null : listing.id)}
                 onSave={(draft) =>
-                  onSave(listing, draft, item.name, () => {
+                  onSave(listing, draft, name, () => {
                     setOpen(null)
                     requestAnimationFrame(() =>
                       document.getElementById(`listing-main-${listing.id}`)?.focus(),
                     )
                   })
                 }
-                onRemove={() => onRemove(listing, item.name)}
+                onRemove={() => onRemove(listing, name)}
                 onEditItem={onEditItem ? () => onEditItem(listing.definition_id) : undefined}
               />
             )
@@ -435,7 +480,11 @@ export function StockList({
   )
 }
 
-/** Pick several catalog items at once from an icon grid; each lands at its DM value. */
+/**
+ * Pick several catalog items at once from an icon grid; each lands at its DM value. RYT-107: the
+ * header carries the search and New item, so creating an item never needs a scroll; a search
+ * without results offers to create it.
+ */
 export function AddItemsDrawer({
   opened,
   shop,
@@ -455,9 +504,11 @@ export function AddItemsDrawer({
   onClose: () => void
   onAdd: (items: AdminItem[]) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const gp = useGp()
   const phone = usePhone()
-  const [creating, setCreating] = useState(false)
+  // The forge's starting name: '' from the toolbar, the search text from "Create it".
+  const [creating, setCreating] = useState<string | null>(null)
   const [picked, setPicked] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<ItemCategory | 'all'>('all')
@@ -466,24 +517,27 @@ export function AddItemsDrawer({
   const selection = available.filter((item) => picked.includes(item.id))
   const needle = search.trim().toLocaleLowerCase()
   const visible = available.filter(
-    (i) =>
-      (category === 'all' || i.category === category) &&
-      (!needle || i.name.toLocaleLowerCase().includes(needle)),
+    (i) => (category === 'all' || i.category === category) && matchesName(i, needle),
   )
+  // A search without results turns the one Create action into "Create <search>".
+  const missing = needle && visible.length === 0 ? search.trim() : null
+  // Picks the filter hides still count; the dock says so and can bring them back.
+  const hidden = selection.filter((item) => !visible.includes(item)).length
   const close = () => {
     if (busy) return
     setPicked([])
     setSearch('')
     onClose()
   }
-  if (creating)
+  if (creating !== null)
     return (
       <DefinitionEditor
         campaignId={campaignId}
         definition={null}
-        onClose={() => setCreating(false)}
+        initialName={creating}
+        onClose={() => setCreating(null)}
         onSaved={(item) => {
-          setCreating(false)
+          setCreating(null)
           setSearch('')
           setCategory('all')
           setPicked((ids) => [...ids, item.id])
@@ -491,113 +545,162 @@ export function AddItemsDrawer({
       />
     )
   return (
-    <Drawer
+    <Drawer.Root
       opened={opened}
       onClose={close}
       position={phone ? 'bottom' : 'right'}
       size={phone ? '92%' : 'lg'}
-      title={t('admin.listing.pickTitle', { shop: shop.name })}
-      closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
-      <Stack gap="md">
-        {available.length === 0 ? (
-          <Text>{t('admin.listing.noItems')}</Text>
-        ) : (
-          <>
-            <TextInput
-              label={t('admin.listing.pickSearch')}
-              leftSection={<Search size={16} aria-hidden="true" />}
-              value={search}
-              onChange={(e) => setSearch(e.currentTarget.value)}
-              data-autofocus
-            />
-            <div className="kind-filter" role="group" aria-label={t('shop.filterKind')}>
-              {(['all', ...itemCategories] as const)
-                .filter((c) => c === 'all' || available.some((i) => i.category === c))
-                .map((c) => (
-                  <UnstyledButton
-                    key={c}
-                    className="category-chip"
-                    aria-pressed={category === c}
-                    onClick={() => setCategory(c)}
+      <Drawer.Overlay />
+      <Drawer.Content>
+        <Drawer.Header className="pick-header">
+          <Drawer.Title className="pick-title">
+            {t('admin.listing.pickTitle', { shop: shop.name })}
+          </Drawer.Title>
+          <Drawer.CloseButton aria-label={t('common.close')} size={44} />
+          <div className="pick-toolbar">
+            {available.length > 0 && (
+              <TextInput
+                className="pick-search"
+                aria-label={t('admin.listing.pickSearch')}
+                placeholder={t('admin.listing.pickSearch')}
+                leftSection={<Search size={16} aria-hidden="true" />}
+                value={search}
+                onChange={(e) => setSearch(e.currentTarget.value)}
+                data-autofocus
+              />
+            )}
+            <Button
+              variant="light"
+              disabled={busy}
+              onClick={() => setCreating(missing ?? '')}
+              leftSection={<Hammer size={16} aria-hidden="true" />}
+              className="pick-create"
+            >
+              <span className="user-copy">
+                {missing
+                  ? t('admin.listing.createNamed', { name: missing })
+                  : t('admin.listing.toForge')}
+              </span>
+            </Button>
+          </div>
+        </Drawer.Header>
+        <Drawer.Body>
+          <Stack gap="md">
+            {available.length === 0 ? (
+              <EmptyNote icon={PackageOpen}>{t('admin.listing.noItems')}</EmptyNote>
+            ) : (
+              <>
+                <div className="kind-filter" role="group" aria-label={t('shop.filterKind')}>
+                  {(['all', ...itemCategories] as const)
+                    .filter((c) => c === 'all' || available.some((i) => i.category === c))
+                    .map((c) => (
+                      <UnstyledButton
+                        key={c}
+                        className="category-chip"
+                        aria-pressed={category === c}
+                        onClick={() => setCategory(c)}
+                      >
+                        {t(`inventory.category.${c}`)}
+                      </UnstyledButton>
+                    ))}
+                </div>
+                {visible.length > 0 ? (
+                  <div className="pick-grid" role="group" aria-label={t('admin.listing.pickGroup')}>
+                    {visible.map((item) => {
+                      const on = picked.includes(item.id)
+                      return (
+                        <UnstyledButton
+                          key={item.id}
+                          className="pick-tile"
+                          aria-pressed={on}
+                          disabled={busy}
+                          onClick={() =>
+                            setPicked(
+                              on ? picked.filter((id) => id !== item.id) : [...picked, item.id],
+                            )
+                          }
+                        >
+                          <ItemGlyph
+                            imagePath={item.image_path}
+                            icon={item.icon}
+                            rarity={item.rarity}
+                            size={24}
+                          />
+                          <span className="pick-tile-name user-copy">
+                            {localizedName(item, i18n.language)}
+                          </span>
+                          <span className="pick-tile-value">
+                            {item.value_gp === null
+                              ? t('admin.listing.noValueShort')
+                              : t('gold.amount', { value: gp(item.value_gp) })}
+                          </span>
+                          {on && (
+                            <span className="pick-tile-check" aria-hidden="true">
+                              <Check size={16} />
+                            </span>
+                          )}
+                        </UnstyledButton>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="pick-none">
+                    <EmptyNote icon={Search}>
+                      {missing
+                        ? t('admin.listing.noMatch', { search: missing })
+                        : t('shop.noMatches')}
+                    </EmptyNote>
+                  </div>
+                )}
+              </>
+            )}
+            <div className="pick-dock">
+              {/* Inside the sticky dock so the failure stays visible above the retry action. */}
+              {error && (
+                <Alert color="red" role="alert" mb="xs">
+                  {error}
+                </Alert>
+              )}
+              <Button
+                size="lg"
+                fullWidth
+                disabled={selection.length === 0 && !busy}
+                aria-disabled={busy || selection.length === 0}
+                aria-busy={busy}
+                leftSection={busy ? <Loader size={16} /> : undefined}
+                onClick={() => {
+                  if (!busy && selection.length > 0) onAdd(selection)
+                }}
+              >
+                {selection.length === 0
+                  ? t('admin.listing.pickNone')
+                  : t('admin.listing.pickAdd', { count: selection.length })}
+              </Button>
+              {hidden > 0 ? (
+                <div className="pick-hidden">
+                  <Text size="sm">{t('admin.listing.pickHidden', { count: hidden })}</Text>
+                  <Button
+                    variant="subtle"
+                    size="compact-sm"
+                    mih={44}
+                    onClick={() => {
+                      setSearch('')
+                      setCategory('all')
+                    }}
                   >
-                    {t(`inventory.category.${c}`)}
-                  </UnstyledButton>
-                ))}
+                    {t('admin.listing.pickShowAll')}
+                  </Button>
+                </div>
+              ) : (
+                <Text size="xs" c="dimmed" ta="center" mt={4}>
+                  {t('admin.listing.pickHelp')}
+                </Text>
+              )}
             </div>
-            <div className="pick-grid" role="group" aria-label={t('admin.listing.pickGroup')}>
-              {visible.map((item) => {
-                const on = picked.includes(item.id)
-                return (
-                  <UnstyledButton
-                    key={item.id}
-                    className="pick-tile"
-                    aria-pressed={on}
-                    disabled={busy}
-                    onClick={() =>
-                      setPicked(on ? picked.filter((id) => id !== item.id) : [...picked, item.id])
-                    }
-                  >
-                    <ItemGlyph
-                      imagePath={item.image_path}
-                      icon={item.icon}
-                      rarity={item.rarity}
-                      size={24}
-                    />
-                    <span className="pick-tile-name user-copy">{item.name}</span>
-                    <span className="pick-tile-value">
-                      {item.value_gp === null
-                        ? t('admin.listing.noValueShort')
-                        : t('gold.amount', { value: item.value_gp })}
-                    </span>
-                    {on && (
-                      <span className="pick-tile-check" aria-hidden="true">
-                        <Check size={16} />
-                      </span>
-                    )}
-                  </UnstyledButton>
-                )
-              })}
-            </div>
-            {visible.length === 0 && <Text c="dimmed">{t('shop.noMatches')}</Text>}
-          </>
-        )}
-        <Button
-          disabled={busy}
-          onClick={() => setCreating(true)}
-          variant="subtle"
-          leftSection={<Hammer size={16} aria-hidden="true" />}
-          w="fit-content"
-        >
-          {t('admin.listing.toForge')}
-        </Button>
-        <div className="pick-dock">
-          {/* Inside the sticky dock so the failure stays visible above the retry action. */}
-          {error && (
-            <Alert color="red" role="alert" mb="xs">
-              {error}
-            </Alert>
-          )}
-          <Button
-            size="lg"
-            fullWidth
-            disabled={selection.length === 0 && !busy}
-            aria-disabled={busy || selection.length === 0}
-            aria-busy={busy}
-            leftSection={busy ? <Loader size={16} /> : undefined}
-            onClick={() => {
-              if (!busy && selection.length > 0) onAdd(selection)
-            }}
-          >
-            {selection.length === 0
-              ? t('admin.listing.pickNone')
-              : t('admin.listing.pickAdd', { count: selection.length })}
-          </Button>
-          <Text size="xs" c="dimmed" ta="center" mt={4}>
-            {t('admin.listing.pickHelp')}
-          </Text>
-        </div>
-      </Stack>
-    </Drawer>
+          </Stack>
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   )
 }

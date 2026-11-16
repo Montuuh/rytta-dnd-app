@@ -22,6 +22,8 @@ import {
   type ShopMode,
   type ShopVisibility,
 } from '../domain/shops'
+import { ShopImageField } from './shop-image'
+import { ShopKind } from './shop-type-picker'
 import { useAutoSave } from './use-auto-save'
 
 /** Character toggles: who can see a shop or a listing. One tap per character. */
@@ -67,12 +69,14 @@ export function AccessChips({
  * order (useAutoSave); the save pill reports progress where the DM is looking.
  */
 export function ShopControls({
+  campaignId,
   shop,
   characters,
   saveDraft,
   onRename,
   onArchive,
 }: {
+  campaignId: string
   shop: AdminShop
   characters: ShopAdmin['characters']
   saveDraft: (draft: ShopDraft, revision: number) => Promise<unknown>
@@ -90,6 +94,7 @@ export function ShopControls({
       <Stack gap="lg">
         <Group justify="space-between" align="start" className="shop-controls-head">
           <div className="shop-controls-title">
+            <ShopKind kind={shop.kind} />
             <Title order={2} id={`shop-${shop.id}`} className="user-copy">
               {shop.name}
             </Title>
@@ -123,6 +128,7 @@ export function ShopControls({
             </Tooltip>
           </Group>
         </Group>
+        <ShopImageField campaignId={campaignId} shop={shop} />
         <Text size="xs" c="dimmed">
           {t('admin.shop.autoSaveHint')}
         </Text>

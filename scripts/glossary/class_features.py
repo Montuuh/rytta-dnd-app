@@ -315,18 +315,55 @@ def with_tables(entry_id: str, lang: str, blocks: list[dict], names: dict) -> li
     return out
 
 
+# RYT-102: options a resource pays for, described inside their parent feature with a bold lead
+# ("Flurry of Blows."), become entries of their own so the sheet can list them under the
+# resource. The parent keeps its full text. Each child copies its lead paragraph and the
+# paragraphs that follow it up to the next lead: (English lead, Spanish lead, child id).
+SPLITS = {
+    "feature.monk-monks-focus": [
+        ("Flurry of Blows", "Ráfaga de golpes", "feature.monk-flurry-of-blows"),
+        ("Patient Defense", "Defensa paciente", "feature.monk-patient-defense"),
+        ("Step of the Wind", "Paso del viento", "feature.monk-step-of-the-wind"),
+    ],
+    "feature.cleric-channel-divinity": [
+        ("Divine Spark", "Chispa divina", "feature.cleric-divine-spark"),
+        ("Turn Undead", "Expulsar muertos vivientes", "feature.cleric-turn-undead"),
+    ],
+    "feature.paladin-channel-divinity": [
+        ("Divine Sense", "Sentidos divinos", "feature.paladin-divine-sense"),
+    ],
+}
+
+
+def split_out(blocks: list[dict], lead: str) -> list[dict]:
+    out: list[dict] = []
+    for block in blocks:
+        if out and (block.get("lead") or block["t"] != "p"):
+            break
+        if out:
+            out.append(block)
+        elif block.get("lead", "").rstrip(".") == lead:
+            out.append({"t": "p", "x": block["x"]})
+    if not out:
+        raise SystemExit(f"split lead not found: {lead}")
+    return out
+
+
 def main(pdf_dir: str, content: str, report: bool) -> None:
     en, es = segment("en", pdf_dir), segment("es", pdf_dir)
     pairs = pair(en, es)
     if report:
         for a, b in pairs:
             print(f"{a['class']:<9} {a['sub'] or '-':<10} {a['level']:>2}  {a['name']:<40} {b['name']}")
+    # Only class features are replaced; species traits and feats (origin_features.py) stay.
     with open(os.path.join(content, "index.json"), encoding="utf-8") as fh:
-        index = [row for row in json.load(fh) if row["cat"] != "feature"]
+        rows = json.load(fh)
+    replaced = {row["id"] for row in rows if row["cat"] == "feature" and "fc" in row}
+    index = [row for row in rows if row["id"] not in replaced]
     bodies = {}
     for lang in ("en", "es"):
         with open(os.path.join(content, f"{lang}.json"), encoding="utf-8") as fh:
-            bodies[lang] = {k: v for k, v in json.load(fh).items() if not k.startswith("feature.")}
+            bodies[lang] = {k: v for k, v in json.load(fh).items() if k not in replaced}
     names = spell_names(index)
     seen: set[str] = set()
     for a, b in pairs:
@@ -344,6 +381,20 @@ def main(pdf_dir: str, content: str, report: bool) -> None:
             summary = first_sentence(item["blocks"]) or item["name"]
             blocks = with_tables(entry_id, lang, item["blocks"], names)
             bodies[lang][entry_id] = {"page": item["page"], "summary": summary, "blocks": blocks}
+    by_id = {row["id"]: row for row in index}
+    children = 0
+    for parent, items in SPLITS.items():
+        row = by_id[parent]
+        for lead_en, lead_es, child in items:
+            if child in seen:
+                raise SystemExit(f"duplicate feature id {child}")
+            seen.add(child)
+            index.append({**row, "id": child, "en": lead_en, "es": lead_es})
+            for lang, lead in (("en", lead_en), ("es", lead_es)):
+                blocks = split_out(bodies[lang][parent]["blocks"], lead)
+                bodies[lang][child] = {"page": bodies[lang][parent]["page"],
+                                       "summary": first_sentence(blocks) or lead, "blocks": blocks}
+            children += 1
     index.sort(key=lambda i: i["id"])
     with open(os.path.join(content, "index.json"), "w", encoding="utf-8") as fh:
         json.dump(index, fh, ensure_ascii=False, separators=(",", ":"))
@@ -353,7 +404,7 @@ def main(pdf_dir: str, content: str, report: bool) -> None:
         with open(os.path.join(content, f"{lang}.json"), "w", encoding="utf-8") as fh:
             json.dump(ordered, fh, ensure_ascii=False, separators=(",", ":"))
             fh.write("\n")
-    print("features", len(pairs), "entries", len(index))
+    print("features", len(pairs), "split", children, "entries", len(index))
 
 
 if __name__ == "__main__":

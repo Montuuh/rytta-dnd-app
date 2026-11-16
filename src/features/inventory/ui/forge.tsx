@@ -3,38 +3,55 @@ import {
   Alert,
   Button,
   Checkbox,
+  Collapse,
+  Combobox,
   Drawer,
   Loader,
   NativeSelect,
-  Combobox,
-  useCombobox,
   SimpleGrid,
   Stack,
+  Switch,
   Text,
   TextInput,
   Textarea,
   UnstyledButton,
+  useCombobox,
 } from '@mantine/core'
+import { useDebouncedValue } from '@mantine/hooks'
+import { useQuery } from '@tanstack/react-query'
+import { ChevronDown, Languages } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/features/auth'
+import { formatGp } from '@/shared/lib/money'
+import { localizedDescription, localizedName, type Translations } from '@/shared/lib/translations'
+import { fromPounds, toPounds } from '@/shared/lib/weight'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { ViewerButton } from '@/shared/ui/image-viewer'
-import { useTranslation } from 'react-i18next'
-import { formatPounds } from '../domain/encumbrance'
+import { catalogueSearchQuery } from '../api'
+import { draftFrom, rankStartingPoints, type CatalogueItem } from '../domain/catalogue'
 import {
   itemCategories,
   rarities,
   slotKinds,
+  unitPounds,
   type DefinitionDraft,
   type ItemCategory,
   type ItemDefinition,
   type SlotKind,
 } from '../domain/item'
-import { srdEquipment } from '../domain/srd-equipment'
+import { GpInput, WeightFields } from './amount-fields'
 import { iconKeys } from './icons'
 import { ItemIcon } from './item-icon'
 import { categoryIcons, rarityPips } from './item-visuals'
 import { Stepper } from './stepper'
+import { useWeightFormat } from './use-weight'
+import './catalogue.css'
 
 export type ForgeTarget = { id: string; name: string; portrait: React.ReactNode }
+/** What the forge hands back besides the draft: recipients and amount, or the proposal extras. */
+export type ForgeExtra = { characterIds: string[]; amount: number; suggestedGp: number | null }
+type Language = 'en' | 'es'
+
 const defaultSlot: Partial<Record<ItemCategory, SlotKind>> = {
   weapon: 'one_hand',
   armor: 'body',
@@ -45,9 +62,10 @@ const emptyDraft = (): DefinitionDraft => ({
   category: 'gear',
   icon: 'package',
   rarity: 'common',
-  weight_tenths: 0,
+  weight_lb: 0,
   value_gp: null,
   description: '',
+  translations: null,
   slot_kind: 'none',
   properties: {},
 })
@@ -56,28 +74,60 @@ const fromDefinition = (definition: ItemDefinition): DefinitionDraft => ({
   category: definition.category,
   icon: definition.icon,
   rarity: definition.rarity,
-  weight_tenths: definition.weight_tenths,
+  weight_lb: unitPounds(definition),
   value_gp: definition.value_gp,
   description: definition.description,
+  translations: definition.translations ?? null,
   slot_kind: definition.slot_kind,
   properties: definition.properties,
 })
 
+type Texts = { name: string; description: string; otherName: string; otherDescription: string }
+/**
+ * The reader edits the text of their language; the other language is the optional second one.
+ * An item first written in the other language keeps that text as its second language.
+ */
+function splitTexts(draft: DefinitionDraft, language: Language): Texts {
+  const other: Language = language === 'en' ? 'es' : 'en'
+  const record = { ...draft, translations: draft.translations ?? null }
+  const own = record.translations?.[language]
+  const second = record.translations?.[other]
+  return {
+    name: localizedName(record, language),
+    description: localizedDescription(record, language),
+    otherName: second?.name ?? (own ? draft.name : ''),
+    otherDescription: second?.description ?? (own ? draft.description : ''),
+  }
+}
+function joinTexts(texts: Texts, language: Language): Translations {
+  const other: Language = language === 'en' ? 'es' : 'en'
+  if (!texts.otherName.trim()) return null
+  return {
+    [language]: { name: texts.name.trim(), description: texts.description },
+    [other]: { name: texts.otherName.trim(), description: texts.otherDescription },
+  }
+}
+
 /** Live card of the item being forged: the one place the editor shows off (RYT-032). */
 function ForgePreview({
   draft,
-  dm,
+  name,
+  description,
+  priced,
   image,
   imagePath,
 }: {
   draft: DefinitionDraft
-  dm: boolean
+  name: string
+  description: string
+  priced: number | null | undefined
   image?: string | null
   imagePath?: string | null
 }) {
   const { t, i18n } = useTranslation()
+  const { format } = useWeightFormat()
   const p = draft.properties
-  const name = draft.name.trim() || t('forge.unnamed')
+  const shown = name.trim() || t('forge.unnamed')
   const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`
   const facts = [
     draft.category === 'weapon' && p.dice
@@ -95,12 +145,17 @@ function ForgePreview({
       ? `${signed(p.acBonus)} ${t('inventory.forge.acShort')}`
       : null,
     p.speedBonus ? `${signed(p.speedBonus)} ${t('inventory.card.feet')}` : null,
-    t('forge.weightUnit', { value: formatPounds(draft.weight_tenths / 10, i18n.language) }),
-    dm
-      ? draft.value_gp === null
-        ? t('store.noValue')
-        : t('store.value', { value: draft.value_gp.toLocaleString(i18n.language) })
+    p.rations ? t('items.supplies.rationsEach', { count: p.rations }) : null,
+    p.water ? t('items.supplies.waterEach', { count: p.water }) : null,
+    p.container?.loadReductionPercent
+      ? t('items.container.reductionShort', { percent: p.container.loadReductionPercent })
       : null,
+    format(draft.weight_lb, 3),
+    priced === undefined
+      ? null
+      : priced === null
+        ? t('store.noValue')
+        : t('store.value', { value: formatGp(priced, i18n.language) }),
   ].filter(Boolean)
   return (
     <section className={`forge-preview rarity-${draft.rarity}`} aria-label={t('forge.preview')}>
@@ -108,9 +163,9 @@ function ForgePreview({
       {image ? (
         <ViewerButton
           src={image}
-          title={name}
-          alt={t('viewer.alt', { name })}
-          label={t('viewer.open', { name })}
+          title={shown}
+          alt={t('viewer.alt', { name: shown })}
+          label={t('viewer.open', { name: shown })}
           className="item-image-open forge-preview-glyph"
         >
           <img src={image} alt="" />
@@ -121,12 +176,12 @@ function ForgePreview({
           imagePath={imagePath}
           size={44}
           viewable
-          name={name}
+          name={shown}
           frame="forge-preview-glyph"
         />
       )}
       <span className="forge-preview-body">
-        <span className="forge-preview-name user-copy">{name}</span>
+        <span className="forge-preview-name user-copy">{shown}</span>
         <span className="forge-preview-kind">
           <span className="forge-preview-rarity">{t(`inventory.rarity.${draft.rarity}`)}</span>{' '}
           {t(`inventory.category.${draft.category}`)}
@@ -139,51 +194,56 @@ function ForgePreview({
             <span key={fact}>{fact}</span>
           ))}
         </span>
-        {draft.description.trim() && (
-          <span className="forge-preview-text user-copy">{draft.description}</span>
-        )}
+        {description.trim() && <span className="forge-preview-text user-copy">{description}</span>}
       </span>
     </section>
   )
 }
 
-/** Keep results in the drawer's scroll flow as the software keyboard resizes the viewport. */
-function TemplatePicker({ dm, onPick }: { dm: boolean; onPick: (key: string) => void }) {
-  const { t } = useTranslation()
-  const [selected, setSelected] = useState('')
+/**
+ * RYT-104: "Start from an existing item" searches the campaign catalogue; items the DM marked as
+ * templates come first, then basic catalogue items. Results stay in the drawer's scroll flow as
+ * the software keyboard resizes the viewport.
+ */
+function StartingPoint({
+  campaignId,
+  onPick,
+}: {
+  campaignId: string
+  onPick: (item: CatalogueItem) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const { state } = useAuth()
   const [query, setQuery] = useState('')
+  const [chosen, setChosen] = useState('')
+  const [debounced] = useDebouncedValue(query, 250)
   const list = useCombobox({ onDropdownClose: () => list.resetSelectedOption() })
-  const label = t('inventory.forge.template')
-  const options = srdEquipment.map(({ key }) => ({
-    key,
-    label: t(`srdItem.${key}` as 'srdItem.dagger'),
-  }))
-  const matches = options.filter((item) =>
-    item.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
-  )
+  const search = useQuery({
+    ...catalogueSearchQuery(state.user?.id ?? 'anon', campaignId, debounced, 60),
+    enabled: Boolean(state.user) && list.dropdownOpened,
+  })
+  const matches = rankStartingPoints(search.data ?? [], i18n.language)
+  const label = t('items.start.label')
   return (
     <Combobox
       store={list}
-      onOptionSubmit={(key) => {
-        setSelected(key)
+      onOptionSubmit={(id) => {
+        const item = matches.find((entry) => entry.id === id)
+        if (!item) return
+        setChosen(localizedName(item, i18n.language))
         setQuery('')
         list.closeDropdown()
-        onPick(key)
+        onPick(item)
       }}
     >
       <div>
         <Combobox.EventsTarget withExpandedAttribute>
           <TextInput
             label={label}
-            description={t(
-              dm ? 'inventory.forge.templateHint' : 'inventory.forge.templateHintPlayer',
-            )}
-            placeholder={t('inventory.forge.templatePlaceholder')}
-            value={
-              list.dropdownOpened
-                ? query
-                : (options.find((item) => item.key === selected)?.label ?? '')
-            }
+            description={t('items.start.hint')}
+            placeholder={t('items.start.placeholder')}
+            value={list.dropdownOpened ? query : chosen}
+            rightSection={search.isFetching ? <Loader size={16} /> : undefined}
             onClick={() => list.openDropdown()}
             onFocus={() => list.openDropdown()}
             onBlur={() => {
@@ -203,16 +263,30 @@ function TemplatePicker({ dm, onPick }: { dm: boolean; onPick: (key: string) => 
         </Combobox.EventsTarget>
         {list.dropdownOpened && (
           <Combobox.Options aria-label={label} className="forge-template-options">
+            {search.isError && (
+              <Combobox.Option value="" disabled>
+                {t('query.error')}
+              </Combobox.Option>
+            )}
+            {search.isPending && !search.data && (
+              <Combobox.Option value="" disabled>
+                {t('common.loading')}
+              </Combobox.Option>
+            )}
             {matches.map((item) => (
-              <Combobox.Option
-                key={item.key}
-                value={item.key}
-                aria-selected={item.key === selected}
-              >
-                {item.label}
+              <Combobox.Option key={item.id} value={item.id} className="start-option">
+                <ItemIcon icon={item.icon} size={18} />
+                <span className="start-option-name user-copy">
+                  {localizedName(item, i18n.language)}
+                </span>
+                <span className="start-option-kind">
+                  {item.is_template
+                    ? t('items.start.template')
+                    : t(`inventory.category.${item.category}`)}
+                </span>
               </Combobox.Option>
             ))}
-            {matches.length === 0 && (
+            {search.data && matches.length === 0 && (
               <Combobox.Option value="" disabled>
                 {t('store.noResults')}
               </Combobox.Option>
@@ -224,52 +298,81 @@ function TemplatePicker({ dm, onPick }: { dm: boolean; onPick: (key: string) => 
   )
 }
 
-/** The forge: create or edit an item, optionally from an SRD template, then hand it out. */
+/**
+ * The forge: create or edit an item (DM), optionally from an existing one, then hand it out; or,
+ * for a Player, describe a new item for the DM to review (`proposal`, RYT-105).
+ */
 export function Forge({
+  campaignId,
   definition,
+  initial,
+  initialName,
   media,
   image,
-  dm,
+  mode,
   targets,
   initialGive,
+  initialAmount = 1,
+  amountLabel,
   title,
+  submitLabel,
   pending,
   error,
   onSave,
   onClose,
 }: {
+  campaignId: string
   definition: ItemDefinition | null
+  /** A draft to start from, e.g. a Player's proposal under review. */
+  initial?: DefinitionDraft
+  /** Name of a new item, e.g. the text searched without results. */
+  initialName?: string
   media?: React.ReactNode
   /** Freshly chosen image (object URL) or null when removed; shown in the live preview. */
   image?: string | null
-  dm: boolean
+  mode: 'dm' | 'proposal'
   targets: ForgeTarget[]
   /** Characters preselected to receive a new item (for example "New item for Arin"). */
   initialGive?: string[]
+  initialAmount?: number
+  /** Always show the amount stepper with this label (a proposal under review). */
+  amountLabel?: string
   title?: string
+  submitLabel?: string
   pending: boolean
   error: string | null
-  onSave: (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => void
+  onSave: (draft: DefinitionDraft, extra: ForgeExtra) => void
   onClose: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language: Language = i18n.language.startsWith('en') ? 'en' : 'es'
+  const other: Language = language === 'en' ? 'es' : 'en'
+  const dm = mode === 'dm'
   const phone = usePhone()
   const id = useId()
-  const [draft, setDraft] = useState<DefinitionDraft>(() =>
-    definition ? fromDefinition(definition) : emptyDraft(),
+  const { unit } = useWeightFormat()
+  const [draft, setDraft] = useState<DefinitionDraft>(
+    () =>
+      initial ??
+      (definition
+        ? fromDefinition(definition)
+        : { ...emptyDraft(), name: initialName?.trim().slice(0, 100) ?? '' }),
   )
-  const [give, setGive] = useState<string[]>(
-    () => initialGive ?? (!dm && !definition && targets[0] ? [targets[0].id] : []),
-  )
-  const [amount, setAmount] = useState<number | null>(1)
+  const [texts, setTexts] = useState<Texts>(() => splitTexts(draft, language))
+  const [secondOpen, setSecondOpen] = useState(() => Boolean(texts.otherName))
+  const [give, setGive] = useState<string[]>(() => initialGive ?? [])
+  const [amount, setAmount] = useState<number | null>(initialAmount)
+  const [suggested, setSuggested] = useState<number | null>(null)
   const set = (change: Partial<DefinitionDraft>) =>
     setDraft((current) => ({ ...current, ...change }))
+  const setText = (change: Partial<Texts>) => setTexts((current) => ({ ...current, ...change }))
   const setProps = (change: DefinitionDraft['properties']) =>
     setDraft((current) => ({ ...current, properties: { ...current.properties, ...change } }))
   const p = draft.properties
   const diceInvalid = Boolean(p.dice && !/^\d{1,2}d\d{1,3}$/.test(p.dice))
-  const valid = draft.name.trim().length > 0 && !diceInvalid
+  const valid = texts.name.trim().length > 0 && !diceInvalid
   const imagePath = image === null ? null : definition?.image_path
+  const otherLabel = t(other === 'en' ? 'items.language.en' : 'items.language.es')
   const giveBlock = dm && targets.length > 0 && (
     <fieldset className="plain-fieldset">
       <legend>
@@ -306,6 +409,7 @@ export function Forge({
   )
   // A preselected recipient ("New item for Arin") is shown first so the target is obvious.
   const giveFirst = Boolean(initialGive?.length)
+  const container = p.container
   return (
     <Drawer
       returnFocus={false}
@@ -313,37 +417,58 @@ export function Forge({
       onClose={onClose}
       position={phone ? 'bottom' : 'right'}
       size={phone ? '92%' : 560}
-      title={title ?? t(definition ? 'inventory.forge.editTitle' : 'inventory.forge.title')}
+      title={
+        title ??
+        t(
+          !dm
+            ? 'items.propose.title'
+            : definition
+              ? 'inventory.forge.editTitle'
+              : 'inventory.forge.title',
+        )
+      }
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       className="forge-drawer"
     >
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          if (valid && !pending)
-            onSave(
-              { ...draft, name: draft.name.trim(), value_gp: dm ? draft.value_gp : null },
-              { characterIds: give, amount: amount ?? 1 },
-            )
+          if (!valid || pending) return
+          onSave(
+            {
+              ...draft,
+              name: texts.name.trim(),
+              description: texts.description,
+              translations: joinTexts(texts, language),
+              value_gp: dm ? draft.value_gp : null,
+            },
+            {
+              characterIds: give,
+              amount: amount ?? 1,
+              suggestedGp: dm ? null : suggested,
+            },
+          )
         }}
       >
         <Stack gap="lg">
-          <ForgePreview draft={draft} dm={dm} image={image} imagePath={imagePath} />
+          <ForgePreview
+            draft={draft}
+            name={texts.name}
+            description={texts.description}
+            priced={dm ? draft.value_gp : suggested === null ? undefined : suggested}
+            image={image}
+            imagePath={imagePath}
+          />
           {giveFirst && giveBlock}
-          {!definition && (
-            <TemplatePicker
-              dm={dm}
-              onPick={(key) => {
-                const template = srdEquipment.find((item) => item.key === key)
-                if (!template) return
-                const { key: templateKey, ...rest } = template
-                setDraft({
-                  ...emptyDraft(),
-                  ...rest,
-                  value_gp: dm ? rest.value_gp : null,
-                  name: t(`srdItem.${templateKey}` as 'srdItem.dagger'),
-                  origin: dm ? 'srd' : undefined,
-                })
+          {dm && !definition && !initial && (
+            <StartingPoint
+              campaignId={campaignId}
+              onPick={(item) => {
+                const next = draftFrom(item, true)
+                setDraft(next)
+                const split = splitTexts(next, language)
+                setTexts(split)
+                if (split.otherName) setSecondOpen(true)
               }}
             />
           )}
@@ -352,8 +477,8 @@ export function Forge({
             data-autofocus
             maxLength={100}
             label={t('inventory.forge.name')}
-            value={draft.name}
-            onChange={(event) => set({ name: event.currentTarget.value })}
+            value={texts.name}
+            onChange={(event) => setText({ name: event.currentTarget.value })}
           />
           <fieldset className="plain-fieldset">
             <legend>
@@ -435,27 +560,29 @@ export function Forge({
               ))}
             </div>
           </fieldset>
-          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-            <Stepper
-              label={t('inventory.forge.weight')}
-              min={0}
-              max={10000}
-              step={0.5}
-              decimalScale={1}
-              value={draft.weight_tenths / 10}
-              onChange={(value) => set({ weight_tenths: Math.round((value ?? 0) * 10) })}
+          <WeightFields
+            label={t('items.weight.each')}
+            pounds={draft.weight_lb}
+            onChange={(weight_lb) => set({ weight_lb })}
+          />
+          {dm ? (
+            <GpInput
+              withSteps
+              label={t('inventory.forge.value')}
+              placeholder={t('store.noValue')}
+              value={draft.value_gp}
+              onChange={(value_gp) => set({ value_gp })}
             />
-            {dm && (
-              <Stepper
-                label={t('inventory.forge.value')}
-                min={0}
-                max={100000000}
-                placeholder={t('store.noValue')}
-                value={draft.value_gp}
-                onChange={(value) => set({ value_gp: value })}
-              />
-            )}
-          </SimpleGrid>
+          ) : (
+            <GpInput
+              withSteps
+              label={t('items.propose.suggested')}
+              description={t('items.propose.suggestedHint')}
+              placeholder={t('items.propose.noSuggestion')}
+              value={suggested}
+              onChange={setSuggested}
+            />
+          )}
           <NativeSelect
             label={t('inventory.forge.slot')}
             value={draft.slot_kind}
@@ -579,6 +706,88 @@ export function Forge({
               </SimpleGrid>
             </fieldset>
           )}
+          {draft.category === 'consumable' && (
+            <fieldset className="plain-fieldset forge-props">
+              <legend>
+                <Text fw={600} size="sm">
+                  {t('items.supplies.title')}
+                </Text>
+                <Text size="sm" c="dimmed">
+                  {t('items.supplies.hint')}
+                </Text>
+              </legend>
+              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" mt={6}>
+                <Stepper
+                  label={t('items.supplies.rations')}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  decimalScale={1}
+                  value={p.rations ?? 0}
+                  onChange={(value) => setProps({ rations: value ? value : undefined })}
+                />
+                <Stepper
+                  label={t('items.supplies.water')}
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  decimalScale={1}
+                  value={p.water ?? 0}
+                  onChange={(value) => setProps({ water: value ? value : undefined })}
+                />
+              </SimpleGrid>
+            </fieldset>
+          )}
+          {draft.category === 'gear' && (
+            <fieldset className="plain-fieldset forge-props">
+              <legend className="visually-hidden-live">{t('items.container.title')}</legend>
+              <Switch
+                size="md"
+                label={t('items.container.toggle')}
+                description={t('items.container.hint')}
+                checked={Boolean(container)}
+                onChange={(event) =>
+                  setProps({
+                    container: event.currentTarget.checked
+                      ? { capacityLb: 30, loadReductionPercent: 0 }
+                      : undefined,
+                  })
+                }
+              />
+              {container && (
+                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" mt="sm">
+                  <Stepper
+                    label={t(
+                      unit === 'kg' ? 'items.container.capacityKg' : 'items.container.capacityLb',
+                    )}
+                    min={0}
+                    max={unit === 'kg' ? 5000 : 10000}
+                    step={unit === 'kg' ? 5 : 10}
+                    decimalScale={3}
+                    value={fromPounds(container.capacityLb, unit)}
+                    onChange={(value) =>
+                      setProps({
+                        container: { ...container, capacityLb: toPounds(value ?? 0, unit) },
+                      })
+                    }
+                  />
+                  <Stepper
+                    label={t('items.container.reduction')}
+                    min={0}
+                    max={90}
+                    step={5}
+                    suffix=" %"
+                    value={container.loadReductionPercent}
+                    onChange={(value) =>
+                      setProps({
+                        container: { ...container, loadReductionPercent: Math.round(value ?? 0) },
+                      })
+                    }
+                  />
+                </SimpleGrid>
+              )}
+            </fieldset>
+          )}
           {draft.slot_kind !== 'none' &&
             draft.category !== 'armor' &&
             draft.category !== 'shield' && (
@@ -612,13 +821,56 @@ export function Forge({
             minRows={2}
             maxLength={2000}
             label={t('inventory.forge.description')}
-            value={draft.description}
-            onChange={(event) => set({ description: event.currentTarget.value })}
+            value={texts.description}
+            onChange={(event) => setText({ description: event.currentTarget.value })}
           />
+          <div className="forge-second">
+            <UnstyledButton
+              type="button"
+              className="forge-second-toggle"
+              aria-expanded={secondOpen}
+              aria-controls={`${id}-second`}
+              onClick={() => setSecondOpen((open) => !open)}
+            >
+              <Languages size={18} aria-hidden="true" />
+              <span className="forge-second-copy">
+                <span className="forge-second-title">
+                  {t('items.language.toggle', { language: otherLabel })}
+                </span>
+                <span className="forge-second-hint">
+                  {texts.otherName.trim()
+                    ? texts.otherName
+                    : t('items.language.hint', { language: otherLabel })}
+                </span>
+              </span>
+              <ChevronDown size={18} aria-hidden="true" className="forge-second-chevron" />
+            </UnstyledButton>
+            <Collapse expanded={secondOpen} id={`${id}-second`}>
+              <Stack gap="sm" pt="sm">
+                <TextInput
+                  maxLength={100}
+                  lang={other}
+                  label={t('items.language.name', { language: otherLabel })}
+                  value={texts.otherName}
+                  onChange={(event) => setText({ otherName: event.currentTarget.value })}
+                />
+                <Textarea
+                  autosize
+                  minRows={2}
+                  maxLength={2000}
+                  lang={other}
+                  label={t('items.language.description', { language: otherLabel })}
+                  description={t('items.language.needsName')}
+                  value={texts.otherDescription}
+                  onChange={(event) => setText({ otherDescription: event.currentTarget.value })}
+                />
+              </Stack>
+            </Collapse>
+          </div>
           {!giveFirst && giveBlock}
-          {give.length > 0 && (
+          {(give.length > 0 || !dm || amountLabel) && (
             <Stepper
-              label={t('inventory.card.amount')}
+              label={amountLabel ?? t(dm ? 'inventory.card.amount' : 'items.propose.quantity')}
               min={1}
               max={1000}
               value={amount}
@@ -640,7 +892,14 @@ export function Forge({
               leftSection={pending ? <Loader size={16} /> : undefined}
               disabled={!valid && !pending}
             >
-              {t(definition ? 'inventory.forge.save' : 'inventory.forge.create')}
+              {submitLabel ??
+                t(
+                  !dm
+                    ? 'items.propose.send'
+                    : definition
+                      ? 'inventory.forge.save'
+                      : 'inventory.forge.create',
+                )}
             </Button>
           </div>
         </Stack>

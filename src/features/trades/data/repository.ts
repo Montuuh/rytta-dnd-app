@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { config } from '@/shared/lib/config'
 import { tradeErrorCode, tradeStateSchema, type TradeAction } from '../domain/trade'
+import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
 
 async function client() {
@@ -63,7 +64,7 @@ export async function changeTrade(campaignId: string, action: TradeAction) {
           .array(z.object({ item_id: z.uuid(), quantity: z.number().int().min(1) }))
           .max(8)
           .parse(action.items),
-        offer_gold: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).parse(action.gold),
+        offer_gold: gpAmount.parse(action.gold),
         request_id,
       })
       break

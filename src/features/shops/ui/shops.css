@@ -1,0 +1,482 @@
+/* RYT-107 shops: shop types, the shop image banner and the add-items toolbar. */
+
+/* Shop type tiles: native radios under painted tiles (one Tab stop, arrow keys). */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 128px), 1fr));
+  gap: 8px;
+}
+.type-tile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  min-height: 104px;
+  padding: 12px 8px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+.type-tile:hover {
+  border-color: var(--app-accent);
+}
+.type-tile[data-checked] {
+  border-color: var(--app-accent);
+  background: var(--app-raised);
+  box-shadow: inset 0 0 0 2px var(--app-accent);
+}
+.type-tile:has(.type-radio:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.type-tile:has(.type-radio:disabled) {
+  cursor: default;
+  opacity: 0.7;
+}
+.type-radio {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+.type-tile-glyph {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--app-raised);
+  color: var(--app-accent);
+}
+.type-tile[data-checked] .type-tile-glyph {
+  background: var(--app-surface);
+}
+.type-tile-name {
+  font-weight: 600;
+  font-size: var(--fs-meta);
+  line-height: 1.25;
+}
+.type-tile-meta {
+  font-size: var(--fs-tag);
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+.type-tile-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+@media (max-width: 47.99em) {
+  .type-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .type-tile {
+    min-height: 96px;
+    padding-inline: 4px;
+  }
+}
+
+/* What a type stocks, editable before saving. */
+.stock-review {
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.stock-review-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--app-text);
+}
+.stock-review-toggle:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.stock-review-chevron {
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+.stock-review-toggle[aria-expanded='true'] .stock-review-chevron {
+  transform: rotate(180deg);
+}
+.stock-review-list {
+  display: grid;
+  margin: 0;
+  padding: 0 14px 10px;
+  list-style: none;
+}
+.stock-review-list li + li {
+  border-top: 1px solid var(--app-border);
+}
+.stock-review-list .mantine-Checkbox-labelWrapper {
+  flex: 1;
+}
+.stock-review-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.stock-review-price {
+  color: var(--gold-accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The shop type beside a name: glyph and word, no pill. */
+.shop-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.shop-kind svg {
+  color: var(--app-accent);
+}
+.shop-sign-kind {
+  font-size: var(--fs-tag);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Small decorative picture in shop lists. */
+.shop-thumb {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--app-raised);
+  color: var(--app-accent);
+}
+.shop-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.admin-shop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.admin-shop-title {
+  display: grid;
+  min-width: 0;
+}
+.admin-shop-kind {
+  font-size: var(--fs-tag);
+}
+
+/*
+ * The shop banner. Its text sits on a fixed dark scrim in every theme, like the image viewer's
+ * curtain, so the ink keeps AA contrast over any picture: the scrim starts at 0.78 opacity where
+ * the text begins (cream on it stays above 7:1 even over white).
+ */
+.shop-banner-card {
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+.shop-banner {
+  --banner-ink: #f5ebd6;
+  --banner-ink-soft: #e2d3b8;
+  --banner-scrim: 20 15 11;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 16 / 9;
+  background: var(--app-raised);
+  color: var(--banner-ink);
+}
+@media (min-width: 48em) {
+  .shop-banner {
+    aspect-ratio: 3 / 1;
+  }
+}
+.shop-banner-open {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--app-raised);
+  cursor: zoom-in;
+}
+.shop-banner-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shop-banner-open.is-loading {
+  cursor: default;
+}
+.shop-banner-open:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+.shop-banner-overlay {
+  position: relative;
+  width: 100%;
+  padding: 32px 16px 12px;
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--banner-scrim) / 0) 0,
+    rgb(var(--banner-scrim) / 0.78) 32px,
+    rgb(var(--banner-scrim) / 0.92) 100%
+  );
+  /* Taps outside the name and badges reach the picture under them. */
+  pointer-events: none;
+}
+.shop-banner-overlay :is(button, [tabindex], a) {
+  pointer-events: auto;
+}
+.shop-banner-title {
+  display: grid;
+  gap: 2px;
+  text-shadow: 0 1px 2px rgb(var(--banner-scrim) / 0.9);
+}
+.shop-banner .shop-title,
+.shop-banner .shop-picker-trigger,
+.shop-banner .shop-picker-chevron {
+  color: var(--banner-ink);
+}
+.shop-banner .shop-picker-trigger:hover,
+.shop-banner .shop-picker-trigger[data-expanded] {
+  background: rgb(var(--banner-scrim) / 0.6);
+}
+.shop-banner .shop-kind,
+.shop-banner .shop-kind svg {
+  color: var(--banner-ink-soft);
+}
+.shop-banner .shop-title-badges .mantine-Badge-root {
+  border: 1px solid rgb(245 235 214 / 0.55);
+  background: rgb(var(--banner-scrim) / 0.72);
+  color: var(--banner-ink);
+  text-shadow: none;
+}
+.shop-banner-title.is-closed .shop-title {
+  opacity: 0.92;
+}
+.shop-banner-after {
+  display: grid;
+  gap: 6px;
+  padding: 12px 16px 14px;
+}
+@media (min-width: 48em) {
+  .shop-banner-overlay {
+    padding: 56px 22px 16px;
+  }
+  .shop-banner-after {
+    padding-inline: 22px;
+  }
+}
+
+/* The DM's image field: a drop zone around the native input, then the preview. */
+.shop-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.shop-drop {
+  display: grid;
+  gap: 8px;
+}
+.shop-drop-target {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 2px dashed var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.shop-drop-target:hover,
+.shop-drop[data-dragging] .shop-drop-target {
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-surface));
+}
+.shop-drop-target:has(.shop-file:focus-visible),
+.shop-drop-change:has(.shop-file:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.shop-drop-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--app-raised);
+  color: var(--app-accent);
+}
+.shop-drop-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.shop-drop-title {
+  font-weight: 600;
+}
+.shop-drop-help {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.shop-drop-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--app-raised);
+  cursor: zoom-in;
+}
+.shop-drop-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shop-drop-preview:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.shop-drop[data-dragging] .shop-drop-preview {
+  border-color: var(--app-accent);
+  box-shadow: inset 0 0 0 2px var(--app-accent);
+}
+.shop-drop-change,
+.shop-drop-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.shop-drop-change {
+  position: relative;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+}
+.shop-drop-change[data-busy] {
+  cursor: progress;
+  opacity: 0.7;
+}
+.shop-drop-remove {
+  color: var(--danger);
+}
+.shop-drop-remove:hover {
+  background: var(--danger-soft);
+}
+.shop-drop-status:empty {
+  margin: 0;
+}
+.shop-drop-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--danger);
+}
+
+/* Add-items drawer: title, close and a toolbar (search + New item) stay in the sticky header. */
+.pick-header {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  border-bottom: 1px solid var(--app-border);
+}
+.pick-title {
+  flex: 1;
+  min-width: 0;
+}
+/* Search and Create share a row while the search keeps about 12rem; otherwise the search takes
+   the full width and Create sits under it (narrow phones, enlarged text). */
+.pick-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+  align-items: center;
+  gap: 8px;
+}
+.pick-search {
+  flex: 1 1 12rem;
+  min-width: min(12rem, 100%);
+}
+.pick-search .mantine-Input-input {
+  min-height: 44px;
+}
+.pick-create {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-height: 44px;
+}
+.pick-hidden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 8px;
+  margin-top: 4px;
+}
+.pick-none {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+/* An empty shop's shelves: the note and the one action that fills them. */
+.stock-empty {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-tile,
+  .stock-review-chevron,
+  .shop-drop-target {
+    transition: none;
+  }
+}

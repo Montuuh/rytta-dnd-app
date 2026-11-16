@@ -13,14 +13,17 @@ import {
 import { usePhone } from '@/shared/ui/use-viewport'
 import { ArrowRight, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { encumbrance, formatPounds } from '@/features/inventory'
+import { encumbrance, GpInput, useWeightFormat } from '@/features/inventory'
+import { localizedName } from '@/shared/lib/translations'
 import {
+  cartPounds,
   cartTotal,
-  cartTenths,
   maxPurchasable,
+  sumGp,
   type CartLine,
   type StorefrontShop,
 } from '../domain/shops'
+import { useGp } from './use-gp'
 import { GoldAmount } from './visuals'
 
 type Props = {
@@ -42,27 +45,32 @@ type Props = {
 export function CartDrawer(props: Props) {
   const { opened, groups, gold, tenths, strength, busy } = props
   const { t, i18n } = useTranslation()
+  const gp = useGp()
+  const { format: weight } = useWeightFormat()
   const phone = usePhone()
   const approval = groups.some(({ shop }) => shop.mode === 'approval')
   const immediate = groups.some(({ shop }) => shop.mode === 'auto')
   const mixed = approval && immediate
+  // Totals add up in copper (sumGp), so decimal prices never drift.
   const sumMode = (mode: StorefrontShop['mode']) =>
-    groups.reduce(
-      (sum, { shop, lines }) =>
-        sum + (shop.mode === mode ? cartTotal(lines, shop.listings, mode) : 0),
-      0,
+    sumGp(
+      groups
+        .filter(({ shop }) => shop.mode === mode)
+        .map(({ shop, lines }) => cartTotal(lines, shop.listings, mode)),
     )
   const charge = sumMode('auto')
   const requested = sumMode('approval')
-  const total = charge + requested
-  const after = gold - charge
-  const addedTenths = groups.reduce(
+  const total = sumGp([charge, requested])
+  const after = sumGp([gold, -charge])
+  const addedPounds = groups.reduce(
     (sum, { shop, lines }) =>
-      sum + (shop.mode === 'auto' || !immediate ? cartTenths(lines, shop.listings) : 0),
+      sum + (shop.mode === 'auto' || !immediate ? cartPounds(lines, shop.listings) : 0),
     0,
   )
+  const nowPounds = tenths / 10
   // The same 5e variant thresholds as the inventory Balanza (ADR 014); informative only.
-  const load = strength === null ? null : encumbrance(tenths + addedTenths, strength)
+  const load =
+    strength === null ? null : encumbrance(Math.round((nowPounds + addedPounds) * 10), strength)
   const blocked = !groups.length || groups.some(({ shop }) => !shop.is_open) || after < 0
   return (
     <Drawer
@@ -95,18 +103,19 @@ export function CartDrawer(props: Props) {
               {lines.map((line) => {
                 const listing = shop.listings.find((l) => l.id === line.listingId)
                 if (!listing) return null
+                const name = localizedName(listing.item, i18n.language)
                 return (
                   <div className="cart-line" key={line.listingId}>
                     <Group justify="space-between" wrap="nowrap" gap="xs">
                       <Text fw={600} className="user-copy">
-                        {listing.item.name}
+                        {name}
                       </Text>
                       <ActionIcon
                         variant="subtle"
                         color="red"
                         size={44}
                         disabled={busy}
-                        aria-label={t('cart.removeNamed', { name: listing.item.name })}
+                        aria-label={t('cart.removeNamed', { name })}
                         onClick={() =>
                           props.onChange(
                             shop.id,
@@ -137,26 +146,22 @@ export function CartDrawer(props: Props) {
                         w={110}
                       />
                       {shop.mode === 'approval' ? (
-                        <NumberInput
+                        <GpInput
                           disabled={busy}
-                          hideControls
                           label={t('cart.offerEach')}
-                          description={t('cart.listEach', { value: listing.unit_price })}
-                          placeholder={String(listing.unit_price)}
-                          min={0}
-                          max={1_000_000_000}
-                          allowDecimal={false}
-                          value={line.offeredPrice ?? ''}
+                          description={t('cart.listEach', { value: gp(listing.unit_price) })}
+                          placeholder={gp(listing.unit_price)}
+                          value={line.offeredPrice}
                           onChange={(value) =>
                             update(line.listingId, {
-                              offeredPrice: value === '' ? null : Number(value),
+                              offeredPrice: value,
                             })
                           }
                           w={150}
                         />
                       ) : (
                         <Text size="sm" c="dimmed" pb={10}>
-                          {t('cart.each', { value: listing.unit_price })}
+                          {t('cart.each', { value: gp(listing.unit_price) })}
                         </Text>
                       )}
                     </Group>
@@ -201,7 +206,10 @@ export function CartDrawer(props: Props) {
               <span className={`balance-change ${after < 0 ? 'is-short' : ''}`}>
                 <GoldAmount value={gold} size="sm" />
                 <ArrowRight size={14} aria-label={t('cart.becomes')} />
-                <GoldAmount value={Math.max(0, immediate ? after : gold - requested)} size="sm" />
+                <GoldAmount
+                  value={Math.max(0, immediate ? after : sumGp([gold, -requested]))}
+                  size="sm"
+                />
               </span>
             </Group>
             <Group justify="space-between" wrap="wrap" gap={4}>
@@ -210,17 +218,15 @@ export function CartDrawer(props: Props) {
               </Text>
               <span className={`balance-change load-${load?.status ?? 'light'}`}>
                 <Text span size="sm">
-                  {t('cart.weightNow', { weight: formatPounds(tenths / 10, i18n.language) })}
+                  {weight(nowPounds)}
                 </Text>
                 <ArrowRight size={14} aria-label={t('cart.becomes')} />
                 <Text span size="sm">
                   {load === null
-                    ? t('cart.weightNow', {
-                        weight: formatPounds((tenths + addedTenths) / 10, i18n.language),
-                      })
-                    : t(`inventory.load.${load.status}`, {
-                        carried: formatPounds(load.pounds, i18n.language),
-                        max: formatPounds(load.thresholds.max, i18n.language),
+                    ? weight(nowPounds + addedPounds)
+                    : t(`cart.load.${load.status}`, {
+                        carried: weight(load.pounds),
+                        max: weight(load.thresholds.max),
                         penalty: load.speedPenalty,
                       })}
                 </Text>
@@ -235,7 +241,7 @@ export function CartDrawer(props: Props) {
         )}
         {after < 0 && (
           <Text role="alert" className="load-over">
-            {t('cart.shortBy', { value: -after })}
+            {t('cart.shortBy', { value: gp(-after) })}
           </Text>
         )}
         {approval && !mixed && (
@@ -254,7 +260,7 @@ export function CartDrawer(props: Props) {
             ? t('cart.confirmMixed')
             : approval
               ? t('cart.sendRequest')
-              : t('cart.buyFor', { value: total })}
+              : t('cart.buyFor', { value: gp(total) })}
         </Button>
       </Stack>
     </Drawer>

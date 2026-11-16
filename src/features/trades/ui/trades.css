@@ -738,3 +738,8 @@ button.trade-slot.filled:hover,
     transform: none;
   }
 }
+
+/* RYT-104: the description of the stack being offered. */
+.trade-picker-description {
+  color: var(--app-muted);
+}

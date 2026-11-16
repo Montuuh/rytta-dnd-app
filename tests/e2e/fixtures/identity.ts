@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { basicImportMock } from './basic-import.ts'
 export const dmId = '10000000-0000-4000-8000-000000000001'
 export const playerId = '10000000-0000-4000-8000-000000000002'
 export const campaignId = '20000000-0000-4000-8000-000000000001'
@@ -86,6 +87,8 @@ export async function identityFixture(
     absent?: boolean
     /** RYT-096: names of free (unassigned) characters the DM prepared; the first has a sheet. */
     free?: string[]
+    /** RYT-104/105: basic catalogue items, a template and a pending Player proposal. */
+    catalogue?: boolean
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -322,6 +325,22 @@ export async function identityFixture(
   const inventory = inventoryState(
     characters.map((c) => c.id),
     Boolean(options.inventory),
+    Boolean(options.catalogue),
+    // RYT-104: food and drink add to (and undo takes back from) the character's supplies.
+    (id, rations, water) => {
+      const target = characters.find((c) => c.id === id)
+      if (!target) return null
+      const res = target.character_resources
+      const taken = {
+        rations: Math.max(-res.rations, rations),
+        water: Math.max(-res.water_units, water),
+      }
+      res.rations += taken.rations
+      res.water_units += taken.water
+      res.revision += 1
+      return taken
+    },
+    (id) => characters.find((c) => c.id === id)?.name ?? null,
   )
   // RYT-080 group rest state (one request at a time) and the rest maths of the SQL.
   type Rest = {
@@ -1530,7 +1549,8 @@ export async function identityFixture(
     vitalsOf: (character: string) => vitals.get(character),
     maxResources: () => {
       characters[0]!.character_resources = {
-        gold: Number.MAX_SAFE_INTEGER,
+        // RYT-104: gold is numeric(12,2), so its maximum is 9,999,999,999.99 gp.
+        gold: 9_999_999_999.99,
         water_units: 2147483647,
         rations: 2147483647,
         exhaustion: 2147483647,
@@ -1685,7 +1705,17 @@ type Event = {
   created_at: string
 }
 /** In-memory inventory contract mirroring the RYT-004 RPCs closely enough for the UI. */
-function inventoryState(characterIds: string[], seeded: boolean) {
+function inventoryState(
+  characterIds: string[],
+  seeded: boolean,
+  catalogue = false,
+  supplies: (
+    characterId: string,
+    rations: number,
+    water: number,
+  ) => { rations: number; water: number } | null = () => null,
+  characterName: (characterId: string) => string | null = () => null,
+) {
   let counter = 0
   const id = (prefix: string) => `${prefix}-0000-4000-8000-${String(++counter).padStart(12, '0')}`
   const definition = (partial: Partial<Definition>): Definition => ({
@@ -1704,7 +1734,13 @@ function inventoryState(characterIds: string[], seeded: boolean) {
     archived: false,
     created_by: dmId,
     revision: 0,
+    translations: null,
+    basic_key: null,
+    is_template: false,
+    image_path: null,
     ...partial,
+    // RYT-104: weight_lb is the source of truth; weight_tenths follows it.
+    weight_lb: Number(partial.weight_lb ?? Number(partial.weight_tenths ?? 10) / 10),
   })
   const definitions: Definition[] = seeded
     ? [
@@ -1753,6 +1789,113 @@ function inventoryState(characterIds: string[], seeded: boolean) {
         }),
       ]
     : []
+  // RYT-104/105: basic catalogue items, a template and one pending Player proposal.
+  if (catalogue) {
+    const sword = definitions.find((d) => d.name === 'Espada larga')
+    if (sword) sword.is_template = true
+    definitions.push(
+      definition({
+        name: 'Raciones',
+        category: 'consumable',
+        icon: 'drumstick',
+        weight_lb: 2,
+        weight_tenths: 20,
+        value_gp: 0.5,
+        origin: 'srd',
+        basic_key: 'rations',
+        description: 'Comida seca para un día de viaje.',
+        translations: {
+          en: { name: 'Rations', description: 'Dry food for a day on the road.' },
+          es: { name: 'Raciones', description: 'Comida seca para un día de viaje.' },
+        },
+        properties: { rations: 1 },
+      }),
+      definition({
+        name: 'Mochila reforzada',
+        icon: 'backpack',
+        weight_lb: 6,
+        weight_tenths: 60,
+        value_gp: 12.5,
+        origin: 'dm',
+        basic_key: 'reinforcedBackpack',
+        description: 'Correas acolchadas que reparten el peso.',
+        translations: {
+          en: { name: 'Reinforced backpack', description: 'Padded straps spread the weight.' },
+          es: {
+            name: 'Mochila reforzada',
+            description: 'Correas acolchadas que reparten el peso.',
+          },
+        },
+        properties: { container: { capacityLb: 40, loadReductionPercent: 10 } },
+      }),
+      definition({
+        name: 'Cuerda de cáñamo',
+        icon: 'link',
+        weight_lb: 10,
+        weight_tenths: 100,
+        value_gp: 1,
+        origin: 'srd',
+        basic_key: 'rope',
+        description: '15 metros de cuerda.',
+      }),
+    )
+  }
+  type Proposal = {
+    id: string
+    character_id: string
+    proposed_by: string
+    draft: Record<string, unknown>
+    quantity: number
+    status: string
+    dm_note: string
+    resolved_definition_id: string | null
+    revision: number
+    created_at: string
+    updated_at: string
+    resolved_at: string | null
+  }
+  const proposals: Proposal[] = []
+  if (catalogue && characterIds[0])
+    proposals.push({
+      id: id('b0000000'),
+      character_id: characterIds[0],
+      proposed_by: playerId,
+      draft: {
+        name: 'Amuleto de la abuela',
+        description: 'Un colgante de hueso que siempre está tibio.',
+        category: 'treasure',
+        icon: 'medal',
+        rarity: 'uncommon',
+        slot_kind: 'neck',
+        properties: {},
+        weight_lb: 0.25,
+        suggested_value_gp: 25,
+      },
+      quantity: 1,
+      status: 'pending',
+      dm_note: '',
+      resolved_definition_id: null,
+      revision: 0,
+      created_at: '2026-11-15T10:00:00Z',
+      updated_at: '2026-11-15T10:00:00Z',
+      resolved_at: null,
+    })
+  const proposalJson = (p: Proposal, dm: boolean) => ({
+    id: p.id,
+    character_id: p.character_id,
+    character_name: characterName(p.character_id),
+    proposed_by_you: p.proposed_by === (dm ? dmId : playerId),
+    proposer_name: dm ? 'Arin' : null,
+    draft: p.draft,
+    quantity: p.quantity,
+    status: p.status,
+    dm_note: p.dm_note,
+    resolved_definition_id: p.resolved_definition_id,
+    revision: p.revision,
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+    resolved_at: p.resolved_at,
+  })
   const stacks: Stack[] = []
   const events: Event[] = []
   const stack = (
@@ -1810,10 +1953,26 @@ function inventoryState(characterIds: string[], seeded: boolean) {
     events.unshift(event)
     return { item_id: row.id, event_id: event.id, revision: row.revision }
   }
+  // One import mock (and one replay memory) for every fixture that serves import_basic_items.
+  const importBasic = basicImportMock({
+    definitions,
+    create: (entry, key) => {
+      const row = definition({
+        ...entry,
+        key: undefined,
+        weight_tenths: Math.round(Number(entry.weight_lb ?? 0) * 10),
+        origin: 'srd',
+        basic_key: key,
+      })
+      delete row.key
+      return row
+    },
+  })
   return {
     stacks,
     definitions,
     events,
+    importBasic,
     handle(
       method: string,
       body: Record<string, unknown>,
@@ -1836,12 +1995,15 @@ function inventoryState(characterIds: string[], seeded: boolean) {
       }
       if (method === 'save_item_definition') {
         const item = body.item as Record<string, unknown>
-        if (!dm && item.value_gp !== null && item.value_gp !== undefined)
-          return new Error('Forbidden')
+        // RYT-105 release: only the DM creates or edits definitions.
+        if (!dm) return new Error('Forbidden')
         const existing = definitions.find((d) => d.id === body.target_definition)
         if (existing) {
-          Object.assign(existing, item, { revision: existing.revision + 1 })
-          return { id: existing.id }
+          Object.assign(existing, item, {
+            revision: existing.revision + 1,
+            weight_tenths: Math.round(Number(item.weight_lb ?? existing.weight_lb ?? 0) * 10),
+          })
+          return { id: existing.id, revision: existing.revision }
         }
         const created = definition({
           ...item,
@@ -1860,6 +2022,181 @@ function inventoryState(characterIds: string[], seeded: boolean) {
           holders: new Set(held.filter((s) => s.quantity > 0).map((s) => s.character_id)).size,
           units: held.reduce((n, s) => n + s.quantity, 0),
           open_orders: 0,
+          open_trades: 0,
+        }
+      }
+      // RYT-104/105 catalogue RPCs (the shops fixture layers its own import on top).
+      if (method === 'search_campaign_items') {
+        const needle = String(body.search_query ?? '')
+          .trim()
+          .toLowerCase()
+        const carried = new Set(stacks.filter((s) => s.quantity > 0).map((s) => s.definition_id))
+        return definitions
+          .filter((d) => !d.archived)
+          .filter((d) => dm || d.basic_key || d.created_by === playerId || carried.has(d.id))
+          .filter((d) => {
+            const names = [
+              d.name,
+              ...Object.values((d.translations ?? {}) as object).map(
+                (t) => (t as { name: string }).name,
+              ),
+            ]
+            return !needle || names.some((n) => String(n).toLowerCase().includes(needle))
+          })
+          .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+          .slice(0, Number(body.max_results ?? 50))
+          .map((d) => ({
+            id: d.id,
+            name: d.name,
+            description: d.description,
+            translations: d.translations ?? null,
+            category: d.category,
+            icon: d.icon,
+            image_path: d.image_path ?? null,
+            rarity: d.rarity,
+            weight_lb: d.weight_lb,
+            weight_tenths: d.weight_tenths,
+            slot_kind: d.slot_kind,
+            properties: d.properties,
+            origin: d.origin,
+            basic_key: d.basic_key ?? null,
+            is_template: Boolean(d.is_template),
+            value_gp: dm || d.basic_key ? (d.value_gp ?? null) : null,
+            revision: d.revision,
+            created_by_you: d.created_by === (dm ? dmId : playerId),
+          }))
+      }
+      if (method === 'set_item_template') {
+        const item = definitions.find((d) => d.id === body.target_definition)
+        if (!dm || !item) return new Error('Forbidden')
+        if (item.revision !== body.expected_revision) return new Error('Stale revision')
+        if (Boolean(item.is_template) !== body.make_template) {
+          item.is_template = Boolean(body.make_template)
+          item.revision += 1
+        }
+        return { id: item.id, is_template: item.is_template, revision: item.revision }
+      }
+      if (method === 'import_basic_items') {
+        if (!dm) return new Error('Forbidden')
+        const reply = importBasic(body)
+        return 'error' in reply ? new Error(reply.error) : reply.data
+      }
+      if (method === 'list_item_proposals') {
+        const own = (p: Proposal) => dm || p.character_id === characterIds[0]
+        return proposals
+          .filter(own)
+          .filter((p) => !body.target_character || p.character_id === body.target_character)
+          .filter((p) => body.include_closed !== false || p.status === 'pending')
+          .map((p) => proposalJson(p, dm))
+      }
+      if (method === 'propose_item') {
+        const draft = body.draft as Record<string, unknown>
+        if (['value_gp', 'is_template', 'basic_key', 'origin'].some((k) => k in draft))
+          return new Error('Forbidden')
+        const open = proposals.filter(
+          (p) => p.character_id === body.target_character && p.status === 'pending',
+        )
+        if (open.length >= 20) return new Error('Too many proposals')
+        const now = new Date().toISOString()
+        const row: Proposal = {
+          id: id('b0000000'),
+          character_id: String(body.target_character),
+          proposed_by: actor,
+          draft,
+          quantity: Number(body.quantity),
+          status: 'pending',
+          dm_note: '',
+          resolved_definition_id: null,
+          revision: 0,
+          created_at: now,
+          updated_at: now,
+          resolved_at: null,
+        }
+        proposals.unshift(row)
+        return { id: row.id, status: row.status, revision: row.revision }
+      }
+      if (method === 'cancel_item_proposal') {
+        const row = proposals.find((p) => p.id === body.target_proposal)
+        if (!row || row.proposed_by !== actor) return new Error('Forbidden')
+        if (row.status !== 'pending') return new Error('Proposal closed')
+        if (row.revision !== body.expected_revision) return new Error('Stale revision')
+        row.status = 'cancelled'
+        row.revision += 1
+        return { id: row.id, status: row.status, revision: row.revision }
+      }
+      if (method === 'resolve_item_proposal') {
+        const row = proposals.find((p) => p.id === body.target_proposal)
+        if (!dm) return new Error('Forbidden')
+        if (!row) return new Error('Proposal unavailable')
+        if (row.status !== 'pending') return new Error('Proposal closed')
+        if (row.revision !== body.expected_revision) return new Error('Stale revision')
+        let target: Definition | undefined
+        if (body.resolution === 'accept') {
+          const draft = (body.draft ?? row.draft) as Record<string, unknown>
+          target = definition({
+            ...draft,
+            weight_tenths: Math.round(Number(draft.weight_lb ?? 0) * 10),
+            origin: 'player',
+            created_by: dmId,
+          })
+          definitions.push(target)
+        } else if (body.resolution === 'merge') {
+          target = definitions.find((d) => d.id === body.target_definition && !d.archived)
+          if (!target) return new Error('Item unavailable')
+        }
+        let granted: { item_id: string; event_id: string } | undefined
+        if (target) {
+          const stack0 = stack(row.character_id, target.id, Number(body.quantity))
+          granted = record(stack0, actor, 'grant', Number(body.quantity))
+        }
+        row.status =
+          body.resolution === 'accept'
+            ? 'accepted'
+            : body.resolution === 'merge'
+              ? 'merged'
+              : 'rejected'
+        row.dm_note = String(body.note ?? '')
+        row.resolved_definition_id = target?.id ?? null
+        row.revision += 1
+        row.resolved_at = new Date().toISOString()
+        return {
+          id: row.id,
+          status: row.status,
+          revision: row.revision,
+          definition_id: target?.id ?? null,
+          item_id: granted?.item_id ?? null,
+          event_id: granted?.event_id ?? null,
+          quantity: target ? Number(body.quantity) : null,
+        }
+      }
+      if (method === 'merge_item_definitions') {
+        if (!dm) return new Error('Forbidden')
+        const source = definitions.find((d) => d.id === body.source_definition)
+        const target = definitions.find((d) => d.id === body.target_definition)
+        if (!source || !target || source.archived || target.archived)
+          return new Error('Item unavailable')
+        if (source.revision !== body.source_revision || target.revision !== body.target_revision)
+          return new Error('Stale revision')
+        const moved = stacks.filter((s) => s.definition_id === source.id && s.quantity > 0)
+        for (const row of moved) {
+          row.definition_id = target.id
+          row.revision += 1
+        }
+        source.archived = true
+        source.revision += 1
+        return {
+          source_id: source.id,
+          target_id: target.id,
+          source_revision: source.revision,
+          target_revision: target.revision,
+          moved_stacks: moved.length,
+          merged_stacks: 0,
+          unequipped_stacks: 0,
+          moved_units: moved.reduce((n, s) => n + s.quantity, 0),
+          characters: new Set(moved.map((s) => s.character_id)).size,
+          repointed_listings: 0,
+          archived_listings: 0,
+          repointed_order_lines: 0,
         }
       }
       if (method === 'archive_item_definition') {
@@ -1872,6 +2209,9 @@ function inventoryState(characterIds: string[], seeded: boolean) {
       }
       if (method === 'grant_item') {
         const source = dm ? 'dm' : 'player'
+        // RYT-105 release: Players add only basic catalogue items to themselves.
+        const granted = definitions.find((d) => d.id === body.target_definition)
+        if (!dm && !granted?.basic_key) return new Error('Forbidden')
         let row = stacks.find(
           (s) =>
             s.character_id === body.target_character &&
@@ -1899,7 +2239,32 @@ function inventoryState(characterIds: string[], seeded: boolean) {
         row.quantity -= Number(body.amount)
         if (row.quantity === 0) row.equipped_slot = null
         row.revision += 1
-        return record(row, actor, method === 'use_item' ? 'use' : 'remove', -Number(body.amount))
+        const result = record(
+          row,
+          actor,
+          method === 'use_item' ? 'use' : 'remove',
+          -Number(body.amount),
+        )
+        // RYT-104: consumables from the DM or a shop add rations and water once per use.
+        const used = definitions.find((d) => d.id === row.definition_id)
+        const props = (used?.properties ?? {}) as { rations?: number; water?: number }
+        if (
+          method === 'use_item' &&
+          used?.category === 'consumable' &&
+          row.source !== 'player' &&
+          (props.rations || props.water)
+        ) {
+          const added = supplies(
+            row.character_id,
+            Math.floor(Number(body.amount) * (props.rations ?? 0)),
+            Math.floor(Number(body.amount) * (props.water ?? 0)),
+          )
+          if (added) {
+            events[0]!.after_value.supplies = added
+            return { ...result, supplies: added }
+          }
+        }
+        return result
       }
       if (method === 'equip_item') {
         if (!row || row.revision !== body.expected_revision) return new Error('Stale revision')
@@ -1934,6 +2299,12 @@ function inventoryState(characterIds: string[], seeded: boolean) {
         target.revision += 1
         const result = record(target, actor, 'undo', -original.quantity_delta, original.id)
         original.undone_by = result.event_id
+        const given = original.after_value.supplies as
+          { rations: number; water: number } | undefined
+        if (given) {
+          const taken = supplies(target.character_id, -given.rations, -given.water)
+          if (taken) return { ...result, supplies: taken }
+        }
         return result
       }
       return undefined

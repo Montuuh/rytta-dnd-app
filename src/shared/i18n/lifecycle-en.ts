@@ -1,7 +1,6 @@
 // RYT-032 item delete, linked price sync, the reworked forge and DM "Add item" for a character.
 export const lifecycleEn = {
   'store.delete': 'Delete',
-  'store.deleteItem': 'Delete {{name}}',
   'lifecycle.deleteTitle': 'Delete {{name}}?',
   'lifecycle.deleteBody': 'It leaves the storeroom and can no longer be given or sold.',
   'lifecycle.checking': 'Checking where this item is used…',
@@ -38,7 +37,6 @@ export const lifecycleEn = {
   'forge.dropTitle': 'Drop an image here or choose a file',
   'forge.dropActive': 'Release to use this image',
   'forge.replaceImage': 'Replace image',
-  'forge.weightUnit': '{{value}} lb',
   'forge.properties': 'Combat details',
   'addItem.title': 'Add an item for {{name}}',
   'addItem.existing': 'Existing item',

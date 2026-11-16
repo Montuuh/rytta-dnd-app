@@ -9,9 +9,11 @@ import {
 } from '@mantine/core'
 import { LayoutGrid, List, Plus, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { carriedTenths } from '../domain/encumbrance'
+import { localizedName } from '@/shared/lib/translations'
+import { carriedLoad } from '../domain/encumbrance'
 import {
   itemCategories,
+  unitPounds,
   type ItemCategory,
   type ItemDefinition,
   type ItemStack,
@@ -19,7 +21,7 @@ import {
 import { Balance } from './balance'
 import { ItemIcon } from './item-icon'
 import { categoryIcons, rarityPips } from './item-visuals'
-import { formatPounds } from '../domain/encumbrance'
+import { useWeightFormat } from './use-weight'
 
 type SatchelView = 'grid' | 'list'
 const viewKey = 'rytta-satchel-view'
@@ -47,6 +49,8 @@ export function Satchel({
   onAdd: (target: HTMLElement) => void
 }) {
   const { t, i18n } = useTranslation()
+  const { format } = useWeightFormat()
+  const nameOf = (definition: ItemDefinition) => localizedName(definition, i18n.language)
   const [view, setViewState] = useState<SatchelView>(savedView)
   const setView = (next: SatchelView) => {
     setViewState(next)
@@ -66,13 +70,20 @@ export function Satchel({
         const definition = definitions.get(stack.definition_id)
         if (!definition) return false
         if (filter !== 'all' && definition.category !== filter) return false
-        return definition.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())
+        const needle = search.trim().toLocaleLowerCase()
+        return [definition.name, localizedName(definition, i18n.language)].some((name) =>
+          name.toLocaleLowerCase().includes(needle),
+        )
       }),
-    [loose, definitions, filter, search],
+    [loose, definitions, filter, search, i18n.language],
   )
   return (
     <div className="satchel-view">
-      <Balance tenths={carriedTenths(stacks, definitions)} strength={strength} />
+      <Balance
+        load={carriedLoad(stacks, definitions)}
+        strength={strength}
+        definitions={definitions}
+      />
       <div className="satchel-tools">
         <div className="category-rail" role="group" aria-label={t('inventory.filter')}>
           {(['all', ...itemCategories] as const)
@@ -136,7 +147,7 @@ export function Satchel({
                 <UnstyledButton
                   className="store-row-main"
                   aria-label={t('inventory.tileLabel', {
-                    name: definition.name,
+                    name: nameOf(definition),
                     quantity: stack.quantity,
                     rarity: t(`inventory.rarity.${definition.rarity}`),
                   })}
@@ -146,15 +157,10 @@ export function Satchel({
                     <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={22} />
                   </span>
                   <span className="store-row-body">
-                    <span className="store-row-name user-copy">{definition.name}</span>
+                    <span className="store-row-name user-copy">{nameOf(definition)}</span>
                     <span className="store-row-meta">
                       {t(`inventory.category.${definition.category}`)} ·{' '}
-                      {t('store.weight', {
-                        value: formatPounds(
-                          (definition.weight_tenths * stack.quantity) / 10,
-                          i18n.language,
-                        ),
-                      })}
+                      {format(unitPounds(definition) * stack.quantity)}
                     </span>
                   </span>
                   <span className="satchel-qty" aria-hidden="true">
@@ -188,7 +194,7 @@ export function Satchel({
                 <UnstyledButton
                   className={`item-tile rarity-${definition.rarity}`}
                   aria-label={t('inventory.tileLabel', {
-                    name: definition.name,
+                    name: nameOf(definition),
                     quantity: stack.quantity,
                     rarity: t(`inventory.rarity.${definition.rarity}`),
                   })}
@@ -197,7 +203,7 @@ export function Satchel({
                   <span className="item-tile-icon">
                     <ItemIcon icon={definition.icon} imagePath={definition.image_path} />
                   </span>
-                  <span className="item-tile-name">{definition.name}</span>
+                  <span className="item-tile-name">{nameOf(definition)}</span>
                   <span className="item-rarity-pips" aria-hidden="true">
                     {'◆'.repeat(rarityPips[definition.rarity])}
                   </span>

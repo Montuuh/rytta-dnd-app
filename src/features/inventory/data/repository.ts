@@ -7,6 +7,17 @@ import {
   stackSchema,
   type InventoryAction,
 } from '../domain/item'
+import {
+  importResultSchema,
+  mergeResultSchema,
+  proposalResultSchema,
+  proposalSchema,
+  searchItemSchema,
+  templateResultSchema,
+  type ImportItem,
+} from '../domain/catalogue'
+import type { Json } from '@/shared/api/database.generated'
+import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
 import { uploadBytes, uploadExtension, uploadTypes } from '@/shared/lib/image-encode'
 
@@ -17,7 +28,7 @@ async function client() {
 }
 
 const definitionColumns =
-  'id, campaign_id, name, category, icon, rarity, weight_tenths, value_gp, description, slot_kind, properties, origin, archived, created_by, revision, image_path'
+  'id, campaign_id, name, category, icon, rarity, weight_tenths, weight_lb, value_gp, description, translations, slot_kind, properties, origin, basic_key, is_template, archived, created_by, revision, image_path'
 const stackColumns =
   'id, campaign_id, character_id, definition_id, quantity, equipped_slot, source, notes, revision'
 const eventColumns =
@@ -98,6 +109,13 @@ export async function loadInventory(campaignId: string, characterId: string, sig
   }
 }
 
+/**
+ * A cent amount the server refuses because its release migration is not applied yet: the money
+ * checks raise 'Invalid request' or 'Invalid item N' with detail 'amount'.
+ */
+export const refusesCents = (error: { message: string; details?: string | null }) =>
+  /Invalid (request|item)/.test(error.message) && error.details === 'amount'
+
 const errorCode = (message: string) =>
   [
     ['Stale revision', 'stale'],
@@ -105,7 +123,17 @@ const errorCode = (message: string) =>
     ['Slot occupied', 'occupied'],
     ['Insufficient', 'insufficient'],
     ['Forbidden', 'forbidden'],
+    ['Open orders', 'openOrders'],
+    ['Open trades', 'openTrades'],
+    ['Too many proposals', 'tooMany'],
+    ['Proposal closed', 'closed'],
+    ['Proposal unavailable', 'closed'],
+    ['Item unavailable', 'gone'],
   ].find(([needle]) => message.includes(needle!))?.[1] ?? 'unavailable'
+
+/** The Error a failed RPC throws: its stable code as the message. */
+const failure = (error: { message: string; details?: string | null }) =>
+  new Error(refusesCents(error) ? 'cents' : errorCode(error.message))
 
 export async function changeInventory(campaignId: string, action: InventoryAction) {
   const db = await client()
@@ -118,7 +146,7 @@ export async function changeInventory(campaignId: string, action: InventoryActio
         target_campaign,
         target_definition: action.definitionId,
         expected_revision: action.expectedRevision,
-        item: action.draft,
+        item: action.draft as unknown as Json,
         request_id,
       })
       break
@@ -166,7 +194,7 @@ export async function changeInventory(campaignId: string, action: InventoryActio
       })
       break
   }
-  if (result.error) throw new Error(errorCode(result.error.message))
+  if (result.error) throw failure(result.error)
   return action.kind === 'define'
     ? { definitionId: z.object({ id: z.uuid() }).parse(result.data).id }
     : actionResultSchema.parse(result.data)
@@ -187,7 +215,7 @@ export async function uploadPortrait(campaignId: string, characterId: string, im
     target_character: characterId,
     new_path: path,
   })
-  if (saved.error) throw new Error(errorCode(saved.error.message))
+  if (saved.error) throw failure(saved.error)
   return path
 }
 /** RYT-090: clears the sheet's portrait; the stored object stays, as after a replacement. */
@@ -198,7 +226,7 @@ export async function removePortrait(campaignId: string, characterId: string) {
     target_character: z.uuid().parse(characterId),
     new_path: null,
   })
-  if (saved.error) throw new Error(errorCode(saved.error.message))
+  if (saved.error) throw failure(saved.error)
 }
 export async function portraitUrl(path: string) {
   const db = await client()
@@ -289,7 +317,7 @@ export async function attachItemImage(
     new_path: path,
     request_id: requestId,
   })
-  if (result.error) throw new Error(errorCode(result.error.message))
+  if (result.error) throw failure(result.error)
 }
 /** Only clean an unreferenced object, including after an ambiguous network outcome. */
 export async function discardItemUpload(campaignId: string, path: string) {
@@ -307,7 +335,7 @@ const impactSchema = z.object({
       id: z.uuid(),
       shop_id: z.uuid(),
       shop_name: z.string(),
-      price: z.number().int().min(0),
+      price: z.coerce.number().pipe(gpAmount),
       stock: z.number().int().nullable(),
       revision: z.number().int(),
     })
@@ -315,10 +343,9 @@ const impactSchema = z.object({
   holders: z.number().int().min(0),
   units: z.number().int().min(0),
   open_orders: z.number().int().min(0),
+  open_trades: z.number().int().min(0).optional(),
 })
 export type DefinitionImpact = z.infer<typeof impactSchema>
-const lifecycleError = (message: string) =>
-  message.includes('Open orders') ? 'openOrders' : errorCode(message)
 
 export async function loadDefinitionImpact(
   campaignId: string,
@@ -332,7 +359,7 @@ export async function loadDefinitionImpact(
   })
   if (signal) call = call.abortSignal(signal)
   const result = await call
-  if (result.error) throw new Error(lifecycleError(result.error.message))
+  if (result.error) throw failure(result.error)
   return impactSchema.parse(result.data)
 }
 export async function archiveDefinition(
@@ -348,7 +375,7 @@ export async function archiveDefinition(
     expected_revision: z.number().int().min(0).parse(revision),
     request_id: z.uuid().parse(requestId),
   })
-  if (result.error) throw new Error(lifecycleError(result.error.message))
+  if (result.error) throw failure(result.error)
   return z.object({ id: z.uuid(), archived_listings: z.number().int() }).parse(result.data)
 }
 export async function syncListingPrices(
@@ -363,10 +390,10 @@ export async function syncListingPrices(
     target_campaign: z.uuid().parse(campaignId),
     target_definition: z.uuid().parse(definitionId),
     listing_ids: z.uuid().array().min(1).max(200).parse(listingIds),
-    new_price: z.number().int().min(0).max(100_000_000).parse(price),
+    new_price: gpAmount.pipe(z.number().max(100_000_000)).parse(price),
     request_id: z.uuid().parse(requestId),
   })
-  if (result.error) throw new Error(lifecycleError(result.error.message))
+  if (result.error) throw failure(result.error)
   return z.object({ updated: z.number().int() }).parse(result.data)
 }
 
@@ -385,4 +412,170 @@ export async function listCampaignPortraits(campaignId: string, signal?: AbortSi
       .parse(result.data)
       .map((row) => [row.character_id, row.portrait_path]),
   )
+}
+
+// RYT-104/105 catalogue: search, templates, basic catalogue import, proposals and merges.
+export async function searchCampaignItems(
+  campaignId: string,
+  query: string,
+  limit: number,
+  signal?: AbortSignal,
+) {
+  const db = await client()
+  let call = db.rpc('search_campaign_items', {
+    target_campaign: z.uuid().parse(campaignId),
+    search_query: z.string().max(100).parse(query.trim()),
+    max_results: z.number().int().min(1).max(200).parse(limit),
+  })
+  if (signal) call = call.abortSignal(signal)
+  const result = await call
+  if (result.error) throw failure(result.error)
+  return searchItemSchema.array().max(200).parse(result.data)
+}
+
+export async function setItemTemplate(
+  campaignId: string,
+  definitionId: string,
+  template: boolean,
+  revision: number,
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('set_item_template', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_definition: z.uuid().parse(definitionId),
+    make_template: template,
+    expected_revision: z.number().int().min(0).parse(revision),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return templateResultSchema.parse(result.data)
+}
+
+/**
+ * DM only: catalogue keys become campaign definitions; keys the campaign has return their id.
+ * With `updateExisting` the live ones whose catalogue fields changed are updated (never their
+ * price, image or template flag).
+ */
+export async function importBasicItems(
+  campaignId: string,
+  items: ImportItem[],
+  requestId: string,
+  updateExisting = false,
+) {
+  const db = await client()
+  z.array(z.object({ key: z.string().min(1) }))
+    .min(1)
+    .max(500)
+    .parse(items)
+  const result = await db.rpc('import_basic_items', {
+    target_campaign: z.uuid().parse(campaignId),
+    items: items as unknown as Json,
+    request_id: z.uuid().parse(requestId),
+    update_existing: updateExisting,
+  })
+  if (result.error) throw failure(result.error)
+  return importResultSchema.parse(result.data)
+}
+
+export async function listItemProposals(
+  campaignId: string,
+  characterId: string | null,
+  signal?: AbortSignal,
+) {
+  const db = await client()
+  let call = db.rpc('list_item_proposals', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_character: characterId === null ? null : z.uuid().parse(characterId),
+    include_closed: true,
+  })
+  if (signal) call = call.abortSignal(signal)
+  const result = await call
+  if (result.error) throw failure(result.error)
+  return proposalSchema.array().max(200).parse(result.data)
+}
+
+export type ProposalInput = {
+  draft: Record<string, unknown>
+  characterId: string
+  quantity: number
+  requestId: string
+}
+export async function proposeItem(campaignId: string, input: ProposalInput) {
+  const db = await client()
+  const result = await db.rpc('propose_item', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_character: z.uuid().parse(input.characterId),
+    draft: input.draft as Json,
+    quantity: z.number().int().min(1).max(1000).parse(input.quantity),
+    request_id: z.uuid().parse(input.requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return proposalResultSchema.parse(result.data)
+}
+
+export async function cancelItemProposal(
+  campaignId: string,
+  proposalId: string,
+  revision: number,
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('cancel_item_proposal', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_proposal: z.uuid().parse(proposalId),
+    expected_revision: z.number().int().min(0).parse(revision),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return proposalResultSchema.parse(result.data)
+}
+
+export type Resolution =
+  | { resolution: 'accept'; draft: Record<string, unknown>; quantity: number }
+  | { resolution: 'merge'; definitionId: string; quantity: number }
+  | { resolution: 'reject' }
+export async function resolveItemProposal(
+  campaignId: string,
+  proposal: { id: string; revision: number },
+  decision: Resolution & { note: string },
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('resolve_item_proposal', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_proposal: z.uuid().parse(proposal.id),
+    resolution: decision.resolution,
+    draft: decision.resolution === 'accept' ? (decision.draft as Json) : null,
+    target_definition:
+      decision.resolution === 'merge' ? z.uuid().parse(decision.definitionId) : null,
+    quantity:
+      decision.resolution === 'reject'
+        ? null
+        : z.number().int().min(1).max(1000).parse(decision.quantity),
+    note: z.string().max(500).parse(decision.note.trim()),
+    expected_revision: z.number().int().min(0).parse(proposal.revision),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return proposalResultSchema.parse(result.data)
+}
+
+export async function mergeItemDefinitions(
+  campaignId: string,
+  source: { id: string; revision: number },
+  target: { id: string; revision: number },
+  requestId: string,
+) {
+  const db = await client()
+  const result = await db.rpc('merge_item_definitions', {
+    target_campaign: z.uuid().parse(campaignId),
+    source_definition: z.uuid().parse(source.id),
+    target_definition: z.uuid().parse(target.id),
+    source_revision: z.number().int().min(0).parse(source.revision),
+    target_revision: z.number().int().min(0).parse(target.revision),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return mergeResultSchema.parse(result.data)
 }

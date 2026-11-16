@@ -76,6 +76,14 @@ line, icon actions) with an optional compact grid. Actions that fit stay as 44px
 with accessible names; on phones they fold into one ⋯ menu. Avoid stacks of plain text
 buttons on cards. Campaign pages share one width for every role.
 
+Amounts (RYT-104, ADR 043): every gp field is the inventory `GpInput`: two decimals, the
+interface language's separator, the decimal keypad on phones, and half-typed decimals ("12,")
+kept until they parse. Weights are `WeightFields`: one fieldset with two linked fields (the
+reader's unit first, "=" between, 1 lb = 0.5 kg); editing either updates the other. Shop images
+(RYT-107, ADR 044) are a header banner of fixed aspect with the name on a fixed dark scrim and
+cream ink in every theme, never a page background; the picture is its own button to the image
+viewer.
+
 ## Settings and themes (RYT-033, RYT-069)
 
 Settings is a right-hand drawer opened from the profile menu, the single home for language
@@ -83,7 +91,7 @@ and theme (RYT-069, ADR 034). It is a medium panel (`calc(min(100vw - 1.5rem, 30
 the current screen; the route and title stay, Escape or the 44px close button closes it and
 focus returns to the profile button. Old `#/settings` links open it over the home screen. The
 drawer title is the h2; each preference is a section with an h3 and one line of help, then one
-radio group: Language first, then Theme. Radio cards are native radios kept in the
+radio group: Language first, then Weight (kg or lb, RYT-104), then Theme. Radio cards are native radios kept in the
 accessibility tree and painted as cards (`.choice-card`). They have a 1px border, a 2px accent
 border plus a check badge when selected (never color alone), a 3px `--app-focus` ring on
 keyboard focus and at least 56px of height. Arrow keys move the selection, and Tab moves

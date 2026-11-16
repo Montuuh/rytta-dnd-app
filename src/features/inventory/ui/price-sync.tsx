@@ -1,3 +1,4 @@
+import { formatGp } from '@/shared/lib/money'
 import { useRef, useState } from 'react'
 import { Alert, Button, Checkbox, Group, Loader, Modal, Stack, Text } from '@mantine/core'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -57,7 +58,7 @@ export function PriceSyncDialog({
     >
       <Stack gap="md">
         <Text className="user-copy">
-          {t('lifecycle.syncBody', { name, value: price.toLocaleString(i18n.language) })}
+          {t('lifecycle.syncBody', { name, value: formatGp(price, i18n.language) })}
         </Text>
         <Checkbox.Group
           label={t('lifecycle.syncShops')}
@@ -80,13 +81,9 @@ export function PriceSyncDialog({
                     <span className="sync-row-name user-copy">{listing.shop_name}</span>
                     <span className="sync-row-price">
                       <span>{t('lifecycle.syncCurrent')} </span>
-                      <s>
-                        {t('store.value', { value: listing.price.toLocaleString(i18n.language) })}
-                      </s>
+                      <s>{t('store.value', { value: formatGp(listing.price, i18n.language) })}</s>
                       <span aria-hidden="true"> → </span>
-                      <strong>
-                        {t('store.value', { value: price.toLocaleString(i18n.language) })}
-                      </strong>
+                      <strong>{t('store.value', { value: formatGp(price, i18n.language) })}</strong>
                     </span>
                   </span>
                 </Group>
@@ -96,7 +93,9 @@ export function PriceSyncDialog({
         </Checkbox.Group>
         {syncPrices.isError && (
           <Alert color="red" role="alert">
-            {t('lifecycle.syncError')}
+            {syncPrices.error.message === 'cents'
+              ? t('inventory.error.cents')
+              : t('lifecycle.syncError')}
           </Alert>
         )}
         <Stack gap="xs">

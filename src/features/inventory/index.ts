@@ -6,9 +6,10 @@ export { inventoryQuery, useCampaignPortraits } from './api'
 export { ItemIcon } from './ui/item-icon'
 export { useItemPicture } from './ui/item-picture'
 export {
+  carriedLoad,
   carriedTenths,
   encumbrance,
-  formatPounds,
+  type CarriedLoad,
   type EncumbranceStatus,
 } from './domain/encumbrance'
 export {
@@ -21,7 +22,13 @@ export {
   type AttackOptions,
   type Equipped,
 } from './domain/equipment'
-export { itemCategories, itemPropertiesSchema, rarities, slotKinds } from './domain/item'
+export {
+  itemCategories,
+  itemPropertiesSchema,
+  rarities,
+  slotKinds,
+  unitPounds,
+} from './domain/item'
 export type {
   EquipmentSlot,
   ItemCategory,
@@ -33,7 +40,24 @@ export type {
 } from './domain/item'
 export { HoldSeal } from './ui/hold-seal'
 
-export { catalogueQuery, rosterQuery, useInventoryAction } from './api'
+export {
+  basicCatalogueQuery,
+  catalogueQuery,
+  catalogueSearchQuery,
+  rosterQuery,
+  useBasicImport,
+  useInventoryAction,
+  useItemTemplate,
+  usePendingProposalCount,
+} from './api'
+export type { CatalogueItem, ImportItem, ImportResult } from './domain/catalogue'
+export { toImportItem } from './domain/catalogue'
+export { BasicImport } from './ui/basic-import'
+export { MergeItems } from './ui/merge-items'
+export { ProposalReview } from './ui/proposal-review'
+export { GpInput, WeightFields } from './ui/amount-fields'
+export { useWeightFormat } from './ui/use-weight'
 export { DefinitionEditor, type GiveOutcome } from './ui/definition-editor'
 export { DeleteItemDialog } from './ui/delete-item'
 export { categoryIcons, rarityPips } from './ui/item-visuals'
+export { loadBasicItemDescriptions, loadBasicItems, type BasicItem } from './domain/basic-items'

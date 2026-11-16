@@ -574,7 +574,11 @@ test('RYT-032 the forge shows a live preview and keyboard-selectable category an
   await expect(preview).toContainText('Hoja lunar')
   await expect(preview).toContainText('Raro')
   await expect(preview).toContainText('1d6')
-  await expect(preview).toContainText('0,5 lb')
+  // RYT-104: 0.5 lb shows in the Spanish default unit, with the Spanish decimal comma.
+  await expect(preview).toContainText('0,25 kg')
+  await expect(editor.getByRole('textbox', { name: 'Peso (kg)', exact: true })).toHaveValue('0,25')
+  // The two fields read as one weight at every width: the "=" stays between them.
+  await expect(editor.locator('.weight-pair-equals')).toBeVisible()
   await expect(preview).toContainText('1 po')
   await audit(page, info.outputPath('forge.png'))
   await evidence(page, 'forge', info)
@@ -643,13 +647,47 @@ test('RYT-032 the DM adds an existing storeroom item or a new one to a character
   ).toBe(true)
 })
 
-test('RYT-032 Players keep the direct forge from the satchel', async ({ page }) => {
-  await identityFixture(page, { player: true, inventory: true, sheet: 'complete' })
+test('RYT-105 Players search basic items first and propose what is missing', async ({ page }) => {
+  await identityFixture(page, {
+    player: true,
+    inventory: true,
+    catalogue: true,
+    sheet: 'complete',
+  })
   await page.goto(`./#/campaign/${campaignId}/inventory`)
   await page.locator('main').getByRole('button', { name: 'Añadir objeto', exact: true }).click()
-  await expect(page.getByRole('dialog', { name: /Añadir un objeto para/ })).toHaveCount(0)
-  await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Nombre' })).toBeVisible()
-  await expect(page.getByRole('dialog').getByRole('textbox', { name: 'Valor (po)' })).toHaveCount(0)
+  const drawer = page.getByRole('dialog')
+  await drawer.getByRole('textbox', { name: 'Buscar objetos básicos' }).fill('racion')
+  await drawer.getByRole('button', { name: /Raciones/ }).click()
+  await expect(drawer).toContainText('Comida seca para un día de viaje.')
+  await drawer.getByRole('button', { name: 'Aumentar Cantidad', exact: true }).click()
+  await drawer.getByRole('button', { name: /Dar 2 a Arin/ }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  // Units a Player added never feed supplies, so their card does not promise rations.
+  await page.getByRole('button', { name: /Raciones, cantidad 2/ }).click()
+  await expect(page.getByRole('dialog')).toContainText('Comida seca para un día de viaje.')
+  await expect(page.getByRole('dialog')).not.toContainText('Cada uso da')
+  await page.keyboard.press('Escape')
+  await page.locator('main').getByRole('button', { name: 'Añadir objeto', exact: true }).click()
+  await page
+    .getByRole('dialog')
+    .getByRole('textbox', { name: 'Buscar objetos básicos' })
+    .fill('Laúd')
+  // With nothing to pick, proposing is the one action: no dead "choose an item" button.
+  await expect(page.getByRole('dialog')).toContainText('Ningún objeto básico coincide')
+  await expect(page.getByRole('button', { name: 'Elige primero un objeto' })).toHaveCount(0)
+  await page.getByRole('button', { name: /Propón un objeto nuevo/ }).click()
+  const forge = page.getByRole('dialog', { name: 'Proponer un objeto para Arin' })
+  await expect(forge.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Laúd')
+  await expect(forge.getByRole('textbox', { name: 'Valor (po)' })).toHaveCount(0)
+  await forge.getByRole('textbox', { name: 'Precio sugerido (po)' }).fill('35.5')
+  await forge.getByRole('button', { name: 'Enviar al DM', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  const shelf = page.getByRole('region', { name: 'Tus propuestas' })
+  await expect(shelf).toContainText('Laúd')
+  await expect(shelf).toContainText('Esperando al DM')
+  await shelf.getByRole('button', { name: 'Retirar la propuesta de Laúd' }).click()
+  await expect(shelf).not.toContainText('Laúd')
 })
 
 test('RYT-098 the chosen picture opens the viewer from the forge and the give drawer', async ({
@@ -691,4 +729,106 @@ test('RYT-098 the chosen picture opens the viewer from the forge and the give dr
   await expect(viewer).toHaveCount(0)
   await expect(preview).toBeFocused()
   await expect(page.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Moonstone')
+})
+
+test('RYT-104 the DM updates imported basic items from the catalogue and imports the rest', async ({
+  page,
+}, info) => {
+  const f = await identityFixture(page, { inventory: true, catalogue: true })
+  const bodies: { keys: string[]; update: boolean; request: string }[] = []
+  await page.route('**/rpc/import_basic_items', (route) => {
+    const body = route.request().postDataJSON()
+    bodies.push({
+      keys: body.items.map((item: { key: string }) => item.key),
+      update: Boolean(body.update_existing),
+      request: body.request_id,
+    })
+    return route.fallback()
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  const open = page.getByRole('button', { name: 'Importar objetos básicos' })
+  await open.click()
+  const drawer = page.getByRole('dialog', { name: 'Importar objetos básicos' })
+  const update = drawer.getByRole('button', { name: 'Actualizar 3 objetos' })
+  await expect(update).toBeVisible()
+  await audit(page, info.outputPath('import-update.png'))
+  await update.click()
+  // The rope's name and weight follow the catalogue; its price stays the DM's.
+  await expect(page.getByRole('status').filter({ hasText: /objetos? actualizados?/ })).toBeVisible()
+  expect(bodies.at(-1)).toMatchObject({ update: true })
+  expect(bodies.at(-1)!.keys.sort()).toEqual(['rations', 'reinforcedBackpack', 'rope'])
+  const rope = f.inventory.definitions.find((d) => d.basic_key === 'rope')!
+  expect(rope).toMatchObject({ name: 'Cuerda', weight_lb: 5, value_gp: 1 })
+  // Nothing changed since: a second update reports that everything matches.
+  await open.click()
+  await drawer.getByRole('button', { name: 'Actualizar 3 objetos' }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Todo lo importado ya coincide con el catálogo.' }),
+  ).toBeVisible()
+  // The import itself only sends what is missing and creates it.
+  await open.click()
+  const submit = drawer.getByRole('button', { name: /^Importar \d+ objetos$/ })
+  const count = Number((await submit.textContent())!.match(/(\d+)/)![1])
+  await submit.click()
+  await expect(
+    page.getByRole('status').filter({ hasText: `${count} objetos añadidos al almacén.` }),
+  ).toBeVisible()
+  const sent = bodies.filter((body) => !body.update).flatMap((body) => body.keys)
+  expect(sent).toHaveLength(count)
+  expect(sent).not.toContain('rope')
+})
+
+test('RYT-105 the DM review keeps focus through its steps; Escape steps back and keeps the reason', async ({
+  page,
+}) => {
+  await identityFixture(page, { inventory: true, catalogue: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  const desk = page.locator('.store-desk-link').first()
+  await desk.click()
+  const drawer = page.getByRole('dialog', { name: 'Propuestas de jugadores' })
+  const onBody = () => page.evaluate(() => document.activeElement === document.body)
+  await drawer.getByRole('button', { name: /Amuleto/ }).click()
+  await expect(drawer.getByRole('heading', { level: 3, name: /Amuleto/ })).toBeFocused()
+  expect(await onBody()).toBe(false)
+  // Reject: focus on the reason; Escape returns to the proposal and the reason survives.
+  const reject = drawer.getByRole('button', { name: 'Rechazar', exact: true })
+  await reject.click()
+  const reason = drawer.getByRole('textbox', { name: 'Motivo (opcional)' })
+  await expect(reason).toBeFocused()
+  await reason.fill('Demasiado poderoso para nivel 3')
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeVisible()
+  await expect(reject).toBeFocused()
+  await reject.click()
+  await expect(reason).toHaveValue('Demasiado poderoso para nivel 3')
+  await drawer.getByRole('button', { name: 'Volver', exact: true }).click()
+  await expect(reject).toBeFocused()
+  // Give an existing item: focus on its search; Escape returns to its link.
+  const give = drawer.getByRole('button', { name: 'Dar un objeto existente en su lugar' })
+  await give.click()
+  await expect(drawer.getByRole('textbox', { name: 'Objeto que se entrega' })).toBeFocused()
+  expect(await onBody()).toBe(false)
+  await page.keyboard.press('Escape')
+  await expect(give).toBeFocused()
+  // On the proposal itself Escape closes the drawer as before.
+  await page.keyboard.press('Escape')
+  await expect(drawer).toHaveCount(0)
+})
+
+test('RYT-104 the merge confirmation says it cannot be undone', async ({ page }) => {
+  await identityFixture(page, { inventory: true, catalogue: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  await rowAction(page, 'Cuerda de cáñamo', 'Fusionar con…', 'Fusionar con…')
+  const drawer = page.getByRole('dialog', { name: 'Fusionar Cuerda de cáñamo' })
+  await drawer
+    .getByRole('button', { name: /Flecha/ })
+    .first()
+    .click()
+  await drawer.getByRole('button', { name: /^Conservar/ }).click()
+  await expect(
+    drawer.getByText('No se puede deshacer: Cuerda de cáñamo sale del almacén para siempre.'),
+  ).toBeVisible()
 })

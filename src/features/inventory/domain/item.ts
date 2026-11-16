@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { gpAmount } from '@/shared/lib/money'
+import { translationsSchema, type Translations } from '@/shared/lib/translations'
 
 export const itemCategories = [
   'weapon',
@@ -78,6 +80,26 @@ export const itemPropertiesSchema = z.object({
     .regex(/^\d{1,4}\/\d{1,4}$/)
     .optional(),
   usesPerItem: optionalInt(1, 99),
+  // RYT-103/104 catalogue properties, validated by the server where they have rules.
+  mastery: z.string().trim().min(1).max(40).optional(),
+  proficiency: z.enum(['simple', 'martial']).optional(),
+  light: z.boolean().optional(),
+  heavy: z.boolean().optional(),
+  reach: z.boolean().optional(),
+  loading: z.boolean().optional(),
+  ammunition: z.string().max(80).optional(),
+  flatDamage: optionalInt(1, 20),
+  armorType: z.enum(['light', 'medium', 'heavy']).optional(),
+  /** Rations and water one unit gives when used (one decimal; the counters get whole units). */
+  rations: z.number().min(0).max(100).optional(),
+  water: z.number().min(0).max(100).optional(),
+  /** A container: what it holds and the share of the carried load it takes off. */
+  container: z
+    .object({
+      capacityLb: z.number().min(0).max(10000),
+      loadReductionPercent: z.number().int().min(0).max(90),
+    })
+    .optional(),
 })
 export type ItemProperties = z.infer<typeof itemPropertiesSchema>
 
@@ -90,8 +112,13 @@ export const definitionSchema = z.object({
   icon: z.string().regex(/^[a-z0-9-]{1,40}$/),
   rarity: z.enum(rarities),
   weight_tenths: z.number().int().min(0).max(100000),
-  value_gp: z.number().int().min(0).nullable(),
+  /** RYT-104: weight of one unit in lb with three decimals; source of truth over weight_tenths. */
+  weight_lb: z.coerce.number().min(0).max(10000).optional(),
+  value_gp: z.coerce.number().pipe(gpAmount).nullable(),
   description: z.string().max(2000),
+  translations: translationsSchema.optional(),
+  basic_key: z.string().max(80).nullable().optional(),
+  is_template: z.boolean().optional(),
   slot_kind: z.enum(slotKinds),
   properties: itemPropertiesSchema.catch({}),
   origin: z.enum(['dm', 'player', 'srd']),
@@ -134,6 +161,8 @@ export const eventSchema = z.object({
     // RYT-034 trades: one row per stack on each side of a completed swap; never undone here.
     'trade_in',
     'trade_out',
+    // RYT-105: a duplicate definition merged into the kept one moves its stacks.
+    'merge',
   ]),
   quantity_delta: z.number().int(),
   after_value: z.record(z.string(), z.unknown()),
@@ -143,10 +172,17 @@ export const eventSchema = z.object({
 })
 export type InventoryEvent = z.infer<typeof eventSchema>
 
+const suppliesSchema = z.object({
+  rations: z.number().int(),
+  water: z.number().int(),
+})
+export type Supplies = z.infer<typeof suppliesSchema>
 export const actionResultSchema = z.object({
   item_id: z.uuid(),
   event_id: z.uuid(),
   revision: safeRevision,
+  /** RYT-104: rations and water a use added (or an undo took back). */
+  supplies: suppliesSchema.optional(),
 })
 
 export type DefinitionDraft = {
@@ -154,13 +190,20 @@ export type DefinitionDraft = {
   category: ItemCategory
   icon: string
   rarity: Rarity
-  weight_tenths: number
+  /** Weight of one unit in lb, three decimals. */
+  weight_lb: number
   value_gp: number | null
   description: string
+  translations?: Translations
   slot_kind: SlotKind
   properties: ItemProperties
   origin?: 'dm' | 'srd'
+  is_template?: boolean
 }
+
+/** Weight of one unit in lb: weight_lb when the server sent it, else the legacy tenths. */
+export const unitPounds = (definition: Pick<ItemDefinition, 'weight_tenths' | 'weight_lb'>) =>
+  definition.weight_lb ?? definition.weight_tenths / 10
 
 export type InventoryAction =
   | {

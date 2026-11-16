@@ -1,3 +1,4 @@
+import { formatGp, gpAmount, MAX_GP, roundGp } from '@/shared/lib/money'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   ActionIcon,
@@ -7,7 +8,6 @@ import {
   Loader,
   Menu,
   Modal,
-  NumberInput,
   Stack,
   Switch,
   Title,
@@ -38,7 +38,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useCampaign } from '@/features/campaigns'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
-import { PortraitPlate } from '@/features/inventory'
+import { GpInput, PortraitPlate } from '@/features/inventory'
 import { TradeButton } from '@/features/trades'
 import { newRequestId } from '@/shared/lib/request-id'
 import { useLongPress } from '@/shared/ui/use-long-press'
@@ -493,7 +493,9 @@ function Ledger({ character }: { character: Character }) {
             {t(short)}
           </dt>
           <dd className="party-ledger-value">
-            {character.character_resources[field].toLocaleString(i18n.language)}
+            {field === 'gold'
+              ? formatGp(character.character_resources.gold, i18n.language)
+              : character.character_resources[field].toLocaleString(i18n.language)}
           </dd>
         </div>
       ))}
@@ -520,8 +522,7 @@ function DmCounters({
   useEffect(() => {
     if (resource.error) onError(resource.error.message === 'stale' ? 'stale' : 'unavailable')
   }, [resource.error, onError])
-  const limit = (field: LedgerField | 'exhaustion') =>
-    field === 'gold' ? Number.MAX_SAFE_INTEGER : 2147483647
+  const limit = (field: LedgerField | 'exhaustion') => (field === 'gold' ? MAX_GP : 2147483647)
   const send = (field: LedgerField | 'exhaustion', change: (current: number) => number) =>
     resource.apply((current) => {
       onError(null)
@@ -552,12 +553,13 @@ function DmCounters({
                     ref={goldButton}
                     type="button"
                     className="party-gold-button"
-                    aria-label={t('catalogue.editGold', { name: character.name, value })}
+                    aria-label={t('catalogue.editGold', {
+                      name: character.name,
+                      value: formatGp(value, i18n.language),
+                    })}
                     onClick={() => setGoldOpen(true)}
                   >
-                    <span className="party-ledger-value">
-                      {value.toLocaleString(i18n.language)}
-                    </span>
+                    <span className="party-ledger-value">{formatGp(value, i18n.language)}</span>
                     <span className="party-gold-key" aria-hidden="true">
                       <Pencil size={16} />
                     </span>
@@ -872,11 +874,11 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
   const { t } = useTranslation()
   const campaign = useCampaign()
   const action = useCharacterAction(campaign.id)
-  const [gold, setGold] = useState<number | string>(character.character_resources.gold)
+  const [gold, setGold] = useState<number | null>(character.character_resources.gold)
   const [attempted, setAttempted] = useState(false)
   const errorMessage = useRef<HTMLDivElement>(null)
   const request = useRef(newRequestId())
-  const valid = typeof gold === 'number' && Number.isSafeInteger(gold) && gold >= 0
+  const valid = gold !== null && gpAmount.safeParse(gold).success
   return (
     <Modal
       opened
@@ -893,7 +895,7 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
             {
               kind: 'resources',
               characterId: character.id,
-              values: { ...character.character_resources, gold: gold as number },
+              values: { ...character.character_resources, gold: roundGp(gold ?? 0) },
               requestId: request.current,
             },
             {
@@ -904,22 +906,22 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
         }}
       >
         <Stack>
-          <NumberInput
+          <GpInput
             data-autofocus
             label={t('characters.gold')}
             value={gold}
             onChange={setGold}
-            min={0}
-            max={Number.MAX_SAFE_INTEGER}
-            allowDecimal={false}
-            allowNegative={false}
-            hideControls
+            max={MAX_GP}
             readOnly={attempted}
           />
           {action.isError && (
             <Alert ref={errorMessage} tabIndex={-1} color="red" role="alert">
               {t(
-                action.error.message === 'stale' ? 'characters.stale' : 'catalogue.operationError',
+                action.error.message === 'stale'
+                  ? 'characters.stale'
+                  : action.error.message === 'cents'
+                    ? 'inventory.error.cents'
+                    : 'catalogue.operationError',
               )}
             </Alert>
           )}

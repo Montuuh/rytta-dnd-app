@@ -36,7 +36,7 @@ const named = (value: unknown) =>
   })
 
 /** Text fields that are long or free-form: the history says they were edited. */
-const prose = new Set(['notes', 'appearance', 'languages', 'proficiencies', 'alignment'])
+const prose = new Set(['notes', 'appearance', 'languages', 'proficiencies', 'alignment', 'choices'])
 /** Presentation and bookkeeping keys never shown. */
 const quiet = new Set([
   'layout',

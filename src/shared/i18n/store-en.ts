@@ -18,7 +18,6 @@ export const storeEn = {
   'store.shopItem': 'Add {{name}} to a shop',
   'store.noResults': 'No item matches these filters.',
   'store.clearFilters': 'Clear filters',
-  'store.weight': '{{value}} lb',
   'store.value': '{{value}} gp',
   'store.noValue': 'No price',
   'store.origin.dm': 'Homebrew',

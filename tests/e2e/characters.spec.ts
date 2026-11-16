@@ -304,7 +304,7 @@ test('maximum valid resources remain readable within cards at 150% text', async 
       .evaluateAll((cells) => cells.every((el) => el.scrollWidth <= el.clientWidth)),
   ).toBe(true)
   await expect(page.locator('.party-ledger-value').first()).toHaveText(
-    Number.MAX_SAFE_INTEGER.toLocaleString('es'),
+    (9_999_999_999.99).toLocaleString('es', { minimumFractionDigits: 2 }),
   )
   await capture(page, info.outputPath('max-resources-150.png'))
 })

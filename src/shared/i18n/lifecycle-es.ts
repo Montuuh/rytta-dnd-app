@@ -3,7 +3,6 @@ import type { lifecycleEn } from './lifecycle-en'
 // RYT-032 item delete, linked price sync, the reworked forge and DM "Add item" for a character.
 export const lifecycleEs = {
   'store.delete': 'Eliminar',
-  'store.deleteItem': 'Eliminar {{name}}',
   'lifecycle.deleteTitle': '¿Eliminar {{name}}?',
   'lifecycle.deleteBody': 'Sale del almacén y ya no se podrá dar ni vender.',
   'lifecycle.checking': 'Comprobando dónde se usa este objeto…',
@@ -41,7 +40,6 @@ export const lifecycleEs = {
   'forge.dropTitle': 'Suelta una imagen aquí o elige un archivo',
   'forge.dropActive': 'Suelta para usar esta imagen',
   'forge.replaceImage': 'Cambiar imagen',
-  'forge.weightUnit': '{{value}} lb',
   'forge.properties': 'Detalles de combate',
   'addItem.title': 'Añadir un objeto para {{name}}',
   'addItem.existing': 'Objeto existente',

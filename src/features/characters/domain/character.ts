@@ -1,7 +1,9 @@
 import { z } from 'zod'
+import { gpAmount } from '@/shared/lib/money'
 export const safeAmount = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
 export const resourceSchema = z.object({
-  gold: safeAmount,
+  // RYT-104: gold in gp with two decimals (0.01 gp = 1 cp).
+  gold: gpAmount,
   water_units: safeAmount.max(2147483647),
   rations: safeAmount.max(2147483647),
   exhaustion: safeAmount.max(2147483647),

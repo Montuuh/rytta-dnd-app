@@ -37,4 +37,9 @@ export type ShopFunctions = {
   answer_counter_offer: Read<Campaign & Keyed & { target_order: string; accept: boolean }>
   cancel_order: { Args: Campaign & { target_order: string }; Returns: undefined }
   revert_order: Read<Campaign & Keyed & { target_order: string; note: string }>
+  // RYT-107 (20261120120000): bulk stocking and the shop image.
+  add_listings: Read<Campaign & Keyed & { target_shop: string; items: Json }>
+  set_shop_image: Read<
+    Campaign & Keyed & { target_shop: string; expected_revision: number; new_path: string | null }
+  >
 }

@@ -99,7 +99,7 @@ describe('RYT-093 content library domain', () => {
     expect(count('creature')).toBe(330)
     expect(count('creature-trait')).toBe(48)
     expect(count('table')).toBe(1)
-    expect(groups.reduce((sum, g) => sum + g.entries.length, 0)).toBe(330 + 48 + 1 + 782)
+    expect(groups.reduce((sum, g) => sum + g.entries.length, 0)).toBe(330 + 48 + 1 + 838)
     for (const group of groups)
       for (const entry of group.entries) {
         expect(entryProblem(entry), `${entry.kind}:${entry.key}`).toBeNull()

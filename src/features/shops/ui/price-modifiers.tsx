@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Group, Slider, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { modifiedPrice, type AdminShop, type ShopAdmin } from '../domain/shops'
+import { useGp } from './use-gp'
 
 function ModifierSlider({
   shop,
@@ -15,6 +16,7 @@ function ModifierSlider({
   save: (percent: number) => Promise<unknown>
 }) {
   const { t } = useTranslation()
+  const gp = useGp()
   const current = shop.modifiers.find((m) => m.character_id === character.id)?.percent ?? 0
   // The value the DM chose, shown until the server row agrees. The latest value is always
   // sent; keyboard bursts are coalesced and a change made mid-save is sent right after it.
@@ -63,7 +65,10 @@ function ModifierSlider({
           {describe(value)}
           {sample !== null && value !== 0 && (
             <Text span size="xs" c="dimmed" ml={6}>
-              {t('admin.modifier.sample', { from: sample, to: modifiedPrice(sample, value) })}
+              {t('admin.modifier.sample', {
+                from: gp(sample),
+                to: gp(modifiedPrice(sample, value)),
+              })}
             </Text>
           )}
         </Text>

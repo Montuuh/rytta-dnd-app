@@ -3185,10 +3185,12 @@ html[data-mantine-color-scheme='light'] .order-counter {
   flex: 1;
   min-width: 0;
   font-size: var(--fs-meta);
-  /* One line keeps the pill short over the content; the full text stays in the DOM. */
-  white-space: nowrap;
+  /* Two lines fit the 44px pill, so a shop or item name is not cut at phone width. */
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .save-pill-saving {
   padding-right: 16px;

@@ -6,8 +6,15 @@ import {
   slotKinds,
   type ItemCategory,
 } from '@/features/inventory'
+import { gpAmount } from '@/shared/lib/money'
+import { translationsSchema } from '@/shared/lib/translations'
 
-const amount = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
+/** RYT-104: gp with two decimals (0.01 gp is a copper piece), as the server sends it. */
+const amount = z.coerce.number().pipe(gpAmount)
+const revision = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
+/** Shop archetype key (free text on the server, 1..40). */
+const shopKind = z.string().max(40).nullable().optional()
+const shopImage = z.string().max(300).nullable().optional()
 export const shopModes = ['auto', 'approval'] as const
 export const shopVisibilities = ['hidden', 'party', 'selected'] as const
 export const listingVisibilities = ['shop', 'hidden', 'selected'] as const
@@ -23,8 +30,11 @@ export const shopItemSchema = z.object({
   image_path: z.string().nullable().optional(),
   icon: z.string().regex(/^[a-z0-9-]{1,40}$/),
   rarity: z.enum(rarities),
-  weight_tenths: z.number().int().min(0).max(100000),
+  weight_tenths: z.number().int().min(0).max(100000).optional(),
+  /** Weight of one unit in lb (three decimals); the source of truth over weight_tenths. */
+  weight_lb: z.coerce.number().min(0).max(10000).optional(),
   description: z.string().max(2000),
+  translations: translationsSchema.optional(),
   slot_kind: z.enum(slotKinds),
   properties: itemPropertiesSchema.catch({}),
 })
@@ -44,6 +54,8 @@ export const storefrontShopSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   description: z.string(),
+  kind: shopKind,
+  image_path: shopImage,
   mode: z.enum(shopModes),
   is_open: z.boolean(),
   resale_percent: z.number().int().min(0).max(100),
@@ -61,7 +73,10 @@ export type Storefront = z.infer<typeof storefrontSchema>
 
 export const adminItemSchema = shopItemSchema.extend({
   value_gp: amount.nullable(),
-  origin: z.enum(['dm', 'srd']),
+  // A Player-made item enters the economy once the DM priced it (RYT-105).
+  origin: z.enum(['dm', 'srd', 'player']),
+  basic_key: z.string().max(80).nullable().optional(),
+  is_template: z.boolean().optional(),
 })
 export type AdminItem = z.infer<typeof adminItemSchema>
 export const adminListingSchema = z.object({
@@ -70,7 +85,7 @@ export const adminListingSchema = z.object({
   price: amount,
   stock: z.number().int().min(0).nullable(),
   visibility: z.enum(listingVisibilities),
-  revision: amount,
+  revision,
   access: z.uuid().array(),
 })
 export type AdminListing = z.infer<typeof adminListingSchema>
@@ -78,11 +93,13 @@ export const adminShopSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   description: z.string(),
+  kind: shopKind,
+  image_path: shopImage,
   visibility: z.enum(shopVisibilities),
   mode: z.enum(shopModes),
   resale_percent: z.number().int().min(0).max(100),
   is_open: z.boolean(),
-  revision: amount,
+  revision,
   access: z.uuid().array(),
   modifiers: z.object({ character_id: z.uuid(), percent: z.number().int() }).array(),
   listings: adminListingSchema.array(),
@@ -110,6 +127,7 @@ export const orderLineSchema = z.object({
   id: z.uuid(),
   definition_id: z.uuid(),
   item_name: z.string(),
+  translations: translationsSchema.optional(),
   icon: z.string(),
   quantity: z.number().int().min(1),
   unit_price: amount,
@@ -130,7 +148,7 @@ export const orderSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   closed_at: z.string().nullable(),
-  shop: z.object({ id: z.uuid(), name: z.string(), mode: z.enum(shopModes) }),
+  shop: z.object({ id: z.uuid(), name: z.string(), mode: z.enum(shopModes), kind: shopKind }),
   character: z.object({ id: z.uuid(), name: z.string() }),
   lines: orderLineSchema.array(),
 })
@@ -154,6 +172,8 @@ export const shopDraftSchema = z.object({
   resale_percent: z.number().int().min(0).max(100),
   is_open: z.boolean(),
   access: z.uuid().array().max(50),
+  /** Shop type key; an empty string clears it and a missing key keeps the saved one. */
+  kind: z.string().trim().max(40).optional(),
 })
 export type ShopDraft = z.infer<typeof shopDraftSchema>
 
@@ -170,7 +190,7 @@ export const draftOf = (shop: AdminShop): ShopDraft => ({
 
 export const listingDraftSchema = z.object({
   definition_id: z.uuid(),
-  price: z.number().int().min(0).max(100_000_000),
+  price: gpAmount.pipe(z.number().max(100_000_000)),
   stock: z.number().int().min(0).max(9999).nullable(),
   visibility: z.enum(listingVisibilities),
   access: z.uuid().array().max(50),
@@ -180,30 +200,46 @@ export type ListingDraft = z.infer<typeof listingDraftSchema>
 export type CartLine = { listingId: string; quantity: number; offeredPrice: number | null }
 export type SaleLine = { definitionId: string; quantity: number; offeredPrice: number | null }
 
-/** Mirrors the server's modifier rounding so displayed prices match the charge. */
+/** Money adds up in copper so decimal gold never drifts (0.1 + 0.2 stays 0.3). */
+export const toCents = (gp: number) => Math.round(gp * 100)
+
+/**
+ * A modified price as the server computes it: integer copper, rounded half up
+ * (1.13 gp at +50 % is 1.70 gp). What a Player pays is still the server's own price.
+ */
 export const modifiedPrice = (base: number, percent: number) =>
-  Math.max(0, Math.round((base * (100 + percent)) / 100))
+  Math.max(0, Math.floor((toCents(base) * (100 + percent) + 50) / 100) / 100)
+export const sumGp = (amounts: number[]) =>
+  amounts.reduce((sum, value) => sum + toCents(value), 0) / 100
+/** Price of a line: unit price times quantity, in exact cents. */
+export const lineGp = (unit: number, quantity: number) => (toCents(unit) * quantity) / 100
+
+/** Weight of one unit in lb: weight_lb when the server sent it, else the legacy tenths. */
+export const itemPounds = (item: Pick<ShopItem, 'weight_lb' | 'weight_tenths'>) =>
+  item.weight_lb ?? (item.weight_tenths ?? 0) / 10
 
 export const maxPurchasable = (listing: Pick<Listing, 'stock'>) =>
   Math.min(999, listing.stock ?? 999)
 
 /** What the cart will cost: the list price, or the Player's offer in approval shops. */
 export function cartTotal(lines: CartLine[], listings: Listing[], mode: ShopMode) {
-  return lines.reduce((sum, line) => {
+  const cents = lines.reduce((sum, line) => {
     const listing = listings.find((l) => l.id === line.listingId)
     if (!listing) return sum
     const each =
       mode === 'approval' && line.offeredPrice !== null ? line.offeredPrice : listing.unit_price
-    return sum + each * line.quantity
+    return sum + toCents(each) * line.quantity
   }, 0)
+  return cents / 100
 }
 
-/** Added weight in tenths of a pound, the RYT-004 unit. */
-export function cartTenths(lines: CartLine[], listings: Listing[]) {
-  return lines.reduce((sum, line) => {
+/** Added weight in lb. */
+export function cartPounds(lines: CartLine[], listings: Listing[]) {
+  const thousandths = lines.reduce((sum, line) => {
     const listing = listings.find((l) => l.id === line.listingId)
-    return sum + (listing ? listing.item.weight_tenths * line.quantity : 0)
+    return sum + (listing ? Math.round(itemPounds(listing.item) * 1000) * line.quantity : 0)
   }, 0)
+  return thousandths / 1000
 }
 
 /** Drop lines whose listing vanished and clamp quantities to the current stock. */
@@ -232,7 +268,17 @@ export const orderVariant = (order: Pick<Order, 'kind' | 'status'>): OrderVarian
 /** What the Player asked for before the DM countered: their offer, or the list price. */
 export const askedLinePrice = (line: OrderLine) => line.offered_price ?? line.unit_price
 export const askedTotal = (order: Pick<Order, 'lines'>) =>
-  order.lines.reduce((sum, line) => sum + askedLinePrice(line) * line.quantity, 0)
+  order.lines.reduce((sum, line) => sum + toCents(askedLinePrice(line)) * line.quantity, 0) / 100
+
+/** Search matches the shown (localized) name and the original one. */
+export function matchesName(
+  item: { name: string; translations?: ShopItem['translations'] },
+  needle: string,
+) {
+  if (!needle) return true
+  const names = [item.name, item.translations?.en?.name, item.translations?.es?.name]
+  return names.some((name) => name?.toLocaleLowerCase().includes(needle))
+}
 
 export function filterListings(
   listings: Listing[],
@@ -243,7 +289,7 @@ export function filterListings(
   return listings.filter(
     (listing) =>
       (category === 'all' || listing.item.category === category) &&
-      (!needle || listing.item.name.toLocaleLowerCase().includes(needle)),
+      matchesName(listing.item, needle),
   )
 }
 
@@ -291,6 +337,8 @@ export const shopErrorCodes = [
   'invalid_state',
   'open_orders',
   'forbidden',
+  /** The server does not take cent amounts yet (its release migration is not applied). */
+  'cents',
   'unavailable',
 ] as const
 export type ShopErrorCode = (typeof shopErrorCodes)[number]
@@ -314,7 +362,9 @@ export class ShopError extends Error {
     this.code = code
   }
 }
-export function shopError(message: string | undefined) {
+export function shopError(message: string | undefined, details?: string | null) {
+  if (message && /Invalid (request|item)/.test(message) && details === 'amount')
+    return new ShopError('cents')
   const match = messageCodes.find(([text]) => message?.includes(text))
   return new ShopError(match?.[1] ?? 'unavailable')
 }

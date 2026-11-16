@@ -71,16 +71,17 @@ test('keyboard search finds a condition in either language and shows its quick f
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(glossaryUrl)
   await expect(page.getByRole('heading', { level: 1, name: 'Glosario' })).toBeVisible()
-  await expect(page.getByText('782 entradas')).toBeVisible()
+  await expect(page.getByText('838 entradas')).toBeVisible()
   await evidence(page, info.project.name, 'index')
   await page.locator('body').press('/')
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
   await expect(search).toBeFocused()
   // English name in a Spanish interface.
-  // Real typing on the 782-entry "All" tab must keep every keystroke (UI review F1).
+  // Real typing on the 838-entry "All" tab must keep every keystroke (UI review F1).
   await search.pressSequentially('grappled', { delay: 40 })
   await expect(search).toHaveValue('grappled')
-  await expect(page.getByText('1 entrada', { exact: true })).toBeVisible()
+  // The condition ranks first; feats and traits that mention it follow (RYT-102).
+  await expect(page.getByText(/^\d+ entradas?$/)).toBeVisible()
   await search.press('Enter')
   await expect(page).toHaveURL(/glossary\/condition\.grappled/)
   const headword = page.getByRole('heading', { name: 'Agarrado', exact: true })
@@ -699,7 +700,7 @@ test('a category chosen right after typing survives the delayed ?q= update', asy
   await identityFixture(page, { player: true, modules: ['party', 'glossary'] })
   await page.goto(glossaryUrl)
   const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
-  await expect(page.getByText('782 entradas')).toBeVisible()
+  await expect(page.getByText('838 entradas')).toBeVisible()
   await search.fill('a')
   await page.waitForTimeout(250)
   // Choose a tab just before the 300 ms search mirror writes ?q= (it used to drop ?cat=).

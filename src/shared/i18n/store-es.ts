@@ -20,7 +20,6 @@ export const storeEs = {
   'store.shopItem': 'Añadir {{name}} a una tienda',
   'store.noResults': 'Ningún objeto coincide con estos filtros.',
   'store.clearFilters': 'Quitar filtros',
-  'store.weight': '{{value}} lb',
   'store.value': '{{value}} po',
   'store.noValue': 'Sin precio',
   'store.origin.dm': 'Homebrew',

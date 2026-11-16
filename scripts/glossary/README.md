@@ -12,8 +12,13 @@ The scripts run manually (not in CI) and need `pdfplumber` and `pdftotext`:
 3. `python3 -I scripts/glossary/build_content.py <raw-dir> src/features/glossary/content`.
 4. `python3 -I scripts/glossary/class_features.py <pdf-dir> src/features/glossary/content [--report]`
    merges the 232 SRD 5.2.1 class and subclass features (RYT-071, ADR 035) as category `feature`;
-   `--report` prints the English–Spanish pairs for review. Re-run it after step 3.
-5. Review the diff and run `npm run test` (content contract tests).
+   `--report` prints the English–Spanish pairs for review. Re-run it after step 3. It also splits
+   the options a resource pays for (Flurry of Blows, Divine Spark, Divine Sense…) out of their
+   parent feature into entries of their own (RYT-102); the parent keeps its text.
+5. `python3 -I scripts/glossary/origin_features.py <pdf-dir> src/features/glossary/content [--report]`
+   merges the 33 species traits (`feature.species-<species>-<trait>`) and 17 feats
+   (`feature.feat-<feat>`) as category `feature` without a class (RYT-102). Run it after step 4.
+6. Review the diff and run `npm run test` (content contract tests).
 
 - `srd_pdf.py`: two-column PDF reader with font styles (heading, bold lead-in, italic).
 - `blocks.py`: paragraphs, tables and Rytta inline markup (`*em*`, `**strong**`).
@@ -22,4 +27,6 @@ The scripts run manually (not in CI) and need `pdfplumber` and `pdftotext`:
   auto-link exclusions, 2014 headings, table overrides).
 - `legacy.py`: SRD 5.1 conditions and combat actions.
 - `class_features.py`: class features (reviewed pairs for levels with several features, reviewed
-  tables, subclass spell lists named from the glossary's spell pairs).
+  tables, subclass spell lists named from the glossary's spell pairs, options split out).
+- `origin_features.py`: species traits and feats (reviewed name pairs, full-width tables and
+  Spanish letter-spacing fixes).

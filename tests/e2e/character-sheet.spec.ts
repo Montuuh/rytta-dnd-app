@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
+import { identityFixture, campaignId, characterId, sampleSheet } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 
 const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
@@ -755,6 +755,8 @@ test('RYT-101 equipped gear, attack bonuses and encumbrance flow into sheet brea
   const shield = byName('Escudo')
   const sword = byName('Espada larga')
   const ring = byName('Anillo de la marea')
+  // RYT-104: weight_lb is the source of truth; the server keeps weight_tenths in step.
+  leather.weight_lb = 30
   leather.weight_tenths = 300
   ring.properties = { ...(ring.properties as Record<string, unknown>), acBonus: 1 }
   sword.properties = {
@@ -793,4 +795,135 @@ test('RYT-101 equipped gear, attack bonuses and encumbrance flow into sheet brea
   await expect(attacksDrawer).toContainText('Espada larga')
   await expect(attacksDrawer).toContainText('Objeto +1')
   await audit(page, info.outputPath('sheet-gear-attacks.png'))
+})
+
+/** A level 5 Goliath Monk with Savage Attacker, saved before its class resources existed. */
+async function monkSheet(page: Page) {
+  const base = sampleSheet()
+  const row = {
+    ...base,
+    level: 5,
+    build: {
+      ...base.build,
+      classKey: 'monk',
+      classLabel: 'Monje',
+      subclass: 'Mano Abierta',
+      subclassKey: 'open-hand',
+      speciesKey: 'goliath',
+      speciesLabel: 'Goliat',
+      backgroundKey: 'soldier',
+      backgroundLabel: 'Soldado',
+      casterKind: 'none',
+      spellAbility: null,
+      spells: [],
+      hitDie: 8,
+      speed: 35,
+      choices: { giantAncestry: 'fire' },
+      features: [
+        { id: 'species-giantAncestry', name: 'Linaje gigante', source: 'species', description: '' },
+        {
+          id: 'background-savageAttacker',
+          name: 'Atacante salvaje',
+          source: 'feat',
+          description: '',
+        },
+      ],
+      trackers: [],
+    } as Record<string, unknown>,
+  }
+  await page.route('https://rytta-test.supabase.co/rest/v1/**', async (route) => {
+    const url = new URL(route.request().url())
+    const method = url.pathname.split('/').pop()
+    const select = url.searchParams.get('select') ?? ''
+    if (
+      method === 'character_sheets' &&
+      route.request().method() === 'GET' &&
+      select.includes('build')
+    )
+      return route.fulfill({
+        json: [{ character_id: characterId, campaign_id: campaignId, ...row, portrait_path: null }],
+      })
+    if (method === 'save_character_sheet') {
+      const body = route.request().postDataJSON()
+      Object.assign(row, {
+        level: body.new_level,
+        max_hp: body.new_max_hp,
+        armor_class: body.new_armor_class,
+        build: body.new_build,
+        revision: row.revision + 1,
+      })
+      return route.fulfill({ json: row.revision })
+    }
+    return route.fallback()
+  })
+}
+const focusOnBody = (page: Page) => page.evaluate(() => document.activeElement === document.body)
+
+test('RYT-102 resources: add the missing ones, refused options, once-per-turn marks and focus', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { sheet: 'complete' })
+  await monkSheet(page)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await page
+    .getByRole('button', { name: /^Recursos/ })
+    .first()
+    .click()
+  const sheet = page.getByRole('dialog')
+  // "Add them" disappears with its success; focus lands on the first tracker it brought.
+  const add = sheet.getByRole('button', { name: 'Añadirlos' })
+  await add.focus()
+  await page.keyboard.press('Enter')
+  await expect(add).toBeHidden()
+  await expect(sheet.locator('[data-tracker-name]:focus')).toHaveCount(1)
+  expect(await focusOnBody(page)).toBe(false)
+
+  // Spend all Focus Points: every option paid from them reads unavailable and says why.
+  const focus = sheet.getByRole('region', { name: 'Puntos de concentración' })
+  for (let n = 0; n < 5; n++)
+    await focus
+      .getByRole('button', { name: /^Gastar un uso de Puntos de concentración/ })
+      .first()
+      .click()
+  await expect(focus.getByText('0/5')).toBeVisible()
+  const flurry = focus
+    .getByRole('button', { name: /^Necesita 1 de Puntos de concentración; quedan 0/ })
+    .first()
+  await expect(flurry).toHaveAttribute('aria-disabled', 'true')
+  await expect(flurry).toHaveCSS('font-weight', '500')
+  await expect(flurry).toHaveCSS('border-top-style', 'dashed')
+  // aria-disabled keeps it focusable; a press names the reason and outlines the resource.
+  await flurry.focus()
+  await page.keyboard.press('Enter')
+  await expect(focus.locator('.resource-refused')).toHaveText(
+    'Necesita 1 de Puntos de concentración; quedan 0',
+  )
+  await expect(focus.locator('.resource-meter[data-refused]')).toHaveCount(1)
+  await expect(flurry).toBeFocused()
+  await audit(page, info.outputPath('focus-empty.png'))
+
+  // The once-per-turn mark: an open box while available, ticked and struck once used.
+  const marks = sheet.getByRole('region', { name: 'Una vez por turno' })
+  const savage = marks.getByRole('button', { name: 'Atacante salvaje, usado este turno' })
+  const name = marks.locator('.turn-mark-name').first()
+  await expect(savage).toHaveAttribute('aria-pressed', 'false')
+  await expect(savage.locator('svg')).toHaveCount(0)
+  await expect(name).not.toHaveCSS('text-decoration-line', 'line-through')
+  await savage.focus()
+  await page.keyboard.press('Enter')
+  await expect(savage).toHaveAttribute('aria-pressed', 'true')
+  await expect(savage.locator('svg')).toHaveCount(1)
+  await expect(name).toHaveCSS('text-decoration-line', 'line-through')
+  await audit(page, info.outputPath('mark-used.png'))
+  // "New turn" disappears once nothing is marked; focus returns to the first mark.
+  const newTurn = marks.getByRole('button', {
+    name: 'Nuevo turno: borra las marcas de una vez por turno',
+  })
+  await newTurn.focus()
+  await page.keyboard.press('Enter')
+  await expect(newTurn).toBeHidden()
+  await expect(savage).toHaveAttribute('aria-pressed', 'false')
+  await expect(savage).toBeFocused()
+  expect(await focusOnBody(page)).toBe(false)
 })

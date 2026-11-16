@@ -13,7 +13,7 @@ import {
   type DefinitionImpact,
 } from '../data/repository'
 import type { DefinitionDraft, ItemDefinition } from '../domain/item'
-import { Forge } from './forge'
+import { Forge, type ForgeExtra } from './forge'
 import { ItemIcon } from './item-icon'
 import { CharacterPortrait } from './portrait'
 import { PriceSyncDialog } from './price-sync'
@@ -80,6 +80,7 @@ export function DefinitionEditor({
   allowGive = false,
   initialGive,
   title,
+  initialName,
   returnFocusToOpener = true,
 }: {
   campaignId: string
@@ -93,6 +94,8 @@ export function DefinitionEditor({
   initialGive?: string[]
   /** Drawer title override, e.g. "New item for Arin". */
   title?: string
+  /** Name of a new item, e.g. the text searched without results. */
+  initialName?: string
   /** Set to false when the caller returns focus itself (e.g. editors opened from a link). */
   returnFocusToOpener?: boolean
 }) {
@@ -135,7 +138,9 @@ export function DefinitionEditor({
   const message = (failure: unknown) =>
     failure instanceof Error && failure.message === 'stale'
       ? t('inventory.error.stale')
-      : t('catalogue.saveError')
+      : failure instanceof Error && failure.message === 'cents'
+        ? t('inventory.error.cents')
+        : t('catalogue.saveError')
   const finish = async (item: ItemDefinition) => {
     if (!navigator.onLine || controller?.getSnapshot().user?.id !== userId)
       throw new Error('unavailable')
@@ -214,8 +219,10 @@ export function DefinitionEditor({
       if (token === generation.current) setBusy(false)
     }
   }
-  const save = async (draft: DefinitionDraft, give: { characterIds: string[]; amount: number }) => {
-    pendingGive.current = definition ? { characterIds: [], amount: 1 } : give
+  const save = async (draft: DefinitionDraft, give: ForgeExtra) => {
+    pendingGive.current = definition
+      ? { characterIds: [], amount: 1 }
+      : { characterIds: give.characterIds, amount: give.amount }
     setError(null)
     setBusy(true)
     try {
@@ -232,6 +239,7 @@ export function DefinitionEditor({
       if (!('definitionId' in result)) throw new Error('unavailable')
       const item: ItemDefinition = {
         ...draft,
+        weight_tenths: Math.round(draft.weight_lb * 10),
         id: result.definitionId,
         campaign_id: campaignId,
         origin: definition?.origin ?? draft.origin ?? 'dm',
@@ -239,6 +247,8 @@ export function DefinitionEditor({
         created_by: definition?.created_by ?? userId,
         revision: definition ? definition.revision + 1 : 0,
         image_path: definition?.image_path ?? null,
+        basic_key: definition?.basic_key ?? null,
+        is_template: definition?.is_template ?? false,
       }
       setSaved(item)
       await finish(item)
@@ -318,8 +328,9 @@ export function DefinitionEditor({
     )
   return (
     <Forge
+      campaignId={campaignId}
       definition={definition}
-      dm
+      mode="dm"
       targets={
         allowGive && !definition
           ? (roster.data ?? []).map((c) => ({
@@ -338,6 +349,7 @@ export function DefinitionEditor({
           : []
       }
       initialGive={initialGive}
+      initialName={initialName}
       title={title}
       pending={busy}
       error={error}

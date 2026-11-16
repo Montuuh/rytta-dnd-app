@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { rarities } from '@/features/inventory'
+import { gpAmount } from '@/shared/lib/money'
+import { translationsSchema } from '@/shared/lib/translations'
 
 /** Offer slots per side; the RPC rejects more. */
 export const tradeSlots = 8
@@ -13,7 +15,8 @@ export const tradeStatuses = [
 ] as const
 export type TradeStatus = (typeof tradeStatuses)[number]
 
-const gold = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
+// RYT-104: gold in gp with two decimals.
+const gold = z.coerce.number().pipe(gpAmount)
 export const tradeItemSchema = z.object({
   item_id: z.uuid(),
   definition_id: z.uuid(),
@@ -21,6 +24,7 @@ export const tradeItemSchema = z.object({
   icon: z.string(),
   rarity: z.enum(rarities),
   category: z.string(),
+  translations: translationsSchema.optional(),
   quantity: z.number().int().min(1),
 })
 export type TradeItem = z.infer<typeof tradeItemSchema>
@@ -54,6 +58,7 @@ const summarySideSchema = z.object({
       name: z.string(),
       icon: z.string(),
       rarity: z.enum(rarities),
+      translations: translationsSchema.optional(),
       quantity: z.number().int().min(1),
     }),
   ),

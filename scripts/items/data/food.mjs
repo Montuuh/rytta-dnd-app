@@ -1,0 +1,118 @@
+// SRD 5.2.1 "Food, Drink, and Lodging" goods (inn stays are services and are left out).
+// The SRD lists prices only: descriptions, weights (none) and the rations/water values are Rytta's.
+import { cp, gp, sp } from './units.mjs'
+
+const good = (key, en, es, icon, costCp, properties, descEn, descEs) => ({
+  key,
+  name: { en, es },
+  description: { en: descEn, es: descEs },
+  descriptionSource: 'rytta',
+  category: 'consumable',
+  icon,
+  weightLb: 0,
+  costCp,
+  properties,
+})
+const meal = (key, en, es, costCp, descEn, descEs) =>
+  good(key, en, es, 'drumstick', costCp, { rations: 1 }, descEn, descEs)
+
+export const food = [
+  good(
+    'ale',
+    'Ale (mug)',
+    'Cerveza (jarra)',
+    'amphora',
+    cp(4),
+    { water: 1 },
+    'A mug of ale, about one pint.',
+    'Una jarra de cerveza, medio litro aproximadamente.',
+  ),
+  good(
+    'bread',
+    'Bread (loaf)',
+    'Pan (hogaza)',
+    'apple',
+    cp(2),
+    { rations: 0.5 },
+    'A loaf of bread: half a day of food.',
+    'Una hogaza de pan: comida para medio día.',
+  ),
+  good(
+    'cheese',
+    'Cheese (wedge)',
+    'Queso (cuña)',
+    'apple',
+    sp(1),
+    { rations: 0.5 },
+    'A wedge of cheese: half a day of food.',
+    'Una cuña de queso: comida para medio día.',
+  ),
+  good(
+    'wineCommon',
+    'Common Wine (bottle)',
+    'Vino común (botella)',
+    'amphora',
+    sp(2),
+    { water: 1.5 },
+    'A bottle of ordinary table wine, about a pint and a half.',
+    'Una botella de vino de mesa corriente, unos tres cuartos de litro.',
+  ),
+  good(
+    'wineFine',
+    'Fine Wine (bottle)',
+    'Vino de calidad (botella)',
+    'amphora',
+    gp(10),
+    { water: 1.5 },
+    'A bottle of fine vintage wine, about a pint and a half.',
+    'Una botella de vino de buena añada, unos tres cuartos de litro.',
+  ),
+  meal(
+    'mealSqualid',
+    'Squalid Meal',
+    'Comida miserable',
+    cp(1),
+    'Scraps and thin gruel, barely enough to keep going.',
+    'Sobras y gachas aguadas, lo justo para seguir adelante.',
+  ),
+  meal(
+    'mealPoor',
+    'Poor Meal',
+    'Comida pobre',
+    cp(2),
+    'Coarse bread, boiled vegetables and little else.',
+    'Pan basto, verduras hervidas y poco más.',
+  ),
+  meal(
+    'mealModest',
+    'Modest Meal',
+    'Comida modesta',
+    sp(1),
+    'A plain, filling plate of stew and bread.',
+    'Un plato sencillo y contundente de guiso con pan.',
+  ),
+  meal(
+    'mealComfortable',
+    'Comfortable Meal',
+    'Comida cómoda',
+    sp(2),
+    'A good meal with meat, fresh bread and something to drink.',
+    'Una buena comida con carne, pan recién hecho y algo de beber.',
+  ),
+  meal(
+    'mealWealthy',
+    'Wealthy Meal',
+    'Comida lujosa',
+    sp(3),
+    'Several well-cooked courses served with care.',
+    'Varios platos bien cocinados y servidos con esmero.',
+  ),
+  meal(
+    'mealAristocratic',
+    'Aristocratic Meal',
+    'Comida aristocrática',
+    sp(6),
+    'A banquet of rare dishes fit for a noble table.',
+    'Un banquete de platos exquisitos digno de una mesa noble.',
+  ),
+]

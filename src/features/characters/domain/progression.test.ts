@@ -4,8 +4,10 @@ import {
   addLibraryFeature,
   removeFeature,
   removeTracker,
+  maxTrackers,
   restoreTracker,
   syncProgression,
+  syncProgressionReport,
   type LibraryFeature,
 } from './progression'
 import { blankDraft, quickDraft } from './quick'
@@ -20,7 +22,8 @@ const [index] = Object.values(
   import.meta.glob<Row[]>('../../glossary/content/index.json', { eager: true, import: 'default' }),
 )
 const library: LibraryFeature[] = index!
-  .filter((row) => row.cat === 'feature')
+  // Class features only: species traits and feats (RYT-102) have no class.
+  .filter((row) => row.cat === 'feature' && row.fc)
   .map((row) => ({
     id: row.id,
     name: row.es,
@@ -72,6 +75,21 @@ describe('RYT-071 class resources and features', () => {
     const row = library.find((r) => r.id === strike.ref)!
     build = syncProgression(addLibraryFeature(build, row, 6), 6, library, names)
     expect(build.features.filter((f) => f.ref === strike.ref)).toHaveLength(1)
+  })
+
+  it('counts the granted resources that do not fit in a full sheet instead of dropping them silently', () => {
+    const own = Array.from({ length: maxTrackers }, (_, n) => ({
+      id: `own-${n}`,
+      name: `Own ${n}`,
+      max: 1,
+      reset: 'long' as const,
+    }))
+    const full = { ...emptyBuild(), classKey: 'monk', classLabel: 'Monje', trackers: own }
+    const report = syncProgressionReport(full, 5, library, names)
+    expect(report.build.trackers).toHaveLength(maxTrackers)
+    expect(report.leftOut).toBe(monk(5).trackers.length)
+    expect(report.leftOut).toBeGreaterThan(0)
+    expect(syncProgressionReport(monk(5), 5, library, names).leftOut).toBe(0)
   })
 
   it('adopts resources and features typed by hand instead of duplicating them', () => {

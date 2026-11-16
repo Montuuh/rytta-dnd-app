@@ -51,8 +51,9 @@ export const lifecycleEs = {
   'addItem.pickGroup': 'Objetos del almacén',
   'addItem.give': 'Dar {{amount}} a {{name}}',
   'addItem.take': 'Añadir {{amount}} a la mochila',
-  'addItem.taken': '{{item}} ×{{amount}} añadido a tu mochila.',
+  'addItem.taken': 'Añadido a tu mochila: {{item}} ×{{amount}}.',
+  'addItem.takeError': 'No se pudo añadir a tu mochila. Puedes reintentarlo.',
   'addItem.pickFirst': 'Elige primero un objeto',
-  'addItem.given': '{{item}} ×{{amount}} entregado a {{name}}.',
+  'addItem.given': 'Entregado a {{name}}: {{item}} ×{{amount}}.',
   'addItem.error': 'No se pudo dar el objeto. Puedes reintentarlo.',
 } satisfies Record<keyof typeof lifecycleEn, string>

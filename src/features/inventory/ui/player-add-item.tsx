@@ -193,7 +193,7 @@ export function PlayerAddItem({
             )}
             {failed && (
               <Alert color="red" role="alert" my="xs">
-                {t('addItem.error')}
+                {t('addItem.takeError')}
               </Alert>
             )}
             <Button

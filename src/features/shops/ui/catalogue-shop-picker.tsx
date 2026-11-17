@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { Alert, Button, Loader, Drawer, NumberInput, Select, Stack, Text } from '@mantine/core'
+import { Alert, Button, Loader, NumberInput, Select, Stack, Text } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'

@@ -3,7 +3,6 @@ import {
   Button,
   Checkbox,
   CloseButton,
-  Drawer,
   Group,
   Kbd,
   Loader,
@@ -15,6 +14,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { PageHead } from '@/shared/ui/page-head'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
 import { ChevronLeft, Plus, Search, SlidersHorizontal } from 'lucide-react'
@@ -32,6 +32,7 @@ import {
   type SpellSchool,
 } from '../domain/types'
 import { EntryArticle } from './entry-article'
+import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
 import { EntryIndex, type IndexRowData } from './entry-index'
 import { useGlossary } from './glossary-context'
 import { headwordFocus } from './headword-focus'
@@ -159,17 +160,28 @@ export function GlossaryPage() {
       return
     }
     // Back on the index: keep the reader's place by focusing the row it came from (after the
-    // layout's route-change scroll and focus, hence the next frame).
+    // layout's route-change scroll and focus, hence the next frame). The list can still swap
+    // between ranked and lettered while the search settles, which drops the row it just focused:
+    // for a moment the row is focused again whenever focus has fallen back to the page.
     if (!lastReaderEntry || !catalog) return
-    const frame = requestAnimationFrame(() => {
+    const id = lastReaderEntry
+    const started = performance.now()
+    let frame = 0
+    let centred = false
+    const tick = () => {
       const row = indexRef.current?.querySelector<HTMLAnchorElement>(
-        `[data-entry-id="${CSS.escape(lastReaderEntry ?? '')}"]`,
+        `[data-entry-id="${CSS.escape(id)}"]`,
       )
-      if (!row) return
-      row.scrollIntoView({ block: 'center' })
-      row.focus({ preventScroll: true })
-      lastReaderEntry = null
-    })
+      const dropped = !document.activeElement || document.activeElement === document.body
+      if (row && (!centred || dropped)) {
+        if (!centred) centreUntilSettled(row)
+        centred = true
+        row.focus({ preventScroll: true })
+      }
+      if (performance.now() - started < 600) frame = requestAnimationFrame(tick)
+      else lastReaderEntry = null
+    }
+    frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [entryId, wide, catalog])
   useEffect(() => {
@@ -456,6 +468,7 @@ export function GlossaryPage() {
                 grouped={!deferredQuery.trim()}
                 query={deferredQuery.trim()}
                 selectedId={entryId}
+                revealId={wide ? null : lastReaderEntry}
                 hrefFor={hrefFor}
                 bodies={glossary.bodies}
               />

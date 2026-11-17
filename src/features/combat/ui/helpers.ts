@@ -90,23 +90,61 @@ export function useDeathSaveAnnouncements(state: CombatState) {
   return text
 }
 
-/** "Last known" state: offline, failing or older than the polling budget. */
-export function useFreshness(updatedAt: number, failing: boolean) {
-  const [now, setNow] = useState(() => Date.now())
+/** The browser's own connection flag, followed live. */
+export function useOnline() {
   const [online, setOnline] = useState(() => navigator.onLine)
   useEffect(() => {
-    const tick = window.setInterval(() => setNow(Date.now()), 5_000)
     const up = () => setOnline(true)
     const down = () => setOnline(false)
     window.addEventListener('online', up)
     window.addEventListener('offline', down)
     return () => {
-      window.clearInterval(tick)
       window.removeEventListener('online', up)
       window.removeEventListener('offline', down)
     }
   }, [])
-  return !online || failing || (updatedAt > 0 && now - updatedAt > staleAfterMs)
+  return online
+}
+
+/**
+ * "Last known" state: offline, failing or older than the polling budget (`limit`, which a screen
+ * that is pushed by realtime and polls rarely raises to its own poll interval).
+ */
+export function useFreshness(updatedAt: number, failing: boolean, limit = staleAfterMs) {
+  const [now, setNow] = useState(() => Date.now())
+  const online = useOnline()
+  useEffect(() => {
+    const tick = window.setInterval(() => setNow(Date.now()), 5_000)
+    return () => window.clearInterval(tick)
+  }, [])
+  return !online || failing || (updatedAt > 0 && now - updatedAt > limit)
+}
+
+/**
+ * RYT-126 J4-27: true for a few seconds after the page comes back to the foreground (a phone
+ * unlocked, a tab reopened) until a fetch newer than that moment lands. What was on screen is the
+ * old state; the banner says it is updating instead of showing a stale "Your turn!".
+ */
+export function useResuming(updatedAt: number) {
+  const [since, setSince] = useState(0)
+  useEffect(() => {
+    let hiddenAt = 0
+    const change = () => {
+      if (document.visibilityState === 'hidden') hiddenAt = Date.now()
+      else if (hiddenAt && Date.now() - hiddenAt > 3_000) {
+        setSince(Date.now())
+        hiddenAt = 0
+      }
+    }
+    document.addEventListener('visibilitychange', change)
+    return () => document.removeEventListener('visibilitychange', change)
+  }, [])
+  useEffect(() => {
+    if (!since) return
+    const timer = window.setTimeout(() => setSince(0), 6_000)
+    return () => window.clearTimeout(timer)
+  }, [since])
+  return since > 0 && updatedAt < since
 }
 
 export function sideLabel(t: TFunction, combatant: Combatant) {

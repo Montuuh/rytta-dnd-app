@@ -6,8 +6,11 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from 'react'
-import { Button, Group, Modal, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
+import { Button, Group, SegmentedControl, Slider, Stack, Text } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
+import { ImagePlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { usePortraitErrorText } from './portrait-error'
 import { usePhone } from '@/shared/ui/use-viewport'
 import {
   afterPaint,
@@ -20,6 +23,9 @@ import {
 /** The on-screen working square; the saved portrait is drawn again at uploadSide (RYT-099). */
 const out = 512
 const maxZoom = 4
+/** The picture is re-encoded to well under 1 MB, but a file this big cannot be read on a phone. */
+const maxSourceBytes = 20 * 1024 * 1024
+const readableTypes = ['image/jpeg', 'image/png', 'image/webp']
 type Mode = 'crop' | 'fit'
 type View = { zoom: number; cx: number; cy: number }
 
@@ -79,43 +85,57 @@ export function PortraitEditor({
   name,
   onCancel,
   onSave,
+  onReplace,
   pending,
   error,
 }: {
-  error: boolean
+  error: Error | null
   file: File
   name: string
   onCancel: () => void
   onSave: (image: Blob) => void
+  /** J3-14: a refused picture is replaced from the same dialog instead of a dead end. */
+  onReplace: (file: File) => void
   pending: boolean
 }) {
   const { t } = useTranslation()
+  const errorText = usePortraitErrorText()
+  const picker = useRef<HTMLInputElement>(null)
+  const refusal = !readableTypes.includes(file.type)
+    ? 'wrongType'
+    : file.size > maxSourceBytes
+      ? 'tooLarge'
+      : null
   const phone = usePhone()
   const canvas = useRef<HTMLCanvasElement>(null)
   const previews = useRef<(HTMLCanvasElement | null)[]>([])
-  const [bitmap, setBitmap] = useState<ImageBitmap | null>(null)
-  const [unreadable, setUnreadable] = useState(false)
+  // Both belong to one file: choosing another image starts again without an effect resetting them.
+  const [loaded, setLoaded] = useState<{ file: File; image: ImageBitmap } | null>(null)
+  const [unreadableFile, setUnreadableFile] = useState<File | null>(null)
+  const bitmap = loaded?.file === file ? loaded.image : null
+  const unreadable = unreadableFile === file
   const [mode, setMode] = useState<Mode>('crop')
   const [view, setView] = useState<View>({ zoom: 1, cx: 0, cy: 0 })
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef<{ distance: number; zoom: number } | null>(null)
 
   useEffect(() => {
+    if (refusal) return
     let alive = true
     let loaded: ImageBitmap | null = null
     createImageBitmap(file)
       .then((image) => {
         loaded = image
         if (!alive) return image.close()
-        setBitmap(image)
+        setLoaded({ file, image })
         setView({ zoom: 1, cx: image.width / 2, cy: image.height / 2 })
       })
-      .catch(() => alive && setUnreadable(true))
+      .catch(() => alive && setUnreadableFile(file))
     return () => {
       alive = false
       loaded?.close()
     }
-  }, [file])
+  }, [file, refusal])
 
   useEffect(() => {
     if (!bitmap || !canvas.current) return
@@ -246,7 +266,7 @@ export function PortraitEditor({
       }, canvasToUpload)
       if (live.current) onSave(image)
     } catch {
-      if (live.current) setUnreadable(true)
+      if (live.current) setUnreadableFile(file)
     } finally {
       busy.current = false
       if (live.current) setEncoding(false)
@@ -261,13 +281,41 @@ export function PortraitEditor({
       title={
         <span className="block-sheet-title user-copy">{t('portrait.editorTitle', { name })}</span>
       }
-      closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+      closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
-      {unreadable ? (
+      {unreadable || refusal ? (
         <Stack>
-          <Text role="alert">{t('portrait.unreadable')}</Text>
+          <Text role="alert">
+            {refusal === 'wrongType'
+              ? t('inventory.portrait.wrongType')
+              : refusal === 'tooLarge'
+                ? t('inventory.portrait.tooLarge', { max: maxSourceBytes / 1024 / 1024 })
+                : t('portrait.unreadable')}
+          </Text>
+          <input
+            ref={picker}
+            type="file"
+            accept="image/webp,image/png,image/jpeg"
+            className="visually-hidden"
+            tabIndex={-1}
+            aria-hidden="true"
+            onChange={(event) => {
+              const chosen = event.currentTarget.files?.[0]
+              event.currentTarget.value = ''
+              if (chosen) onReplace(chosen)
+            }}
+          />
           <Group justify="flex-end">
-            <Button onClick={cancel}>{t('panel.close')}</Button>
+            <Button variant="subtle" onClick={cancel}>
+              {t('panel.close')}
+            </Button>
+            <Button
+              data-autofocus
+              leftSection={<ImagePlus size={18} aria-hidden="true" />}
+              onClick={() => picker.current?.click()}
+            >
+              {t('inventory.portrait.chooseOther')}
+            </Button>
           </Group>
         </Stack>
       ) : (
@@ -342,7 +390,7 @@ export function PortraitEditor({
           </div>
           {error && (
             <Text size="sm" role="alert" c="red">
-              {t('inventory.portrait.error')}
+              {errorText(error)}
             </Text>
           )}
           <Group justify="flex-end">

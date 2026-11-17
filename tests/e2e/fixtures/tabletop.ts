@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { Page } from '@playwright/test'
-import { campaignId, dmId } from './identity.ts'
+import { campaignId, characterId, dmId, playerId } from './identity.ts'
 
 // ADR 032 SDK contract fixture: one in-memory tabletop shared by several browser contexts. It
 // mirrors the RPC results and the table projection the UI relies on; authorization, validation and
@@ -23,7 +23,15 @@ type Item = Json & {
 
 const now = () => new Date().toISOString()
 
-export function tabletopServer(options: { visibleCombatant?: (id: string) => boolean } = {}) {
+export function tabletopServer(
+  options: {
+    visibleCombatant?: (id: string) => boolean
+    /** RYT-113: character id to the alias the live encounter shows it under. */
+    aliases?: Record<string, string>
+  } = {},
+) {
+  // The character's own Player keeps its token whole, off the table screen.
+  const owners: Record<string, string> = { [characterId]: playerId }
   const scenes: Scene[] = []
   const items: Item[] = []
   const cards: Json[] = []
@@ -94,6 +102,16 @@ export function tabletopServer(options: { visibleCombatant?: (id: string) => boo
             void _h
             void _l
             void _v
+            const character = i.character_id as string | null
+            const alias =
+              character && !(owners[character] === actor && !asTable)
+                ? options.aliases?.[character]
+                : undefined
+            if (alias) {
+              const { srd_id: _srd, ...data } = i.data
+              void _srd
+              return { ...rest, label: alias, character_id: null, data }
+            }
             return { ...rest, data: i.kind === 'door' ? { state: i.data.state } : i.data }
           })
     const card = live.card_id ? (cards.find((c) => c.id === live.card_id) ?? null) : null

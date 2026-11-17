@@ -70,7 +70,7 @@ for (const language of ['es', 'en'] as const)
         ).toEqual([])
         await expectTouchTargets(
           page,
-          'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term), [role="dialog"] select:visible',
+          'main button:visible, [role="dialog"] button:visible, [role="dialog"] select:visible',
         )
         await capture(page, info.outputPath(`${screen}-${language}-${scheme}-150.png`))
       }
@@ -265,7 +265,7 @@ for (const language of ['es', 'en'] as const)
         if (screen === 'settings')
           await page
             .getByRole('menuitem', {
-              name: language === 'es' ? 'Ajustes' : 'App setup',
+              name: language === 'es' ? 'Ajustes' : 'Settings',
               exact: true,
             })
             .click()
@@ -504,10 +504,11 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
     await expect(
       page.getByRole('switch', { name: `${module}: visible para jugadores` }),
     ).toBeEnabled()
+  // RYT-112: modules that have not shipped are not listed at all, so they cannot be switched on.
   for (const module of ['Misiones', 'Atlas'])
     await expect(
       page.getByRole('switch', { name: `${module}: visible para jugadores` }),
-    ).toBeDisabled()
+    ).toHaveCount(0)
 })
 
 test('RYT-035 a planned module enabled by an old campaign row is not a destination', async ({
@@ -536,10 +537,7 @@ async function axeAndTargets(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  await expectTouchTargets(
-    page,
-    'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
-  )
+  await expectTouchTargets(page, 'main button:visible, [role="dialog"] button:visible')
 }
 
 test('RYT-031/097 Player sees teammates; live state only for those the DM shares', async ({

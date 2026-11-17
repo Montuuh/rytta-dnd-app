@@ -76,6 +76,9 @@ describe('RYT-034 trade domain', () => {
       },
     }
     expect(pollInterval(tradeStateSchema.parse(live))).toBe(3_000)
+    // Realtime subscribed: the poll is only a safety net.
+    expect(pollInterval(idle, true)).toBe(60_000)
+    expect(pollInterval(tradeStateSchema.parse(live), true)).toBe(20_000)
     expect(() =>
       tradeStateSchema.parse({ ...live, trade: { ...live.trade, status: 'haggling' } }),
     ).toThrow()

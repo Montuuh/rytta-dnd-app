@@ -23,6 +23,9 @@ export class AuthFailure extends Error {
   }
 }
 
+/** A stored session that cannot be checked (no network) must not leave a bare loading screen. */
+export const initializeTimeoutMs = 8000
+
 // Independent of React and the SDK so identity/cache races can be tested directly.
 export class AuthController {
   private snapshot: AuthSnapshot = { status: 'loading', user: null, issue: null }
@@ -60,12 +63,19 @@ export class AuthController {
         if (!this.loggingOut)
           this.publish(user, !user ? (this.snapshot.user ? 'expired' : this.snapshot.issue) : null)
       })
+      let timer: ReturnType<typeof setTimeout> | undefined
       try {
-        const user = await this.adapter.initialize()
+        const user = await Promise.race([
+          this.adapter.initialize(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new AuthFailure('connection')), initializeTimeoutMs)
+          }),
+        ])
         this.publish(latest === undefined ? user : latest)
       } catch (error) {
         this.publish(null, error instanceof AuthFailure ? error.issue : 'connection')
       } finally {
+        clearTimeout(timer)
         initializing = false
       }
     })()
@@ -79,6 +89,11 @@ export class AuthController {
     await this.start()
   }
   signIn = async () => {
+    // Offline, the redirect would land on the browser's error page: say so here instead.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      this.publish(null, 'connection')
+      return
+    }
     try {
       await this.adapter.signIn()
     } catch {

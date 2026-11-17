@@ -1,8 +1,10 @@
 import { z } from 'zod'
+import { ownsStoragePath } from '@/shared/api/storage-paths'
 import { config } from '@/shared/lib/config'
 import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
 import { uploadBytes, uploadExtension, uploadTypes } from '@/shared/lib/image-encode'
+import { storageUploadError } from '@/shared/api/storage-errors'
 import { addListingsResultSchema } from '../domain/stocking'
 import {
   listingDraftSchema,
@@ -226,7 +228,7 @@ export async function uploadShopImage(campaignId: string, shopId: string, image:
   const { activeSchema } = await import('@/shared/api/supabase')
   const path = `${activeSchema()}/${id.parse(campaignId)}/${id.parse(shopId)}/${newRequestId()}.${uploadExtension(image.type)}`
   const result = await db.storage.from(bucket).upload(path, image, { contentType: image.type })
-  if (result.error) throw new Error('unavailable')
+  if (result.error) throw new Error(storageUploadError(result.error))
   return path
 }
 
@@ -244,9 +246,9 @@ export async function attachShopImage(
   path: string | null,
   requestId: string,
 ) {
-  const { data, error } = await (
-    await client()
-  ).rpc('set_shop_image', {
+  const db = await client()
+  const previous = await currentShopImage(db, campaignId, shopId)
+  const { data, error } = await db.rpc('set_shop_image', {
     target_campaign: id.parse(campaignId),
     target_shop: id.parse(shopId),
     expected_revision: revision,
@@ -254,11 +256,48 @@ export async function attachShopImage(
     request_id: id.parse(requestId),
   })
   if (error) throw shopError(error.message, error.details)
-  return imageResultSchema.parse(data)
+  const saved = imageResultSchema.parse(data)
+  // RYT-113: delete the replaced or cleared banner so it stops counting against the campaign
+  // storage quota. Only inside the active environment: a PRE copy keeps production paths, and
+  // deleting one from a PRE screen would remove the live shop's banner. Best effort.
+  const { activeSchema } = await import('@/shared/api/supabase')
+  if (
+    previous &&
+    previous !== saved.image_path &&
+    ownsStoragePath(previous, activeSchema(), campaignId, shopId)
+  )
+    await db.storage
+      .from(bucket)
+      .remove([previous])
+      .catch(() => undefined)
+  return saved
+}
+
+const shopImagesSchema = z.object({
+  shops: z.array(z.object({ id: z.string(), image_path: z.string().nullable().optional() })),
+})
+/** The shop's banner before a write; null when unknown, so nothing is deleted. */
+async function currentShopImage(
+  db: Awaited<ReturnType<typeof client>>,
+  campaignId: string,
+  shopId: string,
+) {
+  try {
+    const result = await db.rpc('get_shop_admin', { target_campaign: id.parse(campaignId) })
+    if (result.error) return null
+    const parsed = shopImagesSchema.safeParse(result.data)
+    return parsed.success
+      ? (parsed.data.shops.find((shop) => shop.id === shopId)?.image_path ?? null)
+      : null
+  } catch {
+    return null
+  }
 }
 
 /** Remove an upload that never got attached (objects are immutable; attached ones stay). */
 export async function discardShopUpload(path: string) {
+  const { activeSchema } = await import('@/shared/api/supabase')
+  if (!path.startsWith(`${activeSchema()}/`)) return
   const db = await client()
   const result = await db.storage.from(bucket).remove([path])
   if (result.error) throw result.error

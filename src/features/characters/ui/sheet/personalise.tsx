@@ -13,6 +13,7 @@ import {
 } from '@mantine/core'
 import { RotateCcw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useTrackerLabel } from '../resource-names'
 import { removeTracker, removedTracker, restoreTracker } from '../../domain/progression'
 import { grantedResources, resourceSpec } from '../../domain/resources'
 import { restKinds, sheetBlocks, trackerDisplays, type SheetBlock } from '../../domain/sheet'
@@ -41,6 +42,7 @@ export function PersonaliseDrawer({
   props: PanelProps
 }) {
   const { t } = useTranslation()
+  const trackerLabel = useTrackerLabel()
   const { build, level, change, pending } = props
   const resourcesTitle = useRef<HTMLHeadingElement>(null)
   const hidden = new Set(build.layout?.hidden ?? [])
@@ -102,7 +104,7 @@ export function PersonaliseDrawer({
               <li key={tracker.id} className="feature-row">
                 <div className="feature-main">
                   <Text fw={600} className="user-copy">
-                    {tracker.name}
+                    {trackerLabel(tracker)}
                   </Text>
                   <Text size="sm" c="dimmed">
                     {tracker.per === 'turn'
@@ -118,7 +120,7 @@ export function PersonaliseDrawer({
                   variant="subtle"
                   color="red"
 
-                  aria-label={t('panel.removeNamed', { name: tracker.name })}
+                  aria-label={t('panel.removeNamed', { name: trackerLabel(tracker) })}
                   onClick={() => {
                     change(
                       (draft) => ({ ...draft, build: removeTracker(draft.build, tracker.id) }),

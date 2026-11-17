@@ -6,6 +6,7 @@ import {
   loadDefinitionImpact,
   syncListingPrices,
   loadCatalogue,
+  itemImageTtlSeconds,
   itemImageUrl,
   listCampaignPortraits,
   listRoster,
@@ -185,13 +186,15 @@ export function useItemLifecycle(campaignId: string) {
   return { archive, syncPrices }
 }
 
+/** Re-sign ten minutes before the signed URL expires; signing is batched per screen. */
+export const itemImageRefreshMs = (itemImageTtlSeconds - 600) * 1000
 export const itemImageQuery = (userId: string | undefined, path?: string | null) =>
   queryOptions({
     queryKey: ['private', userId, 'item-image', path],
     queryFn: () => itemImageUrl(path!),
     enabled: Boolean(userId && path),
-    staleTime: 240_000,
-    refetchInterval: 240_000,
+    staleTime: itemImageRefreshMs,
+    refetchInterval: itemImageRefreshMs,
     retry: false,
   })
 

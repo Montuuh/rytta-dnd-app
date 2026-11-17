@@ -5,7 +5,6 @@ import {
   Checkbox,
   Group,
   Loader,
-  Modal,
   NumberInput,
   Select,
   Tabs,
@@ -13,6 +12,7 @@ import {
   Textarea,
   TextInput,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

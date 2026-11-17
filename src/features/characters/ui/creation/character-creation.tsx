@@ -1,31 +1,39 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { Alert, Button, Group, Paper, Progress, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
 import { CharacterPortrait } from '@/features/inventory'
 import { sheetQuery, useSheetAction } from '../../api'
 import {
+  buildGaps,
   creationSteps,
   initialDraft,
   normalizeDraft,
   stepApplies,
+  stepGaps,
+  suggestedHpFor,
   validateAll,
   validateStep,
+  type ClassLoss,
   type CreationStep,
 } from '../../domain/creation'
 import type { SheetDraft, SheetRow } from '../../domain/sheet'
+import { classEmblem } from '../class-emblem'
 import { syncProgression } from '../../domain/progression'
 import { BlankSheet } from './blank-sheet'
 import { CreationChooserPanel } from './chooser'
 import { isCreationMode } from './modes'
 import { QuickBuild } from './quick-build'
-import { CreationStepView } from './steps'
-import { newRequestId } from '@/shared/lib/request-id'
+import { CreationStepView, type Session } from './steps'
+import { LeaveDialog } from '../leave-guard'
+import { useLeaveGuard } from '../use-leave-guard'
+import { useResourceNames } from '../resource-names'
+import { useSubmitGuard } from '../use-submit-guard'
 
 const fromRow = (sheet: SheetRow): SheetDraft =>
   sheet.build
@@ -98,6 +106,10 @@ export function CharacterCreationPage() {
       </Stack>
     )
   const { sheet, character } = query.data
+  // A finished sheet opens the wizard only on purpose (`mode=full`, from "Edit the sheet"). Back
+  // from the new sheet lands on the creation URL again: it goes forward to the sheet instead.
+  if (sheet.status === 'complete' && sheet.build && mode !== 'full')
+    return <Navigate to={sheetPath} replace />
   // RYT-072: a sheet never started offers the three doors; quick and blank have their own flows.
   if (!sheet.build && sheet.status === 'draft') {
     if (mode === 'quick')
@@ -139,8 +151,12 @@ function Wizard({
   const campaign = useCampaign()
   const action = useSheetAction(campaign.id)
   const library = useSrdLibrary()
+  const names = useResourceNames()
+  const submit = useSubmitGuard()
   const [draft, setDraft] = useState(() => fromRow(sheet))
   const [revision, setRevision] = useState(sheet.revision)
+  const [displayName, setDisplayName] = useState(name)
+  const [renamed, setRenamed] = useState(name)
   // Resume a draft at the first step that still needs input.
   const [index, setIndex] = useState(() => {
     if (sheet.status === 'complete' || !sheet.build) return 0
@@ -149,8 +165,14 @@ function Wizard({
     const pending = steps.findIndex((step) => validateStep(step, initial).length > 0)
     return pending === -1 ? steps.length - 1 : pending
   })
-  const [issues, setIssues] = useState<string[]>([])
+  const [attempt, setAttempt] = useState<{ complete: boolean; exiting: boolean } | null>(null)
+  const [gapAsk, setGapAsk] = useState(false)
+  const [acked, setAcked] = useState<ReadonlySet<string>>(() => new Set())
+  const [scores, setScores] = useState<Session['scores']>({})
+  const [classLoss, setClassLoss] = useState<ClassLoss | null>(null)
   const [savedNotice, setSavedNotice] = useState(false)
+  const [leaving, setLeaving] = useState<string | null>(null)
+  const [baseline, setBaseline] = useState(() => JSON.stringify([fromRow(sheet), name]))
   const heading = useRef<HTMLHeadingElement>(null)
   const editing = sheet.status === 'complete'
   const steps = creationSteps.filter((step) => stepApplies(step, draft.build))
@@ -158,27 +180,57 @@ function Wizard({
   const last = index >= steps.length - 1
   const issuesRef = useRef<HTMLDivElement>(null)
   useEffect(() => heading.current?.focus(), [index])
-  useEffect(() => {
-    if (issues.length > 0) issuesRef.current?.scrollIntoView({ block: 'nearest' })
-  }, [issues])
+  const dirty = JSON.stringify([draft, displayName]) !== baseline
+  useLeaveGuard(dirty, setLeaving)
 
-  const save = (complete: boolean, then: () => void, exiting = false) => {
-    // Leaving keeps an incomplete draft; only what the server would reject blocks it.
-    const found = complete
+  // The maximum HP follows the suggestion until the player types another number: a change of
+  // level, Constitution or hit die moves it too (a class change always re-suggests, in the step).
+  const update: Dispatch<SetStateAction<SheetDraft>> = (change) =>
+    setDraft((previous) => {
+      const next = typeof change === 'function' ? change(previous) : change
+      const followed = previous.maxHp === suggestedHpFor(previous)
+      return followed && next.maxHp === previous.maxHp
+        ? { ...next, maxHp: suggestedHpFor(next) }
+        : next
+    })
+
+  // Blocking problems are derived from the draft, so a fixed problem disappears at once.
+  const issuesFor = (mode: { complete: boolean; exiting: boolean }) =>
+    mode.complete
       ? validateAll(draft)
       : validateStep(current, draft).filter(
-          (issue) => !exiting || issue === 'emptyName' || issue === 'tooLarge',
+          (issue) => !mode.exiting || issue === 'emptyName' || issue === 'tooLarge',
         )
-    setIssues(found)
+  const issues = attempt ? issuesFor(attempt) : []
+  useEffect(() => {
+    if (issues.length > 0) issuesRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [issues.length])
+
+  // Choices left open are named before moving on and again on the review step; the player may
+  // continue anyway (the domain accepts the incomplete build, as the blank sheet does).
+  const gapKey = (step: CreationStep, kind: string) => `${step}:${kind}`
+  const reviewGaps = editing
+    ? []
+    : buildGaps(draft.build).filter(({ step }) => stepApplies(step, draft.build))
+  const stepOpen = editing
+    ? []
+    : stepGaps(current, draft.build).map((gap) => ({ step: current, gap }))
+  // A step asks once; finishing asks again for whatever is still open, whatever was said before.
+  const openGaps = last
+    ? reviewGaps
+    : stepOpen.filter(({ step, gap }) => !acked.has(gapKey(step, gap.kind)))
+
+  const save = (complete: boolean, then: () => void, exiting = false) => {
+    const mode = { complete, exiting }
+    setAttempt(mode)
     setSavedNotice(false)
-    if (found.length > 0) return
-    action.mutate(
-      {
-        kind: 'save',
-        characterId: sheet.character_id,
-        expectedRevision: revision,
+    if (issuesFor(mode).length > 0) return
+    const trimmed = displayName.trim()
+    if (complete && !trimmed) return
+    void submit
+      .run(async () => {
         // RYT-071: finishing adds the class resources and features of the class and level.
-        draft: normalizeDraft(
+        const payload = normalizeDraft(
           complete && library
             ? {
                 ...draft,
@@ -186,21 +238,71 @@ function Wizard({
                   { ...draft.build, origin: draft.build.origin ?? 'full' },
                   draft.level,
                   library.features,
-                  { resource: (key) => t(`panel.resource.${key}` as 'panel.resource.monk-focus') },
+                  names,
                 ),
               }
             : draft,
-        ),
-        complete,
-        requestId: newRequestId(),
-      },
-      {
-        onSuccess: (next) => {
-          setRevision(typeof next === 'number' ? next : revision + 1)
-          then()
-        },
-      },
-    )
+        )
+        if (!editing && trimmed && trimmed !== renamed) {
+          const renameKey = `rename:${trimmed}`
+          await action.mutateAsync({
+            kind: 'rename',
+            characterId: sheet.character_id,
+            name: trimmed,
+            requestId: submit.idFor(renameKey),
+          })
+          submit.done(renameKey)
+          setRenamed(trimmed)
+        }
+        const key = `save:${revision}:${complete}:${JSON.stringify(payload)}`
+        const next = await action.mutateAsync({
+          kind: 'save',
+          characterId: sheet.character_id,
+          expectedRevision: revision,
+          draft: payload,
+          complete,
+          requestId: submit.idFor(key),
+        })
+        submit.done(key)
+        setRevision(typeof next === 'number' ? next : revision + 1)
+        setBaseline(JSON.stringify([draft, displayName]))
+        then()
+      })
+      .catch(() => undefined)
+  }
+  const advance = (skipGaps = false) => {
+    if (!skipGaps && openGaps.length > 0) return setGapAsk(true)
+    if (skipGaps) {
+      const keys = openGaps.map(({ step, gap }) => gapKey(step, gap.kind))
+      setAcked((previous) => new Set([...previous, ...keys]))
+    }
+    setGapAsk(false)
+    if (last) save(true, () => void navigate(sheetPath, { replace: true }))
+    else
+      save(false, () => {
+        setSavedNotice(!editing)
+        setIndex((position) => position + 1)
+        setAttempt(null)
+      })
+  }
+  const goTo = (position: number) => {
+    setAttempt(null)
+    setGapAsk(false)
+    setIndex(position)
+  }
+  const session: Session = {
+    scores,
+    remember: (method, value) => setScores((previous) => ({ ...previous, [method]: value })),
+    classLoss,
+    setClassLoss,
+    editing,
+    name: displayName,
+    setName: setDisplayName,
+    gaps: reviewGaps,
+    goTo: (step) => {
+      const position = steps.indexOf(step)
+      if (position >= 0) goTo(position)
+    },
   }
   return (
     <Stack gap="md" className="creation-wizard">
@@ -214,7 +316,7 @@ function Wizard({
         >
           {t('sheet.title')}
         </Button>
-        {!last && (
+        {!(last && editing) && (
           <Button
             variant="default"
             leftSection={<Save size={16} aria-hidden="true" />}
@@ -230,10 +332,11 @@ function Wizard({
         <CharacterPortrait
           campaignId={campaign.id}
           characterId={sheet.character_id}
-          name={name}
+          name={displayName || name}
           path={sheet.portrait_path ?? null}
           size={64}
           editable
+          emblem={classEmblem(draft.build.classKey)}
         />
         <div>
           <Text className="eyebrow user-copy" mb={4}>
@@ -263,10 +366,7 @@ function Wizard({
                 variant={position === index ? 'filled' : 'default'}
                 aria-current={position === index ? 'step' : undefined}
                 disabled={action.isPending}
-                onClick={() => {
-                  setIssues([])
-                  setIndex(position)
-                }}
+                onClick={() => goTo(position)}
               >
                 {t(`wizard.step.${step}`)}
               </Button>
@@ -285,7 +385,26 @@ function Wizard({
           </Stack>
         </Alert>
       )}
-      <CreationStepView step={current} draft={draft} setDraft={setDraft} />
+      <CreationStepView step={current} draft={draft} setDraft={update} session={session} />
+      {gapAsk && openGaps.length > 0 && (
+        <Alert color="yellow" role="alert" className="wizard-gap-alert">
+          <Stack gap="xs" align="flex-start">
+            <Text size="sm" fw={600}>
+              {t(last ? 'wizard.gap.finishTitle' : 'wizard.gap.title')}
+            </Text>
+            {openGaps.map(({ step, gap }) => (
+              <Text key={gapKey(step, gap.kind)} size="sm">
+                {gap.kind === 'bonuses'
+                  ? t('wizard.gap.bonuses')
+                  : t('wizard.gap.skills', { count: gap.missing })}
+              </Text>
+            ))}
+            <Button variant="default" onClick={() => advance(true)}>
+              {t(last ? 'wizard.gap.finishAnyway' : 'wizard.gap.continue')}
+            </Button>
+          </Stack>
+        </Alert>
+      )}
       {action.isError && (
         <Alert color="red" role="alert">
           <Stack gap="xs" align="flex-start">
@@ -304,7 +423,9 @@ function Wizard({
                 onClick={async () => {
                   const fresh = await reload()
                   if (!fresh) return
-                  setDraft(fromRow(fresh))
+                  const restored = fromRow(fresh)
+                  setDraft(restored)
+                  setBaseline(JSON.stringify([restored, displayName]))
                   setRevision(fresh.revision)
                   action.reset()
                 }}
@@ -326,27 +447,29 @@ function Wizard({
         <Button
           variant="default"
           disabled={index === 0 || action.isPending}
-          onClick={() => {
-            setIssues([])
-            setIndex(index - 1)
-          }}
+          onClick={() => goTo(index - 1)}
         >
           {t('wizard.back')}
         </Button>
         <Button
           loading={action.isPending}
-          onClick={() =>
-            last
-              ? save(true, () => void navigate(sheetPath))
-              : save(false, () => {
-                  setSavedNotice(!editing)
-                  setIndex(index + 1)
-                })
-          }
+          onClick={() => {
+            // Moving on closes the class-change notice: it was said once.
+            if (current === 'class') setClassLoss(null)
+            advance()
+          }}
         >
           {t(last ? (editing ? 'wizard.saveChanges' : 'wizard.finish') : 'wizard.next')}
         </Button>
       </Group>
+      <LeaveDialog
+        target={leaving}
+        onKeep={() => setLeaving(null)}
+        onDiscard={(target) => {
+          setLeaving(null)
+          window.location.href = target
+        }}
+      />
     </Stack>
   )
 }

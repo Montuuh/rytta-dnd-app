@@ -1,7 +1,9 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test'
 
 /** Every control matched by `selector` inside `scope` (use `:visible`) meets the touch target.
- * One round trip instead of one per control; failures list every offending element's markup. */
+ * One round trip instead of one per control; failures list every offending element's markup.
+ * An inline glossary term keeps the text flow, so its effective hit area is measured instead: its
+ * box grown by the invisible `::after` (44px each way). */
 export async function expectTouchTargets(
   scope: Page | Locator,
   selector: string,
@@ -13,6 +15,12 @@ export async function expectTouchTargets(
       return controls
         .filter((control) => {
           const box = control.getBoundingClientRect()
+          if (control.matches('.glossary-term')) {
+            const after = getComputedStyle(control, '::after')
+            const height = box.height - parseFloat(after.top) - parseFloat(after.bottom)
+            const width = box.width - parseFloat(after.left) - parseFloat(after.right)
+            return !(height >= min.height && width >= Math.max(min.height, min.width ?? 0))
+          }
           return box.height < min.height || (min.width !== undefined && box.width < min.width)
         })
         .map((control) => control.outerHTML.slice(0, 300))

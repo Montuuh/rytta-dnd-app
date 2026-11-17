@@ -52,6 +52,14 @@ async function openBestiary(page: Page) {
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
 }
 
+/** Rows far down the list are not mounted until reached: the jump strip brings a group in. */
+async function jumpTo(page: Page, group: string) {
+  await page
+    .getByRole('navigation', { name: 'Saltar a un grupo' })
+    .getByRole('button', { name: group, exact: true })
+    .click()
+}
+
 async function pick(page: Page, name: RegExp) {
   await page.getByRole('button', { name }).first().click()
 }
@@ -114,6 +122,7 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
   )
   await evidence(page, info, 'filters')
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
+  await jumpTo(page, 'Z')
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
   // Favourites live on this device.
   await page.getByRole('button', { name: 'Añadir Zombi a favoritas' }).click()
@@ -145,6 +154,7 @@ test('the filters dropdown fits a short screen and keeps its results button in r
   await filters.getByText('Muerto viviente', { exact: true }).click()
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
   await expect(filters).toHaveCount(0)
+  await jumpTo(page, 'Z')
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
 })
 
@@ -169,6 +179,7 @@ test('with large text and little room, the filters open in a side sheet', async 
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
   await expect(filters).toHaveCount(0)
   await expect(open).toBeFocused()
+  await jumpTo(page, 'Z')
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
 })
 
@@ -378,7 +389,12 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   await expect(detail(page, info).getByText('Modificada en esta campaña')).toBeVisible({
     timeout: 15_000,
   })
-  if (sheet(info)) await page.keyboard.press('Escape')
+  // The saved creature opens in the sheet once the list knows it: close it only when it is there.
+  if (sheet(info)) {
+    await expect(page.locator('.bst-sheet')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.bst-sheet')).toHaveCount(0)
+  }
 
   // Archetype and CR: a leader draft with SRD-median numbers.
   await page.getByRole('button', { name: 'Nueva criatura' }).click()
@@ -400,7 +416,12 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   await expect(page.getByText('Guardado en el bestiario: Capitán orco.')).toBeVisible()
   const captain = server.templates.find((t) => t.name === 'Capitán orco')!
   expect(captain).toMatchObject({ challenge: '2', creature_type: 'monstrosity' })
-  if (sheet(info)) await page.keyboard.press('Escape')
+  // The saved creature opens in the sheet once the list knows it: close it only when it is there.
+  if (sheet(info)) {
+    await expect(page.locator('.bst-sheet')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.bst-sheet')).toHaveCount(0)
+  }
 
   // Paste: a 2014 block from a book becomes a draft to review.
   await page.getByRole('button', { name: 'Nueva criatura' }).click()
@@ -524,7 +545,7 @@ test('RYT-052 rows reached by Shift+Tab stay clear of the sticky search row', as
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await server.install(page)
   await openBestiary(page)
-  await page.locator('.bst-row-main').nth(25).focus()
+  await page.locator('.bst-row-main').nth(20).focus()
   for (let i = 0; i < 20; i++) {
     await page.keyboard.press('Shift+Tab')
     const covered = await page.evaluate(() => {
@@ -887,4 +908,181 @@ test('RYT-091 a campaign creature that gets its first image keeps its stat colum
   await expect(aside).toBeVisible()
   await expect.poll(() => aside.evaluate((node) => node.hasAttribute('data-unstuck'))).toBe(true)
   await expect(aside).toHaveCSS('position', 'static')
+})
+
+// RYT-117: 330 creatures mount only the groups near the viewport.
+test('RYT-117 the list mounts a bounded number of rows; jumps, search and keys reach the rest', async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await openBestiary(page)
+  expect(await page.locator('.bst-row').count()).toBeLessThan(120)
+  // The jump strip reaches a group whose rows were not mounted; the heading keeps its count.
+  await jumpTo(page, 'Z')
+  await expect(page.getByRole('heading', { level: 3, name: /^Z/ })).toBeInViewport()
+  await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
+  expect(await page.locator('.bst-row').count()).toBeLessThan(120)
+  // Search is complete: a creature from an unmounted group is found.
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await search.fill('dragon rojo adulto')
+  await expect(page.getByRole('button', { name: /^Dragón rojo adulto/ })).toBeVisible()
+  await search.fill('')
+  // Home and End walk the whole list, including groups that were not mounted yet.
+  await page
+    .getByRole('button', { name: /^Aboleth/ })
+    .first()
+    .focus()
+  await page.keyboard.press('End')
+  await expect(page.locator('.bst-row-main:focus')).toContainText('Zombi')
+  await page.keyboard.press('Home')
+  await expect(page.locator('.bst-row-main:focus')).toContainText('Aboleth')
+  expect(errors).toEqual([])
+})
+
+test('RYT-117 a deep link to a late creature scrolls its row into view and opens it', async ({
+  page,
+}, info) => {
+  test.setTimeout(120_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary&creature=srd:zombie`)
+  await expect(detail(page, info).getByRole('heading', { name: 'Zombi' }).first()).toBeVisible({
+    timeout: 30_000,
+  })
+  expect(await page.locator('.bst-row').count()).toBeLessThan(120)
+  await expect(page.locator('.bst-row[data-current]')).toHaveCount(1)
+  if (!sheet(info)) await expect(page.locator('.bst-row[data-current]')).toBeInViewport()
+})
+
+test('RYT-117 clearing a search restores the exact alphabetical groups, without duplicate keys', async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  const problems: string[] = []
+  page.on('pageerror', (e) => problems.push(e.message))
+  page.on('console', (m) => {
+    if (m.type() === 'error' && !m.text().includes('supabase')) problems.push(m.text())
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await openBestiary(page)
+  const strip = () => page.locator('.bst-jump-item').allTextContents()
+  const before = await strip()
+  expect(new Set(before).size).toBe(before.length)
+  expect(before).toEqual([...before].sort((a, b) => a.localeCompare(b, 'es')))
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  for (const word of ['dra', 'a']) {
+    await search.pressSequentially(word)
+    await expect(page.locator('.bst-jump-item')).toHaveCount(0)
+    for (let i = 0; i < word.length; i++) await search.press('Backspace')
+    await expect(search).toHaveValue('')
+    await expect.poll(strip).toEqual(before)
+    // The groups never repeat a letter, however the list was reached.
+    const heads = await page.locator('.bst-group-head > span:first-child').allTextContents()
+    expect(heads).toEqual(before.filter((letter) => heads.includes(letter)))
+    expect(new Set(heads).size).toBe(heads.length)
+  }
+  expect(problems).toEqual([])
+})
+
+test('RYT-117 Back closes a creature like Escape: same row, scroll and focus', async ({
+  page,
+}, info) => {
+  test.setTimeout(120_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await openBestiary(page)
+  await jumpTo(page, 'M')
+  const row = page.getByRole('button', { name: /^Momia/ }).first()
+  await expect(row).toBeVisible()
+  // Let the jump finish settling before measuring and clicking.
+  await page.waitForTimeout(900)
+  await row.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  const topBefore = (await row.boundingBox())!.y
+  // Dispatched on the row: Playwright's own click would scroll sticky bars out of the way first.
+  await row.dispatchEvent('click')
+  await expect(detail(page, info).getByRole('heading', { name: /Momia/ }).first()).toBeVisible()
+  await page.goBack()
+  await expect(page.locator('.bst-row[data-current]')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Momia/ }).first()).toBeFocused()
+  // The row is where it was on screen (not back at the top of a 330-row list).
+  const back = (await page
+    .getByRole('button', { name: /^Momia/ })
+    .first()
+    .boundingBox())!
+  if (sheet(info)) expect(Math.abs(back.y - topBefore)).toBeLessThan(120)
+  // A second open and the close button end on the same row, with no extra history entry left.
+  await page
+    .getByRole('button', { name: /^Momia/ })
+    .first()
+    .click()
+  await expect(page.locator('.bst-row[data-current]')).toHaveCount(1)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: /^Momia/ }).first()).toBeFocused()
+})
+
+test('RYT-117 jumps and keyboard walks release what they mounted', async ({ page }) => {
+  test.setTimeout(120_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await openBestiary(page)
+  for (const letter of ['M', 'Z', 'D', 'S', 'B', 'V']) await jumpTo(page, letter)
+  await jumpTo(page, 'A')
+  await page
+    .getByRole('button', { name: /^Aboleth/ })
+    .first()
+    .focus()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Home')
+  for (let i = 0; i < 120; i++) await page.keyboard.press('ArrowDown')
+  await expect.poll(() => page.locator('.bst-row').count()).toBeLessThan(160)
+  expect(await page.evaluate(() => document.querySelectorAll('.bst-list *').length)).toBeLessThan(
+    2600,
+  )
+})
+
+test('RYT-117 the jump strip stays pinned below the search row while the list scrolls', async ({
+  page,
+}, info) => {
+  test.skip(!sheet(info), 'Beside the stat block the strip sticks inside the list column')
+  test.setTimeout(120_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await openBestiary(page)
+  await jumpTo(page, 'M')
+  const strip = page.locator('.bst-jump')
+  const searchRow = page.locator('.bst-toolbar-search')
+  await expect(strip).toBeInViewport()
+  const bar = (await searchRow.boundingBox())!
+  const stripBox = (await strip.boundingBox())!
+  // Under the pinned search row, not over it, and the jumped-to heading is clear of both.
+  expect(stripBox.y).toBeGreaterThanOrEqual(bar.y + bar.height - 1)
+  const head = (await page.getByRole('heading', { level: 3, name: /^M/ }).boundingBox())!
+  expect(head.y).toBeGreaterThanOrEqual(stripBox.y + stripBox.height - 1)
+})
+
+test('RYT-117 closing a creature opened by a deep link focuses its row', async ({ page }, info) => {
+  test.setTimeout(120_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await combatServer().install(page)
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary&creature=srd:zombie`)
+  await expect(detail(page, info).getByRole('heading', { name: 'Zombi' }).first()).toBeVisible({
+    timeout: 30_000,
+  })
+  if (sheet(info)) {
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.bst-sheet')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeFocused()
+  }
 })

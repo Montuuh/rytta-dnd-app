@@ -23,7 +23,7 @@ async function audit(page: Page, path: string) {
   ).toEqual([])
   await expectTouchTargets(
     page,
-    'main button:visible:not(.glossary-term), main a.mantine-Button-root:visible, [role="dialog"] button:visible, .rest-banner button:visible',
+    'main button:visible, main a.mantine-Button-root:visible, [role="dialog"] button:visible, .rest-banner button:visible',
   )
   await capture(page, path)
 }
@@ -130,7 +130,9 @@ test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die'
   await expect(dice.getByText('Revisa los dados', { exact: false })).toBeVisible()
   await roll.fill('9')
   // Bard CON 14 (+2): 9 + 2 × 2 = 13.
-  await expect(dice.getByRole('status')).toHaveText('Tirada 9, CON +2 por dado: +13 PG')
+  await expect(dice.getByRole('status')).toHaveText(
+    'Tirada 9, CON +2 por dado: +13 PGSolo recuperas 8 PG más: el resto de la tirada se pierde.',
+  )
   await expect(panel).toContainText('30 → 38')
   await audit(page, info.outputPath('rest-short-dice.png'))
   // The sticky dock never hides the focused control (WCAG 2.4.11).
@@ -145,6 +147,8 @@ test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die'
   // Rytta rolls instead (reduced motion: no animation, an even result).
   await autoRoll.click()
   await expect(roll).toHaveValue(/^([2-9]|1[0-6])$/)
+  // J4-23: each die stays readable in the dock once the dice leave the screen.
+  await expect(dice.locator('.rest-dice-faces')).toContainText(/^Dados: \d+( \+ \d+)*$/)
   await panel.getByRole('button', { name: 'Descansar', exact: true }).click()
   await expect(panel.getByRole('button', { name: 'Descansar', exact: true })).toHaveAttribute(
     'aria-pressed',

@@ -2,9 +2,7 @@ import {
   ActionIcon,
   Alert,
   Button,
-  Drawer,
   Group,
-  Modal,
   Select,
   Stack,
   TextInput,
@@ -12,6 +10,7 @@ import {
   Textarea,
   Tooltip,
 } from '@mantine/core'
+import { Drawer, Modal } from '@/shared/ui/overlays'
 import { useForm } from '@mantine/form'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Plus, Trash2, TriangleAlert, X } from 'lucide-react'

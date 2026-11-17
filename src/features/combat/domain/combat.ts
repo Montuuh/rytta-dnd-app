@@ -68,6 +68,15 @@ export const combatantSchema = z.object({
   can_act: z.boolean(),
   defeated: z.boolean(),
   character_id: z.uuid().optional(),
+  /**
+   * RYT-118: the character's class key for its emblem; absent under an alias for Players and the
+   * table. An unexpected value is dropped (the token keeps its initials) instead of failing.
+   */
+  class_key: z
+    .string()
+    .regex(/^[a-z]{1,20}$/)
+    .optional()
+    .catch(undefined),
   hidden: z.boolean().optional(),
   shares_live: z.boolean().optional(),
   hp_revealed: z.boolean().optional(),
@@ -461,9 +470,15 @@ export const concentrationDc = (damage: number) =>
 
 export const halfDamage = (amount: number) => Math.floor(Math.max(0, amount) / 2)
 
-/** Polling backs up realtime: fast while a fight is live, slow otherwise. */
-export const combatPollInterval = (state: CombatState | undefined) =>
-  isLive(state?.encounter?.status) ? 4_000 : 15_000
+/** Live-fight poll while the realtime channel is subscribed (realtime carries the changes). */
+export const combatRealtimePollMs = 20_000
+
+/**
+ * Polling backs up realtime: during a live fight 4s without a realtime channel and 20s while it
+ * is subscribed; 15s outside a fight.
+ */
+export const combatPollInterval = (state: CombatState | undefined, realtime = false) =>
+  isLive(state?.encounter?.status) ? (realtime ? combatRealtimePollMs : 4_000) : 15_000
 
 /** Data older than this, or a failing connection, is presented as "last known". */
 export const staleAfterMs = 15_000
@@ -472,24 +487,40 @@ export function turnOrder(combatants: readonly Combatant[]) {
   return combatants.filter((c) => c.in_turn_order)
 }
 
-/** The combatant acting after the active one (wrapping), or null. */
+/**
+ * The combatant acting after the active one (wrapping), or null. With no visible active combatant
+ * (initiative not started, or a hidden creature's turn) nothing is guessed: the top of the order
+ * would name someone who may not be next (RYT-126 J4-06).
+ */
 export function nextUp(combatants: readonly Combatant[]) {
   const order = turnOrder(combatants)
-  if (order.length === 0) return null
   const index = order.findIndex((c) => c.is_active)
-  if (index < 0) return order[0] ?? null
-  if (order.length === 1) return null
+  if (index < 0 || order.length < 2) return null
   return order[(index + 1) % order.length] ?? null
 }
 
-/** How many turns until `id` acts: 0 = now, null when it is not in the turn order. */
+/**
+ * How many turns until `id` acts: 0 = now, null when it is not in the turn order or when nobody
+ * visible acts (a hidden creature's turn: counting would guess).
+ */
 export function turnsUntil(combatants: readonly Combatant[], id: string) {
   const order = turnOrder(combatants)
   const target = order.findIndex((c) => c.id === id)
   if (target < 0) return null
   const active = order.findIndex((c) => c.is_active)
-  if (active < 0) return target
+  if (active < 0) return null
   return (target - active + order.length) % order.length
+}
+
+/**
+ * RYT-126 J4-06: the fight is running but the creature acting is not in this projection (hidden
+ * from Players and the table). Says nothing about who it is.
+ */
+export function isHiddenTurn(
+  encounter: Encounter | null | undefined,
+  combatants: readonly Combatant[],
+) {
+  return encounter?.status === 'active' && !combatants.some((c) => c.is_active)
 }
 
 /**
@@ -511,6 +542,71 @@ export function joinPlacement(combatants: readonly Combatant[], total: number) {
     before: combatants[index - 1] ?? null,
     after: combatants[index] ?? null,
     thisRound: active >= 0 && index > active,
+  }
+}
+
+/**
+ * RYT-126 J4-10: a d20 + bonus total lands in bonus + 1 .. bonus + 20. Outside it the number was
+ * probably mistyped; a gentle warning, never a block (a table may use house rules).
+ */
+export const initiativeOutlier = (total: number, bonus: number | null) =>
+  bonus !== null && Number.isInteger(total) && (total < bonus + 1 || total > bonus + 20)
+
+/** RYT-126 J4-24: ids of combatants sharing an initiative total with another one. */
+export function initiativeTies(combatants: readonly Combatant[]) {
+  const seen = new Map<number, string[]>()
+  for (const c of combatants)
+    if (c.initiative !== undefined)
+      seen.set(c.initiative, [...(seen.get(c.initiative) ?? []), c.id])
+  return new Set([...seen.values()].filter((ids) => ids.length > 1).flat())
+}
+
+export type OwnChange = {
+  hp?: { delta: number; current: number; max: number }
+  added: CombatCondition[]
+  removed: CombatCondition[]
+  concentration?: { now?: string; before?: string }
+}
+
+/**
+ * RYT-126 J4-04: what changed on the Player's own character between two projections, or null.
+ * Only what the projection carries: no hit point change is reported while the vitals are hidden.
+ */
+export function ownChange(before: Combatant, after: Combatant): OwnChange | null {
+  const change: OwnChange = { added: [], removed: [] }
+  if (before.hp && after.hp && before.hp.current !== after.hp.current)
+    change.hp = {
+      delta: after.hp.current - before.hp.current,
+      current: after.hp.current,
+      max: after.hp.max,
+    }
+  const was = new Set(before.conditions ?? [])
+  const is = new Set(after.conditions ?? [])
+  change.added = [...is].filter((key) => !was.has(key))
+  change.removed = [...was].filter((key) => !is.has(key))
+  if (before.concentration !== after.concentration)
+    change.concentration = { now: after.concentration, before: before.concentration }
+  return change.hp || change.added.length || change.removed.length || change.concentration
+    ? change
+    : null
+}
+
+/**
+ * RYT-126 J4-04: the concentration save the last visible hit on this combatant called for. The DC
+ * rides on the event detail the server already sends Players for visible events; no new data.
+ */
+export function concentrationSave(events: readonly CombatEvent[], combatantId: string) {
+  const hit = events.find(
+    (e) =>
+      e.target_combatant === combatantId &&
+      !e.undone &&
+      typeof e.detail.concentration_dc === 'number',
+  )
+  if (!hit) return null
+  const spell = hit.detail.concentration
+  return {
+    dc: hit.detail.concentration_dc as number,
+    spell: typeof spell === 'string' ? spell : '',
   }
 }
 
@@ -614,13 +710,17 @@ export function previewAsPlayer(state: CombatState, ownCharacterIds: ReadonlySet
     .map((c): Combatant => {
       const own = c.kind === 'character' && !!c.character_id && ownCharacterIds.has(c.character_id)
       const pc = c.kind === 'character'
-      const visibleVitals = pc && (own || c.shares_live === true)
+      // RYT-118: under an alias a character shares nothing with other Players; its own Player
+      // still sees it whole, as get_combat_state does.
+      const masked = !!c.public_name && !own
+      const visibleVitals = pc && (own || (c.shares_live === true && !c.public_name))
       const revealed = c.kind === 'npc' && c.hp_revealed
       return {
         ...c,
         // ADR 028: the alias replaces the name, and hides the image, for Players.
         name: c.public_name ?? c.name,
-        image_path: c.public_name ? undefined : c.image_path,
+        image_path: masked ? undefined : c.image_path,
+        class_key: masked ? undefined : c.class_key,
         public_name: undefined,
         srd_id: undefined,
         template_id: undefined,
@@ -637,6 +737,7 @@ export function previewAsPlayer(state: CombatState, ownCharacterIds: ReadonlySet
         initiative_bonus: own ? c.initiative_bonus : undefined,
         hp: visibleVitals || revealed ? c.hp : undefined,
         hp_status: pc && !visibleVitals ? 'unknown' : c.hp_status,
+        hp_band: pc && !visibleVitals ? 'unknown' : c.hp_band,
         armor_class: visibleVitals ? c.armor_class : undefined,
         conditions: pc && !visibleVitals ? undefined : c.conditions,
         concentration: pc && !visibleVitals ? undefined : c.concentration,

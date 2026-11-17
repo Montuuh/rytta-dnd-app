@@ -6,6 +6,13 @@ import { shopsFixture, shopIds } from './fixtures/shops.ts'
 
 const shops = `./#/campaign/${campaignId}/shops`
 const modules = ['party', 'inventory', 'shops']
+/** One cart button: the dock on a phone's buy tab, the purse bar's button on a tablet (J3-33). */
+const cartButton = (page: Page, count: string, total = '[0-9]+') =>
+  page.getByRole('button', {
+    name: new RegExp(
+      `Revisar carrito: ${count} por ${total} po|Abrir carrito, ${count} objetos?, ${total} po`,
+    ),
+  })
 async function audit(page: Page, path: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(
@@ -14,7 +21,7 @@ async function audit(page: Page, path: string) {
   ).toEqual([])
   await expectTouchTargets(
     page,
-    'main button:visible:not(.glossary-term), main a.mantine-Button-root:visible, [role="dialog"] button:visible:not(.glossary-term)',
+    'main button:visible, main a.mantine-Button-root:visible, [role="dialog"] button:visible',
   )
   await capture(page, path)
 }
@@ -48,16 +55,8 @@ test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory
   await expect(page.getByRole('option')).toHaveCount(0)
   await expect(picker).toBeFocused()
   await expect(page.getByText('Bóveda del contrabandista')).toHaveCount(0)
-  // The mode help is a tooltip on the badge (focusable), not a paragraph under the header.
-  await expect(page.locator('.shop-header p', { hasText: 'Las compras se completan' })).toHaveCount(
-    0,
-  )
-  await expect(page.locator('.mode-hint')).toHaveAccessibleDescription(
-    /Las compras se completan al momento/,
-  )
-  await page.locator('.mode-hint').focus()
-  await expect(page.getByRole('tooltip')).toContainText('Las compras se completan al momento')
-  await page.keyboard.press('Escape')
+  // J3-07: the mode help is a visible line (a tooltip cannot be opened by touch).
+  await expect(page.locator('.shop-mode-help')).toContainText('Las compras se completan al momento')
   await expect(page.getByRole('tooltip')).toHaveCount(0)
   await expect(page.getByText('20 % de descuento para ti')).toBeVisible()
   const potion = page.locator('.listing-card', { hasText: 'Poción de curación' })
@@ -72,13 +71,16 @@ test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory
   await audit(page, info.outputPath('storefront.png'))
 
   await page.getByRole('button', { name: 'Añadir Poción de curación al carrito' }).click()
-  await page.getByRole('button', { name: 'Añadir Poción de curación al carrito' }).click()
+  // J3-12: once in the cart the add button is a stepper on the card.
+  await page
+    .getByRole('button', { name: 'Aumentar Cantidad de Poción de curación en el carrito' })
+    .click()
   await page.locator('.listing-card', { hasText: 'Flecha' }).locator('.listing-main').click()
   const detail = page.getByRole('dialog', { name: 'Flecha' })
-  await detail.getByLabel('Cantidad').fill('5')
+  await detail.getByRole('textbox', { name: 'Cantidad' }).fill('5')
   await detail.getByRole('button', { name: 'Añadir 5 al carrito' }).click()
   await page.keyboard.press('Escape')
-  await page.getByRole('button', { name: 'Revisar carrito: 7 por 85 po' }).click()
+  await cartButton(page, '7', '85').click()
   const cart = page.getByRole('dialog', { name: 'Carrito' })
   await expect(cart.locator('.balance-change').first()).toContainText('120 po')
   await expect(cart.locator('.balance-change').first()).toContainText('35 po')
@@ -90,8 +92,9 @@ test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory
   await expect(page.locator('.purse-bar')).toContainText('35 po')
 
   await page.getByRole('link', { name: 'Ver inventario' }).click()
-  await expect(page.getByRole('button', { name: /Flecha, cantidad 5/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Poción de curación, cantidad 3/ })).toHaveCount(2)
+  // J3-23: units of one item read as one tile, whatever stack they sit in.
+  await expect(page.getByRole('button', { name: /Flecha, cantidad 25/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Poción de curación, cantidad 6/ })).toHaveCount(1)
   await page.locator('.view-switch').getByText('Bitácora', { exact: true }).click()
   await expect(page.locator('.ledger-entry').first()).toContainText('compra')
   expect(errors).toEqual([])
@@ -112,13 +115,13 @@ test('one cart spans merchants and retries only the outstanding order', async ({
   await page.getByRole('button', { name: 'Añadir Poción de curación al carrito' }).click()
   await page.getByRole('combobox', { name: /Cambiar de tienda/ }).click()
   await page.getByRole('option', { name: /El Yunque de Ámbar/ }).click()
-  await expect(page.getByRole('button', { name: 'Revisar carrito: 1 por 40 po' })).toBeVisible()
+  await expect(cartButton(page, '1', '40')).toBeVisible()
   await page.getByRole('button', { name: 'Añadir Espada larga al carrito' }).click()
-  await page.getByRole('button', { name: /Revisar carrito: 2/ }).click()
+  await cartButton(page, '2').click()
   const cart = page.getByRole('dialog', { name: 'Carrito' })
   await expect(cart.getByRole('heading', { name: 'Mercado del puerto' })).toBeVisible()
   await expect(cart.getByRole('heading', { name: 'El Yunque de Ámbar' })).toBeVisible()
-  await cart.getByLabel('Tu oferta por unidad').fill('12')
+  await cart.getByRole('textbox', { name: 'Tu oferta por unidad' }).fill('12')
   await expect(cart.locator('.cart-summary')).toContainText('52 po')
   await audit(page, info.outputPath('shared-cart.png'))
   await cart.getByRole('button', { name: 'Comprar y enviar petición al DM' }).click()
@@ -127,7 +130,7 @@ test('one cart spans merchants and retries only the outstanding order', async ({
     cart.getByRole('status').filter({ hasText: 'Compra completada por 40 po.' }),
   ).toBeVisible()
   await expect(cart.getByText('Poción de curación', { exact: true })).toHaveCount(0)
-  await expect(cart.getByLabel('Tu oferta por unidad')).toHaveValue('12')
+  await expect(cart.getByRole('textbox', { name: 'Tu oferta por unidad' })).toHaveValue('12')
   await cart.getByRole('button', { name: 'Enviar petición al DM' }).click()
   await expect(cart).toBeHidden()
   expect(market.gold()).toBe(80)
@@ -150,9 +153,9 @@ test('a Player negotiates with an approval shop and sells to it', async ({ page 
 
   await page.getByRole('tab', { name: 'Comprar' }).click()
   await page.getByRole('button', { name: 'Añadir Espada larga al carrito' }).click()
-  await page.getByRole('button', { name: /Revisar carrito/ }).click()
+  await cartButton(page, '[0-9]+').click()
   const cart = page.getByRole('dialog', { name: 'Carrito' })
-  await cart.getByLabel('Tu oferta por unidad').fill('12')
+  await cart.getByRole('textbox', { name: 'Tu oferta por unidad' }).fill('12')
   await cart.getByLabel('Mensaje para el DM').fill('Soy cliente fiel.')
   await expect(cart.getByText('El oro y los objetos solo se mueven')).toBeVisible()
   await cart.getByRole('button', { name: 'Enviar petición al DM' }).click()
@@ -160,7 +163,7 @@ test('a Player negotiates with an approval shop and sells to it', async ({ page 
 
   await page.getByRole('tab', { name: 'Vender' }).click()
   await expect(page.getByText(/No compra: .*Flecha/)).toBeVisible()
-  await page.getByLabel('Cuántos Espada larga vender').fill('1')
+  await page.getByRole('textbox', { name: 'Cuántos Espada larga vender' }).fill('1')
   await audit(page, info.outputPath('sell.png'))
   await page.getByRole('button', { name: 'Proponer venta al DM' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Propuesta de venta' })).toBeVisible()
@@ -599,8 +602,68 @@ test('RYT-107 a Player sees the shop banner with its type; tapping it opens the 
   await expect(page.getByRole('dialog', { name: 'Mercado del puerto', exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(open).toBeFocused()
-  // A shop without an image keeps the sign, with its type.
+  // RYT-112: a shop without an image shows its type's painted interior as the banner, with the
+  // type in its title; the art is decorative, so there is no viewer button to open.
   await page.goto(`${shops}?shop=${shopIds.smith}`)
-  await expect(page.locator('.shop-banner')).toHaveCount(0)
-  await expect(page.locator('.shop-sign')).toContainText('Herrería')
+  const painted = page.locator('.shop-banner .is-painted')
+  await expect(painted).toHaveCount(1)
+  await expect(painted.locator('img')).toHaveAttribute('src', /shops\/.+/)
+  await expect(page.locator('.shop-banner')).toContainText('Herrería')
+  await expect(
+    page.locator('.shop-banner').getByRole('button', { name: /^Ver la imagen/ }),
+  ).toHaveCount(0)
+})
+
+test('J3-01 a quantity field shows what will be charged: 9 against a stock of 3 becomes 3', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, { player: true, inventory: true, modules })
+  await shopsFixture(page, fixture)
+  const sent: { order_lines: { listing_id: string; quantity: number }[] }[] = []
+  await page.route('**/rpc/checkout', async (route) => {
+    sent.push(route.request().postDataJSON())
+    return route.fallback()
+  })
+  await page.goto(shops)
+  await page
+    .locator('.listing-card', { hasText: 'Poción de curación' })
+    .locator('.listing-main')
+    .click()
+  const detail = page.getByRole('dialog', { name: 'Poción de curación' })
+  const amount = detail.getByRole('textbox', { name: 'Cantidad' })
+  await amount.fill('9')
+  // The field itself takes the clamped value and says why.
+  await expect(amount).toHaveValue('3')
+  await expect(detail.getByText('Solo quedan 3')).toBeVisible()
+  await detail.getByRole('button', { name: 'Añadir 3 al carrito' }).click()
+  await page.keyboard.press('Escape')
+
+  await cartButton(page, '3', '120').click()
+  const cart = page.getByRole('dialog', { name: 'Carrito' })
+  const quantity = cart.getByRole('textbox', { name: 'Cantidad', exact: true })
+  await expect(quantity).toHaveValue('3')
+  // Typing past the stock, a negative number or zero never leaves a value the charge ignores.
+  await quantity.fill('5000')
+  await expect(quantity).toHaveValue('3')
+  await quantity.fill('0')
+  await expect(quantity).toHaveValue('1')
+  await expect(cart.getByText('Mínimo 1')).toBeVisible()
+  await quantity.fill('9')
+  await expect(quantity).toHaveValue('3')
+  await expect(cart.locator('.cart-summary')).toContainText('120 po')
+  await cart.getByRole('button', { name: 'Comprar por 120 po' }).click()
+  await expect(cart).toBeHidden()
+  // Field, line total and the request all agree.
+  expect(sent).toHaveLength(1)
+  expect(sent[0]!.order_lines.map((l) => l.quantity)).toEqual([3])
+})
+
+test('J3-06 the cart survives a reload and is checked against the shelf', async ({ page }) => {
+  const fixture = await identityFixture(page, { player: true, inventory: true, modules })
+  await shopsFixture(page, fixture)
+  await page.goto(shops)
+  await page.getByRole('button', { name: 'Añadir Poción de curación al carrito' }).click()
+  await expect(cartButton(page, '1', '40')).toBeVisible()
+  await page.reload()
+  await expect(cartButton(page, '1', '40')).toBeVisible()
 })

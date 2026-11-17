@@ -1,6 +1,7 @@
 import { localizedName } from '@/shared/lib/translations'
 import { useRef } from 'react'
-import { Alert, Button, Group, Loader, Modal, Stack, Text } from '@mantine/core'
+import { Alert, Button, Group, Loader, Stack, Text } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { Backpack, Store, Trash2 } from 'lucide-react'

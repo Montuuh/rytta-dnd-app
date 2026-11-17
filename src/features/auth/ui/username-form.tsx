@@ -7,6 +7,9 @@ import { UsernameError, usernameProblem } from '../domain/username'
 import { useSetUsername, useUsernameAvailability } from '../username-api'
 import './username-form.css'
 
+/** Unsaved text of the Settings field, kept while the drawer is closed (J1-21). Memory only. */
+const drafts = new Map<string, string>()
+
 /**
  * RYT-078: one field for the account's username, used in Settings and in the sign-in
  * prompt. Format is checked locally once the field was left or submitted; availability is asked
@@ -19,6 +22,7 @@ export function UsernameForm({
   extraAction,
   onSaved,
   autoFocus,
+  draftKey,
 }: {
   current: string | null
   initial: string
@@ -26,9 +30,17 @@ export function UsernameForm({
   extraAction?: ReactNode
   onSaved?: (username: string) => void
   autoFocus?: boolean
+  /** Keeps what was typed (not saved) for this key until saved or reset, so closing the drawer loses nothing. */
+  draftKey?: string
 }) {
   const { t } = useTranslation()
-  const [value, setValue] = useState(initial)
+  const [value, setValue] = useState(() => (draftKey && drafts.get(draftKey)) || initial)
+  const edit = (next: string) => {
+    setValue(next)
+    if (!draftKey) return
+    if (next.trim() === (current ?? initial)) drafts.delete(draftKey)
+    else drafts.set(draftKey, next)
+  }
   const [touched, setTouched] = useState(false)
   const [saved, setSaved] = useState(false)
   // Announce only after the person typed or submitted, not the check of a prefilled suggestion.
@@ -83,6 +95,7 @@ export function UsernameForm({
         if (problem || taken || unchanged || save.isPending) return
         save.mutate(name, {
           onSuccess: (stored) => {
+            if (draftKey) drafts.delete(draftKey)
             setValue(stored)
             setSaved(true)
             onSaved?.(stored)
@@ -94,7 +107,7 @@ export function UsernameForm({
         label={t('username.label')}
         value={value}
         onChange={(event) => {
-          setValue(event.currentTarget.value)
+          edit(event.currentTarget.value)
           setSaved(false)
           setDirty(true)
         }}
@@ -105,7 +118,8 @@ export function UsernameForm({
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
-        maxLength={24}
+        // Generous cap only: a longer paste is reported by the length check instead of silently cut.
+        maxLength={64}
         error={Boolean(error)}
         // The status line is Mantine's description, so the input is described by it in every state
         // (Mantine replaces a hand-written aria-describedby). Always mounted and polite.

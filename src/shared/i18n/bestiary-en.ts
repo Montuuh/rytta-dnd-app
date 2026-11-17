@@ -441,4 +441,6 @@ export const bestiaryEn = {
     'The creature will show the art of its SRD creature again. You can choose another image at any time.',
   'bestiary.art.own': 'Your campaign’s image.',
   'bestiary.art.ownSrd': 'Your image for this creature in the campaign. Only you see it.',
+  'bestiary.jump': 'Jump to a group',
+  'bestiary.range': 'Creatures {{from}} to {{to}} of {{total}}',
 }

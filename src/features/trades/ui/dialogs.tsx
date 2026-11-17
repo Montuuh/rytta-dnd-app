@@ -1,6 +1,7 @@
 import { formatGp } from '@/shared/lib/money'
 import { localizedName } from '@/shared/lib/translations'
-import { Alert, Button, Modal, Text } from '@mantine/core'
+import { Alert, Button, Text } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { Check, Coins, Handshake } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ItemIcon } from '@/features/inventory'

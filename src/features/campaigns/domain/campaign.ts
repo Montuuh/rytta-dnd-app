@@ -78,12 +78,38 @@ export const inviteEmailSchema = z.email().max(254)
 export type Invitation = z.infer<typeof invitationSchema>
 export type Member = z.infer<typeof memberSchema>
 export type SentInvitation = z.infer<typeof sentInvitationSchema>
+/** Why a campaign or membership action failed; each value has an `action.<reason>` text. */
+export type MembershipReason =
+  | 'last-dm'
+  | 'already-member'
+  | 'campaign-limit'
+  | 'member-limit'
+  | 'too-many-invitations'
+  | 'recipient-limit'
+  | 'invitation-declined'
+  /** Answering an invitation that expired, was revoked or belongs to another account. */
+  | 'invitation-unavailable'
+  | 'unavailable'
 export class MembershipError extends Error {
-  readonly reason: 'last-dm' | 'already-member' | 'unavailable'
-  constructor(reason: 'last-dm' | 'already-member' | 'unavailable') {
+  readonly reason: MembershipReason
+  constructor(reason: MembershipReason) {
     super(reason)
     this.reason = reason
   }
+}
+const membershipMessages: [string, MembershipReason][] = [
+  ['Keep at least one DM', 'last-dm'],
+  ['Already a member', 'already-member'],
+  // RYT-113 quotas and invitation throttles.
+  ['Campaign limit', 'campaign-limit'],
+  ['Member limit', 'member-limit'],
+  ['Too many invitations', 'too-many-invitations'],
+  ['Recipient invitation limit', 'recipient-limit'],
+  ['Invitation declined', 'invitation-declined'],
+]
+/** Maps a database error message of the campaign RPCs to a typed reason. */
+export function membershipReason(message: string): MembershipReason {
+  return membershipMessages.find(([text]) => message.includes(text))?.[1] ?? 'unavailable'
 }
 
 /** RYT-095: why the viewer cannot leave yet. A DM waits for the member list ('checking') and is

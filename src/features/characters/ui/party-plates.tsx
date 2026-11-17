@@ -48,8 +48,10 @@ import { hpTone, teammateLive, type HpTone, type PartyMember } from '../domain/p
 import { isClassKey } from '../domain/rules'
 import type { Condition } from '../domain/srd'
 import type { SheetSummary } from '../domain/sheet'
+import { classEmblem } from './class-emblem'
 import { CreationChooser } from './creation/chooser'
 import './party.css'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 const exhaustionLevels = 6
 const ledgerFields = [
@@ -104,6 +106,7 @@ export function HeroPlate({
           characterId={character.id}
           name={character.name}
           path={portrait}
+          emblem={classEmblem(summary?.class_key ?? live?.class_key)}
         >
           <div className="party-plate-identity">
             <p className="eyebrow party-plate-eyebrow">{t('party.hero')}</p>
@@ -206,6 +209,7 @@ export function TeammateCard({
         characterId={member.id}
         name={member.name}
         path={portrait}
+        emblem={classEmblem(member.class_key)}
       >
         {live && (
           <span className="party-mate-band" aria-hidden="true">
@@ -303,6 +307,7 @@ export function DmPlate({
         characterId={character.id}
         name={character.name}
         path={portrait}
+        emblem={classEmblem(summary?.class_key ?? live?.class_key)}
       >
         <div className="party-plate-identity">
           <Title order={2} id={nameId} tabIndex={-1} className="party-plate-name user-copy">
@@ -879,6 +884,7 @@ function GoldEditor({ character, onClose }: { character: Character; onClose: () 
   const errorMessage = useRef<HTMLDivElement>(null)
   const request = useRef(newRequestId())
   const valid = gold !== null && gpAmount.safeParse(gold).success
+  useBackToClose(true, () => !action.isPending && onClose())
   return (
     <Modal
       opened

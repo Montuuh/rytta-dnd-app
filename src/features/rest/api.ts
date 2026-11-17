@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
-import { changeRest, getRestState } from './data/repository'
+import { liveChannelUp, livePollInterval, liveStatePollMs } from '@/shared/lib/live-poll'
+import { changeRest, getRestState, restChannelKey } from './data/repository'
 import type { RestAction, RestState } from './domain/rest'
 
 export const restScope = (userId: string, campaignId: string) =>
@@ -11,8 +12,15 @@ export const restStateQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: restScope(userId, campaignId),
     queryFn: ({ signal }) => getRestState(campaignId, signal),
-    refetchInterval: (query) => (query.state.data?.status === 'open' ? 5_000 : 30_000),
+    refetchInterval: (query) => {
+      const connected = liveChannelUp(restChannelKey(campaignId))
+      return query.state.data?.status === 'open'
+        ? livePollInterval(connected, 5_000, liveStatePollMs)
+        : livePollInterval(connected, 30_000)
+    },
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     staleTime: 0,
     retry: 1,
   })

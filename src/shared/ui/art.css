@@ -1,0 +1,19 @@
+.art-plate {
+  display: block;
+  flex: none;
+  max-width: 100%;
+  object-fit: cover;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--rytta-border, rgb(127 127 127 / 0.25));
+  background: #140f0b;
+  user-select: none;
+}
+
+.art-plate-round {
+  border-radius: 50%;
+}
+
+/* Painted images sit slightly quieter on dark themes, as the bestiary plates do. */
+[data-mantine-color-scheme='dark'] .art-plate {
+  filter: brightness(0.94) saturate(0.95);
+}

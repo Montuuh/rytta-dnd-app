@@ -9,6 +9,11 @@ import type { TabletopFunctions } from './tabletop-functions'
 import type { ProfileFunctions } from './profile-functions'
 import type { GlossaryEntriesTable, GlossaryFunctions } from './glossary-functions'
 import type { ContentFunctions } from './content-functions'
+import type {
+  CampaignRollSignalsTable,
+  CampaignRollsTable,
+  CampaignSettingsFunctions,
+} from './campaign-functions'
 
 type Functions = GeneratedDatabase['public']['Functions']
 type Tables = GeneratedDatabase['public']['Tables']
@@ -142,6 +147,9 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
         Relationships: []
       }
       glossary_entries: GlossaryEntriesTable
+      // RYT-133 roll log and its realtime signal (20261130120000).
+      campaign_rolls: CampaignRollsTable
+      campaign_roll_signals: CampaignRollSignalsTable
       character_events: {
         Row: {
           id: string
@@ -167,7 +175,8 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       TabletopFunctions &
       ProfileFunctions &
       GlossaryFunctions &
-      ContentFunctions & {
+      ContentFunctions &
+      CampaignSettingsFunctions & {
         list_my_invitations: Omit<Functions['list_my_invitations'], 'Returns'> & {
           Returns: (Functions['list_my_invitations']['Returns'][number] & {
             character_id: string

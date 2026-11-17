@@ -34,6 +34,7 @@ export const restEn = {
   'rest.rollHint': 'Total of your dice, {{min}} to {{max}}.',
   'rest.autoRoll': 'Roll for me',
   'rest.rolling': 'Rolling…',
+  'rest.rolledDice': 'Dice: {{dice}}',
   'rest.heal': 'Roll {{roll}}, CON {{con}} per die: +{{heal}} HP',
   'rest.noDice': 'No dice: you only get short rest resources back.',
   'rest.rest': 'Rest',
@@ -116,4 +117,6 @@ export const restEn = {
     'The DM marked that you are not coming today, so your character is not in the party.',
   'characters.benchedLink': 'See my characters',
   'panel.field.absent': 'Absent',
+  // RYT-126
+  'rest.overheal': 'You can only recover {{room}} more HP: the rest of the roll is lost.',
 }

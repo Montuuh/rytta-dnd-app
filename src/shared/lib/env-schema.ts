@@ -5,6 +5,10 @@ const schema = z
     VITE_DATA_MODE: z.enum(['demo', 'supabase']).default('demo'),
     VITE_SUPABASE_URL: z.url().optional(),
     VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+    /** Public owner contact shown on the privacy and terms pages. */
+    VITE_CONTACT_EMAIL: z.email().optional(),
+    /** Name of the natural person responsible for the service, shown in the privacy policy. */
+    VITE_OWNER_NAME: z.string().trim().max(120).optional(),
   })
   .superRefine((value, context) => {
     if (

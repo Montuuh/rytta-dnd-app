@@ -8,6 +8,7 @@ import { ImageViewer } from '@/shared/ui/image-viewer'
 import { portraitQuery, usePortraitUpload } from '../api'
 import { initials } from './initials'
 import { PortraitEditor } from './portrait-editor'
+import { usePortraitErrorText } from './portrait-error'
 import './portrait.css'
 
 export function CharacterPortrait({
@@ -18,6 +19,7 @@ export function CharacterPortrait({
   size = 96,
   editable = false,
   viewable = false,
+  emblem = null,
 }: {
   campaignId: string
   characterId: string
@@ -30,8 +32,11 @@ export function CharacterPortrait({
    * where it does not sit inside another control; the camera stays a separate control.
    */
   viewable?: boolean
+  /** RYT-112: painted class emblem worn until a portrait is uploaded; initials when absent. */
+  emblem?: { thumb: string; full: string } | null
 }) {
   const { t } = useTranslation()
+  const errorText = usePortraitErrorText()
   const { state } = useAuth()
   const inputId = useId()
   const url = useQuery(portraitQuery(state.user!.id, path))
@@ -71,6 +76,15 @@ export function CharacterPortrait({
               src={src}
               alt={t('inventory.portrait.alt', { name })}
               onError={() => setBroken(src)}
+            />
+          ) : emblem ? (
+            <img
+              src={size <= 128 ? emblem.thumb : emblem.full}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              draggable={false}
             />
           ) : (
             <span className="portrait-initials" aria-hidden="true">
@@ -113,8 +127,12 @@ export function CharacterPortrait({
           file={file}
           name={name}
           pending={upload.isPending}
-          error={upload.isError}
+          error={upload.error}
           onCancel={close}
+          onReplace={(chosen) => {
+            upload.reset()
+            setFile(chosen)
+          }}
           onSave={(image) => upload.mutate(image, { onSuccess: close })}
         />
       )}
@@ -130,7 +148,7 @@ export function CharacterPortrait({
       )}
       {upload.isError && !file && (
         <Text size="xs" role="alert" className="portrait-error">
-          {t('inventory.portrait.error')}
+          {errorText(upload.error)}
         </Text>
       )}
     </div>

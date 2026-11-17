@@ -486,3 +486,124 @@
     transition: none;
   }
 }
+
+/* A painted interior stands in for an uploaded banner; the scrim and title sit over it. */
+.shop-banner-open.is-painted {
+  cursor: default;
+}
+.shop-banner-open.is-painted img {
+  object-position: center 40%;
+}
+
+/* The DM's shop strip: whole words, never cut cards, and a 44px "new shop" control. */
+@media (max-width: 47.99em) {
+  /* Wrap instead of scrolling sideways: every shop stays whole and "New shop" stays in reach. */
+  .admin-shops .admin-shop-list {
+    flex-wrap: wrap;
+    overflow: visible;
+    align-items: stretch;
+  }
+  .admin-shops .admin-shop-item {
+    flex: 1 1 11rem;
+    min-width: min(100%, 11rem);
+  }
+  .admin-shops .admin-shop-list > .mantine-Button-root {
+    flex: 0 0 auto;
+    align-self: center;
+    min-width: 44px;
+    white-space: nowrap;
+  }
+}
+.admin-shops .admin-shop-name {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.admin-shops .admin-shop-list > .mantine-Button-root {
+  min-height: 44px;
+}
+
+/* RYT-125 (J3-20): on a phone the uploaded picture gets a taller banner and a visible "view
+   picture" control in its free top corner, clear of the shop picker at the bottom. */
+@media (max-width: 47.99em) {
+  .shop-banner {
+    aspect-ratio: 4 / 3;
+  }
+}
+.shop-banner-view {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgb(245 235 214 / 0.55);
+  border-radius: 8px;
+  background: rgb(var(--banner-scrim) / 0.72);
+  color: var(--banner-ink);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* J3-29: the mode is the header's one badge; "closed" is a state line, the discount sits with prices. */
+.shop-closed-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.shop-banner .shop-closed-flag {
+  color: var(--banner-ink);
+}
+.shop-mode-help {
+  color: var(--app-muted);
+  max-width: 70ch;
+}
+.shop-modifier.shop-modifier {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+}
+
+/* J3-17: a sale row keeps its stepper under the name on a phone. */
+.sell-row {
+  flex-wrap: wrap;
+}
+.sell-row-body {
+  flex: 1 1 8rem;
+}
+.sell-row-amount {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px 12px;
+  flex: 0 0 auto;
+}
+.sell-row-amount .amount-row {
+  width: 11rem;
+}
+.sell-all {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--app-accent);
+  font-weight: 600;
+}
+@media (max-width: 47.99em) {
+  .sell-row-amount {
+    flex: 1 0 100%;
+    justify-content: space-between;
+  }
+}
+
+/* J3-04: an offer note sits under the line it is about. */
+.cart-offer-note {
+  color: var(--warn);
+}
+.order-error {
+  scroll-margin-block: 80px;
+}

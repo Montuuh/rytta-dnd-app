@@ -9,7 +9,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
-import { ChevronsRight, Hourglass, Pencil } from 'lucide-react'
+import { ChevronsRight, EyeOff, Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import {
@@ -18,6 +18,8 @@ import {
   canEnterInitiative,
   deathState,
   initiativeProgress,
+  initiativeTies,
+  isHiddenTurn,
   nextUp,
   turnsUntil,
   type CombatState,
@@ -25,11 +27,15 @@ import {
 } from '../domain/combat'
 import { CombatSummary } from './combat-summary'
 import { DeathSaveTracker } from './death-saves'
-import { useDeathSaveAnnouncements, useRunner } from './helpers'
+import { useDeathSaveAnnouncements, useResuming, useRunner } from './helpers'
 import { InitiativeEntry } from './initiative-entry'
 import { InitiativeRail } from './initiative-rail'
+import { OwnNews } from './own-news'
+import { OwnStrip } from './own-strip'
 import { NetworkState, Pips, RunnerError } from './parts'
+import { RecentEvents } from './recent-events'
 import { CombatantToken } from './token'
+import { useOwnNews } from './use-own-news'
 
 /**
  * The table view (RYT-038, RYT-042): the one combat screen Players have, and the DM's default.
@@ -45,12 +51,15 @@ export function TableDisplay({
   stale,
   connected,
   retry,
+  updatedAt = 0,
 }: {
   campaignId: string
   state: CombatState
   stale: boolean
   connected: boolean
-  retry: () => void
+  retry: () => unknown
+  /** When the state last arrived (ms): "offline for N s" and the "updating" cue after a wake-up. */
+  updatedAt?: number
 }) {
   const { t } = useTranslation()
   const encounter = state.encounter!
@@ -61,7 +70,23 @@ export function TableDisplay({
   const own = combatants.filter((c) => c.is_own)
   const ownInOrder = own.find((c) => c.in_turn_order) ?? null
   const until = ownInOrder ? turnsUntil(combatants, ownInOrder.id) : null
-  const yours = status === 'active' && active?.is_own === true
+  const hiddenTurn = isHiddenTurn(encounter, combatants)
+  const resuming = useResuming(updatedAt)
+  const yours = status === 'active' && active?.is_own === true && !resuming
+  const ownStrip = own.find((c) => c.hp) ?? null
+  const ties = status === 'initiative' ? initiativeTies(combatants) : undefined
+  const ownNews = useOwnNews(state)
+  // RYT-126 J4-33: whoever owns the document title can prefix it on the own turn: the root carries
+  // `data-own-turn` and a `rytta:own-turn` event announces each change.
+  useEffect(() => {
+    const root = document.documentElement
+    root.toggleAttribute('data-own-turn', yours)
+    window.dispatchEvent(new CustomEvent('rytta:own-turn', { detail: { yours } }))
+    return () => {
+      root.removeAttribute('data-own-turn')
+      window.dispatchEvent(new CustomEvent('rytta:own-turn', { detail: { yours: false } }))
+    }
+  }, [yours])
   const { run, pending, error, trigger, clear } = useRunner(campaignId)
   const announcement = useTurnAnnouncement(state)
   const deathNews = useDeathSaveAnnouncements(state)
@@ -85,6 +110,7 @@ export function TableDisplay({
   const progress = initiativeProgress(combatants)
   return (
     <Stack gap="lg" className={`combat-table-view${yours ? ' is-your-turn' : ''}`}>
+      <OwnNews news={ownNews.news} dismiss={ownNews.dismiss} />
       <VisuallyHidden aria-live="polite">{announcement.text}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{saved}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{deathNews}</VisuallyHidden>
@@ -98,7 +124,9 @@ export function TableDisplay({
               ? t('combat.round', { round: encounter.round })
               : t(`combat.status.${status}`)}
           </Text>
-          {status !== 'ended' && <NetworkState stale={stale} connected={connected} retry={retry} />}
+          {status !== 'ended' && (
+            <NetworkState stale={stale} connected={connected} retry={retry} updatedAt={updatedAt} />
+          )}
         </Group>
       </header>
       <RunnerError error={error} trigger={trigger} onClose={clear} />
@@ -118,7 +146,33 @@ export function TableDisplay({
         </div>
       )}
 
-      {status === 'active' && (
+      {status === 'active' && resuming && (
+        // RYT-126 J4-27: the phone just woke up; what was on screen is the old state.
+        <div className="combat-table-now is-updating" role="status">
+          <Loader size={28} color="currentColor" />
+          <Text className="combat-table-active">{t('combat.turn.updating')}</Text>
+        </div>
+      )}
+
+      {status === 'active' && !resuming && hiddenTurn && (
+        // RYT-126 J4-06: the creature acting is hidden from this viewer. No guess at who is next,
+        // no countdown: only that a turn is running out of sight.
+        <div className="combat-table-now is-hidden-turn">
+          <div className="combat-table-actor">
+            <div className="combat-table-actor-grid is-text">
+              <Text className="combat-table-label">{t('combat.turn.now')}</Text>
+              <Text className="combat-table-active">
+                <EyeOff size={28} aria-hidden="true" className="combat-hidden-icon" />
+                {t('combat.turn.hidden')}
+              </Text>
+            </div>
+          </div>
+          <Text className="combat-table-help">{t('combat.turn.hiddenHelp')}</Text>
+          {ownStrip && <OwnStrip combatant={ownStrip} effects={state.effects} />}
+        </div>
+      )}
+
+      {status === 'active' && !resuming && !hiddenTurn && (
         // The Player's own status is the dominant line (RYT-042 F3): on the own turn "Your turn!"
         // replaces the (already known) own name at display size; while waiting, the countdown
         // has its own full-width band, not a line under "Up next".
@@ -129,7 +183,10 @@ export function TableDisplay({
             <div className="combat-table-actor-grid">
               {active && <CombatantToken combatant={active} viewable />}
               <Text className="combat-table-label">{t('combat.turn.now')}</Text>
-              <Text className="combat-table-active">
+              <Text
+                className="combat-table-active"
+                data-long={(active?.name.length ?? 0) > 16 || undefined}
+              >
                 {yours ? t('combat.turn.yours') : (active?.name ?? '—')}
               </Text>
             </div>
@@ -180,7 +237,12 @@ export function TableDisplay({
               <div className="combat-table-actor-grid">
                 {upNext && <CombatantToken combatant={upNext} showActive={false} viewable />}
                 <Text className="combat-table-label">{t('combat.turn.upNext')}</Text>
-                <Text className="combat-table-next">{upNext?.name ?? '—'}</Text>
+                <Text
+                  className="combat-table-next"
+                  data-long={(upNext?.name.length ?? 0) > 16 || undefined}
+                >
+                  {upNext?.name ?? '—'}
+                </Text>
               </div>
             </div>
           )}
@@ -190,8 +252,11 @@ export function TableDisplay({
               <span>{t('combat.turn.in', { count: until })}</span>
             </p>
           )}
+          {ownStrip && <OwnStrip combatant={ownStrip} effects={state.effects} />}
         </div>
       )}
+
+      {status !== 'ended' && <RecentEvents events={state.events} />}
 
       {status === 'ended' ? (
         <CombatSummary encounter={encounter} combatants={combatants} large />
@@ -203,6 +268,8 @@ export function TableDisplay({
           <InitiativeRail
             combatants={combatants}
             mode={{ kind: 'read' }}
+            ties={ties}
+            flash={ownNews.flash}
             large
             rowAction={(c) =>
               canEnterInitiative(status, c) && !entryOpen(c) ? (

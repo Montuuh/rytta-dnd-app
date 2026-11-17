@@ -88,6 +88,10 @@ export type CharacterFunctions = {
       created_at: string
       role: string
       player_modules: string[]
+      // RYT-130 / RYT-133 (20261130120000).
+      party_level: number | null
+      dice_mode: string
+      roll_visibility: string
     }[]
   }
   save_character_sheet: {
@@ -241,6 +245,8 @@ export type CharacterFunctions = {
       armor_class: number | null
       exhaustion: number | null
       conditions: string[] | null
+      // RYT-130: complete sheet below the party level (20261130120000).
+      below_party_level: boolean
     }[]
   }
 }

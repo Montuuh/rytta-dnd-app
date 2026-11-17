@@ -2,6 +2,7 @@ import { Button, Stack, Text } from '@mantine/core'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Coins, HeartPulse, ScrollText, Sparkles, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useTrackerLabel } from '../resource-names'
 import { useAuth } from '@/features/auth'
 import { QueryFeedback } from '@/features/campaigns'
 import { relativeTime } from '@/shared/lib/relative-time'
@@ -108,6 +109,7 @@ export function HistoryBlock({
 
 function useHistoryText(build: Build) {
   const { t, i18n } = useTranslation()
+  const trackerLabel = useTrackerLabel()
   const number = (value: number | null) =>
     value === null ? '—' : value.toLocaleString(i18n.language)
   const fieldLabel = (field: string) =>
@@ -188,9 +190,10 @@ function useHistoryText(build: Build) {
           })
         case 'tracker':
           return t('panel.history.tracker', {
-            name:
-              build.trackers.find((tracker) => tracker.id === line.id)?.name ??
-              t('panel.history.resource'),
+            name: (() => {
+              const tracker = build.trackers.find((item) => item.id === line.id)
+              return tracker ? trackerLabel(tracker) : t('panel.history.resource')
+            })(),
             before: line.before,
             after: line.after,
           })

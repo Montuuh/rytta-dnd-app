@@ -404,8 +404,9 @@ export async function uploadCreatureImage(
 }
 
 /**
- * Realtime invalidation: the encounters row carries no secrets and its revision moves on every
- * combat change, so subscribers refetch the role projection. Polling stays on as the fallback.
+ * Realtime invalidation: the encounter_signals row carries only status and revision (the DM-only
+ * encounters row holds the summary), and the revision moves on every combat change, so
+ * subscribers refetch the role projection. Polling stays on as the fallback.
  * `onStatus` reports whether the channel is subscribed (false while connecting or after loss).
  */
 export function subscribeEncounters(
@@ -427,7 +428,7 @@ export function subscribeEncounters(
           {
             event: '*',
             schema: activeSchema(),
-            table: 'encounters',
+            table: 'encounter_signals',
             filter: `campaign_id=eq.${campaign}`,
           },
           () => onChange(),

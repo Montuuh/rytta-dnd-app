@@ -5,7 +5,6 @@ import {
   Alert,
   Button,
   Group,
-  Modal,
   NumberInput,
   SegmentedControl,
   Select,
@@ -15,6 +14,7 @@ import {
   Textarea,
   Tooltip,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import {
   ArrowDown,
   ArrowUp,

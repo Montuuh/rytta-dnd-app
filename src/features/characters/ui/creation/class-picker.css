@@ -1,0 +1,116 @@
+/* RYT-112 class chooser: painted emblem cards, two columns on phones. */
+.class-picker {
+  display: grid;
+  gap: 8px;
+}
+.class-picker-label {
+  margin: 0;
+  font-weight: 600;
+}
+.class-picker-hint {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.class-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 48em) {
+  .class-picker-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 62em) {
+  .class-picker-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.class-pick {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 2px;
+  min-height: 44px;
+  padding: 12px 8px 10px;
+  border-radius: 14px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  text-align: center;
+  cursor: pointer;
+}
+.class-pick[data-checked] {
+  /* A heavier frame and the check: the choice never rests on colour alone. */
+  border: 2px solid var(--app-accent);
+  padding: 11px 7px 9px;
+  background: var(--app-raised);
+}
+.class-pick:has(.class-pick-input:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .class-pick:hover {
+    border-color: var(--app-accent-secondary);
+  }
+}
+.class-pick-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.class-pick-art {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  overflow: hidden;
+  color: var(--app-accent);
+  background: var(--app-bg);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 40%, transparent);
+}
+.class-pick-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.class-pick-name {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.class-pick-role {
+  font-size: var(--fs-meta);
+  line-height: 1.3;
+  color: var(--app-text);
+  text-wrap: balance;
+}
+.class-pick-meta {
+  font-size: var(--fs-meta);
+  line-height: 1.3;
+  color: var(--app-muted);
+}
+.class-pick-check {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  display: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--app-on-accent);
+  background: var(--app-accent);
+}
+.class-pick[data-checked] .class-pick-check {
+  display: grid;
+}

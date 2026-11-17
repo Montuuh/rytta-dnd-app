@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { config } from '@/shared/lib/config'
+import { trackLiveChannel } from '@/shared/lib/live-poll'
 import { tradeErrorCode, tradeStateSchema, type TradeAction } from '../domain/trade'
 import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
@@ -93,9 +94,12 @@ export async function changeTrade(campaignId: string, action: TradeAction) {
  * Realtime invalidation: any change to a trade of this campaign that RLS lets the viewer see.
  * Polling stays on as the fallback, so a failed socket only slows updates down.
  */
+export const tradeChannelKey = (campaignId: string) => `trades:${campaignId}`
+
 export function subscribeTrades(campaignId: string, onChange: () => void) {
   let stop: (() => void) | undefined
   let cancelled = false
+  const status = trackLiveChannel(tradeChannelKey(campaignId))
   void (async () => {
     try {
       const db = await client()
@@ -113,7 +117,12 @@ export function subscribeTrades(campaignId: string, onChange: () => void) {
           },
           () => onChange(),
         )
-        .subscribe()
+        .subscribe((next) => {
+          if (cancelled) return
+          // Up: refetch what a reconnection may have missed. Down: refetch so the fast poll starts.
+          status.set(next === 'SUBSCRIBED')
+          onChange()
+        })
       stop = () => void db.removeChannel(channel)
       if (cancelled) stop()
     } catch {
@@ -122,6 +131,7 @@ export function subscribeTrades(campaignId: string, onChange: () => void) {
   })()
   return () => {
     cancelled = true
+    status.release()
     stop?.()
   }
 }

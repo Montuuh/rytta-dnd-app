@@ -1,13 +1,14 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router'
-import { lazy, Suspense } from 'react'
+import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router'
+import { lazy, Suspense, useEffect } from 'react'
 import { LoadingScreen } from '@/shared/ui/loading-screen'
 import { Layout, SettingsRoute } from './layout'
-import { CampaignBoundary, CampaignHub } from '@/features/campaigns'
-import { useAuth } from '@/features/auth'
+import { CampaignBoundary, CampaignHub, useCampaign } from '@/features/campaigns'
+import { takeReturnTo, useAuth } from '@/features/auth'
 import { LibraryPage } from '@/features/content-library'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
 import { CampaignLanding } from '@/pages/campaign-landing'
+import { LegalPage } from '@/pages/legal-page'
 
 // RYT-034: campaign pages render inside the trade layer (invitation popup, window, dock).
 const TradeLayer = lazy(() =>
@@ -75,11 +76,36 @@ const ModulePage = lazy(() =>
   import('@/pages/module-page').then((module) => ({ default: module.ModulePage })),
 )
 
+/** J3-16: the storeroom lives in the DM Command Center; a Player's equivalent is the inventory. */
+function ItemsRedirect() {
+  const { role } = useCampaign()
+  return (
+    <Navigate
+      to={role === 'dm' ? '../members?panel=items' : '../inventory'}
+      relative="path"
+      replace
+    />
+  )
+}
+
+/** J1-17: after signing in from a deep link the callback lands on the hub; this returns there. */
+function RestoreReturnTo() {
+  const { state } = useAuth()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (state.status !== 'signed-in') return
+    const route = takeReturnTo()
+    if (route) void navigate(route, { replace: true })
+  }, [state.status, navigate])
+  return null
+}
+
 export function AppRouter() {
   const { state } = useAuth()
   const live = config.VITE_DATA_MODE === 'supabase'
   return (
     <HashRouter>
+      <RestoreReturnTo />
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           {/* The table screen lies under the miniatures: no app chrome around the map. */}
@@ -91,6 +117,9 @@ export function AppRouter() {
           <Route element={<Layout />}>
             {/* RYT-069: Settings is a drawer; old links open it over the home screen. */}
             <Route path="settings" element={<SettingsRoute />} />
+            {/* RYT-115: public documents, reachable signed out, so they sit before the gate. */}
+            <Route path="privacy" element={<LegalPage kind="privacy" />} />
+            <Route path="terms" element={<LegalPage kind="terms" />} />
             {live && state.status !== 'signed-in' ? (
               <Route
                 path="*"
@@ -98,7 +127,10 @@ export function AppRouter() {
               />
             ) : (
               <>
-                <Route index element={live ? <CampaignHub /> : <Navigate to="/party" replace />} />
+                <Route
+                  index
+                  element={live ? <CampaignHub /> : <Navigate to="/glossary" replace />}
+                />
 
                 {live && (
                   <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
@@ -114,10 +146,7 @@ export function AppRouter() {
                         />
                         <Route path="members" element={<DmCenterPage />} />
                         {/* RYT-027: the storeroom moved into the DM Command Center. */}
-                        <Route
-                          path="items"
-                          element={<Navigate to="../members?panel=items" relative="path" replace />}
-                        />
+                        <Route path="items" element={<ItemsRedirect />} />
                         <Route path="inventory" element={<InventoryPage />} />
                         <Route path="shops" element={<ShopsPage />} />
                         <Route path="combat" element={<CombatPage />} />

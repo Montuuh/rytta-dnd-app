@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Text } from '@mantine/core'
 import { Coins, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { ItemIcon, type Rarity } from '@/features/inventory'
+import { ItemIcon, type ItemCategory, type Rarity } from '@/features/inventory'
 import { formatGp } from '@/shared/lib/money'
 
 /** Gold (to the copper) with a coin glyph; the accessible text always names the unit. */
@@ -36,13 +36,16 @@ export function ItemGlyph({
   icon,
   imagePath,
   rarity,
-  size = 22,
+  category,
+  size = category ? 44 : 22,
   viewable = false,
   name,
 }: {
   icon: string
   imagePath?: string | null
   rarity: Rarity
+  /** J3-28: without a picture the category's painting stands in, as in the satchel. */
+  category?: ItemCategory
   size?: number
   /** Only outside another control. */
   viewable?: boolean
@@ -52,6 +55,7 @@ export function ItemGlyph({
     <ItemIcon
       imagePath={imagePath}
       icon={icon}
+      category={category}
       size={size}
       viewable={viewable}
       name={name}

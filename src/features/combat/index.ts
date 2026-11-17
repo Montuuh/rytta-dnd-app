@@ -8,3 +8,7 @@ export type { CombatState, Combatant, Encounter } from './domain/combat'
 export { CreatureEditor } from './ui/creature-editor'
 export { blankDraft, draftFromBlock, type CreatureDraft } from './ui/creature-draft'
 export type { TemplateInput } from './domain/combat'
+// RYT-126: the table screen derives staleness and the turn text the way the combat screens do.
+export { Elapsed } from './ui/parts'
+export { useFreshness } from './ui/helpers'
+export { isHiddenTurn, nextUp } from './domain/combat'

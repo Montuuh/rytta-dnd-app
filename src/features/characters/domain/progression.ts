@@ -14,8 +14,15 @@ export type LibraryFeature = {
   subclass: string | null
 }
 
-/** Localized names for resources Rytta adds (the build stores them as written). */
-export type ProgressionNames = { resource: (key: string) => string }
+/**
+ * The name stored on a resource Rytta adds. Callers pass the resource key, so a sheet is not
+ * frozen in the language it was created in (the interface translates keyed resources at render).
+ * `match` lists the localized names a hand-typed resource may carry to be adopted.
+ */
+export type ProgressionNames = {
+  resource: (key: string) => string
+  match?: (key: string) => string[]
+}
 
 export const removedTracker = (key: string) => `tracker:${key}`
 export const removedFeature = (ref: string) => `feature:${ref}`
@@ -125,8 +132,10 @@ export function syncProgressionReport(
     let tracker = original
     if (!tracker.key) {
       // A resource typed by hand with the class resource's name becomes that resource.
-      const match = [...wanted.values()].find(
-        (spec) => plain(names.resource(spec.key)) === plain(tracker.name),
+      const match = [...wanted.values()].find((spec) =>
+        [names.resource(spec.key), ...(names.match?.(spec.key) ?? [])].some(
+          (name) => plain(name) === plain(tracker.name),
+        ),
       )
       if (!match) {
         trackers.push(tracker)
@@ -233,4 +242,25 @@ export function addLibraryFeature(build: Build, row: LibraryFeature, level: numb
     level: row.level,
   }
   return { ...build, removed, features: [...build.features, feature].slice(0, 120) }
+}
+
+/** What a sync changed on the resources and features, so the sheet can say it (RYT-071). */
+export type SyncChanges = {
+  added: Tracker[]
+  changed: { tracker: Tracker; from: number }[]
+  features: number
+}
+export function syncChanges(before: Build, after: Build): SyncChanges {
+  const old = new Map(before.trackers.map((tracker) => [tracker.id, tracker]))
+  const added = after.trackers.filter((tracker) => !old.has(tracker.id))
+  const changed = after.trackers.flatMap((tracker) => {
+    const prev = old.get(tracker.id)
+    return prev && prev.max !== tracker.max ? [{ tracker, from: prev.max }] : []
+  })
+  const had = new Set(before.features.map((feature) => feature.id))
+  return {
+    added,
+    changed,
+    features: after.features.filter((feature) => !had.has(feature.id)).length,
+  }
 }

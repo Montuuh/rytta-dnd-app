@@ -47,4 +47,9 @@ export const settingsEs = {
   'theme.wizard.tagline': 'Azul arcano',
   'theme.parchment': 'Pergamino',
   'theme.parchment.tagline': 'Tinta sobre papel',
+  'update.available': 'Hay una versión nueva.',
+  'update.reload': 'Recargar',
+  'update.dismiss': 'Ahora no',
+  'settings.languageLoading': 'Cargando el idioma…',
+  'settings.languageError': 'No se pudo cargar el idioma. Sigues en el actual.',
 } satisfies Record<keyof typeof settingsEn, string>

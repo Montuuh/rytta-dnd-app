@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { livePollInterval } from '@/shared/lib/live-poll'
 
 // ADR 032: the tabletop contract. Positions and sizes are in squares; one square is 5 feet.
 
@@ -205,7 +206,8 @@ const itemBase = {
   rotation: z.number().int(),
   label: z.string().max(80).nullable(),
   combatant_id: z.uuid().nullable(),
-  character_id: z.uuid().nullable(),
+  /** Null on Players' and the table's maps while the character is under a table alias. */
+  character_id: z.uuid().nullable().default(null),
   /** DM only. */
   hidden: z.boolean().optional(),
   locked: z.boolean().optional(),
@@ -285,11 +287,29 @@ export const trackSchema = z.object({
 })
 export type Track = z.infer<typeof trackSchema>
 
+/**
+ * RYT-126 J4-17: items are read one by one. An invalid token or prop is logged (id, kind and the
+ * failing fields only) and skipped, so one bad item never blanks the map for the whole table.
+ */
+export const lenientItems = z.array(z.unknown()).transform((list): Item[] =>
+  list.flatMap((raw) => {
+    const parsed = itemSchema.safeParse(raw)
+    if (parsed.success) return [parsed.data]
+    const { id, kind } = (raw ?? {}) as { id?: unknown; kind?: unknown }
+    console.warn('Skipped an invalid tabletop item', {
+      id,
+      kind,
+      fields: parsed.error.issues.map((issue) => issue.path.join('.')),
+    })
+    return []
+  }),
+)
+
 export const viewSchema = z.object({
   role: z.enum(['dm', 'player']),
   live: liveSchema,
   scene: sceneSchema.nullable(),
-  items: z.array(itemSchema),
+  items: lenientItems,
   card: cardSchema.nullable(),
   track: trackSchema.nullable(),
 })
@@ -374,6 +394,7 @@ export type TabletopErrorCode =
   | 'audio'
   | 'fogFull'
   | 'full'
+  | 'sceneLimit'
   | 'offline'
   | 'unavailable'
 
@@ -382,6 +403,7 @@ export function tabletopErrorCode(message: string): TabletopErrorCode {
     [/Stale scene/, 'stale'],
     [/Fog is full/, 'fogFull'],
     [/Scene is full/, 'full'],
+    [/Scene limit/, 'sceneLimit'],
     [/Image unavailable/, 'image'],
     [/Audio unavailable/, 'audio'],
     [/(Scene|Item|Card|Track) unavailable/, 'gone'],
@@ -392,5 +414,5 @@ export function tabletopErrorCode(message: string): TabletopErrorCode {
   return table.find(([pattern]) => pattern.test(message))?.[1] ?? 'unavailable'
 }
 
-/** Seconds between table refetches when realtime is down (the live row is the hint). */
-export const tabletopPollMs = (connected: boolean) => (connected ? 20_000 : 3_000)
+/** Ms between table refetches: 3 s when realtime is down, a 60 s safety poll while subscribed. */
+export const tabletopPollMs = (connected: boolean) => livePollInterval(connected, 3_000)

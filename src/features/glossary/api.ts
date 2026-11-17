@@ -25,7 +25,9 @@ export const homebrewQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'glossary'],
     queryFn: ({ signal }) => (campaignId ? listHomebrew(campaignId, signal) : []),
-    refetchInterval: 60_000,
+    // House rules change rarely: no interval; refetch on mount and focus once five minutes old.
+    // Own writes invalidate the campaign scope, and the editor refetches before a stale save.
+    staleTime: 5 * 60_000,
   })
 
 /**

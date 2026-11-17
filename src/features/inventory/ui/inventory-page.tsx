@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Button,
@@ -35,6 +35,8 @@ import { ItemCard } from './item-card'
 import { Ledger } from './ledger'
 import { PaperDoll } from './paper-doll'
 import { CharacterPortrait } from './portrait'
+import { PurseBar } from './purse-bar'
+import './inventory-journey.css'
 import { Satchel } from './satchel'
 import { UndoFuse, type FuseEntry } from './undo-fuse'
 
@@ -93,6 +95,12 @@ export function InventoryPage() {
         : heading.current?.focus(),
     )
   const dismissFuse = useCallback(() => setFuse(null), [setFuse])
+  // J3-18: a result line belongs to the moment it happened; it fades on its own.
+  useEffect(() => {
+    if (!notice) return
+    const id = window.setTimeout(() => setNotice(null), 8000)
+    return () => window.clearTimeout(id)
+  }, [notice])
 
   if (!dm && !enabled)
     return (
@@ -216,10 +224,14 @@ export function InventoryPage() {
       if (!slot) restoreFocus(stack.quantity === 1)
     })
   }
+  // RYT-115: deleting an account sets its audit actor to null; inventory writes always have an actor.
   const actorName = (id: string | null) =>
-    id === userId
-      ? t('inventory.ledger.you')
-      : (members.data?.find((m) => m.user_id === id)?.display_name ?? t('inventory.ledger.someone'))
+    id === null
+      ? t('account.deletedUser')
+      : id === userId
+        ? t('inventory.ledger.you')
+        : (members.data?.find((m) => m.user_id === id)?.display_name ??
+          t('inventory.ledger.someone'))
   const sendProposal = (draft: DefinitionDraft, extra: ForgeExtra) => {
     const payload = {
       name: draft.name,
@@ -258,7 +270,11 @@ export function InventoryPage() {
   const views: View[] = ['satchel', 'equipment', 'ledger']
 
   return (
-    <Stack gap="md" className="inventory-page">
+    <Stack
+      gap="md"
+      className="inventory-page"
+      data-undo={(fuse && fuse.characterId === character.id && canEdit) || undefined}
+    >
       <header className="inventory-head">
         {portrait(72, canEdit)}
         <div>
@@ -270,6 +286,7 @@ export function InventoryPage() {
           </Text>
         </div>
       </header>
+      {data && <PurseBar name={character.name} gold={data.gold} />}
       {dm && visibleRoster.length > 1 && (
         <div className="camp-roster" role="group" aria-label={t('inventory.roster')}>
           {visibleRoster.map((c) => (
@@ -301,7 +318,10 @@ export function InventoryPage() {
         className="view-switch"
         aria-label={t('inventory.views')}
         value={view}
-        onChange={(value) => setView(value as View)}
+        onChange={(value) => {
+          setView(value as View)
+          setNotice(null)
+        }}
         data={views.map((value) => {
           const Icon = viewIcons[value]
           return {
@@ -395,6 +415,7 @@ export function InventoryPage() {
           dm={dm && !playerPreview}
           userId={userId}
           actorName={actorName}
+          ordersHref={`/campaign/${campaign.id}/shops?tab=orders`}
           pending={action.isPending || !canEdit}
           onUndo={(event: InventoryEvent) =>
             run({ kind: 'undo', eventId: event.id }, () => setNotice(t('inventory.undo.done')))
@@ -404,6 +425,9 @@ export function InventoryPage() {
       {openStack && definitions.get(openStack.definition_id) && (
         <ItemCard
           stack={openStack}
+          total={stacks
+            .filter((s) => s.definition_id === openStack.definition_id && !s.equipped_slot)
+            .reduce((sum, s) => sum + s.quantity, 0)}
           definition={definitions.get(openStack.definition_id)!}
           canEdit={canEdit}
           dm={dm && !playerPreview}

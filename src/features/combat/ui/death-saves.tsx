@@ -1,5 +1,5 @@
-import { useId, useRef, useState } from 'react'
-import { Loader, UnstyledButton } from '@mantine/core'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Button, Loader, UnstyledButton } from '@mantine/core'
 import { Check, HeartPulse, Plus, Skull, Sparkles, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -14,6 +14,9 @@ import type { Run } from './helpers'
 import { D20 } from './initiative-entry'
 
 type Track = 'success' | 'failure'
+/** How long the Player can take back the own last death save (the server allows it to its actor). */
+const undoMs = 10_000
+
 const natural: Record<Track, { outcome: DeathSaveOutcome; face: string }> = {
   success: { outcome: 'nat20', face: '20' },
   failure: { outcome: 'nat1', face: '1' },
@@ -24,7 +27,8 @@ const natural: Record<Track, { outcome: DeathSaveOutcome; face: string }> = {
  * notches, like the boxes on a paper sheet: the next empty notch of each track is the control (the
  * d20 landed 10–19 or 2–9), and a die at the end of each track takes the naturals (20 revives
  * with 1 hit point, 1 counts two failures). One roll per round, no confirmation: the server
- * refuses a second roll and the DM can undo a mistaken one from the console log.
+ * refuses a second roll. RYT-126 J4-11: the server lets the Player undo the own save, so for ten
+ * seconds after rolling an "Undo" sits beside it; later the DM can still undo it from the console.
  */
 export function DeathSaveTracker({
   state,
@@ -61,6 +65,15 @@ export function DeathSaveTracker({
       failure: Math.min(counts.failure, baseline.failure),
     })
   const [mountedAs] = useState(status)
+  // The undo window opens when this screen records a roll and closes by itself.
+  const [undoKey, setUndoKey] = useState(0)
+  const [undoLive, setUndoLive] = useState(false)
+  const [undone, setUndone] = useState('')
+  useEffect(() => {
+    if (undoKey === 0) return
+    const timer = window.setTimeout(() => setUndoLive(false), undoMs)
+    return () => window.clearTimeout(timer)
+  }, [undoKey])
   if (status === null) return null
   if (status === 'revived')
     return (
@@ -87,7 +100,22 @@ export function DeathSaveTracker({
     const ok = await run({ kind: 'deathSave', combatantId: combatant.id, outcome })
     lock.current = false
     setPressed(null)
-    if (ok) afterRoll()
+    if (ok) {
+      setUndone('')
+      setUndoLive(true)
+      setUndoKey((key) => key + 1)
+      afterRoll()
+    }
+  }
+  const takeBack = async () => {
+    if (lock.current || pending || !rolled) return
+    lock.current = true
+    const ok = await run({ kind: 'undo', eventId: rolled.id })
+    lock.current = false
+    if (ok) {
+      setUndoLive(false)
+      setUndone(t('combat.death.undoneNow'))
+    }
   }
   const busy = pending || pressed !== null
   const track = (kind: Track) => {
@@ -181,14 +209,36 @@ export function DeathSaveTracker({
         </p>
       ) : (
         rolled && (
-          <p className="combat-saves-note is-recorded">
-            {t('combat.death.recorded', {
-              outcome: t(
-                `combat.death.${(rolled.detail.outcome as DeathSaveOutcome | undefined) ?? 'success'}`,
-              ),
-            })}
-          </p>
+          <div className="combat-saves-recorded">
+            <p className="combat-saves-note is-recorded">
+              {t('combat.death.recorded', {
+                outcome: t(
+                  `combat.death.${(rolled.detail.outcome as DeathSaveOutcome | undefined) ?? 'success'}`,
+                ),
+              })}
+            </p>
+            {undoLive && rolled.mine && rolled.undoable && !stale && (
+              <Button
+                variant="default"
+                className="combat-saves-undo"
+                aria-disabled={pending || undefined}
+                aria-label={t('combat.death.undoLabel', {
+                  outcome: t(
+                    `combat.death.${(rolled.detail.outcome as DeathSaveOutcome | undefined) ?? 'success'}`,
+                  ),
+                })}
+                onClick={() => void takeBack()}
+              >
+                {t('combat.death.undo')}
+              </Button>
+            )}
+          </div>
         )
+      )}
+      {undone && (
+        <p className="combat-saves-note" role="status">
+          {undone}
+        </p>
       )}
     </section>
   )

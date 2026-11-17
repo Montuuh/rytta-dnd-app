@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Button,
-  Drawer,
   Group,
   Loader,
   Stack,
@@ -12,6 +11,7 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { useWindowEvent } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ChevronRight, GitMerge, Hammer, Search, X } from 'lucide-react'

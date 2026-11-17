@@ -11,6 +11,7 @@ import {
   HandHeart,
   Languages,
   Leaf,
+  LoaderCircle,
   Moon,
   Music,
   ShieldHalf,
@@ -20,8 +21,9 @@ import {
   WandSparkles,
   type LucideIcon,
 } from 'lucide-react'
-import { useId, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLanguageSwitch } from '@/shared/i18n/use-language-switch'
 import { config } from '@/shared/lib/config'
 import {
   defaultWeightUnit,
@@ -29,7 +31,8 @@ import {
   useStoredWeightUnit,
   type WeightUnit,
 } from '@/shared/lib/weight'
-import { UsernameSettings, useAuth } from '@/features/auth'
+import { AccountSection, UsernameSettings, useAuth } from '@/features/auth'
+import { LegalLinks } from './legal-page'
 import './settings-panel.css'
 import {
   classThemes,
@@ -90,6 +93,7 @@ function ChoiceCard({
   value,
   checked,
   onSelect,
+  onReselect,
   label,
   hint,
   lang,
@@ -101,6 +105,8 @@ function ChoiceCard({
   value: string
   checked: boolean
   onSelect: () => void
+  /** Chosen again while already checked (a pending change can be taken back). */
+  onReselect?: () => void
   label: string
   hint?: string
   lang?: string
@@ -118,6 +124,7 @@ function ChoiceCard({
         value={value}
         checked={checked}
         onChange={onSelect}
+        onClick={checked ? onReselect : undefined}
         aria-labelledby={`${id}-label`}
         aria-describedby={hint ? `${id}-hint` : undefined}
       />
@@ -221,36 +228,77 @@ function ThemePicker({ labelledBy, describedBy }: { labelledBy: string; describe
 }
 
 function LanguagePicker({ labelledBy, describedBy }: { labelledBy: string; describedBy?: string }) {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const { pending, failed, choose } = useLanguageSwitch()
+  const group = useRef<HTMLDivElement>(null)
+  // Set when a keyboard retry was asked; the effect below acts once the alert is really gone.
+  const retryFromKeyboard = useRef(false)
+  useEffect(() => {
+    if (failed !== null || !retryFromKeyboard.current) return
+    retryFromKeyboard.current = false
+    // A retry that worked removed the button that had focus: continue on the chosen language.
+    group.current?.querySelector<HTMLInputElement>('input:checked')?.focus()
+  }, [failed])
   const current = i18n.resolvedLanguage === 'en' ? 'en' : 'es'
   const options = [
     { value: 'es', label: 'Español' },
     { value: 'en', label: 'English' },
   ] as const
   return (
-    <div
-      role="radiogroup"
-      aria-labelledby={labelledBy}
-      aria-describedby={describedBy}
-      className="language-picker"
-    >
-      {options.map(({ value, label }) => (
-        <ChoiceCard
-          key={value}
-          name="language"
-          value={value}
-          checked={current === value}
-          onSelect={() => void i18n.changeLanguage(value)}
-          label={label}
-          lang={value}
-          className="language-card"
-        >
-          <span className="language-monogram" aria-hidden="true">
-            {value.toUpperCase()}
-          </span>
-        </ChoiceCard>
-      ))}
-    </div>
+    <>
+      <div
+        ref={group}
+        role="radiogroup"
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-busy={pending !== null || undefined}
+        className="language-picker"
+      >
+        {options.map(({ value, label }) => (
+          <ChoiceCard
+            key={value}
+            name="language"
+            value={value}
+            checked={current === value}
+            onSelect={() => void choose(value)}
+            onReselect={() => void choose(value)}
+            label={label}
+            lang={value}
+            className="language-card"
+          >
+            <span className="language-monogram" aria-hidden="true">
+              {pending === value ? (
+                <LoaderCircle size={18} className="language-spin" />
+              ) : (
+                value.toUpperCase()
+              )}
+            </span>
+          </ChoiceCard>
+        ))}
+      </div>
+      {pending !== null && failed === null && (
+        <p className="language-status" role="status">
+          {t('settings.languageLoading')}
+        </p>
+      )}
+      {failed !== null && (
+        <p className="language-status is-error" role="alert">
+          {t('settings.languageError')}{' '}
+          <button
+            type="button"
+            className="language-retry"
+            aria-disabled={pending !== null || undefined}
+            onClick={(event) => {
+              if (pending !== null) return
+              retryFromKeyboard.current = document.activeElement === event.currentTarget
+              void choose(failed)
+            }}
+          >
+            {pending !== null ? t('settings.languageLoading') : t('common.retry')}
+          </button>
+        </p>
+      )}
+    </>
   )
 }
 
@@ -304,7 +352,13 @@ function WeightPicker({ labelledBy, describedBy }: { labelledBy: string; describ
  * RYT-069: the settings content, shown in the right-hand Settings drawer (app/layout.tsx).
  * The signed-in account's username (RYT-078) comes first, then language and the theme tiles.
  */
-export function SettingsPanel() {
+export function SettingsPanel({
+  onLeave,
+  onDialogChange,
+}: {
+  onLeave?: () => void
+  onDialogChange?: (opened: boolean) => void
+} = {}) {
   const { t } = useTranslation()
   const { state } = useAuth()
   const demo = config.VITE_DATA_MODE === 'demo'
@@ -325,6 +379,14 @@ export function SettingsPanel() {
         {(ids) => <WeightPicker {...ids} />}
       </Section>
       <Text className="settings-saved">{t('preferences.saved')}</Text>
+      {state.user && (
+        <Section title={t('account.title')} help={t('account.help')}>
+          {() => <AccountSection onNavigate={onLeave} onDialogChange={onDialogChange} />}
+        </Section>
+      )}
+      <Section title={t('legal.links')} help={t('legal.linksHelp')}>
+        {() => <LegalLinks className="settings-legal" />}
+      </Section>
       {/* Demo data must stay explicit; a live installation shows no setup internals. */}
       {demo && (
         <Section title={t('settings.about')}>

@@ -19,6 +19,17 @@ import { combatPollInterval, type CombatAction } from './domain/combat'
 const combatScope = (userId: string, campaignId: string) =>
   ['private', userId, 'campaign', campaignId, 'combat'] as const
 
+/** Subscribed realtime channels per campaign; the live-fight poll backs off while any is up. */
+const realtimeChannels = new Map<string, number>()
+export const combatRealtimeConnected = (campaignId: string) =>
+  (realtimeChannels.get(campaignId) ?? 0) > 0
+function trackRealtime(campaignId: string, delta: 1 | -1) {
+  const count = Math.max(0, (realtimeChannels.get(campaignId) ?? 0) + delta)
+  if (count === 0) realtimeChannels.delete(campaignId)
+  else realtimeChannels.set(campaignId, count)
+  return count
+}
+
 export const encountersQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: [...combatScope(userId, campaignId), 'encounters'],
@@ -43,7 +54,8 @@ export const combatStateQuery = (
       asTable ? 'table' : 'self',
     ],
     queryFn: ({ signal }) => loadCombatState(campaignId, encounterId, asTable, signal),
-    refetchInterval: (query) => combatPollInterval(query.state.data),
+    refetchInterval: (query) =>
+      combatPollInterval(query.state.data, combatRealtimeConnected(campaignId)),
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
@@ -85,15 +97,27 @@ export function useCombatRealtime(campaignId: string, enabled: boolean) {
   const [connected, setConnected] = useState(false)
   useEffect(() => {
     if (!enabled || !userId) return
+    let subscribed = false
+    const report = (next: boolean) => {
+      if (next !== subscribed) {
+        subscribed = next
+        // Losing the last channel refetches now so the 4s fallback poll starts at once.
+        if (trackRealtime(campaignId, next ? 1 : -1) === 0 && !next)
+          void cache.invalidateQueries({ queryKey: [...combatScope(userId, campaignId), 'state'] })
+      }
+      setConnected(next)
+    }
     const stop = subscribeEncounters(
       campaignId,
       () => {
         void cache.invalidateQueries({ queryKey: combatScope(userId, campaignId) })
       },
-      setConnected,
+      report,
     )
     return () => {
       stop()
+      if (subscribed) trackRealtime(campaignId, -1)
+      subscribed = false
       setConnected(false)
     }
   }, [cache, campaignId, enabled, userId])

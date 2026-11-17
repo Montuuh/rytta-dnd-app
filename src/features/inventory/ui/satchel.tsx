@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  Button,
   Group,
   SegmentedControl,
   Text,
@@ -19,6 +20,7 @@ import {
   type ItemStack,
 } from '../domain/item'
 import { Balance } from './balance'
+import { EmptyPanel } from './empty-panel'
 import { ItemIcon } from './item-icon'
 import { categoryIcons, rarityPips } from './item-visuals'
 import { useWeightFormat } from './use-weight'
@@ -62,11 +64,25 @@ export function Satchel({
   }
   const [filter, setFilter] = useState<ItemCategory | 'all'>('all')
   const [search, setSearch] = useState('')
-  const loose = stacks.filter((stack) => !stack.equipped_slot)
-  const present = new Set(loose.map((stack) => definitions.get(stack.definition_id)?.category))
+  // J3-23: identical units read as one tile. The largest stack answers for the group (its card
+  // acts on it); the tile shows the units of all of them.
+  const loose = useMemo(() => {
+    const groups = new Map<string, { stack: ItemStack; total: number }>()
+    for (const stack of stacks) {
+      if (stack.equipped_slot) continue
+      const group = groups.get(stack.definition_id)
+      if (!group) groups.set(stack.definition_id, { stack, total: stack.quantity })
+      else {
+        group.total += stack.quantity
+        if (stack.quantity > group.stack.quantity) group.stack = stack
+      }
+    }
+    return [...groups.values()]
+  }, [stacks])
+  const present = new Set(loose.map(({ stack }) => definitions.get(stack.definition_id)?.category))
   const visible = useMemo(
     () =>
-      loose.filter((stack) => {
+      loose.filter(({ stack }) => {
         const definition = definitions.get(stack.definition_id)
         if (!definition) return false
         if (filter !== 'all' && definition.category !== filter) return false
@@ -138,33 +154,38 @@ export function Satchel({
           ]}
         />
       </div>
-      {view === 'list' && (
+      {view === 'list' && loose.length > 0 && (
         <ul className="store-list satchel-list" aria-label={t('inventory.view.satchel')}>
-          {visible.map((stack) => {
+          {visible.map(({ stack, total }) => {
             const definition = definitions.get(stack.definition_id)!
             return (
-              <li key={stack.id} className="store-row">
+              <li key={stack.definition_id} className="store-row">
                 <UnstyledButton
                   className="store-row-main"
                   aria-label={t('inventory.tileLabel', {
                     name: nameOf(definition),
-                    quantity: stack.quantity,
+                    quantity: total,
                     rarity: t(`inventory.rarity.${definition.rarity}`),
                   })}
                   onClick={(event) => onOpen(stack, event.currentTarget)}
                 >
                   <span className={`store-glyph rarity-${definition.rarity}`} aria-hidden="true">
-                    <ItemIcon icon={definition.icon} imagePath={definition.image_path} size={22} />
+                    <ItemIcon
+                      icon={definition.icon}
+                      imagePath={definition.image_path}
+                      category={definition.category}
+                      size={40}
+                    />
                   </span>
                   <span className="store-row-body">
                     <span className="store-row-name user-copy">{nameOf(definition)}</span>
                     <span className="store-row-meta">
-                      {t(`inventory.category.${definition.category}`)} ·{' '}
-                      {format(unitPounds(definition) * stack.quantity)}
+                      {t(`inventory.category.${definition.category}`)}
+                      {unitPounds(definition) > 0 && ` · ${format(unitPounds(definition) * total)}`}
                     </span>
                   </span>
                   <span className="satchel-qty" aria-hidden="true">
-                    ×{stack.quantity}
+                    ×{total}
                   </span>
                 </UnstyledButton>
               </li>
@@ -185,31 +206,36 @@ export function Satchel({
           )}
         </ul>
       )}
-      {view === 'grid' && (
+      {view === 'grid' && loose.length > 0 && (
         <ul className="satchel-grid" aria-label={t('inventory.view.satchel')}>
-          {visible.map((stack) => {
+          {visible.map(({ stack, total }) => {
             const definition = definitions.get(stack.definition_id)!
             return (
-              <li key={stack.id}>
+              <li key={stack.definition_id}>
                 <UnstyledButton
                   className={`item-tile rarity-${definition.rarity}`}
                   aria-label={t('inventory.tileLabel', {
                     name: nameOf(definition),
-                    quantity: stack.quantity,
+                    quantity: total,
                     rarity: t(`inventory.rarity.${definition.rarity}`),
                   })}
                   onClick={(event) => onOpen(stack, event.currentTarget)}
                 >
                   <span className="item-tile-icon">
-                    <ItemIcon icon={definition.icon} imagePath={definition.image_path} />
+                    <ItemIcon
+                      icon={definition.icon}
+                      imagePath={definition.image_path}
+                      category={definition.category}
+                      size={44}
+                    />
                   </span>
                   <span className="item-tile-name">{nameOf(definition)}</span>
                   <span className="item-rarity-pips" aria-hidden="true">
                     {'◆'.repeat(rarityPips[definition.rarity])}
                   </span>
-                  {stack.quantity > 1 && (
+                  {total > 1 && (
                     <span className="item-seal" aria-hidden="true">
-                      {stack.quantity}
+                      {total}
                     </span>
                   )}
                 </UnstyledButton>
@@ -231,11 +257,27 @@ export function Satchel({
           )}
         </ul>
       )}
-      {visible.length === 0 && (
+      {loose.length === 0 && (
+        <EmptyPanel
+          art="satchel"
+          title={t('inventory.empty')}
+          action={
+            canAdd ? (
+              <Button
+                leftSection={<Plus size={16} aria-hidden="true" />}
+                onClick={(event) => onAdd(event.currentTarget)}
+              >
+                {t('inventory.add')}
+              </Button>
+            ) : undefined
+          }
+        >
+          {canAdd ? t('inventory.emptyHelp') : t('inventory.emptyView')}
+        </EmptyPanel>
+      )}
+      {loose.length > 0 && visible.length === 0 && (
         <Group className="satchel-empty">
-          <Text c="dimmed">
-            {loose.length === 0 ? t('inventory.empty') : t('inventory.noMatches')}
-          </Text>
+          <Text c="dimmed">{t('inventory.noMatches')}</Text>
         </Group>
       )}
     </div>

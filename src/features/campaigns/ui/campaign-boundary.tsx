@@ -38,6 +38,7 @@ export function CampaignBoundary() {
         pending={query.isPending}
         error={query.isError}
         retry={() => void query.refetch()}
+        cause={query.error}
       />
     )
   if (!campaign)

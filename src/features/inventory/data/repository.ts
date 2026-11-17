@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ownsStoragePath } from '@/shared/api/storage-paths'
 import { config } from '@/shared/lib/config'
 import {
   actionResultSchema,
@@ -20,6 +21,7 @@ import type { Json } from '@/shared/api/database.generated'
 import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
 import { uploadBytes, uploadExtension, uploadTypes } from '@/shared/lib/image-encode'
+import { storageUploadError } from '@/shared/api/storage-errors'
 
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw new Error('Demo is read-only')
@@ -54,11 +56,17 @@ export type Holder = {
   monkLevel: number
 }
 
+const goldSchema = z.object({ gold: z.coerce.number().min(0) })
+const gold = (row: unknown) => {
+  const parsed = goldSchema.safeParse(row)
+  return parsed.success ? parsed.data.gold : null
+}
+
 export async function loadInventory(campaignId: string, characterId: string, signal: AbortSignal) {
   const db = await client()
   const campaign = z.uuid().parse(campaignId)
   const character = z.uuid().parse(characterId)
-  const [stacks, definitions, events, holder] = await Promise.all([
+  const [stacks, definitions, events, holder, resources] = await Promise.all([
     db
       .from('inventory_items')
       .select(stackColumns)
@@ -90,6 +98,14 @@ export async function loadInventory(campaignId: string, characterId: string, sig
       .eq('character_id', character)
       .abortSignal(signal)
       .maybeSingle(),
+    // RYT-125: the purse for the inventory header. A read that fails only hides the purse.
+    db
+      .from('character_resources')
+      .select('gold')
+      .eq('campaign_id', campaign)
+      .eq('character_id', character)
+      .abortSignal(signal)
+      .maybeSingle(),
   ])
   for (const r of [stacks, definitions, events, holder]) if (r.error) throw r.error
   if (!holder.data) return null
@@ -98,6 +114,7 @@ export async function loadInventory(campaignId: string, characterId: string, sig
     stacks: stackSchema.array().parse(stacks.data),
     definitions: definitionSchema.array().parse(definitions.data),
     events: eventSchema.array().parse(events.data),
+    gold: gold(resources.data),
     holder: {
       armorClass: h.armor_class,
       level: h.level,
@@ -209,24 +226,66 @@ export async function uploadPortrait(campaignId: string, characterId: string, im
   const extension = image.type === 'image/jpeg' ? 'jpg' : image.type.split('/')[1]
   const path = `${activeSchema()}/${z.uuid().parse(campaignId)}/${z.uuid().parse(characterId)}/${newRequestId()}.${extension}`
   const upload = await db.storage.from(bucket).upload(path, image, { contentType: image.type })
-  if (upload.error) throw new Error('unavailable')
+  if (upload.error) throw new Error(storageUploadError(upload.error))
+  const previous = await currentPortrait(db, campaignId, characterId)
   const saved = await db.rpc('set_character_portrait', {
     target_campaign: campaignId,
     target_character: characterId,
     new_path: path,
   })
   if (saved.error) throw failure(saved.error)
+  if (previous && previous !== path) await discardPortrait(db, campaignId, characterId, previous)
   return path
 }
-/** RYT-090: clears the sheet's portrait; the stored object stays, as after a replacement. */
+/** RYT-090: clears the sheet's portrait, then deletes the object it pointed to (RYT-113). */
 export async function removePortrait(campaignId: string, characterId: string) {
   const db = await client()
+  const previous = await currentPortrait(db, campaignId, characterId)
   const saved = await db.rpc('set_character_portrait', {
     target_campaign: z.uuid().parse(campaignId),
     target_character: z.uuid().parse(characterId),
     new_path: null,
   })
   if (saved.error) throw failure(saved.error)
+  if (previous) await discardPortrait(db, campaignId, characterId, previous)
+}
+type Db = Awaited<ReturnType<typeof client>>
+/** The sheet's portrait before a write; null when unknown, so nothing is deleted. */
+async function currentPortrait(db: Db, campaignId: string, characterId: string) {
+  const read = await db
+    .from('character_sheets')
+    .select('portrait_path')
+    .eq('campaign_id', z.uuid().parse(campaignId))
+    .eq('character_id', z.uuid().parse(characterId))
+    .maybeSingle()
+  return read.error
+    ? null
+    : z
+        .string()
+        .nullable()
+        .catch(null)
+        .parse(read.data?.portrait_path ?? null)
+}
+/**
+ * RYT-113: a replaced or cleared portrait stops counting against the campaign storage quota.
+ * Best effort and only while no sheet still points at it; a failure leaves a harmless orphan.
+ */
+async function discardPortrait(db: Db, campaignId: string, characterId: string, path: string) {
+  try {
+    const { activeSchema } = await import('@/shared/api/supabase')
+    // A PRE copy keeps production paths; never delete outside the active environment.
+    if (!ownsStoragePath(path, activeSchema(), campaignId, characterId)) return
+    const referenced = await db
+      .from('character_sheets')
+      .select('character_id')
+      .eq('campaign_id', campaignId)
+      .eq('portrait_path', path)
+      .limit(1)
+    if (referenced.error || referenced.data.length > 0) return
+    await db.storage.from(bucket).remove([path])
+  } catch {
+    // Keep the object: an orphan is harmless, a deleted current portrait is not.
+  }
 }
 export async function portraitUrl(path: string) {
   const db = await client()
@@ -269,26 +328,93 @@ export async function listRoster(campaignId: string, signal: AbortSignal) {
     .map((row) => ({ ...row, portraitPath: portraits.get(row.id) ?? null }))
 }
 
+/** The API returns at most this many rows per request (supabase/config.toml max_rows). */
+export const cataloguePageSize = 1000
+
+/** Every definition of the campaign, read page by page so a large catalogue is never cut short. */
 export async function loadCatalogue(campaignId: string, signal?: AbortSignal) {
   const db = await client()
-  let query = db
-    .from('item_definitions')
-    .select(definitionColumns)
-    .eq('campaign_id', z.uuid().parse(campaignId))
-    .order('name')
-  if (signal) query = query.abortSignal(signal)
-  const result = await query
-  if (result.error) throw result.error
-  return definitionSchema.array().parse(result.data)
+  const campaign = z.uuid().parse(campaignId)
+  const rows: unknown[] = []
+  for (let from = 0; ; from += cataloguePageSize) {
+    let query = db
+      .from('item_definitions')
+      .select(definitionColumns)
+      .eq('campaign_id', campaign)
+      .order('name')
+      .order('id')
+      .range(from, from + cataloguePageSize - 1)
+    if (signal) query = query.abortSignal(signal)
+    const result = await query
+    if (result.error) throw result.error
+    rows.push(...result.data)
+    if (result.data.length < cataloguePageSize) break
+  }
+  return definitionSchema.array().parse(rows)
 }
 
+/** Signed item pictures stay valid this long; the cache re-signs them well before expiry. */
+export const itemImageTtlSeconds = 3600
+const signBatchLimit = 100
+let pendingSigns = new Map<
+  string,
+  { resolve: (url: string) => void; reject: (e: unknown) => void }[]
+>()
+let signTimer: ReturnType<typeof setTimeout> | null = null
+
+async function flushSigns() {
+  const batch = pendingSigns
+  pendingSigns = new Map()
+  signTimer = null
+  const paths = [...batch.keys()]
+  const fail = (chunk: string[], error: unknown) => {
+    for (const path of chunk) for (const waiter of batch.get(path) ?? []) waiter.reject(error)
+  }
+  let db: Awaited<ReturnType<typeof client>>
+  try {
+    db = await client()
+  } catch (error) {
+    fail(paths, error)
+    return
+  }
+  for (let i = 0; i < paths.length; i += signBatchLimit) {
+    const chunk = paths.slice(i, i + signBatchLimit)
+    try {
+      const result = await db.storage
+        .from('item-images')
+        .createSignedUrls(chunk, itemImageTtlSeconds)
+      if (result.error) throw result.error
+      const urls = new Map(
+        result.data
+          .filter((row) => !row.error && row.path)
+          .map((row) => [row.path!, row.signedUrl]),
+      )
+      for (const path of chunk) {
+        const url = z.url().safeParse(urls.get(path))
+        for (const waiter of batch.get(path) ?? [])
+          if (url.success) waiter.resolve(url.data)
+          else waiter.reject(new Error('unavailable'))
+      }
+    } catch (error) {
+      fail(chunk, error)
+    }
+  }
+}
+
+/**
+ * Signs one item picture. Calls made in the same moment (a satchel, a shop shelf) are collected
+ * and signed with one Storage request per 100 pictures.
+ */
+let supabaseModule: Promise<typeof import('@/shared/api/supabase')> | undefined
 export async function itemImageUrl(path: string) {
-  const { activeSchema } = await import('@/shared/api/supabase')
+  const { activeSchema } = await (supabaseModule ??= import('@/shared/api/supabase'))
   if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
-  const db = await client()
-  const result = await db.storage.from('item-images').createSignedUrl(path, 300)
-  if (result.error) throw result.error
-  return z.url().parse(result.data.signedUrl)
+  return new Promise<string>((resolve, reject) => {
+    const waiters = pendingSigns.get(path) ?? []
+    waiters.push({ resolve, reject })
+    pendingSigns.set(path, waiters)
+    signTimer ??= setTimeout(() => void flushSigns(), 15)
+  })
 }
 export async function uploadItemImage(campaignId: string, definitionId: string, image: Blob) {
   if (!(uploadTypes as readonly string[]).includes(image.type) || image.size > uploadBytes)
@@ -299,7 +425,7 @@ export async function uploadItemImage(campaignId: string, definitionId: string, 
   const result = await db.storage
     .from('item-images')
     .upload(path, image, { contentType: image.type })
-  if (result.error) throw new Error('unavailable')
+  if (result.error) throw new Error(storageUploadError(result.error))
   return path
 }
 export async function attachItemImage(
@@ -310,6 +436,19 @@ export async function attachItemImage(
   requestId: string,
 ) {
   const db = await client()
+  const before = await db
+    .from('item_definitions')
+    .select('image_path')
+    .eq('campaign_id', z.uuid().parse(campaignId))
+    .eq('id', z.uuid().parse(definitionId))
+    .maybeSingle()
+  const previous = before.error
+    ? null
+    : z
+        .string()
+        .nullable()
+        .catch(null)
+        .parse(before.data?.image_path ?? null)
   const result = await db.rpc('set_item_image', {
     target_campaign: campaignId,
     target_definition: definitionId,
@@ -318,12 +457,23 @@ export async function attachItemImage(
     request_id: requestId,
   })
   if (result.error) throw failure(result.error)
+  // RYT-113: the replaced or cleared picture is deleted once no definition points at it.
+  if (previous && previous !== path) await discardItemUpload(campaignId, previous).catch(() => {})
 }
 /** Only clean an unreferenced object, including after an ambiguous network outcome. */
 export async function discardItemUpload(campaignId: string, path: string) {
-  const definitions = await loadCatalogue(campaignId)
-  if (definitions.some((item) => item.image_path === path)) return
+  const { activeSchema } = await import('@/shared/api/supabase')
+  // A PRE copy keeps production paths; never delete outside the active environment.
+  if (!ownsStoragePath(path, activeSchema(), campaignId)) return
   const db = await client()
+  const referenced = await db
+    .from('item_definitions')
+    .select('id')
+    .eq('campaign_id', z.uuid().parse(campaignId))
+    .eq('image_path', path)
+    .limit(1)
+  if (referenced.error) throw referenced.error
+  if (referenced.data.length > 0) return
   const result = await db.storage.from('item-images').remove([path])
   if (result.error) throw result.error
 }

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { Button, Group, Menu, Modal, Stack, Text } from '@mantine/core'
+import { Button, Group, Menu, Stack, Text } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { BookDown, BookMinus, ChevronDown, Library, Pencil, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'

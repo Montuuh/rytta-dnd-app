@@ -25,10 +25,7 @@ async function audit(page: Page, path: string) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  await expectTouchTargets(
-    page,
-    'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
-  )
+  await expectTouchTargets(page, 'main button:visible, [role="dialog"] button:visible')
   await capture(page, path)
 }
 for (const language of ['es', 'en'] as const)
@@ -163,10 +160,14 @@ test('Players cannot access the DM catalogue and unequip from the slot drawer', 
 }) => {
   await identityFixture(page, { player: true, inventory: true, sheet: 'complete' })
   await page.goto(url)
-  await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
+  // J3-16: the old items address sends a Player to the inventory, never to the DM catalogue.
+  await expect(page).toHaveURL(/\/inventory/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Almacén de objetos' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Nuevo objeto' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/party/${characterId}`)
+  // The sheet must have replaced the inventory (a mounted page keeps its view), then no gear link.
+  await expect(page.getByRole('heading', { level: 1, name: 'Arin' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Ver y cambiar equipo' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
   // The equipped-items list is gone: unequip lives in the slot drawer only.
@@ -569,7 +570,7 @@ test('RYT-032 the forge shows a live preview and keyboard-selectable category an
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('ArrowRight')
   await expect(editor.getByRole('radio', { name: 'Raro', exact: true })).toBeChecked()
-  await editor.getByRole('button', { name: 'Aumentar Peso (lb)', exact: true }).click()
+  await editor.getByRole('button', { name: 'Aumentar Peso (kg)', exact: true }).click()
   await editor.getByRole('button', { name: 'Aumentar Valor (po)', exact: true }).click()
   await expect(preview).toContainText('Hoja lunar')
   await expect(preview).toContainText('Raro')
@@ -577,8 +578,8 @@ test('RYT-032 the forge shows a live preview and keyboard-selectable category an
   // RYT-104: 0.5 lb shows in the Spanish default unit, with the Spanish decimal comma.
   await expect(preview).toContainText('0,25 kg')
   await expect(editor.getByRole('textbox', { name: 'Peso (kg)', exact: true })).toHaveValue('0,25')
-  // The two fields read as one weight at every width: the "=" stays between them.
-  await expect(editor.locator('.weight-pair-equals')).toBeVisible()
+  // RYT-125: one weight field, in the reader's unit; the other unit is not a second field.
+  await expect(editor.getByRole('textbox', { name: 'Peso (lb)', exact: true })).toHaveCount(0)
   await expect(preview).toContainText('1 po')
   await audit(page, info.outputPath('forge.png'))
   await evidence(page, 'forge', info)
@@ -680,6 +681,9 @@ test('RYT-105 Players search basic items first and propose what is missing', asy
   const forge = page.getByRole('dialog', { name: 'Proponer un objeto para Arin' })
   await expect(forge.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Laúd')
   await expect(forge.getByRole('textbox', { name: 'Valor (po)' })).toHaveCount(0)
+  // J3-19: a proposal starts short; the price lives under "Más detalles".
+  await expect(forge.getByRole('textbox', { name: 'Precio sugerido (po)' })).toBeHidden()
+  await forge.getByRole('button', { name: /Más detalles/ }).click()
   await forge.getByRole('textbox', { name: 'Precio sugerido (po)' }).fill('35.5')
   await forge.getByRole('button', { name: 'Enviar al DM', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)

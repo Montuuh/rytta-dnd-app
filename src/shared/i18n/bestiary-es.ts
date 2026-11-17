@@ -445,4 +445,6 @@ export const bestiaryEs = {
     'La criatura volverá a mostrar la ilustración de su criatura del SRD. Puedes elegir otra imagen cuando quieras.',
   'bestiary.art.own': 'Imagen de tu campaña.',
   'bestiary.art.ownSrd': 'Tu imagen para esta criatura en la campaña. Solo la ves tú.',
+  'bestiary.jump': 'Saltar a un grupo',
+  'bestiary.range': 'Criaturas {{from}} a {{to}} de {{total}}',
 }

@@ -18,9 +18,12 @@ import { tabletopEn } from './tabletop-en'
 import { panelEn } from './panel-en'
 import { restEn } from './rest-en'
 import { usernameEn } from './username-en'
+import { accountEn } from './account-en'
 import { libraryEn } from './library-en'
 import { viewerEn } from './viewer-en'
+import { legalEn } from './legal-en'
 export const en = {
+  ...legalEn,
   ...identityEn,
   ...charactersEn,
   ...sheetEn,
@@ -41,6 +44,7 @@ export const en = {
   ...panelEn,
   ...restEn,
   ...usernameEn,
+  ...accountEn,
   ...libraryEn,
   ...viewerEn,
   'module.party': 'Party',
@@ -69,19 +73,20 @@ export const en = {
   'nav.drawer': 'Rytta navigation',
   'nav.close': 'Close navigation',
   'nav.adventure': 'YOUR ADVENTURE',
-  'nav.settings': 'App setup',
+  'nav.settings': 'Settings',
   'mode.demo': 'Preview · sample data',
   'mode.backend': 'Your table',
-  'common.planned': 'Planned module',
   'common.back': 'Back',
-  'common.loading': 'Opening your companion…',
+  'common.loading': 'Loading…',
+  'common.loadingSlow': 'This is taking longer than expected. Reload or go back to the start.',
   'common.retry': 'Try again',
+  'common.storageQuota':
+    'Storage refused the upload. This campaign may have used its storage space: remove pictures or media it no longer needs, then try again.',
   'page.notFound': 'Page not found',
-  'page.unknown': 'Unknown route',
-  'page.noPath': 'This path does not lead to a page.',
-  'page.return': 'Go back to keep exploring the companion.',
-  'page.planned':
-    'This module is not available yet. It will appear in the menu when your table can use it.',
+  'page.notFoundHelp': 'This address doesn’t exist or is no longer available.',
+  'page.goCampaign': 'Go to the campaign',
+  'page.goHome': 'Go to the start',
+  'nav.campaignHome': 'Home of {{name}}',
   'campaigns.title': 'Your campaigns',
   'campaigns.next': 'Campaign creation and invitations arrive with RYT-002.',
   'campaigns.empty': 'No campaigns available for this account.',
@@ -89,11 +94,11 @@ export const en = {
   'error.signIn': 'Sign-in is required. Authentication screens are planned in RYT-001.',
   'error.campaigns': 'Campaigns could not be loaded. Check your connection and campaign access.',
   'error.title': 'The companion could not open',
-  'error.help': 'Reload to try again. If this continues, check the app configuration.',
+  'error.help': 'Reload the page. If it keeps failing, go back to the start and try again.',
+  'error.home': 'Go to the start',
   'error.reload': 'Reload',
   'preferences.language': 'Language',
-  'preferences.saved':
-    'Your choices are saved on this device. New visits start in Spanish with the Hearth theme.',
+  'preferences.saved': 'Your choices are saved on this device.',
   'settings.demo': 'Demo mode',
   'settings.backend': 'Supabase mode',
   'settings.demoDescription':

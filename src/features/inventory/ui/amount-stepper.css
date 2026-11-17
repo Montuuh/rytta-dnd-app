@@ -1,0 +1,116 @@
+/* RYT-125 amount stepper: −/value/+ at 44px with a line that says why a value was changed.
+   Semantic tokens only, so Hearth, Parchment and the class themes all read. */
+.amount-stepper {
+  min-width: 0;
+}
+.amount-row {
+  --stepper-line: color-mix(in srgb, var(--app-muted) 40%, var(--app-border));
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  max-width: 14rem;
+  border: 1px solid var(--stepper-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  transition: border-color 120ms ease;
+}
+.amount-row:focus-within {
+  border-color: var(--app-accent);
+}
+.amount-row[data-edge='min'],
+.amount-row[data-edge='max'] {
+  border-color: var(--app-accent);
+}
+.amount-row[data-edge='digits'] {
+  border-color: var(--danger);
+}
+.amount-row[data-disabled] {
+  opacity: 0.6;
+}
+.amount-step {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--app-accent);
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.amount-step:first-child {
+  border-radius: 11px 0 0 11px;
+}
+.amount-step:last-child {
+  border-radius: 0 11px 11px 0;
+}
+.amount-step:hover:not(:disabled) {
+  background: var(--app-hover);
+}
+.amount-step:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+.amount-step:active:not(:disabled) svg {
+  transform: scale(0.85);
+}
+.amount-step:disabled {
+  color: color-mix(in srgb, var(--app-muted) 55%, transparent);
+  cursor: not-allowed;
+}
+.amount-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 3.5rem;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-inline: 1px solid var(--stepper-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--app-text);
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.amount-input:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+.amount-input::placeholder {
+  color: var(--app-muted);
+  font-weight: 400;
+}
+.amount-suffix {
+  display: grid;
+  align-items: center;
+  padding-inline: 0 8px;
+  margin-inline-start: -2px;
+  color: var(--app-muted);
+  font-weight: 600;
+}
+.amount-reason {
+  margin: 4px 0 0;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--app-text);
+}
+.amount-reason:empty {
+  margin: 0;
+}
+.amount-reason[data-edge='digits'] {
+  color: var(--danger);
+}
+@media (prefers-reduced-motion: reduce) {
+  .amount-row {
+    transition: none;
+  }
+  .amount-step:active:not(:disabled) svg {
+    transform: none;
+  }
+}

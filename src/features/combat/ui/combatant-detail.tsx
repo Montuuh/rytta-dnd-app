@@ -5,7 +5,6 @@ import {
   Chip,
   Group,
   Menu,
-  Modal,
   NumberInput,
   Paper,
   SegmentedControl,
@@ -17,6 +16,7 @@ import {
   Textarea,
   Title,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import {
   Brain,
   Crown,

@@ -2,10 +2,30 @@
 <html lang="es" data-mantine-color-scheme="dark" data-rytta-theme="default">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%icons/icon-32.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%icons/icon-180.png" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#140f0b" />
     <meta name="description" content="Rytta, tu compañero para campañas de rol presenciales." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Rytta" />
+    <meta property="og:title" content="Rytta · Tu compañero de mesa" />
+    <meta
+      property="og:description"
+      content="Fichas, inventario, tiendas, combate y mesa para campañas de rol presenciales."
+    />
+    <meta property="og:image" content="%BASE_URL%icons/share.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rytta · Tu compañero de mesa" />
+    <meta
+      name="twitter:description"
+      content="Fichas, inventario, tiendas, combate y mesa para campañas de rol presenciales."
+    />
+    <meta name="twitter:image" content="%BASE_URL%icons/share.jpg" />
     <title>Rytta · Tu compañero de mesa</title>
     <script>
       // Set validated preferences before the first paint; storage may be unavailable.
@@ -55,10 +75,38 @@
         color: #2a1c11;
         color-scheme: light;
       }
+      /* Mantine paints its own body colour (grey, or white in light themes) for the frame between
+         the app mounting and its token resolver injecting the theme's. The app's own tokens are
+         already in the stylesheet, so the body reads them from the first paint; the extra
+         specificity wins over Mantine's defaults and equals what the resolver sets afterwards. */
+      :root:root[data-mantine-color-scheme] {
+        --mantine-color-body: var(--app-bg, var(--boot-bg));
+        --mantine-color-text: var(--app-text, #f5ebd6);
+      }
+      /* The first-visit loader covers the page with the theme colour until the app mounts. */
+      .boot-screen {
+        position: fixed;
+        inset: 0;
+        background: var(--boot-bg, #140f0b);
+      }
+      html[data-mantine-color-scheme='light'] .boot-screen {
+        background: var(--boot-bg, #f7efe2);
+      }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Language-neutral loading state; React replaces it once the first catalogue is in. -->
+      <div class="loading-screen boot-screen" aria-busy="true">
+        <img
+          class="loading-emblem"
+          src="%BASE_URL%art/brand/emblem.webp"
+          alt=""
+          width="72"
+          height="72"
+        />
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

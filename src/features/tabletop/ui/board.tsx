@@ -15,6 +15,7 @@ import { useAuth } from '@/features/auth'
 import { creatureArtUrl } from '@/features/bestiary'
 import { Token, type Combatant } from '@/features/combat'
 import { useCampaign } from '@/features/campaigns'
+import { classEmblem } from '@/features/characters'
 import { useCampaignPortraits } from '@/features/inventory'
 import { mediaQuery } from '../api'
 import { cellMaskPath } from '../domain/visibility'
@@ -1028,6 +1029,7 @@ function MapToken({
           active={active}
           defeated={defeated}
           hidden={mode === 'dm' && (item.hidden || combatant?.hidden)}
+          emblem={combatant!.kind === 'character' ? classEmblem(combatant!.class_key)?.thumb : null}
         />
       ) : portrait && item.character_id ? (
         <Token

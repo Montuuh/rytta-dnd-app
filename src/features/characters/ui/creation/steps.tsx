@@ -1,6 +1,7 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   ActionIcon,
+  Alert,
   Button,
   Checkbox,
   Group,
@@ -16,34 +17,25 @@ import {
   Textarea,
   Title,
 } from '@mantine/core'
-import {
-  Axe,
-  Crosshair,
-  Flame,
-  Guitar,
-  HandFist,
-  Leaf,
-  PenTool,
-  Plus,
-  ShieldHalf,
-  Skull,
-  Sun,
-  Swords,
-  Trash2,
-  VenetianMask,
-  WandSparkles,
-  type LucideIcon,
-} from 'lucide-react'
+import { BookOpen, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
+  assignStandard,
   chooseBackground,
   chooseClass,
   chooseSpecies,
+  classChangeLoss,
   classSkillChoices,
+  normalizeDraft,
+  pointBuyCeiling,
   pointBuyStart,
   suggestedHpFor,
+  type ClassLoss,
   type CreationStep,
+  type StepGap,
 } from '../../domain/creation'
+import { syncProgression } from '../../domain/progression'
+import { reseedStandard, standardAbilitiesFor } from '../../domain/quick'
 import {
   defaultArmorClass,
   finalAbilities,
@@ -60,10 +52,10 @@ import {
   backgroundKeys,
   backgrounds,
   casterKinds,
-  classKeys,
   classes,
   hitDice,
   pointBuyBudget,
+  pointBuyCost,
   skillKeys,
   species,
   speciesKeys,
@@ -71,25 +63,34 @@ import {
   type Ability,
   type Skill,
 } from '../../domain/srd'
+import { useSrdLibrary } from '@/features/glossary'
+import { HpField } from '../hp-field'
 import { useCharacterLabels } from '../labels'
+import { useResourceNames, useTrackerLabel } from '../resource-names'
+import { LibraryPicker, type LibraryTab } from '../sheet/library'
+import { Stepper } from '../sheet/widgets'
+import { BuildSummary } from './build-summary'
+import { ClassPicker } from './class-picker'
 import { newRequestId } from '@/shared/lib/request-id'
 
-const classIcons: Record<string, LucideIcon> = {
-  barbarian: Axe,
-  bard: Guitar,
-  cleric: Sun,
-  druid: Leaf,
-  fighter: Swords,
-  monk: HandFist,
-  paladin: ShieldHalf,
-  ranger: Crosshair,
-  rogue: VenetianMask,
-  sorcerer: Flame,
-  warlock: Skull,
-  wizard: WandSparkles,
+/** What the wizard keeps across steps: ability scores per method, what a class change removed,
+ * the name and the choices still open. */
+export type Session = {
+  scores: Partial<Record<Build['abilityMethod'], Build['baseAbilities']>>
+  remember: (method: Build['abilityMethod'], scores: Build['baseAbilities']) => void
+  classLoss: ClassLoss | null
+  setClassLoss: (loss: ClassLoss | null) => void
+  editing: boolean
+  name: string
+  setName: (name: string) => void
+  gaps: { step: CreationStep; gap: StepGap }[]
+  goTo: (step: CreationStep) => void
 }
-
-type StepProps = { draft: SheetDraft; setDraft: Dispatch<SetStateAction<SheetDraft>> }
+type StepProps = {
+  draft: SheetDraft
+  setDraft: Dispatch<SetStateAction<SheetDraft>>
+  session: Session
+}
 const newId = () => newRequestId()
 
 export function CreationStepView({ step, ...props }: StepProps & { step: CreationStep }) {
@@ -120,73 +121,45 @@ const asInt = (value: number | string, fallback: number) =>
 
 function ClassStep(props: StepProps) {
   const { t } = useTranslation()
-  const { draft, setDraft } = props
+  const { draft, setDraft, session } = props
   const update = useBuild(props)
   const { build } = draft
-  const shortSaves = (saves: readonly Ability[]) =>
-    saves.map((key) => t(`srd.abilityShort.${key}`)).join(', ')
+  const loss = session.classLoss
   return (
     <Stack gap="md">
-      <Radio.Group
+      <ClassPicker
+        value={build.classKey}
         label={t('wizard.class')}
         description={t('wizard.classHint')}
-        value={build.classKey}
-        onChange={(key) =>
-          update((current) =>
-            chooseClass(
-              current,
-              key,
-              key === 'custom' ? current.classLabel : t(`srd.class.${key}` as 'srd.class.bard'),
-            ),
-          )
-        }
-      >
-        <SimpleGrid cols={{ base: 2, sm: 3, lg: 4 }} spacing="xs" mt="xs" className="class-grid">
-          {classKeys.map((key) => {
-            const Icon = classIcons[key] ?? PenTool
-            return (
-              <Radio.Card
-                key={key}
-                value={key}
-                p="sm"
-                className="choice-card class-card"
-                aria-label={`${t(`srd.class.${key}`)}, ${t('wizard.classCard', {
-                  die: classes[key].hitDie,
-                  saves: shortSaves(classes[key].saves),
-                })}`}
-              >
-                <Radio.Indicator className="class-card-indicator" />
-                <span className="class-card-icon" aria-hidden="true">
-                  <Icon size={26} />
-                </span>
-                <Text fw={700} className="class-card-name">
-                  {t(`srd.class.${key}`)}
-                </Text>
-                <span className="class-card-die" aria-hidden="true">
-                  {t('wizard.hitDieShort', { die: classes[key].hitDie })}
-                </span>
-                <Text size="xs" c="dimmed" aria-hidden="true">
-                  {t('wizard.savesShort', { saves: shortSaves(classes[key].saves) })}
-                </Text>
-              </Radio.Card>
-            )
-          })}
-          <Radio.Card
-            value="custom"
-            p="sm"
-            className="choice-card class-card"
-            aria-label={t('srd.custom')}
-          >
-            <Radio.Indicator className="class-card-indicator" />
-            <span className="class-card-icon" aria-hidden="true">
-              <PenTool size={26} />
-            </span>
-            <Text fw={700} className="class-card-name">
-              {t('srd.custom')}
-            </Text>
-          </Radio.Card>
-        </SimpleGrid>
-      </Radio.Group>
+        withCustom
+        showSaves
+        onChange={(key) => {
+          if (key === build.classKey) return
+          const label = key === 'custom' ? build.classLabel : t(`srd.class.${key}`)
+          // A new class re-places the standard array it seeded and re-suggests the HP; what it
+          // removes is named once below the picker.
+          const next = reseedStandard(build, chooseClass(build, key, label))
+          session.setClassLoss(classChangeLoss(build, next))
+          setDraft((current) => ({
+            ...current,
+            build: next,
+            maxHp: suggestedHpFor({ ...current, build: next }),
+          }))
+        }}
+      />
+      {loss && (
+        <Alert color="yellow" role="status" className="wizard-class-loss">
+          <Text size="sm" fw={600}>
+            {t('wizard.classLoss.title')}
+          </Text>
+          <ul className="wizard-loss-list">
+            {loss.subclass && <li>{t('wizard.classLoss.subclass', { name: loss.subclass })}</li>}
+            {loss.skills > 0 && <li>{t('wizard.classLoss.skills', { count: loss.skills })}</li>}
+            {loss.spells > 0 && <li>{t('wizard.classLoss.spells', { count: loss.spells })}</li>}
+            <li>{t('wizard.classLoss.hp', { value: draft.maxHp })}</li>
+          </ul>
+        </Alert>
+      )}
       {build.classKey === 'custom' && (
         <Paper p="md" className="sheet-block">
           <Stack gap="sm">
@@ -257,21 +230,19 @@ function ClassStep(props: StepProps) {
             update((current) => ({ ...current, subclass }))
           }}
         />
-        <NumberInput
-          hideControls
-          label={t('wizard.level')}
-          min={1}
-          max={20}
-          allowDecimal={false}
-          allowNegative={false}
-          value={draft.level}
-          onChange={(value) =>
-            setDraft((current) => ({
-              ...current,
-              level: Math.min(20, Math.max(1, asInt(value, current.level))),
-            }))
-          }
-        />
+        <div>
+          <Text size="sm" fw={500} mb={4}>
+            {t('wizard.level')}
+          </Text>
+          <Stepper
+            label={t('wizard.level')}
+            name={t('panel.levelName')}
+            value={draft.level}
+            min={1}
+            max={20}
+            onChange={(level) => setDraft((current) => ({ ...current, level }))}
+          />
+        </div>
       </SimpleGrid>
     </Stack>
   )
@@ -413,15 +384,13 @@ function OriginStep(props: StepProps) {
 function AbilitiesStep(props: StepProps) {
   const { t } = useTranslation()
   const update = useBuild(props)
+  const { session } = props
   const { build } = props.draft
   const totals = finalAbilities(build)
   const spent = pointBuySpent(build.baseAbilities)
-  const setScore = (key: Ability, value: number) =>
-    update((current) => ({
-      ...current,
-      baseAbilities: { ...current.baseAbilities, [key]: value },
-    }))
   const method = build.abilityMethod
+  const setScores = (baseAbilities: Build['baseAbilities']) =>
+    update((current) => ({ ...current, baseAbilities }))
   return (
     <Stack gap="md">
       <SegmentedControl
@@ -434,21 +403,24 @@ function AbilitiesStep(props: StepProps) {
         }))}
         onChange={(value) => {
           const next = value as Build['abilityMethod']
+          // Each method keeps its own scores while the wizard is open.
+          session.remember(method, build.baseAbilities)
           update((current) => ({
             ...current,
             abilityMethod: next,
             baseAbilities:
-              next === 'pointBuy'
+              session.scores[next] ??
+              (next === 'pointBuy'
                 ? pointBuyStart()
                 : next === 'standard'
-                  ? { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 }
-                  : current.baseAbilities,
+                  ? standardAbilitiesFor(current.classKey)
+                  : current.baseAbilities),
           }))
         }}
       />
       <Text size="sm" c="dimmed" aria-live="polite">
         {method === 'standard'
-          ? t('wizard.standardHint')
+          ? t(isClassKeyValue(build.classKey) ? 'wizard.standardHintClass' : 'wizard.standardHint')
           : method === 'pointBuy'
             ? t('wizard.pointBuyHint', {
                 left: spent === null ? '—' : pointBuyBudget - spent,
@@ -456,52 +428,58 @@ function AbilitiesStep(props: StepProps) {
               })
             : t('wizard.manualHint')}
       </Text>
-      <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="sm">
+      <ul className="score-rows">
         {abilityKeys.map((key) => {
           const label = t(`srd.ability.${key}`)
-          const description = t('wizard.finalScore', {
+          const score = build.baseAbilities[key]
+          const total = t('wizard.finalScore', {
             score: totals[key],
             mod: signed(modifier(totals[key])),
           })
-          return method === 'standard' ? (
-            <NativeSelect
-              key={key}
-              label={label}
-              description={description}
-              value={String(build.baseAbilities[key])}
-              data={[...new Set([...standardArray, build.baseAbilities[key]])].map((value) => ({
-                value: String(value),
-                label: String(value),
-              }))}
-              onChange={(event) => setScore(key, Number(event.currentTarget.value))}
-            />
-          ) : (
-            <NumberInput
-              hideControls
-              key={key}
-              label={label}
-              description={description}
-              min={method === 'pointBuy' ? 8 : 1}
-              max={method === 'pointBuy' ? 15 : 30}
-              allowDecimal={false}
-              allowNegative={false}
-              value={build.baseAbilities[key]}
-              onChange={(value) =>
-                setScore(
-                  key,
-                  Math.min(
-                    method === 'pointBuy' ? 15 : 30,
-                    Math.max(method === 'pointBuy' ? 8 : 1, asInt(value, build.baseAbilities[key])),
-                  ),
-                )
-              }
-            />
+          return (
+            <li key={key} className="score-row">
+              <div className="score-row-name">
+                <span id={`score-${key}`}>{label}</span>
+                <Text size="xs" c="dimmed">
+                  {total}
+                  {method === 'pointBuy' && pointBuyCost[score] !== undefined
+                    ? ` · ${t('wizard.pointCost', { cost: pointBuyCost[score] })}`
+                    : ''}
+                </Text>
+              </div>
+              {method === 'standard' ? (
+                <NativeSelect
+                  aria-labelledby={`score-${key}`}
+                  className="score-row-select"
+                  value={String(score)}
+                  data={[...new Set([...standardArray, score])].map((value) => ({
+                    value: String(value),
+                    label: String(value),
+                  }))}
+                  onChange={(event) =>
+                    setScores(
+                      assignStandard(build.baseAbilities, key, Number(event.currentTarget.value)),
+                    )
+                  }
+                />
+              ) : (
+                <Stepper
+                  label={label}
+                  name={t('panel.scoreName', { ability: label })}
+                  value={score}
+                  min={method === 'pointBuy' ? 8 : 1}
+                  max={method === 'pointBuy' ? pointBuyCeiling(build.baseAbilities, key) : 30}
+                  onChange={(value) => setScores({ ...build.baseAbilities, [key]: value })}
+                />
+              )}
+            </li>
           )
         })}
-      </SimpleGrid>
+      </ul>
     </Stack>
   )
 }
+const isClassKeyValue = (key: string) => key in classes
 
 function SkillsStep(props: StepProps) {
   const { t } = useTranslation()
@@ -569,30 +547,23 @@ function CombatStep(props: StepProps) {
   const { draft, setDraft } = props
   const update = useBuild(props)
   const suggested = suggestedHpFor(draft)
+  const follows = draft.maxHp === suggested
   const unarmored = defaultArmorClass(draft.build)
   return (
     <Stack gap="md">
       <Group align="flex-end" gap="sm">
-        <NumberInput
-          hideControls
+        <HpField
           className="grow-input"
           label={t('wizard.maxHp')}
-          description={t('wizard.suggested', { value: suggested })}
-          min={1}
-          max={9999}
-          allowDecimal={false}
-          allowNegative={false}
+          description={t(follows ? 'wizard.suggestedFollows' : 'wizard.suggestedManual', {
+            value: suggested,
+          })}
           value={draft.maxHp}
-          onChange={(value) =>
-            setDraft((current) => ({
-              ...current,
-              maxHp: Math.min(9999, Math.max(1, asInt(value, current.maxHp))),
-            }))
-          }
+          onChange={(maxHp) => setDraft((current) => ({ ...current, maxHp }))}
         />
         <Button
           variant="light"
-          disabled={draft.maxHp === suggested}
+          disabled={follows}
           onClick={() => setDraft((current) => ({ ...current, maxHp: suggested }))}
         >
           {t('wizard.useSuggested')}
@@ -654,7 +625,12 @@ function SpellsStep(props: StepProps) {
   const { t } = useTranslation()
   const update = useBuild(props)
   const { build } = props.draft
+  const [picking, setPicking] = useState(false)
+  const [tab, setTab] = useState<LibraryTab>('spells')
   const slots = slotsFor(build.casterKind, props.draft.level)
+  const maxSpellLevel = slots.reduce((top, count, index) => (count > 0 ? index + 1 : top), 0)
+  const cantrips = build.spells.filter((spell) => spell.level === 0).length
+  const prepared = build.spells.filter((spell) => spell.level > 0 && spell.prepared).length
   const slotText = slots
     .flatMap((count, index) =>
       count > 0 ? [`${t('sheet.slotLevel', { level: index + 1 })}: ${count}`] : [],
@@ -671,6 +647,15 @@ function SpellsStep(props: StepProps) {
         {t('wizard.spellsHint')}
       </Text>
       {slotText && <Text size="sm">{t('wizard.slotsAtLevel', { slots: slotText })}</Text>}
+      {build.spells.length > 0 && (
+        <Text size="sm" fw={600} aria-live="polite">
+          {t('wizard.spellsCount', {
+            cantrips,
+            spells: build.spells.length - cantrips,
+            prepared,
+          })}
+        </Text>
+      )}
       {build.spells.map((spell) => (
         <Paper key={spell.id} p="sm" className="sheet-block">
           <Stack gap="xs">
@@ -707,6 +692,11 @@ function SpellsStep(props: StepProps) {
                 <Trash2 size={18} aria-hidden="true" />
               </ActionIcon>
             </Group>
+            {maxSpellLevel > 0 && spell.level > maxSpellLevel && (
+              <Text size="sm" className="wizard-warn" role="note">
+                {t('wizard.spellTooHigh', { max: maxSpellLevel })}
+              </Text>
+            )}
             <Group gap="md">
               <Checkbox
                 label={t('sheet.concentration')}
@@ -737,30 +727,52 @@ function SpellsStep(props: StepProps) {
           </Stack>
         </Paper>
       ))}
-      <Button
-        variant="light"
-        leftSection={<Plus size={16} aria-hidden="true" />}
-        disabled={build.spells.length >= 100}
-        onClick={() =>
-          update((current) => ({
-            ...current,
-            spells: [
-              ...current.spells,
-              {
-                id: newId(),
-                name: '',
-                level: 0,
-                concentration: false,
-                ritual: false,
-                prepared: false,
-                notes: '',
-              },
-            ],
-          }))
-        }
-      >
-        {t('wizard.addSpell')}
-      </Button>
+      <Group gap="xs">
+        <Button
+          variant="light"
+          leftSection={<BookOpen size={16} aria-hidden="true" />}
+          disabled={build.spells.length >= 100}
+          onClick={() => setPicking(true)}
+        >
+          {t('panel.fromLibrary')}
+        </Button>
+        <Button
+          variant="light"
+          leftSection={<Plus size={16} aria-hidden="true" />}
+          disabled={build.spells.length >= 100}
+          onClick={() =>
+            update((current) => ({
+              ...current,
+              spells: [
+                ...current.spells,
+                {
+                  id: newId(),
+                  name: '',
+                  level: 0,
+                  concentration: false,
+                  ritual: false,
+                  prepared: false,
+                  notes: '',
+                },
+              ],
+            }))
+          }
+        >
+          {t('wizard.addSpell')}
+        </Button>
+      </Group>
+      <LibraryPicker
+        opened={picking}
+        onClose={() => setPicking(false)}
+        tab={tab}
+        onTab={setTab}
+        props={{
+          build,
+          level: props.draft.level,
+          pending: false,
+          change: (apply) => props.setDraft((current) => apply(current)),
+        }}
+      />
     </Stack>
   )
 }
@@ -779,25 +791,70 @@ function DetailsStep(props: StepProps) {
       update((current) => ({ ...current, [field]: value }))
     },
   })
+  const { session } = props
+  const library = useSrdLibrary()
+  const names = useResourceNames()
+  const trackerLabel = useTrackerLabel()
+  // The review shows what finishing will produce: class resources and features included.
+  const preview = useMemo(
+    () =>
+      normalizeDraft(
+        library
+          ? {
+              ...draft,
+              build: syncProgression(
+                { ...draft.build, origin: draft.build.origin ?? 'full' },
+                draft.level,
+                library.features,
+                names,
+              ),
+            }
+          : draft,
+      ),
+    [draft, library, names],
+  )
   return (
     <Stack gap="md">
-      <Paper p="md" className="sheet-block">
-        <Title order={2} size="h4">
-          {t('wizard.review')}
-        </Title>
-        <Text mt={4}>
-          {t('wizard.reviewLine', {
-            class: labels.className(build),
-            level: draft.level,
-            species: labels.speciesName(build),
-            background: labels.backgroundName(build),
-          })}
-        </Text>
-        <Text size="sm" c="dimmed">
-          {t('sheet.hpSummary', { value: draft.maxHp })},{' '}
-          {t('sheet.acSummary', { value: build.acOverride ?? defaultArmorClass(build) })}
-        </Text>
-      </Paper>
+      {!session.editing && (
+        <TextInput
+          required
+          maxLength={100}
+          label={t('creation.name')}
+          value={session.name}
+          error={session.name.trim() ? undefined : t('creation.nameRequired')}
+          onChange={(event) => session.setName(event.currentTarget.value)}
+        />
+      )}
+      <BuildSummary draft={preview} title={t('wizard.review')} />
+      <Text size="sm" c="dimmed">
+        {t('wizard.reviewLine', {
+          class: labels.className(build),
+          level: draft.level,
+          species: labels.speciesName(build),
+          background: labels.backgroundName(build),
+        })}
+      </Text>
+      {session.gaps.length > 0 && (
+        <section aria-labelledby="wizard-gaps" className="wizard-gaps">
+          <Title order={2} size="h4" id="wizard-gaps">
+            {t('wizard.gaps.title')}
+          </Title>
+          <ul className="wizard-loss-list">
+            {session.gaps.map(({ step, gap }) => (
+              <li key={`${step}-${gap.kind}`}>
+                <span>
+                  {gap.kind === 'bonuses'
+                    ? t('wizard.gap.bonuses')
+                    : t('wizard.gap.skills', { count: gap.missing })}
+                </span>{' '}
+                <Button variant="subtle" size="compact-md" onClick={() => session.goTo(step)}>
+                  {t('wizard.gaps.goTo', { step: t(`wizard.step.${step}`) })}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <Textarea
         autosize
         minRows={2}
@@ -923,8 +980,9 @@ function DetailsStep(props: StepProps) {
                     required
                     maxLength={60}
                     label={t('wizard.trackerName')}
-                    value={tracker.name}
-                    onChange={(event) => patch({ name: event.currentTarget.value })}
+                    value={trackerLabel(tracker)}
+                    // Typing over a class resource's name makes it the player's own.
+                    onChange={(event) => patch({ name: event.currentTarget.value, key: undefined })}
                   />
                   <NumberInput
                     hideControls
@@ -954,7 +1012,9 @@ function DetailsStep(props: StepProps) {
                     size={44}
                     variant="subtle"
                     color="red"
-                    aria-label={t('wizard.remove', { name: tracker.name || t('wizard.untitled') })}
+                    aria-label={t('wizard.remove', {
+                      name: trackerLabel(tracker) || t('wizard.untitled'),
+                    })}
                     onClick={() =>
                       update((current) => ({
                         ...current,

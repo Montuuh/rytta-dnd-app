@@ -4,9 +4,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { ViewerButton } from '@/shared/ui/image-viewer'
+import { artUrl } from '@/shared/ui/art-url'
 import { itemImageQuery } from '../api'
+import type { ItemCategory } from '../domain/item'
 import { itemIcons } from './icons'
 import './item-icon.css'
+
+const PAINTED_FROM = 40
 
 /**
  * An item's picture, or its icon without one. RYT-098: a viewable picture (with the item's `name`)
@@ -20,6 +24,7 @@ export function ItemIcon({
   viewable = false,
   name,
   frame,
+  category,
 }: {
   icon: string
   size?: number
@@ -28,6 +33,8 @@ export function ItemIcon({
   viewable?: boolean
   name?: string
   frame?: string
+  /** Without a picture, a tile of 40px or more shows this category's painting; smaller keeps the glyph. */
+  category?: ItemCategory
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
@@ -35,6 +42,8 @@ export function ItemIcon({
   const [failed, setFailed] = useState<string | null>(null)
   const Icon = itemIcons[icon] ?? Package
   const src = query.data && failed !== query.data ? query.data : null
+  // Wait for a real picture to load before falling back, so the painting never flashes first.
+  const painted = !src && category && size >= PAINTED_FROM && !(imagePath && query.isPending)
   const picture = src ? (
     <img
       src={src}
@@ -43,6 +52,16 @@ export function ItemIcon({
       height={size}
       style={{ objectFit: 'contain' }}
       onError={() => setFailed(src)}
+    />
+  ) : painted ? (
+    <img
+      src={artUrl(`items/thumbs/${category}`)}
+      alt=""
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
+      className="item-art"
     />
   ) : (
     <Icon size={size} aria-hidden="true" strokeWidth={1.6} />
@@ -60,7 +79,7 @@ export function ItemIcon({
       </ViewerButton>
     )
   return frame ? (
-    <span className={frame} aria-hidden="true">
+    <span className={painted ? `${frame} has-art` : frame} aria-hidden="true">
       {picture}
     </span>
   ) : (

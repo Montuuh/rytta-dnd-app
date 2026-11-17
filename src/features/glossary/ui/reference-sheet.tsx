@@ -1,4 +1,5 @@
-import { Anchor, Drawer, Loader, Text } from '@mantine/core'
+import { Anchor, Loader, Text } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { ArrowUpRight, ChevronLeft } from 'lucide-react'
 import { useEffect, useRef } from 'react'

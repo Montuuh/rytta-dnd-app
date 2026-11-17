@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { Button, Modal, NumberInput, Slider, Switch } from '@mantine/core'
+import { Button, NumberInput, Slider, Switch } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useTranslation } from 'react-i18next'
 import { MonitorSmartphone } from 'lucide-react'
 import { TileGroup } from '@/features/combat'

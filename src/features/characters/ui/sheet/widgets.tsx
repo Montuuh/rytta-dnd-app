@@ -4,6 +4,7 @@ import { Minus, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useLongPress } from '@/shared/ui/use-long-press'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 /** RYT-073: a block's detail opens over the sheet: a bottom sheet on phones, a side sheet from
  * 48em. Mantine traps focus, closes on Escape and returns focus to the tile that opened it. */
@@ -26,6 +27,7 @@ export function BlockSheet({
 }) {
   const { t } = useTranslation()
   const phone = usePhone()
+  useBackToClose(opened, onClose)
   return (
     <Drawer
       opened={opened}

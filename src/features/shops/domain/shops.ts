@@ -265,6 +265,10 @@ export type OrderVariant = 'purchase' | 'sale' | 'counter'
 export const orderVariant = (order: Pick<Order, 'kind' | 'status'>): OrderVariant =>
   order.status === 'countered' ? 'counter' : order.kind
 
+/** A counter-offer the Player turned down closes as "cancelled" but keeps the DM's price. */
+export const counterDeclined = (order: Pick<Order, 'status' | 'lines'>) =>
+  order.status === 'cancelled' && order.lines.some((line) => line.countered_price !== null)
+
 /** What the Player asked for before the DM countered: their offer, or the list price. */
 export const askedLinePrice = (line: OrderLine) => line.offered_price ?? line.unit_price
 export const askedTotal = (order: Pick<Order, 'lines'>) =>

@@ -1,12 +1,12 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
-import { Button, Drawer, Modal, Text, UnstyledButton } from '@mantine/core'
+import { Button, Text, UnstyledButton } from '@mantine/core'
+import { Drawer, Modal } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { ItemIcon, type CatalogueItem } from '@/features/inventory'
+import { ItemIcon, Stepper, type CatalogueItem } from '@/features/inventory'
 import { localizedDescription, localizedName } from '@/shared/lib/translations'
 import { tradeSlots, type OfferLine, type TradeItem } from '../domain/trade'
-import { Stepper } from './stepper'
 
 /** Chooses one free stack and an amount for the own offer. Bottom sheet on phones. */
 export function ItemPicker({
@@ -113,13 +113,17 @@ export function ItemPicker({
                 ) : null
               })()}
               <Stepper
+                hideLabel
                 value={amount}
                 min={1}
                 max={current.quantity}
+                required
+                longPress
                 label={t('trade.picker.quantity', { name: nameOf(current) })}
                 lessLabel={t('trade.picker.less', { name: nameOf(current) })}
                 moreLabel={t('trade.picker.more', { name: nameOf(current) })}
-                onChange={setAmount}
+                maxMessage={t('trade.picker.onlyHave', { count: current.quantity })}
+                onChange={(next) => setAmount(next ?? 1)}
                 autoFocus
               />
               {full && (
@@ -149,7 +153,7 @@ export function ItemPicker({
       )}
     </div>
   )
-  const close = { 'aria-label': t('action.cancel'), size: 44 }
+  const close = { 'aria-label': t('common.close'), size: 44 }
   return phone ? (
     <Drawer
       opened

@@ -1,5 +1,5 @@
 import { GlossaryText } from '@/features/glossary'
-import { useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Badge,
@@ -7,7 +7,6 @@ import {
   Chip,
   Combobox,
   Group,
-  NumberInput,
   Paper,
   Stack,
   Tabs,
@@ -15,7 +14,6 @@ import {
   Textarea,
   TextInput,
   Title,
-  Tooltip,
   UnstyledButton,
   useCombobox,
 } from '@mantine/core'
@@ -26,7 +24,7 @@ import {
   Handshake,
   HandCoins,
   Lock,
-  PackageOpen,
+  Tag,
   ScrollText,
   Search,
   ShoppingBag,
@@ -35,11 +33,14 @@ import {
 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { PageHead } from '@/shared/ui/page-head'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { QueryFeedback, useCampaign, useCampaignView } from '@/features/campaigns'
 import {
+  EmptyPanel,
   itemCategories,
+  Stepper,
   type ItemCategory,
   type ItemDefinition,
   type ItemStack,
@@ -63,7 +64,6 @@ import {
   sumGp,
   toCents,
   type SaleLine,
-  type CartLine,
   type OrderResult,
   type ShopAction,
   type StorefrontShop,
@@ -75,8 +75,10 @@ import { EmptyNote, GoldAmount, ItemGlyph } from './visuals'
 import { newRequestId } from '@/shared/lib/request-id'
 import { localizedName } from '@/shared/lib/translations'
 import { useGp } from './use-gp'
+import { useStoredCart } from './use-stored-cart'
 import { ShopBanner, ShopThumb } from './shop-image'
 import { ShopKind } from './shop-type-picker'
+import { findShopType } from '../domain/shop-types'
 
 type Notice = { text: string; inventoryLink?: boolean }
 /** Shelves up to this size are scanned by eye; a search field only adds a step. */
@@ -105,8 +107,9 @@ export function Storefront() {
   })
   const holdings = useHoldings(character?.id)
   const action = useShopAction(campaign.id)
-  const [carts, setCarts] = useState<Record<string, CartLine[]>>({})
-  const [notes, setNotes] = useState<Record<string, string>>({})
+  const stored = useStoredCart(campaign.id, character?.id ?? null)
+  const { carts, notes } = stored
+  const phone = usePhone()
   const [cartOpen, setCartOpen] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -119,6 +122,7 @@ export function Storefront() {
   const entries = holdings.stacks
   const gold = front.data?.gold ?? 0
   const canBuy = !playerPreview && !!shop?.is_open
+  const canSellHere = !playerPreview && !!shop && shop.is_open && shop.resale_percent > 0
   const groups = shops.flatMap((merchant) => {
     const items = reconcileCart(carts[merchant.id] ?? [], merchant.listings)
     return items.length ? [{ shop: merchant, lines: items, note: notes[merchant.id] ?? '' }] : []
@@ -146,8 +150,17 @@ export function Storefront() {
       },
       { replace: true },
     )
-  const setLines = (shopId: string, next: CartLine[]) =>
-    setCarts((prior) => ({ ...prior, [shopId]: next }))
+  const setLines = stored.setCart
+  // Sets one line to an exact quantity (0 removes it); the stepper on the listing card uses it.
+  const setQuantity = (listingId: string, quantity: number) => {
+    if (!shop) return
+    setLines(
+      shop.id,
+      quantity <= 0
+        ? lines.filter((line) => line.listingId !== listingId)
+        : lines.map((line) => (line.listingId === listingId ? { ...line, quantity } : line)),
+    )
+  }
   const add = (listingId: string, quantity: number) => {
     const current = lines.find((line) => line.listingId === listingId)
     if (!shop) return
@@ -197,7 +210,7 @@ export function Storefront() {
           if (!order) throw new ShopError('unavailable')
           attempts.current.delete(merchant.id)
           setLines(merchant.id, [])
-          setNotes((prior) => ({ ...prior, [merchant.id]: '' }))
+          stored.setNote(merchant.id, '')
           if (order.status === 'completed') {
             bought = true
             receipts.push(t('shop.notice.bought', { value: gp(order.total) }))
@@ -220,6 +233,13 @@ export function Storefront() {
       setCheckingOut(false)
     }
   }
+  const failure = action.error
+  const failureText = failure
+    ? t(`commerce.error.${failure instanceof ShopError ? failure.code : 'unavailable'}`)
+    : ''
+  // An order's refusal belongs inside that order; anything else is shown above the tabs.
+  const failedOrder =
+    failure && action.variables && 'orderId' in action.variables ? action.variables.orderId : null
   const detail = shop?.listings.find((l) => l.id === detailId) ?? null
   const kinds = itemCategories.filter((k) => shop?.listings.some((l) => l.item.category === k))
   const visible = shop ? filterListings(shop.listings, search, kind) : []
@@ -274,8 +294,8 @@ export function Storefront() {
               </Text>
               <GoldAmount value={gold} size="lg" />
             </div>
-            {/* An empty cart is nothing to open; the dock takes over on the buy tab. */}
-            {!playerPreview && units > 0 && tab !== 'buy' && (
+            {/* One cart button: the dock on a phone's buy tab, this one everywhere else. */}
+            {!playerPreview && units > 0 && (tab !== 'buy' || !phone) && (
               <Button
                 leftSection={<ShoppingBag size={18} aria-hidden="true" />}
                 onClick={openCart}
@@ -300,18 +320,14 @@ export function Storefront() {
             >
               {notice.text}{' '}
               {notice.inventoryLink && (
-                <Link to={`/campaign/${campaign.id}/inventory`}>
+                <Link to={`/campaign/${campaign.id}/inventory`} className="notice-link">
                   {t('shop.notice.seeInventory')}
                 </Link>
               )}
             </Alert>
           )}
-          {action.error && action.variables?.kind !== 'checkout' && (
-            <Alert color="red" role="alert">
-              {t(
-                `commerce.error.${action.error instanceof ShopError ? action.error.code : 'unavailable'}`,
-              )}
-            </Alert>
+          {failure && action.variables?.kind !== 'checkout' && !failedOrder && (
+            <FocusedAlert message={failureText} />
           )}
           <Tabs
             value={tab}
@@ -370,8 +386,39 @@ export function Storefront() {
                     </Group>
                   </Chip.Group>
                 )}
+                {shop.modifier !== 0 && shop.listings.length > 0 && (
+                  <Text
+                    size="sm"
+                    fw={600}
+                    className={`shop-modifier ${shop.modifier < 0 ? 'modifier-discount' : 'modifier-markup'}`}
+                  >
+                    <Tag size={16} aria-hidden="true" />
+                    {shop.modifier < 0
+                      ? t('shop.discount', { value: -shop.modifier })
+                      : t('shop.markup', { value: shop.modifier })}
+                  </Text>
+                )}
                 {shop.listings.length === 0 ? (
-                  <EmptyNote icon={PackageOpen}>{t('shop.noListings')}</EmptyNote>
+                  <EmptyPanel
+                    art="shop"
+                    title={t('shop.noListings')}
+                    action={
+                      canSellHere ? (
+                        <Button
+                          leftSection={<HandCoins size={16} aria-hidden="true" />}
+                          onClick={() => setParam('tab', 'sell')}
+                        >
+                          {t('shop.tab.sell')}
+                        </Button>
+                      ) : undefined
+                    }
+                  >
+                    {canSellHere
+                      ? t('shop.noListingsSell')
+                      : playerPreview
+                        ? t('shop.noListingsPreview')
+                        : t('shop.noListingsWait')}
+                  </EmptyPanel>
                 ) : (
                   <div className="listing-grid">
                     {visible.map((listing) => (
@@ -387,6 +434,7 @@ export function Storefront() {
                           setDetailId(listing.id)
                         }}
                         onAdd={() => add(listing.id, 1)}
+                        onSet={(quantity) => setQuantity(listing.id, quantity)}
                       />
                     ))}
                   </div>
@@ -444,6 +492,8 @@ export function Storefront() {
                     order={order}
                     role={playerPreview ? 'viewer' : 'player'}
                     busy={action.isPending}
+                    gold={gold}
+                    error={failedOrder === order.id ? failureText : null}
                     onAction={(next) =>
                       perform(
                         next,
@@ -459,7 +509,7 @@ export function Storefront() {
               </Stack>
             </Tabs.Panel>
           </Tabs>
-          {!playerPreview && units > 0 && tab === 'buy' && (
+          {!playerPreview && units > 0 && tab === 'buy' && phone && (
             <div className="cart-dock">
               <Button
                 fullWidth
@@ -499,7 +549,7 @@ export function Storefront() {
               if (!submitting.current) setCartOpen(false)
             }}
             onChange={setLines}
-            onNote={(id, note) => setNotes((prior) => ({ ...prior, [id]: note }))}
+            onNote={stored.setNote}
             onSubmit={checkout}
           />
         </>
@@ -526,49 +576,28 @@ function ShopSeal({ shop, size = 'md' }: { shop: StorefrontShop; size?: 'sm' | '
 
 const modeIcons = { auto: Zap, approval: Handshake } as const
 
-/**
- * How buying works here, as a badge whose explanation lives in a tooltip. The badge is a
- * focus stop (hover, focus or tap opens it; Escape or leaving closes it) and the help is
- * also its accessible description, so nothing depends on seeing the tooltip.
- */
-function ModeHint({ shop }: { shop: StorefrontShop }) {
+/** How buying works here: the mode as the header's one badge. Its explanation is a visible line
+ * (`ModeHelp`), because a tooltip cannot be opened by touch. */
+function ModeBadge({ shop }: { shop: StorefrontShop }) {
   const { t } = useTranslation()
-  const [opened, setOpened] = useState(false)
-  const helpId = useId()
   const Icon = modeIcons[shop.mode]
   return (
-    <Tooltip
-      label={t(`shop.modeHelp.${shop.mode}`)}
-      opened={opened}
-      multiline
-      w={260}
-      withArrow
-      position="bottom"
-    >
-      <span
-        className="mode-hint"
-        tabIndex={0}
-        aria-describedby={helpId}
-        onMouseEnter={() => setOpened(true)}
-        onMouseLeave={() => setOpened(false)}
-        onFocus={() => setOpened(true)}
-        onBlur={() => setOpened(false)}
-        onClick={() => setOpened((prior) => !prior)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape' && opened) {
-            event.stopPropagation()
-            setOpened(false)
-          }
-        }}
-      >
-        <Badge variant="light" leftSection={<Icon size={14} aria-hidden="true" />}>
-          {t(`shop.mode.${shop.mode}`)}
-        </Badge>
-        <span id={helpId} className="visually-hidden">
-          {t(`shop.modeHelp.${shop.mode}`)}
-        </span>
-      </span>
-    </Tooltip>
+    <Badge variant="light" leftSection={<Icon size={14} aria-hidden="true" />}>
+      {t(`shop.mode.${shop.mode}`)}
+    </Badge>
+  )
+}
+
+/** An error shown above the tabs; it takes focus so it is read where the reader is looking. */
+function FocusedAlert({ message }: { message: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.focus()
+  }, [message])
+  return (
+    <Alert color="red" role="alert" ref={ref} tabIndex={-1}>
+      {message}
+    </Alert>
   )
 }
 
@@ -623,7 +652,7 @@ function ShopPicker({
               aria-selected={s.id === shop.id}
               className="shop-picker-option"
             >
-              {s.image_path ? (
+              {s.image_path || (s.kind && findShopType(s.kind)) ? (
                 <ShopThumb path={s.image_path} kind={s.kind} />
               ) : (
                 <ShopSeal shop={s} size="sm" />
@@ -666,21 +695,12 @@ function ShopHeader({
           )}
         </Title>
         <div className="shop-title-badges">
-          <ModeHint shop={shop} />
+          <ModeBadge shop={shop} />
           {!shop.is_open && (
-            <Badge variant="outline" leftSection={<Lock size={14} aria-hidden="true" />}>
+            <span className="shop-closed-flag">
+              <Lock size={14} aria-hidden="true" />
               {t('shop.closed')}
-            </Badge>
-          )}
-          {shop.modifier !== 0 && (
-            <Badge
-              variant="filled"
-              className={shop.modifier < 0 ? 'modifier-discount' : 'modifier-markup'}
-            >
-              {shop.modifier < 0
-                ? t('shop.discount', { value: -shop.modifier })
-                : t('shop.markup', { value: shop.modifier })}
-            </Badge>
+            </span>
           )}
         </div>
       </div>
@@ -688,6 +708,9 @@ function ShopHeader({
   )
   const details = (
     <>
+      <Text size="sm" className="shop-mode-help">
+        {t(`shop.modeHelp.${shop.mode}`)}
+      </Text>
       {shop.description && (
         <Text c="dimmed" className="user-copy shop-description">
           <GlossaryText text={shop.description} />
@@ -704,6 +727,7 @@ function ShopHeader({
   return (
     <ShopBanner
       path={shop.image_path}
+      kind={shop.kind}
       name={shop.name}
       fallback={
         <Paper p="lg" className={`shop-header shop-sign${closed}`}>
@@ -715,7 +739,7 @@ function ShopHeader({
         </Paper>
       }
       overlay={<div className={`shop-banner-title${closed}`}>{title}</div>}
-      after={shop.description || !shop.is_open ? details : null}
+      after={details}
     />
   )
 }
@@ -771,13 +795,20 @@ function SellPanel({
     <Stack gap="md">
       <Text size="sm" c="dimmed">
         {t('sell.help', { percent: shop.resale_percent })}
+        {shop.mode === 'approval' && ` ${t('sell.approvalNote')}`}
       </Text>
+      {!shop.is_open && (
+        <Text size="sm" className="shop-closed-note">
+          {t('shop.closedHelp')}
+        </Text>
+      )}
       <Stack gap="xs">
         {rows.map(({ definition, available }) => (
           <div className="sell-row" key={definition.id}>
             <ItemGlyph
               imagePath={definition.image_path}
               icon={definition.icon}
+              category={definition.category}
               rarity={definition.rarity}
               viewable
               name={nameOf(definition)}
@@ -793,22 +824,31 @@ function SellPanel({
                 })}
               </Text>
             </div>
-            <NumberInput
-              hideControls
-              aria-label={t('sell.quantityNamed', { name: nameOf(definition) })}
-              min={0}
-              max={available}
-              allowDecimal={false}
-              value={amounts[definition.id] ?? 0}
-              disabled={readOnly}
-              onChange={(value) =>
-                setAmounts((prior) => ({
-                  ...prior,
-                  [definition.id]: Math.max(0, Math.min(available, Number(value) || 0)),
-                }))
-              }
-              w={96}
-            />
+            <div className="sell-row-amount">
+              <Stepper
+                hideLabel
+                label={t('sell.quantityNamed', { name: nameOf(definition) })}
+                min={0}
+                max={available}
+                required
+                longPress
+                value={amounts[definition.id] ?? 0}
+                disabled={readOnly || !shop.is_open}
+                maxMessage={t('sell.onlyHave', { count: available })}
+                onChange={(value) =>
+                  setAmounts((prior) => ({ ...prior, [definition.id]: value ?? 0 }))
+                }
+              />
+              {available > 1 && (
+                <UnstyledButton
+                  className="quiet-link sell-all"
+                  disabled={readOnly || !shop.is_open}
+                  onClick={() => setAmounts((prior) => ({ ...prior, [definition.id]: available }))}
+                >
+                  {t('sell.all', { count: available })}
+                </UnstyledButton>
+              )}
+            </div>
           </div>
         ))}
       </Stack>

@@ -12,6 +12,10 @@ const child = spawn(
     stdio: 'inherit',
     env: {
       ...process.env,
+      // Previews show the unconfigured state whatever .env.local holds.
+      VITE_CONTACT_EMAIL: '',
+      VITE_OWNER_NAME: '',
+      VITE_SITE_URL: '',
       VITE_DATA_MODE: 'supabase',
       VITE_SUPABASE_URL: 'https://rytta-test.supabase.co',
       VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_browser_test_fixture',

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { Alert, Button, Checkbox, Drawer, Loader, Stack, Text } from '@mantine/core'
+import { Alert, Button, Checkbox, Loader, Stack, Text } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { Check, PackagePlus, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

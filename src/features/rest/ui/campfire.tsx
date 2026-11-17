@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Ban, Check, Ellipsis, Flame, X } from 'lucide-react'
+import { useState, type CSSProperties } from 'react'
+import { Ban, Check, Ellipsis, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { CharacterPortrait, useCampaignPortraits } from '@/features/inventory'
+import { artUrl } from '@/shared/ui/art-url'
 import { voteMark, type RestParticipant, type VoteMark } from '../domain/rest'
+import { PersonToken } from './person-token'
 
 const icons = { yes: Check, no: X, wait: Ellipsis, cannot: Ban }
 
@@ -22,7 +23,6 @@ export function Campfire({
   total: number
 }) {
   const { t } = useTranslation()
-  const portraits = useCampaignPortraits(campaignId)
   const count = participants.length
   const [largeText] = useState(() => {
     try {
@@ -46,49 +46,55 @@ export function Campfire({
       layout === 'ring'
         ? -Math.PI / 2 + (2 * Math.PI * index) / count
         : Math.PI * (count === 1 ? 1.5 : 1.08 + (0.84 * index) / (count - 1))
-    const [cx, cy, rx, ry] = layout === 'ring' ? [50, 50, 37, 37] : [50, 70, 38, 52]
+    const [cx, cy, rx, ry] = layout === 'ring' ? [50, 55, 37, 33] : [50, 72, 38, 50]
     return { left: `${cx + rx * Math.cos(angle)}%`, top: `${cy + ry * Math.sin(angle)}%` }
   }
   return (
-    <div className="rest-fire" data-count={count} data-layout={layout}>
-      <ul className="rest-seats" aria-label={t('rest.status', { yes, total })}>
-        {participants.map((person, index) => {
-          const mark = voteMark(person)
-          const Icon = icons[mark]
-          return (
-            <li
-              key={person.id}
-              className="rest-seat"
-              data-mark={mark}
-              data-own={person.own || undefined}
-              style={place(index)}
-            >
-              <span className="rest-seat-face">
-                <CharacterPortrait
-                  campaignId={campaignId}
-                  characterId={person.id}
-                  name={person.name}
-                  path={portraits.get(person.id) ?? null}
-                  size={size}
-                  viewable
-                />
-                <span className="rest-seat-mark" aria-hidden="true">
-                  <Icon size={12} strokeWidth={3} />
+    <div className="rest-camp">
+      <div
+        className="rest-fire"
+        data-count={count}
+        data-layout={layout}
+        // The painted scene is the backdrop; a fixed dark scrim keeps the ink AA in every theme.
+        style={{ '--fire-art': `url(${artUrl('scenes/campfire')})` } as CSSProperties}
+      >
+        <ul className="rest-seats" aria-label={t('rest.status', { yes, total })}>
+          {participants.map((person, index) => {
+            const mark = voteMark(person)
+            const Icon = icons[mark]
+            return (
+              <li
+                key={person.id}
+                className="rest-seat"
+                data-mark={mark}
+                data-own={person.own || undefined}
+                style={place(index)}
+              >
+                <span className="rest-seat-face">
+                  <PersonToken
+                    campaignId={campaignId}
+                    characterId={person.id}
+                    name={person.name}
+                    size={size}
+                    viewable
+                  />
+                  <span className="rest-seat-mark" aria-hidden="true">
+                    <Icon size={12} strokeWidth={3} />
+                  </span>
                 </span>
-              </span>
-              <span className="rest-seat-name user-copy">
-                {person.own ? t('rest.you') : person.name}
-              </span>
-              <span className="rest-seat-vote">{word[mark]}</span>
-            </li>
-          )
-        })}
-      </ul>
-      <div className="rest-hearth" aria-hidden="true">
-        <Flame className="rest-flame" size={34} strokeWidth={1.6} />
+                <span className="rest-seat-name user-copy">
+                  {person.own ? t('rest.you') : person.name}
+                </span>
+                <span className="rest-seat-vote">{word[mark]}</span>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+      <p className="rest-hearth" aria-hidden="true">
         <span className="rest-hearth-count">{t('rest.tally', { yes, total })}</span>
         <span className="rest-hearth-hint">{t('rest.tallyHint')}</span>
-      </div>
+      </p>
     </div>
   )
 }

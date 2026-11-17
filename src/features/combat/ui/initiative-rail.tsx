@@ -39,6 +39,8 @@ export function InitiativeRail({
   rowMenu,
   rowAction,
   rowExtra,
+  ties,
+  flash,
   large = false,
 }: {
   combatants: Combatant[]
@@ -50,6 +52,10 @@ export function InitiativeRail({
   rowAction?: (combatant: Combatant) => ReactNode
   /** Full-width content under a row (the table view's own initiative entry). */
   rowExtra?: (combatant: Combatant) => ReactNode
+  /** Ids that share an initiative total with another combatant (marked while it is collected). */
+  ties?: ReadonlySet<string>
+  /** Rows to flash after the DM changed them (the own character), alternating to restart it. */
+  flash?: { ids: ReadonlySet<string>; turn: number }
   large?: boolean
 }) {
   const { t } = useTranslation()
@@ -71,7 +77,14 @@ export function InitiativeRail({
             : mode.kind === 'multi'
               ? mode.selected.has(combatant.id)
               : false
-        const body = <RowBody combatant={combatant} large={large} />
+        const body = (
+          <RowBody
+            combatant={combatant}
+            large={large}
+            tied={ties?.has(combatant.id) ?? false}
+            terms={mode.kind === 'read'}
+          />
+        )
         const action = rowAction?.(combatant)
         const extra = rowExtra?.(combatant)
         return (
@@ -83,6 +96,7 @@ export function InitiativeRail({
               combatant.defeated ? 'is-defeated' : '',
               selected ? 'is-selected' : '',
               combatant.is_own ? 'is-own' : '',
+              flash?.ids.has(combatant.id) ? `is-flash-${flash.turn % 2 ? 'a' : 'b'}` : '',
               extra ? 'has-extra' : '',
               `side-${combatant.kind === 'lair' ? 'lair' : combatant.side}`,
             ].join(' ')}
@@ -206,7 +220,17 @@ function PickButton({
   )
 }
 
-function RowBody({ combatant, large }: { combatant: Combatant; large: boolean }) {
+function RowBody({
+  combatant,
+  large,
+  tied,
+  terms,
+}: {
+  combatant: Combatant
+  large: boolean
+  tied: boolean
+  terms: boolean
+}) {
   const { t } = useTranslation()
   return (
     <>
@@ -229,6 +253,16 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
             <span className="combat-alias-tag">
               {t('combat.creature.aliasRow', { alias: combatant.public_name })}
             </span>
+          )}
+          {tied && (
+            <Text
+              component="span"
+              size="xs"
+              className="combat-tie"
+              title={t('combat.initiative.tieNote')}
+            >
+              {t('combat.initiative.tie')}
+            </Text>
           )}
           {combatant.is_own && (
             <Text component="span" size="xs" className="combat-you">
@@ -259,7 +293,7 @@ function RowBody({ combatant, large }: { combatant: Combatant; large: boolean })
         <HpMeter combatant={combatant} compact={!large} large={large} />
         <Group gap={6} wrap="wrap">
           <StateBadge combatant={combatant} />
-          <ConditionBadges combatant={combatant} limit={large ? undefined : 3} />
+          <ConditionBadges combatant={combatant} limit={large ? undefined : 3} terms={terms} />
         </Group>
       </span>
     </>

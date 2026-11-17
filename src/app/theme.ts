@@ -35,10 +35,19 @@ export function createAppTheme(classTheme: ClassThemeId = 'default') {
     // Filled primary controls use the theme's on-accent token (verified by the contrast test).
     variantColorResolver: (input) => {
       const colors = defaultVariantColorsResolver(input)
-      return input.variant === 'filled' &&
-        (input.color ?? input.theme.primaryColor) === input.theme.primaryColor
-        ? { ...colors, color: 'var(--app-on-accent)' }
-        : colors
+      const primary = (input.color ?? input.theme.primaryColor) === input.theme.primaryColor
+      if (input.variant === 'filled' && primary) return { ...colors, color: 'var(--app-on-accent)' }
+      // The light variant of the primary colour reads as a tinted, outlined action in every theme;
+      // Mantine's own tint is near-black on near-black in the dark themes and looks disabled.
+      if (input.variant === 'light' && primary)
+        return {
+          ...colors,
+          background: 'color-mix(in srgb, var(--app-accent) 16%, var(--app-surface))',
+          hover: 'color-mix(in srgb, var(--app-accent) 26%, var(--app-surface))',
+          color: 'var(--app-accent)',
+          border: '1px solid color-mix(in srgb, var(--app-accent) 55%, transparent)',
+        }
+      return colors
     },
     fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
     headings: { fontFamily: 'Georgia, Cambria, serif', fontWeight: '500' },

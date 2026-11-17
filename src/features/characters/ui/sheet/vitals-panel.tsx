@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { applyHp } from '../../domain/rules'
 import type { Vitals } from '../../domain/sheet'
 import { toneOf } from './hp-tone'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 export type HpMode = 'damage' | 'heal' | 'temp'
 const quickAmounts = [1, 5, 10] as const
@@ -55,6 +56,7 @@ export function HpDialog({
       return text ? Number(text) : ''
     })
   const previewRatio = Math.round((preview.current_hp / Math.max(1, max)) * 100)
+  useBackToClose(true, close)
   return (
     <Modal
       opened
@@ -90,10 +92,17 @@ export function HpDialog({
             max={maxAmount}
             allowDecimal={false}
             allowNegative={false}
+            // Typing past the maximum stops at it, and the field says what the maximum is.
+            clampBehavior="strict"
             inputMode="numeric"
             value={amount}
             onChange={setAmount}
             className="hp-amount"
+            error={
+              typeof amount === 'number' && amount >= maxAmount
+                ? t('sheet.amountMax', { max: maxAmount })
+                : undefined
+            }
             description={
               mode === 'damage'
                 ? t('sheet.hpDialog.damageHint')

@@ -22,11 +22,18 @@ export function EncounterList({ campaignId }: { campaignId: string }) {
     <Stack gap="lg">
       <Encounters campaignId={campaignId} />
       <Paper className="combat-panel combat-bestiary-link" p="sm">
-        <Group gap="sm" wrap="nowrap" align="center">
-          <PawPrint size={22} className="feature-icon" aria-hidden="true" />
-          <Text size="sm" style={{ flex: 1 }}>
-            {t('combat.bestiaryLink.body')}
-          </Text>
+        <Group gap="sm" wrap="wrap" align="center">
+          <Group
+            gap="sm"
+            wrap="nowrap"
+            align="flex-start"
+            style={{ flex: '1 1 16rem', minWidth: 0 }}
+          >
+            <PawPrint size={22} className="feature-icon" aria-hidden="true" />
+            <Text size="sm" style={{ flex: 1, minWidth: 0 }}>
+              {t('combat.bestiaryLink.body')}
+            </Text>
+          </Group>
           <Button component={Link} to={bestiaryPath} variant="light">
             {t('combat.bestiaryLink.open')}
           </Button>

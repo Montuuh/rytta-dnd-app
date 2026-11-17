@@ -1,4 +1,5 @@
-import { Button, Group, Modal, Text } from '@mantine/core'
+import { Button, Group, Text } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { notifications } from '@mantine/notifications'
 import { Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

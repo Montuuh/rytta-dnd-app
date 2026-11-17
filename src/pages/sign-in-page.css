@@ -1,0 +1,196 @@
+/* RYT-112 landing. The hero is a painted scene under a dark scrim, so its ink is fixed cream in
+ * both themes; the capability lists below use the theme tokens. */
+.landing {
+  display: grid;
+  gap: 24px;
+  max-width: 64rem;
+  margin-inline: auto;
+}
+
+.landing-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--mantine-radius-lg);
+  border: 1px solid var(--app-border);
+  background: #140f0b;
+  color: #f5ebd6;
+  min-height: 30rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.landing-art,
+.landing-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+}
+
+.landing-art img {
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+.landing-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgb(20 15 11 / 0.94) 0,
+    rgb(20 15 11 / 0.84) 48%,
+    rgb(20 15 11 / 0.18) 100%
+  );
+}
+
+.landing-copy {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 24px 20px 28px;
+  max-width: 34rem;
+}
+
+.landing-emblem {
+  border-color: rgb(245 235 214 / 0.35);
+}
+
+.landing-copy h1 {
+  margin: 0;
+  color: #f5ebd6;
+  font-size: var(--fs-h1);
+  line-height: 1.1;
+}
+
+.landing-lede {
+  margin: 0;
+  color: #f5ebd6;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+
+.landing-note {
+  margin: 0;
+  color: #e3d3b6;
+  font-size: var(--fs-meta);
+}
+
+.landing-copy .landing-alert {
+  width: 100%;
+}
+
+/* Google's neutral button: white fill, grey outline, dark ink. */
+.landing-copy .sign-in-google {
+  --button-bg: #ffffff;
+  --button-hover: #f1ece4;
+  --button-color: #1f1f1f;
+  --button-bd: 1px solid #747775;
+  min-height: 48px;
+  font-weight: 600;
+}
+
+.landing-copy .sign-in-google.mantine-Button-root,
+.landing-copy .sign-in-google .mantine-Button-label {
+  color: #1f1f1f;
+}
+
+.landing-copy .landing-retry.mantine-Button-root {
+  color: #f5ebd6;
+}
+
+.landing-copy .landing-retry {
+  --button-bg: transparent;
+  --button-hover: rgb(245 235 214 / 0.14);
+  --button-color: #f5ebd6;
+  --button-bd: 1px solid rgb(245 235 214 / 0.6);
+}
+
+/* The page focus colour can be too dark on the scrim in light themes. */
+.landing-hero :focus-visible {
+  outline: 3px solid #f6c478;
+  outline-offset: 3px;
+}
+
+.landing-uses {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.landing-use {
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  padding: 16px 18px;
+}
+
+.landing-use h2 {
+  margin: 0 0 8px;
+  font-size: var(--fs-h3);
+}
+
+.landing-use ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.landing-use li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--app-text);
+}
+
+.landing-use li svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--app-accent);
+}
+
+@media (min-width: 48em) {
+  .landing-hero {
+    min-height: 26rem;
+    align-items: center;
+  }
+  .landing-hero::before {
+    background: linear-gradient(
+      to right,
+      rgb(20 15 11 / 0.92) 0,
+      rgb(20 15 11 / 0.8) 45%,
+      rgb(20 15 11 / 0.1) 85%
+    );
+  }
+  .landing-art img {
+    object-position: center;
+  }
+  .landing-copy {
+    padding: 40px 40px;
+  }
+  .landing-uses {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* A phone held sideways: the sign-in button must clear the fold, so the hero loses its height
+ * and padding and the emblem (decorative) steps aside. */
+@media (max-height: 480px) {
+  .landing-hero {
+    min-height: 0;
+  }
+
+  .landing-copy {
+    gap: 8px;
+    padding: 14px 20px 16px;
+  }
+
+  .landing-copy .landing-emblem {
+    display: none;
+  }
+}

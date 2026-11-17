@@ -902,3 +902,29 @@ html[data-mantine-color-scheme='light'] .party-mate[data-hidden] .portrait-plate
   gap: 6px;
   flex-shrink: 0;
 }
+
+/* RYT-112: the DM's empty party: the plate, one sentence and the two real next steps. */
+.party-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 50% 0%, var(--app-hero), var(--app-surface) 70%);
+  text-align: center;
+}
+.party-empty-title {
+  font-size: var(--fs-h2);
+}
+.party-empty-text {
+  max-width: 44ch;
+  color: var(--app-muted);
+}
+.party-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 12px;
+  margin-top: 4px;
+}

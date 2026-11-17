@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
+import { slowPollMs } from '@/shared/lib/live-poll'
 import type { CampaignRepository } from './domain/campaign'
 
 async function repository(): Promise<CampaignRepository> {
@@ -15,36 +16,48 @@ async function repository(): Promise<CampaignRepository> {
   )
 }
 
+/**
+ * Campaigns, invitations and members have no realtime channel. A visible tab re-reads them every
+ * minute, on focus and on reconnect, and the user's own mutations invalidate them at once, so a
+ * removed member or a module switch reaches the other tabs within a minute.
+ */
+const campaignPoll = {
+  refetchInterval: slowPollMs,
+  refetchIntervalInBackground: false,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+} as const
+
 export const campaignsQuery = (userId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaigns'],
     queryFn: async ({ signal }) => (await repository()).list(signal),
-    refetchInterval: 20_000,
+    ...campaignPoll,
   })
 export const invitationsQuery = (userId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'invitations'],
     queryFn: async ({ signal }) => (await repository()).invitations(signal),
-    refetchInterval: 30_000,
+    ...campaignPoll,
   })
 export const membersQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'members'],
     queryFn: async ({ signal }) => (await repository()).members(campaignId, signal),
-    refetchInterval: 20_000,
+    ...campaignPoll,
   })
 export const sentInvitationsQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'sent-invitations'],
     queryFn: async ({ signal }) => (await repository()).sentInvitations(campaignId, signal),
-    refetchInterval: 30_000,
+    ...campaignPoll,
   })
 export const auditEventsQuery = (userId: string, campaignId: string, characterId?: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'audit-events', characterId ?? 'all'],
     queryFn: async ({ signal }) =>
       (await repository()).auditEvents(campaignId, signal, characterId),
-    refetchInterval: 20_000,
+    ...campaignPoll,
   })
 export type CampaignAction =
   | { kind: 'create'; name: string; description: string }

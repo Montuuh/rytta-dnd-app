@@ -44,10 +44,13 @@ export const tabletopEn = {
     'The map is one Tab stop. Arrows move the square cursor (Shift: five) and say what is there; Enter uses the tool on that square. With Select, Enter picks what is under the cursor and opens its sheet (Escape returns to the map); on the sheet, "Move to a square" waits for the square you choose with the cursor. Delete removes and H hides what is under the cursor, or the selection. Each tool has its letter. Plus and minus zoom; 0 fits the map.',
   'tabletop.strip': '{{tool}} options',
   'tabletop.empty.title': 'No scenes yet',
-  'tabletop.empty.body': 'Generate a map, upload one or start from a blank grid.',
+  'tabletop.empty.body':
+    'A scene is the map your players see on the table display, a TV or a tablet laid flat. Create the first one: generate a map, upload one or start from a blank grid.',
   'tabletop.error.load': 'The tabletop did not load. Check the connection and try again.',
   'tabletop.error.save': 'That change was not saved. Try again.',
   'tabletop.error.sceneGone': 'This scene no longer exists.',
+  'tabletop.error.sceneLimit':
+    'This campaign has as many scenes as it can keep. Delete a scene you no longer use first.',
   'tabletop.error.full': 'This scene holds as many items as it can (1,500). Remove some first.',
   'tabletop.error.fogFull':
     'The fog has too many strokes. Reveal or hide everything to start over.',
@@ -667,7 +670,6 @@ export const tabletopEn = {
   'tabletop.table.round': 'Round {{round}}',
   'tabletop.table.turn': '{{name}}’s turn',
   'tabletop.table.live': 'Live',
-  'tabletop.table.polling': 'Refreshing every few seconds',
   'tabletop.table.offline': 'No connection',
   'tabletop.table.uncalibrated': 'Not set up: the map fills the screen',
   'tabletop.table.ruler': 'Ruler',
@@ -740,4 +742,11 @@ export const tabletopEn = {
   'tabletop.area.placing': 'Place {{shape}}',
   'tabletop.selectedAnnounce': 'Selected: {{name}}. Escape returns to the map.',
   'tabletop.door.title': '{{state}} door',
+  // RYT-126: table screen liveness and the Player's map.
+  'tabletop.table.offlineSince': 'Offline · {{seconds}} s ago',
+  'tabletop.table.after': 'Next: {{name}}',
+  'tabletop.table.hiddenTurn': 'Hidden turn',
+  'tabletop.table.retry': 'Retry',
+  'tabletop.table.retrying': 'Retrying…',
+  'tabletop.zoom.mine': 'Centre on my token',
 } as const

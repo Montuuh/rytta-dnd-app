@@ -1,5 +1,5 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
-import { ActionIcon, Select, Stack, Switch, Tabs, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Button, Select, Stack, Switch, Tabs, Text, TextInput } from '@mantine/core'
 import { Check, Plus, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm, useSrdLibrary } from '@/features/glossary'
@@ -26,7 +26,7 @@ export function LibraryPicker({
   onClose: () => void
   tab: LibraryTab
   onTab: (tab: LibraryTab) => void
-  props: PanelProps
+  props: Pick<PanelProps, 'build' | 'level' | 'change' | 'pending'>
 }) {
   const { t } = useTranslation()
   const library = useSrdLibrary()
@@ -151,6 +151,16 @@ export function LibraryPicker({
         <Text size="sm" c="dimmed" aria-live="polite">
           {library ? t('panel.libraryCount', { count: rows.length }) : t('glossary.loading')}
         </Text>
+        {library && rows.length === 0 && classFilter && (
+          <div className="library-empty" role="status">
+            <Text size="sm">
+              {t('panel.libraryNoneInClass', { class: t(`srd.class.${classFilter as 'bard'}`) })}
+            </Text>
+            <Button variant="light" onClick={() => setClassFilter('')}>
+              {t('panel.libraryAllClasses')}
+            </Button>
+          </div>
+        )}
         <ul className="library-list">
           {shown.map((row) => {
             const added = has.refs.has(row.id) || has.names.has(plain(row.name))

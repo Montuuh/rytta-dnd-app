@@ -21,3 +21,70 @@
   flex: 1;
   min-width: 0;
 }
+
+/*
+ * Listings read as a list of goods. RYT-125: item and price share the first row (the tag at the
+ * top right), stock and ownership sit under the name, and the add control is a 44px square at the
+ * end of that row. Once the item is in the cart it becomes a full-width stepper on its own row.
+ * Scoped under the grid so it outranks the base card.
+ */
+.listing-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+}
+.listing-grid .listing-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px 10px;
+}
+.listing-grid .listing-card > .listing-lead {
+  grid-column: 1;
+  grid-row: 1;
+}
+.listing-grid .listing-card > .price-tag {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+}
+.listing-grid .listing-card > .listing-flags {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+}
+.listing-grid .listing-card > .listing-add {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.listing-grid .listing-card > .listing-stepper {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  justify-self: end;
+  width: auto;
+  height: auto;
+  min-width: 0;
+}
+.listing-stepper .amount-row {
+  width: 11rem;
+}
+.listing-meta {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.listing-flags .stock-text {
+  white-space: nowrap;
+}
+.owned-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.notice-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { rarities } from '@/features/inventory'
+import { livePollInterval, liveStatePollMs } from '@/shared/lib/live-poll'
 import { gpAmount } from '@/shared/lib/money'
 import { translationsSchema } from '@/shared/lib/translations'
 
@@ -164,5 +165,11 @@ export const sameOffer = (a: OfferLine[], b: OfferLine[]) =>
   a.length === b.length &&
   a.every((line) => b.some((o) => o.item_id === line.item_id && o.quantity === line.quantity))
 
-/** Polling cadence: fast while a trade or invitation is live, slow while idle. */
-export const pollInterval = (state: TradeState | undefined) => (state?.trade ? 3_000 : 10_000)
+/**
+ * Polling cadence: fast while a trade or invitation is live, slow while idle. While the realtime
+ * channel is subscribed the poll is only a safety net (20 s live, 60 s idle).
+ */
+export const pollInterval = (state: TradeState | undefined, realtime = false) =>
+  state?.trade
+    ? livePollInterval(realtime, 3_000, liveStatePollMs)
+    : livePollInterval(realtime, 10_000)

@@ -2,16 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Group, Modal, Skeleton, Text } from '@mantine/core'
 import { Check, LoaderCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useAuth } from '../auth-context'
 import { suggestUsername } from '../domain/username'
 import { useUsername } from '../username-api'
 import { UsernameForm } from './username-form'
 import { laterKey, readLater } from '../domain/username-later'
 
+const promptDelayMs = 2500
+
 /**
  * RYT-078: on every sign-in, a dialog asks for a username while the account has none. "Later"
  * (or Escape) closes it until the next sign-in; an account with a username changes it only in
  * Settings. After saving, the dialog confirms the name and takes focus until it is closed.
+ * RYT-112: it waits a moment after the page opens, so the first screen is seen before it asks.
  */
 export function UsernameDialog({
   suspended = false,
@@ -26,15 +30,21 @@ export function UsernameDialog({
   const user = state.user
   const username = useUsername()
   const [later, setLater] = useState(() => (user ? readLater(user.id) : false))
+  const [waited, setWaited] = useState(false)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setWaited(true), promptDelayMs)
+    return () => window.clearTimeout(timer)
+  }, [])
   // Once the dialog asked, the name arriving in the cache means it was just saved here.
   const [asked, setAsked] = useState(false)
-  if (username.data === null && !asked && !later && !suspended) setAsked(true)
+  if (username.data === null && !asked && !later && !suspended && waited) setAsked(true)
   const saved = asked && username.data ? username.data : null
   const closeButton = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (saved) closeButton.current?.focus()
   }, [saved])
-  const opened = Boolean(user) && !later && !suspended && (username.data === null || saved !== null)
+  const opened =
+    Boolean(user) && !later && !suspended && waited && (username.data === null || saved !== null)
   const close = () => {
     if (user && !saved)
       try {
@@ -45,6 +55,7 @@ export function UsernameDialog({
     setLater(true)
     requestAnimationFrame(() => onClosed?.())
   }
+  useBackToClose(opened && !!user, close)
   // Mounted only while open: the enter transition then always starts fresh, also when a lazy
   // route suspends during the first render.
   if (!opened || !user) return null
@@ -148,6 +159,7 @@ export function UsernameSettings() {
       submitLabel={t('username.save')}
       // A successful retry replaces the button that had focus: continue on the field.
       autoFocus={failed}
+      draftKey={state.user.id}
     />
   )
 }

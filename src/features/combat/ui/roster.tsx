@@ -1,4 +1,5 @@
-import { ActionIcon, Button, Menu, Modal, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { ActionIcon, Button, Menu, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { Dice5, Ellipsis, Play, UserMinus, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { joinPlacement, type Combatant } from '../domain/combat'

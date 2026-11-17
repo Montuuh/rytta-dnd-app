@@ -1,11 +1,11 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Button, Group, Text, UnstyledButton } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
-import { ImagePlus, RefreshCw, Trash2 } from 'lucide-react'
+import { ImagePlus, Maximize2, RefreshCw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { ItemIcon } from '@/features/inventory'
 import { newRequestId } from '@/shared/lib/request-id'
+import { artUrl } from '@/shared/ui/art-url'
 import { ViewerButton } from '@/shared/ui/image-viewer'
 import { shopAdminQuery, useShopPicture } from '../api'
 import { attachShopImage, discardShopUpload, uploadShopImage } from '../data/repository'
@@ -14,6 +14,8 @@ import { ShopError, type AdminShop } from '../domain/shops'
 import { toShopImage } from './shop-image-encode'
 import './shops.css'
 
+const DEFAULT_SHOP_ART = 'generalStore'
+
 /**
  * RYT-107: the shop image as a header banner (fixed aspect, cover). The picture is its own
  * button that opens the shared viewer; `overlay` (the shop's name and state) sits on a scrim
@@ -21,12 +23,15 @@ import './shops.css'
  */
 export function ShopBanner({
   path,
+  kind,
   name,
   overlay,
   after,
   fallback,
 }: {
   path: string | null | undefined
+  /** The shop type: without an uploaded picture its painted interior is the banner. */
+  kind?: string | null
   name: string
   overlay: ReactNode
   /** Under the banner, on the card: the description and notes. */
@@ -37,11 +42,17 @@ export function ShopBanner({
   const picture = useShopPicture(path)
   const [broken, setBroken] = useState<string | null>(null)
   const src = picture.src && broken !== picture.src ? picture.src : null
-  if (!src && !picture.pending) return <>{fallback}</>
+  // A shop without a (known) type gets the neutral general-store interior.
+  const painted = kind && findShopType(kind) ? kind : DEFAULT_SHOP_ART
+  if (!src && !picture.pending && !painted) return <>{fallback}</>
   return (
     <div className="shop-banner-card">
       <div className="shop-banner">
-        {src ? (
+        {!src && !picture.pending && painted ? (
+          <span className="shop-banner-open is-painted" aria-hidden="true">
+            <img src={artUrl(`shops/${painted}`)} alt="" decoding="async" />
+          </span>
+        ) : src ? (
           <ViewerButton
             src={src}
             title={name}
@@ -50,6 +61,10 @@ export function ShopBanner({
             className="shop-banner-open"
           >
             <img src={src} alt="" onError={() => setBroken(src)} />
+            <span className="shop-banner-view" aria-hidden="true">
+              <Maximize2 size={14} aria-hidden="true" />
+              {t('shop.banner.view')}
+            </span>
           </ViewerButton>
         ) : (
           <span className="shop-banner-open is-loading" aria-hidden="true" />
@@ -65,10 +80,18 @@ export function ShopBanner({
 export function ShopThumb({ path, kind }: { path?: string | null; kind?: string | null }) {
   const picture = useShopPicture(path)
   const type = kind ? findShopType(kind) : undefined
-  if (!picture.src && !type) return null
   return (
     <span className="shop-thumb" aria-hidden="true">
-      {picture.src ? <img src={picture.src} alt="" /> : <ItemIcon icon={type!.icon} size={20} />}
+      {picture.src ? (
+        <img src={picture.src} alt="" />
+      ) : (
+        <img
+          src={artUrl(`shops/${type?.key ?? DEFAULT_SHOP_ART}`)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      )}
     </span>
   )
 }
@@ -126,7 +149,9 @@ export function ShopImageField({ campaignId, shop }: { campaignId: string; shop:
         ? t(`commerce.error.${failure.code}`)
         : failure instanceof Error && failure.message === 'invalid'
           ? t('admin.image.invalid')
-          : t('commerce.error.unavailable'),
+          : failure instanceof Error && failure.message === 'storageQuota'
+            ? t('common.storageQuota')
+            : t('commerce.error.unavailable'),
     )
     void refresh()
   }

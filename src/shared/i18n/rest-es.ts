@@ -36,6 +36,7 @@ export const restEs = {
   'rest.rollHint': 'Suma de tus dados, de {{min}} a {{max}}.',
   'rest.autoRoll': 'Tirar por mí',
   'rest.rolling': 'Tirando…',
+  'rest.rolledDice': 'Dados: {{dice}}',
   'rest.heal': 'Tirada {{roll}}, CON {{con}} por dado: +{{heal}} PG',
   'rest.noDice': 'Sin dados: solo recuperas los recursos de descanso corto.',
   'rest.rest': 'Descansar',
@@ -122,4 +123,6 @@ export const restEs = {
     'El DM ha marcado que hoy no vienes, así que tu personaje no está en el grupo.',
   'characters.benchedLink': 'Ver mis personajes',
   'panel.field.absent': 'Ausente',
+  // RYT-126
+  'rest.overheal': 'Solo recuperas {{room}} PG más: el resto de la tirada se pierde.',
 } satisfies Record<keyof typeof restEn, string>

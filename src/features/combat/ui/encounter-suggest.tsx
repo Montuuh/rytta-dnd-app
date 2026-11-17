@@ -1,5 +1,6 @@
 import { useId, useMemo, useState } from 'react'
-import { Button, Modal, Select, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { Button, Select, Stack, Text, VisuallyHidden } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { Crown, Dices, Layers, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { creatureTypes, type CreatureType } from '@/features/bestiary'

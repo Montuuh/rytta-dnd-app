@@ -89,6 +89,20 @@ export async function identityFixture(
     free?: string[]
     /** RYT-104/105: basic catalogue items, a template and a pending Player proposal. */
     catalogue?: boolean
+    /** RYT-115: account export and deletion. blocked lists campaigns the DM must resolve first. */
+    account?: {
+      blocked?: boolean
+      authUser?: 'deleted' | 'disabled' | 'kept' | 'shared' | 'absent'
+      truncated?: string[]
+      /** Server message of delete_my_account (for example 'Account deletion not prepared'). */
+      deleteError?: string
+      /** Server message of prepare_account_deletion (for example 'Forbidden'). */
+      prepareError?: string
+      /** The dialog sees no blockers, then prepare finds some (a campaign became solo meanwhile). */
+      blockOnPrepare?: boolean
+      /** Campaign images the preparation lists; the Storage remove endpoint clears them. */
+      storageObjects?: number
+    }
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
@@ -642,6 +656,14 @@ export async function identityFixture(
   const usernameHeldByOther = (name: string, actor: string) =>
     [...usernames].some(([id, held]) => id !== actor && held.toLowerCase() === name.toLowerCase())
   let failList = false
+  // RYT-115: prepare_account_deletion must run before delete_my_account; objects are Storage rows.
+  let accountPrepared = false
+  let accountBlockedNow = Boolean(options.account?.blocked)
+  let accountObjects = Array.from({ length: options.account?.storageObjects ?? 0 }, (_, n) => ({
+    bucket_id: 'character-portraits',
+    object_path: `pre/${campaignId}/portrait-${n}.webp`,
+    campaign_id: campaignId,
+  }))
   // RYT-096: the next claim fails with this server message (a lost race takes the character).
   let nextClaimError: string | null = null
   let glossaryEntries: {
@@ -764,7 +786,15 @@ export async function identityFixture(
     }
     const eq = (name: string) => url.searchParams.get(name)?.replace('eq.', '')
     if (url.pathname.includes('/storage/v1/object/sign/'))
-      return respond({ signedURL: '/object/public-test/portrait.png?token=fixture' })
+      return respond(
+        Array.isArray(body.paths)
+          ? body.paths.map((path) => ({
+              path,
+              signedURL: '/object/public-test/portrait.png?token=fixture',
+              error: null,
+            }))
+          : { signedURL: '/object/public-test/portrait.png?token=fixture' },
+      )
     if (url.pathname.includes('/storage/v1/object/public-test/'))
       return route.fulfill({ status: 200, contentType: 'image/png', body: tinyPng })
     if (
@@ -1300,6 +1330,63 @@ export async function identityFixture(
           created_at: '2026-10-27T01:20:00Z',
         })
       return respond(Boolean(body.enabled))
+    }
+    // RYT-115 account RPCs: the server's shapes (migration 20261125120000), in memory.
+    if (method === 'export_my_data')
+      return respond({
+        format: 'rytta-account-export',
+        version: 1,
+        environment: 'pre',
+        generated_at: '2026-11-17T10:00:00Z',
+        limits: { rows_per_section: 500 },
+        truncated: options.account?.truncated ?? [],
+        profile: { user_id: actor, username: usernames.get(actor) ?? null },
+        memberships: [{ campaign: 'The Sunken Coast', role: 'dm' }],
+      })
+    const accountBlockers = [
+      { campaign_id: campaignId, campaign_name: 'The Sunken Coast', other_members: 3 },
+      { campaign_id: otherCampaignId, campaign_name: 'Winter at the Keep', other_members: 1 },
+    ]
+    if (method === 'account_deletion_blockers')
+      return respond(accountBlockedNow ? accountBlockers : [])
+    if (method === 'account_storage_paths') return respond(accountObjects)
+    if (
+      request.method() === 'DELETE' &&
+      url.pathname.endsWith('/storage/v1/object/character-portraits')
+    ) {
+      const gone = new Set(Array.isArray(body.prefixes) ? body.prefixes.map(String) : [])
+      accountObjects = accountObjects.filter((row) => !gone.has(row.object_path))
+      return respond([...gone].map((name) => ({ name })))
+    }
+    if (method === 'prepare_account_deletion') {
+      if (options.account?.prepareError)
+        return respond({ message: options.account.prepareError }, 400)
+      const blocked = accountBlockedNow || Boolean(options.account?.blockOnPrepare)
+      accountBlockedNow = blocked
+      accountPrepared = !blocked
+      return respond({
+        blockers: blocked ? accountBlockers : [],
+        campaigns: blocked ? [] : [campaignId],
+        storage_paths: blocked ? [] : accountObjects,
+        revoked_invitations: 0,
+      })
+    }
+    if (method === 'delete_my_account') {
+      if (options.account?.deleteError)
+        return respond({ message: options.account.deleteError }, 400)
+      if (body.confirmation !== 'DELETE') return respond({ message: 'Confirmation required' }, 400)
+      if (!accountPrepared) return respond({ message: 'Account deletion not prepared' }, 400)
+      if (accountObjects.length > 0)
+        return respond({ message: 'Account deletion not prepared' }, 400)
+      const authUser = options.account?.authUser ?? 'deleted'
+      return respond({
+        deleted: authUser === 'deleted' || authUser === 'absent' || authUser === 'shared',
+        data_deleted: true,
+        environment: 'pre',
+        auth_user: authUser,
+        campaigns_deleted: [],
+        campaigns_left: [campaignId],
+      })
     }
     if (method === 'get_my_username') return respond(usernames.get(actor) ?? null)
     if (method === 'username_available') {
@@ -1980,7 +2067,10 @@ function inventoryState(
       dm: boolean,
     ) {
       const actor = dm ? dmId : playerId
-      if (method === 'item_definitions') return definitions
+      if (method === 'item_definitions') {
+        const image = eq('image_path')
+        return image ? definitions.filter((d) => d.image_path === image) : definitions
+      }
       if (method === 'inventory_items')
         return stacks.filter((row) => row.character_id === eq('character_id') && row.quantity > 0)
       if (method === 'inventory_events')

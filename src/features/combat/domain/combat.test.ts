@@ -5,6 +5,11 @@ import {
   canRollDeathSave,
   combatErrorCode,
   initiativeProgress,
+  initiativeOutlier,
+  initiativeTies,
+  isHiddenTurn,
+  ownChange,
+  concentrationSave,
   combatPollInterval,
   combatStateSchema,
   concentrationDc,
@@ -20,7 +25,9 @@ import {
   previewAsPlayer,
   turnsUntil,
   type Combatant,
+  type CombatEvent,
   type CombatState,
+  type Encounter,
 } from './combat'
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`
@@ -63,6 +70,16 @@ describe('combat rules', () => {
     expect(turnsUntil(later, id(3))).toBe(2)
     expect(nextUp([base(1, { is_active: true })])).toBeNull()
     expect(nextUp([])).toBeNull()
+  })
+  it('guesses nothing when the acting combatant is hidden from the viewer (RYT-126)', () => {
+    const list = [base(1), base(2), base(3, { is_own: true })]
+    expect(nextUp(list)).toBeNull()
+    expect(turnsUntil(list, id(3))).toBeNull()
+    const active = { status: 'active' } as Encounter
+    expect(isHiddenTurn(active, list)).toBe(true)
+    expect(isHiddenTurn(active, [base(1, { is_active: true }), base(2)])).toBe(false)
+    expect(isHiddenTurn({ status: 'initiative' } as Encounter, list)).toBe(false)
+    expect(isHiddenTurn(null, list)).toBe(false)
   })
   it('reorders only within an initiative tie', () => {
     const list = [
@@ -108,6 +125,14 @@ describe('combat rules', () => {
     })
     expect(combatPollInterval(live)).toBe(4000)
     expect(combatPollInterval(undefined)).toBe(15000)
+  })
+  it('backs off the live poll while realtime is subscribed and returns to 4s when it is not', () => {
+    const live = combatStateSchema.parse({
+      encounter: { id: id(9), name: 'x', status: 'active', round: 1, revision: 1 },
+    })
+    expect(combatPollInterval(live, true)).toBe(20000)
+    expect(combatPollInterval(live, false)).toBe(4000)
+    expect(combatPollInterval(undefined, true)).toBe(15000)
   })
   it('previews the Player projection without DM-only data', () => {
     const state: CombatState = combatStateSchema.parse({
@@ -177,6 +202,90 @@ describe('combat rules', () => {
     expect(view.combatants[2]).toMatchObject({ hp_status: 'bloodied', can_act: false })
     expect(view.combatants[2]!.hp).toBeUndefined()
     expect(view.combatants[2]!.armor_class).toBeUndefined()
+  })
+  it('RYT-118 reads the class key of a character and drops malformed ones', () => {
+    const pc = (extra: Record<string, unknown>) =>
+      combatStateSchema.parse({
+        encounter: null,
+        combatants: [{ ...base(1, { kind: 'character', side: 'party' }), ...extra }],
+      }).combatants[0]!
+    expect(pc({ class_key: 'wizard' }).class_key).toBe('wizard')
+    expect(pc({}).class_key).toBeUndefined()
+    // A value the server should never send keeps the state usable (initials instead of emblem).
+    expect(pc({ class_key: "wizard' or 'x" }).class_key).toBeUndefined()
+    expect(pc({ class_key: 7 }).class_key).toBeUndefined()
+    expect(pc({ class_key: 'x'.repeat(40) }).class_key).toBeUndefined()
+    // Unknown fields are stripped, not rejected: an older client ignores new projection fields.
+    expect(pc({ class_key: 'bard', future_field: 1 })).not.toHaveProperty('future_field')
+  })
+  it('RYT-118 previews no class key behind an alias', () => {
+    const state = combatStateSchema.parse({
+      viewer: { role: 'dm' },
+      encounter: null,
+      combatants: [
+        base(1, { kind: 'character', side: 'party', class_key: 'rogue' }),
+        base(2, { kind: 'character', side: 'party', class_key: 'cleric', public_name: 'Stranger' }),
+        base(3, { kind: 'character', side: 'party', class_key: 'fighter', hidden: true }),
+      ],
+    })
+    const view = previewAsPlayer(state, new Set())
+    expect(view.combatants.map((c) => [c.name, c.class_key])).toEqual([
+      ['C1', 'rogue'],
+      ['Stranger', undefined],
+    ])
+    expect(JSON.stringify(view)).not.toMatch(/cleric|fighter/)
+  })
+  it('RYT-118 previews an aliased character without its shared vitals, whole for its owner', () => {
+    const vitals = {
+      kind: 'character',
+      side: 'party',
+      class_key: 'cleric',
+      shares_live: true,
+      image_path: 'pre/c/portrait.webp',
+      hp: { current: 4, max: 20, temp: 0 },
+      hp_status: 'bloodied',
+      hp_band: 'critical',
+      armor_class: 17,
+      conditions: ['poisoned'],
+      concentration: 'Bless',
+      death_saves: { successes: 1, failures: 0 },
+      exhaustion: 2,
+    } satisfies Partial<Combatant>
+    const state = combatStateSchema.parse({
+      viewer: { role: 'dm' },
+      encounter: null,
+      combatants: [
+        base(1, { ...vitals, public_name: 'Stranger', character_id: id(101) }),
+        base(2, { ...vitals, public_name: 'Masked', character_id: id(102) }),
+        base(3, { ...vitals, character_id: id(103) }),
+      ],
+    })
+    const [stranger, own, shared] = previewAsPlayer(state, new Set([id(102)])).combatants
+    expect(stranger).toMatchObject({ name: 'Stranger', hp_status: 'unknown', hp_band: 'unknown' })
+    for (const field of [
+      'image_path',
+      'class_key',
+      'character_id',
+      'hp',
+      'armor_class',
+      'conditions',
+      'concentration',
+      'death_saves',
+      'exhaustion',
+    ] as const)
+      expect(stranger![field]).toBeUndefined()
+    // The owner previews their own aliased character whole, class included.
+    expect(own).toMatchObject({
+      name: 'Masked',
+      is_own: true,
+      class_key: 'cleric',
+      image_path: 'pre/c/portrait.webp',
+      armor_class: 17,
+      hp_band: 'critical',
+      exhaustion: 2,
+    })
+    // Without an alias, shared vitals stay visible.
+    expect(shared).toMatchObject({ armor_class: 17, hp_band: 'critical', class_key: 'cleric' })
   })
   it('previews where a joining character lands in the current round', () => {
     const order = [
@@ -294,5 +403,74 @@ describe('combat rules', () => {
     expect(canEndTurn('active', null)).toBe(false)
     expect(combatErrorCode('Not your turn')).toBe('notYourTurn')
     expect(combatErrorCode('Already rolled')).toBe('alreadyRolled')
+  })
+})
+
+describe('own character changes (RYT-126)', () => {
+  const pc = (extra: Partial<Combatant> = {}) =>
+    base(1, {
+      kind: 'character',
+      side: 'party',
+      is_own: true,
+      hp: { current: 24, max: 24, temp: 0 },
+      ...extra,
+    })
+  it('reports the hit point delta with the new total', () => {
+    const change = ownChange(pc(), pc({ hp: { current: 10, max: 24, temp: 0 } }))
+    expect(change).toMatchObject({ hp: { delta: -14, current: 10, max: 24 } })
+    expect(ownChange(pc({ hp: { current: 10, max: 24, temp: 0 } }), pc())?.hp?.delta).toBe(14)
+  })
+  it('reports conditions and concentration, and nothing when unchanged', () => {
+    const next = pc({ conditions: ['poisoned'], concentration: 'Bless' })
+    expect(ownChange(pc(), next)).toMatchObject({
+      added: ['poisoned'],
+      removed: [],
+      concentration: { now: 'Bless', before: undefined },
+    })
+    expect(ownChange(next, pc())).toMatchObject({ removed: ['poisoned'] })
+    expect(ownChange(pc(), pc())).toBeNull()
+  })
+  it('ignores a projection that hides the vitals', () => {
+    expect(ownChange(pc(), pc({ hp: undefined }))).toBeNull()
+  })
+  it('finds the latest live concentration save for a combatant', () => {
+    const event = (n: number, extra: Partial<CombatEvent>): CombatEvent => ({
+      id: id(n),
+      kind: 'damage',
+      round: 1,
+      target_combatant: id(1),
+      detail: {},
+      undone: false,
+      mine: false,
+      undoable: false,
+      created_at: '2026-01-01T00:00:00Z',
+      ...extra,
+    })
+    const events = [
+      event(3, { undone: true, detail: { concentration_dc: 20, concentration: 'Bless' } }),
+      event(2, { detail: { concentration_dc: 11, concentration: 'Bless' } }),
+      event(1, { detail: { concentration_dc: 15 }, target_combatant: id(9) }),
+    ]
+    expect(concentrationSave(events, id(1))).toEqual({ dc: 11, spell: 'Bless' })
+    expect(concentrationSave(events, id(7))).toBeNull()
+  })
+})
+
+describe('initiative entry helpers (RYT-126)', () => {
+  it('flags totals outside bonus + 1 to bonus + 20', () => {
+    expect(initiativeOutlier(25, 2)).toBe(true)
+    expect(initiativeOutlier(22, 2)).toBe(false)
+    expect(initiativeOutlier(3, 2)).toBe(false)
+    expect(initiativeOutlier(2, 2)).toBe(true)
+    expect(initiativeOutlier(15, null)).toBe(false)
+  })
+  it('marks equal totals as ties', () => {
+    const list = [
+      base(1, { initiative: 25 }),
+      base(2, { initiative: 25 }),
+      base(3, { initiative: 4 }),
+      base(4),
+    ]
+    expect([...initiativeTies(list)].sort()).toEqual([id(1), id(2)])
   })
 })

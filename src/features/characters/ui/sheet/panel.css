@@ -117,13 +117,16 @@
   top: 12px;
   inset-inline-start: 12px;
   z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px 0 12px;
+  border-radius: 12px;
+  font-size: var(--fs-meta);
+  font-weight: 600;
   color: var(--app-text);
-  background: color-mix(in srgb, var(--app-bg) 70%, transparent);
+  background: color-mix(in srgb, var(--app-bg) 78%, transparent);
   border: 2px solid color-mix(in srgb, var(--app-text) 35%, transparent);
   cursor: pointer;
 }
@@ -225,9 +228,12 @@ span.sheet-inspiration {
 }
 /* Smaller label text: the term's invisible hit area grows to keep 44px (WCAG 2.5.8). */
 .sheet-featured-cell dt .glossary-term::after,
-.sheet-statline dt .glossary-term::after,
 .panel-stat dt .glossary-term::after {
-  inset: -14px -3px;
+  inset-block: -14px;
+}
+/* The statline labels are 0.72rem (about 14px tall): reach 44px from a smaller line box. */
+.sheet-statline dt .glossary-term::after {
+  inset-block: -16px;
 }
 .sheet-featured-cell dd {
   display: flex;
@@ -248,6 +254,16 @@ span.sheet-inspiration {
   color: var(--app-accent);
   background: color-mix(in srgb, var(--app-accent) 16%, var(--app-surface));
   clip-path: polygon(50% 0, 100% 13%, 93% 62%, 50% 100%, 7% 62%, 0 13%);
+}
+.sheet-bolt {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-surface));
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 .stat-breakdown-trigger {
   position: relative;
@@ -283,16 +299,23 @@ span.sheet-inspiration {
   gap: 3px 6px;
 }
 .sheet-stat-formula {
-  font-family: var(--app-font, inherit);
+  font-family: var(--mantine-font-family);
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--app-accent);
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--app-accent) 12%, var(--app-raised));
-  border: 1px solid color-mix(in srgb, var(--app-accent) 30%, transparent);
+  color: var(--app-muted);
   white-space: nowrap;
+}
+/* A value set by hand: a pencil and a lowercase word, no badge. */
+.sheet-stat-manual {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--mantine-font-family);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--app-muted);
 }
 .stat-breakdown {
   display: grid;
@@ -359,24 +382,44 @@ span.sheet-inspiration {
   align-items: center;
 }
 .sheet-statline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
   margin: 0;
 }
-.sheet-statline > div {
+.sheet-statcell {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 3px 6px;
+  border-radius: 12px;
+  text-align: center;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
 }
-.sheet-statline dt {
-  font-size: var(--fs-meta);
+.sheet-statcell dt {
+  font-size: 0.72rem;
+  line-height: 1.2;
   color: var(--app-muted);
 }
-.sheet-statline dd {
+.sheet-statcell dd {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
   margin: 0;
-  font-weight: 600;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.375rem;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+.sheet-statcell .sheet-stat-stack {
+  align-items: center;
+}
+.sheet-statline .stat-breakdown-trigger {
+  justify-content: center;
 }
 .sheet-hp-actions {
   display: grid;
@@ -626,6 +669,12 @@ span.sheet-inspiration {
 .panel-tile-item[data-wide] {
   grid-column: 1 / -1;
 }
+.panel-tile-item {
+  display: grid;
+}
+.panel-tile-item > .panel-tile {
+  height: 100%;
+}
 .panel-tile {
   all: unset;
   box-sizing: border-box;
@@ -767,7 +816,7 @@ span.sheet-inspiration {
   border: 1px solid var(--app-border);
 }
 .panel-dock-rest {
-  flex: 1 1 8.5rem;
+  flex: 1 1 0;
   min-width: 0;
   min-height: 44px;
   height: auto;
@@ -1240,5 +1289,203 @@ span.sheet-inspiration {
 @media (prefers-reduced-motion: reduce) {
   .resource-meter[data-refused] {
     animation: none;
+  }
+}
+
+/* RYT-112 conditions: a grid of toggles; active ones are filled and checked. */
+.condition-grid {
+  display: grid;
+  /* Columns follow the drawer's own width, and a column always fits the longest name. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+  gap: 8px;
+}
+.condition-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  text-align: start;
+  color: var(--app-text);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  cursor: pointer;
+}
+.condition-toggle svg {
+  flex: none;
+  color: var(--app-muted);
+}
+.condition-toggle-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: normal;
+  hyphens: manual;
+  line-height: 1.2;
+}
+.condition-toggle[data-on] {
+  font-weight: 600;
+  background: color-mix(in srgb, var(--app-accent) 18%, var(--app-surface));
+  border: 2px solid var(--app-accent);
+  padding: 5px 9px;
+}
+.condition-toggle[data-on] svg {
+  color: var(--app-accent);
+}
+.condition-toggle:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .condition-toggle:hover {
+    border-color: var(--app-accent-secondary);
+  }
+}
+
+/* RYT-124 wizard: ability scores as rows, notices for what a choice removes or leaves open. */
+.score-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.score-row-name {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-weight: 600;
+}
+.score-row-select {
+  flex: none;
+  width: 6rem;
+}
+.wizard-class-loss.mantine-Alert-root,
+.wizard-gap-alert.mantine-Alert-root,
+.quick-build .mantine-Alert-root[data-tone='warn'] {
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  color: var(--app-text);
+}
+.panel-synced.mantine-Alert-root {
+  background: var(--info-soft);
+  border: 1px solid var(--info);
+  color: var(--app-text);
+}
+.wizard-loss-list {
+  margin: 4px 0 0;
+  padding-inline-start: 1.1rem;
+  font-size: var(--fs-meta);
+}
+.wizard-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.wizard-gaps {
+  display: grid;
+  gap: 4px;
+}
+.wizard-gaps .wizard-loss-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding-inline-start: 0;
+}
+.wizard-gaps .wizard-loss-list li {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+}
+
+/* RYT-124 sheet: the HP ring opens the pad, a dying strip, an undo for the last HP change. */
+.sheet-ring-button {
+  display: block;
+  border-radius: 50%;
+}
+.sheet-ring-button:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.sheet-dying {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+}
+.sheet-dying[data-state='stable'] {
+  background: var(--success-soft);
+  border-color: var(--success);
+}
+.sheet-dying[data-state='dead'] {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+.sheet-dying-state {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.sheet-dying-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sheet-dying-label {
+  flex: 0 0 5rem;
+  font-size: var(--fs-meta);
+}
+.sheet-undo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  font-weight: 600;
+}
+.sheet-undo-button.mantine-Button-root {
+  min-height: 44px;
+}
+.panel-ac-bonus {
+  display: grid;
+  gap: 2px;
+}
+.notes-save {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.library-empty {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+/* The name plate reserves room for the ring; where AC and initiative share the row with it they
+   rise into that room too, so there is no empty band under the origin line. */
+.sheet-vitals {
+  container-type: inline-size;
+}
+@container (min-width: 21.5rem) {
+  .sheet-featured {
+    position: relative;
+    z-index: 1;
+    margin-top: calc(var(--sheet-ring) * -0.42 + 8px);
   }
 }

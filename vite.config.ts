@@ -73,7 +73,7 @@ function securityHeaders(backendUrl: string | undefined): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
-  const buildId = `${(process.env.GITHUB_SHA ?? '').slice(0, 12) || 'local'}-${Date.now().toString(36)}`
+  const buildId = `${(process.env.GITHUB_SHA ?? process.env.CF_PAGES_COMMIT_SHA ?? '').slice(0, 12) || 'local'}-${Date.now().toString(36)}`
   const env = loadEnv(mode, process.cwd(), 'VITE_')
   // Reject unsafe credentials before Vite can inline them into a public bundle.
   parseConfig(env)

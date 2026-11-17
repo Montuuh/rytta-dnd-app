@@ -5,7 +5,8 @@
  * dialog drops it back onto the page. It gives up as soon as focus lands on another control,
  * so a user who has already moved on is never pulled back. Pass `from` (the control focused when
  * the action started) when the call comes after an await: by then the user may have moved. Pass
- * `leaving` (the overlay that is closing) when its focus trap can still land inside it late.
+ * `leaving` (the overlay that is closing) when its focus trap can still land inside it late; by
+ * default it is the dialog that holds `from`.
  */
 export function focusWhenReady(
   target: string | (() => HTMLElement | null | undefined),
@@ -14,7 +15,9 @@ export function focusWhenReady(
     timeout = 3000,
     settle = 300,
     from = document.activeElement,
-    leaving = null,
+    // Called as an overlay closes, focus is still inside it: a slow unmount must not read as "the
+    // user moved on" (which ends the return and lets the removal drop focus on the page).
+    leaving = from?.closest('[role="dialog"]') ?? null,
   }: {
     preventScroll?: boolean
     timeout?: number

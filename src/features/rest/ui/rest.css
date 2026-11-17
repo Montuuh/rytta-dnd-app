@@ -144,7 +144,9 @@
 }
 .rest-seat {
   position: absolute;
+  /* Fixed box, same numbers as seatBoxes in domain/campfire-layout.ts. */
   width: 92px;
+  height: 106px;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
@@ -203,6 +205,20 @@
   overflow-wrap: anywhere;
   text-shadow: 0 1px 2px rgb(var(--fire-scrim) / 0.95);
 }
+/* Placed seats (arc, ring) have a box that does not depend on the font: one line of name and one of
+   vote, each exactly 1.15em tall and clipped with an ellipsis, so wide or tall fallback fonts cannot
+   grow a seat into its neighbour. Rows flow, so they may wrap. */
+.rest-fire:not([data-layout='rows']) .rest-seat > * {
+  flex: none;
+  max-width: 100%;
+}
+.rest-fire:not([data-layout='rows']) .rest-seat-name,
+.rest-fire:not([data-layout='rows']) .rest-seat-vote {
+  height: 1.15em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .rest-seat-vote {
   font-size: var(--fs-tag);
   color: var(--fire-ink-soft);
@@ -241,9 +257,13 @@
   aspect-ratio: 1 / 1;
   max-width: 400px;
 }
-.rest-fire[data-layout='ring'] .rest-seat,
+.rest-fire[data-layout='ring'] .rest-seat {
+  width: 80px;
+  height: 82px;
+}
 .rest-fire[data-layout='rows'] .rest-seat {
   width: 80px;
+  height: auto;
 }
 .rest-fire[data-layout='ring'] .rest-seat-vote {
   position: absolute;

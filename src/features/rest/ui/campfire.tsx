@@ -1,8 +1,9 @@
-import { useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Ban, Check, Ellipsis, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { artUrl } from '@/shared/ui/art-url'
 import { voteMark, type RestParticipant, type VoteMark } from '../domain/rest'
+import { pickLayout, seatPoints } from '../domain/campfire-layout'
 import { PersonToken } from './person-token'
 
 const icons = { yes: Check, no: X, wait: Ellipsis, cannot: Ban }
@@ -31,7 +32,20 @@ export function Campfire({
       return false
     }
   })
-  const layout = count <= 4 ? 'arc' : count <= 8 && !largeText ? 'ring' : ('rows' as const)
+  // The scene's width decides whether the seats fit; until it is measured the seats flow in rows.
+  const fire = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+  useLayoutEffect(() => {
+    const node = fire.current
+    if (!node) return
+    const measure = () => setWidth(Math.round(node.clientWidth))
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+  const layout = pickLayout(count, largeText, width)
   const size = layout === 'arc' ? 56 : 48
   const word: Record<VoteMark, string> = {
     yes: t('rest.vote.yes'),
@@ -39,19 +53,19 @@ export function Campfire({
     wait: t('rest.vote.wait'),
     cannot: t('rest.vote.cannot'),
   }
-  // Arc: the upper half, left to right. Ring: the whole circle from the top. Rows: no placement.
+  // Seat boxes are fixed-size (text clipped in CSS), so these pixel centres cannot overlap.
+  const points =
+    layout === 'rows'
+      ? []
+      : seatPoints(layout, count, { width, height: layout === 'ring' ? width : 250 })
   const place = (index: number) => {
-    if (layout === 'rows') return undefined
-    const angle =
-      layout === 'ring'
-        ? -Math.PI / 2 + (2 * Math.PI * index) / count
-        : Math.PI * (count === 1 ? 1.5 : 1.08 + (0.84 * index) / (count - 1))
-    const [cx, cy, rx, ry] = layout === 'ring' ? [50, 55, 37, 33] : [50, 72, 38, 50]
-    return { left: `${cx + rx * Math.cos(angle)}%`, top: `${cy + ry * Math.sin(angle)}%` }
+    const point = layout === 'rows' ? undefined : points[index]
+    return point && { left: `${point.x}px`, top: `${point.y}px` }
   }
   return (
     <div className="rest-camp">
       <div
+        ref={fire}
         className="rest-fire"
         data-count={count}
         data-layout={layout}

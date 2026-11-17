@@ -56,3 +56,4 @@ art/sprites/source/*/
 ~$*
 
 .pw-dev/
+dist-headers

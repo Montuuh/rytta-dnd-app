@@ -25,7 +25,7 @@ saved and no Supabase connection is made in demo mode.
 - Responsive Mantine shell, mobile drawer, route focus, error boundary and Pages-safe hash routes.
 - Campaign domain contract, demo/Supabase adapters, Zod validation and TanStack Query.
 - SQL migration for campaigns, membership, characters and resources, RLS and atomic campaign bootstrap.
-- PostgreSQL policy tests, Vitest, Playwright/axe, CI and an explicit Pages publishing workflow.
+- PostgreSQL policy tests, Vitest, Playwright/axe, CI and a static build published by the host.
 - Producer backlog, ADRs, security model, repo skills, role definitions and hooks.
 
 Supabase mode includes Google sign-in, My campaigns, campaign creation, in-app invitations

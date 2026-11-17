@@ -91,6 +91,12 @@ test('a newer published build shows a quiet notice; Not now dismisses it and Rel
   await page.waitForTimeout(500)
   expect(await page.evaluate(() => (window as unknown as { marker?: number }).marker)).toBe(1)
   await expect(notice.getByRole('button', { name: 'Reload' })).toHaveCSS('min-height', '44px')
+  // On a phone the notice is one row, and the icon-only dismiss keeps a 44px target and its name.
+  const dismiss = (await notice.getByRole('button', { name: 'Not now' }).boundingBox())!
+  expect(dismiss.height).toBeGreaterThanOrEqual(44)
+  expect(dismiss.width).toBeGreaterThanOrEqual(44 - 1e-6)
+  if ((page.viewportSize()?.width ?? 1000) < 768)
+    expect((await notice.boundingBox())!.height).toBeLessThanOrEqual(56)
   // Dismissed for the session: a reload in the same tab stays quiet.
   await notice.getByRole('button', { name: 'Not now' }).click()
   await expect(notice).toBeHidden()

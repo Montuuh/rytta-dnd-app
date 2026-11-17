@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId, sampleSheet } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
@@ -1027,6 +1027,15 @@ test('RYT-124 a double tap on Save changes saves once without a false conflict',
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
+/** The question after "Siguiente" or "Terminar personaje" must be where the player is looking. */
+async function expectNoticeInViewAndFocused(notice: Locator) {
+  await expect(notice).toBeFocused()
+  const box = await notice.boundingBox()
+  const viewport = notice.page().viewportSize()!
+  expect(box!.y).toBeGreaterThanOrEqual(0)
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height)
+}
+
 test('RYT-124 the full wizard names open choices, keeps scores per method and lets the player finish anyway', async ({
   page,
 }, info) => {
@@ -1039,6 +1048,7 @@ test('RYT-124 the full wizard names open choices, keeps scores per method and le
   await next(page)
   const gap = page.getByRole('alert').filter({ hasText: 'elecciones sin hacer' })
   await expect(gap).toContainText('aumentos de característica')
+  await expectNoticeInViewAndFocused(gap)
   await audit(page, info.outputPath('wizard-gap.png'))
   await gap.getByRole('button', { name: 'Continuar sin elegir' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Características')
@@ -1099,7 +1109,9 @@ test('RYT-124 the full wizard names open choices, keeps scores per method and le
   await expect(pending).toContainText('2 habilidades')
   await audit(page, info.outputPath('wizard-review.png'))
   await page.getByRole('button', { name: 'Terminar personaje' }).click()
-  await expect(page.getByRole('alert').filter({ hasText: 'terminar con elecciones' })).toBeVisible()
+  const finishAsk = page.getByRole('alert').filter({ hasText: 'terminar con elecciones' })
+  await expect(finishAsk).toBeVisible()
+  await expectNoticeInViewAndFocused(finishAsk)
   await page.getByRole('button', { name: 'Terminar así' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Arin Vael' })).toBeVisible()
 })
@@ -1125,6 +1137,13 @@ test('RYT-124 changing class clears the subclass and class skills, re-suggests H
   const loss = page.getByRole('status').filter({ hasText: 'Al cambiar de clase se quita' })
   await expect(loss).toContainText('Evocador')
   await expect(loss).toContainText('1 habilidad de clase')
+  // The recalculated HP is not something that was removed: it sits outside the list.
+  await expect(loss).toContainText('Los PG máximos se han recalculado')
+  await expect(loss.locator('li').filter({ hasText: 'PG máximos' })).toHaveCount(0)
+  // Shown below the grid on a phone, so it is scrolled into view; focus stays on the class card.
+  const lossBox = (await loss.boundingBox())!
+  expect(lossBox.y).toBeGreaterThanOrEqual(0)
+  expect(lossBox.y + lossBox.height).toBeLessThanOrEqual(page.viewportSize()!.height)
   await expect(page.getByLabel('Subclase')).toHaveValue('')
   await next(page)
   await expect(page.getByRole('status').filter({ hasText: 'Al cambiar de clase' })).toHaveCount(0)

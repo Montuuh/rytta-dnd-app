@@ -15,6 +15,7 @@
 }
 .account-block h4,
 .account-list h4 {
+  margin: 0;
   font-size: var(--fs-body);
   line-height: 1.3;
 }

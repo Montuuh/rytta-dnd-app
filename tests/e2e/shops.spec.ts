@@ -73,7 +73,7 @@ test('a Player buys a cart in an auto shop and finds it in the RYT-004 inventory
   await page.getByRole('button', { name: 'Añadir Poción de curación al carrito' }).click()
   // J3-12: once in the cart the add button is a stepper on the card.
   await page
-    .getByRole('button', { name: 'Aumentar Cantidad de Poción de curación en el carrito' })
+    .getByRole('button', { name: 'Cantidad de Poción de curación en el carrito: uno más' })
     .click()
   await page.locator('.listing-card', { hasText: 'Flecha' }).locator('.listing-main').click()
   const detail = page.getByRole('dialog', { name: 'Flecha' })
@@ -648,6 +648,10 @@ test('J3-01 a quantity field shows what will be charged: 9 against a stock of 3 
   await quantity.fill('0')
   await expect(quantity).toHaveValue('1')
   await expect(cart.getByText('Mínimo 1')).toBeVisible()
+  // A whole-number field does not take "2,5" silently: it keeps 2 and says why.
+  await quantity.fill('2,5')
+  await expect(quantity).toHaveValue('2')
+  await expect(cart.getByText('Escribe solo cifras.')).toBeVisible()
   await quantity.fill('9')
   await expect(quantity).toHaveValue('3')
   await expect(cart.locator('.cart-summary')).toContainText('120 po')

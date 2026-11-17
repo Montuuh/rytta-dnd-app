@@ -1,4 +1,4 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   ActionIcon,
   Alert,
@@ -119,6 +119,36 @@ function useBuild({ setDraft }: StepProps) {
 const asInt = (value: number | string, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : fallback
 
+/** What a class change removed, then the recalculated HP apart from that list. It shows up below
+ * the class grid, so it is scrolled into view (focus stays on the card the player tapped). */
+function ClassLossNotice({ loss, maxHp }: { loss: ClassLoss; maxHp: number }) {
+  const { t } = useTranslation()
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: 'nearest' })
+  }, [loss])
+  const removed = Boolean(loss.subclass) || loss.skills > 0 || loss.spells > 0
+  return (
+    <Alert color="yellow" role="status" ref={ref} className="wizard-class-loss">
+      {removed && (
+        <>
+          <Text size="sm" fw={600}>
+            {t('wizard.classLoss.title')}
+          </Text>
+          <ul className="wizard-loss-list">
+            {loss.subclass && <li>{t('wizard.classLoss.subclass', { name: loss.subclass })}</li>}
+            {loss.skills > 0 && <li>{t('wizard.classLoss.skills', { count: loss.skills })}</li>}
+            {loss.spells > 0 && <li>{t('wizard.classLoss.spells', { count: loss.spells })}</li>}
+          </ul>
+        </>
+      )}
+      <Text size="sm" mt={removed ? 'xs' : 0}>
+        {t('wizard.classLoss.hp', { value: maxHp })}
+      </Text>
+    </Alert>
+  )
+}
+
 function ClassStep(props: StepProps) {
   const { t } = useTranslation()
   const { draft, setDraft, session } = props
@@ -147,19 +177,7 @@ function ClassStep(props: StepProps) {
           }))
         }}
       />
-      {loss && (
-        <Alert color="yellow" role="status" className="wizard-class-loss">
-          <Text size="sm" fw={600}>
-            {t('wizard.classLoss.title')}
-          </Text>
-          <ul className="wizard-loss-list">
-            {loss.subclass && <li>{t('wizard.classLoss.subclass', { name: loss.subclass })}</li>}
-            {loss.skills > 0 && <li>{t('wizard.classLoss.skills', { count: loss.skills })}</li>}
-            {loss.spells > 0 && <li>{t('wizard.classLoss.spells', { count: loss.spells })}</li>}
-            <li>{t('wizard.classLoss.hp', { value: draft.maxHp })}</li>
-          </ul>
-        </Alert>
-      )}
+      {loss && <ClassLossNotice loss={loss} maxHp={draft.maxHp} />}
       {build.classKey === 'custom' && (
         <Paper p="md" className="sheet-block">
           <Stack gap="sm">

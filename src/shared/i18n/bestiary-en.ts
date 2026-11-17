@@ -296,7 +296,7 @@ export const bestiaryEn = {
     '*Ranged Attack Roll:* {{bonus}}, range 80/320 ft. *Hit:* {{average}} ({{dice}}) Piercing damage.',
   'bestiary.arch.burst': 'Arcane Burst (Recharge 5–6)',
   'bestiary.arch.burstText':
-    '*Dexterity Saving Throw:* DC {{dc}}, each creature in a 20-foot-radius Sphere within 120 feet. *Failure:* {{average}} ({{dice}}) Force damage. *Success:* Half damage.',
+    '*Dexterity Saving Throw:* DC {{dc}}, each creature in a 20-foot-radius Sphere within 120 feet. *Failure:* {{average}} ({{dice}}) Force damage. *Success:* Half damage.',
   'bestiary.arch.nimble': 'Nimble Escape',
   'bestiary.arch.nimbleText': 'The creature takes the Disengage or Hide action.',
   'bestiary.arch.rally': 'Rally (3/Day)',

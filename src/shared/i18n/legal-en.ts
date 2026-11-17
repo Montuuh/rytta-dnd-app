@@ -39,7 +39,7 @@ export const legalEn = {
   'legal.privacy.where.p1':
     'Account and game data and uploaded files are stored in a Supabase project in the EU (region eu-west-1). Supabase Auth handles sign-in together with Google.',
   'legal.privacy.where.p2':
-    'Uploaded files sit in private storage and each campaign has a space quota for its images. When you replace an image, the previous file is deleted. The pages of the app are static files served by GitHub Pages, which, like any web host, sees technical request data such as your IP address when your browser loads them. To offer you updates, the app also downloads a small version-number file from that same site; it sends none of your data.',
+    'Uploaded files sit in private storage and each campaign has a space quota for its images. When you replace an image, the previous file is deleted. The pages of the app are static files served from Cloudflare and, during the transition, also from GitHub Pages; like any web host, they see technical request data such as your IP address when your browser loads them. To offer you updates, the app also downloads a small version-number file from that same site; it sends none of your data.',
 
   'legal.privacy.visibility.title': 'Who can see what',
   'legal.privacy.visibility.l1':
@@ -72,7 +72,7 @@ export const legalEn = {
 
   'legal.privacy.third.title': 'Third parties',
   'legal.privacy.third.p1':
-    'Google (sign-in), Supabase (database, sign-in and file storage) and GitHub (page hosting) process data as described above. The 3D dice, the illustrations and the rules text are part of the app and load from the same site; they send your data to no one.',
+    'Google (sign-in), Supabase (database, sign-in and file storage) and Cloudflare and GitHub (page hosting, the latter during the transition) process data as described above. The 3D dice, the illustrations and the rules text are part of the app and load from the same site; they send your data to no one.',
 
   'legal.privacy.changes.title': 'Changes to this policy',
   'legal.privacy.changes.p1':

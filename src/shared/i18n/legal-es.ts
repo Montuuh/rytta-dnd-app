@@ -43,7 +43,7 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
   'legal.privacy.where.p1':
     'Los datos de la cuenta y de las partidas y los archivos subidos se guardan en un proyecto de Supabase en la UE (región eu-west-1). Supabase Auth gestiona el inicio de sesión junto con Google.',
   'legal.privacy.where.p2':
-    'Los archivos subidos están en almacenamiento privado y cada campaña tiene una cuota de espacio para sus imágenes. Cuando reemplazas una imagen, el archivo anterior se borra. Las páginas de la aplicación son archivos estáticos servidos por GitHub Pages que, como cualquier alojamiento web, ve datos técnicos de la petición, como tu dirección IP, cuando tu navegador las carga. Para ofrecerte actualizaciones, la aplicación también descarga de ese mismo sitio un pequeño archivo con el número de versión; no envía datos tuyos.',
+    'Los archivos subidos están en almacenamiento privado y cada campaña tiene una cuota de espacio para sus imágenes. Cuando reemplazas una imagen, el archivo anterior se borra. Las páginas de la aplicación son archivos estáticos servidos desde Cloudflare y, durante la transición, también desde GitHub Pages; como cualquier alojamiento web, ven datos técnicos de la petición, como tu dirección IP, cuando tu navegador las carga. Para ofrecerte actualizaciones, la aplicación también descarga de ese mismo sitio un pequeño archivo con el número de versión; no envía datos tuyos.',
 
   'legal.privacy.visibility.title': 'Quién ve qué',
   'legal.privacy.visibility.l1':
@@ -76,7 +76,7 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
 
   'legal.privacy.third.title': 'Terceros',
   'legal.privacy.third.p1':
-    'Google (inicio de sesión), Supabase (base de datos, inicio de sesión y archivos) y GitHub (alojamiento de las páginas) tratan datos como se describe arriba. Los dados 3D, las ilustraciones y el texto de reglas forman parte de la aplicación y se cargan desde el mismo sitio; no envían tus datos a nadie.',
+    'Google (inicio de sesión), Supabase (base de datos, inicio de sesión y archivos) y Cloudflare y GitHub (alojamiento de las páginas, este último durante la transición) tratan datos como se describe arriba. Los dados 3D, las ilustraciones y el texto de reglas forman parte de la aplicación y se cargan desde el mismo sitio; no envían tus datos a nadie.',
 
   'legal.privacy.changes.title': 'Cambios en esta política',
   'legal.privacy.changes.p1':

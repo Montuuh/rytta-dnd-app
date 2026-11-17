@@ -430,6 +430,8 @@ export const inventoryEn = {
   'amount.max': 'Maximum {{value}}',
   'amount.min': 'Minimum {{value}}',
   'amount.digits': 'Type digits only.',
+  'amount.less': '{{field}}: one fewer',
+  'amount.more': '{{field}}: one more',
   'inventory.purse': 'Purse of {{name}}',
   'items.propose.more': 'More details',
   'items.propose.moreHint': 'Rarity, icon, weight and suggested price',

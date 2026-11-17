@@ -114,8 +114,10 @@ export function Stepper({
       return
     }
     const clamped = clampAmount(reading.value, min, max, decimals)
+    // A whole-number field cannot keep "2,5": it is cut to 2 and says why instead of silently.
+    const cut = reading.truncated && decimals === 0
     if (clamped.limit || reading.truncated)
-      apply(clamped.value, write(clamped.value), clamped.limit)
+      apply(clamped.value, write(clamped.value), clamped.limit ?? (cut ? 'digits' : null))
     else apply(clamped.value, raw)
   }
   const settle = () => {
@@ -171,7 +173,7 @@ export function Stepper({
           type="button"
           className="amount-step"
           disabled={disabled || (value !== null ? atMin : true)}
-          aria-label={lessLabel ?? t('characters.decrease', { field })}
+          aria-label={lessLabel ?? t('amount.less', { field })}
           {...buttons.less}
         >
           <Minus size={18} aria-hidden="true" />
@@ -214,7 +216,7 @@ export function Stepper({
           type="button"
           className="amount-step"
           disabled={disabled || atMax}
-          aria-label={moreLabel ?? t('characters.increase', { field })}
+          aria-label={moreLabel ?? t('amount.more', { field })}
           {...buttons.more}
         >
           <Plus size={18} aria-hidden="true" />

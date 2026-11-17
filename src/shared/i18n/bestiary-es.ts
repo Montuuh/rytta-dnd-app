@@ -296,7 +296,7 @@ export const bestiaryEs = {
     '*Tirada de ataque a distancia:* {{bonus}}, alcance 24/96 m. *Acierto:* {{average}} ({{dice}}) de daño perforante.',
   'bestiary.arch.burst': 'Estallido arcano (recarga 5–6)',
   'bestiary.arch.burstText':
-    '*Tirada de salvación de Destreza:* CD {{dc}}, cada criatura en una esfera de 6 m de radio a 36 m o menos. *Fallo:* {{average}} ({{dice}}) de daño de fuerza. *Éxito:* la mitad del daño.',
+    '*Tirada de salvación de Destreza:* CD {{dc}}, cada criatura en una esfera de 6 m de radio a 36 m o menos. *Fallo:* {{average}} ({{dice}}) de daño de fuerza. *Éxito:* la mitad del daño.',
   'bestiary.arch.nimble': 'Huida veloz',
   'bestiary.arch.nimbleText': 'La criatura realiza la acción de destrabarse o esconderse.',
   'bestiary.arch.rally': 'Arenga (3/día)',

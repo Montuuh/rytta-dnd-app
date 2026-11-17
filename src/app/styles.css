@@ -1468,11 +1468,13 @@ html[data-mantine-color-scheme='light'] {
 }
 .item-card-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  /* rem, not px: at large text the tiles stack instead of squeezing a long value. */
+  grid-template-columns: repeat(auto-fit, minmax(min(8.5rem, 100%), 1fr));
   gap: 8px;
   margin: 0 0 12px;
 }
 .item-card-facts div {
+  min-width: 0;
   padding: 8px 10px;
   border-radius: 10px;
   background: var(--app-bg);
@@ -1484,6 +1486,7 @@ html[data-mantine-color-scheme='light'] {
 .item-card-facts dd {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .item-card-description {
   margin-bottom: 14px;
@@ -4398,19 +4401,43 @@ html[data-mantine-color-scheme='light'] .order-counter {
   min-height: 44px;
   padding-inline: 14px;
 }
+.update-notice-x {
+  display: none;
+}
 /* A dialog or drawer owns the screen: the notice waits behind it instead of showing dimmed. */
 body:has(.mantine-Modal-content, .mantine-Drawer-content) .update-notice {
   display: none;
 }
 @media (max-width: 47.99em) {
-  /* Phones: one row, the text then both actions; it only wraps on the narrowest screens. */
+  /* Phones: one row. The text takes what the actions leave and the dismiss action is an icon
+     (its words stay for assistive technology), so text and both actions fit 390px. */
   .update-notice {
+    flex-wrap: nowrap;
     padding: 4px 4px 4px 14px;
-    gap: 2px 8px;
+    gap: 0 6px;
   }
   .update-notice-text {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     font-size: var(--fs-meta);
+    line-height: 1.25;
+  }
+  .update-notice-actions {
+    flex: none;
+    gap: 4px;
+  }
+  .update-notice-x {
+    display: block;
+  }
+  .update-notice-dismiss {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .update-notice-action.mantine-Button-root[class*='update-notice'] {
+    padding-inline: 12px;
   }
   body:has(.has-bottom-nav) .update-notice {
     bottom: calc(var(--bottom-nav-h) + 10px + env(safe-area-inset-bottom));

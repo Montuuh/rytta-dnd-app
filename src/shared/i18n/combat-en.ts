@@ -141,7 +141,7 @@ export const combatEn = {
   'combat.concentration.end': 'End concentration',
   'combat.concentration.on': 'Concentrating on {{spell}}',
   'combat.concentration.dc':
-    '{{name}} must make a Constitution save, DC {{dc}}, to keep {{spell}}.',
+    '{{name}} must make a Constitution save, DC {{dc}}, to keep {{spell}}.',
   'combat.concentration.lost': '{{name}} lost concentration.',
   'combat.death.title': 'Death saves',
   'combat.death.success': 'Success',
@@ -355,7 +355,7 @@ export const combatEn = {
   'combat.news.conditionOff': 'No longer: {{condition}}',
   'combat.news.concentrationOn': 'Concentrating on {{spell}}',
   'combat.news.concentrationOff': 'Concentration ended',
-  'combat.news.dc': 'Concentration save: DC {{dc}}',
+  'combat.news.dc': 'Concentration save: DC {{dc}}',
   'combat.news.close': 'Dismiss notice',
   'combat.own.label': 'Your character',
   'combat.own.effects': 'Effects on you',

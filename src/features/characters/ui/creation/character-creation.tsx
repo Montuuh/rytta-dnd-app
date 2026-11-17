@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react'
 import { Alert, Button, Group, Paper, Progress, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -44,6 +51,23 @@ const fromRow = (sheet: SheetRow): SheetDraft =>
         armorClass: sheet.armor_class,
       }
     : initialDraft()
+
+/**
+ * The question about choices left open. It appears below a long step, so it is scrolled into view
+ * and focused each time the button asks (as an order's refusal is): without that, a newcomer taps
+ * the button and sees nothing happen. Focus scrolls without animation, so reduced motion holds.
+ */
+function GapAlert({ round, children }: { round: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.focus()
+  }, [round])
+  return (
+    <Alert color="yellow" role="alert" ref={ref} tabIndex={-1} className="wizard-gap-alert">
+      {children}
+    </Alert>
+  )
+}
 
 export function CharacterCreationPage() {
   const { t } = useTranslation()
@@ -167,6 +191,8 @@ function Wizard({
   })
   const [attempt, setAttempt] = useState<{ complete: boolean; exiting: boolean } | null>(null)
   const [gapAsk, setGapAsk] = useState(false)
+  // Each press of the button that asks counts, so the notice is brought back into view each time.
+  const [gapRound, setGapRound] = useState(0)
   const [acked, setAcked] = useState<ReadonlySet<string>>(() => new Set())
   const [scores, setScores] = useState<Session['scores']>({})
   const [classLoss, setClassLoss] = useState<ClassLoss | null>(null)
@@ -271,7 +297,10 @@ function Wizard({
       .catch(() => undefined)
   }
   const advance = (skipGaps = false) => {
-    if (!skipGaps && openGaps.length > 0) return setGapAsk(true)
+    if (!skipGaps && openGaps.length > 0) {
+      setGapRound((round) => round + 1)
+      return setGapAsk(true)
+    }
     if (skipGaps) {
       const keys = openGaps.map(({ step, gap }) => gapKey(step, gap.kind))
       setAcked((previous) => new Set([...previous, ...keys]))
@@ -387,7 +416,7 @@ function Wizard({
       )}
       <CreationStepView step={current} draft={draft} setDraft={update} session={session} />
       {gapAsk && openGaps.length > 0 && (
-        <Alert color="yellow" role="alert" className="wizard-gap-alert">
+        <GapAlert round={gapRound}>
           <Stack gap="xs" align="flex-start">
             <Text size="sm" fw={600}>
               {t(last ? 'wizard.gap.finishTitle' : 'wizard.gap.title')}
@@ -403,7 +432,7 @@ function Wizard({
               {t(last ? 'wizard.gap.finishAnyway' : 'wizard.gap.continue')}
             </Button>
           </Stack>
-        </Alert>
+        </GapAlert>
       )}
       {action.isError && (
         <Alert color="red" role="alert">

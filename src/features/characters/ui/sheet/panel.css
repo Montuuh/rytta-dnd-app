@@ -1383,6 +1383,15 @@ span.sheet-inspiration {
   border: 1px solid var(--info);
   color: var(--app-text);
 }
+.wizard-class-loss.mantine-Alert-root,
+.wizard-gap-alert.mantine-Alert-root {
+  /* Scrolled into view clear of the bottom bar. */
+  scroll-margin-block: 16px 96px;
+}
+.wizard-gap-alert.mantine-Alert-root:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 2px;
+}
 .wizard-loss-list {
   margin: 4px 0 0;
   padding-inline-start: 1.1rem;

@@ -142,7 +142,7 @@ export const combatEs = {
   'combat.concentration.end': 'Terminar concentración',
   'combat.concentration.on': 'Concentrado en {{spell}}',
   'combat.concentration.dc':
-    '{{name}} debe superar una salvación de Constitución CD {{dc}} para mantener {{spell}}.',
+    '{{name}} debe superar una salvación de Constitución CD {{dc}} para mantener {{spell}}.',
   'combat.concentration.lost': '{{name}} pierde la concentración.',
   'combat.death.title': 'Salvaciones de muerte',
   'combat.death.success': 'Éxito',
@@ -357,7 +357,7 @@ export const combatEs = {
   'combat.news.conditionOff': 'Ya no tienes: {{condition}}',
   'combat.news.concentrationOn': 'Concentrado en {{spell}}',
   'combat.news.concentrationOff': 'Concentración terminada',
-  'combat.news.dc': 'Salvación de concentración: CD {{dc}}',
+  'combat.news.dc': 'Salvación de concentración: CD {{dc}}',
   'combat.news.close': 'Cerrar aviso',
   'combat.own.label': 'Tu personaje',
   'combat.own.effects': 'Efectos sobre ti',

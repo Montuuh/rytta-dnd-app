@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@mantine/core'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   buildId,
@@ -97,7 +97,8 @@ export function UpdateNotice() {
             )
           }}
         >
-          {t('update.dismiss')}
+          <X size={18} aria-hidden="true" className="update-notice-x" />
+          <span className="update-notice-dismiss">{t('update.dismiss')}</span>
         </Button>
         <Button
           size="compact-md"

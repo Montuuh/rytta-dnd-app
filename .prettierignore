@@ -11,3 +11,5 @@ src/features/glossary/content/
 src/features/bestiary/content/
 # Third-party builds copied as published (public/vendor/*/NOTICE.md)
 public/vendor/
+# Site ownership verification file, kept byte for byte as issued
+public/google*.html

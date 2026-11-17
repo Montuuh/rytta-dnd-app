@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { etlCommand, withExposureSql } from '../../scripts/lib/pre-etl.mts'
+import { relaxQuotasSql } from './quota-fixture.ts'
 
 // RYT-096: a Player claims a free character the DM prepared. RYT-097: the party overview returns
 // teammates the DM does not share live without their live fields.
@@ -329,8 +330,11 @@ beforeAll(async () => {
       readFileSync('supabase/maintenance/expose-pre.sql', 'utf8'),
     ),
   )
-  for (const file of files.filter((f) => f >= migration))
+  // This suite re-runs its own file, which cannot replace get_party_overview once
+  // 20261130120000 changed its columns; party-level-dice.test.ts covers the later shape.
+  for (const file of files.filter((f) => f >= migration && f < '20261130120000'))
     await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
+  await db.exec(relaxQuotasSql)
 }, 90000)
 afterAll(() => db.close())
 

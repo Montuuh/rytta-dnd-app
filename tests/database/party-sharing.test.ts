@@ -45,6 +45,8 @@ const liveColumns = [
   'armor_class',
   'exhaustion',
   'conditions',
+  // RYT-130: computed from the party level (20261130120000).
+  'below_party_level',
 ].sort()
 
 async function setup(schema = 'public') {

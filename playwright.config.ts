@@ -14,7 +14,13 @@ const hasWebkit = (() => {
 
 // The owner's .env.local sets the public contact; specs always see the unconfigured state. An
 // explicit empty value in the process environment wins over every .env file.
-const unconfigured = { VITE_CONTACT_EMAIL: '', VITE_OWNER_NAME: '', VITE_SITE_URL: '' }
+const unconfigured = {
+  VITE_CONTACT_EMAIL: '',
+  VITE_OWNER_NAME: '',
+  VITE_SITE_URL: '',
+  // Live-mode builds fail without an owner and contact; the test builds opt out explicitly.
+  RYTTA_ALLOW_UNPUBLISHED_OWNER: '1',
+}
 
 export default defineConfig({
   testDir: './tests/e2e',

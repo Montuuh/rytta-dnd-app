@@ -62,3 +62,5 @@ concurrent deletions, real iOS and Android keyboards, screen readers and the pro
   `change_campaign_member` (`Character absent`), found during this delivery.
 - RYT-121: account dialog action order and post-deletion notice focus ring (UI review notes
   R2-b and R2-c).
+
+- 2026-11-17: the owner approved the privacy policy and terms texts; the draft state is off (`LEGAL_DRAFT = false`) and the pages show "En vigor desde el 17 de noviembre de 2026". Live builds now fail without the contact address and owner name.

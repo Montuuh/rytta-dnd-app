@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { legalEn } from '@/shared/i18n/legal-en'
 import { legalEs } from '@/shared/i18n/legal-es'
-import { legalDocuments, legalSegments, legalWhoKey, type LegalKey } from './legal-content'
+import {
+  LEGAL_DRAFT,
+  LEGAL_EFFECTIVE_DATE,
+  legalDocuments,
+  legalSegments,
+  legalWhoKey,
+  type LegalKey,
+} from './legal-content'
 
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{\{(\w+)\}\}/g, (_, name: string) => values[name] ?? '')
@@ -55,6 +62,27 @@ describe('legal content', () => {
     expect(legalEs['legal.terms.law.p1']).toContain('ley española')
     expect(legalEn['legal.terms.law.p1']).toContain('Spanish law')
     expect(legalEs['legal.terms.law.p1']).not.toContain('pendiente')
+  })
+
+  it('is published: the owner approved both texts, effective 2026-11-17', () => {
+    expect(LEGAL_DRAFT).toBe(false)
+    expect(LEGAL_EFFECTIVE_DATE).toBe('2026-11-17')
+    expect(fill(legalEs['legal.effective'], { date: '17 de noviembre de 2026' })).toBe(
+      'En vigor desde el 17 de noviembre de 2026',
+    )
+    expect(fill(legalEn['legal.effective'], { date: 'November 17, 2026' })).toBe(
+      'In force since November 17, 2026',
+    )
+  })
+
+  it('keeps the draft wording ready behind the one switch, and nowhere else', () => {
+    expect(legalEs['legal.draftDate']).toContain('Borrador')
+    expect(legalEn['legal.draftDate']).toContain('Draft')
+    for (const key of Object.keys(legalEs) as LegalKey[]) {
+      if (key === 'legal.draft' || key === 'legal.draftHelp' || key === 'legal.draftDate') continue
+      expect(legalEs[key], key).not.toMatch(/borrador/i)
+      expect(legalEn[key], key).not.toMatch(/draft/i)
+    }
   })
 
   it('keeps both languages complete', () => {

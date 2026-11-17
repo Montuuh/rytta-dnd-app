@@ -28,8 +28,8 @@ Build settings (the Worker, Settings, Build):
 | `VITE_DATA_MODE`                | `supabase`                                                           |
 | `VITE_SUPABASE_URL`             | the project URL (staging project for previews)                       |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | its publishable key (`sb_publishable_...`), never a secret key       |
-| `VITE_CONTACT_EMAIL`            | the public contact address                                           |
-| `VITE_OWNER_NAME`               | the person responsible for the service                               |
+| `VITE_CONTACT_EMAIL`            | the public contact address (required: a live build fails without it) |
+| `VITE_OWNER_NAME`               | the person responsible for the service (required, same)              |
 | `VITE_SITE_URL`                 | the site's own https origin, no path; makes the share image absolute |
 | `VITE_BASE_PATH`                | leave unset: the site is at the root                                 |
 
@@ -115,9 +115,12 @@ The steps below also serve as setup instructions for new environments.
    Before the public launch also set the repository variables VITE_CONTACT_EMAIL (the owner's
    public contact address) and VITE_OWNER_NAME (the full name of the natural person responsible
    for the service). The privacy policy, the terms and the notice shown after an account
-   deletion send users to the address; the privacy policy names the person. While either is
-   empty a production build prints a warning and the pages say it is pending; the build still
-   succeeds.
+   deletion send users to the address; the privacy policy names the person. A production
+   build with `VITE_DATA_MODE=supabase` fails with a clear error while either is empty, so a live
+   site never ships with the owner pending; demo builds only print a warning and the pages say it
+   is pending. The CI `checks` job builds in demo mode and the `e2e` builds pin both empty with
+   `RYTTA_ALLOW_UNPUBLISHED_OWNER=1` (set in `playwright.config.ts`, not a `VITE_` variable, so it
+   never reaches a bundle); the `deploy` job and the Cloudflare build read the real variables.
 4. Push the intended revision to main, or dispatch the Quality workflow manually. Its `checks`
    job and the four `e2e` shards run in parallel; the `deploy` job runs only on main after both
    pass, so a failing check never publishes.

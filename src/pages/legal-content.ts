@@ -2,8 +2,11 @@ import type { legalEn } from '@/shared/i18n/legal-en'
 
 export type LegalKey = keyof typeof legalEn
 
-/** RYT-115: set to false once the owner has reviewed both pages; this is the only switch. */
-export const LEGAL_DRAFT = true
+/**
+ * RYT-115: true shows the draft notice and "Borrador del …"; false (the owner approved both texts
+ * on 2026-11-17) shows the effective date. This is the only switch.
+ */
+export const LEGAL_DRAFT = false
 /** The day both documents take effect (ISO date, shown in the visitor's language). */
 export const LEGAL_EFFECTIVE_DATE = '2026-11-17'
 

@@ -79,16 +79,21 @@ export default defineConfig(({ mode, command }) => {
   parseConfig(env)
   // RYT-115: after deleting an account the app tells users with a remaining sign-in record whom to
   // write to. Without a published address that step reads "pending": warn, do not fail (CI has none).
+  // The texts are approved: a live build (VITE_DATA_MODE=supabase) without them must not ship, so
+  // it fails. Demo builds only warn. The browser-test builds are live-mode but deliberately
+  // unconfigured, and say so with RYTTA_ALLOW_UNPUBLISHED_OWNER=1 (not a VITE_ variable, so it never
+  // reaches the bundle).
   const missing = ['VITE_CONTACT_EMAIL', 'VITE_OWNER_NAME'].filter((name) => !env[name]?.trim())
-  if (mode === 'production' && missing.length)
+  if (mode === 'production' && missing.length) {
+    const message = `${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} empty: the privacy policy shows the owner or contact as pending and the account-deletion notice cannot offer a contact.`
+    if (env.VITE_DATA_MODE === 'supabase' && process.env.RYTTA_ALLOW_UNPUBLISHED_OWNER !== '1')
+      throw new Error(
+        `[rytta] ${message} A live build (VITE_DATA_MODE=supabase) needs both: set VITE_CONTACT_EMAIL and VITE_OWNER_NAME as build variables.`,
+      )
     console.warn(
-      [
-        '',
-        `[rytta] ${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} empty: the privacy policy shows the owner or contact as pending and`,
-        '[rytta] the account-deletion notice cannot offer a contact. Set both before the public launch.',
-        '',
-      ].join('\n'),
+      ['', `[rytta] ${message}`, '[rytta] Set both before the public launch.', ''].join('\n'),
     )
+  }
   return {
     plugins: [
       react(),

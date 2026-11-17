@@ -3,7 +3,7 @@ export const legalEn = {
   'legal.back': 'Back',
   'legal.draft': 'Draft pending owner review',
   'legal.draftHelp': 'This text is a draft and has no legal effect until the owner approves it.',
-  'legal.effective': 'Effective {{date}}',
+  'legal.effective': 'In force since {{date}}',
   'legal.draftDate': 'Draft of {{date}}',
   'legal.contactPending': 'contact address pending, to be published before launch',
   'legal.other.privacy': 'Read the privacy policy',

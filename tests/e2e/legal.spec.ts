@@ -35,9 +35,13 @@ for (const language of ['es', 'en'] as const)
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
       await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible()
       await expect(page.locator('.legal')).toContainText(text)
-      // One constant drives the draft note.
-      await expect(page.getByRole('note')).toContainText(
-        language === 'es' ? 'Borrador pendiente' : 'Draft pending',
+      // Approved: no draft note, and the date reads as in force.
+      await expect(page.getByRole('note')).toHaveCount(0)
+      await expect(page.locator('.legal')).not.toContainText(/Borrador|Draft/)
+      await expect(page.locator('.legal-date')).toContainText(
+        language === 'es'
+          ? 'En vigor desde el 17 de noviembre de 2026'
+          : 'In force since November 17, 2026',
       )
       await expect(page).toHaveTitle(`${title} · Rytta`)
       await expect(page.locator('html')).toHaveAttribute('lang', language)
@@ -87,12 +91,14 @@ test('Settings links to both pages and leaves the drawer behind', async ({ page 
   ).toBeFocused()
 })
 
-test('while the text is a draft the page shows its date as a draft, not as in force', async ({
-  page,
-}) => {
+test('the approved text shows the effective date, not a draft', async ({ page }) => {
   await page.goto('./#/privacy')
-  await expect(page.locator('.legal-date')).toContainText('Borrador del 17 de noviembre de 2026')
-  await expect(page.locator('.legal-date')).not.toContainText('En vigor')
+  await expect(page.locator('.legal-date')).toContainText(
+    'En vigor desde el 17 de noviembre de 2026',
+  )
+  await expect(page.locator('.legal-date')).not.toContainText('Borrador')
+  await expect(page.locator('.legal-draft')).toHaveCount(0)
+  await expect(page.locator('.legal-date time')).toHaveAttribute('datetime', '2026-11-17')
   // The e2e builds publish no owner name and no contact address.
   await expect(page.locator('#legal-who + p')).toContainText(
     'El responsable se identificará antes del lanzamiento',

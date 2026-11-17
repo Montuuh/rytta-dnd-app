@@ -228,13 +228,54 @@ These are deployment prerequisites, not permission to modify hosted data.
 
 Test simultaneous buys, double taps, retries, stale writes and insufficient funds.
 
+## Account deletion
+
+`prepare_account_deletion` and `delete_my_account` (RYT-115) run per environment for the caller
+only. The client prepares (blockers, Storage paths, and pending invitations of the campaigns to be
+deleted are revoked), removes those Storage objects until none are listed, then deletes; the
+server refuses when the prepared campaign set no longer matches.
+
+- Deleted: the profile, memberships, content editor grant, idempotency rows, invitations to the
+  user's email, and every campaign where the user is the only active member and a DM. Deleting such
+  a campaign also removes the rows former members authored there and its pending invitations.
+- De-identified: in campaigns that survive, the user's characters return to the DM pool and
+  ownership passes to the longest-standing other DM; authored or acted rows (history, orders,
+  trades, combat log, proposals, glossary, content packs, rest requests) stay with the user
+  reference set to null. A sole DM of a campaign with other members is blocked until they hand over.
+- Auth: production then deletes the Auth user. Through the shared Auth foreign keys this also
+  removes or nulls that user's rows in the current PRE copy, an accepted exception to environment
+  isolation that can leave a PRE campaign without a DM; retained PRE backups are not touched. When
+  the Auth row cannot be deleted the app data is still gone and the result reports `deleted: false`
+  with `auth_user` `disabled` (banned, sessions removed) or `kept` (needs a server-side follow-up).
+- Deletion requests keep an md5 digest of the user id and campaign ids for replay; they are pruned
+  after 7 days.
+
+Accepted residual in combat masking: an aliased character shows no name, portrait, class or
+vitals, but Players can still infer it by elimination from its kind, side and death state.
+
 ## Content, media and sessions
 
 Future uploads use private Storage buckets, campaign-scoped policies, signed URLs and
 MIME/size validation. Game data from outside the app reaches it only through the content library.
 Render text safely; rich text needs an explicit sanitizer before HTML support.
 Clear private caches on logout. Do not log tokens or private campaign payloads.
-Restrict Auth redirects to exact deployed URLs. Pages cannot hold backend secrets.
+Restrict Auth redirects to exact deployed URLs. A static host cannot hold backend secrets.
+
+### Response headers (RYT-116)
+
+The Cloudflare deployment sends security headers from the `_headers` file the build writes
+(see [deployment](deployment.md#cloudflare-workers-static-assets) and ADR 047): a Content
+Security Policy whose `script-src` allows only the site's own scripts, the SHA-256 of the inline
+boot script and WebAssembly compilation for the 3D dice (never `'unsafe-inline'` or
+`'unsafe-eval'` for scripts); `connect-src`, `img-src` and `media-src` limited to the site and
+the configured Supabase origin; `frame-ancestors 'none'` against clickjacking; `nosniff`, a
+strict referrer policy, a permissions policy that denies camera, microphone, geolocation and
+payment, HSTS, and `Cross-Origin-Opener-Policy: same-origin-allow-popups`. The site has its own
+origin, so session storage is no longer shared with other projects of the same account (GitHub
+Pages serves every project of an account from one origin). The one inline allowance is
+`style-src 'unsafe-inline'`, because Mantine injects theme styles at runtime. GitHub Pages cannot
+send headers: while it still serves the app, none of this applies there. The e2e spec
+`tests/e2e/security-headers.spec.ts` fails on any violation during the main journeys.
 
 ## Verification boundary
 

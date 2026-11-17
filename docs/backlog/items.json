@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-16",
+  "updatedAt": "2026-11-17",
   "items": [
     {
       "id": "RYT-000",
@@ -250,7 +250,7 @@
       "priority": "P1",
       "owner": "frontend",
       "status": "done",
-      "dependsOn": ["RYT-003", "RYT-013"],
+      "dependsOn": ["RYT-003"],
       "sources": [
         "User 2026-11-03: design, UI, UX and feature analysis for a useful, accessible combat screen for DM and Players; full module in one delivery.",
         "Drive: HP and initiative",
@@ -418,7 +418,11 @@
       "owner": "backend",
       "status": "planned",
       "dependsOn": ["RYT-003"],
-      "sources": ["User: multi-device companion", "D&D Sync: live sync"],
+      "sources": [
+        "User: multi-device companion",
+        "D&D Sync: live sync",
+        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests."
+      ],
       "scope": "Scoped subscriptions, reconnect/refetch and truthful network state.",
       "acceptance": [
         "Publish only approved tables/channels; RLS remains authoritative.",
@@ -3641,6 +3645,647 @@
         "unit tests for wizard choices and resulting trackers",
         "npm run check",
         "npm run test:e2e (characters and character-sheet at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-112",
+      "title": "Launch presentation: brand art, landing, app shell and illustrated fallbacks",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": [],
+      "sources": [
+        "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
+        "Progress 2026-11-17: npm run check passed (565 tests, build); full e2e 605 passed, 53 skipped, 0 failed. Independent UI review round 1 CHANGES_REQUIRED (16 findings); round 2 CHANGES_REQUIRED (15 resolved, F8 deferred to RYT-118, new blocking R1 on the conditions grid at 390px and minor N2); round 3 pending.",
+        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Independent UI review round 3 PASS; the current recorded PASS covers RYT-112 to RYT-118. F8 resolved by RYT-118. Not committed or released; remaining steps in RYT-122."
+      ],
+      "scope": "A static illustration set under public/art rendered through a shared ArtPlate component. A landing and sign-in page that explains the product with hero art. App icons, a web manifest and a share image. Correct document titles on nested routes. A bottom bar that works with a single enabled module and gives the DM one-tap access to Combat and the table screen; planned modules are hidden. Not-found, error and loading screens that always offer a way home. Campaign covers, illustrated empty states, default class portraits and class emblems in both character creation paths, default shop banners per shop type and item category art fallbacks. Non-goals: schema changes, user-uploaded campaign covers, autonomous release.",
+      "acceptance": [
+        "Signed out, the landing page explains what Rytta is and who it is for, shows hero art and offers sign-in; it renders without a horizontal scrollbar at 390px and 820px.",
+        "The built site ships app icons, a valid web manifest and a share image referenced from index.html; every nested route sets a translated document title, asserted by a browser spec.",
+        "With one enabled module the bottom bar still navigates correctly; a DM reaches Combat and the table screen in one tap; planned modules never appear in navigation.",
+        "Not-found, route error and loading screens render art and a working link home; a browser spec covers an unknown nested route under the production subpath.",
+        "Campaigns without a cover, empty lists, characters without a portrait (both creation paths), shops without a banner and items without a picture show the shared fallback art for their kind, with an empty alt or a translated label as appropriate; no broken image requests appear in the browser console.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for ArtPlate fallback selection and document titles",
+        "npm run check",
+        "npm run test:e2e (landing, campaigns, characters, shops, inventory, combat and not-found at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-112/validation.md"]
+    },
+    {
+      "id": "RYT-113",
+      "title": "Security hardening for open sign-up: hidden combat data, cross-campaign modifiers, quotas and invitation limits",
+      "priority": "P0",
+      "owner": "backend",
+      "status": "review",
+      "dependsOn": [],
+      "sources": [
+        "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
+        "Security audit findings: H-1 (encounters summary and active_combatant readable by Players through table reads and realtime), H-3 (no quotas on campaigns, scenes or uploaded media), M-1 (set_shop_modifier delete not scoped to its campaign), M-2 (unthrottled invitations and unbounded list_my_invitations).",
+        "Progress 2026-11-17: migrations applied to production (hosted 20261117012750 and 20261117013004) and mirrored to PRE with baseline row counts unchanged; npm run test:db 250 passed; two independent security reviews returned safe to apply, one blocking client finding fixed. Hosted actor-level verification moved to RYT-119; hosted Auth settings and the frontend release remain owner actions.",
+        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Hosted PRE actor-level verification passed (RYT-119). Remaining: hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA) and the frontend release, tracked in RYT-122."
+      ],
+      "scope": "Players can no longer read hidden combatants, true creature names, their damage or a hidden active turn through direct reads or realtime of encounters: the realtime signal row carries no secrets and the summary and active combatant live where only the DM can read them, while get_combat_state keeps its masked projection. set_shop_modifier verifies the shop belongs to the target campaign and deletes only within that campaign. Per-account and per-campaign quotas for campaigns, pending invitations, tabletop scenes and uploaded media bytes, enforced server-side. Invitations are rate-limited per inviting DM and per recipient, and list_my_invitations is bounded. Reviewed backward-compatible migrations, tested in PRE first and mirrored there. Non-goals: auth provider, CAPTCHA and rate-limit configuration in the hosted dashboard (owner action, recorded in the evidence), destructive migrations, autonomous release.",
+      "acceptance": [
+        "A Player selecting summary or active_combatant from encounters, or receiving an encounters realtime event, never sees a hidden combatant, a true name behind an alias or a hidden active turn; a SQL test reproduces the audit proof and now fails to read them, and get_combat_state tests still pass.",
+        "set_shop_modifier called by the DM of campaign A with a shop of campaign B is refused and leaves campaign B's modifiers unchanged, for both the set and the clear branch.",
+        "Creating campaigns, pending invitations or tabletop scenes beyond the documented caps, or uploading media beyond the per-campaign byte budget, is refused with a translated error in the UI; requests under the caps keep working.",
+        "Invitations beyond the per-DM daily cap or the per-recipient pending cap are refused, and list_my_invitations returns at most the documented page size.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every changed table, RPC, realtime path and storage path; RLS stays authoritative.",
+        "PRE migration and tests pass before the reviewed production migration; production verified afterwards; the hosted Auth settings to change (email provider, anonymous sign-in, CAPTCHA, rate limits) are listed as owner actions in the evidence."
+      ],
+      "validation": [
+        "SQL tests for encounter visibility, shop modifier scope, quotas, invitation limits and denial cases",
+        "npm run check",
+        "npm run test:e2e (combat, shops, campaigns and invitations at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS for any changed error copy"
+      ],
+      "evidence": ["docs/evidence/RYT-113/validation.md"]
+    },
+    {
+      "id": "RYT-114",
+      "title": "Scalability: indexes, policy cost, retention, batched signed URLs and polling back-off",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": [
+        "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
+        "Scalability audit findings: S1 (polling continues while realtime is connected), S2 (membership policy helpers run per row), S3 (idempotency and history tables grow without bound), S5 (one signed URL request per image), S6 (unindexed foreign keys).",
+        "Progress 2026-11-17: migration applied (hosted version 20261117012908); 76 indexes, 0 of 87 foreign keys without a covering index; 29 policies rewritten with identical visibility; prune not scheduled (pg_cron absent). Open: back-off for trades, rest and campaign polling, storage request spec, first prune with owner approval.",
+        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Moved back from review: back-off for trades, rest and campaign polling and the browser spec counting Storage requests are not implemented; the first prune still needs owner approval (RYT-119)."
+      ],
+      "scope": "Indexes for the unindexed foreign keys and RLS lookups listed in the audit, confirmed against the hosted advisors. Membership-based policies that call a helper per row are rewritten to compare against set-based lookups of the caller's campaigns, DM campaigns and characters. Idempotency tables gain created_at and a scheduled job prunes them and bounds history snapshots after their undo window. Item, shop and creature images are signed in batches per screen instead of one request each. Combat, trades and rest polling backs off when their realtime channel is connected and falls back to the current interval when it is not. Reviewed backward-compatible migrations, tested in PRE first. Non-goals: changing the transport architecture (broadcast channels, revision signals), new features, autonomous release.",
+      "acceptance": [
+        "Every foreign key and RLS lookup listed in the audit has a supporting index; the hosted performance advisors report no unindexed foreign key on application tables after the migration.",
+        "Rewritten policies return exactly the same rows as before: the existing denial tests for anon, outsider, Player and cross-campaign DM pass unchanged, and a query plan for item_definitions read by a Player no longer runs a membership helper per row.",
+        "Every idempotency table has created_at; a scheduled job deletes rows older than the documented window in both public and PRE schemas, and a retried request inside the window still replays.",
+        "A screen showing N item, shop or creature pictures signs them in a single batched request, verified by a browser spec counting storage requests.",
+        "With realtime connected, combat, trades and rest poll at the documented back-off interval; when the channel drops they return to the short interval; unit tests cover both states.",
+        "PRE migration and tests pass before the reviewed production migration; production verified afterwards."
+      ],
+      "validation": [
+        "SQL tests for policy equivalence, pruning and replay inside the window",
+        "unit tests for polling intervals with and without realtime",
+        "npm run check",
+        "npm run test:e2e (combat, trades, inventory and shops at 390px and 820px)",
+        "hosted performance and security advisors before and after",
+        "PRE then production migration verification"
+      ],
+      "evidence": ["docs/evidence/RYT-114/validation.md"]
+    },
+    {
+      "id": "RYT-115",
+      "title": "Account deletion, data export and legal pages",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "review",
+      "dependsOn": ["RYT-113"],
+      "sources": [
+        "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
+        "Security audit finding M-3 and operations gaps 1 and 2: foreign keys to auth users block erasure, no account deletion or export exists, and there is no privacy policy, terms or attribution page.",
+        "Delivered 2026-11-17: migrations applied to production (hosted 20261117063453 and 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply for each; hosted PRE actor checks passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 1 CHANGES_REQUIRED (8 findings, all resolved), round 2 PASS. Remaining: production Auth-user removal unverified, legal text review and draft flag, VITE_CONTACT_EMAIL, frontend release and the privacy URL for the consent screen (RYT-122). Follow-ups RYT-120 and RYT-121."
+      ],
+      "scope": "A signed-in user can export their data and delete their account. Deletion leaves or hands over campaigns (sole-DM campaigns are transferred or deleted after an explicit confirmation), nulls actor and author references, removes memberships, invitations, profile and the user's storage objects, and then removes the Auth user server-side without shipping a server secret to the browser. Foreign keys to Auth users get explicit delete actions. Public privacy policy, terms and SRD and art attribution pages are reachable signed out and linked from the landing page and settings. Backend and frontend work; reviewed migrations tested in PRE first. Non-goals: legal text authorship (owner supplies or approves the text), erasure of PRE copies and retained backups (covered by RYT-116), autonomous release.",
+      "acceptance": [
+        "Export returns a JSON file with the user's profile, memberships, characters, sheets, inventory and authored content, and nothing belonging to other users or DM-only fields of campaigns where the user is a Player.",
+        "Deleting an account requires typed confirmation, states the consequence for each campaign where the user is the only DM, and afterwards the Auth user, profile, memberships, invitations and storage objects are gone while other members' campaigns, history and items remain intact with the actor shown as a deleted user.",
+        "Deleting an Auth user no longer fails on foreign keys; a SQL test deletes a user who owns a campaign, acted in history and proposed items.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for the export and deletion RPCs; no one can export or delete another account.",
+        "Privacy policy, terms and attribution pages render signed out under the production subpath, are linked from the landing page and settings, and the privacy policy URL is recorded for the Google consent screen.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for export scope, deletion cascade and denial cases",
+        "npm run check",
+        "npm run test:e2e (settings, export, deletion and legal pages at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-115/validation.md"]
+    },
+    {
+      "id": "RYT-116",
+      "title": "Environments: staging project, CI migration promotion, PRE retirement, security headers and backups",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
+        "Security audit findings H-2 (PRE schema reachable by every production session with a stale copy of all tenants' data), M-4 (no CSP or anti-framing headers on the shared static origin) and L-8 (localhost callbacks allowlisted on production); environment audit section 2 and operations gaps 3 and 7."
+      ],
+      "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
+      "acceptance": [
+        "Owner decision recorded on the hosting provider, custom domain and Supabase plan, with cost, in an ADR that supersedes ADR 007.",
+        "A staging project exists with migrations applied from zero, synthetic seed data only and its own OAuth client; the hosted production migration history matches the repository with an empty schema diff.",
+        "CI applies migrations to staging on merge and to production only after a manual approval, using environment-scoped secrets; no routine development task needs a production write token.",
+        "The production API exposes only public and graphql_public; pre, pre_private and their backup schemas, PRE realtime entries, pre/ storage objects and localhost redirect URLs are gone, verified on the hosted project.",
+        "Production responses carry a Content-Security-Policy with frame-ancestors none, nosniff, a Referrer-Policy and immutable caching for hashed assets, verified with a header check and a browser run with no CSP violations.",
+        "A scheduled backup runs and a restore into staging is rehearsed and documented with its date and duration."
+      ],
+      "validation": [
+        "ADR review",
+        "hosted schema list, migration history and schema diff",
+        "response header check on the production site",
+        "npm run check",
+        "npm run test:e2e against the staging site",
+        "documented backup restore rehearsal"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-117",
+      "title": "Long lists and first load: paged bestiary and glossary, lazy second language and update notice",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": [
+        "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
+        "Scalability audit operations gaps 8 and 10: both languages load eagerly in the first bundle, and there is no new-version notice for paired migrations.",
+        "Implemented 2026-11-17: windowed bestiary and glossary (6046 to 1160 and 12977 to 1728 DOM nodes), entry chunk 262 to 136 kB gzip with lazy languages, version notice. UI review rounds 1-4: round 4 CHANGES_REQUIRED with one blocking finding (focus after a successful language retry) and one minor (one-frame default background at mount), both fixed under RYT-123 and not yet re-reviewed. Known limitation: one 97 px step back in WebKit at 820px after a long jump sequence."
+      ],
+      "scope": "The bestiary (330 creatures) and glossary (838 entries) render only the visible rows through virtualisation or paging while search, filters and deep links keep working. Only the active language's translations load at start; the other loads on switch. A deployed build id lets an open tab detect a newer version and offer a reload without losing unsaved input. Non-goals: offline support or a service worker, backend changes, autonomous release.",
+      "acceptance": [
+        "The bestiary and glossary mount a bounded number of row elements regardless of list length; search, filters, keyboard navigation and deep links to an entry still work.",
+        "The first load fetches the translations of the active language only; switching language loads the other without a page reload or missing-key flashes, asserted by a browser spec.",
+        "When a newer build is deployed, an open tab shows a translated, dismissible update notice with a reload action; it never reloads automatically or discards unsaved input.",
+        "The gzip size of the first load before sign-in is reported before and after in the evidence and does not grow.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for language loading and version comparison",
+        "npm run check",
+        "npm run test:e2e (bestiary, glossary and language switch at 390px and 820px)",
+        "bundle size before and after",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-117/validation.md"]
+    },
+    {
+      "id": "RYT-118",
+      "title": "Table view tokens show class emblems",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "review",
+      "dependsOn": ["RYT-112"],
+      "sources": [
+        "UI review of RYT-112, finding F8 (2026-11-17): the Table combat projection carries no character reference, so player tokens fall back to initials while the DM console shows class emblems.",
+        "Delivered 2026-11-17: migrations applied to production (hosted 20261117063556, 20261117063639 and the combat leave mask in 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply; hosted PRE alias masking check passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 2 PASS. Accepted residuals in docs/security.md. Not committed or released (RYT-122)."
+      ],
+      "scope": "Backend first, then frontend. Expose a safe class key in the Table combat projection (not the character id if that would leak hidden data) and use it for the token fallback art. Non-goals: portraits on the Table view, changing combat visibility rules, autonomous release.",
+      "acceptance": [
+        "The Table combat projection returns a class key for player combatants and nothing that reveals hidden combatants or private character data; SQL tests cover anon, outsider, Player and cross-campaign DM.",
+        "Player tokens on the Table view show the same class emblem fallback as the DM console; tokens without a class keep initials.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for the projection and denial cases",
+        "npm run check",
+        "npm run test:e2e (table view at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-118/validation.md"]
+    },
+    {
+      "id": "RYT-119",
+      "title": "Hosted verification of open sign-up hardening",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "in_progress",
+      "dependsOn": ["RYT-113", "RYT-114"],
+      "sources": [
+        "RYT-113 and RYT-114 evidence 2026-11-17: actor-level, realtime, storage quota and concurrency behaviour were tested only on PGlite; pg_cron is not installed, so private.prune_stale_rows is not scheduled.",
+        "Progress 2026-11-17: hosted PRE actor checks and production catalog checks done for both rollouts (seven migrations). Open: realtime delivery filtering, real Storage rejection text, true concurrency, the per-recipient flood trade-off record, production Auth-user deletion and scheduling private.prune_stale_rows (pg_cron absent; first run needs owner approval)."
+      ],
+      "scope": "Verify the RYT-113 and RYT-114 migrations against the hosted PRE schema: actor-level denial and quota tests (anon, outsider, Player, cross-campaign DM), realtime filtering of encounter_signals, the storage quota rejection text, concurrency of the seat cap, the per-recipient invitation flood trade-off and the byte-quota query plan on storage.objects. Schedule or run private.prune_stale_rows only with owner approval. Also covers the second rollout (RYT-115 and RYT-118 migrations), including production removal of the Auth user by delete_my_account once a safe test account exists. Non-goals: new features, destructive data changes, promoting PRE data into production, autonomous release.",
+      "acceptance": [
+        "Actor-level denial and quota tests for anon, outsider, Player and cross-campaign DM run against hosted PRE and their results are recorded.",
+        "A Player subscribed to encounter_signals on hosted PRE receives only status and revision.",
+        "An upload over the byte quota on hosted Storage is refused with the documented error text, and the byte-quota query plan on storage.objects is recorded.",
+        "Concurrent joins at the seat cap never exceed it on hosted PRE.",
+        "The per-recipient invitation flood trade-off is recorded as a decision or an accepted risk.",
+        "private.prune_stale_rows is scheduled or run once with recorded owner approval, or the open owner decision is recorded."
+      ],
+      "validation": [
+        "hosted PRE actor-level test run",
+        "realtime subscription check",
+        "storage quota and concurrency checks",
+        "query plan capture",
+        "owner approval record for pruning"
+      ],
+      "evidence": ["docs/evidence/RYT-119/validation.md"]
+    },
+    {
+      "id": "RYT-120",
+      "title": "A Player with an absent character cannot leave a campaign",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "review",
+      "dependsOn": ["RYT-115"],
+      "sources": [
+        "Found during RYT-115 (2026-11-17): change_campaign_member refuses a Player leaving while their character is absent, with the error Character absent.",
+        "Delivered 2026-11-17: migration 20261129120000_absent_character_leave.sql applied to production and mirrored to PRE (hosted version 20261117075346) after an independent security review (safe to apply); npm run test:db 306 passed; a hosted PRE check in a rolled-back transaction showed a Player with an absent character leaving without error and the character back in the pool still absent; production data untouched. No frontend release is needed. Remaining: commit with the release checklist (RYT-122); no behavioural check in production."
+      ],
+      "scope": "Let a Player leave a campaign through change_campaign_member while their character is marked absent, releasing the character as for any other leave. Reviewed backward-compatible migration tested in PRE first. Non-goals: changing absence rules in combat or rest, autonomous release.",
+      "acceptance": [
+        "A Player whose character is absent can leave the campaign; the character is released as for a present character and no history is lost.",
+        "Denial tests for anon, outsider, Player and cross-campaign DM still pass; no one can remove another member through this path.",
+        "PRE migration and tests pass before the reviewed production migration; production verified afterwards."
+      ],
+      "validation": [
+        "SQL tests for leaving with an absent character and denial cases",
+        "npm run check",
+        "PRE then production migration verification"
+      ],
+      "evidence": ["docs/evidence/RYT-120/validation.md"]
+    },
+    {
+      "id": "RYT-121",
+      "title": "Account dialog action order and post-deletion notice focus ring",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-115"],
+      "sources": [
+        "UI review of RYT-115 round 2 (2026-11-17), notes R2-b and R2-c: in the account dialog the stacked actions have a visual order that differs from the tab order, and the post-deletion notice shows a focus ring that its stylesheet comment says is suppressed.",
+        "Implemented 2026-11-17 and covered by the UI review of RYT-117: action order and the notice focus ring judged correct in rounds 1-4 with no finding; the formal PASS comes with the RYT-117 re-review on the current source."
+      ],
+      "scope": "Make the visual order of the stacked account dialog actions match their tab order, and make the post-deletion notice focus treatment match its documented intent while keeping a visible focus indicator for keyboard users. Non-goals: changing the deletion flow or copy, autonomous release.",
+      "acceptance": [
+        "At 390px and 820px the account dialog actions are tabbed and announced in the same order as they appear.",
+        "The post-deletion notice receives focus as before and its focus styling matches its stylesheet; keyboard users still see focus where they need it.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (settings and account deletion at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-117/validation.md"]
+    },
+    {
+      "id": "RYT-122",
+      "title": "Launch release checklist",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "planned",
+      "dependsOn": ["RYT-112", "RYT-113", "RYT-115", "RYT-118"],
+      "sources": [
+        "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published."
+      ],
+      "scope": "Owner-run release of the launch delivery: commit and review the working tree, set the VITE_CONTACT_EMAIL and VITE_SITE_URL repository variables, apply the hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA), publish the frontend, then smoke-test production. Non-goals: new features, destructive migrations, paid services without an owner decision, autonomous release.",
+      "acceptance": [
+        "The working tree is committed and reviewed as a pull request with the Quality workflow green before merge.",
+        "VITE_CONTACT_EMAIL and VITE_SITE_URL are set as repository variables and the built site uses them.",
+        "The hosted Auth settings are applied and recorded with their date: email provider with confirm email, leaked-password protection and CAPTCHA.",
+        "The frontend is published from main and the published build matches the merged commit.",
+        "A production smoke test records sign-in, combat realtime updates for a Player, an image upload and an account export, each with its result; anything not exercised is listed."
+      ],
+      "validation": [
+        "pull request review and CI",
+        "repository variable and hosted Auth settings check",
+        "production smoke test record"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-123",
+      "title": "Player journey fixes: arrival, account and shell",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": [
+        "Player journey audit 2026-11-17, journey 1 (arrival and account), findings J1-01..J1-03, J1-05..J1-09 and J1-11..J1-29.",
+        "Player journey audit 2026-11-17, findings J3-06 (Back part) and J4-20: the phone Back button leaves the page instead of closing an open drawer or sheet.",
+        "UI review of RYT-117, two open notes: focus after a successful language retry, and a one-frame default background at mount."
+      ],
+      "scope": "Fix the arrival, invitation, account and app-shell findings of journey 1 and add one shared rule that the phone Back button closes the topmost open dialog, drawer or sheet anywhere in the app. Close the two open RYT-117 review notes. J1-04 (legal text and contact) stays with the owner launch gate in RYT-122; J1-10 (offline reload) moves to RYT-128. Non-goals: a service worker, legal copy approval, backend changes, autonomous release.",
+      "acceptance": [
+        "Account deletion never queues: offline it shows the offline error at once, and Cancel, close and Escape stay enabled until a request is in flight; Google sign-in offline, a stale session offline (retry hint within about 4 s) and data export offline each show the connection message instead of navigating away or spinning (J1-01, J1-08, J1-09, J1-28).",
+        "A Player sees pending invitations above the campaign list with Player-facing copy, a named decline question that stays busy until the result, a focused outcome after accept or decline, and specific offline, unavailable and retry errors; invitation buttons carry the campaign name and near expiry reads \"today\" (J1-02, J1-03, J1-05, J1-06, J1-07, J1-24, J1-25).",
+        "Pressing the phone Back button with any dialog, drawer or sheet open closes that overlay and keeps the route, asserted by a browser spec covering the username prompt, a shell drawer, a shop drawer and a tabletop or rest sheet (J1-11, J3-06 Back part, J4-20).",
+        "Shell and hub: a route back to the campaign list from inside a campaign, one empty state with a copyable email and a secondary Create campaign, visible primary actions in the dark theme, Settings opening directly when signed out, a one-line update notice hidden under modals, deep links restored after sign-in, a single alert on refresh failure, two hub columns on tablet and the landing button above the fold in landscape (J1-12..J1-18, J1-26, J1-27).",
+        "Forms and copy: the create-campaign form validates in app copy with an enter key hint, long usernames are not cut silently, an unsaved username draft is kept or flagged, the delete confirmation word is accepted trimmed and case-insensitively or explained, English \"Settings\" and the shortened saved line (J1-19..J1-23, J1-29); after a successful language retry focus lands on a defined target and the first frame uses the chosen theme background (RYT-117 review notes).",
+        "390px and 820px (with 320px and landscape spot checks), Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed domain and form logic",
+        "npm run check",
+        "npm run test:e2e (hub, invitations, settings, account deletion and Back closing overlays at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-124",
+      "title": "Player journey fixes: character creation and sheet",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": [
+        "Player journey audit 2026-11-17, journey 2 (character creation and sheet), findings J2-01..J2-05, J2-07..J2-23, J2-25 and J2-27..J2-42."
+      ],
+      "scope": "Fix the creation wizards, quick and blank paths and play sheet findings of journey 2. J2-06 (level-up flow), J2-24 (casting) and J2-26 (dice from the sheet) are new interface pieces and move to RYT-127. Non-goals: a level-up flow, spell casting, a dice roller, backend changes, autonomous release.",
+      "acceptance": [
+        "A double tap on create, save, quick create or finish sends one request and never shows a stale-write error after a correct save; one request id per dialog opening (J2-01, J2-02).",
+        "The full wizard blocks or confirms missing ability increases and class skills and lists them on a review step that summarises abilities, saves, skills and spells; it asks for the name, keeps Save and exit on the last step, guards leaving with unsaved choices and replaces history on finish (J2-03, J2-16, J2-17, J2-18, J2-19, J2-42 second part).",
+        "Abilities and combat steps: the standard array is seeded by class and cannot hold duplicates, scores are kept per method, point buy and manual use clamped steppers with cost, level uses a 1-20 stepper, max HP follows the suggestion until typed and re-suggests on class or level change, a cleared field cannot pass, changing class clears subclass and class skills with one warning, validation alerts clear when fixed, and spells can be added from the library with a slot-level warning (J2-04, J2-05, J2-07, J2-10..J2-15, J2-31).",
+        "Sheet in play: notes edit in place with their own save, Cancel on a dirty draft asks first, the HP pad states its maximum and offers undo, the ring opens the pad, 0 HP shows a dying strip with Dead and Stable states, hit dice outside a rest are read-only or ask for a roll, resource re-sync is announced in the open drawer, and attacks are labelled from one data source (J2-08, J2-09, J2-20..J2-23, J2-25, J2-28, J2-36).",
+        "Targets, copy and look: glossary terms have a 44px hit area and are back in the touch audit; species show two traits; quick defaults are marked suggested; step counts, blank-sheet copy and contradictory hints match the UI; resource names are stored as keys; the rest legend, library empty state, armor class edit cell, dock and hero spacing, emblem on light themes, portrait button weight and the single free-character card are fixed (J2-27, J2-29, J2-30, J2-32..J2-35, J2-37..J2-41, J2-42 first part).",
+        "390px and 820px including the wizards, Hearth, Parchment and a class theme, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed domain and form logic",
+        "npm run check",
+        "npm run test:e2e (roster, the three creation paths and the sheet at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-125",
+      "title": "Player journey fixes: inventory, shops and trades",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": [
+        "Player journey audit 2026-11-17, journey 3 (inventory, shops and trades), findings J3-01..J3-37."
+      ],
+      "scope": "Fix the inventory, storefront, cart, orders, ledger and trade findings of journey 3. J3-34: unless the owner decides otherwise, item value stays DM-only and the Sell tab is worded as the shop offer; record that decision in the evidence. The Back part of J3-06 is delivered by the shared rule in RYT-123. Non-goals: Player containers, server-side split or merge, item picture upload for Players, backend changes, autonomous release.",
+      "acceptance": [
+        "One 44px numeric stepper is used for every quantity and gold field (cart, listing, Sell tab, item card, add drawer, trade): it clamps on blur, writes the clamped value back, states why (\"only 3 left\"), rejects separators, caps discard at the stack and never saves an invalid trade amount (J3-01, J3-11, J3-12, J3-17, J3-22).",
+        "Money errors are visible where the action is at 390px: accepting a counter-offer without gold shows the shortfall in the order card and focuses it, an approval offer above the purse warns or blocks and never shows the purse as 0, and trade failures render in the sticky footer naming the side and item (J3-02, J3-03, J3-04, J3-15).",
+        "Cancel request, decline counter-offer and cancel trade need a confirm or offer undo with a correct status label; a double tap on the trade icon sends one invite and no false busy notice; the cart survives reload, Back and Forward; the shop mode explanation opens on tap (J3-06, J3-07, J3-08, J3-09).",
+        "Inventory and routes: the purse shows in the inventory, ledger purchases show price and shop, action notices clear on view change without gender agreement, the undo bar does not cover the last row, the self-add caveat shows before adding, the proposal form starts short with one weight unit and a submit reason, portrait errors offer another image with a stated size limit and Player quota copy, and a Player opening the item store lands on the inventory (J3-05, J3-10, J3-13, J3-14, J3-16, J3-18, J3-19, J3-21).",
+        "Visual and copy polish: a taller phone shop banner with a view-image control, identical stacks merged in view, \"mochila\" wording, zero weights hidden, one date format, close buttons named Close and cards titled by item, painted pictures in tiles and listings, fewer header pills, listing meta on its own line, Player order titles by shop, 44px links with a Parchment cue, one cart button on tablet, the item value decision applied, one weight decimal, unit counts in trade summaries and a dock clear of content (J3-20, J3-23..J3-37).",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed domain and form logic",
+        "npm run check",
+        "npm run test:e2e (inventory, storefront, cart, orders and trade window at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-126",
+      "title": "Player journey fixes: combat, table display, map and rest",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": [
+        "Player journey audit 2026-11-17, journey 4 (combat, table display, map, rest and reference), findings J4-03, J4-04, J4-06..J4-13, J4-15..J4-20 and J4-22..J4-34."
+      ],
+      "scope": "Fix the Player combat, tabletop table screen, Player map, rest and glossary findings of journey 4. J4-01, J4-02 (table display mode), J4-05 (phone map layout) and J4-21 (dice) move to RYT-127; J4-14 (recap damage credit) moves to RYT-129; the Back part of J4-20 is the shared rule in RYT-123. Non-goals: a new table display mode, a phone map redesign, a dice roller, backend changes, autonomous release.",
+      "acceptance": [
+        "The tabletop table screen shows a persistent offline or stale mark with elapsed time and dims the turn text while stale, never shows live beside an error, offers retry and auto-retry, and parses items leniently so one invalid item does not blank the map (J4-03, J4-17).",
+        "Changes to the Player own character (damage, healing, conditions, concentration DC) are announced by a visible notice and a live region; a hidden creature turn shows a deliberate hidden-turn state without a countdown or a guessed next; Players see a recent events strip and their own conditions and timed effects as glossary chips with 44px hit areas; the own HP, AC and conditions stay in view (J4-04, J4-06, J4-07, J4-08, J4-09).",
+        "Player combat controls: initiative warns outside the d20 plus bonus range, the own last death save can be undone briefly or a natural 1 is confirmed, long names clamp to two lines on banner and map, one offline alert with a busy retry, a back link on past fights, ties marked, an updating state after unlock, image tokens in the recap, the error notice closes with Close and the tab title marks the own turn (J4-10..J4-13, J4-15, J4-24, J4-27, J4-28, J4-31, J4-33).",
+        "Table screen and map: the acting ring does not cover the name, a scene change clears the shared measure with a short transition, a turn plate shows the acting and next names at readable size, tokens and campfire seats show an initial with an emblem badge, failed effects use the shared alert, the Player map can centre on the own token, mute toggles its label, the uncalibrated map fits above the status bar and the combat switch no longer shares the \"Table\" name (J4-16, J4-18, J4-19, J4-22, J4-25, J4-26, J4-29, J4-32, J4-34).",
+        "Rest and reference: the short-rest dice show an overheal hint and settle clear of the preview, the glossary letter strip shows that it scrolls, the placeholder fits and inline terms are padded; Back with a story card or rest sheet open closes it (J4-20, J4-23, J4-30).",
+        "390px and 820px for the Player and 1280px and 1920px for the table screen, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for staleness, turn projection and announcement logic",
+        "npm run check",
+        "npm run test:e2e (Player combat, map and rest at 390px and 820px; table screen at 1280px and 1920px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-127",
+      "title": "New interface pieces awaiting the owner direction",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "done",
+      "dependsOn": [],
+      "sources": [
+        "Player journey audit 2026-11-17, findings J2-06 (no level-up flow), J4-01, J4-02 and J4-19 (combat on a shared screen keeps DM chrome, scrolls and uses small type), J4-05 (the phone map is a small board under page chrome), J2-26 and J4-21 (no dice outside the short rest) and J2-24 (no casting, slot choice or concentration).",
+        "Owner review of the options page 2026-11-17: level up C, table screen for combat C, map on the phone A, dice C (build order B, setting, A), casting A; build order level up, table screen, phone map, dice, casting; any player of the campaign may open the table screen; the DM decides in the campaign settings who sees rolls made in the app. Recorded in ADR 046 and split into RYT-130 to RYT-134."
+      ],
+      "scope": "Decide and design five new interface pieces before any is built: a level-up flow; a chrome-less, large-type, auto-following table display mode for combat on a shared screen; a phone map layout with the board as the page; a dice roller on the sheet with recent rolls, or an explicit statement that rolls are physical; casting a spell with slot choice and a concentration marker. Each approved piece becomes its own implementation ticket. Non-goals: implementation, backend changes, autonomous release.",
+      "acceptance": [
+        "Each of the five pieces has a recorded decision (build, defer or decline) with its reason, in a decision record or this ticket evidence (J2-06, J2-24, J2-26, J4-01, J4-02, J4-05, J4-19, J4-21).",
+        "For every piece to be built, an options page with at least two directions at 390px and 820px (1280px and 1920px for the table display mode) is reviewed by the owner before implementation starts.",
+        "The level-up and casting options state their HP, feature, slot and concentration rules and which data they read and write (J2-06, J2-24).",
+        "The dice decision states whether rolls are recorded or shared and how initiative and short-rest dice relate to it (J2-26, J4-21).",
+        "Approved pieces are split into implementation tickets with owners, dependencies and acceptance criteria, and the deferred findings are linked to them."
+      ],
+      "validation": [
+        "owner review of the options pages",
+        "recorded decisions",
+        "npm run check:docs"
+      ],
+      "evidence": ["docs/decisions/046-table-pieces.md"]
+    },
+    {
+      "id": "RYT-128",
+      "title": "Offline shell: a reload without signal opens the app",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-117"],
+      "sources": [
+        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker."
+      ],
+      "scope": "Add a minimal service worker that caches the app shell so a reload without signal opens the app with its offline banner, with an update path that works with the version notice from RYT-117. Non-goals: offline data or mutations, caching private campaign data or authenticated responses, background sync, push notifications, autonomous release.",
+      "acceptance": [
+        "After one online visit, reloading the production subpath offline opens the app shell and shows the offline banner instead of the browser error page (J1-10).",
+        "The service worker caches only static build assets and the shell; no API, Auth or storage response and no private campaign data is cached, verified by inspecting the cache.",
+        "A new deployment is picked up: the existing version notice offers the reload and the next load uses the new assets without a stale shell or a forced reload that loses input.",
+        "The worker scope matches the production subpath, and disabling or unregistering it is documented.",
+        "390px and 820px offline and online, axe clean; independent UI review PASS on the current source for the offline state."
+      ],
+      "validation": [
+        "unit tests for the cache and update logic",
+        "npm run check",
+        "npm run test:e2e (offline reload and update notice on the production subpath at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-129",
+      "title": "Combat recap credits damage correctly",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Player journey audit 2026-11-17, finding J4-14: the combat summary attributes damage to whoever held the turn, so damage the DM applies to a Player is credited to another Player (most damage dealt: Cato, 40, for the DM downing Arin on the turn of Cato)."
+      ],
+      "scope": "Change the combat summary so damage is credited only to a combatant that dealt it to the opposing side, or drop the headline where the source is unknown, through a reviewed migration tested in PRE first. Non-goals: a combat log redesign, client-side recomputation, destructive data changes, autonomous release.",
+      "acceptance": [
+        "DM-applied damage to a Player on another Player turn is not credited to that Player; the recap headline reflects only attributable damage between sides (J4-14).",
+        "Healing, self-damage and damage to an ally are not counted as damage dealt (J4-14).",
+        "Hidden creatures and aliases stay masked in the Player recap projection.",
+        "Denial tests cover anon, outsider, player and cross-campaign DM for the changed summary function.",
+        "The migration is applied to PRE and production with the result recorded, and the recap at 390px shows the corrected credit."
+      ],
+      "validation": [
+        "SQL tests for summary attribution and masking",
+        "denial tests for anon, outsider, player and cross-campaign DM",
+        "npm run check",
+        "hosted migration result in PRE and production"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-130",
+      "title": "Level up: party level set by the DM and the guided level-up sheet",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "in_progress",
+      "dependsOn": ["RYT-124"],
+      "sources": [
+        "Player journey audit 2026-11-17, finding J2-06: there is no level-up flow; level, hit points and features are edited by hand.",
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+      ],
+      "scope": "Backend first, then frontend. Backend: a campaign party level the DM raises from the DM centre through an authorised, idempotent RPC, and one transactional RPC that writes a character level up (level, hit point maximum, choices); no read-modify-write in the browser; migration tested in PRE first, then reviewed for production. Frontend: a DM centre control to raise the party level, and a guided step-by-step sheet for each Player: hit points with the hit-die average pre-filled or a typed roll; what the level grants by name; choices; one confirm; a \"what changed\" notice. Non-goals: multiclass level up, automatic rule effects of features, experience points, lowering a level, autonomous release.",
+      "acceptance": [
+        "Only a DM of the campaign can raise the party level; SQL denial tests cover anon, outsider, Player and cross-campaign DM, and a repeated request with the same id applies once.",
+        "After the DM raises the party level, each Player whose character is below it sees a level-up prompt on the sheet, and the level-up RPC refuses a level above the party level (J2-06).",
+        "The hit points step pre-fills the hit-die average plus the Constitution modifier and accepts a typed roll within the die range; the new maximum is shown before confirm.",
+        "The sheet lists what the new level grants by name with glossary links, asks the required choices (subclass, ability increase or feat, spells) and cannot confirm with a choice missing.",
+        "One confirm writes level, hit points, choices and trackers through one transactional RPC and shows a \"what changed\" notice; the character history records the level up; a failure leaves the character unchanged and offers a retry.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for the party level and level-up RPCs, idempotency and denial cases",
+        "unit tests for hit points, grants and choices by class and level",
+        "npm run check",
+        "npm run test:e2e (DM centre party level and the level-up sheet at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-131",
+      "title": "One table screen for combat: turn plate over the map and the \"now and next\" screen without a map",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-126"],
+      "sources": [
+        "Player journey audit 2026-11-17, findings J4-01, J4-02 and J4-19: combat on a shared screen keeps DM chrome, scrolls and uses small type.",
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+      ],
+      "scope": "One table screen for combat. With a map: the map full screen with a turn plate (now / next) over a corner that can be moved or shrunk. Without a map: a chrome-less \"now and next\" screen with the whole order in two or three columns, large type readable at 1-2 m, the acting row followed automatically. Any member of the campaign may open it; it reads the existing Table projection only. It does not depend on RYT-132 (map on the phone); either may be built first. Non-goals: dice on the table screen, new combat rules, backend changes, autonomous release.",
+      "acceptance": [
+        "Any active member of the campaign, DM or Player, can open the table screen from combat; it shows only Table projection data and never hidden creatures or DM fields (J4-01).",
+        "With a map, the map fills the screen and a turn plate shows now and next; the plate can be moved to another corner and shrunk, and the choice is kept on that device (J4-19).",
+        "Without a map, the screen has no app chrome and shows the whole order in two or three columns at 1280px and 1920px without scrolling for up to 16 combatants, in type readable at 1-2 m (J4-02).",
+        "The acting row is followed automatically on each turn change and is marked by more than colour; the offline or stale state from RYT-126 stays visible.",
+        "Reduced motion is respected, Escape or a visible control leaves the screen, and each turn change is announced once by a live region.",
+        "1280px and 1920px, plus 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed domain logic",
+        "npm run check",
+        "npm run test:e2e (table screen with and without a map at 820px, 1280px and 1920px, opened by a DM and by a Player)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-132",
+      "title": "Map on the phone: the board is the page",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-126"],
+      "sources": [
+        "Player journey audit 2026-11-17, finding J4-05: on a phone the map is a small board under page chrome.",
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+      ],
+      "scope": "On a phone the map becomes the page: full-bleed map, a compact turn strip on top, floating round tool buttons (centre on my token, measure, effects), labels at a constant readable size. Reuses the existing tabletop data and Player permissions. Non-goals: DM map editing on the phone, new map tools, backend changes, autonomous release.",
+      "acceptance": [
+        "At 390px the Player map fills the viewport below a compact turn strip with no page chrome; the strip shows now, next and the own turn (J4-05).",
+        "Floating round buttons of at least 44px centre on the own token, open measure and open effects; they do not cover the own token after centring and show a visible focus.",
+        "Token and area labels keep a constant readable size at every zoom level.",
+        "Pan and pinch zoom work by touch, the phone Back button closes an open tool or sheet first (RYT-123 rule), and portrait and landscape both fit without horizontal page scroll.",
+        "Player visibility is unchanged: hidden tokens, fog and DM-only layers stay hidden, asserted by a browser spec.",
+        "390px portrait and landscape and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed domain logic",
+        "npm run check",
+        "npm run test:e2e (Player map at 390px portrait and landscape and at 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-133",
+      "title": "Dice: campaign setting, \"what to roll\" sheet, in-app rolls with recent rolls and roll visibility set by the DM",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": ["RYT-124"],
+      "sources": [
+        "Player journey audit 2026-11-17, findings J2-26 and J4-21: there are no dice outside the short rest and the sheet does not say what to roll.",
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+      ],
+      "scope": "Backend then frontend, built in the order B, setting, A. B: in physical mode the sheet says what to roll and what to add for checks, saves, attacks and damage, and can optionally record the result. Setting (backend): a campaign dice mode chosen by the DM (physical dice, dice in the app, each player chooses), physical by default, and who sees rolls made in the app, also chosen by the DM and enforced by RLS; rolls are recorded through an authorised RPC; migration tested in PRE first. A: in app mode tapping a modifier rolls 3D dice with the maths shown and a recent-rolls strip. Non-goals: rolls on the table screen, automatic rule effects, autonomous release.",
+      "acceptance": [
+        "In physical mode each check, save, attack and damage line on the sheet states the dice and the modifier to add, and the result can optionally be recorded (J2-26).",
+        "Only a DM sets the dice mode and the roll visibility, the default is physical dice, and SQL denial tests cover anon, outsider, Player and cross-campaign DM.",
+        "In app mode tapping a modifier rolls 3D dice, shows the maths (dice, modifier, total) and adds the roll to a recent-rolls strip; with reduced motion the result appears without animation (J4-21).",
+        "Recorded and in-app rolls are visible only to the people the DM setting allows, verified by SQL tests for each visibility option; rolls are written only through the RPC.",
+        "Initiative and short-rest hit dice follow the same campaign mode, so a table never meets two dice behaviours.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for roll maths and the \"what to roll\" lines",
+        "SQL tests for the dice setting, roll visibility and denial cases",
+        "npm run check",
+        "npm run test:e2e (sheet in physical and app mode and the DM campaign setting at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-134",
+      "title": "Casting: \"Lanzar\" with slot choice and a concentration marker",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-124"],
+      "sources": [
+        "Player journey audit 2026-11-17, finding J2-24: there is no casting, slot choice or concentration.",
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+      ],
+      "scope": "\"Lanzar\" on each prepared spell: choose the slot level, the slot is spent, a concentration marker appears in the sheet hero and is replaced by a new concentration spell, ritual casting spends nothing; a manual way out stays for table rulings. Uses the existing sheet play state and its save path; if that path cannot spend a slot atomically, stop and open a backend ticket. Non-goals: spell effects, damage, saving throws, upcasting maths, autonomous release.",
+      "acceptance": [
+        "Each prepared spell has a 44px \"Lanzar\" action; cantrips cast without spending a slot (J2-24).",
+        "Casting a levelled spell asks for a slot level at or above the spell level, offers only levels with a slot left and spends one slot; with no slot left the action says why.",
+        "A concentration spell shows a marker in the sheet hero; casting another concentration spell asks first and replaces the marker; the marker can be ended by hand.",
+        "Ritual casting of a ritual spell spends no slot, and the manual slot and concentration edits stay available for table rulings.",
+        "A double tap spends one slot, and a failed save leaves the slots unchanged with a visible error and a retry.",
+        "390px and 820px, Hearth, Parchment and a class theme, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed domain logic",
+        "npm run check",
+        "npm run test:e2e (casting from the sheet at 390px and 820px)",
         "independent UI review PASS"
       ],
       "evidence": []

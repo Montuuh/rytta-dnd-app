@@ -8,6 +8,7 @@ import { membersQuery } from '@/features/campaigns'
 import { characterRosterQuery, charactersQuery, useCharacterAction } from '../api'
 import type { Character } from '../domain/character'
 import { playersWithFreeSlots } from '../domain/roster'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 export function PlayerAssignmentEditor({
   character,
@@ -40,6 +41,9 @@ export function PlayerAssignmentEditor({
     characters.data?.find((item) => item.id === character.id)
   const changed = loaded && current?.user_id !== character.user_id
   const title = t(unlink ? 'characters.unassign' : 'characters.assign')
+  useBackToClose(true, () => {
+    if (!action.isPending) close()
+  })
   return (
     <Modal
       opened

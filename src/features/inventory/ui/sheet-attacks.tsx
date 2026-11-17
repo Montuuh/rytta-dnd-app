@@ -1,30 +1,7 @@
-import { Text } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@/features/auth'
-import { inventoryQuery } from '../api'
 import { AttackLines } from './paper-doll'
+import type { Attack } from '../domain/equipment'
 
-/** Attack lines from equipped weapons and unarmed strike, rendered inside the character sheet. */
-export function SheetAttacks({
-  campaignId,
-  characterId,
-  monkLevel,
-}: {
-  campaignId: string
-  characterId: string
-  monkLevel?: number
-}) {
-  const { state } = useAuth()
-  const query = useQuery(inventoryQuery(state.user!.id, campaignId, characterId))
-  if (!query.data) return query.isPending ? <Text size="sm">…</Text> : null
-  return (
-    <AttackLines
-      stacks={query.data.stacks}
-      definitions={new Map(query.data.definitions.map((d) => [d.id, d]))}
-      strength={query.data.holder.str}
-      dexterity={query.data.holder.dex}
-      level={query.data.holder.level}
-      monkLevel={monkLevel ?? query.data.holder.monkLevel}
-    />
-  )
+/** Attack lines inside the character sheet: the sheet's own list, so the tile and this block agree. */
+export function SheetAttacks({ lines }: { lines: Attack[] }) {
+  return <AttackLines lines={lines} />
 }

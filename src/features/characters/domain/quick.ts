@@ -12,6 +12,7 @@ import type { Build, SheetDraft } from './sheet'
 import {
   backgrounds,
   classes,
+  abilityKeys,
   standardArray,
   type Ability,
   type BackgroundKey,
@@ -77,6 +78,35 @@ export function unarmoredClass(build: Build) {
   if (build.classKey === 'barbarian') return 10 + dex + modifier(scores.con)
   if (build.classKey === 'monk') return 10 + dex + modifier(scores.wis)
   return defaultArmorClass(build)
+}
+
+/** Sheet order, the standard array before a class is known. */
+const sheetOrderArray = (): Build['baseAbilities'] => ({
+  str: 15,
+  dex: 14,
+  con: 13,
+  int: 12,
+  wis: 10,
+  cha: 8,
+})
+/** The standard array placed by the class's usual priorities (as the quick path does). */
+export function standardAbilitiesFor(classKey: string): Build['baseAbilities'] {
+  if (!isClassKey(classKey)) return sheetOrderArray()
+  return Object.fromEntries(
+    quickAbilityOrder[classKey].map((key, index) => [key, standardArray[index]!]),
+  ) as Build['baseAbilities']
+}
+const sameScores = (a: Build['baseAbilities'], b: Build['baseAbilities']) =>
+  abilityKeys.every((key) => a[key] === b[key])
+/**
+ * A new class re-places the standard array when the scores are still the previous seed, so a
+ * Wizard does not keep INT 12 and a player's own arrangement is never overwritten.
+ */
+export function reseedStandard(prev: Build, next: Build): Build {
+  if (next.abilityMethod !== 'standard' || prev.classKey === next.classKey) return next
+  return sameScores(prev.baseAbilities, standardAbilitiesFor(prev.classKey))
+    ? { ...next, baseAbilities: standardAbilitiesFor(next.classKey) }
+    : next
 }
 
 export type QuickChoice = {

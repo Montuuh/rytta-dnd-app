@@ -14,24 +14,20 @@ test('fresh visits default to Spanish, dark and the default theme despite browse
   await expect(html(page)).toHaveAttribute('lang', 'es')
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'dark')
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'default')
-  await expect(page.getByRole('heading', { name: 'Grupo', exact: true })).toBeVisible()
-  await expect(page).toHaveTitle('Grupo · Rytta')
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
+  await expect(page).toHaveTitle('Glosario · Rytta')
 })
 
-test('the profile menu opens the Settings drawer over the page; toggles live there', async ({
-  page,
-}) => {
+test('the gear opens the Settings drawer over the page; toggles live there', async ({ page }) => {
   await page.goto('./')
-  const trigger = page.getByRole('button', { name: /Abrir menú de ajustes/ })
+  // J1-15: signed out there is nothing else to choose, so the gear opens Settings directly.
+  const trigger = page.getByRole('button', { name: 'Ajustes', exact: true })
   await trigger.click()
-  await expect(page.getByRole('menuitem')).toHaveCount(1)
-  await expect(page.getByRole('menuitem', { name: /Cambiar a modo/ })).toHaveCount(0)
-  await page.getByRole('menuitem', { name: 'Ajustes', exact: true }).click()
   const settings = drawer(page)
   await expect(settings).toBeVisible()
   // The page stays underneath: same route, same heading, and the panel sits on the right.
-  await expect(page).toHaveURL(/#\/party$/)
-  await expect(page.getByRole('heading', { name: 'Grupo', exact: true })).toBeAttached()
+  await expect(page).toHaveURL(/#\/glossary$/)
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeAttached()
   // Measure once the panel has slid in, against the veil: both are fixed to the same box (the
   // viewport minus the stable scrollbar gutter that desktop browsers keep).
   await expect(settings).toHaveCSS('opacity', '1')
@@ -98,16 +94,15 @@ test('theme (with its scheme) and language persist across navigation and reload'
     .getByText('English', { exact: true })
     .click()
   await expect(html(page)).toHaveAttribute('lang', 'en')
-  await expect(drawer(page, 'App setup')).toBeVisible()
+  await expect(drawer(page, 'Settings')).toBeVisible()
   await page.goto('./')
-  await expect(page.getByRole('heading', { name: 'Party', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
   await page.reload()
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'light')
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'wizard')
   await expect(html(page)).toHaveAttribute('lang', 'en')
-  await page.getByRole('button', { name: /Open settings menu/ }).click()
-  await page.getByRole('menuitem', { name: 'App setup', exact: true }).click()
-  const setup = drawer(page, 'App setup')
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  const setup = drawer(page, 'Settings')
   await setup
     .getByRole('radiogroup', { name: 'Theme' })
     .getByText('Hearth', { exact: true })
@@ -117,7 +112,7 @@ test('theme (with its scheme) and language persist across navigation and reload'
     .getByText('Español', { exact: true })
     .click()
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Grupo', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'dark')
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'default')
   await page.goto('./#/settings')
@@ -137,7 +132,7 @@ test('a legacy light preference becomes Parchment; classes keep their class', as
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'parchment')
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'light')
   // Wait for the app to mount (the router must be listening) before changing the hash.
-  await expect(page.getByRole('heading', { name: 'Grupo', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
   await page.goto('./#/settings')
   await expect(drawer(page).getByRole('radio', { name: 'Pergamino' })).toBeChecked()
   // An explicit choice retires the legacy key, so Hearth stays Hearth after a reload.
@@ -203,7 +198,7 @@ for (const language of ['es', 'en'] as const) {
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
         // Audit once the drawer has finished sliding in (its opacity animates from 0).
         if (route)
-          await expect(drawer(page, language === 'es' ? 'Ajustes' : 'App setup')).toHaveCSS(
+          await expect(drawer(page, language === 'es' ? 'Ajustes' : 'Settings')).toHaveCSS(
             'opacity',
             '1',
           )
@@ -224,7 +219,7 @@ for (const language of ['es', 'en'] as const) {
         ).toEqual([])
         await capture(
           page,
-          testInfo.outputPath(`${language}-${theme}-${route ? 'settings' : 'party'}.png`),
+          testInfo.outputPath(`${language}-${theme}-${route ? 'settings' : 'home'}.png`),
           { scale: 'css' },
         )
       }
@@ -245,7 +240,9 @@ test('every theme passes axe on the settings drawer in its own scheme', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Theme colors do not depend on the viewport')
-  test.slow()
+  // Fourteen theme swaps with an axe pass each, over the glossary the demo lands on (RYT-112):
+  // about 70 s alone, so give it room when the whole suite shares the machine.
+  test.setTimeout(240_000)
   // Tiles cross-fade their colors on change; reduced motion removes the fade so axe reads the
   // settled colors.
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -312,8 +309,204 @@ test('blocked storage does not prevent changing language or theme', async ({ pag
     .getByRole('radiogroup', { name: 'Idioma' })
     .getByText('English', { exact: true })
     .click()
-  await expect(drawer(page, 'App setup')).toBeVisible()
+  await expect(drawer(page, 'Settings')).toBeVisible()
   await expect(html(page)).toHaveAttribute('data-mantine-color-scheme', 'light')
   await expect(html(page)).toHaveAttribute('data-rytta-theme', 'wizard')
   expect(errors).toEqual([])
+})
+
+// RYT-117: only the active language's catalogue loads at start; the other loads on switch.
+test('the second language loads only when it is chosen, without untranslated keys', async ({
+  page,
+}) => {
+  const chunks: string[] = []
+  page.on('request', (request) => {
+    const match = new URL(request.url()).pathname.match(/\/catalogue-(en|es)-[\w-]+\.js$/)
+    if (match && !chunks.includes(match[1]!)) chunks.push(match[1]!)
+  })
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
+  expect(chunks).toEqual(['es'])
+  await page.goto('./#/settings')
+  await drawer(page)
+    .getByRole('radiogroup', { name: 'Idioma' })
+    .getByText('English', { exact: true })
+    .click()
+  await expect(drawer(page, 'Settings')).toBeVisible()
+  expect(chunks).toEqual(['es', 'en'])
+  // No raw key reaches the page, and a reload in English fetches English alone.
+  await expect(page.locator('body')).not.toContainText(/\b(?:settings|nav|common)\.[a-z]+\b/)
+  chunks.length = 0
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
+  expect(chunks).toEqual(['en'])
+})
+
+test('a catalogue that cannot be fetched keeps the current language and offers a retry', async ({
+  page,
+}) => {
+  await page.route('**/catalogue-en-*.js', (route) => route.abort())
+  await page.goto('./#/settings')
+  const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
+  await group.getByText('English', { exact: true }).click()
+  // Still Spanish everywhere, the choice not saved, and the failure said in Spanish with a retry.
+  const failure = drawer(page).getByRole('alert').filter({ hasText: 'No se pudo cargar el idioma' })
+  await expect(failure).toBeVisible({ timeout: 15_000 })
+  await expect(group.getByRole('radio', { name: 'Español' })).toBeChecked()
+  await expect(html(page)).toHaveAttribute('lang', 'es')
+  expect(await page.evaluate(() => localStorage.getItem('rytta-language'))).not.toBe('en')
+  await expect(page.locator('body')).not.toContainText(/\b(?:settings|nav|common)\.[a-z]+\b/)
+  // The network comes back: the same control retries and only then switches.
+  await page.unroute('**/catalogue-en-*.js')
+  await failure.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(drawer(page, 'Settings')).toBeVisible({ timeout: 15_000 })
+  await expect(html(page)).toHaveAttribute('lang', 'en')
+})
+
+test('a slow catalogue shows a busy language control and switches in one step', async ({
+  page,
+}) => {
+  let release: () => void = () => {}
+  const gate = new Promise<void>((resolve) => (release = resolve))
+  await page.route('**/catalogue-en-*.js', async (route) => {
+    await gate
+    await route.continue()
+  })
+  await page.goto('./#/settings')
+  const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
+  await group.getByText('English', { exact: true }).click()
+  await expect(group).toHaveAttribute('aria-busy', 'true')
+  await expect(drawer(page).getByText('Cargando el idioma…')).toBeVisible()
+  await expect(group.getByRole('radio', { name: 'Español' })).toBeChecked()
+  release()
+  await expect(drawer(page, 'Settings')).toBeVisible()
+  await expect(html(page)).toHaveAttribute('lang', 'en')
+})
+
+test('a failed first load shows a readable retry screen instead of raw keys, then recovers', async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem('rytta-language', 'en'))
+  await page.route('**/catalogue-en-*.js', (route) => route.abort())
+  await page.goto('./')
+  const retry = page.getByRole('button', { name: 'Reintentar / Retry' })
+  await expect(retry).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('Check your connection and try again.')).toBeVisible()
+  await expect(page.locator('body')).not.toContainText(/\b(?:module|nav|common)\.[a-z]+\b/)
+  await page.unroute('**/catalogue-en-*.js')
+  await retry.click()
+  await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
+})
+
+test('changing your mind while a language loads keeps the latest choice', async ({ page }) => {
+  let release: () => void = () => {}
+  const gate = new Promise<void>((resolve) => (release = resolve))
+  await page.route('**/catalogue-en-*.js', async (route) => {
+    await gate
+    await route.continue()
+  })
+  await page.goto('./#/settings')
+  const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
+  await group.getByText('English', { exact: true }).click()
+  await expect(group).toHaveAttribute('aria-busy', 'true')
+  await group.getByText('Español', { exact: true }).click()
+  release()
+  await page.waitForTimeout(800)
+  // The superseded English load never switches or saves anything.
+  await expect(html(page)).toHaveAttribute('lang', 'es')
+  await expect(group.getByRole('radio', { name: 'Español' })).toBeChecked()
+  expect(await page.evaluate(() => localStorage.getItem('rytta-language'))).not.toBe('en')
+})
+
+test('Retry keeps keyboard focus on its control, in Settings and on the first-load screen', async ({
+  page,
+}) => {
+  await page.route('**/catalogue-en-*.js', (route) => route.abort())
+  await page.goto('./#/settings')
+  const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
+  await group.getByText('English', { exact: true }).click()
+  const retry = drawer(page).getByRole('button', { name: 'Reintentar' })
+  await expect(retry).toBeVisible({ timeout: 15_000 })
+  await retry.focus()
+  await page.keyboard.press('Enter')
+  await expect(retry).toBeFocused()
+  await expect(drawer(page).getByRole('button', { name: /Reintentar|Cargando/ })).toBeFocused({
+    timeout: 15_000,
+  })
+  await page.evaluate(() => localStorage.setItem('rytta-language', 'en'))
+  await page.goto('./')
+  const first = page.getByRole('button', { name: 'Reintentar / Retry' })
+  await expect(first).toBeVisible({ timeout: 30_000 })
+  await first.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('button', { name: /Reintentar|Cargando/ })).toBeFocused({
+    timeout: 30_000,
+  })
+})
+
+test('the first visit shows a loading state while the catalogue loads, and a hung request ends in the retry screen', async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  await page.route('**/catalogue-es-*.js', () => {
+    /* Never answered: the request hangs. */
+  })
+  await page.goto('./')
+  // Language-neutral shell: the emblem in the root, no text, no raw keys.
+  await expect(page.locator('#root .loading-screen')).toBeVisible()
+  await expect(page.locator('#root .loading-emblem')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Reintentar / Retry' })).toBeVisible({
+    timeout: 60_000,
+  })
+  await expect(page.locator('#root .loading-screen')).toHaveCount(0)
+})
+
+// RYT-123: the retry button disappears when the retry works; focus must land on the new language.
+test('a successful keyboard retry of a failed language switch focuses the checked language', async ({
+  page,
+}) => {
+  await page.route('**/catalogue-en-*.js', (route) => route.abort())
+  await page.goto('./#/settings')
+  const group = drawer(page).getByRole('radiogroup', { name: 'Idioma' })
+  // Keyboard only: arrow to English, which cannot load, then Tab to the retry.
+  await group.getByRole('radio', { name: 'Español' }).focus()
+  await page.keyboard.press('ArrowRight')
+  const failure = drawer(page).getByRole('alert').filter({ hasText: 'No se pudo cargar el idioma' })
+  await expect(failure).toBeVisible({ timeout: 15_000 })
+  await page.unroute('**/catalogue-en-*.js')
+  await page.keyboard.press('Tab')
+  await expect(failure.getByRole('button', { name: 'Reintentar' })).toBeFocused()
+  await page.keyboard.press('Enter')
+  const english = drawer(page, 'Settings').getByRole('radio', { name: 'English' })
+  await expect(english).toBeChecked({ timeout: 15_000 })
+  await expect(english).toBeFocused()
+  expect(
+    await page.evaluate(() => {
+      const active = document.activeElement as HTMLInputElement | null
+      return `${active?.name}:${active?.checked}`
+    }),
+  ).toBe('language:true')
+})
+
+test('J1-11 Back closes the Settings drawer; closing it any other way leaves no history entry', async ({
+  page,
+}) => {
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
+  const start = page.url()
+  const gear = page.getByRole('button', { name: 'Ajustes', exact: true })
+  await gear.click()
+  await expect(drawer(page)).toBeVisible()
+  await page.goBack()
+  await expect(drawer(page)).toBeHidden()
+  expect(page.url()).toBe(start)
+  await expect(page.getByRole('heading', { name: 'Glosario', exact: true })).toBeVisible()
+  await gear.click()
+  await expect(drawer(page)).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(drawer(page)).toBeHidden()
+  await expect
+    .poll(() => page.evaluate(() => JSON.stringify(history.state)))
+    .not.toContain('ryttaOverlays')
+  expect(page.url()).toBe(start)
 })

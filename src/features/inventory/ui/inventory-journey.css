@@ -1,0 +1,43 @@
+/* RYT-125: the purse sits in the page header, not stuck to the viewport like the shop's. */
+.purse-bar.inventory-purse {
+  position: static;
+  gap: 2px 12px;
+  padding: 8px 14px;
+}
+.purse-bar.inventory-purse > .mantine-Text-root {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* J3-21: while the undo ribbon is up, the page keeps room under its last row and the add button. */
+.inventory-page[data-undo] {
+  padding-bottom: calc(var(--bottom-nav-h, 64px) + 96px + env(safe-area-inset-bottom));
+}
+.pick-caveat {
+  color: var(--app-muted);
+  margin-bottom: 6px;
+}
+.item-card-amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 12px;
+}
+.item-card-all {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 26px;
+  color: var(--app-accent);
+  font-weight: 600;
+}
+.ledger-orders-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.item-card-amount .amount-row {
+  max-width: 11rem;
+}

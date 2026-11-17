@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, Group, Modal, Stack, Textarea, TextInput } from '@mantine/core'
+import { Button, Group, Stack, Textarea, TextInput } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useTranslation } from 'react-i18next'
 
 export function RenameShopDialog({

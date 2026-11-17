@@ -58,7 +58,14 @@ function useCombatState(encounterId: string | null, asTable = false, enabled = t
   const { userId, campaignId, project } = useCombatViewer()
   const query = useQuery({ ...combatStateQuery(userId, campaignId, encounterId, asTable), enabled })
   const stale = useFreshness(query.dataUpdatedAt, query.isError && query.data !== undefined)
-  return { query, data: project(query.data), stale, retry: () => void query.refetch() }
+  return {
+    query,
+    data: project(query.data),
+    stale,
+    updatedAt: query.dataUpdatedAt,
+    /** Resolves true when the refetch worked (the connection banner shows the outcome). */
+    retry: async () => !(await query.refetch()).isError,
+  }
 }
 
 export function CombatPage() {
@@ -85,7 +92,7 @@ export function CombatPage() {
 function PlayerCombat() {
   const { t } = useTranslation()
   const { userId, campaignId } = useCombatViewer()
-  const { query, data, stale, retry } = useCombatState(null)
+  const { query, data, stale, retry, updatedAt } = useCombatState(null)
   const connected = useCombatRealtime(campaignId, true)
   const history = useQuery(encountersQuery(userId, campaignId))
   const encounter = data?.encounter
@@ -99,6 +106,7 @@ function PlayerCombat() {
         stale={stale}
         connected={connected}
         retry={retry}
+        updatedAt={updatedAt}
       />
     )
   const ended = (history.data ?? []).filter((e) => e.status === 'ended')
@@ -152,19 +160,35 @@ export function CombatEncounterPage() {
 function PlayerEncounter() {
   const { encounterId } = useParams()
   const { campaignId } = useCombatViewer()
-  const { query, data, stale, retry } = useCombatState(encounterId ?? null)
+  const { query, data, stale, retry, updatedAt } = useCombatState(encounterId ?? null)
+  const { t } = useTranslation()
   const connected = useCombatRealtime(campaignId, true)
   if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
   if (!data?.encounter)
     return <QueryFeedback pending={query.isPending} error={query.isError} retry={retry} />
   return (
-    <TableDisplay
-      campaignId={campaignId}
-      state={data}
-      stale={stale}
-      connected={connected}
-      retry={retry}
-    />
+    <Stack gap="md">
+      {/* RYT-126 J4-15: a past fight opened from the list has a way back. */}
+      <Button
+        component={Link}
+        to=".."
+        relative="path"
+        variant="subtle"
+        leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+        className="combat-back"
+        w="fit-content"
+      >
+        {t('combat.back')}
+      </Button>
+      <TableDisplay
+        campaignId={campaignId}
+        state={data}
+        stale={stale}
+        connected={connected}
+        retry={retry}
+        updatedAt={updatedAt}
+      />
+    </Stack>
   )
 }
 
@@ -269,6 +293,7 @@ function DmViews({ encounterId, status }: { encounterId: string; status: Encount
               stale={table.stale}
               connected={connected}
               retry={table.retry}
+              updatedAt={table.updatedAt}
             />
           ) : (
             <QueryFeedback

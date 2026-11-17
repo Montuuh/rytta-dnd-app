@@ -1,6 +1,6 @@
 /** RYT-033 settings page and class themes; RYT-069 gives every theme its own scheme. */
 export const settingsEn = {
-  'settings.close': 'Close app setup',
+  'settings.close': 'Close settings',
   'settings.theme': 'Theme',
   'settings.themeHelp': 'Each theme comes with its own mode, dark or light.',
   'settings.darkThemes': 'Dark',
@@ -45,4 +45,9 @@ export const settingsEn = {
   'theme.wizard.tagline': 'Arcane blue',
   'theme.parchment': 'Parchment',
   'theme.parchment.tagline': 'Ink on paper',
+  'update.available': 'A new version is available.',
+  'update.reload': 'Reload',
+  'update.dismiss': 'Not now',
+  'settings.languageLoading': 'Loading the language…',
+  'settings.languageError': 'The language could not be loaded. You are still on the current one.',
 }

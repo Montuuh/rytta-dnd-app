@@ -296,7 +296,7 @@ export const bestiaryEs = {
     '*Tirada de ataque a distancia:* {{bonus}}, alcance 24/96 m. *Acierto:* {{average}} ({{dice}}) de daño perforante.',
   'bestiary.arch.burst': 'Estallido arcano (recarga 5–6)',
   'bestiary.arch.burstText':
-    '*Tirada de salvación de Destreza:* CD {{dc}}, cada criatura en una esfera de 6 m de radio a 36 m o menos. *Fallo:* {{average}} ({{dice}}) de daño de fuerza. *Éxito:* la mitad del daño.',
+    '*Tirada de salvación de Destreza:* CD {{dc}}, cada criatura en una esfera de 6 m de radio a 36 m o menos. *Fallo:* {{average}} ({{dice}}) de daño de fuerza. *Éxito:* la mitad del daño.',
   'bestiary.arch.nimble': 'Huida veloz',
   'bestiary.arch.nimbleText': 'La criatura realiza la acción de destrabarse o esconderse.',
   'bestiary.arch.rally': 'Arenga (3/día)',
@@ -445,4 +445,6 @@ export const bestiaryEs = {
     'La criatura volverá a mostrar la ilustración de su criatura del SRD. Puedes elegir otra imagen cuando quieras.',
   'bestiary.art.own': 'Imagen de tu campaña.',
   'bestiary.art.ownSrd': 'Tu imagen para esta criatura en la campaña. Solo la ves tú.',
+  'bestiary.jump': 'Saltar a un grupo',
+  'bestiary.range': 'Criaturas {{from}} a {{to}} de {{total}}',
 }

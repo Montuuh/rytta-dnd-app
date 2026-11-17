@@ -1,13 +1,14 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Alert, Button, Loader, Text } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ImagePlus, ImageUp, Trash2 } from 'lucide-react'
+import { Camera, ImageUp, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { ImageViewer } from '@/shared/ui/image-viewer'
 import { portraitQuery, usePortraitRemove, usePortraitUpload } from '../api'
 import { initials } from './initials'
 import { PortraitEditor } from './portrait-editor'
+import { usePortraitErrorText } from './portrait-error'
 import './portrait-plate.css'
 
 /** How long the remove confirmation ignores taps after the question appears (ms). */
@@ -24,6 +25,7 @@ export function PortraitPlate({
   editable = false,
   fit = 'cover',
   className,
+  emblem = null,
   children,
 }: {
   campaignId: string
@@ -34,9 +36,12 @@ export function PortraitPlate({
   /** 'whole' never crops: the square portrait sits on a soft copy of itself (RYT-099). */
   fit?: 'cover' | 'whole'
   className?: string
+  /** RYT-112: painted class emblem shown instead of the monogram; initials when absent. */
+  emblem?: { thumb: string; full: string } | null
   children?: ReactNode
 }) {
   const { t } = useTranslation()
+  const errorText = usePortraitErrorText()
   const { state } = useAuth()
   const inputId = useId()
   const url = useQuery(portraitQuery(state.user!.id, path))
@@ -118,30 +123,49 @@ export function PortraitPlate({
       <div className="portrait-plate-content">
         {!src && (
           <div className="portrait-plate-blank" aria-busy={loading || undefined}>
-            <span className="portrait-plate-monogram" aria-hidden="true">
-              {initials(name)}
+            {/* J2-41: the camera is a quiet badge on the face, not a second primary button. */}
+            <span className="portrait-plate-face">
+              {emblem ? (
+                // Sized like the monogram it replaces (1.75em of the consumer's font size), round.
+                <img
+                  className="portrait-plate-monogram portrait-plate-emblem"
+                  src={emblem.full}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                />
+              ) : (
+                <span className="portrait-plate-monogram" aria-hidden="true">
+                  {initials(name)}
+                </span>
+              )}
+              {loading ? (
+                <Loader size="sm" aria-hidden="true" className="portrait-plate-loading" />
+              ) : (
+                editable && (
+                  <label
+                    htmlFor={inputId}
+                    className="portrait-plate-camera"
+                    data-pending={upload.isPending || undefined}
+                    title={t(path ? 'inventory.portrait.replace' : 'inventory.portrait.add')}
+                  >
+                    <Camera size={18} aria-hidden="true" />
+                    {/* A portrait that cannot be shown can still be replaced. */}
+                    <span className="visually-hidden">
+                      {t(path ? 'inventory.portrait.replace' : 'inventory.portrait.add')}
+                    </span>
+                  </label>
+                )
+              )}
             </span>
-            {loading ? (
-              <Loader size="sm" aria-hidden="true" />
-            ) : (
-              editable && (
-                <label
-                  htmlFor={inputId}
-                  className="portrait-plate-add"
-                  data-pending={upload.isPending || undefined}
-                >
-                  <ImagePlus size={20} aria-hidden="true" />
-                  {/* A portrait that cannot be shown can still be replaced. */}
-                  {t(path ? 'inventory.portrait.replace' : 'inventory.portrait.add')}
-                </label>
-              )
-            )}
           </div>
         )}
         {children}
         {upload.isError && !file && (
           <Alert color="red" role="alert" className="portrait-plate-error">
-            {t('inventory.portrait.error')}
+            {errorText(upload.error)}
           </Alert>
         )}
       </div>
@@ -239,8 +263,12 @@ export function PortraitPlate({
           file={file}
           name={name}
           pending={upload.isPending}
-          error={upload.isError}
+          error={upload.error}
           onCancel={closeEditor}
+          onReplace={(chosen) => {
+            upload.reset()
+            setFile(chosen)
+          }}
           onSave={(image) => upload.mutate(image, { onSuccess: closeEditor })}
         />
       )}

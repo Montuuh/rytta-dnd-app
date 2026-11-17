@@ -20,11 +20,13 @@
   text-underline-offset: 0.22em;
   border-radius: 2px;
 }
-/* A 44px-tall invisible hit area that does not move the surrounding text. */
+/* An invisible hit area that does not move the surrounding text. A 14px-tall label reaches 44px
+   with 15px above and below; a short word (an ability's initials) is widened to 44px as well. */
 .glossary-term::after {
   content: '';
   position: absolute;
-  inset: -12px -3px;
+  inset-block: -15px;
+  inset-inline: min(-3px, calc(50% - 22.5px));
 }
 .glossary-term:hover {
   color: var(--app-accent);
@@ -165,10 +167,12 @@
   color: var(--app-text);
   border-bottom-color: var(--app-accent);
 }
-.gl-group {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 480px;
+/* The strip scrolls sideways and would clip an outer ring: draw it inside the button. */
+.gl-thumb:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
 }
+/* RYT-117: sections off screen are unmounted by Windowed, not skipped with content-visibility. */
 .gl-letter {
   margin: 20px 0 4px;
   padding: 0 8px 4px;

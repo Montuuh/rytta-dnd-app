@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react'
-import { ActionIcon, Button, Loader, Menu, Modal, Group, Text, UnstyledButton } from '@mantine/core'
+import { ActionIcon, Button, Loader, Menu, Group, Text, UnstyledButton } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { ImagePlus, Pencil, RotateCcw, Trash2, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

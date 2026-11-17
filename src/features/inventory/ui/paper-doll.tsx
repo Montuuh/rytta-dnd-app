@@ -1,7 +1,8 @@
 import { localizedName } from '@/shared/lib/translations'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { useRef, useState } from 'react'
-import { Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Stack, Text, UnstyledButton } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Shield } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +13,7 @@ import {
   equippedBySlot,
   proficiencyBonus,
   slotsFor,
+  type Attack,
 } from '../domain/equipment'
 import {
   equipmentSlots,
@@ -38,32 +40,10 @@ const slotIcons: Record<EquipmentSlot, string> = {
 }
 const signed = (value: number) => (value >= 0 ? `+${value}` : `${value}`)
 
-export function AttackLines({
-  stacks,
-  definitions,
-  strength,
-  dexterity,
-  level,
-  monkLevel,
-}: {
-  stacks: ItemStack[]
-  definitions: Map<string, ItemDefinition>
-  strength: number
-  dexterity: number
-  level: number
-  monkLevel?: number
-}) {
+/** One attack list for the sheet tile, the sheet block and the equipment view: callers compute
+ * `lines` once with `attacks(...)` so every place shows the same numbers. */
+export function AttackLines({ lines }: { lines: Attack[] }) {
   const { t } = useTranslation()
-  const lines = attacks(
-    { str: strength, dex: dexterity },
-    proficiencyBonus(level),
-    equippedBySlot(stacks, definitions),
-    {
-      monkLevel,
-      includeUnarmed: true,
-      unarmedName: t('inventory.attacks.unarmed'),
-    },
-  )
   if (lines.length === 0)
     return (
       <Text size="sm" c="dimmed">
@@ -83,14 +63,17 @@ export function AttackLines({
         return (
           <li key={line.stackId}>
             <span className="attack-name user-copy">{line.name}</span>
-            <span
-              className="attack-bonus"
-              aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
-            >
-              {signed(line.attack)}
+            <span className="attack-bonus">
+              <span className="attack-label">{t('inventory.attacks.hitLabel')}</span>{' '}
+              <span
+                className="attack-value"
+                aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
+              >
+                {signed(line.attack)}
+              </span>
             </span>
             <span className="attack-damage">
-              {line.dice}
+              <span className="attack-label">{t('inventory.attacks.damageLabel')}</span> {line.dice}
               {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
               {line.damageType && (
                 <>
@@ -229,12 +212,12 @@ export function PaperDoll({
             {t('inventory.attacks.title')}
           </Text>
           <AttackLines
-            stacks={stacks}
-            definitions={definitions}
-            strength={strength}
-            dexterity={dexterity}
-            level={level}
-            monkLevel={monkLevel}
+            lines={attacks(
+              { str: strength, dex: dexterity },
+              proficiencyBonus(level),
+              equippedBySlot(stacks, definitions),
+              { monkLevel, includeUnarmed: true, unarmedName: t('inventory.attacks.unarmed') },
+            )}
           />
         </div>
       </div>
@@ -254,6 +237,7 @@ export function PaperDoll({
                   <ItemIcon
                     icon={current.definition.icon}
                     imagePath={current.definition.image_path}
+                    category={current.definition.category}
                     size={40}
                     viewable
                     name={localizedName(current.definition, i18n.language)}

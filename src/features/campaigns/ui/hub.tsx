@@ -13,27 +13,126 @@ import {
   Text,
   Textarea,
   TextInput,
-  ThemeIcon,
   Title,
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import { useClipboard } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Check, Ellipsis, Inbox, Mail, Plus, RefreshCw } from 'lucide-react'
+import { ArrowRight, Check, Copy, Ellipsis, Plus, X } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { PageHead } from '@/shared/ui/page-head'
+import { RefreshControl } from '@/shared/ui/refresh-control'
+import { ArtPlate } from '@/shared/ui/art'
+import { artUrl, pickByKey } from '@/shared/ui/art-url'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useAuth } from '@/features/auth'
 import { campaignsQuery, invitationsQuery, membersQuery, useCampaignAction } from '../api'
 import {
   createCampaignSchema,
   leaveBlock,
   leftCampaignState,
+  MembershipError,
   type Campaign,
   type Invitation,
 } from '../domain/campaign'
 import { ActionFeedback, QueryFeedback } from './feedback'
 import { LeaveCampaignDialog, LeaveCampaignItem } from './leave'
+import './hub.css'
+
+const covers = [
+  'forest',
+  'mountains',
+  'coast',
+  'desert',
+  'underdark',
+  'frost',
+  'swamp',
+  'city',
+] as const
+
+/** A cover per campaign, stable for a given id; neighbours in the grid never share one. */
+function coversFor(campaigns: readonly Campaign[]) {
+  const picked: number[] = []
+  for (const [position, campaign] of campaigns.entries()) {
+    let index = pickByKey(
+      campaign.id,
+      covers.map((_, at) => at),
+    )
+    // A two-column grid puts the previous two entries next to this one.
+    while (picked.slice(-2).includes(index)) index = (index + 1) % covers.length
+    picked[position] = index
+  }
+  return picked.map((index) => covers[index]!)
+}
+
+/** "Expires today" or tomorrow when it is near, the date otherwise. */
+function expiryText(iso: string, t: TFunction, language: string) {
+  const expires = new Date(iso)
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  const days = Math.floor((expires.getTime() - midnight.getTime()) / 86_400_000)
+  if (days <= 0) return t('hub.expiresToday')
+  if (days === 1) return t('hub.expiresTomorrow')
+  return t('hub.expires', { date: expires.toLocaleDateString(language) })
+}
+
+type Notice =
+  { kind: 'left' | 'declined'; name: string } | { kind: 'joined'; name: string; id: string }
+
+/** The account's email with a copy button: it is what a DM needs to send an invitation. */
+function EmailCopy({ email }: { email: string }) {
+  const { t } = useTranslation()
+  const clipboard = useClipboard({ timeout: 2000 })
+  return (
+    <div className="hub-email">
+      <Text className="hub-email-address user-copy" fw={600}>
+        {email}
+      </Text>
+      <Button
+        variant="default"
+        leftSection={
+          clipboard.copied ? (
+            <Check size={18} aria-hidden="true" />
+          ) : (
+            <Copy size={18} aria-hidden="true" />
+          )
+        }
+        onClick={() => clipboard.copy(email)}
+      >
+        {clipboard.copied ? t('hub.copiedEmail') : t('hub.copyEmail')}
+      </Button>
+      <span className="visually-hidden" role="status">
+        {clipboard.copied ? t('hub.copiedEmail') : ''}
+      </span>
+    </div>
+  )
+}
+
+/** Why answering an invitation failed, in one short line; a retry unless the invitation is gone. */
+function RespondError({ error, retry }: { error: Error | null; retry: () => void }) {
+  const { t } = useTranslation()
+  if (!error) return null
+  const reason = error instanceof MembershipError ? error.reason : null
+  const gone = reason === 'invitation-unavailable'
+  let text: string = t('hub.respondFailed')
+  if (error.message === 'Offline') text = t('hub.respondOffline')
+  else if (gone) text = t('action.invitation-unavailable')
+  return (
+    <Alert color="red" role="alert">
+      <Text size="sm" mb={gone ? 0 : 'sm'}>
+        {text}
+      </Text>
+      {!gone && (
+        <Button variant="default" onClick={retry}>
+          {t('common.retry')}
+        </Button>
+      )}
+    </Alert>
+  )
+}
 
 export function CampaignHub() {
   const { t, i18n } = useTranslation()
@@ -41,7 +140,7 @@ export function CampaignHub() {
   const user = state.user!
   const campaigns = useQuery(campaignsQuery(user.id))
   const invitations = useQuery(invitationsQuery(user.id))
-  const action = useCampaignAction()
+  const respond = useCampaignAction()
   const create = useCampaignAction()
   const [opened, setOpened] = useState(false)
   const [decline, setDecline] = useState<Invitation | null>(null)
@@ -50,25 +149,28 @@ export function CampaignHub() {
   const location = useLocation()
   const navigate = useNavigate()
   const incoming = leftCampaignState.safeParse(location.state).data?.leftCampaign
-  const [left, setLeft] = useState(incoming)
+  const [notice, setNotice] = useState<Notice | undefined>(
+    incoming ? { kind: 'left', name: incoming } : undefined,
+  )
   const [seenKey, setSeenKey] = useState(location.key)
   // A later departure while this page stays mounted arrives with a new history entry.
   if (incoming && location.key !== seenKey) {
     setSeenKey(location.key)
-    setLeft(incoming)
+    setNotice({ kind: 'left', name: incoming })
   }
-  const leftRef = useRef<HTMLDivElement>(null)
+  const noticeRef = useRef<HTMLDivElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   // The outcome is kept here and dropped from history at once, so a reload does not repeat it.
   useEffect(() => {
     if (incoming) void navigate(location.pathname, { replace: true, state: null })
   }, [incoming, location.pathname, navigate])
-  // The outcome takes focus after the layout has moved focus to the page on navigation.
+  // The outcome takes focus after the layout has moved focus to the page on navigation, and after
+  // an answered invitation removed the button that had it.
   useEffect(() => {
-    if (!left) return
-    const frame = requestAnimationFrame(() => leftRef.current?.focus())
+    if (!notice) return
+    const frame = requestAnimationFrame(() => noticeRef.current?.focus())
     return () => cancelAnimationFrame(frame)
-  }, [left, location.key])
+  }, [notice, location.key])
   const form = useForm({
     initialValues: { name: '', description: '' },
     validate: {
@@ -81,26 +183,176 @@ export function CampaignHub() {
     void campaigns.refetch()
     void invitations.refetch()
   }
+  const startCreate = () => {
+    create.reset()
+    setOpened(true)
+  }
+  const closeCreate = () => {
+    if (!create.isPending) setOpened(false)
+  }
+  const closeDecline = () => {
+    if (respond.isPending) return
+    respond.reset()
+    setDecline(null)
+  }
+  useBackToClose(opened, closeCreate)
+  useBackToClose(!!decline, closeDecline)
+  // The retry repeats the last answer with the same outcome handling.
+  const lastAnswer = useRef<{ invite: Invitation; accept: boolean } | null>(null)
+  const answer = (invite: Invitation, accept: boolean) => {
+    lastAnswer.current = { invite, accept }
+    respond.mutate(
+      { kind: 'respond', invitationId: invite.id, accept },
+      {
+        onSuccess: () => {
+          setDecline(null)
+          setNotice(
+            accept
+              ? { kind: 'joined', name: invite.campaign_name, id: invite.campaign_id }
+              : { kind: 'declined', name: invite.campaign_name },
+          )
+        },
+        onError: (error) => {
+          // The invitation is gone: drop its card and say so where the card was.
+          if (error instanceof MembershipError && error.reason === 'invitation-unavailable') {
+            setDecline(null)
+            void invitations.refetch()
+          }
+        },
+      },
+    )
+  }
+  const retryAnswer = () => {
+    const last = lastAnswer.current
+    if (last) answer(last.invite, last.accept)
+  }
+  const pendingInvites = !invitations.isError ? (invitations.data ?? []) : []
+  const invitesPending = pendingInvites.length > 0
+  // With no campaign and no invitation the empty state owns the one instruction and the create action.
+  const showEmpty =
+    !campaigns.isError && campaigns.data?.length === 0 && invitations.isSuccess && !invitesPending
+  // A pending invitation is the first thing to do; creating a campaign steps back.
+  const createVariant = invitesPending ? 'default' : 'filled'
+  const coverList = coversFor(campaigns.data ?? [])
+  const invitationsPanel = (
+    <Paper component="section" aria-labelledby="invitations-heading" p={{ base: 'md', sm: 'xl' }}>
+      <Stack gap="lg">
+        <Group justify="space-between" align="flex-start" wrap="nowrap" gap="sm">
+          <div className="invitations-heading">
+            <Group gap="xs" wrap="nowrap" align="center">
+              <Title order={2} id="invitations-heading">
+                {t('hub.invitations')}
+              </Title>
+              {invitesPending && (
+                <Badge
+                  variant="light"
+                  aria-label={t('hub.pendingCount', { count: pendingInvites.length })}
+                >
+                  {pendingInvites.length}
+                </Badge>
+              )}
+            </Group>
+            {invitesPending && (
+              <Text size="sm" c="dimmed" mt={4}>
+                {t('hub.joinHint')}
+              </Text>
+            )}
+          </div>
+          <RefreshControl
+            onRefresh={refresh}
+            fetching={campaigns.isFetching || invitations.isFetching}
+            updatedAt={Math.max(campaigns.dataUpdatedAt, invitations.dataUpdatedAt)}
+          />
+        </Group>
+        {!decline && <RespondError error={respond.error} retry={retryAnswer} />}
+        <QueryFeedback
+          pending={invitations.isPending}
+          error={invitations.isError}
+          retry={() => void invitations.refetch()}
+          cause={invitations.error}
+        />
+        {invitations.isSuccess &&
+          (invitesPending ? (
+            pendingInvites.map((invite) => {
+              const answering =
+                respond.isPending &&
+                respond.variables?.kind === 'respond' &&
+                respond.variables.invitationId === invite.id
+              return (
+                <Paper key={invite.id} p="lg" className="invitation-card">
+                  <Stack>
+                    <Title order={3} className="user-copy">
+                      {invite.campaign_name}
+                    </Title>
+                    <Text>
+                      {invite.character_name
+                        ? t('hub.invitationCharacter', { name: invite.character_name })
+                        : t('hub.membershipInvite')}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      {expiryText(invite.expires_at, t, i18n.language)}
+                    </Text>
+                    <Group className="invite-actions">
+                      <Button
+                        aria-label={t('hub.acceptLabel', { name: invite.campaign_name })}
+                        loading={answering}
+                        disabled={respond.isPending}
+                        onClick={() => answer(invite, true)}
+                      >
+                        {t('hub.accept')}
+                      </Button>
+                      <Button
+                        variant="subtle"
+                        color="red"
+                        aria-label={t('hub.declineLabel', { name: invite.campaign_name })}
+                        disabled={respond.isPending}
+                        onClick={() => {
+                          respond.reset()
+                          setDecline(invite)
+                        }}
+                      >
+                        {t('hub.decline')}
+                      </Button>
+                    </Group>
+                  </Stack>
+                </Paper>
+              )
+            })
+          ) : (
+            <div className="invitation-empty">
+              <ArtPlate name="empty/invitations" size={96} />
+              <Stack gap="xs">
+                <Text fw={600}>{t('hub.noInvitations')}</Text>
+                <Text size="sm" c="dimmed">
+                  {t('hub.emptyHint')}
+                </Text>
+                <EmailCopy email={user.email} />
+              </Stack>
+            </div>
+          ))}
+      </Stack>
+    </Paper>
+  )
   return (
     <Stack gap="xl">
       <PageHead
         title={t('hub.title')}
         headingRef={heading}
         actions={
-          <Button
-            leftSection={<Plus size={18} aria-hidden="true" />}
-            onClick={() => {
-              create.reset()
-              setOpened(true)
-            }}
-          >
-            {t('hub.create')}
-          </Button>
+          showEmpty ? undefined : (
+            <Button
+              variant={createVariant}
+              leftSection={<Plus size={18} aria-hidden="true" />}
+              onClick={startCreate}
+            >
+              {t('hub.create')}
+            </Button>
+          )
         }
       />
-      {left && (
+      {notice && (
         <Alert
-          ref={leftRef}
+          ref={noticeRef}
           tabIndex={-1}
           role="status"
           className="campaign-left user-copy"
@@ -108,142 +360,73 @@ export function CampaignHub() {
           withCloseButton
           closeButtonLabel={t('common.close')}
           onClose={() => {
-            setLeft(undefined)
+            setNotice(undefined)
             focusWhenReady(() => heading.current)
           }}
         >
-          {t('hub.left', { name: left })}
+          <div className="campaign-left-line">
+            <span>{t(`hub.${notice.kind}`, { name: notice.name })}</span>
+            {notice.kind === 'joined' && (
+              <Button
+                component={Link}
+                to={`/campaign/${notice.id}`}
+                variant="default"
+                rightSection={<ArrowRight size={18} aria-hidden="true" />}
+              >
+                {t('hub.open')}
+              </Button>
+            )}
+          </div>
         </Alert>
       )}
-      <QueryFeedback pending={campaigns.isPending} error={campaigns.isError} retry={refresh} />
-      {!campaigns.isError &&
-        campaigns.data &&
-        (campaigns.data.length ? (
-          <SimpleGrid cols={{ base: 1, md: 2 }}>
-            {campaigns.data.map((campaign) => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-                userId={user.id}
-                onLeave={(trigger) => setLeaving({ campaign, trigger })}
-              />
-            ))}
-          </SimpleGrid>
-        ) : (
-          <Paper p="xl">
+      {invitesPending && invitationsPanel}
+      <QueryFeedback
+        pending={campaigns.isPending}
+        error={campaigns.isError}
+        retry={refresh}
+        cause={campaigns.error}
+      />
+      {!campaigns.isError && campaigns.data && campaigns.data.length > 0 && (
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
+          {campaigns.data.map((campaign, position) => (
+            <CampaignCard
+              key={campaign.id}
+              campaign={campaign}
+              cover={coverList[position]!}
+              userId={user.id}
+              onLeave={(trigger) => setLeaving({ campaign, trigger })}
+            />
+          ))}
+        </SimpleGrid>
+      )}
+      {showEmpty && (
+        <Paper p={{ base: 'lg', sm: 'xl' }} className="hub-empty">
+          <ArtPlate name="empty/campaigns" size={144} />
+          <Stack gap="xs" align="flex-start">
             <Title order={2}>{t('hub.empty')}</Title>
-            <Text c="dimmed" mt="sm">
-              {t('hub.emptyHint')}
-            </Text>
-          </Paper>
-        ))}
-      <Paper component="section" aria-labelledby="invitations-heading" p={{ base: 'md', sm: 'xl' }}>
-        <Stack gap="lg">
-          <Group justify="space-between" align="flex-start">
-            <Group gap="sm" wrap="nowrap" align="flex-start" className="invitations-heading">
-              <ThemeIcon size={44} radius="xl" variant="light">
-                <Mail size={22} aria-hidden="true" />
-              </ThemeIcon>
-              <div>
-                <Group gap="xs" wrap="nowrap" align="center">
-                  <Title order={2} id="invitations-heading">
-                    {t('hub.invitations')}
-                  </Title>
-                  {!!invitations.data?.length && !invitations.isError && (
-                    <Badge
-                      variant="light"
-                      aria-label={t('hub.pendingCount', { count: invitations.data.length })}
-                    >
-                      {invitations.data.length}
-                    </Badge>
-                  )}
-                </Group>
-                <Text size="sm" c="dimmed" mt={4}>
-                  {t('hub.joinHint')}
-                </Text>
-              </div>
-            </Group>
+            <Text c="dimmed">{t('hub.emptyHint')}</Text>
+            <EmailCopy email={user.email} />
             <Button
+              mt="xs"
               variant="default"
-              className="invitations-refresh"
-              leftSection={<RefreshCw size={16} aria-hidden="true" />}
-              onClick={refresh}
+              leftSection={<Plus size={18} aria-hidden="true" />}
+              onClick={startCreate}
             >
-              {t('hub.refresh')}
+              {t('hub.create')}
             </Button>
-          </Group>
-          <ActionFeedback error={action.error} />
-          <QueryFeedback
-            pending={invitations.isPending}
-            error={invitations.isError}
-            retry={() => void invitations.refetch()}
-          />
-          {!invitations.isError &&
-            invitations.data &&
-            (invitations.data.length ? (
-              invitations.data.map((invite) => (
-                <Paper key={invite.id} p="lg" className="invitation-card">
-                  <Stack>
-                    <Title order={3}>{invite.campaign_name}</Title>
-                    <Text>
-                      {invite.character_name
-                        ? t('characters.invitation', { name: invite.character_name })
-                        : t('members.membershipInvite')}
-                    </Text>
-                    <Text size="sm" c="dimmed">
-                      {t('hub.expires', {
-                        date: new Date(invite.expires_at).toLocaleDateString(i18n.language),
-                      })}
-                    </Text>
-                    <Group className="invite-actions">
-                      <Button
-                        disabled={action.isPending}
-                        onClick={() =>
-                          action.mutate({ kind: 'respond', invitationId: invite.id, accept: true })
-                        }
-                      >
-                        {t('hub.accept')}
-                      </Button>
-                      <Button
-                        variant="subtle"
-                        color="red"
-                        disabled={action.isPending}
-                        onClick={() => setDecline(invite)}
-                      >
-                        {t('hub.decline')}
-                      </Button>
-                    </Group>
-                  </Stack>
-                </Paper>
-              ))
-            ) : (
-              <Stack gap="xs" align="center" py="lg" className="invitation-empty">
-                <ThemeIcon size={52} radius="xl" variant="light">
-                  <Inbox size={26} aria-hidden="true" />
-                </ThemeIcon>
-                <Text fw={600} ta="center">
-                  {t('hub.noInvitations')}
-                </Text>
-                <Text size="sm" c="dimmed" ta="center" maw={400}>
-                  {t('hub.noInvitationsHint')}
-                </Text>
-              </Stack>
-            ))}
-          <Text size="sm" c="dimmed" className="invitation-account user-copy">
-            {t('hub.inviteHint', { email: user.email })}
-          </Text>
-        </Stack>
-      </Paper>
+          </Stack>
+        </Paper>
+      )}
+      {!invitesPending && !showEmpty && invitationsPanel}
       <Modal
         opened={opened}
-        onClose={() => {
-          if (!create.isPending) setOpened(false)
-        }}
+        onClose={closeCreate}
         title={t('hub.create')}
         returnFocus
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
         <form
+          noValidate
           onSubmit={form.onSubmit((values) =>
             create.mutate(
               { kind: 'create', ...values },
@@ -264,6 +447,7 @@ export function CampaignHub() {
               label={t('hub.name')}
               required
               maxLength={100}
+              enterKeyHint="next"
               data-autofocus
               {...form.getInputProps('name')}
             />
@@ -276,7 +460,7 @@ export function CampaignHub() {
             />
             <ActionFeedback error={create.error} />
             <Group justify="flex-end">
-              <Button variant="subtle" disabled={create.isPending} onClick={() => setOpened(false)}>
+              <Button variant="subtle" disabled={create.isPending} onClick={closeCreate}>
                 {t('action.cancel')}
               </Button>
               <Button type="submit" loading={create.isPending}>
@@ -288,27 +472,41 @@ export function CampaignHub() {
       </Modal>
       <Modal
         opened={!!decline}
-        onClose={() => setDecline(null)}
-        title={t('members.confirm')}
+        onClose={closeDecline}
+        title={t('hub.declineTitle')}
+        centered
         returnFocus
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+        closeOnEscape={!respond.isPending}
+        closeButtonProps={{
+          'aria-label': t('action.cancel'),
+          size: 44,
+          disabled: respond.isPending,
+        }}
       >
         <Stack>
-          <Text>{t('members.confirmDecline', { name: decline?.campaign_name ?? '' })}</Text>
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={() => setDecline(null)}>
+          <Text className="leave-body user-copy">
+            {t('hub.declineBody', { name: decline?.campaign_name ?? '' })}
+          </Text>
+          <RespondError error={decline ? respond.error : null} retry={retryAnswer} />
+          <div className="leave-actions">
+            <Button
+              variant="subtle"
+              data-autofocus
+              disabled={respond.isPending}
+              onClick={closeDecline}
+            >
               {t('action.cancel')}
             </Button>
             <Button
-              onClick={() => {
-                if (decline)
-                  action.mutate({ kind: 'respond', invitationId: decline.id, accept: false })
-                setDecline(null)
-              }}
+              color="red"
+              variant="light"
+              leftSection={<X size={18} aria-hidden="true" />}
+              loading={respond.isPending}
+              onClick={() => decline && answer(decline, false)}
             >
-              {t('action.confirm')}
+              {t('hub.declineConfirm')}
             </Button>
-          </Group>
+          </div>
         </Stack>
       </Modal>
       {leaving && (
@@ -322,19 +520,20 @@ export function CampaignHub() {
           onLeft={() => setLeaving(null)}
         />
       )}
-      {campaigns.isRefetchError && <Alert color="red">{t('error.campaigns')}</Alert>}
     </Stack>
   )
 }
 
-/** One campaign: its role, name and description, Open, and a ⋯ menu with Open and Leave. A DM's
+/** One campaign: a cover with its role and name, the description, Open, and a ⋯ menu with Open and Leave. A DM's
  * member list loads when the menu opens, to tell the only DM why they cannot leave yet. */
 function CampaignCard({
   campaign,
+  cover,
   userId,
   onLeave,
 }: {
   campaign: Campaign
+  cover: (typeof covers)[number]
   userId: string
   onLeave: (trigger: HTMLElement) => void
 }) {
@@ -347,10 +546,38 @@ function CampaignCard({
   })
   const more = t('hub.more', { name: campaign.name })
   return (
-    <Paper p="lg" className="campaign-card">
-      <Stack h="100%">
-        <div className="campaign-card-head">
-          <Badge variant="light">{t(`campaign.role.${campaign.role}`)}</Badge>
+    <Paper className="campaign-card hub-card">
+      <div className="hub-cover">
+        <img
+          src={artUrl(`covers/${cover}`)}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
+        <div className="hub-cover-text">
+          <span className="hub-cover-role">{t(`campaign.role.${campaign.role}`)}</span>
+          <Title order={2}>{campaign.name}</Title>
+        </div>
+      </div>
+      <Stack className="hub-card-body" gap="sm">
+        {campaign.description && (
+          <Text c="dimmed" className="user-copy hub-card-description">
+            {campaign.description}
+          </Text>
+        )}
+        <Group gap="xs" wrap="nowrap" className="hub-card-actions">
+          <Button
+            component={Link}
+            to={`/campaign/${campaign.id}`}
+            rightSection={<ArrowRight size={18} aria-hidden="true" />}
+            variant="default"
+            flex={1}
+            aria-label={`${t('hub.open')}: ${campaign.name}`}
+          >
+            {t('hub.open')}
+          </Button>
           <Menu
             opened={menuOpened}
             onChange={setMenuOpened}
@@ -378,22 +605,7 @@ function CampaignCard({
               />
             </Menu.Dropdown>
           </Menu>
-        </div>
-        <Title order={2}>{campaign.name}</Title>
-        {campaign.description && (
-          <Text c="dimmed" className="user-copy">
-            {campaign.description}
-          </Text>
-        )}
-        <Button
-          component={Link}
-          to={`/campaign/${campaign.id}`}
-          rightSection={<ArrowRight size={18} />}
-          variant="light"
-          aria-label={`${t('hub.open')}: ${campaign.name}`}
-        >
-          {t('hub.open')}
-        </Button>
+        </Group>
       </Stack>
     </Paper>
   )

@@ -8,6 +8,7 @@ import { actionsFor, resourceSpec, spendAction, type ResourceAction } from '../.
 import { slotsFor } from '../../domain/rules'
 import type { Build, Tracker, Vitals } from '../../domain/sheet'
 import { choiceKeys, traitChoices, type ChoiceKey } from '../../domain/srd'
+import { useTrackerLabel } from '../resource-names'
 import { Pips } from './pips'
 import type { PanelProps } from './panel-types'
 import { Counter } from './widgets'
@@ -26,6 +27,7 @@ const trackerChoice: Record<string, ChoiceKey> = {
  * player's own resources, spell slots and hit point dice (RYT-071, RYT-102). */
 export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }) {
   const { t } = useTranslation()
+  const trackerLabel = useTrackerLabel()
   const { build, level, vitals, canEdit, editing, locked, commit, change, onPersonalise } = props
   const library = useSrdLibrary()
   const slots = slotsFor(build.casterKind, level)
@@ -181,7 +183,7 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
                     className="turn-mark"
                     data-tracker-name={tracker.id}
                     aria-pressed={used}
-                    aria-label={t('panel.turnMark', { name: tracker.name })}
+                    aria-label={t('panel.turnMark', { name: trackerLabel(tracker) })}
                     disabled={!canEdit}
                     onClick={() => setUses({ ...vitals.tracker_uses, [tracker.id]: used ? 0 : 1 })}
                   >
@@ -196,9 +198,9 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
                     data-used={used || undefined}
                   >
                     {spec ? (
-                      <GlossaryTerm id={spec.feature}>{tracker.name}</GlossaryTerm>
+                      <GlossaryTerm id={spec.feature}>{trackerLabel(tracker)}</GlossaryTerm>
                     ) : (
-                      tracker.name
+                      trackerLabel(tracker)
                     )}
                   </Text>
                   {spec?.die && (
@@ -253,19 +255,18 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
         <Pips
           max={level}
           used={level - hitDiceLeft}
-          // Spending hit dice heals: it follows the HP lock (RYT-070).
-          disabled={!canEdit || locked}
+          // Hit dice are spent in a short rest, where the roll heals: tapping a pip out of a rest
+          // would spend a die and heal nothing, so this row only shows them.
+          disabled
           spendLabel={t('sheet.spendHitDieLabel')}
           restoreLabel={t('sheet.recoverHitDieLabel')}
           countLabel={`${hitDiceLeft}/${level}`}
           glyph={`d${build.hitDie}`}
-          onChange={(used) => commit({ ...vitals, hit_dice_spent: used })}
+          onChange={() => undefined}
         />
-        {locked && (
-          <Text size="sm" c="dimmed">
-            {t('panel.hitDiceLocked')}
-          </Text>
-        )}
+        <Text size="sm" c="dimmed">
+          {t(locked ? 'panel.hitDiceLocked' : 'panel.hitDiceRest')}
+        </Text>
       </section>
       {canEdit && (
         <Button
@@ -297,6 +298,7 @@ function TrackerRow({
   setUses: (uses: Vitals['tracker_uses']) => void
 }) {
   const { t } = useTranslation()
+  const trackerLabel = useTrackerLabel()
   const used = Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
   const spec = resourceSpec(tracker.key)
   const options = actionsFor(build, level, tracker.key)
@@ -315,7 +317,7 @@ function TrackerRow({
     return () => window.clearTimeout(timer)
   }, [refused])
   return (
-    <section className="resource-row" aria-label={tracker.name}>
+    <section className="resource-row" aria-label={trackerLabel(tracker)}>
       <Group justify="space-between" gap="xs" wrap="nowrap">
         <Text
           fw={600}
@@ -323,7 +325,11 @@ function TrackerRow({
           tabIndex={-1}
           data-tracker-name={tracker.id}
         >
-          {spec ? <GlossaryTerm id={spec.feature}>{tracker.name}</GlossaryTerm> : tracker.name}
+          {spec ? (
+            <GlossaryTerm id={spec.feature}>{trackerLabel(tracker)}</GlossaryTerm>
+          ) : (
+            trackerLabel(tracker)
+          )}
           {spec?.die && (
             <Text span size="sm" c="dimmed" fw={500} className="resource-die">
               {' '}
@@ -347,7 +353,7 @@ function TrackerRow({
       >
         {(tracker.display ?? 'pips') === 'counter' || tracker.max > 20 ? (
           <Counter
-            name={tracker.name}
+            name={trackerLabel(tracker)}
             max={tracker.max}
             used={used}
             disabled={!canEdit}
@@ -358,15 +364,18 @@ function TrackerRow({
             max={tracker.max}
             used={used}
             disabled={!canEdit}
-            spendLabel={t('sheet.useOne', { name: tracker.name })}
-            restoreLabel={t('sheet.restoreOne', { name: tracker.name })}
+            spendLabel={t('sheet.useOne', { name: trackerLabel(tracker) })}
+            restoreLabel={t('sheet.restoreOne', { name: trackerLabel(tracker) })}
             countLabel={t('sheet.usesLeft', { left: tracker.max - used, max: tracker.max })}
             onChange={set}
           />
         )}
       </div>
       {options.length > 0 && (
-        <ul className="resource-options" aria-label={t('panel.optionsOf', { name: tracker.name })}>
+        <ul
+          className="resource-options"
+          aria-label={t('panel.optionsOf', { name: trackerLabel(tracker) })}
+        >
           {options.map((option) => (
             <OptionRow
               key={option.key}
@@ -385,7 +394,7 @@ function TrackerRow({
         {refused
           ? t('panel.optionShort', {
               cost: refused.cost,
-              resource: tracker.name,
+              resource: trackerLabel(tracker),
               left: tracker.max - used,
             })
           : ''}
@@ -413,6 +422,7 @@ function OptionRow({
   onRefused: () => void
 }) {
   const { t } = useTranslation()
+  const trackerLabel = useTrackerLabel()
   const name = t(actionName(option.key))
   const next = spendAction(option, build.trackers, vitals.tracker_uses)
   const left = tracker.max - Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
@@ -427,8 +437,8 @@ function OptionRow({
         aria-disabled={blocked || undefined}
         aria-label={
           next === null && canEdit
-            ? t('panel.optionShort', { cost: option.cost, resource: tracker.name, left })
-            : t('panel.useOption', { name, cost: option.cost, resource: tracker.name })
+            ? t('panel.optionShort', { cost: option.cost, resource: trackerLabel(tracker), left })
+            : t('panel.useOption', { name, cost: option.cost, resource: trackerLabel(tracker) })
         }
         onClick={() => {
           if (!blocked && next) setUses(next)

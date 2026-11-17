@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type ReactNode,
 } from 'react'
 import {
   ActionIcon,
@@ -14,11 +15,9 @@ import {
   Badge,
   Button,
   CloseButton,
-  Drawer,
   Group,
   Loader,
   Menu,
-  Modal,
   Popover,
   RangeSlider,
   SegmentedControl,
@@ -28,7 +27,10 @@ import {
   Textarea,
   Title,
   VisuallyHidden,
+  Drawer as CreatureDrawer,
 } from '@mantine/core'
+import { Drawer, Modal } from '@/shared/ui/overlays'
+import { afterOverlayEntriesSettle } from '@/shared/ui/use-back-to-close'
 import {
   ArrowDown01,
   ArrowDownAZ,
@@ -53,7 +55,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   challengeRatings,
   emptyFilters,
@@ -69,6 +71,10 @@ import {
 } from '@/features/bestiary'
 import { QueryFeedback } from '@/features/campaigns'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
+import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
+import { showTopOf } from '@/shared/ui/scroll-parent'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
+import { Windowed } from '@/shared/ui/windowed'
 import type { CombatantTemplate, TemplateInput } from '../domain/combat'
 import { AddToEncounterDialog } from './add-to-encounter'
 import { CreatureEditor } from './creature-editor'
@@ -88,6 +94,7 @@ import { RunnerError } from './parts'
 import { typeGlyphs } from './bestiary-glyphs'
 import { NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
 import { Token } from './token'
+import { JumpIndex } from './jump-index'
 import './bestiary.css'
 
 const crCount = challengeRatings.length - 1
@@ -188,7 +195,10 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const restore = () => {
     const node = opener.current
     requestAnimationFrame(() =>
-      (node?.isConnected ? node : document.getElementById('bestiary-search'))?.focus(),
+      (node?.isConnected
+        ? node
+        : (rowOf(lastKey.current) ?? document.getElementById('bestiary-search'))
+      )?.focus(),
     )
   }
   // A dialog over the phone sheet owns Escape: the sheet stays open underneath.
@@ -230,16 +240,57 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       ? catalog.items.find((i) => i.version && `srd:${i.srdId}` === selectedKey)
       : undefined) ??
     null
-  const select = (key: string | null) =>
-    setParams(
-      (current) => {
-        const next = new URLSearchParams(current)
-        if (key) next.set('creature', key)
-        else next.delete('creature')
-        return next
-      },
-      { replace: true },
-    )
+  // Opening a creature adds a history entry, so system Back closes it like Escape does; closing
+  // by hand undoes that entry instead of leaving a duplicate behind.
+  const navigate = useNavigate()
+  const pushed = useRef(false)
+  const select = (key: string | null) => {
+    // An overlay over the creature (the editor, a confirmation) gives its history entry back
+    // asynchronously; a replace or a Back made before that lands on the overlay's entry and the
+    // pending Back then restores the old creature or pops the wrong entry. Wait for them first.
+    void afterOverlayEntriesSettle().then(() => {
+      if (key === null && pushed.current) {
+        pushed.current = false
+        void navigate(-1)
+        return
+      }
+      const adding = key !== null && selectedKeyRef.current === null
+      if (adding) pushed.current = true
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          if (key) next.set('creature', key)
+          else next.delete('creature')
+          return next
+        },
+        { replace: !adding },
+      )
+    })
+  }
+  const selectedKeyRef = useRef(selectedKey)
+  useEffect(() => {
+    selectedKeyRef.current = selectedKey
+  })
+  // The row of the creature that was open: where focus returns when it closes, by any route.
+  const lastKey = useRef<string | null>(null)
+  const rowOf = (key: string | null) =>
+    key
+      ? document.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(key)}"] .bst-row-main`)
+      : null
+  const refocused = useRef<string | null>(null)
+  useEffect(() => {
+    if (selectedKey) {
+      lastKey.current = selectedKey
+      refocused.current = null
+      return
+    }
+    pushed.current = false
+    const key = lastKey.current
+    if (!key || overlayOpen || refocused.current === key) return
+    refocused.current = key
+    // Back, Escape and "Volver a la lista" all end on the row that was open.
+    focusWhenReady(() => rowOf(key))
+  }, [selectedKey, overlayOpen])
   // A newly saved creature is selected once the list knows it.
   useEffect(() => {
     if (!pendingSelect.current) return
@@ -310,11 +361,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     else if (next.kind === 'removeAll') {
       if (selected?.source === 'srd' || selected?.version) select(null)
       setNotice(t('bestiary.official.removedAll'))
-      requestAnimationFrame(() =>
-        document
-          .querySelector<HTMLElement>('.bst-official-empty button, .bst-official-line button')
-          ?.focus(),
-      )
+      // The empty state appears after the refetch: retry until it exists.
+      focusWhenReady('.bst-official-empty button, .bst-official-line button')
       return
     } else if (next.kind === 'remove') {
       select(null)
@@ -496,7 +544,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       {!catalog.pending && (catalog.items.length > 0 || official?.downloaded) && (
         <div className={wide ? 'bst-split' : undefined}>
           <CreatureList
-            grouping={filters.query.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
+            grouping={deferredQuery.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
             altLang={catalog.language === 'es' ? 'en' : 'es'}
             items={results}
             artCredit={catalog.artCredit}
@@ -537,7 +585,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         </div>
       )}
       {!wide && (
-        <Drawer
+        // Opening a creature owns a router history entry (see select), so no second Back entry here.
+        <CreatureDrawer
           opened={Boolean(selected)}
           onClose={() => {
             select(null)
@@ -561,7 +610,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         >
           {notice && noticeAlert}
           {detail}
-        </Drawer>
+        </CreatureDrawer>
       )}
       <footer className="bst-attribution">
         <p>{t('glossary.license')}</p>
@@ -1040,7 +1089,8 @@ function groupsOf(
   crLabel: (cr: string) => string,
 ) {
   if (!grouping) return [{ key: 'all', label: null as string | null, items }]
-  const groups: { key: string; label: string | null; items: CreatureListItem[] }[] = []
+  // Groups are merged by key, so unsorted input never repeats a letter or a challenge rating.
+  const byKey = new Map<string, { key: string; label: string | null; items: CreatureListItem[] }>()
   for (const item of items) {
     const key =
       grouping === 'cr'
@@ -1048,17 +1098,24 @@ function groupsOf(
         : /^\p{L}/u.test(searchKey(item.name))
           ? searchKey(item.name)[0]!.toLocaleUpperCase()
           : '#'
-    const last = groups[groups.length - 1]
-    if (last?.key === key) last.items.push(item)
+    const group = byKey.get(key)
+    if (group) group.items.push(item)
     else
-      groups.push({
+      byKey.set(key, {
         key,
         label: grouping === 'cr' ? (item.cr === null ? noCr : crLabel(item.cr)) : key,
         items: [item],
       })
   }
+  const groups = [...byKey.values()]
   return groups
 }
+
+/** Rows per spacer-backed chunk when a flat (searched) list has no letter or CR groups. */
+const chunkSize = 40
+/** Row height plus gap before any section was measured; measured sections refine it. */
+/** Rows are taller on a phone, where the names and numbers wrap. */
+const firstRowEstimate = () => (window.innerWidth < 600 ? 118 : 90)
 
 function CreatureList({
   items,
@@ -1086,11 +1143,59 @@ function CreatureList({
 }) {
   const { t } = useTranslation()
   const listId = useId()
-  const groups = useMemo(
-    () =>
-      groupsOf(items, grouping, t('bestiary.group.noCr'), (cr) => t('bestiary.crShort', { cr })),
-    [items, grouping, t],
-  )
+  const listRef = useRef<HTMLDivElement>(null)
+  const groups = useMemo(() => {
+    const grouped = groupsOf(items, grouping, t('bestiary.group.noCr'), (cr) =>
+      t('bestiary.crShort', { cr }),
+    )
+    // RYT-117: a long flat result is cut into chunks, each its own windowed list.
+    if (grouping !== null || items.length <= chunkSize) return grouped
+    return Array.from({ length: Math.ceil(items.length / chunkSize) }, (_, index) => ({
+      key: `chunk-${index}`,
+      label: null as string | null,
+      items: items.slice(index * chunkSize, (index + 1) * chunkSize),
+    }))
+  }, [items, grouping, t])
+  const groupOf = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const group of groups) for (const item of group.items) map.set(item.key, group.key)
+    return map
+  }, [groups])
+  // Groups that stay mounted off screen: the open creature's, plus a jump or keyboard target's.
+  // Only the latest jump or keyboard target stays mounted; the one before it is released.
+  const [pinned, setPinned] = useState<string | null>(null)
+  const pin = (key: string | undefined) => {
+    if (key) setPinned(key)
+  }
+  // A new set of results starts at its top, not at the scroll offset of the list it replaced.
+  const signature = `${grouping}|${items.length}|${items[0]?.key}`
+  const shownSignature = useRef(signature)
+  useEffect(() => {
+    if (shownSignature.current === signature) return
+    shownSignature.current = signature
+    if (listRef.current) showTopOf(listRef.current)
+  }, [signature])
+  const [rowEstimate, setRowEstimate] = useState(firstRowEstimate)
+  const job = useRef<{ key: string; focus: boolean } | null>(null)
+  // A row that was not mounted yet (deep link, End key) is focused or scrolled to once it is.
+  useEffect(() => {
+    const todo = job.current
+    if (!todo) return
+    const row = listRef.current?.querySelector<HTMLElement>(
+      `[data-row-key="${CSS.escape(todo.key)}"]`,
+    )
+    if (!row) return
+    job.current = null
+    if (todo.focus) row.querySelector<HTMLElement>('.bst-row-main')?.focus()
+    else centreUntilSettled(row)
+  })
+  // The open creature's row is scrolled into view when it was reached by a link.
+  const scrolledTo = useRef<string | null>(null)
+  useEffect(() => {
+    if (!selectedKey || scrolledTo.current === selectedKey || !groupOf.has(selectedKey)) return
+    scrolledTo.current = selectedKey
+    job.current = { key: selectedKey, focus: false }
+  }, [selectedKey, groupOf])
   if (items.length === 0)
     return (
       <div className="bst-empty">
@@ -1103,26 +1208,39 @@ function CreatureList({
         </Button>
       </div>
     )
+  const goTo = (key: string) => {
+    const row = listRef.current?.querySelector<HTMLElement>(
+      `[data-row-key="${CSS.escape(key)}"] .bst-row-main`,
+    )
+    if (row) row.focus()
+    else {
+      job.current = { key, focus: true }
+      pin(groupOf.get(key))
+    }
+  }
   // Arrow keys move between rows across groups (from a row or its picture); Home and End jump to
-  // the ends.
+  // the ends. They follow the data, so a row that is not mounted yet is reached too.
   const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
-    const rows = [...event.currentTarget.querySelectorAll<HTMLElement>('.bst-row-main')]
     const active = document.activeElement
-    const at = rows.findIndex(
-      (row) =>
-        row === active ||
-        (active?.matches('.combat-token-open') && row.closest('.bst-row')?.contains(active)),
-    )
+    if (!active?.matches('.bst-row-main, .combat-token-open')) return
+    const current = active.closest('[data-row-key]')?.getAttribute('data-row-key')
+    const at = items.findIndex((item) => item.key === current)
     if (at < 0) return
     event.preventDefault()
     const next =
       event.key === 'Home'
         ? 0
         : event.key === 'End'
-          ? rows.length - 1
-          : Math.max(0, Math.min(rows.length - 1, at + (event.key === 'ArrowDown' ? 1 : -1)))
-    rows[next]?.focus()
+          ? items.length - 1
+          : Math.max(0, Math.min(items.length - 1, at + (event.key === 'ArrowDown' ? 1 : -1)))
+    goTo(items[next]!.key)
+  }
+  const jumpTo = (index: number) => {
+    pin(groups[index]?.key)
+    const head = document.getElementById(`${listId}-${index}`)
+    if (head) centreUntilSettled(head, 'start')
+    head?.focus({ preventScroll: true })
   }
   const row = (item: CreatureListItem) => {
     const favorite = favorites.has(item.key)
@@ -1149,6 +1267,7 @@ function CreatureList({
     return (
       <li
         key={item.key}
+        data-row-key={item.key}
         className={pictured ? 'bst-row is-pictured' : 'bst-row'}
         data-current={current || undefined}
       >
@@ -1157,7 +1276,11 @@ function CreatureList({
           type="button"
           className="bst-row-main"
           aria-current={current ? 'true' : undefined}
-          onClick={(event) => select(item.key, event.currentTarget)}
+          onClick={(event) => {
+            // A row the user picked is already in view: only a link scrolls the list to its row.
+            scrolledTo.current = item.key
+            select(item.key, event.currentTarget)
+          }}
         >
           {!pictured && token}
           <span className="bst-row-text">
@@ -1206,16 +1329,56 @@ function CreatureList({
       </li>
     )
   }
+  const windowed = (group: (typeof groups)[number], index: number, list: ReactNode) => (
+    <Windowed
+      estimate={group.items.length * rowEstimate}
+      pinned={
+        pinned === group.key || (selectedKey !== null && groupOf.get(selectedKey) === group.key)
+      }
+      initiallyMounted={index < 2}
+      onMeasure={(height) => {
+        if (group.items.length < 5) return
+        const next = height / group.items.length
+        setRowEstimate((prev) => (Math.abs(prev - next) < 2 ? prev : next))
+      }}
+    >
+      {list}
+    </Windowed>
+  )
   return (
-    <div className="bst-list" onKeyDown={onKey}>
+    <div className="bst-list" ref={listRef} onKeyDown={onKey}>
+      {grouping !== null && groups.length > 1 && (
+        <JumpIndex
+          label={t('bestiary.jump')}
+          items={groups.map((group) => group.label ?? group.key)}
+          onJump={jumpTo}
+        />
+      )}
       {groups.map((group, index) =>
         group.label === null ? (
-          <ul key={group.key} className="bst-items" aria-label={t('bestiary.listLabel')}>
-            {group.items.map(row)}
-          </ul>
+          <div key={group.key}>
+            {windowed(
+              group,
+              index,
+              <ul
+                className="bst-items"
+                aria-label={
+                  groups.length === 1
+                    ? t('bestiary.listLabel')
+                    : t('bestiary.range', {
+                        from: index * chunkSize + 1,
+                        to: index * chunkSize + group.items.length,
+                        total: items.length,
+                      })
+                }
+              >
+                {group.items.map(row)}
+              </ul>,
+            )}
+          </div>
         ) : (
           <div key={group.key} className="bst-group">
-            <h3 className="bst-group-head" id={`${listId}-${index}`}>
+            <h3 className="bst-group-head" id={`${listId}-${index}`} tabIndex={-1}>
               <span>{group.label}</span>
               <span className="bst-group-count">
                 <span aria-hidden="true">{group.items.length}</span>
@@ -1224,9 +1387,13 @@ function CreatureList({
                 </span>
               </span>
             </h3>
-            <ul className="bst-items" aria-labelledby={`${listId}-${index}`}>
-              {group.items.map(row)}
-            </ul>
+            {windowed(
+              group,
+              index,
+              <ul className="bst-items" aria-labelledby={`${listId}-${index}`}>
+                {group.items.map(row)}
+              </ul>,
+            )}
           </div>
         ),
       )}

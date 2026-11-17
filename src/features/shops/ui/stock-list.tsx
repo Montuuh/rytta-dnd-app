@@ -6,7 +6,6 @@ import {
   Button,
   Loader,
   Collapse,
-  Drawer,
   Group,
   NumberInput,
   SegmentedControl,
@@ -15,7 +14,9 @@ import {
   TextInput,
   Title,
   UnstyledButton,
+  Drawer,
 } from '@mantine/core'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { usePhone } from '@/shared/ui/use-viewport'
 import {
   Check,
@@ -28,7 +29,6 @@ import {
   PackageOpen,
   PackagePlus,
   Search,
-  Store,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next'
 import { useLongPress } from '@/shared/ui/use-long-press'
 import {
   DefinitionEditor,
+  EmptyPanel,
   GpInput,
   itemCategories,
   useItemPicture,
@@ -436,15 +437,20 @@ export function StockList({
         </Button>
       </Group>
       {empty ? (
-        <div className="stock-empty">
-          <EmptyNote icon={Store}>{t('admin.type.emptyShelves')}</EmptyNote>
-          <Button
-            leftSection={<PackagePlus size={16} aria-hidden="true" />}
-            onClick={onStockFromType}
-          >
-            {t('admin.type.stockFrom')}
-          </Button>
-        </div>
+        <EmptyPanel
+          art="shop"
+          title={t('admin.type.emptyTitle')}
+          action={
+            <Button
+              leftSection={<PackagePlus size={16} aria-hidden="true" />}
+              onClick={onStockFromType}
+            >
+              {t('admin.type.stockFrom')}
+            </Button>
+          }
+        >
+          {t('admin.type.emptyShelves')}
+        </EmptyPanel>
       ) : (
         <ul className="stock-list">
           {shop.listings.map((listing) => {
@@ -529,6 +535,8 @@ export function AddItemsDrawer({
     setSearch('')
     onClose()
   }
+  // The picker keeps its entry while the item editor is open over it; Back closes the editor first.
+  useBackToClose(opened, close)
   if (creating !== null)
     return (
       <DefinitionEditor

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router'
 import { usePhone } from '@/shared/ui/use-viewport'
 
 import { creationModes, type CreationMode } from './modes'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 const icons = { quick: Zap, full: ListChecks, blank: FileText } as const
 
@@ -89,6 +90,7 @@ export function CreationChooser({
       </Button>
     </Stack>
   )
+  useBackToClose(opened, onClose)
   const close = { 'aria-label': t('panel.close'), size: 44 } as const
   return phone ? (
     <Drawer

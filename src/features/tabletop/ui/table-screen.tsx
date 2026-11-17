@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Compass, RefreshCw, Ruler, VolumeX, Wifi, WifiOff } from 'lucide-react'
+import { Compass, Ruler, Volume2, VolumeX, Wifi, WifiOff } from 'lucide-react'
 import { useAuth } from '@/features/auth'
-import { combatStateQuery, useCombatRealtime } from '@/features/combat'
+import {
+  combatStateQuery,
+  Elapsed,
+  isHiddenTurn,
+  nextUp,
+  useCombatRealtime,
+  useFreshness,
+} from '@/features/combat'
 import { mediaQuery, tabletopQuery, useTabletopRealtime } from '../api'
+import { tabletopPollMs } from '../domain/model'
 import { audioPlan, TableAudio } from '../audio/engine'
 import { fromSetup, squareCss } from '../domain/calibration'
 import { Board } from './board'
@@ -27,6 +35,30 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const query = useQuery(tabletopQuery(userId, campaignId, null, true, connected))
   const combat = useQuery(combatStateQuery(userId, campaignId, null, true))
   const view = query.data
+  // RYT-126 J4-03: staleness the way the combat screens derive it, for both queries. While realtime
+  // pushes changes the map polls only every minute, so its budget is that interval plus slack.
+  const known = [query.dataUpdatedAt, combat.dataUpdatedAt].filter((at) => at > 0)
+  const updatedAt = known.length > 0 ? Math.min(...known) : 0
+  const stale = useFreshness(
+    updatedAt,
+    (query.isError && query.data !== undefined) || (combat.isError && combat.data !== undefined),
+    tabletopPollMs(connected) + 15_000,
+  )
+  const [retrying, setRetrying] = useState(false)
+  const { refetch: refetchView } = query
+  const { refetch: refetchCombat } = combat
+  const retry = async () => {
+    setRetrying(true)
+    await Promise.allSettled([refetchView(), refetchCombat()])
+    setRetrying(false)
+  }
+  const loadFailed = query.isError && !view
+  // A map that failed to load tries again by itself every few seconds (the button does it now).
+  useEffect(() => {
+    if (!loadFailed || query.error?.message === 'forbidden') return
+    const timer = window.setInterval(() => void refetchView(), 8_000)
+    return () => window.clearInterval(timer)
+  }, [loadFailed, query.error, refetchView])
   const track = useQuery(mediaQuery(userId, view?.track?.path))
   const [started, setStarted] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -102,16 +134,29 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
 
   const scene = view?.scene ?? null
   const calibration = fromSetup(view?.live.screen)
+  // RYT-126 J4-34: an uncalibrated map fits the space above the status bar, not the whole screen.
+  const statusBar = useRef<HTMLDivElement>(null)
+  const [barHeight, setBarHeight] = useState(0)
+  useEffect(() => {
+    const node = statusBar.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+    const measure = () => setBarHeight(node.offsetHeight + 24)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+  const fitHeight = calibration ? size.h : Math.max(size.h / 2, size.h - barHeight)
   const square = calibration
     ? squareCss(calibration, size.dpr)
     : scene
-      ? Math.min(size.w / scene.cols, size.h / scene.rows)
+      ? Math.min(size.w / scene.cols, fitHeight / scene.rows)
       : 64
   const z = square / U
   const cx = view?.live.view_x ?? (scene ? scene.cols / 2 : 0)
   const cy = view?.live.view_y ?? (scene ? scene.rows / 2 : 0)
   const x = size.w / 2 - cx * U * z
-  const y = size.h / 2 - cy * U * z
+  const y = fitHeight / 2 - cy * U * z
   const worldTransform = `translate(${x}px, ${y}px) scale(${z})`
   const combatants = useMemo(
     () => new Map((combat.data?.combatants ?? []).map((c) => [c.id, c])),
@@ -121,7 +166,24 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const active = combat.data?.combatants.find((c) => c.is_active)
   const fight = encounter && (encounter.status === 'active' || encounter.status === 'initiative')
   const measure = view?.live.measure
-  const measureFresh = measure && now - Date.parse(measure.at) < 10 * 60 * 1000
+  const ping = view?.live.ping ?? null
+  // RYT-126 J4-18: a shared measure and ping belong to the scene they were made on. When the scene
+  // changes, the ones in the projection at that moment are not shown on the new scene.
+  const sceneId = scene?.id ?? null
+  const [hidden, setHidden] = useState<{ scene: string | null; measure?: string; ping?: string }>({
+    scene: sceneId,
+  })
+  if (hidden.scene !== sceneId)
+    setHidden(
+      hidden.scene === null
+        ? { scene: sceneId }
+        : { scene: sceneId, measure: measure?.at, ping: ping?.at },
+    )
+  const measureFresh =
+    measure && measure.at !== hidden.measure && now - Date.parse(measure.at) < 10 * 60 * 1000
+  const shownPing = ping && ping.at !== hidden.ping ? ping : null
+  const hiddenTurn = isHiddenTurn(encounter, combat.data?.combatants ?? [])
+  const upNext = nextUp(combat.data?.combatants ?? [])
 
   return (
     <div
@@ -129,7 +191,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       // Words on the table are sized in squares, so they read the same on any screen.
       style={{ '--tt-sq': `${square}px` } as CSSProperties}
     >
-      {query.isError && !view ? (
+      {loadFailed ? (
         <div className="tt-table-empty" role="alert">
           <Compass size={48} aria-hidden="true" />
           <p>
@@ -139,6 +201,16 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
                 : 'tabletop.error.load',
             )}
           </p>
+          {query.error.message !== 'forbidden' && (
+            <button
+              type="button"
+              className="tt-status-button"
+              aria-disabled={retrying || undefined}
+              onClick={() => !retrying && void retry()}
+            >
+              {retrying ? t('tabletop.table.retrying') : t('tabletop.table.retry')}
+            </button>
+          )}
         </div>
       ) : !view ? (
         <div className="tt-table-empty">
@@ -151,7 +223,8 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
           <p>{t('tabletop.table.nothingHelp')}</p>
         </div>
       ) : (
-        <div className="tt-table-world" style={{ transform: worldTransform }}>
+        // Keyed by scene: a new scene fades in instead of cutting (reduced motion: no fade).
+        <div className="tt-table-world" key={scene.id} style={{ transform: worldTransform }}>
           <Board
             scene={scene}
             items={view.items}
@@ -160,7 +233,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
             overlay={
               <>
                 {measureFresh && <MeasureTape points={measure.points} large />}
-                <PingRipple ping={view.live.ping} />
+                <PingRipple ping={shownPing} />
               </>
             }
           />
@@ -185,28 +258,53 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
           <TableRuler square={square} baseMm={calibration.baseMm} />
         </div>
       )}
-      <div className="tt-status" role="status">
+      <div className="tt-status" role="status" ref={statusBar}>
         {scene && <span className="tt-status-scene">{scene.name}</span>}
         {fight && (
-          <span>
+          <span className={`tt-status-turn${stale ? ' is-stale' : ''}`}>
             {t('tabletop.table.round', { round: encounter.round })}
-            {active ? ` · ${t('tabletop.table.turn', { name: active.name })}` : ''}
+            {hiddenTurn
+              ? ` · ${t('tabletop.table.hiddenTurn')}`
+              : active
+                ? ` · ${t('tabletop.table.turn', { name: active.name })}`
+                : ''}
+            {!hiddenTurn && upNext ? ` · ${t('tabletop.table.after', { name: upNext.name })}` : ''}
           </span>
         )}
-        <span className="tt-status-net">
-          {connected ? (
-            <Wifi size={14} aria-hidden="true" />
-          ) : query.isError ? (
+        {stale ? (
+          <span className="tt-status-net is-offline">
             <WifiOff size={14} aria-hidden="true" />
-          ) : (
-            <RefreshCw size={14} aria-hidden="true" />
-          )}
-          {connected
-            ? t('tabletop.table.live')
-            : query.isError
-              ? t('tabletop.table.offline')
-              : t('tabletop.table.polling')}
-        </span>
+            {/* The count changes every second: sighted readers get it, the live region gets the state. */}
+            {updatedAt === 0 ? (
+              t('tabletop.table.offline')
+            ) : (
+              <>
+                <span aria-hidden="true">
+                  <Elapsed
+                    since={updatedAt}
+                    format={(seconds) => t('tabletop.table.offlineSince', { seconds })}
+                  />
+                </span>
+                <span className="visually-hidden">{t('tabletop.table.offline')}</span>
+              </>
+            )}
+            <button
+              type="button"
+              className="tt-status-button"
+              aria-disabled={retrying || undefined}
+              onClick={() => !retrying && void retry()}
+            >
+              {retrying ? t('tabletop.table.retrying') : t('tabletop.table.retry')}
+            </button>
+          </span>
+        ) : (
+          connected && (
+            <span className="tt-status-net">
+              <Wifi size={14} aria-hidden="true" />
+              {t('tabletop.table.live')}
+            </span>
+          )
+        )}
         {!calibration && scene && (
           <span className="tt-status-warn">{t('tabletop.table.uncalibrated')}</span>
         )}
@@ -223,14 +321,13 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
               <Ruler size={14} aria-hidden="true" />
               {t('tabletop.table.ruler')}
             </button>
-            <button
-              type="button"
-              className="tt-status-button"
-              onClick={() => setMuted((m) => !m)}
-              aria-pressed={muted}
-            >
-              <VolumeX size={14} aria-hidden="true" />
-              {t('tabletop.table.mute')}
+            <button type="button" className="tt-status-button" onClick={() => setMuted((m) => !m)}>
+              {muted ? (
+                <Volume2 size={14} aria-hidden="true" />
+              ) : (
+                <VolumeX size={14} aria-hidden="true" />
+              )}
+              {t(muted ? 'tabletop.table.unmute' : 'tabletop.table.mute')}
             </button>
           </>
         )}

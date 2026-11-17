@@ -3,6 +3,7 @@ import { Alert, Button, Group, Modal, Stack, Text } from '@mantine/core'
 import { Moon, Sunset } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { newRequestId } from '@/shared/lib/request-id'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useRestAction } from '../api'
 import type { RestKind } from '../domain/rest'
 import { RecoveryLines } from './recovery'
@@ -32,6 +33,9 @@ export function RestRequestDialog({
   const { t } = useTranslation()
   const { campaignId, state, openPanel } = useRestPanel()
   const action = useRestAction(campaignId ?? '')
+  useBackToClose(kind !== null, () => {
+    if (!action.isPending) onClose()
+  })
   // One id per opened dialog, so a retried tap never asks twice.
   const [requestId, setRequestId] = useState(newRequestId)
   const [shownKind, setShownKind] = useState(kind)

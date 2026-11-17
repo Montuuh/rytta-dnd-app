@@ -113,3 +113,9 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     and [RYT-107 verification](evidence/RYT-107/validation.md).
 55. [ADR 045: default trackers for species, feats and subclasses](decisions/045-sheet-default-trackers.md)
     and [RYT-102 verification](evidence/RYT-102/validation.md).
+56. [ADR 046: level up, one table screen for combat, the phone map, dice and casting](decisions/046-table-pieces.md):
+    the owner decisions of RYT-127, built by RYT-130 to RYT-134.
+57. [Interface art](interface-art.md): the painted brand, cover, shop, class, item and empty-state
+    pictures of RYT-112, their rules, regeneration steps, provenance and credits.
+58. [ADR 047: hosting on Cloudflare Workers static assets](decisions/047-hosting-cloudflare-pages.md):
+    security headers, caching and the site at the domain root (RYT-116).

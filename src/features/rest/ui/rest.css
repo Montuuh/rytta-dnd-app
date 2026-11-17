@@ -108,13 +108,34 @@
   color: var(--app-muted);
 }
 
-/* The fire: seats on the upper arc, the hearth below. */
-.rest-fire {
-  position: relative;
-  height: 250px;
-  margin-inline: auto;
+/* The fire: seats on the upper arc, the hearth below. The painted campfire is the backdrop; its
+   scrim and ink are fixed, so the names stay AA in both themes (like the shop banner). */
+.rest-camp {
+  display: grid;
+  gap: 8px;
   width: 100%;
   max-width: 420px;
+  margin-inline: auto;
+}
+.rest-fire {
+  --fire-ink: #f5ebd6;
+  --fire-ink-soft: #e2d3b8;
+  --fire-scrim: 20 15 11;
+  position: relative;
+  height: 250px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--app-border);
+  color: var(--fire-ink);
+  background:
+    radial-gradient(
+      ellipse at 50% 78%,
+      rgb(var(--fire-scrim) / 0.28) 0,
+      rgb(var(--fire-scrim) / 0.74) 70%
+    ),
+    var(--fire-art) center 70% / cover no-repeat,
+    rgb(var(--fire-scrim));
 }
 .rest-seats {
   list-style: none;
@@ -123,7 +144,9 @@
 }
 .rest-seat {
   position: absolute;
+  /* Fixed box, same numbers as seatBoxes in domain/campfire-layout.ts. */
   width: 92px;
+  height: 106px;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
@@ -136,7 +159,8 @@
   display: inline-flex;
   border-radius: 50%;
   padding: 3px;
-  border: 2px dashed var(--app-muted);
+  border: 2px dashed var(--fire-ink-soft);
+  background: rgb(var(--fire-scrim) / 0.55);
   transition: border-color 0.2s ease-out;
 }
 .rest-seat[data-mark='yes'] .rest-seat-face {
@@ -179,30 +203,36 @@
   line-height: 1.15;
   max-width: 100%;
   overflow-wrap: anywhere;
+  text-shadow: 0 1px 2px rgb(var(--fire-scrim) / 0.95);
+}
+/* Placed seats (arc, ring) have a box that does not depend on the font: one line of name and one of
+   vote, each exactly 1.15em tall and clipped with an ellipsis, so wide or tall fallback fonts cannot
+   grow a seat into its neighbour. Rows flow, so they may wrap. */
+.rest-fire:not([data-layout='rows']) .rest-seat > * {
+  flex: none;
+  max-width: 100%;
+}
+.rest-fire:not([data-layout='rows']) .rest-seat-name,
+.rest-fire:not([data-layout='rows']) .rest-seat-vote {
+  height: 1.15em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .rest-seat-vote {
   font-size: var(--fs-tag);
-  color: var(--app-muted);
+  color: var(--fire-ink-soft);
   line-height: 1.15;
+  text-shadow: 0 1px 2px rgb(var(--fire-scrim) / 0.95);
 }
 .rest-hearth {
-  position: absolute;
-  left: 50%;
-  top: 72%;
-  transform: translate(-50%, -50%);
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin: 0;
   text-align: center;
-  gap: 2px;
-}
-.rest-flame {
-  width: 64px;
-  height: 64px;
-  padding: 14px;
-  border-radius: 50%;
-  color: var(--app-accent);
-  background: radial-gradient(circle at 50% 62%, var(--gold-soft), transparent 70%);
 }
 .rest-hearth-count {
   font-family: Georgia, Cambria, 'Times New Roman', serif;
@@ -227,12 +257,13 @@
   aspect-ratio: 1 / 1;
   max-width: 400px;
 }
-.rest-fire[data-layout='ring'] .rest-hearth {
-  top: 50%;
+.rest-fire[data-layout='ring'] .rest-seat {
+  width: 80px;
+  height: 82px;
 }
-.rest-fire[data-layout='ring'] .rest-seat,
 .rest-fire[data-layout='rows'] .rest-seat {
   width: 80px;
+  height: auto;
 }
 .rest-fire[data-layout='ring'] .rest-seat-vote {
   position: absolute;
@@ -244,15 +275,11 @@
 }
 .rest-fire[data-layout='rows'] {
   height: auto;
+  padding: 16px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-}
-.rest-fire[data-layout='rows'] .rest-hearth {
-  position: static;
-  transform: none;
-  order: -1;
 }
 .rest-fire[data-layout='rows'] .rest-seats {
   display: flex;
@@ -372,7 +399,9 @@
   min-width: 0;
 }
 .rest-dice-title {
-  padding: 0;
+  /* A notch in the border: the label sits on its own ground, never struck through by the line. */
+  padding: 0 8px;
+  background: var(--app-bg);
   font-weight: 600;
   font-size: var(--fs-meta);
 }
@@ -527,4 +556,16 @@
   .rest-bar-gain {
     transition: none;
   }
+}
+
+.rest-dice-faces {
+  display: block;
+  color: var(--app-text);
+  font-weight: 600;
+}
+.rest-overheal {
+  display: block;
+  margin-top: 4px;
+  color: var(--warn);
+  font-weight: 600;
 }

@@ -40,6 +40,7 @@ import {
   type Combatant,
 } from '@/features/combat'
 import { libraryQuery, mediaQuery, useMediaUpload, useTabletopAction } from '../api'
+import { limitKey } from './limits'
 import { mediaLimit } from '../data/repository'
 import { prepareImage } from './media'
 import { sizeSquares } from '../domain/geometry'
@@ -481,7 +482,7 @@ function CardForm({
   const [body, setBody] = useState(card?.body ?? '')
   const [file, setFile] = useState<File | null>(null)
   const [imagePath, setImagePath] = useState(card?.image_path ?? null)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<boolean | NonNullable<ReturnType<typeof limitKey>>>(false)
   const image = useQuery(mediaQuery(state.user!.id, imagePath))
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
   return (
@@ -490,8 +491,8 @@ function CardForm({
       onSubmit={(e) => {
         e.preventDefault()
         setError(false)
-        onSave({ title: title.trim(), body, image_path: imagePath }, file).catch(() =>
-          setError(true),
+        onSave({ title: title.trim(), body, image_path: imagePath }, file).catch((caught) =>
+          setError(limitKey(caught) ?? true),
         )
       }}
     >
@@ -545,7 +546,7 @@ function CardForm({
       </div>
       {error && (
         <p className="tt-error" role="alert">
-          {t('tabletop.error.save')}
+          {t(error === true ? 'tabletop.error.save' : error)}
         </p>
       )}
       <div className="tt-row">
@@ -783,8 +784,8 @@ export function AudioPanel({
                 mime,
                 size: file.size,
               })
-            } catch {
-              setError(t('tabletop.audio.uploadFailed'))
+            } catch (caught) {
+              setError(t(limitKey(caught) ?? 'tabletop.audio.uploadFailed'))
             }
           }}
         >

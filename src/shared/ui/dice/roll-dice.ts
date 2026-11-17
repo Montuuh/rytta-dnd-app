@@ -9,7 +9,7 @@ export type DieSides = 4 | 6 | 8 | 10 | 12 | 20
 
 /** Rytta's amber for every die (user decision 2026-11-10). */
 const amber = '#eda145'
-const holdMs = 1800
+const holdMs = 1200
 const timeoutMs = 9000
 
 type DiceBox = {
@@ -80,8 +80,16 @@ const timeout = () =>
     window.setTimeout(() => reject(new Error('timeout')), timeoutMs),
   )
 
-/** Rolls `count` dice with `sides` faces and resolves with each die's value. */
-export async function rollDice(count: number, sides: DieSides): Promise<number[]> {
+/**
+ * Rolls `count` dice with `sides` faces and resolves with each die's value. By default the dice
+ * stay on the table dimmed for a moment; `hold: 0` clears them the moment they stop, for callers
+ * that write the result into the page right under them (the short-rest dock).
+ */
+export async function rollDice(
+  count: number,
+  sides: DieSides,
+  { hold = holdMs }: { hold?: number } = {},
+): Promise<number[]> {
   if (count < 1) return []
   if (reducedMotion() || !webgl()) return randomRolls(count, sides)
   try {
@@ -89,17 +97,24 @@ export async function rollDice(count: number, sides: DieSides): Promise<number[]
     const box = await instance
     window.clearTimeout(clearTimer)
     box.show()
+    stage?.classList.remove('is-settled')
     stage?.classList.add('is-rolling')
     const results = await Promise.race([
       box.roll(`${count}d${sides}`, { themeColor: amber }),
       timeout(),
     ])
     const values = results.map((result) => result.value)
-    // The dice stay on the table for a moment, then the overlay clears.
-    clearTimer = window.setTimeout(() => {
-      stage?.classList.remove('is-rolling')
+    // The dice stay on the table for a moment, dimmed so the number they gave (written into the
+    // page the moment they stop) is readable above them; then the overlay clears (RYT-126 J4-23).
+    const clearStage = () => {
+      stage?.classList.remove('is-rolling', 'is-settled')
       box.clear()
-    }, holdMs)
+    }
+    if (hold <= 0) clearStage()
+    else {
+      stage?.classList.add('is-settled')
+      clearTimer = window.setTimeout(clearStage, hold)
+    }
     if (
       values.length !== count ||
       values.some((value) => !Number.isInteger(value) || value < 1 || value > sides)

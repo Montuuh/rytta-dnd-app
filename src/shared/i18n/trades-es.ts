@@ -92,4 +92,12 @@ export const tradesEs = {
   'inventory.ledger.trade_in': 'Trueque: recibido {{amount}} × {{name}}',
   'inventory.ledger.trade_out': 'Trueque: entregado {{amount}} × {{name}}',
   'dm.auditEvent.trade_completed': 'Trueque cerrado',
+  'trade.window.cancelAsk': '¿Cancelar el trueque para los dos?',
+  'trade.window.cancelYes': 'Sí, cancelar',
+  'trade.window.cancelNo': 'Seguir comerciando',
+  'trade.window.goldOnlyHave': 'Solo tienes {{gold}} po',
+  'trade.picker.onlyHave_one': 'Solo tienes {{count}}',
+  'trade.picker.onlyHave_other': 'Solo tienes {{count}}',
+  'trade.error.quantityYou': 'Ya no tienes tantas unidades de {{name}}. Baja la cantidad.',
+  'trade.error.quantityPartner': '{{name}} ya no tiene todo lo que ofrece. Espera a que lo cambie.',
 } satisfies Record<keyof typeof tradesEn, string>

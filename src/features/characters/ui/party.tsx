@@ -14,7 +14,7 @@ import {
 } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import { Minus, Plus } from 'lucide-react'
+import { Minus, Plus, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -23,6 +23,7 @@ import { GpInput, useCampaignPortraits } from '@/features/inventory'
 import { TradeHistory } from '@/features/trades'
 import { MAX_GP, roundGp } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
+import { ArtPlate } from '@/shared/ui/art'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { PageHead } from '@/shared/ui/page-head'
 import { PullToRefresh } from '@/shared/ui/pull-to-refresh'
@@ -40,6 +41,7 @@ import { partyTeammates } from '../domain/party'
 import { DmPlate, HeroPlate, TeammateCard, type ResourceError } from './party-plates'
 import { PlayerAssignmentEditor } from './player-assignment'
 import { ArchiveDialog, FirstCharacter, RosterLink } from './roster'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 const fields = ['gold', 'water_units', 'rations', 'exhaustion'] as const
 type Editor = { kind: 'create' } | { kind: 'resources'; character: Character }
@@ -116,15 +118,18 @@ export function CharacterParty() {
                 )}
               />
               {/* RYT-097: the DM creates from the head; Players create from My characters. */}
-              <Button
-                variant="default"
-                className="party-create"
-                leftSection={<Plus size={18} aria-hidden="true" />}
-                aria-label={t('party.newCharacterLabel')}
-                onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
-              >
-                {t('party.newCharacter')}
-              </Button>
+              {/* The empty state below offers the same action: one create button per view. */}
+              {(query.isError || query.data?.length !== 0) && (
+                <Button
+                  variant="default"
+                  className="party-create"
+                  leftSection={<Plus size={18} aria-hidden="true" />}
+                  aria-label={t('party.newCharacterLabel')}
+                  onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
+                >
+                  {t('party.newCharacter')}
+                </Button>
+              )}
             </div>
           ) : (
             own.roster &&
@@ -198,9 +203,36 @@ export function CharacterParty() {
         // RYT-044: a Player without characters is guided to create the first one.
         (!dm && !playerPreview ? (
           <FirstCharacter withArchived={(own.roster?.archived.length ?? 0) > 0} archivedLink />
+        ) : dm ? (
+          // RYT-112: the DM's empty party offers the two real next steps, like the Player's.
+          <section className="party-empty" aria-labelledby="party-empty-title">
+            <ArtPlate name="empty/campaigns" size={168} />
+            <Title order={2} id="party-empty-title" className="party-empty-title">
+              {t('party.dmEmptyTitle')}
+            </Title>
+            <Text className="party-empty-text">{t('party.dmEmptyText')}</Text>
+            <div className="party-empty-actions">
+              <Button
+                size="lg"
+                leftSection={<Plus size={20} aria-hidden="true" />}
+                onClick={(event) => open({ kind: 'create' }, event.currentTarget)}
+              >
+                {t('party.newCharacterLabel')}
+              </Button>
+              <Button
+                component={Link}
+                to={`/campaign/${campaign.id}/members`}
+                size="lg"
+                variant="default"
+                leftSection={<UserPlus size={20} aria-hidden="true" />}
+              >
+                {t('members.invite')}
+              </Button>
+            </div>
+          </section>
         ) : (
           <Paper p="xl">
-            <Text>{t(dm ? 'characters.empty' : 'characters.emptyPlayer')}</Text>
+            <Text>{t('characters.emptyPlayer')}</Text>
           </Paper>
         ))}
       {!query.isError && characters.length > 0 && dm && (
@@ -353,6 +385,9 @@ function CharacterEditor({
     },
   })
   const title = t(editor.kind === 'create' ? 'characters.create' : 'characters.edit')
+  useBackToClose(true, () => {
+    if (!action.isPending) close()
+  })
   return (
     <Modal
       opened

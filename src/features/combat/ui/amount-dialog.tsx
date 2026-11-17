@@ -3,13 +3,13 @@ import {
   Button,
   Checkbox,
   Group,
-  Modal,
   NumberInput,
   SegmentedControl,
   Stack,
   Text,
   UnstyledButton,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { Delete } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useReturnFocus } from './helpers'

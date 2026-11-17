@@ -191,4 +191,5 @@ export const glossaryEn = {
   'glossary.hb.error.invalid': 'Check the fields: one is empty or too long.',
   'glossary.hb.error.unavailable': 'You are offline. Try again when you reconnect.',
   'glossary.hb.error.unknown': 'The entry could not be saved. Try again.',
+  'glossary.range': 'Entries {{from}} to {{to}} of {{total}}',
 } as const

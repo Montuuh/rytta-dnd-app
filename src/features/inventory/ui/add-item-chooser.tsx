@@ -1,14 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import {
-  Alert,
-  Button,
-  Drawer,
-  Loader,
-  Stack,
-  Text,
-  TextInput,
-  UnstyledButton,
-} from '@mantine/core'
+import { Alert, Button, Loader, Stack, Text, TextInput, UnstyledButton } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Check, Hammer, PackageSearch, Search } from 'lucide-react'

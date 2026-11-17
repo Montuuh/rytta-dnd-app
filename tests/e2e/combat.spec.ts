@@ -34,13 +34,13 @@ async function audit(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  await expectTouchTargets(page, '[role="dialog"] button:visible:not(.glossary-term)')
+  await expectTouchTargets(page, '[role="dialog"] button:visible')
 }
 // The DM keeps both views mounted: only the visible one counts.
 const row = (page: Page, name: string) =>
   page.locator('.combat-rail:visible .combat-row', { hasText: name }).first()
 /** RYT-042: the DM's view switch, tapped like a person would (its radios are visually hidden). */
-async function view(page: Page, name: 'Mesa' | 'Consola del DM' | 'Table' | 'DM console') {
+async function view(page: Page, name: 'Orden' | 'Consola del DM' | 'Order' | 'DM console') {
   await page.locator('.combat-view-switch label', { hasText: name }).click()
   await expect(page.getByRole('radio', { name })).toBeChecked()
 }
@@ -144,7 +144,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await dm.getByRole('button', { name: 'Elegir objetivos' }).click()
   await dm.getByRole('checkbox', { name: 'Elegir a Goblin 1' }).check()
   await dm.getByRole('checkbox', { name: 'Elegir a Goblin 2' }).check()
-  await view(dm, 'Mesa')
+  await view(dm, 'Orden')
   await expect(dm.locator('.combat-table-active')).toHaveText('Goblin 1')
   await view(dm, 'Consola del DM')
   await expect(dm.getByRole('checkbox', { name: 'Elegir a Goblin 1' })).toBeChecked()
@@ -180,7 +180,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await expect(row(arin, 'Bea')).toContainText('18/18 PG')
 
   // 8. The table view is a read-only projection; the DM reaches it with the view switch.
-  await view(dm, 'Mesa')
+  await view(dm, 'Orden')
   // RYT-041: there is no full screen control for anyone.
   await expect(dm.getByRole('button', { name: 'Pantalla completa' })).toHaveCount(0)
   await expect(dm.locator('.combat-table-active')).toHaveText('Goblin 1')
@@ -202,7 +202,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await expect(dm.locator('.combat-multi-bar')).toHaveCount(0)
   await expect(dm.getByRole('button', { name: /^Daño$|^Curar$/ })).toHaveCount(0)
   await audit(dm)
-  await view(dm, 'Mesa')
+  await view(dm, 'Orden')
   await expect(dm.getByRole('heading', { name: 'Resumen del combate' })).toBeVisible()
   const recap = arin.getByRole('region', { name: 'Resumen del combate' })
   await expect(recap).toBeVisible({ timeout: 20_000 })
@@ -279,7 +279,7 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
   // Dismissing with the keyboard returns focus to the control that failed.
   const next = page.getByRole('button', { name: 'Siguiente turno' })
   await next.click()
-  await toast.getByRole('button', { name: 'Cancelar' }).focus()
+  await toast.getByRole('button', { name: 'Cerrar' }).focus()
   await page.keyboard.press('Enter')
   await expect(toast).toBeHidden()
   await expect(next).toBeFocused()
@@ -313,7 +313,7 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
   await audit(page)
   await evidence(page, info.project.name, 'error-detail')
   // Errors inside a drawer wait for the person; dismissing returns to the same place.
-  await inline.getByRole('button', { name: 'Cancelar' }).focus()
+  await inline.getByRole('button', { name: 'Cerrar' }).focus()
   await page.keyboard.press('Enter')
   await expect(inline).toBeHidden()
   await expect(page.getByRole('checkbox', { name: 'Derribado' })).toBeFocused()
@@ -1006,7 +1006,7 @@ test('RYT-042 the DM opens the table view and switches to the console without lo
   })
   await page.goto(`./#/campaign/${campaignId}/combat/${id}`)
   // The table view is the default: the table projection, no console controls.
-  const tableRadio = page.getByRole('radio', { name: 'Mesa' })
+  const tableRadio = page.getByRole('radio', { name: 'Orden' })
   const consoleRadio = page.getByRole('radio', { name: 'Consola del DM' })
   await expect(tableRadio).toBeChecked()
   await expect(page.locator('.combat-table-active')).toHaveText('Arin')
@@ -1036,7 +1036,7 @@ test('RYT-042 the DM opens the table view and switches to the console without lo
   await evidence(page, info.project.name, 'dm-console', 'RYT-042')
 
   // Touch: tap the table view, then come back with the keyboard; nothing was lost.
-  await view(page, 'Mesa')
+  await view(page, 'Orden')
   await expect(page.locator('.combat-table-active')).toHaveText('Bea')
   await expect(page.getByRole('checkbox', { name: 'Elegir a Goblin 2' })).toHaveCount(0)
   await tableRadio.focus()
@@ -1058,7 +1058,7 @@ test('RYT-042 the DM opens the table view and switches to the console without lo
   })
   await page.getByRole('button', { name: 'Elegir objetivos' }).click()
   await page.getByRole('checkbox', { name: 'Elegir a Goblin 2' }).check()
-  await view(page, 'Mesa')
+  await view(page, 'Orden')
   server.act('set_encounter_status', { target_encounter: id, new_status: 'ended' })
   const recap = page.getByRole('region', { name: 'Resumen del combate' })
   await expect(recap).toBeVisible({ timeout: 20_000 })
@@ -1251,13 +1251,17 @@ test('RYT-098 portraits open the viewer from the table banner and the detail, no
   await expect(viewer).toHaveCount(0)
   await expect(detail).toBeVisible()
   await expect(portrait).toBeFocused()
-  // A monogram is never a button.
+  // A class emblem is never a button.
   if ((page.viewportSize()?.width ?? 1440) < 992) {
     await page.keyboard.press('Escape')
     await expect(page.locator('.combat-detail:visible')).toHaveCount(0)
   }
   await row(page, 'Bea').click()
-  await expect(page.locator('.combat-detail:visible .combat-token-monogram')).toHaveText('B')
+  // RYT-112: a character without a picture wears its class emblem instead of initials.
+  await expect(page.locator('.combat-detail:visible .combat-token img')).toHaveAttribute(
+    'src',
+    /classes\//,
+  )
   await expect(page.locator('.combat-detail:visible .combat-token-open')).toHaveCount(0)
   expect(errors).toEqual([])
 })
@@ -1327,6 +1331,7 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   // Tokens: the own portrait and the goblin art load; Bea and Cato have monograms by side.
   await expect(row(page, 'Arin').locator('.combat-token img')).toHaveAttribute('src', /ranger/)
   await expect(row(page, 'Goblin 3').locator('.combat-token img')).toHaveAttribute('src', /goblin/)
+  // Bea has no class emblem in this fixture: initials by side, as before.
   await expect(row(page, 'Bea').locator('.combat-token img')).toHaveCount(0)
   await expect(row(page, 'Bea').locator('.combat-token-monogram')).toHaveText('B')
   await expect(row(page, 'Bea').locator('.combat-token-monogram')).toHaveAttribute(
@@ -1366,13 +1371,111 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   await evidence(page, info.project.name, 'player-bands-150', 'RYT-043')
   await page.evaluate(() => (document.documentElement.style.fontSize = ''))
 
-  // An image that cannot load falls back to the monogram (no broken image).
+  // An image that cannot load falls back to the class emblem (no broken image).
   await page.route(/\/art\/ranger\.svg/, (route) => route.fulfill({ status: 404, body: '' }))
   await page.reload()
-  await expect(row(page, 'Arin').locator('.combat-token-monogram')).toHaveText('A', {
+  await expect(row(page, 'Arin').locator('.combat-token img')).toHaveAttribute('src', /classes\//, {
     timeout: 15_000,
   })
-  await expect(row(page, 'Arin').locator('.combat-token img')).toHaveCount(0)
+  await expect(row(page, 'Arin').locator('.combat-token img[src*="ranger"]')).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+/** RYT-118: Bea is a bard and Cato a wizard behind the alias "Encapuchado". */
+function seedClasses(server: ReturnType<typeof combatServer>) {
+  const art = seedArt(server)
+  server.classes[beaId] = 'bard'
+  server.classes[catoId] = 'wizard'
+  const encounter = server.encounters.find((e) => e.id === art.id)!
+  encounter.combatants.find((c) => c.name === 'Cato')!.public_name = 'Encapuchado'
+  return art
+}
+
+test('RYT-118 Players see teammates’ class emblems on the Table view, never behind an alias', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const projections: string[] = []
+  page.on('response', async (response) => {
+    if (response.url().includes('/rpc/get_combat_state')) projections.push(await response.text())
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  // The Player's party cache knows no class for Bea: the emblem comes from the projection.
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  seedClasses(server)
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  await expect(page.locator('.combat-table-active')).toHaveText('¡Te toca!', { timeout: 15_000 })
+  // Bea (no portrait) wears the bard emblem in the order and on the own turn's hand-off.
+  await expect(row(page, 'Bea').locator('.combat-token img')).toHaveAttribute(
+    'src',
+    /classes\/thumbs\/bard/,
+  )
+  // RYT-126 J4-22: the emblem is a badge on the initial (the painted emblems are dark).
+  await expect(row(page, 'Bea').locator('.combat-token-monogram')).toHaveText('B')
+  await expect(row(page, 'Bea').locator('.combat-token-emblem')).toHaveCount(1)
+  // The small hand-off token (32px) keeps the initial only: a badge that size is just noise.
+  const next = page.locator('.combat-table-now .combat-token:not(.is-active)')
+  await expect(next.locator('.combat-token-monogram')).toHaveText('B')
+  // An emblem is decoration, never a button.
+  await expect(page.locator('.combat-table-now .combat-token-open:not(.is-active)')).toHaveCount(0)
+  // The alias keeps its initials and the projection never names the class behind it.
+  await expect(row(page, 'Encapuchado').locator('.combat-token img')).toHaveCount(0)
+  await expect(row(page, 'Encapuchado').locator('.combat-token-monogram')).toHaveText('E')
+  await expect(page.getByText('Cato')).toHaveCount(0)
+  await expect(row(page, 'Encapuchado')).not.toContainText('PG')
+  expect(projections.length).toBeGreaterThan(0)
+  for (const body of projections) {
+    expect(body).not.toContain('wizard')
+    expect(body).not.toContain('Ogre')
+  }
+  await audit(page)
+  await evidence(page, info.project.name, 'player-table-emblems', 'RYT-118')
+  expect(errors).toEqual([])
+})
+
+test('RYT-118 the DM’s Table view shows the same class emblems as the console', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  const art = seedClasses(server)
+  await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
+  await expect(page.getByRole('radio', { name: 'Orden' })).toBeChecked()
+  await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
+  await expect(row(page, 'Bea').locator('.combat-token img')).toHaveAttribute(
+    'src',
+    /classes\/thumbs\/bard/,
+  )
+  // The table projection hides the alias's class from the DM's table screen as well.
+  await expect(row(page, 'Encapuchado').locator('.combat-token img')).toHaveCount(0)
+  await expect(row(page, 'Encapuchado').locator('.combat-token-monogram')).toHaveText('E')
+  await audit(page)
+  await evidence(page, info.project.name, 'dm-table-emblems', 'RYT-118')
+  // The console still shows the class for the DM (own full view).
+  await view(page, 'Consola del DM')
+  await expect(row(page, 'Cato').locator('.combat-token img')).toHaveAttribute(
+    'src',
+    /classes\/thumbs\/wizard/,
+  )
   expect(errors).toEqual([])
 })
 
@@ -1613,7 +1716,7 @@ test('RYT-042 R2-2/R2-3: the end of a fight moves focus to the recap and refresh
   await expect(page.getByRole('button', { name: 'Siguiente turno' })).toBeVisible({
     timeout: 15_000,
   })
-  await view(page, 'Mesa')
+  await view(page, 'Orden')
   server.act('set_encounter_status', { target_encounter: second, new_status: 'ended' })
   await expect(page.getByRole('region', { name: 'Resumen del combate' })).toBeVisible({
     timeout: 15_000,
@@ -1861,7 +1964,16 @@ test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the who
   // A success: stamped, announced, the roll locks for the round and focus moves to the hand-off.
   await success.click()
   await expect(saves.getByRole('group', { name: '1 de 3 éxitos' })).toBeVisible()
-  await expect(saves.getByRole('button')).toHaveCount(0)
+  // RYT-126 J4-11: the only control left is the Player's own ten-second undo (the server lets the
+  // actor take back the own save); taking it back re-opens the roll for the round.
+  const takeBack = saves.getByRole('button', { name: /^Deshacer mi última salvación/ })
+  await expect(saves.getByRole('button')).toHaveCount(1)
+  await expect(takeBack).toBeVisible()
+  await takeBack.click()
+  await expect(saves.getByRole('group', { name: '0 de 3 éxitos' })).toBeVisible({ timeout: 15_000 })
+  await expect(arin.getByText('Salvación deshecha. Puedes volver a tirar.')).toBeVisible()
+  await success.click()
+  await expect(saves.getByRole('group', { name: '1 de 3 éxitos' })).toBeVisible()
   await expect(saves).toContainText('Éxito marcado. El DM puede deshacer un error.')
   await expect(handoff).toBeFocused()
   // Recorded: the hand-off becomes the filled primary key.
@@ -1887,7 +1999,8 @@ test('RYT-045 death saves at 0 HP: marks, natural 1 and 20, outcomes for the who
     { timeout: 15_000 },
   )
   await expect(cato.getByText('Arin supera una salvación de muerte.')).toBeAttached()
-  await expect(row(cato, 'Arin').getByRole('button')).toHaveCount(0)
+  // Only glossary terms (the condition) are controls on the row.
+  await expect(row(cato, 'Arin').locator('button:not(.glossary-term)')).toHaveCount(0)
   await evidence(arin, info.project.name, 'death-saves-marked', 'RYT-045')
 
   // Round 2: a natural 1 counts two failures.
@@ -2049,5 +2162,122 @@ test('RYT-088 the DM opens a creature in a fight on its portrait, which opens th
   await row(page, 'Goblin 2').click()
   await expect(page.locator('.combat-detail:visible .combat-token')).toBeVisible()
   await expect(page.locator('.combat-detail:visible .bst-plate')).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+test('RYT-126 a hidden creature’s turn is a deliberate state that guesses nobody', async ({
+  browser,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  seedTurns(server)
+  const goblin = combatantId(server, 'Goblin')
+  // The creature acts hidden from the Players, as the DM's reveal control leaves it.
+  server.act('update_combatant', { target_combatant: goblin, patch: { hidden: true } })
+  server.act('set_active_turn', {
+    target_encounter: server.encounters[0]!.id,
+    target_combatant: goblin,
+    expected_active: server.encounters[0]!.active,
+  })
+  const bea = await playerPage(browser, info, server, peerId, errors)
+  const banner = bea.locator('.combat-table-now')
+  await expect(banner).toContainText('Turno oculto', { timeout: 15_000 })
+  await expect(banner).toContainText('Alguien que no ves está actuando')
+  // No guess: no "Después", no countdown, no name in the banner, nothing marked as acting.
+  await expect(banner).not.toContainText('Después')
+  await expect(banner).not.toContainText(/Te toca dentro de/)
+  await expect(banner).not.toContainText('Goblin')
+  await expect(bea.locator('.combat-row.is-active')).toHaveCount(0)
+  await expect(bea.getByText('Goblin')).toHaveCount(0)
+  expect(await bea.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(errors).toEqual([])
+})
+
+test('RYT-126 what the DM does to the own character reaches the Player and the table', async ({
+  browser,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  const { id } = seedTurns(server)
+  const arin = await playerPage(browser, info, server, playerId, errors)
+  await expect(arin.locator('.combat-own-strip')).toContainText('24/24 PG', { timeout: 15_000 })
+  await arin.evaluate(() => {
+    ;(window as unknown as { buzzed: number[] }).buzzed = []
+    navigator.vibrate = (pattern) => {
+      ;(window as unknown as { buzzed: unknown[] }).buzzed.push(pattern)
+      return true
+    }
+  })
+  // Concentrating, then hit for 14: a notice with the delta and total, the DC and a vibration.
+  server.act('set_concentration', { target_combatant: combatantId(server, 'Arin'), spell: 'Bless' })
+  server.act('apply_combat_hp', {
+    target_encounter: id,
+    hp_mode: 'damage',
+    hits: [{ combatant_id: combatantId(server, 'Arin'), amount: 14 }],
+    request_id: 'hit-14',
+  })
+  server.act('set_combat_condition', {
+    target_combatant: combatantId(server, 'Arin'),
+    condition_key: 'poisoned',
+    enabled: true,
+  })
+  const notice = arin.locator('.combat-news')
+  await expect(notice).toContainText('−14 PG (10/24)', { timeout: 15_000 })
+  await expect(notice).toContainText('Salvación de concentración: CD 10')
+  // Pinned own strip: exact numbers, the condition as a glossary term of at least 14px.
+  const strip = arin.locator('.combat-own-strip')
+  await expect(strip).toContainText('10/24 PG')
+  await expect(strip.locator('.combat-badge', { hasText: 'Envenenado' })).toBeVisible()
+  const badge = strip.locator('.combat-badge', { hasText: 'Envenenado' })
+  expect(
+    await badge.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+  ).toBeGreaterThanOrEqual(14)
+  expect(
+    await arin.evaluate(() => (window as unknown as { buzzed: unknown[] }).buzzed.length),
+  ).toBeGreaterThan(0)
+  await notice.getByRole('button', { name: 'Cerrar aviso' }).click()
+  await expect(notice).toHaveCount(0)
+  // The recent events strip is collapsed and lists what the Player may see.
+  const recent = arin.locator('.combat-recent')
+  await expect(recent).not.toHaveAttribute('open', '')
+  await recent.locator('summary').click()
+  await expect(recent).toContainText('Arin')
+  expect(errors).toEqual([])
+})
+
+test('RYT-126 initiative entry rolls for the Player, warns on odd totals and marks ties', async ({
+  browser,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  const errors: string[] = []
+  server.seedInitiative()
+  server.act(
+    'set_initiative',
+    {
+      target_combatant: combatantId(server, 'Bea'),
+      initiative_total: 25,
+      tiebreak_bonus: 0,
+    },
+    peerId,
+  )
+  const arin = await playerPage(browser, info, server, playerId, errors)
+  const entry = arin.locator('.combat-entry')
+  await expect(entry).toBeVisible({ timeout: 15_000 })
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry.locator('.combat-entry-formula')).toContainText('Salió', { timeout: 15_000 })
+  const total = Number((await entry.locator('.combat-d20-input input').inputValue()) || 0)
+  expect(total).toBeGreaterThanOrEqual(1)
+  // 25 is outside d20 + bonus for a bonus of 2: a warning, and saving stays possible.
+  await entry.getByRole('button', { name: 'Borrar', exact: true }).click()
+  await arin.getByRole('button', { name: '2', exact: true }).click()
+  await arin.getByRole('button', { name: '5', exact: true }).click()
+  await expect(entry.locator('.combat-entry-formula')).toContainText('Revisa el número')
+  await expect(entry.getByRole('button', { name: 'Guardar' })).toBeEnabled()
+  await entry.getByRole('button', { name: 'Guardar' }).click()
+  // 25 and 25: both rows say so while initiative is being collected.
+  await expect(arin.locator('.combat-tie')).toHaveCount(2, { timeout: 15_000 })
   expect(errors).toEqual([])
 })

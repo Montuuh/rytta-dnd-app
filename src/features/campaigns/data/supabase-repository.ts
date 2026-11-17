@@ -8,19 +8,14 @@ import {
   inviteEmailSchema,
   memberSchema,
   MembershipError,
+  membershipReason,
   sentInvitationSchema,
   type CampaignRepository,
 } from '../domain/campaign'
 
 function check(error: { message: string } | null) {
   if (!error) return
-  throw new MembershipError(
-    error.message.includes('Keep at least one DM')
-      ? 'last-dm'
-      : error.message.includes('Already a member')
-        ? 'already-member'
-        : 'unavailable',
-  )
+  throw new MembershipError(membershipReason(error.message))
 }
 
 export function createSupabaseCampaignRepository(client: AppSupabaseClient): CampaignRepository {
@@ -96,6 +91,8 @@ export function createSupabaseCampaignRepository(client: AppSupabaseClient): Cam
         invitation_id: invitationId,
         accept_invitation: accept,
       })
+      if (error?.message.includes('Invitation unavailable'))
+        throw new MembershipError('invitation-unavailable')
       check(error)
       return z.uuid().parse(data)
     },

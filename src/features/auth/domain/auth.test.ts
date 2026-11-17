@@ -1,6 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
-import { AuthController, AuthFailure, type AuthAdapter, type Identity } from './auth'
+import {
+  AuthController,
+  AuthFailure,
+  initializeTimeoutMs,
+  type AuthAdapter,
+  type Identity,
+} from './auth'
 import { consumeCallback } from '../data/supabase-auth'
 
 const a = { id: '10000000-0000-4000-8000-000000000001', email: 'a@example.com' }
@@ -100,6 +106,29 @@ describe('identity lifecycle', () => {
     expect(f.controller.getSnapshot()).toMatchObject({ status: 'signed-out', issue: null })
   })
 })
+describe('without a network', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+  it('publishes the connection issue when the stored session cannot be checked in time', async () => {
+    vi.useFakeTimers()
+    const f = fixture(() => new Promise(() => {}))
+    const started = f.controller.start()
+    await vi.advanceTimersByTimeAsync(initializeTimeoutMs)
+    await started
+    expect(f.controller.getSnapshot()).toMatchObject({ status: 'signed-out', issue: 'connection' })
+  })
+  it('does not start the sign-in redirect while offline', async () => {
+    vi.stubGlobal('navigator', { onLine: false })
+    const f = fixture()
+    await f.controller.start()
+    await f.controller.signIn()
+    expect(f.adapter.signIn).not.toHaveBeenCalled()
+    expect(f.controller.getSnapshot().issue).toBe('connection')
+  })
+})
+
 describe('PKCE URL cleanup', () => {
   it('removes credentials before exchange and preserves a Pages base', () => {
     const replace = vi.fn()

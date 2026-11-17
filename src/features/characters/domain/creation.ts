@@ -9,11 +9,21 @@ import {
   isBackgroundKey,
   isClassKey,
   isSpeciesKey,
+  pointBuySpent,
   pointBuyValid,
   standardArrayValid,
   suggestedMaxHp,
 } from './rules'
-import { abilityKeys, backgrounds, classes, species, type Skill } from './srd'
+import {
+  abilityKeys,
+  backgrounds,
+  classes,
+  pointBuyBudget,
+  pointBuyCost,
+  species,
+  type Ability,
+  type Skill,
+} from './srd'
 
 export const creationSteps = [
   'class',
@@ -47,14 +57,16 @@ const withoutSeeds = (features: Feature[], prefix: string) =>
 export function chooseClass(build: Build, key: string, label: string): Build {
   if (!isClassKey(key)) return { ...build, classKey: 'custom', classLabel: label }
   const entry = classes[key]
-  const allowed = entry.skills === 'any' ? null : (entry.skills as readonly string[])
-  // Keep background skills; drop class picks that the new class does not offer.
-  const keep = Object.fromEntries(
-    Object.entries(build.skills).filter(
-      ([skill]) =>
-        backgroundSkills(build).includes(skill as Skill) || !allowed || allowed.includes(skill),
-    ),
-  )
+  // A different class starts without the old class's subclass and skill picks; background
+  // skills stay. Choosing the same class again changes nothing but its label.
+  const changed = key !== build.classKey
+  const skills = changed
+    ? Object.fromEntries(
+        Object.entries(build.skills).filter(([skill]) =>
+          backgroundSkills(build).includes(skill as Skill),
+        ),
+      )
+    : build.skills
   return {
     ...build,
     classKey: key,
@@ -63,8 +75,21 @@ export function chooseClass(build: Build, key: string, label: string): Build {
     saves: [...entry.saves],
     casterKind: entry.caster,
     spellAbility: entry.spellAbility,
-    skills: keep,
+    skills,
+    ...(changed ? { subclass: '', subclassKey: '' } : {}),
   }
+}
+/** What switching class takes away, so the wizard can say so once. */
+export type ClassLoss = { subclass: string; skills: number; spells: number }
+export function classChangeLoss(prev: Build, next: Build): ClassLoss | null {
+  if (!prev.classKey || prev.classKey === next.classKey) return null
+  const fixed = backgroundSkills(prev)
+  const skills = Object.keys(prev.skills).filter(
+    (skill) => !fixed.includes(skill as Skill) && !(skill in next.skills),
+  ).length
+  const subclass = prev.subclass.trim()
+  const spells = next.casterKind === 'none' ? prev.spells.length : 0
+  return subclass || skills || spells ? { subclass, skills, spells } : null
 }
 export function chooseSpecies(build: Build, key: string, label: string, name: Namer): Build {
   const features = withoutSeeds(build.features, 'species')
@@ -217,3 +242,49 @@ export const suggestedHpFor = (draft: SheetDraft) =>
 
 export const pointBuyStart = () =>
   Object.fromEntries(abilityKeys.map((key) => [key, 8])) as Build['baseAbilities']
+
+/**
+ * Choices a newcomer would otherwise skip without noticing. The domain accepts them (a blank
+ * sheet is a first-class door and "save and exit" keeps drafts), so they are advisory: the
+ * wizard names them on Next and on the review step and lets the player continue anyway.
+ */
+export type StepGap = { kind: 'bonuses' } | { kind: 'skills'; missing: number }
+export function stepGaps(step: CreationStep, build: Build): StepGap[] {
+  if (step === 'origin') {
+    const total = abilityKeys.reduce((sum, key) => sum + build.bonuses[key], 0)
+    return build.backgroundKey && total === 0 ? [{ kind: 'bonuses' }] : []
+  }
+  if (step === 'skills') {
+    const { picked, count } = classSkillChoices(build)
+    return count !== null && picked.length < count
+      ? [{ kind: 'skills', missing: count - picked.length }]
+      : []
+  }
+  return []
+}
+export const buildGaps = (build: Build) =>
+  creationSteps.flatMap((step) => stepGaps(step, build).map((gap) => ({ step, gap })))
+
+/** Standard array: picking a score another ability holds swaps the two, so no value repeats. */
+export function assignStandard(
+  scores: Build['baseAbilities'],
+  key: Ability,
+  value: number,
+): Build['baseAbilities'] {
+  const holder = abilityKeys.find((other) => other !== key && scores[other] === value)
+  return {
+    ...scores,
+    [key]: value,
+    ...(holder ? { [holder]: scores[key] } : {}),
+  }
+}
+/** Highest score still affordable in point buy when `key` is raised (budget 27). */
+export function pointBuyCeiling(scores: Build['baseAbilities'], key: Ability) {
+  const spent = pointBuySpent(scores)
+  if (spent === null) return 15
+  const room = pointBuyBudget - (spent - (pointBuyCost[scores[key]] ?? 0))
+  let top = scores[key]
+  for (let score = scores[key]; score <= 15; score += 1)
+    if ((pointBuyCost[score] ?? Infinity) <= room) top = score
+  return top
+}

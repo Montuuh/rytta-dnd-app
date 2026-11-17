@@ -1,7 +1,6 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   Button,
-  NumberInput,
   Popover,
   RingProgress,
   Select,
@@ -13,7 +12,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core'
-import { Heart, Shield, Sparkles, Swords } from 'lucide-react'
+import { Heart, Pencil, Shield, Sparkles, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm } from '@/features/glossary'
 import { PortraitPlate } from '@/features/inventory'
@@ -30,10 +29,14 @@ import {
   type StatBreakdown,
 } from '../../domain/rules'
 import { backgroundKeys, classKeys, speciesKeys, subclassOf } from '../../domain/srd'
-import { toneOf } from './hp-tone'
+import { classEmblem } from '../class-emblem'
+import { HpField } from '../hp-field'
+import { deathState, toneOf } from './hp-tone'
+import { Pips } from './pips'
 import { HpDialog, type HpMode } from './vitals-panel'
 import { Stepper } from './widgets'
 import type { PanelProps } from './panel-types'
+import type { Vitals } from '../../domain/sheet'
 
 type HeroProps = PanelProps & {
   exhaustion: number | undefined
@@ -146,6 +149,7 @@ export function SheetHero(props: HeroProps) {
   const { t } = useTranslation()
   const { build, vitals, maxHp, level, canEdit, editing, pending, locked, commit, speed } = props
   const [mode, setMode] = useState<HpMode | null>(null)
+  const [undo, setUndo] = useState<{ before: Vitals; text: string } | null>(null)
   const opener = useRef<HTMLElement | null>(null)
   const current = Math.min(vitals.current_hp, maxHp)
   const ratio = Math.round((current / Math.max(1, maxHp)) * 100)
@@ -166,11 +170,42 @@ export function SheetHero(props: HeroProps) {
     requestAnimationFrame(() => opener.current?.focus())
   }
   const inspired = vitals.heroic_inspiration
+  const dying = current === 0 && vitals.current_hp === 0
+  // The undo offer fades from the screen after a while; the next HP change replaces it.
+  useEffect(() => {
+    if (!undo) return
+    const timer = setTimeout(() => setUndo(null), 12_000)
+    return () => clearTimeout(timer)
+  }, [undo])
+  const hpText = (values: Vitals) =>
+    `${Math.min(values.current_hp, maxHp)}/${maxHp}${values.temp_hp > 0 ? ` +${values.temp_hp}` : ''}`
   const hpActions = [
     { mode: 'damage' as const, label: t('sheet.damage'), icon: Swords },
     { mode: 'heal' as const, label: t('sheet.heal'), icon: Heart },
     { mode: 'temp' as const, label: t('sheet.setTemp'), icon: Shield },
   ]
+  const ring = (
+    <RingProgress
+      size={116}
+      thickness={10}
+      roundCaps
+      className="hp-ring"
+      role={canChangeHp ? undefined : 'img'}
+      aria-hidden={canChangeHp || undefined}
+      rootColor="var(--app-surface)"
+      sections={[
+        { value: ratio, color: 'var(--hp-tone)' },
+        ...(tempRatio > 0 ? [{ value: tempRatio, color: 'var(--info)' }] : []),
+      ]}
+      aria-label={canChangeHp ? undefined : t('sheet.hpRing', { current, max: maxHp })}
+      label={
+        <Text className="hp-value" ta="center" aria-hidden="true">
+          <span className="hp-current">{current}</span>
+          <span className="hp-max">/{maxHp}</span>
+        </Text>
+      }
+    />
+  )
   return (
     <section className={`panel-hero hp-${tone}`} aria-labelledby="sheet-name">
       <PortraitPlate
@@ -181,6 +216,7 @@ export function SheetHero(props: HeroProps) {
         name={props.name}
         path={props.sheet.portrait_path ?? null}
         editable={canEdit}
+        emblem={classEmblem(build.classKey)}
       >
         <div className="sheet-plate-identity">
           <Title order={1} id="sheet-name" className="user-copy">
@@ -190,7 +226,10 @@ export function SheetHero(props: HeroProps) {
         </div>
         {canEdit ? (
           <Tooltip
-            label={t('sheet.inspiration')}
+            label={t('sheet.inspirationHint')}
+            multiline
+            w={240}
+            position="bottom-end"
             events={{ hover: true, focus: true, touch: true }}
           >
             <UnstyledButton
@@ -199,38 +238,34 @@ export function SheetHero(props: HeroProps) {
               aria-pressed={inspired}
               onClick={() => commit({ ...vitals, heroic_inspiration: !inspired })}
             >
-              <Sparkles size={20} aria-hidden="true" />
+              <Sparkles size={18} aria-hidden="true" />
+              <span aria-hidden="true">{t('sheet.inspirationShort')}</span>
             </UnstyledButton>
           </Tooltip>
         ) : (
           inspired && (
             <span className="sheet-inspiration" role="img" aria-label={t('sheet.inspiration')}>
-              <Sparkles size={20} aria-hidden="true" />
+              <Sparkles size={18} aria-hidden="true" />
+              <span aria-hidden="true">{t('sheet.inspirationShort')}</span>
             </span>
           )
         )}
       </PortraitPlate>
       <div className="sheet-vitals">
         <div className="sheet-ring">
-          <RingProgress
-            size={116}
-            thickness={10}
-            roundCaps
-            className="hp-ring"
-            role="img"
-            rootColor="var(--app-surface)"
-            sections={[
-              { value: ratio, color: 'var(--hp-tone)' },
-              ...(tempRatio > 0 ? [{ value: tempRatio, color: 'var(--info)' }] : []),
-            ]}
-            aria-label={t('sheet.hpRing', { current, max: maxHp })}
-            label={
-              <Text className="hp-value" ta="center" aria-hidden="true">
-                <span className="hp-current">{current}</span>
-                <span className="hp-max">/{maxHp}</span>
-              </Text>
-            }
-          />
+          {canChangeHp ? (
+            // The big number is the quickest way to the pad: tap it to take damage or heal.
+            <UnstyledButton
+              className="sheet-ring-button"
+              aria-haspopup="dialog"
+              aria-label={t('sheet.hpOpenPad', { current, max: maxHp })}
+              onClick={(event) => open('damage', event.currentTarget)}
+            >
+              {ring}
+            </UnstyledButton>
+          ) : (
+            ring
+          )}
           <div className="sheet-ring-meta">
             <Text size="sm">
               <GlossaryTerm id="rule.hit-points">{t('sheet.hp')}</GlossaryTerm>
@@ -251,9 +286,40 @@ export function SheetHero(props: HeroProps) {
         </div>
         {editing ? <EditStats {...props} /> : <FeaturedStats {...props} />}
       </div>
+      {dying && !editing && (
+        <section
+          className="sheet-dying"
+          data-state={deathState(vitals)}
+          aria-labelledby="sheet-dying"
+        >
+          <p id="sheet-dying" className="sheet-dying-state" role="status">
+            {t(`sheet.deathState.${deathState(vitals)}`, {
+              successes: vitals.death_successes,
+              failures: vitals.death_failures,
+            })}
+          </p>
+          {(['death_successes', 'death_failures'] as const).map((field) => {
+            const label = t(field === 'death_successes' ? 'sheet.successes' : 'sheet.failures')
+            return (
+              <div key={field} className="sheet-dying-row" data-kind={field}>
+                <span className="sheet-dying-label">{label}</span>
+                <Pips
+                  max={3}
+                  used={3 - vitals[field]}
+                  disabled={!canEdit}
+                  spendLabel={`${label}: −1`}
+                  restoreLabel={`${label}: +1`}
+                  countLabel={`${vitals[field]}/3`}
+                  onChange={(used) => commit({ ...vitals, [field]: 3 - used })}
+                />
+              </div>
+            )
+          })}
+        </section>
+      )}
       {!editing && (
         <dl className="sheet-statline">
-          <div>
+          <div className="sheet-statcell">
             <dt>
               <GlossaryTerm id="rule.speed">{t('sheet.speed')}</GlossaryTerm>
             </dt>
@@ -276,23 +342,29 @@ export function SheetHero(props: HeroProps) {
               </StatPopover>
             </dd>
           </div>
-          <div>
+          <div className="sheet-statcell">
             <dt>
               <GlossaryTerm id="rule.proficiency">{t('sheet.proficiency')}</GlossaryTerm>
             </dt>
-            <dd>{signed(proficiencyBonus(level))}</dd>
+            <dd>
+              <span className="sheet-stat-stack">{signed(proficiencyBonus(level))}</span>
+            </dd>
           </div>
-          <div>
+          <div className="sheet-statcell">
             <dt>
               <GlossaryTerm id="rule.passive-perception">
                 {t('sheet.passivePerception')}
               </GlossaryTerm>
             </dt>
-            <dd>{passivePerception(build, level)}</dd>
+            <dd>
+              <span className="sheet-stat-stack">{passivePerception(build, level)}</span>
+            </dd>
           </div>
-          <div>
+          <div className="sheet-statcell">
             <dt>{t('wizard.level')}</dt>
-            <dd>{level}</dd>
+            <dd>
+              <span className="sheet-stat-stack">{level}</span>
+            </dd>
           </div>
         </dl>
       )}
@@ -322,6 +394,29 @@ export function SheetHero(props: HeroProps) {
           ))}
         </div>
       )}
+      {undo && (
+        <div className="sheet-undo" role="status">
+          <span>{undo.text}</span>
+          <Button
+            variant="default"
+            size="compact-md"
+            className="sheet-undo-button"
+            onClick={() => {
+              // Only the HP fields go back: a slot spent since then stays spent.
+              commit({
+                ...vitals,
+                current_hp: undo.before.current_hp,
+                temp_hp: undo.before.temp_hp,
+                death_successes: undo.before.death_successes,
+                death_failures: undo.before.death_failures,
+              })
+              setUndo(null)
+            }}
+          >
+            {t('sheet.undo')}
+          </Button>
+        </div>
+      )}
       {canEdit && locked && (
         <p className="panel-lock" role="note">
           <Swords size={18} aria-hidden="true" />
@@ -336,11 +431,15 @@ export function SheetHero(props: HeroProps) {
           pending={pending}
           close={close}
           apply={(chosen, amount) => {
-            commit(
+            const next =
               chosen === 'temp'
                 ? { ...vitals, temp_hp: amount }
-                : applyHp(vitals, maxHp, chosen, amount),
-            )
+                : applyHp(vitals, maxHp, chosen, amount)
+            commit(next)
+            setUndo({
+              before: vitals,
+              text: t('sheet.hpChanged', { from: hpText(vitals), to: hpText(next) }),
+            })
             close()
           }}
         />
@@ -359,14 +458,22 @@ function FeaturedStats({ armorClass, ac, init }: HeroProps) {
         </dt>
         <dd>
           <StatPopover
-            label={t('panel.breakdownAria', { stat: t('sheet.acLong'), value: String(armorClass) })}
+            label={[
+              t('panel.breakdownAria', { stat: t('sheet.acLong'), value: String(armorClass) }),
+              ac.overridden ? t('sheet.manualHint') : null,
+            ]
+              .filter(Boolean)
+              .join('. ')}
             title={t('sheet.acLong')}
             breakdown={ac}
           >
             <span className="sheet-stat-stack">
               <span className="sheet-shield">{armorClass}</span>
               {ac.overridden ? (
-                <span className="sheet-stat-formula">{t('panel.mod.manualShort')}</span>
+                <span className="sheet-stat-manual" title={t('sheet.manualHint')}>
+                  <Pencil size={12} aria-hidden="true" />
+                  {t('panel.mod.manualShort')}
+                </span>
               ) : (
                 ac.modified &&
                 ac.formula && <span className="sheet-stat-formula">{ac.formula}</span>
@@ -390,9 +497,11 @@ function FeaturedStats({ armorClass, ac, init }: HeroProps) {
             signedBase
           >
             <span className="sheet-stat-stack">
-              <span>{signed(init.total)}</span>
-              {init.modified && init.formula && (
+              <span className="sheet-bolt">{signed(init.total)}</span>
+              {init.modified && init.formula ? (
                 <span className="sheet-stat-formula">{init.formula}</span>
+              ) : (
+                <span className="sheet-stat-formula">{t('srd.abilityShort.dex')}</span>
               )}
             </span>
           </StatPopover>
@@ -625,17 +734,27 @@ function EditStats(props: HeroProps) {
               <Text size="xs" c="dimmed" className="panel-ac-auto">
                 {t('panel.acAutoSummary', { value: automaticAc })}
               </Text>
-              <Stepper
-                label={t('panel.acBonusLabel')}
-                name={t('panel.acBonusName')}
-                value={build.acBonus ?? 0}
-                min={-20}
-                max={20}
-                format={signed}
-                onChange={(value) =>
-                  props.change((draft) => ({ ...draft, build: { ...draft.build, acBonus: value } }))
-                }
-              />
+              {build.acOverride === null && (
+                <div className="panel-ac-bonus">
+                  <Text size="xs" c="dimmed" id="panel-ac-bonus-label">
+                    {t('panel.acBonusLabel')}
+                  </Text>
+                  <Stepper
+                    label={t('panel.acBonusLabel')}
+                    name={t('panel.acBonusName')}
+                    value={build.acBonus ?? 0}
+                    min={-20}
+                    max={20}
+                    format={signed}
+                    onChange={(value) =>
+                      props.change((draft) => ({
+                        ...draft,
+                        build: { ...draft.build, acBonus: value },
+                      }))
+                    }
+                  />
+                </div>
+              )}
               <Switch
                 size="sm"
                 className="panel-ac-switch"
@@ -699,19 +818,11 @@ function EditStats(props: HeroProps) {
           </dd>
         </div>
       </dl>
-      <NumberInput
-        hideControls
-        label={t('wizard.maxHp')}
-        min={1}
-        max={9999}
-        allowDecimal={false}
-        allowNegative={false}
-        value={maxHp}
-        onChange={(value) =>
-          typeof value === 'number' &&
-          props.change((draft) => ({ ...draft, maxHp: Math.min(9999, Math.max(1, value)) }))
-        }
+      <HpField
         className="panel-input"
+        label={t('wizard.maxHp')}
+        value={maxHp}
+        onChange={(value) => props.change((draft) => ({ ...draft, maxHp: value }))}
       />
     </div>
   )

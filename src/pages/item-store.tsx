@@ -4,7 +4,6 @@ import {
   Alert,
   Badge,
   Button,
-  Drawer,
   Group,
   Loader,
   Menu,
@@ -18,6 +17,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -70,6 +70,7 @@ import { CatalogueShopPicker } from '@/features/shops'
 import { formatGp } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
 import { localizedName } from '@/shared/lib/translations'
+import './item-store.css'
 
 type View = 'list' | 'grid'
 type Sort = 'name' | 'category' | 'rarity' | 'value'
@@ -235,7 +236,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     [
       t(`inventory.category.${item.category}`),
       t(`inventory.rarity.${item.rarity}`),
-      unitPounds(item) > 0 ? format(unitPounds(item)) : null,
+      unitPounds(item) > 0 ? format(unitPounds(item)).replaceAll(' ', '\u00a0') : null,
     ]
       .filter(Boolean)
       .join(' · ')

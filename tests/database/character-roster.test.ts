@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { etlCommand, withExposureSql } from '../../scripts/lib/pre-etl.mts'
+import { relaxQuotasSql } from './quota-fixture.ts'
 
 // RYT-044: Player character roster, server-enforced limit of 4 and exactly one active character.
 const migration = '20261105120000_character_roster.sql'
@@ -133,6 +134,7 @@ beforeAll(async () => {
   )
   for (const file of files.filter((f) => f >= migration))
     await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
+  await db.exec(relaxQuotasSql)
 }, 60000)
 afterAll(() => db.close())
 

@@ -15,7 +15,7 @@ test('Google sign-in uses PKCE and an exact Pages callback; no private requests 
 }) => {
   const fixture = await identityFixture(page, { signedIn: false })
   await page.goto('./')
-  await expect(page.getByRole('heading', { name: 'Entra en Rytta' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Rytta', exact: true })).toBeVisible()
   expect(fixture.calls.filter((c) => c.method.startsWith('list_'))).toEqual([])
   const request = page.waitForRequest('https://rytta-test.supabase.co/auth/v1/authorize**')
   await page.getByRole('button', { name: 'Continuar con Google' }).click()
@@ -69,7 +69,9 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   page.on('pageerror', (error) => errors.push(error.message))
   await identityFixture(page, { empty: true })
   await page.goto('./')
-  await expect(page.getByText('Tu mesa te espera.')).toBeVisible()
+  // An invitation is waiting: it leads the page and creating a campaign steps back.
+  await expect(page.getByRole('region', { name: 'Unirse a una campaña' })).toBeVisible()
+  await expect(page.getByText('Aún no tienes campañas')).toHaveCount(0)
   const create = page.locator('main').getByRole('button', { name: 'Crear campaña', exact: true })
   await create.click()
   await expect(page.getByLabel('Nombre de la campaña')).toBeFocused()
@@ -116,10 +118,13 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('No hay invitaciones pendientes para esta campaña.')).toBeVisible()
   expect(f.calls.some((c) => c.method === 'invite_campaign_member')).toBe(true)
-  await page.getByRole('button', { name: 'Nombrar DM', exact: true }).click()
+  const arinMenu = page.getByRole('button', { name: 'Acciones de Arin', exact: true })
+  await arinMenu.click()
+  await page.getByRole('menuitem', { name: 'Nombrar DM', exact: true }).click()
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('button', { name: 'Nombrar DM', exact: true })).toBeFocused()
-  await page.keyboard.press('Enter')
+  await expect(arinMenu).toBeFocused()
+  await arinMenu.click()
+  await page.getByRole('menuitem', { name: 'Nombrar DM', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeEnabled()
   await page.getByRole('button', { name: /Sesión de/ }).click()
@@ -127,10 +132,14 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await page.getByRole('link', { name: 'Abrir campaña: Winter at the Keep' }).click()
   expect(page.url()).toContain(otherCampaignId)
   const currentNav = page.getByRole('navigation', { name: 'Navegación principal' })
-  await expect(currentNav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
-  await expect(currentNav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
-  await expect(currentNav.getByText('Inventario', { exact: false })).toHaveCount(0)
-  await expect(currentNav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
+  // RYT-112: a Player with a single destination (Party) gets no navigation bar; the DM-only
+  // and disabled modules are not offered anywhere in the header.
+  const header = page.locator('header')
+  await expect(page).toHaveURL(new RegExp(`/campaign/${otherCampaignId}`))
+  await expect(currentNav).toHaveCount(0)
+  await expect(header.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
+  await expect(header.getByText('Inventario', { exact: false })).toHaveCount(0)
+  await expect(header.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/members`)
   // RYT-095: the command center uses the same confirmation as My campaigns.
   await page.getByRole('button', { name: 'Abandonar campaña', exact: true }).click()
@@ -166,9 +175,11 @@ test('RYT-029: Players land on Party with no Camp entry and no discoveries secti
   await identityFixture(page, { player: true })
   await page.goto(`./#/campaign/${campaignId}`)
   await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/party$`))
-  const nav = page.getByRole('navigation', { name: 'Navegación principal' })
-  await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
-  await expect(nav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
+  // RYT-112: Party is the Player's only destination, so there is no navigation bar to offer
+  // Camp in; the Party page itself is what they land on.
+  await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
+  await expect(page.locator('main')).toBeVisible()
   await expect(page.getByText('Descubrimientos de la campaña')).toHaveCount(0)
   await capture(page, info.outputPath('landing-player.png'))
 })
@@ -199,7 +210,9 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   const mainNav = page.getByRole('navigation', { name: 'Navegación principal' })
   // RYT-027: the DM Command Center comes first; phones show the short "DM" label.
   await expect(mainNav.getByRole('link').nth(0)).toHaveAccessibleName('Centro de mando DM')
-  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Grupo')
+  // RYT-112: running a session comes next (Combat, then the Table), then the other modules.
+  await expect(mainNav.getByRole('link').nth(1)).toHaveAccessibleName('Combate')
+  await expect(mainNav.getByRole('link', { name: 'Grupo', exact: true })).toBeVisible()
   await expect(mainNav.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
   await expect(mainNav.getByRole('link', { name: /Almacén|Objetos de campaña/ })).toHaveCount(0)
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
@@ -209,14 +222,10 @@ test('DM command center manages modules, the item storeroom, audit log and playe
     'aria-selected',
     'true',
   )
-  await expect(
-    page.getByRole('heading', { name: 'Control de módulos activos', exact: true }),
-  ).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Módulos activos', exact: true })).toHaveCount(0)
   await tabs.getByRole('tab', { name: 'Auditoría', exact: true }).click()
-  await expect(
-    page.getByRole('heading', { name: 'Registro de auditoría', exact: true }),
-  ).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Miembros', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Auditoría', exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Miembros', exact: true })).toHaveCount(0)
   await expect(page.getByText('Recursos actualizados', { exact: true })).toBeVisible()
   await expect(page.getByText('Personaje creado', { exact: true })).toBeVisible()
   await expect(page.getByText('Oro: 15 → 25 (+10)', { exact: true })).toBeVisible()
@@ -229,9 +238,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
   await auditFilter.filter({ hasText: /^Todos$/ }).click()
 
   await tabs.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
-  await expect(
-    page.getByRole('heading', { name: 'Control de módulos activos', exact: true }),
-  ).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Módulos activos', exact: true })).toBeVisible()
   const shops = page.getByRole('switch', { name: 'Tiendas: visible para jugadores', exact: true })
   await expect(shops).not.toBeChecked()
   await shops.focus()
@@ -319,10 +326,8 @@ test('self-demotion clears management views and offline actions are not queued',
   expect(f.calls.filter((c) => c.method === 'invite_campaign_member')).toHaveLength(0)
   await page.keyboard.press('Escape')
   await page.goto(`./#/campaign/${campaignId}/members`)
-  const self = page
-    .locator('.mantine-Paper-root')
-    .filter({ has: page.getByText('Table DM · Tú', { exact: true }) })
-  await self.getByRole('button', { name: 'Cambiar a jugador', exact: true }).click()
+  await page.getByRole('button', { name: 'Acciones de Table DM', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Cambiar a jugador', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
@@ -351,7 +356,7 @@ test('home uses a compact settings menu and accessible theme icons', async ({ pa
   const campaignsItem = page.getByRole('menuitem', { name: 'Mis campañas', exact: true })
   const settings = page.getByRole('menuitem', { name: 'Ajustes', exact: true })
   await expect(campaignsItem).toBeFocused()
-  // My campaigns, App setup and Sign out; language and theme live in Settings (RYT-033).
+  // My campaigns, Settings and Sign out; language and theme live in Settings (RYT-033).
   await expect(page.getByRole('menuitem')).toHaveCount(3)
   const bounds = await page.getByRole('menu').boundingBox()
   expect(bounds!.height).toBeLessThan(260)
@@ -410,7 +415,8 @@ test('invitation panel distinguishes loading, empty and failed refresh with reco
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toHaveCount(0)
   release()
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
-  await expect(panel.getByText('Invitaciones para: dm@example.com')).toBeVisible()
+  await expect(panel.getByText('dm@example.com', { exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Copiar correo' })).toBeVisible()
   await capture(page, info.outputPath('invitations-empty.png'))
   fail = true
   await panel.getByRole('button', { name: 'Actualizar', exact: true }).click()
@@ -756,4 +762,213 @@ test('RYT-095 a failed leave keeps the dialog open with a retry', async ({ page,
   await expect(
     page.getByRole('status').filter({ hasText: 'Has abandonado The Sunken Coast.' }),
   ).toBeFocused()
+})
+
+// RYT-123 (J1): answering invitations, the arrival order of the hub and the shell.
+const respondRpc = 'https://rytta-test.supabase.co/rest/v1/rpc/respond_campaign_invitation'
+const invitationsRpc = 'https://rytta-test.supabase.co/rest/v1/rpc/list_my_invitations'
+
+test('J1-03 a pending invitation sits above the campaigns and speaks to the Player', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true })
+  await page.goto('./')
+  const panel = page.getByRole('region', { name: 'Unirse a una campaña' })
+  await expect(panel).toBeVisible()
+  const campaign = page.getByRole('heading', { name: 'The Sunken Coast', level: 2 })
+  await expect(campaign).toBeVisible()
+  expect((await panel.boundingBox())!.y).toBeLessThan((await campaign.boundingBox())!.y)
+  // J1-02 and J1-25: Player copy, and the buttons name the campaign they answer.
+  await expect(panel.getByText('Jugarás con Amber scout.')).toBeVisible()
+  await expect(page.getByText('Cuando acepte, podrás vincularle')).toHaveCount(0)
+  await expect(
+    panel.getByRole('button', { name: 'Aceptar invitación a The Amber Road' }),
+  ).toBeVisible()
+  await expect(
+    panel.getByRole('button', { name: 'Rechazar invitación a The Amber Road' }),
+  ).toBeVisible()
+})
+
+test('J1-05 accepting an invitation says so, offers the way in and keeps focus on the result', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true })
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Aceptar invitación a The Amber Road' }).click()
+  const notice = page.getByRole('status').filter({ hasText: 'Te has unido a The Amber Road.' })
+  await expect(notice).toBeVisible()
+  await expect(notice).toBeFocused()
+  await expect(notice.getByRole('link', { name: 'Abrir campaña' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'The Amber Road', level: 2 })).toBeVisible()
+})
+
+test('J1-06 an offline accept sends nothing, says so and retries after reconnecting', async ({
+  page,
+  context,
+}) => {
+  const f = await identityFixture(page, { player: true })
+  await page.goto('./')
+  const accept = page.getByRole('button', { name: 'Aceptar invitación a The Amber Road' })
+  await expect(accept).toBeVisible()
+  await context.setOffline(true)
+  await accept.click()
+  const alert = page.getByRole('region', { name: 'Unirse a una campaña' }).getByRole('alert')
+  await expect(alert).toContainText('Sin conexión. Reconecta y vuelve a intentarlo.')
+  await context.setOffline(false)
+  await page.waitForTimeout(500)
+  expect(f.calls.filter((c) => c.method === 'respond_campaign_invitation')).toHaveLength(0)
+  await alert.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Te has unido a The Amber Road.' }),
+  ).toBeVisible()
+  expect(f.calls.filter((c) => c.method === 'respond_campaign_invitation')).toHaveLength(1)
+})
+
+test('J1-06 a revoked invitation says it is gone and its card leaves; other failures offer a retry', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true })
+  await page.goto('./')
+  let gone = false
+  await page.route(invitationsRpc, (route) =>
+    gone
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+      : route.fallback(),
+  )
+  let mode: 'server' | 'gone' = 'server'
+  await page.route(respondRpc, async (route) => {
+    if (mode === 'gone') gone = true
+    await route.fulfill({
+      status: mode === 'gone' ? 403 : 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        message: mode === 'gone' ? 'Invitation unavailable' : 'Service unavailable',
+      }),
+    })
+  })
+  const panel = page.getByRole('region', { name: 'Unirse a una campaña' })
+  await page.getByRole('button', { name: 'Aceptar invitación a The Amber Road' }).click()
+  await expect(panel.getByRole('alert')).toContainText('No se pudo responder a la invitación')
+  await expect(panel.getByRole('alert').getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  mode = 'gone'
+  await panel.getByRole('alert').getByRole('button', { name: 'Reintentar' }).click()
+  await expect(panel.getByRole('alert')).toContainText('Esta invitación ya no está disponible')
+  await expect(panel.getByRole('alert').getByRole('button', { name: 'Reintentar' })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: /Aceptar invitación a/ })).toHaveCount(0)
+})
+
+test('J1-07 declining asks a named question, stays open and busy until the answer, then reports it', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, { player: true })
+  await page.goto('./')
+  let release: () => void = () => {}
+  const gate = new Promise<void>((resolve) => (release = resolve))
+  await page.route(respondRpc, async (route) => {
+    await gate
+    await route.fallback()
+  })
+  await page.getByRole('button', { name: 'Rechazar invitación a The Amber Road' }).click()
+  const dialog = page.getByRole('dialog', { name: '¿Rechazar la invitación?' })
+  await expect(dialog).toContainText('The Amber Road')
+  const confirm = dialog.getByRole('button', { name: 'Rechazar invitación', exact: true })
+  await confirm.click()
+  await expect(confirm).toBeDisabled()
+  // Busy: the request is in flight, so Escape waits for its answer.
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeVisible()
+  release()
+  await expect(dialog).toHaveCount(0)
+  const notice = page
+    .getByRole('status')
+    .filter({ hasText: 'Has rechazado la invitación a The Amber Road.' })
+  await expect(notice).toBeFocused()
+  expect(f.calls.filter((c) => c.method === 'respond_campaign_invitation')).toHaveLength(1)
+})
+
+test('J1-11 Back closes the hub dialogs instead of leaving the page', async ({ page }) => {
+  await identityFixture(page, { player: true })
+  await page.goto('./')
+  const start = page.url()
+  await page.getByRole('button', { name: 'Crear campaña', exact: true }).click()
+  const create = page.getByRole('dialog', { name: 'Crear campaña' })
+  await expect(create).toBeVisible()
+  await page.goBack()
+  await expect(create).toHaveCount(0)
+  expect(page.url()).toBe(start)
+  await expect(page.getByRole('heading', { name: 'Mis campañas', level: 1 })).toBeVisible()
+  // Closing with Escape leaves no entry behind.
+  await page.getByRole('button', { name: 'Rechazar invitación a The Amber Road' }).click()
+  await expect(page.getByRole('dialog', { name: '¿Rechazar la invitación?' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(await page.evaluate(() => JSON.stringify(history.state))).not.toContain('ryttaOverlays')
+  // An overlay reopened right after another closed still owns exactly one entry.
+  await page.getByRole('button', { name: 'Rechazar invitación a The Amber Road' }).click()
+  const decline = page.getByRole('dialog', { name: '¿Rechazar la invitación?' })
+  await expect(decline).toBeVisible()
+  await page.goBack()
+  await expect(decline).toHaveCount(0)
+  expect(page.url()).toBe(start)
+})
+
+test('J3-16 a Player sent to the old items address lands on the inventory', async ({ page }) => {
+  await identityFixture(page, { player: true, inventory: true })
+  await page.goto(`./#/campaign/${campaignId}/items`)
+  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}/inventory$`))
+})
+
+test('J3-16 the DM keeps landing on the storeroom of the command center', async ({ page }) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/items`)
+  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}/members\\?panel=items$`))
+})
+
+test('J1-12 the emblem inside a campaign returns to My campaigns; the name stays its home', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const home = page.getByRole('link', { name: 'Inicio de The Sunken Coast' })
+  const list = page.getByRole('link', { name: 'RYTTA · Mis campañas' })
+  await expect(home).toBeVisible()
+  const box = (await list.boundingBox())!
+  expect(box.width).toBeGreaterThanOrEqual(44)
+  expect(box.height).toBeGreaterThanOrEqual(44)
+  await list.click()
+  await expect(page.getByRole('heading', { name: 'Mis campañas', level: 1 })).toBeVisible()
+})
+
+test('J1-08 tapping Google offline says so instead of leaving the page', async ({
+  page,
+  context,
+}) => {
+  await identityFixture(page, { signedIn: false })
+  await page.goto('./')
+  const google = page.getByRole('button', { name: 'Continuar con Google' })
+  await expect(google).toBeVisible()
+  let authorize = 0
+  page.on('request', (request) => {
+    if (request.url().includes('/auth/v1/authorize')) authorize += 1
+  })
+  const start = page.url()
+  await context.setOffline(true)
+  await google.click()
+  await expect(page.getByRole('alert')).toContainText('No pudimos conectar')
+  await expect(google).toBeVisible()
+  expect(page.url()).toBe(start)
+  expect(authorize).toBe(0)
+})
+
+test('J1-15 signed out, the gear opens Settings directly and Back closes it', async ({ page }) => {
+  await identityFixture(page, { signedIn: false })
+  await page.goto('./')
+  const start = page.url()
+  await page.getByRole('button', { name: 'Ajustes', exact: true }).click()
+  const drawer = page.getByRole('dialog', { name: 'Ajustes' })
+  await expect(drawer).toBeVisible()
+  await page.goBack()
+  await expect(drawer).toHaveCount(0)
+  expect(page.url()).toBe(start)
+  await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
 })

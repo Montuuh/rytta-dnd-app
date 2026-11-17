@@ -193,4 +193,5 @@ export const glossaryEs = {
   'glossary.hb.error.invalid': 'Revisa los campos: alguno está vacío o es demasiado largo.',
   'glossary.hb.error.unavailable': 'No hay conexión. Inténtalo de nuevo al reconectar.',
   'glossary.hb.error.unknown': 'No se pudo guardar la entrada. Inténtalo de nuevo.',
+  'glossary.range': 'Entradas {{from}} a {{to}} de {{total}}',
 } satisfies Record<keyof typeof glossaryEn, string>

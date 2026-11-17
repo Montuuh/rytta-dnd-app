@@ -1,7 +1,8 @@
 import { formatGp } from '@/shared/lib/money'
 import { localizedName } from '@/shared/lib/translations'
 import { useEffect, useRef, useState, type Ref } from 'react'
-import { Alert, Button, Modal, Text, UnstyledButton, VisuallyHidden } from '@mantine/core'
+import { Alert, Button, Group, Text, UnstyledButton, VisuallyHidden } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useReducedMotion } from '@mantine/hooks'
 import {
@@ -22,6 +23,7 @@ import { useTranslation } from 'react-i18next'
 import {
   CharacterPortrait,
   ItemIcon,
+  Stepper,
   useCampaignPortraits,
   type CatalogueItem,
 } from '@/features/inventory'
@@ -41,7 +43,6 @@ import {
 } from '../domain/trade'
 import { useItemDetails } from './item-details'
 import { ItemPicker } from './item-picker'
-import { Stepper } from './stepper'
 
 type Draft = { lines: OfferLine[]; gold: number }
 
@@ -182,12 +183,48 @@ export function TradeWindow({
       { kind: 'cancel', tradeId: trade.id, acting: trade.you.character_id },
       { onError: (failure) => setError(failure.message as TradeErrorCode) },
     )
+  // Cancelling ends the trade for both, so it asks again in place; focus rests on the safe choice.
+  const [askCancel, setAskCancel] = useState(false)
+  const keepRef = useRef<HTMLButtonElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const ask = (next: boolean) => {
+    setAskCancel(next)
+    requestAnimationFrame(() => (next ? keepRef.current : cancelRef.current)?.focus())
+  }
+  // J3-15: "someone no longer has that amount" names who, and which offered stack, when it can.
+  const shortStack =
+    error === 'quantity'
+      ? shown.lines.find((line) => line.quantity > (byId.get(line.item_id)?.quantity ?? 0))
+      : undefined
+  const shortName = shortStack
+    ? localizedName(byId.get(shortStack.item_id) ?? { name: '' }, i18n.language)
+    : ''
+  const errorText = error
+    ? error === 'quantity'
+      ? shortStack
+        ? t('trade.error.quantityYou', { name: shortName })
+        : t('trade.error.quantityPartner', { name: trade.partner.name })
+      : t(`trade.error.${error}`)
+    : ''
   const left = remainingMs(trade.expires_at, now)
   const partner = trade.partner.name
   const youLabel = t('trade.window.yourOffer')
   const theirLabel = t('trade.window.theirOffer', { name: partner })
   const sealed = trade.you.confirmed && !pending
   const partnerLines = offerLines(trade.partner)
+  const partnerUnits = partnerLines.reduce((sum, line) => sum + line.quantity, 0)
+  // Phones stack the offers; the peek bar only helps while the partner's column is out of view.
+  const [partnerInView, setPartnerInView] = useState(false)
+  useEffect(() => {
+    const node = partnerSide.current
+    if (!node || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      ([entry]) => setPartnerInView(!!entry?.isIntersecting),
+      { threshold: 0.6 },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
   // Nothing on either side: there is no deal to accept (the server refuses it too).
   const emptyDeal =
     shown.lines.length === 0 &&
@@ -267,6 +304,7 @@ export function TradeWindow({
           gold={shown.gold}
           purse={purse}
           onSlot={openPicker}
+          problemItem={shortStack?.item_id}
           onGold={(gold) => change({ ...shown, gold }, 500)}
         />
         <div className="trade-seam" aria-hidden="true">
@@ -288,16 +326,18 @@ export function TradeWindow({
           gold={trade.partner.gold}
         />
       </div>
-      {error && (
-        <Alert color="red" role="alert" className="trade-error">
-          {t(`trade.error.${error}`)}
-        </Alert>
-      )}
       <footer className="trade-footer">
+        {/* J3-03: the refusal sits right above "Accept", where a phone's sticky footer is. */}
+        {error && (
+          <Alert color="red" role="alert" className="trade-error">
+            {errorText}
+          </Alert>
+        )}
         {/* Phones stack the offers: keep what the partner gives in view next to "Accept". */}
         <UnstyledButton
           className="trade-peek"
           data-confirmed={trade.partner.confirmed || undefined}
+          data-hidden={partnerInView || undefined}
           aria-label={t('trade.window.peekLabel', { name: partner })}
           onClick={() =>
             partnerSide.current?.scrollIntoView({
@@ -311,7 +351,7 @@ export function TradeWindow({
           </span>
           <span className="trade-peek-who user-copy">{theirLabel}</span>
           <span className="trade-peek-items">
-            {t('trade.window.peekItems', { count: partnerLines.length })}
+            {t('trade.window.peekItems', { count: partnerUnits })}
           </span>
           <span className="trade-peek-gold">
             <Coins size={16} aria-hidden="true" />
@@ -324,16 +364,54 @@ export function TradeWindow({
           <span>{status.text}</span>
         </div>
         <div className="trade-footer-actions">
-          <Button
-            variant="subtle"
-            color="red"
-            size="md"
-            leftSection={<X size={18} aria-hidden="true" />}
-            onClick={cancel}
-            disabled={action.isPending && action.variables?.kind === 'cancel'}
-          >
-            {t('trade.window.cancel')}
-          </Button>
+          {askCancel ? (
+            <Group
+              gap={6}
+              role="group"
+              aria-label={t('trade.window.cancelAsk')}
+              className="trade-cancel-ask"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.stopPropagation()
+                  ask(false)
+                }
+              }}
+            >
+              <Text size="sm" fw={600}>
+                {t('trade.window.cancelAsk')}
+              </Text>
+              <Button
+                data-mantine-stop-propagation
+                variant="light"
+                color="red"
+                size="md"
+                onClick={cancel}
+                loading={action.isPending && action.variables?.kind === 'cancel'}
+              >
+                {t('trade.window.cancelYes')}
+              </Button>
+              <Button
+                ref={keepRef}
+                data-mantine-stop-propagation
+                variant="subtle"
+                size="md"
+                onClick={() => ask(false)}
+              >
+                {t('trade.window.cancelNo')}
+              </Button>
+            </Group>
+          ) : (
+            <Button
+              ref={cancelRef}
+              variant="subtle"
+              color="red"
+              size="md"
+              leftSection={<X size={18} aria-hidden="true" />}
+              onClick={() => ask(true)}
+            >
+              {t('trade.window.cancel')}
+            </Button>
+          )}
           <Button
             size="lg"
             className="trade-accept"
@@ -384,6 +462,7 @@ function OfferColumn({
   gold,
   purse,
   onSlot,
+  problemItem,
   onGold,
 }: {
   ref?: Ref<HTMLElement>
@@ -397,6 +476,8 @@ function OfferColumn({
   gold: number
   purse?: number
   onSlot?: (itemId: string | null) => void
+  /** An offered stack the server refused for its amount. */
+  problemItem?: string
   onGold?: (gold: number) => void
 }) {
   const { t, i18n } = useTranslation()
@@ -454,6 +535,7 @@ function OfferColumn({
                 {own ? (
                   <UnstyledButton
                     data-slot={line.item_id}
+                    data-problem={line.item_id === problemItem || undefined}
                     className={`trade-slot filled rarity-${item.rarity}`}
                     aria-label={t('trade.window.slotItem', {
                       name: localizedName(item, i18n.language),
@@ -506,14 +588,21 @@ function OfferColumn({
         {own && onGold ? (
           <>
             <Stepper
+              hideLabel
               value={gold}
               min={0}
               max={purse ?? 0}
               label={t('trade.window.goldInput')}
               lessLabel={t('trade.window.goldLess')}
               moreLabel={t('trade.window.goldMore')}
-              onChange={onGold}
+              maxMessage={t('trade.window.goldOnlyHave', {
+                gold: formatGp(purse ?? 0, i18n.language),
+              })}
+              onChange={(next) => onGold(next ?? 0)}
               decimalScale={2}
+              pad
+              required
+              longPress
             />
             <Text size="sm" c="dimmed" className="trade-purse">
               {t('trade.window.goldPurse', { gold: formatGp(purse ?? 0, i18n.language) })}

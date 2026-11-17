@@ -5,7 +5,6 @@ import {
   FileInput,
   Group,
   Loader,
-  Modal,
   Progress,
   Radio,
   Select,
@@ -14,6 +13,7 @@ import {
   Textarea,
   TextInput,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { FileJson } from 'lucide-react'
 import type { TFunction } from 'i18next'

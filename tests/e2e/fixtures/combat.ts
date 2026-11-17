@@ -112,6 +112,8 @@ export function combatServer() {
   const templates: Record<string, unknown>[] = []
   /** RYT-043: current portrait path per character (character_sheets.portrait_path). */
   const portraits: Record<string, string> = {}
+  /** RYT-118: SRD class key per character (character_sheets.build.classKey). */
+  const classes: Record<string, string> = {}
   const requests = new Map<string, unknown>()
   const find = (id: unknown) => encounters.find((e) => e.id === id)
   const owning = (id: unknown) => encounters.find((e) => e.combatants.some((c) => c.id === id))
@@ -199,7 +201,9 @@ export function combatServer() {
       .filter((c) => full || !c.hidden)
       .map((c) => {
         const own = c.kind === 'character' && !table && owners[c.character_id!] === actor
-        const shared = c.kind === 'character' && pcs[c.character_id!]!.shares
+        // RYT-118: under an alias a character shares nothing with Players or the table.
+        const shared =
+          c.kind === 'character' && pcs[c.character_id!]!.shares && (full || !c.public_name)
         const vitals = full || own || shared
         const row: Record<string, unknown> = {
           id: c.id,
@@ -223,7 +227,10 @@ export function combatServer() {
           hp_revealed: full ? c.hp_revealed : undefined,
           dm_notes: full ? c.dm_notes : undefined,
         }
-        row.image_path = !full && c.public_name ? undefined : imageOf(c)
+        row.image_path = !full && !own && c.public_name ? undefined : imageOf(c)
+        // RYT-118 (20261126120000_table_view_class_key_alias_mask.sql): an alias hides the class too.
+        if (c.kind === 'character' && (full || !c.public_name))
+          row.class_key = classes[c.character_id!]
         if (c.kind !== 'lair') {
           row.hp_status = c.kind === 'character' && !vitals ? 'unknown' : status(c)
           row.hp_band = c.kind === 'character' && !vitals ? 'unknown' : band(c)
@@ -298,7 +305,8 @@ export function combatServer() {
           }
         }),
       events: e.events
-        .filter((x) => full || x.visible)
+        // RYT-118: nothing about a combatant that is hidden now.
+        .filter((x) => full || (x.visible && !e.combatants.find((c) => c.id === x.target)?.hidden))
         .slice(0, 60)
         .map((x) =>
           JSON.parse(
@@ -944,6 +952,7 @@ export function combatServer() {
     encounters,
     templates,
     portraits,
+    classes,
     uploads,
     srdImages,
     official,

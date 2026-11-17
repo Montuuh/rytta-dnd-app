@@ -17,6 +17,8 @@ export const partyEs = {
   'party.rations': 'Raciones',
   'party.newCharacter': 'Personaje',
   'party.newCharacterLabel': 'Nuevo personaje',
+  'party.dmEmptyTitle': 'El grupo está vacío',
+  'party.dmEmptyText': 'Crea tú el primer personaje o invita a un jugador para que cree el suyo.',
   'party.exhaustionUp': 'Subir agotamiento a nivel {{level}}',
   'party.exhaustionDown': 'Bajar agotamiento a nivel {{level}}',
   'party.shareLabel': 'En vivo',

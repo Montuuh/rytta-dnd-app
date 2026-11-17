@@ -24,6 +24,15 @@ describe('app configuration', () => {
       }).VITE_DATA_MODE,
     ).toBe('supabase')
   })
+  it('reads the owner name trimmed and treats an empty one as unset', () => {
+    expect(parseConfig({ VITE_OWNER_NAME: '  Nombre Apellido ' }).VITE_OWNER_NAME).toBe(
+      'Nombre Apellido',
+    )
+    expect(parseConfig({ VITE_OWNER_NAME: '' }).VITE_OWNER_NAME).toBeUndefined()
+    expect(() => parseConfig({ VITE_OWNER_NAME: 'x'.repeat(121) })).toThrow(
+      'Invalid app configuration',
+    )
+  })
   it('rejects legacy JWT keys instead of accidentally accepting service-role credentials', () => {
     expect(() =>
       parseConfig({ VITE_SUPABASE_PUBLISHABLE_KEY: 'eyJhbGciOiJIUzI1NiJ9.legacy.signature' }),

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } f
 import { Button, NumberInput, Text } from '@mantine/core'
 import { useReducedMotion } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
-import { Check } from 'lucide-react'
+import { Check, Dices } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
-import { isInitiativeTotal, type Combatant } from '../domain/combat'
+import { rollDice } from '@/shared/ui/dice/roll-dice'
+import { initiativeOutlier, isInitiativeTotal, type Combatant } from '../domain/combat'
 import { InitiativeKeypad } from './amount-dialog'
 
 /**
@@ -43,6 +44,28 @@ export function InitiativeEntry({
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = isInitiativeTotal(value)
   const outOfRange = typeof amount === 'number' && !valid
+  // RYT-126 J4-10: a total no d20 + bonus can reach is probably a slip: warned, never blocked.
+  const unusual = valid && initiativeOutlier(value, bonus)
+  const [rolling, setRolling] = useState(false)
+  const [rolled, setRolled] = useState('')
+  const rollForMe = async () => {
+    if (rolling) return
+    setRolling(true)
+    try {
+      const [die = 1] = await rollDice(1, 20)
+      const modifier = bonus ?? 0
+      setAmount(die + modifier)
+      setRolled(
+        t('combat.initiative.rolled', {
+          die,
+          bonus: modifier >= 0 ? `+ ${modifier}` : `− ${-modifier}`,
+          total: die + modifier,
+        }),
+      )
+    } finally {
+      setRolling(false)
+    }
+  }
   const hintId = useId()
   // React leaves the attribute alone afterwards: Mantine's own value stays undefined.
   const describe = useCallback(
@@ -109,20 +132,44 @@ export function InitiativeEntry({
           </div>
           <Text
             id={hintId}
-            className={`combat-entry-formula${outOfRange ? ' is-invalid' : ''}`}
+            className={`combat-entry-formula${outOfRange ? ' is-invalid' : unusual ? ' is-unusual' : ''}`}
             aria-live="polite"
           >
             {outOfRange
               ? t('combat.initiative.range')
-              : bonus === null
-                ? t('combat.initiative.rollPlain')
-                : t('combat.initiative.roll', {
-                    bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
-                  })}
+              : unusual
+                ? t('combat.initiative.unusual', {
+                    bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
+                    min: bonus! + 1,
+                    max: bonus! + 20,
+                  })
+                : rolled
+                  ? rolled
+                  : bonus === null
+                    ? t('combat.initiative.rollPlain')
+                    : t('combat.initiative.roll', {
+                        bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+                      })}
           </Text>
         </div>
         <div className="combat-entry-keys">
-          <InitiativeKeypad onChange={setAmount} />
+          <Button
+            variant="default"
+            size="lg"
+            className="combat-entry-roll"
+            leftSection={<Dices size={20} aria-hidden="true" />}
+            aria-disabled={rolling || undefined}
+            aria-busy={rolling || undefined}
+            onClick={() => void rollForMe()}
+          >
+            {t('combat.initiative.rollForMe')}
+          </Button>
+          <InitiativeKeypad
+            onChange={(next) => {
+              setRolled('')
+              setAmount(next)
+            }}
+          />
           <div className="combat-entry-actions">
             {editing && (
               <Button variant="subtle" size="lg" onClick={cancel}>

@@ -1,0 +1,229 @@
+/* RYT-115 account group in Settings: data export, the quiet delete action and its dialog. */
+.account-section {
+  display: grid;
+  gap: 20px;
+}
+.account-block {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  min-width: 0;
+}
+.account-block + .account-block {
+  padding-top: 20px;
+  border-top: 1px solid var(--app-border);
+}
+.account-block h4,
+.account-list h4 {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.3;
+}
+.account-copy {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  text-wrap: pretty;
+}
+.account-button {
+  min-height: 44px;
+}
+/* The delete action stays outline-quiet: red ink and border, no fill, until the dialog. */
+.account-danger {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--app-border));
+  background: transparent;
+  color: var(--danger);
+}
+.account-danger:hover {
+  background: var(--danger-soft);
+}
+.account-danger-solid {
+  --button-bg: var(--danger);
+  --button-hover: color-mix(in srgb, var(--danger) 88%, black);
+  --button-color: #ffffff;
+  color: #ffffff;
+}
+html:not([data-mantine-color-scheme='light']) .account-danger-solid {
+  --button-color: #1b0b09;
+  color: #1b0b09;
+}
+html .account-danger-solid:disabled,
+html .account-danger-solid[data-disabled] {
+  /* Locked, but still the red action the word unlocks: outline until it is typed. */
+  border-color: color-mix(in srgb, var(--danger) 70%, var(--app-border));
+  background: transparent;
+  color: var(--danger);
+  opacity: 1;
+  cursor: not-allowed;
+}
+.account-status {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  overflow-wrap: anywhere;
+}
+.account-status:empty {
+  display: none;
+}
+.account-status[data-error] {
+  color: var(--danger);
+}
+.account-spin {
+  animation: account-spin 900ms linear infinite;
+}
+@keyframes account-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.account-dialog-title {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+}
+.account-dialog-body {
+  display: grid;
+  gap: 16px;
+}
+.account-dialog-body p {
+  margin: 0;
+  text-wrap: pretty;
+}
+.account-list {
+  display: grid;
+  gap: 6px;
+}
+.account-list ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-inline-start: 1.1em;
+}
+.account-final {
+  font-weight: 700;
+}
+.account-download {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.account-input {
+  min-height: 44px;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.account-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--app-muted);
+}
+.account-blockers {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.account-blockers li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.account-blocker-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.account-blocker-meta {
+  grid-column: 1;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.account-blockers .account-link {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 4px;
+  color: var(--app-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.account-link:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.account-notice {
+  text-align: left;
+}
+.account-notice .account-actions {
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-spin {
+    animation: none;
+  }
+}
+
+/* The decision row stays on screen while a long list scrolls inside the dialog. */
+.account-dialog,
+.account-dialog-scroll {
+  /* A focused field never scrolls under the sticky row (stacked actions, about 8rem). */
+  scroll-padding-bottom: 9rem;
+}
+.account-dialog-scroll {
+  padding-bottom: 0;
+}
+.account-sticky {
+  position: sticky;
+  bottom: 0;
+  margin-inline: calc(var(--mantine-spacing-md) * -1);
+  padding: 12px var(--mantine-spacing-md) var(--mantine-spacing-md);
+  border-top: 1px solid var(--app-border);
+  background: var(--mantine-color-body);
+}
+.account-dialog-body:has(.account-sticky) {
+  padding-bottom: 0;
+}
+
+/* Phones and tablets: both actions full width, one under the other. Source, visual and tab order
+   agree: the safe action (cancel) first, the destructive one last. */
+@media (max-width: 64em) {
+  .account-sticky {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .account-sticky .account-button {
+    width: 100%;
+  }
+}
+
+/* A programmatic focus target, not a control. A pointer-initiated or script-only focus must not
+   look like an error, so no ring shows then; keyboard-initiated focus (:focus-visible) keeps the
+   page ring from sign-in-page.css. */
+.account-notice:focus:not(:focus-visible),
+.account-lead:focus:not(:focus-visible) {
+  outline: none;
+}

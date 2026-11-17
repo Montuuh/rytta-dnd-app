@@ -21,7 +21,7 @@ export const usernameEn = {
   'username.promptTitle': 'Choose your username',
   'username.doneTitle': 'Your username is ready',
   'username.promptCopy':
-    'Your DMs will see it instead of your email. It is the same in every campaign, and you can change it in Profile › App setup.',
+    'Your DMs will see it instead of your email. It is the same in every campaign, and you can change it in Profile › Settings.',
   'username.promptSave': 'Use this name',
   'username.later': 'Later',
   'username.close': 'Close',
@@ -29,5 +29,5 @@ export const usernameEn = {
   'username.checkFailed': 'We could not check this name now. You can still save it.',
   'username.error.saveFailed': 'We could not save your username. Try again.',
   'username.promptDone':
-    'Your DMs will see you as {{name}}. You can change it in Profile › App setup.',
+    'Your DMs will see you as {{name}}. You can change it in Profile › Settings.',
 }

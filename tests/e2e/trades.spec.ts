@@ -24,7 +24,7 @@ async function audit(page: Page) {
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  await expectTouchTargets(page, '[role="dialog"] button:visible:not(.glossary-term)')
+  await expectTouchTargets(page, '[role="dialog"] button:visible')
 }
 
 test('RYT-034 two Players trade items and gold with a double confirmation', async ({
@@ -82,7 +82,12 @@ test('RYT-034 two Players trade items and gold with a double confirmation', asyn
   await picker.getByRole('button', { name: 'Una unidad más de Poción de curación' }).click()
   await picker.getByRole('button', { name: 'Dar', exact: true }).click()
   await expect(arinWindow.getByRole('button', { name: /Poción de curación, ×2/ })).toBeVisible()
-  await arinWindow.getByRole('textbox', { name: 'Oro que das' }).fill('10')
+  // J3-22: more gold than the purse is clamped in the field, with the reason, never kept silently.
+  const goldField = arinWindow.getByRole('textbox', { name: 'Oro que das' })
+  await goldField.fill('99999')
+  await expect(goldField).toHaveValue('120')
+  await expect(arinWindow.getByText('Solo tienes 120 po')).toBeVisible()
+  await goldField.fill('10')
   await expect(arinWindow.getByText('Guardando tu oferta…')).toBeHidden({ timeout: 5_000 })
   await expect
     .poll(() => server.calls.filter((c) => c.method === 'set_trade_offer').length)
@@ -222,7 +227,13 @@ test('RYT-034 declined invitations and phone bottom-sheet picker', async ({ brow
     .getByRole('button', { name: 'Volver al trueque con Bea' })
     .click()
   await expect(arinWindow).toBeVisible()
+  // J3-08: cancelling ends the trade for both, so it asks again in place and rests on the safe choice.
   await arinWindow.getByRole('button', { name: 'Cancelar el trueque' }).click()
+  await expect(arinWindow.getByRole('button', { name: 'Seguir comerciando' })).toBeFocused()
+  await arin.keyboard.press('Escape')
+  await expect(arinWindow).toBeVisible()
+  await arinWindow.getByRole('button', { name: 'Cancelar el trueque' }).click()
+  await arinWindow.getByRole('button', { name: 'Sí, cancelar' }).click()
   await expect(arinWindow).toBeHidden()
   await expect(bea.getByText('Arin cancelled the trade.')).toBeVisible({ timeout: 10_000 })
   await arinContext.close()
@@ -265,5 +276,5 @@ test('RYT-097 trading starts from the portrait icon, also with an unshared teamm
         .analyze()
     ).violations,
   ).toEqual([])
-  await expectTouchTargets(page, 'main button:visible:not(.glossary-term)')
+  await expectTouchTargets(page, 'main button:visible')
 })

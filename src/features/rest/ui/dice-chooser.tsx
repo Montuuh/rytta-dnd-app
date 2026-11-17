@@ -14,6 +14,7 @@ export function DiceChooser({
   left,
   conMod,
   value,
+  room,
   showError = false,
   onChange,
 }: {
@@ -21,6 +22,8 @@ export function DiceChooser({
   left: number
   conMod: number
   value: DiceChoice
+  /** Hit points the character can still get back (max minus current): more is lost. */
+  room?: number
   /** A vote was refused for this roll: show the error on the field and move focus to it. */
   showError?: boolean
   onChange: (next: DiceChoice) => void
@@ -28,6 +31,8 @@ export function DiceChooser({
   const { t } = useTranslation()
   const id = useId()
   const [rolling, setRolling] = useState(false)
+  /** Each die of the last Rytta roll, shown in the dock once the dice leave the screen. */
+  const [dice, setDice] = useState<{ values: number[]; roll: string } | null>(null)
   const rollInput = useRef<HTMLInputElement>(null)
   const valid = rollValid(value, die)
   useEffect(() => {
@@ -44,8 +49,12 @@ export function DiceChooser({
     if (rolling || value.spent === 0 || die === 0) return
     setRolling(true)
     try {
-      const values = await rollDice(value.spent, die as DieSides)
-      onChange({ spent: value.spent, roll: String(values.reduce((sum, item) => sum + item, 0)) })
+      // The dice stage sits over the whole page, preview included: it clears when they stop and
+      // the result stays in the dock, below.
+      const values = await rollDice(value.spent, die as DieSides, { hold: 0 })
+      const total = String(values.reduce((sum, item) => sum + item, 0))
+      setDice({ values, roll: total })
+      onChange({ spent: value.spent, roll: total })
     } finally {
       setRolling(false)
     }
@@ -115,7 +124,16 @@ export function DiceChooser({
         </Button>
       )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">
+        {dice && value.spent === dice.values.length && value.roll === dice.roll && (
+          <span className="rest-dice-faces">
+            {t('rest.rolledDice', { dice: dice.values.join(' + ') })}
+          </span>
+        )}
         {value.spent === 0 ? t('rest.noDice') : valid ? t('rest.heal', { roll, con, heal }) : null}
+        {/* RYT-126 J4-23: a die that heals past the maximum is spent for nothing: say so. */}
+        {valid && room !== undefined && heal > room && (
+          <span className="rest-overheal">{t('rest.overheal', { room: Math.max(0, room) })}</span>
+        )}
       </p>
     </fieldset>
   )

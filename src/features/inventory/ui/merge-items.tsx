@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { Alert, Button, Drawer, Group, Loader, Stack, Text, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Loader, Stack, Text, TextInput } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

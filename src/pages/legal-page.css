@@ -1,0 +1,130 @@
+/* RYT-115: a readable long-form page. Semantic tokens only, so every theme works. */
+.legal {
+  max-width: 70ch;
+  margin-inline: auto;
+  padding-block: 8px 32px;
+  color: var(--app-text);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.legal a {
+  color: var(--app-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+.legal-head h1 {
+  margin: 8px 0 4px;
+  font-size: var(--fs-h1);
+  line-height: 1.15;
+}
+
+.legal-date {
+  margin: 0 0 16px;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+
+.legal-draft {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-accent);
+  border-left-width: 4px;
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+}
+
+.legal-intro {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+.legal section {
+  margin-top: 32px;
+}
+
+.legal h2 {
+  margin: 0 0 8px;
+  font-size: var(--fs-h2);
+  line-height: 1.25;
+}
+
+.legal p,
+.legal ul {
+  margin: 0 0 12px;
+}
+
+.legal ul {
+  padding-left: 1.25rem;
+}
+
+.legal li + li {
+  margin-top: 6px;
+}
+
+.legal blockquote {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--app-border);
+  background: var(--app-surface);
+  border-radius: 0 var(--mantine-radius-md) var(--mantine-radius-md) 0;
+  font-size: var(--fs-meta);
+}
+
+.legal-foot {
+  margin-top: 36px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border);
+}
+
+.legal-foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+/* Footer links on the landing and the Settings row. */
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  justify-content: center;
+}
+
+.legal-links.settings-legal {
+  justify-content: flex-start;
+}
+
+.legal-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-links a:hover {
+  color: var(--app-text);
+}
+
+/* Programmatic focus targets (page arrival, "Who runs the service" link): no ring of their own. */
+.legal h1:focus,
+.legal h2:focus {
+  outline: none;
+}

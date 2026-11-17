@@ -19,7 +19,6 @@ export const charactersEn = {
   'characters.rules': 'Homebrew · Whole gold, food and water rations · Manual exhaustion',
   'characters.create': 'Create character',
   'characters.name': 'Character name',
-  'characters.empty': 'No characters yet.',
   'characters.emptyPlayer': 'This player has no character yet.',
   'characters.unassigned': 'Unassigned',
   'characters.assigned': 'Assigned to a Player',

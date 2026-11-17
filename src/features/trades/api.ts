@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
-import { changeTrade, loadTradeState, subscribeTrades } from './data/repository'
+import { liveChannelUp } from '@/shared/lib/live-poll'
+import { changeTrade, loadTradeState, subscribeTrades, tradeChannelKey } from './data/repository'
 import { pollInterval, type TradeAction } from './domain/trade'
 
 const tradeScope = (userId: string, campaignId: string) =>
@@ -11,13 +12,19 @@ export const tradeStateQuery = (userId: string, campaignId: string, actingUser: 
   queryOptions({
     queryKey: [...tradeScope(userId, campaignId), actingUser ?? 'self'],
     queryFn: ({ signal }) => loadTradeState(campaignId, actingUser, signal),
-    refetchInterval: (query) => pollInterval(query.state.data),
+    refetchInterval: (query) =>
+      pollInterval(query.state.data, liveChannelUp(tradeChannelKey(campaignId))),
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     staleTime: 0,
     retry: 1,
   })
 
-/** Invalidates the trade state whenever Realtime reports a change to a campaign trade. */
+/**
+ * Invalidates the trade state when Realtime reports a change to a campaign trade and when the
+ * channel connects or drops, so the poll cadence (slow while subscribed) follows at once.
+ */
 export function useTradeRealtime(campaignId: string, enabled: boolean) {
   const { state } = useAuth()
   const cache = useQueryClient()

@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState, type ComponentType } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from 'react'
 import {
   Alert,
   Button,
@@ -12,8 +20,8 @@ import {
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
-  Compass,
   Eye,
+  LayoutGrid,
   Library,
   LogOut,
   Menu as MenuIcon,
@@ -24,6 +32,7 @@ import {
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { modules } from './modules'
+import { documentTitleKey } from './document-title'
 import { config } from '@/shared/lib/config'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -36,10 +45,15 @@ import {
   type Campaign,
 } from '@/features/campaigns'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
+import { artUrl } from '@/shared/ui/art-url'
 import { UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
 import { SettingsPanel } from '@/pages/settings-panel'
+
+/** Settings links into a campaign Members page leave the drawer behind them. */
+const membersPage = /^\/campaign\/[^/]+\/members/
 
 /** RYT-069: Settings is a right-hand drawer over the current page, not a page of its own. */
 const SettingsDrawerContext = createContext<() => void>(() => {})
@@ -55,7 +69,7 @@ export function SettingsRoute() {
   return null
 }
 
-const defaultActivePaths = new Set(['/party', '/glossary'])
+const defaultActivePaths = new Set(['/glossary'])
 /** Phones show this many destinations before folding the rest into "More". */
 const bottomSlots = 5
 
@@ -66,6 +80,14 @@ type NavEntry = {
   short?: string
   icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' }>
   dm?: boolean
+  key?: string
+}
+
+const sessionModules = ['combat', 'tabletop']
+/** Stable sort rank: session tools first, everything else keeps its catalogue order. */
+const sessionRank = (key?: string) => {
+  const index = sessionModules.indexOf(key ?? '')
+  return index === -1 ? sessionModules.length : index
 }
 
 /** Only reachable destinations appear in navigation. Planned modules live in the DM module
@@ -86,11 +108,14 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   const reachable = modules.filter(
     ({ key, implemented }) => implemented && (effectiveDm || enabledKeys.has(key)),
   )
-  const entries: NavEntry[] = reachable.map(({ path, label, icon }) => ({
+  const entries: NavEntry[] = reachable.map(({ key, path, label, icon }) => ({
     to: `${prefix}${path}`,
     label: t(label),
     icon,
+    key,
   }))
+  // Running a session: the DM reaches Combat and the Table in one tap, ahead of the rest.
+  if (effectiveDm) entries.sort((a, b) => sessionRank(a.key) - sessionRank(b.key))
   // The DM Command Center is the DM's first destination (RYT-027); it also holds the storeroom.
   if (effectiveDm)
     entries.unshift({
@@ -105,8 +130,14 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
 
 function TopNavigation({ entries }: { entries: NavEntry[] }) {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
+  const nav = useRef<HTMLElement>(null)
+  // Tabs scroll when they do not fit: keep the current one in view after navigating.
+  useEffect(() => {
+    nav.current?.querySelector('.active')?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+  }, [pathname])
   return (
-    <nav aria-label={t('nav.main')} className="nav-tabs">
+    <nav ref={nav} aria-label={t('nav.main')} className="nav-tabs">
       {entries.map(({ to, label, icon: Icon, dm }) => (
         <NavLink
           key={to}
@@ -134,6 +165,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
   const rest = overflow ? entries.slice(bottomSlots - 1) : []
   const moreActive = rest.some(({ to }) => pathname === to || pathname.startsWith(`${to}/`))
   useEffect(close, [pathname, close])
+  useBackToClose(opened, close)
   return (
     <>
       <nav aria-label={t('nav.main')} className="bottom-nav">
@@ -202,6 +234,52 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
   )
 }
 
+/** The emblem always goes to My campaigns; inside a campaign the name beside it is that
+ * campaign's home, so there is a way back to the list from every page (J1-12). */
+function BrandLink({
+  campaign,
+  live,
+  emblem,
+  copy,
+}: {
+  campaign: Campaign | undefined
+  live: boolean
+  emblem: ReactNode
+  copy: ReactNode
+}) {
+  const { t } = useTranslation()
+  if (!live)
+    return (
+      <div className="brand-bar">
+        {emblem}
+        {copy}
+      </div>
+    )
+  const hubLabel = `RYTTA · ${t('hub.title')}`
+  if (!campaign)
+    return (
+      <NavLink to="/" end className="brand-bar" aria-label={hubLabel}>
+        {emblem}
+        {copy}
+      </NavLink>
+    )
+  return (
+    <div className="brand-bar">
+      <NavLink to="/" className="brand-home" aria-label={hubLabel}>
+        {emblem}
+      </NavLink>
+      <NavLink
+        to={`/campaign/${campaign.id}`}
+        end
+        className="brand-campaign"
+        aria-label={t('nav.campaignHome', { name: campaign.name })}
+      >
+        {copy}
+      </NavLink>
+    </div>
+  )
+}
+
 export function Layout() {
   const { t } = useTranslation()
   const { state, controller } = useAuth()
@@ -229,7 +307,10 @@ export function Layout() {
   // RYT-078: true from opening the Settings drawer until its exit transition ends (focus is back
   // on the profile button), so the username dialog opens only after the drawer is fully gone.
   const [settingsShown, setSettingsShown] = useState(false)
+  // RYT-115: the account dialog inside the drawer takes Escape first.
+  const [accountDialog, setAccountDialog] = useState(false)
   if (settingsOpened && !settingsShown) setSettingsShown(true)
+  useBackToClose(settingsOpened, settings.close)
   const menuButton = useRef<HTMLButtonElement>(null)
   const previewSwitch = useRef<HTMLInputElement>(null)
   const restoreMenuFocus = useRef(false)
@@ -251,9 +332,41 @@ export function Layout() {
       ? members.data.filter((member) => member.role === 'player')
       : []
   const entries = useNavEntries(campaign, playerPreview)
-  const showNav = (!live || !!campaign) && entries.length > 0
+  // One destination needs no bar: the header already names the page and links home.
+  const showNav = (!live || !!campaign) && entries.length > 1
   const mainRef = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
+  // RYT-115: the legal links inside Settings leave the drawer behind them.
+  const closeSettings = settings.close
+  // Leaving through a link in the drawer (or by signing out) hands focus to the page, not the header.
+  const leaveFocus = useRef(false)
+  const settingsOpenRef = useRef(settingsOpened)
+  useEffect(() => {
+    settingsOpenRef.current = settingsOpened
+  }, [settingsOpened])
+  useEffect(() => {
+    if (pathname === '/privacy' || pathname === '/terms' || membersPage.test(pathname)) {
+      if (settingsOpenRef.current) leaveFocus.current = true
+      closeSettings()
+    }
+  }, [pathname, closeSettings])
+  // Signing out (account deletion) leaves nothing to set up behind the landing.
+  const wasSignedIn = useRef(false)
+  useEffect(() => {
+    if (wasSignedIn.current && !state.user) {
+      leaveFocus.current = true
+      closeSettings()
+      setAccountDialog(false)
+    }
+    wasSignedIn.current = !!state.user
+  }, [state.user, closeSettings])
+  const [ownTurn, setOwnTurn] = useState(false)
+  useEffect(() => {
+    const on = (event: Event) =>
+      setOwnTurn((event as CustomEvent<{ yours: boolean }>).detail.yours === true)
+    window.addEventListener('rytta:own-turn', on)
+    return () => window.removeEventListener('rytta:own-turn', on)
+  }, [])
   useEffect(() => {
     if (previousPath.current !== pathname) {
       // RYT-093: moving inside the content library keeps focus and scroll; the library moves them.
@@ -264,23 +377,16 @@ export function Layout() {
       if (!withinLibrary) window.scrollTo(0, 0)
       previousPath.current = pathname
     }
-    const modulePath = live ? pathname.replace(/^\/campaign\/[^/]+/, '') || '/' : pathname
-    const key =
-      live && state.status !== 'signed-in'
-        ? 'auth.google'
-        : live && pathname === '/'
-          ? 'hub.title'
-          : pathname.startsWith('/library')
-            ? 'library.title'
-            : pathname.endsWith('/members')
-              ? 'campaign.manage'
-              : /^\/party\/[^/]+\/create$/.test(modulePath)
-                ? 'wizard.editorTitle'
-                : /^\/party\/[^/]+$/.test(modulePath)
-                  ? 'sheet.title'
-                  : (modules.find((m) => m.path === modulePath)?.label ?? 'page.notFound')
-    document.title = `${t(key)} · Rytta`
-  }, [pathname, t, live, state.status, settingsOpened])
+    const titleKey = documentTitleKey({
+      pathname,
+      live,
+      signedIn: state.status === 'signed-in',
+    })
+    const title = titleKey ? t(titleKey) : (campaign?.name ?? 'Rytta')
+    const base = title === 'Rytta' ? 'Rytta' : `${title} · Rytta`
+    // RYT-126: on the Player's own turn a background tab says so (combat raises the event).
+    document.title = ownTurn ? `${t('combat.turn.yours')} ${base}` : base
+  }, [pathname, t, live, state.status, settingsOpened, campaign?.name, ownTurn])
   const enterPreview = (userId: string | null, label: string | null) => {
     setPreviewUserId(userId)
     setPreviewLabel(label)
@@ -327,24 +433,35 @@ export function Layout() {
           <div className="workspace">
             <header className="app-header">
               <div className="topbar">
-                <div className="brand-bar">
-                  <span className="brand-emblem" aria-hidden="true">
-                    <Compass size={22} strokeWidth={1.7} />
-                  </span>
-                  <div className="brand-copy">
-                    <span className="brand-title">RYTTA</span>
-                    {campaign && (
-                      <Text
-                        size="sm"
-                        fw={600}
-                        className="header-campaign-name user-copy"
-                        title={campaign.name}
-                      >
-                        {campaign.name}
-                      </Text>
-                    )}
-                  </div>
-                </div>
+                <BrandLink
+                  campaign={campaign}
+                  live={live && !!state.user}
+                  emblem={
+                    <img
+                      className="brand-emblem"
+                      src={artUrl('brand/emblem')}
+                      alt=""
+                      width={40}
+                      height={40}
+                      draggable={false}
+                    />
+                  }
+                  copy={
+                    <div className="brand-copy">
+                      <span className="brand-title">RYTTA</span>
+                      {campaign && (
+                        <Text
+                          size="sm"
+                          fw={600}
+                          className="header-campaign-name user-copy"
+                          title={campaign.name}
+                        >
+                          {campaign.name}
+                        </Text>
+                      )}
+                    </div>
+                  }
+                />
                 <div className="header-actions">
                   {campaign?.role === 'dm' && (
                     <Popover
@@ -364,21 +481,15 @@ export function Layout() {
                             size="md"
                             checked={playerPreview}
                             onChange={(event) => togglePreview(event.currentTarget.checked)}
-                            // Phones show the short label; the accessible name stays the full one.
+                            label={t('shell.playerSwitch')}
                             aria-label={t('shell.playerSwitch')}
-                            label={
-                              <>
-                                <span className="preview-switch-full">
-                                  {t('shell.playerSwitch')}
-                                </span>
-                                <span className="preview-switch-short" aria-hidden="true">
-                                  {t('shell.playerSwitchShort')}
-                                </span>
-                              </>
-                            }
+                            aria-describedby="player-switch-hint"
                             title={t('shell.playerSwitchHint')}
                             thumbIcon={<Eye size={12} aria-hidden="true" />}
                           />
+                          <span id="player-switch-hint" className="visually-hidden">
+                            {t('shell.playerSwitchHint')}
+                          </span>
                         </div>
                       </Popover.Target>
                       <Popover.Dropdown
@@ -411,105 +522,128 @@ export function Layout() {
                       </Popover.Dropdown>
                     </Popover>
                   )}
-                  <Menu
-                    opened={opened}
-                    onChange={(value) => {
-                      if (value) {
-                        restoreMenuFocus.current = true
-                        open()
-                      } else close()
-                    }}
-                    position="bottom-end"
-                    width={260}
-                    withinPortal
-                    withInitialFocusPlaceholder={false}
-                    returnFocus={false}
-                    onExitTransitionEnd={() => {
-                      if (restoreMenuFocus.current) menuButton.current?.focus()
-                    }}
-                  >
-                    <Menu.Target>
-                      <Button
-                        ref={menuButton}
-                        variant="subtle"
-                        className="account-button profile-trigger-btn"
-                        leftSection={<UserRound size={18} aria-hidden="true" />}
-                        aria-label={
-                          state.user
-                            ? `${t('account.profile')} · ${username ? `${username} · ` : ''}${t('auth.account', { email: state.user.email })}`
-                            : `${t('account.profile')} · ${t('account.menu')}`
-                        }
-                      >
-                        <span className="profile-label">{t('account.profile')}</span>
-                      </Button>
-                    </Menu.Target>
-                    <Menu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
-                      {state.user && (
-                        <>
-                          <Menu.Label className="user-copy">
-                            {username && <span className="user-name">{username}</span>}
-                            <span className="user-email">{state.user.email}</span>
-                          </Menu.Label>
-                          <Menu.Item
-                            component={NavLink}
-                            to="/"
-                            leftSection={<Compass size={18} aria-hidden="true" />}
-                          >
-                            {t('hub.title')}
-                          </Menu.Item>
-                          {contentEditor && (
+                  {!state.user ? (
+                    // Signed out the profile menu would hold one item: open Settings directly.
+                    <Button
+                      ref={menuButton}
+                      variant="subtle"
+                      className="account-button profile-trigger-btn"
+                      leftSection={<Settings size={18} aria-hidden="true" />}
+                      aria-haspopup="dialog"
+                      aria-expanded={settingsOpened}
+                      onClick={settings.open}
+                    >
+                      <span className="profile-label">{t('nav.settings')}</span>
+                    </Button>
+                  ) : (
+                    <Menu
+                      opened={opened}
+                      onChange={(value) => {
+                        if (value) {
+                          restoreMenuFocus.current = true
+                          open()
+                        } else close()
+                      }}
+                      position="bottom-end"
+                      width={260}
+                      withinPortal
+                      withInitialFocusPlaceholder={false}
+                      returnFocus={false}
+                      onExitTransitionEnd={() => {
+                        if (restoreMenuFocus.current) menuButton.current?.focus()
+                      }}
+                    >
+                      <Menu.Target>
+                        <Button
+                          ref={menuButton}
+                          variant="subtle"
+                          className="account-button profile-trigger-btn"
+                          leftSection={
+                            state.user ? (
+                              <UserRound size={18} aria-hidden="true" />
+                            ) : (
+                              <Settings size={18} aria-hidden="true" />
+                            )
+                          }
+                          aria-label={
+                            state.user
+                              ? `${t('account.profile')} · ${username ? `${username} · ` : ''}${t('auth.account', { email: state.user.email })}`
+                              : `${t('nav.settings')} · ${t('account.menu')}`
+                          }
+                        >
+                          <span className="profile-label">
+                            {t(state.user ? 'account.profile' : 'nav.settings')}
+                          </span>
+                        </Button>
+                      </Menu.Target>
+                      <Menu.Dropdown className="account-dropdown" maw="calc(100vw - 32px)">
+                        {state.user && (
+                          <>
+                            <Menu.Label className="user-copy">
+                              {username && <span className="user-name">{username}</span>}
+                              <span className="user-email">{state.user.email}</span>
+                            </Menu.Label>
                             <Menu.Item
                               component={NavLink}
-                              to="/library"
-                              leftSection={<Library size={18} aria-hidden="true" />}
+                              to="/"
+                              leftSection={<LayoutGrid size={18} aria-hidden="true" />}
                             >
-                              {t('library.title')}
+                              {t('hub.title')}
                             </Menu.Item>
-                          )}
-                          <Menu.Divider />
-                        </>
-                      )}
-                      {/* RYT-095: leaving belongs to the open campaign, in its own group above the
+                            {contentEditor && (
+                              <Menu.Item
+                                component={NavLink}
+                                to="/library"
+                                leftSection={<Library size={18} aria-hidden="true" />}
+                              >
+                                {t('library.title')}
+                              </Menu.Item>
+                            )}
+                            <Menu.Divider />
+                          </>
+                        )}
+                        {/* RYT-095: leaving belongs to the open campaign, in its own group above the
                           account items; never from the DM's Player view. */}
-                      {live && state.user && campaign && !playerPreview && (
-                        <>
-                          <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
-                          <LeaveCampaignItem
-                            block={leaveBlock(campaign.role, members.data, members.isError)}
-                            onSelect={() => {
-                              // The dialog takes focus; it hands it back to the trigger on cancel.
-                              restoreMenuFocus.current = false
-                              setLeaving({ id: campaign.id, name: campaign.name })
-                            }}
-                          />
-                          <Menu.Divider />
-                        </>
-                      )}
-                      {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
-                      <Menu.Item
-                        leftSection={<Settings size={18} aria-hidden="true" />}
-                        aria-haspopup="dialog"
-                        // The drawer takes focus; it hands it back to the trigger when it closes.
-                        onClick={() => {
-                          restoreMenuFocus.current = false
-                          settings.open()
-                        }}
-                      >
-                        {t('nav.settings')}
-                      </Menu.Item>
-                      {state.user && (
-                        <>
-                          <Menu.Divider />
-                          <Menu.Item
-                            leftSection={<LogOut size={18} aria-hidden="true" />}
-                            onClick={() => void controller?.signOut()}
-                          >
-                            {t('auth.signOut')}
-                          </Menu.Item>
-                        </>
-                      )}
-                    </Menu.Dropdown>
-                  </Menu>
+                        {live && state.user && campaign && !playerPreview && (
+                          <>
+                            <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
+                            <LeaveCampaignItem
+                              block={leaveBlock(campaign.role, members.data, members.isError)}
+                              onSelect={() => {
+                                // The dialog takes focus; it hands it back to the trigger on cancel.
+                                restoreMenuFocus.current = false
+                                setLeaving({ id: campaign.id, name: campaign.name })
+                              }}
+                            />
+                            <Menu.Divider />
+                          </>
+                        )}
+                        {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
+                        <Menu.Item
+                          leftSection={<Settings size={18} aria-hidden="true" />}
+                          aria-haspopup="dialog"
+                          // The drawer takes focus; it hands it back to the trigger when it closes.
+                          onClick={() => {
+                            restoreMenuFocus.current = false
+                            settings.open()
+                          }}
+                        >
+                          {t('nav.settings')}
+                        </Menu.Item>
+                        {state.user && (
+                          <>
+                            <Menu.Divider />
+                            <Menu.Item
+                              leftSection={<LogOut size={18} aria-hidden="true" />}
+                              onClick={() => void controller?.signOut()}
+                            >
+                              {t('auth.signOut')}
+                            </Menu.Item>
+                          </>
+                        )}
+                      </Menu.Dropdown>
+                    </Menu>
+                  )}
                 </div>
               </div>
               {showNav && (
@@ -555,16 +689,25 @@ export function Layout() {
             size="calc(min(100vw - 1.5rem, 30rem))"
             title={t('nav.settings')}
             className="settings-drawer"
+            closeOnEscape={!accountDialog}
             closeButtonProps={{ 'aria-label': t('settings.close'), size: 44 }}
             // A light veil keeps the page readable, so a new theme shows behind the panel.
             overlayProps={{ backgroundOpacity: 0.3 }}
             returnFocus={false}
             onExitTransitionEnd={() => {
-              menuButton.current?.focus()
+              if (leaveFocus.current) {
+                leaveFocus.current = false
+                const page = document.getElementById('main-content')
+                const target =
+                  page?.querySelector<HTMLElement>('[data-leave-focus]') ??
+                  page?.querySelector<HTMLElement>('h1') ??
+                  page
+                target?.focus()
+              } else menuButton.current?.focus()
               setSettingsShown(false)
             }}
           >
-            <SettingsPanel />
+            <SettingsPanel onLeave={settings.close} onDialogChange={setAccountDialog} />
           </Drawer>
           {leaving && (
             <LeaveCampaignDialog

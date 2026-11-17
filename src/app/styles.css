@@ -144,15 +144,39 @@ h2[tabindex='-1']:focus {
   min-width: 0;
   flex: 1 1 9rem;
 }
+a.brand-bar {
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+  border-radius: 12px;
+}
+/* Inside a campaign the emblem links to My campaigns and the name to the campaign's home. */
+.brand-home,
+.brand-campaign {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 12px;
+}
+.brand-home {
+  flex-shrink: 0;
+  min-width: 44px;
+  justify-content: center;
+}
+.brand-campaign {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .brand-emblem {
   width: 40px;
   height: 40px;
   border-radius: 11px;
-  background: var(--app-raised);
   border: 1px solid var(--app-border);
-  color: var(--app-accent);
-  display: grid;
-  place-items: center;
+  background: #140f0b;
+  object-fit: cover;
+  display: block;
   flex-shrink: 0;
 }
 .brand-copy {
@@ -194,6 +218,10 @@ h2[tabindex='-1']:focus {
 .preview-switch .mantine-Switch-body {
   align-items: center;
   min-height: 44px;
+}
+/* The off track must stand out from the capsule in every theme (3:1 non-text contrast). */
+.preview-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track {
+  box-shadow: inset 0 0 0 1.5px var(--app-muted);
 }
 .preview-switch .mantine-Switch-label {
   font-weight: 600;
@@ -247,36 +275,43 @@ h2[tabindex='-1']:focus {
 .nav-tabs {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 10px 24px;
+  padding: 0 24px;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
+  gap: 4px;
   overflow-x: auto;
-  scrollbar-width: thin;
-  scroll-padding-inline: 24px;
+  scrollbar-width: none;
+  scroll-padding-inline: 32px;
+  /* Edge shadows appear only on the side that still has hidden tabs (scroll affordance). */
+  background:
+    linear-gradient(to right, var(--app-bg), var(--app-bg)) left center / 36px 100% local no-repeat,
+    linear-gradient(to left, var(--app-bg), var(--app-bg)) right center / 36px 100% local no-repeat,
+    linear-gradient(to right, color-mix(in srgb, var(--app-text) 22%, transparent), transparent)
+      left center / 16px 100% scroll no-repeat,
+    linear-gradient(to left, color-mix(in srgb, var(--app-text) 22%, transparent), transparent)
+      right center / 16px 100% scroll no-repeat;
+}
+.nav-tabs::-webkit-scrollbar {
+  display: none;
 }
 .nav-tabs .nav-item {
   flex-shrink: 0;
   white-space: nowrap;
 }
-/* Edge fade hints that the row scrolls; trailing padding keeps the last pill readable. */
-.nav-tabs-row .nav-tabs {
-  padding-right: 48px;
-  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
-}
 .campaign-layout .nav-tabs,
 .campaign-layout .topbar {
   max-width: 1360px;
 }
+/* Tabs, not pills: a label on a baseline, the open one underlined. */
 .nav-item {
-  min-height: 44px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -284,34 +319,24 @@ h2[tabindex='-1']:focus {
   text-decoration: none;
   font-size: var(--fs-meta);
   font-weight: 600;
-  color: var(--app-text);
+  color: var(--app-muted);
   max-width: 100%;
   overflow-wrap: anywhere;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   transition:
-    background-color 140ms,
     color 140ms,
-    border-color 140ms,
-    transform 140ms,
-    box-shadow 140ms;
+    border-color 140ms;
 }
 .nav-item:hover:not(.disabled-module) {
-  background: var(--app-raised);
   color: var(--app-text);
-  border-color: var(--app-accent);
-  transform: translateY(-1px);
+  border-bottom-color: var(--app-border);
 }
 .nav-item-dm:not(.active) {
-  border-color: var(--app-accent);
-  background: var(--app-raised);
   color: var(--app-accent);
 }
 .nav-item.active {
-  background: var(--app-accent);
-  color: var(--app-on-accent);
-  border-color: var(--app-accent);
+  color: var(--app-text);
+  border-bottom-color: var(--app-accent);
   font-weight: 700;
-  box-shadow: 0 3px 10px rgba(217, 130, 43, 0.28);
 }
 .disabled-module {
   opacity: 0.68;
@@ -330,11 +355,47 @@ h2[tabindex='-1']:focus {
   color: var(--app-muted);
 }
 .loading-screen {
-  padding: 24px;
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: var(--app-muted);
 }
-.sign-in-card {
-  max-width: 560px;
-  margin: 5vh auto;
+.loading-screen p {
+  margin: 0;
+  max-width: 24rem;
+  padding-inline: 16px;
+  text-align: center;
+}
+.loading-emblem {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  border: 1px solid var(--app-border);
+  animation: rytta-breathe 1800ms ease-in-out infinite;
+}
+@keyframes rytta-breathe {
+  50% {
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-emblem {
+    animation: none;
+  }
+}
+/* 404: one heading, one sentence, one way home. */
+.not-found {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 28rem;
+  margin: 4vh auto 0;
+  text-align: center;
+}
+.not-found h1 {
+  margin: 0;
 }
 /* Large text can wrap the sign-in label: keep its lines centred under each other. */
 .sign-in-google {
@@ -416,9 +477,35 @@ h2[tabindex='-1']:focus {
   padding-block: 8px;
   text-align: start;
 }
-.fatal-error button {
+.fatal-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+.fatal-error-primary,
+.fatal-error-secondary {
   min-height: 44px;
+  min-width: 44px;
   padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--app-accent);
+  font: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fatal-error-primary {
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.fatal-error-secondary {
+  background: transparent;
+  color: var(--app-text);
+  border-color: var(--app-border);
 }
 main {
   width: 100%;
@@ -503,8 +590,30 @@ main h3 {
   pointer-events: auto;
 }
 .fatal-error {
-  max-width: 650px;
-  padding: 32px;
+  max-width: none;
+  box-sizing: border-box;
+  background: var(--app-bg);
+  min-height: 100dvh;
+  padding: 32px 20px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  color: var(--app-text);
+}
+.fatal-error h1,
+.fatal-error p {
+  margin: 0;
+}
+.fatal-error h1 {
+  font-family: Georgia, Cambria, serif;
+  font-weight: 400;
+  font-size: var(--fs-h1);
+  max-width: 20ch;
+}
+.fatal-error p {
+  max-width: 30rem;
 }
 .mantine-Menu-item {
   min-height: 44px;
@@ -530,8 +639,7 @@ main h3 {
     padding: 22px 16px;
   }
   .nav-tabs {
-    padding: 8px 16px;
-    gap: 6px;
+    padding: 0 16px;
   }
 }
 @media (max-width: 47.99em) {
@@ -1360,11 +1468,13 @@ html[data-mantine-color-scheme='light'] {
 }
 .item-card-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  /* rem, not px: at large text the tiles stack instead of squeezing a long value. */
+  grid-template-columns: repeat(auto-fit, minmax(min(8.5rem, 100%), 1fr));
   gap: 8px;
   margin: 0 0 12px;
 }
 .item-card-facts div {
+  min-width: 0;
   padding: 8px 10px;
   border-radius: 10px;
   background: var(--app-bg);
@@ -1376,6 +1486,7 @@ html[data-mantine-color-scheme='light'] {
 .item-card-facts dd {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .item-card-description {
   margin-bottom: 14px;
@@ -1661,9 +1772,16 @@ html[data-mantine-color-scheme='light'] {
   border: 1px solid var(--app-border);
 }
 .attack-bonus {
+  white-space: nowrap;
+}
+.attack-value {
   font-family: Georgia, Cambria, serif;
   font-size: 1.2rem;
   color: var(--app-accent);
+}
+.attack-label {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
 }
 .attack-damage {
   grid-column: 1 / -1;
@@ -3956,9 +4074,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   text-overflow: ellipsis;
   max-width: 100%;
 }
-.preview-switch-short {
-  display: none;
-}
 @media (max-width: 47.99em) {
   .page-head {
     gap: 10px;
@@ -3987,14 +4102,19 @@ html[data-mantine-color-scheme='light'] .order-counter {
     width: 36px;
     height: 36px;
   }
+  /* Phones: the switch is icon-only so the campaign name keeps the header; the input keeps
+     its full accessible name and a tooltip, and its input grows to a 44px hit area. */
   .preview-switch {
-    padding: 0 8px;
+    padding: 0 6px;
   }
-  .preview-switch-full {
+  .preview-switch .mantine-Switch-label {
     display: none;
   }
-  .preview-switch-short {
-    display: inline;
+  .preview-switch .mantine-Switch-input {
+    z-index: 2;
+    inset: -12px -6px;
+    width: calc(100% + 12px);
+    height: calc(100% + 24px);
   }
 }
 .sheet-identity {
@@ -4152,9 +4272,6 @@ html[data-mantine-color-scheme='light'] .order-counter {
   .campaign-layout .brand-title {
     display: none;
   }
-  .preview-switch .mantine-Switch-label {
-    white-space: nowrap;
-  }
 }
 .bottom-nav-label {
   display: block;
@@ -4247,5 +4364,82 @@ html[data-mantine-color-scheme='light'] .order-counter {
   }
   .dm-tabs:not([data-orientation='vertical']) .mantine-Tabs-tab {
     padding-block: 6px;
+  }
+}
+
+/* RYT-117: new-version notice. Quiet and non-modal: it never takes focus and sits below dialogs. */
+.update-notice {
+  position: fixed;
+  z-index: 130;
+  left: 50%;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 24px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 14px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  border: 1px solid var(--app-accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.update-notice-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-weight: 600;
+}
+.update-notice-actions {
+  display: flex;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+.update-notice-action.mantine-Button-root {
+  min-height: 44px;
+  padding-inline: 14px;
+}
+.update-notice-x {
+  display: none;
+}
+/* A dialog or drawer owns the screen: the notice waits behind it instead of showing dimmed. */
+body:has(.mantine-Modal-content, .mantine-Drawer-content) .update-notice {
+  display: none;
+}
+@media (max-width: 47.99em) {
+  /* Phones: one row. The text takes what the actions leave and the dismiss action is an icon
+     (its words stay for assistive technology), so text and both actions fit 390px. */
+  .update-notice {
+    flex-wrap: nowrap;
+    padding: 4px 4px 4px 14px;
+    gap: 0 6px;
+  }
+  .update-notice-text {
+    flex: 1 1 0;
+    font-size: var(--fs-meta);
+    line-height: 1.25;
+  }
+  .update-notice-actions {
+    flex: none;
+    gap: 4px;
+  }
+  .update-notice-x {
+    display: block;
+  }
+  .update-notice-dismiss {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .update-notice-action.mantine-Button-root[class*='update-notice'] {
+    padding-inline: 12px;
+  }
+  body:has(.has-bottom-nav) .update-notice {
+    bottom: calc(var(--bottom-nav-h) + 10px + env(safe-area-inset-bottom));
   }
 }

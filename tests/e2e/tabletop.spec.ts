@@ -1,6 +1,6 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { campaignId, characterId, identityFixture, playerId } from './fixtures/identity.ts'
+import { beaId, campaignId, characterId, identityFixture, playerId } from './fixtures/identity.ts'
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
@@ -26,8 +26,13 @@ async function audit(page: Page, scope = 'body', exclude?: string) {
   expect((await builder.analyze()).violations).toEqual([])
 }
 
-async function prepare(page: Page, modules = ['party', 'combat', 'tabletop'], player = false) {
-  const server = tabletopServer()
+async function prepare(
+  page: Page,
+  modules = ['party', 'combat', 'tabletop'],
+  player = false,
+  aliases?: Record<string, string>,
+) {
+  const server = tabletopServer({ aliases })
   const combat = combatServer()
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules, player })
@@ -677,8 +682,9 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   await expect(board.locator('.tt-token', { hasText: 'Centinela' })).toBeVisible()
   await expect(board.locator('.tt-token', { hasText: 'Ogro emboscado' })).toHaveCount(0)
   await expect(board.locator('.tt-pin')).toHaveCount(0)
+  // RYT-113: a Player reads the Player projection (the own token keeps its name under an alias).
   expect(
-    server.calls.filter((c) => c.method === 'get_tabletop').every((c) => c.body.as_table === true),
+    server.calls.filter((c) => c.method === 'get_tabletop').every((c) => c.body.as_table === false),
   ).toBe(true)
   // RYT-085: the board and its zoom stack fit the viewport (above the phone bottom bar).
   await expectBoardFits(page)
@@ -693,6 +699,41 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   await expect(page.locator('.tt-readout-feet')).toHaveText('35 pies')
   await audit(page, 'main', '.tt-world')
   void playerId
+})
+
+test('RYT-113 a teammate under a table alias shows only the alias on the Player map', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const { server } = await prepare(page, ['party', 'tabletop'], true, {
+    [beaId]: 'Encapuchada',
+    [characterId]: 'Máscara',
+  })
+  const sceneId = seedScene(server)
+  server.act('put_tabletop_items', {
+    target_campaign: campaignId,
+    target_scene: sceneId,
+    request_id: 'party',
+    items: [
+      { kind: 'token', x: 5, y: 2, label: 'Arin', character_id: characterId, data: {} },
+      { kind: 'token', x: 7, y: 2, label: 'Bea', character_id: beaId, data: { srd_id: 'acolyte' } },
+    ],
+  })
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  const board = page.getByRole('img', { name: 'Mapa de Puente de Vado' })
+  await expect(board.locator('.tt-token', { hasText: 'Encapuchada' })).toBeVisible({
+    timeout: 15_000,
+  })
+  // The own token keeps its name for its Player; the teammate's real name never arrives.
+  await expect(board.locator('.tt-token', { hasText: 'Arin' })).toBeVisible()
+  await expect(board.locator('.tt-token', { hasText: 'Máscara' })).toHaveCount(0)
+  await expect(board.locator('.tt-token', { hasText: 'Bea' })).toHaveCount(0)
+  const masked = board.locator('.tt-token', { hasText: 'Encapuchada' })
+  await expect(masked.locator('img')).toHaveCount(0)
+  await audit(page, 'main', '.tt-world')
+  expect(errors).toEqual([])
 })
 
 test('RYT-055 the tabletop stays closed to Players until the DM opens it', async ({ page }) => {
@@ -1150,3 +1191,99 @@ for (const language of ['es', 'en'])
         })
     })
   }
+
+test('RYT-126 the table screen says when it is offline, dims stale news and recovers', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const { server } = await prepare(page)
+  seedScene(server)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page
+    .getByRole('dialog', { name: 'Pantalla de mesa' })
+    .getByRole('button', { name: 'Empezar' })
+    .click()
+  const status = page.locator('.tt-status')
+  await expect(status).toContainText('Puente de Vado', { timeout: 15_000 })
+  // Muting switches the label and the icon (it used to read "Mute" forever).
+  await page.getByRole('button', { name: 'Silenciar' }).click()
+  await expect(page.getByRole('button', { name: 'Activar sonido' })).toBeVisible()
+  await page.getByRole('button', { name: 'Activar sonido' }).click()
+  // Offline: one persistent line with the age of what is on screen, never "En directo".
+  await page.context().setOffline(true)
+  await expect(status.locator('.tt-status-net.is-offline')).toContainText('Sin conexión', {
+    timeout: 15_000,
+  })
+  await expect(status.locator('.tt-status-net.is-offline span[aria-hidden="true"]')).toContainText(
+    /hace \d+ s/,
+  )
+  await expect(status).not.toContainText('En directo')
+  await expect(status.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  await page.context().setOffline(false)
+  await expect(status.locator('.tt-status-net.is-offline')).toHaveCount(0, { timeout: 15_000 })
+  expect(errors).toEqual([])
+})
+
+test('RYT-126 one invalid token does not blank the map, and a scene change clears the measure', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
+  const { server } = await prepare(page)
+  seedScene(server)
+  // The server hands out a token whose colour this build does not know.
+  server.items.find((i) => i.label === 'Centinela')!.data = { color: 'not-a-colour' }
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await page
+    .getByRole('dialog', { name: 'Pantalla de mesa' })
+    .getByRole('button', { name: 'Empezar' })
+    .click()
+  const table = page.locator('.tt-table')
+  // The rest of the scene still shows; the bad token is skipped.
+  await expect(page.locator('.tt-status')).toContainText('Puente de Vado', { timeout: 15_000 })
+  await expect(table.locator('.tt-token', { hasText: 'Centinela' })).toHaveCount(0)
+  await expect(table.locator('.tt-prop, .tt-fog').first()).toBeAttached()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  // A shared measure belongs to the scene it was made on.
+  const second = server.act('save_tabletop_scene', {
+    target_campaign: campaignId,
+    target_scene: null,
+    expected_revision: null,
+    request_id: 'second',
+    fields: {
+      name: 'Segunda sala',
+      map_kind: 'blank',
+      ground: 'grass',
+      cols: 10,
+      rows: 8,
+      items: [],
+    },
+  }) as { id: string }
+  server.act('set_tabletop_live', {
+    target_campaign: campaignId,
+    request_id: 'measure',
+    patch: {
+      measure: {
+        points: [
+          [4.5, 4.5],
+          [7.5, 6.5],
+        ],
+      },
+    },
+  })
+  await expect(table.locator('.tt-tape-feet')).toHaveText('15 pies', { timeout: 15_000 })
+  server.act('set_tabletop_live', {
+    target_campaign: campaignId,
+    request_id: 'scene-2',
+    patch: { scene_id: second.id },
+  })
+  await expect(page.locator('.tt-status')).toContainText('Segunda sala', { timeout: 15_000 })
+  await expect(table.locator('.tt-tape-feet')).toHaveCount(0)
+  expect(errors.filter((e) => !/invalid tabletop item/i.test(e))).toEqual([])
+})

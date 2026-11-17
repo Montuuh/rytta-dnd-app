@@ -12,7 +12,7 @@ async function audit(page: Page, path: string) {
   ).toEqual([])
   await expectTouchTargets(
     page,
-    'main button:visible:not(.glossary-term), main label.portrait-edit:visible, [role="dialog"] button:visible:not(.glossary-term), .undo-fuse button:visible',
+    'main button:visible, main label.portrait-edit:visible, [role="dialog"] button:visible, .undo-fuse button:visible',
   )
   await capture(page, path)
 }
@@ -88,7 +88,7 @@ test('equipping through the card and the paper doll updates AC and attacks', asy
   await page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Equipar' }).click()
   await expect(page.locator('.inventory-notice')).toHaveText(
-    'Espada larga equipado en Mano principal.',
+    'Equipado en Mano principal: Espada larga.',
   )
   await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeFocused()
   await page.locator('.view-switch').getByText('Equipo', { exact: true }).click()
@@ -164,14 +164,17 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
   await picker.fill('espada')
   await expect(options.getByRole('option')).toHaveCount(1)
   await expect(picker).toBeFocused()
-  expect(
-    await options.getByRole('option').evaluate((option) => {
-      const box = option.getBoundingClientRect()
-      return option.contains(
-        document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
-      )
-    }),
-  ).toBe(true)
+  // The option is reachable once the resized drawer has settled: nothing covers its centre.
+  await expect
+    .poll(() =>
+      options.getByRole('option').evaluate((option) => {
+        const box = option.getBoundingClientRect()
+        return option.contains(
+          document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+        )
+      }),
+    )
+    .toBe(true)
   await capture(page, info.outputPath('template-search.png'))
   await picker.press('Escape')
   await expect(options).toBeHidden()
@@ -258,11 +261,14 @@ test('RYT-098 item pictures open the viewer from the item and the slot; the tile
   await page.goto(url)
   // A tap on the tile still opens the item; the picture in its drawer opens the viewer.
   await page.getByRole('button', { name: /Espada larga, cantidad 1/ }).click()
-  const card = page.getByRole('dialog', { name: 'Objeto' })
+  // J3-27: the drawer is titled with the item's name.
+  const card = page.locator('.item-card-drawer')
   const picture = card.getByRole('button', { name: 'Ver la imagen de Espada larga' })
   await expect(picture).toHaveAttribute('aria-haspopup', 'dialog')
   await picture.click()
-  const viewer = page.getByRole('dialog', { name: 'Espada larga', exact: true })
+  const viewer = page
+    .getByRole('dialog', { name: 'Espada larga', exact: true })
+    .filter({ has: page.getByRole('img', { name: 'Imagen de Espada larga' }) })
   await expect(viewer.getByRole('img', { name: 'Imagen de Espada larga' })).toBeVisible()
   await audit(page, info.outputPath('item-viewer.png'))
   // Over the drawer, Escape closes only the viewer and focus returns to the picture.
@@ -290,4 +296,28 @@ test('RYT-098 item pictures open the viewer from the item and the slot; the tile
   await expect(slot).toBeVisible()
   await expect(armour).toBeFocused()
   await audit(page, info.outputPath('slot-picture.png'))
+})
+
+test('J3-05 the purse shows in the header, and J3-11 a discard amount stops at the stack', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  await page.route('**/rest/v1/character_resources*', (route) =>
+    route.fulfill({ json: { gold: 120 } }),
+  )
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(url)
+  await expect(page.getByRole('group', { name: 'Bolsa de Arin' })).toContainText('120 po')
+  await page.getByRole('button', { name: /Poción de curación, cantidad 3/ }).click()
+  const card = page.locator('.item-card-drawer')
+  const amount = card.getByRole('textbox', { name: 'Cuántos descartar' })
+  await amount.fill('9')
+  await expect(amount).toHaveValue('3')
+  await expect(card.getByText('Solo tienes 3')).toBeVisible()
+  await expect(card.getByText('Descartar 3')).toBeVisible()
+  await card.getByRole('button', { name: /Todo \(3\)/ }).click()
+  await expect(amount).toHaveValue('3')
+  await amount.fill('0')
+  await expect(amount).toHaveValue('1')
+  await expect(card.getByText('Descartar 1')).toBeVisible()
 })

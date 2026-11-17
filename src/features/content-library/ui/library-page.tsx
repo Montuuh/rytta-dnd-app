@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
-import {
-  Alert,
-  Button,
-  Group,
-  Loader,
-  Modal,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from '@mantine/core'
+import { Alert, Button, Group, Loader, Select, Stack, Text, TextInput, Title } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, FileUp, Library, PencilLine, Plus, Search, UploadCloud } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  Alert,
   Badge,
   Button,
   Group,
@@ -25,13 +26,20 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useCampaign } from '@/features/campaigns'
-import { CharacterPortrait, GpInput, HoldSeal, useCampaignPortraits } from '@/features/inventory'
+import {
+  CharacterPortrait,
+  formatWhen,
+  GpInput,
+  HoldSeal,
+  useCampaignPortraits,
+} from '@/features/inventory'
 import { roundGp } from '@/shared/lib/money'
 import { localizedName } from '@/shared/lib/translations'
 import { useGp } from './use-gp'
 import { GoldAmount, ItemGlyph } from './visuals'
 import {
   askedLinePrice,
+  counterDeclined,
   effectiveLinePrice,
   isOpenOrder,
   lineGp,
@@ -65,7 +73,16 @@ const statusKey = (status: OrderStatus, role: Role) =>
         : 'order.status.counteredDm'
       : (`order.status.${status}` as const)
 
-export function OrderStatusBadge({ status, role }: { status: OrderStatus; role: Role }) {
+export function OrderStatusBadge({
+  status,
+  role,
+  declined = false,
+}: {
+  status: OrderStatus
+  role: Role
+  /** The order is a declined counter-offer: say so instead of "Cancelled". */
+  declined?: boolean
+}) {
   const { t } = useTranslation()
   const Icon = statusIcons[status]
   return (
@@ -74,7 +91,7 @@ export function OrderStatusBadge({ status, role }: { status: OrderStatus; role: 
       className={`order-status status-${status}`}
       leftSection={<Icon size={14} aria-hidden="true" />}
     >
-      {t(statusKey(status, role))}
+      {declined ? t('order.status.counterDeclined') : t(statusKey(status, role))}
     </Badge>
   )
 }
@@ -174,16 +191,90 @@ function CounterLine({
   )
 }
 
+/**
+ * A one-way action that asks again in place: the button becomes "Yes, …" and "No", with focus on
+ * the safe choice, and goes back to the button when declined or on Escape.
+ */
+function TwoStep({
+  label,
+  question,
+  yes,
+  no,
+  busy,
+  onConfirm,
+}: {
+  label: string
+  question: string
+  yes: string
+  no: string
+  busy: boolean
+  onConfirm: () => void
+}) {
+  const [asking, setAsking] = useState(false)
+  const openRef = useRef<HTMLButtonElement>(null)
+  const noRef = useRef<HTMLButtonElement>(null)
+  const ask = (next: boolean) => {
+    setAsking(next)
+    requestAnimationFrame(() => (next ? noRef.current : openRef.current)?.focus())
+  }
+  return asking ? (
+    <Group
+      gap={4}
+      role="group"
+      aria-label={question}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.stopPropagation()
+          ask(false)
+        }
+      }}
+    >
+      <Text size="sm" fw={600} px={4}>
+        {question}
+      </Text>
+      <Button variant="light" color="red" loading={busy} onClick={onConfirm}>
+        {yes}
+      </Button>
+      <Button ref={noRef} variant="subtle" onClick={() => ask(false)}>
+        {no}
+      </Button>
+    </Group>
+  ) : (
+    <Button ref={openRef} variant="subtle" color="red" loading={busy} onClick={() => ask(true)}>
+      {label}
+    </Button>
+  )
+}
+
+/** A refusal shown inside the order it belongs to, and focused so it is read where it happened. */
+function OrderError({ message }: { message: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.focus()
+  }, [message])
+  return (
+    <Alert color="red" role="alert" ref={ref} tabIndex={-1} className="order-error">
+      {message}
+    </Alert>
+  )
+}
+
 export function OrderCard({
   order,
   role,
   busy,
   onAction,
+  gold = null,
+  error = null,
 }: {
   order: Order
   role: Role
   busy: boolean
   onAction: (action: ShopAction) => void
+  /** The acting character's purse: a counter-offer above it cannot be accepted. */
+  gold?: number | null
+  /** The message of this order's last failed action. */
+  error?: string | null
 }) {
   const { t, i18n } = useTranslation()
   const gp = useGp()
@@ -259,6 +350,8 @@ export function OrderCard({
       note: '',
       requestId: key(),
     })
+  const declined = counterDeclined(order)
+  const short = role === 'player' && gold !== null ? Math.max(0, roundGp(order.total - gold)) : 0
   const variant = orderVariant(order)
   const VariantIcon = variantIcons[variant]
   const variantLabel =
@@ -283,7 +376,7 @@ export function OrderCard({
             <VariantIcon size={16} aria-hidden="true" />
             {variantLabel}
           </span>
-          <OrderStatusBadge status={order.status} role={role} />
+          <OrderStatusBadge status={order.status} role={role} declined={declined} />
         </Group>
         <div className="order-heading order-heading-with-face">
           {/* RYT-074: who placed the order, at a glance. */}
@@ -297,13 +390,12 @@ export function OrderCard({
           />
           <div>
             <Title order={3} size="h4" className="user-copy" id={`order-${order.id}`}>
-              {t(titleKey, { character: order.character.name, shop: order.shop.name })}
+              {role === 'player'
+                ? order.shop.name
+                : t(titleKey, { character: order.character.name, shop: order.shop.name })}
             </Title>
             <Text size="xs" c="dimmed">
-              {new Date(order.created_at).toLocaleString(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}
+              {formatWhen(order.created_at, i18n.language)}
             </Text>
           </div>
         </div>
@@ -543,39 +635,54 @@ export function OrderCard({
           </Stack>
         )}
 
+        {declined && role === 'player' && (
+          <Text size="sm" className="order-note">
+            {t('order.declinedNote')}
+          </Text>
+        )}
+        {error && <OrderError message={error} />}
         {role === 'player' && order.status === 'pending' && (
           <Group gap="xs">
-            <Button
-              variant="subtle"
-              color="red"
-              loading={busy}
-              onClick={() => act({ kind: 'cancel', orderId: order.id })}
-            >
-              {t('order.cancel')}
-            </Button>
+            <TwoStep
+              label={t('order.cancel')}
+              question={t('order.cancelAsk')}
+              yes={t('order.cancelYes')}
+              no={t('order.cancelNo')}
+              busy={busy}
+              onConfirm={() => act({ kind: 'cancel', orderId: order.id })}
+            />
           </Group>
         )}
         {role === 'player' && order.status === 'countered' && (
-          <Group gap="xs">
-            <Button
-              loading={busy}
-              onClick={() =>
-                act({ kind: 'answer', orderId: order.id, accept: true, requestId: key() })
-              }
-            >
-              {t('order.acceptFor', { value: gp(order.total) })}
-            </Button>
-            <Button
-              variant="subtle"
-              color="red"
-              loading={busy}
-              onClick={() =>
-                act({ kind: 'answer', orderId: order.id, accept: false, requestId: key() })
-              }
-            >
-              {t('order.decline')}
-            </Button>
-          </Group>
+          <Stack gap={6}>
+            <Group gap="xs">
+              <Button
+                loading={busy}
+                disabled={short > 0}
+                aria-describedby={short > 0 ? `short-${order.id}` : undefined}
+                onClick={() =>
+                  act({ kind: 'answer', orderId: order.id, accept: true, requestId: key() })
+                }
+              >
+                {t('order.acceptFor', { value: gp(order.total) })}
+              </Button>
+              <TwoStep
+                label={t('order.decline')}
+                question={t('order.declineAsk')}
+                yes={t('order.declineYes')}
+                no={t('order.declineNo')}
+                busy={busy}
+                onConfirm={() =>
+                  act({ kind: 'answer', orderId: order.id, accept: false, requestId: key() })
+                }
+              />
+            </Group>
+            {short > 0 && (
+              <Text size="sm" className="load-over" id={`short-${order.id}`}>
+                {t('order.shortBy', { value: gp(short) })}
+              </Text>
+            )}
+          </Stack>
         )}
       </Stack>
     </Paper>

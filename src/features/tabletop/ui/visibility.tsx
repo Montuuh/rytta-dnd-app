@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Checkbox, Switch } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Switch, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { NumberDial } from '@/features/combat'
 import { useTabletopAction } from '../api'
@@ -168,7 +168,7 @@ export function PlayerEffects({
               (item.data.light_on ?? true) &&
               item.data.map_actions?.some((e) => e === 'torch' || e === 'light') && (
                 <Button
-                  variant="subtle"
+                  variant="default"
                   onClick={() =>
                     send({
                       kind: 'effect',
@@ -185,14 +185,17 @@ export function PlayerEffects({
         </fieldset>
       ))}
       {action.isError && (
-        <div role="alert">
-          {t('tabletop.error.save')}
-          {retry && (
-            <Button variant="subtle" onClick={() => send(retry)}>
-              {t('tabletop.failure.retry')}
-            </Button>
-          )}
-        </div>
+        // RYT-126 J4-25: the same alert as the rest of the map and combat screens.
+        <Alert color="red" role="alert" className="tt-effect-error">
+          <Group justify="space-between" gap="sm">
+            <Text size="sm">{t('tabletop.error.save')}</Text>
+            {retry && (
+              <Button size="sm" variant="light" onClick={() => send(retry)}>
+                {t('tabletop.failure.retry')}
+              </Button>
+            )}
+          </Group>
+        </Alert>
       )}
       {action.isSuccess && <p role="status">{t('tabletop.visibility.applied')}</p>}
     </div>

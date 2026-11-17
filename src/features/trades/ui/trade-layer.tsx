@@ -100,8 +100,12 @@ function TradeCenter({ actingUser }: { actingUser: string | null }) {
     setLater(null)
     setMinimized(null)
   }
+  // A second tap before the first answer would send a second invitation: ignore it, and never
+  // report "busy" for the trade this very tap just opened.
+  const inviteInFlight = useRef(false)
   const invite = (partnerId: string, partnerName: string) => {
-    if (!state?.character) return
+    if (!state?.character || inviteInFlight.current) return
+    inviteInFlight.current = true
     action.mutate(
       { kind: 'invite', from: state.character.id, to: partnerId },
       {
@@ -111,6 +115,9 @@ function TradeCenter({ actingUser }: { actingUser: string | null }) {
             color: 'red',
             message: t(`trade.error.${failure.message as TradeErrorCode}`),
           }),
+        onSettled: () => {
+          inviteInFlight.current = false
+        },
       },
     )
   }

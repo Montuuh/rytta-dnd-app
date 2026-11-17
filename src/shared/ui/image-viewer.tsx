@@ -27,6 +27,7 @@ import {
   type Tap,
   type Zoom,
 } from './image-zoom'
+import { useBackToClose } from './use-back-to-close'
 import './image-viewer.css'
 
 /*
@@ -151,6 +152,8 @@ export function ImageViewer({
       return node instanceof HTMLElement && node.isConnected ? node : null
     })
   }
+  // Back closes the viewer like Escape and returns focus to the picture that opened it.
+  useBackToClose(opened, requestClose)
   const closeOnEscape = useEffectEvent(requestClose)
 
   // While open it owns Escape.

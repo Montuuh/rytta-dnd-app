@@ -1,20 +1,10 @@
-import {
-  Backpack,
-  BookMarked,
-  BookOpen,
-  Gem,
-  Image,
-  Landmark,
-  Map as TableMap,
-  ScrollText,
-  Store,
-  Swords,
-  Users,
-} from 'lucide-react'
+import { Backpack, BookMarked, Map as TableMap, Store, Swords, Users } from 'lucide-react'
 import type { CampaignModuleKey } from '../domain/campaign'
 
 /** The one module catalogue for navigation, module pages and the DM module switches.
- * Only `implemented` modules can be enabled for Players or appear in navigation. */
+ * Only shipped modules are listed: planned ones (quests, atlas, memories, stronghold, workshop)
+ * stay out of the DM controls and navigation for launch, and their paths show "not found".
+ * Add an entry here when its page ships. */
 export const campaignModules = [
   {
     key: 'party',
@@ -44,15 +34,6 @@ export const campaignModules = [
     implemented: true,
   },
   {
-    key: 'quests',
-    path: '/quests',
-    label: 'module.quests',
-    summary: 'summary.quests',
-    icon: ScrollText,
-    ticket: 'RYT-006',
-    implemented: false,
-  },
-  {
     key: 'combat',
     path: '/combat',
     label: 'module.combat',
@@ -71,15 +52,6 @@ export const campaignModules = [
     implemented: true,
   },
   {
-    key: 'atlas',
-    path: '/atlas',
-    label: 'module.atlas',
-    summary: 'summary.atlas',
-    icon: BookOpen,
-    ticket: 'RYT-010',
-    implemented: false,
-  },
-  {
     key: 'glossary',
     path: '/glossary',
     label: 'module.glossary',
@@ -87,33 +59,6 @@ export const campaignModules = [
     icon: BookMarked,
     ticket: 'RYT-008',
     implemented: true,
-  },
-  {
-    key: 'memories',
-    path: '/memories',
-    label: 'module.memories',
-    summary: 'summary.memories',
-    icon: Image,
-    ticket: 'RYT-009',
-    implemented: false,
-  },
-  {
-    key: 'stronghold',
-    path: '/stronghold',
-    label: 'module.stronghold',
-    summary: 'summary.stronghold',
-    icon: Landmark,
-    ticket: 'RYT-011',
-    implemented: false,
-  },
-  {
-    key: 'workshop',
-    path: '/workshop',
-    label: 'module.workshop',
-    summary: 'summary.workshop',
-    icon: Gem,
-    ticket: 'RYT-012',
-    implemented: false,
   },
 ] as const satisfies readonly {
   key: CampaignModuleKey

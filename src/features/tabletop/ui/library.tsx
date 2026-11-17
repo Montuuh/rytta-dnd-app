@@ -4,11 +4,11 @@ import {
   FileButton,
   Loader,
   Menu,
-  Modal,
   NumberInput,
   TextInput,
   VisuallyHidden,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
@@ -27,6 +27,7 @@ import { TileGroup } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { mediaQuery, scenesQuery, useMediaUpload, useTabletopAction } from '../api'
+import { limitKey } from './limits'
 import { fromSetup, squaresThatFit } from '../domain/calibration'
 import { placeFrame } from '../domain/geometry'
 import { sizePresets } from '../domain/generator'
@@ -95,57 +96,65 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
   const liveId = query.data?.live.scene_id ?? null
   const scenes = query.data?.scenes ?? []
   const open = (id: string) => navigate(id)
+  // Before the first scene the screen is an explanation and one action. The setup card only
+  // appears once there is a saved setup to show; until then "set up the table" is a quiet button
+  // under the main action, so "Not set up" never greets a DM who has no table concept yet.
+  const firstScene = !query.isPending && !query.isError && scenes.length === 0
   return (
     <div className="tt-library">
       <PageHead
         title={t('tabletop.title')}
         actions={
-          <Button
-            ref={newScene}
-            leftSection={<Plus size={18} aria-hidden="true" />}
-            onClick={() => setFlow('choose')}
-          >
-            {t('tabletop.newScene')}
-          </Button>
+          firstScene ? undefined : (
+            <Button
+              ref={newScene}
+              leftSection={<Plus size={18} aria-hidden="true" />}
+              onClick={() => setFlow('choose')}
+            >
+              {t('tabletop.newScene')}
+            </Button>
+          )
         }
       />
-      <section className="tt-setup-card" aria-labelledby="tt-setup-title">
-        <span className="tt-setup-glyph" aria-hidden="true">
-          <Ruler size={22} />
-        </span>
-        <div>
-          <h2 id="tt-setup-title" className="tt-setup-title">
-            {t('tabletop.setup.card')}
-          </h2>
-          <p className="tt-setup-line">
-            {calibration
-              ? t('tabletop.setup.summary', {
-                  diagonal: calibration.diagonalIn,
-                  w: calibration.pxW,
-                  h: calibration.pxH,
-                  base: new Intl.NumberFormat(i18n.language).format(calibration.baseMm),
-                  cols: table!.cols,
-                  rows: table!.rows,
-                })
-              : t('tabletop.setup.none')}
-          </p>
-        </div>
-        <div className="tt-setup-actions">
-          <Button variant="default" onClick={() => setSetup(true)}>
-            {calibration ? t('tabletop.setup.adjust') : t('tabletop.setup.start')}
-          </Button>
-          <Button
-            component="a"
-            variant="subtle"
-            href={`#/campaign/${campaignId}/tabletop-table`}
-            target="_blank"
-            rel="noopener"
-            leftSection={<Monitor size={18} aria-hidden="true" />}
-          >
-            {t('tabletop.openTable')}
-          </Button>
-        </div>
-      </section>
+      {(!firstScene || calibration) && (
+        <section className="tt-setup-card" aria-labelledby="tt-setup-title">
+          <span className="tt-setup-glyph" aria-hidden="true">
+            <Ruler size={22} />
+          </span>
+          <div>
+            <h2 id="tt-setup-title" className="tt-setup-title">
+              {t('tabletop.setup.card')}
+            </h2>
+            <p className="tt-setup-line">
+              {calibration
+                ? t('tabletop.setup.summary', {
+                    diagonal: calibration.diagonalIn,
+                    w: calibration.pxW,
+                    h: calibration.pxH,
+                    base: new Intl.NumberFormat(i18n.language).format(calibration.baseMm),
+                    cols: table!.cols,
+                    rows: table!.rows,
+                  })
+                : t('tabletop.setup.none')}
+            </p>
+          </div>
+          <div className="tt-setup-actions">
+            <Button variant="default" onClick={() => setSetup(true)}>
+              {calibration ? t('tabletop.setup.adjust') : t('tabletop.setup.start')}
+            </Button>
+            <Button
+              component="a"
+              variant="subtle"
+              href={`#/campaign/${campaignId}/tabletop-table`}
+              target="_blank"
+              rel="noopener"
+              leftSection={<Monitor size={18} aria-hidden="true" />}
+            >
+              {t('tabletop.openTable')}
+            </Button>
+          </div>
+        </section>
+      )}
       {query.isPending ? (
         <p className="tt-state">{t('tabletop.loading')}</p>
       ) : query.isError ? (
@@ -158,7 +167,20 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
       ) : scenes.length === 0 ? (
         <div className="tt-empty">
           <p className="tt-empty-title">{t('tabletop.empty.title')}</p>
-          <p>{t('tabletop.empty.body')}</p>
+          <p className="tt-empty-body">{t('tabletop.empty.body')}</p>
+          <Button
+            ref={newScene}
+            className="tt-empty-action"
+            leftSection={<Plus size={18} aria-hidden="true" />}
+            onClick={() => setFlow('choose')}
+          >
+            {t('tabletop.newScene')}
+          </Button>
+          {!calibration && (
+            <Button variant="subtle" className="tt-empty-setup" onClick={() => setSetup(true)}>
+              {t('tabletop.setup.start')}
+            </Button>
+          )}
         </div>
       ) : (
         <ul className="tt-plates" aria-label={t('tabletop.scenes')}>
@@ -503,7 +525,7 @@ function BlankScene({
         )}
         {action.isError && (
           <p className="tt-error" role="alert">
-            {t('tabletop.error.save')}
+            {t(limitKey(action.error) ?? 'tabletop.error.save')}
           </p>
         )}
         <div className="tt-dialog-foot">
@@ -855,8 +877,8 @@ function UploadScene({
                 })
                 if (scene && typeof scene === 'object' && 'id' in scene)
                   onCreated(scene.id as string)
-              } catch {
-                setError(t('tabletop.upload.failed'))
+              } catch (caught) {
+                setError(t(limitKey(caught) ?? 'tabletop.upload.failed'))
               }
             }}
           >

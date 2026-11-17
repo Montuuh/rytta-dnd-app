@@ -601,6 +601,28 @@
     max-width: 30rem;
   }
 }
+/* A single free character on My characters reads as one wide row (portrait, then text and the
+   action) instead of a narrow card beside empty space. */
+.claim-grid[data-layout='roster'][data-count='1'] {
+  --claim-cols: 1;
+}
+.claim-grid[data-layout='roster'][data-count='1'] .claim-card {
+  grid-template-columns: 7rem minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  text-align: start;
+}
+.claim-grid[data-layout='roster'][data-count='1'] .claim-plate {
+  grid-row: 1 / -1;
+  border-bottom: 0;
+  border-inline-end: 1px solid var(--app-border);
+}
+.claim-grid[data-layout='roster'][data-count='1'] .claim-text {
+  align-content: center;
+  padding: 10px 12px 0;
+}
+.claim-grid[data-layout='roster'][data-count='1'] .claim-play {
+  grid-column: 2;
+}
 /* Large text: fewer columns, so names never break inside a word. The thresholds are in rem, so
    they follow the text size (two and three columns at 100% on phones, one and two at 150%). */
 @container claim (max-width: 18rem) {

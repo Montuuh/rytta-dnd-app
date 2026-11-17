@@ -1,11 +1,12 @@
 import { GlossaryText } from '@/features/glossary'
-import { Anchor, Badge, Button, Drawer, Group, NumberInput, Stack, Text } from '@mantine/core'
+import { Anchor, Badge, Button, Group, Stack, Text } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Link } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useItemPicture, useWeightFormat } from '@/features/inventory'
+import { Stepper, useItemPicture, useWeightFormat } from '@/features/inventory'
 import { localizedDescription, localizedName } from '@/shared/lib/translations'
 import { itemPounds, maxPurchasable, type Listing } from '../domain/shops'
 import { useGp } from './use-gp'
@@ -23,6 +24,7 @@ export function ListingCard({
   inventoryHref,
   onOpen,
   onAdd,
+  onSet,
 }: {
   listing: Listing
   ownership: Ownership
@@ -31,6 +33,8 @@ export function ListingCard({
   inventoryHref: string
   onOpen: (target: HTMLElement) => void
   onAdd: () => void
+  /** Sets the quantity in the cart; 0 takes the line out. */
+  onSet: (quantity: number) => void
 }) {
   const { t, i18n } = useTranslation()
   const gp = useGp()
@@ -62,6 +66,7 @@ export function ListingCard({
             <ItemGlyph
               imagePath={listing.item.image_path}
               icon={listing.item.icon}
+              category={listing.item.category}
               rarity={listing.item.rarity}
             />
           )}
@@ -106,16 +111,32 @@ export function ListingCard({
               : t('shop.stockLeft', { count: listing.stock })}
         </Text>
       </div>
-      {canBuy && (
+      {canBuy && inCart > 0 && (
+        <div className="listing-add listing-stepper">
+          <Stepper
+            hideLabel
+            label={t('shop.quantityNamed', { name })}
+            min={0}
+            max={maxPurchasable(listing)}
+            required
+            longPress
+            value={inCart}
+            maxMessage={
+              listing.stock === null ? undefined : t('shop.onlyLeft', { count: listing.stock })
+            }
+            onChange={(value) => onSet(value ?? 0)}
+          />
+        </div>
+      )}
+      {canBuy && inCart === 0 && (
         <Button
-          variant={inCart > 0 ? 'filled' : 'light'}
-          leftSection={<Plus size={16} aria-hidden="true" />}
+          variant="light"
           disabled={soldOut || remaining <= 0}
           onClick={onAdd}
           aria-label={t('shop.addNamed', { name })}
           className="listing-add"
         >
-          {inCart > 0 ? t('shop.inCart', { count: inCart }) : t('shop.add')}
+          <Plus size={20} aria-hidden="true" />
         </Button>
       )}
     </article>
@@ -165,8 +186,9 @@ export function ListingDrawer({
             <ItemGlyph
               imagePath={listing.item.image_path}
               icon={listing.item.icon}
+              category={listing.item.category}
               rarity={listing.item.rarity}
-              size={26}
+              size={44}
               viewable
               name={name}
             />
@@ -192,12 +214,16 @@ export function ListingDrawer({
                 </Text>
               )}
             </dd>
-            <dt>{t('inventory.card.weight')}</dt>
-            <dd>
-              {t('shop.weightEach', {
-                weight: weight(itemPounds(listing.item)),
-              })}
-            </dd>
+            {itemPounds(listing.item) > 0 && (
+              <>
+                <dt>{t('inventory.card.weight')}</dt>
+                <dd>
+                  {t('shop.weightEach', {
+                    weight: weight(itemPounds(listing.item)),
+                  })}
+                </dd>
+              </>
+            )}
             <dt>{t('shop.youOwn')}</dt>
             <dd>
               {ownership.owned}{' '}
@@ -214,24 +240,29 @@ export function ListingDrawer({
             </Group>
           )}
           {canBuy && max > 0 && (
-            <Group align="end" wrap="nowrap">
-              <NumberInput
-                hideControls
+            <Group align="start" wrap="wrap">
+              <Stepper
                 label={t('shop.quantity')}
                 min={1}
                 max={max}
-                allowDecimal={false}
-                value={quantity}
-                onChange={(value) => setQuantity(Math.max(1, Math.min(max, Number(value) || 1)))}
-                w={120}
+                required
+                longPress
+                value={Math.min(quantity, max)}
+                maxMessage={
+                  listing.stock === null || listing.stock > 999
+                    ? undefined
+                    : t('shop.onlyLeft', { count: max })
+                }
+                onChange={(value) => setQuantity(value ?? 1)}
               />
               <Button
+                mt={28}
                 onClick={() => {
-                  onAdd(quantity)
+                  onAdd(Math.min(quantity, max))
                   setQuantity(1)
                 }}
               >
-                {t('shop.addToCart', { count: quantity })}
+                {t('shop.addToCart', { count: Math.min(quantity, max) })}
               </Button>
             </Group>
           )}

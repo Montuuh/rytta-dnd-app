@@ -2,10 +2,8 @@ import { useEffect, useRef, useState, type FocusEvent } from 'react'
 import {
   Badge,
   Button,
-  Drawer,
   Group,
   Menu,
-  Modal,
   Stack,
   Tabs,
   Text,
@@ -15,6 +13,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
+import { Drawer, Modal } from '@/shared/ui/overlays'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import {
   ChevronLeft,

@@ -28,7 +28,7 @@ async function axeAndTargets(page: Page) {
   ).toEqual([])
   await expectTouchTargets(
     page,
-    'main button:visible:not(.glossary-term), main a.roster-link:visible, main a.roster-foot-link:visible, main a.roster-row-sheet:visible, [role="dialog"] button:visible',
+    'main button:visible, main a.roster-link:visible, main a.roster-foot-link:visible, main a.roster-row-sheet:visible, [role="dialog"] button:visible',
   )
 }
 const rosterPath = `./#/campaign/${campaignId}/party/roster`
@@ -557,4 +557,26 @@ test('RYT-096 the DM and the DM Player view never list free characters', async (
   await expect(page.getByRole('heading', { level: 1, name: 'Personajes de Arin' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Jugar con/ })).toHaveCount(0)
   expect(f.calls.filter((c) => c.method === 'list_claimable_characters')).toHaveLength(0)
+})
+
+test('RYT-124 a double tap on Create sends one request with one id and makes one character', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, { player: true, noCharacters: true })
+  await page.goto(`./#/campaign/${campaignId}`)
+  await page
+    .getByRole('region', { name: '¿Con quién vas a jugar?' })
+    .getByRole('button', { name: 'Crear mi personaje' })
+    .click()
+  const dialog = page.getByRole('dialog', { name: 'Nuevo personaje' })
+  await dialog.getByLabel('Nombre del personaje').fill('Vex')
+  // Two clicks in the same tick, before React could disable the button.
+  await dialog.getByRole('button', { name: 'Crear y hacer la ficha' }).evaluate((button) => {
+    ;(button as HTMLElement).click()
+    ;(button as HTMLElement).click()
+  })
+  await expect(page).toHaveURL(/\/party\/40000000-0000-4000-8000-0000000000e1\/create$/)
+  expect(f.calls.filter((c) => c.method === 'create_own_character')).toHaveLength(1)
+  await page.goto(`./#/campaign/${campaignId}/party/roster`)
+  await expect(page.getByText('Vex', { exact: true })).toHaveCount(1)
 })

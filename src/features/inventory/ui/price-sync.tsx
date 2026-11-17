@@ -1,6 +1,7 @@
 import { formatGp } from '@/shared/lib/money'
 import { useRef, useState } from 'react'
-import { Alert, Button, Checkbox, Group, Loader, Modal, Stack, Text } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Loader, Stack, Text } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Store } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

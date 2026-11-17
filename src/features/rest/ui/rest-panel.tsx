@@ -3,7 +3,7 @@ import { Accordion, Alert, Button, Modal } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Ban, Check, Hourglass, Moon, Sunset, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { CharacterPortrait, useCampaignPortraits } from '@/features/inventory'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useRestAction } from '../api'
 import {
   minutesLeft,
@@ -17,6 +17,7 @@ import {
 } from '../domain/rest'
 import { Campfire } from './campfire'
 import { DiceChooser } from './dice-chooser'
+import { PersonToken } from './person-token'
 import { RecoveryLines } from './recovery'
 import { isEmptyRecovery, useEffectView, type RecoveryView } from './recovery-view'
 import './rest.css'
@@ -63,8 +64,8 @@ export function RestPanel({
   const { t, i18n } = useTranslation()
   const phone = useMediaQuery('(max-width: 36em)')
   const action = useRestAction(campaignId)
+  useBackToClose(opened, onClose)
   const toView = useEffectView()
-  const portraits = useCampaignPortraits(campaignId)
   const now = useNow(opened)
   const open = state.status === 'open'
   const short = state.kind === 'short'
@@ -207,11 +208,10 @@ export function RestPanel({
       <Accordion.Item key={person.id} value={person.id} className="rest-person">
         <Accordion.Control
           icon={
-            <CharacterPortrait
+            <PersonToken
               campaignId={campaignId}
               characterId={person.id}
               name={person.name}
-              path={portraits.get(person.id) ?? null}
               size={36}
             />
           }
@@ -256,6 +256,7 @@ export function RestPanel({
             <DiceChooser
               die={effect.hit_die}
               left={effect.dice_left_before}
+              room={effect.max_hp - effect.hp_before}
               conMod={effect.con_mod}
               value={choiceOf(person)}
               showError={diceError}

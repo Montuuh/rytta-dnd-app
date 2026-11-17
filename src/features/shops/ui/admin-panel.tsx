@@ -6,13 +6,13 @@ import {
   CloseButton,
   Group,
   Loader,
-  Modal,
   Paper,
   Stack,
   Tabs,
   Text,
   Title,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Check, EyeOff, Lock, Plus, Trash2, Users } from 'lucide-react'
 import { useSearchParams } from 'react-router'

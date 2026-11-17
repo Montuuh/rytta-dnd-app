@@ -1,7 +1,8 @@
 import { localizedName } from '@/shared/lib/translations'
 import { useEffect, useState } from 'react'
-import { Text, UnstyledButton } from '@mantine/core'
+import { Anchor, Text, UnstyledButton } from '@mantine/core'
 import { Undo2 } from 'lucide-react'
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   undoRemainingMs,
@@ -9,6 +10,7 @@ import {
   type ItemDefinition,
   type ItemStack,
 } from '../domain/item'
+import { formatWhen } from '../domain/when'
 import { ItemIcon } from './item-icon'
 
 /** Vertical timeline of inventory events; undoable entries carry a seal with the time left. */
@@ -19,6 +21,7 @@ export function Ledger({
   dm,
   userId,
   actorName,
+  ordersHref,
   pending,
   onUndo,
 }: {
@@ -28,6 +31,8 @@ export function Ledger({
   dm: boolean
   userId: string
   actorName: (id: string | null) => string
+  /** Where a purchase, sale or revert is itemised: the order carries the price and the shop. */
+  ordersHref: string
   pending: boolean
   onUndo: (event: InventoryEvent) => void
 }) {
@@ -75,10 +80,23 @@ export function Ledger({
                 )}
               </Text>
               <Text size="xs" c="dimmed">
-                {new Date(event.created_at).toLocaleString(i18n.language, {
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                })}
+                {formatWhen(event.created_at, i18n.language)}
+                {/* The event has no price or shop (see the RYT-125 note), so the way to them is the orders. */}
+                {(event.kind === 'purchase' ||
+                  event.kind === 'sale' ||
+                  event.kind === 'revert') && (
+                  <>
+                    {' · '}
+                    <Anchor
+                      component={Link}
+                      to={ordersHref}
+                      size="xs"
+                      className="ledger-orders-link"
+                    >
+                      {t('inventory.ledger.seeOrders')}
+                    </Anchor>
+                  </>
+                )}
               </Text>
             </div>
             {remaining > 0 && (

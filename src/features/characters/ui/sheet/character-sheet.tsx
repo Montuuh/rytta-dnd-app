@@ -5,7 +5,6 @@ import {
   Button,
   Group,
   Loader,
-  Modal,
   Paper,
   Stack,
   Text,
@@ -40,7 +39,12 @@ import { RestRequestDialog, type RecoveryView } from '@/features/rest'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
 import { charactersQuery, playLockQuery, sheetQuery, useSheetAction } from '../../api'
-import { syncProgression } from '../../domain/progression'
+import { syncChanges, syncProgression } from '../../domain/progression'
+import { LeaveDialog } from '../leave-guard'
+import { useLeaveGuard } from '../use-leave-guard'
+import { deathState } from './hp-tone'
+import { useResourceNames, useTrackerLabel } from '../resource-names'
+import { useSubmitGuard } from '../use-submit-guard'
 import {
   acBreakdown,
   finalAbilities,
@@ -235,6 +239,9 @@ function SheetPanel({
   const { state } = useAuth()
   const campaign = useCampaign()
   const action = useSheetAction(campaign.id)
+  const submit = useSubmitGuard()
+  const resourceNames = useResourceNames()
+  const trackerLabel = useTrackerLabel()
   const labels = useCharacterLabels()
   const library = useSrdLibrary()
   const inventory = useQuery(inventoryQuery(state.user!.id, campaign.id, character.id))
@@ -253,6 +260,8 @@ function SheetPanel({
   const [lastLibraryTab, setLastLibraryTab] = useState<LibraryTab>('spells')
   const [rest, setRest] = useState<'short' | 'long' | null>(null)
   const [leaving, setLeaving] = useState<string | null>(null)
+  const [cancelAsk, setCancelAsk] = useState(false)
+  const [syncInfo, setSyncInfo] = useState<string | null>(null)
   const [optimistic, setOptimistic] = useState<Vitals | null>(null)
   const inFlight = useRef(false)
   const queued = useRef<{ values: Vitals; done?: PanelNotice } | null>(null)
@@ -301,9 +310,7 @@ function SheetPanel({
   // glossary index is there (without it, nothing is added or dropped).
   const progress = (next: SheetDraft): SheetDraft => {
     const synced = library
-      ? syncProgression(next.build, next.level, library.features, {
-          resource: (key) => t(`panel.resource.${key}` as 'panel.resource.monk-focus'),
-        })
+      ? syncProgression(next.build, next.level, library.features, resourceNames)
       : next.build
     return {
       ...next,
@@ -314,12 +321,13 @@ function SheetPanel({
   const validName = shownName.trim().length > 0
   const save = async (next: SheetDraft, done?: PanelNotice, then?: () => void) => {
     // One write at a time: controls stay focusable while saving and taps wait for the result.
-    if (action.isPending) return
+    // The guard is a ref, so a double tap cannot slip a second request in before the next render.
+    if (action.isPending || submit.busy) return
     const nextName = (next.name ?? character.name).trim()
     if (!nextName) return
-    setNotice(null)
     const progressed = progress(next)
     // A save that also brought class features or resources up to date says so (legacy sheets).
+    const changes = syncChanges(next.build, progressed.build)
     const synced =
       JSON.stringify([progressed.build.features, progressed.build.trackers]) !==
       JSON.stringify([next.build.features, next.build.trackers])
@@ -338,23 +346,43 @@ function SheetPanel({
       })
     const nameChanged = nextName !== character.name
     try {
-      if (sheetChanged || !nameChanged) {
-        await action.mutateAsync({
-          kind: 'save',
-          characterId: character.id,
-          expectedRevision: sheet.revision,
-          draft: progressed,
-          complete: true,
-          requestId: newRequestId(),
-        })
-      }
-      if (nameChanged) {
-        await action.mutateAsync({
-          kind: 'rename',
-          characterId: character.id,
-          name: nextName,
-          requestId: newRequestId(),
-        })
+      const finished = await submit.run(async () => {
+        setNotice(null)
+        setSyncInfo(null)
+        if (sheetChanged || !nameChanged) {
+          const key = `save:${sheet.revision}:${JSON.stringify(progressed)}`
+          await action.mutateAsync({
+            kind: 'save',
+            characterId: character.id,
+            expectedRevision: sheet.revision,
+            draft: progressed,
+            complete: true,
+            requestId: submit.idFor(key),
+          })
+          submit.done(key)
+        }
+        if (nameChanged) {
+          const key = `rename:${nextName}`
+          await action.mutateAsync({
+            kind: 'rename',
+            characterId: character.id,
+            name: nextName,
+            requestId: submit.idFor(key),
+          })
+          submit.done(key)
+        }
+        return true
+      })
+      if (!finished) return
+      if (synced) {
+        const lines = [
+          ...changes.changed.map(
+            ({ tracker, from }) => `${trackerLabel(tracker)}: ${from} → ${tracker.max}`,
+          ),
+          ...changes.added.map((tracker) => `${trackerLabel(tracker)} (${tracker.max})`),
+          ...(changes.features > 0 ? [t('panel.syncedFeatures', { count: changes.features })] : []),
+        ]
+        setSyncInfo(lines.length ? lines.join('; ') : null)
       }
       setNotice(synced ? 'panel.synced' : (done ?? 'sheet.saved'))
       then?.()
@@ -453,9 +481,7 @@ function SheetPanel({
   const detail: Record<TileKey, ReactNode> = {
     resources: <ResourcesBlock {...props} onPersonalise={() => setPersonalise(true)} />,
     skills: <SkillsBlock {...props} />,
-    attacks: (
-      <SheetAttacks campaignId={campaign.id} characterId={character.id} monkLevel={monkLevel} />
-    ),
+    attacks: <SheetAttacks lines={attackList} />,
     features: <FeaturesBlock {...props} onLibrary={() => openLibrary('features')} />,
     conditions: <ConditionsBlock {...props} exhaustion={exhaustion} />,
     spells: <SpellsBlock {...props} onLibrary={() => openLibrary('spells')} />,
@@ -465,8 +491,16 @@ function SheetPanel({
   const subtitle = [
     t('sheet.classLevel', { class: labels.className(build), level: shown.level }) +
       (build.subclass ? ` (${build.subclass})` : ''),
-    `${labels.speciesName(build)}, ${labels.backgroundName(build)}`,
-  ].join('\n')
+    // An origin left open is not printed as "Unset, Unset".
+    [
+      build.speciesKey || build.speciesLabel.trim() ? labels.speciesName(build) : '',
+      build.backgroundKey || build.backgroundLabel.trim() ? labels.backgroundName(build) : '',
+    ]
+      .filter(Boolean)
+      .join(', '),
+  ]
+    .filter(Boolean)
+    .join('\n')
   const errorKey =
     action.error?.message === 'stale'
       ? 'sheet.stale'
@@ -475,11 +509,26 @@ function SheetPanel({
         : action.error?.message === 'forbidden'
           ? 'sheet.forbidden'
           : 'sheet.unavailable'
-  const errorAlert = action.isError ? (
-    <Alert color="red" role="alert" mb="md">
-      {t(errorKey)}
-    </Alert>
-  ) : null
+  // What a save changed on class resources is said in the open sheet too, where the player is
+  // looking, and lists what moved.
+  const syncedNote =
+    notice === 'panel.synced' ? (
+      <Alert color="blue" role="status" mb="md" className="panel-synced">
+        {t('panel.synced')}
+        {syncInfo ? ` ${syncInfo}.` : ''}
+      </Alert>
+    ) : null
+  const errorAlert =
+    action.isError || syncedNote ? (
+      <>
+        {action.isError && (
+          <Alert color="red" role="alert" mb="md">
+            {t(errorKey)}
+          </Alert>
+        )}
+        {syncedNote}
+      </>
+    ) : null
   const closeRest = () => {
     setRest(null)
     requestAnimationFrame(() => restOpener.current?.focus())
@@ -542,6 +591,8 @@ function SheetPanel({
             pending={action.isPending}
             disabled={!validName}
             onCancel={() => {
+              // A dirty draft asks first, as leaving the page does.
+              if (dirty) return setCancelAsk(true)
               action.reset()
               stopEditing()
             }}
@@ -609,6 +660,8 @@ function SheetPanel({
             pending={action.isPending}
             disabled={!validName}
             onCancel={() => {
+              // A dirty draft asks first, as leaving the page does.
+              if (dirty) return setCancelAsk(true)
               action.reset()
               stopEditing()
             }}
@@ -641,16 +694,21 @@ function SheetPanel({
               {t(kind === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}
             </Button>
           ))}
-          <ActionIcon
-            size={44}
-            variant="default"
-            className="panel-dock-personalise"
-            aria-label={t('panel.personalise')}
-            aria-haspopup="dialog"
-            onClick={() => setPersonalise(true)}
+          <Tooltip
+            label={t('sheet.personaliseHint')}
+            events={{ hover: true, focus: true, touch: true }}
           >
-            <SlidersHorizontal size={20} aria-hidden="true" />
-          </ActionIcon>
+            <ActionIcon
+              size={44}
+              variant="default"
+              className="panel-dock-personalise"
+              aria-label={t('panel.personalise')}
+              aria-haspopup="dialog"
+              onClick={() => setPersonalise(true)}
+            >
+              <SlidersHorizontal size={20} aria-hidden="true" />
+            </ActionIcon>
+          </Tooltip>
           {locked && (
             <Text size="sm" c="dimmed" id="panel-rest-locked" className="panel-dock-note">
               {t('panel.restLocked')}
@@ -681,33 +739,27 @@ function SheetPanel({
         props={props}
         alert={errorAlert}
       />
-      <Modal
-        opened={leaving !== null}
-        onClose={() => setLeaving(null)}
-        title={t('panel.leaveTitle')}
-        closeButtonProps={{ 'aria-label': t('panel.close'), size: 44 }}
-      >
-        <Stack>
-          <Text>{t('panel.leaveBody')}</Text>
-          <Group justify="flex-end">
-            <Button variant="default" data-autofocus onClick={() => setLeaving(null)}>
-              {t('panel.keepEditing')}
-            </Button>
-            <Button
-              variant="default"
-              className="panel-danger-button"
-              onClick={() => {
-                const target = leaving
-                setLeaving(null)
-                setDraft(null)
-                if (target) window.location.href = target
-              }}
-            >
-              {t('panel.discardAndLeave')}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <LeaveDialog
+        target={leaving}
+        onKeep={() => setLeaving(null)}
+        onDiscard={(target) => {
+          setLeaving(null)
+          setDraft(null)
+          window.location.href = target
+        }}
+      />
+      <LeaveDialog
+        target={cancelAsk ? 'cancel' : null}
+        title={t('panel.cancelTitle')}
+        body={t('panel.cancelBody')}
+        discardLabel={t('panel.discardChanges')}
+        onKeep={() => setCancelAsk(false)}
+        onDiscard={() => {
+          setCancelAsk(false)
+          action.reset()
+          stopEditing()
+        }}
+      />
       <RestRequestDialog
         kind={rest}
         preview={restPreview}
@@ -762,37 +814,10 @@ function EditActions({
   )
 }
 
-/** Unsaved edits: links ask before leaving the sheet, and the browser warns before unloading.
- * The router is a HashRouter, so links are intercepted instead of using a route blocker. */
-function useLeaveGuard(dirty: boolean, ask: (href: string) => void) {
-  useEffect(() => {
-    if (!dirty) return
-    const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0) return
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-      const link = (event.target as Element | null)?.closest?.('a[href]')
-      if (!(link instanceof HTMLAnchorElement)) return
-      if (link.target && link.target !== '_self') return
-      // HashRouter routes are "#/…"; in-page anchors such as the skip link are not navigation.
-      if (link.origin !== window.location.origin || !link.hash.startsWith('#/')) return
-      if (link.hash === window.location.hash) return
-      event.preventDefault()
-      event.stopPropagation()
-      ask(link.href)
-    }
-    const onUnload = (event: BeforeUnloadEvent) => event.preventDefault()
-    document.addEventListener('click', onClick, true)
-    window.addEventListener('beforeunload', onUnload)
-    return () => {
-      document.removeEventListener('click', onClick, true)
-      window.removeEventListener('beforeunload', onUnload)
-    }
-  }, [dirty, ask])
-}
-
 /** One-line glances for the tiles: enough to read at the table without opening anything. */
 function useGlance(props: PanelProps, exhaustion: number | undefined): Record<TileKey, ReactNode> {
   const { t } = useTranslation()
+  const trackerLabel = useTrackerLabel()
   const { build, level, vitals } = props
   const meter = (key: string, label: string, left: number, max: number) => (
     <span key={key} className="glance-meter">
@@ -818,7 +843,7 @@ function useGlance(props: PanelProps, exhaustion: number | undefined): Record<Ti
       .slice(0, 4)
       .map((tracker) => {
         const used = Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
-        return meter(tracker.id, tracker.name, tracker.max - used, tracker.max)
+        return meter(tracker.id, trackerLabel(tracker), tracker.max - used, tracker.max)
       }),
     ...(slotMax > 0 ? [meter('slots', t('sheet.slots'), slotLeft, slotMax)] : []),
     meter('dice', t('sheet.hitDice'), level - Math.min(level, vitals.hit_dice_spent), level),
@@ -857,7 +882,7 @@ function useGlance(props: PanelProps, exhaustion: number | undefined): Record<Ti
         : exhaustion
           ? t('sheet.exhaustion', { value: exhaustion })
           : vitals.current_hp === 0
-            ? t('panel.glance.dying', {
+            ? t(`sheet.deathState.${deathState(vitals)}`, {
                 successes: vitals.death_successes,
                 failures: vitals.death_failures,
               })

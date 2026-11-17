@@ -5,13 +5,13 @@ import {
   Collapse,
   Group,
   Loader,
-  Modal,
   Select,
   Stack,
   Switch,
   Text,
   TextInput,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, Dices, Sigma, SlidersHorizontal, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

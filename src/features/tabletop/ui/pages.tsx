@@ -4,11 +4,12 @@ import { Button, Drawer, Switch } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useParams } from 'react-router'
-import { Maximize, Minus, Plus } from 'lucide-react'
+import { LocateFixed, Maximize, Minus, Plus } from 'lucide-react'
 import { useAuth } from '@/features/auth'
-import { useCampaign } from '@/features/campaigns'
+import { useCampaign, useIsRealDm } from '@/features/campaigns'
 import { combatStateQuery, useCombatRealtime } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { tabletopQuery, useTabletopRealtime } from '../api'
 import { cellCenter, clamp, measurePath, type Point } from '../domain/geometry'
 import { Board } from './board'
@@ -58,8 +59,10 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
   const userId = state.user!.id
   const connected = useTabletopRealtime(campaignId, true)
   useCombatRealtime(campaignId, true)
-  // The table projection, also for a DM previewing as a Player: never the DM's own view.
-  const query = useQuery(tabletopQuery(userId, campaignId, null, true, connected))
+  // A DM previewing as a Player reads the table projection, never the DM's own view. A Player reads
+  // the Player projection, where the own character's token keeps its name under a table alias.
+  const realDm = useIsRealDm()
+  const query = useQuery(tabletopQuery(userId, campaignId, null, realDm, connected))
   const combat = useQuery(combatStateQuery(userId, campaignId, null, false))
   const view = query.data
   const scene = view?.scene ?? null
@@ -100,9 +103,18 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
     () => new Map((combat.data?.combatants ?? []).map((c) => [c.id, c])),
     [combat.data],
   )
+  // RYT-126 J4-26: the own token, so a pinch that ended in the dark has a way back.
+  const ownToken =
+    view?.items.find(
+      (item) =>
+        item.kind === 'token' &&
+        (item.controllable ||
+          (item.combatant_id && combatants.get(item.combatant_id)?.is_own === true)),
+    ) ?? null
   const shown = end && start ? [start, end] : points
   const route = measurePath(shown)
   const card = view?.card && dismissed !== view.card.id ? view.card : null
+  useBackToClose(Boolean(card), () => setDismissed(card?.id ?? null))
   return (
     <div className="tt-library tt-player">
       <PageHead
@@ -110,9 +122,18 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
         description={scene ? t('tabletop.player.lede') : undefined}
       />
       {query.isError && !view ? (
-        <p className="tt-state" role="alert">
-          {t(query.error.message === 'forbidden' ? 'tabletop.hiddenModule' : 'tabletop.error.load')}
-        </p>
+        <div className="tt-state" role="alert">
+          <p>
+            {t(
+              query.error.message === 'forbidden' ? 'tabletop.hiddenModule' : 'tabletop.error.load',
+            )}
+          </p>
+          {query.error.message !== 'forbidden' && (
+            <Button variant="default" onClick={() => void query.refetch()}>
+              {t('tabletop.failure.retry')}
+            </Button>
+          )}
+        </div>
       ) : !view ? (
         <p className="tt-state">{t('tabletop.loading')}</p>
       ) : !scene ? (
@@ -235,6 +256,18 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
               >
                 <Minus size={18} aria-hidden="true" />
               </button>
+              {ownToken && (
+                <button
+                  type="button"
+                  className="tt-icon-button"
+                  onClick={() =>
+                    board.centerOn(ownToken.x + ownToken.w / 2, ownToken.y + ownToken.h / 2)
+                  }
+                  aria-label={t('tabletop.zoom.mine')}
+                >
+                  <LocateFixed size={18} aria-hidden="true" />
+                </button>
+              )}
               <button
                 type="button"
                 className="tt-icon-button"

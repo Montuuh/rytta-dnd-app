@@ -1,14 +1,6 @@
 import { useRef, useState } from 'react'
-import {
-  Alert,
-  Button,
-  Drawer,
-  Loader,
-  Stack,
-  Text,
-  TextInput,
-  UnstyledButton,
-} from '@mantine/core'
+import { Alert, Button, Loader, Stack, Text, TextInput, UnstyledButton } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { useDebouncedValue } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { Hammer, Search } from 'lucide-react'
@@ -181,11 +173,19 @@ export function PlayerAddItem({
                 {description}
               </Text>
             )}
+            {/* J3-13: what a self-added container will not do is said before it is added. */}
+            {item?.properties.container?.loadReductionPercent ? (
+              <Text size="sm" className="pick-caveat" role="note">
+                {t('addItem.containerCaveat')}
+              </Text>
+            ) : null}
             {item && (
               <Stepper
                 label={t('inventory.card.amount')}
                 min={1}
                 max={1000}
+                required
+                longPress
                 value={amount}
                 onChange={setAmount}
                 disabled={action.isPending}

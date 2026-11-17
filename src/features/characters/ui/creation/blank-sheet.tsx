@@ -8,6 +8,7 @@ import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
 import { backgroundKeys, classKeys, speciesKeys } from '../../domain/srd'
+import { useResourceNames } from '../resource-names'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
 
@@ -23,6 +24,7 @@ export function BlankSheet({
 }) {
   const { t } = useTranslation()
   const library = useSrdLibrary()
+  const names = useResourceNames()
   const [name, setName] = useState(characterName)
   const [classKey, setClassKey] = useState<string>('fighter')
   const [custom, setCustom] = useState('')
@@ -89,9 +91,7 @@ export function BlankSheet({
               name: (kind, key) => t(`srd.${kind}.${key}` as 'srd.trait.darkvision'),
               level,
               library: library.features,
-              names: {
-                resource: (key) => t(`panel.resource.${key}` as 'panel.resource.monk-focus'),
-              },
+              names,
             }),
             name,
           ).catch(() => undefined)

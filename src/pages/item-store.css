@@ -1,0 +1,17 @@
+/* Storeroom rows: the meta line wraps instead of cutting itself at 390px, and the price keeps its
+   own line when the meta needs the width. */
+.store-list .store-row-line {
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 0;
+}
+.store-list .store-row-meta {
+  flex: 1 1 8rem;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: break-word;
+}
+.store-list .store-row-line .store-value {
+  margin-left: auto;
+}

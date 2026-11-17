@@ -25,10 +25,22 @@ const phone = (page: Page) => page.viewportSize()!.width < 768
 /** Edit and delete are icon buttons from 48em; on phones they live in the entry's menu. */
 async function entryAction(page: Page, scope: Locator, name: string, action: 'edit' | 'delete') {
   if (phone(page)) {
-    await scope.getByRole('button', { name: `Acciones de «${name}»` }).click()
-    await page
-      .getByRole('menuitem', { name: action === 'edit' ? 'Editar entrada' : 'Eliminar entrada' })
-      .click()
+    const trigger = scope.getByRole('button', { name: `Acciones de «${name}»` })
+    const item = page.getByRole('menuitem', {
+      name: action === 'edit' ? 'Editar entrada' : 'Eliminar entrada',
+    })
+    // Under load the menu can open without ever showing its items (the fake clock in some specs
+    // starves its transition): close it and open it again instead of waiting on a hidden menu.
+    await expect(async () => {
+      await trigger.click()
+      try {
+        await item.click({ timeout: 4_000 })
+      } catch (error) {
+        await page.keyboard.press('Escape')
+        await expect(page.getByRole('menu')).toHaveCount(0)
+        throw error
+      }
+    }).toPass({ timeout: 30_000 })
   } else
     await scope
       .getByRole('button', { name: `${action === 'edit' ? 'Editar' : 'Eliminar'} «${name}»` })
@@ -43,23 +55,15 @@ const actionTrigger = (page: Page, scope: Locator, name: string, action: 'edit' 
       })
 const houseRuleId = '50000000-0000-4000-8000-000000000001'
 async function audit(page: Page) {
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  // A drawer still sliding in overflows for a frame under load: it must settle to no overflow.
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true)
   expect(
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
-  // Controls are 44px; inline term links keep text flow and get a 44px hit area instead.
-  await expectTouchTargets(
-    page,
-    'main button:visible:not(.glossary-term), [role="dialog"] button:visible:not(.glossary-term)',
-  )
-  const hits = await page.locator('.glossary-term:visible').evaluateAll((terms) =>
-    terms.map((el) => {
-      const after = getComputedStyle(el, '::after')
-      return el.getBoundingClientRect().height - parseFloat(after.top) - parseFloat(after.bottom)
-    }),
-  )
-  for (const hit of hits) expect(hit).toBeGreaterThanOrEqual(44)
+  await expectTouchTargets(page, 'main button:visible, [role="dialog"] button:visible')
 }
 
 test('keyboard search finds a condition in either language and shows its quick facts', async ({
@@ -328,10 +332,11 @@ test('background refreshes keep focus and typed text in the open editor', async 
   const summary = editor.getByLabel('Resumen')
   await summary.fill('')
   await summary.pressSequentially('abc')
-  // Another member saves and the list refreshes (the 60 s poll or a refocused tab).
+  // Another member saves and the list refreshes when the tab regains focus after five minutes.
   const before = f.calls.filter((call) => call.method === 'glossary_entries').length
   f.changeHomebrew(houseRuleId, { body: 'Otro cambio.' })
-  await page.clock.fastForward(61_000)
+  await page.clock.fastForward(5 * 60_000 + 1_000)
+  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
   await expect
     .poll(() => f.calls.filter((call) => call.method === 'glossary_entries').length)
     .toBeGreaterThan(before)
@@ -710,4 +715,85 @@ test('a category chosen right after typing survives the delayed ?q= update', asy
   await expect(page).toHaveURL(/q=a/)
   await expect(page.getByRole('tab', { name: /Conjuros/ })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('button', { name: 'Filtros de conjuros' })).toBeVisible()
+})
+
+// RYT-117: 838 entries mount only the sections near the viewport.
+test('RYT-117 the index mounts a bounded number of rows and still reaches every entry', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(glossaryUrl)
+  await expect(page.getByText('838 entradas')).toBeVisible()
+  await expect(page.locator('.gl-row').first()).toBeVisible()
+  expect(await page.locator('.gl-row').count()).toBeLessThan(250)
+  // A letter far down the alphabet is one tap away: its heading takes focus and its rows mount.
+  const letters = page.getByRole('navigation', { name: 'Saltar a la letra' })
+  await letters.getByRole('button', { name: 'Z', exact: true }).click()
+  await expect(page.locator('#gl-letter-Z')).toBeFocused()
+  await expect(page.getByRole('link', { name: /^Zona de la verdad/ })).toBeVisible()
+  expect(await page.locator('.gl-row').count()).toBeLessThan(250)
+  // Search covers the whole catalogue, not just what is mounted; results list in ranked chunks.
+  const search = page.getByRole('searchbox', { name: 'Buscar en el glosario' })
+  await search.fill('de')
+  await expect(page.getByText(/^\d+ entradas$/)).not.toHaveText('838 entradas')
+  const total = Number((await page.getByText(/^\d+ entradas$/).textContent())!.split(' ')[0])
+  expect(total).toBeGreaterThan(200)
+  expect(await page.locator('.gl-row').count()).toBeLessThan(total)
+  await search.press('ArrowDown')
+  await expect(page.locator('.gl-row:focus')).toBeVisible()
+  // Arrow keys walk past the mounted rows into chunks that were not rendered yet.
+  for (let i = 0; i < 90; i++) await page.keyboard.press('ArrowDown')
+  await expect(page.locator('.gl-row:focus')).toBeVisible()
+  await expect(page.getByRole('list', { name: /^Entradas 81 a 120 de / })).toBeVisible()
+  await search.fill('zona de la verdad')
+  await expect(page.getByRole('link', { name: /^Zona de la verdad/ })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('RYT-117 a deep link to a late entry opens it and back returns to its row', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`${glossaryUrl}/spell.zone-of-truth`)
+  const headword = page.getByRole('heading', { name: 'Zona de la verdad', exact: true })
+  await expect(headword).toBeVisible()
+  expect(await page.locator('.gl-row').count()).toBeLessThan(250)
+  if (narrow(page)) {
+    await expect(headword).toBeFocused()
+    await page.getByRole('link', { name: 'Todas las entradas' }).click()
+    await expect(page.getByRole('link', { name: /^Zona de la verdad/ })).toBeFocused()
+    await expect(page.getByRole('link', { name: /^Zona de la verdad/ })).toBeInViewport()
+  } else {
+    // Beside the reader, the index scrolls to the open entry.
+    const row = page.getByRole('link', { name: /^Zona de la verdad/ })
+    await expect(row).toHaveAttribute('aria-current', 'true')
+    await expect(row).toBeInViewport()
+  }
+})
+
+test('RYT-117 Home and End move row focus across the whole list and the DOM stays bounded', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await identityFixture(page, { player: true, modules: ['party', 'glossary'], sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(glossaryUrl)
+  await expect(page.getByText('838 entradas')).toBeVisible()
+  const letters = page.getByRole('navigation', { name: 'Saltar a la letra' })
+  for (const letter of ['M', 'Z', 'D', 'S', 'B', 'V'])
+    await letters.getByRole('button', { name: letter, exact: true }).click()
+  await page.locator('.gl-row').first().focus()
+  await page.keyboard.press('End')
+  await expect(page.locator('.gl-row:focus')).toContainText(/Zona de la verdad/)
+  await page.keyboard.press('Home')
+  await expect(page.locator('.gl-row:focus')).toBeVisible()
+  expect(await page.evaluate(() => scrollY)).toBeLessThan(2000)
+  for (let i = 0; i < 100; i++) await page.keyboard.press('ArrowDown')
+  await expect.poll(() => page.locator('.gl-row').count()).toBeLessThan(260)
 })

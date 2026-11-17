@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Json } from '@/shared/api/database.generated'
 import { config } from '@/shared/lib/config'
+import { storageUploadError } from '@/shared/api/storage-errors'
 import {
   cardSchema,
   fogSchema,
@@ -253,7 +254,7 @@ export async function uploadMedia(campaignId: string, kind: MediaKind, file: Blo
   const { activeSchema } = await import('@/shared/api/supabase')
   const path = `${activeSchema()}/${uuid(campaignId)}/${kind}/${crypto.randomUUID()}.${extension}`
   const result = await db.storage.from(mediaBucket).upload(path, file, { contentType: file.type })
-  if (result.error) throw new Error('unavailable')
+  if (result.error) throw new Error(storageUploadError(result.error))
   return path
 }
 

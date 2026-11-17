@@ -19,10 +19,13 @@ import { tabletopEs } from './tabletop-es'
 import { panelEs } from './panel-es'
 import { restEs } from './rest-es'
 import { usernameEs } from './username-es'
+import { accountEs } from './account-es'
 import { libraryEs } from './library-es'
 import { viewerEs } from './viewer-es'
+import { legalEs } from './legal-es'
 
 export const es = {
+  ...legalEs,
   ...identityEs,
   ...charactersEs,
   ...sheetEs,
@@ -43,6 +46,7 @@ export const es = {
   ...panelEs,
   ...restEs,
   ...usernameEs,
+  ...accountEs,
   ...libraryEs,
   ...viewerEs,
   'module.party': 'Grupo',
@@ -74,16 +78,17 @@ export const es = {
   'nav.settings': 'Ajustes',
   'mode.demo': 'Vista previa · datos de ejemplo',
   'mode.backend': 'Tu mesa',
-  'common.planned': 'Módulo previsto',
   'common.back': 'Volver',
-  'common.loading': 'Abriendo tu compañero de aventuras…',
+  'common.loading': 'Cargando…',
+  'common.loadingSlow': 'Está tardando más de lo normal. Recarga o vuelve al inicio.',
   'common.retry': 'Reintentar',
+  'common.storageQuota':
+    'El almacenamiento rechazó la subida. Puede que esta campaña haya llenado su espacio: quita imágenes o archivos que ya no necesite y vuelve a intentarlo.',
   'page.notFound': 'Página no encontrada',
-  'page.unknown': 'Ruta desconocida',
-  'page.noPath': 'Esta ruta no lleva a ninguna página.',
-  'page.return': 'Vuelve atrás para seguir explorando.',
-  'page.planned':
-    'Este módulo aún no está disponible. Aparecerá en el menú cuando tu mesa pueda usarlo.',
+  'page.notFoundHelp': 'Esta dirección no existe o ya no está disponible.',
+  'page.goCampaign': 'Ir a la campaña',
+  'page.goHome': 'Ir al inicio',
+  'nav.campaignHome': 'Inicio de {{name}}',
   'campaigns.title': 'Tus campañas',
   'campaigns.next': 'La creación de campañas y las invitaciones llegarán con RYT-002.',
   'campaigns.empty': 'No hay campañas disponibles para esta cuenta.',
@@ -92,12 +97,11 @@ export const es = {
   'error.campaigns':
     'No se pudieron cargar las campañas. Comprueba tu conexión y los permisos de acceso.',
   'error.title': 'No se pudo abrir la aplicación',
-  'error.help':
-    'Recarga para intentarlo de nuevo. Si el problema continúa, comprueba la configuración.',
+  'error.help': 'Recarga la página. Si sigue fallando, vuelve al inicio e inténtalo de nuevo.',
+  'error.home': 'Ir al inicio',
   'error.reload': 'Recargar',
   'preferences.language': 'Idioma',
-  'preferences.saved':
-    'Tus preferencias se guardan en este dispositivo. La primera visita empieza en español y con el tema Hoguera.',
+  'preferences.saved': 'Tus preferencias se guardan en este dispositivo.',
   'settings.demo': 'Modo demo',
   'settings.backend': 'Modo Supabase',
   'settings.demoDescription':

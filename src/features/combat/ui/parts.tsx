@@ -1,8 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Alert, Badge, Button, Group, Portal, Text } from '@mantine/core'
+import { Alert, Badge, Button, Group, Loader, Portal, Text } from '@mantine/core'
 import { Check, HeartPulse, Radio, Skull, Sparkles, WifiOff, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { deathState, healthBand, type Combatant, type CombatErrorCode } from '../domain/combat'
+import { useOnline } from './helpers'
 import { BandMark } from './token'
 
 /** The body of the topmost open dialog or drawer, if any (nested ones portal last). */
@@ -96,7 +98,7 @@ export function ErrorAlert({
       color="red"
       role="alert"
       withCloseButton
-      closeButtonLabel={t('action.cancel')}
+      closeButtonLabel={t('combat.close')}
       onClose={() => onDismiss(ref.current)}
       className="combat-alert"
     >
@@ -133,17 +135,85 @@ function FloatingError({ onClose, children }: { onClose: () => void; children: R
   )
 }
 
+/** Seconds since `since` (ms), refreshed every second on its own so the host does not re-render. */
+export function Elapsed({ since, format }: { since: number; format: (seconds: number) => string }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const tick = window.setInterval(() => setNow(Date.now()), 1_000)
+    return () => window.clearInterval(tick)
+  }, [])
+  return <>{format(Math.max(0, Math.round((now - since) / 1000)))}</>
+}
+
+/**
+ * Connection state of a combat screen. Stale data is said once: offline, the app shell already
+ * shows its alert, so this is a quiet line with "last updated" and the retry (RYT-126 J4-13);
+ * online but failing, it is the alert. Retry shows a busy state and, if it fails, a visible result.
+ */
 export function NetworkState({
   stale,
   connected,
   retry,
+  updatedAt = 0,
 }: {
   stale: boolean
   connected: boolean
-  retry: () => void
+  retry: () => unknown
+  /** When the screen last got fresh data (ms), for "N s ago". */
+  updatedAt?: number
 }) {
   const { t } = useTranslation()
-  if (stale)
+  const online = useOnline()
+  const [attempt, setAttempt] = useState<'idle' | 'busy' | 'failed'>('idle')
+  if (!stale && attempt !== 'idle') setAttempt('idle')
+  const again = async () => {
+    if (attempt === 'busy') return
+    setAttempt('busy')
+    const result = await retry()
+    setAttempt(result === false ? 'failed' : 'idle')
+  }
+  if (stale) {
+    const button = (
+      <Button
+        size="sm"
+        variant="light"
+        className="combat-retry"
+        onClick={() => void again()}
+        aria-disabled={attempt === 'busy' || undefined}
+        leftSection={attempt === 'busy' ? <Loader size={14} color="currentColor" /> : null}
+      >
+        {attempt === 'busy' ? t('combat.network.retrying') : t('combat.network.retry')}
+      </Button>
+    )
+    const result = attempt === 'failed' && (
+      <Text size="sm" className="combat-stale-result" role="status">
+        {t('combat.network.stillOffline')}
+      </Text>
+    )
+    if (!online)
+      return (
+        <div className="combat-stale is-inline" role="status">
+          <WifiOff size={18} aria-hidden="true" />
+          <Text size="sm" fw={600}>
+            {updatedAt > 0 ? (
+              <>
+                {/* Counting seconds must not be read out every second. */}
+                <span aria-hidden="true">
+                  <Elapsed
+                    since={updatedAt}
+                    format={(seconds) => t('combat.network.offline', { seconds })}
+                  />
+                </span>
+                <span className="visually-hidden">{t('combat.network.offlineNow')}</span>
+              </>
+            ) : (
+              t('combat.network.offlineNow')
+            )}
+          </Text>
+          {button}
+          {result}
+        </div>
+      )
     return (
       <Alert
         color="yellow"
@@ -153,16 +223,18 @@ export function NetworkState({
       >
         <Group justify="space-between" gap="sm">
           <Text size="sm">{t('combat.network.stale')}</Text>
-          <Button size="xs" variant="light" onClick={retry}>
-            {t('combat.network.retry')}
-          </Button>
+          {button}
         </Group>
+        {result}
       </Alert>
     )
+  }
+  // Quiet polling is the normal fallback, not news: only a live link or a stale one is worth saying.
+  if (!connected) return null
   return (
     <Text size="sm" c="dimmed" className="combat-live" role="status">
       <Radio size={14} aria-hidden="true" />
-      {t(connected ? 'combat.network.live' : 'combat.network.polling')}
+      {t('combat.network.live')}
     </Text>
   )
 }
@@ -214,13 +286,22 @@ export function HpMeter({
   )
 }
 
-export function ConditionBadges({ combatant, limit }: { combatant: Combatant; limit?: number }) {
+export function ConditionBadges({
+  combatant,
+  limit,
+  terms = false,
+}: {
+  combatant: Combatant
+  limit?: number
+  /** Conditions open their glossary definition (not inside another control). */
+  terms?: boolean
+}) {
   const { t } = useTranslation()
   const conditions = combatant.conditions ?? []
   if (conditions.length === 0 && !combatant.concentration) return null
   const shown = limit ? conditions.slice(0, limit) : conditions
   return (
-    <Group gap={4} className="combat-badges">
+    <Group gap={8} className="combat-badges">
       {combatant.concentration && (
         <Badge variant="light" color="blue" size="sm" className="combat-badge">
           {t('combat.concentration.on', { spell: combatant.concentration })}
@@ -228,7 +309,11 @@ export function ConditionBadges({ combatant, limit }: { combatant: Combatant; li
       )}
       {shown.map((key) => (
         <Badge key={key} variant="outline" size="sm" className="combat-badge">
-          {t(`srd.condition.${key}`)}
+          {terms ? (
+            <GlossaryTerm id={glossaryIds.condition(key)}>{t(`srd.condition.${key}`)}</GlossaryTerm>
+          ) : (
+            t(`srd.condition.${key}`)
+          )}
         </Badge>
       ))}
       {limit && conditions.length > limit && (

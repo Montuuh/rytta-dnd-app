@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Button, Loader, Drawer, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Alert, Button, Loader, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ImageUp, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -140,7 +141,9 @@ export function DefinitionEditor({
       ? t('inventory.error.stale')
       : failure instanceof Error && failure.message === 'cents'
         ? t('inventory.error.cents')
-        : t('catalogue.saveError')
+        : failure instanceof Error && failure.message === 'storageQuota'
+          ? t('common.storageQuota')
+          : t('catalogue.saveError')
   const finish = async (item: ItemDefinition) => {
     if (!navigator.onLine || controller?.getSnapshot().user?.id !== userId)
       throw new Error('unavailable')

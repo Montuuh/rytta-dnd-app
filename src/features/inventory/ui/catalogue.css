@@ -1,34 +1,4 @@
-/* RYT-104/105 catalogue: linked weight fields, second language, proposals, import and merges. */
-
-/* Weight: one figure in two units, the reader's first, joined by an equals sign. */
-.weight-pair {
-  display: grid;
-  gap: 6px;
-}
-.weight-pair-fields {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: end;
-  gap: 8px;
-}
-.weight-pair-equals {
-  padding-bottom: 0.7rem;
-  color: var(--app-muted);
-  font-family: var(--mantine-font-family-headings);
-}
-@media (max-width: 30em) {
-  .weight-pair-fields {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  /* Stacked on phones, the sign stays between the two fields so they read as one weight. */
-  .weight-pair-equals {
-    justify-self: center;
-    padding: 0;
-    margin: -4px 0 -6px;
-    font-size: 1.25rem;
-    line-height: 1;
-  }
-}
+/* RYT-104/105 catalogue: second language, proposals, import and merges. */
 
 /* "Start from an existing item" results. */
 .start-option {

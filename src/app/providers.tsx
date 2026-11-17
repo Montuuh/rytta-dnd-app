@@ -7,7 +7,12 @@ import { classThemes, getClassTheme, themeScheme, useClassTheme } from '@/shared
 import { AuthProvider } from '@/features/auth'
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true } },
+  defaultOptions: {
+    queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true },
+    // A mutation is never paused for the network and resumed later: offline it fails at once, so
+    // a purchase, a deletion or an upload cannot fire by itself when the connection returns.
+    mutations: { networkMode: 'always' },
+  },
 })
 /** Red light, subtle and outline variants read the contrast-tested danger token in both schemes
  * (Mantine's dark red-light text is near white and loses the destructive signal). */

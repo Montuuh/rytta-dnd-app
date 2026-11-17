@@ -114,34 +114,64 @@ html[data-mantine-color-scheme='light'] .portrait-plate-backdrop {
   line-height: 1;
   color: var(--app-accent);
 }
-.portrait-plate-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 6px 16px;
-  border-radius: 12px;
-  background: var(--app-surface);
-  border: 1px dashed var(--app-accent);
-  color: var(--app-text);
-  font-weight: 600;
-  text-align: center;
+.portrait-plate-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+/* The class emblem is painted on a near-black ground. On a dark page it is a medallion with an
+   accent ring; on a light one (Parchment, light class themes) the same ground would be a heavy
+   dark disc, so it is lifted and set on a plate: a paper gap, the accent ring and a soft shadow. */
+.portrait-plate-emblem {
+  width: 1.75em;
+  height: 1.75em;
+  padding: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 3px var(--app-accent);
+}
+html[data-mantine-color-scheme='light'] .portrait-plate-emblem {
+  filter: brightness(1.28) contrast(0.9) saturate(1.05);
+  box-shadow:
+    0 0 0 3px var(--app-surface),
+    0 0 0 5px var(--app-accent),
+    0 8px 18px rgb(70 45 20 / 0.28);
+}
+/* A quiet camera badge on the face: 44px to tap, a small accent disc to look at. */
+.portrait-plate-camera {
+  position: absolute;
+  right: -12px;
+  bottom: -8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--app-on-accent);
   cursor: pointer;
 }
-.portrait-plate-add svg {
-  flex-shrink: 0;
-  color: var(--app-accent);
+.portrait-plate-camera::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  border: 2px solid var(--app-surface);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
 }
-.portrait-plate-add:hover {
-  background: var(--app-hover);
+.portrait-plate-camera svg {
+  position: relative;
 }
-.portrait-plate-add[data-pending] {
+.portrait-plate-camera:hover::before {
+  background: color-mix(in srgb, var(--app-accent) 85%, var(--app-text));
+}
+.portrait-plate-camera[data-pending] {
   opacity: 0.6;
 }
-.portrait-plate:has(.portrait-plate-input:focus-visible) .portrait-plate-add {
+.portrait-plate:has(.portrait-plate-input:focus-visible) .portrait-plate-camera {
   outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 .portrait-plate-error {
   position: relative;

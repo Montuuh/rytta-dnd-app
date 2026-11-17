@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { useCampaign } from '@/features/campaigns'
+import { classEmblem, useClassEmblems } from '@/features/characters'
 import { creatureArtQuery, creatureArtUrl, type CreatureArt } from '@/features/bestiary'
 import { combatImageQuery } from '../api'
 import { monogram, type Combatant, type HpBand } from '../domain/combat'
@@ -46,6 +48,7 @@ export function Token({
   viewable = false,
   fullArt,
   credit,
+  emblem = null,
 }: {
   /** The image is the subject here (not just beside the printed name): give it alt text. */
   described?: boolean
@@ -72,6 +75,8 @@ export function Token({
   fullArt?: string | null
   /** The bundled art's credit, shown in the viewer under it. */
   credit?: CreatureArt | null
+  /** RYT-112: a character's class emblem, worn instead of the monogram when there is no picture. */
+  emblem?: string | null
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
@@ -140,6 +145,13 @@ export function Token({
           </span>
         )}
       </span>
+      {/* RYT-126 J4-22: a class emblem is a badge on the initial, not the whole face: the painted
+          emblems are dark and a face made of one read as defeated. */}
+      {!src && emblem && side !== 'lair' && !Glyph && (size === undefined || size >= 36) && (
+        <span className="combat-token-emblem" aria-hidden="true">
+          <img src={emblem} alt="" loading="lazy" decoding="async" draggable={false} />
+        </span>
+      )}
       {children}
     </Root>
   )
@@ -182,6 +194,14 @@ export function CombatantToken({
   const srdId = combatant.kind === 'npc' ? combatant.srd_id : undefined
   const credits = useQuery({ ...creatureArtQuery(), enabled: Boolean(srdId) })
   const credit = (srdId && credits.data?.[srdId]) || null
+  const campaign = useCampaign()
+  const emblems = useClassEmblems(campaign.id)
+  // RYT-118: the projection's class key works without the party cache (the table and Players
+  // receive no character id); the cached overview still covers older projections.
+  const emblem =
+    combatant.kind === 'character'
+      ? (classEmblem(combatant.class_key) ?? emblems(combatant.character_id))
+      : null
   const art = srdId && credit ? creatureArtUrl(srdId, 'thumb') : null
   return (
     <Token
@@ -198,6 +218,7 @@ export function CombatantToken({
       viewable={viewable}
       fullArt={srdId && credit ? creatureArtUrl(srdId, 'full') : null}
       credit={credit}
+      emblem={emblem && (size !== undefined && size > 128 ? emblem.full : emblem.thumb)}
     />
   )
 }

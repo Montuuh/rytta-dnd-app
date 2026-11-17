@@ -1,8 +1,7 @@
-import { Fragment } from 'react'
 import { NumberInput, type NumberInputProps } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { MAX_GP, roundGp } from '@/shared/lib/money'
-import { KG_PER_LB, useWeightUnit, type WeightUnit } from '@/shared/lib/weight'
+import { KG_PER_LB, useWeightUnit } from '@/shared/lib/weight'
 import { useDecimalDraft, useDecimalSeparator } from '@/shared/ui/decimal-draft'
 import { Stepper } from './stepper'
 
@@ -10,9 +9,8 @@ const round = (value: number, digits: number) =>
   Math.round((value + Number.EPSILON) * 10 ** digits) / 10 ** digits
 
 /**
- * RYT-104: one weight, two linked fields. Pounds are stored with three decimals; kilograms follow
- * at 1 lb = 0.5 kg with four, so every stored weight reads back exactly (0.001 lb = 0.0005 kg)
- * and a round trip never drifts. The reader's unit comes first; editing either updates the other.
+ * RYT-104/125: a weight is stored in pounds with three decimals and shown in the reader's unit
+ * (kg in Spanish, lb in English).
  */
 export function WeightFields({
   pounds,
@@ -25,36 +23,24 @@ export function WeightFields({
   label: string
   max?: number
 }) {
-  const { t, i18n } = useTranslation()
-  const preferred = useWeightUnit(i18n.language)
-  const units: WeightUnit[] = preferred === 'kg' ? ['kg', 'lb'] : ['lb', 'kg']
-  const kilograms = (lb: number) => round(lb * KG_PER_LB, 4)
+  const { i18n, t } = useTranslation()
+  const unit = useWeightUnit(i18n.language)
+  const kilograms = (lb: number) => round(lb * KG_PER_LB, 3)
+  // RYT-125: one field, in the reader's unit. Grams (0.001 kg) are exactly 0.002 lb, so a kilogram
+  // value written with three decimals converts to pounds and back without drifting.
   return (
-    <fieldset className="plain-fieldset weight-pair">
-      <legend className="visually-hidden-live">{label}</legend>
-      <div className="weight-pair-fields">
-        {units.map((unit, index) => (
-          <Fragment key={unit}>
-            {index === 1 && (
-              <span className="weight-pair-equals" aria-hidden="true">
-                =
-              </span>
-            )}
-            <Stepper
-              label={t(unit === 'kg' ? 'inventory.forge.weightKg' : 'inventory.forge.weight')}
-              min={0}
-              max={unit === 'kg' ? kilograms(max) : max}
-              step={unit === 'kg' ? 0.25 : 0.5}
-              decimalScale={unit === 'kg' ? 4 : 3}
-              value={unit === 'kg' ? kilograms(pounds) : pounds}
-              onChange={(value) =>
-                onChange(round(unit === 'kg' ? (value ?? 0) / KG_PER_LB : (value ?? 0), 3))
-              }
-            />
-          </Fragment>
-        ))}
-      </div>
-    </fieldset>
+    <Stepper
+      label={t(unit === 'kg' ? 'inventory.forge.weightKg' : 'inventory.forge.weight')}
+      description={label}
+      min={0}
+      max={unit === 'kg' ? kilograms(max) : max}
+      step={unit === 'kg' ? 0.25 : 0.5}
+      decimalScale={3}
+      value={unit === 'kg' ? kilograms(pounds) : pounds}
+      onChange={(value) =>
+        onChange(round(unit === 'kg' ? (value ?? 0) / KG_PER_LB : (value ?? 0), 3))
+      }
+    />
   )
 }
 

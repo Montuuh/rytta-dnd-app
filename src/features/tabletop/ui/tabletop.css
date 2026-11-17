@@ -2574,3 +2574,72 @@ html.tt-table-mode body {
 .tt-player-tools .mantine-Switch-body {
   align-items: center;
 }
+
+/* Zero scenes: one explanation and one action. */
+.tt-empty-body {
+  max-width: 34rem;
+  margin-inline: auto !important;
+}
+.tt-empty-action {
+  justify-self: center;
+  margin-top: 0.75rem;
+}
+.tt-empty-setup {
+  justify-self: center;
+}
+
+/* RYT-126 player journey fixes ------------------------------------------------------------- */
+
+/* The acting ring sits under the name plate, never over it (J4-16); names take two lines (J4-12). */
+.tt-token > .tt-token-name {
+  z-index: 1;
+}
+.tt-token.is-active::after {
+  z-index: 0;
+}
+.tt-token-name {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-align: center;
+  overflow-wrap: break-word;
+  width: max-content;
+}
+/* A new scene fades in; no fade for reduced motion (J4-18). */
+@media (prefers-reduced-motion: no-preference) {
+  .tt-table-world {
+    animation: tt-scene-in 0.5s ease-out;
+  }
+}
+@keyframes tt-scene-in {
+  from {
+    opacity: 0;
+  }
+}
+/* Stale data is dimmed and said once; the turn text is the one thing the table reads (J4-03, J4-19). */
+.tt-status-turn {
+  color: #f5ebd6;
+  font-weight: 700;
+}
+.tt-status-turn.is-stale {
+  opacity: 0.45;
+}
+.tt-status-net.is-offline {
+  color: #f6c478;
+  font-weight: 700;
+}
+.tt-table-empty .tt-status-button {
+  font-size: 1.25rem;
+  color: #f5ebd6;
+}
+.tt-effect-error {
+  margin-top: 0.5rem;
+}
+/* A two-line name plate hangs below the token instead of growing up over it. */
+.tt-token > .tt-token-name,
+.tt-world[data-mode='table'] .tt-token-name {
+  top: 88%;
+  bottom: auto;
+}

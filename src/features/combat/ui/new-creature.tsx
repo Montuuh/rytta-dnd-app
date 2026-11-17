@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   Button,
   Group,
-  Modal,
   Select,
   Stack,
   Text,
@@ -10,6 +9,7 @@ import {
   Textarea,
   UnstyledButton,
 } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import {
   ArrowLeft,
   BookCopy,

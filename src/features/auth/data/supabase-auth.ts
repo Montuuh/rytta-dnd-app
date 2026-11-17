@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { AppSupabaseClient } from '@/shared/api/database.types'
 import { AuthFailure, type AuthAdapter } from '../domain/auth'
+import { rememberReturnTo } from '../domain/return-to'
 
 const identitySchema = z.object({ id: z.uuid(), email: z.email() })
 
@@ -46,6 +47,8 @@ export function createAuthAdapter(client: AppSupabaseClient): AuthAdapter {
     },
     async signIn() {
       const redirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).href
+      // The callback lands on the hub; the router sends the visitor back to this page afterwards.
+      rememberReturnTo(window.location.hash)
       const { error } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, queryParams: { prompt: 'select_account' } },

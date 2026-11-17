@@ -5,7 +5,6 @@ import {
   Checkbox,
   Collapse,
   Combobox,
-  Drawer,
   Loader,
   NativeSelect,
   SimpleGrid,
@@ -17,9 +16,10 @@ import {
   UnstyledButton,
   useCombobox,
 } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { useDebouncedValue } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, Languages } from 'lucide-react'
+import { ChevronDown, Languages, SlidersHorizontal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { formatGp } from '@/shared/lib/money'
@@ -174,6 +174,7 @@ function ForgePreview({
         <ItemIcon
           icon={draft.icon}
           imagePath={imagePath}
+          category={draft.category}
           size={44}
           viewable
           name={shown}
@@ -360,6 +361,7 @@ export function Forge({
   )
   const [texts, setTexts] = useState<Texts>(() => splitTexts(draft, language))
   const [secondOpen, setSecondOpen] = useState(() => Boolean(texts.otherName))
+  const [moreOpen, setMoreOpen] = useState(false)
   const [give, setGive] = useState<string[]>(() => initialGive ?? [])
   const [amount, setAmount] = useState<number | null>(initialAmount)
   const [suggested, setSuggested] = useState<number | null>(null)
@@ -427,7 +429,7 @@ export function Forge({
               : 'inventory.forge.title',
         )
       }
-      closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+      closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
       className="forge-drawer"
     >
       <form
@@ -513,309 +515,339 @@ export function Forge({
               ))}
             </div>
           </fieldset>
-          <fieldset className="plain-fieldset">
-            <legend>
-              <Text fw={600} size="sm" mb={6}>
-                {t('inventory.forge.rarity')}
-              </Text>
-            </legend>
-            <div className="forge-rarity-row">
-              {rarities.map((rarity) => (
-                <label key={rarity} className={`forge-swatch rarity-${rarity}`}>
-                  <input
-                    type="radio"
-                    className="forge-radio"
-                    name={`${id}-rarity`}
-                    value={rarity}
-                    checked={draft.rarity === rarity}
-                    onChange={() => set({ rarity })}
-                  />
-                  <span className="forge-gem" aria-hidden="true" />
-                  <span className="forge-swatch-label">{t(`inventory.rarity.${rarity}`)}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          {media}
-          <fieldset className="plain-fieldset">
-            <legend>
-              <Text fw={600} size="sm" mb={6}>
-                {t('inventory.forge.icon')}
-              </Text>
-            </legend>
-            <div className="icon-picker" role="group">
-              {iconKeys.map((icon) => (
-                <UnstyledButton
-                  key={icon}
-                  type="button"
-                  aria-pressed={draft.icon === icon}
-                  aria-label={t('inventory.forge.iconLabel', {
-                    icon: t(`inventory.icon.${icon}` as 'inventory.icon.package'),
-                  })}
-                  className="icon-choice"
-                  onClick={() => set({ icon })}
-                >
-                  <ItemIcon icon={icon} size={22} />
-                </UnstyledButton>
-              ))}
-            </div>
-          </fieldset>
-          <WeightFields
-            label={t('items.weight.each')}
-            pounds={draft.weight_lb}
-            onChange={(weight_lb) => set({ weight_lb })}
-          />
-          {dm ? (
-            <GpInput
-              withSteps
-              label={t('inventory.forge.value')}
-              placeholder={t('store.noValue')}
-              value={draft.value_gp}
-              onChange={(value_gp) => set({ value_gp })}
-            />
-          ) : (
-            <GpInput
-              withSteps
-              label={t('items.propose.suggested')}
-              description={t('items.propose.suggestedHint')}
-              placeholder={t('items.propose.noSuggestion')}
-              value={suggested}
-              onChange={setSuggested}
-            />
+          {/* J3-19: a proposal starts short (name, kind, description, how many); the rest is one tap away. */}
+          {!dm && (
+            <UnstyledButton
+              type="button"
+              className="forge-second-toggle"
+              aria-expanded={moreOpen}
+              aria-controls={`${id}-more`}
+              onClick={() => setMoreOpen((open) => !open)}
+            >
+              <SlidersHorizontal size={18} aria-hidden="true" />
+              <span className="forge-second-copy">
+                <span className="forge-second-title">{t('items.propose.more')}</span>
+                <span className="forge-second-hint">{t('items.propose.moreHint')}</span>
+              </span>
+              <ChevronDown size={18} aria-hidden="true" className="forge-second-chevron" />
+            </UnstyledButton>
           )}
-          <NativeSelect
-            label={t('inventory.forge.slot')}
-            value={draft.slot_kind}
-            data={slotKinds.map((kind) => ({
-              value: kind,
-              label: t(`inventory.slotKind.${kind}`),
-            }))}
-            onChange={(event) => set({ slot_kind: event.currentTarget.value as SlotKind })}
-          />
-          {draft.category === 'armor' && (
-            <fieldset className="plain-fieldset forge-props">
-              <legend>
-                <Text fw={600} size="sm" mb={6}>
-                  {t('forge.properties')}
-                </Text>
-              </legend>
-              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-                <Stepper
-                  label={t('inventory.forge.armorBase')}
-                  min={0}
-                  max={30}
-                  value={p.base ?? 10}
-                  onChange={(value) => setProps({ base: value ?? undefined })}
-                />
-                <Stepper
-                  label={t('inventory.forge.acBonus')}
-                  min={-5}
-                  max={10}
-                  value={p.acBonus ?? 0}
-                  onChange={(value) => setProps({ acBonus: value ? value : undefined })}
-                />
-                <NativeSelect
-                  label={t('inventory.forge.dexCap')}
-                  value={p.dexCap === null || p.dexCap === undefined ? 'none' : String(p.dexCap)}
-                  data={[
-                    { value: 'none', label: t('inventory.forge.dexFull') },
-                    { value: '2', label: '+2' },
-                    { value: '0', label: t('inventory.forge.dexNone') },
-                  ]}
-                  onChange={(event) =>
-                    setProps({
-                      dexCap:
-                        event.currentTarget.value === 'none'
-                          ? null
-                          : Number(event.currentTarget.value),
-                    })
-                  }
-                />
-                <Checkbox
-                  label={t('inventory.card.stealth')}
-                  checked={p.stealthDisadvantage ?? false}
-                  onChange={(event) =>
-                    setProps({ stealthDisadvantage: event.currentTarget.checked })
-                  }
-                />
-              </SimpleGrid>
-            </fieldset>
-          )}
-          {draft.category === 'shield' && (
-            <Stepper
-              label={t('inventory.card.shield')}
-              min={0}
-              max={10}
-              value={p.acBonus ?? 2}
-              onChange={(value) => setProps({ acBonus: value ?? undefined })}
-            />
-          )}
-          {draft.category === 'weapon' && (
-            <fieldset className="plain-fieldset forge-props">
-              <legend>
-                <Text fw={600} size="sm" mb={6}>
-                  {t('forge.properties')}
-                </Text>
-              </legend>
-              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-                <TextInput
-                  label={t('inventory.forge.dice')}
-                  placeholder="1d8"
-                  value={p.dice ?? ''}
-                  error={diceInvalid ? t('inventory.forge.diceError') : undefined}
-                  onChange={(event) => setProps({ dice: event.currentTarget.value || undefined })}
-                />
-                <NativeSelect
-                  label={t('inventory.forge.damageType')}
-                  value={p.damageType ?? 'slashing'}
-                  data={(['bludgeoning', 'piercing', 'slashing'] as const).map((type) => ({
-                    value: type,
-                    label: t(`inventory.damage.${type}`),
-                  }))}
-                  onChange={(event) =>
-                    setProps({
-                      damageType: event.currentTarget.value as
-                        'bludgeoning' | 'piercing' | 'slashing',
-                    })
-                  }
-                />
-                <Stepper
-                  label={t('inventory.forge.attackBonus')}
-                  min={-5}
-                  max={10}
-                  value={p.attackBonus ?? 0}
-                  onChange={(value) => setProps({ attackBonus: value ? value : undefined })}
-                />
-                <Stepper
-                  label={t('inventory.forge.damageBonus')}
-                  min={-5}
-                  max={10}
-                  value={p.damageBonus ?? 0}
-                  onChange={(value) => setProps({ damageBonus: value ? value : undefined })}
-                />
-                <Checkbox
-                  label={t('inventory.forge.finesse')}
-                  checked={p.finesse ?? false}
-                  onChange={(event) => setProps({ finesse: event.currentTarget.checked })}
-                />
-                <Checkbox
-                  label={t('inventory.forge.ranged')}
-                  checked={p.ranged ?? false}
-                  onChange={(event) => setProps({ ranged: event.currentTarget.checked })}
-                />
-              </SimpleGrid>
-            </fieldset>
-          )}
-          {draft.category === 'consumable' && (
-            <fieldset className="plain-fieldset forge-props">
-              <legend>
-                <Text fw={600} size="sm">
-                  {t('items.supplies.title')}
-                </Text>
-                <Text size="sm" c="dimmed">
-                  {t('items.supplies.hint')}
-                </Text>
-              </legend>
-              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" mt={6}>
-                <Stepper
-                  label={t('items.supplies.rations')}
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  decimalScale={1}
-                  value={p.rations ?? 0}
-                  onChange={(value) => setProps({ rations: value ? value : undefined })}
-                />
-                <Stepper
-                  label={t('items.supplies.water')}
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  decimalScale={1}
-                  value={p.water ?? 0}
-                  onChange={(value) => setProps({ water: value ? value : undefined })}
-                />
-              </SimpleGrid>
-            </fieldset>
-          )}
-          {draft.category === 'gear' && (
-            <fieldset className="plain-fieldset forge-props">
-              <legend className="visually-hidden-live">{t('items.container.title')}</legend>
-              <Switch
-                size="md"
-                label={t('items.container.toggle')}
-                description={t('items.container.hint')}
-                checked={Boolean(container)}
-                onChange={(event) =>
-                  setProps({
-                    container: event.currentTarget.checked
-                      ? { capacityLb: 30, loadReductionPercent: 0 }
-                      : undefined,
-                  })
-                }
-              />
-              {container && (
-                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" mt="sm">
-                  <Stepper
-                    label={t(
-                      unit === 'kg' ? 'items.container.capacityKg' : 'items.container.capacityLb',
-                    )}
-                    min={0}
-                    max={unit === 'kg' ? 5000 : 10000}
-                    step={unit === 'kg' ? 5 : 10}
-                    decimalScale={3}
-                    value={fromPounds(container.capacityLb, unit)}
-                    onChange={(value) =>
-                      setProps({
-                        container: { ...container, capacityLb: toPounds(value ?? 0, unit) },
-                      })
-                    }
-                  />
-                  <Stepper
-                    label={t('items.container.reduction')}
-                    min={0}
-                    max={90}
-                    step={5}
-                    suffix=" %"
-                    value={container.loadReductionPercent}
-                    onChange={(value) =>
-                      setProps({
-                        container: { ...container, loadReductionPercent: Math.round(value ?? 0) },
-                      })
-                    }
-                  />
-                </SimpleGrid>
-              )}
-            </fieldset>
-          )}
-          {draft.slot_kind !== 'none' &&
-            draft.category !== 'armor' &&
-            draft.category !== 'shield' && (
-              <fieldset className="plain-fieldset forge-props">
+          <Collapse expanded={dm || moreOpen} id={`${id}-more`}>
+            <Stack gap="lg">
+              <fieldset className="plain-fieldset">
                 <legend>
                   <Text fw={600} size="sm" mb={6}>
-                    {t('inventory.forge.modifiers')}
+                    {t('inventory.forge.rarity')}
                   </Text>
                 </legend>
-                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-                  <Stepper
-                    label={t('inventory.forge.acBonus')}
-                    min={-5}
-                    max={10}
-                    value={p.acBonus ?? 0}
-                    onChange={(value) => setProps({ acBonus: value ? value : undefined })}
-                  />
-                  <Stepper
-                    label={t('inventory.forge.speedBonus')}
-                    min={-30}
-                    max={60}
-                    step={5}
-                    value={p.speedBonus ?? 0}
-                    onChange={(value) => setProps({ speedBonus: value ? value : undefined })}
-                  />
-                </SimpleGrid>
+                <div className="forge-rarity-row">
+                  {rarities.map((rarity) => (
+                    <label key={rarity} className={`forge-swatch rarity-${rarity}`}>
+                      <input
+                        type="radio"
+                        className="forge-radio"
+                        name={`${id}-rarity`}
+                        value={rarity}
+                        checked={draft.rarity === rarity}
+                        onChange={() => set({ rarity })}
+                      />
+                      <span className="forge-gem" aria-hidden="true" />
+                      <span className="forge-swatch-label">{t(`inventory.rarity.${rarity}`)}</span>
+                    </label>
+                  ))}
+                </div>
               </fieldset>
-            )}
+              {media}
+              <fieldset className="plain-fieldset">
+                <legend>
+                  <Text fw={600} size="sm" mb={6}>
+                    {t('inventory.forge.icon')}
+                  </Text>
+                </legend>
+                <div className="icon-picker" role="group">
+                  {iconKeys.map((icon) => (
+                    <UnstyledButton
+                      key={icon}
+                      type="button"
+                      aria-pressed={draft.icon === icon}
+                      aria-label={t('inventory.forge.iconLabel', {
+                        icon: t(`inventory.icon.${icon}` as 'inventory.icon.package'),
+                      })}
+                      className="icon-choice"
+                      onClick={() => set({ icon })}
+                    >
+                      <ItemIcon icon={icon} size={22} />
+                    </UnstyledButton>
+                  ))}
+                </div>
+              </fieldset>
+              <WeightFields
+                label={t('items.weight.each')}
+                pounds={draft.weight_lb}
+                onChange={(weight_lb) => set({ weight_lb })}
+              />
+              {dm ? (
+                <GpInput
+                  withSteps
+                  label={t('inventory.forge.value')}
+                  placeholder={t('store.noValue')}
+                  value={draft.value_gp}
+                  onChange={(value_gp) => set({ value_gp })}
+                />
+              ) : (
+                <GpInput
+                  withSteps
+                  label={t('items.propose.suggested')}
+                  description={t('items.propose.suggestedHint')}
+                  placeholder={t('items.propose.noSuggestion')}
+                  value={suggested}
+                  onChange={setSuggested}
+                />
+              )}
+              <NativeSelect
+                label={t('inventory.forge.slot')}
+                value={draft.slot_kind}
+                data={slotKinds.map((kind) => ({
+                  value: kind,
+                  label: t(`inventory.slotKind.${kind}`),
+                }))}
+                onChange={(event) => set({ slot_kind: event.currentTarget.value as SlotKind })}
+              />
+              {draft.category === 'armor' && (
+                <fieldset className="plain-fieldset forge-props">
+                  <legend>
+                    <Text fw={600} size="sm" mb={6}>
+                      {t('forge.properties')}
+                    </Text>
+                  </legend>
+                  <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+                    <Stepper
+                      label={t('inventory.forge.armorBase')}
+                      min={0}
+                      max={30}
+                      value={p.base ?? 10}
+                      onChange={(value) => setProps({ base: value ?? undefined })}
+                    />
+                    <Stepper
+                      label={t('inventory.forge.acBonus')}
+                      min={-5}
+                      max={10}
+                      value={p.acBonus ?? 0}
+                      onChange={(value) => setProps({ acBonus: value ? value : undefined })}
+                    />
+                    <NativeSelect
+                      label={t('inventory.forge.dexCap')}
+                      value={
+                        p.dexCap === null || p.dexCap === undefined ? 'none' : String(p.dexCap)
+                      }
+                      data={[
+                        { value: 'none', label: t('inventory.forge.dexFull') },
+                        { value: '2', label: '+2' },
+                        { value: '0', label: t('inventory.forge.dexNone') },
+                      ]}
+                      onChange={(event) =>
+                        setProps({
+                          dexCap:
+                            event.currentTarget.value === 'none'
+                              ? null
+                              : Number(event.currentTarget.value),
+                        })
+                      }
+                    />
+                    <Checkbox
+                      label={t('inventory.card.stealth')}
+                      checked={p.stealthDisadvantage ?? false}
+                      onChange={(event) =>
+                        setProps({ stealthDisadvantage: event.currentTarget.checked })
+                      }
+                    />
+                  </SimpleGrid>
+                </fieldset>
+              )}
+              {draft.category === 'shield' && (
+                <Stepper
+                  label={t('inventory.card.shield')}
+                  min={0}
+                  max={10}
+                  value={p.acBonus ?? 2}
+                  onChange={(value) => setProps({ acBonus: value ?? undefined })}
+                />
+              )}
+              {draft.category === 'weapon' && (
+                <fieldset className="plain-fieldset forge-props">
+                  <legend>
+                    <Text fw={600} size="sm" mb={6}>
+                      {t('forge.properties')}
+                    </Text>
+                  </legend>
+                  <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+                    <TextInput
+                      label={t('inventory.forge.dice')}
+                      placeholder="1d8"
+                      value={p.dice ?? ''}
+                      error={diceInvalid ? t('inventory.forge.diceError') : undefined}
+                      onChange={(event) =>
+                        setProps({ dice: event.currentTarget.value || undefined })
+                      }
+                    />
+                    <NativeSelect
+                      label={t('inventory.forge.damageType')}
+                      value={p.damageType ?? 'slashing'}
+                      data={(['bludgeoning', 'piercing', 'slashing'] as const).map((type) => ({
+                        value: type,
+                        label: t(`inventory.damage.${type}`),
+                      }))}
+                      onChange={(event) =>
+                        setProps({
+                          damageType: event.currentTarget.value as
+                            'bludgeoning' | 'piercing' | 'slashing',
+                        })
+                      }
+                    />
+                    <Stepper
+                      label={t('inventory.forge.attackBonus')}
+                      min={-5}
+                      max={10}
+                      value={p.attackBonus ?? 0}
+                      onChange={(value) => setProps({ attackBonus: value ? value : undefined })}
+                    />
+                    <Stepper
+                      label={t('inventory.forge.damageBonus')}
+                      min={-5}
+                      max={10}
+                      value={p.damageBonus ?? 0}
+                      onChange={(value) => setProps({ damageBonus: value ? value : undefined })}
+                    />
+                    <Checkbox
+                      label={t('inventory.forge.finesse')}
+                      checked={p.finesse ?? false}
+                      onChange={(event) => setProps({ finesse: event.currentTarget.checked })}
+                    />
+                    <Checkbox
+                      label={t('inventory.forge.ranged')}
+                      checked={p.ranged ?? false}
+                      onChange={(event) => setProps({ ranged: event.currentTarget.checked })}
+                    />
+                  </SimpleGrid>
+                </fieldset>
+              )}
+              {draft.category === 'consumable' && (
+                <fieldset className="plain-fieldset forge-props">
+                  <legend>
+                    <Text fw={600} size="sm">
+                      {t('items.supplies.title')}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      {t('items.supplies.hint')}
+                    </Text>
+                  </legend>
+                  <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" mt={6}>
+                    <Stepper
+                      label={t('items.supplies.rations')}
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      decimalScale={1}
+                      value={p.rations ?? 0}
+                      onChange={(value) => setProps({ rations: value ? value : undefined })}
+                    />
+                    <Stepper
+                      label={t('items.supplies.water')}
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      decimalScale={1}
+                      value={p.water ?? 0}
+                      onChange={(value) => setProps({ water: value ? value : undefined })}
+                    />
+                  </SimpleGrid>
+                </fieldset>
+              )}
+              {draft.category === 'gear' && (
+                <fieldset className="plain-fieldset forge-props">
+                  <legend className="visually-hidden-live">{t('items.container.title')}</legend>
+                  <Switch
+                    size="md"
+                    label={t('items.container.toggle')}
+                    description={t('items.container.hint')}
+                    checked={Boolean(container)}
+                    onChange={(event) =>
+                      setProps({
+                        container: event.currentTarget.checked
+                          ? { capacityLb: 30, loadReductionPercent: 0 }
+                          : undefined,
+                      })
+                    }
+                  />
+                  {container && (
+                    <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" mt="sm">
+                      <Stepper
+                        label={t(
+                          unit === 'kg'
+                            ? 'items.container.capacityKg'
+                            : 'items.container.capacityLb',
+                        )}
+                        min={0}
+                        max={unit === 'kg' ? 5000 : 10000}
+                        step={unit === 'kg' ? 5 : 10}
+                        decimalScale={3}
+                        value={fromPounds(container.capacityLb, unit)}
+                        onChange={(value) =>
+                          setProps({
+                            container: { ...container, capacityLb: toPounds(value ?? 0, unit) },
+                          })
+                        }
+                      />
+                      <Stepper
+                        label={t('items.container.reduction')}
+                        min={0}
+                        max={90}
+                        step={5}
+                        suffix=" %"
+                        value={container.loadReductionPercent}
+                        onChange={(value) =>
+                          setProps({
+                            container: {
+                              ...container,
+                              loadReductionPercent: Math.round(value ?? 0),
+                            },
+                          })
+                        }
+                      />
+                    </SimpleGrid>
+                  )}
+                </fieldset>
+              )}
+              {draft.slot_kind !== 'none' &&
+                draft.category !== 'armor' &&
+                draft.category !== 'shield' && (
+                  <fieldset className="plain-fieldset forge-props">
+                    <legend>
+                      <Text fw={600} size="sm" mb={6}>
+                        {t('inventory.forge.modifiers')}
+                      </Text>
+                    </legend>
+                    <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+                      <Stepper
+                        label={t('inventory.forge.acBonus')}
+                        min={-5}
+                        max={10}
+                        value={p.acBonus ?? 0}
+                        onChange={(value) => setProps({ acBonus: value ? value : undefined })}
+                      />
+                      <Stepper
+                        label={t('inventory.forge.speedBonus')}
+                        min={-30}
+                        max={60}
+                        step={5}
+                        value={p.speedBonus ?? 0}
+                        onChange={(value) => setProps({ speedBonus: value ? value : undefined })}
+                      />
+                    </SimpleGrid>
+                  </fieldset>
+                )}
+            </Stack>
+          </Collapse>
           <Textarea
             autosize
             minRows={2}
@@ -873,6 +905,8 @@ export function Forge({
               label={amountLabel ?? t(dm ? 'inventory.card.amount' : 'items.propose.quantity')}
               min={1}
               max={1000}
+              required
+              longPress
               value={amount}
               onChange={setAmount}
             />
@@ -882,6 +916,12 @@ export function Forge({
               <Alert color="red" role="alert" mb="xs">
                 {error}
               </Alert>
+            )}
+            {/* J3-19: a disabled submit says what is missing, next to the button. */}
+            {!valid && !pending && (
+              <Text size="sm" c="dimmed" mb="xs" role="status">
+                {t(diceInvalid ? 'inventory.forge.diceError' : 'forge.nameNeeded')}
+              </Text>
             )}
             <Button
               type="submit"

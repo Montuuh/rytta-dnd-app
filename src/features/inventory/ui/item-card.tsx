@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { GlossaryTerm, GlossaryText, glossaryIds } from '@/features/glossary'
 import { useState } from 'react'
-import { Alert, Drawer, Group, NumberInput, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Alert, Group, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { Gift, Hand, Pencil, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +13,7 @@ import { isUsable, unitPounds, type ItemDefinition, type ItemStack } from '../do
 import { useWeightFormat } from './use-weight'
 import { HoldSeal } from './hold-seal'
 import { ItemIcon } from './item-icon'
+import { Stepper } from './stepper'
 
 export type CardActions = {
   use: () => void
@@ -24,6 +26,7 @@ export type CardActions = {
 /** The parchment "trading card" for one stack. Actions are seals and quiet links, not buttons. */
 export function ItemCard({
   stack,
+  total,
   definition,
   canEdit,
   dm,
@@ -34,6 +37,8 @@ export function ItemCard({
   onClose,
 }: {
   stack: ItemStack
+  /** Units of this item in the satchel, across stacks (the tile shows them as one). */
+  total: number
   definition: ItemDefinition
   canEdit: boolean
   dm: boolean
@@ -46,8 +51,12 @@ export function ItemCard({
   const { t, i18n } = useTranslation()
   const { format } = useWeightFormat()
   const phone = usePhone()
-  const [amount, setAmount] = useState<number | string>(1)
-  const count = typeof amount === 'number' && amount >= 1 ? Math.trunc(amount) : 1
+  const [amount, setAmount] = useState<number | null>(1)
+  // The DM's field also grants, so it only stops at 1000; a Player can only discard what the stack holds.
+  const limit = dm ? 1000 : stack.quantity
+  const count = Math.min(amount ?? 1, limit)
+  // What "Discard" will take is never more than the stack, so the button says exactly that.
+  const discard = Math.min(count, stack.quantity)
   const props = definition.properties
   const name = localizedName(definition, i18n.language)
   const description = localizedDescription(definition, i18n.language)
@@ -159,8 +168,8 @@ export function ItemCard({
       onClose={onClose}
       position={phone ? 'bottom' : 'right'}
       size={phone ? 'auto' : 420}
-      title={t('inventory.card.title')}
-      closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+      title={<span className="user-copy">{name}</span>}
+      closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
       classNames={{ content: 'item-card-drawer' }}
     >
       <article className={`item-card rarity-${definition.rarity}`} aria-labelledby="item-card-name">
@@ -168,17 +177,20 @@ export function ItemCard({
           <ItemIcon
             icon={definition.icon}
             imagePath={definition.image_path}
+            category={definition.category}
             size={40}
             viewable
             name={name}
             frame="item-card-icon"
           />
           <div>
-            <h3 id="item-card-name" className="item-card-name user-copy">
+            {/* The drawer's title shows the name; this heading names the article for readers. */}
+            <h3 id="item-card-name" className="item-card-name user-copy visually-hidden">
               {name}
             </h3>
             <Text size="sm" className="item-card-rarity">
               {t(`inventory.rarity.${definition.rarity}`)} · ×{stack.quantity}
+              {total > stack.quantity && ` · ${t('inventory.card.inTotal', { count: total })}`}
             </Text>
           </div>
         </header>
@@ -247,25 +259,47 @@ export function ItemCard({
               )}
             </Group>
             {(dm || stack.quantity > 1) && (
-              <NumberInput
-                label={t('inventory.card.amount')}
-                min={1}
-                max={1000}
-                allowDecimal={false}
-                allowNegative={false}
-                hideControls
-                value={amount}
-                onChange={setAmount}
-              />
+              <div className="item-card-amount">
+                <Stepper
+                  label={t(dm ? 'inventory.card.amount' : 'inventory.card.discardCount')}
+                  min={1}
+                  max={limit}
+                  required
+                  longPress
+                  value={Math.min(amount ?? 1, limit)}
+                  maxMessage={
+                    dm
+                      ? undefined
+                      : t(
+                          total > stack.quantity
+                            ? 'inventory.card.onlyInStack'
+                            : 'inventory.card.onlyHave',
+                          {
+                            count: stack.quantity,
+                          },
+                        )
+                  }
+                  onChange={setAmount}
+                />
+                {stack.quantity > 1 && (
+                  <UnstyledButton
+                    className="quiet-link item-card-all"
+                    aria-disabled={pending || undefined}
+                    onClick={() => setAmount(stack.quantity)}
+                  >
+                    {t('inventory.card.all', { count: stack.quantity })}
+                  </UnstyledButton>
+                )}
+              </div>
             )}
             <Group justify="space-between" gap="xs" className="item-card-links">
               <UnstyledButton
                 className="quiet-link danger"
-                aria-disabled={pending || count > stack.quantity || undefined}
-                onClick={() => !pending && count <= stack.quantity && actions.remove(count)}
+                aria-disabled={pending || undefined}
+                onClick={() => !pending && actions.remove(discard)}
               >
                 <Trash2 size={16} aria-hidden="true" />
-                {t('inventory.card.discard', { amount: count })}
+                {t('inventory.card.discard', { amount: discard })}
               </UnstyledButton>
               {dm && (
                 <UnstyledButton

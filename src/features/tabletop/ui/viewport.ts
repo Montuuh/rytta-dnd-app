@@ -145,6 +145,15 @@ export function useBoardView(
       y: el.clientHeight / 2 - (y + h / 2) * U * v.z,
     })
   }
+  /** Pans to centre a point in squares, at a zoom where tokens read (RYT-126 J4-26). */
+  const centerOn = (x: number, y: number) => {
+    if (!el) return
+    touched.current = true
+    setView((v) => {
+      const z = Math.max(v.z, 0.6)
+      return { z, x: el.clientWidth / 2 - x * U * z, y: el.clientHeight / 2 - y * U * z }
+    })
+  }
   /** The square at the centre of the viewport. */
   const center = (): WorldPoint => {
     if (!el) return [cols / 2, rows / 2]
@@ -253,6 +262,7 @@ export function useBoardView(
     fit,
     zoomAt,
     center,
+    centerOn,
     reveal,
     /** Spread on the viewport element: its callback ref and pointer handlers. */
     bind: {

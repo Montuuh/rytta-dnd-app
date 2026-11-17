@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { config } from '@/shared/lib/config'
+import { trackLiveChannel } from '@/shared/lib/live-poll'
 import { restError, restStateSchema, type RestAction } from '../domain/rest'
 
 async function client() {
@@ -51,9 +52,12 @@ export async function changeRest(campaignId: string, action: RestAction) {
  * Realtime invalidation: the rest_requests row carries no secrets and its revision moves on every
  * vote and outcome, so subscribers refetch the state. Polling stays on as the fallback.
  */
+export const restChannelKey = (campaignId: string) => `rest:${campaignId}`
+
 export function subscribeRest(campaignId: string, onChange: () => void) {
   let stop: (() => void) | undefined
   let cancelled = false
+  const status = trackLiveChannel(restChannelKey(campaignId))
   void (async () => {
     try {
       const db = await client()
@@ -71,9 +75,11 @@ export function subscribeRest(campaignId: string, onChange: () => void) {
           },
           () => onChange(),
         )
-        .subscribe((status) => {
-          // A (re)connection may have missed events: refetch the authoritative state.
-          if (status === 'SUBSCRIBED') onChange()
+        .subscribe((next) => {
+          if (cancelled) return
+          // Up: a (re)connection may have missed events. Down: the fast poll must start at once.
+          status.set(next === 'SUBSCRIBED')
+          onChange()
         })
       stop = () => void db.removeChannel(channel)
       if (cancelled) stop()
@@ -83,6 +89,7 @@ export function subscribeRest(campaignId: string, onChange: () => void) {
   })()
   return () => {
     cancelled = true
+    status.release()
     stop?.()
   }
 }

@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { etlCommand, withExposureSql } from '../../scripts/lib/pre-etl.mts'
+import { relaxQuotasSql } from './quota-fixture.ts'
 
 const migration = '20261104120000_combat.sql'
 const db = new PGlite()
@@ -231,6 +232,7 @@ beforeAll(async () => {
   )
   for (const file of files.filter((f) => f >= migration))
     await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
+  await db.exec(relaxQuotasSql)
 }, 60000)
 afterAll(() => db.close())
 
@@ -593,10 +595,17 @@ describe('RYT-007 shared combat', () => {
       current: 3,
       max: 7,
     })
-    // Players read the encounters row (realtime) but no combat table directly.
+    // Players read the encounter signal (realtime) but no combat table directly (RYT-113).
+    expect(
+      (
+        await db.query('select encounter_id from public.encounter_signals where campaign_id=$1', [
+          s.c,
+        ])
+      ).rows,
+    ).toHaveLength(1)
     expect(
       (await db.query('select id from public.encounters where campaign_id=$1', [s.c])).rows,
-    ).toHaveLength(1)
+    ).toHaveLength(0)
     for (const table of [
       'encounter_combatants',
       'encounter_effects',

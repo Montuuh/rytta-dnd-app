@@ -38,6 +38,7 @@ import { PageHead } from '@/shared/ui/page-head'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { newRequestId } from '@/shared/lib/request-id'
+import { useSubmitGuard } from './use-submit-guard'
 import {
   characterRosterQuery,
   claimableCharactersQuery,
@@ -60,7 +61,9 @@ import {
   type RosterEntry,
 } from '../domain/roster'
 import type { SheetSummary } from '../domain/sheet'
+import { classEmblem } from './class-emblem'
 import './roster.css'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
 type Entry = RosterEntry & { portraitPath: string | null }
 type Notice = {
@@ -623,6 +626,7 @@ function RosterCard({
         path={entry.portraitPath}
         size={76}
         viewable
+        emblem={classEmblem(summary?.class_key)}
       />
       {active && (
         <span className="roster-check" aria-hidden="true">
@@ -736,6 +740,7 @@ function RosterRow({
           path={entry.portraitPath}
           size={44}
           viewable
+          emblem={classEmblem(summary?.class_key)}
         />
         <div className="roster-row-text">
           <span id={`${id}-name`} className="roster-row-name user-copy">
@@ -940,6 +945,7 @@ export function ArchiveDialog({
   }, [action.isError])
   const npc = !entry.user_id
   const error = action.error?.message
+  useBackToClose(true, () => !action.isPending && onClose())
   return (
     <Modal
       opened
@@ -1299,6 +1305,7 @@ function ClaimCards({
                 name={character.name}
                 path={character.portrait_path}
                 className="claim-plate"
+                emblem={classEmblem(character.class_key)}
               />
               <div className="claim-text">
                 <Title order={3} className="claim-name user-copy">
@@ -1387,6 +1394,7 @@ function ClaimDialog({
     if (shown) errorRef.current?.focus()
   }, [shown])
   const name = character.name
+  useBackToClose(true, () => !claim.isPending && onClose())
   return (
     <Modal
       opened
@@ -1403,6 +1411,7 @@ function ClaimDialog({
             name={name}
             path={character.portrait_path}
             size={64}
+            emblem={classEmblem(character.class_key)}
           />
           <div className="claim-ask-text">
             <Text className="claim-meta user-copy">{metaOf(character)}</Text>
@@ -1531,12 +1540,15 @@ export function CreateCharacterDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const action = useCreateOwnCharacter(campaign.id)
   const [name, setName] = useState('')
+  // One request id per opening: a repeated press (or a retry after an error) is the same request.
   const [requestId] = useState(() => newRequestId())
+  const guard = useSubmitGuard()
   const [invalid, setInvalid] = useState(false)
   const errorRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (action.isError) errorRef.current?.focus()
   }, [action.isError])
+  useBackToClose(true, () => !action.isPending && onClose())
   return (
     <Modal
       opened
@@ -1547,12 +1559,14 @@ export function CreateCharacterDialog({ onClose }: { onClose: () => void }) {
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          if (action.isPending) return
           if (!name.trim()) return setInvalid(true)
-          action.mutate(
-            { name: name.trim(), requestId },
-            { onSuccess: (id) => navigate(`/campaign/${campaign.id}/party/${id}/create`) },
-          )
+          // A ref guard, not `isPending`: a double tap lands before the next render.
+          void guard
+            .run(() => action.mutateAsync({ name: name.trim(), requestId }))
+            .then(
+              (id) => id && void navigate(`/campaign/${campaign.id}/party/${id}/create`),
+              () => undefined,
+            )
         }}
       >
         <Stack>

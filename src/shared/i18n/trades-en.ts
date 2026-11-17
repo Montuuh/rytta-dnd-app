@@ -88,4 +88,13 @@ export const tradesEn = {
   'inventory.ledger.trade_in': 'Trade: received {{amount}} × {{name}}',
   'inventory.ledger.trade_out': 'Trade: gave {{amount}} × {{name}}',
   'dm.auditEvent.trade_completed': 'Trade closed',
+  'trade.window.cancelAsk': 'Cancel the trade for both of you?',
+  'trade.window.cancelYes': 'Yes, cancel',
+  'trade.window.cancelNo': 'Keep trading',
+  'trade.window.goldOnlyHave': 'You only have {{gold}} gp',
+  'trade.picker.onlyHave_one': 'You only have {{count}}',
+  'trade.picker.onlyHave_other': 'You only have {{count}}',
+  'trade.error.quantityYou': 'You no longer have that many {{name}}. Lower the amount.',
+  'trade.error.quantityPartner':
+    '{{name}} no longer has all of what they offered. Wait for them to change it.',
 }

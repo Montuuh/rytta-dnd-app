@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { Loader, Text, Tooltip, UnstyledButton } from '@mantine/core'
 import { ArrowLeftRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { formatWhen } from '@/features/inventory'
 import { useTrades } from './context'
 import { SummaryList } from './dialogs'
 
@@ -77,10 +78,7 @@ export function TradeHistory() {
             <div className="trade-history-head">
               <span className="user-copy">{t('trade.history.with', { name: entry.partner })}</span>
               <Text size="xs" c="dimmed" component="span">
-                {new Date(entry.completed_at).toLocaleString(i18n.language, {
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                })}
+                {formatWhen(entry.completed_at, i18n.language)}
               </Text>
             </div>
             <div className="trade-history-sides">

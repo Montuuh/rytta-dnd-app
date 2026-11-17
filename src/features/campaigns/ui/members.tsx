@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
   Group,
+  Menu,
   Modal,
   Paper,
   SegmentedControl,
@@ -13,12 +15,25 @@ import {
   Tabs,
   Text,
   TextInput,
-  Title,
 } from '@mantine/core'
 import { useWide } from '@/shared/ui/use-viewport'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
-import { Eye, History, Lock, LogOut, Package, PawPrint, Shield, Users } from 'lucide-react'
+import {
+  ArrowDown,
+  Ellipsis,
+  Eye,
+  History,
+  Lock,
+  LogOut,
+  Package,
+  PawPrint,
+  Shield,
+  UserMinus,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
@@ -29,7 +44,7 @@ import {
   type CampaignAction,
 } from '../api'
 import { useCampaign } from '../campaign-context'
-import { inviteEmailSchema } from '../domain/campaign'
+import { inviteEmailSchema, MembershipError, type Member } from '../domain/campaign'
 import { useCampaignView } from '../view-context'
 import { ActionFeedback, QueryFeedback } from './feedback'
 import { AuditTimeline } from './audit-timeline'
@@ -39,6 +54,9 @@ import { PageHead } from '@/shared/ui/page-head'
 import { campaignModules, implementedModuleKeys } from './module-catalog'
 import { LeaveCampaignDialog } from './leave'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
+import { useBackToClose } from '@/shared/ui/use-back-to-close'
+import { FirstSession } from './first-session'
+import './dm-center.css'
 
 type Confirmation = { action: CampaignAction; message: string }
 type DmPanel = 'members' | 'modules' | 'items' | 'bestiary' | 'audit'
@@ -51,7 +69,13 @@ type AuditFilter = 'all' | 'characters' | 'resources'
 export function CampaignMembers({
   itemsPanel,
   bestiaryPanel,
-}: { itemsPanel?: ReactNode; bestiaryPanel?: ReactNode } = {}) {
+  characterCount,
+}: {
+  itemsPanel?: ReactNode
+  bestiaryPanel?: ReactNode
+  /** Characters in play, once loaded by the page; drives the first-session checklist. */
+  characterCount?: number
+} = {}) {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const user = state.user!
@@ -122,6 +146,8 @@ export function CampaignMembers({
       restoreTriggerFocus()
     }
   }
+  useBackToClose(inviteOpen, closeInvite)
+  useBackToClose(!!confirmation, closeConfirmation)
   const handleInviteSubmit = inviteForm.onSubmit((values) => {
     action.mutate(
       { kind: 'invite', campaignId: campaign.id, email: values.email },
@@ -133,6 +159,29 @@ export function CampaignMembers({
       },
     )
   })
+  const hasPlayers =
+    !!members.data?.some((member) => member.role === 'player') || !!invitations.data?.length
+  const modulesChosen = (campaign.player_modules ?? ['party']).some(
+    (key) => key !== 'party' && implementedModuleKeys.has(key),
+  )
+  // Shown while the loaded data says the campaign has no players or no characters yet.
+  const firstSession = {
+    invite: hasPlayers,
+    modules: modulesChosen,
+    characters: (characterCount ?? 0) > 0,
+  }
+  const showFirstSession =
+    dm &&
+    !!members.data &&
+    !!invitations.data &&
+    characterCount !== undefined &&
+    !(firstSession.invite && firstSession.characters)
+  const openInvite = (target: HTMLElement) => {
+    trigger.current = target
+    action.reset()
+    inviteForm.reset()
+    setInviteOpen(true)
+  }
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
@@ -193,7 +242,7 @@ export function CampaignMembers({
             orientation={wide ? 'vertical' : 'horizontal'}
             variant="pills"
             keepMounted={false}
-            className="dm-tabs"
+            className="dm-tabs dm-tabs-seg"
           >
             <Tabs.List aria-label={t('dm.commandCenter')} className="dm-tabs-list">
               {(
@@ -213,6 +262,7 @@ export function CampaignMembers({
                   <Tabs.Tab
                     key={key}
                     value={key}
+                    data-panel={key}
                     leftSection={<Icon size={18} aria-hidden="true" />}
                   >
                     {t(label)}
@@ -223,160 +273,112 @@ export function CampaignMembers({
               <Stack gap="xl">
                 {showMembers && (
                   <>
-                    <section aria-labelledby="members-heading">
-                      <Stack>
-                        <Group justify="space-between" align="flex-start">
-                          <Group gap="xs">
-                            <Users size={20} className="feature-icon" aria-hidden="true" />
-                            <Title id="members-heading" order={2}>
-                              {t('members.list')}
-                            </Title>
-                          </Group>
-                          <Group>
-                            <Button
-                              onClick={(event) => {
-                                trigger.current = event.currentTarget
-                                action.reset()
-                                inviteForm.reset()
-                                setInviteOpen(true)
-                              }}
-                            >
-                              {t('members.invite')}
-                            </Button>
-                          </Group>
+                    {showFirstSession && (
+                      <FirstSession
+                        campaignId={campaign.id}
+                        done={firstSession}
+                        onInvite={openInvite}
+                        onModules={() => {
+                          setActivePanel('modules')
+                          // The checklist row unmounts with the Members panel: focus the chosen tab.
+                          focusWhenReady('.dm-tabs-list [role="tab"][data-panel="modules"]')
+                        }}
+                      />
+                    )}
+                    <section aria-label={t('dm.panelMembers')}>
+                      <Stack gap="sm">
+                        <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
+                          <Text size="sm" c="dimmed">
+                            {members.data ? t('members.count', { count: members.data.length }) : ''}
+                          </Text>
+                          <Button
+                            leftSection={<UserPlus size={18} aria-hidden="true" />}
+                            onClick={(event) => openInvite(event.currentTarget)}
+                          >
+                            {t('members.invite')}
+                          </Button>
                         </Group>
                         <QueryFeedback
                           pending={members.isPending}
                           error={members.isError}
+                          cause={members.error}
                           retry={() => {
                             void members.refetch()
                           }}
                         />
-                        {!members.isError &&
-                          members.data?.map((member) => (
-                            <Paper key={member.user_id} p="lg">
-                              <Stack>
-                                <Group justify="space-between" align="flex-start">
-                                  <div className="member-identity">
-                                    <Text fw={600} className="user-copy">
-                                      {member.display_name}
-                                      {member.user_id === user.id ? ` · ${t('members.you')}` : ''}
-                                    </Text>
-                                    <Text size="sm" c="dimmed" className="user-copy">
-                                      {member.email}
-                                    </Text>
-                                  </div>
-                                  <Badge variant="light">{t(`campaign.role.${member.role}`)}</Badge>
-                                </Group>
-                                <Group className="invite-actions">
-                                  <Button
-                                    variant="light"
-                                    disabled={action.isPending || (member.role === 'dm' && lastDm)}
-                                    onClick={(event) => {
-                                      const role = member.role === 'dm' ? 'player' : 'dm'
-                                      openConfirmation(
-                                        {
-                                          action: {
-                                            kind: 'member',
-                                            campaignId: campaign.id,
-                                            userId: member.user_id,
-                                            role,
-                                          },
-                                          message: t('members.confirmRole', {
-                                            name: member.display_name,
-                                            role: t(`campaign.role.${role}`),
-                                          }),
-                                        },
-                                        event.currentTarget,
-                                      )
-                                    }}
-                                  >
-                                    {t(member.role === 'dm' ? 'members.demote' : 'members.promote')}
-                                  </Button>
-                                  {member.user_id !== user.id && (
-                                    <Button
+                        {!members.isError && !!members.data?.length && (
+                          <ul className="member-list">
+                            {members.data.map((member) => (
+                              <MemberRow
+                                key={member.user_id}
+                                member={member}
+                                you={member.user_id === user.id}
+                                protectedDm={member.role === 'dm' && lastDm}
+                                busy={action.isPending}
+                                onConfirm={(next, target) => openConfirmation(next, target)}
+                                campaignId={campaign.id}
+                              />
+                            ))}
+                          </ul>
+                        )}
+                      </Stack>
+                    </section>
+                    <section aria-labelledby="sent-heading">
+                      <Stack gap="sm">
+                        <h2 id="sent-heading" className="dm-subheading">
+                          {t('members.sent')}
+                        </h2>
+                        <QueryFeedback
+                          pending={invitations.isPending}
+                          error={invitations.isError}
+                          cause={invitations.error}
+                          retry={() => void invitations.refetch()}
+                        />
+                        {!invitations.isError &&
+                          invitations.data &&
+                          (invitations.data.length ? (
+                            <ul className="member-list">
+                              {invitations.data.map((item) => {
+                                const revoke = t('members.revoke')
+                                return (
+                                  <li key={item.id} className="member-row">
+                                    <div className="member-identity">
+                                      <Text fw={600} className="user-copy">
+                                        {item.email}
+                                      </Text>
+                                      <Text size="sm" c="dimmed">
+                                        {t('hub.expires', {
+                                          date: new Date(item.expires_at).toLocaleDateString(
+                                            i18n.language,
+                                          ),
+                                        })}
+                                      </Text>
+                                    </div>
+                                    <ActionIcon
                                       variant="subtle"
                                       color="red"
-                                      disabled={
-                                        action.isPending || (member.role === 'dm' && lastDm)
-                                      }
+                                      size={44}
+                                      aria-label={revoke}
+                                      title={revoke}
+                                      disabled={action.isPending}
                                       onClick={(event) =>
                                         openConfirmation(
                                           {
-                                            action: {
-                                              kind: 'member',
-                                              campaignId: campaign.id,
-                                              userId: member.user_id,
-                                              role: null,
-                                            },
-                                            message: t('members.confirmRemove', {
-                                              name: member.display_name,
+                                            action: { kind: 'revoke', invitationId: item.id },
+                                            message: t('members.confirmRevoke', {
+                                              email: item.email,
                                             }),
                                           },
                                           event.currentTarget,
                                         )
                                       }
                                     >
-                                      {t('members.remove')}
-                                    </Button>
-                                  )}
-                                </Group>
-                                {member.role === 'dm' && lastDm && (
-                                  <Text size="sm" c="dimmed">
-                                    {t('members.onlyDm')}
-                                  </Text>
-                                )}
-                              </Stack>
-                            </Paper>
-                          ))}
-                      </Stack>
-                    </section>
-                    <section aria-labelledby="sent-heading">
-                      <Stack>
-                        <Title order={2} id="sent-heading">
-                          {t('members.sent')}
-                        </Title>
-                        <QueryFeedback
-                          pending={invitations.isPending}
-                          error={invitations.isError}
-                          retry={() => void invitations.refetch()}
-                        />
-                        {!invitations.isError &&
-                          invitations.data &&
-                          (invitations.data.length ? (
-                            invitations.data.map((item) => (
-                              <Paper key={item.id} p="lg">
-                                <Stack>
-                                  <Text className="user-copy">{item.email}</Text>
-                                  <Text size="sm" c="dimmed">
-                                    {t('hub.expires', {
-                                      date: new Date(item.expires_at).toLocaleDateString(
-                                        i18n.language,
-                                      ),
-                                    })}
-                                  </Text>
-                                  <Button
-                                    w="fit-content"
-                                    variant="subtle"
-                                    color="red"
-                                    disabled={action.isPending}
-                                    onClick={(event) =>
-                                      openConfirmation(
-                                        {
-                                          action: { kind: 'revoke', invitationId: item.id },
-                                          message: t('members.confirmRevoke', {
-                                            email: item.email,
-                                          }),
-                                        },
-                                        event.currentTarget,
-                                      )
-                                    }
-                                  >
-                                    {t('members.revoke')}
-                                  </Button>
-                                </Stack>
-                              </Paper>
-                            ))
+                                      <X size={20} aria-hidden="true" />
+                                    </ActionIcon>
+                                  </li>
+                                )
+                              })}
+                            </ul>
                           ) : (
                             <Text c="dimmed">{t('members.noneSent')}</Text>
                           ))}
@@ -387,21 +389,13 @@ export function CampaignMembers({
                 )}
 
                 {showModules && (
-                  <section aria-labelledby="modules-control-heading">
+                  <section aria-label={t('dm.panelModules')}>
                     <Stack>
-                      <Group justify="space-between" align="flex-start">
-                        <div>
-                          <Group gap="xs">
-                            <Shield size={20} className="feature-icon" aria-hidden="true" />
-                            <Title order={2} id="modules-control-heading">
-                              {t('dm.modulesTitle')}
-                            </Title>
-                          </Group>
-                          <Text size="sm" c="dimmed" mt={4}>
-                            {t('dm.modulesHint')}
-                          </Text>
-                        </div>
-                        <Badge variant="light">
+                      <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
+                        <Text size="sm" c="dimmed">
+                          {t('dm.modulesHint')}
+                        </Text>
+                        <Badge variant="light" className="module-count">
                           {t('dm.activeCount', {
                             count: [...enabledModules].filter((key) =>
                               implementedModuleKeys.has(key),
@@ -410,11 +404,8 @@ export function CampaignMembers({
                         </Badge>
                       </Group>
                       <ul className="module-switch-list">
-                        {campaignModules.map(({ key, label, icon: Icon, implemented: ready }) => {
+                        {campaignModules.map(({ key, label, icon: Icon }) => {
                           const active = enabledModules.has(key)
-                          // Planned modules cannot be shown to Players; an old row can still
-                          // be switched off.
-                          const locked = !ready && !active
                           return (
                             <li
                               key={key}
@@ -424,32 +415,16 @@ export function CampaignMembers({
                               <Icon size={20} className="feature-icon" aria-hidden="true" />
                               <div className="module-switch-name">
                                 <Text fw={600}>{t(label)}</Text>
-                                {!ready && (
-                                  <Badge
-                                    variant="outline"
-                                    className="visibility-badge"
-                                    size="sm"
-                                    id={`module-${key}-planned`}
-                                  >
-                                    {t('common.comingSoonTag')}
-                                    <span className="visually-hidden">
-                                      {' · '}
-                                      {t('dm.modulePlannedReason')}
-                                    </span>
-                                  </Badge>
-                                )}
                               </div>
                               <Switch
                                 size="lg"
                                 checked={active}
-                                disabled={locked}
-                                aria-describedby={!ready ? `module-${key}-planned` : undefined}
                                 aria-disabled={action.isPending || undefined}
                                 aria-label={t('dm.moduleSwitch', { module: t(label) })}
                                 onLabel={<Eye size={14} aria-hidden="true" />}
                                 offLabel={<Lock size={14} aria-hidden="true" />}
                                 onChange={() => {
-                                  if (action.isPending || locked) return
+                                  if (action.isPending) return
                                   const next = new Set(enabledModules)
                                   if (active) next.delete(key)
                                   else next.add(key)
@@ -470,21 +445,11 @@ export function CampaignMembers({
                 {showItems && itemsPanel}
                 {showBestiary && bestiaryPanel}
                 {showAudit && (
-                  <section aria-labelledby="audit-heading">
+                  <section aria-label={t('dm.panelAudit')}>
                     <Stack>
-                      <Group justify="space-between" align="flex-start">
-                        <div>
-                          <Group gap="xs">
-                            <History size={20} className="feature-icon" aria-hidden="true" />
-                            <Title order={2} id="audit-heading">
-                              {t('dm.auditTitle')}
-                            </Title>
-                          </Group>
-                          <Text size="sm" c="dimmed" mt={4}>
-                            {t('dm.auditHint')}
-                          </Text>
-                        </div>
-                      </Group>
+                      <Text size="sm" c="dimmed">
+                        {t('dm.auditHint')}
+                      </Text>
                       <SegmentedControl
                         value={auditFilter}
                         onChange={(value) => setAuditFilter(value as AuditFilter)}
@@ -499,6 +464,7 @@ export function CampaignMembers({
                       <QueryFeedback
                         pending={auditEvents.isPending}
                         error={auditEvents.isError}
+                        cause={auditEvents.error}
                         retry={() => void auditEvents.refetch()}
                       />
                       {!auditEvents.isError &&
@@ -571,8 +537,10 @@ export function CampaignMembers({
               {t('members.membershipInvite')}
             </Text>
             {action.isError && (
-              <Alert role="alert" color="red">
-                {t('characters.unavailable')}
+              <Alert role="alert" color="red" title={t('action.error')}>
+                {t(
+                  `action.${action.error instanceof MembershipError ? action.error.reason : 'unavailable'}`,
+                )}
               </Alert>
             )}
             <Group justify="flex-end">
@@ -612,5 +580,104 @@ export function CampaignMembers({
         </Stack>
       </Modal>
     </Stack>
+  )
+}
+
+/** One member on a compact row; the role actions live in its menu. */
+function MemberRow({
+  member,
+  you,
+  protectedDm,
+  busy,
+  campaignId,
+  onConfirm,
+}: {
+  member: Member
+  you: boolean
+  protectedDm: boolean
+  busy: boolean
+  campaignId: string
+  onConfirm: (next: Confirmation, target: HTMLElement) => void
+}) {
+  const { t } = useTranslation()
+  const trigger = useRef<HTMLButtonElement>(null)
+  const more = t('members.more', { name: member.display_name })
+  const nextRole = member.role === 'dm' ? 'player' : 'dm'
+  const confirm = (next: Confirmation) => trigger.current && onConfirm(next, trigger.current)
+  return (
+    <li className="member-row">
+      <div className="member-identity">
+        <Text fw={600} className="user-copy">
+          {member.display_name}
+          {you ? ` · ${t('members.you')}` : ''}
+        </Text>
+        <Text size="sm" c="dimmed" className="user-copy">
+          {member.email}
+        </Text>
+        {protectedDm && (
+          <Text size="sm" c="dimmed">
+            {t('members.onlyDm')}
+          </Text>
+        )}
+      </div>
+      <Badge variant="light" className="member-role">
+        {t(`campaign.role.${member.role}`)}
+      </Badge>
+      <Menu
+        position="bottom-end"
+        withinPortal
+        withInitialFocusPlaceholder={false}
+        returnFocus={false}
+      >
+        <Menu.Target>
+          <ActionIcon ref={trigger} variant="subtle" size={44} aria-label={more} title={more}>
+            <Ellipsis size={20} aria-hidden="true" />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item
+            disabled={busy || protectedDm}
+            leftSection={
+              member.role === 'dm' ? (
+                <ArrowDown size={18} aria-hidden="true" />
+              ) : (
+                <Shield size={18} aria-hidden="true" />
+              )
+            }
+            onClick={() =>
+              confirm({
+                action: {
+                  kind: 'member',
+                  campaignId,
+                  userId: member.user_id,
+                  role: nextRole,
+                },
+                message: t('members.confirmRole', {
+                  name: member.display_name,
+                  role: t(`campaign.role.${nextRole}`),
+                }),
+              })
+            }
+          >
+            {t(member.role === 'dm' ? 'members.demote' : 'members.promote')}
+          </Menu.Item>
+          {!you && (
+            <Menu.Item
+              color="red"
+              disabled={busy || protectedDm}
+              leftSection={<UserMinus size={18} aria-hidden="true" />}
+              onClick={() =>
+                confirm({
+                  action: { kind: 'member', campaignId, userId: member.user_id, role: null },
+                  message: t('members.confirmRemove', { name: member.display_name }),
+                })
+              }
+            >
+              {t('members.remove')}
+            </Menu.Item>
+          )}
+        </Menu.Dropdown>
+      </Menu>
+    </li>
   )
 }

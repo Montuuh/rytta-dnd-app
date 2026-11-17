@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
   Button,
   Checkbox,
-  Chip,
   Group,
   Select,
   Stack,
@@ -13,7 +12,27 @@ import {
   Textarea,
   UnstyledButton,
 } from '@mantine/core'
-import { BookOpen, Plus, Trash2 } from 'lucide-react'
+import {
+  ArrowDownToLine,
+  BookOpen,
+  Check,
+  CircleSlash,
+  Eclipse,
+  EarOff,
+  EyeOff,
+  FlaskConical,
+  Ghost,
+  Hand,
+  Heart,
+  Lock,
+  Moon,
+  Mountain,
+  Orbit,
+  Plus,
+  Trash2,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   GlossaryNameLink,
@@ -25,7 +44,14 @@ import {
 import { removeFeature } from '../../domain/progression'
 import { isClassKey, signed, skillBonus, spellcasting } from '../../domain/rules'
 import { featureSources, type Feature, type Spell } from '../../domain/sheet'
-import { conditionKeys, skillAbilities, skillKeys, subclassOf, type Skill } from '../../domain/srd'
+import {
+  conditionKeys,
+  skillAbilities,
+  skillKeys,
+  subclassOf,
+  type Condition,
+  type Skill,
+} from '../../domain/srd'
 import { Pips } from './pips'
 import type { PanelProps } from './panel-types'
 
@@ -529,6 +555,66 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
   )
 }
 
+const conditionIcons: Record<Condition, LucideIcon> = {
+  blinded: EyeOff,
+  charmed: Heart,
+  deafened: EarOff,
+  frightened: Ghost,
+  grappled: Hand,
+  incapacitated: CircleSlash,
+  invisible: Eclipse,
+  paralyzed: Zap,
+  petrified: Mountain,
+  poisoned: FlaskConical,
+  prone: ArrowDownToLine,
+  restrained: Lock,
+  stunned: Orbit,
+  unconscious: Moon,
+}
+
+/** RYT-112: the 14 conditions as a grid of toggles (icon and name) in a fixed order. The check marks "on" besides the fill. */
+function ConditionToggles({
+  active,
+  onChange,
+}: {
+  active: readonly Condition[]
+  onChange: (next: Condition[]) => void
+}) {
+  const { t } = useTranslation()
+  // The order is fixed while the toggles are on screen, so a tap never lands on a moved control.
+  const toggle = (key: Condition) => {
+    onChange(active.includes(key) ? active.filter((item) => item !== key) : [...active, key])
+  }
+  return (
+    <>
+      <Text size="sm" c="dimmed" mb="xs">
+        {t('sheet.conditionsHint')}
+      </Text>
+      <div className="condition-grid" role="group" aria-labelledby="panel-conditions">
+        {conditionKeys.map((key) => {
+          const on = active.includes(key)
+          const Icon = conditionIcons[key]
+          return (
+            <button
+              key={key}
+              type="button"
+              className="condition-toggle"
+              data-condition={key}
+              data-on={on || undefined}
+              aria-pressed={on}
+              onClick={() => toggle(key)}
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span className="condition-toggle-name">{t(`srd.condition.${key}`)}</span>
+              {on && <Check size={16} strokeWidth={3} aria-hidden="true" />}
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
 /** Conditions and death saving throws (play state; never locked by RYT-070). */
 export function ConditionsBlock({
   vitals,
@@ -559,21 +645,12 @@ export function ConditionsBlock({
           </Text>
         )}
         {canEdit ? (
-          <Chip.Group
-            multiple
-            value={[...vitals.conditions]}
+          <ConditionToggles
+            active={vitals.conditions}
             onChange={(next) =>
               commit({ ...vitals, conditions: conditionKeys.filter((key) => next.includes(key)) })
             }
-          >
-            <div className="condition-chips" role="group" aria-labelledby="panel-conditions">
-              {conditionKeys.map((key) => (
-                <Chip key={key} value={key} className="condition-chip">
-                  {t(`srd.condition.${key}`)}
-                </Chip>
-              ))}
-            </div>
-          </Chip.Group>
+          />
         ) : (
           vitals.conditions.length === 0 && (
             <Text size="sm" c="dimmed">
@@ -625,22 +702,52 @@ const noteFields = [
   ['notes', 'sheet.notes', 4000],
 ] as const
 
-/** Alignment, languages and appearance left the wizard (RYT-072); they live here. */
-export function NotesBlock({ build, editing, change }: PanelProps) {
+type NoteField = (typeof noteFields)[number][0]
+const pickNotes = (build: PanelProps['build']): Record<NoteField, string> => ({
+  alignment: build.alignment,
+  languages: build.languages,
+  proficiencies: build.proficiencies,
+  appearance: build.appearance,
+  notes: build.notes,
+})
+
+/** Alignment, languages and appearance left the wizard (RYT-072); they live here.
+ * In play the notes are written in place and saved from the sheet itself (and when it closes),
+ * without going through edit mode. */
+export function NotesBlock({ build, editing, canEdit, pending, change }: PanelProps) {
   const { t } = useTranslation()
+  const [local, setLocal] = useState(() => pickNotes(build))
+  const saved = pickNotes(build)
+  const inPlay = canEdit && !editing
+  const dirty = inPlay && noteFields.some(([field]) => local[field] !== saved[field])
+  const save = () =>
+    change((draft) => ({ ...draft, build: { ...draft.build, ...local } }), 'sheet.saved')
+  // Closing the sheet keeps what was written: the latest values are read at unmount.
+  const latest = useRef({ dirty, save })
+  useEffect(() => {
+    latest.current = { dirty, save }
+  })
+  useEffect(
+    () => () => {
+      if (latest.current.dirty) latest.current.save()
+    },
+    [],
+  )
   return (
     <Stack gap="md">
       {noteFields.map(([field, label, max]) =>
-        editing ? (
+        editing || inPlay ? (
           field === 'alignment' ? (
             <TextInput
               key={field}
               label={t(label)}
               maxLength={max}
-              value={build[field]}
+              value={editing ? build[field] : local[field]}
               onChange={(event) => {
                 const value = event.currentTarget.value
-                change((draft) => ({ ...draft, build: { ...draft.build, [field]: value } }))
+                if (editing)
+                  change((draft) => ({ ...draft, build: { ...draft.build, [field]: value } }))
+                else setLocal((current) => ({ ...current, [field]: value }))
               }}
             />
           ) : (
@@ -650,10 +757,12 @@ export function NotesBlock({ build, editing, change }: PanelProps) {
               maxLength={max}
               autosize
               minRows={2}
-              value={build[field]}
+              value={editing ? build[field] : local[field]}
               onChange={(event) => {
                 const value = event.currentTarget.value
-                change((draft) => ({ ...draft, build: { ...draft.build, [field]: value } }))
+                if (editing)
+                  change((draft) => ({ ...draft, build: { ...draft.build, [field]: value } }))
+                else setLocal((current) => ({ ...current, [field]: value }))
               }}
             />
           )
@@ -669,6 +778,20 @@ export function NotesBlock({ build, editing, change }: PanelProps) {
             </Text>
           </section>
         ),
+      )}
+      {inPlay && (
+        <div className="notes-save">
+          <Button
+            leftSection={<Check size={16} aria-hidden="true" />}
+            aria-disabled={!dirty || pending || undefined}
+            onClick={() => dirty && !pending && save()}
+          >
+            {t('panel.saveNotes')}
+          </Button>
+          <Text size="sm" c="dimmed" aria-live="polite">
+            {dirty ? t('panel.notesUnsaved') : t('panel.notesSaved')}
+          </Text>
+        </div>
       )}
     </Stack>
   )

@@ -47,10 +47,13 @@ export const tabletopEs = {
     'El mapa es una sola parada de Tab. Las flechas mueven el cursor de casilla (Mayús: cinco) y dicen qué hay en ella; Intro usa la herramienta en esa casilla. Con Seleccionar, Intro elige lo que hay bajo el cursor y abre su ficha (Escape vuelve al mapa); en la ficha, "Mover a una casilla" espera la casilla que elijas con el cursor. Supr quita y H oculta lo que hay bajo el cursor o lo seleccionado. Cada herramienta tiene su letra. Más y menos acercan; 0 encaja el mapa.',
   'tabletop.strip': 'Opciones de {{tool}}',
   'tabletop.empty.title': 'Aún no hay escenas',
-  'tabletop.empty.body': 'Genera un mapa, sube uno o empieza con una cuadrícula en blanco.',
+  'tabletop.empty.body':
+    'Una escena es el mapa que tus jugadores ven en la pantalla de la mesa, una tele o una tablet tumbada. Crea la primera: genera un mapa, sube uno o empieza con una cuadrícula en blanco.',
   'tabletop.error.load': 'La mesa no se cargó. Revisa la conexión y vuelve a intentarlo.',
   'tabletop.error.save': 'Ese cambio no se guardó. Vuelve a intentarlo.',
   'tabletop.error.sceneGone': 'Esta escena ya no existe.',
+  'tabletop.error.sceneLimit':
+    'Esta campaña ya tiene todas las escenas que admite. Borra antes una escena que ya no uses.',
   'tabletop.error.full':
     'Esta escena ya tiene todos los elementos que admite (1500). Quita alguno antes.',
   'tabletop.error.fogFull':
@@ -677,7 +680,6 @@ export const tabletopEs = {
   'tabletop.table.round': 'Ronda {{round}}',
   'tabletop.table.turn': 'Turno de {{name}}',
   'tabletop.table.live': 'En directo',
-  'tabletop.table.polling': 'Actualizando cada pocos segundos',
   'tabletop.table.offline': 'Sin conexión',
   'tabletop.table.uncalibrated': 'Sin configurar: el mapa llena la pantalla',
   'tabletop.table.ruler': 'Regla',
@@ -749,4 +751,11 @@ export const tabletopEs = {
   'tabletop.area.placing': 'Colocar {{shape}}',
   'tabletop.selectedAnnounce': 'Seleccionado: {{name}}. Escape vuelve al mapa.',
   'tabletop.door.title': 'Puerta {{state}}',
+  // RYT-126: table screen liveness and the Player's map.
+  'tabletop.table.offlineSince': 'Sin conexión · hace {{seconds}} s',
+  'tabletop.table.after': 'Después: {{name}}',
+  'tabletop.table.hiddenTurn': 'Turno oculto',
+  'tabletop.table.retry': 'Reintentar',
+  'tabletop.table.retrying': 'Reintentando…',
+  'tabletop.zoom.mine': 'Centrar en mi ficha',
 } satisfies Record<keyof typeof tabletopEn, string>

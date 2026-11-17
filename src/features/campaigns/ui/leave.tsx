@@ -3,6 +3,8 @@ import { Alert, Button, Loader, Menu, Modal, Stack, Text } from '@mantine/core'
 import { LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
+import { flushSync } from 'react-dom'
+import { afterOverlayEntriesSettle, useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useAuth } from '@/features/auth'
 import { useCampaignAction } from '../api'
 import { MembershipError, type LeaveBlock } from '../domain/campaign'
@@ -80,6 +82,7 @@ export function LeaveCampaignDialog({
   useEffect(() => {
     if (action.isError) errorRef.current?.focus()
   }, [action.isError])
+  useBackToClose(true, () => !action.isPending && onClose())
   const lastDm = action.error instanceof MembershipError && action.error.reason === 'last-dm'
   const leave = () =>
     // mutateAsync, not mutate callbacks: the page that opened the dialog can unmount once the
@@ -87,8 +90,11 @@ export function LeaveCampaignDialog({
     action
       .mutateAsync({ kind: 'member', campaignId: campaign.id, userId: state.user!.id, role: null })
       .then(
-        () => {
-          onLeft()
+        async () => {
+          // The dialog gives up its history entry first, so replacing the page below it does not
+          // leave the campaign just left one Back press away.
+          flushSync(onLeft)
+          await afterOverlayEntriesSettle()
           void navigate('/', { replace: true, state: { leftCampaign: campaign.name } })
         },
         // The failure is shown from the mutation state and the dialog stays open to retry.

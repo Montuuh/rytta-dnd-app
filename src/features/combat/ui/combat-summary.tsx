@@ -3,7 +3,7 @@ import { Text, Title } from '@mantine/core'
 import { HeartCrack, ShieldCheck, Skull, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { Combatant, Encounter, SummaryRow } from '../domain/combat'
-import { Token } from './token'
+import { CombatantToken, Token } from './token'
 
 const sides = ['party', 'ally', 'enemy'] as const
 const stats = ['dealt', 'taken', 'healed'] as const
@@ -98,14 +98,18 @@ export function CombatSummary({
                 return (
                   <li key={row.combatant_id} className={`combat-recap-row is-${fate}`}>
                     <div className="combat-recap-who">
-                      <Token
-                        name={row.name}
-                        side={side}
-                        imageKind={row.kind === 'character' ? 'character' : 'creature'}
-                        path={combatant?.image_path}
-                        defeated={fate === 'dead' || fate === 'defeated'}
-                        viewable
-                      />
+                      {/* RYT-126 J4-28: the same token as the order (image, emblem, shape). */}
+                      {combatant ? (
+                        <CombatantToken combatant={combatant} showActive={false} viewable />
+                      ) : (
+                        <Token
+                          name={row.name}
+                          side={side}
+                          imageKind={row.kind === 'character' ? 'character' : 'creature'}
+                          path={undefined}
+                          defeated={fate === 'dead' || fate === 'defeated'}
+                        />
+                      )}
                       <div className="combat-recap-id">
                         <Text component="span" className="combat-recap-name">
                           {row.name}

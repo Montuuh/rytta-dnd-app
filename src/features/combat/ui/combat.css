@@ -2104,3 +2104,326 @@ button.combat-image-picker:focus-visible {
   width: 11px;
   height: 11px;
 }
+
+/* RYT-126 player journey fixes ------------------------------------------------------------- */
+
+/* Long names and aliases: two lines at most, broken at word edges, never mid-word (J4-12). */
+.combat-table-active,
+.combat-table-next {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.combat-table-active[data-long] {
+  font-size: calc(var(--fs-display) * 0.72);
+  line-height: 1.12;
+}
+.combat-table-next[data-long] {
+  font-size: calc(var(--fs-h2) * 0.85);
+}
+.combat-rail.is-large .combat-row-name {
+  white-space: normal;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* A hidden creature's turn: a deliberate state, not an empty "now" (J4-06). */
+.combat-table-now.is-hidden-turn {
+  grid-template-columns: minmax(0, 1fr);
+  border-style: dashed;
+}
+.combat-table-actor-grid.is-text {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'label'
+    'name';
+}
+.combat-table-actor-grid.is-text > .combat-table-active {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--app-text);
+}
+.combat-hidden-icon {
+  flex: none;
+  color: var(--app-muted);
+}
+.combat-table-help {
+  margin: 0;
+  color: var(--app-muted);
+}
+/* After a wake-up the banner says it is refreshing rather than showing a stale turn (J4-27). */
+.combat-table-now.is-updating {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  border-style: dashed;
+  color: var(--app-muted);
+}
+.combat-table-now.is-updating .combat-table-active {
+  color: var(--app-muted);
+}
+
+/* The own character, pinned in the banner (J4-08, J4-09). */
+.combat-own-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+.combat-own-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.combat-own-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-size: var(--fs-h3);
+}
+.combat-own-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--app-muted);
+}
+.combat-own-effects li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Conditions on the table: 14px and up; the glossary term carries the 44px touch area (J4-08). */
+.combat-table-view .combat-badges {
+  row-gap: 14px;
+}
+.combat-table-view .combat-badges .combat-badge {
+  height: auto;
+  min-height: 28px;
+  padding: 3px 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.combat-table-view .combat-badges .glossary-term {
+  min-width: 24px;
+}
+.combat-tie {
+  border: 1px dashed var(--app-muted);
+  border-radius: 999px;
+  padding: 0 8px;
+  color: var(--app-muted);
+  font-weight: 700;
+  font-size: var(--fs-tag);
+}
+
+/* The change the DM just made to the own character: a notice and a row flash (J4-04). */
+.combat-news {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(480px, calc(100vw - 24px));
+  padding: 8px 4px 8px 14px;
+  border: 2px solid var(--app-accent);
+  border-radius: 14px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+.combat-news svg {
+  flex: none;
+  color: var(--app-accent);
+}
+.combat-news ul {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 48em) {
+  .combat-news {
+    top: auto;
+    bottom: calc(var(--bottom-nav-h) + 12px + env(safe-area-inset-bottom));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .combat-news {
+    animation: combat-news-in 0.22s ease-out;
+  }
+  .combat-row.is-flash-a {
+    animation: combat-flash-a 1.6s ease-out;
+  }
+  .combat-row.is-flash-b {
+    animation: combat-flash-b 1.6s ease-out;
+  }
+}
+@keyframes combat-news-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+@keyframes combat-flash-a {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  15% {
+    background-color: color-mix(in srgb, var(--app-accent) 32%, transparent);
+  }
+}
+@keyframes combat-flash-b {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  15% {
+    background-color: color-mix(in srgb, var(--app-accent) 32%, transparent);
+  }
+}
+/* Reduced motion: no animation, a still highlight while the row carries the class. */
+@media (prefers-reduced-motion: reduce) {
+  .combat-row.is-flash-a,
+  .combat-row.is-flash-b {
+    outline: 3px solid var(--app-accent);
+    outline-offset: 1px;
+  }
+}
+
+/* "Recent events": closed by default, newest first (J4-07). */
+.combat-recent {
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface);
+}
+.combat-recent summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.combat-recent summary::-webkit-details-marker {
+  display: none;
+}
+.combat-recent summary:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+.combat-recent summary svg:last-child {
+  margin-left: auto;
+  transition: transform 0.15s;
+}
+.combat-recent[open] summary svg:last-child {
+  transform: rotate(180deg);
+}
+.combat-recent-count {
+  color: var(--app-muted);
+  font-weight: 400;
+  font-size: var(--fs-meta);
+}
+.combat-recent ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0 14px 12px;
+  list-style: none;
+  font-size: 0.9375rem;
+}
+.combat-recent-round {
+  display: inline-block;
+  min-width: 2.6em;
+  margin-right: 8px;
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .combat-recent summary svg:last-child {
+    transition: none;
+  }
+}
+
+/* Offline, the shell already shows its alert: one quiet line with its retry (J4-13). */
+.combat-stale.is-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--app-muted);
+}
+.combat-retry {
+  min-height: 44px;
+}
+.combat-stale-result {
+  flex-basis: 100%;
+  color: var(--warn);
+  font-weight: 600;
+}
+
+/* Death save: the undo window and the recorded line (J4-11). */
+.combat-saves-recorded {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.combat-saves-undo {
+  min-height: 44px;
+}
+
+/* Initiative entry: roll for me, unusual totals (J4-10). */
+.combat-entry-roll {
+  min-height: 48px;
+}
+.combat-entry-formula.is-unusual {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+/* Tokens: the class emblem is a badge on the initial, not the whole face (J4-22). */
+.combat-token-emblem {
+  position: absolute;
+  right: -8%;
+  bottom: -8%;
+  width: 44%;
+  height: 44%;
+  overflow: hidden;
+  border: 2px solid var(--ring);
+  border-radius: 50%;
+  background: var(--app-raised);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.combat-token-emblem img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.combat-token.is-defeated .combat-token-emblem {
+  filter: grayscale(1);
+}

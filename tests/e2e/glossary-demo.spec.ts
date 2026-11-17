@@ -14,7 +14,8 @@ test('the SRD glossary works without a backend, in English, with deep links', as
   })
   await page.goto('./#/glossary')
   await expect(page.getByRole('heading', { level: 1, name: 'Glossary' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Glossary' }).first()).toBeVisible()
+  // One destination only: the layout shows no navigation bar for it.
+  await expect(page.getByRole('navigation', { name: 'Main navigation' })).toHaveCount(0)
   await page.getByRole('searchbox', { name: 'Search the glossary' }).fill('agarrado')
   await page.getByRole('searchbox').press('Enter')
   await expect(page.getByRole('heading', { name: 'Grappled', exact: true })).toBeVisible()

@@ -20,7 +20,6 @@ export const charactersEs = {
   'characters.rules': 'Homebrew · Oro entero, raciones de comida y agua · Agotamiento manual',
   'characters.create': 'Crear personaje',
   'characters.name': 'Nombre del personaje',
-  'characters.empty': 'Todavía no hay personajes.',
   'characters.emptyPlayer': 'Este jugador todavía no tiene personaje.',
   'characters.unassigned': 'Sin jugador',
   'characters.assigned': 'Asignado a un jugador',

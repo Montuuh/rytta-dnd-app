@@ -264,3 +264,48 @@
     transition: none;
   }
 }
+
+/* RYT-117: a language that is still loading or could not be loaded is said next to the choice. */
+.language-status {
+  margin: 8px 0 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.language-status.is-error {
+  color: var(--danger);
+}
+.language-spin {
+  animation: language-spin 900ms linear infinite;
+}
+@keyframes language-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .language-spin {
+    animation: none;
+  }
+}
+
+.language-retry {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.language-retry:hover {
+  border-color: var(--app-accent);
+}
+.language-retry:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}

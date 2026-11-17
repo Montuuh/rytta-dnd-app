@@ -1,10 +1,12 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { Button, Loader, Modal, NumberInput, Switch, TextInput } from '@mantine/core'
+import { Button, Loader, NumberInput, Switch, TextInput } from '@mantine/core'
+import { Modal } from '@/shared/ui/overlays'
 import { useTranslation } from 'react-i18next'
 import { Beer, Castle, Dices, Mountain, Skull, Trees, Undo2 } from 'lucide-react'
 import { TileGroup } from '@/features/combat'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useMediaUpload, useTabletopAction } from '../api'
+import { limitKey } from './limits'
 import {
   densities,
   generateMap,
@@ -83,6 +85,7 @@ export function GeneratorDialog({
   }
   const [name, setName] = useState('')
   const [error, setError] = useState(false)
+  const [limit, setLimit] = useState<ReturnType<typeof limitKey>>(null)
   // A state ref: the Modal mounts its content after opening, so the paint waits for the canvas.
   const [preview, setPreview] = useState<HTMLCanvasElement | null>(null)
   const upload = useMediaUpload(campaignId)
@@ -193,6 +196,7 @@ export function GeneratorDialog({
   const create = async () => {
     if (busy) return
     setError(false)
+    setLimit(null)
     setPhase('paint')
     try {
       const tiles = map.options.look === 'painted' ? await loadMapArt(map) : null
@@ -231,7 +235,8 @@ export function GeneratorDialog({
         },
       })
       if (scene && typeof scene === 'object' && 'id' in scene) onCreated(scene.id as string)
-    } catch {
+    } catch (caught) {
+      setLimit(limitKey(caught))
       setError(true)
     } finally {
       setPhase(null)
@@ -737,7 +742,7 @@ export function GeneratorDialog({
           </p>
           {error && (
             <p className="tt-foot-status is-error" role="alert">
-              {t('tabletop.generator.failed')}
+              {t(limit ?? 'tabletop.generator.failed')}
             </p>
           )}
           <Button

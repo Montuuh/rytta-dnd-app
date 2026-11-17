@@ -2,6 +2,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { readFileSync, readdirSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { randomUUID } from 'node:crypto'
+import { relaxQuotasSql } from './quota-fixture.ts'
 const db = new PGlite()
 const dm = randomUUID(),
   player = randomUUID(),
@@ -41,6 +42,7 @@ beforeAll(async () => {
     .filter((f) => f.endsWith('.sql'))
     .sort())
     await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
+  await db.exec(relaxQuotasSql)
 }, 30000)
 afterAll(() => db.close())
 describe('RYT-003 complete migration chain', () => {

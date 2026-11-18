@@ -41,8 +41,23 @@ async function openLevelUp(page: Page, level: number) {
 }
 
 /** The glossary index loads in the background; the spell list fills once it is there. */
-async function pickSpells(dialog: Locator, count: number, language: 'es' | 'en' = 'es') {
-  const adds = dialog.getByRole('button', { name: language === 'es' ? /^Añadir / : /^Add / })
+async function pickSpells(
+  dialog: Locator,
+  count: number,
+  language: 'es' | 'en' = 'es',
+  group: 'spells' | 'cantrips' = 'spells',
+) {
+  const title =
+    language === 'es'
+      ? group === 'spells'
+        ? /^Conjuros nuevos/
+        : /^Truco nuevo/
+      : group === 'spells'
+        ? /^New spells/
+        : /^New cantrip/
+  const adds = dialog
+    .getByRole('group', { name: title })
+    .getByRole('button', { name: language === 'es' ? /^Añadir / : /^Add / })
   await expect(adds.first()).toBeVisible()
   for (let n = 0; n < count; n += 1) await adds.first().click()
 }
@@ -204,6 +219,13 @@ test('RYT-130 the Player below the party level levels up through the guided shee
   await expect(prompt).toHaveCount(0)
   await expect(page.getByText('Bardo de nivel 5', { exact: false })).toBeVisible()
   await expect(page.locator('.hp-current')).toHaveText('37')
+  // The history tells a level-up from a manual edit.
+  await page.getByRole('button', { name: /^Historial/ }).click()
+  const history = page.getByRole('dialog', { name: 'Historial' })
+  await expect(history.getByText('Subida de nivel', { exact: true })).toBeVisible()
+  await expect(history).toContainText('4 → 5')
+  await expect(history).toContainText('38 → 45')
+  await evidence(page, 'player-history')
 })
 
 test('RYT-130 a failed level-up leaves the character as it was and the retry repeats the request', async ({
@@ -308,6 +330,9 @@ test('RYT-130 subclass at level 3 and the ability increase at level 4 block the 
   await expect(dialog.getByText('2 de 2 elegidas')).toBeVisible()
   await expect(dialog.getByRole('button', { name: /^Carisma/ })).toContainText('15 → 16')
   await pickSpells(dialog, 1)
+  // Levels 4 and 10 also teach one more cantrip.
+  await expect(dialog.getByRole('group', { name: /^Truco nuevo/ })).toBeVisible()
+  await pickSpells(dialog, 1, 'es', 'cantrips')
   await dialog.getByRole('button', { name: 'Siguiente' }).click()
   await dialog.getByRole('button', { name: 'Confirmar nivel 4' }).click()
   await expect(dialog.getByRole('heading', { name: 'Ahora eres de nivel 4' })).toBeVisible()
@@ -456,6 +481,7 @@ for (const language of ['es', 'en'] as const)
         .first()
         .check({ force: true })
       await pickSpells(dialog, 1, language)
+      await pickSpells(dialog, 1, language, 'cantrips')
       await evidence(page, `matrix-${tag}-3-choices-complete`)
       await next.click()
       await evidence(page, `matrix-${tag}-4-review`)
@@ -527,4 +553,47 @@ test('RYT-130 the full editor shows the finished sheet level as locked for the P
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase y nivel')
   await expect(page.getByText('El nivel sube con la subida de nivel, no a mano.')).toBeVisible()
   await expect(page.getByRole('button', { name: /^Subir nivel/ })).toHaveCount(0)
+})
+
+test('RYT-130 the DM lowers the party level while the sheet is open: the refusal offers only a way out', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    sheetLevel: 4,
+    partyLevel: 5,
+  })
+  await page.goto(sheetUrl)
+  const dialog = await openLevelUp(page, 5)
+  const next = dialog.getByRole('button', { name: 'Siguiente' })
+  await next.click()
+  await next.click()
+  await pickSpells(dialog, 2)
+  await next.click()
+  fixture.setPartyLevel(4)
+  await dialog.getByRole('button', { name: 'Confirmar nivel 5' }).click()
+  await expect(dialog.getByRole('alert')).toContainText('El nivel del grupo es ahora menor')
+  await expect(dialog.getByRole('alert')).toContainText('Tu personaje no ha cambiado.')
+  await expect(dialog.getByRole('button', { name: 'Reintentar' })).toHaveCount(0)
+  await evidence(page, 'level-up-above-party')
+  await dialog.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
+  await expect(dialog).toHaveCount(0)
+  // The sheet and the campaign reloaded: nothing changed and no prompt is left.
+  await expect(page.getByText('Bardo de nivel 4', { exact: false })).toBeVisible()
+  await expect(page.getByRole('region', { name: /El grupo es de nivel/ })).toHaveCount(0)
+})
+
+test('RYT-130 an absent character shows no prompt', async ({ page }) => {
+  await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    sheetLevel: 4,
+    partyLevel: 5,
+    absent: true,
+  })
+  await page.goto(sheetUrl)
+  await expect(page.getByRole('heading', { level: 1, name: 'Arin' })).toBeVisible()
+  await expect(page.getByRole('region', { name: /El grupo es de nivel/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Subir a nivel/ })).toHaveCount(0)
 })

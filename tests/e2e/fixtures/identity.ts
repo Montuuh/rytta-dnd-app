@@ -628,8 +628,8 @@ export async function identityFixture(
   let portraitPath: string | null = null
   let nextVitalsStale = false
   // RYT-130: idempotency of the party level and level-up RPCs, and one-shot failures.
-  const partyRequests = new Map<string, { payload: string; result: number | null }>()
-  const levelUpRequests = new Map<string, { payload: string; revision: number }>()
+  const partyRequests = new Map<string, { actor: string; payload: string; result: number | null }>()
+  const levelUpRequests = new Map<string, { actor: string; payload: string; revision: number }>()
   let nextPartyLevelError: string | null = null
   let nextLevelUpError: string | null = null
   let sent: { id: string; email: string; expires_at: string }[] = []
@@ -897,9 +897,21 @@ export async function identityFixture(
     }
     if (method === 'get_character_history') {
       // The audit rows of the party fixture, turned into field changes like the RPC does.
-      const quiet = ['id', 'campaign_id', 'character_id', 'revision', 'user_id', 'created_at']
+      const quiet = [
+        'id',
+        'campaign_id',
+        'character_id',
+        'revision',
+        'user_id',
+        'created_at',
+        'party_level',
+      ]
       const audited = characterEvents
-        .filter((e) => e.character_id === body.target_character && e.kind.endsWith(':UPDATE'))
+        .filter(
+          (e) =>
+            e.character_id === body.target_character &&
+            (e.kind.endsWith(':UPDATE') || e.kind === 'level_up'),
+        )
         .map((e) => ({
           id: e.id,
           at: e.created_at,
@@ -989,24 +1001,26 @@ export async function identityFixture(
     if (method === 'set_party_level') {
       const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
       if (!dm) return respond({ code: '42501', message: 'Forbidden' }, 403)
+      if (!body.request_id) return respond({ code: '22023', message: 'Invalid request' }, 400)
+      const level = body.new_level === null ? null : Number(body.new_level)
+      const payload = JSON.stringify([body.target_campaign, level])
+      const prior = partyRequests.get(String(body.request_id))
+      // The replay comes first, as in the SQL: the same request returns what it returned.
+      if (prior)
+        return prior.actor === actor && prior.payload === payload
+          ? respond(prior.result)
+          : respond({ code: '22023', message: 'Request mismatch' }, 400)
       if (nextPartyLevelError) {
         const message = nextPartyLevelError
         nextPartyLevelError = null
         return respond({ message }, message === 'Unavailable' ? 503 : 400)
       }
-      const level = body.new_level === null ? null : Number(body.new_level)
-      const payload = JSON.stringify([body.target_campaign, level])
-      const prior = partyRequests.get(String(body.request_id))
-      if (prior)
-        return prior.payload === payload
-          ? respond(prior.result)
-          : respond({ code: '22023', message: 'Request mismatch' }, 400)
       if (level !== null && !(Number.isInteger(level) && level >= 1 && level <= 20))
         return respond({ code: '22023', message: 'Invalid level' }, 400)
       campaigns = campaigns.map((c) =>
         c.id === body.target_campaign ? { ...c, party_level: level } : c,
       )
-      partyRequests.set(String(body.request_id), { payload, result: level })
+      partyRequests.set(String(body.request_id), { actor, payload, result: level })
       return respond(level)
     }
     if (method === 'apply_level_up') {
@@ -1016,6 +1030,7 @@ export async function identityFixture(
       const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
       if (!character || !row || (!dm && character.user_id !== actor))
         return respond({ code: '42501', message: 'Forbidden' }, 403)
+      if (!body.request_id) return respond({ code: '22023', message: 'Invalid request' }, 400)
       const payload = JSON.stringify([
         targetId,
         body.expected_revision,
@@ -1025,7 +1040,7 @@ export async function identityFixture(
       ])
       const prior = levelUpRequests.get(String(body.request_id))
       if (prior)
-        return prior.payload === payload
+        return prior.actor === actor && prior.payload === payload
           ? respond(prior.revision)
           : respond({ code: '22023', message: 'Request mismatch' }, 400)
       if (nextLevelUpError) {
@@ -1033,6 +1048,9 @@ export async function identityFixture(
         nextLevelUpError = null
         return respond({ message }, message === 'Unavailable' ? 503 : 400)
       }
+      // A Player cannot level an archived or an absent character; the DM can.
+      if (!dm && (character.archived_at || character.absent))
+        return respond({ code: '42501', message: 'Character unavailable' }, 403)
       if (!dm && options.inEncounter) return respond({ message: 'Encounter locked' }, 400)
       if (row.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
@@ -1067,9 +1085,13 @@ export async function identityFixture(
       ]
       Object.assign(row, { level, max_hp: maxHp, build: nextBuild, revision: row.revision + 1 })
       const state = vitals.get(targetId)! as VitalsRow & { current_hp: number }
-      state.current_hp = Math.min(state.current_hp + (maxHp - before.max_hp), maxHp)
-      state.revision += 1
+      // Play state moves only when the maximum rose, as in the SQL.
+      if (maxHp > before.max_hp) {
+        state.current_hp = Math.min(state.current_hp + (maxHp - before.max_hp), maxHp)
+        state.revision += 1
+      }
       record(targetId, 'character_sheets:UPDATE', changes)
+
       characterEvents.unshift({
         id: crypto.randomUUID(),
         campaign_id: campaignId,
@@ -1080,7 +1102,7 @@ export async function identityFixture(
         after_value: { level, max_hp: maxHp, party_level: party },
         created_at: new Date().toISOString(),
       })
-      levelUpRequests.set(String(body.request_id), { payload, revision: row.revision })
+      levelUpRequests.set(String(body.request_id), { actor, payload, revision: row.revision })
       return respond(row.revision)
     }
     if (method === 'set_character_vitals') {

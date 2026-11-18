@@ -31,6 +31,7 @@ export const levelupEn = {
   'partyLevel.demo': 'The demo is read-only. Set the party level in a live campaign.',
 
   'dm.auditEvent.level_up': 'Level up',
+  'panel.history.levelUp': 'Level up',
   'levelUp.promptTitle': 'The party is level {{party}}',
   'levelUp.promptBody': '{{name}} is still level {{level}}.',
   'levelUp.stepsLeft_one': '{{count}} level to go.',
@@ -108,6 +109,12 @@ export const levelupEn = {
 
   'levelUp.kind.subclass': 'subclass',
   'levelUp.kind.improvement': 'ability increase or feat',
+  'levelUp.kind.cantrips': 'cantrips',
+  'levelUp.kind.spellbook': 'spellbook',
+  'levelUp.cantrips.title': 'New cantrip',
+  'levelUp.cantrips.hint': 'Cantrips: pick the new one.',
+  'levelUp.spellbook.title': 'Spellbook',
+  'levelUp.spellbook.hint': 'Spells to copy into your spellbook; they stay unprepared.',
   'levelUp.kind.spells': 'spells',
   'levelUp.review.heading': 'Check and confirm',
   'levelUp.review.level': 'Level {{from}} → {{to}}',

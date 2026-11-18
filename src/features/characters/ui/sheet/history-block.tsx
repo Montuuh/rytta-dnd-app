@@ -1,6 +1,6 @@
 import { Button, Stack, Text } from '@mantine/core'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { Coins, HeartPulse, ScrollText, Sparkles, UserRound } from 'lucide-react'
+import { ArrowUp, Coins, HeartPulse, ScrollText, Sparkles, UserRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useTrackerLabel } from '../resource-names'
 import { useAuth } from '@/features/auth'
@@ -23,6 +23,7 @@ const icons: Record<HistoryFamily, typeof HeartPulse> = {
   sheet: ScrollText,
   identity: UserRound,
   resources: Coins,
+  levelUp: ArrowUp,
 }
 
 /** RYT-070: read-only change history for the DM and the assigned Player. */
@@ -82,6 +83,11 @@ export function HistoryBlock({
                       t('common.justNow')}
                   </Text>
                 </div>
+                {familyOf(item) === 'levelUp' && (
+                  <Text size="sm" fw={600}>
+                    {t('panel.history.levelUp')}
+                  </Text>
+                )}
                 <ul className="history-lines">
                   {lines.map((line, index) => (
                     <li key={index} className="user-copy">

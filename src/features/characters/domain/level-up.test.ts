@@ -143,8 +143,8 @@ describe('RYT-130 choices by class and level', () => {
   it('keeps the confirm blocked while a required choice is missing', () => {
     const build = character('bard', 3, { subclass: 'Lore', subclassKey: 'lore' })
     const need = levelUpRequirements(build, 4)
-    expect(need).toMatchObject({ subclass: false, improvement: true, spells: 1 })
-    expect(missingChoices(build, need, noChoices)).toEqual(['improvement', 'spells'])
+    expect(need).toMatchObject({ subclass: false, improvement: true, spells: 1, cantrips: 1 })
+    expect(missingChoices(build, need, noChoices)).toEqual(['improvement', 'spells', 'cantrips'])
     const spell = {
       id: 'lib-sleep',
       ref: 'spell.sleep',
@@ -154,9 +154,11 @@ describe('RYT-130 choices by class and level', () => {
       ritual: false,
     }
     const done: LevelUpChoices = {
+      ...noChoices,
       subclass: null,
       improvement: { kind: 'abilities', split: false, picks: ['cha'] },
       spells: [spell],
+      cantrips: [{ ...spell, id: 'lib-light', ref: 'spell.light', name: 'Light', level: 0 }],
     }
     expect(missingChoices(build, need, done)).toEqual([])
     expect(missingChoices(build, need, { ...done, spells: [] })).toEqual(['spells'])
@@ -203,6 +205,7 @@ describe('RYT-130 the level-up written to the build', () => {
     const build = character('wizard', 3, { subclass: 'Evoker', subclassKey: 'evoker' })
     const need = levelUpRequirements(build, 4)
     const next = applyChoices(build, 4, need, {
+      ...noChoices,
       subclass: null,
       improvement: { kind: 'abilities', split: true, picks: ['int', 'con'] },
       spells: [
@@ -228,6 +231,7 @@ describe('RYT-130 the level-up written to the build', () => {
     const build = character('cleric', 3)
     const need = levelUpRequirements(build, 4)
     const next = applyChoices(build, 4, need, {
+      ...noChoices,
       subclass: { key: 'life', name: 'Life Domain' },
       improvement: { kind: 'feat', name: ' Tough ' },
       spells: [],
@@ -253,6 +257,7 @@ describe('RYT-130 the level-up written to the build', () => {
     const build = character('fighter', 4, { subclass: 'Champion' })
     const need = levelUpRequirements(build, 5)
     const next = applyChoices(build, 5, need, {
+      ...noChoices,
       subclass: { key: 'champion', name: 'Other' },
       improvement: { kind: 'abilities', split: false, picks: ['str'] },
       spells: [],
@@ -296,6 +301,7 @@ describe('RYT-130 what a level grants', () => {
 
 describe('RYT-130 the plan sent to the server', () => {
   const choices = (build: Build): LevelUpChoices => ({
+    ...noChoices,
     subclass: null,
     improvement: levelUpRequirements(build, 4).improvement
       ? { kind: 'abilities', split: false, picks: ['con'] }
@@ -358,6 +364,7 @@ describe('RYT-130 the plan sent to the server', () => {
         maxHp: 24,
         hitPoints: { kind: 'average' },
         choices: {
+          ...noChoices,
           subclass: null,
           improvement: null,
           spells: [
@@ -378,6 +385,24 @@ describe('RYT-130 the plan sent to the server', () => {
               ritual: false,
             },
           ],
+          spellbook: [
+            {
+              id: 'lib-web',
+              ref: 'spell.web',
+              name: 'Web',
+              level: 2,
+              concentration: true,
+              ritual: false,
+            },
+            {
+              id: 'lib-haste',
+              ref: 'spell.haste',
+              name: 'Haste',
+              level: 3,
+              concentration: true,
+              ritual: false,
+            },
+          ],
         },
       },
       library,
@@ -388,8 +413,86 @@ describe('RYT-130 the plan sent to the server', () => {
       { level: 4, maxHp: 24, build },
       { level: plan.level, maxHp: plan.maxHp, build: plan.build },
     )
-    expect(summary).toMatchObject({ fromLevel: 4, toLevel: 5, spells: ['Fireball', 'Fly'] })
+    expect(summary).toMatchObject({ fromLevel: 4, toLevel: 5, spells: ['Fireball', 'Fly', 'Web', 'Haste'] })
     expect(summary.hp.to).toBeGreaterThan(24)
     expect(summary.grants.slots).toEqual([{ level: 3, from: 0, to: 2 }])
+  })
+})
+
+describe('RYT-130 cantrips and the wizard spellbook', () => {
+  const cantripsAt = (key: ClassKey) =>
+    Array.from({ length: 19 }, (_, i) => i + 2).filter(
+      (level) => levelUpRequirements(character(key, level - 1), level).cantrips > 0,
+    )
+
+  it('asks for one more cantrip at levels 4 and 10 of the casting classes only', () => {
+    for (const key of ['bard', 'cleric', 'druid', 'sorcerer', 'warlock', 'wizard'] as const)
+      expect(cantripsAt(key), key).toEqual([4, 10])
+    for (const key of ['barbarian', 'fighter', 'monk', 'rogue', 'paladin', 'ranger'] as const)
+      expect(cantripsAt(key), key).toEqual([])
+  })
+
+  it('asks for two spellbook spells at every wizard level after the first, and for no one else', () => {
+    const wizard = (level: number) => levelUpRequirements(character('wizard', level - 1), level)
+    expect(wizard(2).spellbook).toBe(2)
+    expect(wizard(12).spellbook).toBe(2)
+    expect(wizard(12).spells).toBe(0)
+    expect(wizard(20).spellbook).toBe(2)
+    expect(levelUpRequirements(character('bard', 11), 12).spellbook).toBe(0)
+  })
+
+  it('blocks the confirm until the cantrip and the spellbook spells are chosen', () => {
+    const build = character('wizard', 3, { subclass: 'Evoker', subclassKey: 'evoker' })
+    const need = levelUpRequirements(build, 4)
+    expect(hasChoices(need)).toBe(true)
+    const pick = (id: string, level: number) => ({
+      id,
+      name: id,
+      level,
+      concentration: false,
+      ritual: false,
+    })
+    const improvement = { kind: 'feat' as const, name: 'Alert' }
+    const base = { ...noChoices, improvement, spells: [pick('a', 1)] }
+    expect(missingChoices(build, need, base)).toEqual(['cantrips', 'spellbook'])
+    const done = {
+      ...base,
+      cantrips: [pick('c', 0)],
+      spellbook: [pick('s1', 1), pick('s2', 2)],
+    }
+    expect(missingChoices(build, need, done)).toEqual([])
+    expect(missingChoices(build, need, { ...done, spellbook: [pick('s1', 1)] })).toEqual([
+      'spellbook',
+    ])
+  })
+
+  it('writes cantrips as prepared and spellbook spells as not prepared', () => {
+    const build = character('wizard', 3, { subclass: 'Evoker', subclassKey: 'evoker' })
+    const need = levelUpRequirements(build, 4)
+    const pick = (id: string, level: number) => ({
+      id,
+      name: id,
+      level,
+      concentration: false,
+      ritual: false,
+    })
+    const next = applyChoices(build, 4, need, {
+      ...noChoices,
+      improvement: { kind: 'feat', name: 'Alert' },
+      spells: [pick('prep', 1)],
+      cantrips: [pick('can', 0)],
+      spellbook: [pick('book1', 1), pick('book2', 2)],
+    })
+    const by = (id: string) => next.spells.find((spell) => spell.id === id)
+    expect(by('prep')).toMatchObject({ prepared: true, level: 1 })
+    expect(by('can')).toMatchObject({ prepared: true, level: 0 })
+    expect(by('book1')).toMatchObject({ prepared: false })
+    expect(by('book2')).toMatchObject({ prepared: false })
+    expect(() => buildSchema.parse(next)).not.toThrow()
+    const summary = summarizeLevelUp(
+      { level: 3, maxHp: 20, build },
+      { level: 4, maxHp: 26, build: next },
+    )
+    expect(summary.spells).toEqual(['prep', 'can', 'book1', 'book2'])
   })
 })

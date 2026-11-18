@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { CampaignMembers } from '@/features/campaigns'
+import { CampaignMembers, partyBelow, partySuggested } from '@/features/campaigns'
 import { BestiaryPanel } from '@/features/combat'
 import { charactersQuery, partyOverviewQuery } from '@/features/characters'
 import { useAuth } from '@/features/auth'
@@ -21,17 +21,8 @@ export function DmCenterPage() {
       itemsPanel={dm ? <ItemStore campaignId={campaign.id} /> : undefined}
       bestiaryPanel={dm ? <BestiaryPanel campaignId={campaign.id} /> : undefined}
       characterCount={characters.isError ? undefined : characters.data?.length}
-      partySuggested={
-        party.data
-          ? Math.max(
-              0,
-              ...party.data.flatMap((row) =>
-                row.sheet_status === 'complete' && row.level ? [row.level] : [],
-              ),
-            ) || undefined
-          : undefined
-      }
-      partyBelow={party.data ? party.data.filter((row) => row.below_party_level).length : undefined}
+      partySuggested={partySuggested(party.data)}
+      partyBelow={partyBelow(party.data)}
     />
   )
 }

@@ -34,6 +34,7 @@ export const levelupEs = {
   'partyLevel.demo': 'La demo es de solo lectura. Fija el nivel del grupo en una campaña real.',
 
   'dm.auditEvent.level_up': 'Subida de nivel',
+  'panel.history.levelUp': 'Subida de nivel',
   'levelUp.promptTitle': 'El grupo es de nivel {{party}}',
   'levelUp.promptBody': '{{name}} sigue en el nivel {{level}}.',
   'levelUp.stepsLeft_one': 'Falta {{count}} nivel.',
@@ -111,6 +112,12 @@ export const levelupEs = {
 
   'levelUp.kind.subclass': 'subclase',
   'levelUp.kind.improvement': 'aumento de característica o dote',
+  'levelUp.kind.cantrips': 'trucos',
+  'levelUp.kind.spellbook': 'libro de conjuros',
+  'levelUp.cantrips.title': 'Truco nuevo',
+  'levelUp.cantrips.hint': 'Trucos: elige el nuevo.',
+  'levelUp.spellbook.title': 'Libro de conjuros',
+  'levelUp.spellbook.hint': 'Conjuros para copiar en tu libro de conjuros; quedan sin preparar.',
   'levelUp.kind.spells': 'conjuros',
   'levelUp.review.heading': 'Revisa y confirma',
   'levelUp.review.level': 'Nivel {{from}} → {{to}}',

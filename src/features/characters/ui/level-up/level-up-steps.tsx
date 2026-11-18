@@ -314,6 +314,7 @@ export function ChoicesStep({
   choices: LevelUpChoices
   onChange: (next: LevelUpChoices) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="levelup-step">
       {requirements.subclass && (
@@ -336,10 +337,45 @@ export function ChoicesStep({
         <SpellChoice
           build={build}
           toLevel={toLevel}
-          requirements={requirements}
+          group="spells"
+          total={requirements.spells}
+          levels={[1, requirements.maxSpellLevel]}
+          title={t('levelUp.spells.title')}
+          hint={t('levelUp.spells.hint', { level: requirements.maxSpellLevel })}
           missing={missing.includes('spells')}
           picks={choices.spells}
+          others={[...choices.cantrips, ...choices.spellbook]}
           onChange={(spells) => onChange({ ...choices, spells })}
+        />
+      )}
+      {requirements.cantrips > 0 && (
+        <SpellChoice
+          build={build}
+          toLevel={toLevel}
+          group="cantrips"
+          total={requirements.cantrips}
+          levels={[0, 0]}
+          title={t('levelUp.cantrips.title')}
+          hint={t('levelUp.cantrips.hint')}
+          missing={missing.includes('cantrips')}
+          picks={choices.cantrips}
+          others={[...choices.spells, ...choices.spellbook]}
+          onChange={(cantrips) => onChange({ ...choices, cantrips })}
+        />
+      )}
+      {requirements.spellbook > 0 && (
+        <SpellChoice
+          build={build}
+          toLevel={toLevel}
+          group="spellbook"
+          total={requirements.spellbook}
+          levels={[1, requirements.maxSpellLevel]}
+          title={t('levelUp.spellbook.title')}
+          hint={t('levelUp.spellbook.hint')}
+          missing={missing.includes('spellbook')}
+          picks={choices.spellbook}
+          others={[...choices.spells, ...choices.cantrips]}
+          onChange={(spellbook) => onChange({ ...choices, spellbook })}
         />
       )}
     </div>
@@ -506,16 +542,29 @@ function ImprovementChoice({
 function SpellChoice({
   build,
   toLevel,
-  requirements,
   missing,
   picks,
   onChange,
+  group,
+  total,
+  levels: levelRange,
+  title,
+  hint,
+  others,
 }: {
   build: Build
   toLevel: number
-  requirements: LevelUpRequirements
+  /** Which pick list this is; keeps the ids of the typed spells apart. */
+  group: 'spells' | 'cantrips' | 'spellbook'
+  total: number
+  /** Lowest and highest spell level offered (0 for cantrips). */
+  levels: [number, number]
+  title: string
+  hint: string
   missing: boolean
   picks: SpellPick[]
+  /** Picks of the other lists: not offered twice. */
+  others: SpellPick[]
   onChange: (picks: SpellPick[]) => void
 }) {
   const { t } = useTranslation()
@@ -524,43 +573,46 @@ function SpellChoice({
   const deferred = useDeferredValue(query)
   const [manual, setManual] = useState('')
   const [manualLevel, setManualLevel] = useState('1')
-  const full = picks.length >= requirements.spells
+  const full = picks.length >= total
   const have = useMemo(() => {
-    const items = [...build.spells, ...picks]
+    const items = [...build.spells, ...picks, ...others]
     return {
       refs: new Set(items.map((item) => item.ref).filter(Boolean)),
       names: new Set(items.map((item) => plain(item.name))),
     }
-  }, [build.spells, picks])
+  }, [build.spells, picks, others])
   const rows = useMemo(() => {
     if (!library) return []
     const needle = plain(deferred.trim())
     return library.spells
       .filter(
         (spell) =>
-          spell.level >= 1 &&
-          spell.level <= requirements.maxSpellLevel &&
+          spell.level >= levelRange[0] &&
+          spell.level <= levelRange[1] &&
           (!isClassKey(build.classKey) || spell.classes.includes(build.classKey as never)) &&
           (!needle || plain(spell.name).includes(needle)) &&
           !have.refs.has(spell.id) &&
           !have.names.has(plain(spell.name)),
       )
       .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
-  }, [library, deferred, requirements.maxSpellLevel, build.classKey, have])
+  }, [library, deferred, levelRange, build.classKey, have])
   const shown = rows.slice(0, 40)
   const add = (pick: SpellPick) => !full && onChange([...picks, pick])
-  const levels = Array.from({ length: Math.max(1, requirements.maxSpellLevel) }, (_, i) => i + 1)
+  const levels = Array.from(
+    { length: Math.max(1, levelRange[1]) },
+    (_, i) => i + 1,
+  )
   return (
     <div className="levelup-card">
       <fieldset className="levelup-fieldset">
         <legend className="levelup-legend">
-          <span>{t('levelUp.spells.title')}</span>
+          <span>{title}</span>
           <ChoiceStatus missing={missing} />
         </legend>
         <Text size="sm" c="dimmed" aria-live="polite">
-          {t('levelUp.spells.count', { done: picks.length, total: requirements.spells })}
+          {t('levelUp.spells.count', { done: picks.length, total })}
           {' · '}
-          {t('levelUp.spells.hint', { level: requirements.maxSpellLevel })}
+          {hint}
         </Text>
         {picks.length > 0 && (
           <ul className="levelup-list" aria-label={t('levelUp.spells.picks')}>
@@ -639,12 +691,14 @@ function SpellChoice({
             value={manual}
             onChange={(event) => setManual(event.currentTarget.value)}
           />
-          <NativeSelect
-            label={t('levelUp.spells.manualLevel')}
-            value={manualLevel}
-            data={levels.map((level) => ({ value: String(level), label: String(level) }))}
-            onChange={(event) => setManualLevel(event.currentTarget.value)}
-          />
+          {levelRange[1] > 0 && (
+            <NativeSelect
+              label={t('levelUp.spells.manualLevel')}
+              value={manualLevel}
+              data={levels.map((level) => ({ value: String(level), label: String(level) }))}
+              onChange={(event) => setManualLevel(event.currentTarget.value)}
+            />
+          )}
           <Button
             variant="light"
             aria-disabled={full || !manual.trim() || undefined}
@@ -652,9 +706,9 @@ function SpellChoice({
               const name = manual.trim()
               if (!name || full) return
               add({
-                id: `lvlup-${toLevel}-${Date.now().toString(36)}`.slice(0, 40),
+                id: `lvlup-${group[0]}${toLevel}-${Date.now().toString(36)}`.slice(0, 40),
                 name,
-                level: Number(manualLevel),
+                level: levelRange[1] === 0 ? 0 : Number(manualLevel),
                 concentration: false,
                 ritual: false,
               })

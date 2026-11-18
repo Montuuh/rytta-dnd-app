@@ -18,7 +18,7 @@ export type HistoryLine =
   | { key: 'ability'; ability: string; before: number; after: number }
   | { key: 'skill'; skill: string; before: string | null; after: string | null }
 
-export type HistoryFamily = 'hp' | 'play' | 'sheet' | 'identity' | 'resources'
+export type HistoryFamily = 'hp' | 'play' | 'sheet' | 'identity' | 'resources' | 'levelUp'
 
 const num = (value: unknown) => (typeof value === 'number' ? value : null)
 const str = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -53,6 +53,8 @@ const quiet = new Set([
 ])
 
 export function familyOf(item: HistoryItem): HistoryFamily {
+  // RYT-130: a level-up is its own entry, apart from a manual edit of the sheet.
+  if (item.kind === 'level_up') return 'levelUp'
   const table = item.kind.split(':')[0]
   if (table === 'character_vitals')
     return item.changes.some((c) => ['current_hp', 'temp_hp'].includes(c.field)) ? 'hp' : 'play'

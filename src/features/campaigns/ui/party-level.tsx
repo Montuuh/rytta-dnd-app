@@ -7,6 +7,7 @@ import { newRequestId } from '@/shared/lib/request-id'
 import { Modal } from '@/shared/ui/overlays'
 import { useLongPress } from '@/shared/ui/use-long-press'
 import { useSetPartyLevel } from '../api'
+import { createPartyRequestIds } from '../domain/party-level'
 import { CampaignSettingsError } from '../domain/settings'
 
 const minLevel = 1
@@ -39,7 +40,7 @@ export function PartyLevelControl({
   // `undefined`: no question open; `null`: asking to clear the level.
   const [asking, setAsking] = useState<number | null | undefined>(undefined)
   const [saved, setSaved] = useState<string | null>(null)
-  const ids = useRef(new Map<string, string>())
+  const ids = useRef(createPartyRequestIds(newRequestId))
   const apply = useRef<HTMLButtonElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const start = current ?? suggested ?? minLevel
@@ -67,19 +68,17 @@ export function PartyLevelControl({
     if (pending) return
     setAsking(undefined)
     mutation.reset()
+    // A question that is closed starts over: no id outlives it.
+    ids.current.reset()
   }
   const confirm = (level: number | null) => {
-    const key = String(level)
-    let requestId = ids.current.get(key)
-    if (!requestId) {
-      requestId = newRequestId()
-      ids.current.set(key, requestId)
-    }
+    // The id belongs to the change from what the campaign holds now to the level asked for.
+    const from = current
     mutation.mutate(
-      { level, requestId },
+      { level, requestId: ids.current.idFor(from, level) },
       {
         onSuccess: () => {
-          ids.current.delete(key)
+          ids.current.done(from, level)
           setEdited(null)
           setAsking(undefined)
           setSaved(level === null ? t('partyLevel.cleared') : t('partyLevel.saved', { level }))

@@ -35,6 +35,12 @@ const spellsAtLevel: Partial<Record<ClassKey, readonly number[]>> = {
   ranger: [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
 }
 
+/** Levels at which a spellcasting class learns one more cantrip (SRD 5.2 class tables). */
+export const cantripLevels = [4, 10]
+const cantripClasses: readonly ClassKey[] = ['bard', 'cleric', 'druid', 'sorcerer', 'warlock', 'wizard']
+/** Spells a Wizard copies into the spellbook with every level after the first. */
+export const spellbookPerLevel = 2
+
 /** The server rule: a Player gains 1 to 64 hit points a level. */
 export const maxHpGain = 64
 
@@ -85,6 +91,10 @@ export type LevelUpRequirements = {
   improvement: boolean
   /** New spells to pick (prepared or known). */
   spells: number
+  /** New cantrips to pick (levels 4 and 10 of the casting classes). */
+  cantrips: number
+  /** Spells to copy into a Wizard's spellbook: the sheet keeps them as spells not prepared. */
+  spellbook: number
   /** Highest spell level of the new level, to filter the picker. */
   maxSpellLevel: number
 }
@@ -93,7 +103,7 @@ export function levelUpRequirements(build: Build, toLevel: number): LevelUpRequi
   const slots = slotsFor(build.casterKind, toLevel)
   const maxSpellLevel = slots.reduce((top, count, index) => (count > 0 ? index + 1 : top), 0)
   if (!isClassKey(build.classKey))
-    return { subclass: false, improvement: false, spells: 0, maxSpellLevel }
+    return { subclass: false, improvement: false, spells: 0, cantrips: 0, spellbook: 0, maxSpellLevel }
   const table = spellsAtLevel[build.classKey]
   const spells =
     table && build.casterKind !== 'none' && toLevel >= 2
@@ -103,12 +113,23 @@ export function levelUpRequirements(build: Build, toLevel: number): LevelUpRequi
     subclass: toLevel >= subclassLevel && !build.subclassKey && !build.subclass.trim(),
     improvement: (improvementLevels[build.classKey] ?? defaultImprovementLevels).includes(toLevel),
     spells,
+    cantrips:
+      cantripClasses.includes(build.classKey) &&
+      build.casterKind !== 'none' &&
+      cantripLevels.includes(toLevel)
+        ? 1
+        : 0,
+    spellbook: build.classKey === 'wizard' && toLevel >= 2 ? spellbookPerLevel : 0,
     maxSpellLevel,
   }
 }
 
 export const hasChoices = (requirements: LevelUpRequirements) =>
-  requirements.subclass || requirements.improvement || requirements.spells > 0
+  requirements.subclass ||
+  requirements.improvement ||
+  requirements.spells > 0 ||
+  requirements.cantrips > 0 ||
+  requirements.spellbook > 0
 
 /** A spell picked in the level-up: from the glossary (with a ref) or typed by hand. */
 export type SpellPick = {
@@ -126,9 +147,17 @@ export type LevelUpChoices = {
   subclass: { key: string; name: string } | null
   improvement: Improvement | null
   spells: SpellPick[]
+  cantrips: SpellPick[]
+  spellbook: SpellPick[]
 }
-export const noChoices: LevelUpChoices = { subclass: null, improvement: null, spells: [] }
-export type ChoiceKind = 'subclass' | 'improvement' | 'spells'
+export const noChoices: LevelUpChoices = {
+  subclass: null,
+  improvement: null,
+  spells: [],
+  cantrips: [],
+  spellbook: [],
+}
+export type ChoiceKind = 'subclass' | 'improvement' | 'spells' | 'cantrips' | 'spellbook'
 
 /** The SRD subclass of a class, when the class is an SRD one. */
 export const srdSubclassOf = (build: Pick<Build, 'classKey'>) =>
@@ -166,6 +195,10 @@ export function missingChoices(
     missing.push('improvement')
   if (requirements.spells > 0 && choices.spells.length !== requirements.spells)
     missing.push('spells')
+  if (requirements.cantrips > 0 && choices.cantrips.length !== requirements.cantrips)
+    missing.push('cantrips')
+  if (requirements.spellbook > 0 && choices.spellbook.length !== requirements.spellbook)
+    missing.push('spellbook')
   return missing
 }
 
@@ -203,9 +236,15 @@ export function applyChoices(
     }
     next = { ...next, features: [...next.features.filter((item) => item.id !== feat.id), feat] }
   }
-  if (requirements.spells > 0) {
+  const groups: [number, SpellPick[], boolean][] = [
+    [requirements.spells, choices.spells, true],
+    [requirements.cantrips, choices.cantrips, true],
+    [requirements.spellbook, choices.spellbook, false],
+  ]
+  for (const [need, picks, prepared] of groups) {
+    if (need <= 0) continue
     const have = new Set(next.spells.map((spell) => spell.id))
-    const added: Spell[] = choices.spells
+    const added: Spell[] = picks
       .filter((pick) => !have.has(pick.id))
       .map((pick) => ({
         id: pick.id,
@@ -213,7 +252,7 @@ export function applyChoices(
         level: pick.level,
         concentration: pick.concentration,
         ritual: pick.ritual,
-        prepared: true,
+        prepared,
         notes: '',
         ...(pick.ref ? { ref: pick.ref } : {}),
       }))

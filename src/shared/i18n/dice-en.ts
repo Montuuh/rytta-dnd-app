@@ -130,7 +130,36 @@ export const diceEn = {
   'combat.initiative.rollApp': 'Rytta rolls d20 {{bonus}} for you.',
   'combat.initiative.alreadyRolled': 'You already rolled: {{total}}. Only the DM can change it.',
   'rest.alreadyRolled':
-    'You already rolled the hit dice: {{roll}}. With the roll made, how many you spend cannot change.',
+    'You already rolled the hit dice: {{roll}}. With the roll made, how many you spend cannot change. The DM can reset it.',
   'rest.notRolled': 'Not rolled',
   'rest.rollResult': 'Your roll',
+  // RYT-137: the server allows one roll per fight (initiative) and per rest (hit dice).
+  'roll.error.already-rolled':
+    'You already have a roll for this. No other roll was made and no number was saved. The DM can reset it.',
+  'roll.error.roll-required': 'This needs a roll made in Rytta. Nothing was saved: roll first.',
+  'combat.initiative.refusedAlready':
+    'Rytta already has your initiative roll for this fight. No other roll was made. If it has to change, the DM can reset it.',
+  'combat.initiative.refusedInvalid':
+    'The server did not accept the roll: your initiative bonus has to be between −20 and +30. Nothing was rolled.',
+  'combat.initiative.rolledHidden':
+    'You already have a roll in this fight. If it has to change, the DM can reset it.',
+  'rest.rolledHidden':
+    'You already have a hit-dice roll. If it has to change, the DM can reset it.',
+  'rest.refusedAlready': 'Rytta already has your hit dice. No other roll was made.',
+  'rest.refusedInvalid':
+    'The server did not accept the roll: check how many dice you spend (no more than you have left). Nothing was rolled.',
+  'combat.error.rollRequired':
+    'Your initiative has to come from your roll in Rytta. Roll and save that result.',
+  'combat.error.invalidRoll': 'The server did not accept that roll. Nothing was changed.',
+  'combat.error.rollLimit': 'Too many rolls in a row. Wait a moment and try again.',
+  'rest.error.rollRequired': 'The hit dice have to come from your roll in Rytta. Roll first.',
+  'rest.error.rollLimit': 'Too many rolls in a row. Wait a moment and try again.',
+  'combat.row.clearRoll': 'Clear their initiative roll',
+  'combat.row.rerollInitiative': 'Roll their initiative again',
+  'combat.reset.cleared': '{{name}} can roll their initiative again.',
+  'combat.reset.rerolled': 'The initiative of {{name}} was rolled again.',
+  'rest.dm.resetRoll': 'Reset the hit dice of {{name}}',
+  'rest.dm.resetNote': '{{name}} already rolled the hit dice. Reset them so they can roll again.',
+  'rest.dm.resetDone': 'Roll reset: {{name}} can roll again.',
+  'rest.dm.resetDoneVote': 'Roll reset: the vote of {{name}} was removed and they vote again.',
 } as const

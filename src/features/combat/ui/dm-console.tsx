@@ -47,6 +47,7 @@ import { CombatantDetail } from './combatant-detail'
 import { EncounterBalance } from './encounter-balance'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
+import { useResetInitiative } from './reset-roll'
 import { NetworkState, RunnerError } from './parts'
 import { RemoveCombatantDialog, RowActions } from './roster'
 import { CombatantToken } from './token'
@@ -82,6 +83,16 @@ export function DmConsole({
   // the detail: a turn change then keeps it on the same combatant instead of swapping it away.
   const [detailBusy, setDetailBusy] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  // RYT-137: the DM clears or re-rolls a Player's initiative roll where the server holds one.
+  const initiativeRoll = useResetInitiative(campaignId, run, encounter.status)
+  const resetRoll = async (combatant: Combatant, mode: 'clear' | 'reroll') => {
+    if (await initiativeRoll.reset(combatant, mode))
+      setAnnouncement(
+        t(mode === 'clear' ? 'combat.reset.cleared' : 'combat.reset.rerolled', {
+          name: combatant.name,
+        }),
+      )
+  }
   const [seenActive, setSeenActive] = useState(activeId)
   if (seenActive !== activeId) {
     setSeenActive(activeId)
@@ -228,6 +239,12 @@ export function DmConsole({
       run={run}
       pending={pending}
       onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
+      onClearRoll={
+        initiativeRoll.canReset(selected) ? () => void resetRoll(selected, 'clear') : undefined
+      }
+      onRerollInitiative={
+        initiativeRoll.canReset(selected) ? () => void resetRoll(selected, 'reroll') : undefined
+      }
       onRemove={
         status !== 'ended'
           ? () => fromMenu(`detail-menu-${selected.id}`, () => setRemoving(selected))
@@ -291,6 +308,16 @@ export function DmConsole({
                   }
                   onInitiative={() =>
                     fromMenu(`row-menu-${combatant.id}`, () => setInitiativeFor(combatant))
+                  }
+                  onClearRoll={
+                    initiativeRoll.canReset(combatant)
+                      ? () => void resetRoll(combatant, 'clear')
+                      : undefined
+                  }
+                  onRerollInitiative={
+                    initiativeRoll.canReset(combatant)
+                      ? () => void resetRoll(combatant, 'reroll')
+                      : undefined
                   }
                   onRemove={() =>
                     fromMenu(`row-menu-${combatant.id}`, () => setRemoving(combatant))

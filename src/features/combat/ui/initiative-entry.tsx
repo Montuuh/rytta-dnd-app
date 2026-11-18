@@ -8,12 +8,12 @@ import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
 import {
   DiceModeChoice,
-  useOwnRoll,
   attemptFor,
-  checkSpec,
   failureReason,
+  initiativeExpression,
   useAppRoll,
   useDiceMode,
+  useRollContext,
   type Attempt,
 } from '@/features/dice'
 import { newRequestId } from '@/shared/lib/request-id'
@@ -33,7 +33,6 @@ import { InitiativeKeypad } from './amount-dialog'
 export function InitiativeEntry({
   campaignId,
   combatant,
-  since,
   editing,
   pending,
   save,
@@ -41,8 +40,6 @@ export function InitiativeEntry({
 }: {
   campaignId: string
   combatant: Combatant
-  /** When the initiative phase opened (null when unknown): rolls since then count as this fight's. */
-  since: string | null
   /** Reopened over a saved total: Escape and Cancel keep that total. */
   editing: boolean
   pending: boolean
@@ -69,19 +66,41 @@ export function InitiativeEntry({
   const attempt = useRef<Attempt | null>(null)
   const [rollFailure, setRollFailure] = useState<string | null>(null)
   const [rolledTotal, setRolledTotal] = useState<number | null>(null)
-  // One roll per fight, read from the Player's own roll log so it survives a reload or another
-  // device: once Rytta has rolled it the Player cannot roll it again, only save that total; the DM
-  // changes it from the console.
-  const own = useOwnRoll(campaignId)
-  const logged = appDice ? own.find(combatant.character_id ?? null, 'initiative', since) : undefined
-  // What the combat state saved always wins over the roll log (the DM may have changed it).
-  const standing = initiativeRollState(combatant.initiative, rolledTotal ?? logged?.total ?? null)
-  const rolledAlready = appDice && standing.kind !== 'none'
+  // One roll per fight, and the server decides: its one-roll state says whether this character
+  // has rolled (also after a reload or on another device). Once it has, the Player cannot roll
+  // again, only save that total; the DM clears or re-rolls it from the console.
+  const context = useRollContext(campaignId)
+  const characterId = combatant.character_id ?? null
+  const spent = appDice && context.spent(characterId, 'initiative')
+  const logged = appDice ? context.roll(characterId, 'initiative') : undefined
+  // What the combat state saved always wins over the server's roll (the DM may have changed it).
+  // The total rolled on this screen counts only while the server's state cannot be read: once it
+  // can, a roll the DM cleared is gone whatever this screen remembers.
+  const remembered = context.status === 'ready' ? null : rolledTotal
+  const standing = initiativeRollState(combatant.initiative, logged?.total ?? remembered ?? null)
+  // Spent without a total to show: the DM made the roll and this account may not read it.
+  const rolledHidden = spent && standing.kind === 'none'
+  const rolledAlready = appDice && (standing.kind !== 'none' || rolledHidden)
   const settled = standing.kind === 'saved' || standing.kind === 'set'
-  const logLoading = appDice && !rolledAlready && since !== null && own.status === 'loading'
-  const logFailed = appDice && !rolledAlready && since !== null && own.status === 'failed'
+  const logLoading = appDice && !rolledAlready && context.status === 'loading'
+  const logFailed = appDice && !rolledAlready && context.status === 'failed'
+  // The DM cleared or re-rolled this initiative (or the fight moved on): read the state again, so
+  // a cleared Player is offered a roll without waiting for the next poll.
+  const seenInitiative = useRef(combatant.initiative)
+  const { refresh } = context
+  useEffect(() => {
+    if (seenInitiative.current === combatant.initiative) return
+    seenInitiative.current = combatant.initiative
+    setRolledTotal(null)
+    setRolled('')
+    void refresh()
+  }, [combatant.initiative, refresh])
   // What the d20 shows: with dice in the app the standing total, else what was typed.
-  const amount: number | string = rolledAlready ? standing.total : typed
+  const amount: number | string = rolledAlready
+    ? standing.kind === 'none'
+      ? ''
+      : standing.total
+    : typed
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = isInitiativeTotal(value)
   const outOfRange = typeof amount === 'number' && !valid
@@ -91,8 +110,13 @@ export function InitiativeEntry({
   const needsSheet = appDice && !rolledAlready && bonus === null
   const rollForMe = async () => {
     if (rolling || bonus === null) return
-    const spec = checkSpec('initiative', 'initiative', bonus)
-    if (!spec) return
+    const expression = initiativeExpression(bonus)
+    // The server only rolls d20 with a bonus from -20 to +30: nothing is sent for another one.
+    if (!expression) {
+      setRollFailure('invalid')
+      return
+    }
+    const spec = { kind: 'initiative' as const, label: 'initiative', expression }
     setRolling(true)
     setRollFailure(null)
     // The server rolls and its dice and total are the only ones: a failure stops here, and the
@@ -190,7 +214,11 @@ export function InitiativeEntry({
             {rollFailure
               ? rollFailure === 'dice-mode'
                 ? t('roll.error.dice-mode')
-                : t('combat.initiative.rollFailed')
+                : rollFailure === 'already-rolled'
+                  ? t('combat.initiative.refusedAlready')
+                  : rollFailure === 'invalid'
+                    ? t('combat.initiative.refusedInvalid')
+                    : t('combat.initiative.rollFailed')
               : needsSheet
                 ? sheet.isPending
                   ? t('combat.initiative.waitSheet')
@@ -218,17 +246,19 @@ export function InitiativeEntry({
         <div className="combat-entry-keys">
           {rolledAlready && (
             <p className="combat-entry-note" role="status">
-              {standing.kind === 'unsaved'
-                ? t('combat.initiative.rolledUnsaved', { total: standing.total })
-                : standing.kind === 'saved'
-                  ? t('combat.initiative.alreadyRolled', { total: standing.total })
-                  : t('combat.initiative.fixed', { total: standing.total })}
+              {standing.kind === 'none'
+                ? t('combat.initiative.rolledHidden')
+                : standing.kind === 'unsaved'
+                  ? t('combat.initiative.rolledUnsaved', { total: standing.total })
+                  : standing.kind === 'saved'
+                    ? t('combat.initiative.alreadyRolled', { total: standing.total })
+                    : t('combat.initiative.fixed', { total: standing.total })}
             </p>
           )}
           {logFailed && (
             <p className="combat-entry-note" role="alert">
               {t('combat.initiative.logFailed')}{' '}
-              <Button variant="subtle" onClick={own.retry}>
+              <Button variant="subtle" onClick={context.retry}>
                 {t('common.retry')}
               </Button>
             </p>

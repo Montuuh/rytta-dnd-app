@@ -23,7 +23,9 @@ export function DiceChooser({
   campaignId,
   characterId,
   rolled,
+  spentHidden = false,
   onRolled,
+  onRefused,
   rollsStatus,
   onRetryRolls,
   die,
@@ -39,8 +41,12 @@ export function DiceChooser({
   characterId: string
   /** The roll Rytta already made of these hit dice for this rest, read from the roll log. */
   rolled?: CampaignRoll
+  /** The server holds this character's roll but it cannot be read here (the DM rolled it). */
+  spentHidden?: boolean
   /** The server made a roll on this screen: the panel keeps it for when the log cannot be read. */
   onRolled: (roll: CampaignRoll) => void
+  /** The server refused a roll because one is already held: read its state again. */
+  onRefused?: () => void
   /** The roll log has loaded: until then nothing is said about an earlier roll. */
   rollsStatus: 'loading' | 'ready' | 'failed'
   onRetryRolls: () => void
@@ -76,6 +82,7 @@ export function DiceChooser({
   // The roll log is the source; the panel also keeps the roll made on this screen, so a log that
   // could not load does not make a reopened rest forget it.
   const rolledAlready = appDice && rolled !== undefined
+  const lockedHidden = appDice && !rolledAlready && spentHidden
   const dice = rolled ? { values: rolled.dice } : null
   const step = (delta: number) => {
     if (rolledAlready) return
@@ -102,7 +109,9 @@ export function DiceChooser({
       const total = String(stored.dice.reduce((sum, item) => sum + item, 0))
       onChange({ spent: value.spent, roll: total })
     } catch (error) {
-      setFailure(failureReason(error))
+      const reason = failureReason(error)
+      setFailure(reason)
+      if (reason === 'already-rolled') onRefused?.()
     } finally {
       setRolling(false)
     }
@@ -170,7 +179,10 @@ export function DiceChooser({
       {value.spent > 0 && appDice && rolledAlready && (
         <p className="rest-dice-note">{t('rest.alreadyRolled', { roll: value.roll })}</p>
       )}
-      {value.spent > 0 && appDice && !rolledAlready && (
+      {value.spent > 0 && lockedHidden && (
+        <p className="rest-dice-note">{t('rest.rolledHidden')}</p>
+      )}
+      {value.spent > 0 && appDice && !rolledAlready && !lockedHidden && (
         <Button
           variant="default"
           className="rest-autoroll"
@@ -189,17 +201,27 @@ export function DiceChooser({
                 : t('rest.autoRoll')}
         </Button>
       )}
-      {value.spent > 0 && appDice && !rolledAlready && rollsStatus === 'failed' && (
-        <p className="rest-dice-error" role="alert">
-          {t('rest.logFailed')}{' '}
-          <Button variant="subtle" onClick={onRetryRolls}>
-            {t('common.retry')}
-          </Button>
-        </p>
-      )}
+      {value.spent > 0 &&
+        appDice &&
+        !rolledAlready &&
+        !lockedHidden &&
+        rollsStatus === 'failed' && (
+          <p className="rest-dice-error" role="alert">
+            {t('rest.logFailed')}{' '}
+            <Button variant="subtle" onClick={onRetryRolls}>
+              {t('common.retry')}
+            </Button>
+          </p>
+        )}
       {failure && (
         <p className="rest-dice-error" role="alert">
-          {failure === 'dice-mode' ? t('roll.error.dice-mode') : t('rest.rollFailed')}
+          {failure === 'dice-mode'
+            ? t('roll.error.dice-mode')
+            : failure === 'already-rolled'
+              ? t('rest.refusedAlready')
+              : failure === 'invalid'
+                ? t('rest.refusedInvalid')
+                : t('rest.rollFailed')}
         </p>
       )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">

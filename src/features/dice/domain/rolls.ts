@@ -22,32 +22,3 @@ export function rollerOf(characterId: string | null, names: ReadonlyMap<string, 
   const name = names.get(characterId)
   return name ? { kind: 'character', name } : { kind: 'unknown' }
 }
-
-/**
- * The newest roll the viewer made of a kind for a character since a moment (the start of a rest,
- * of the initiative phase): the roller can always read their own rolls, so "already rolled" comes
- * from the roll log, not from what a screen remembers. Null `since` means the start is unknown and
- * nothing is derived.
- */
-export function ownRollSince(
-  rolls: readonly CampaignRoll[],
-  query: {
-    userId: string
-    characterId: string | null
-    kind: CampaignRoll['kind']
-    since: string | null
-  },
-): CampaignRoll | undefined {
-  if (!query.since) return undefined
-  const from = Date.parse(query.since)
-  if (Number.isNaN(from)) return undefined
-  return rolls
-    .filter(
-      (roll) =>
-        roll.roller_id === query.userId &&
-        roll.character_id === query.characterId &&
-        roll.kind === query.kind &&
-        Date.parse(roll.created_at) >= from,
-    )
-    .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id))[0]
-}

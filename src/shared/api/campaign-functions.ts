@@ -41,6 +41,12 @@ export type CampaignSettingsFunctions = {
     }
     Returns: Json
   }
+  /** RYT-137 (20261204120000): the one-roll state of the live fight and the open rest. */
+  get_roll_context: { Args: { target_campaign: string }; Returns: Json }
+  reset_hit_dice_roll: {
+    Args: { target_campaign: string; target_character: string; request_id: string }
+    Returns: Json
+  }
 }
 
 export type CampaignRollsTable = {
@@ -57,6 +63,9 @@ export type CampaignRollsTable = {
     source: string
     visibility: string
     created_at: string
+    encounter_id: string | null
+    rest_id: string | null
+    superseded_at: string | null
   }
   Insert: never
   Update: never

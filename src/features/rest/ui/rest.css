@@ -444,6 +444,19 @@
 .rest-dm-vote {
   margin-top: 12px;
 }
+/* RYT-137: the DM sets a Player's hit-dice roll aside; the note says why, the button is a full target. */
+.rest-dm-reset {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.rest-dm-reset .mantine-Button-root {
+  min-height: 44px;
+  height: auto;
+  white-space: normal;
+}
 
 /* Votes and DM actions: a sticky dock at the bottom of the panel. */
 .rest-dock {

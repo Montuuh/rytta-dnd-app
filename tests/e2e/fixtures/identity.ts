@@ -530,6 +530,21 @@ export async function identityFixture(
       },
     }
   }
+  // RYT-137: the roll store asks the rest state which rest is open and which hit dice are left.
+  dice.world.openRest = () =>
+    rest?.status === 'open' && Date.parse(rest.expires_at) > Date.now() ? rest.id : null
+  dice.world.hitDice = (id) => {
+    const sheet = sheets.get(id)
+    const v = vitals.get(id)
+    if (!sheet || !v) return null
+    return {
+      die: Number((sheet.build as { hitDie?: number }).hitDie ?? 0),
+      left: Math.max(
+        0,
+        sheet.level - Number((v as { hit_dice_spent?: number }).hit_dice_spent ?? 0),
+      ),
+    }
+  }
   const strip = (effect: ReturnType<typeof restEffect>) => {
     const { apply: _apply, ...rest } = effect
     return rest
@@ -565,6 +580,8 @@ export async function identityFixture(
       resolved_at: new Date().toISOString(),
       revision: current.revision + 1,
     })
+    // A completed rest uses up every hit-dice roll made before it.
+    dice.restsCompleted += 1
   }
   const restSettle = () => {
     if (!rest || rest.status !== 'open') return
@@ -1119,6 +1136,44 @@ export async function identityFixture(
             : undefined
         },
         body,
+      )
+      return respond(reply.body, reply.status)
+    }
+    // RYT-137: the one-roll state, and the DM's reset of a hit-dice roll.
+    if (method === 'get_roll_context') {
+      const context = dice.context(
+        actor,
+        diceMember(),
+        String(body.target_campaign),
+        (characterId) => characters.find((c) => c.id === characterId)?.user_id,
+      )
+      return context ? respond(context) : respond({ code: '42501', message: 'Forbidden' }, 403)
+    }
+    if (method === 'reset_hit_dice_roll') {
+      const reply = dice.resetHitDice(
+        actor,
+        diceMember(),
+        (id) => {
+          const found = characters.find(
+            (c) => c.id === id && c.campaign_id === body.target_campaign,
+          )
+          return found
+            ? {
+                id: found.id,
+                user_id: found.user_id,
+                archived: Boolean(found.archived_at),
+                absent: Boolean(found.absent),
+              }
+            : undefined
+        },
+        body,
+        (characterId) => {
+          const vote = restVotes.get(characterId)
+          if (!rest || !vote || vote.dice_spent <= 0) return false
+          restVotes.delete(characterId)
+          rest.revision += 1
+          return true
+        },
       )
       return respond(reply.body, reply.status)
     }
@@ -1897,6 +1952,25 @@ export async function identityFixture(
       if (!target) return respond({ message: 'Character unavailable' }, 400)
       if (!(target.user_id === actor || (isDm && target.user_id === null)))
         return respond({ message: 'Forbidden' }, 403)
+      // RYT-137: with dice in the app, a short-rest "yes" that spends hit dice has to match the
+      // character's own hit-dice roll in force (its dice, summed, without the CON bonus).
+      if (
+        !isDm &&
+        dice.dice_mode === 'app' &&
+        rest.kind === 'short' &&
+        body.vote_value === 'yes' &&
+        Number(body.spent ?? 0) > 0
+      ) {
+        const made = dice.rolls.find(
+          (roll) =>
+            roll.character_id === target.id &&
+            roll.kind === 'hit_die' &&
+            dice.inForce(roll) &&
+            roll.dice.length === Number(body.spent) &&
+            roll.dice.reduce((sum, face) => sum + face, 0) === Number(body.roll),
+        )
+        if (!made) return respond({ code: 'P0001', message: 'Roll required' }, 400)
+      }
       const error = restVote(
         target.id,
         String(body.vote_value),

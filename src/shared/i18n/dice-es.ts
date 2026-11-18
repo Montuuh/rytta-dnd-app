@@ -135,7 +135,40 @@ export const diceEs = {
   'combat.initiative.rollApp': 'Rytta tira d20 {{bonus}} por ti.',
   'combat.initiative.alreadyRolled': 'Ya tiraste: {{total}}. Solo el DM puede cambiarla.',
   'rest.alreadyRolled':
-    'Ya tiraste los dados de golpe: {{roll}}. Con la tirada hecha no se puede cambiar cuántos gastas.',
+    'Ya tiraste los dados de golpe: {{roll}}. Con la tirada hecha no se puede cambiar cuántos gastas. El DM puede restablecerla.',
   'rest.notRolled': 'Sin tirar',
   'rest.rollResult': 'Tu tirada',
+  // RYT-137: the server allows one roll per fight (initiative) and per rest (hit dice).
+  'roll.error.already-rolled':
+    'Ya hay una tirada tuya para esto. No se ha hecho otra ni se ha guardado ningún número. El DM puede restablecerla.',
+  'roll.error.roll-required':
+    'Esto necesita una tirada hecha en Rytta. No se ha guardado nada: tira primero.',
+  'combat.initiative.refusedAlready':
+    'Rytta ya tiene tu tirada de iniciativa de este combate. No se ha hecho otra. Si debe cambiar, el DM puede restablecerla.',
+  'combat.initiative.refusedInvalid':
+    'El servidor no aceptó la tirada: tu bonificador de iniciativa tiene que estar entre −20 y +30. No se ha tirado nada.',
+  'combat.initiative.rolledHidden':
+    'Ya hay una tirada tuya en este combate. Si debe cambiar, el DM puede restablecerla.',
+  'rest.rolledHidden':
+    'Ya hay una tirada tuya de dados de golpe. Si debe cambiar, el DM puede restablecerla.',
+  'rest.refusedAlready': 'Rytta ya tiene tus dados de golpe. No se ha hecho otra tirada.',
+  'rest.refusedInvalid':
+    'El servidor no aceptó la tirada: revisa cuántos dados gastas (no más de los que te quedan). No se ha tirado nada.',
+  'combat.error.rollRequired':
+    'Tu iniciativa tiene que salir de tu tirada en Rytta. Tira y guarda ese resultado.',
+  'combat.error.invalidRoll': 'El servidor no aceptó esa tirada. No se ha cambiado nada.',
+  'combat.error.rollLimit': 'Demasiadas tiradas seguidas. Espera un momento y vuelve a intentarlo.',
+  'rest.error.rollRequired':
+    'Los dados de golpe tienen que salir de tu tirada en Rytta. Tira primero.',
+  'rest.error.rollLimit': 'Demasiadas tiradas seguidas. Espera un momento y vuelve a intentarlo.',
+  'combat.row.clearRoll': 'Borrar su tirada de iniciativa',
+  'combat.row.rerollInitiative': 'Tirar su iniciativa de nuevo',
+  'combat.reset.cleared': '{{name}} puede volver a tirar su iniciativa.',
+  'combat.reset.rerolled': 'La iniciativa de {{name}} se ha tirado de nuevo.',
+  'rest.dm.resetRoll': 'Restablecer los dados de golpe de {{name}}',
+  'rest.dm.resetNote':
+    '{{name}} ya tiró los dados de golpe. Restablécelos para que pueda tirar otra vez.',
+  'rest.dm.resetDone': 'Tirada restablecida: {{name}} puede volver a tirar.',
+  'rest.dm.resetDoneVote':
+    'Tirada restablecida: se quitó el voto de {{name}} y tiene que votar de nuevo.',
 } satisfies Record<keyof typeof diceEn, string>

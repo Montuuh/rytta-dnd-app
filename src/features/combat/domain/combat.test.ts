@@ -6,7 +6,6 @@ import {
   combatErrorCode,
   initiativeProgress,
   initiativeRollState,
-  initiativeStartedAt,
   initiativeOutlier,
   initiativeTies,
   isHiddenTurn,
@@ -103,6 +102,11 @@ describe('combat rules', () => {
     expect(combatErrorCode('Forbidden')).toBe('forbidden')
     expect(combatErrorCode('boom')).toBe('unavailable')
     expect(combatErrorCode('Initiative closed')).toBe('initiativeClosed')
+    // RYT-137: the server's one-roll refusals each keep their own reason.
+    expect(combatErrorCode('Roll required')).toBe('rollRequired')
+    expect(combatErrorCode('Invalid roll')).toBe('invalidRoll')
+    expect(combatErrorCode('Roll limit')).toBe('rollLimit')
+    expect(combatErrorCode('Already rolled')).toBe('alreadyRolled')
   })
   it('opens the table initiative entry only for the own character while it is collected', () => {
     const own = base(1, { kind: 'character', side: 'party', is_own: true, can_act: true })
@@ -475,42 +479,6 @@ describe('initiative entry helpers (RYT-126)', () => {
       base(4),
     ]
     expect([...initiativeTies(list)].sort()).toEqual([id(1), id(2)])
-  })
-})
-
-describe('when the initiative phase opened (RYT-133)', () => {
-  const event = (
-    kind: CombatEvent['kind'],
-    status: string | undefined,
-    at: string,
-    undone = false,
-  ) =>
-    ({
-      id: id(1),
-      kind,
-      round: 0,
-      detail: status ? { status } : {},
-      undone,
-      mine: false,
-      undoable: false,
-      created_at: at,
-    }) as CombatEvent
-  it('is the newest visible status event that moved the encounter to initiative', () => {
-    expect(
-      initiativeStartedAt([
-        event('status', 'initiative', '2026-11-18T10:05:00Z'),
-        event('turn', undefined, '2026-11-18T10:06:00Z'),
-        event('status', 'initiative', '2026-11-18T10:00:00Z'),
-        event('status', 'active', '2026-11-18T10:09:00Z'),
-      ]),
-    ).toBe('2026-11-18T10:05:00Z')
-  })
-  it('is unknown when the events do not hold it, and skips an undone one', () => {
-    expect(initiativeStartedAt([])).toBeNull()
-    expect(initiativeStartedAt([event('status', 'active', '2026-11-18T10:09:00Z')])).toBeNull()
-    expect(
-      initiativeStartedAt([event('status', 'initiative', '2026-11-18T10:05:00Z', true)]),
-    ).toBeNull()
   })
 })
 

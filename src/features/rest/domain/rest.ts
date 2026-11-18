@@ -68,6 +68,14 @@ export const restStateSchema = z
   .nullable()
 export type RestState = NonNullable<z.infer<typeof restStateSchema>>
 
+/** RYT-137: what `reset_hit_dice_roll` answers: the roll it set aside (null when the character had
+ * none in force) and whether it removed the vote that was made with it. */
+export const hitDiceResetSchema = z.object({
+  superseded_roll: z.uuid().nullable(),
+  vote_cleared: z.boolean(),
+})
+export type HitDiceReset = z.infer<typeof hitDiceResetSchema>
+
 export type RestAction =
   | { kind: 'request'; rest: RestKind; requestId: string }
   | {
@@ -82,7 +90,15 @@ export type RestAction =
   | { kind: 'cancel'; requestId: string }
 
 export type RestError =
-  'open' | 'combat' | 'unavailable' | 'closed' | 'dice' | 'cannotRest' | 'forbidden'
+  | 'open'
+  | 'combat'
+  | 'unavailable'
+  | 'closed'
+  | 'dice'
+  | 'cannotRest'
+  | 'forbidden'
+  | 'rollRequired'
+  | 'rollLimit'
 /** Maps server messages of the rest RPCs to user-facing error kinds. */
 export function restError(message: string): RestError {
   if (message.includes('Rest open')) return 'open'
@@ -90,6 +106,9 @@ export function restError(message: string): RestError {
   if (message.includes('Rest closed')) return 'closed'
   if (message.includes('Invalid dice')) return 'dice'
   if (message.includes('Cannot rest')) return 'cannotRest'
+  // RYT-137: a short-rest "yes" that spends hit dice has to match the server's own roll.
+  if (message.includes('Roll required')) return 'rollRequired'
+  if (message.includes('Roll limit')) return 'rollLimit'
   if (message.includes('Forbidden')) return 'forbidden'
   return 'unavailable'
 }

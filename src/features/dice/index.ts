@@ -9,7 +9,9 @@ export { DiceModeChoice } from './ui/mode-choice'
 export { useDiceMode } from './ui/use-dice-mode'
 export { useDice } from './ui/dice-context'
 export { useAppRoll } from './ui/use-app-roll'
-export { useOwnRoll } from './ui/use-own-roll'
+export { useRollContext } from './ui/use-roll-context'
+export { rollContextScope } from './api'
+export { initiativeExpression, rerollExpression } from './domain/context'
 export { failureReason } from './ui/failure-reason'
 export {
   attackSpecs,

@@ -21,7 +21,9 @@ import {
   Brain,
   Crown,
   Dice5,
+  Dices,
   Ellipsis,
+  Eraser,
   Heart,
   Minus,
   Pencil,
@@ -63,6 +65,9 @@ type Props = {
   onInitiative?: () => void
   /** DM: asks to remove this combatant from the encounter (the caller confirms). */
   onRemove?: () => void
+  /** RYT-137 (DM): present while the server holds this character's initiative roll. */
+  onClearRoll?: () => void
+  onRerollInitiative?: () => void
 }
 
 /** Everything about one combatant. Writes appear only when the viewer can act on it. */
@@ -594,7 +599,17 @@ function EffectDialog({
   )
 }
 
-function DmControls({ combatant, run, pending, status, activeId, encounterId, onRemove }: Props) {
+function DmControls({
+  combatant,
+  run,
+  pending,
+  status,
+  activeId,
+  encounterId,
+  onRemove,
+  onClearRoll,
+  onRerollInitiative,
+}: Props) {
   const { t } = useTranslation()
   const [notes, setNotes] = useState(combatant.dm_notes ?? '')
   // Closing the drawer (Escape included) flushes an unsaved note instead of dropping it.
@@ -625,7 +640,7 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId, on
         <Title order={4} className="combat-panel-title">
           {t('combat.dm.title')}
         </Title>
-        {(npc || onRemove) && (
+        {(npc || onRemove || onClearRoll || onRerollInitiative) && (
           <Menu position="bottom-end">
             <Menu.Target>
               <ActionIcon
@@ -646,10 +661,26 @@ function DmControls({ combatant, run, pending, status, activeId, encounterId, on
                   {t('combat.dm.edit')}
                 </Menu.Item>
               )}
-              {npc && onRemove && <Menu.Divider />}
+              {onClearRoll && (
+                <Menu.Item
+                  leftSection={<Eraser size={16} aria-hidden="true" />}
+                  onClick={onClearRoll}
+                >
+                  {t('combat.row.clearRoll')}
+                </Menu.Item>
+              )}
+              {onRerollInitiative && (
+                <Menu.Item
+                  leftSection={<Dices size={16} aria-hidden="true" />}
+                  onClick={onRerollInitiative}
+                >
+                  {t('combat.row.rerollInitiative')}
+                </Menu.Item>
+              )}
+              {(npc || onClearRoll || onRerollInitiative) && onRemove && <Menu.Divider />}
               {onRemove && (
                 <Menu.Item
-                  color="red"
+                  className="combat-menu-danger"
                   leftSection={<UserMinus size={16} aria-hidden="true" />}
                   onClick={onRemove}
                 >

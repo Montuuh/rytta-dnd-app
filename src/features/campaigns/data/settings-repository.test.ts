@@ -39,6 +39,9 @@ const roll = {
   source: 'recorded',
   visibility: 'roller_dm',
   created_at: '2026-11-17T10:00:00.000+00:00',
+  encounter_id: null,
+  rest_id: null,
+  superseded_at: null,
 }
 
 describe('campaign settings repository', () => {
@@ -89,6 +92,9 @@ describe('campaign settings repository', () => {
       ['Above party level', 'above-party-level'],
       ['Stale revision', 'stale'],
       ['Roll limit', 'roll-limit'],
+      ['Already rolled', 'already-rolled'],
+      ['Roll required', 'roll-required'],
+      ['Invalid roll', 'invalid'],
       ['Dice mode', 'dice-mode'],
       ['Forbidden', 'forbidden'],
       ['boom', 'unavailable'],

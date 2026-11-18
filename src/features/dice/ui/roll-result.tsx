@@ -17,6 +17,8 @@ const known = [
   'character-unavailable',
   'roll-limit',
   'dice-mode',
+  'already-rolled',
+  'roll-required',
 ] as const
 const knownReason = (reason: string | undefined) =>
   known.find((item) => item === reason) ?? 'unavailable'

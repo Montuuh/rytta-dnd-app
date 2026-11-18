@@ -145,7 +145,8 @@ const entrySchema = z.discriminatedUnion('kind', [
 export async function changeCombat(campaignId: string, action: CombatAction) {
   const db = await client()
   const target_campaign = uuid(campaignId)
-  const request_id = crypto.randomUUID()
+  // A reset names its own request id: a retry of the same intent repeats it (idempotent).
+  const request_id = action.kind === 'resetRoll' ? uuid(action.requestId) : crypto.randomUUID()
   let result
   switch (action.kind) {
     case 'create':
@@ -213,6 +214,20 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
       result = await db.rpc('roll_npc_initiative', {
         target_campaign,
         target_encounter: uuid(action.encounterId),
+        request_id,
+      })
+      break
+    case 'resetRoll':
+      result = await db.rpc('reset_initiative_roll', {
+        target_campaign,
+        target_character: uuid(action.characterId),
+        reroll_expression:
+          action.expression === null
+            ? null
+            : z
+                .string()
+                .regex(/^1?d20([+-][0-9]{1,2})?$/)
+                .parse(action.expression),
         request_id,
       })
       break

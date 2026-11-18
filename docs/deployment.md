@@ -1,26 +1,22 @@
 # Deployment and rollback
 
-## Cloudflare Workers (static assets)
+## Cloudflare Pages
 
-The production host (ADR 047, RYT-116). The site is a Worker with static assets, connected to
-the repository through Workers Builds; `wrangler.jsonc` names it and serves `dist` with a
-single-page fallback. It has no Worker code, no bindings and no secrets, and the file holds no
-account id.
+The production host (ADR 047, RYT-116): the Pages project `rytta`, served at
+https://rytta.pages.dev and connected to the repository. It is static files only: no Functions,
+no bindings and no secrets.
 
-Build settings (the Worker, Settings, Build):
+Build settings (the project, Settings, Build):
 
-- Build command `npm run build`; deploy command `npx wrangler deploy`. Wrangler is not a project
-  dependency: Cloudflare's build image runs it through `npx`. Pin it (`npm i -D wrangler`) only if
-  a release of it ever breaks the deploy.
+- Build command `npm run build`; build output directory `dist`. No deploy command and no
+  `wrangler` configuration: Pages publishes the output directory itself, honours the generated
+  `_headers` file and falls back to `index.html` for unknown paths.
 - Node 24 (`.nvmrc` and the CI workflow use 24; `engines` requires `>=24.13.0 <25`). Set the
   build variable `NODE_VERSION=24` if the image default differs.
-- Production branch `main`. `wrangler.jsonc` sets `workers_dev: true` (the production URL on
-  `workers.dev`) and `preview_urls: false`, so the outcome does not depend on dashboard state.
-  Preview URLs stay off until a preview configuration that uses the staging Supabase project
-  exists; previews must never use production, because they serve the `public` schema like any
-  non-local host. The Worker is named `rytta-dnd` in `wrangler.jsonc` and must match the name in
-  the dashboard, or the build fails on the mismatch.
-- The `VITE_` values are build variables of the Worker's Build settings, not runtime bindings:
+- Production branch `main`, automatic deployments on. Preview branch deployments are set to
+  None until a preview configuration that uses the staging Supabase project exists; previews
+  must never use production, because they serve the `public` schema like any non-local host.
+- The `VITE_` values are build variables of the project (Settings, Variables and secrets), not runtime bindings:
   Vite inlines them while building.
 
 | Variable                        | Production and previews                                              |
@@ -82,54 +78,24 @@ Owner checklist for the first deployment:
    `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_CONTACT_EMAIL`, `VITE_OWNER_NAME` and `VITE_SITE_URL`
    before the first production build; leave `VITE_BASE_PATH` unset. Without them the build
    falls back to demo mode and the privacy pages show the owner as pending.
-2. The production URL on `workers.dev` becomes reachable only after the first successful
-   `wrangler deploy` with `workers_dev: true`. Copy it into `VITE_SITE_URL` and rebuild, because
-   it is only known after that first deploy.
+2. The production URL is `https://<project name>.pages.dev`; set it as `VITE_SITE_URL` when the
+   project is created.
 3. Add the new origin to Supabase Authentication (Site URL and redirect allowlist) and to the
    Google OAuth client's authorised JavaScript origins. Until then sign-in fails on the new
    site; the existing GitHub Pages site is unaffected.
-4. Read the response headers of `/` once (see above), then disable the GitHub Pages deploy.
+4. Read the response headers of `/` once (see above). Done on 2026-11-18, together with a real
+   Google sign-in on the new origin.
 
-GitHub Pages: the Quality workflow keeps its `checks` and `e2e` jobs. Its `deploy` job still
-publishes to GitHub Pages; disable it (remove it, or turn Pages off) once Cloudflare is live, so
-there are not two production sites on two origins. This change does not remove it.
-
-## GitHub Pages (previous host)
-
-The frontend is static; Supabase is a separate backend. Hash routes avoid rewrite support.
-
-The current repository has Pages enabled with GitHub Actions and public Supabase variables
-configured. Production Auth URLs are also configured. See the
-[configuration follow-up](evidence/RYT-001-002/production-configuration.md). The initial
-frontend is published at https://montuuh.github.io/rytta-dnd-app/ with a verified Google
-callback and session reload; see [deployment evidence](evidence/RYT-001-002/pages-deployment.md).
-The second-account test is deferred by the user. Pushes to main trigger publication automatically;
-verify public behavior after each deployment and review backend compatibility before pushing.
-The steps below also serve as setup instructions for new environments.
-
-1. Create/connect a GitHub repo and push only when requested.
-2. Settings → Pages: choose GitHub Actions.
-3. Keep VITE_DATA_MODE=demo for the architecture preview. For future live data, set
-   repository variables VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY and
-   VITE_DATA_MODE=supabase. Never use secret/service-role keys.
-   Before the public launch also set the repository variables VITE_CONTACT_EMAIL (the owner's
-   public contact address) and VITE_OWNER_NAME (the full name of the natural person responsible
-   for the service). The privacy policy, the terms and the notice shown after an account
-   deletion send users to the address; the privacy policy names the person. A production
-   build with `VITE_DATA_MODE=supabase` fails with a clear error while either is empty, so a live
-   site never ships with the owner pending; demo builds only print a warning and the pages say it
-   is pending. The CI `checks` job builds in demo mode and the `e2e` builds pin both empty with
-   `RYTTA_ALLOW_UNPUBLISHED_OWNER=1` (set in `playwright.config.ts`, not a `VITE_` variable, so it
-   never reaches a bundle); the `deploy` job and the Cloudflare build read the real variables.
-4. Push the intended revision to main, or dispatch the Quality workflow manually. Its `checks`
-   job and the four `e2e` shards run in parallel; the `deploy` job runs only on main after both
-   pass, so a failing check never publishes.
-5. The deploy job takes base_path from configure-pages, builds dist and publishes it.
-6. Verify public assets/favicon, refreshed /#/inventory, mobile navigation and browser errors.
-   Real-data releases additionally require staging Auth/RLS tests.
-
-No database migration runs from the Pages workflow. The workflow also permits manual dispatch and defaults
-to demo. Hosted two-account authentication/invitation tests must pass before live campaign use.
+GitHub Pages was the previous host. Since 2026-11-18 Cloudflare is the only production site: the
+Quality workflow no longer has a `deploy` job, the Supabase Site URL points at the Cloudflare
+origin, and the old address is no longer updated. The workflow keeps `checks` on every push and pull
+request and runs the four `e2e` shards on pull requests and manual dispatch. Cloudflare builds
+main as soon as it is pushed and does not wait for the workflow, so changes reach main only
+through a pull request whose checks and browser tests passed. A production build with
+`VITE_DATA_MODE=supabase` fails while `VITE_CONTACT_EMAIL` or `VITE_OWNER_NAME` is empty; the CI
+`checks` job builds in demo mode and the `e2e` builds pin both empty with
+`RYTTA_ALLOW_UNPUBLISHED_OWNER=1` (set in `playwright.config.ts`, not a `VITE_` variable, so it
+never reaches a bundle). No database migration runs from any build.
 
 ## Supabase production
 
@@ -151,7 +117,7 @@ both applied to production. Release order for a paired migration:
 
 1. Confirm the hosted history has part 1 and not part 2, and that `private.money_scale()`
    returns 0 in production.
-2. Push the frontend to main and wait for the Quality workflow to deploy it.
+2. Push the frontend to main and wait for the host to build and publish it.
 3. Apply part 2 right after the deployment finishes. Between the two steps the new frontend
    runs on whole gold (a typed cent amount is refused, never rounded) and the API still lets
    Players create items; no data is lost.

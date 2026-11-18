@@ -49,6 +49,9 @@ test('the settings gear opens the drawer from the keyboard and returns focus', a
   await page.goto('./')
   await expect(page.locator('.sidebar')).toHaveCount(0)
   const menu = page.getByRole('button', { name: 'Settings', exact: true })
+  // The start route redirects to the glossary; wait for it so the header is not replaced under
+  // the key press.
+  await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
   // Language and theme live in the Settings drawer (RYT-033, RYT-069); signed out the gear opens it.
   await menu.focus()
   await page.keyboard.press('Enter')

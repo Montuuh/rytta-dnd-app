@@ -53,3 +53,13 @@ and eval are blocked.
   both leaves two production sites and two session origins, so disable it once Cloudflare is live.
 - The policy cannot be verified on the real host from the repository; check the response
   headers of the deployed site once (see `deployment.md`).
+
+## Update 2026-11-18: Pages project instead of a Worker
+
+The first deployment ran as a Worker with static assets and proved the headers and the sign-in
+flow. Its free address carries the account name, and the owner chose not to buy a domain yet, so
+the site moved to a Cloudflare Pages project named `rytta` (https://rytta.pages.dev). Nothing else
+in this decision changes: same build, same generated `_headers`, same policy, no server code.
+`wrangler.jsonc` is removed because Pages needs no configuration file for a static output
+directory; the Worker is retired once the new address is confirmed. A custom domain can be
+attached to the Pages project later without another move.

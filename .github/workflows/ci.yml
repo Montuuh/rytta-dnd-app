@@ -1,6 +1,7 @@
 name: Quality
-# One pipeline: checks and sharded browser tests run in parallel; Pages deploys from main only
-# after both pass, so the suite never runs twice per push.
+# Checks run on every push and pull request; the sharded browser tests run on pull requests and
+# manual dispatch only, because every change reaches main through a pull request that already ran
+# them. Publishing is not done here: the host builds and deploys main on its own (docs/deployment.md).
 on:
   push:
     branches: [main]
@@ -47,42 +48,3 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
-
-  deploy:
-    needs: [checks, e2e]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - uses: actions/configure-pages@v5
-        id: pages
-      - run: npm run build
-        env:
-          VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-          VITE_SITE_URL: ${{ steps.pages.outputs.origin }}
-          VITE_DATA_MODE: ${{ vars.VITE_DATA_MODE || 'demo' }}
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
-          VITE_OWNER_NAME: ${{ vars.VITE_OWNER_NAME }}
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4

@@ -3,6 +3,7 @@ import { Accordion, Alert, Button, Modal } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Ban, Check, Hourglass, Moon, Sunset, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/features/auth'
 import { useDiceMode, useOwnRoll } from '@/features/dice'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useRestAction } from '../api'
@@ -106,7 +107,9 @@ export function RestPanel({
   // panel, a reload and another device.
   const { behaviour } = useDiceMode(campaignId)
   const own = useOwnRoll(campaignId)
-  const madeKey = (person: RestParticipant) => madeRollKey(campaignId, person.id, state.created_at)
+  const userId = useAuth().state.user!.id
+  const madeKey = (person: RestParticipant) =>
+    madeRollKey(userId, campaignId, person.id, state.created_at)
   const rolledFor = (person: RestParticipant) =>
     behaviour === 'app' && short
       ? (own.find(person.id, 'hit_die', state.created_at) ?? madeRoll(madeKey(person)))

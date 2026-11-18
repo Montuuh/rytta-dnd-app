@@ -2032,7 +2032,7 @@ html.tt-table-mode {
   border-radius: 10px;
   background: rgba(11, 8, 6, 0.78);
   color: #cbb699;
-  font-size: clamp(15px, calc(var(--tt-sq, 40px) * 0.4), 30px);
+  font-size: clamp(15px, calc(var(--tt-sq-bar, 40px) * 0.4), 30px);
   /* Above the story dimmer: the connection state stays readable while a card is shown. */
   z-index: 9;
 }
@@ -3312,16 +3312,21 @@ html.tt-pm-mode {
    can hold them: a plate is one line, at most two squares wide, and below the zoom threshold (`labelsShown`)
    the tokens show their own monogram alone. The ring is capped so it never outgrows its neighbours. */
 .tt-pm .tt-token-name {
+  /* Drawn at its screen size (14px) and scaled by the inverse of the board's zoom, so the text never
+     takes a tiny font size that a browser may clamp or wrap differently. One line, an ellipsis. */
   display: block;
-  max-width: min(calc(112px * var(--tt-label-k, 1)), 128px);
+  max-width: min(112px, calc(128px / var(--tt-label-k, 1)));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   -webkit-line-clamp: unset;
   line-clamp: unset;
-  padding: calc(1px * var(--tt-label-k, 1)) calc(6px * var(--tt-label-k, 1));
-  border-radius: calc(6px * var(--tt-label-k, 1));
-  font-size: calc(14px * var(--tt-label-k, 1));
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 21px;
+  transform: translateX(-50%) scale(var(--tt-label-k, 1));
+  transform-origin: 50% 0;
 }
 .tt-pm .tt-world-wrap[data-labels='hidden'] .tt-token-name {
   display: none;

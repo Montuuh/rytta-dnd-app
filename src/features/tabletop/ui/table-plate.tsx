@@ -24,8 +24,6 @@ type Props = {
   stale: boolean
   /** The table is turned for people on the other side: the plate keeps to the viewer's corners. */
   flipped: boolean
-  /** Height of the status bar, so a bottom corner stays above it. */
-  barHeight: number
 }
 
 /**
@@ -43,7 +41,6 @@ export function TurnPlate({
   ready,
   stale,
   flipped,
-  barHeight,
 }: Props) {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<PlatePrefs>(() => readPlate())
@@ -100,7 +97,6 @@ export function TurnPlate({
   }
 
   const style = {
-    '--tt-bar': `${barHeight}px`,
     ...(drag && {
       transform: `translate(${flipped ? -drag.x : drag.x}px, ${flipped ? -drag.y : drag.y}px)`,
     }),

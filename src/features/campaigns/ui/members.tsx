@@ -141,10 +141,14 @@ export function CampaignMembers({
     trigger.current = target
     setConfirmation(next)
   }
-  const closeConfirmation = () => setConfirmation(null)
-  const restoreTriggerFocus = () => {
-    const node = trigger.current
-    requestAnimationFrame(() => node?.focus())
+  // Focus goes back to the control that opened the dialog, however the dialog was left (Escape, a
+  // button, Back) and even if its exit transition never reports the end (a close pressed while it was
+  // still opening): the helper keeps trying until the closing dialog is gone, and gives up if the
+  // person has moved on.
+  const restoreTriggerFocus = () => focusWhenReady(() => trigger.current)
+  const closeConfirmation = () => {
+    setConfirmation(null)
+    restoreTriggerFocus()
   }
   const closeInvite = () => {
     if (!action.isPending) {

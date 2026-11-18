@@ -121,6 +121,8 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   const arinMenu = page.getByRole('button', { name: 'Acciones de Arin', exact: true })
   await arinMenu.click()
   await page.getByRole('menuitem', { name: 'Nombrar DM', exact: true }).click()
+  // Escape closes the dialog once it is open (pressed while it is still opening, it can be lost).
+  await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(arinMenu).toBeFocused()
   await arinMenu.click()

@@ -397,6 +397,48 @@ describe('the concentration marker', () => {
       ).rejects.toThrow(/character_vitals_concentration_check/)
   })
 
+  it.each(schemas)('%s: refuses an oversized value before storing anything', async (schema) => {
+    const { s, c, player, arin } = await table(schema)
+    const internal = schema === 'public' ? 'private' : 'pre_private'
+    const stored = async () => {
+      await asSystem()
+      return (
+        await rows<{ requests: number; events: number }>(
+          `select (select count(*)::int from ${internal}.sheet_requests where character_id = $1) requests,
+             (select count(*)::int from ${schema}.character_events where character_id = $1) events`,
+          [arin],
+        )
+      )[0]!
+    }
+    const before = await stored()
+    // Leading spaces that trimming would remove: 'Bless' after trimming, megabytes as sent.
+    for (const bad of [' '.repeat(1_000_000) + 'Bless', ' '.repeat(1020) + 'Bless']) {
+      await asUser(player)
+      await expect(s.write(c, arin, { rev: 1, concentration: bad })).rejects.toThrow(
+        /Invalid concentration/,
+      )
+    }
+    expect(await stored()).toEqual(before)
+    expect(await s.vitals(arin)).toMatchObject({ concentration: null, revision: 1 })
+    // Exactly 1024 bytes is accepted and stored trimmed.
+    await asUser(player)
+    expect(await s.write(c, arin, { rev: 1, concentration: ' '.repeat(1019) + 'Bless' })).toBe(2)
+    expect((await s.vitals(arin)).concentration).toBe('Bless')
+    // 100 astral characters (4 bytes each in UTF-8, 400 bytes) still pass; 101 are too long.
+    const mage = String.fromCodePoint(0x1f9d9)
+    await asUser(player)
+    expect(await s.write(c, arin, { rev: 2, concentration: mage.repeat(100) })).toBe(3)
+    expect((await s.vitals(arin)).concentration).toBe(mage.repeat(100))
+    await asUser(player)
+    await expect(s.write(c, arin, { rev: 3, concentration: mage.repeat(101) })).rejects.toThrow(
+      /Invalid concentration/,
+    )
+    expect(await stored()).toEqual({
+      requests: before.requests + 2,
+      events: before.events + 2,
+    })
+  })
+
   it.each(
     schemas.flatMap((schema) =>
       refused.map(([family, points]) => [schema, family, points] as const),

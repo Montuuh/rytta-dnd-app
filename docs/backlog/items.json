@@ -4195,12 +4195,13 @@
       "title": "One table screen for combat: turn plate over the map and the \"now and next\" screen without a map",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "review",
       "dependsOn": ["RYT-126"],
       "sources": [
         "Player journey audit 2026-11-17, findings J4-01, J4-02 and J4-19: combat on a shared screen keeps DM chrome, scrolls and uses small type.",
         "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046.",
-        "Producer upkeep 2026-11-18: in progress on branch table-screen."
+        "Producer upkeep 2026-11-18: in progress on branch table-screen.",
+        "Review 2026-11-18 on branch table-screen at e84f3c7: npm run check and npm run test:e2e pass (935 passed, 77 skipped, 0 failed); independent code review changes addressed in e84f3c7; independent UI review CHANGES_REQUIRED on cd1842d, PASS on e84f3c7; three non-blocking leftovers moved to RYT-135; merge to main pending (docs/evidence/RYT-131/validation.md)."
       ],
       "scope": "One table screen for combat. With a map: the map full screen with a turn plate (now / next) over a corner that can be moved or shrunk. Without a map: a chrome-less \"now and next\" screen with the whole order in two or three columns, large type readable at 1-2 m, the acting row followed automatically. Any member of the campaign may open it; it reads the existing Table projection only. It does not depend on RYT-132 (map on the phone); either may be built first. Non-goals: dice on the table screen, new combat rules, backend changes, autonomous release.",
       "acceptance": [
@@ -4217,7 +4218,7 @@
         "npm run test:e2e (table screen with and without a map at 820px, 1280px and 1920px, opened by a DM and by a Player)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-131/validation.md"]
     },
     {
       "id": "RYT-132",
@@ -4307,28 +4308,32 @@
     },
     {
       "id": "RYT-135",
-      "title": "Level up polish from the UI review",
+      "title": "Level up and table screen polish from the UI reviews",
       "priority": "P2",
       "owner": "frontend",
       "status": "planned",
-      "dependsOn": ["RYT-130"],
+      "dependsOn": ["RYT-130", "RYT-131"],
       "sources": [
         "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md).",
-        "Open check from the RYT-130 production record (2026-11-18): keyboard focus on an option at 150% text on a phone may sit under the sticky footer."
+        "Open check from the RYT-130 production record (2026-11-18): keyboard focus on an option at 150% text on a phone may sit under the sticky footer.",
+        "Independent UI review PASS on RYT-131 at e84f3c7, three non-blocking findings on the table screen (docs/evidence/RYT-131/validation.md)."
       ],
-      "scope": "Fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Non-goals: new level-up rules, backend or migration changes, multiclass, autonomous release.",
+      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Non-goals: new level-up rules, new combat rules, backend or migration changes, multiclass, autonomous release.",
       "acceptance": [
         "For an ability at 19 the \"+2\" option no longer says \"Already at 20\"; its label and disabled reason state the real limit, and an ability at 20 still says it is at the cap.",
         "At 820px a failed confirm scrolls so that both the failure alert and the summary row are fully visible.",
         "At 390px with 150% text the typed-roll hint is visible together with the roll input without scrolling, or is tied to it by a description that is read with the input.",
         "The DM party-level dialog has no two controls with the same accessible name; each Cancel-like control says what it cancels or one of them is removed.",
         "At 390px with 150% text, moving keyboard focus through the level-up options keeps the focused option fully visible above the sticky footer, asserted by a browser spec.",
-        "390px and 820px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+        "When a Player leaves the table screen, keyboard focus returns to the control that opened it, asserted by a browser spec.",
+        "On the order screen a long name uses the smaller type only when it would not fit at the normal size; a long name that fits keeps the normal size, and no name overlaps another row or exceeds two lines at 820px, 1280px and 1920px.",
+        "When loading the fight fails, the table screen error text says the fight could not be loaded, in English and Spanish.",
+        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
-        "unit tests for the changed option labels",
+        "unit tests for the changed option labels and the long-name sizing rule",
         "npm run check",
-        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px)",
+        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px)",
         "independent UI review PASS"
       ],
       "evidence": []

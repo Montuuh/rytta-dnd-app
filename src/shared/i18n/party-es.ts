@@ -11,6 +11,7 @@ export const partyEs = {
   'party.liveTemp': '+{{value}} temporales',
   'party.liveAc': 'Clase de armadura {{value}}',
   'party.liveConditions': 'Estados de {{name}}',
+  'party.liveConcentration': 'Concentración: {{spell}}',
   'party.liveNoSheet': 'Estado aún no disponible',
   'party.acShort': 'CA',
   'party.water': 'Agua',

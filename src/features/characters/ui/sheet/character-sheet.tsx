@@ -542,7 +542,12 @@ function SheetPanel({
         : spell.level === 0
           ? t('cast.done.noSlot', { name })
           : t('cast.done.ritual', { name }),
-      plan.concentration ? t('cast.done.concentrating', { name: plan.concentration.value }) : null,
+      // The spell just named is the one concentrated on: the note names it once.
+      plan.concentration
+        ? plan.concentration.value === name
+          ? t('cast.done.concentratingHere')
+          : t('cast.done.concentrating', { name: plan.concentration.value })
+        : null,
     ]
       .filter(Boolean)
       .join(' ')

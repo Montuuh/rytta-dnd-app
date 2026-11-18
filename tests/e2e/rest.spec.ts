@@ -208,6 +208,35 @@ test('the DM launches a rest, votes for own characters and can rest the group at
   expect(f.vitalsOf(beaId)?.current_hp).toBe(24)
 })
 
+for (const [language, line, title] of [
+  ['es', 'Un descanso largo termina las concentraciones en curso.', 'Descanso del grupo'],
+  ['en', 'A long rest ends any concentration in progress.', 'Group rest'],
+] as const)
+  test(`RYT-135 the group rest panel says a long rest ends concentration (${language})`, async ({
+    page,
+  }, info) => {
+    await page.addInitScript((lang) => localStorage.setItem('rytta-language', lang), language)
+    const f = await identityFixture(page, { player: true, sheet: 'complete', party: true })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    f.openRest('long', { user: peerId, character: beaId })
+    await page.goto(party)
+    await page.getByRole('region', { name: title }).getByRole('button').first().click()
+    const panel = page.getByRole('dialog', { name: title })
+    await expect(panel.getByText(line)).toBeVisible()
+    await audit(page, info.outputPath('rest-long-concentration.png'))
+  })
+
+test('RYT-135 a short rest says nothing about concentration', async ({ page }) => {
+  const f = await identityFixture(page, { player: true, sheet: 'complete', party: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  f.openRest('short', { user: peerId, character: beaId })
+  await page.goto(party)
+  await page.getByRole('region', { name: 'Descanso del grupo' }).getByRole('button').first().click()
+  const panel = page.getByRole('dialog', { name: 'Descanso del grupo' })
+  await expect(panel.getByRole('heading', { name: 'Descanso corto' })).toBeVisible()
+  await expect(panel.getByText('concentraciones')).toHaveCount(0)
+})
+
 test('a Player whose request expires or is cancelled sees why', async ({ page }) => {
   const f = await identityFixture(page, { player: true, sheet: 'complete', party: true })
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -385,3 +414,27 @@ test('a requester at 0 HP can still ask for the group and cancel', async ({ page
   await panel.getByRole('button', { name: 'Cancelar petición' }).click()
   await expect(panel.getByRole('heading', { name: 'Petición cancelada' })).toBeVisible()
 })
+
+for (const theme of ['default', 'parchment', 'wizard'] as const)
+  for (const percent of [100, 150])
+    test(`RYT-135 axe is clean on the long-rest line in ${theme} at ${percent}% text`, async ({
+      page,
+    }, info) => {
+      await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+      const f = await identityFixture(page, { player: true, sheet: 'complete', party: true })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      f.openRest('long', { user: peerId, character: beaId })
+      await page.goto(party)
+      await page.addStyleTag({ content: `html { font-size: ${percent}%; }` })
+      await page
+        .getByRole('region', { name: 'Descanso del grupo' })
+        .getByRole('button')
+        .first()
+        .click()
+      await expect(
+        page
+          .getByRole('dialog', { name: 'Descanso del grupo' })
+          .getByText('Un descanso largo termina las concentraciones en curso.'),
+      ).toBeVisible()
+      await audit(page, info.outputPath(`long-rest-${theme}-${percent}.png`))
+    })

@@ -34,6 +34,7 @@ export const castEn = {
   'cast.done.slot': 'You cast {{name}} with a level {{level}} slot. {{left}} of {{max}} left.',
   'cast.done.ritual': 'You cast {{name}} as a ritual. No slot spent.',
   'cast.done.concentrating': 'Concentrating on {{name}}.',
+  'cast.done.concentratingHere': 'Concentrating on this spell.',
   'cast.marker.label': 'Concentrating',
   'cast.marker.end': 'End',
   'cast.marker.endNamed': 'End concentration on {{name}}',

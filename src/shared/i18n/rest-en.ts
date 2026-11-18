@@ -27,6 +27,7 @@ export const restEn = {
   'rest.slots': 'Spell slots',
   'rest.concentration': 'Concentration',
   'rest.concentrationEnds': 'Ends: {{name}}',
+  'rest.longEndsConcentration': 'A long rest ends any concentration in progress.',
   'rest.slotLevel': 'level {{level}} +{{count}}',
   'rest.diceTitle': 'Hit dice you spend (d{{die}}, {{left}} left)',
   'rest.diceCount': 'Dice spent',

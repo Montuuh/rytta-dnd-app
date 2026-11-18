@@ -36,6 +36,7 @@ export const castEs = {
     'Lanzaste {{name}} con un espacio de nivel {{level}}. Quedan {{left}} de {{max}}.',
   'cast.done.ritual': 'Lanzaste {{name}} como ritual. No se gastó ningún espacio.',
   'cast.done.concentrating': 'Te concentras en {{name}}.',
+  'cast.done.concentratingHere': 'Te concentras en este conjuro.',
   'cast.marker.label': 'Concentración',
   'cast.marker.end': 'Terminar',
   'cast.marker.endNamed': 'Terminar la concentración en {{name}}',

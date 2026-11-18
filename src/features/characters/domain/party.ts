@@ -19,6 +19,8 @@ export const partyMemberSchema = z.object({
   armor_class: z.number().int().nullable(),
   exhaustion: z.number().int().nullable(),
   conditions: z.array(z.enum(conditionKeys)).nullable(),
+  /** RYT-135: the spell the character concentrates on, under the same sharing rule as conditions. */
+  concentration: z.string().nullable().optional(),
   /** RYT-130: a finished sheet below the party level the DM set. */
   below_party_level: z.boolean().optional(),
 })
@@ -43,6 +45,7 @@ export type TeammateLive = {
   armorClass: number | null
   exhaustion: number
   conditions: Condition[]
+  concentration: string | null
   ratio: number
   tone: HpTone
 }
@@ -59,6 +62,7 @@ export function teammateLive(member: PartyMember): TeammateLive | null {
     armorClass: member.armor_class,
     exhaustion: member.exhaustion ?? 0,
     conditions: member.conditions ?? [],
+    concentration: member.concentration ?? null,
     ...hpTone(member.current_hp, member.max_hp),
   }
 }

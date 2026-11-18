@@ -273,7 +273,7 @@ test('RYT-134 concentration: the slot and the marker are one request; another sp
     new_concentration: 'Bendición',
   })
   await expect(sheet.locator('[data-cast-note]')).toHaveText(
-    'Lanzaste Bendición con un espacio de nivel 1. Quedan 3 de 4. Te concentras en Bendición.',
+    'Lanzaste Bendición con un espacio de nivel 1. Quedan 3 de 4. Te concentras en este conjuro.',
   )
 
   // A second concentration spell asks first; cancelling changes nothing.
@@ -1212,3 +1212,73 @@ for (const theme of ['default', 'parchment', 'bard'])
     await expect(sheet.locator('[data-cast-note]')).toBeVisible()
     await audit(page, `${theme}: note 150%`)
   })
+
+test('RYT-135 a cast that meets a manual slot tap still on its way waits for it: one write after, none before', async ({
+  page,
+}) => {
+  test.setTimeout(60_000)
+  const f = await open(page)
+  // The slot tap's request is held on its way: the server has not seen it yet.
+  let release: () => void = () => {}
+  const gate = new Promise<void>((resolve) => (release = resolve))
+  let seen = 0
+  await page.route(/\/rpc\/set_character_vitals$/, async (route) => {
+    seen += 1
+    if (seen === 1) await gate
+    await route.fallback()
+  })
+  const resources = await openSpells(page, /Recursos/)
+  await resources.getByRole('button', { name: 'Gastar un espacio de nivel 1' }).first().click()
+  await expect.poll(() => seen).toBe(1)
+  await page.keyboard.press('Escape')
+
+  const sheet = await openSpells(page)
+  await rowOf(sheet, 'Palabra sanadora')
+    .getByRole('button', { name: /Lanzar/ })
+    .click()
+  const dialog = castDialog(page, 'Lanzar Palabra sanadora')
+  await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
+  // Waiting: the cast has sent nothing, nothing was spent, and no result is claimed.
+  await page.waitForTimeout(800)
+  expect(seen).toBe(1)
+  expect(f.vitalsCalls).toHaveLength(0)
+  expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
+  await expect(sheet.locator('[data-cast-note]')).toHaveCount(0)
+  await expect(dialog).toBeVisible()
+
+  // The tap lands first; the cast then goes out on the revision that tap made, spending one more.
+  release()
+  await expect(dialog).toHaveCount(0)
+  expect(f.vitalsCalls).toHaveLength(2)
+  expect(f.vitalsCalls[0]).toMatchObject({
+    new_slots_used: [1, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected_revision: 0,
+  })
+  expect(f.vitalsCalls[1]).toMatchObject({
+    new_slots_used: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+    expected_revision: 1,
+  })
+  expect(f.vitalsOf(characterId)!.slots_used).toEqual([2, 0, 0, 0, 0, 0, 0, 0, 0])
+  await expect(sheet.locator('[data-cast-note]')).toHaveText(
+    'Lanzaste Palabra sanadora con un espacio de nivel 1. Quedan 2 de 4.',
+  )
+})
+
+test('RYT-135 when the cast spell is also the new concentration the note names it once', async ({
+  page,
+}) => {
+  const f = await open(page)
+  const sheet = await openSpells(page)
+  await rowOf(sheet, 'Bendición')
+    .getByRole('button', { name: /Lanzar/ })
+    .click()
+  await castDialog(page, 'Lanzar Bendición')
+    .getByRole('button', { name: 'Lanzar', exact: true })
+    .click()
+  const note = sheet.locator('[data-cast-note]')
+  await expect(note).toHaveText(
+    'Lanzaste Bendición con un espacio de nivel 1. Quedan 3 de 4. Te concentras en este conjuro.',
+  )
+  expect(((await note.textContent()) ?? '').split('Bendición')).toHaveLength(2)
+  expect(f.vitalsOf(characterId)!.concentration).toBe('Bendición')
+})

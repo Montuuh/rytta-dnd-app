@@ -106,6 +106,14 @@ Non-blocking leftovers, moved to RYT-135:
 - the result card repeats the newest strip entry;
 - the sticky result card is tall at 150% text.
 
+## Merge and release
+
+- PR 18 merged to `main` (merge commit `16254f8`); live at https://rytta.pages.dev with that build
+  id.
+- One CI failure on the way: a test computed its drag coordinates before the DM map's first fit.
+  The trace showed 32px squares measured and the fit landing 80ms later. The test now waits for the
+  settled layout. No product change.
+
 ## Known limits
 
 - The one-roll guard depends on the roll log (the newest 50 rolls of the campaign) and on the
@@ -122,9 +130,11 @@ Non-blocking leftovers, moved to RYT-135:
 - The animated path on a real GPU and on phones.
 - A real screen reader.
 - Hosted Supabase through the real API.
-- WebKit for the new spec.
+- WebKit and iOS for the new spec.
+- Real phones and tablets.
 
 ## Status
 
-Review. Local checks and both independent reviews are recorded above; the merge to `main` is
-pending. Follow-ups are in RYT-135, RYT-137 and RYT-138.
+Done. Merged to `main` (`16254f8`) and live; the database part was applied to production with
+RYT-130, and both independent reviews are recorded above. Follow-ups are in RYT-135, RYT-137 and
+RYT-138.

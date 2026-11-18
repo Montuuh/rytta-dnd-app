@@ -1,6 +1,8 @@
 # ADR 007: shared-project PRE schemas
 
-Date: 2026-10-28. Status: accepted for RYT-017.
+Date: 2026-10-28. Status: accepted for RYT-017. The environment part is superseded by
+[ADR 048](048-environments-staging.md): a separate staging project now gates production, and PRE
+stays only until staging replaces it for local development.
 
 ## Context
 

@@ -54,6 +54,7 @@ import { RefreshControl } from '@/shared/ui/refresh-control'
 import { PageHead } from '@/shared/ui/page-head'
 import { campaignModules, implementedModuleKeys } from './module-catalog'
 import { LeaveCampaignDialog } from './leave'
+import { closeOnEscapeWhileOpening } from '@/shared/ui/escape-while-opening'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { FirstSession } from './first-session'
@@ -139,21 +140,31 @@ export function CampaignMembers({
           : t('members.invalidEmail'),
     },
   })
+  // An Escape pressed in the same frame as the control that opens a dialog closes it too.
+  const stopEarlyEscape = useRef<() => void>(() => {})
   const openConfirmation = (next: Confirmation, target: HTMLElement) => {
     trigger.current = target
     setConfirmation(next)
+    stopEarlyEscape.current()
+    stopEarlyEscape.current = closeOnEscapeWhileOpening(() => closeConfirmation())
   }
   // Focus goes back to the control that opened the dialog, however the dialog was left (Escape, a
   // button, Back). The return starts when the dialog closes and waits for it to go; it gives up as soon
   // as the person moves focus elsewhere, so the dialogs start no second return at the end of their exit
   // transition (that one took the control the person had just tabbed to for fallen focus).
-  const restoreTriggerFocus = () =>
+  const restoreTriggerFocus = () => {
+    const leaving = document.activeElement?.closest('[role="dialog"], [role="menu"]') ?? null
+    // The closing dialog stays mounted, after the trigger in the page, for its exit transition: Tab
+    // pressed right after Escape would land in it and be lost. Inert, it is skipped at once.
+    if (leaving?.getAttribute('role') === 'dialog') leaving.setAttribute('inert', '')
+    stopEarlyEscape.current()
     focusWhenReady(() => trigger.current, {
       // Focus on any control but the trigger counts as the person having moved on, even when this
       // runs a second time with focus already back on the trigger.
       from: trigger.current,
-      leaving: document.activeElement?.closest('[role="dialog"]') ?? null,
+      leaving,
     })
+  }
   const closeConfirmation = () => {
     setConfirmation(null)
     restoreTriggerFocus()
@@ -200,7 +211,16 @@ export function CampaignMembers({
     action.reset()
     inviteForm.reset()
     setInviteOpen(true)
+    stopEarlyEscape.current()
+    stopEarlyEscape.current = closeOnEscapeWhileOpening(() => closeInvite())
   }
+  // A dialog opened again before the last one finished leaving is the same element: let it work.
+  useEffect(() => {
+    if (confirmation || inviteOpen)
+      document
+        .querySelectorAll('[role="dialog"][inert]')
+        .forEach((el) => el.removeAttribute('inert'))
+  }, [confirmation, inviteOpen])
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)

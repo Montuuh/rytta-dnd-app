@@ -542,16 +542,26 @@ export function Layout() {
                         if (value) {
                           restoreMenuFocus.current = true
                           open()
-                        } else close()
+                        } else {
+                          // RYT-136: focus goes back to the trigger once, and only while it is still where
+                          // the menu left it (inside the closing menu or on the page): a person who has
+                          // tabbed or clicked to another control keeps it. A choice that opens a dialog
+                          // or a drawer, or leaves the page, has cleared the flag: that overlay hands
+                          // focus back itself.
+                          const leaving = document.activeElement?.closest('[role="menu"]') ?? null
+                          close()
+                          if (restoreMenuFocus.current)
+                            focusWhenReady(() => menuButton.current, {
+                              from: menuButton.current,
+                              leaving,
+                            })
+                        }
                       }}
                       position="bottom-end"
                       width={260}
                       withinPortal
                       withInitialFocusPlaceholder={false}
                       returnFocus={false}
-                      onExitTransitionEnd={() => {
-                        if (restoreMenuFocus.current) menuButton.current?.focus()
-                      }}
                     >
                       <Menu.Target>
                         <Button

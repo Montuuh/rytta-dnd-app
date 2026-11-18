@@ -1027,6 +1027,13 @@ button.combat-row-main:focus-visible {
   font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
 }
+/* RYT-133: once Rytta has rolled the initiative it is final for the Player. */
+.combat-entry-note {
+  margin: 0;
+  text-align: center;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
 .combat-d20 {
   position: relative;
   width: 10.5rem;

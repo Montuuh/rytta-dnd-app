@@ -117,7 +117,7 @@ export function CampaignMembers({
   useEffect(() => {
     document
       .querySelector('.dm-tabs-list [data-active]')
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      ?.scrollIntoView({ block: 'nearest', inline: 'center' })
   }, [activePanel, wide])
   const [auditFilter, setAuditFilter] = useState<AuditFilter>('all')
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })

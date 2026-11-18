@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { SegmentedControl } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import type { DiceBehaviour } from '../domain/mode'
@@ -11,15 +12,19 @@ import './dice.css'
  */
 export function DiceModeChoice({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
+  const labelId = useId()
   const { mode, behaviour, setChoice } = useDiceMode(campaignId)
   if (mode !== 'player') return null
   return (
     <div className="dice-choice">
+      <span id={labelId} className="dice-choice-label">
+        {t('diceChoice.label')}
+      </span>
       <SegmentedControl
         fullWidth
         value={behaviour}
         onChange={(value) => setChoice(value as DiceBehaviour)}
-        aria-label={t('diceChoice.label')}
+        aria-labelledby={labelId}
         data={[
           { value: 'physical', label: t('diceChoice.physical') },
           { value: 'app', label: t('diceChoice.app') },

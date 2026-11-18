@@ -318,3 +318,23 @@
 .dice-choice {
   margin-bottom: 6px;
 }
+
+.dice-choice-label {
+  font-weight: 600;
+  font-size: var(--fs-meta);
+}
+
+/* The track and the selected segment take the theme's surfaces, in both schemes. */
+.dice-choice .mantine-SegmentedControl-root {
+  background: var(--app-raised);
+}
+
+.dice-choice .mantine-SegmentedControl-indicator {
+  background: var(--app-surface);
+  border: 1px solid var(--app-accent);
+  box-shadow: none;
+}
+
+.dice-choice .mantine-SegmentedControl-label {
+  color: var(--app-text);
+}

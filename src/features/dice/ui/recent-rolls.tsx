@@ -11,6 +11,7 @@ import { rollsQuery, rollsScope } from '../api'
 import { subscribeRolls } from '../data/repository'
 import { formulaOf, mathsText, rollMaths } from '../domain/roll'
 import { rollerOf } from '../domain/rolls'
+import { useHeldRolls } from './held-rolls'
 import { useRollName } from './roll-name'
 import { useDiceMode } from './use-dice-mode'
 import './dice.css'
@@ -90,7 +91,8 @@ export function RecentRolls({
       }),
     [campaignId, userId, cache],
   )
-  const rolls = query.data ?? []
+  const held = useHeldRolls()
+  const rolls = (query.data ?? []).filter((roll) => !held.has(roll.id))
   // With physical dice the strip appears once someone has recorded a roll, never before.
   if (behaviour === 'physical' && rolls.length === 0) return null
   const who = (roll: CampaignRoll) => {

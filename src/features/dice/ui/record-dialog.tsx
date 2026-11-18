@@ -103,7 +103,7 @@ function RecordForm({
   onSaved: (saved: CampaignRoll) => void
 }) {
   const { t } = useTranslation()
-  const record = useRecordRoll(campaignId)
+  const { record } = useRecordRoll(campaignId)
   const slots = diceSlots(spec.expression)
   const perDie = slots.length > 0 && slots.length <= maxTypedDice
   const [values, setValues] = useState<string[]>(() => slots.map(() => ''))

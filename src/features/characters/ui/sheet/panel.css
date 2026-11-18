@@ -674,6 +674,14 @@ span.sheet-inspiration {
   }
 }
 
+/* At large text six medals no longer hold a formula each: three to a row, so every formula stays in its
+   own medal. */
+@container (max-width: 18rem) {
+  .ability-strip:not([data-editing]) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 /* Tiles */
 .panel-tiles {
   list-style: none;

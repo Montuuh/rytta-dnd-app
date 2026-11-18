@@ -78,6 +78,11 @@ html[data-mantine-color-scheme='light'] {
   --info: #18577a;
   --info-soft: rgba(24, 87, 122, 0.1);
 }
+/* Mantine's own error red is 2.9:1 on this background: light field errors use the accessible token.
+   The extra :root outranks Mantine's own scheme rule. */
+html[data-mantine-color-scheme='light']:root {
+  --mantine-color-error: var(--danger);
+}
 body {
   margin: 0;
 }

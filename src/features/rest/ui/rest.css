@@ -569,3 +569,41 @@
   color: var(--warn);
   font-weight: 600;
 }
+
+/* RYT-133 hit dice in the app: the roll is a result Rytta made, not a field to fill in. */
+.rest-roll-result {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rest-roll-result-label {
+  font-weight: 600;
+  font-size: var(--fs-meta);
+}
+
+.rest-roll-result-value {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-stat);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rest-roll-result-value:not([data-rolled]) {
+  font-family: inherit;
+  font-size: var(--fs-body);
+  color: var(--app-muted);
+}
+
+.rest-dice-note {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.rest-dice-error {
+  margin: 0;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--danger);
+}

@@ -10,10 +10,10 @@ export const diceEn = {
   'diceSettings.visibilityLegend': 'Who sees the rolls',
   'diceSettings.mode.physical': 'Physical dice',
   'diceSettings.mode.physicalHint':
-    'Each Player rolls their own. The sheet says what to roll and what to add; what is typed in is marked as recorded.',
+    'Each Player rolls their own dice. The sheet says what to roll and what to add, and the result can be recorded: it is marked as recorded.',
   'diceSettings.mode.app': 'Dice in the app',
   'diceSettings.mode.appHint':
-    'Rytta rolls and records: the server decides the result and it is marked as rolled by Rytta. What is typed by hand is marked as recorded. Initiative and hit dice too.',
+    'Rytta rolls the dice and records every roll, initiative and hit dice included. It is marked as rolled by Rytta and nobody can change it.',
   'diceSettings.mode.player': 'Each Player chooses',
   'diceSettings.mode.playerHint':
     'Each one picks physical or in-app dice on their own device. Physical dice until they choose.',
@@ -27,15 +27,15 @@ export const diceEn = {
   'diceSettings.saved': 'Dice settings saved.',
   'diceSettings.confirmTitle': 'Change the table dice?',
   'diceSettings.confirmMode.physical':
-    'Players roll their own dice. The sheet says what to roll, and initiative and hit dice are typed in.',
+    'Players roll their own dice. The sheets say what to roll, and initiative and hit dice are typed in. No character data changes.',
   'diceSettings.confirmMode.app':
-    'Players will roll in the app: Rytta makes the roll and records it, initiative and hit dice included. No sheet changes.',
+    'Players will roll in the app: Rytta rolls and records every roll, initiative and hit dice included. On the sheets, the numbers stop saying what to roll and roll when tapped. No character data changes.',
   'diceSettings.confirmMode.player':
     'Each Player chooses on their device; until they do, they use physical dice.',
   'diceSettings.confirmVisibility.wider':
     'Earlier rolls are not shown to more people: they stay visible only to those who could see them when they were made.',
   'diceSettings.confirmVisibility.narrower':
-    'Whoever can no longer see rolls also loses the earlier ones.',
+    'Players stop seeing each other\u0027s rolls, earlier ones included.',
   'diceSettings.errorTitle': 'The dice settings were not saved',
   'diceSettings.error.unavailable': 'Could not reach the server. Nothing changed; try again.',
   'diceSettings.error.forbidden': 'Only a DM of this campaign can change the dice.',
@@ -46,15 +46,15 @@ export const diceEn = {
   'diceChoice.label': 'Your dice',
   'diceChoice.physical': 'Physical',
   'diceChoice.app': 'In the app',
-  'diceChoice.hint': 'The DM leaves it to you. Saved on this device.',
+  'diceChoice.hint': 'Each Player chooses on their device; your choice is saved here.',
 
   'roll.name.ability': '{{ability}} check',
   'roll.name.save': '{{ability}} save',
   'roll.name.initiative': 'Initiative',
   'roll.name.hitDie': 'Hit dice',
   'roll.name.deathSave': 'Death save',
-  'roll.name.attack': 'Attack: {{weapon}}',
-  'roll.name.damage': 'Damage: {{weapon}}',
+  'roll.name.attack': 'Attack with {{weapon}}',
+  'roll.name.damage': 'Damage with {{weapon}}',
   'roll.kind.ability': 'Ability check',
   'roll.kind.skill': 'Skill',
   'roll.kind.save': 'Save',
@@ -62,12 +62,13 @@ export const diceEn = {
   'roll.kind.damage': 'Damage',
   'roll.kind.initiative': 'Initiative',
   'roll.kind.death_save': 'Death save',
-  'roll.kind.hit_die': 'Hit die',
+  'roll.kind.hit_die': 'Hit dice',
   'roll.kind.custom': 'Roll',
   'roll.rollAction': 'Roll {{name}}, {{formula}}',
   'roll.recordAction': 'Record the roll for {{name}}, {{formula}}',
-  'roll.hintApp': 'Tap an underlined modifier to roll the dice.',
-  'roll.hintPhysical': 'Roll what each line says and tap the underlined line to record the result.',
+  'roll.hintApp': 'Tap an underlined number to roll the dice.',
+  'roll.hintPhysical':
+    'Roll what each line says and tap the underlined number to record the result.',
   'roll.recordTitle': 'Record: {{name}}',
   'roll.recordFormula': 'Roll {{formula}}.',
   'roll.dieSingle': 'd{{sides}} result',
@@ -96,7 +97,7 @@ export const diceEn = {
   'roll.seeAll': 'See all {{count}}',
   'roll.loading': 'Loading rolls…',
   'roll.loadError': 'Could not load the rolls.',
-  'roll.empty': 'No rolls yet. Tap a modifier to roll.',
+  'roll.empty': 'No rolls yet.',
   'roll.dm': 'DM',
   'roll.you': '{{name}} (you)',
   'roll.source.app': 'Rolled by Rytta',
@@ -116,4 +117,12 @@ export const diceEn = {
     'The initiative could not be rolled. No roll was saved; try again.',
   'rest.rollFailed': 'The hit dice could not be rolled. No roll was saved; try again.',
   'roll.totalWord': 'Total',
+  'diceSettings.confirmVisibility.narrowerRoller':
+    'With "Only the roller", each Player sees only their own and you stop seeing the Players’ rolls, earlier ones included.',
+  'combat.initiative.rollApp': 'Rytta rolls d20 {{bonus}} for you.',
+  'combat.initiative.rollApp0': 'Rytta rolls d20 for you.',
+  'combat.initiative.alreadyRolled': 'You already rolled: {{total}}. Only the DM can change it.',
+  'rest.alreadyRolled': 'You already rolled the hit dice: {{roll}}.',
+  'rest.notRolled': 'Not rolled',
+  'rest.rollResult': 'Your roll',
 } as const

@@ -39,6 +39,9 @@ const slotIcons: Record<EquipmentSlot, string> = {
   off_hand: 'shield',
 }
 const signed = (value: number) => (value >= 0 ? `+${value}` : `${value}`)
+/** The bonus of a damage line as it is read aloud: ` + 3`, ` − 1`, nothing for 0. */
+const damageBonus = (value: number) =>
+  value === 0 ? '' : value > 0 ? ` + ${value}` : ` − ${-value}`
 
 /** One attack list for the sheet tile, the sheet block and the equipment view: callers compute
  * `lines` once with `attacks(...)` so every place shows the same numbers. */
@@ -93,7 +96,7 @@ export function AttackLines({
                 'damage',
                 <>
                   {line.dice}
-                  {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
+                  {damageBonus(line.damageBonus)}
                 </>,
               )}
               {line.damageType && (
@@ -114,7 +117,7 @@ export function AttackLines({
                     line,
                     'versatile',
                     t('inventory.attacks.twoHands', {
-                      dice: `${line.versatileDice}${line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}`,
+                      dice: `${line.versatileDice}${damageBonus(line.damageBonus)}`,
                     }),
                   )}
                 </>

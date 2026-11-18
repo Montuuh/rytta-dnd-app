@@ -146,9 +146,12 @@ test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die'
   const autoRoll = dice.getByRole('button', { name: 'Tirar por mí' })
   await expect(autoRoll).toHaveCount(0)
   await dice.locator('label', { hasText: 'En la app' }).click()
-  await expect(roll).toHaveAttribute('readonly', '')
+  // The roll is a result, not a field: nothing to type, and it says nothing is rolled yet.
+  await expect(roll).toHaveCount(0)
+  const result = dice.locator('.rest-roll-result-value')
+  await expect(result).toHaveText('Sin tirar')
   // The sticky dock never hides the focused control (WCAG 2.4.11).
-  await roll.focus()
+  await dice.getByRole('button', { name: 'Gastar un dado más' }).focus()
   await page.keyboard.press('Tab')
   await expect(autoRoll).toBeFocused()
   const [button, dock] = await Promise.all([
@@ -158,9 +161,18 @@ test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die'
   expect(button!.y + button!.height).toBeLessThanOrEqual(dock!.y + 1)
   // Rytta rolls instead (reduced motion: no animation, an even result).
   await autoRoll.click()
-  await expect(roll).toHaveValue(/^([2-9]|1[0-6])$/)
+  await expect(result).toHaveText(/^([2-9]|1[0-6])$/)
+  // Once rolled it is final: no second roll, and the count is locked.
+  await expect(autoRoll).toHaveCount(0)
+  await expect(dice).toContainText('Ya tiraste los dados de golpe')
+  await expect(dice.getByRole('button', { name: 'Gastar un dado más' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
   // J4-23: each die stays readable in the dock once the dice leave the screen.
-  await expect(dice.locator('.rest-dice-faces')).toContainText(/^Dados: \d+( \+ \d+)*$/)
+  await expect(dice.locator('.rest-dice-faces')).toContainText(
+    /^Dados: \d+( \+ \d+)*\. Tirada por Rytta\.$/,
+  )
   await panel.getByRole('button', { name: 'Descansar', exact: true }).click()
   await expect(panel.getByRole('button', { name: 'Descansar', exact: true })).toHaveAttribute(
     'aria-pressed',
@@ -285,7 +297,7 @@ test('3D dice roll the hit dice and fill the total', async ({ page }) => {
   await dice.getByRole('button', { name: 'Gastar un dado más' }).click()
   await dice.getByRole('button', { name: 'Tirar por mí' }).click()
   // WebGL rolls take a moment; without WebGL Rytta rolls at once.
-  await expect(dice.getByRole('textbox', { name: 'Tu tirada' })).toHaveValue(/^[1-8]$/, {
+  await expect(dice.locator('.rest-roll-result-value')).toHaveText(/^[1-8]$/, {
     timeout: 20_000,
   })
   expect(errors).toEqual([])

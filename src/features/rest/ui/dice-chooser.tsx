@@ -62,7 +62,11 @@ export function DiceChooser({
   const roll = Number(value.roll)
   const heal = valid && value.spent > 0 ? shortRestHeal(value.spent, roll, conMod) : 0
   const con = conMod >= 0 ? `+${conMod}` : `−${Math.abs(conMod)}`
+  // One roll per rest: once Rytta has rolled the hit dice the count and the roll are final.
+  const rolledAlready =
+    appDice && dice !== null && value.roll === dice.roll && value.spent === dice.values.length
   const step = (delta: number) => {
+    if (rolledAlready) return
     const spent = Math.min(left, Math.max(0, value.spent + delta))
     if (spent !== value.spent) onChange({ spent, roll: spent === 0 ? '' : value.roll })
   }
@@ -101,7 +105,7 @@ export function DiceChooser({
             variant="default"
             size={44}
             aria-label={t('rest.diceFewer')}
-            aria-disabled={value.spent <= 0 || undefined}
+            aria-disabled={value.spent <= 0 || rolledAlready || undefined}
             onClick={() => step(-1)}
           >
             <Minus size={18} aria-hidden="true" />
@@ -113,19 +117,26 @@ export function DiceChooser({
             variant="default"
             size={44}
             aria-label={t('rest.diceMore')}
-            aria-disabled={value.spent >= left || undefined}
+            aria-disabled={value.spent >= left || rolledAlready || undefined}
             onClick={() => step(1)}
           >
             <Plus size={18} aria-hidden="true" />
           </ActionIcon>
         </div>
-        {value.spent > 0 && (
+        {value.spent > 0 && appDice && (
+          <div className="rest-roll-result">
+            <span className="rest-roll-result-label">{t('rest.rollResult')}</span>
+            <output className="rest-roll-result-value" data-rolled={rolledAlready || undefined}>
+              {rolledAlready ? value.roll : t('rest.notRolled')}
+            </output>
+          </div>
+        )}
+        {value.spent > 0 && !appDice && (
           <TextInput
             id={`${id}-roll`}
             className="rest-roll"
             label={t('rest.roll')}
-            inputMode={appDice ? 'none' : 'numeric'}
-            readOnly={appDice}
+            inputMode="numeric"
             autoComplete="off"
             value={value.roll}
             onChange={(event) =>
@@ -144,7 +155,10 @@ export function DiceChooser({
           />
         )}
       </div>
-      {value.spent > 0 && appDice && (
+      {value.spent > 0 && appDice && rolledAlready && (
+        <p className="rest-dice-note">{t('rest.alreadyRolled', { roll: value.roll })}</p>
+      )}
+      {value.spent > 0 && appDice && !rolledAlready && (
         <Button
           variant="default"
           className="rest-autoroll"
@@ -158,14 +172,14 @@ export function DiceChooser({
         </Button>
       )}
       {failure && (
-        <p className="rest-overheal" role="alert">
+        <p className="rest-dice-error" role="alert">
           {failure === 'dice-mode' ? t('roll.error.dice-mode') : t('rest.rollFailed')}
         </p>
       )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">
         {dice && value.spent === dice.values.length && value.roll === dice.roll && (
           <span className="rest-dice-faces">
-            {t('rest.rolledDice', { dice: dice.values.join(' + ') })}
+            {`${t('rest.rolledDice', { dice: dice.values.join(' + ') })}. ${t('roll.source.app')}.`}
           </span>
         )}
         {value.spent === 0 ? t('rest.noDice') : valid ? t('rest.heal', { roll, con, heal }) : null}

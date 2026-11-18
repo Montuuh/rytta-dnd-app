@@ -12,10 +12,10 @@ export const diceEs = {
   'diceSettings.visibilityLegend': 'Quién ve las tiradas',
   'diceSettings.mode.physical': 'Dados físicos',
   'diceSettings.mode.physicalHint':
-    'Cada jugador tira los suyos. La ficha dice qué tirar y qué sumar; lo que se escribe consta como anotado.',
+    'Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.',
   'diceSettings.mode.app': 'Dados en la app',
   'diceSettings.mode.appHint':
-    'Rytta tira y anota: el resultado lo decide el servidor y consta como tirada por Rytta. Lo que se escriba a mano consta como anotado. La iniciativa y los dados de golpe también.',
+    'Rytta tira los dados y anota cada tirada, también la de iniciativa y los dados de golpe. Queda marcada como tirada por Rytta y nadie puede cambiarla.',
   'diceSettings.mode.player': 'Cada jugador elige',
   'diceSettings.mode.playerHint':
     'Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.',
@@ -29,15 +29,15 @@ export const diceEs = {
   'diceSettings.saved': 'Ajustes de dados guardados.',
   'diceSettings.confirmTitle': '¿Cambiar los dados de la mesa?',
   'diceSettings.confirmMode.physical':
-    'Los jugadores tiran sus dados. La ficha dice qué tirar, y la iniciativa y los dados de golpe se escriben a mano.',
+    'Los jugadores tiran sus dados. Las fichas dicen qué tirar, y la iniciativa y los dados de golpe se escriben a mano. Ningún dato de personaje cambia.',
   'diceSettings.confirmMode.app':
-    'Los jugadores tirarán en la app: Rytta hace la tirada y la anota, también la de iniciativa y los dados de golpe. Ninguna ficha cambia.',
+    'Los jugadores tirarán en la app: Rytta tira y anota cada tirada, la iniciativa y los dados de golpe incluidas. En las fichas, los números dejan de decir qué tirar y tiran al tocarlos. Ningún dato de personaje cambia.',
   'diceSettings.confirmMode.player':
     'Cada jugador elige en su dispositivo; hasta que elija, usa dados físicos.',
   'diceSettings.confirmVisibility.wider':
     'Las tiradas anteriores no se muestran a más gente: siguen visibles solo para quien las veía cuando se hicieron.',
   'diceSettings.confirmVisibility.narrower':
-    'Quien deje de poder verlas pierde también las tiradas anteriores.',
+    'Los jugadores dejan de ver las tiradas de los demás, también las anteriores.',
   'diceSettings.errorTitle': 'No se guardaron los ajustes de dados',
   'diceSettings.error.unavailable':
     'No se pudo conectar con el servidor. Nada cambió; inténtalo de nuevo.',
@@ -49,15 +49,15 @@ export const diceEs = {
   'diceChoice.label': 'Tus dados',
   'diceChoice.physical': 'Físicos',
   'diceChoice.app': 'En la app',
-  'diceChoice.hint': 'El DM lo deja a tu elección. Se guarda en este dispositivo.',
+  'diceChoice.hint': 'Cada jugador elige en su dispositivo; tu elección se guarda aquí.',
 
   'roll.name.ability': 'Prueba de {{ability}}',
   'roll.name.save': 'Salvación de {{ability}}',
   'roll.name.initiative': 'Iniciativa',
   'roll.name.hitDie': 'Dados de golpe',
   'roll.name.deathSave': 'Salvación de muerte',
-  'roll.name.attack': 'Ataque: {{weapon}}',
-  'roll.name.damage': 'Daño: {{weapon}}',
+  'roll.name.attack': 'Ataque con {{weapon}}',
+  'roll.name.damage': 'Daño de {{weapon}}',
   'roll.kind.ability': 'Prueba de característica',
   'roll.kind.skill': 'Habilidad',
   'roll.kind.save': 'Salvación',
@@ -65,13 +65,13 @@ export const diceEs = {
   'roll.kind.damage': 'Daño',
   'roll.kind.initiative': 'Iniciativa',
   'roll.kind.death_save': 'Salvación de muerte',
-  'roll.kind.hit_die': 'Dado de golpe',
+  'roll.kind.hit_die': 'Dados de golpe',
   'roll.kind.custom': 'Tirada',
   'roll.rollAction': 'Tirar {{name}}, {{formula}}',
   'roll.recordAction': 'Anotar la tirada de {{name}}, {{formula}}',
-  'roll.hintApp': 'Toca un modificador subrayado para tirar los dados.',
+  'roll.hintApp': 'Toca un número subrayado para tirar los dados.',
   'roll.hintPhysical':
-    'Tira lo que dice cada línea y toca la línea subrayada para anotar el resultado.',
+    'Tira lo que dice cada línea y toca el número subrayado para anotar el resultado.',
   'roll.recordTitle': 'Anotar: {{name}}',
   'roll.recordFormula': 'Tira {{formula}}.',
   'roll.dieSingle': 'Resultado del d{{sides}}',
@@ -100,7 +100,7 @@ export const diceEs = {
   'roll.seeAll': 'Ver las {{count}}',
   'roll.loading': 'Cargando tiradas…',
   'roll.loadError': 'No se pudieron cargar las tiradas.',
-  'roll.empty': 'Aún no hay tiradas. Toca un modificador para tirar.',
+  'roll.empty': 'Aún no hay tiradas.',
   'roll.dm': 'DM',
   'roll.you': '{{name}} (tú)',
   'roll.source.app': 'Tirada por Rytta',
@@ -121,4 +121,12 @@ export const diceEs = {
   'rest.rollFailed':
     'No se pudieron tirar los dados de golpe. No se ha guardado ninguna tirada; inténtalo de nuevo.',
   'roll.totalWord': 'Total',
+  'diceSettings.confirmVisibility.narrowerRoller':
+    'Con «Solo quien tira», cada jugador solo ve las suyas y tú dejas de ver las de los jugadores, las anteriores incluidas.',
+  'combat.initiative.rollApp': 'Rytta tira d20 {{bonus}} por ti.',
+  'combat.initiative.rollApp0': 'Rytta tira d20 por ti.',
+  'combat.initiative.alreadyRolled': 'Ya tiraste: {{total}}. Solo el DM puede cambiarla.',
+  'rest.alreadyRolled': 'Ya tiraste los dados de golpe: {{roll}}.',
+  'rest.notRolled': 'Sin tirar',
+  'rest.rollResult': 'Tu tirada',
 } satisfies Record<keyof typeof diceEn, string>

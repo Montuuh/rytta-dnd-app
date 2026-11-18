@@ -174,7 +174,7 @@ test('a Player: sheet, rest with 3D dice, portrait upload, inventory and shop pi
     // A blocked worker or WebAssembly module would stall the roll: report that first.
     await page.waitForTimeout(10_000)
     expect(violations).toEqual([])
-    await expect(dice.getByRole('textbox', { name: 'Tu tirada' })).not.toHaveValue('', {
+    await expect(dice.locator('.rest-roll-result-value')).not.toHaveText('Sin tirar', {
       timeout: 60_000,
     })
   })

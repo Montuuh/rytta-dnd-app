@@ -41,8 +41,23 @@ export function useRecordRoll(campaignId: string) {
   const { state, controller } = useAuth()
   const userId = state.user?.id
   const cache = useQueryClient()
-  return useCallback(
-    async (input: LogRollInput): Promise<CampaignRoll> => {
+  /** Puts a stored roll in the strip and refetches what this account may read. */
+  const publish = useCallback(
+    (roll: CampaignRoll) => {
+      if (!userId || controller?.getSnapshot().user?.id !== userId) return
+      cache.setQueryData<CampaignRoll[]>(rollsScope(userId, campaignId), (rolls) =>
+        rolls ? mergeRoll(rolls, roll, recentRollLimit) : rolls,
+      )
+      // The server decides what this account reads: refetch to reconcile.
+      void cache.invalidateQueries({ queryKey: rollsScope(userId, campaignId) })
+    },
+    [userId, controller, cache, campaignId],
+  )
+  const record = useCallback(
+    async (
+      input: LogRollInput,
+      { publishNow = true }: { publishNow?: boolean } = {},
+    ): Promise<CampaignRoll> => {
       if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
         throw new CampaignSettingsError('unavailable')
       let roll: CampaignRoll
@@ -55,15 +70,10 @@ export function useRecordRoll(campaignId: string) {
           void cache.invalidateQueries({ queryKey: campaignsQuery(userId).queryKey })
         throw error
       }
-      if (controller?.getSnapshot().user?.id === userId) {
-        cache.setQueryData<CampaignRoll[]>(rollsScope(userId, campaignId), (rolls) =>
-          rolls ? mergeRoll(rolls, roll, recentRollLimit) : rolls,
-        )
-        // The server decides what this account reads: refetch to reconcile.
-        void cache.invalidateQueries({ queryKey: rollsScope(userId, campaignId) })
-      }
+      if (publishNow) publish(roll)
       return roll
     },
-    [userId, controller, cache, campaignId],
+    [userId, controller, cache, publish],
   )
+  return { record, publish }
 }

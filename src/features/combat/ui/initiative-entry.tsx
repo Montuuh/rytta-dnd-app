@@ -64,6 +64,10 @@ export function InitiativeEntry({
   const appRoll = useAppRoll(campaignId)
   const attempt = useRef<Attempt | null>(null)
   const [rollFailure, setRollFailure] = useState<string | null>(null)
+  const [rolledTotal, setRolledTotal] = useState<number | null>(null)
+  // One roll per fight: once Rytta has rolled it (now, or before the entry was reopened) the Player
+  // cannot roll it again; only the DM changes it from the console.
+  const rolledAlready = appDice && (combatant.initiative != null || rolledTotal !== null)
   // Dice in the app roll d20 plus the sheet's bonus: without the bonus there is nothing to roll.
   const needsSheet = appDice && bonus === null
   const rollForMe = async () => {
@@ -79,12 +83,13 @@ export function InitiativeEntry({
       const roll = await appRoll(spec, combatant.character_id ?? null, attempt.current.id)
       attempt.current = null
       setAmount(roll.total)
+      setRolledTotal(roll.total)
       setRolled(
-        t('combat.initiative.rolled', {
+        `${t('combat.initiative.rolled', {
           die: roll.dice[0] ?? 0,
           bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
           total: roll.total,
-        }),
+        })}. ${t('roll.source.app')}.`,
       )
     } catch (error) {
       setRollFailure(failureReason(error))
@@ -183,13 +188,20 @@ export function InitiativeEntry({
                       ? rolled
                       : bonus === null
                         ? t('combat.initiative.rollPlain')
-                        : t('combat.initiative.roll', {
+                        : t(appDice ? 'combat.initiative.rollApp' : 'combat.initiative.roll', {
                             bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
                           })}
           </Text>
         </div>
         <div className="combat-entry-keys">
-          {appDice && (
+          {rolledAlready && (
+            <p className="combat-entry-note" role="status">
+              {t('combat.initiative.alreadyRolled', {
+                total: rolledTotal ?? combatant.initiative ?? 0,
+              })}
+            </p>
+          )}
+          {appDice && !rolledAlready && (
             <Button
               variant="default"
               size="lg"

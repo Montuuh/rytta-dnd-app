@@ -9,11 +9,13 @@ import { createDiceRequestIds, sameDiceSettings, visibilityChange } from '../dom
 import {
   CampaignSettingsError,
   diceModes,
-  rollVisibilities,
   type DiceMode,
   type DiceSettings,
   type RollVisibility,
 } from '../domain/settings'
+
+/** Default first, then wider, then narrower. */
+const visibilityOrder: readonly RollVisibility[] = ['roller_dm', 'table', 'roller']
 
 /** One group of exclusive choices: a legend, and a row per option with its consequence. */
 function ChoiceGroup<T extends string>({
@@ -136,7 +138,7 @@ export function DiceSettingsControl({
     title: t(`diceSettings.mode.${value}`),
     hint: t(`diceSettings.mode.${value}Hint`),
   }))
-  const visibilityOptions = rollVisibilities.map((value) => ({
+  const visibilityOptions = visibilityOrder.map((value) => ({
     value,
     title: t(`diceSettings.visibility.${value}`),
     hint: t(`diceSettings.visibility.${value}Hint`),
@@ -213,7 +215,13 @@ export function DiceSettingsControl({
             <Text size="sm">{t(`diceSettings.confirmMode.${shown.dice_mode}`)}</Text>
           )}
           {visibility !== 'same' && (
-            <Text size="sm">{t(`diceSettings.confirmVisibility.${visibility}`)}</Text>
+            <Text size="sm">
+              {t(
+                visibility === 'narrower' && shown.roll_visibility === 'roller'
+                  ? 'diceSettings.confirmVisibility.narrowerRoller'
+                  : `diceSettings.confirmVisibility.${visibility}`,
+              )}
+            </Text>
           )}
           {mutation.isError && (
             <Alert

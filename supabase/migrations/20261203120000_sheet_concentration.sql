@@ -78,8 +78,8 @@ declare ddl text := $ddl$
 alter table public.character_vitals add column if not exists concentration text
   constraint character_vitals_concentration_check check (concentration is null or (
     char_length(concentration) between 1 and 100
-    and concentration !~ '[\u0001-\u001f\u007f-\u009f​-‏‪-‮⁠-⁤⁦-⁩﻿]'
-    and concentration = regexp_replace(concentration, '^[    -   　]+|[    -   　]+$', '', 'g')));
+    and concentration !~ '[\u0001-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]'
+    and concentration = regexp_replace(concentration, '^[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+|[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+$', '', 'g')));
 comment on column public.character_vitals.concentration is
   'RYT-134: the spell the character concentrates on; null when not concentrating. RPC writes only.';
 
@@ -95,7 +95,7 @@ returns bigint language plpgsql security definer set search_path = '' as $fn$
 declare current public.character_vitals; sheet public.character_sheets; prior private.sheet_requests;
   changing boolean := coalesce(change_concentration, false);
   -- Unicode spaces trimmed at both ends; the same expressions as the column check.
-  cleaned text := regexp_replace(new_concentration, '^[    -   　]+|[    -   　]+$', '', 'g');
+  cleaned text := regexp_replace(new_concentration, '^[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+|[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+$', '', 'g');
   payload jsonb := jsonb_build_array('vitals', target_campaign, target_character, expected_revision,
     new_current_hp, new_temp_hp, new_hit_dice_spent, new_death_successes, new_death_failures,
     new_heroic_inspiration, new_conditions, new_slots_used, new_tracker_uses);
@@ -106,7 +106,7 @@ begin
   if request_id is null or (not changing and new_concentration is not null) then
     raise exception 'Invalid request' using errcode = '22023'; end if;
   if changing and cleaned is not null and (char_length(cleaned) not between 1 and 100
-      or cleaned ~ '[\u0001-\u001f\u007f-\u009f​-‏‪-‮⁠-⁤⁦-⁩﻿]') then
+      or cleaned ~ '[\u0001-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]') then
     raise exception 'Invalid concentration' using errcode = '22023'; end if;
   if changing then payload := payload || jsonb_build_array('concentration', new_concentration); end if;
   select * into prior from private.sheet_requests r where r.request_id = set_character_vitals.request_id;

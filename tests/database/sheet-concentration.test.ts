@@ -376,17 +376,19 @@ describe('the concentration marker', () => {
     const padded = spaces.map((cp) => String.fromCodePoint(cp)).join('')
     await asUser(player)
     expect(
-      await s.write(c, arin, { rev: 1, concentration: `${padded}Shield of Faith${padded}` }),
+      await s.write(c, arin, { rev: 1, concentration: `${padded}Shield\u00a0of Faith${padded}` }),
     ).toBe(2)
-    expect((await s.vitals(arin)).concentration).toBe('Shield of Faith')
+    expect((await s.vitals(arin)).concentration).toBe('Shield\u00a0of Faith')
     await asUser(player)
     expect(await s.write(c, arin, { rev: 2, concentration: 'x'.repeat(100) })).toBe(3)
     expect((await s.vitals(arin)).concentration).toHaveLength(100)
     // Accented and other visible characters are fine.
     await asUser(player)
-    expect(await s.write(c, arin, { rev: 3, concentration: 'Protección del mal‐bien' })).toBe(4)
+    expect(
+      await s.write(c, arin, { rev: 3, concentration: 'Protecci\u00f3n del mal\u2010bien' }),
+    ).toBe(4)
     await asSystem()
-    for (const bad of ['', ' Bless', 'Bless ', '　Bless', 'x'.repeat(101)])
+    for (const bad of ['', ' Bless', 'Bless\u00a0', '\u3000Bless', 'x'.repeat(101)])
       await expect(
         db.query(`update ${schema}.character_vitals set concentration=$1 where character_id=$2`, [
           bad,
@@ -434,8 +436,8 @@ describe('the concentration marker', () => {
       const src = await scalar(
         `select prosrc result from pg_proc where oid = '${schema}.set_character_vitals(uuid,uuid,bigint,integer,integer,integer,integer,integer,boolean,text[],integer[],jsonb,uuid,boolean,text)'::regprocedure`,
       )
-      const refusedClass = String.raw`'[\u0001-\u001f\u007f-\u009f​-‏‪-‮⁠-⁤⁦-⁩﻿]'`
-      const spaceClass = String.raw`[    -   　]`
+      const refusedClass = String.raw`'[\u0001-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]'`
+      const spaceClass = String.raw`[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]`
       const trim = `'^${spaceClass}+|${spaceClass}+$'`
       for (const text of [check!.def, src]) {
         expect(text).toContain(refusedClass)
@@ -754,6 +756,20 @@ describe('grants and the PRE mirror', () => {
       await bare.close()
     }
   }, 120000)
+
+  it('keeps the migration file printable ASCII, with the code points as escapes', () => {
+    // Invisible or bidi characters in the SQL source could be changed by an editor or a copy and
+    // cannot be reviewed; the regular expressions spell every code point as a \uXXXX escape.
+    // A Windows checkout may turn LF into CRLF (core.autocrlf); git stores and ships LF.
+    const text = readFileSync(`supabase/migrations/${migration}`, 'utf8').replaceAll('\r\n', '\n')
+    const outside = [...text]
+      .map((ch, index) => ({ index, cp: ch.codePointAt(0)! }))
+      .filter(({ cp }) => cp !== 0x0a && (cp < 0x20 || cp > 0x7e))
+      .map(({ index, cp }) => `U+${cp.toString(16).padStart(4, '0')} at ${index}`)
+    expect(outside).toEqual([])
+    expect(text).toContain(String.raw`\u200b-\u200f`)
+    expect(text).toContain("'^[" + String.fromCharCode(92) + 'u0020')
+  })
 
   it('keeps PRE writes in PRE', async () => {
     const { s, c, player, arin } = await table('pre')

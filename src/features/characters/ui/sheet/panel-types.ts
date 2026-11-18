@@ -28,6 +28,8 @@ export type PanelProps = {
   pending: boolean
   /** RYT-070: a Player whose character fights a live encounter. */
   locked: boolean
+  /** RYT-134: the character fights a live encounter; the DM's own concentration tracker is separate. */
+  inEncounter: boolean
   /** RYT-130: a Player's finished sheet changes level by leveling up, not by hand. */
   levelLocked: boolean
   /** Play-state write. `marker` is set when the write also sets (`value`) or ends (`null`) the

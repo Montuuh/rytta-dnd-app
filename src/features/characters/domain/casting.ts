@@ -38,7 +38,9 @@ export function slotChoices(
   })
 }
 
-/** What the "Lanzar" action of one spell can do right now. `blocked` has no way to cast it. */
+/** What the "Lanzar" action of one spell can do right now. `blocked` has no way to cast it.
+ * Rituals: any prepared spell with the Ritual tag can be cast as a ritual, spending no slot. That
+ * is the 2024 SRD rule this project ships (the ritual does not need to be in a spellbook). */
 export type CastAvailability = 'cantrip' | 'slot' | 'ritual-only' | 'blocked'
 export function castAvailability(
   spell: Pick<Spell, 'level' | 'ritual'>,

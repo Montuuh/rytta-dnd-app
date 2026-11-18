@@ -66,6 +66,12 @@ export function RecoveryLines({ view }: { view: RecoveryView }) {
           </dd>
         </div>
       )}
+      {view.concentration && (
+        <div className="rest-line">
+          <dt>{t('rest.concentration')}</dt>
+          <dd className="user-copy">{t('rest.concentrationEnds', { name: view.concentration })}</dd>
+        </div>
+      )}
     </dl>
   )
 }

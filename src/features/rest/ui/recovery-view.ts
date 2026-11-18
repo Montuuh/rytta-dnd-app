@@ -10,10 +10,17 @@ export type RecoveryView = {
   slots: { level: number; count: number }[]
   /** Sheet preview of a short rest: hit dice the character may spend to heal in the panel. */
   healDice?: { left: number; die: number }
+  /** RYT-134: a long rest ends the spell the character concentrates on. */
+  concentration?: string
 }
 
 export const isEmptyRecovery = (view: RecoveryView) =>
-  !view.hp && !view.dice && !view.healDice && view.trackers.length === 0 && view.slots.length === 0
+  !view.hp &&
+  !view.dice &&
+  !view.healDice &&
+  !view.concentration &&
+  view.trackers.length === 0 &&
+  view.slots.length === 0
 
 /** Maps the server preview of one character to the view; resource names use the class key. */
 export function useEffectView() {

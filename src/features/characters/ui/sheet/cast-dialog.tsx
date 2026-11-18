@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import { Alert, Button, Group, Loader, Text } from '@mantine/core'
 import { Check, TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -6,17 +6,26 @@ import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { Modal } from '@/shared/ui/overlays'
 import {
   castAvailability,
+  concentrationName,
   planCast,
   slotChoices,
   type CastMode,
   type CastPlan,
 } from '../../domain/casting'
-import type { createSubmitGuard } from '../../domain/submit-guard'
 import type { Build, Spell, Vitals } from '../../domain/sheet'
 import { useSubmitGuard } from '../use-submit-guard'
 
 export type CastTarget = { spell: Spell; name: string }
-export type CastGuard = ReturnType<typeof createSubmitGuard>
+/** One write of a cast: what it sends, on which revision, under which request id, and the play
+ * state it was planned from. A retry after a failure that may have been applied sends exactly
+ * this again, so the server can replay it instead of spending a second slot. */
+export type CastSubmission = {
+  plan: CastPlan
+  base: Vitals
+  revision: number
+  requestId: string
+}
+export type CastHeld = MutableRefObject<CastSubmission | null>
 /** What the sheet answers with when it refuses or fails a cast; `null` means it was saved. */
 export type CastFailure =
   'unavailable' | 'busy' | 'stale' | 'forbidden' | 'absent' | 'concentration'
@@ -38,9 +47,11 @@ const ritualValue = 'ritual'
 /**
  * RYT-134: "Lanzar" for one spell. A levelled spell asks which slot to spend (only levels from the
  * spell's own up that still have one) or, for a ritual, offers casting it without one. A
- * concentration spell says it replaces the marker before it does. The cast is one write that
- * spends the slot and sets the marker together; a failure leaves the sheet as it was and the
- * confirm becomes a retry that repeats the same request, never a second cast.
+ * concentration spell says it will be marked on the sheet and which marker it replaces. The cast
+ * is one write that spends the slot and sets the marker together. A failure that may have been
+ * applied keeps the exact submission: the confirm becomes a retry that resends it, never a second
+ * cast, and the slot counters keep showing the state it was planned from. A new opening of the
+ * dialog starts clean (the sheet gives each its own key).
  */
 export function CastDialog({
   opened,
@@ -48,6 +59,7 @@ export function CastDialog({
   build,
   level,
   vitals,
+  inEncounter,
   onClose,
   apply,
   returnTo,
@@ -57,24 +69,33 @@ export function CastDialog({
   build: Build
   level: number
   vitals: Vitals
+  /** The character fights a live encounter: the DM's own concentration tracker is separate. */
+  inEncounter: boolean
   onClose: () => void
   /** Writes the cast; rejects with an Error whose message names the failure. */
-  apply: (plan: CastPlan, guard: CastGuard) => Promise<void>
+  apply: (plan: CastPlan, base: Vitals, held: CastHeld) => Promise<void>
   /** Where focus goes when the dialog closes. */
   returnTo: () => HTMLElement | null | undefined
 }) {
   const { t } = useTranslation()
   const guard = useSubmitGuard()
   const { spell, name } = target
+  const held: CastHeld = useRef(null)
+  const [frozen, setFrozen] = useState<Vitals | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [failure, setFailure] = useState<CastFailure | null>(null)
   const [failedAt, setFailedAt] = useState(0)
   const alert = useRef<HTMLDivElement>(null)
+  // The state this cast is planned from: while a retry is waiting it is the one the failed
+  // attempt started from, never the sheet as it reloads (the server may have applied it).
+  const basis = frozen ?? vitals
+  // A name that leaves nothing once cleaned still casts, under a generic marker.
+  const markerName = concentrationName(name) ? name : t('cast.unnamed')
 
   const slots = useMemo(
-    () => slotChoices(build, level, vitals, spell.level),
-    [build, level, vitals, spell.level],
+    () => slotChoices(build, level, basis, spell.level),
+    [build, level, basis, spell.level],
   )
   const ritual = spell.ritual && spell.level > 0
   const cantrip = spell.level === 0
@@ -89,8 +110,8 @@ export function CastDialog({
         ? { kind: 'ritual' }
         : { kind: 'slot', level: Number(choice) }
   const noOption = !cantrip && mode === null
-  const replaced = spell.concentration ? vitals.concentration : null
-  const availability = castAvailability(spell, build, level, vitals)
+  const replaced = spell.concentration ? basis.concentration : null
+  const availability = castAvailability(spell, build, level, basis)
   const retryable = failure === 'unavailable' || failure === 'busy'
   const refused = refusal(failure)
 
@@ -105,9 +126,16 @@ export function CastDialog({
     if (pending) return
     onClose()
   }
+  const choose = (value: string) => {
+    // Another slot is another cast: nothing held from the failed one applies to it.
+    held.current = null
+    setFrozen(null)
+    setPicked(value)
+    if (!refused) setFailure(null)
+  }
   const confirm = async () => {
     if (!mode || pending || refused) return
-    const plan = planCast(spell, mode, build, level, vitals, name)
+    const plan = planCast(spell, mode, build, level, basis, markerName)
     if (!plan) {
       setFailure('stale')
       setFailedAt((count) => count + 1)
@@ -118,10 +146,17 @@ export function CastDialog({
       setPending(true)
       setFailure(null)
       try {
-        await apply(plan, guard)
+        await apply(plan, basis, held)
         return 'saved' as const
       } catch (error) {
-        setFailure(failureOf(error instanceof Error ? error.message : ''))
+        const next = failureOf(error instanceof Error ? error.message : '')
+        // Only a failure that may have reached the server keeps its submission for the retry.
+        if (next === 'unavailable' && held.current) setFrozen(held.current.base)
+        else {
+          held.current = null
+          setFrozen(null)
+        }
+        setFailure(next)
         setFailedAt((count) => count + 1)
         return 'failed' as const
       } finally {
@@ -150,14 +185,9 @@ export function CastDialog({
       classNames={{ body: 'cast-body' }}
     >
       <div className="cast-form">
-        {(spell.concentration || spell.ritual) && (
+        {ritual && (
           <Text size="sm" c="dimmed">
-            {[
-              spell.concentration ? t('sheet.concentration') : null,
-              spell.ritual ? t('sheet.ritual') : null,
-            ]
-              .filter(Boolean)
-              .join(', ')}
+            {t('sheet.ritual')}
           </Text>
         )}
         {cantrip ? (
@@ -168,7 +198,9 @@ export function CastDialog({
           </Text>
         ) : (
           <fieldset className="cast-choices">
-            <legend className="cast-legend">{t('cast.slotHeading')}</legend>
+            <legend className="cast-legend">
+              {t(ritual ? 'cast.howHeading' : 'cast.slotHeading')}
+            </legend>
             {slots.map((slot, index) => (
               <label
                 key={slot.level}
@@ -181,10 +213,7 @@ export function CastDialog({
                   className="cast-option-input"
                   checked={choice === String(slot.level)}
                   data-autofocus={index === 0 || undefined}
-                  onChange={() => {
-                    setPicked(String(slot.level))
-                    if (!refused) setFailure(null)
-                  }}
+                  onChange={() => choose(String(slot.level))}
                 />
                 <span className="cast-option-copy">
                   <span className="cast-option-label">
@@ -205,10 +234,7 @@ export function CastDialog({
                   className="cast-option-input"
                   checked={choice === ritualValue}
                   data-autofocus={slots.length === 0 || undefined}
-                  onChange={() => {
-                    setPicked(ritualValue)
-                    if (!refused) setFailure(null)
-                  }}
+                  onChange={() => choose(ritualValue)}
                 />
                 <span className="cast-option-copy">
                   <span className="cast-option-label">{t('cast.ritual')}</span>
@@ -221,7 +247,14 @@ export function CastDialog({
         )}
         {spell.concentration && (
           <Text size="sm" className="cast-concentrates">
-            {replaced ? t('cast.replaces', { current: replaced }) : t('cast.concentrates')}
+            {replaced
+              ? `${t('cast.replaces', { next: name, current: replaced })} ${t('cast.willMark')}`
+              : t('cast.concentrates')}
+          </Text>
+        )}
+        {spell.concentration && inEncounter && (
+          <Text size="sm" c="dimmed" className="cast-combat">
+            {t('cast.combatNote')}
           </Text>
         )}
         {failure && (

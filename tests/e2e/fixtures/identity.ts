@@ -1231,7 +1231,13 @@ export async function identityFixture(
       const changeMarker = body.change_concentration === true
       if (!changeMarker && body.new_concentration != null)
         return respond({ message: 'Invalid request' }, 400)
-      // Request ids replay (same payload) or clash (another payload), before anything else.
+      // A marker the server would refuse is refused first, as the SQL validates it before the
+      // replay and the revision.
+      const marker =
+        changeMarker && body.new_concentration != null ? cleanMarker(body.new_concentration) : null
+      if (changeMarker && body.new_concentration != null && marker === null)
+        return respond({ message: 'Invalid concentration' }, 400)
+      // Request ids replay (same payload) or clash (another payload).
       const payload = JSON.stringify([
         target,
         body.expected_revision,
@@ -1259,20 +1265,17 @@ export async function identityFixture(
         nextVitalsStale = false
         return respond({ message: 'Stale revision' }, 400)
       }
-      const character = characters.find((c) => c.id === target)
-      if (character?.absent && !dm) return respond({ message: 'Character absent' }, 400)
       if (state.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
-      const marker =
-        changeMarker && body.new_concentration != null ? cleanMarker(body.new_concentration) : null
-      if (changeMarker && body.new_concentration != null && marker === null)
-        return respond({ message: 'Invalid concentration' }, 400)
       if (
         options.inEncounter &&
         !dm &&
         (body.new_current_hp !== state.current_hp || body.new_temp_hp !== state.temp_hp)
       )
         return respond({ message: 'Encounter locked' }, 400)
+      // The absent trigger fires when the row is updated, after the checks above.
+      if (characters.find((c) => c.id === target)?.absent && !dm)
+        return respond({ message: 'Character absent' }, 400)
       if (body.new_current_hp !== state.current_hp)
         record(target, 'character_vitals:UPDATE', [
           { field: 'current_hp', before: state.current_hp, after: body.new_current_hp },

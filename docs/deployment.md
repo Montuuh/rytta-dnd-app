@@ -131,6 +131,16 @@ safe: it parses gold as integers and cannot read cent amounts or `merge` rows. F
 instead; a corrective migration can return both switches to their part-1 values but does not
 remove amounts already stored with cents.
 
+## Migration first: the sheet's concentration marker
+
+`20261203120000_sheet_concentration.sql` (RYT-134) adds `character_vitals.concentration`. The
+frontend that casts spells reads that column by name when it loads a sheet, so against a database
+without it every character sheet fails to load. Apply the migration to production first, confirm
+the column exists and `set_character_vitals` takes `change_concentration` and `new_concentration`,
+and only then publish the frontend. The frontend already in production keeps working after the
+migration: it calls `set_character_vitals` with the thirteen original arguments, which leaves the
+marker untouched. Rolling the frontend back after the migration is safe for the same reason.
+
 ## Vercel fallback
 
 Vite preset, npm ci, npm run build, output dist, base /. Same hash routes work without

@@ -151,6 +151,8 @@ export function SheetHero(props: HeroProps) {
   const { build, vitals, maxHp, level, canEdit, editing, pending, locked, commit, speed } = props
   const [mode, setMode] = useState<HpMode | null>(null)
   const [undo, setUndo] = useState<{ before: Vitals; text: string } | null>(null)
+  // RYT-134: the marker just ended by hand, offered back for a few seconds.
+  const [ended, setEnded] = useState<string | null>(null)
   const opener = useRef<HTMLElement | null>(null)
   const current = Math.min(vitals.current_hp, maxHp)
   const ratio = Math.round((current / Math.max(1, maxHp)) * 100)
@@ -172,6 +174,11 @@ export function SheetHero(props: HeroProps) {
   }
   const inspired = vitals.heroic_inspiration
   const dying = current === 0 && vitals.current_hp === 0
+  useEffect(() => {
+    if (!ended) return
+    const timer = setTimeout(() => setEnded(null), 12_000)
+    return () => clearTimeout(timer)
+  }, [ended])
   // The undo offer fades from the screen after a while; the next HP change replaces it.
   useEffect(() => {
     if (!undo) return
@@ -324,6 +331,9 @@ export function SheetHero(props: HeroProps) {
           <p className="sheet-concentration-text">
             <span className="sheet-concentration-label">{t('cast.marker.label')}</span>
             <span className="sheet-concentration-name user-copy">{vitals.concentration}</span>
+            {props.inEncounter && (
+              <span className="sheet-concentration-combat">{t('cast.marker.combat')}</span>
+            )}
           </p>
           {canEdit && !editing && (
             <Button
@@ -331,11 +341,30 @@ export function SheetHero(props: HeroProps) {
               className="sheet-concentration-end"
               leftSection={<X size={16} aria-hidden="true" />}
               aria-label={t('cast.marker.endNamed', { name: vitals.concentration })}
-              onClick={() => commit({ ...vitals, concentration: null }, undefined, { value: null })}
+              onClick={() => {
+                setEnded(vitals.concentration)
+                commit({ ...vitals, concentration: null }, undefined, { value: null })
+              }}
             >
               {t('cast.marker.end')}
             </Button>
           )}
+        </div>
+      )}
+      {ended && !vitals.concentration && canEdit && !editing && (
+        <div className="sheet-undo">
+          <span className="user-copy">{t('cast.marker.ended', { name: ended })}</span>
+          <Button
+            variant="default"
+            size="compact-md"
+            className="sheet-undo-button"
+            onClick={() => {
+              commit({ ...vitals, concentration: ended }, undefined, { value: ended })
+              setEnded(null)
+            }}
+          >
+            {t('sheet.undo')}
+          </Button>
         </div>
       )}
       {!editing && (

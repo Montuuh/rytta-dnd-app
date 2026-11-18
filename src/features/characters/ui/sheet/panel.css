@@ -1547,8 +1547,9 @@ span.sheet-inspiration {
 /* RYT-134 casting. The marker in the hero, "Lanzar" on a spell row and the cast dialog. */
 .sheet-concentration {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
   padding: 6px 6px 6px 12px;
   border-radius: 12px;
   background: var(--app-surface);
@@ -1562,7 +1563,7 @@ span.sheet-inspiration {
 .sheet-concentration-text {
   display: grid;
   gap: 1px;
-  flex: 1 1 auto;
+  flex: 1 1 10rem;
   min-width: 0;
   margin: 0;
 }
@@ -1572,10 +1573,22 @@ span.sheet-inspiration {
 }
 .sheet-concentration-name {
   font-weight: 600;
-  overflow-wrap: anywhere;
+  /* Words break only when one cannot fit; two lines at most, the rest is cut with an ellipsis
+     (the whole name stays in the text for assistive technology). */
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.sheet-concentration-combat {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
 }
 .sheet-concentration-end.mantine-Button-root {
   flex: none;
+  margin-inline-start: auto;
   min-height: 44px;
   color: var(--app-text);
 }
@@ -1606,10 +1619,14 @@ span.sheet-inspiration {
   text-align: end;
 }
 .cast-note {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
   padding: 8px 12px;
   border-radius: 12px;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
+  border-inline-start: 4px solid var(--app-accent);
 }
 .cast-note:focus-visible {
   outline: 3px solid var(--app-focus);
@@ -1618,19 +1635,40 @@ span.sheet-inspiration {
 .cast-manual {
   display: grid;
   gap: 8px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--app-border);
+  padding-top: 4px;
+}
+.cast-manual-toggle.mantine-Button-root {
+  justify-self: start;
+  min-height: 44px;
+  color: var(--app-text);
+}
+.cast-manual-body {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.spell-level-left {
+  font-weight: 400;
 }
 .cast-manual-current {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px 10px;
   min-width: 0;
 }
-.cast-manual-current > .user-copy {
+.cast-manual-end.mantine-Button-root {
+  flex: none;
+  margin-inline-start: auto;
+}
+.cast-manual-name {
+  flex: 1 1 10rem;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .cast-manual-form {
   display: grid;

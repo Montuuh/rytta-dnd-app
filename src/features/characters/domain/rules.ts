@@ -595,7 +595,9 @@ export function restRecovery(
   }
 }
 
-/** 2024 rests: a long rest restores HP, all hit dice, slots and uses; a short rest restores
+/** Test-only helper: real rests run on the server (`request_rest`) and the sheet reloads their
+ * result. This mirrors them for unit tests, including the long rest ending concentration.
+ * 2024 rests: a long rest restores HP, all hit dice, slots and uses; a short rest restores
  * short-rest uses and pact slots. A long rest also ends concentration (RYT-134).
  * Exhaustion stays a DM-controlled resource. */
 export function applyRest(vitals: Vitals, build: Build, maxHp: number, kind: 'short' | 'long') {

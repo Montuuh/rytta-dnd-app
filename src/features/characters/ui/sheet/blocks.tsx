@@ -29,6 +29,7 @@ import {
   Mountain,
   Orbit,
   Plus,
+  SlidersHorizontal,
   Trash2,
   WandSparkles,
   X,
@@ -46,11 +47,13 @@ import {
 } from '@/features/glossary'
 import { castAvailability, type CastAvailability } from '../../domain/casting'
 import { removeFeature } from '../../domain/progression'
-import { isClassKey, signed, skillBonus, spellcasting } from '../../domain/rules'
+import { isClassKey, signed, skillBonus, slotsFor, spellcasting } from '../../domain/rules'
 import {
   featureSources,
   hasForbiddenMarkerCharacters,
   markerFor,
+  stripForbiddenMarkerCharacters,
+  trimMarkerSpaces,
   type Feature,
   type Spell,
 } from '../../domain/sheet'
@@ -467,6 +470,10 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
       (draft) => ({ ...draft, build: { ...draft.build, spells: update(draft.build.spells) } }),
       notice,
     )
+  const slotMax = slotsFor(build.casterKind, level)
+  const slotLeft = (slotLevel: number) =>
+    slotMax[slotLevel - 1]! -
+    Math.min(slotMax[slotLevel - 1]!, vitals.slots_used[slotLevel - 1] ?? 0)
   return (
     <Stack gap="md">
       {casting ? (
@@ -493,12 +500,6 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
           {t('sheet.notCaster')}
         </Text>
       )}
-      {castNote && (
-        <Text size="sm" className="cast-note" tabIndex={-1} data-cast-note>
-          {castNote}
-        </Text>
-      )}
-      {canEdit && !editing && <ConcentrationManual {...props} />}
       {build.spells.length === 0 && casting && (
         <Text size="sm" c="dimmed">
           {t('sheet.noSpells')}
@@ -510,6 +511,15 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
             {spellLevelKey === 0
               ? t('sheet.cantrips')
               : t('sheet.slotLevel', { level: spellLevelKey })}
+            {spellLevelKey > 0 && slotMax[spellLevelKey - 1]! > 0 && (
+              <span className="spell-level-left">
+                {' · '}
+                {t('cast.slotLeft', {
+                  left: slotLeft(spellLevelKey),
+                  max: slotMax[spellLevelKey - 1]!,
+                })}
+              </span>
+            )}
           </Text>
           <ul className="feature-list">
             {build.spells
@@ -561,6 +571,20 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
           </Button>
         </Group>
       )}
+      {build.casterKind === 'pact' && (
+        <Text size="sm" c="dimmed">
+          {slotMax
+            .map((count, index) => (count > 0 ? index + 1 : 0))
+            .filter(Boolean)
+            .map((slotLevel) =>
+              t('cast.pactLeft', {
+                level: slotLevel,
+                left: slotLeft(slotLevel),
+                max: slotMax[slotLevel - 1]!,
+              }),
+            )}
+        </Text>
+      )}
       {adding && (
         <Stack gap="xs" className="panel-inline-form">
           <TextInput
@@ -610,6 +634,14 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
           </Group>
         </Stack>
       )}
+      {canEdit && !editing && <ConcentrationManual {...props} />}
+      {castNote && (
+        // Pinned to the bottom edge of the sheet while the list scrolls, under the thumb: the
+        // result of a cast is read where it is made.
+        <Text size="sm" className="cast-note" tabIndex={-1} data-cast-note>
+          {castNote}
+        </Text>
+      )}
     </Stack>
   )
 }
@@ -618,6 +650,7 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
  * own; this ends it or marks it without casting. */
 function ConcentrationManual({ vitals, commit }: PanelProps) {
   const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   // A pasted invisible or control character is refused in the field, never sent to the server.
   const invalid = hasForbiddenMarkerCharacters(text)
@@ -628,52 +661,78 @@ function ConcentrationManual({ vitals, commit }: PanelProps) {
     setText('')
   }
   return (
-    <section aria-labelledby="cast-manual-title" className="cast-manual">
-      <Text fw={600} id="cast-manual-title">
-        {t('cast.manual.heading')}
-      </Text>
-      {vitals.concentration ? (
-        <div className="cast-manual-current">
-          <Text className="user-copy">{vitals.concentration}</Text>
-          <Button
-            variant="default"
-            leftSection={<X size={16} aria-hidden="true" />}
-            aria-label={t('cast.marker.endNamed', { name: vitals.concentration })}
-            onClick={() => commit({ ...vitals, concentration: null }, undefined, { value: null })}
-          >
-            {t('cast.marker.end')}
-          </Button>
-        </div>
-      ) : (
-        <Text size="sm" c="dimmed">
-          {t('cast.manual.none')}
-        </Text>
-      )}
-      <form
-        className="cast-manual-form"
-        onSubmit={(event) => {
-          event.preventDefault()
-          set()
-        }}
+    <div className="cast-manual">
+      <Button
+        variant="subtle"
+        className="cast-manual-toggle"
+        aria-expanded={open}
+        aria-controls="cast-manual-body"
+        leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
+        onClick={() => setOpen((value) => !value)}
       >
-        <TextInput
-          label={t('cast.manual.label')}
-          description={t('cast.manual.hint')}
-          maxLength={100}
-          value={text}
-          error={invalid ? t('cast.manual.invalid') : undefined}
-          onChange={(event) => setText(event.currentTarget.value)}
-        />
-        <Button
-          type="submit"
-          variant="default"
-          aria-disabled={!marker || undefined}
-          aria-label={t('cast.manual.setNamed')}
+        {t('cast.manual.open')}
+      </Button>
+      {open && (
+        <section
+          id="cast-manual-body"
+          aria-label={t('cast.manual.open')}
+          className="cast-manual-body"
         >
-          {t('cast.manual.set')}
-        </Button>
-      </form>
-    </section>
+          {vitals.concentration ? (
+            <div className="cast-manual-current">
+              <Text className="user-copy cast-manual-name">{vitals.concentration}</Text>
+              <Button
+                variant="default"
+                className="cast-manual-end"
+                leftSection={<X size={16} aria-hidden="true" />}
+                aria-label={t('cast.marker.endNamed', { name: vitals.concentration })}
+                onClick={() =>
+                  commit({ ...vitals, concentration: null }, undefined, { value: null })
+                }
+              >
+                {t('cast.marker.end')}
+              </Button>
+            </div>
+          ) : (
+            <Text size="sm" c="dimmed">
+              {t('cast.manual.none')}
+            </Text>
+          )}
+          <form
+            className="cast-manual-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              set()
+            }}
+          >
+            <TextInput
+              label={t('cast.manual.label')}
+              description={t('cast.manual.hint')}
+              maxLength={100}
+              value={text}
+              error={invalid ? t('cast.manual.invalid') : undefined}
+              onChange={(event) => setText(event.currentTarget.value)}
+            />
+            {invalid && (
+              <Button
+                variant="default"
+                onClick={() => setText(trimMarkerSpaces(stripForbiddenMarkerCharacters(text)))}
+              >
+                {t('cast.manual.clean')}
+              </Button>
+            )}
+            <Button
+              type="submit"
+              variant="default"
+              aria-disabled={!marker || undefined}
+              aria-label={t('cast.manual.setNamed')}
+            >
+              {t('cast.manual.set')}
+            </Button>
+          </form>
+        </section>
+      )}
+    </div>
   )
 }
 

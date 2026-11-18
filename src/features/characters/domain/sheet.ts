@@ -154,6 +154,17 @@ export function markerFor(value: string): string | null {
     : null
 }
 export const concentrationSchema = z.string().refine((value) => markerFor(value) !== null)
+/** The marker as the sheet reads it. What the server stores is valid, but a sheet must never fail
+ * to load over a marker: anything unexpected is cleaned or dropped for display. */
+export function readMarker(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const marker = markerFor(value)
+  if (marker !== null) return marker
+  const cleaned = Array.from(trimMarkerSpaces(stripForbiddenMarkerCharacters(value)))
+    .slice(0, concentrationMaxLength)
+    .join('')
+  return trimMarkerSpaces(cleaned) || null
+}
 
 const safeRevision = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
 // A never-saved sheet stores {}; expose it as "no build yet" rather than failing.
@@ -184,11 +195,7 @@ export const vitalsSchema = z.object({
   slots_used: z.array(z.number().int().min(0).max(9)).length(9),
   tracker_uses: z.record(z.string().max(40), z.number().int().min(0).max(999)),
   /** RYT-134: the spell the character concentrates on (the server keeps 1 to 100 characters). */
-  concentration: z
-    .string()
-    .max(100)
-    .nullish()
-    .transform((value) => value ?? null),
+  concentration: z.unknown().optional().transform(readMarker),
   revision: safeRevision,
 })
 export type Vitals = z.infer<typeof vitalsSchema>

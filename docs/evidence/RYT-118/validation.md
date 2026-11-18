@@ -1,8 +1,8 @@
 # Delivery RYT-118: Table view tokens show class emblems
 
-Status: review (2026-11-17). Every acceptance criterion is met on the current tree, including
-the hosted migrations and the independent UI review. Not Done: the work is not committed or
-released (RYT-122).
+Status: done (2026-11-18). Every acceptance criterion is met, including the hosted migrations
+and the independent UI review. Merged to `main` through PR 13 on 2026-11-18 and live at
+https://rytta.pages.dev.
 
 ## Outcome
 

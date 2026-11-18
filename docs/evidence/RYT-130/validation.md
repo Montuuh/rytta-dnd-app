@@ -77,8 +77,44 @@ Both migrations: SAFE, no critical, high or medium findings. Low findings:
 
 ### Hosted production
 
-PENDING. The production apply runs right before the merge; this section is updated with the
-recorded versions, the `pre.apply_level_up` / `ch.absent` check and advisor results.
+Verified 2026-11-18. Both migrations were applied to the production project in one sitting, right
+before the merge.
+
+| Migration file | Recorded version | Integrity |
+|----------------|------------------|-----------|
+| `20261130120000_party_level_dice_settings.sql` | `20261118015333 party_level_dice_settings` | Stored text identical to the committed file (LF line endings) |
+| `20261202120000_level_up_history_absent.sql` | `20261118015418 level_up_history_absent` | md5 identical to the local file and to the staging apply |
+
+Read-only checks, in the production (`public`, `private`) and PRE (`pre`, `pre_private`) schemas:
+
+| Check | Result |
+|-------|--------|
+| `campaigns.party_level` exists and is null for every existing campaign | PASS |
+| `apply_level_up` contains the absent-character check (`ch.absent`), production and PRE | PASS |
+| `get_character_history` and `history_changes` know `level_up` | PASS |
+| `set_party_level` exists | PASS |
+| `save_character_sheet` refuses a manual level change on a finished sheet for a non-DM | PASS |
+| PRE copies carry no reference to the production schemas | PASS |
+| EXECUTE on the 26 changed functions: none for `anon`; `authenticated` only on the public RPCs and the roll-scope helper the roll policy needs | PASS |
+| Empty `search_path` on all 26 changed functions | PASS |
+| RLS enabled on every table: 43 `public`, 43 `pre`, 12 `private`, 12 `pre_private` | PASS |
+| Nightly pruning job unchanged and active | PASS |
+| Row counts unchanged: 3 campaigns, 15 characters, 15 sheets, 636 character events, 14 members, 8 accounts | PASS |
+
+Advisors: no error-level finding. Only the expected informational findings remain: on the new
+request table, and unused indexes on empty tables.
+
+Not verified in production: actor behaviour through the real API (no write tests on real data),
+the pruning job running with its new body, and realtime delivery of roll signals.
+
+### Merge
+
+PR 15 was merged to `main` (merge commit `0ee61dd`) after its checks and browser tests passed.
+Two test-only fixes were needed on the way, after `916776e`; no application source changed:
+
+- `a6ae929`: a database test depended on the creation order of rows created in the same instant;
+  it now compares claimable characters without relying on that order.
+- `a6bea20`: a level-up browser test forced a hidden radio input; it now taps the option label.
 
 ## Independent code and rules review
 
@@ -108,8 +144,12 @@ recorded versions, the `pre.apply_level_up` / `ch.absent` check and advisor resu
 - WebKit / iOS and real touch devices.
 - Own (non-SRD) classes and retroactive Constitution hit points in the browser; unit tests only.
 - Glossary loading and error states inside the level-up sheet.
+- Actor behaviour through the real API in production, the pruning job running with its new body
+  and realtime delivery of roll signals (see Hosted production).
+- Keyboard focus on a level-up option at 150 % text on a phone may sit under the sticky footer;
+  to be checked under RYT-135.
 
 ## Status
 
-Review (2026-11-18). Local checks, staging verification and both independent reviews are done.
-Open before Done: the hosted production apply and its catalog check.
+Done (2026-11-18). Local checks, staging and production verification, both independent reviews
+and the merge to `main` are recorded above. Follow-ups are in RYT-135.

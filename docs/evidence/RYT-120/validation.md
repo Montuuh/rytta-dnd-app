@@ -1,6 +1,7 @@
 # Delivery RYT-120: a Player with an absent character can leave a campaign
 
-Status: review (2026-11-17). Found during RYT-115 (see its follow-ups).
+Status: done (2026-11-18). Found during RYT-115 (see its follow-ups). The migration and its tests
+were merged to `main` through PR 13 on 2026-11-18.
 
 ## Outcome
 
@@ -34,5 +35,5 @@ succeeds.
 ## Untested and remaining
 
 - No leave by a real Player with an absent character has been exercised in production.
-- The migration file and its tests are in the uncommitted working tree; committing them is part
-  of the release checklist in RYT-122. No frontend release is needed for the fix to work.
+- The migration file and its tests were merged to `main` through PR 13 on 2026-11-18. No
+  frontend release was needed for the fix to work.

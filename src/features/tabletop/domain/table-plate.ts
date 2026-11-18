@@ -74,6 +74,17 @@ export function cornerToward(
   return `${v}-${h}` as PlateCorner
 }
 
+/** The corner a rotated screen shows where `corner` is in the plate's own frame (and back). */
+export function mirrorCorner(corner: PlateCorner): PlateCorner {
+  const [vertical, horizontal] = corner.split('-') as ['top' | 'bottom', 'left' | 'right']
+  return `${vertical === 'top' ? 'bottom' : 'top'}-${horizontal === 'left' ? 'right' : 'left'}`
+}
+
+export type PlateDirection = 'left' | 'right' | 'up' | 'down'
+const opposite = { left: 'right', right: 'left', up: 'down', down: 'up' } as const
+/** An arrow key on a screen turned 180 degrees moves the plate the other way in its own frame. */
+export const mirrorDirection = (direction: PlateDirection): PlateDirection => opposite[direction]
+
 /** The next corner clockwise: one press is enough for anyone who cannot drag. */
 export function nextCorner(corner: PlateCorner): PlateCorner {
   return plateCorners[(plateCorners.indexOf(corner) + 1) % plateCorners.length]!

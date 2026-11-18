@@ -4,6 +4,9 @@ import { ChevronRight, EyeOff, Skull } from 'lucide-react'
 import { CombatantToken, type Combatant } from '@/features/combat'
 import { orderLayout } from '../domain/table-order'
 
+/** A name that needs a smaller type to keep its words whole: long, or with a long word. */
+const isLong = (name: string) => name.length > 22 || name.split(/\s+/).some((w) => w.length > 9)
+
 type Props = {
   name: string
   status: 'initiative' | 'active'
@@ -63,7 +66,7 @@ export function TableOrder({
         ) : hiddenTurn ? (
           <div className="tt-order-now">
             <p className="tt-order-label">{t('combat.turn.now')}</p>
-            <p className="tt-order-actor">
+            <p className="tt-order-actor is-hidden-turn">
               <EyeOff aria-hidden="true" />
               {t('tabletop.table.hiddenTurn')}
             </p>
@@ -91,6 +94,8 @@ export function TableOrder({
       </header>
       <ol
         className="tt-order-list"
+        // A long order scrolls; the keyboard can reach it.
+        tabIndex={0}
         aria-label={t('combat.order.title')}
         style={{ '--tt-cols': columns, '--tt-rows': rows } as CSSProperties}
       >
@@ -108,7 +113,13 @@ export function TableOrder({
                 {isActive && <ChevronRight strokeWidth={3} />}
               </span>
               <CombatantToken combatant={c} showActive={false} />
-              <span className="tt-order-name">{c.name}</span>
+              <span
+                className="tt-order-name"
+                title={c.name}
+                data-long={isLong(c.name) || undefined}
+              >
+                {c.name}
+              </span>
               {down && (
                 <span className="tt-order-state">
                   <Skull aria-hidden="true" />

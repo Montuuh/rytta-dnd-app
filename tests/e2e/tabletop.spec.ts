@@ -1287,3 +1287,39 @@ test('RYT-126 one invalid token does not blank the map, and a scene change clear
   await expect(table.locator('.tt-tape-feet')).toHaveCount(0)
   expect(errors.filter((e) => !/invalid tabletop item/i.test(e))).toEqual([])
 })
+
+test('RYT-131 every scene card in the library is visible and none covers another', async ({
+  page,
+}) => {
+  test.setTimeout(60_000)
+  const { server } = await prepare(page)
+  for (const name of ['Puente de Vado', 'Cripta olvidada', 'Taberna del Ciervo'])
+    server.act('save_tabletop_scene', {
+      target_campaign: campaignId,
+      target_scene: null,
+      expected_revision: null,
+      request_id: `library-${name}`,
+      fields: { name, map_kind: 'blank', ground: 'grass', cols: 12, rows: 8, items: [] },
+    })
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  const cards = page.locator('.tt-plates > li')
+  await expect(cards).toHaveCount(3, { timeout: 15_000 })
+  for (const name of ['Puente de Vado', 'Cripta olvidada', 'Taberna del Ciervo'])
+    await expect(cards.filter({ hasText: name }).getByRole('button').first()).toBeVisible()
+  const boxes = await cards.evaluateAll((items) =>
+    items.map((item) => {
+      const { x, y, width, height } = item.getBoundingClientRect()
+      return { x, y, width, height }
+    }),
+  )
+  boxes.forEach((a, i) => {
+    expect(a.width).toBeGreaterThan(100)
+    expect(a.x + a.width).toBeLessThanOrEqual(page.viewportSize()!.width + 1)
+    boxes.forEach((b, j) => {
+      if (j <= i) return
+      const across = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)
+      const down = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)
+      expect(across > 1 && down > 1, `scene cards ${i} and ${j} overlap`).toBe(false)
+    })
+  })
+})

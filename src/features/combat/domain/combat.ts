@@ -450,14 +450,16 @@ export function healthBand(combatant: Combatant): HpBand | null {
   return combatant.hp_band ?? combatant.hp_status ?? 'unknown'
 }
 
-/** Up to two initials for a monogram: "Goblin 3" gives "G3", "Arin Vale" gives "AV". */
+/**
+ * Up to two initials for a monogram: "Goblin 3" gives "G3", "Arin Vale" gives "AV". A number that
+ * ends the name stays whole ("Goblin 12" gives "G12"), so the numbered creatures of a group differ.
+ */
 export function monogram(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => Array.from(part)[0]!.toLocaleUpperCase())
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+  return parts
+    .map((part, index) =>
+      index === 1 && /^\d{1,3}$/.test(part) ? part : Array.from(part)[0]!.toLocaleUpperCase(),
+    )
     .join('')
 }
 

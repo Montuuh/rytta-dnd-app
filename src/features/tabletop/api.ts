@@ -15,6 +15,9 @@ import {
 } from './data/repository'
 import { tabletopPollMs, type Item, type TabletopView } from './domain/model'
 
+/** How often a refused account checks again whether the DM has opened the map. */
+export const forbiddenRecheckMs = 120_000
+
 export const tabletopScope = (userId: string, campaignId: string) =>
   ['private', userId, 'campaign', campaignId, 'tabletop'] as const
 
@@ -34,12 +37,17 @@ export const tabletopQuery = (
       asTable ? 'table' : 'self',
     ],
     queryFn: ({ signal }) => loadTabletop(campaignId, sceneId, asTable, signal),
-    refetchInterval: tabletopPollMs(connected),
+    // A refusal is an answer, not a glitch: no second try, and only a slow re-check (the DM may open
+    // the map later) instead of the live poll.
+    refetchInterval: (query) =>
+      query.state.error?.message === 'forbidden' && !query.state.data
+        ? forbiddenRecheckMs
+        : tabletopPollMs(connected),
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 0,
-    retry: 1,
+    retry: (count, error) => error.message !== 'forbidden' && count < 1,
   })
 
 export const scenesQuery = (userId: string, campaignId: string) =>

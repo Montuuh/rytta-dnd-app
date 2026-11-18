@@ -2,7 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
-import { Compass, LogOut, Ruler, Volume2, VolumeX, Wifi, WifiOff } from 'lucide-react'
+import {
+  Compass,
+  LogOut,
+  Maximize,
+  Minimize,
+  Ruler,
+  Volume2,
+  VolumeX,
+  Wifi,
+  WifiOff,
+} from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import {
   combatStateQuery,
@@ -40,7 +50,9 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
   const { state } = useAuth()
   const userId = state.user!.id
-  const connected = useTabletopRealtime(campaignId, true)
+  // The channel opens once the map has been read: an account it refuses never subscribes.
+  const [permitted, setPermitted] = useState(false)
+  const connected = useTabletopRealtime(campaignId, permitted)
   useCombatRealtime(campaignId, true)
   const query = useQuery(tabletopQuery(userId, campaignId, null, true, connected))
   const combat = useQuery(combatStateQuery(userId, campaignId, null, true))
@@ -65,6 +77,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const loadFailed = query.isError && !view
   // A Player whose DM has not opened the map still has the fight: the screen shows the order.
   const mapForbidden = loadFailed && query.error.message === 'forbidden'
+  if (Boolean(view) !== permitted) setPermitted(Boolean(view))
   // A map that failed to load tries again by itself every few seconds (the button does it now).
   useEffect(() => {
     if (!loadFailed || mapForbidden) return
@@ -107,6 +120,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   useEffect(() => {
     if (!awake) return
     let lock: { release: () => Promise<void> } | null = null
+    let cancelled = false
     const request = () =>
       (
         navigator as Navigator & {
@@ -114,12 +128,18 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
         }
       ).wakeLock
         ?.request('screen')
-        .then((l) => (lock = l))
+        .then((l) => {
+          // The request can resolve after the screen was left: hand that lock back at once.
+          if (cancelled) return void l.release().catch(() => undefined)
+          void lock?.release().catch(() => undefined)
+          lock = l
+        })
         .catch(() => undefined)
     void request()
     const again = () => document.visibilityState === 'visible' && void request()
     document.addEventListener('visibilitychange', again)
     return () => {
+      cancelled = true
       document.removeEventListener('visibilitychange', again)
       void lock?.release().catch(() => undefined)
     }
@@ -156,13 +176,13 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   // own, such as the TV, goes to the campaign). Full screen ends with the screen.
   const navigate = useNavigate()
   const location = useLocation()
-  const leave = useCallback(
-    () =>
-      location.key !== 'default'
-        ? navigate(-1)
-        : navigate(`/campaign/${campaignId}`, { replace: true }),
-    [location.key, navigate, campaignId],
-  )
+  const leave = useCallback(() => {
+    if (location.key !== 'default') return void navigate(-1)
+    // A screen opened on its own (the DM's launch in a new tab, the TV) closes itself, so a stray key
+    // never lands on the interface behind it; where the browser refuses, it goes to the campaign.
+    window.close()
+    window.setTimeout(() => navigate(`/campaign/${campaignId}`, { replace: true }), 150)
+  }, [location.key, navigate, campaignId])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return
@@ -178,6 +198,19 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     },
     [],
   )
+
+  const [fullscreen, setFullscreen] = useState(() => Boolean(document.fullscreenElement))
+  useEffect(() => {
+    const sync = () => setFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', sync)
+    return () => document.removeEventListener('fullscreenchange', sync)
+  }, [])
+  const toggleFullscreen = () =>
+    void (
+      document.fullscreenElement
+        ? document.exitFullscreen()
+        : document.documentElement.requestFullscreen()
+    ).catch(() => undefined)
 
   const calibration = fromSetup(view?.live.screen)
   // RYT-126 J4-34: an uncalibrated map fits the space above the status bar, not the whole screen.
@@ -235,10 +268,13 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     ready: allCombatants.filter((c) => c.initiative !== undefined).length,
     total: allCombatants.length,
   }
-  // The map failed to load (not "not allowed"), or there is no map and the fight did not load.
+  // Each failure says what it is. A refusal has no retry; a network failure does. Without a map the
+  // fight is all there is, so its own failure is the screen's failure.
+  const combatDenied = combat.isError && !combat.data && combat.error.message === 'forbidden'
+  const combatFailed = combat.isError && !combat.data && !combatDenied
   const failed =
-    (loadFailed && !mapForbidden) || (!scene && Boolean(view) && combat.isError && !combat.data)
-  const forbidden = mapForbidden && combat.isError && !combat.data
+    (loadFailed && !mapForbidden) || (!scene && Boolean(view || mapForbidden) && combatFailed)
+  const forbidden = mapForbidden && combatDenied
   const waiting = scene ? false : (!view && !mapForbidden) || (!combat.data && !combat.isError)
 
   return (
@@ -282,8 +318,10 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       ) : !scene || !view ? (
         <div className="tt-table-empty">
           <Compass size={56} aria-hidden="true" />
-          <p className="tt-table-empty-title">{t('tabletop.table.nothing')}</p>
-          <p>{t(combat.data ? 'tabletop.table.nothingFight' : 'tabletop.table.nothingHelp')}</p>
+          <p className="tt-table-empty-title">
+            {t(mapForbidden ? 'tabletop.table.noFight' : 'tabletop.table.nothing')}
+          </p>
+          <p>{t(mapForbidden ? 'tabletop.table.noFightHelp' : 'tabletop.table.nothingFight')}</p>
         </div>
       ) : (
         // Keyed by scene: a new scene fades in instead of cutting (reduced motion: no fade).
@@ -396,6 +434,16 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
             </button>
           </>
         )}
+        {orderMode && (
+          <button type="button" className="tt-status-button" onClick={toggleFullscreen}>
+            {fullscreen ? (
+              <Minimize size={14} aria-hidden="true" />
+            ) : (
+              <Maximize size={14} aria-hidden="true" />
+            )}
+            {t(fullscreen ? 'tabletop.table.exitFullscreen' : 'tabletop.table.fullscreen')}
+          </button>
+        )}
         <button type="button" className="tt-status-button tt-leave" onClick={leave}>
           <LogOut size={14} aria-hidden="true" />
           {t('tabletop.table.leave')}
@@ -404,7 +452,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       <div className="visually-hidden" aria-live="polite" aria-atomic="true">
         {announcement}
       </div>
-      {!started && !orderMode && !waiting && (
+      {!started && !orderMode && !waiting && !mapForbidden && (
         <div
           className="tt-start"
           role="dialog"

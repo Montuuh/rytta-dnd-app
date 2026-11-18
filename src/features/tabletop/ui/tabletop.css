@@ -2553,7 +2553,9 @@ html.tt-table-mode {
 .tt-table-distance {
   position: absolute;
   top: 0.75rem;
-  right: 0.75rem;
+  /* Top centre: the turn plate takes the corners. */
+  left: 50%;
+  translate: -50% 0;
   z-index: 5;
   padding: 0.35em 0.65em;
   border-radius: 8px;
@@ -2649,7 +2651,7 @@ html.tt-table-mode {
 
 /* The turn plate over the map: now and next in a corner, moved and shrunk by the table. It wears the
    app's semantic tokens, so it reads in Hearth and in Parchment over any map. */
-.tt-plate {
+.tt-turnplate {
   position: absolute;
   z-index: 6;
   display: grid;
@@ -2663,45 +2665,45 @@ html.tt-table-mode {
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
   --tt-edge: 0.75rem;
 }
-.tt-plate[data-size='small'] {
+.tt-turnplate[data-size='small'] {
   width: auto;
   min-width: 11rem;
   max-width: min(22rem, 60vw);
 }
-.tt-plate[data-corner^='top'] {
+.tt-turnplate[data-corner^='top'] {
   top: var(--tt-edge);
 }
-.tt-plate[data-corner^='bottom'] {
+.tt-turnplate[data-corner^='bottom'] {
   bottom: calc(var(--tt-bar, 3rem) + var(--tt-edge) / 2);
 }
-.tt-plate[data-corner$='left'] {
+.tt-turnplate[data-corner$='left'] {
   left: var(--tt-edge);
 }
-.tt-plate[data-corner$='right'] {
+.tt-turnplate[data-corner$='right'] {
   right: var(--tt-edge);
 }
-.tt-plate.is-dragging {
+.tt-turnplate.is-dragging {
   z-index: 7;
   opacity: 0.9;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
 }
 /* A plate that may be out of date says so by its border as well as in the status bar. */
-.tt-plate.is-stale {
+.tt-turnplate.is-stale {
   border-style: dashed;
 }
-.tt-plate-head {
+.tt-turnplate-head {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
-.tt-plate-round {
+.tt-turnplate-round {
   margin: 0 auto 0 0;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--app-muted);
 }
-.tt-plate-key {
+.tt-turnplate-key {
   display: inline-grid;
   place-items: center;
   width: 44px;
@@ -2713,46 +2715,73 @@ html.tt-table-mode {
   cursor: pointer;
   touch-action: none;
 }
-.tt-plate-key:hover {
+.tt-turnplate-key:hover {
   background: var(--app-hover);
 }
-.tt-plate-key:focus-visible {
+.tt-turnplate-key:focus-visible {
   outline: 3px solid var(--app-focus);
   outline-offset: 2px;
 }
-.tt-plate-line {
+.tt-turnplate-line {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
-.tt-plate-line p {
+.tt-turnplate-line > div {
+  min-width: 0;
+}
+.tt-turnplate-line p {
   margin: 0;
 }
-.tt-plate-label {
+.tt-turnplate-label {
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--app-muted);
 }
-.tt-plate-name {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.tt-turnplate-name {
   margin: 0;
   font-family: Georgia, Cambria, serif;
   font-size: clamp(1.5rem, calc(var(--tt-sq, 40px) * 0.7), 2.5rem);
   font-weight: 700;
   line-height: 1.1;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
-.tt-plate-next {
+.tt-turnplate-name.is-hidden-turn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.tt-turnplate-stale {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  background: var(--danger);
+  color: var(--app-bg);
+  font-weight: 700;
+}
+.tt-turnplate-next {
   font-family: Georgia, Cambria, serif;
   font-size: clamp(1.125rem, calc(var(--tt-sq, 40px) * 0.5), 1.75rem);
   line-height: 1.15;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
-.tt-plate-line.is-next {
+.tt-turnplate-line.is-next {
   padding-top: 0.5rem;
   border-top: 1px solid var(--app-border);
 }
@@ -2817,14 +2846,18 @@ html.tt-table-mode {
   align-items: center;
   gap: clamp(0.75rem, 1.6vw, 1.5rem);
   min-width: 0;
-  --token-size: clamp(48px, 9vh, 104px);
+  --tt-token: clamp(48px, 9vh, 104px);
 }
 .tt-order-now {
   padding-left: clamp(0.75rem, 1.5vw, 1.5rem);
   border-left: 0.5rem solid var(--app-accent);
 }
 .tt-order-next {
-  --token-size: clamp(40px, 6.5vh, 72px);
+  --tt-token: clamp(40px, 6.5vh, 72px);
+}
+/* The token sets its own size on itself, so the order sets it on the token. */
+.tt-order .combat-token {
+  --token-size: var(--tt-token);
 }
 .tt-order-now > div,
 .tt-order-next > div {
@@ -2848,7 +2881,16 @@ html.tt-table-mode {
   font-size: clamp(2rem, 7.5vh, 5rem);
   font-weight: 700;
   line-height: 1.05;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  /* A long name takes at most two lines: the header never grows into the order. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.tt-order-actor.is-hidden-turn {
+  display: flex;
 }
 .tt-order-actor svg {
   flex: none;
@@ -2859,7 +2901,12 @@ html.tt-table-mode {
   font-family: Georgia, Cambria, serif;
   font-size: clamp(1.5rem, 4.2vh, 3rem);
   line-height: 1.1;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 /* Each row is as tall as the screen allows (container units), and the list scrolls only when more
@@ -2878,9 +2925,13 @@ html.tt-table-mode {
   list-style: none;
   overflow-y: auto;
 }
+.tt-order-list:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
 .tt-order-row {
   --row: calc(100cqh / var(--tt-rows));
-  --token-size: clamp(36px, calc(var(--row) * 0.66), 84px);
+  --tt-token: clamp(36px, calc(var(--row) * 0.6), 68px);
   display: grid;
   grid-template-columns: 1.5rem auto minmax(0, 1fr) auto auto;
   align-items: center;
@@ -2888,7 +2939,9 @@ html.tt-table-mode {
   min-width: 0;
   padding-right: 0.5rem;
   border-bottom: 1px solid var(--app-border);
-  font-size: clamp(1.25rem, calc(var(--row) * 0.4), 2.5rem);
+  font-size: clamp(1rem, calc(var(--row) * 0.4), 2.5rem);
+  min-height: 0;
+  overflow: hidden;
 }
 .tt-order-mark {
   display: grid;
@@ -2903,7 +2956,17 @@ html.tt-table-mode {
   min-width: 0;
   font-family: Georgia, Cambria, serif;
   line-height: 1.1;
-  overflow-wrap: anywhere;
+  /* Words break at word boundaries; what does not fit in two lines ends in an ellipsis (the full
+     name is the text, the tooltip and the accessible name). */
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.tt-order-name[data-long] {
+  font-size: 0.7em;
 }
 .tt-order-initiative {
   min-width: 2ch;
@@ -2945,7 +3008,8 @@ html.tt-table-mode {
   text-underline-offset: 0.15em;
 }
 
-@media (max-width: 47.99em) {
+/* Only the one-column phone layout (orderLayout: under 640px) reads in rows. */
+@media (max-width: 39.99em) {
   .tt-order-list {
     grid-auto-flow: row;
     grid-template-rows: none;

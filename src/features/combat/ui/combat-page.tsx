@@ -14,6 +14,7 @@ import { DmConsole } from './dm-console'
 import { EncounterGroup, EncounterList } from './encounter-list'
 import { useFreshness } from './helpers'
 import { TableDisplay } from './table-display'
+import { TableScreenLink } from './table-screen-link'
 import './combat.css'
 
 /** The viewer as the screens see it: DM (not previewing), or a Player (real or previewed). */
@@ -255,6 +256,7 @@ function DmViews({ encounterId, status }: { encounterId: string; status: Encount
         >
           {t('combat.back')}
         </Button>
+        {isLive(status) && <TableScreenLink campaignId={campaignId} newTab />}
         {status !== 'draft' && (
           <SegmentedControl
             value={view}

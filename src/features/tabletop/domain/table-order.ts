@@ -21,6 +21,13 @@ export type TurnMark = {
   round: number
 }
 
+/** Each announcement is a new object, so the same sentence twice in a row still reads out twice. */
+export type Announcement = { text: string; seq: number }
+export const nextAnnouncement = (previous: Announcement, text: string): Announcement => ({
+  text,
+  seq: previous.seq + 1,
+})
+
 export type AnnounceKey = 'tabletop.table.announce' | 'tabletop.table.announceHidden'
 export type AnnounceTranslate = (
   key: AnnounceKey,

@@ -1,10 +1,12 @@
 import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EyeOff, Maximize2, Minimize2, Move } from 'lucide-react'
+import { EyeOff, Maximize2, Minimize2, Move, WifiOff } from 'lucide-react'
 import { CombatantToken, type Combatant } from '@/features/combat'
 import {
   cornerFromPoint,
   cornerToward,
+  mirrorCorner,
+  mirrorDirection,
   nextCorner,
   readPlate,
   writePlate,
@@ -55,8 +57,11 @@ export function TurnPlate({
     const value = { ...prefs, ...change }
     setPrefs(value)
     writePlate(value)
-    if (change.corner)
-      setMoved(t('tabletop.plate.moved', { corner: t(`tabletop.plate.corner.${change.corner}`) }))
+    // The corner is named as the screen shows it: a turned screen mirrors the plate's own frame.
+    if (change.corner) {
+      const shown = flipped ? mirrorCorner(change.corner) : change.corner
+      setMoved(t('tabletop.plate.moved', { corner: t(`tabletop.plate.corner.${shown}`) }))
+    }
   }
   const place = (corner: PlateCorner) => corner !== prefs.corner && update({ corner })
 
@@ -90,7 +95,8 @@ export function TurnPlate({
     )[e.key as 'ArrowLeft']
     if (!direction) return
     e.preventDefault()
-    place(cornerToward(prefs.corner, direction))
+    // Arrow keys follow the screen, which a 180 degree turn mirrors against the plate's frame.
+    place(cornerToward(prefs.corner, flipped ? mirrorDirection(direction) : direction))
   }
 
   const style = {
@@ -102,21 +108,21 @@ export function TurnPlate({
 
   return (
     <aside
-      className={`tt-plate${stale ? ' is-stale' : ''}${drag ? ' is-dragging' : ''}`}
+      className={`tt-turnplate${stale ? ' is-stale' : ''}${drag ? ' is-dragging' : ''}`}
       data-corner={prefs.corner}
       data-size={prefs.size}
       aria-label={t('tabletop.plate.label')}
       style={style}
     >
-      <div className="tt-plate-head">
-        <p className="tt-plate-round">
+      <div className="tt-turnplate-head">
+        <p className="tt-turnplate-round">
           {status === 'initiative'
             ? t('combat.table.rolling')
             : t('tabletop.table.round', { round })}
         </p>
         <button
           type="button"
-          className="tt-plate-key"
+          className="tt-turnplate-key"
           aria-label={t('tabletop.plate.move')}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -137,7 +143,7 @@ export function TurnPlate({
         </button>
         <button
           type="button"
-          className="tt-plate-key"
+          className="tt-turnplate-key"
           aria-label={t(small ? 'tabletop.plate.grow' : 'tabletop.plate.shrink')}
           onClick={() => update({ size: small ? 'full' : 'small' })}
         >
@@ -149,33 +155,39 @@ export function TurnPlate({
         </button>
       </div>
       {status === 'initiative' ? (
-        <p className="tt-plate-name">
+        <p className="tt-turnplate-name">
           {t('combat.table.ready', { ready: ready.ready, total: ready.total })}
         </p>
       ) : hiddenTurn ? (
-        <p className="tt-plate-name">
+        <p className="tt-turnplate-name is-hidden-turn">
           <EyeOff size={22} aria-hidden="true" />
           {t('tabletop.table.hiddenTurn')}
         </p>
       ) : (
         <>
-          <div className="tt-plate-line is-now">
+          <div className="tt-turnplate-line is-now">
             {active && !small && <CombatantToken combatant={active} showActive={false} size={48} />}
             <div>
-              <p className="tt-plate-label">{t('combat.turn.now')}</p>
-              <p className="tt-plate-name">{active?.name ?? '—'}</p>
+              <p className="tt-turnplate-label">{t('combat.turn.now')}</p>
+              <p className="tt-turnplate-name">{active?.name ?? '—'}</p>
             </div>
           </div>
           {!small && next && (
-            <div className="tt-plate-line is-next">
+            <div className="tt-turnplate-line is-next">
               <CombatantToken combatant={next} showActive={false} size={32} />
               <div>
-                <p className="tt-plate-label">{t('combat.turn.upNext')}</p>
-                <p className="tt-plate-next">{next.name}</p>
+                <p className="tt-turnplate-label">{t('combat.turn.upNext')}</p>
+                <p className="tt-turnplate-next">{next.name}</p>
               </div>
             </div>
           )}
         </>
+      )}
+      {stale && (
+        <p className="tt-turnplate-stale">
+          <WifiOff size={18} aria-hidden="true" />
+          {t('tabletop.table.offline')}
+        </p>
       )}
       <span className="visually-hidden" role="status">
         {moved}

@@ -37,7 +37,11 @@ async function prepare(
 }
 
 /** Arin, Bea, a table alias for a secret creature, a hidden creature and `goblins` goblins. */
-function seedFight(combat: ReturnType<typeof combatServer>, goblins = 13) {
+function seedFight(
+  combat: ReturnType<typeof combatServer>,
+  goblins = 13,
+  options: { long?: boolean } = {},
+) {
   const { encounter_id: id } = combat.act('create_encounter', {
     encounter_name: 'Emboscada del puente',
   }) as { encounter_id: string }
@@ -48,6 +52,17 @@ function seedFight(combat: ReturnType<typeof combatServer>, goblins = 13) {
       { kind: 'character', character_id: beaId },
       { kind: 'npc', name: 'Lich Verdadero', public_name: 'Figura Encapuchada', max_hp: 40 },
       { kind: 'npc', name: 'Wyvern Secreta', hidden: true, max_hp: 30, dm_notes: secret[2] },
+      ...(options.long
+        ? [
+            {
+              kind: 'npc',
+              name: 'Guardiana',
+              public_name: 'Guardiana Ancestral de la Cripta Olvidada de Vadoscuro',
+              max_hp: 20,
+            },
+            { kind: 'npc', name: 'Archimandrita Ceremonial del Templo Hundido', max_hp: 20 },
+          ]
+        : []),
       { kind: 'npc', name: 'Goblin', count: goblins, max_hp: 7, armor_class: 12 },
     ],
   })
@@ -61,7 +76,35 @@ function seedFight(combat: ReturnType<typeof combatServer>, goblins = 13) {
       expected_active: encounter.active,
       request_id: crypto.randomUUID(),
     })
-  return { id, pass }
+  return { id, pass, encounter }
+}
+
+/** The screen's own network answers (as_table), for the "nothing hidden crosses the wire" check. */
+function watchTableResponses(page: Page) {
+  const bodies: Promise<string>[] = []
+  page.on('response', (response) => {
+    const request = response.request()
+    if (
+      /\/rpc\/get_(combat_state|tabletop)$/.test(response.url()) &&
+      request.postData()?.includes('"as_table":true')
+    )
+      bodies.push(response.text().catch(() => ''))
+  })
+  return async () => {
+    const all = await Promise.all(bodies)
+    expect(all.length).toBeGreaterThan(0)
+    for (const text of secret) expect(all.join('\n')).not.toContain(text)
+  }
+}
+
+/** The way in from the fight's screen: a Player follows the link; the DM's opens a new tab. */
+async function openScreen(page: Page, role: Role) {
+  const link = page.getByRole('link', { name: /Pantalla de mesa/ })
+  if (role === 'player') return link.click()
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', /noopener/)
+  // The fixture backend is per page, so the new tab is followed here at its address.
+  await page.goto((await link.getAttribute('href'))!)
 }
 
 function putSceneOnTable(server: ReturnType<typeof tabletopServer>) {
@@ -128,7 +171,8 @@ for (const role of ['dm', 'player'] as const)
           ? `./#/campaign/${campaignId}/combat/${id}`
           : `./#/campaign/${campaignId}/combat`,
       )
-      await page.getByRole('link', { name: 'Pantalla de mesa' }).click()
+      const checkWire = watchTableResponses(page)
+      await openScreen(page, role)
       const order = page.locator('.tt-order')
       await expect(order).toBeVisible({ timeout: 15_000 })
 
@@ -169,6 +213,12 @@ for (const role of ['dm', 'player'] as const)
       expect(await acting.evaluate((el) => getComputedStyle(el).fontWeight)).toBe('700')
       await expect(order.getByText('Figura Encapuchada')).toBeVisible()
       await expectNothingHidden(page)
+      await checkWire()
+      // The tokens scale with the display (they sat at 44px).
+      if (size.width >= 1280)
+        expect(
+          await order.locator('.tt-order-now .combat-token').evaluate((el) => el.clientWidth),
+        ).toBeGreaterThan(60)
 
       await expectTouchTargets(page, '.tt-status button:visible')
       await audit(page)
@@ -193,7 +243,8 @@ for (const role of ['dm', 'player'] as const)
           ? `./#/campaign/${campaignId}/combat/${id}`
           : `./#/campaign/${campaignId}/combat`,
       )
-      await page.getByRole('link', { name: 'Pantalla de mesa' }).click()
+      const checkWire = watchTableResponses(page)
+      await openScreen(page, role)
       await begin(page)
 
       const turn = plate(page)
@@ -207,7 +258,8 @@ for (const role of ['dm', 'player'] as const)
       const frame = await page.locator('.tt-table').boundingBox()
       expect(frame).toMatchObject({ x: 0, y: 0, width: size.width, height: size.height })
       await expectNothingHidden(page)
-      await expectTouchTargets(page, '.tt-plate button:visible, .tt-status button:visible')
+      await checkWire()
+      await expectTouchTargets(page, '.tt-turnplate button:visible, .tt-status button:visible')
       await audit(page)
 
       if (process.env.RYT_EVIDENCE)
@@ -216,19 +268,62 @@ for (const role of ['dm', 'player'] as const)
     })
   }
 
-test('RYT-131 a Player whose map is closed still gets the order', async ({ page }) => {
+test('RYT-131 a Player whose map is closed gets the order without hammering the map', async ({
+  page,
+}) => {
   test.setTimeout(90_000)
   await page.setViewportSize(sizes[1]!)
+  const frames: string[] = []
+  const calls: string[] = []
+  page.on('request', (request) => {
+    if (request.url().endsWith('/rpc/get_tabletop')) calls.push(request.url())
+  })
   const { combat, server } = await prepare(page, 'player', {
     modules: ['party', 'combat'],
     closed: true,
+  })
+  // Later routes win: watch the realtime socket the combat fixture otherwise swallows.
+  await page.routeWebSocket(/realtime\/v1\/websocket/, (socket) => {
+    socket.onMessage((message) => frames.push(String(message)))
   })
   seedFight(combat)
   putSceneOnTable(server)
   await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('alert')).toHaveCount(0)
+  // No start card: there is no map to play sound for.
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await expectNothingHidden(page)
+  // One refused call, no retry and no fast poll; and no channel on a table it cannot read.
+  const settled = calls.length
+  await page.waitForTimeout(7_000)
+  expect(settled).toBe(1)
+  expect(calls.length).toBe(1)
+  expect(frames.join('\n')).toContain('encounters:')
+  expect(frames.join('\n')).not.toContain('tabletop:')
+})
+
+test('RYT-131 without a map a Player gets an honest message for each failure', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const { combat } = await prepare(page, 'player', { modules: ['party', 'combat'], closed: true })
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  // No fight yet: what comes next is a fight, never a scene this Player cannot see.
+  await expect(page.getByText('No hay combate ahora')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText(/en cuanto el DM empiece un combate/)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByText(/escena/)).toHaveCount(0)
+  await audit(page)
+  seedFight(combat, 2)
+  await expect(page.locator('.tt-order')).toBeVisible({ timeout: 20_000 })
+
+  // The fight itself cannot be read (the network): a load failure with a retry, not "forbidden".
+  await page.route(/\/rpc\/get_combat_state$/, (route) => route.abort('connectionrefused'))
+  await page.reload()
+  const alert = page.getByRole('alert')
+  await expect(alert).toContainText('La mesa no se cargó', { timeout: 20_000 })
+  await expect(alert).not.toContainText('no puede ver')
+  await expect(alert.getByRole('button', { name: 'Reintentar' })).toBeVisible()
 })
 
 test('RYT-131 Escape and the visible key leave the screen', async ({ page }) => {
@@ -241,14 +336,14 @@ test('RYT-131 Escape and the visible key leave the screen', async ({ page }) => 
   await expect(heading).toBeVisible({ timeout: 15_000 })
 
   // Without a map: Escape goes back to where the screen was opened from.
-  await page.getByRole('link', { name: 'Pantalla de mesa' }).click()
+  await page.getByRole('link', { name: /Pantalla de mesa/ }).click()
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Escape')
   await expect(heading).toBeVisible()
   expect(page.url()).not.toContain('tabletop-table')
 
   // The visible key does the same.
-  await page.getByRole('link', { name: 'Pantalla de mesa' }).click()
+  await page.getByRole('link', { name: /Pantalla de mesa/ }).click()
   await expect(page.locator('.tt-order')).toBeVisible()
   const leave = page.getByRole('button', { name: 'Salir de la pantalla de mesa' })
   await leave.focus()
@@ -258,7 +353,7 @@ test('RYT-131 Escape and the visible key leave the screen', async ({ page }) => 
 
   // With a map, Escape works from the start card too.
   putSceneOnTable(server)
-  await page.getByRole('link', { name: 'Pantalla de mesa' }).click()
+  await page.getByRole('link', { name: /Pantalla de mesa/ }).click()
   await expect(page.getByRole('dialog', { name: 'Pantalla de mesa' })).toBeVisible({
     timeout: 15_000,
   })
@@ -271,7 +366,7 @@ test('RYT-131 Escape and the visible key leave the screen', async ({ page }) => 
     timeout: 15_000,
   })
   await page.keyboard.press('Escape')
-  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}$`))
+  await expect(page).toHaveURL(new RegExp(`#/campaign/${campaignId}(/party)?$`))
 })
 
 test('RYT-131 each turn change is announced once and the acting row follows it', async ({
@@ -289,9 +384,11 @@ test('RYT-131 each turn change is announced once and the acting row follows it',
   await live.evaluate((el) => {
     const seen: string[] = []
     ;(window as unknown as { announced: string[] }).announced = seen
+    let last = ''
     new MutationObserver(() => {
       const text = el.textContent ?? ''
-      if (text && seen.at(-1) !== text) seen.push(text)
+      if (text && text !== last) seen.push(text)
+      last = text
     }).observe(el, { childList: true, characterData: true, subtree: true })
   })
 
@@ -359,7 +456,7 @@ test('RYT-131 the plate moves by pointer and keys, shrinks, and keeps the choice
   await expect(turn).toHaveAttribute('data-size', 'small')
   await expect(turn).toContainText('Arin')
   await expect(turn).not.toContainText('Después')
-  await expectTouchTargets(page, '.tt-plate button:visible')
+  await expectTouchTargets(page, '.tt-turnplate button:visible')
   await audit(page)
 
   // The choice survives a reload.
@@ -420,6 +517,183 @@ test('RYT-131 the table screen says what it cannot show', async ({ page }) => {
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 20_000 })
 })
 
+/** Rows keep to their own space: none overlaps another or the status bar, names stay in two lines. */
+async function expectRowsApart(page: Page) {
+  const problems = await page.evaluate(() => {
+    const list = document.querySelector<HTMLElement>('.tt-order-list')!
+    const listBox = list.getBoundingClientRect()
+    const bar = document.querySelector('.tt-status')!.getBoundingClientRect()
+    const rows = [...list.querySelectorAll<HTMLElement>('.tt-order-row')]
+    const rects = rows.map((row) => row.getBoundingClientRect())
+    const out: string[] = []
+    if (listBox.bottom > bar.top + 1) out.push('the list runs under the status bar')
+    rows.forEach((row, i) => {
+      const rect = rects[i]!
+      const name = row.querySelector<HTMLElement>('.tt-order-name')!
+      const box = name.getBoundingClientRect()
+      const line = parseFloat(getComputedStyle(name).lineHeight)
+      const label = row.textContent?.slice(0, 30)
+      if (box.top < rect.top - 1 || box.bottom > rect.bottom + 1)
+        out.push(`name leaves its row: ${label}`)
+      if (box.height > line * 2 + 2) out.push(`name takes more than two lines: ${label}`)
+      if (name.scrollWidth > name.clientWidth + 1) out.push(`name runs sideways: ${label}`)
+      rects.forEach((other, j) => {
+        if (j <= i) return
+        const across = Math.min(rect.right, other.right) - Math.max(rect.left, other.left)
+        const down = Math.min(rect.bottom, other.bottom) - Math.max(rect.top, other.top)
+        if (across > 1 && down > 1) out.push(`rows overlap: ${label}`)
+      })
+    })
+    return out
+  })
+  expect(problems).toEqual([])
+}
+
+for (const size of sizes.slice(0, 2))
+  for (const zoom of ['100%', '150%']) {
+    test(`RYT-131 long names stay in their rows at ${size.name}px and ${zoom} text`, async ({
+      page,
+    }) => {
+      test.setTimeout(90_000)
+      await page.setViewportSize(size)
+      const { combat } = await prepare(page, 'player')
+      seedFight(combat, 9, { long: true })
+      await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+      await expect(page.locator('.tt-order-row')).toHaveCount(14, { timeout: 15_000 })
+      await page.evaluate((fontSize) => (document.documentElement.style.fontSize = fontSize), zoom)
+      await expect(page.getByText('Guardiana Ancestral de la Cripta')).toBeVisible()
+      await expectRowsApart(page)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      )
+      if (process.env.RYT_EVIDENCE)
+        await page.screenshot({
+          path: `${evidenceDir}/order-long-names-${size.name}-${zoom.replace('%', '')}.png`,
+        })
+    })
+  }
+
+test('RYT-131 the order follows a re-ordered and a shortened fight', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const { combat } = await prepare(page, 'player')
+  const { encounter } = seedFight(combat, 5)
+  const idOf = (name: string) => encounter.combatants.find((c) => c.name === name)!.id
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  const rows = page.locator('.tt-order-row')
+  const acting = page.locator('.tt-order-row[aria-current="step"]')
+  await expect(rows).toHaveCount(8, { timeout: 15_000 })
+  await expect(acting).toContainText('Arin')
+
+  // A total changed mid-round moves its row; the acting row stays Arin's.
+  encounter.combatants.find((c) => c.name === 'Goblin 5')!.initiative = 110
+  await expect(rows.first()).toContainText('Goblin 5', { timeout: 20_000 })
+  await expect(acting).toContainText('Arin')
+
+  // A combatant removed from the fight leaves the order.
+  combat.act('remove_combatant', { target_combatant: idOf('Goblin 2') })
+  await expect(rows).toHaveCount(7, { timeout: 20_000 })
+  await expect(page.locator('.tt-order-list')).not.toContainText('Goblin 2')
+  await expect(acting).toContainText('Arin')
+
+  // The acting combatant removed: the turn passes on and the row mark follows it.
+  combat.act('remove_combatant', { target_combatant: idOf('Arin') })
+  await expect(acting).toContainText('Bea', { timeout: 20_000 })
+  await expect(rows).toHaveCount(6)
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+test('RYT-131 a hidden creature’s turn is announced without a name', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const { combat } = await prepare(page, 'player')
+  const { encounter } = seedFight(combat, 3)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
+  const live = page.locator('.tt-table > .visually-hidden[aria-live="polite"]')
+  // The fixture cannot pass the turn to a hidden creature, so the DM's pick is set directly.
+  encounter.active = encounter.combatants.find((c) => c.name === 'Wyvern Secreta')!.id
+  await expect(live).toHaveText('Un turno fuera de vista, ronda 1', { timeout: 20_000 })
+  await expect(page.locator('.tt-order-actor')).toHaveText('Turno oculto')
+  await expect(page.locator('.tt-order-next')).toHaveCount(0)
+  await expect(page.locator('.tt-order-row[aria-current="step"]')).toHaveCount(0)
+  await expectNothingHidden(page)
+})
+
+test('RYT-131 a turned table mirrors the plate’s arrow keys and its announced corner', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const { combat, server } = await prepare(page, 'dm')
+  seedFight(combat, 3)
+  const scene = putSceneOnTable(server)
+  server.act('set_tabletop_live', {
+    target_campaign: campaignId,
+    request_id: 'turned',
+    patch: {
+      scene_id: scene,
+      screen: { diagonal_in: 32, px_w: 1920, px_h: 1080, base_mm: 25.4, fine: 1, flip: true },
+    },
+  })
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await begin(page)
+  const turn = plate(page)
+  await expect(turn).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.tt-table')).toHaveClass(/is-flipped/)
+  const move = turn.getByRole('button', { name: /^Mover la placa de turno/ })
+  await move.focus()
+  // Right on the screen is left in the turned frame: the plate is already at the left, so it stays.
+  await page.keyboard.press('ArrowRight')
+  await expect(turn).toHaveAttribute('data-corner', 'top-left')
+  // Left on the screen moves it to the other side of its frame, and the corner named is the screen's.
+  await page.keyboard.press('ArrowLeft')
+  await expect(turn).toHaveAttribute('data-corner', 'top-right')
+  await expect(turn.getByRole('status')).toHaveText(
+    'Placa de turno en la esquina inferior izquierda',
+  )
+  // The plate is where the screen says: at the bottom left of the physical screen.
+  const box = (await turn.boundingBox())!
+  expect(box.x + box.width / 2).toBeLessThan(640)
+  expect(box.y + box.height / 2).toBeGreaterThan(360)
+})
+
+test('RYT-131 the table screen at 390px: order and map', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const { combat, server } = await prepare(page, 'player')
+  seedFight(combat)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  const order = page.locator('.tt-order')
+  await expect(order).toBeVisible({ timeout: 15_000 })
+  // One column; the list may scroll here, and the acting row is in view.
+  expect(
+    await order
+      .locator('.tt-order-list')
+      .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length),
+  ).toBe(1)
+  await expect(order.locator('.tt-order-row[aria-current="step"]')).toBeInViewport()
+  await expectNothingHidden(page)
+  await expectTouchTargets(page, '.tt-status button:visible')
+  await audit(page)
+  if (process.env.RYT_EVIDENCE) await page.screenshot({ path: `${evidenceDir}/order-390.png` })
+
+  putSceneOnTable(server)
+  await page.reload()
+  await begin(page)
+  const turn = plate(page)
+  await expect(turn).toBeVisible({ timeout: 15_000 })
+  const box = (await turn.boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(390)
+  await expectTouchTargets(page, '.tt-turnplate button:visible, .tt-status button:visible')
+  await audit(page)
+  if (process.env.RYT_EVIDENCE) await page.screenshot({ path: `${evidenceDir}/map-390.png` })
+})
+
 // Evidence: both themes and languages, with and without a map, at the three sizes.
 test('RYT-131 evidence captures', async ({ page }) => {
   test.skip(!process.env.RYT_EVIDENCE, 'Evidence captures run with RYT_EVIDENCE')
@@ -445,7 +719,7 @@ test('RYT-131 evidence captures', async ({ page }) => {
           await page.reload()
           if (scene) {
             await page.locator('.tt-start-button').click()
-            await expect(page.locator('.tt-plate')).toBeVisible({ timeout: 15_000 })
+            await expect(page.locator('.tt-turnplate')).toBeVisible({ timeout: 15_000 })
             await page.waitForTimeout(600)
           } else await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
           await page.screenshot({

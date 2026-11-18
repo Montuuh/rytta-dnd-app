@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
-  Button,
   Group,
   Loader,
   Stack,
@@ -10,9 +9,8 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
-import { ChevronsRight, EyeOff, Hourglass, Monitor, Pencil } from 'lucide-react'
+import { ChevronsRight, EyeOff, Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import {
   canEndTurn,
@@ -27,6 +25,7 @@ import {
   type CombatState,
   type Combatant,
 } from '../domain/combat'
+import { useCampaign } from '@/features/campaigns'
 import { CombatSummary } from './combat-summary'
 import { DeathSaveTracker } from './death-saves'
 import { useDeathSaveAnnouncements, useResuming, useRunner } from './helpers'
@@ -36,6 +35,7 @@ import { OwnNews } from './own-news'
 import { OwnStrip } from './own-strip'
 import { NetworkState, Pips, RunnerError } from './parts'
 import { RecentEvents } from './recent-events'
+import { TableScreenLink } from './table-screen-link'
 import { CombatantToken } from './token'
 import { useOwnNews } from './use-own-news'
 
@@ -64,6 +64,7 @@ export function TableDisplay({
   updatedAt?: number
 }) {
   const { t } = useTranslation()
+  const isDm = useCampaign().role === 'dm'
   const encounter = state.encounter!
   const status = encounter.status
   const combatants = state.combatants
@@ -137,19 +138,10 @@ export function TableDisplay({
             )}
           </Group>
         </div>
-        {(status === 'active' || status === 'initiative') && (
+        {(status === 'active' || status === 'initiative') &&
           // RYT-131: every member opens the same chrome-less table screen from here.
-          <Button
-            component={Link}
-            to={`/campaign/${campaignId}/tabletop-table`}
-            variant="default"
-            size="md"
-            className="combat-table-screen"
-            leftSection={<Monitor size={20} aria-hidden="true" />}
-          >
-            {t('combat.table.screen')}
-          </Button>
-        )}
+          // (the DM has it in the bar above both views).
+          !isDm && <TableScreenLink campaignId={campaignId} newTab={false} />}
       </header>
       <RunnerError error={error} trigger={trigger} onClose={clear} />
 

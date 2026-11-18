@@ -431,10 +431,16 @@ is replaced by the locked value and a pointer for Players; the DM keeps the step
 
 One chrome-less screen at `#/campaign/:id/tabletop-table`, read-only, for every member of the campaign.
 It reads the table projection only, so hidden creatures, real names behind an alias and DM fields are
-never in the page, whoever opens it. The way in is a "Table screen" link in the header of the fight's
-table view, for the DM and for Players; Escape or the "Leave the table screen" key in the status bar
-(44px, always visible) goes back to where it was opened, or to the campaign when it was opened on its
-own, and ends full screen with it. Escape first closes the ruler or the browser's full screen.
+never in the page, whoever opens it. The way in is a "Table screen" link: in the header of the fight's
+table view for Players (same tab; focus returns to the link on the way back) and in the bar above both
+views for the DM (a new tab, so a stray key on a shared display never reaches the DM's interface).
+Escape or the "Leave the table screen" key in the status bar (44px, always visible) goes back to where
+it was opened; a screen opened on its own closes its tab, or goes to the campaign where the browser
+refuses. Leaving ends full screen. Escape first closes the ruler or the browser's full screen. The
+order screen has a "Full screen" key in the bar. A Player whose DM has not opened the map module is
+refused the map once: the screen shows the order, makes no further map calls beyond a slow re-check,
+opens no map channel and shows no start card; with no fight it says no fight is running, and a
+network failure of the fight says so with a retry.
 
 - With a scene on the table: the map fills the screen and the turn plate sits over a corner while a
   fight is live. The plate is a raised surface in the semantic tokens with an accent border (so it
@@ -445,8 +451,11 @@ own, and ends full screen with it. Escape first closes the ruler or the browser'
   keeps the acting name alone. A hidden creature's turn shows only "Hidden turn", and collecting
   initiative shows how many are ready. The corner and size live in `localStorage['rytta-table-plate']`
   and fall back to top left and full size when storage is blocked. Bottom corners stay above the
-  status bar. Position changes are instant, so reduced motion has nothing to cut. A stale plate has a
-  dashed border; the offline state and its age stay in the status bar.
+  status bar. On a table turned 180 degrees the arrow keys and the named corner follow the screen,
+  not the plate's own frame. Position changes are instant, so reduced motion has nothing to cut. A
+  stale plate has a dashed border and an "offline" strip; the age stays in the status bar. Names take
+  at most two lines and break at word boundaries; "Hidden turn" never wraps. The ruler's distance
+  readout sits at the top centre, clear of the corners.
 - Without a scene (or where the Player's DM has not opened the map): the order is the screen, in the
   semantic tokens of the chosen theme. A header carries the fight, the round, "Now" in display size
   (up to 5rem) and "Up next". Below, the whole turn order reads down two or three columns
@@ -454,8 +463,12 @@ own, and ends full screen with it. Escape first closes the ruler or the browser'
   keeps two). Each row is as tall as the screen allows (container units), so 16 combatants fit without
   scrolling at 1280x720, 1920x1080 and 820x1180, with names from 26px to 40px; a longer order scrolls
   and the acting row is scrolled into view. The acting row has a chevron, bold weight, the raised mat
-  and a ruled accent bar, never colour alone. Defeated rows are struck through with a skull and the
-  word. Initiative totals sit at the row's edge with a visually hidden "Initiative N".
-- Each turn change (and each new round) is announced once by a polite live region ("Arin's turn, round
+  and a ruled accent bar, never colour alone. Names take at most two lines at word boundaries and then
+  end in an ellipsis (the full name is the tooltip and the accessible name), so a row never spills
+  into the next one or under the status bar, also at 150% text; tokens scale with the row. Below
+  640px the order is one column read in rows. The list is a Tab stop so a long order can be scrolled
+  by keyboard. Defeated rows are struck through with a skull and the word. Initiative totals sit at the row's edge with a visually hidden "Initiative N".
+- Each turn change (and each new round) is announced once by a polite live region, emptied just before
+  each sentence so two turns with the same words are both read out ("Arin's turn, round
   2"; a hidden creature's turn is announced without a name). The first state after opening is not
   announced. The full-screen strip reserved by `scrollbar-gutter` is off while the screen is open.

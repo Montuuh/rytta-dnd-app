@@ -1816,6 +1816,7 @@ async function playerPage(
   server: ReturnType<typeof combatServer>,
   as: string,
   errors: string[],
+  diceMode?: 'physical' | 'app' | 'player',
 ) {
   const context = await browser.newContext({
     viewport: info.project.use.viewport,
@@ -1830,6 +1831,7 @@ async function playerPage(
     sheet: 'complete',
     modules: ['party', 'combat'],
     as,
+    diceMode,
   })
   await server.install(page)
   await page.goto(`./#/campaign/${campaignId}/combat`)
@@ -2263,13 +2265,21 @@ test('RYT-126 initiative entry rolls for the Player, warns on odd totals and mar
     },
     peerId,
   )
-  const arin = await playerPage(browser, info, server, playerId, errors)
+  const arin = await playerPage(browser, info, server, playerId, errors, 'player')
   const entry = arin.locator('.combat-entry')
   await expect(entry).toBeVisible({ timeout: 15_000 })
+  // RYT-133: the DM left the dice to each Player. Physical until this Player picks the app: the
+  // keypad is there and the roll button is not.
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+  await expect(arin.getByRole('group', { name: 'Teclado numérico' })).toBeVisible()
+  await entry.locator('label', { hasText: 'En la app' }).click()
+  await expect(arin.getByRole('group', { name: 'Teclado numérico' })).toHaveCount(0)
   await entry.getByRole('button', { name: 'Tirar por mí' }).click()
   await expect(entry.locator('.combat-entry-formula')).toContainText('Salió', { timeout: 15_000 })
   const total = Number((await entry.locator('.combat-d20-input input').inputValue()) || 0)
   expect(total).toBeGreaterThanOrEqual(1)
+  await entry.locator('label', { hasText: 'Físicos' }).click()
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
   // 25 is outside d20 + bonus for a bonus of 2: a warning, and saving stays possible.
   await entry.getByRole('button', { name: 'Borrar', exact: true }).click()
   await arin.getByRole('button', { name: '2', exact: true }).click()

@@ -1,0 +1,312 @@
+/* RYT-133 dice on the sheet. A rollable number is the number itself with a solid accent underline
+   (the glossary keeps its dotted one); the result and the recent rolls are plain surfaces. */
+.roll-point {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.roll-point-text {
+  display: block;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--app-accent) 75%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.roll-point:hover {
+  background: var(--app-hover);
+}
+
+.roll-point:active {
+  background: color-mix(in srgb, var(--app-accent) 20%, transparent);
+}
+
+.roll-point:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+.roll-point[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.roll-hint {
+  margin: 0 0 8px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.roll-result {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 10px 52px 10px 12px;
+  border: 1px solid var(--app-accent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--app-accent) 9%, var(--app-surface));
+}
+
+.roll-result[data-where='sheet'] {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 12px;
+}
+
+.roll-result[data-phase='failed'] {
+  border-color: var(--danger);
+}
+
+.roll-result-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.roll-result-total {
+  display: grid;
+  place-items: center;
+  flex: none;
+  min-width: 2.6ch;
+  min-height: 2.6rem;
+  font-family: Georgia, Cambria, serif;
+  font-size: 2.25rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-accent);
+}
+
+.roll-result-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.roll-result-name,
+.roll-result-state {
+  margin: 0;
+}
+
+.roll-result-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.roll-result-maths {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.roll-die {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2ch;
+  padding: 0 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-raised);
+  font-weight: 700;
+}
+
+.roll-result-formula {
+  margin-inline-start: 6px;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.roll-result-state {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.roll-result-close {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 2px;
+}
+
+.roll-result-retry {
+  margin-top: 8px;
+}
+
+.roll-result-retry button {
+  min-height: 44px;
+}
+
+.roll-result-alert {
+  scroll-margin-bottom: calc(var(--bottom-nav-h, 0px) + 16px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .roll-result:not([data-phase='rolling']) .roll-result-total {
+    animation: roll-pop 220ms ease-out;
+  }
+}
+
+@keyframes roll-pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+}
+
+.roll-strip {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roll-strip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roll-strip-head h2 {
+  margin: 0;
+}
+
+.roll-strip-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roll-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  overflow: hidden;
+}
+
+.roll-entry {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--app-border);
+}
+
+.roll-entry:first-child {
+  border-top: 0;
+}
+
+.roll-entry[data-own] {
+  box-shadow: inset 3px 0 0 var(--app-accent);
+}
+
+.roll-entry-total {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.5rem;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.roll-entry-body {
+  min-width: 0;
+}
+
+.roll-entry-name,
+.roll-entry-maths {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.roll-entry-name {
+  font-weight: 600;
+}
+
+.roll-entry-who {
+  font-weight: 400;
+  color: var(--app-muted);
+}
+
+.roll-entry-maths {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.roll-drawer .roll-list {
+  margin-bottom: 8px;
+}
+
+.roll-record-dice {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 12px;
+}
+
+.roll-record-formula {
+  margin: 0;
+  font-weight: 600;
+}
+
+.roll-record-sum {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.roll-record-sum:empty {
+  display: none;
+}
+
+.dice-choice {
+  display: grid;
+  gap: 6px;
+}
+
+.dice-choice .mantine-SegmentedControl-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.dice-choice-hint {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.roll-point-formula {
+  display: block;
+  margin-top: 5px;
+  font-size: var(--fs-tag);
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--app-muted);
+  white-space: nowrap;
+}
+
+.dice-choice {
+  margin-bottom: 6px;
+}

@@ -6,6 +6,7 @@ import { Check, Dices } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
+import { DiceModeChoice, checkSpec, useDiceMode, useQuietRollLog } from '@/features/dice'
 import { rollDice } from '@/shared/ui/dice/roll-dice'
 import { initiativeOutlier, isInitiativeTotal, type Combatant } from '../domain/combat'
 import { InitiativeKeypad } from './amount-dialog'
@@ -48,12 +49,19 @@ export function InitiativeEntry({
   const unusual = valid && initiativeOutlier(value, bonus)
   const [rolling, setRolling] = useState(false)
   const [rolled, setRolled] = useState('')
+  // RYT-133: the table's dice mode decides: physical dice are typed in, dice in the app are rolled
+  // here and nothing is typed, so initiative never behaves unlike the sheet and the short rest.
+  const { behaviour } = useDiceMode(campaignId)
+  const appDice = behaviour === 'app'
+  const logRoll = useQuietRollLog(campaignId, combatant.character_id ?? null)
   const rollForMe = async () => {
     if (rolling) return
     setRolling(true)
     try {
       const [die = 1] = await rollDice(1, 20)
       const modifier = bonus ?? 0
+      const spec = checkSpec('initiative', 'initiative', modifier)
+      if (spec) logRoll(spec, [die])
       setAmount(die + modifier)
       setRolled(
         t('combat.initiative.rolled', {
@@ -103,6 +111,7 @@ export function InitiativeEntry({
         }}
       >
         <div className="combat-entry-face">
+          <DiceModeChoice campaignId={campaignId} />
           <Text component="h3" id={titleId} tabIndex={-1} className="combat-entry-title">
             {t('combat.initiative.yours')}
           </Text>
@@ -122,7 +131,8 @@ export function InitiativeEntry({
               // Out-of-range totals stay as typed and are explained below (RYT-042 F5).
               clampBehavior="none"
               allowDecimal={false}
-              inputMode="numeric"
+              readOnly={appDice}
+              inputMode={appDice ? 'none' : 'numeric'}
               placeholder="?"
               value={amount}
               onChange={setAmount}
@@ -153,23 +163,27 @@ export function InitiativeEntry({
           </Text>
         </div>
         <div className="combat-entry-keys">
-          <Button
-            variant="default"
-            size="lg"
-            className="combat-entry-roll"
-            leftSection={<Dices size={20} aria-hidden="true" />}
-            aria-disabled={rolling || undefined}
-            aria-busy={rolling || undefined}
-            onClick={() => void rollForMe()}
-          >
-            {t('combat.initiative.rollForMe')}
-          </Button>
-          <InitiativeKeypad
-            onChange={(next) => {
-              setRolled('')
-              setAmount(next)
-            }}
-          />
+          {appDice && (
+            <Button
+              variant="default"
+              size="lg"
+              className="combat-entry-roll"
+              leftSection={<Dices size={20} aria-hidden="true" />}
+              aria-disabled={rolling || undefined}
+              aria-busy={rolling || undefined}
+              onClick={() => void rollForMe()}
+            >
+              {t('combat.initiative.rollForMe')}
+            </Button>
+          )}
+          {!appDice && (
+            <InitiativeKeypad
+              onChange={(next) => {
+                setRolled('')
+                setAmount(next)
+              }}
+            />
+          )}
           <div className="combat-entry-actions">
             {editing && (
               <Button variant="subtle" size="lg" onClick={cancel}>

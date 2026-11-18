@@ -32,6 +32,15 @@ import {
   useCampaignView,
   useIsRealDm,
 } from '@/features/campaigns'
+import {
+  DiceModeChoice,
+  DiceProvider,
+  RecentRolls,
+  RollHint,
+  RollPoint,
+  RollResultSlot,
+  attackSpecs,
+} from '@/features/dice'
 import { useSrdLibrary } from '@/features/glossary'
 import {
   attacks,
@@ -259,6 +268,12 @@ function SheetPanel({
   const labels = useCharacterLabels()
   const library = useSrdLibrary()
   const inventory = useQuery(inventoryQuery(state.user!.id, campaign.id, character.id))
+  // RYT-133: whose roll is whose, for the characters this account can see.
+  const partyList = useQuery(charactersQuery(state.user!.id, campaign.id))
+  const rollerNames = useMemo(
+    () => new Map((partyList.data ?? []).map((item) => [item.id, item.name])),
+    [partyList.data],
+  )
   const definitions = useMemo(
     () => new Map((inventory.data?.definitions ?? []).map((d) => [d.id, d])),
     [inventory.data?.definitions],
@@ -515,7 +530,23 @@ function SheetPanel({
   const detail: Record<TileKey, ReactNode> = {
     resources: <ResourcesBlock {...props} onPersonalise={() => setPersonalise(true)} />,
     skills: <SkillsBlock {...props} />,
-    attacks: <SheetAttacks lines={attackList} />,
+    attacks: (
+      <>
+        <RollHint />
+        <SheetAttacks
+          lines={attackList}
+          renderRoll={(line, part, content) => {
+            const specs = attackSpecs(line)
+            const spec = part === 'hit' ? specs.hit : specs.damage
+            return (
+              <RollPoint spec={editing ? null : spec} formula="replace">
+                {content}
+              </RollPoint>
+            )
+          }}
+        />
+      </>
+    ),
     features: <FeaturesBlock {...props} onLibrary={() => openLibrary('features')} />,
     conditions: <ConditionsBlock {...props} exhaustion={exhaustion} />,
     spells: <SpellsBlock {...props} onLibrary={() => openLibrary('spells')} />,
@@ -588,246 +619,252 @@ function SheetPanel({
         }
       : null
   return (
-    <Stack gap="md" className="character-sheet panel-sheet" data-editing={editing || undefined}>
-      <Group justify="space-between" wrap="nowrap" gap="xs" className="sheet-header">
-        {back}
-        <Group gap="xs" wrap="nowrap" className="sheet-header-actions">
-          <RefreshControl
-            onRefresh={refresh.run}
-            fetching={refresh.fetching}
-            updatedAt={refresh.updatedAt}
+    <DiceProvider campaignId={campaign.id} characterId={character.id} canRoll={canEdit && !editing}>
+      <Stack gap="md" className="character-sheet panel-sheet" data-editing={editing || undefined}>
+        <Group justify="space-between" wrap="nowrap" gap="xs" className="sheet-header">
+          {back}
+          <Group gap="xs" wrap="nowrap" className="sheet-header-actions">
+            <RefreshControl
+              onRefresh={refresh.run}
+              fetching={refresh.fetching}
+              updatedAt={refresh.updatedAt}
+            />
+            {canEdit && !editing && (
+              <Tooltip label={t('panel.edit')} events={{ hover: true, focus: true, touch: true }}>
+                <ActionIcon
+                  ref={pencil}
+                  size={44}
+                  className="sheet-tool"
+                  aria-label={t('panel.edit')}
+                  onClick={() => {
+                    if (!action.isPending) startEditing()
+                  }}
+                >
+                  <Pencil size={20} aria-hidden="true" />
+                </ActionIcon>
+              </Tooltip>
+            )}
+          </Group>
+        </Group>
+        {editing && (
+          <div className="panel-editbar" role="region" aria-label={t('panel.editing')}>
+            <Text fw={600} ref={editHeading} tabIndex={-1} className="panel-editbar-title">
+              {t('panel.editing')}
+            </Text>
+            <Text size="sm" c="dimmed" className="panel-editbar-hint">
+              {t('panel.editingHint')}{' '}
+              <Link to={`${characterPath}/create?mode=full`}>{t('panel.fullWizard')}</Link>
+            </Text>
+            <EditActions
+              pending={action.isPending}
+              disabled={!validName}
+              onCancel={() => {
+                // A dirty draft asks first, as leaving the page does.
+                if (dirty) return setCancelAsk(true)
+                action.reset()
+                stopEditing()
+              }}
+              onSave={() => void save(draft, 'sheet.saved', stopEditing)}
+            />
+          </div>
+        )}
+        {/* With a sheet open the error shows inside it instead (never behind, never twice). */}
+        {action.isError && open === null && !personalise && libraryTab === null && (
+          <Alert color="red" role="alert">
+            {t(errorKey)}
+          </Alert>
+        )}
+        <div aria-live="polite" className="visually-hidden-live">
+          {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
+        </div>
+        {levelUpDue && !editing && campaign.party_level !== null && (
+          <LevelUpPrompt
+            name={character.name}
+            level={sheet.level}
+            party={campaign.party_level}
+            locked={locked}
+            onStart={openLevelUp}
           />
-          {canEdit && !editing && (
-            <Tooltip label={t('panel.edit')} events={{ hover: true, focus: true, touch: true }}>
-              <ActionIcon
-                ref={pencil}
-                size={44}
-                className="sheet-tool"
-                aria-label={t('panel.edit')}
-                onClick={() => {
-                  if (!action.isPending) startEditing()
+        )}
+        <div className="panel-layout">
+          <div className="panel-main">
+            <SheetHero
+              {...props}
+              exhaustion={exhaustion}
+              name={shownName}
+              subtitle={subtitle}
+              note={canEdit ? null : absentOwner ? t('sheet.absentReadOnly') : t('sheet.readOnly')}
+            />
+            {canEdit && !editing && <DiceModeChoice campaignId={campaign.id} />}
+            <AbilityStrip {...props} />
+            {open === null && <RollResultSlot where="page" campaignId={campaign.id} />}
+            <RecentRolls campaignId={campaign.id} names={rollerNames} />
+          </div>
+          <section className="panel-tiles-wrap" aria-labelledby="panel-tiles-title">
+            <h2 id="panel-tiles-title" className="visually-hidden">
+              {t('panel.blocks')}
+            </h2>
+            <ul className="panel-tiles">
+              {tiles.map((key, index) => (
+                <li
+                  key={key}
+                  className="panel-tile-item"
+                  // Resources span the row; so does a last tile left alone in its row.
+                  data-wide={
+                    key === 'resources' ||
+                    (index === tiles.length - 1 && (tiles.length - 1) % 2 === 1) ||
+                    undefined
+                  }
+                >
+                  <button
+                    type="button"
+                    className="panel-tile"
+                    aria-haspopup="dialog"
+                    onClick={() => setOpen(key)}
+                  >
+                    <span className="panel-tile-title">
+                      {tileTitle(key)}
+                      <ChevronRight size={18} aria-hidden="true" />
+                    </span>
+                    <span className="panel-tile-glance">{glance[key]}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+        {editing && (
+          // Phones: the edit bar scrolls away with the page; the same actions wait at the end.
+          <div className="panel-editbar-end" role="group" aria-label={t('panel.editing')}>
+            <EditActions
+              pending={action.isPending}
+              disabled={!validName}
+              onCancel={() => {
+                // A dirty draft asks first, as leaving the page does.
+                if (dirty) return setCancelAsk(true)
+                action.reset()
+                stopEditing()
+              }}
+              onSave={() => void save(draft, 'sheet.saved', stopEditing)}
+            />
+          </div>
+        )}
+        {canEdit && !editing && (
+          <div className="panel-dock" role="group" aria-label={t('sheet.rest')}>
+            {(['short', 'long'] as const).map((kind) => (
+              <Button
+                key={kind}
+                variant="default"
+                className="panel-dock-rest"
+                leftSection={
+                  kind === 'short' ? (
+                    <Sunset size={18} aria-hidden="true" />
+                  ) : (
+                    <Moon size={18} aria-hidden="true" />
+                  )
+                }
+                aria-disabled={action.isPending || locked || editing || undefined}
+                aria-describedby={locked ? 'panel-rest-locked' : undefined}
+                onClick={(event) => {
+                  if (action.isPending || locked || editing) return
+                  restOpener.current = event.currentTarget
+                  setRest(kind)
                 }}
               >
-                <Pencil size={20} aria-hidden="true" />
+                {t(kind === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}
+              </Button>
+            ))}
+            <Tooltip
+              label={t('sheet.personaliseHint')}
+              events={{ hover: true, focus: true, touch: true }}
+            >
+              <ActionIcon
+                size={44}
+                variant="default"
+                className="panel-dock-personalise"
+                aria-label={t('panel.personalise')}
+                aria-haspopup="dialog"
+                onClick={() => setPersonalise(true)}
+              >
+                <SlidersHorizontal size={20} aria-hidden="true" />
               </ActionIcon>
             </Tooltip>
-          )}
-        </Group>
-      </Group>
-      {editing && (
-        <div className="panel-editbar" role="region" aria-label={t('panel.editing')}>
-          <Text fw={600} ref={editHeading} tabIndex={-1} className="panel-editbar-title">
-            {t('panel.editing')}
-          </Text>
-          <Text size="sm" c="dimmed" className="panel-editbar-hint">
-            {t('panel.editingHint')}{' '}
-            <Link to={`${characterPath}/create?mode=full`}>{t('panel.fullWizard')}</Link>
-          </Text>
-          <EditActions
-            pending={action.isPending}
-            disabled={!validName}
-            onCancel={() => {
-              // A dirty draft asks first, as leaving the page does.
-              if (dirty) return setCancelAsk(true)
-              action.reset()
-              stopEditing()
-            }}
-            onSave={() => void save(draft, 'sheet.saved', stopEditing)}
-          />
-        </div>
-      )}
-      {/* With a sheet open the error shows inside it instead (never behind, never twice). */}
-      {action.isError && open === null && !personalise && libraryTab === null && (
-        <Alert color="red" role="alert">
-          {t(errorKey)}
-        </Alert>
-      )}
-      <div aria-live="polite" className="visually-hidden-live">
-        {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
-      </div>
-      {levelUpDue && !editing && campaign.party_level !== null && (
-        <LevelUpPrompt
-          name={character.name}
-          level={sheet.level}
-          party={campaign.party_level}
-          locked={locked}
-          onStart={openLevelUp}
+            {locked && (
+              <Text size="sm" c="dimmed" id="panel-rest-locked" className="panel-dock-note">
+                {t('panel.restLocked')}
+              </Text>
+            )}
+          </div>
+        )}
+        <BlockSheet
+          opened={open !== null}
+          closeOnEscape={libraryTab === null && !personalise}
+          onClose={() => setOpen(null)}
+          title={open ? tileTitle(open) : ''}
+          alert={errorAlert}
+        >
+          {open && detail[open]}
+          {open !== null && <RollResultSlot where="sheet" campaignId={campaign.id} />}
+        </BlockSheet>
+        <PersonaliseDrawer
+          opened={personalise}
+          onClose={() => setPersonalise(false)}
+          props={props}
+          alert={errorAlert}
         />
-      )}
-      <div className="panel-layout">
-        <div className="panel-main">
-          <SheetHero
-            {...props}
-            exhaustion={exhaustion}
-            name={shownName}
-            subtitle={subtitle}
-            note={canEdit ? null : absentOwner ? t('sheet.absentReadOnly') : t('sheet.readOnly')}
-          />
-          <AbilityStrip {...props} />
-        </div>
-        <section className="panel-tiles-wrap" aria-labelledby="panel-tiles-title">
-          <h2 id="panel-tiles-title" className="visually-hidden">
-            {t('panel.blocks')}
-          </h2>
-          <ul className="panel-tiles">
-            {tiles.map((key, index) => (
-              <li
-                key={key}
-                className="panel-tile-item"
-                // Resources span the row; so does a last tile left alone in its row.
-                data-wide={
-                  key === 'resources' ||
-                  (index === tiles.length - 1 && (tiles.length - 1) % 2 === 1) ||
-                  undefined
-                }
-              >
-                <button
-                  type="button"
-                  className="panel-tile"
-                  aria-haspopup="dialog"
-                  onClick={() => setOpen(key)}
-                >
-                  <span className="panel-tile-title">
-                    {tileTitle(key)}
-                    <ChevronRight size={18} aria-hidden="true" />
-                  </span>
-                  <span className="panel-tile-glance">{glance[key]}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-      {editing && (
-        // Phones: the edit bar scrolls away with the page; the same actions wait at the end.
-        <div className="panel-editbar-end" role="group" aria-label={t('panel.editing')}>
-          <EditActions
-            pending={action.isPending}
-            disabled={!validName}
-            onCancel={() => {
-              // A dirty draft asks first, as leaving the page does.
-              if (dirty) return setCancelAsk(true)
-              action.reset()
-              stopEditing()
-            }}
-            onSave={() => void save(draft, 'sheet.saved', stopEditing)}
-          />
-        </div>
-      )}
-      {canEdit && !editing && (
-        <div className="panel-dock" role="group" aria-label={t('sheet.rest')}>
-          {(['short', 'long'] as const).map((kind) => (
-            <Button
-              key={kind}
-              variant="default"
-              className="panel-dock-rest"
-              leftSection={
-                kind === 'short' ? (
-                  <Sunset size={18} aria-hidden="true" />
-                ) : (
-                  <Moon size={18} aria-hidden="true" />
-                )
-              }
-              aria-disabled={action.isPending || locked || editing || undefined}
-              aria-describedby={locked ? 'panel-rest-locked' : undefined}
-              onClick={(event) => {
-                if (action.isPending || locked || editing) return
-                restOpener.current = event.currentTarget
-                setRest(kind)
-              }}
-            >
-              {t(kind === 'short' ? 'sheet.shortRest' : 'sheet.longRest')}
-            </Button>
-          ))}
-          <Tooltip
-            label={t('sheet.personaliseHint')}
-            events={{ hover: true, focus: true, touch: true }}
-          >
-            <ActionIcon
-              size={44}
-              variant="default"
-              className="panel-dock-personalise"
-              aria-label={t('panel.personalise')}
-              aria-haspopup="dialog"
-              onClick={() => setPersonalise(true)}
-            >
-              <SlidersHorizontal size={20} aria-hidden="true" />
-            </ActionIcon>
-          </Tooltip>
-          {locked && (
-            <Text size="sm" c="dimmed" id="panel-rest-locked" className="panel-dock-note">
-              {t('panel.restLocked')}
-            </Text>
-          )}
-        </div>
-      )}
-      <BlockSheet
-        opened={open !== null}
-        closeOnEscape={libraryTab === null && !personalise}
-        onClose={() => setOpen(null)}
-        title={open ? tileTitle(open) : ''}
-        alert={errorAlert}
-      >
-        {open && detail[open]}
-      </BlockSheet>
-      <PersonaliseDrawer
-        opened={personalise}
-        onClose={() => setPersonalise(false)}
-        props={props}
-        alert={errorAlert}
-      />
-      <LibraryPicker
-        opened={libraryTab !== null}
-        onClose={() => setLibraryTab(null)}
-        tab={libraryTab ?? lastLibraryTab}
-        onTab={openLibrary}
-        props={props}
-        alert={errorAlert}
-      />
-      <LeaveDialog
-        target={leaving}
-        onKeep={() => setLeaving(null)}
-        onDiscard={(target) => {
-          setLeaving(null)
-          setDraft(null)
-          window.location.href = target
-        }}
-      />
-      <LeaveDialog
-        target={cancelAsk ? 'cancel' : null}
-        title={t('panel.cancelTitle')}
-        body={t('panel.cancelBody')}
-        discardLabel={t('panel.discardChanges')}
-        onKeep={() => setCancelAsk(false)}
-        onDiscard={() => {
-          setCancelAsk(false)
-          action.reset()
-          stopEditing()
-        }}
-      />
-      {levelUp && (
-        <LevelUpSheet
-          key={levelUp.token}
-          opened={levelUp.opened}
-          onClose={() => setLevelUp((current) => current && { ...current, opened: false })}
-          onAgain={levelUpDue && !locked ? openLevelUp : null}
-          campaignId={campaign.id}
-          characterId={character.id}
-          characterName={character.name}
-          snapshot={levelUp.snapshot}
+        <LibraryPicker
+          opened={libraryTab !== null}
+          onClose={() => setLibraryTab(null)}
+          tab={libraryTab ?? lastLibraryTab}
+          onTab={openLibrary}
+          props={props}
+          alert={errorAlert}
         />
-      )}
-      <RestRequestDialog
-        kind={rest}
-        preview={restPreview}
-        canRest={shownVitals.current_hp > 0}
-        opener={restOpener}
-        onClose={closeRest}
-      />
-      <Text size="sm" c="dimmed" className="srd-license">
-        {t('srd.license')}
-      </Text>
-    </Stack>
+        <LeaveDialog
+          target={leaving}
+          onKeep={() => setLeaving(null)}
+          onDiscard={(target) => {
+            setLeaving(null)
+            setDraft(null)
+            window.location.href = target
+          }}
+        />
+        <LeaveDialog
+          target={cancelAsk ? 'cancel' : null}
+          title={t('panel.cancelTitle')}
+          body={t('panel.cancelBody')}
+          discardLabel={t('panel.discardChanges')}
+          onKeep={() => setCancelAsk(false)}
+          onDiscard={() => {
+            setCancelAsk(false)
+            action.reset()
+            stopEditing()
+          }}
+        />
+        {levelUp && (
+          <LevelUpSheet
+            key={levelUp.token}
+            opened={levelUp.opened}
+            onClose={() => setLevelUp((current) => current && { ...current, opened: false })}
+            onAgain={levelUpDue && !locked ? openLevelUp : null}
+            campaignId={campaign.id}
+            characterId={character.id}
+            characterName={character.name}
+            snapshot={levelUp.snapshot}
+          />
+        )}
+        <RestRequestDialog
+          kind={rest}
+          preview={restPreview}
+          canRest={shownVitals.current_hp > 0}
+          opener={restOpener}
+          onClose={closeRest}
+        />
+        <Text size="sm" c="dimmed" className="srd-license">
+          {t('srd.license')}
+        </Text>
+      </Stack>
+    </DiceProvider>
   )
 }
 

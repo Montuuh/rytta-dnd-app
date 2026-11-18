@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ActionIcon, Button, TextInput } from '@mantine/core'
 import { Dices, Minus, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { DiceModeChoice, hitDiceExpression, useDiceMode, useQuietRollLog } from '@/features/dice'
 import { rollDice, type DieSides } from '@/shared/ui/dice/roll-dice'
 import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
 
@@ -10,6 +11,8 @@ import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
  * Player types the physical dice total or lets Rytta roll 3D dice; CON is added per die.
  */
 export function DiceChooser({
+  campaignId,
+  characterId,
   die,
   left,
   conMod,
@@ -18,6 +21,9 @@ export function DiceChooser({
   showError = false,
   onChange,
 }: {
+  campaignId: string
+  /** The character that rests; its hit dice rolls are recorded with dice in the app. */
+  characterId: string
   die: number
   left: number
   conMod: number
@@ -34,6 +40,11 @@ export function DiceChooser({
   /** Each die of the last Rytta roll, shown in the dock once the dice leave the screen. */
   const [dice, setDice] = useState<{ values: number[]; roll: string } | null>(null)
   const rollInput = useRef<HTMLInputElement>(null)
+  // RYT-133: the table's dice mode decides. Physical dice are typed in; dice in the app are rolled
+  // here and the total is not typed, so the short rest behaves like initiative and the sheet.
+  const { behaviour } = useDiceMode(campaignId)
+  const appDice = behaviour === 'app'
+  const logRoll = useQuietRollLog(campaignId, characterId)
   const valid = rollValid(value, die)
   useEffect(() => {
     if (showError) rollInput.current?.focus()
@@ -55,6 +66,8 @@ export function DiceChooser({
       const total = String(values.reduce((sum, item) => sum + item, 0))
       setDice({ values, roll: total })
       onChange({ spent: value.spent, roll: total })
+      const expression = hitDiceExpression(value.spent, die, conMod)
+      if (expression) logRoll({ kind: 'hit_die', label: 'hit_die', expression }, values)
     } finally {
       setRolling(false)
     }
@@ -62,6 +75,7 @@ export function DiceChooser({
   return (
     <fieldset className="rest-dice">
       <legend className="rest-dice-title">{t('rest.diceTitle', { die, left })}</legend>
+      <DiceModeChoice campaignId={campaignId} />
       <div className="rest-dice-row">
         <div className="rest-stepper" role="group" aria-label={t('rest.diceCount')}>
           <ActionIcon
@@ -91,7 +105,8 @@ export function DiceChooser({
             id={`${id}-roll`}
             className="rest-roll"
             label={t('rest.roll')}
-            inputMode="numeric"
+            inputMode={appDice ? 'none' : 'numeric'}
+            readOnly={appDice}
             autoComplete="off"
             value={value.roll}
             onChange={(event) =>
@@ -110,7 +125,7 @@ export function DiceChooser({
           />
         )}
       </div>
-      {value.spent > 0 && (
+      {value.spent > 0 && appDice && (
         <Button
           variant="default"
           className="rest-autoroll"

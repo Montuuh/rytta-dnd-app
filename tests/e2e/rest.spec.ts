@@ -113,7 +113,13 @@ test('RYT-098 a portrait at the fire opens the viewer over the rest panel', asyn
 test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die', async ({
   page,
 }, info) => {
-  const f = await identityFixture(page, { player: true, sheet: 'complete', party: true })
+  // RYT-133: the DM left the dice to each Player: physical until this Player picks the app.
+  const f = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    party: true,
+    diceMode: 'player',
+  })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   await page.getByRole('button', { name: 'Descanso corto' }).click()
@@ -135,8 +141,14 @@ test('a short rest spends hit dice: typed or rolled by Rytta, CON added per die'
   )
   await expect(panel).toContainText('30 → 38')
   await audit(page, info.outputPath('rest-short-dice.png'))
-  // The sticky dock never hides the focused control (WCAG 2.4.11).
+  // Physical dice have no roll button; choosing the app on this device brings it (and the typed
+  // total becomes read-only: one dice behaviour at a time).
   const autoRoll = dice.getByRole('button', { name: 'Tirar por mí' })
+  await expect(autoRoll).toHaveCount(0)
+  await dice.locator('label', { hasText: 'En la app' }).click()
+  await expect(roll).toHaveAttribute('readonly', '')
+  // The sticky dock never hides the focused control (WCAG 2.4.11).
+  await roll.focus()
   await page.keyboard.press('Tab')
   await expect(autoRoll).toBeFocused()
   const [button, dock] = await Promise.all([
@@ -257,7 +269,12 @@ test('an absent Player reads the sheet only and is told why', async ({ page }, i
 })
 
 test('3D dice roll the hit dice and fill the total', async ({ page }) => {
-  const f = await identityFixture(page, { player: true, sheet: 'complete', party: true })
+  const f = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    party: true,
+    diceMode: 'app',
+  })
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   f.openRest('short', { user: peerId, character: beaId })

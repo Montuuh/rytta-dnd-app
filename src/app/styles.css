@@ -852,7 +852,7 @@ main h3 {
 }
 .skill-row {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto 3ch;
+  grid-template-columns: 24px minmax(0, 1fr) auto minmax(3ch, auto);
   align-items: center;
   gap: 8px;
   min-height: 36px;

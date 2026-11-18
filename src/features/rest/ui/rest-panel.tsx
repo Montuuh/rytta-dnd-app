@@ -254,6 +254,8 @@ export function RestPanel({
           )}
           {open && short && person.controlled && effect?.can_rest && (
             <DiceChooser
+              campaignId={campaignId}
+              characterId={person.id}
               die={effect.hit_die}
               left={effect.dice_left_before}
               room={effect.max_hp - effect.hp_before}

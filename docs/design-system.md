@@ -512,3 +512,26 @@ line with an ellipsis, at most two squares wide, and show from 0.9 zoom up. The 
 strip (preview and rest first, then the update notice); on a phone on its side they share one scrolling
 row and the update notice moves to the bottom left. While initiative is collected, the Player's own
 roll is the main line and "n of m ready" the small one.
+
+## Dice (RYT-133, ADR 046)
+
+The DM sets the table's dice in the DM Command Center, tab "Dice": two groups of exclusive rows (how
+the table rolls: physical dice, dice in the app, each Player chooses; who sees the rolls: the roller and
+the DM, the whole table, only the roller). Each row is a 44px label with a mark, the choice and what it
+means; the radio is visually hidden and the checked row takes the accent border. A change shows one
+button, then one confirmation that lists what changes and what it does to earlier rolls; failures
+focus the reason and the retry repeats the same request. "Each Player chooses" is kept on the Player's
+device (`rytta-dice-choice:<user>:<campaign>` in localStorage): a two-way control "Physical / In the
+app" on the sheet, the initiative entry and the hit dice, physical until it is used.
+
+A rollable number on the sheet is the number itself with a solid accent underline (the glossary keeps
+its dotted one), a 44px target, never a chip or a button face. With physical dice the number reads as
+what to roll (`d20 + 5`, `1d8 + 3`; `d20+5` inside the ability medals) and a tap opens a dialog where
+the dice are typed and checked; with dice in the app the modifier stays and a tap rolls. Checks and
+saves, skills, attack and damage lines are rollable; a flat damage (unarmed without a die) is not. The
+result is one card, under the abilities or at the foot of the open block: total in the display face,
+the dice and the modifier, the formula, whether the table has it and who reads it. A dismiss key and a
+retry sit in it; a failed save keeps the roll. The recent rolls strip lists the newest three (the rest in
+a drawer), refetched on the realtime signal with polling behind it; it shows what the database returns
+and nothing else. Labels of checks and saves are stored as keys and read in the viewer's language.
+Reduced motion shows results without animation and without loading the 3D engine.

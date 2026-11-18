@@ -11,6 +11,8 @@ export const demoCampaignRepository: CampaignRepository = {
         role: 'dm',
         player_modules: ['party'],
         party_level: null,
+        dice_mode: 'physical',
+        roll_visibility: 'roller_dm',
       },
     ]
   },

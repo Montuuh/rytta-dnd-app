@@ -1,6 +1,6 @@
 import { localizedName } from '@/shared/lib/translations'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Stack, Text, UnstyledButton } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -42,7 +42,15 @@ const signed = (value: number) => (value >= 0 ? `+${value}` : `${value}`)
 
 /** One attack list for the sheet tile, the sheet block and the equipment view: callers compute
  * `lines` once with `attacks(...)` so every place shows the same numbers. */
-export function AttackLines({ lines }: { lines: Attack[] }) {
+export function AttackLines({
+  lines,
+  renderRoll,
+}: {
+  lines: Attack[]
+  /** Wraps the to-hit number and the damage dice of a line, so a sheet can make them rollable;
+   * the equipment view leaves them as text. */
+  renderRoll?: (line: Attack, part: 'hit' | 'damage', content: ReactNode) => ReactNode
+}) {
   const { t } = useTranslation()
   if (lines.length === 0)
     return (
@@ -50,6 +58,8 @@ export function AttackLines({ lines }: { lines: Attack[] }) {
         {t('inventory.attacks.none')}
       </Text>
     )
+  const wrap = (line: Attack, part: 'hit' | 'damage', content: ReactNode) =>
+    renderRoll ? renderRoll(line, part, content) : content
   return (
     <ul className="attack-lines">
       {lines.map((line) => {
@@ -65,16 +75,27 @@ export function AttackLines({ lines }: { lines: Attack[] }) {
             <span className="attack-name user-copy">{line.name}</span>
             <span className="attack-bonus">
               <span className="attack-label">{t('inventory.attacks.hitLabel')}</span>{' '}
-              <span
-                className="attack-value"
-                aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
-              >
-                {signed(line.attack)}
-              </span>
+              {wrap(
+                line,
+                'hit',
+                <span
+                  className="attack-value"
+                  aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
+                >
+                  {signed(line.attack)}
+                </span>,
+              )}
             </span>
             <span className="attack-damage">
-              <span className="attack-label">{t('inventory.attacks.damageLabel')}</span> {line.dice}
-              {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
+              <span className="attack-label">{t('inventory.attacks.damageLabel')}</span>{' '}
+              {wrap(
+                line,
+                'damage',
+                <>
+                  {line.dice}
+                  {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
+                </>,
+              )}
               {line.damageType && (
                 <>
                   {' '}

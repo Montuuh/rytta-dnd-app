@@ -22,9 +22,11 @@ import { accountEn } from './account-en'
 import { libraryEn } from './library-en'
 import { viewerEn } from './viewer-en'
 import { legalEn } from './legal-en'
+import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
 export const en = {
   ...legalEn,
+  ...diceEn,
   ...levelupEn,
   ...identityEn,
   ...charactersEn,

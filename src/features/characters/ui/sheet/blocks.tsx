@@ -34,6 +34,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { RollHint, RollPoint, checkSpec } from '@/features/dice'
 import {
   GlossaryNameLink,
   GlossaryTerm,
@@ -78,6 +79,7 @@ export function SkillsBlock({ build, level, editing, change }: PanelProps) {
     })
   return (
     <Stack gap="sm">
+      {!editing && <RollHint />}
       {!editing && (
         <Switch
           size="md"
@@ -130,7 +132,13 @@ export function SkillsBlock({ build, level, editing, change }: PanelProps) {
                 <span className="skill-ability">
                   {t(`srd.abilityShort.${skillAbilities[skill]}`)}
                 </span>
-                <span className="skill-bonus">{signed(skillBonus(build, level, skill))}</span>
+                <RollPoint
+                  spec={editing ? null : checkSpec('skill', skill, skillBonus(build, level, skill))}
+                  formula="replace"
+                  className="skill-bonus"
+                >
+                  {signed(skillBonus(build, level, skill))}
+                </RollPoint>
               </li>
             )
           })}

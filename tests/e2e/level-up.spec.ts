@@ -165,14 +165,20 @@ test('RYT-130 the Player below the party level levels up through the guided shee
   await expect(dialog.getByText('38 → 45')).toBeVisible()
   await audit(page, info.outputPath('step-hp.png'))
   await evidence(page, 'level-up-1-hp')
-  await dialog.getByRole('radio', { name: /Mi tirada/ }).check({ force: true })
+  await dialog
+    .getByRole('radio', { name: /Mi tirada/ })
+    .locator('xpath=..')
+    .click()
   const roll = dialog.getByRole('textbox', { name: 'Tirada del d8' })
   await roll.fill('12')
   await expect(roll).toHaveValue('8')
   await expect(dialog.getByText('El d8 llega hasta 8.')).toBeVisible()
   await expect(dialog.getByText('38 → 48')).toBeVisible()
   await evidence(page, 'level-up-1-hp-roll')
-  await dialog.getByRole('radio', { name: /Media fija/ }).check({ force: true })
+  await dialog
+    .getByRole('radio', { name: /Media fija/ })
+    .locator('xpath=..')
+    .click()
   await dialog.getByRole('button', { name: 'Siguiente' }).click()
 
   // 2. What the level grants, by name with glossary links.
@@ -335,7 +341,7 @@ test('RYT-130 subclass at level 3 and the ability increase at level 4 block the 
   await next.click()
   await expect(dialog.getByRole('group', { name: /Subclase/ })).toBeVisible()
   await expect(dialog.getByText('Falta elegir').first()).toBeVisible()
-  await dialog.getByRole('radio', { name: 'Otra subclase' }).check({ force: true })
+  await dialog.getByRole('radio', { name: 'Otra subclase' }).locator('xpath=..').click()
   await dialog.getByRole('textbox', { name: 'Nombre de la subclase' }).fill('Colegio del Valor')
   await pickSpells(dialog, 1)
   await next.click()
@@ -354,7 +360,7 @@ test('RYT-130 subclass at level 3 and the ability increase at level 4 block the 
   await expect(
     dialog.getByRole('group', { name: /Aumento de característica o dote/ }),
   ).toBeVisible()
-  await dialog.getByRole('radio', { name: '+1 a dos características' }).check({ force: true })
+  await dialog.getByRole('radio', { name: '+1 a dos características' }).locator('xpath=..').click()
   await dialog.getByRole('button', { name: /^Carisma/ }).click()
   await expect(dialog.getByText('1 de 2 elegidas')).toBeVisible()
   await dialog.getByRole('button', { name: /^Destreza/ }).click()
@@ -503,14 +509,16 @@ for (const language of ['es', 'en'] as const)
         .getByRole('radio', {
           name: language === 'es' ? '+1 a dos características' : '+1 to two scores',
         })
-        .check({ force: true })
+        .locator('xpath=..')
+        .click()
       await dialog.getByRole('button', { name: /^(Carisma|Charisma)/ }).click()
       await evidence(page, `matrix-${tag}-3-choices-picked`)
       await dialog.getByRole('button', { name: /^(Destreza|Dexterity)/ }).click()
       await dialog
         .getByRole('radio', { name: /^(College of Lore|Colegio del conocimiento)/ })
         .first()
-        .check({ force: true })
+        .locator('xpath=..')
+        .click()
       await pickSpells(dialog, 1, language)
       await pickSpells(dialog, 1, language, 'cantrips')
       await evidence(page, `matrix-${tag}-3-choices-complete`)
@@ -567,7 +575,9 @@ test('RYT-130 the guided sheet holds at 150% text and in English', async ({ page
   await audit(page, info.outputPath('grants-150.png'))
   await dialog.getByRole('button', { name: 'Next' }).click()
   await expect(dialog.getByRole('heading', { name: 'Choices for level 4' })).toBeFocused()
-  await dialog.getByRole('radio', { name: '+1 to two scores' }).check({ force: true })
+  // The radio is visually hidden inside its label: tap the label, as a person does.
+  await dialog.getByRole('radio', { name: '+1 to two scores' }).locator('xpath=..').click()
+  await expect(dialog.getByRole('radio', { name: '+1 to two scores' })).toBeChecked()
   await audit(page, info.outputPath('choices-150.png'))
 })
 
@@ -635,7 +645,10 @@ test('RYT-130 the step count stays put and an empty roll says why Next waits', a
   await page.goto(sheetUrl)
   const dialog = await openLevelUp(page, 5)
   await expect(dialog).toContainText('Paso 1 de 4: Puntos de golpe')
-  await dialog.getByRole('radio', { name: /Mi tirada/ }).check({ force: true })
+  await dialog
+    .getByRole('radio', { name: /Mi tirada/ })
+    .locator('xpath=..')
+    .click()
   await expect(dialog).toContainText('Paso 1 de 4: Puntos de golpe')
   await expect(dialog.getByText('Escribe tu tirada, de 1 a 8, para continuar.')).toBeVisible()
   await expect(dialog.getByRole('button', { name: 'Siguiente' })).toHaveAttribute(
@@ -698,7 +711,7 @@ test('RYT-130 a wizard copies two spells into the spellbook; a feat takes the pl
   await expect(dialog.getByRole('group', { name: /^Libro de conjuros/ })).toBeVisible()
   await expect(dialog.getByRole('group', { name: /^Conjuros nuevos/ })).toHaveCount(0)
   await expect(dialog.getByRole('group', { name: /^Truco nuevo/ })).toHaveCount(0)
-  await dialog.getByRole('radio', { name: 'Una dote' }).check({ force: true })
+  await dialog.getByRole('radio', { name: 'Una dote' }).locator('xpath=..').click()
   await dialog.getByRole('textbox', { name: 'Nombre de la dote' }).fill('Alerta')
   await pickSpells(dialog, 2, 'es', 'spellbook')
   await expect(dialog.getByText('2 de 2 elegidos')).toBeVisible()
@@ -731,16 +744,16 @@ test('RYT-130 +2 to one score and a score already at 20', async ({ page }) => {
   await next.click()
   await next.click()
   const intelligence = dialog.getByRole('button', { name: /^Inteligencia/ })
-  await dialog.getByRole('radio', { name: '+2 a una característica' }).check({ force: true })
+  await dialog.getByRole('radio', { name: '+2 a una característica' }).locator('xpath=..').click()
   // 19 + 2 would pass 20: it cannot be picked and says so.
   await expect(intelligence).toHaveAttribute('aria-disabled', 'true')
   await expect(intelligence).toContainText('Ya en 20')
   await intelligence.click({ force: true })
   await expect(dialog.getByText('0 de 1 elegidas')).toBeVisible()
   // +1 to two scores can still take it to 20.
-  await dialog.getByRole('radio', { name: '+1 a dos características' }).check({ force: true })
+  await dialog.getByRole('radio', { name: '+1 a dos características' }).locator('xpath=..').click()
   await expect(intelligence).not.toContainText('Ya en 20')
-  await dialog.getByRole('radio', { name: '+2 a una característica' }).check({ force: true })
+  await dialog.getByRole('radio', { name: '+2 a una característica' }).locator('xpath=..').click()
   await dialog.getByRole('button', { name: /^Sabiduría/ }).click()
   await expect(dialog.getByRole('button', { name: /^Sabiduría/ })).toContainText('10 → 12')
   await pickSpells(dialog, 2, 'es', 'spellbook')

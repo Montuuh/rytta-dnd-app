@@ -4225,11 +4225,12 @@
       "title": "Map on the phone: the board is the page",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-126"],
       "sources": [
         "Player journey audit 2026-11-17, finding J4-05: on a phone the map is a small board under page chrome.",
-        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046.",
+        "Review 2026-11-18 on branch phone-map at 8b148ac: npm run check and npm run test:e2e pass (969 passed, 117 skipped, 0 failed); independent code review changes addressed in a171934; independent UI review CHANGES_REQUIRED on 24fcbca and a171934, PASS on 8b148ac; seven non-blocking leftovers moved to RYT-135; merge to main pending (docs/evidence/RYT-132/validation.md)."
       ],
       "scope": "On a phone the map becomes the page: full-bleed map, a compact turn strip on top, floating round tool buttons (centre on my token, measure, effects), labels at a constant readable size. Reuses the existing tabletop data and Player permissions. Non-goals: DM map editing on the phone, new map tools, backend changes, autonomous release.",
       "acceptance": [
@@ -4246,7 +4247,7 @@
         "npm run test:e2e (Player map at 390px portrait and landscape and at 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-132/validation.md"]
     },
     {
       "id": "RYT-133",
@@ -4308,17 +4309,18 @@
     },
     {
       "id": "RYT-135",
-      "title": "Level up and table screen polish from the UI reviews",
+      "title": "Level up, table screen and phone map polish from the UI reviews",
       "priority": "P2",
       "owner": "frontend",
       "status": "planned",
-      "dependsOn": ["RYT-130", "RYT-131"],
+      "dependsOn": ["RYT-130", "RYT-131", "RYT-132"],
       "sources": [
         "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md).",
         "Open check from the RYT-130 production record (2026-11-18): keyboard focus on an option at 150% text on a phone may sit under the sticky footer.",
-        "Independent UI review PASS on RYT-131 at e84f3c7, three non-blocking findings on the table screen (docs/evidence/RYT-131/validation.md)."
+        "Independent UI review PASS on RYT-131 at e84f3c7, three non-blocking findings on the table screen (docs/evidence/RYT-131/validation.md).",
+        "Independent UI review PASS on RYT-132 at 8b148ac, seven non-blocking findings on the phone map (docs/evidence/RYT-132/validation.md)."
       ],
-      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Non-goals: new level-up rules, new combat rules, backend or migration changes, multiclass, autonomous release.",
+      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Phone map: fix the seven non-blocking findings left by the RYT-132 UI review: in landscape while measuring the update notice covers the distance chip and its clear button, the keyboard shortcuts are not announced, the map cannot be panned by keyboard outside measure (pre-existing, also at 820px), the board focus ring shows only on its top edge, the ellipsis hides the trailing number of similar names, the round keys are only on the right, and a name plate still covers about a quarter of the token right below it. Non-goals: new level-up rules, new combat rules, new map tools, DM map editing on the phone, backend or migration changes, multiclass, autonomous release.",
       "acceptance": [
         "For an ability at 19 the \"+2\" option no longer says \"Already at 20\"; its label and disabled reason state the real limit, and an ability at 20 still says it is at the cap.",
         "At 820px a failed confirm scrolls so that both the failure alert and the summary row are fully visible.",
@@ -4328,12 +4330,42 @@
         "When a Player leaves the table screen, keyboard focus returns to the control that opened it, asserted by a browser spec.",
         "On the order screen a long name uses the smaller type only when it would not fit at the normal size; a long name that fits keeps the normal size, and no name overlaps another row or exceeds two lines at 820px, 1280px and 1920px.",
         "When loading the fight fails, the table screen error text says the fight could not be loaded, in English and Spanish.",
-        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+        "At 390px landscape while measuring, the distance chip and its clear button stay fully visible and operable when the update notice is shown.",
+        "The map's keyboard shortcuts (zoom in, zoom out, fit) are announced to assistive technology, for example in the board's accessible description.",
+        "Outside measure, the map can be panned by keyboard at 390px and 820px, asserted by a browser spec.",
+        "When the board has keyboard focus, its focus ring is visible on all four edges at 390px and 820px.",
+        "Similar long names that differ only in a trailing number (for example \"Goblin arquero 14\" and \"Goblin arquero 15\") remain distinguishable on the phone map; the number is not cut off by the ellipsis.",
+        "The placement of the round map keys is reviewed for left-handed use: either a documented decision keeps them on the right or the user can place them on the left, kept on that device.",
+        "A name plate does not cover the token directly below it at the default zoom on the phone map.",
+        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; phone map at 390px portrait and landscape and 820px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
         "unit tests for the changed option labels and the long-name sizing rule",
         "npm run check",
-        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px)",
+        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px; phone map notices, keyboard pan, focus ring, similar names and name plates at 390px portrait and landscape and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-136",
+      "title": "Profile menu: do not pull focus back to its trigger after the user has moved on",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Observed 2026-11-18 while reviewing focus return on branch phone-map (RYT-132): pre-existing behaviour in src/app/layout.tsx, where the profile menu exit-transition handler focuses the menu trigger whenever the menu was opened, even after keyboard focus has moved to another control."
+      ],
+      "scope": "Fix the profile menu close path in src/app/layout.tsx so that focus returns to the menu trigger only when focus is still inside the closing menu or on the page body; if the user has tabbed or clicked to another control, focus stays there. Non-goals: other menus or dialogs, the shared focus helpers beyond what this fix needs, visual changes, backend changes, autonomous release.",
+      "acceptance": [
+        "Focus is not pulled back to the profile menu trigger once it has moved to another control; covered by a browser test.",
+        "Closing the profile menu with Escape or by choosing an item that does not navigate still returns focus to its trigger.",
+        "390px and 820px, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (profile menu focus return at 390px and 820px)",
         "independent UI review PASS"
       ],
       "evidence": []

@@ -433,17 +433,35 @@ test('RYT-131 the plate moves by pointer and keys, shrinks, and keeps the choice
   await expect(turn.getByRole('status')).toHaveText('Placa de turno en la esquina superior derecha')
   await page.keyboard.press('ArrowDown')
   await expect(turn).toHaveAttribute('data-corner', 'bottom-right')
-  // The bottom corners stay above the status bar.
-  const bar = (await page.locator('.tt-status').boundingBox())!
-  expect((await turn.boundingBox())!.y + (await turn.boundingBox())!.height).toBeLessThanOrEqual(
-    bar.y + 1,
-  )
+  // The bottom corners stay above the status bar. The bar can still be growing (a wider font wraps its
+  // keys once the sound and ruler keys arrive) and the plate follows on the next frame, so wait for
+  // the two boxes to agree instead of sampling them at one instant.
+  await expect
+    .poll(async () => {
+      const bar = (await page.locator('.tt-status').boundingBox())!
+      const box = (await turn.boundingBox())!
+      return bar.y - (box.y + box.height)
+    })
+    .toBeGreaterThanOrEqual(-1)
   // A plain press steps to the next corner clockwise.
   await move.click()
   await expect(turn).toHaveAttribute('data-corner', 'bottom-left')
 
   // Pointer: dragging follows the pointer and snaps to the corner it is released in.
-  // hover waits until the plate has stopped moving to its new corner, so the press lands on the handle.
+  // The plate follows the status bar, which can still be growing; wait until it has stopped moving to
+  // its corner so the press lands on the handle (hover alone only waits for two steady frames).
+  let before = ''
+  await expect
+    .poll(
+      async () => {
+        const now = JSON.stringify(await move.boundingBox())
+        const steady = now === before
+        before = now
+        return steady
+      },
+      { intervals: [250] },
+    )
+    .toBe(true)
   await move.hover()
   await page.mouse.down()
   await page.mouse.move(900, 120, { steps: 6 })

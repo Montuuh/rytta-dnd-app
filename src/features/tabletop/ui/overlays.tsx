@@ -13,9 +13,12 @@ import type { Card } from '../domain/model'
 export function MeasureTape({
   points,
   large = false,
+  plateScale = 1,
 }: {
   points: readonly Point[]
   large?: boolean
+  /** Multiplies the readout plate, so a board that is zoomed out keeps it readable (RYT-132). */
+  plateScale?: number
 }) {
   const { t } = useTranslation()
   if (points.length < 2) {
@@ -48,7 +51,7 @@ export function MeasureTape({
       {points.map(([x, y], i) => (
         <circle key={i} cx={x} cy={y} r={0.14} className="tt-tape-knot" />
       ))}
-      <g transform={`translate(${ex + 0.35} ${ey - h - 0.2})`}>
+      <g transform={`translate(${ex} ${ey}) scale(${plateScale}) translate(0.35 ${-h - 0.2})`}>
         <rect width={w} height={h} rx={0.14} className="tt-tape-plate" />
         <text
           x={w / 2}

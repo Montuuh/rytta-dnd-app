@@ -1,8 +1,8 @@
 /**
  * Focus a control that may not exist yet: it appears after a refetch, or once a closing dialog's
  * transition ends. A single animation frame is not enough on a slow device, so this retries every
- * frame until `timeout`, then keeps the focus for a short `settle` window in case a closing
- * dialog drops it back onto the page. It gives up as soon as focus lands on another control,
+ * frame until `timeout`, then keeps the focus for a short `settle` window (and for as long as the
+ * closing dialog is still mounted) in case it drops focus back onto the page. It gives up as soon as focus lands on another control,
  * so a user who has already moved on is never pulled back. Pass `from` (the control focused when
  * the action started) when the call comes after an await: by then the user may have moved. Pass
  * `leaving` (the overlay that is closing) when its focus trap can still land inside it late; by
@@ -48,7 +48,9 @@ export function focusWhenReady(
     const active = document.activeElement
     if (el && active === el) {
       heldSince ||= now
-      if (now - heldSince >= settle) return
+      // Done once the hold window has passed AND the closing overlay is gone: its late removal
+      // would otherwise drop focus on the page with nobody left to give it back.
+      if (now - heldSince >= settle && !leaving?.isConnected) return
     } else if (fallen(active) || (heldSince && active === document.body)) {
       if (el?.isConnected) {
         el.focus({ preventScroll })

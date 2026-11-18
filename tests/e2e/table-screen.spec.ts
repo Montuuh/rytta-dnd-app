@@ -584,6 +584,40 @@ const nameTypes = (page: Page) =>
     )
   })
 
+test('RYT-135 with reduced motion the names are measured once and then left alone', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1280, height: 720 })
+  const { combat } = await prepare(page, 'player')
+  seedFight(combat, 9, { long: true })
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await expect(page.locator('.tt-order-row')).toHaveCount(14, { timeout: 15_000 })
+  await expect(page.getByText('Guardiana Ancestral de la Cripta')).toBeVisible()
+  // Once the screen has settled, nothing measures the names again: no attribute flips and every
+  // name keeps its height, frame after frame.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const names = [...document.querySelectorAll<HTMLElement>('.tt-order-name')]
+          let flips = 0
+          const watcher = new MutationObserver((records) => (flips += records.length))
+          for (const el of names)
+            watcher.observe(el, { attributes: true, attributeFilter: ['data-long'] })
+          const heights = new Set<string>()
+          for (let frame = 0; frame < 60; frame += 1) {
+            await new Promise((done) => requestAnimationFrame(done))
+            heights.add(names.map((el) => Math.round(el.getBoundingClientRect().height)).join())
+          }
+          watcher.disconnect()
+          return { flips, layouts: heights.size }
+        }),
+      { timeout: 20_000 },
+    )
+    .toEqual({ flips: 0, layouts: 1 })
+})
+
 for (const size of sizes)
   for (const [zoom, wide] of [
     ['100%', false],

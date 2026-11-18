@@ -29,9 +29,8 @@ export const castEn = {
   'cast.error.absent': 'This character is absent, so its sheet is read-only.',
   'cast.error.concentration': 'This spell name cannot be saved as a concentration marker.',
   'cast.error.tap':
-    'The slot change it was waiting for was not saved. Selected: level {{level}} slot. Check it and cast again.',
-  'cast.error.tapPlain':
-    'The slot change it was waiting for was not saved. Check the option and cast again.',
+    'Your tap on a slot was not saved. Selected: level {{level}} slot. Check it and cast again.',
+  'cast.error.tapPlain': 'Your tap on a slot was not saved. Check the option and cast again.',
   'cast.error.noSlot': 'No slot is left for this spell any more.',
   'cast.error.close': 'Close',
   'cast.done.cantrip': 'Cantrip {{name}} spends no slot. Nothing is saved.',

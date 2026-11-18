@@ -30,9 +30,8 @@ export const castEs = {
   'cast.error.absent': 'Este personaje está ausente: su ficha es de solo lectura.',
   'cast.error.concentration': 'El nombre de este conjuro no se puede guardar como concentración.',
   'cast.error.tap':
-    'El cambio de espacios que esperaba no se guardó. Elegido: espacio de nivel {{level}}. Revísalo y vuelve a lanzar.',
-  'cast.error.tapPlain':
-    'El cambio de espacios que esperaba no se guardó. Revisa la opción y vuelve a lanzar.',
+    'Tu toque en un espacio no se guardó. Elegido: espacio de nivel {{level}}. Revísalo y vuelve a lanzar.',
+  'cast.error.tapPlain': 'Tu toque en un espacio no se guardó. Revisa la opción y vuelve a lanzar.',
   'cast.error.noSlot': 'Ya no queda un espacio para este conjuro.',
   'cast.error.close': 'Cerrar',
   'cast.done.cantrip': 'Truco {{name}}: no gasta espacio y no se guarda nada.',

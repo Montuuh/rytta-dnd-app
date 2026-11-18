@@ -2976,6 +2976,13 @@ html.tt-table-mode {
   line-clamp: 2;
   overflow: hidden;
 }
+/* Never animated, the name or the parts inside it that inherit its size: the size is measured and
+   corrected in one pass, and a transition (reduced motion shortens them to a blink, it does not
+   remove them) would make each pass start another. */
+.tt-order-name,
+.tt-order-name * {
+  transition-property: none !important;
+}
 .tt-order-tail {
   white-space: nowrap;
 }
@@ -2985,8 +2992,6 @@ html.tt-table-mode {
 /* Measuring the normal size: a word wider than the column overflows instead of breaking, and
    the whole name is as tall as its lines. */
 .tt-order-name[data-measuring] {
-  /* No transition either: reduced motion shortens them to a blink, which still lags a read. */
-  transition-property: none !important;
   overflow-wrap: normal;
   -webkit-line-clamp: none;
   line-clamp: none;

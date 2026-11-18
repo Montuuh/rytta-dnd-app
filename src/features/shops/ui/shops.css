@@ -607,3 +607,11 @@
 .order-error {
   scroll-margin-block: 80px;
 }
+
+.merchant-settings > summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  color: var(--mantine-color-anchor);
+  font-weight: 600;
+}

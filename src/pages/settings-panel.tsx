@@ -379,14 +379,20 @@ export function SettingsPanel({
         {(ids) => <WeightPicker {...ids} />}
       </Section>
       <Text className="settings-saved">{t('preferences.saved')}</Text>
-      {state.user && (
+      {state.user ? (
         <Section title={t('account.title')} help={t('account.help')}>
-          {() => <AccountSection onNavigate={onLeave} onDialogChange={onDialogChange} />}
+          {() => (
+            <>
+              <AccountSection onNavigate={onLeave} onDialogChange={onDialogChange} />
+              <LegalLinks className="settings-legal" />
+            </>
+          )}
+        </Section>
+      ) : (
+        <Section title={t('legal.links')} help={t('legal.linksHelp')}>
+          {() => <LegalLinks className="settings-legal" />}
         </Section>
       )}
-      <Section title={t('legal.links')} help={t('legal.linksHelp')}>
-        {() => <LegalLinks className="settings-legal" />}
-      </Section>
       {/* Demo data must stay explicit; a live installation shows no setup internals. */}
       {demo && (
         <Section title={t('settings.about')}>

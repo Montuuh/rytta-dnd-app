@@ -61,8 +61,8 @@ for (const language of ['es', 'en'] as const)
           )
           await expect(page.getByText('player@example.com', { exact: true })).toBeVisible()
           await expect(
-            page.getByRole('button', { name: /Vincular|Desvincular|Link Player|Unlink Player/ }),
-          ).toHaveCount(0)
+            page.getByRole('link', { name: es ? 'Ficha de Arin' : 'Sheet of Arin' }),
+          ).toBeVisible()
         }
         if (screen === 'invite')
           await page
@@ -386,7 +386,7 @@ test('Party owns character assignment and Player preview hides DM actions', asyn
   // A single Player enters the preview directly; the banner makes the mode unmistakable.
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
   await expect(
-    page.getByRole('status').filter({ hasText: 'Estás viendo la mesa como Arin' }),
+    page.getByRole('status').filter({ hasText: 'Viendo como jugador · Arin' }),
   ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Nuevo personaje', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Más acciones para/ })).toHaveCount(0)

@@ -70,7 +70,10 @@ describe.each(schemas)('%s loot distribution', (schema) => {
     await asUser(otherDm)
     const other = await scalar(`select ${schema}.create_campaign('Other') result`)
     const foreign = await scalar(`select ${schema}.create_character($1,'Foreign') result`, [other])
-    const foreignItem = await scalar<{id:string}>(`select ${schema}.save_item_definition($1,null,null,$2,$3) result`, [other,JSON.stringify({name:'Other item',category:'gear'}),randomUUID()])
+    const foreignItem = await scalar<{ id: string }>(
+      `select ${schema}.save_item_definition($1,null,null,$2,$3) result`,
+      [other, JSON.stringify({ name: 'Other item', category: 'gear' }), randomUUID()],
+    )
     await asUser(dm)
     const campaign = await scalar(`select ${schema}.create_campaign('Vault') result`)
     const invite = await scalar(`select ${schema}.invite_campaign_member($1,$2) result`, [
@@ -79,8 +82,14 @@ describe.each(schemas)('%s loot distribution', (schema) => {
     ])
     await asUser(player)
     await db.query(`select ${schema}.respond_campaign_invitation($1,true)`, [invite])
-    await scalar(`select ${schema}.create_own_character($1,'Active',$2) result`,[campaign,randomUUID()])
-    const reserve = await scalar(`select ${schema}.create_own_character($1,'Reserve',$2) result`,[campaign,randomUUID()])
+    await scalar(`select ${schema}.create_own_character($1,'Active',$2) result`, [
+      campaign,
+      randomUUID(),
+    ])
+    const reserve = await scalar(`select ${schema}.create_own_character($1,'Reserve',$2) result`, [
+      campaign,
+      randomUUID(),
+    ])
     await asUser(dm)
     const characters = []
     for (const name of ['Arin', 'Bea', 'Finn'])
@@ -95,11 +104,18 @@ describe.each(schemas)('%s loot distribution', (schema) => {
           [campaign, JSON.stringify({ name, category: 'gear' }), randomUUID()],
         ),
       )
-    const archivedChar = await scalar(`select ${schema}.create_character($1,'Archived') result`,[campaign])
-    await db.query(`select ${schema}.archive_character($1,$2)`,[campaign,archivedChar])
-    const archivedItem = await scalar<{id:string}>(`select ${schema}.save_item_definition($1,null,null,$2,$3) result`, [campaign,JSON.stringify({name:'Retired',category:'gear'}),randomUUID()])
+    const archivedChar = await scalar(`select ${schema}.create_character($1,'Archived') result`, [
+      campaign,
+    ])
+    await db.query(`select ${schema}.archive_character($1,$2)`, [campaign, archivedChar])
+    const archivedItem = await scalar<{ id: string }>(
+      `select ${schema}.save_item_definition($1,null,null,$2,$3) result`,
+      [campaign, JSON.stringify({ name: 'Retired', category: 'gear' }), randomUUID()],
+    )
     await asSystem()
-    await db.query(`update ${schema}.item_definitions set archived=true where id=$1`,[archivedItem.id])
+    await db.query(`update ${schema}.item_definitions set archived=true where id=$1`, [
+      archivedItem.id,
+    ])
     await asUser(dm)
     const lines = characters.map((character_id, index) => ({
       character_id,
@@ -114,7 +130,8 @@ describe.each(schemas)('%s loot distribution', (schema) => {
       )
     const batches = () =>
       scalar<unknown[]>(`select ${schema}.list_loot_batches($1,null) result`, [campaign])
-    const remove = (id:string|null,key=randomUUID()) => scalar(`select ${schema}.delete_loot_batch($1,$2,$3) result`,[campaign,id,key])
+    const remove = (id: string | null, key = randomUUID()) =>
+      scalar(`select ${schema}.delete_loot_batch($1,$2,$3) result`, [campaign, id, key])
     const units = () =>
       scalar<number>(
         `select coalesce(sum(quantity),0)::integer result from ${schema}.inventory_items where campaign_id=$1`,
@@ -138,7 +155,10 @@ describe.each(schemas)('%s loot distribution', (schema) => {
       definition_id,
       quantity,
     }))
-    expect(sent).toEqual({ allocations: snapshot.map(a=>({...a,event_id:expect.any(String)})), batch_id: expect.any(String) })
+    expect(sent).toEqual({
+      allocations: snapshot.map((a) => ({ ...a, event_id: expect.any(String) })),
+      batch_id: expect.any(String),
+    })
     expect(await call(lines, 'Starter pack', key)).toEqual(sent)
     expect(await units()).toBe(3)
     expect(await batches()).toEqual([
@@ -157,10 +177,20 @@ describe.each(schemas)('%s loot distribution', (schema) => {
     ] as const) {
       await expect(call([lines[0], { ...lines[1], ...patch }], 'Rejected')).rejects.toThrow(message)
     }
-    for (const input of [null,{},[],Array(101).fill(lines[0]),[{...lines[0],quantity:'1'}],[{...lines[0],extra:true}],[{...lines[0],extra:'x'.repeat(33000)}]]) {
+    for (const input of [
+      null,
+      {},
+      [],
+      Array(101).fill(lines[0]),
+      [{ ...lines[0], quantity: '1' }],
+      [{ ...lines[0], extra: true }],
+      [{ ...lines[0], extra: 'x'.repeat(33000) }],
+    ]) {
       await expect(call(input)).rejects.toThrow(/Invalid allocation/)
     }
-    await expect(scalar(`select ${schema}.list_loot_batches($1,$2) result`,[campaign,'x'.repeat(81)])).rejects.toThrow('Invalid cursor')
+    await expect(
+      scalar(`select ${schema}.list_loot_batches($1,$2) result`, [campaign, 'x'.repeat(81)]),
+    ).rejects.toThrow('Invalid cursor')
     await expect(call([lines[0], lines[0]])).rejects.toThrow('Duplicate allocation')
     await expect(call(lines, 'Starter pack')).rejects.toThrow('Batch name in use')
     expect(await units()).toBe(3)
@@ -172,16 +202,18 @@ describe.each(schemas)('%s loot distribution', (schema) => {
     await expect(call(lines, 'Starter pack', key)).rejects.toThrow('Forbidden')
     const privateSchema = schema === 'pre' ? 'pre_private' : 'private'
     await asSystem()
-    await db.exec(`update ${privateSchema}.quota_limits set max_count=1 where quota='loot_batches_per_campaign'`)
+    await db.exec(
+      `update ${privateSchema}.quota_limits set max_count=1 where quota='loot_batches_per_campaign'`,
+    )
     await asUser(dm)
-    await expect(call(lines,'Full')).rejects.toThrow('Batch limit reached')
+    await expect(call(lines, 'Full')).rejects.toThrow('Batch limit reached')
     expect(await units()).toBe(6)
     const deleteKey = randomUUID()
-    expect(await remove(sent.batch_id,deleteKey)).toEqual({id:sent.batch_id})
-    expect(await remove(sent.batch_id,deleteKey)).toEqual({id:sent.batch_id})
+    expect(await remove(sent.batch_id, deleteKey)).toEqual({ id: sent.batch_id })
+    expect(await remove(sent.batch_id, deleteKey)).toEqual({ id: sent.batch_id })
     expect(await batches()).toHaveLength(0)
     expect(await units()).toBe(6)
-    expect((await call(lines,'Fresh')).batch_id).toEqual(expect.any(String))
+    expect((await call(lines, 'Fresh')).batch_id).toEqual(expect.any(String))
     for (const actor of [dm, player]) {
       await asUser(actor)
       await expect(db.exec(`select * from ${privateSchema}.loot_batches`)).rejects.toThrow(

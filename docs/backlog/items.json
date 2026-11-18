@@ -4591,6 +4591,27 @@
         "npm run check"
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-144",
+      "title": "Table activation and campaign preparation",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "in_progress",
+      "dependsOn": [],
+      "sources": ["Product audit, 18 November 2026: activate a table and prepare a campaign."],
+      "scope": "Public turn example, invitation handoff, first session, campaign context, command centre, character assignment, reviewed loot distribution and shop management.",
+      "acceptance": [
+        "Show the same turn across three roles and copy the in-app invitation steps.",
+        "Expose setup outcomes, solo rehearsal, campaign identity and an exit from player preview.",
+        "Navigate to active combat, catalogue or bestiary in two actions and manage character links from Members.",
+        "Deliver items to several recipients in one reviewed operation and reuse a saved distribution.",
+        "Show effective shop visibility and prioritise stock and pending orders."
+      ],
+      "validation": [
+        "Project checks, browser workflows at 390px and 820px, accessibility, independent UI review, SQL and hosted migration verification."
+      ],
+      "evidence": []
     }
   ]
 }

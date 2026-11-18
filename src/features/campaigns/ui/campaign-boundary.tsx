@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { campaignsQuery } from '../api'
 import { CampaignContext } from '../campaign-context'
+import { recordCampaignVisit } from '../domain/recent-campaign'
 import { QueryFeedback } from './feedback'
 
 export function CampaignBoundary() {
@@ -16,6 +17,10 @@ export function CampaignBoundary() {
   const client = useQueryClient()
   const query = useQuery(campaignsQuery(userId))
   const campaign = !query.isError ? query.data?.find((item) => item.id === campaignId) : undefined
+  const visitedId = campaign?.id
+  useEffect(() => {
+    if (visitedId) recordCampaignVisit(userId, visitedId)
+  }, [userId, visitedId])
   // Players still need characters; only drop DM-only campaign caches when the role is not DM.
   useEffect(() => {
     if (campaign?.role === 'dm') return

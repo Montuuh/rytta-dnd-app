@@ -1,43 +1,42 @@
-/* RYT-112 DM center: phone tabs are one scrollable segmented track, members are compact rows. */
-.dm-tabs-seg:not([data-orientation='vertical']) .dm-tabs-list {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 4px;
-  padding: 4px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  border: 1px solid var(--app-border);
-  border-radius: var(--mantine-radius-md);
-  background: var(--app-raised);
+.dm-tabs-seg .mantine-Tabs-tabLabel {
+  white-space: normal;
+  text-align: start;
 }
-
-.dm-tabs-seg:not([data-orientation='vertical']) .mantine-Tabs-tab {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  scroll-snap-align: start;
-  border-color: transparent;
-  background: transparent;
-  padding-block: 0;
+.dm-nav-count {
+  display: block;
+  font-weight: 400;
 }
-
-.dm-tabs-seg:not([data-orientation='vertical']) .mantine-Tabs-tab[data-active] {
-  border-color: var(--app-accent);
-  background: var(--app-accent);
-  color: var(--app-on-accent);
-}
-
-/* A fade on the trailing edge shows that the track continues. */
-@media (max-width: 47.99em) {
-  .dm-tabs-seg:not([data-orientation='vertical']) .dm-tabs-list {
-    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+@media (max-width: 61.99em) {
+  .dm-tabs.dm-tabs-seg[data-orientation='vertical'] {
+    display: block;
+  }
+  .dm-tabs.dm-tabs-seg[data-orientation='vertical'] .dm-tabs-list {
+    position: static;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    margin-bottom: 1rem;
+    gap: 4px;
   }
 }
-
-.dm-tabs-seg:not([data-orientation='vertical']) .mantine-Tabs-tabLabel {
-  flex: none;
+.member-characters {
+  grid-column: 1 / -1;
+  min-width: 0;
 }
-
+.member-characters button,
+.member-characters summary,
+.member-sheet {
+  min-height: 44px;
+  align-content: center;
+}
+.member-sheet {
+  display: inline-block;
+  overflow-wrap: anywhere;
+  color: var(--app-accent);
+}
+.member-characters summary {
+  cursor: pointer;
+}
 .dm-subheading {
   margin: 0;
   font-size: var(--fs-h3);
@@ -53,7 +52,8 @@
 }
 
 .member-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   min-height: 64px;
@@ -428,4 +428,35 @@
 
 .dice-set-summary span {
   color: var(--app-muted);
+}
+
+@media (max-width: 47.99em) {
+  .page-head .dm-admin-heading {
+    font-size: var(--fs-h2);
+  }
+  .dm-tabs.dm-tabs-seg[data-orientation='vertical'] .dm-tabs-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid var(--app-border);
+    border-radius: var(--mantine-radius-md);
+    overflow: hidden;
+  }
+  .dm-tabs.dm-tabs-seg .mantine-Tabs-tab {
+    border: 0;
+    border-radius: 0;
+    padding: 0.45rem 0.75rem;
+  }
+  .dm-tabs.dm-tabs-seg .mantine-Tabs-tab + .mantine-Tabs-tab {
+    border-top: 1px solid var(--app-border);
+  }
+  .dm-tabs-seg .mantine-Tabs-tabLabel {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .dm-tabs-seg .mantine-Tabs-tab:focus-visible {
+    outline-offset: -3px;
+  }
 }

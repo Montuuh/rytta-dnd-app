@@ -2500,6 +2500,14 @@ function inventoryState(
     events.unshift(event)
     return { item_id: row.id, event_id: event.id, revision: row.revision }
   }
+  type LootLine = {
+    character_id: string
+    definition_id: string
+    quantity: number
+    revision: number
+  }
+  const lootBatches: { id: string; name: string; allocations: LootLine[] }[] = []
+  const lootReceipts = new Map<string, { allocations: LootLine[]; batch_id: string | null }>()
   // One import mock (and one replay memory) for every fixture that serves import_basic_items.
   const importBasic = basicImportMock({
     definitions,
@@ -2756,6 +2764,55 @@ function inventoryState(
         item.archived = true
         item.revision += 1
         return { id: item.id, revision: item.revision, archived_listings: 0 }
+      }
+      if (method === 'list_loot_batches') return dm ? lootBatches : new Error('Forbidden')
+      if (method === 'delete_loot_batch') {
+        if (!dm) return new Error('Forbidden')
+        const index = lootBatches.findIndex((batch) => batch.id === body.target_batch)
+        if (index < 0) return new Error('Batch unavailable')
+        const [removed] = lootBatches.splice(index, 1)
+        return { id: removed!.id }
+      }
+      if (method === 'distribute_loot') {
+        if (!dm) return new Error('Forbidden')
+        const key = String(body.request_id)
+        if (lootReceipts.has(key)) return lootReceipts.get(key)
+        const allocations = body.allocations as LootLine[]
+        if (
+          allocations.some(
+            (a) =>
+              !characterIds.includes(a.character_id) ||
+              !definitions.some(
+                (d) => d.id === a.definition_id && d.revision === a.revision && !d.archived,
+              ),
+          )
+        )
+          return new Error('Stale revision')
+        const batch = body.batch_name
+          ? { id: crypto.randomUUID(), name: String(body.batch_name), allocations }
+          : null
+        if (batch && lootBatches.some((b) => b.name === batch.name))
+          return new Error('Batch name in use')
+        if (batch) lootBatches.push(batch)
+        for (const line of allocations) {
+          const existing = stacks.find(
+            (row) =>
+              row.character_id === line.character_id &&
+              row.definition_id === line.definition_id &&
+              row.source === 'dm' &&
+              !row.equipped_slot,
+          )
+          const row = existing ?? stack(line.character_id, line.definition_id, line.quantity)
+          if (existing) {
+            row.quantity += line.quantity
+            row.revision += 1
+          }
+          row.source = 'dm'
+          record(row, actor, 'grant', line.quantity)
+        }
+        const result = { allocations, batch_id: batch?.id ?? null }
+        lootReceipts.set(key, result)
+        return result
       }
       if (method === 'grant_item') {
         const source = dm ? 'dm' : 'player'

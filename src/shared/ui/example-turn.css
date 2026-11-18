@@ -1,0 +1,38 @@
+.example-turn-title {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+}
+
+.example-turn-context {
+  color: var(--app-muted);
+  margin: 0 0 12px;
+}
+
+.example-turn-roles {
+  gap: 0 4px;
+}
+
+.example-turn-roles .mantine-Tabs-tab {
+  min-width: 44px;
+  min-height: 44px;
+  padding-inline: clamp(0.5rem, 2vw, 1rem);
+  white-space: normal;
+}
+
+.example-turn-figure {
+  display: grid;
+  justify-items: start;
+  margin: 16px 0 0;
+  gap: 14px;
+}
+
+.example-turn-figure img {
+  justify-self: center;
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+}

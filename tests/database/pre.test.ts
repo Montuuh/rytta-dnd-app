@@ -61,8 +61,8 @@ describe('public to pre bulk refresh', () => {
     // private.content_editors and private.content_requests; RYT-105 added item_proposals; RYT-113
     // added encounter_signals and private.quota_limits; RYT-115 added
     // private.account_deletion_requests; RYT-130/133 added campaign_events, campaign_rolls,
-    // campaign_roll_signals and private.campaign_requests.
-    expect(report.rows[0]!.result.tables).toHaveLength(55)
+    // campaign_roll_signals and private.campaign_requests; RYT-144 added private.loot_batches.
+    expect(report.rows[0]!.result.tables).toHaveLength(56)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

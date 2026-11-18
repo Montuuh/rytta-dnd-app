@@ -1,7 +1,7 @@
 /** RYT-115: account export and deletion in Settings, and the notice after deleting. */
 export const accountEn = {
   'account.title': 'Your account',
-  'account.help': 'Take a copy of your data, or delete your account for good.',
+  'account.help': 'Manage your data and privacy across all your campaigns.',
   'account.deletedUser': 'Deleted account',
 
   'account.export.heading': 'Your data',
@@ -32,7 +32,7 @@ export const accountEn = {
 
   'account.delete.heading': 'Leave Rytta',
   'account.delete.copy':
-    'Permanent. Campaigns where you are the only member and their images go with it. Shared campaigns keep their history without your name.',
+    'Deletes your Rytta account and removes you from every campaign. Campaigns where you are the only member are deleted. Shared campaigns keep their history without your name.',
   'account.delete.button': 'Delete my account…',
 
   'account.dialog.title': 'Delete your account',
@@ -57,7 +57,7 @@ export const accountEn = {
   'account.confirm.stays1': 'Your history in shared campaigns, without your name.',
   'account.confirm.stays2':
     'Your characters in shared campaigns, which return to the campaign pool.',
-  'account.confirm.final': 'This cannot be undone.',
+  'account.confirm.final': 'Deleting your Rytta account is permanent.',
   'account.confirm.download': 'Download my data first',
   'account.confirm.label': 'Type {{word}} to confirm',
   'account.confirm.hint':

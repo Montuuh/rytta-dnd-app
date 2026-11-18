@@ -38,6 +38,7 @@ import {
   type Campaign,
   type Invitation,
 } from '../domain/campaign'
+import { readCampaignVisit } from '../domain/recent-campaign'
 import { ActionFeedback, QueryFeedback } from './feedback'
 import { LeaveCampaignDialog, LeaveCampaignItem } from './leave'
 import './hub.css'
@@ -537,7 +538,7 @@ function CampaignCard({
   userId: string
   onLeave: (trigger: HTMLElement) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [menuOpened, setMenuOpened] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   const members = useQuery({
@@ -545,6 +546,12 @@ function CampaignCard({
     enabled: menuOpened && campaign.role === 'dm',
   })
   const more = t('hub.more', { name: campaign.name })
+  const visitedAt = readCampaignVisit(userId, campaign.id)
+  const date = visitedAt
+    ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(
+        visitedAt,
+      )
+    : null
   return (
     <Paper className="campaign-card hub-card">
       <div className="hub-cover">
@@ -556,12 +563,21 @@ function CampaignCard({
           decoding="async"
           draggable={false}
         />
-        <div className="hub-cover-text">
-          <span className="hub-cover-role">{t(`campaign.role.${campaign.role}`)}</span>
-          <Title order={2}>{campaign.name}</Title>
-        </div>
       </div>
       <Stack className="hub-card-body" gap="sm">
+        <div className="hub-card-identity">
+          <Title order={2} className="user-copy">
+            {campaign.name}
+          </Title>
+          <Text component="span" fw={600} size="sm">
+            {t(`campaign.role.${campaign.role}`)}
+          </Text>
+          <Text size="sm" c="dimmed">
+            {date
+              ? t('activation.campaign.lastOpened', { date })
+              : t('activation.campaign.noVisit')}
+          </Text>
+        </div>
         {campaign.description && (
           <Text c="dimmed" className="user-copy hub-card-description">
             {campaign.description}

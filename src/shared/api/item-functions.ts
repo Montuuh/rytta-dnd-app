@@ -6,6 +6,9 @@ type Campaign = { target_campaign: string }
 type Keyed = { request_id: string }
 type Call<A> = { Args: Campaign & A; Returns: Json }
 export type ItemFunctions = {
+  delete_loot_batch: Call<Keyed & { target_batch: string }>
+  list_loot_batches: Call<{ after_name: string | null }>
+  distribute_loot: Call<Keyed & { allocations: Json; batch_name: string | null }>
   item_definition_impact: Call<{ target_definition: string }>
   archive_item_definition: Call<Keyed & { target_definition: string; expected_revision: number }>
   sync_listing_prices: Call<

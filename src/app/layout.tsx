@@ -120,7 +120,7 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   // The DM Command Center is the DM's first destination (RYT-027); it also holds the storeroom.
   if (effectiveDm)
     entries.unshift({
-      to: `${prefix}/members`,
+      to: prefix,
       label: t('campaign.manage'),
       short: t('nav.dmShort'),
       icon: Shield,
@@ -143,6 +143,7 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
         <NavLink
           key={to}
           to={to}
+          end={dm}
           className={({ isActive }) =>
             `nav-item ${dm ? 'nav-item-dm' : ''} ${isActive ? 'active' : ''}`
           }
@@ -174,6 +175,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
           <NavLink
             key={to}
             to={to}
+            end={dm}
             aria-label={short ? label : undefined}
             className={({ isActive }) =>
               `bottom-nav-item ${dm ? 'is-dm' : ''} ${isActive ? 'active' : ''}`

@@ -3,7 +3,7 @@ import type { accountEn } from './account-en'
 /** RYT-115: exportar y eliminar la cuenta en Ajustes, y el aviso tras eliminarla. */
 export const accountEs = {
   'account.title': 'Tu cuenta',
-  'account.help': 'Llévate una copia de tus datos o elimina tu cuenta para siempre.',
+  'account.help': 'Gestiona tus datos y tu privacidad en todas tus campañas.',
   'account.deletedUser': 'Cuenta eliminada',
 
   'account.export.heading': 'Tus datos',
@@ -34,7 +34,7 @@ export const accountEs = {
 
   'account.delete.heading': 'Dejar Rytta',
   'account.delete.copy':
-    'Es permanente. Las campañas donde eres el único miembro y sus imágenes se van con ella. Las campañas compartidas conservan su historial sin tu nombre.',
+    'Elimina tu cuenta de Rytta y te retira de todas tus campañas. Se borran las campañas en las que eres el único miembro. Las compartidas conservan su historial sin tu nombre.',
   'account.delete.button': 'Eliminar mi cuenta…',
 
   'account.dialog.title': 'Eliminar tu cuenta',
@@ -58,7 +58,7 @@ export const accountEs = {
   'account.confirm.stays1': 'Tu historial en las campañas compartidas, sin tu nombre.',
   'account.confirm.stays2':
     'Tus personajes en las campañas compartidas, que vuelven a la reserva de la campaña.',
-  'account.confirm.final': 'No se puede deshacer.',
+  'account.confirm.final': 'El borrado de tu cuenta de Rytta es permanente.',
   'account.confirm.download': 'Descargar mis datos antes',
   'account.confirm.label': 'Escribe {{word}} para confirmar',
   'account.confirm.hint':

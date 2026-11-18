@@ -15,3 +15,63 @@
 .store-list .store-row-line .store-value {
   margin-left: auto;
 }
+
+.store-find {
+  display: grid;
+  gap: var(--mantine-spacing-xs);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.store-options summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  width: fit-content;
+  color: var(--app-muted);
+}
+.loot-line {
+  min-width: 0;
+  margin: 0;
+  padding: var(--mantine-spacing-sm);
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-sm);
+}
+.loot-line legend {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.loot-recipients {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.loot-recipient {
+  min-height: 44px;
+  padding: 4px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.loot-recipient[aria-pressed='true'] {
+  border-color: var(--mantine-primary-color-filled);
+  font-weight: 700;
+}
+@media (max-width: 36em) {
+  .store-find {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.loot-batch-name {
+  min-width: 0;
+  flex: 1;
+  height: auto;
+  min-height: 44px;
+}
+.loot-batch-name .mantine-Button-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

@@ -5,7 +5,6 @@ import {
   Badge,
   Button,
   Group,
-  Loader,
   Menu,
   Select,
   SegmentedControl,
@@ -24,14 +23,12 @@ import {
   ArrowUpDown,
   Bookmark,
   BookmarkCheck,
-  Check,
   Ellipsis,
   Gift,
   GitMerge,
   Inbox,
   LayoutGrid,
   List,
-  Minus,
   PackagePlus,
   Pencil,
   Plus,
@@ -47,18 +44,17 @@ import {
   BasicImport,
   catalogueQuery,
   categoryIcons,
-  CharacterPortrait,
   DefinitionEditor,
   DeleteItemDialog,
   ItemIcon,
   itemCategories,
   MergeItems,
+  LootDrawer,
   ProposalReview,
   rarities,
   rarityPips,
   rosterQuery,
   unitPounds,
-  useInventoryAction,
   useItemTemplate,
   usePendingProposalCount,
   useWeightFormat,
@@ -98,7 +94,9 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
   const [editor, setEditor] = useState<{ item: ItemDefinition | null; give?: string[] } | null>(
     null,
   )
-  const [give, setGive] = useState<ItemDefinition | null>(null)
+  const [give, setGive] = useState<ItemDefinition | true | null>(null)
+  const [managing, setManaging] = useState(false)
+  const [mergeSource, setMergeSource] = useState<string | null>(null)
   const [shop, setShop] = useState<ItemDefinition | null>(null)
   const [removing, setRemoving] = useState<ItemDefinition | null>(null)
   // RYT-104/105: basic catalogue import, proposal review and duplicate merges.
@@ -255,30 +253,6 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     onMerge: () => setMerging(item),
     onTemplate: () => toggleTemplate(item),
   })
-  const importButton = (variant: 'quiet' | 'light') =>
-    variant === 'quiet' ? (
-      <UnstyledButton
-        className="quiet-link store-desk-link"
-        onClick={(event) => {
-          remember(event.currentTarget)
-          setImporting(true)
-        }}
-      >
-        <PackagePlus size={18} aria-hidden="true" />
-        {t('items.import.open')}
-      </UnstyledButton>
-    ) : (
-      <Button
-        variant="light"
-        leftSection={<PackagePlus size={18} aria-hidden="true" />}
-        onClick={(event) => {
-          remember(event.currentTarget)
-          setImporting(true)
-        }}
-      >
-        {t('items.import.open')}
-      </Button>
-    )
   const filtersActive = category !== 'all' || search.trim().length > 0
 
   return (
@@ -307,27 +281,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
           {t('catalogue.create')}
         </Button>
       </Group>
-      <div className="store-desk">
-        <UnstyledButton
-          className="store-desk-link"
-          data-waiting={pendingProposals > 0 || undefined}
-          onClick={(event) => {
-            remember(event.currentTarget)
-            setReviewing(true)
-          }}
-        >
-          <Inbox size={18} aria-hidden="true" />
-          <span>{t('items.review.open')}</span>
-          {pendingProposals > 0 && (
-            <span className="store-desk-count">
-              {t('items.review.waiting', { count: pendingProposals })}
-            </span>
-          )}
-        </UnstyledButton>
-        {all.length > 0 && importButton('quiet')}
-      </div>
-
-      <div className="store-toolbar">
+      <div className="store-find">
         <TextInput
           className="store-search"
           ref={searchInput}
@@ -353,45 +307,92 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             ) : null
           }
         />
-        <Select
-          className="store-sort"
-          aria-label={t('store.sort')}
-          leftSection={<ArrowUpDown size={16} aria-hidden="true" />}
-          value={sort}
-          allowDeselect={false}
-          onChange={(next) => next && setSort(next as Sort)}
-          data={(['name', 'category', 'rarity', 'value'] as const).map((key) => ({
-            value: key,
-            label: t(`store.sort${key[0]!.toUpperCase()}${key.slice(1)}` as 'store.sortName'),
-          }))}
-        />
-        <SegmentedControl
-          className="store-view"
-          aria-label={t('store.view')}
-          value={view}
-          onChange={(next) => setView(next as View)}
-          data={[
-            {
-              value: 'list',
-              label: (
-                <span className="view-option" title={t('store.viewList')}>
-                  <List size={18} aria-hidden="true" />
-                  <VisuallyHidden>{t('store.viewList')}</VisuallyHidden>
-                </span>
-              ),
-            },
-            {
-              value: 'grid',
-              label: (
-                <span className="view-option" title={t('store.viewGrid')}>
-                  <LayoutGrid size={18} aria-hidden="true" />
-                  <VisuallyHidden>{t('store.viewGrid')}</VisuallyHidden>
-                </span>
-              ),
-            },
-          ]}
-        />
+        {all.length > 0 && (
+          <Button
+            variant="light"
+            leftSection={<Gift size={18} />}
+            onClick={(event) => {
+              remember(event.currentTarget)
+              setGive(true)
+            }}
+          >
+            {t('loot.open')}
+          </Button>
+        )}
       </div>
+      <div className="store-desk">
+        <UnstyledButton
+          className="store-desk-link"
+          data-waiting={pendingProposals > 0 || undefined}
+          onClick={(event) => {
+            remember(event.currentTarget)
+            setReviewing(true)
+          }}
+        >
+          <Inbox size={18} aria-hidden="true" />
+          <span>{t('items.review.open')}</span>
+          {pendingProposals > 0 && (
+            <span className="store-desk-count">
+              {t('items.review.waiting', { count: pendingProposals })}
+            </span>
+          )}
+        </UnstyledButton>
+        <UnstyledButton
+          className="store-desk-link"
+          onClick={(event) => {
+            remember(event.currentTarget)
+            setMergeSource(null)
+            setManaging(true)
+          }}
+        >
+          <PackagePlus size={18} aria-hidden />
+          {t('loot.manage')}
+        </UnstyledButton>
+      </div>
+
+      <details className="store-options">
+        <summary>{t('loot.options')}</summary>
+        <Group gap="sm">
+          <Select
+            className="store-sort"
+            aria-label={t('store.sort')}
+            leftSection={<ArrowUpDown size={16} aria-hidden="true" />}
+            value={sort}
+            allowDeselect={false}
+            onChange={(next) => next && setSort(next as Sort)}
+            data={(['name', 'category', 'rarity', 'value'] as const).map((key) => ({
+              value: key,
+              label: t(`store.sort${key[0]!.toUpperCase()}${key.slice(1)}` as 'store.sortName'),
+            }))}
+          />
+          <SegmentedControl
+            className="store-view"
+            aria-label={t('store.view')}
+            value={view}
+            onChange={(next) => setView(next as View)}
+            data={[
+              {
+                value: 'list',
+                label: (
+                  <span className="view-option" title={t('store.viewList')}>
+                    <List size={18} aria-hidden="true" />
+                    <VisuallyHidden>{t('store.viewList')}</VisuallyHidden>
+                  </span>
+                ),
+              },
+              {
+                value: 'grid',
+                label: (
+                  <span className="view-option" title={t('store.viewGrid')}>
+                    <LayoutGrid size={18} aria-hidden="true" />
+                    <VisuallyHidden>{t('store.viewGrid')}</VisuallyHidden>
+                  </span>
+                ),
+              },
+            ]}
+          />
+        </Group>
+      </details>
       <div className="category-rail store-rail" role="group" aria-label={t('inventory.filter')}>
         {(['all', ...itemCategories] as const)
           .filter((key) => key === 'all' || counts.has(key))
@@ -440,7 +441,17 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         <Stack align="center" gap="xs" py="xl" className="store-empty">
           <ItemIcon icon="package" size={36} />
           <Text>{t(all.length ? 'store.noResults' : 'items.import.empty')}</Text>
-          {all.length === 0 && importButton('light')}
+          {all.length === 0 && (
+            <Button
+              variant="light"
+              onClick={(event) => {
+                remember(event.currentTarget)
+                setImporting(true)
+              }}
+            >
+              {t('items.import.open')}
+            </Button>
+          )}
           {filtersActive && (
             <Button
               variant="subtle"
@@ -570,19 +581,69 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         />
       )}
       {give && (
-        <GiveItem
+        <LootDrawer
           campaignId={campaignId}
-          item={give}
+          items={all}
+          initial={give === true ? undefined : give}
           onClose={() => {
             setGive(null)
             returnFocus()
           }}
-          onDone={(names) => {
-            setGive(null)
-            setNotice({ tone: 'ok', text: t('store.givenTo', { name: nameOf(give), names }) })
+        />
+      )}
+      {managing && (
+        <Drawer
+          opened
+          title={t('loot.manage')}
+          position={phone ? 'bottom' : 'right'}
+          size={phone ? 'auto' : 420}
+          onClose={() => {
+            setManaging(false)
             returnFocus()
           }}
-        />
+          returnFocus={false}
+          closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
+        >
+          <Stack>
+            <Button
+              variant="light"
+              leftSection={<PackagePlus size={18} />}
+              onClick={() => {
+                setManaging(false)
+                setImporting(true)
+              }}
+            >
+              {t('items.import.open')}
+            </Button>
+            {all.length > 1 && (
+              <>
+                <Select
+                  label={t('loot.mergeSource')}
+                  searchable
+                  value={mergeSource}
+                  onChange={setMergeSource}
+                  data={all.map((item) => ({ value: item.id, label: nameOf(item) }))}
+                  limit={40}
+                  comboboxProps={{ withinPortal: false }}
+                />
+                <Button
+                  variant="default"
+                  leftSection={<GitMerge size={18} />}
+                  disabled={!mergeSource}
+                  onClick={() => {
+                    const source = all.find((item) => item.id === mergeSource)
+                    if (source) {
+                      setManaging(false)
+                      setMerging(source)
+                    }
+                  }}
+                >
+                  {t('items.merge.open')}
+                </Button>
+              </>
+            )}
+          </Stack>
+        </Drawer>
       )}
       {removing && (
         <DeleteItemDialog
@@ -801,209 +862,5 @@ function ItemActions({
         </Menu.Dropdown>
       </Menu>
     </div>
-  )
-}
-
-/** Give an existing item to one or more characters with an amount stepper. Each character keeps
- * its own idempotency key, so retrying after a partial failure never doubles a grant. */
-function GiveItem({
-  campaignId,
-  item,
-  onClose,
-  onDone,
-}: {
-  campaignId: string
-  item: ItemDefinition
-  onClose: () => void
-  onDone: (names: string) => void
-}) {
-  const { state } = useAuth()
-  const { t, i18n } = useTranslation()
-  const roster = useQuery(rosterQuery(state.user!.id, campaignId))
-  const action = useInventoryAction(campaignId)
-  const [selected, setSelected] = useState<string[]>([])
-  const [given, setGiven] = useState<string[]>([])
-  const [amount, setAmount] = useState(1)
-  const [pending, setPending] = useState(false)
-  const [failed, setFailed] = useState<string[]>([])
-  const requests = useRef(new Map<string, string>())
-  const opener = useRef(document.activeElement as HTMLElement | null)
-  const phone = usePhone()
-  const dismiss = () => {
-    onClose()
-    requestAnimationFrame(() => {
-      if (opener.current?.isConnected) opener.current.focus()
-    })
-  }
-  const submit = async () => {
-    if (pending || selected.length === 0) return
-    setPending(true)
-    setFailed([])
-    const done = [...given]
-    const missed: string[] = []
-    for (const characterId of selected.filter((id) => !given.includes(id))) {
-      if (!requests.current.has(characterId)) requests.current.set(characterId, newRequestId())
-      try {
-        await action.mutateAsync({
-          kind: 'grant',
-          characterId,
-          definitionId: item.id,
-          amount,
-          requestId: requests.current.get(characterId),
-        })
-        done.push(characterId)
-      } catch {
-        missed.push(characterId)
-      }
-    }
-    setFailed(missed)
-    setGiven(done)
-    setPending(false)
-    if (done.length === selected.length) {
-      const names = selected
-        .map((id) => roster.data?.find((c) => c.id === id)?.name ?? '')
-        .filter(Boolean)
-        .join(', ')
-      onDone(names)
-      requestAnimationFrame(() => {
-        if (opener.current?.isConnected) opener.current.focus()
-      })
-    }
-  }
-  return (
-    <Drawer
-      opened
-      position={phone ? 'bottom' : 'right'}
-      size={phone ? 'auto' : 420}
-      title={t('catalogue.give')}
-      returnFocus={false}
-      onClose={() => !pending && dismiss()}
-      closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
-      className="give-drawer"
-    >
-      <Stack>
-        <Group gap="sm" wrap="nowrap">
-          <ItemIcon
-            icon={item.icon}
-            imagePath={item.image_path}
-            size={22}
-            viewable
-            name={localizedName(item, i18n.language)}
-            frame={`store-glyph rarity-${item.rarity}`}
-          />
-          <Text fw={600} className="user-copy">
-            {localizedName(item, i18n.language)}
-          </Text>
-        </Group>
-        {roster.isPending && <Text role="status">{t('common.loading')}</Text>}
-        {roster.isError && (
-          <Alert role="alert" color="red">
-            {t('query.error')}{' '}
-            <Button variant="subtle" onClick={() => void roster.refetch()}>
-              {t('common.retry')}
-            </Button>
-          </Alert>
-        )}
-        {roster.data?.length === 0 && <Text>{t('inventory.noCharacters')}</Text>}
-        {!!roster.data?.length && (
-          <fieldset className="plain-fieldset">
-            <legend>
-              <Text fw={600} size="sm" mb={6}>
-                {t('catalogue.character')}
-              </Text>
-            </legend>
-            <div className="give-roster wrap" role="group">
-              {roster.data.map((c) => (
-                <UnstyledButton
-                  key={c.id}
-                  type="button"
-                  aria-pressed={selected.includes(c.id)}
-                  aria-disabled={given.includes(c.id) || undefined}
-                  className="give-target"
-                  onClick={() =>
-                    !given.includes(c.id) &&
-                    setSelected((current) =>
-                      current.includes(c.id)
-                        ? current.filter((id) => id !== c.id)
-                        : [...current, c.id],
-                    )
-                  }
-                >
-                  <CharacterPortrait
-                    campaignId={campaignId}
-                    characterId={c.id}
-                    name={c.name}
-                    path={null}
-                    size={40}
-                  />
-                  <span className="user-copy">{c.name}</span>
-                  {given.includes(c.id) && (
-                    <span className="give-served">
-                      <Check size={16} aria-hidden="true" />
-                      <VisuallyHidden>{t('store.served')}</VisuallyHidden>
-                    </span>
-                  )}
-                </UnstyledButton>
-              ))}
-            </div>
-          </fieldset>
-        )}
-        <div>
-          <Text fw={600} size="sm" mb={6} id="give-amount">
-            {t('inventory.card.amount')}
-          </Text>
-          <Group gap="xs" role="group" aria-labelledby="give-amount" wrap="nowrap">
-            <ActionIcon
-              variant="default"
-              size={44}
-              aria-label={t('characters.decrease', { field: t('inventory.card.amount') })}
-              aria-disabled={amount <= 1 || undefined}
-              onClick={() => setAmount((current) => Math.max(1, current - 1))}
-            >
-              <Minus size={18} aria-hidden="true" />
-            </ActionIcon>
-            <Text className="give-amount" aria-live="polite">
-              {amount}
-            </Text>
-            <ActionIcon
-              variant="default"
-              size={44}
-              aria-label={t('characters.increase', { field: t('inventory.card.amount') })}
-              aria-disabled={amount >= 1000 || undefined}
-              onClick={() => setAmount((current) => Math.min(1000, current + 1))}
-            >
-              <Plus size={18} aria-hidden="true" />
-            </ActionIcon>
-            {[5, 10].map((step) => (
-              <Button
-                key={step}
-                variant="default"
-                onClick={() => setAmount((current) => Math.min(1000, current + step))}
-              >
-                +{step}
-              </Button>
-            ))}
-          </Group>
-        </div>
-        {failed.length > 0 && (
-          <Alert role="alert" color="red">
-            {t('store.giveFailed', {
-              names: failed
-                .map((id) => roster.data?.find((c) => c.id === id)?.name ?? '')
-                .filter(Boolean)
-                .join(', '),
-            })}
-          </Alert>
-        )}
-        <Button
-          leftSection={pending ? <Loader size={16} /> : <Gift size={18} aria-hidden="true" />}
-          aria-busy={pending}
-          aria-disabled={pending || selected.length === 0 || undefined}
-          onClick={() => void submit()}
-        >
-          {t(failed.length ? 'common.retry' : 'catalogue.give')}
-        </Button>
-      </Stack>
-    </Drawer>
   )
 }

@@ -1,0 +1,25 @@
+.campaign-destinations {
+  display: grid;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+}
+.campaign-destinations a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  min-height: 64px;
+  color: var(--app-text);
+  text-decoration: none;
+}
+.campaign-destinations a + a {
+  border-top: 1px solid var(--app-border);
+}
+.campaign-destinations a:hover {
+  background: var(--app-hover);
+}
+.campaign-destinations svg {
+  color: var(--app-accent);
+}

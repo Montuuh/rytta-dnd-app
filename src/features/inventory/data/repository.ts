@@ -146,6 +146,9 @@ const errorCode = (message: string) =>
     ['Proposal closed', 'closed'],
     ['Proposal unavailable', 'closed'],
     ['Item unavailable', 'gone'],
+    ['Character unavailable', 'gone'],
+    ['Batch name in use', 'batchName'],
+    ['Batch limit reached', 'batchLimit'],
   ].find(([needle]) => message.includes(needle!))?.[1] ?? 'unavailable'
 
 /** The Error a failed RPC throws: its stable code as the message. */
@@ -728,4 +731,73 @@ export async function mergeItemDefinitions(
   })
   if (result.error) throw failure(result.error)
   return mergeResultSchema.parse(result.data)
+}
+
+const lootAllocationSchema = z.object({
+  character_id: z.uuid(),
+  definition_id: z.uuid(),
+  quantity: z.number().int().min(1).max(1000),
+})
+const reviewedAllocations = lootAllocationSchema
+  .extend({ revision: z.number().int().nonnegative() })
+  .array()
+  .min(1)
+  .max(100)
+export type LootAllocation = z.infer<typeof lootAllocationSchema>
+export type LootRequest = {
+  allocations: z.infer<typeof reviewedAllocations>
+  name: string | null
+  requestId: string
+}
+
+export async function distributeLoot(campaignId: string, input: LootRequest) {
+  const db = await client()
+  const result = await db.rpc('distribute_loot', {
+    target_campaign: z.uuid().parse(campaignId),
+    allocations: reviewedAllocations.parse(input.allocations),
+    batch_name: z.string().trim().min(1).max(80).nullable().parse(input.name),
+    request_id: z.uuid().parse(input.requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return z
+    .object({
+      allocations: lootAllocationSchema.array().min(1).max(100),
+      batch_id: z.uuid().nullable(),
+    })
+    .parse(result.data)
+}
+
+export async function listLootBatches(
+  campaignId: string,
+  after: string | null,
+  signal: AbortSignal,
+) {
+  const db = await client()
+  const result = await db
+    .rpc('list_loot_batches', {
+      target_campaign: z.uuid().parse(campaignId),
+      after_name: after,
+    })
+    .abortSignal(signal)
+  if (result.error) throw failure(result.error)
+  return z
+    .object({
+      id: z.uuid(),
+      name: z.string().min(1).max(80),
+      allocations: lootAllocationSchema.array().min(1).max(100),
+    })
+    .array()
+    .max(20)
+    .parse(result.data)
+}
+
+export async function deleteLootBatch(campaignId: string, id: string, requestId: string) {
+  const db = await client()
+  const result = await db.rpc('delete_loot_batch', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_batch: z.uuid().parse(id),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (result.error) throw failure(result.error)
+  return z.object({ id: z.uuid() }).parse(result.data)
 }

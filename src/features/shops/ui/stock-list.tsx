@@ -425,7 +425,7 @@ export function StockList({
   return (
     <section aria-labelledby={`stock-${shop.id}`}>
       <Group justify="space-between" mt="lg" mb="sm">
-        <Title order={3} id={`stock-${shop.id}`}>
+        <Title order={3} tabIndex={-1} id={`stock-${shop.id}`}>
           {t('admin.listing.title')}
         </Title>
         <Button

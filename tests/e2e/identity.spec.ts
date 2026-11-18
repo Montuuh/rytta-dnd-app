@@ -7,6 +7,7 @@ import {
   storageKey,
   session,
   playerId,
+  dmId,
 } from './fixtures/identity.ts'
 import { capture, expectTouchTargets, focusAcrossFrames, limitMatrix } from './fixtures/audit.ts'
 
@@ -27,6 +28,126 @@ test('Google sign-in uses PKCE and an exact Pages callback; no private requests 
   )
 })
 
+test('a DM copies invitation instructions and a player accepts from a separate browser', async ({
+  page: dm,
+  browser,
+  baseURL,
+}, testInfo) => {
+  const accountEmail = 'player@example.com'
+  const invitedCampaign = {
+    id: campaignId,
+    name: 'The Sunken Coast',
+    description: '',
+    created_at: '2026-10-27T00:00:00Z',
+    role: 'player',
+  }
+  const invitation = {
+    id: '30000000-0000-4000-8000-000000000019',
+    campaign_id: campaignId,
+    campaign_name: invitedCampaign.name,
+    character_id: null,
+    character_name: null,
+    email: accountEmail,
+    expires_at: '2099-10-27T00:00:00Z',
+  }
+  let pending = false
+  let joined = false
+  let copied = ''
+  await dm.exposeFunction('recordCopiedInstructions', (text: string) => {
+    copied = text
+  })
+  await dm.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: (
+          window as Window & { recordCopiedInstructions?: (text: string) => Promise<void> }
+        ).recordCopiedInstructions,
+      },
+    })
+  })
+  await identityFixture(dm, { free: ['Eira'] })
+  await dm.route('**/rest/v1/rpc/invite_campaign_member', async (route) => {
+    expect(route.request().postDataJSON()).toMatchObject({
+      target_campaign: campaignId,
+      invite_email: accountEmail,
+    })
+    pending = true
+    await route.fulfill({ json: invitation.id })
+  })
+  await dm.route('**/rest/v1/campaign_invitations?*', (route) =>
+    route.fulfill({ json: pending ? [invitation] : [] }),
+  )
+  await dm.route('**/rest/v1/rpc/list_campaign_members', (route) =>
+    route.fulfill({
+      json: [
+        { user_id: dmId, role: 'dm', email: 'dm@example.com', display_name: 'Table DM' },
+        ...(joined
+          ? [{ user_id: playerId, role: 'player', email: accountEmail, display_name: 'Arin' }]
+          : []),
+      ],
+    }),
+  )
+
+  const recipient = await browser.newContext({ baseURL, viewport: testInfo.project.use.viewport })
+  try {
+    const player = await recipient.newPage()
+    const fixture = await identityFixture(player, { signedIn: false, player: true })
+    await player.route('**/rest/v1/rpc/list_my_campaigns_with_modules', (route) =>
+      route.fulfill({ json: joined ? [invitedCampaign] : [] }),
+    )
+    await player.route('**/rest/v1/rpc/list_my_invitations', (route) =>
+      route.fulfill({ json: pending ? [invitation] : [] }),
+    )
+    await player.route('**/rest/v1/rpc/respond_campaign_invitation', async (route) => {
+      expect(route.request().postDataJSON()).toMatchObject({
+        invitation_id: invitation.id,
+        accept_invitation: true,
+      })
+      pending = false
+      joined = true
+      await route.fulfill({ json: campaignId })
+    })
+
+    await dm.goto(`./#/campaign/${campaignId}/members`)
+    await dm.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
+    const dialog = dm.getByRole('dialog', { name: 'Invitar jugador' })
+    await dialog.getByRole('textbox', { name: 'Correo de la cuenta de Google' }).fill(accountEmail)
+    await dialog.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
+    await dialog.getByRole('button', { name: 'Copiar instrucciones' }).click()
+    await expect(dialog.getByRole('status')).toHaveText('Instrucciones copiadas')
+    expect(copied).toContain(accountEmail)
+    expect(copied).toContain('acepta la invitación en Mis campañas')
+    const address = copied.match(/https?:\/\/[^, ]+/)?.[0]
+    expect(address).toBe(baseURL)
+    await capture(dm, testInfo.outputPath('invitation-instructions.png'), { fullPage: false })
+    await dialog.getByRole('button', { name: 'Listo' }).click()
+
+    await player.goto(address!)
+    const authorise = player.waitForRequest('https://rytta-test.supabase.co/auth/v1/authorize**')
+    await player.getByRole('button', { name: 'Continuar con Google' }).click()
+    await authorise
+    // This callback stands in for the recipient's Google flow; the app still exchanges its code.
+    await player.goto('./?code=fixture-code')
+    await expect(player.getByRole('heading', { name: 'Mis campañas' })).toBeVisible()
+    await player.getByRole('button', { name: 'Aceptar invitación' }).click()
+    await expect(
+      player.getByRole('heading', { level: 2, name: invitedCampaign.name }),
+    ).toBeVisible()
+    expect(fixture.calls.filter(({ method }) => method === 'token')).toHaveLength(1)
+
+    await dm.reload()
+    const member = dm.locator('.member-row', { hasText: accountEmail })
+    await member.getByRole('button', { name: 'Vincular personaje' }).click()
+    const assignment = dm.getByRole('dialog', { name: 'Vincular personaje' })
+    await expect(assignment).toContainText('Arin')
+    await assignment.getByRole('combobox').selectOption({ label: 'Eira' })
+    await assignment.getByRole('button', { name: 'Vincular personaje', exact: true }).click()
+    await expect(member.getByRole('link', { name: 'Ficha de Eira' })).toBeVisible()
+  } finally {
+    await recipient.close()
+  }
+})
+
 test('callback is consumed once and invalid/reused callbacks offer a new sign-in', async ({
   page,
 }) => {
@@ -42,6 +163,43 @@ test('callback is consumed once and invalid/reused callbacks offer a new sign-in
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Mis campañas', exact: true })).toBeVisible()
   expect(fixture.calls.filter((c) => c.method === 'token')).toHaveLength(1)
+})
+
+test('a visitor can compare the three views of one turn without signing in', async ({
+  page,
+}, testInfo) => {
+  const fixture = await identityFixture(page, { signedIn: false })
+  await page.goto('./')
+  const open = page.getByRole('button', { name: 'Ver una partida de ejemplo' })
+  await expect(open).toBeInViewport()
+  await open.focus()
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog', { name: 'Un turno, tres vistas' })
+  const view = dialog.getByRole('tabpanel')
+  const context = dialog.getByText('Emboscada en el puente · Ronda 1 · Turno de Arin')
+  await expect(context).toBeVisible()
+  for (const [name, file, detail] of [
+    ['DM', 'dm', 'El DM sigue la iniciativa'],
+    ['Jugador', 'player', 'En su móvil, Arin ve'],
+    ['Pantalla compartida', 'table', 'Todo el grupo ve el mapa'],
+  ]) {
+    await dialog.getByRole('tab', { name, exact: true }).click()
+    await expect(view).toContainText(detail!)
+    await expect(context).toBeVisible()
+    await expect(view.locator('img')).toHaveAttribute('src', new RegExp(`es-${file}\\.webp$`))
+    await view.locator('img').evaluate((img: HTMLImageElement) => img.decode())
+  }
+  await expectTouchTargets(dialog, 'button:visible', { width: 44, height: 44 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+      .violations,
+  ).toEqual([])
+  await capture(page, testInfo.outputPath('example-turn.png'), { fullPage: false })
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(open).toBeFocused()
+  expect(fixture.calls.filter((c) => c.method.startsWith('list_'))).toEqual([])
 })
 test('expired callback and provider denial remain usable and scrub the URL', async ({ page }) => {
   await identityFixture(page, { signedIn: false, callbackError: true })
@@ -60,6 +218,41 @@ test('expired callback and provider denial remain usable and scrub the URL', asy
     expect(page.url()).not.toContain('provider-private')
     await expect(page.locator('body')).not.toContainText('provider-private')
   }
+})
+
+test('campaign selection shows full similar names, roles and local visits', async ({ page }) => {
+  await identityFixture(page)
+  const common = 'Cartas de las tierras del norte y los antiguos guardianes del reino'
+  const names = [`${common} · Libro primero`, `${common} · Libro segundo`]
+  await page.route('**/rest/v1/rpc/list_my_campaigns_with_modules', (route) =>
+    route.fulfill({
+      json: [campaignId, otherCampaignId].map((id, index) => ({
+        id,
+        name: names[index],
+        description: '',
+        created_at: '2026-10-27T00:00:00Z',
+        role: index === 0 ? 'dm' : 'player',
+      })),
+    }),
+  )
+  await page.goto('./')
+  await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+  const first = page.locator('.campaign-card', { hasText: names[0]! })
+  const second = page.locator('.campaign-card', { hasText: names[1]! })
+  await expect(first.getByRole('heading', { name: names[0], exact: true })).toBeVisible()
+  await expect(second.getByRole('heading', { name: names[1], exact: true })).toBeVisible()
+  await expect(first.getByText('DM', { exact: true })).toBeVisible()
+  await expect(second.getByText('Jugador', { exact: true })).toBeVisible()
+  await expect(page.getByText('Sin visitas previas en este dispositivo')).toHaveCount(2)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await second.getByRole('link', { name: `Abrir campaña: ${names[1]}` }).click()
+  await expect(page).toHaveURL(new RegExp(otherCampaignId))
+  await expect(page.getByRole('heading', { name: 'Grupo', level: 1 })).toBeVisible()
+  await page.getByRole('link', { name: 'RYTTA · Mis campañas' }).click()
+  await expect(first.getByText('Sin visitas previas en este dispositivo')).toBeVisible()
+  await expect(
+    second.getByText('Última visita en este dispositivo', { exact: false }),
+  ).toBeVisible()
 })
 
 test('empty hub creates a DM campaign, accepts a Player invitation and signs out', async ({
@@ -97,6 +290,15 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(page.getByRole('heading', { name: 'Our new table' })).toHaveCount(0)
   expect(errors).toEqual([])
 })
+
+async function finishArinPreview(page: Page) {
+  const banner = page.getByText('Viendo como jugador · Arin')
+  const picker = page.getByRole('dialog', { name: 'Ver como jugador' })
+  await expect(banner.or(picker)).toBeVisible()
+  if (await picker.isVisible())
+    await picker.getByRole('button', { name: 'Arin', exact: true }).click()
+  await expect(banner).toBeVisible()
+}
 
 async function openHandoverDialog(page: Page) {
   await identityFixture(page)
@@ -146,10 +348,21 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
     .getByRole('dialog')
     .getByRole('button', { name: 'Invitar jugador', exact: true })
     .click()
+  const instructions = page.getByRole('textbox', {
+    name: 'Comparte estas instrucciones con el jugador.',
+  })
+  await expect(instructions).toHaveValue(
+    /The Sunken Coast.*\/rytta-dnd-app\/.*new@example\.com.*Mis campañas/,
+  )
+  await expect(
+    page.getByRole('button', { name: 'Copiar instrucciones', exact: true }),
+  ).toBeFocused()
+  await page.getByRole('button', { name: 'Listo', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
   await page.goto(`./#/campaign/${campaignId}/members`)
   await expect(page.getByText('new@example.com', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Cancelar invitación', exact: true }).click()
+  await page.getByRole('button', { name: 'Opciones de la invitación para new@example.com' }).click()
+  await page.getByRole('menuitem', { name: 'Cancelar invitación', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click()
   await expect(page.getByText('No hay invitaciones pendientes para esta campaña.')).toBeVisible()
   expect(f.calls.some((c) => c.method === 'invite_campaign_member')).toBe(true)
@@ -200,10 +413,121 @@ test('RYT-029: the campaign index lands the DM on the command center and Players
 }, info) => {
   await identityFixture(page)
   await page.goto(`./#/campaign/${campaignId}`)
-  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}/members$`))
+  await expect(page).toHaveURL(new RegExp(`/campaign/${campaignId}$`))
+  await expect(page.getByRole('link', { name: 'Gestionar campaña' })).toBeVisible()
   await expect(page.locator('main').getByText('Centro de mando DM', { exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Campamento' })).toHaveCount(0)
   await capture(page, info.outputPath('landing-dm.png'))
+})
+
+test('RYT-144 the DM rehearses a round alone and assigns a free sheet to the accepted player', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { free: ['Eira'] })
+  await page.goto(`./#/campaign/${campaignId}`)
+  await page.getByRole('link', { name: 'Preparar sesión' }).click()
+  const checklist = page.getByRole('region', { name: 'Prepara tu primera sesión' })
+  await expect(checklist.getByText('Jugador incorporado')).toBeVisible()
+  await checklist.getByRole('button', { name: /Ensayar en solitario/ }).click()
+  const rehearsal = page.getByRole('dialog', { name: 'Ensayar en solitario' })
+  await expect(rehearsal).toContainText('Turno de Arin. Ronda 1.')
+  for (let turn = 0; turn < 3; turn++)
+    await rehearsal.getByRole('button', { name: 'Siguiente turno' }).click()
+  await expect(rehearsal).toContainText('Turno de Arin. Ronda 2.')
+  await rehearsal.getByRole('button', { name: 'Reiniciar ensayo' }).click()
+  await expect(rehearsal).toContainText('Turno de Arin. Ronda 1.')
+  await page.keyboard.press('Escape')
+  await checklist.getByRole('button', { name: /Vincular personaje.*Arin/ }).click()
+  const assignment = page.getByRole('dialog', { name: 'Vincular personaje' })
+  await expect(assignment).toContainText('Arin')
+  await assignment.getByRole('combobox').selectOption({ label: 'Eira' })
+  await assignment.getByRole('button', { name: 'Vincular personaje' }).click()
+  await expect(checklist).toContainText('Personajes vinculados')
+  expect(fixture.calls.find((call) => call.method === 'assign_character')?.body.target_user).toBe(
+    playerId,
+  )
+  await axeClean(page)
+  await capture(page, info.outputPath('preparation-checklist.png'))
+  await page.getByRole('tab', { name: 'Miembros', exact: true }).click()
+  const person = page.locator('.member-row').filter({ hasText: 'player@example.com' })
+  await expect(person.getByRole('link', { name: 'Ficha de Eira' })).toBeVisible()
+  await capture(page, info.outputPath('preparation-members.png'))
+})
+
+test('RYT-144 the DM opens live combat and reaches administrative destinations in two actions', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  const encounter = {
+    id: '90000000-0000-4000-8000-000000000001',
+    name: 'The bridge',
+    status: 'active',
+    round: 1,
+    updated_at: '2026-11-18T00:00:00Z',
+    started_at: '2026-11-18T00:00:00Z',
+    ended_at: null,
+    combatants: 3,
+    needs_initiative: false,
+  }
+  await page.route('**/rest/v1/rpc/list_encounters', (route) =>
+    route.fulfill({ json: [encounter] }),
+  )
+  await page.goto(`./#/campaign/${campaignId}`)
+  const resume = page.getByRole('link', { name: 'Continuar encuentro The bridge' })
+  await expect(resume).toHaveAttribute('href', new RegExp(`/combat/${encounter.id}$`))
+  for (const [name, key] of [
+    ['Almacén de objetos', 'items'],
+    ['Bestiario', 'bestiary'],
+  ] as const) {
+    await page.goto(`./#/campaign/${campaignId}`)
+    await page.getByRole('link', { name: 'Gestionar campaña' }).click()
+    const destination = page.getByRole('tab', { name, exact: true })
+    const box = await destination.boundingBox()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    await destination.click()
+    await expect(page).toHaveURL(new RegExp(`panel=${key}$`))
+  }
+})
+
+test('RYT-144 a pending invitation leaves the next action with the player', async ({ page }) => {
+  await identityFixture(page, { twoDms: true })
+  await page.route('**/rest/v1/campaign_invitations?**', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: '90000000-0000-4000-8000-000000000002',
+          email: 'wait@example.com',
+          expires_at: '2099-01-01T00:00:00Z',
+        },
+      ],
+    }),
+  )
+  await page.goto(`./#/campaign/${campaignId}/members?panel=prepare`)
+  const checklist = page.getByRole('region', { name: 'Prepara tu primera sesión' })
+  await expect(checklist).toContainText('Invitación pendiente')
+  await expect(checklist).toContainText('El jugador debe entrar en Rytta y aceptar la invitación.')
+  await expect(checklist).toContainText('Personaje listo para vincular')
+  await expect(page.getByRole('tab', { name: 'Miembros' })).toHaveAccessibleDescription(
+    'Por aceptar · 1',
+  )
+})
+
+test('RYT-144 the DM changes the active character while reserves and archives remain distinct', async ({
+  page,
+}) => {
+  await identityFixture(page, { linkedPlayer: true, reserve: ['Eira'], archived: ['Nico'] })
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const person = page.locator('.member-row').filter({ hasText: 'player@example.com' })
+  await expect(person.getByText('En reserva · Eira')).toBeVisible()
+  await person.locator('summary').click()
+  await expect(person.getByText('Nico', { exact: true })).toBeVisible()
+  await person.getByRole('button', { name: 'Cambiar activo' }).click()
+  const change = page.getByRole('dialog', { name: 'Cambiar activo' })
+  await change.getByRole('combobox').selectOption({ label: 'Eira' })
+  await change.getByRole('button', { name: 'Cambiar activo' }).click()
+  await expect(person.getByRole('link', { name: 'Ficha de Eira' })).toBeVisible()
+  await expect(person.getByText('En reserva · Arin')).toBeVisible()
 })
 
 test('RYT-029: Players land on Party with no Camp entry and no discoveries section', async ({
@@ -301,7 +625,7 @@ test('DM command center manages modules, the item storeroom, audit log and playe
 
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).focus()
   await page.keyboard.press('Space')
-  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await finishArinPreview(page)
   await expect(page.getByText('Tu DM gestiona los miembros y las invitaciones.')).toBeVisible()
   const nav = page.getByRole('navigation', { name: 'Navegación principal' })
   await expect(nav.getByText('Centro de mando DM', { exact: false })).toHaveCount(0)
@@ -713,7 +1037,7 @@ test('RYT-095 the only DM is told to name another DM; with a co-DM they can leav
   ).toHaveAccessibleDescription('Nombra a otro DM antes de irte.')
   await page.keyboard.press('Escape')
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
-  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await finishArinPreview(page)
   await profile.click()
   await expect(page.getByRole('menuitem', { name: 'Ajustes' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Abandonar campaña' })).toHaveCount(0)

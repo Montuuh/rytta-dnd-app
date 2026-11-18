@@ -6,6 +6,67 @@ import { shopsFixture } from './fixtures/shops.ts'
 // RYT-027: /items redirects into the DM Command Center storeroom tab.
 const url = `./#/campaign/${campaignId}/items`
 
+test('RYT-144 reviews loot by recipient, confirms once and reopens a saved distribution', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { inventory: true, party: true })
+  const calls: unknown[] = []
+  await page.route('**/rpc/distribute_loot', async (route) => {
+    calls.push(route.request().postDataJSON())
+    await route.fallback()
+  })
+  await page.goto(url)
+  const open = page.getByRole('button', { name: 'Repartir botín', exact: true })
+  await open.click()
+  const dialog = page.getByRole('dialog')
+  const add = dialog.getByRole('combobox', { name: 'Añadir objeto al reparto' })
+  await add.click()
+  await page.getByRole('option', { name: 'Poción de curación', exact: true }).click()
+  let line = dialog.getByRole('group', { name: 'Poción de curación', exact: true })
+  await line.getByRole('button', { name: 'Arin', exact: true }).click()
+  await line.getByRole('button', { name: 'Bea', exact: true }).click()
+  await add.click()
+  await page.getByRole('option', { name: 'Espada larga', exact: true }).click()
+  line = dialog.getByRole('group', { name: 'Espada larga', exact: true })
+  await line.getByRole('button', { name: 'Cato', exact: true }).click()
+  await dialog.getByLabel('Guardar este reparto como lote reutilizable').check()
+  await dialog.getByLabel('Nombre del lote').fill('Tesoro del puente')
+  await dialog.getByRole('button', { name: 'Revisar reparto' }).click()
+  await expect(dialog.getByRole('heading', { name: 'Revisar reparto' })).toBeFocused()
+  const sections = dialog.locator('section').filter({ has: page.locator('li') })
+  for (const [name, item] of [
+    ['Arin', 'Poción de curación'],
+    ['Bea', 'Poción de curación'],
+    ['Cato', 'Espada larga'],
+  ] as const)
+    await expect(sections.filter({ hasText: name }).last()).toContainText(item + ' × 1')
+  expect(calls).toHaveLength(0)
+  await audit(page, info.outputPath('loot-review.png'), false)
+  await dialog.getByRole('button', { name: 'Editar reparto' }).click()
+  await expect(dialog.getByRole('button', { name: 'Revisar reparto' })).toBeFocused()
+  await dialog.getByRole('button', { name: 'Revisar reparto' }).click()
+  await dialog.getByRole('button', { name: 'Confirmar entrega' }).click()
+  await expect(dialog.getByRole('heading', { name: 'Botín entregado' })).toBeFocused()
+  expect(calls).toHaveLength(1)
+  expect(fixture.inventory.events.filter((event) => event.kind === 'grant')).toHaveLength(3)
+  await dialog.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
+  await open.click()
+  await dialog.getByRole('button', { name: 'Usar un lote guardado' }).click()
+  await dialog.getByRole('button', { name: 'Tesoro del puente', exact: true }).click()
+  await expect(dialog.getByRole('button', { name: 'Revisar reparto' })).toBeEnabled()
+  await expect(dialog.getByLabel('Guardar este reparto como lote reutilizable')).not.toBeChecked()
+  await page.keyboard.press('Escape')
+  await open.click()
+  await dialog.getByRole('button', { name: 'Usar un lote guardado' }).click()
+  await dialog.getByRole('button', { name: /Eliminar el lote/ }).click()
+  await expect(
+    dialog.getByText('Los personajes conservarán todos los objetos entregados.'),
+  ).toBeVisible()
+  await dialog.getByRole('button', { name: 'Eliminar', exact: true }).click()
+  await expect(dialog.getByText('No hay lotes guardados.')).toBeVisible()
+  expect(calls).toHaveLength(1)
+})
+
 /** Row actions are icon buttons on wide screens and fold into one menu on phones. */
 async function rowAction(page: Page, name: string, label: string, item: string) {
   const row = page.locator('.store-row').filter({ hasText: name })
@@ -19,14 +80,14 @@ const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAFElEQVR4nGM8UaHBgA0wYRUdtBIAHicBeAYWg8oAAAAASUVORK5CYII=',
   'base64',
 )
-async function audit(page: Page, path: string) {
+async function audit(page: Page, path: string, fullPage = true) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
       .violations,
   ).toEqual([])
   await expectTouchTargets(page, 'main button:visible, [role="dialog"] button:visible')
-  await capture(page, path)
+  await capture(page, path, { fullPage })
 }
 for (const language of ['es', 'en'] as const)
   for (const theme of ['dark', 'light'] as const)
@@ -146,7 +207,7 @@ test('the DM in Player view can equip and unequip the previewed Player character
   await identityFixture(page, { linkedPlayer: true, inventory: true, sheet: 'complete' })
   await page.goto(`./#/campaign/${campaignId}/inventory?character=${characterId}&view=equipment`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
-  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await expect(page.getByText('Viendo como jugador · Arin')).toBeVisible()
   const torso = page.getByRole('button', { name: 'Torso: Armadura de cuero', exact: true })
   await expect(torso).toBeEnabled()
   await torso.click()
@@ -207,7 +268,7 @@ test('one campaign definition is gifted and reused across two shops', async ({ p
   await shopsFixture(page, f)
   let attempts = 0
   const keys: string[] = []
-  await page.route('**/rest/v1/rpc/grant_item', async (route) => {
+  await page.route('**/rest/v1/rpc/distribute_loot', async (route) => {
     keys.push(route.request().postDataJSON().request_id)
     if (++attempts === 1) return route.fulfill({ status: 503, json: { message: 'Unavailable' } })
     return route.fallback()
@@ -219,10 +280,13 @@ test('one campaign definition is gifted and reused across two shops', async ({ p
   await rowAction(page, 'General charm', 'Dar General charm a personajes', 'Dar a personajes')
   const drawer = page.getByRole('dialog')
   await drawer.getByRole('button', { name: 'Arin', exact: true }).click()
-  await drawer.getByRole('button', { name: 'Aumentar Cantidad', exact: true }).click()
-  await drawer.getByRole('button', { name: 'Dar a personajes' }).click()
+  await drawer.getByRole('button', { name: 'Cantidad: uno más', exact: true }).click()
+  await drawer.getByRole('button', { name: 'Revisar reparto' }).click()
+  await drawer.getByRole('button', { name: 'Confirmar entrega' }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible()
   await page.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  await expect(drawer.getByRole('heading', { name: 'Botín entregado' })).toBeVisible()
+  await drawer.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   expect(new Set(keys).size).toBe(1)
   const item = f.inventory.definitions.find((d) => d.name === 'General charm')!
@@ -346,6 +410,7 @@ test('RYT-027 storeroom filters, sorts and switches between list and grid', asyn
   await page.getByRole('textbox', { name: 'Buscar objetos' }).fill('zzz')
   await expect(page.getByText('Ningún objeto coincide con estos filtros.')).toBeVisible()
   await page.getByRole('button', { name: 'Quitar filtros', exact: true }).click()
+  await page.locator('.store-options summary').click()
   await page.locator('.store-view label').filter({ hasText: 'Cuadrícula' }).click()
   await expect(page.locator('.store-grid .store-tile')).toHaveCount(6)
   await audit(page, info.outputPath('storeroom-grid.png'))
@@ -752,6 +817,7 @@ test('RYT-104 the DM updates imported basic items from the catalogue and imports
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
   const open = page.getByRole('button', { name: 'Importar objetos básicos' })
+  await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
   await open.click()
   const drawer = page.getByRole('dialog', { name: 'Importar objetos básicos' })
   const update = drawer.getByRole('button', { name: 'Actualizar 3 objetos' })
@@ -765,12 +831,14 @@ test('RYT-104 the DM updates imported basic items from the catalogue and imports
   const rope = f.inventory.definitions.find((d) => d.basic_key === 'rope')!
   expect(rope).toMatchObject({ name: 'Cuerda', weight_lb: 5, value_gp: 1 })
   // Nothing changed since: a second update reports that everything matches.
+  await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
   await open.click()
   await drawer.getByRole('button', { name: 'Actualizar 3 objetos' }).click()
   await expect(
     page.getByRole('status').filter({ hasText: 'Todo lo importado ya coincide con el catálogo.' }),
   ).toBeVisible()
   // The import itself only sends what is missing and creates it.
+  await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
   await open.click()
   const submit = drawer.getByRole('button', { name: /^Importar \d+ objetos$/ })
   const count = Number((await submit.textContent())!.match(/(\d+)/)![1])

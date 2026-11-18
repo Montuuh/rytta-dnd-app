@@ -1213,71 +1213,101 @@ for (const theme of ['default', 'parchment', 'bard'])
     await audit(page, `${theme}: note 150%`)
   })
 
-test('RYT-135 a cast that meets a manual slot tap still on its way waits for it: one write after, none before', async ({
-  page,
-}) => {
-  test.setTimeout(60_000)
-  const f = await open(page)
-  // The slot tap's request is held on its way: the server has not seen it yet.
-  let release: () => void = () => {}
-  const gate = new Promise<void>((resolve) => (release = resolve))
-  let seen = 0
-  await page.route(/\/rpc\/set_character_vitals$/, async (route) => {
-    seen += 1
-    if (seen === 1) await gate
-    await route.fallback()
-  })
-  const resources = await openSpells(page, /Recursos/)
-  await resources.getByRole('button', { name: 'Gastar un espacio de nivel 1' }).first().click()
-  await expect.poll(() => seen).toBe(1)
-  await page.keyboard.press('Escape')
+/**
+ * A cast that meets a manual slot tap still on its way waits for it. The order of events is set
+ * by hand: time is frozen, so the cast's 50ms poll wakes only when the test lets it, and the reload
+ * the tap's answer triggers is let through, rendered, and only then does the cast wake.
+ */
+for (const outcome of ['saves', 'fails'] as const)
+  test(`RYT-135 a cast that meets a manual slot tap still on its way waits for it, and the tap ${outcome}`, async ({
+    page,
+  }) => {
+    test.setTimeout(60_000)
+    const f = await open(page)
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    let seen = 0
+    await page.route(/\/rpc\/set_character_vitals$/, async (route) => {
+      seen += 1
+      if (seen === 1) {
+        await gate
+        // The tap's request is held; it then fails here, or reaches the server.
+        if (outcome === 'fails')
+          return route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: '{"message":"down"}',
+          })
+      }
+      await route.fallback()
+    })
+    const resources = await openSpells(page, /Recursos/)
+    await resources.getByRole('button', { name: 'Gastar un espacio de nivel 1' }).first().click()
+    await expect.poll(() => seen).toBe(1)
+    await page.keyboard.press('Escape')
 
-  const sheet = await openSpells(page)
-  await rowOf(sheet, 'Palabra sanadora')
-    .getByRole('button', { name: /Lanzar/ })
-    .click()
-  const dialog = castDialog(page, 'Lanzar Palabra sanadora')
-  // The cast's wait polls on a timer. Time is frozen from here so the order of events is the one
-  // that used to lose: the tap saves, the sheet reloads with its new revision, and only then the
-  // waiting cast wakes up.
-  await page.clock.install()
-  await page.clock.pauseAt(new Date(Date.now() + 5_000))
-  await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
-  // Waiting: the cast has sent nothing, nothing was spent, and no result is claimed.
-  await page.waitForTimeout(800)
-  expect(seen).toBe(1)
-  expect(f.vitalsCalls).toHaveLength(0)
-  expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
-  await expect(sheet.locator('[data-cast-note]')).toHaveCount(0)
-  await expect(dialog).toBeVisible()
+    const sheet = await openSpells(page)
+    await rowOf(sheet, 'Palabra sanadora')
+      .getByRole('button', { name: /Lanzar/ })
+      .click()
+    const dialog = castDialog(page, 'Lanzar Palabra sanadora')
+    await page.clock.install()
+    await page.clock.pauseAt(new Date(Date.now() + 5_000))
+    await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
+    // Waiting: the cast has sent nothing, nothing was spent, and no result is claimed.
+    await expect(dialog.getByRole('button', { name: /Guardando/ })).toBeVisible()
+    expect(seen).toBe(1)
+    expect(f.vitalsCalls).toHaveLength(0)
+    expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
+    await expect(sheet.locator('[data-cast-note]')).toHaveCount(0)
 
-  // The tap lands first; the cast then goes out on the revision that tap made, spending one more.
-  const reloaded = page.waitForResponse(
-    (response) =>
-      response.url().includes('character_vitals') && response.request().method() === 'GET',
-  )
-  release()
-  await reloaded
-  // The reloaded sheet has rendered (the tap's local copy is dropped) before the cast wakes.
-  await new Promise((resolve) => setTimeout(resolve, 400))
-  expect(f.vitalsCalls).toHaveLength(1)
-  await page.clock.runFor(200)
-  await page.clock.resume()
-  await expect(dialog).toHaveCount(0)
-  expect(f.vitalsCalls).toHaveLength(2)
-  expect(f.vitalsCalls[0]).toMatchObject({
-    new_slots_used: [1, 0, 0, 0, 0, 0, 0, 0, 0],
-    expected_revision: 0,
+    // The tap's answer arrives. Let the sheet react to it (notifications are timers: a few ms of
+    // frozen time, less than the cast's 50ms poll) and render, then wake the cast.
+    release()
+    if (outcome === 'saves') {
+      // The reload the tap's answer triggers is let through and rendered before the cast wakes.
+      await page.waitForResponse(
+        (response) =>
+          response.url().includes('character_vitals') && response.request().method() === 'GET',
+      )
+      await page.clock.runFor(10)
+      await page.evaluate(async () => {
+        // Two real macrotasks (the frozen clock does not fake MessageChannel): React has committed.
+        for (let turn = 0; turn < 2; turn += 1)
+          await new Promise((done) => {
+            const channel = new MessageChannel()
+            channel.port1.onmessage = () => done(null)
+            channel.port2.postMessage(0)
+          })
+      })
+      await page.clock.runFor(100)
+    } else {
+      // The tap fails: the cast wakes once it is over, and finds the sheet rolled back.
+      await page.clock.runFor(200)
+    }
+    await page.clock.resume()
+    if (outcome === 'fails') {
+      // Nothing was sent by the cast: the dialog says why, which slot is selected, and casts on the
+      // next press from the slots as they are.
+      const alert = dialog.getByRole('alert')
+      await expect(alert).toContainText('no se guardó')
+      await expect(alert).toContainText('Elegido: espacio de nivel 1')
+      await expect(alert).not.toContainText('otro dispositivo')
+      expect(f.vitalsCalls).toHaveLength(0)
+      expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
+      await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
+    }
+    await expect(dialog).toHaveCount(0)
+    const expected = outcome === 'saves' ? [2, 0, 0, 0, 0, 0, 0, 0, 0] : [1, 0, 0, 0, 0, 0, 0, 0, 0]
+    expect(f.vitalsCalls.at(-1)).toMatchObject({
+      new_slots_used: expected,
+      expected_revision: outcome === 'saves' ? 1 : 0,
+    })
+    expect(f.vitalsOf(characterId)!.slots_used).toEqual(expected)
+    await expect(sheet.locator('[data-cast-note]')).toHaveText(
+      `Lanzaste Palabra sanadora con un espacio de nivel 1. Quedan ${outcome === 'saves' ? 2 : 3} de 4.`,
+    )
   })
-  expect(f.vitalsCalls[1]).toMatchObject({
-    new_slots_used: [2, 0, 0, 0, 0, 0, 0, 0, 0],
-    expected_revision: 1,
-  })
-  expect(f.vitalsOf(characterId)!.slots_used).toEqual([2, 0, 0, 0, 0, 0, 0, 0, 0])
-  await expect(sheet.locator('[data-cast-note]')).toHaveText(
-    'Lanzaste Palabra sanadora con un espacio de nivel 1. Quedan 2 de 4.',
-  )
-})
 
 test('RYT-135 when the cast spell is also the new concentration the note names it once', async ({
   page,

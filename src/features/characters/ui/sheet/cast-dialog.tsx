@@ -28,11 +28,12 @@ export type CastSubmission = {
 export type CastHeld = MutableRefObject<CastSubmission | null>
 /** What the sheet answers with when it refuses or fails a cast; `null` means it was saved. */
 export type CastFailure =
-  'unavailable' | 'busy' | 'stale' | 'forbidden' | 'absent' | 'concentration'
+  'unavailable' | 'busy' | 'stale' | 'tap' | 'forbidden' | 'absent' | 'concentration'
 
 const failureOf = (message: string): CastFailure =>
   message === 'stale' ||
   message === 'busy' ||
+  message === 'tap' ||
   message === 'forbidden' ||
   message === 'absent' ||
   message === 'concentration'
@@ -161,6 +162,9 @@ export function CastDialog({
           held.current = null
           setFrozen(null)
         }
+        // The slot tap this cast waited for failed: the slots are back as they were, so the options
+        // start again from the first one and the message says which is selected.
+        if (next === 'tap') setPicked(null)
         setFailure(next)
         setFailedAt((count) => count + 1)
         return 'failed' as const
@@ -174,7 +178,11 @@ export function CastDialog({
   const failureText = failure
     ? availability === 'blocked' && failure === 'stale'
       ? t('cast.error.noSlot')
-      : t(`cast.error.${failure}`)
+      : failure === 'tap'
+        ? mode?.kind === 'slot'
+          ? t('cast.error.tap', { level: mode.level })
+          : t('cast.error.tapPlain')
+        : t(`cast.error.${failure}`)
     : ''
 
   return (

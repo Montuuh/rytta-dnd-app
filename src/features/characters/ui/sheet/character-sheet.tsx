@@ -320,6 +320,8 @@ function SheetPanel({
     say?: string
   } | null>(null)
   const latestRevision = useRef<number | null>(null)
+  // A slot or pip tap failed while a cast was waiting for it.
+  const tapFailed = useRef(false)
   // What this render shows and what the server last said, for a cast that resumes after waiting:
   // its closure is from before the wait. Declared before the effect below so both are current
   // in the same commit, when the reload that lands clears `latestRevision`.
@@ -516,6 +518,10 @@ function SheetPanel({
         queued.current = null
         latestRevision.current = null
         setOptimistic(null)
+        // A cast waiting on this tap reads `live` on its next poll, which can wake before the
+        // commit that refreshes it: the failed tap must already be gone from what it plans on.
+        live.current = { ...live.current, shown: live.current.vitals }
+        tapFailed.current = true
       })
       .finally(() => {
         inFlight.current = false
@@ -573,7 +579,13 @@ function SheetPanel({
       return
     }
     if (!held.current) {
+      tapFailed.current = false
       await whenIdle()
+      // The tap it waited for failed: what the dialog showed is no longer true, so nothing is sent.
+      if (tapFailed.current) {
+        tapFailed.current = false
+        throw new Error('tap')
+      }
       // The wait may have changed what the sheet is: the tap it waited for landed (or failed).
       // The plan is built again on the state and revision as they are now, never on the ones
       // the dialog saw when it opened.
@@ -609,6 +621,7 @@ function SheetPanel({
       if (error instanceof Error && error.message === 'stale') {
         latestRevision.current = null
         setOptimistic(null)
+        live.current = { ...live.current, shown: live.current.vitals }
       }
       throw error
     } finally {

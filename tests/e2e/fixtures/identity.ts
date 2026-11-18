@@ -83,6 +83,12 @@ export async function identityFixture(
     sheetAbilities?: Partial<Record<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha', number>>
     /** RYT-130: the level the DM set for the party (null: not set). */
     partyLevel?: number | null
+    /** RYT-134: spells of the complete sample sheets (the bard's own list when left out), the
+     * caster kind, the spent slots by level and a concentration marker already set. */
+    sheetSpells?: Record<string, unknown>[]
+    sheetCaster?: 'full' | 'half' | 'pact' | 'none'
+    slotsUsed?: number[]
+    concentration?: string | null
     /** RYT-133: the campaign's dice mode and roll visibility (physical and roller_dm by default). */
     diceMode?: DiceMode
     rollVisibility?: RollVisibility
@@ -307,6 +313,7 @@ export async function identityFixture(
     conditions: [],
     slots_used: [0, 0, 0, 0, 0, 0, 0, 0, 0],
     tracker_uses: {},
+    concentration: null,
     revision: 0,
   })
   // RYT-070 history log, newest last.
@@ -345,6 +352,19 @@ export async function identityFixture(
         : blankSheet(),
     ]),
   )
+  if (options.sheetSpells || options.sheetCaster)
+    for (const sheet of sheets.values())
+      if (sheet.status === 'complete')
+        sheet.build = {
+          ...sheet.build,
+          ...(options.sheetSpells ? { spells: options.sheetSpells } : {}),
+          ...(options.sheetCaster
+            ? {
+                casterKind: options.sheetCaster,
+                spellAbility: options.sheetCaster === 'none' ? null : 'cha',
+              }
+            : {}),
+        }
   if (options.armorClassOverride !== undefined)
     for (const sheet of sheets.values()) {
       sheet.armor_class = options.armorClassOverride
@@ -358,6 +378,11 @@ export async function identityFixture(
         : blankVitals(),
     ]),
   )
+  if (options.sheet === 'complete')
+    for (const state of vitals.values()) {
+      if (options.slotsUsed) state.slots_used = options.slotsUsed
+      if (options.concentration !== undefined) state.concentration = options.concentration
+    }
   if (options.free?.length) sheets.set(freeIds[0]!, sampleSheet())
   if (options.party) {
     sheets.set(beaId, { ...sampleSheet(), max_hp: 24, armor_class: 16 })
@@ -498,7 +523,9 @@ export async function identityFixture(
           slots_used: kind === 'long' || b.casterKind === 'pact' ? Array(9).fill(0) : v.slots_used,
           tracker_uses: usesAfter,
           revision: v.revision + 1,
-          ...(kind === 'long' ? { death_successes: 0, death_failures: 0 } : {}),
+          ...(kind === 'long'
+            ? { death_successes: 0, death_failures: 0, concentration: null }
+            : {}),
         })
       },
     }
@@ -649,6 +676,25 @@ export async function identityFixture(
   }
   let portraitPath: string | null = null
   let nextVitalsStale = false
+  // RYT-134: set_character_vitals replays a request id, and the next writes can fail on request.
+  const vitalsRequests = new Map<string, { actor: string; payload: string; revision: number }>()
+  const vitalsCalls: Record<string, unknown>[] = []
+  let nextVitalsFailures: ('down' | 'lost')[] = []
+  // The server's rule for a marker (20261203120000): Unicode spaces trimmed at both ends, 1 to 100
+  // characters and no control, zero-width or bidi character.
+  const markerSpaces =
+    /^[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+|[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+$/gu
+  /* eslint-disable no-control-regex */
+  const markerForbidden =
+    /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/u
+  /* eslint-enable no-control-regex */
+  const cleanMarker = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null
+    const trimmed = value.replace(markerSpaces, '')
+    return trimmed.length > 0 && Array.from(trimmed).length <= 100 && !markerForbidden.test(trimmed)
+      ? trimmed
+      : null
+  }
   // RYT-130: idempotency of the party level and level-up RPCs, and one-shot failures.
   const partyRequests = new Map<string, { actor: string; payload: string; result: number | null }>()
   const levelUpRequests = new Map<string, { actor: string; payload: string; revision: number }>()
@@ -1178,7 +1224,42 @@ export async function identityFixture(
       return respond(row.revision)
     }
     if (method === 'set_character_vitals') {
-      const state = vitals.get(String(body.target_character))!
+      const target = String(body.target_character)
+      const state = vitals.get(target)!
+      vitalsCalls.push(body)
+      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      const changeMarker = body.change_concentration === true
+      if (!changeMarker && body.new_concentration != null)
+        return respond({ message: 'Invalid request' }, 400)
+      // A marker the server would refuse is refused first, as the SQL validates it before the
+      // replay and the revision.
+      const marker =
+        changeMarker && body.new_concentration != null ? cleanMarker(body.new_concentration) : null
+      if (changeMarker && body.new_concentration != null && marker === null)
+        return respond({ message: 'Invalid concentration' }, 400)
+      // Request ids replay (same payload) or clash (another payload).
+      const payload = JSON.stringify([
+        target,
+        body.expected_revision,
+        body.new_current_hp,
+        body.new_temp_hp,
+        body.new_hit_dice_spent,
+        body.new_death_successes,
+        body.new_death_failures,
+        body.new_heroic_inspiration,
+        body.new_conditions,
+        body.new_slots_used,
+        body.new_tracker_uses,
+        ...(changeMarker ? ['concentration', body.new_concentration ?? null] : []),
+      ])
+      const prior = vitalsRequests.get(String(body.request_id))
+      if (prior) {
+        if (prior.actor !== actor || prior.payload !== payload)
+          return respond({ message: 'Request mismatch' }, 400)
+        return respond(prior.revision)
+      }
+      const failure = nextVitalsFailures.shift()
+      if (failure === 'down') return respond({ message: 'Service unavailable' }, 503)
       // staleVitals(): the next write meets another device's change, whatever refetch ran since.
       if (nextVitalsStale) {
         nextVitalsStale = false
@@ -1186,16 +1267,31 @@ export async function identityFixture(
       }
       if (state.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
-      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
       if (
         options.inEncounter &&
         !dm &&
         (body.new_current_hp !== state.current_hp || body.new_temp_hp !== state.temp_hp)
       )
         return respond({ message: 'Encounter locked' }, 400)
+      // The absent trigger fires when the row is updated, after the checks above.
+      if (characters.find((c) => c.id === target)?.absent && !dm)
+        return respond({ message: 'Character absent' }, 400)
       if (body.new_current_hp !== state.current_hp)
-        record(String(body.target_character), 'character_vitals:UPDATE', [
+        record(target, 'character_vitals:UPDATE', [
           { field: 'current_hp', before: state.current_hp, after: body.new_current_hp },
+        ])
+      const slotChanges = (body.new_slots_used as number[]).flatMap((count, index) =>
+        count !== (state.slots_used as number[])[index] ? [index] : [],
+      )
+      const nextMarker = changeMarker ? marker : (state.concentration ?? null)
+      if (slotChanges.length || nextMarker !== (state.concentration ?? null))
+        record(target, 'character_vitals:UPDATE', [
+          ...(slotChanges.length
+            ? [{ field: 'slots_used', before: state.slots_used, after: body.new_slots_used }]
+            : []),
+          ...(nextMarker !== (state.concentration ?? null)
+            ? [{ field: 'concentration', before: state.concentration ?? null, after: nextMarker }]
+            : []),
         ])
       Object.assign(state, {
         current_hp: body.new_current_hp,
@@ -1207,8 +1303,12 @@ export async function identityFixture(
         conditions: body.new_conditions,
         slots_used: body.new_slots_used,
         tracker_uses: body.new_tracker_uses,
+        concentration: nextMarker,
         revision: state.revision + 1,
       })
+      vitalsRequests.set(String(body.request_id), { actor, payload, revision: state.revision })
+      // 'lost': the write is applied but the answer never arrives (the app retries the same id).
+      if (failure === 'lost') return respond({ message: 'Service unavailable' }, 503)
       return respond(state.revision)
     }
     if (method === 'characters') {
@@ -1523,6 +1623,9 @@ export async function identityFixture(
               armor_class: live ? (sheet?.armor_class ?? null) : null,
               exhaustion: live ? c.character_resources.exhaustion : null,
               conditions: live ? ((state?.conditions as string[] | undefined) ?? []) : null,
+              concentration: live
+                ? ((state?.concentration as string | null | undefined) ?? null)
+                : null,
               below_party_level:
                 sheet?.status === 'complete' &&
                 partyLevelOf(String(body.target_campaign)) !== null &&
@@ -1881,6 +1984,16 @@ export async function identityFixture(
     staleItem: (index = 0) => {
       inventory.stacks[index]!.revision += 1
     },
+    /** RYT-134: the next play-state writes fail ('down': refused, 'lost': applied, answer lost). */
+    failVitals: (...kinds: ('down' | 'lost')[]) => {
+      nextVitalsFailures = kinds
+    },
+    /** RYT-134: the DM benches the character while the Player's sheet is already open. */
+    benchCharacter: () => {
+      characters[0]!.absent = true
+    },
+    /** RYT-134: every set_character_vitals body received, in order. */
+    vitalsCalls,
     staleVitals: () => {
       vitals.get(characterId)!.revision += 1
       nextVitalsStale = true

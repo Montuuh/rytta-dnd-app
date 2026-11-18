@@ -4288,11 +4288,14 @@
       "title": "Casting: \"Lanzar\" with slot choice and a concentration marker",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-124"],
       "sources": [
         "Player journey audit 2026-11-17, finding J2-24: there is no casting, slot choice or concentration.",
-        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046.",
+        "Correction 2026-11-18 to the scope sentence on the save path: spending a slot through the existing sheet save path was already safe (revision check and request id); the concentration marker could not be held by the play state (character_vitals had no such field, conditions are constrained to the SRD keys, a tracker value cannot hold a name and rests drop unknown trackers), so the delivery includes migration 20261203120000_sheet_concentration.sql: a nullable concentration column on character_vitals and two trailing defaulted arguments on set_character_vitals so the slot and the marker are written in one step, compatible with the call already in production.",
+        "Decisions during the delivery 2026-11-18: any prepared spell with the Ritual tag can be cast as a ritual (2024 SRD); a plain cantrip or a ritual without concentration writes nothing and says so; the sheet's concentration marker and the fight's (kept by the DM console, driving the concentration reminder on damage) stay separate, and during a fight the sheet says the DM keeps a separate record (one shared concentration in RYT-139).",
+        "Review 2026-11-18 on branch sheet-casting at 11fd4d3: npm run check passes (109 files, 991 tests) and npm run test:e2e passes (1161 passed, 117 skipped, 0 failed; one failure on 9e5472e and one on 2b104b8 recorded); PGlite database tests 36 files, 406 tests; staging apply and actor checks recorded; independent code review changes addressed in 2b104b8; independent UI review CHANGES_REQUIRED on 9e5472e and 2b104b8, PASS on 11fd4d3; independent security review SAFE on the first and escape versions, re-check of fcfdc8f pending; production apply and merge to main pending; four non-blocking leftovers moved to RYT-135 (docs/evidence/RYT-134/validation.md)."
       ],
       "scope": "\"Lanzar\" on each prepared spell: choose the slot level, the slot is spent, a concentration marker appears in the sheet hero and is replaced by a new concentration spell, ritual casting spends nothing; a manual way out stays for table rulings. Uses the existing sheet play state and its save path; if that path cannot spend a slot atomically, stop and open a backend ticket. Non-goals: spell effects, damage, saving throws, upcasting maths, autonomous release.",
       "acceptance": [
@@ -4309,23 +4312,24 @@
         "npm run test:e2e (casting from the sheet at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-134/validation.md"]
     },
     {
       "id": "RYT-135",
-      "title": "Level up, table screen, phone map and dice polish from the UI reviews",
+      "title": "Level up, table screen, phone map, dice and casting polish from the UI reviews",
       "priority": "P2",
       "owner": "frontend",
       "status": "planned",
-      "dependsOn": ["RYT-130", "RYT-131", "RYT-132", "RYT-133"],
+      "dependsOn": ["RYT-130", "RYT-131", "RYT-132", "RYT-133", "RYT-134"],
       "sources": [
         "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md).",
         "Open check from the RYT-130 production record (2026-11-18): keyboard focus on an option at 150% text on a phone may sit under the sticky footer.",
         "Independent UI review PASS on RYT-131 at e84f3c7, three non-blocking findings on the table screen (docs/evidence/RYT-131/validation.md).",
         "Independent UI review PASS on RYT-132 at 8b148ac, seven non-blocking findings on the phone map (docs/evidence/RYT-132/validation.md).",
-        "Independent UI review PASS on RYT-133 at 290694c, five non-blocking findings on the dice (docs/evidence/RYT-133/validation.md)."
+        "Independent UI review PASS on RYT-133 at 290694c, five non-blocking findings on the dice (docs/evidence/RYT-133/validation.md).",
+        "Independent UI review PASS on RYT-134 at 11fd4d3, four non-blocking findings on casting from the sheet (docs/evidence/RYT-134/validation.md)."
       ],
-      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Phone map: fix the seven non-blocking findings left by the RYT-132 UI review: in landscape while measuring the update notice covers the distance chip and its clear button, the keyboard shortcuts are not announced, the map cannot be panned by keyboard outside measure (pre-existing, also at 820px), the board focus ring shows only on its top edge, the ellipsis hides the trailing number of similar names, the round keys are only on the right, and a name plate still covers about a quarter of the token right below it. Dice: fix the five non-blocking findings left by the RYT-133 UI review: if the roll log keeps failing and the rest is closed and reopened, the hit-dice roll made on that screen is forgotten; a disabled \"Save initiative\" is shown where \"Close\" would be clearer; at 390px the proficiency dot sits close to \"DES\" and \"CAR\"; the result card repeats the newest strip entry; the sticky result card is tall at 150% text. Non-goals: new level-up rules, new combat rules, new map tools, DM map editing on the phone, new dice rules or server-side roll limits (RYT-137), the 3D dice engine (RYT-138), backend or migration changes, multiclass, autonomous release.",
+      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Phone map: fix the seven non-blocking findings left by the RYT-132 UI review: in landscape while measuring the update notice covers the distance chip and its clear button, the keyboard shortcuts are not announced, the map cannot be panned by keyboard outside measure (pre-existing, also at 820px), the board focus ring shows only on its top edge, the ellipsis hides the trailing number of similar names, the round keys are only on the right, and a name plate still covers about a quarter of the token right below it. Dice: fix the five non-blocking findings left by the RYT-133 UI review: if the roll log keeps failing and the rest is closed and reopened, the hit-dice roll made on that screen is forgotten; a disabled \"Save initiative\" is shown where \"Close\" would be clearer; at 390px the proficiency dot sits close to \"DES\" and \"CAR\"; the result card repeats the newest strip entry; the sticky result card is tall at 150% text. Casting: fix the four non-blocking findings left by the RYT-134 UI review: when the cast spell is also the new concentration the result note repeats the name, a teammate's concentration is not shown in the party plates, the group rest panel does not say that concentration ends, and there is no dedicated browser test for a cast waiting on a manual tap. Non-goals: new level-up rules, new combat rules, new map tools, DM map editing on the phone, new dice rules or server-side roll limits (RYT-137), the 3D dice engine (RYT-138), one concentration shared by the sheet and the fight (RYT-139), backend or migration changes, multiclass, autonomous release.",
       "acceptance": [
         "For an ability at 19 the \"+2\" option no longer says \"Already at 20\"; its label and disabled reason state the real limit, and an ability at 20 still says it is at the cap.",
         "At 820px a failed confirm scrolls so that both the failure alert and the summary row are fully visible.",
@@ -4347,12 +4351,16 @@
         "At 390px the proficiency dot on the sheet does not touch or crowd the \"DES\" and \"CAR\" ability labels, in English and Spanish.",
         "The roll result card and the recent-rolls strip do not show the same newest roll twice in a way that reads as two rolls.",
         "At 390px with 150% text the sticky roll result card leaves the sheet usable: it does not cover more than a third of the viewport or it can be collapsed.",
-        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; phone map at 390px portrait and landscape and 820px; dice on the sheet, initiative and hit dice at 390px and 820px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+        "When the cast spell is also the new concentration, the cast result note names the spell once.",
+        "A teammate's concentration is shown in the party plates under the same sharing rule as conditions.",
+        "The group rest panel says that a long rest ends concentration, in English and Spanish.",
+        "A browser spec covers a cast that waits on a manual tap: nothing is spent or written before the tap, and the result is shown after it.",
+        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; phone map at 390px portrait and landscape and 820px; dice on the sheet, initiative and hit dice at 390px and 820px; casting, party plates and the group rest panel at 390px and 820px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
         "unit tests for the changed option labels and the long-name sizing rule",
         "npm run check",
-        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px; phone map notices, keyboard pan, focus ring, similar names and name plates at 390px portrait and landscape and 820px; dice result card, strip, initiative and hit dice at 390px and 820px)",
+        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px; phone map notices, keyboard pan, focus ring, similar names and name plates at 390px portrait and landscape and 820px; dice result card, strip, initiative and hit dice at 390px and 820px; casting result note, manual-tap cast, party plates and group rest panel at 390px and 820px)",
         "independent UI review PASS"
       ],
       "evidence": []
@@ -4432,6 +4440,36 @@
         "npm run check",
         "npm run test:e2e (app-mode rolls with and without reduced motion at 390px and 820px)",
         "licence and content-security-policy review",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-139",
+      "title": "One concentration for sheet and fight",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": ["RYT-134"],
+      "sources": [
+        "RYT-134 decision 2026-11-18: the sheet's concentration marker and the fight's (kept by the DM console, driving the concentration reminder on damage) are separate; during a fight the sheet says the DM keeps a separate record and asks the Player to tell the DM (docs/evidence/RYT-134/validation.md).",
+        "Independent UI review CHANGES_REQUIRED on RYT-134 at 9e5472e: two different concentrations for one character during a fight."
+      ],
+      "scope": "Backend first, then the frontend part. When a Player casts a concentration spell from the sheet during a live encounter, the character's combatant concentration is updated in the same server step, so the DM's concentration reminder on damage follows it; ending concentration on the sheet or in the DM console ends both. Writes go through authorised, idempotent RPCs; RLS stays authoritative. Migration tested in PRE first, then reviewed and applied to production within the delivery. The sheet drops its note that the DM keeps a separate record once both are one. Non-goals: concentration saving throws or their maths, automatic spell effects, concentration for creatures without a character sheet, autonomous release.",
+      "acceptance": [
+        "Casting a concentration spell from the sheet while the character is in a live encounter sets the same concentration on the character's combatant, and the DM console shows it and uses it for the concentration reminder on damage.",
+        "Ending concentration on the sheet ends it in the fight, and ending it in the DM console ends the sheet marker; a long rest still clears it.",
+        "Outside a live encounter the sheet marker behaves as in RYT-134, and the call already in production keeps working.",
+        "A repeated request with the same id changes nothing twice; a lost reply retried after a refetch spends one slot and sets one concentration.",
+        "SQL denial tests cover anon, outsider, Player of another character and cross-campaign DM for the shared concentration writes and reads.",
+        "The migration is applied in PRE, then production, with the catalog and advisor checks recorded.",
+        "Sheet and DM console at 390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for the shared concentration, idempotency, long rest and denial cases",
+        "npm run check",
+        "npm run test:e2e (cast with concentration during a fight, ending it from the sheet and from the DM console, at 390px and 820px)",
+        "PRE then production migration verification",
         "independent UI review PASS"
       ],
       "evidence": []

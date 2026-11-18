@@ -547,3 +547,23 @@ region that is always mounted. The recent rolls strip lists the newest three (th
 refetched on the realtime signal with polling behind it; it shows what the database returns and
 nothing else, and credits "DM" only to a roll with no character. Labels of checks and saves are stored
 as keys and read in the viewer's language.
+
+## Casting spells (RYT-134, ADR 046)
+
+"Lanzar" is a quiet 44px text action on each cantrip and prepared spell, never a bar of filled
+buttons. A levelled spell opens a dialog that offers only the slot levels from the spell's own up
+that still have a slot (pact slots as the one pact level); a spell with no usable slot shows a
+muted reason instead of a button. A concentration spell says it will be marked on the sheet and
+names the marker it replaces. A cast is one write: it spends the slot and sets the marker
+together, and a failure leaves the sheet as it was with the alert inside the dialog and a retry
+that resends the same request.
+
+- Rituals: any prepared spell with the Ritual tag can be cast as a ritual and spends no slot (the
+  2024 SRD rule, no spellbook needed). A ritual that marks nothing writes nothing.
+- The marker lives in the sheet hero, wraps at large text (two lines, then an ellipsis) and ends
+  by hand with a short undo. The table-ruling edit (mark or end it, any slot by hand) sits below
+  the spell list behind "Concentración a mano".
+- The result of a cast shows in a note that stays in view at the top of the spell list, with
+  what was spent and what is left; level headings show the slots left.
+- The encounter tracks the combatant's concentration apart from the sheet. During a live
+  encounter the hero and the dialog say the DM keeps a separate record.

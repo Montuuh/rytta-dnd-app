@@ -272,11 +272,12 @@ async function visibility(): Promise<Snapshot> {
   for (const schema of ['public', 'pre']) {
     for (const [name, id] of Object.entries(users)) {
       await asUser(id)
-      // Rows are compared without columns added by later migrations (20261130120000).
+      // Rows are compared without columns added by later migrations (20261130120000,
+      // 20261203120000).
       for (const table of readTables)
         result[`${schema}.${table}:${name}`] = await scalar(
           `select coalesce(string_agg(r, '|' order by r), '') result from (select
-            (to_jsonb(t) - array['party_level', 'dice_mode', 'roll_visibility'])::text r
+            (to_jsonb(t) - array['party_level', 'dice_mode', 'roll_visibility', 'concentration'])::text r
             from ${schema}.${table} t) x`,
         )
     }

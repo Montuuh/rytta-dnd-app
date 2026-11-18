@@ -27,6 +27,8 @@ export const restEs = {
   'rest.hitDice': 'Dados de golpe (d{{die}})',
   'rest.healDice': 'hasta {{left}} para curarte',
   'rest.slots': 'Espacios de conjuro',
+  'rest.concentration': 'Concentración',
+  'rest.concentrationEnds': 'Termina: {{name}}',
   'rest.slotLevel': 'nivel {{level}} +{{count}}',
   'rest.diceTitle': 'Dados de golpe que gastas (d{{die}}, te quedan {{left}})',
   'rest.diceCount': 'Dados que gastas',

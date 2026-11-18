@@ -1,6 +1,6 @@
 import type { Attack, EquipmentSlot, Equipped } from '@/features/inventory'
 import type { StatBreakdown } from '../../domain/rules'
-import type { Build, SheetDraft, SheetRow, Vitals } from '../../domain/sheet'
+import type { Build, SheetDraft, SheetRow, Spell, Vitals } from '../../domain/sheet'
 
 export type PanelNotice =
   'sheet.saved' | 'sheet.restDone' | 'panel.added' | 'panel.removed' | 'panel.synced'
@@ -28,9 +28,23 @@ export type PanelProps = {
   pending: boolean
   /** RYT-070: a Player whose character fights a live encounter. */
   locked: boolean
+  /** RYT-134: the character fights a live encounter; the DM's own concentration tracker is separate. */
+  inEncounter: boolean
   /** RYT-130: a Player's finished sheet changes level by leveling up, not by hand. */
   levelLocked: boolean
-  commit: (values: Vitals, notice?: PanelNotice) => void
+  /** Play-state write. `marker` is set when the write also sets (`value`) or ends (`null`) the
+   * concentration marker; without it the server leaves the marker alone. */
+  commit: (
+    values: Vitals,
+    notice?: PanelNotice,
+    marker?: { value: string | null; undoable?: boolean },
+  ) => void
+  /** Says something politely through the sheet's live region. */
+  say: (text: string) => void
+  /** RYT-134: opens the cast dialog for a spell; `opener` gets focus back afterwards. */
+  onCast: (spell: Spell, name: string, opener: HTMLElement) => void
+  /** RYT-134: what the last cast did, as text (also announced). */
+  castNote: { text: string; spellId: string } | null
   /** Build changes: into the edit draft while editing, otherwise saved at once. */
   change: (update: (draft: SheetDraft) => SheetDraft, notice?: PanelNotice) => void
   onStartEdit?: () => void

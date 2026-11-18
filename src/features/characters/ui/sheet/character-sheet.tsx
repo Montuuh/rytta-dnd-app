@@ -71,13 +71,15 @@ import {
   speedBreakdown,
   spellcasting,
 } from '../../domain/rules'
-import type { Build, SheetBlock, SheetDraft, SheetRow, Vitals } from '../../domain/sheet'
+import type { CastPlan } from '../../domain/casting'
+import type { Build, SheetBlock, SheetDraft, SheetRow, Spell, Vitals } from '../../domain/sheet'
 import { skillKeys } from '../../domain/srd'
 import { CreationChooser } from '../creation/chooser'
 import { LevelUpPrompt } from '../level-up/level-up-prompt'
 import { LevelUpSheet, type LevelUpSnapshot } from '../level-up/level-up-sheet'
 import { useCharacterLabels } from '../labels'
 import { AbilityStrip } from './abilities'
+import { CastDialog, type CastHeld, type CastTarget } from './cast-dialog'
 import { ConditionsBlock, FeaturesBlock, NotesBlock, SkillsBlock, SpellsBlock } from './blocks'
 import { SheetHero } from './hero'
 import { HistoryBlock } from './history-block'
@@ -206,6 +208,7 @@ export function CharacterSheetPage() {
       absentOwner={absentOwner}
       ownSheet={character.user_id === userId}
       locked={Boolean(lock.data?.locked)}
+      inEncounter={Boolean(lock.data?.in_encounter)}
       exhaustion={exhaustion}
       characterPath={characterPath}
       refresh={{
@@ -239,6 +242,7 @@ function SheetPanel({
   absentOwner,
   ownSheet,
   locked,
+  inEncounter,
   exhaustion,
   characterPath,
   refresh,
@@ -253,6 +257,8 @@ function SheetPanel({
   /** The viewer plays this character (the rest preview speaks to them). */
   ownSheet: boolean
   locked: boolean
+  /** The character fights a live encounter (the DM's own concentration tracker is separate). */
+  inEncounter: boolean
   exhaustion: number | undefined
   characterPath: string
   refresh: { run: () => void; fetching: boolean; updatedAt: number }
@@ -262,6 +268,8 @@ function SheetPanel({
   const campaign = useCampaign()
   const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
+  // RYT-134: a cast keeps its own error and pending state, shown inside its dialog.
+  const castAction = useSheetAction(campaign.id)
   const submit = useSubmitGuard()
   const resourceNames = useResourceNames()
   const trackerLabel = useTrackerLabel()
@@ -297,8 +305,20 @@ function SheetPanel({
     snapshot: LevelUpSnapshot
   } | null>(null)
   const [optimistic, setOptimistic] = useState<Vitals | null>(null)
+  const [cast, setCast] = useState<{ token: number; target: CastTarget; opened: boolean } | null>(
+    null,
+  )
+  const [castNote, setCastNote] = useState<{ text: string; spellId: string } | null>(null)
+  const [announce, setAnnounce] = useState('')
+  const castOpener = useRef<HTMLElement | null>(null)
+  const castBusy = useRef(false)
   const inFlight = useRef(false)
-  const queued = useRef<{ values: Vitals; done?: PanelNotice } | null>(null)
+  const queued = useRef<{
+    values: Vitals
+    done?: PanelNotice
+    marker?: { value: string | null }
+    say?: string
+  } | null>(null)
   const latestRevision = useRef<number | null>(null)
   // Server play state caught up with the last write: drop the local copy.
   useEffect(() => {
@@ -438,17 +458,37 @@ function SheetPanel({
       // Mutation state exposes error feedback inside the panel alert.
     }
   }
-  const commit = (values: Vitals, done?: PanelNotice) => {
+  // Said once the write has succeeded, and again even when the words repeat: the region is
+  // emptied first so a screen reader announces the same sentence a second time.
+  const say = (text: string) => {
+    setAnnounce('')
+    window.setTimeout(() => setAnnounce(text), 60)
+  }
+  const commit: PanelProps['commit'] = (values, done, marker) => {
     setNotice(null)
+    setCastNote(null)
     setOptimistic(values)
-    queued.current = { values, done }
+    const saying = marker
+      ? marker.value === null
+        ? t(marker.undoable ? 'cast.marker.endedUndo' : 'cast.marker.ended', {
+            name: shownVitals.concentration ?? '',
+          })
+        : t('cast.marker.set', { name: marker.value })
+      : undefined
+    // A marker change still waiting for its turn is not lost when a newer tap replaces the write.
+    queued.current = {
+      values,
+      done,
+      marker: marker ?? queued.current?.marker,
+      say: saying ?? queued.current?.say,
+    }
     pump()
   }
   // One play-state write at a time; the newest tap waits and is sent on the fresh revision, so
   // quick taps (two slots, three pips) all count. The sheet shows the tapped state meanwhile.
   const pump = () => {
-    if (inFlight.current || !queued.current) return
-    const { values, done } = queued.current
+    if (inFlight.current || castBusy.current || !queued.current) return
+    const { values, done, marker, say: saying } = queued.current
     queued.current = null
     inFlight.current = true
     const revision = latestRevision.current ?? values.revision
@@ -458,10 +498,12 @@ function SheetPanel({
         characterId: character.id,
         values: { ...values, revision },
         requestId: newRequestId(),
+        ...(marker ? { concentration: marker } : {}),
       })
       .then((next) => {
         latestRevision.current = typeof next === 'number' ? next : revision + 1
         if (!queued.current) setNotice(done ?? null)
+        if (saying) say(saying)
       })
       .catch(() => {
         queued.current = null
@@ -473,7 +515,100 @@ function SheetPanel({
         pump()
       })
   }
+  // A cast waits for a slot or pip tap that is still on its way (it needs that write's revision),
+  // for a few seconds; after that the dialog says another change is still saving.
+  const whenIdle = async () => {
+    for (let waited = 0; (inFlight.current || queued.current) && waited < 5000; waited += 50)
+      await new Promise((resolve) => window.setTimeout(resolve, 50))
+    if (inFlight.current || queued.current) throw new Error('busy')
+  }
+  // RYT-134: a cast is one write that spends the slot and sets the marker together, on the
+  // revision this sheet last saw. The submission (what it sends, the revision, the request id) is
+  // kept in `held` until it succeeds or is refused, so a retry after a lost reply resends exactly
+  // it and the server replays it instead of spending a second slot.
+  const applyCast = async (plan: CastPlan, base: Vitals, held: CastHeld) => {
+    if (!cast) return
+    const { spell, name } = cast.target
+    const left = (level: number) =>
+      slotsFor(build.casterKind, shown.level)[level - 1]! - (plan.vitals.slots_used[level - 1] ?? 0)
+    const text = [
+      plan.spent !== null
+        ? t('cast.done.slot', {
+            name,
+            level: plan.spent,
+            left: left(plan.spent),
+            max: slotsFor(build.casterKind, shown.level)[plan.spent - 1]!,
+          })
+        : spell.level === 0
+          ? t('cast.done.noSlot', { name })
+          : t('cast.done.ritual', { name }),
+      plan.concentration ? t('cast.done.concentrating', { name: plan.concentration.value }) : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    // Nothing to spend or mark (a ritual): there is nothing to write either.
+    if (plan.spent === null && !plan.concentration) {
+      setCastNote({ text, spellId: spell.id })
+      say(text)
+      return
+    }
+    if (!held.current) {
+      await whenIdle()
+      held.current = {
+        plan,
+        base,
+        revision: latestRevision.current ?? vitals.revision,
+        requestId: newRequestId(),
+      }
+    }
+    const sent = held.current
+    castBusy.current = true
+    try {
+      const next = await castAction.mutateAsync({
+        kind: 'vitals',
+        characterId: character.id,
+        values: { ...sent.plan.vitals, revision: sent.revision },
+        requestId: sent.requestId,
+        ...(sent.plan.concentration ? { concentration: sent.plan.concentration } : {}),
+      })
+      held.current = null
+      latestRevision.current = typeof next === 'number' ? next : sent.revision + 1
+      setOptimistic({ ...sent.plan.vitals, revision: latestRevision.current })
+      setNotice(null)
+      setCastNote({ text, spellId: spell.id })
+      say(text)
+    } catch (error) {
+      // The sheet reloads after a stale answer; what the write started from is gone.
+      if (error instanceof Error && error.message === 'stale') {
+        latestRevision.current = null
+        setOptimistic(null)
+      }
+      throw error
+    } finally {
+      castBusy.current = false
+      pump()
+    }
+  }
+  const startCast = (spell: Spell, name: string, opener: HTMLElement) => {
+    castOpener.current = opener
+    setCastNote(null)
+    if (spell.level === 0 && !spell.concentration) {
+      // Nothing to spend or mark, so nothing is saved: say that, so the tap is never silent.
+      const text = t('cast.done.cantrip', { name })
+      setCastNote({ text, spellId: spell.id })
+      say(text)
+      return
+    }
+    castAction.reset()
+    setCast((previous) => ({
+      token: (previous?.token ?? 0) + 1,
+      target: { spell, name },
+      opened: true,
+    }))
+  }
   const change: PanelProps['change'] = (update, done) => {
+    // Any edit of the sheet (a spell prepared or not, a new spell) retires the last cast's note.
+    setCastNote(null)
     if (draft) setDraft((current) => (current ? update(current) : current))
     else void save(update(saved), done)
   }
@@ -506,8 +641,12 @@ function SheetPanel({
     editing,
     pending: action.isPending,
     locked,
+    inEncounter,
     levelLocked: !realDm,
     commit,
+    say,
+    onCast: startCast,
+    castNote,
     change,
     onStartEdit: canEdit && !editing && !action.isPending ? startEditing : undefined,
   }
@@ -582,9 +721,13 @@ function SheetPanel({
         ? 'panel.lockedError'
         : action.error?.message === 'forbidden'
           ? 'sheet.forbidden'
-          : action.error?.message === 'level-up'
-            ? 'levelUp.error.useLevelUp'
-            : 'sheet.unavailable'
+          : action.error?.message === 'absent'
+            ? 'cast.error.absent'
+            : action.error?.message === 'concentration'
+              ? 'cast.error.concentration'
+              : action.error?.message === 'level-up'
+                ? 'levelUp.error.useLevelUp'
+                : 'sheet.unavailable'
   // What a save changed on class resources is said in the open sheet too, where the player is
   // looking, and lists what moved.
   const syncedNote =
@@ -607,6 +750,7 @@ function SheetPanel({
     ) : null
   const closeRest = () => {
     setRest(null)
+    setCastNote(null)
     requestAnimationFrame(() => restOpener.current?.focus())
   }
   // RYT-080: what this character would get back; the DM asks for the group without one.
@@ -615,6 +759,11 @@ function SheetPanel({
     recovery && ownSheet
       ? {
           ...recovery,
+          // A long rest ends concentration on the server.
+          concentration:
+            rest === 'long' && recovery.canRest
+              ? (shownVitals.concentration ?? undefined)
+              : undefined,
           trackers: recovery.trackers.map((tracker) => ({
             id: tracker.id,
             label: tracker.key
@@ -685,6 +834,9 @@ function SheetPanel({
         )}
         <div aria-live="polite" className="visually-hidden-live">
           {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
+        </div>
+        <div aria-live="polite" className="visually-hidden-live">
+          {announce}
         </div>
         {levelUpDue && !editing && campaign.party_level !== null && (
           <LevelUpPrompt
@@ -807,8 +959,11 @@ function SheetPanel({
         )}
         <BlockSheet
           opened={open !== null}
-          closeOnEscape={libraryTab === null && !personalise}
-          onClose={() => setOpen(null)}
+          closeOnEscape={libraryTab === null && !personalise && !cast?.opened}
+          onClose={() => {
+            setOpen(null)
+            setCastNote(null)
+          }}
           title={open ? tileTitle(open) : ''}
           alert={errorAlert}
         >
@@ -860,6 +1015,24 @@ function SheetPanel({
             characterId={character.id}
             characterName={character.name}
             snapshot={levelUp.snapshot}
+          />
+        )}
+        {cast && (
+          <CastDialog
+            key={cast.token}
+            opened={cast.opened}
+            inEncounter={inEncounter}
+            target={cast.target}
+            build={build}
+            level={shown.level}
+            vitals={shownVitals}
+            onClose={() => setCast((current) => current && { ...current, opened: false })}
+            apply={applyCast}
+            returnTo={() =>
+              castOpener.current?.isConnected
+                ? castOpener.current
+                : document.querySelector<HTMLElement>('[data-cast-note]')
+            }
           />
         )}
         <RestRequestDialog

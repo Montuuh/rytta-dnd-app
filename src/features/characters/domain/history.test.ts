@@ -93,3 +93,19 @@ describe('RYT-130 one level-up, one history entry', () => {
     expect(foldLevelUps(elsewhere)).toHaveLength(3)
   })
 })
+
+describe('RYT-134 history of the concentration marker', () => {
+  const vitals = (before: unknown, after: unknown) =>
+    describeHistory(item('character_vitals:UPDATE', [{ field: 'concentration', before, after }]))
+  it('says the spell when the marker is set, replaced and ended', () => {
+    expect(vitals(null, 'Bless')).toEqual([
+      { key: 'text', field: 'concentration', before: '', after: 'Bless' },
+    ])
+    expect(vitals('Bless', 'Bane')).toEqual([
+      { key: 'text', field: 'concentration', before: 'Bless', after: 'Bane' },
+    ])
+    expect(vitals('Bane', null)).toEqual([
+      { key: 'text', field: 'concentration', before: 'Bane', after: '' },
+    ])
+  })
+})

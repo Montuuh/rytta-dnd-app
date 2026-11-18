@@ -142,6 +142,9 @@ export type CharacterFunctions = {
       new_slots_used: number[]
       new_tracker_uses: Json
       request_id: string
+      // RYT-134 (20261203120000): leave both out to keep the marker as it is.
+      change_concentration?: boolean
+      new_concentration?: string | null
     }
     Returns: number
   }
@@ -245,6 +248,8 @@ export type CharacterFunctions = {
       armor_class: number | null
       exhaustion: number | null
       conditions: string[] | null
+      // RYT-134: same sharing rule as conditions (20261203120000).
+      concentration: string | null
       // RYT-130: complete sheet below the party level (20261130120000).
       below_party_level: boolean
     }[]

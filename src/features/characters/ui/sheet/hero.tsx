@@ -12,7 +12,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core'
-import { Heart, Pencil, Shield, Sparkles, Swords } from 'lucide-react'
+import { Focus, Heart, Pencil, Shield, Sparkles, Swords, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm } from '@/features/glossary'
 import { PortraitPlate } from '@/features/inventory'
@@ -151,6 +151,12 @@ export function SheetHero(props: HeroProps) {
   const { build, vitals, maxHp, level, canEdit, editing, pending, locked, commit, speed } = props
   const [mode, setMode] = useState<HpMode | null>(null)
   const [undo, setUndo] = useState<{ before: Vitals; text: string } | null>(null)
+  // RYT-134: the marker just ended by hand, offered back for a few seconds.
+  const [ended, setEnded] = useState<string | null>(null)
+  const endButton = useRef<HTMLButtonElement>(null)
+  const undoButton = useRef<HTMLButtonElement>(null)
+  const focusUndo = useRef(false)
+  const focusEnd = useRef(false)
   const opener = useRef<HTMLElement | null>(null)
   const current = Math.min(vitals.current_hp, maxHp)
   const ratio = Math.round((current / Math.max(1, maxHp)) * 100)
@@ -172,6 +178,30 @@ export function SheetHero(props: HeroProps) {
   }
   const inspired = vitals.heroic_inspiration
   const dying = current === 0 && vitals.current_hp === 0
+  useEffect(() => {
+    if (!ended) return
+    const timer = setTimeout(() => {
+      // The offer runs out: said politely, and focus is not left on a control that goes away.
+      if (undoButton.current && document.activeElement === undoButton.current)
+        document.getElementById('sheet-name')?.focus()
+      props.say(t('cast.marker.undoGone'))
+      setEnded(null)
+    }, 12_000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ended])
+  // Focus follows the marker: to "Deshacer" once the marker is ended, back to "Terminar" once
+  // it is restored (the control that was pressed is gone in both cases).
+  useEffect(() => {
+    if (ended && focusUndo.current) {
+      undoButton.current?.focus()
+      focusUndo.current = false
+    }
+    if (!ended && vitals.concentration && focusEnd.current) {
+      endButton.current?.focus()
+      focusEnd.current = false
+    }
+  }, [ended, vitals.concentration])
   // The undo offer fades from the screen after a while; the next HP change replaces it.
   useEffect(() => {
     if (!undo) return
@@ -317,6 +347,57 @@ export function SheetHero(props: HeroProps) {
             )
           })}
         </section>
+      )}
+      {vitals.concentration && (
+        <div className="sheet-concentration">
+          <Focus size={20} aria-hidden="true" className="sheet-concentration-icon" />
+          <p className="sheet-concentration-text">
+            <span className="sheet-concentration-label">{t('cast.marker.label')}</span>
+            <span className="sheet-concentration-name user-copy">{vitals.concentration}</span>
+            {props.inEncounter && (
+              <span className="sheet-concentration-combat">{t('cast.marker.combat')}</span>
+            )}
+          </p>
+          {canEdit && !editing && (
+            <Button
+              variant="subtle"
+              className="sheet-concentration-end"
+              leftSection={<X size={16} aria-hidden="true" />}
+              aria-label={t('cast.marker.endNamed', { name: vitals.concentration })}
+              ref={endButton}
+              onClick={() => {
+                setEnded(vitals.concentration)
+                focusUndo.current = true
+                commit({ ...vitals, concentration: null }, undefined, {
+                  value: null,
+                  undoable: true,
+                })
+              }}
+            >
+              {t('cast.marker.end')}
+            </Button>
+          )}
+        </div>
+      )}
+      {ended && !vitals.concentration && canEdit && !editing && (
+        <div className="sheet-undo sheet-undo-marker">
+          <span className="user-copy sheet-undo-text">
+            {t('cast.marker.ended', { name: ended })}
+          </span>
+          <Button
+            variant="default"
+            size="compact-md"
+            className="sheet-undo-button"
+            ref={undoButton}
+            onClick={() => {
+              commit({ ...vitals, concentration: ended }, undefined, { value: ended })
+              focusEnd.current = true
+              setEnded(null)
+            }}
+          >
+            {t('sheet.undo')}
+          </Button>
+        </div>
       )}
       {!editing && (
         <dl className="sheet-statline">

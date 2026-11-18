@@ -1503,7 +1503,17 @@ span.sheet-inspiration {
   font-weight: 600;
 }
 .sheet-undo-button.mantine-Button-root {
+  flex: none;
   min-height: 44px;
+  white-space: nowrap;
+}
+.sheet-undo.sheet-undo-marker {
+  flex-wrap: wrap;
+}
+.sheet-undo-text {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 .panel-ac-bonus {
   display: grid;
@@ -1542,4 +1552,237 @@ span.sheet-inspiration {
 .attack-lines .roll-point {
   min-width: 44px;
   vertical-align: middle;
+}
+
+/* RYT-134 casting. The marker in the hero, "Lanzar" on a spell row and the cast dialog. */
+.sheet-concentration {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-inline-start: 4px solid var(--app-accent);
+}
+.sheet-concentration-icon {
+  flex: none;
+  color: var(--app-accent);
+}
+.sheet-concentration-text {
+  display: grid;
+  gap: 1px;
+  flex: 1 1 10rem;
+  min-width: 0;
+  margin: 0;
+}
+.sheet-concentration-label {
+  font-size: var(--fs-tag);
+  color: var(--app-muted);
+}
+.sheet-concentration-name {
+  font-weight: 600;
+  /* Words break only when one cannot fit; two lines at most, the rest is cut with an ellipsis
+     (the whole name stays in the text for assistive technology). */
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.sheet-concentration-combat {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.sheet-concentration-end.mantine-Button-root {
+  flex: none;
+  margin-inline-start: auto;
+  min-height: 44px;
+  color: var(--app-text);
+}
+.feature-row.spell-row {
+  flex-wrap: wrap;
+}
+.spell-row .feature-main {
+  flex: 1 1 11rem;
+}
+.spell-actions {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  margin-inline-start: auto;
+  max-width: 100%;
+}
+.cast-trigger.mantine-Button-root {
+  min-height: 44px;
+  padding-inline: 10px;
+  color: var(--app-text);
+  font-weight: 600;
+}
+.cast-trigger svg {
+  color: var(--app-accent);
+}
+.cast-why {
+  max-width: 16rem;
+  text-align: end;
+}
+.cast-note {
+  flex: 1 0 100%;
+  margin-top: 4px;
+  scroll-margin-bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-inline-start: 4px solid var(--app-accent);
+}
+.cast-note:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.cast-manual {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+}
+.cast-manual-toggle.mantine-Button-root {
+  justify-self: start;
+  min-height: 44px;
+  color: var(--app-text);
+}
+.cast-manual-body {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.spell-level-left {
+  font-weight: 400;
+}
+.cast-manual-current {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 10px;
+  min-width: 0;
+}
+.cast-manual-end.mantine-Button-root {
+  flex: none;
+  margin-inline-start: auto;
+}
+.cast-manual-name {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.cast-manual-form {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.cast-manual-form > * {
+  max-width: 100%;
+}
+.cast-manual-form .mantine-TextInput-root {
+  width: 100%;
+}
+.cast-form {
+  display: grid;
+  gap: 14px;
+}
+.cast-choices {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cast-legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.cast-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  cursor: pointer;
+}
+.cast-option:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border));
+}
+.cast-option[data-checked] {
+  border-color: var(--app-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
+}
+.cast-option:has(.cast-option-input:focus-visible) {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.cast-option-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.cast-option-copy {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cast-option-label {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cast-option-detail {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.cast-option-check {
+  flex: none;
+  color: var(--app-accent);
+  opacity: 0;
+}
+.cast-option[data-checked] .cast-option-check {
+  opacity: 1;
+}
+.cast-concentrates {
+  margin: 0;
+}
+/* The alert takes the plain surface: its title keeps the error token and its text the text token. */
+.cast-alert.mantine-Alert-root {
+  --alert-bg: var(--app-surface);
+  --alert-color: var(--danger);
+  background-color: var(--app-surface);
+  border: 1px solid var(--danger);
+}
+.cast-alert .mantine-Alert-title {
+  color: var(--danger);
+}
+.cast-alert .mantine-Alert-message {
+  color: var(--app-text);
+}
+.cast-alert:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.cast-footer .mantine-Button-root {
+  min-height: 44px;
 }

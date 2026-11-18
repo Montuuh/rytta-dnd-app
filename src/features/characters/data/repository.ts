@@ -11,6 +11,7 @@ import {
 import {
   buildSchema,
   historyItemSchema,
+  markerFor,
   playLockSchema,
   sheetRowSchema,
   sheetSummarySchema,
@@ -19,6 +20,12 @@ import {
   type SheetAction,
   type SheetSummary,
 } from '../domain/sheet'
+/** The marker exactly as the server accepts it; the UI never builds one it would refuse. */
+function sendableMarker(value: string) {
+  const marker = markerFor(value)
+  if (marker === null) throw new Error('concentration')
+  return marker
+}
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw new Error('Demo is read-only')
   const { getSupabase } = await import('@/shared/api/supabase')
@@ -224,7 +231,7 @@ export async function changeCharacter(
 const sheetColumns =
   'character_id, campaign_id, status, level, max_hp, armor_class, build, revision, portrait_path'
 const vitalsColumns =
-  'character_id, current_hp, temp_hp, hit_dice_spent, death_successes, death_failures, heroic_inspiration, conditions, slots_used, tracker_uses, revision'
+  'character_id, current_hp, temp_hp, hit_dice_spent, death_successes, death_failures, heroic_inspiration, conditions, slots_used, tracker_uses, concentration, revision'
 export async function getSheet(campaignId: string, characterId: string, signal: AbortSignal) {
   const db = await client()
   const campaign = z.uuid().parse(campaignId)
@@ -344,6 +351,16 @@ export async function changeSheet(campaignId: string, action: SheetAction) {
       new_slots_used: v.slots_used,
       new_tracker_uses: v.tracker_uses,
       request_id,
+      // Left out, the server keeps the marker: a hit point or slot tap never touches it.
+      ...(action.concentration
+        ? {
+            change_concentration: true,
+            new_concentration:
+              action.concentration.value === null
+                ? null
+                : sendableMarker(action.concentration.value),
+          }
+        : {}),
     })
   }
   if (result.error) {
@@ -353,11 +370,15 @@ export async function changeSheet(campaignId: string, action: SheetAction) {
         ? 'stale'
         : message.includes('Encounter locked')
           ? 'locked'
-          : message.includes('Use level up')
-            ? 'level-up'
-            : message.includes('Forbidden')
-              ? 'forbidden'
-              : 'unavailable',
+          : message.includes('Character absent')
+            ? 'absent'
+            : message.includes('Invalid concentration')
+              ? 'concentration'
+              : message.includes('Use level up')
+                ? 'level-up'
+                : message.includes('Forbidden')
+                  ? 'forbidden'
+                  : 'unavailable',
     )
   }
   return result.data

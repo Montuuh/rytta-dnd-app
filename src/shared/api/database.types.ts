@@ -74,6 +74,8 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
           conditions: string[]
           slots_used: number[]
           tracker_uses: Json
+          // RYT-134: the spell the character concentrates on, null when none.
+          concentration: string | null
           revision: number
         }
         Insert: never

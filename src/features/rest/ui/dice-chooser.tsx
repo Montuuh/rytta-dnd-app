@@ -2,8 +2,16 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ActionIcon, Button, TextInput } from '@mantine/core'
 import { Dices, Minus, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { DiceModeChoice, hitDiceExpression, useDiceMode, useQuietRollLog } from '@/features/dice'
-import { rollDice, type DieSides } from '@/shared/ui/dice/roll-dice'
+import {
+  DiceModeChoice,
+  attemptFor,
+  failureReason,
+  hitDiceExpression,
+  useAppRoll,
+  useDiceMode,
+  type Attempt,
+} from '@/features/dice'
+import { newRequestId } from '@/shared/lib/request-id'
 import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
 
 /**
@@ -44,7 +52,9 @@ export function DiceChooser({
   // here and the total is not typed, so the short rest behaves like initiative and the sheet.
   const { behaviour } = useDiceMode(campaignId)
   const appDice = behaviour === 'app'
-  const logRoll = useQuietRollLog(campaignId, characterId)
+  const appRoll = useAppRoll(campaignId)
+  const attempt = useRef<Attempt | null>(null)
+  const [failure, setFailure] = useState<string | null>(null)
   const valid = rollValid(value, die)
   useEffect(() => {
     if (showError) rollInput.current?.focus()
@@ -58,16 +68,25 @@ export function DiceChooser({
   }
   const autoRoll = async () => {
     if (rolling || value.spent === 0 || die === 0) return
+    const expression = hitDiceExpression(value.spent, die, conMod)
+    if (!expression) return
     setRolling(true)
+    setFailure(null)
+    // The server rolls and its dice are the only ones: a failure stops here, and the retry repeats
+    // the same request so a roll that was made is returned, not made again.
+    attempt.current = attemptFor(attempt.current, expression, newRequestId)
     try {
-      // The dice stage sits over the whole page, preview included: it clears when they stop and
-      // the result stays in the dock, below.
-      const values = await rollDice(value.spent, die as DieSides, { hold: 0 })
-      const total = String(values.reduce((sum, item) => sum + item, 0))
-      setDice({ values, roll: total })
+      const stored = await appRoll(
+        { kind: 'hit_die', label: 'hit_die', expression },
+        characterId,
+        attempt.current.id,
+      )
+      attempt.current = null
+      const total = String(stored.dice.reduce((sum, item) => sum + item, 0))
+      setDice({ values: stored.dice, roll: total })
       onChange({ spent: value.spent, roll: total })
-      const expression = hitDiceExpression(value.spent, die, conMod)
-      if (expression) logRoll({ kind: 'hit_die', label: 'hit_die', expression }, values)
+    } catch (error) {
+      setFailure(failureReason(error))
     } finally {
       setRolling(false)
     }
@@ -135,8 +154,13 @@ export function DiceChooser({
           aria-describedby={`${id}-sum`}
           onClick={() => void autoRoll()}
         >
-          {rolling ? t('rest.rolling') : t('rest.autoRoll')}
+          {rolling ? t('rest.rolling') : failure ? t('common.retry') : t('rest.autoRoll')}
         </Button>
+      )}
+      {failure && (
+        <p className="rest-overheal" role="alert">
+          {failure === 'dice-mode' ? t('roll.error.dice-mode') : t('rest.rollFailed')}
+        </p>
       )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">
         {dice && value.spent === dice.values.length && value.roll === dice.roll && (

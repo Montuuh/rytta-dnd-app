@@ -3,6 +3,7 @@ import { queryOptions, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import {
   CampaignSettingsError,
+  campaignsQuery,
   listRolls,
   logRoll,
   type CampaignRoll,
@@ -33,7 +34,8 @@ export const rollsQuery = (userId: string, campaignId: string) =>
     retry: 1,
   })
 
-/** Records a roll and puts it in the strip. The request id makes a retry safe: the server
+/** Records a roll (typed with physical dice) or has the server roll it (source 'app'), and puts it
+ * in the strip. The request id makes a retry safe: the server
  * returns the stored roll instead of recording another. Rejects with a CampaignSettingsError. */
 export function useRecordRoll(campaignId: string) {
   const { state, controller } = useAuth()
@@ -43,7 +45,16 @@ export function useRecordRoll(campaignId: string) {
     async (input: LogRollInput): Promise<CampaignRoll> => {
       if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
         throw new CampaignSettingsError('unavailable')
-      const roll = await logRoll(input)
+      let roll: CampaignRoll
+      try {
+        roll = await logRoll(input)
+      } catch (error) {
+        // The DM changed the mode since this device last read it: read it again now, so the sheet
+        // stops offering dice the table no longer uses.
+        if (error instanceof CampaignSettingsError && error.reason === 'dice-mode')
+          void cache.invalidateQueries({ queryKey: campaignsQuery(userId).queryKey })
+        throw error
+      }
       if (controller?.getSnapshot().user?.id === userId) {
         cache.setQueryData<CampaignRoll[]>(rollsScope(userId, campaignId), (rolls) =>
           rolls ? mergeRoll(rolls, roll, recentRollLimit) : rolls,

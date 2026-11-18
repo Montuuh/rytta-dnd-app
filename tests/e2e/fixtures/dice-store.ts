@@ -114,6 +114,9 @@ export function createDiceStore(
     settingsRequests: new Map<string, { actor: string; payload: string; result: unknown }>(),
     /** The next set_dice_settings or log_roll fails with this server message (nothing applied). */
     failNext: null as { rpc: 'set_dice_settings' | 'log_roll'; message: string } | null,
+    /** The next log_roll is stored but its reply is lost (503): a retry with the same request id
+     * must return the stored roll. */
+    loseReplyNext: false,
     /** Deterministic server dice for source 'app' (consumed in order, else random). */
     serverDice: [] as number[],
     clock: () => Date.now(),
@@ -142,7 +145,11 @@ export function createDiceStore(
     ): DiceReply {
       if (!member?.active || member.role !== 'dm') return refuse('42501', 'Forbidden')
       if (!body.request_id) return refuse('22023', 'Invalid request')
-      const payload = JSON.stringify([body.new_dice_mode, body.new_roll_visibility])
+      const payload = JSON.stringify([
+        body.target_campaign,
+        body.new_dice_mode,
+        body.new_roll_visibility,
+      ])
       const prior = store.settingsRequests.get(String(body.request_id))
       if (prior)
         return prior.actor === actor && prior.payload === payload
@@ -155,7 +162,7 @@ export function createDiceStore(
       }
       const mode = String(body.new_dice_mode)
       const visibility = String(body.new_roll_visibility)
-      if (!['physical', 'app', 'player'].includes(mode) || !(visibility in rank))
+      if (!['physical', 'app', 'player'].includes(mode) || !Object.hasOwn(rank, visibility))
         return refuse('22023', 'Invalid settings')
       const result = { dice_mode: mode, roll_visibility: visibility }
       if (visibility !== store.roll_visibility) store.revision += 1
@@ -182,6 +189,7 @@ export function createDiceStore(
           JSON.stringify(prior.dice) === JSON.stringify((body.recorded_dice as number[]) ?? [])
         if (
           prior.roller_id !== actor ||
+          prior.campaign_id !== body.target_campaign ||
           prior.character_id !== (body.target_character ?? null) ||
           prior.label !== label ||
           prior.expression !== body.roll_expression ||
@@ -273,6 +281,10 @@ export function createDiceStore(
         )
         .slice(0, 200)
       store.revision += 1
+      if (store.loseReplyNext) {
+        store.loseReplyNext = false
+        return { status: 503, body: { message: 'Unavailable' } }
+      }
       return { status: 200, body: saved }
     },
   }

@@ -1,25 +1,27 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import { CampaignSettingsError } from '@/features/campaigns'
+import { useTranslation } from 'react-i18next'
+import type { CampaignRoll } from '@/features/campaigns'
 import { newRequestId } from '@/shared/lib/request-id'
-import { useRecordRoll } from '../api'
-import { createRollRequestIds, rollMaths, rollPayloadKey, type RollSpec } from '../domain/roll'
+import { announcement, mathsText, rollMaths, type RollSpec } from '../domain/roll'
 import {
   DiceContext,
   RollResultContext,
   type DiceContextValue,
   type RollResultView,
 } from './dice-context'
+import { failureReason } from './failure-reason'
 import { RecordDialog, type Recording } from './record-dialog'
-import { rollExpressionDice } from './roll-engine'
+import { useRollName } from './roll-name'
+import { useAppRoll } from './use-app-roll'
 import { useDiceMode } from './use-dice-mode'
 
 /**
  * RYT-133: what the sheet's numbers do. With physical dice a tap opens the dialog where the
- * result is typed; with dice in the app it rolls the 3D dice, shows the maths and records the
- * roll. Both record through `log_roll`, so the recent rolls strip lists them alike. The faces the
- * 3D dice land on are the roll that is recorded (the engine cannot be told which faces to show,
- * so the dice and the database always agree). Mount it where the character's sheet is; `canRoll`
- * is presentation only, the database refuses a roll that is not the viewer's to make.
+ * result is typed and recorded (source 'recorded'). With dice in the app a tap asks the server to
+ * roll (source 'app'): the server's dice and total are shown and are the only ones there are; the
+ * 3D dice are decoration that clears before they settle, and with reduced motion nothing plays.
+ * Mount it where the character's sheet is; `canRoll` is presentation only, the database refuses a
+ * roll that is not the viewer's to make.
  */
 export function DiceProvider({
   campaignId,
@@ -32,9 +34,10 @@ export function DiceProvider({
   canRoll: boolean
   children: ReactNode
 }) {
+  const { t } = useTranslation()
+  const rollName = useRollName()
   const { behaviour } = useDiceMode(campaignId)
-  const save = useRecordRoll(campaignId)
-  const ids = useRef(createRollRequestIds(newRequestId))
+  const appRoll = useAppRoll(campaignId)
   const sequence = useRef(0)
   const [result, setResult] = useState<RollResultView | null>(null)
   const resultRef = useRef<RollResultView | null>(null)
@@ -53,60 +56,38 @@ export function DiceProvider({
     [show],
   )
 
-  const persist = useCallback(
-    async (entry: RollResultView) => {
-      const key = rollPayloadKey(characterId, entry.spec, entry.dice, entry.total)
-      patch(entry.seq, { phase: 'saving', reason: undefined })
-      try {
-        await save({
-          source: 'recorded',
-          campaignId,
-          characterId,
-          label: entry.spec.label,
-          expression: entry.spec.expression,
-          kind: entry.spec.kind,
-          dice: entry.dice,
-          total: entry.total,
-          requestId: ids.current.idFor(key),
-        })
-        ids.current.done(key)
-        patch(entry.seq, { phase: 'saved' })
-      } catch (error) {
-        patch(entry.seq, {
-          phase: 'failed',
-          reason:
-            error instanceof CampaignSettingsError
-              ? error.reason
-              : error instanceof Error && error.name === 'ZodError'
-                ? 'invalid'
-                : 'unavailable',
-        })
-      }
-    },
-    [campaignId, characterId, patch, save],
-  )
-
-  const roll = useCallback(
-    async (spec: RollSpec) => {
-      if (!canRoll || rollingRef.current) return
+  /** Asks the server to roll; the same request id makes a retry return the same roll. */
+  const run = useCallback(
+    async (entry: RollResultView, animate: boolean) => {
       rollingRef.current = true
       setRolling(true)
-      const seq = ++sequence.current
-      show({ seq, phase: 'rolling', spec, dice: [], total: 0 })
-      let entry: RollResultView | null = null
+      patch(entry.seq, { phase: 'rolling', reason: undefined })
       try {
-        const dice = await rollExpressionDice(spec.expression)
-        const maths = dice && rollMaths(spec.expression, dice)
-        if (dice && maths) entry = { seq, phase: 'saving', spec, dice, total: maths.total }
+        const roll = await appRoll(entry.spec, characterId, entry.requestId, { animate })
+        patch(entry.seq, { phase: 'saved', roll })
+      } catch (error) {
+        patch(entry.seq, { phase: 'failed', reason: failureReason(error) })
       } finally {
         rollingRef.current = false
         setRolling(false)
       }
-      if (!entry) return show(null)
-      show(entry)
-      await persist(entry)
     },
-    [canRoll, persist, show],
+    [appRoll, characterId, patch],
+  )
+
+  const roll = useCallback(
+    (spec: RollSpec) => {
+      if (!canRoll || rollingRef.current) return
+      const entry: RollResultView = {
+        seq: ++sequence.current,
+        phase: 'rolling',
+        spec,
+        requestId: newRequestId(),
+      }
+      show(entry)
+      void run(entry, true)
+    },
+    [canRoll, run, show],
   )
 
   const record = useCallback(
@@ -117,7 +98,7 @@ export function DiceProvider({
   )
 
   const value = useMemo<DiceContextValue>(
-    () => ({ behaviour, canRoll, roll: (spec) => void roll(spec), record, rolling }),
+    () => ({ behaviour, canRoll, roll, record, rolling }),
     [behaviour, canRoll, roll, record, rolling],
   )
   const shared = useMemo(
@@ -125,24 +106,48 @@ export function DiceProvider({
       result,
       retry: () => {
         const current = resultRef.current
-        if (current?.phase === 'failed') void persist(current)
+        if (current?.phase === 'failed') void run(current, false)
       },
       dismiss: () => show(null),
     }),
-    [result, persist, show],
+    [result, run, show],
   )
+  // Always mounted, empty until a roll lands, so the first announcement is not lost. It carries
+  // the roll, who made it (Rytta or typed) and who sees it.
+  const saved = result?.phase === 'saved' ? result.roll : undefined
+  const spoken =
+    result?.phase === 'rolling'
+      ? t('roll.rollingShort')
+      : saved
+        ? announcement({
+            name: rollName(result!.spec.kind, result!.spec.label),
+            maths: ((m) => (m ? mathsText(m) : null))(rollMaths(saved.expression, saved.dice)),
+            total: saved.total,
+            source: t(`roll.source.${saved.source}`),
+            seen: t(`roll.seen.${saved.visibility}`),
+          })
+        : ''
   return (
     <DiceContext.Provider value={value}>
       <RollResultContext.Provider value={shared}>
         {children}
+        <p className="visually-hidden" role="status">
+          {spoken}
+        </p>
         <RecordDialog
           recording={recording}
           campaignId={campaignId}
           characterId={characterId}
           onClose={() => setRecording((current) => current && { ...current, open: false })}
-          onSaved={(spec, dice, total) => {
+          onSaved={(spec: RollSpec, saved: CampaignRoll) => {
             setRecording((current) => current && { ...current, open: false })
-            show({ seq: ++sequence.current, phase: 'saved', spec, dice, total })
+            show({
+              seq: ++sequence.current,
+              phase: 'saved',
+              spec,
+              requestId: saved.id,
+              roll: saved,
+            })
           }}
         />
       </RollResultContext.Provider>

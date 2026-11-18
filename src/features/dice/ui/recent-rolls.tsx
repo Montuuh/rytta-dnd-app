@@ -10,6 +10,7 @@ import { usePhone } from '@/shared/ui/use-viewport'
 import { rollsQuery, rollsScope } from '../api'
 import { subscribeRolls } from '../data/repository'
 import { formulaOf, mathsText, rollMaths } from '../domain/roll'
+import { rollerOf } from '../domain/rolls'
 import { useRollName } from './roll-name'
 import { useDiceMode } from './use-dice-mode'
 import './dice.css'
@@ -48,6 +49,8 @@ function RollEntry({
         </p>
         <p className="roll-entry-maths">
           {maths ? mathsText(maths) : formulaOf(roll.expression)}
+          {' · '}
+          {t(`roll.source.${roll.source}`)}
           {' · '}
           {when}
         </p>
@@ -90,8 +93,14 @@ export function RecentRolls({
   const rolls = query.data ?? []
   // With physical dice the strip appears once someone has recorded a roll, never before.
   if (behaviour === 'physical' && rolls.length === 0) return null
-  const who = (roll: CampaignRoll) =>
-    (roll.character_id ? names.get(roll.character_id) : null) ?? t('roll.dm')
+  const who = (roll: CampaignRoll) => {
+    const roller = rollerOf(roll.character_id, names)
+    return roller.kind === 'dm'
+      ? t('roll.dm')
+      : roller.kind === 'character'
+        ? roller.name
+        : t('roll.someone')
+  }
   const list = (items: CampaignRoll[]) => (
     <ol className="roll-list">
       {items.map((roll) => (

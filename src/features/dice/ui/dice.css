@@ -19,6 +19,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.roll-point-visible {
+  display: flex;
+  flex-direction: inherit;
+  align-items: inherit;
+  justify-content: inherit;
+  gap: inherit;
+}
+
 .roll-point-text {
   display: block;
   text-decoration: underline;

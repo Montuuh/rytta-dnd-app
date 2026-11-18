@@ -49,7 +49,7 @@ export function AttackLines({
   lines: Attack[]
   /** Wraps the to-hit number and the damage dice of a line, so a sheet can make them rollable;
    * the equipment view leaves them as text. */
-  renderRoll?: (line: Attack, part: 'hit' | 'damage', content: ReactNode) => ReactNode
+  renderRoll?: (line: Attack, part: 'hit' | 'damage' | 'versatile', content: ReactNode) => ReactNode
 }) {
   const { t } = useTranslation()
   if (lines.length === 0)
@@ -58,7 +58,7 @@ export function AttackLines({
         {t('inventory.attacks.none')}
       </Text>
     )
-  const wrap = (line: Attack, part: 'hit' | 'damage', content: ReactNode) =>
+  const wrap = (line: Attack, part: 'hit' | 'damage' | 'versatile', content: ReactNode) =>
     renderRoll ? renderRoll(line, part, content) : content
   return (
     <ul className="attack-lines">
@@ -107,9 +107,18 @@ export function AttackLines({
               {line.itemDamageBonus
                 ? ` · ${t('inventory.attacks.partDamage', { value: signed(line.itemDamageBonus) })}`
                 : ''}
-              {line.versatileDice
-                ? ` · ${t('inventory.attacks.twoHands', { dice: line.versatileDice })}`
-                : ''}
+              {line.versatileDice && (
+                <>
+                  {' · '}
+                  {wrap(
+                    line,
+                    'versatile',
+                    t('inventory.attacks.twoHands', {
+                      dice: `${line.versatileDice}${line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}`,
+                    }),
+                  )}
+                </>
+              )}
               {line.range ? ` · ${line.range} ${t('inventory.card.feet')}` : ''}
             </span>
             <span className="attack-breakdown">{hitParts}</span>

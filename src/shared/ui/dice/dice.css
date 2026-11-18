@@ -1,4 +1,4 @@
-/* RYT-082: the 3D dice roll over everything (dialogs included) and never take taps. */
+/* RYT-082/133: the 3D dice tumble over everything (dialogs included) and never take taps. */
 .dice-stage {
   position: fixed;
   inset: 0;
@@ -14,11 +14,6 @@
   display: block;
   width: 100%;
   height: 100%;
-}
-/* Once the dice stop, the stage dims: the total they produced reads above them. */
-.dice-stage.is-rolling.is-settled {
-  opacity: 0.28;
-  transition: opacity 0.3s ease-out;
 }
 @media (prefers-reduced-motion: reduce) {
   .dice-stage {

@@ -19,18 +19,21 @@ const subscribe = (notify: () => void) => {
     window.removeEventListener('storage', notify)
   }
 }
+// Where the browser blocks storage (private mode, a strict policy) the choice is kept here for the
+// session, so the control still works until the page closes.
+const session = new Map<string, string>()
 const read = (key: string) => {
   try {
-    return localStorage.getItem(key) ?? ''
+    return localStorage.getItem(key) ?? session.get(key) ?? ''
   } catch {
-    return ''
+    return session.get(key) ?? ''
   }
 }
 
 /**
  * RYT-133: the one place that decides how this device rolls. The campaign's dice mode wins; when
  * the DM left it to each Player, the choice lives on this device (localStorage, per account and
- * campaign) and is physical dice until the Player chooses. Initiative, hit dice and the sheet all
+ * campaign; in memory for the session where storage is blocked) and is physical dice until the Player chooses. Initiative, hit dice and the sheet all
  * read this, so a table never meets two dice behaviours.
  */
 export function useDiceMode(campaignId: string): {
@@ -50,10 +53,11 @@ export function useDiceMode(campaignId: string): {
   const choice = readDiceChoice(stored || null)
   const setChoice = useCallback(
     (next: DiceBehaviour) => {
+      session.set(key, next)
       try {
         localStorage.setItem(key, next)
       } catch {
-        // Private mode: the choice lasts until the page closes.
+        // Blocked storage: the in-memory copy above carries the choice for this session.
       }
       for (const notify of listeners) notify()
     },

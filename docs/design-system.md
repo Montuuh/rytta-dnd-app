@@ -521,17 +521,29 @@ the DM, the whole table, only the roller). Each row is a 44px label with a mark,
 means; the radio is visually hidden and the checked row takes the accent border. A change shows one
 button, then one confirmation that lists what changes and what it does to earlier rolls; failures
 focus the reason and the retry repeats the same request. "Each Player chooses" is kept on the Player's
-device (`rytta-dice-choice:<user>:<campaign>` in localStorage): a two-way control "Physical / In the
-app" on the sheet, the initiative entry and the hit dice, physical until it is used.
+device (`rytta-dice-choice:<user>:<campaign>` in localStorage, in memory for the session where storage
+is blocked): a two-way control "Physical / In the app" on the sheet, the initiative entry and the hit
+dice, physical until it is used.
+
+In app mode Rytta rolls: the server rolls (`log_roll` with source `app`) and its dice and total are the
+only ones there are. Typed results (physical mode) are stored as `recorded`; the result card and the
+strip say which it was ("Rolled by Rytta" / "Recorded"). The 3D engine cannot land on chosen faces, so
+the dice are decoration: a short tumble that fades out while the dice are still in the air, started
+beside the request; the result appears in the card when the server has answered. With reduced motion
+nothing is animated and the engine is not loaded. A request that fails shows nothing rolled and, for a
+network failure or the rate limit, a retry that repeats the same request id (the server returns the
+roll it already made). When the DM has changed the mode, the refusal says so, the campaign is read
+again and the sheet switches.
 
 A rollable number on the sheet is the number itself with a solid accent underline (the glossary keeps
 its dotted one), a 44px target, never a chip or a button face. With physical dice the number reads as
 what to roll (`d20 + 5`, `1d8 + 3`; `d20+5` inside the ability medals) and a tap opens a dialog where
-the dice are typed and checked; with dice in the app the modifier stays and a tap rolls. Checks and
-saves, skills, attack and damage lines are rollable; a flat damage (unarmed without a die) is not. The
-result is one card, under the abilities or at the foot of the open block: total in the display face,
-the dice and the modifier, the formula, whether the table has it and who reads it. A dismiss key and a
-retry sit in it; a failed save keeps the roll. The recent rolls strip lists the newest three (the rest in
-a drawer), refetched on the realtime signal with polling behind it; it shows what the database returns
-and nothing else. Labels of checks and saves are stored as keys and read in the viewer's language.
-Reduced motion shows results without animation and without loading the 3D engine.
+the dice are typed and checked; with dice in the app the modifier stays and a tap rolls. Its accessible
+name holds what is on screen plus what a tap does. Checks, saves, skills, attack, damage and two-handed
+damage lines are rollable; a flat damage (unarmed without a die) is not. The result is one card, under
+the abilities or at the foot of the open block: total in the display face, the dice and the modifier,
+the formula, and the source and the visibility the roll was stored with. It is announced from a status
+region that is always mounted. The recent rolls strip lists the newest three (the rest in a drawer),
+refetched on the realtime signal with polling behind it; it shows what the database returns and
+nothing else, and credits "DM" only to a roll with no character. Labels of checks and saves are stored
+as keys and read in the viewer's language.

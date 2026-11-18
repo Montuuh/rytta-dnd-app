@@ -12,10 +12,10 @@ export const diceEs = {
   'diceSettings.visibilityLegend': 'Quién ve las tiradas',
   'diceSettings.mode.physical': 'Dados físicos',
   'diceSettings.mode.physicalHint':
-    'Cada jugador tira los suyos. La ficha dice qué tirar y qué sumar, y se puede anotar el resultado.',
+    'Cada jugador tira los suyos. La ficha dice qué tirar y qué sumar; lo que se escribe consta como anotado.',
   'diceSettings.mode.app': 'Dados en la app',
   'diceSettings.mode.appHint':
-    'Tocar un modificador tira dados 3D y muestra la cuenta. La iniciativa y los dados de golpe también.',
+    'Rytta tira y anota: el resultado lo decide el servidor y consta como tirada por Rytta. Lo que se escriba a mano consta como anotado. La iniciativa y los dados de golpe también.',
   'diceSettings.mode.player': 'Cada jugador elige',
   'diceSettings.mode.playerHint':
     'Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.',
@@ -31,7 +31,7 @@ export const diceEs = {
   'diceSettings.confirmMode.physical':
     'Los jugadores tiran sus dados. La ficha dice qué tirar, y la iniciativa y los dados de golpe se escriben a mano.',
   'diceSettings.confirmMode.app':
-    'Los jugadores tirarán en la app, también la iniciativa y los dados de golpe. Ninguna ficha cambia.',
+    'Los jugadores tirarán en la app: Rytta hace la tirada y la anota, también la de iniciativa y los dados de golpe. Ninguna ficha cambia.',
   'diceSettings.confirmMode.player':
     'Cada jugador elige en su dispositivo; hasta que elija, usa dados físicos.',
   'diceSettings.confirmVisibility.wider':
@@ -84,9 +84,9 @@ export const diceEs = {
   'roll.sum': '{{maths}} = {{total}}',
   'roll.sumTotal': 'Total {{total}}',
   'roll.record': 'Anotar',
-  'roll.errorTitle': 'No se anotó la tirada',
+  'roll.errorTitle': 'La tirada no llegó a la mesa',
   'roll.error.unavailable':
-    'No se pudo conectar con el servidor. La tirada no se anotó; inténtalo de nuevo.',
+    'No se pudo conectar con el servidor. La tirada no se hizo ni se anotó; inténtalo de nuevo.',
   'roll.error.forbidden': 'Tu cuenta no puede anotar tiradas en esta campaña.',
   'roll.error.invalid': 'La tirada no es válida. Revisa los números.',
   'roll.error.request-mismatch':
@@ -94,15 +94,7 @@ export const diceEs = {
   'roll.error.character-unavailable': 'Este personaje no puede tirar ahora (ausente o archivado).',
   'roll.error.roll-limit': 'Demasiadas tiradas seguidas. Espera un momento y vuelve a intentarlo.',
   'roll.resultLabel': 'Última tirada',
-  'roll.rolling': 'Tirando {{name}}: {{formula}}.',
   'roll.rollingShort': 'Tirando los dados…',
-  'roll.spoken': '{{name}}: {{maths}} = {{total}}',
-  'roll.spokenTotal': '{{name}}: total {{total}}',
-  'roll.saving': 'Anotando en la mesa…',
-  'roll.saved.table': 'Anotada. La ve toda la mesa.',
-  'roll.saved.roller_dm': 'Anotada. La ven tú y el DM.',
-  'roll.saved.roller': 'Anotada. Solo la ves tú.',
-  'roll.notSaved': 'Sin anotar',
   'roll.dismiss': 'Cerrar la tirada',
   'roll.recent': 'Últimas tiradas',
   'roll.seeAll': 'Ver las {{count}}',
@@ -111,5 +103,22 @@ export const diceEs = {
   'roll.empty': 'Aún no hay tiradas. Toca un modificador para tirar.',
   'roll.dm': 'DM',
   'roll.you': '{{name}} (tú)',
+  'roll.source.app': 'Tirada por Rytta',
+  'roll.source.recorded': 'Anotada',
+  'roll.seen.table': 'La ve toda la mesa.',
+  'roll.seen.roller_dm': 'La ven quien tira y el DM.',
+  'roll.seen.roller': 'Solo la ve quien tira.',
+  'roll.notRolled': 'Sin tirar',
+  'roll.error.dice-mode':
+    'El DM ha cambiado los dados de la mesa. Esta ficha ya usa los nuevos: revisa y vuelve a tirar.',
+  'roll.totalOutOfRange': 'Con esos dados el total va de {{min}} a {{max}}.',
+  'roll.someone': 'Otro personaje',
+  'combat.initiative.waitSheet': 'Cargando tu ficha: hace falta para tirar con tu bonificador.',
+  'combat.initiative.noSheet':
+    'No se pudo leer tu ficha, así que no se conoce tu bonificador. Reintenta para poder tirar.',
+  'combat.initiative.rollFailed':
+    'No se pudo tirar la iniciativa. No se ha guardado ninguna tirada; inténtalo de nuevo.',
+  'rest.rollFailed':
+    'No se pudieron tirar los dados de golpe. No se ha guardado ninguna tirada; inténtalo de nuevo.',
   'roll.totalWord': 'Total',
 } satisfies Record<keyof typeof diceEn, string>

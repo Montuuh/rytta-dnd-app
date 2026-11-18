@@ -824,7 +824,7 @@ test('RYT-101 equipped gear, attack bonuses and encumbrance flow into sheet brea
   const longsword = attacksDrawer.locator('.attack-lines li', { hasText: 'Espada larga' })
   // RYT-133: with physical dice the block says what to roll: the same bonus as the tile.
   const formula = `d20 ${tileBonus!.startsWith('-') ? '−' : '+'} ${tileBonus!.slice(1)}`
-  await expect(longsword.locator('.attack-bonus')).toHaveText(`Ataque ${formula}`)
+  await expect(longsword.locator('.attack-bonus')).toContainText(`Ataque ${formula}`)
   await expect(longsword.locator('.attack-damage')).toContainText('Daño')
   await expect(attacksDrawer).toContainText('Objeto +1')
   await audit(page, info.outputPath('sheet-gear-attacks.png'))

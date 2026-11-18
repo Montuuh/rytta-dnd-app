@@ -31,29 +31,13 @@ async function audit(page: Page) {
 }
 
 /**
- * The 3D engine is deterministic here the way the rest specs make it: reduced motion rolls without
- * the engine, and the platform generator it falls back to hands out the faces given (a die with
- * face v takes the raw value v - 1). Anything else asks the real generator.
+ * Dice in the app are rolled by the server, so the fixture server is what is made deterministic:
+ * the faces it is given are the ones it rolls, in order (anything else it rolls at random). The
+ * 3D engine only decorates, and with reduced motion it never loads.
  */
-async function fixedDice(page: Page, faces: number[]) {
-  await page.addInitScript((initial) => {
-    const queue = [...initial]
-    ;(window as unknown as { diceQueue: number[] }).diceQueue = queue
-    const original = crypto.getRandomValues.bind(crypto)
-    crypto.getRandomValues = ((array: ArrayBufferView) => {
-      if (array instanceof Uint32Array && array.length === 1 && queue.length) {
-        array[0] = queue.shift()! - 1
-        return array
-      }
-      return original(array as ArrayBufferView<ArrayBuffer>)
-    }) as typeof crypto.getRandomValues
-  }, faces)
+const serverFaces = (f: { dice: { serverDice: number[] } }, faces: number[]) => {
+  f.dice.serverDice.push(...faces)
 }
-
-const queueDice = (page: Page, faces: number[]) =>
-  page.evaluate((next) => {
-    ;(window as unknown as { diceQueue: number[] }).diceQueue.push(...next)
-  }, faces)
 
 const logged = (calls: { method: string; body: Record<string, unknown> }[]) =>
   calls.filter((call) => call.method === 'log_roll')
@@ -206,10 +190,14 @@ test('RYT-133 physical dice: each line says what to roll, and the result can be 
   // Skills: the formula replaces the bare bonus.
   const skills = await openTile(page, /Habilidades/)
   await expect(
-    skills.sheet.getByRole('button', { name: /Anotar la tirada de Percepción, d20 \+ 3/ }),
+    skills.sheet
+      .getByRole('button', { name: /Anotar la tirada de Percepción, d20 \+ 3/ })
+      .locator('.roll-point-text'),
   ).toHaveText('d20 + 3')
   await expect(
-    skills.sheet.getByRole('button', { name: /Anotar la tirada de Interpretación, d20 \+ 8/ }),
+    skills.sheet
+      .getByRole('button', { name: /Anotar la tirada de Interpretación, d20 \+ 8/ })
+      .locator('.roll-point-text'),
   ).toHaveText('d20 + 8')
   await audit(page)
   await page.keyboard.press('Escape')
@@ -223,8 +211,14 @@ test('RYT-133 physical dice: each line says what to roll, and the result can be 
   const damage = attacks.sheet.getByRole('button', {
     name: /Anotar la tirada de Daño: Espada larga, 1d8/,
   })
-  await expect(hit).toHaveText(/^d20 [+−] \d+$/)
-  await expect(damage).toHaveText(/^1d8( [+−] \d+)?$/)
+  await expect(hit.locator('.roll-point-text')).toHaveText(/^d20 [+−] \d+$/)
+  // The to-hit number keeps its meaning in the accessible name.
+  await expect(hit).toHaveAccessibleName(/\d al ataque, Anotar la tirada de Ataque: Espada larga/)
+  // Two-handed damage (1d10) is a line of its own that can be recorded.
+  await expect(
+    attacks.sheet.getByRole('button', { name: /Anotar la tirada de Daño: Espada larga, 1d10/ }),
+  ).toContainText('a dos manos')
+  await expect(damage.locator('.roll-point-text')).toHaveText(/^1d8( [+−] \d+)?$/)
   await expect(attacks.sheet.getByRole('button', { name: /Daño: Ataque desarmado/ })).toHaveCount(0)
   await audit(page)
 
@@ -247,7 +241,7 @@ test('RYT-133 physical dice: each line says what to roll, and the result can be 
   // A failed save keeps the dialog open; the reason takes the focus; the retry repeats the request.
   f.dice.failNext = { rpc: 'log_roll', message: 'Unavailable' }
   await record.getByRole('button', { name: 'Anotar', exact: true }).click()
-  await expect(record.getByRole('alert')).toContainText('No se anotó la tirada')
+  await expect(record.getByRole('alert')).toContainText('La tirada no llegó a la mesa')
   await expect(record.getByRole('alert')).toBeFocused()
   expect(f.dice.rolls).toHaveLength(0)
   await record.getByRole('button', { name: 'Reintentar' }).click()
@@ -269,11 +263,11 @@ test('RYT-133 physical dice: each line says what to roll, and the result can be 
   await expect(damage).toBeFocused()
   const result = attacks.sheet.getByRole('region', { name: 'Última tirada' })
   await expect(result).toContainText(String(total))
-  await expect(result).toContainText('Anotada. La ven tú y el DM.')
+  await expect(result).toContainText('Anotada. La ven quien tira y el DM.')
   await audit(page)
   await page.keyboard.press('Escape')
 
-  // The strip on the sheet lists it.
+  // The strip on the sheet lists it, marked as recorded.
   const strip = page.getByRole('region', { name: 'Últimas tiradas' })
   await expect(strip.locator('.roll-entry')).toHaveCount(1)
   await expect(strip.locator('.roll-entry-name')).toHaveText('Daño: Espada larga · Arin (tú)')
@@ -294,7 +288,9 @@ test('RYT-133 physical dice: each line says what to roll, and the result can be 
   expect(logged(f.calls)).toHaveLength(2)
 })
 
-test('RYT-133 dice in the app: a tap rolls, shows the maths and records; reduced motion has no animation', async ({
+const spoken = (page: Page) => page.locator('p.visually-hidden[role="status"]')
+
+test('RYT-133 dice in the app: Rytta rolls on the server, the card and the strip show its dice', async ({
   page,
 }) => {
   const f = await identityFixture(page, {
@@ -303,17 +299,24 @@ test('RYT-133 dice in the app: a tap rolls, shows the maths and records; reduced
     party: true,
     diceMode: 'app',
   })
-  await fixedDice(page, [14, 3, 20, 5])
+  serverFaces(f, [14, 3, 20, 5])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   // With no rolls yet the strip says what to do.
   const strip = page.getByRole('region', { name: 'Últimas tiradas' })
   await expect(strip).toContainText('Aún no hay tiradas. Toca un modificador para tirar.')
   await expect(page.locator('.roll-hint').first()).toContainText('Toca un modificador subrayado')
+  await expect(spoken(page)).toHaveText('')
   await audit(page)
 
+  // The accessible name holds the visible text and what a tap does.
   const check = page.getByRole('button', { name: 'Tirar Prueba de Destreza, d20 + 2' })
   await expect(check).toContainText('+2')
+  await expect(check).toHaveAccessibleName(/Modificador \+2, Tirar Prueba de Destreza, d20 \+ 2/)
+  // A proficient save keeps "proficient" in its name, and the visible +5 is in it too.
+  await expect(
+    page.getByRole('button', { name: 'Tirar Salvación de Destreza, d20 + 5' }),
+  ).toHaveAccessibleName(/Salvación de Destreza \+5, Competente, Tirar Salvación de Destreza/)
   await check.click()
   const result = page.getByRole('region', { name: 'Última tirada' })
   await expect(result.locator('.roll-result-total')).toHaveText('16')
@@ -321,21 +324,33 @@ test('RYT-133 dice in the app: a tap rolls, shows the maths and records; reduced
   await expect(result.locator('.roll-result-maths')).toContainText('14')
   await expect(result.locator('.roll-result-maths')).toContainText('+ 2')
   await expect(result.locator('.roll-result-maths')).toContainText('d20 + 2')
-  await expect(result).toContainText('Anotada. La ven tú y el DM.')
-  // Spoken: the maths and the total, in a status region.
-  await expect(result.getByRole('status')).toHaveText('Prueba de Destreza: 14 + 2 = 16')
-  // No stage for the 3D dice was ever created.
+  // Who made it and who sees it: the source and the visibility the roll was stored with.
+  await expect(result.locator('.roll-result-state')).toHaveText(
+    'Tirada por Rytta. La ven quien tira y el DM.',
+  )
+  // The region is always mounted and was empty: the roll, its source and who sees it are spoken.
+  await expect(spoken(page)).toHaveText(
+    'Prueba de Destreza: 14 + 2 = 16. Tirada por Rytta. La ven quien tira y el DM.',
+  )
+  // Reduced motion: no stage for the 3D dice was ever created.
   await expect(page.locator('#rytta-dice-stage')).toHaveCount(0)
+  // The request carried no dice: the server rolled, and its roll is the only one.
   expect(logged(f.calls)).toHaveLength(1)
   expect(logged(f.calls)[0]!.body).toMatchObject({
     target_character: characterId,
     roll_label: 'dex',
     roll_kind: 'ability',
     roll_expression: 'd20+2',
-    roll_source: 'recorded',
-    recorded_dice: [14],
-    recorded_total: 16,
+    roll_source: 'app',
+    recorded_dice: null,
+    recorded_total: null,
   })
+  expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [14], total: 16 })
+  // The strip agrees with the card and labels the source.
+  await expect(strip.locator('.roll-entry-total').first()).toContainText('16')
+  await expect(strip.locator('.roll-entry-maths').first()).toContainText(
+    '14 + 2 · Tirada por Rytta',
+  )
   await expect(check).toBeFocused()
   await audit(page)
 
@@ -363,7 +378,7 @@ test('RYT-133 dice in the app: a tap rolls, shows the maths and records; reduced
   await page.keyboard.press('Escape')
 
   // The fourth roll: three show, the rest open from "Ver las 4".
-  await queueDice(page, [5])
+  serverFaces(f, [5])
   await page.getByRole('button', { name: 'Tirar Prueba de Fuerza, d20 − 1' }).click()
   await expect(strip.locator('.roll-entry')).toHaveCount(3)
   const all = strip.getByRole('button', { name: 'Ver las 4' })
@@ -376,7 +391,7 @@ test('RYT-133 dice in the app: a tap rolls, shows the maths and records; reduced
   await expect(all).toBeFocused()
 })
 
-test('RYT-133 a failed save keeps the roll and retries the same request; a rate limit says so', async ({
+test('RYT-133 a failed roll shows nothing rolled; the retry repeats the request and a lost reply returns the same roll', async ({
   page,
 }) => {
   const f = await identityFixture(page, {
@@ -385,30 +400,49 @@ test('RYT-133 a failed save keeps the roll and retries the same request; a rate 
     party: true,
     diceMode: 'app',
   })
-  await fixedDice(page, [11, 12])
+  serverFaces(f, [11, 12, 6])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
+  // The request never reaches the table: no dice, no total, no local roll to fall back on.
   f.dice.failNext = { rpc: 'log_roll', message: 'Unavailable' }
   await page.getByRole('button', { name: 'Tirar Prueba de Destreza, d20 + 2' }).click()
   const result = page.getByRole('region', { name: 'Última tirada' })
-  // The roll happened and stays; only the record failed.
-  await expect(result.locator('.roll-result-total')).toHaveText('13')
-  await expect(result).toContainText('Sin anotar')
+  await expect(result.locator('.roll-result-total')).toHaveText('–')
+  await expect(result).toContainText('Sin tirar')
+  await expect(result.locator('.roll-die')).toHaveCount(0)
   const alert = result.getByRole('alert')
-  await expect(alert).toContainText('No se anotó la tirada')
+  await expect(alert).toContainText('La tirada no llegó a la mesa')
   await expect(alert).toBeFocused()
+  expect(f.dice.rolls).toHaveLength(0)
   await alert.getByRole('button', { name: 'Reintentar' }).click()
-  await expect(result).toContainText('Anotada.')
+  await expect(result.locator('.roll-result-total')).toHaveText('13')
   await expect(result.getByRole('alert')).toHaveCount(0)
-  const sent = logged(f.calls)
-  expect(sent).toHaveLength(2)
-  expect(sent[0]!.body.request_id).toBe(sent[1]!.body.request_id)
-  expect(sent[1]!.body.recorded_dice).toEqual([11])
+  const first = logged(f.calls)
+  expect(first).toHaveLength(2)
+  expect(first[0]!.body.request_id).toBe(first[1]!.body.request_id)
   expect(f.dice.rolls).toHaveLength(1)
+
+  // The roll is stored but the answer is lost: the retry with the same id returns that roll
+  // (the face 12, so 17), never a new one (the next face, 6, stays unused).
+  f.dice.loseReplyNext = true
+  await page.getByRole('button', { name: 'Tirar Salvación de Destreza, d20 + 5' }).click()
+  await expect(result.getByRole('alert')).toBeFocused()
+  expect(f.dice.rolls).toHaveLength(2)
+  await result.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(result.locator('.roll-result-total')).toHaveText('17')
+  const replay = logged(f.calls).slice(2)
+  expect(replay).toHaveLength(2)
+  expect(replay[0]!.body.request_id).toBe(replay[1]!.body.request_id)
+  expect(f.dice.rolls).toHaveLength(2)
+  expect(f.dice.serverDice).toEqual([6])
+  // A new roll is a new request.
+  await page.getByRole('button', { name: 'Tirar Salvación de Destreza, d20 + 5' }).click()
+  await expect(result.locator('.roll-result-total')).toHaveText('11')
+  expect(new Set(logged(f.calls).map((call) => call.body.request_id)).size).toBe(3)
 
   // Thirty rolls a minute: the next one is refused with its own message.
   const now = Date.now()
-  for (let n = 0; n < 29; n += 1)
+  for (let n = 0; n < 27; n += 1)
     f.dice.rolls.push({
       id: `50000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
       campaign_id: campaignId,
@@ -425,6 +459,33 @@ test('RYT-133 a failed save keeps the roll and retries the same request; a rate 
     })
   await page.getByRole('button', { name: 'Tirar Salvación de Destreza, d20 + 5' }).click()
   await expect(result.getByRole('alert')).toContainText('Demasiadas tiradas seguidas')
+})
+
+test('RYT-133 when the DM has changed the mode, the refusal says so and the sheet follows', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    party: true,
+    diceMode: 'app',
+  })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  const roll = page.getByRole('button', { name: 'Tirar Prueba de Destreza, d20 + 2' })
+  await expect(roll).toBeVisible()
+  // The DM moves the table to physical dice; this device has not read it yet.
+  f.dice.dice_mode = 'physical'
+  await roll.click()
+  const result = page.getByRole('region', { name: 'Última tirada' })
+  await expect(result.getByRole('alert')).toContainText('El DM ha cambiado los dados de la mesa')
+  // Nothing was rolled and there is no retry to offer: the campaign is read again instead.
+  await expect(result.getByRole('button', { name: 'Reintentar' })).toHaveCount(0)
+  expect(f.dice.rolls).toHaveLength(0)
+  await expect(medal(page, 'DES')).toContainText('d20+2')
+  await expect(
+    page.getByRole('button', { name: 'Anotar la tirada de Prueba de Destreza, d20 + 2' }),
+  ).toBeVisible()
 })
 
 test('RYT-133 a character that cannot roll has plain numbers, not roll buttons', async ({
@@ -452,7 +513,7 @@ test('RYT-133 each Player chooses: physical until the choice, kept on this devic
     party: true,
     diceMode: 'player',
   })
-  await fixedDice(page, [9])
+  serverFaces(f, [9])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   const choice = page.getByRole('radiogroup', { name: 'Tus dados' })
@@ -544,7 +605,7 @@ function seededRolls(stored: RollVisibility): StoredRoll[] {
       dice: [18],
       total: 21,
       kind: 'skill',
-      source: 'recorded',
+      source: 'app',
       visibility: stored,
       created_at: at(120),
     },
@@ -613,6 +674,14 @@ for (const scenario of scenarios)
           text.replace(/^.* · /, '').replace(' (tú)', ''),
         )
         expect(names.sort()).toEqual([...scenario.sees[viewer]].sort())
+        // The table can tell a roll Rytta made from one that was typed: Arin's was rolled by
+        // Rytta, Bea's was recorded.
+        for (const name of scenario.sees[viewer]) {
+          const entry = page.locator('.roll-entry', { hasText: `· ${name}` })
+          await expect(entry.locator('.roll-entry-maths')).toContainText(
+            name === 'Arin' ? 'Tirada por Rytta' : 'Anotada',
+          )
+        }
       }
       // Whoever rolled it reads it as their own.
       if (viewer === 'arin' && scenario.sees.arin.includes('Arin'))
@@ -668,7 +737,6 @@ test('RYT-133 initiative follows the campaign dice: typed with physical dice, ro
     })
     const page = await context.newPage()
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await fixedDice(page, [13])
     const f = await identityFixture(page, {
       player: true,
       party: true,
@@ -676,6 +744,7 @@ test('RYT-133 initiative follows the campaign dice: typed with physical dice, ro
       modules: ['party', 'combat'],
       diceMode: mode,
     })
+    serverFaces(f, [13])
     await server.install(page)
     await page.goto(`./#/campaign/${campaignId}/combat`)
     const entry = page.locator('.combat-entry')
@@ -694,16 +763,27 @@ test('RYT-133 initiative follows the campaign dice: typed with physical dice, ro
     } else {
       await expect(keypad).toHaveCount(0)
       await expect(field).toHaveAttribute('readonly', '')
+      // A request that fails rolls nothing: the total stays empty and the same button retries.
+      f.dice.failNext = { rpc: 'log_roll', message: 'Unavailable' }
       await rollButton.click()
+      await expect(entry.locator('.combat-entry-formula')).toContainText(
+        'No se pudo tirar la iniciativa',
+      )
+      await expect(field).toHaveValue('')
+      await entry.getByRole('button', { name: 'Reintentar' }).click()
+      // The server's dice and total are the only ones: 13 + 2.
       await expect(field).toHaveValue('15')
       await expect(entry.locator('.combat-entry-formula')).toContainText('Salió 13 + 2 = 15')
-      expect(logged(f.calls)).toHaveLength(1)
-      expect(logged(f.calls)[0]!.body).toMatchObject({
+      expect(logged(f.calls)).toHaveLength(2)
+      expect(logged(f.calls)[0]!.body.request_id).toBe(logged(f.calls)[1]!.body.request_id)
+      expect(logged(f.calls)[1]!.body).toMatchObject({
         roll_kind: 'initiative',
         roll_expression: 'd20+2',
-        recorded_dice: [13],
-        recorded_total: 15,
+        roll_source: 'app',
+        recorded_dice: null,
+        recorded_total: null,
       })
+      expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [13], total: 15 })
       await expect(rollButton).toBeVisible()
     }
     await expectTouchTargets(page, '.combat-entry button:visible', { height: 44 })
@@ -720,7 +800,7 @@ test('RYT-133 hit dice follow the campaign dice: typed with physical dice, rolle
     party: true,
     diceMode: 'app',
   })
-  await fixedDice(page, [6])
+  serverFaces(f, [6])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   await page.getByRole('button', { name: 'Descanso corto' }).click()
@@ -733,19 +813,27 @@ test('RYT-133 hit dice follow the campaign dice: typed with physical dice, rolle
     .getByRole('group', { name: /Dados de golpe que gastas/ })
   await dice.getByRole('button', { name: 'Gastar un dado más' }).click()
   await expect(dice.getByRole('textbox', { name: 'Tu tirada' })).toHaveAttribute('readonly', '')
+  // A failed request rolls nothing: the field stays empty and the same button retries.
+  f.dice.failNext = { rpc: 'log_roll', message: 'Unavailable' }
   await dice.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(dice.getByRole('alert')).toContainText('No se pudieron tirar los dados de golpe')
+  await expect(dice.getByRole('textbox', { name: 'Tu tirada' })).toHaveValue('')
+  await dice.getByRole('button', { name: 'Reintentar' }).click()
   await expect(dice.getByRole('textbox', { name: 'Tu tirada' })).toHaveValue('6')
-  // Recorded for the strip, with the CON modifier counted once per die.
-  await expect.poll(() => logged(f.calls).length).toBe(1)
+  // Rolled by the server with the CON modifier counted once per die, on one request id.
+  expect(logged(f.calls)).toHaveLength(2)
+  expect(logged(f.calls)[0]!.body.request_id).toBe(logged(f.calls)[1]!.body.request_id)
   expect(logged(f.calls)[0]!.body).toMatchObject({
     roll_kind: 'hit_die',
     roll_expression: '1d8+2',
-    recorded_dice: [6],
-    recorded_total: 8,
+    roll_source: 'app',
+    recorded_dice: null,
+    recorded_total: null,
   })
+  expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [6], total: 8 })
 })
 
-test('RYT-133 the DM can roll for a character on its sheet, recorded for that character', async ({
+test('RYT-133 the DM can roll for a character on its sheet, rolled for that character', async ({
   page,
 }) => {
   const f = await identityFixture(page, {
@@ -754,7 +842,7 @@ test('RYT-133 the DM can roll for a character on its sheet, recorded for that ch
     linkedPlayer: true,
     diceMode: 'app',
   })
-  await fixedDice(page, [10])
+  serverFaces(f, [10])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   await page.getByRole('button', { name: 'Tirar Prueba de Destreza, d20 + 2' }).click()
@@ -771,29 +859,34 @@ test('RYT-133 English and the light theme: labels in the viewer language, nothin
     localStorage.setItem('rytta-language', 'en')
     localStorage.setItem('rytta-theme', 'parchment')
   })
-  await identityFixture(page, {
+  const f = await identityFixture(page, {
     player: true,
     sheet: 'complete',
     party: true,
     diceMode: 'app',
     rollVisibility: 'table',
   })
-  await fixedDice(page, [12])
+  serverFaces(f, [12])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   await expect(page.locator('.roll-hint').first()).toContainText('Tap an underlined modifier')
   await page.getByRole('button', { name: 'Roll Dexterity check, d20 + 2' }).click()
   const result = page.getByRole('region', { name: 'Latest roll' })
   await expect(result).toContainText('Dexterity check')
-  await expect(result).toContainText('Recorded. The whole table sees it.')
+  await expect(result).toContainText('Rolled by Rytta. The whole table sees it.')
   await expect(page.locator('.roll-entry-name')).toContainText('Dexterity check · Arin (you)')
   await audit(page)
   if (process.env.RYT_CAPTURE) await page.screenshot({ path: info.outputPath('dice-en-light.png') })
 })
 
 test('RYT-133 the dice stay usable at 150% text', async ({ page }) => {
-  await identityFixture(page, { player: true, sheet: 'complete', party: true, diceMode: 'app' })
-  await fixedDice(page, [7])
+  const f = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    party: true,
+    diceMode: 'app',
+  })
+  serverFaces(f, [7])
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(sheetUrl)
   await page.addStyleTag({ content: 'html { font-size: 150% !important; }' })

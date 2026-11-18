@@ -2,51 +2,30 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Alert, Button, Group, Loader, Stack, Text, TextInput } from '@mantine/core'
 import { TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { CampaignSettingsError } from '@/features/campaigns'
+import type { CampaignRoll } from '@/features/campaigns'
 import { newRequestId } from '@/shared/lib/request-id'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { Modal } from '@/shared/ui/overlays'
 import { useRecordRoll } from '../api'
 import {
-  createRollRequestIds,
+  attemptFor,
   diceSlots,
   formulaOf,
   mathsText,
   maxTypedDice,
   rollMaths,
-  rollPayloadKey,
+  payloadKey,
+  type Attempt,
   totalRange,
   typedDice,
   typedTotal,
   type RollSpec,
 } from '../domain/roll'
+import { failureReason } from './failure-reason'
 import { useRollName } from './roll-name'
 import './dice.css'
 
 export type Recording = { spec: RollSpec; opener: HTMLElement | null; open: boolean }
-
-/**
- * Gives the focus back to the line that was tapped. The sheet block under the dialog (a drawer
- * with its own focus trap) may take the focus first, so for a short moment after the dialog is
- * gone anything that is not the line, inside that drawer or on the page, yields to it.
- */
-function returnFocus(opener: HTMLElement) {
-  const block = opener.closest('[role="dialog"]')
-  const until = performance.now() + 500
-  const tick = () => {
-    if (!opener.isConnected) return
-    const active = document.activeElement
-    if (
-      active !== opener &&
-      (!active ||
-        active === document.body ||
-        active.getAttribute('role') === 'dialog' ||
-        block?.contains(active))
-    )
-      opener.focus()
-    if (performance.now() < until) requestAnimationFrame(tick)
-  }
-  requestAnimationFrame(tick)
-}
 
 const digits = (value: string) => value.replace(/[^0-9]/g, '').slice(0, 3)
 
@@ -68,23 +47,29 @@ export function RecordDialog({
   campaignId: string
   characterId: string | null
   onClose: () => void
-  onSaved: (spec: RollSpec, dice: number[], total: number) => void
+  onSaved: (spec: RollSpec, roll: CampaignRoll) => void
 }) {
   const { t } = useTranslation()
   const rollName = useRollName()
   const [pending, setPending] = useState(false)
   if (!recording) return null
   const { spec } = recording
+  // Focus goes back to the line that was tapped. The block under this dialog (a drawer with its
+  // own focus trap) may take it first, so the return starts as this dialog closes and keeps
+  // trying until it is gone (focusWhenReady with the closing dialog as `leaving`).
+  const leave = (then: () => void) => {
+    const leaving = document.activeElement?.closest('[role="dialog"]') ?? null
+    const opener = recording.opener
+    then()
+    if (opener?.isConnected) focusWhenReady(() => opener, { from: document.activeElement, leaving })
+  }
   return (
     <Modal
       opened={recording.open}
-      onClose={() => !pending && onClose()}
+      onClose={() => !pending && leave(onClose)}
       title={t('roll.recordTitle', { name: rollName(spec.kind, spec.label) })}
       closeOnEscape={!pending}
       closeOnClickOutside={!pending}
-      onExitTransitionEnd={() => {
-        if (recording.opener) returnFocus(recording.opener)
-      }}
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44, disabled: pending }}
     >
       <RecordForm
@@ -93,8 +78,8 @@ export function RecordDialog({
         characterId={characterId}
         pending={pending}
         setPending={setPending}
-        onClose={onClose}
-        onSaved={onSaved}
+        onClose={() => leave(onClose)}
+        onSaved={(saved) => leave(() => onSaved(spec, saved))}
       />
     </Modal>
   )
@@ -115,7 +100,7 @@ function RecordForm({
   pending: boolean
   setPending: (next: boolean) => void
   onClose: () => void
-  onSaved: (spec: RollSpec, dice: number[], total: number) => void
+  onSaved: (saved: CampaignRoll) => void
 }) {
   const { t } = useTranslation()
   const record = useRecordRoll(campaignId)
@@ -125,7 +110,7 @@ function RecordForm({
   const [total, setTotal] = useState('')
   const [touched, setTouched] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
-  const ids = useRef(createRollRequestIds(newRequestId))
+  const attempt = useRef<Attempt | null>(null)
   const alert = useRef<HTMLDivElement>(null)
   const first = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -133,11 +118,11 @@ function RecordForm({
   }, [failure])
   const range = totalRange(spec.expression)
   const typed = perDie ? typedDice(spec.expression, values) : null
-  const typedSum = !perDie ? typedTotal(total) : null
+  const typedSum = !perDie ? typedTotal(spec.expression, total) : null
   const sum = typed?.ok
     ? { dice: typed.dice, total: typed.total }
-    : typedSum !== null
-      ? { dice: [] as number[], total: typedSum }
+    : typedSum?.ok
+      ? { dice: [] as number[], total: typedSum.total }
       : null
   const maths = typed?.ok ? rollMaths(spec.expression, typed.dice) : null
   const submit = async (event: FormEvent) => {
@@ -148,11 +133,17 @@ function RecordForm({
       first.current?.focus()
       return
     }
-    const key = rollPayloadKey(characterId, spec, sum.dice, sum.total)
+    // One id per attempt: a retry of this same payload repeats it, other numbers start over.
+    const current = attemptFor(
+      attempt.current,
+      payloadKey(characterId, spec, sum.dice, sum.total),
+      newRequestId,
+    )
+    attempt.current = current
     setPending(true)
     setFailure(null)
     try {
-      await record({
+      const saved = await record({
         source: 'recorded',
         campaignId,
         characterId,
@@ -161,18 +152,12 @@ function RecordForm({
         kind: spec.kind,
         dice: sum.dice,
         total: sum.total,
-        requestId: ids.current.idFor(key),
+        requestId: current.id,
       })
-      ids.current.done(key)
-      onSaved(spec, sum.dice, sum.total)
+      attempt.current = null
+      onSaved(saved)
     } catch (error) {
-      setFailure(
-        error instanceof CampaignSettingsError
-          ? error.reason
-          : error instanceof Error && error.name === 'ZodError'
-            ? 'invalid'
-            : 'unavailable',
-      )
+      setFailure(failureReason(error))
     } finally {
       setPending(false)
     }
@@ -180,6 +165,7 @@ function RecordForm({
   const failureKey =
     failure === 'forbidden' ||
     failure === 'invalid' ||
+    failure === 'dice-mode' ||
     failure === 'request-mismatch' ||
     failure === 'character-unavailable' ||
     failure === 'roll-limit'
@@ -231,7 +217,13 @@ function RecordForm({
             inputMode="numeric"
             autoComplete="off"
             value={total}
-            error={touched && typedSum === null ? t('roll.totalError') : undefined}
+            error={
+              touched && typedSum && !typedSum.ok
+                ? typedSum.reason === 'range'
+                  ? t('roll.totalOutOfRange', { min: typedSum.min ?? 0, max: typedSum.max ?? 0 })
+                  : t('roll.totalError')
+                : undefined
+            }
             onChange={(event) => setTotal(event.currentTarget.value.slice(0, 5))}
           />
         )}

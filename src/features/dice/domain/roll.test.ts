@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   attackSpecs,
   checkSpec,
-  createRollRequestIds,
+  announcement,
+  attemptFor,
   d20Expression,
   damageExpression,
   diceSlots,
@@ -11,13 +12,13 @@ import {
   mathsText,
   parseExpression,
   rollMaths,
-  rollPayloadKey,
+  payloadKey,
   totalRange,
   typedDice,
   typedTotal,
 } from './roll'
 import { diceBehaviour, readDiceChoice } from './mode'
-import { mergeRoll } from './rolls'
+import { mergeRoll, rollerOf } from './rolls'
 import type { CampaignRoll } from '@/features/campaigns'
 
 describe('expressions', () => {
@@ -76,6 +77,15 @@ describe('the lines of the sheet', () => {
     expect(specs.hit).toEqual({ kind: 'attack', label: 'Longsword', expression: 'd20+5' })
     expect(specs.damage).toEqual({ kind: 'damage', label: 'Longsword', expression: '1d8+3' })
     expect(attackSpecs({ name: 'Unarmed', attack: 4, dice: '1', damageBonus: 2 }).damage).toBeNull()
+    const versatile = attackSpecs({
+      name: 'Longsword',
+      attack: 5,
+      dice: '1d8',
+      damageBonus: 3,
+      versatileDice: '1d10',
+    })
+    expect(versatile.versatile?.expression).toBe('1d10+3')
+    expect(specs.versatile).toBeNull()
   })
   it('trims the weapon name to what the database stores', () => {
     const name = ` ${'x'.repeat(100)} `
@@ -127,28 +137,31 @@ describe('recording a physical roll', () => {
     expect(typedDice('d20+5', ['0'])).toEqual({ ok: false, reason: 'range' })
     expect(typedDice('d20+5', ['1e1'])).toEqual({ ok: false, reason: 'range' })
   })
-  it('reads a typed total within what the database stores', () => {
-    expect(typedTotal(' 23 ')).toBe(23)
-    expect(typedTotal('−3')).toBe(-3)
-    expect(typedTotal('1.5')).toBeNull()
-    expect(typedTotal('')).toBeNull()
-    expect(typedTotal('10000')).toBeNull()
+  it('reads a typed total only within what the dice and the modifier can make', () => {
+    expect(typedTotal('d20+5', ' 23 ')).toEqual({ ok: true, total: 23 })
+    expect(typedTotal('3d6', '9')).toEqual({ ok: true, total: 9 })
+    expect(typedTotal('d20+5', '26')).toEqual({ ok: false, reason: 'range', min: 6, max: 25 })
+    expect(typedTotal('d20+5', '5')).toEqual({ ok: false, reason: 'range', min: 6, max: 25 })
+    expect(typedTotal('d20-1', '−1')).toEqual({ ok: false, reason: 'range', min: 0, max: 19 })
+    expect(typedTotal('d20', '1.5')).toEqual({ ok: false, reason: 'format' })
+    expect(typedTotal('d20', '')).toEqual({ ok: false, reason: 'format' })
+    expect(typedTotal('d20', '10000')).toEqual({ ok: false, reason: 'format' })
   })
 })
 
 describe('request ids', () => {
-  it('keeps one id per payload until it is saved', () => {
+  const spec = { kind: 'skill', label: 'perception', expression: 'd20+8' } as const
+  it('keeps the id of an attempt while its payload is the same, and starts a new one otherwise', () => {
     let n = 0
-    const ids = createRollRequestIds(() => `id-${++n}`)
-    const spec = { kind: 'skill', label: 'perception', expression: 'd20+8' } as const
-    const first = rollPayloadKey('c', spec, [14], 22)
-    expect(ids.idFor(first)).toBe('id-1')
-    expect(ids.idFor(first)).toBe('id-1')
-    expect(ids.idFor(rollPayloadKey('c', spec, [15], 23))).toBe('id-2')
-    ids.done(first)
-    expect(ids.idFor(first)).toBe('id-3')
-    ids.reset()
-    expect(ids.idFor(first)).toBe('id-4')
+    const newId = () => `id-${++n}`
+    const first = attemptFor(null, payloadKey('c', spec, [14], 22), newId)
+    expect(first.id).toBe('id-1')
+    // A retry after a failure repeats the id.
+    expect(attemptFor(first, payloadKey('c', spec, [14], 22), newId)).toBe(first)
+    // Other dice are another roll.
+    expect(attemptFor(first, payloadKey('c', spec, [15], 23), newId).id).toBe('id-2')
+    // An attempt that finished leaves nothing to reuse.
+    expect(attemptFor(null, payloadKey('c', spec, [14], 22), newId).id).toBe('id-3')
   })
 })
 
@@ -193,5 +206,38 @@ describe('recent rolls', () => {
     expect(
       mergeRoll(merged, roll('c', '2026-11-18T10:02:00+00:00'), 2).map((item) => item.id),
     ).toEqual(['c', 'b'])
+  })
+})
+
+describe('who rolled', () => {
+  const names = new Map([['c1', 'Arin']])
+  it('credits the DM only when the roll has no character', () => {
+    expect(rollerOf(null, names)).toEqual({ kind: 'dm' })
+    expect(rollerOf('c1', names)).toEqual({ kind: 'character', name: 'Arin' })
+    // A character this viewer cannot name is not the DM.
+    expect(rollerOf('hidden', names)).toEqual({ kind: 'unknown' })
+  })
+})
+
+describe('what is announced', () => {
+  it('says the roll, the maths, who made it and who sees it', () => {
+    expect(
+      announcement({
+        name: 'Percepción',
+        maths: '14 + 8',
+        total: 22,
+        source: 'Tirada por Rytta',
+        seen: 'La ven tú y el DM.',
+      }),
+    ).toBe('Percepción: 14 + 8 = 22. Tirada por Rytta. La ven tú y el DM.')
+    expect(
+      announcement({
+        name: 'Daño',
+        maths: null,
+        total: 7,
+        source: 'Anotada',
+        seen: 'Solo la ves tú.',
+      }),
+    ).toBe('Daño: 7. Anotada. Solo la ves tú.')
   })
 })

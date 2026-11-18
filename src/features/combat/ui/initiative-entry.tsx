@@ -6,8 +6,16 @@ import { Check, Dices } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
-import { DiceModeChoice, checkSpec, useDiceMode, useQuietRollLog } from '@/features/dice'
-import { rollDice } from '@/shared/ui/dice/roll-dice'
+import {
+  DiceModeChoice,
+  attemptFor,
+  checkSpec,
+  failureReason,
+  useAppRoll,
+  useDiceMode,
+  type Attempt,
+} from '@/features/dice'
+import { newRequestId } from '@/shared/lib/request-id'
 import { initiativeOutlier, isInitiativeTotal, type Combatant } from '../domain/combat'
 import { InitiativeKeypad } from './amount-dialog'
 
@@ -53,23 +61,33 @@ export function InitiativeEntry({
   // here and nothing is typed, so initiative never behaves unlike the sheet and the short rest.
   const { behaviour } = useDiceMode(campaignId)
   const appDice = behaviour === 'app'
-  const logRoll = useQuietRollLog(campaignId, combatant.character_id ?? null)
+  const appRoll = useAppRoll(campaignId)
+  const attempt = useRef<Attempt | null>(null)
+  const [rollFailure, setRollFailure] = useState<string | null>(null)
+  // Dice in the app roll d20 plus the sheet's bonus: without the bonus there is nothing to roll.
+  const needsSheet = appDice && bonus === null
   const rollForMe = async () => {
-    if (rolling) return
+    if (rolling || bonus === null) return
+    const spec = checkSpec('initiative', 'initiative', bonus)
+    if (!spec) return
     setRolling(true)
+    setRollFailure(null)
+    // The server rolls and its dice and total are the only ones: a failure stops here, and the
+    // retry repeats the same request so a roll that was made is returned, not made again.
+    attempt.current = attemptFor(attempt.current, spec.expression, newRequestId)
     try {
-      const [die = 1] = await rollDice(1, 20)
-      const modifier = bonus ?? 0
-      const spec = checkSpec('initiative', 'initiative', modifier)
-      if (spec) logRoll(spec, [die])
-      setAmount(die + modifier)
+      const roll = await appRoll(spec, combatant.character_id ?? null, attempt.current.id)
+      attempt.current = null
+      setAmount(roll.total)
       setRolled(
         t('combat.initiative.rolled', {
-          die,
-          bonus: modifier >= 0 ? `+ ${modifier}` : `− ${-modifier}`,
-          total: die + modifier,
+          die: roll.dice[0] ?? 0,
+          bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+          total: roll.total,
         }),
       )
+    } catch (error) {
+      setRollFailure(failureReason(error))
     } finally {
       setRolling(false)
     }
@@ -145,21 +163,29 @@ export function InitiativeEntry({
             className={`combat-entry-formula${outOfRange ? ' is-invalid' : unusual ? ' is-unusual' : ''}`}
             aria-live="polite"
           >
-            {outOfRange
-              ? t('combat.initiative.range')
-              : unusual
-                ? t('combat.initiative.unusual', {
-                    bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
-                    min: bonus! + 1,
-                    max: bonus! + 20,
-                  })
-                : rolled
-                  ? rolled
-                  : bonus === null
-                    ? t('combat.initiative.rollPlain')
-                    : t('combat.initiative.roll', {
-                        bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
-                      })}
+            {rollFailure
+              ? rollFailure === 'dice-mode'
+                ? t('roll.error.dice-mode')
+                : t('combat.initiative.rollFailed')
+              : needsSheet
+                ? sheet.isPending
+                  ? t('combat.initiative.waitSheet')
+                  : t('combat.initiative.noSheet')
+                : outOfRange
+                  ? t('combat.initiative.range')
+                  : unusual
+                    ? t('combat.initiative.unusual', {
+                        bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
+                        min: bonus! + 1,
+                        max: bonus! + 20,
+                      })
+                    : rolled
+                      ? rolled
+                      : bonus === null
+                        ? t('combat.initiative.rollPlain')
+                        : t('combat.initiative.roll', {
+                            bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+                          })}
           </Text>
         </div>
         <div className="combat-entry-keys">
@@ -169,11 +195,19 @@ export function InitiativeEntry({
               size="lg"
               className="combat-entry-roll"
               leftSection={<Dices size={20} aria-hidden="true" />}
-              aria-disabled={rolling || undefined}
+              aria-disabled={rolling || needsSheet || undefined}
               aria-busy={rolling || undefined}
-              onClick={() => void rollForMe()}
+              onClick={() => {
+                if (needsSheet) {
+                  if (sheet.isError) void sheet.refetch()
+                  return
+                }
+                void rollForMe()
+              }}
             >
-              {t('combat.initiative.rollForMe')}
+              {rollFailure || (needsSheet && sheet.isError)
+                ? t('common.retry')
+                : t('combat.initiative.rollForMe')}
             </Button>
           )}
           {!appDice && (

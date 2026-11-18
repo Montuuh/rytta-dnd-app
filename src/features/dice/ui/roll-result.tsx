@@ -2,28 +2,36 @@ import { useEffect, useRef } from 'react'
 import { ActionIcon, Alert, Button, Loader } from '@mantine/core'
 import { TriangleAlert, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { formulaOf, mathsText, rollMaths } from '../domain/roll'
+import { formulaOf, rollMaths } from '../domain/roll'
 import { useRollResult } from './dice-context'
-import { useDiceMode } from './use-dice-mode'
 import { useRollName } from './roll-name'
 import './dice.css'
+
+/** Failures worth another try with the same request; the rest need something else to change. */
+const retryable = new Set(['unavailable', 'roll-limit'])
+const known = [
+  'unavailable',
+  'forbidden',
+  'invalid',
+  'request-mismatch',
+  'character-unavailable',
+  'roll-limit',
+  'dice-mode',
+] as const
+const knownReason = (reason: string | undefined) =>
+  known.find((item) => item === reason) ?? 'unavailable'
 
 /**
  * RYT-133: the roll that just happened, where the Player is looking: under the abilities on the
  * sheet, or at the foot of the open block (skills, attacks), so it never hides behind a sheet. It
- * shows the dice, the modifier and the total, says whether the table has it, and who reads it. A
- * failed save keeps the roll and offers to try again with the same request.
+ * shows the dice, the modifier and the total exactly as the database stored them, says whether
+ * Rytta rolled them or they were typed, and who reads the roll (the visibility the roll was stored
+ * with). A failed roll shows nothing rolled and offers the same request again. The announcement for
+ * assistive technology lives in the provider, in a region that is always mounted.
  */
-export function RollResultSlot({
-  where,
-  campaignId,
-}: {
-  where: 'page' | 'sheet'
-  campaignId: string
-}) {
+export function RollResultSlot({ where }: { where: 'page' | 'sheet' }) {
   const { t } = useTranslation()
   const shared = useRollResult()
-  const { visibility } = useDiceMode(campaignId)
   const rollName = useRollName()
   const alert = useRef<HTMLDivElement>(null)
   const result = shared?.result ?? null
@@ -35,13 +43,9 @@ export function RollResultSlot({
   const { spec } = result
   const name = rollName(spec.kind, spec.label)
   const formula = formulaOf(spec.expression)
-  const maths = result.phase === 'rolling' ? null : rollMaths(spec.expression, result.dice)
-  const spoken =
-    result.phase === 'rolling'
-      ? t('roll.rolling', { name, formula })
-      : maths
-        ? t('roll.spoken', { name, maths: mathsText(maths), total: result.total })
-        : t('roll.spokenTotal', { name, total: result.total })
+  const stored = result.phase === 'saved' ? result.roll : undefined
+  const maths = stored ? rollMaths(stored.expression, stored.dice) : null
+  const reason = knownReason(result.reason)
   return (
     <section
       className="roll-result"
@@ -49,12 +53,15 @@ export function RollResultSlot({
       data-phase={result.phase}
       aria-label={t('roll.resultLabel')}
     >
-      <p className="visually-hidden" role="status">
-        {spoken}
-      </p>
-      <div className="roll-result-main" aria-hidden="true">
+      <div className="roll-result-main">
         <span className="roll-result-total">
-          {result.phase === 'rolling' ? <Loader size={22} /> : result.total}
+          {result.phase === 'saved' && stored ? (
+            stored.total
+          ) : result.phase === 'rolling' ? (
+            <Loader size={22} aria-hidden="true" />
+          ) : (
+            '–'
+          )}
         </span>
         <div className="roll-result-body">
           <p className="roll-result-name">{name}</p>
@@ -73,9 +80,9 @@ export function RollResultSlot({
           </p>
           <p className="roll-result-state">
             {result.phase === 'rolling' && t('roll.rollingShort')}
-            {result.phase === 'saving' && t('roll.saving')}
-            {result.phase === 'saved' && t(`roll.saved.${visibility}`)}
-            {result.phase === 'failed' && t('roll.notSaved')}
+            {result.phase === 'failed' && t('roll.notRolled')}
+            {stored &&
+              `${t(`roll.source.${stored.source}`)}. ${t(`roll.seen.${stored.visibility}`)}`}
           </p>
         </div>
       </div>
@@ -98,22 +105,14 @@ export function RollResultSlot({
           icon={<TriangleAlert size={18} aria-hidden="true" />}
           title={t('roll.errorTitle')}
         >
-          {t(
-            `roll.error.${
-              result.reason === 'forbidden' ||
-              result.reason === 'invalid' ||
-              result.reason === 'character-unavailable' ||
-              result.reason === 'roll-limit' ||
-              result.reason === 'request-mismatch'
-                ? result.reason
-                : 'unavailable'
-            }`,
+          {t(`roll.error.${reason}`)}
+          {retryable.has(reason) && (
+            <div className="roll-result-retry">
+              <Button size="sm" variant="default" onClick={shared.retry}>
+                {t('common.retry')}
+              </Button>
+            </div>
           )}
-          <div className="roll-result-retry">
-            <Button size="sm" variant="default" onClick={shared.retry}>
-              {t('common.retry')}
-            </Button>
-          </div>
         </Alert>
       )}
     </section>

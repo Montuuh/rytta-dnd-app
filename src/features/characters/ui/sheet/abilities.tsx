@@ -60,6 +60,7 @@ export function AbilityStrip({ build, level, editing, change }: PanelProps) {
                   formula="append"
                   dense
                   className="ability-roll"
+                  describe={t('panel.modifier', { value: signed(modifier(scores[key])) })}
                 >
                   <span aria-hidden="true">{signed(modifier(scores[key]))}</span>
                   <span className="visually-hidden">
@@ -95,6 +96,9 @@ export function AbilityStrip({ build, level, editing, change }: PanelProps) {
                       formula="replace"
                       dense
                       className="ability-roll"
+                      describe={`${t('sheet.saveLabel', { ability: name, value: save })}${
+                        proficient ? `, ${t('sheet.proficient')}` : ''
+                      }`}
                       prefix={
                         <span className="ability-save-word" aria-hidden="true">
                           {t('sheet.saveShort')}{' '}

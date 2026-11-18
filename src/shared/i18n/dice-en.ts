@@ -10,10 +10,10 @@ export const diceEn = {
   'diceSettings.visibilityLegend': 'Who sees the rolls',
   'diceSettings.mode.physical': 'Physical dice',
   'diceSettings.mode.physicalHint':
-    'Each Player rolls their own. The sheet says what to roll and what to add, and the result can be recorded.',
+    'Each Player rolls their own. The sheet says what to roll and what to add; what is typed in is marked as recorded.',
   'diceSettings.mode.app': 'Dice in the app',
   'diceSettings.mode.appHint':
-    'Tapping a modifier rolls 3D dice and shows the maths. Initiative and hit dice too.',
+    'Rytta rolls and records: the server decides the result and it is marked as rolled by Rytta. What is typed by hand is marked as recorded. Initiative and hit dice too.',
   'diceSettings.mode.player': 'Each Player chooses',
   'diceSettings.mode.playerHint':
     'Each one picks physical or in-app dice on their own device. Physical dice until they choose.',
@@ -29,7 +29,7 @@ export const diceEn = {
   'diceSettings.confirmMode.physical':
     'Players roll their own dice. The sheet says what to roll, and initiative and hit dice are typed in.',
   'diceSettings.confirmMode.app':
-    'Players will roll in the app, initiative and hit dice included. No sheet changes.',
+    'Players will roll in the app: Rytta makes the roll and records it, initiative and hit dice included. No sheet changes.',
   'diceSettings.confirmMode.player':
     'Each Player chooses on their device; until they do, they use physical dice.',
   'diceSettings.confirmVisibility.wider':
@@ -80,8 +80,9 @@ export const diceEn = {
   'roll.sum': '{{maths}} = {{total}}',
   'roll.sumTotal': 'Total {{total}}',
   'roll.record': 'Record',
-  'roll.errorTitle': 'The roll was not recorded',
-  'roll.error.unavailable': 'Could not reach the server. The roll was not recorded; try again.',
+  'roll.errorTitle': 'The roll did not reach the table',
+  'roll.error.unavailable':
+    'Could not reach the server. The roll was not made or recorded; try again.',
   'roll.error.forbidden': 'Your account cannot record rolls in this campaign.',
   'roll.error.invalid': 'The roll is not valid. Check the numbers.',
   'roll.error.request-mismatch':
@@ -89,15 +90,7 @@ export const diceEn = {
   'roll.error.character-unavailable': 'This character cannot roll now (absent or archived).',
   'roll.error.roll-limit': 'Too many rolls in a row. Wait a moment and try again.',
   'roll.resultLabel': 'Latest roll',
-  'roll.rolling': 'Rolling {{name}}: {{formula}}.',
   'roll.rollingShort': 'Rolling the dice…',
-  'roll.spoken': '{{name}}: {{maths}} = {{total}}',
-  'roll.spokenTotal': '{{name}}: total {{total}}',
-  'roll.saving': 'Recording for the table…',
-  'roll.saved.table': 'Recorded. The whole table sees it.',
-  'roll.saved.roller_dm': 'Recorded. You and the DM see it.',
-  'roll.saved.roller': 'Recorded. Only you see it.',
-  'roll.notSaved': 'Not recorded',
   'roll.dismiss': 'Close the roll',
   'roll.recent': 'Recent rolls',
   'roll.seeAll': 'See all {{count}}',
@@ -106,5 +99,21 @@ export const diceEn = {
   'roll.empty': 'No rolls yet. Tap a modifier to roll.',
   'roll.dm': 'DM',
   'roll.you': '{{name}} (you)',
+  'roll.source.app': 'Rolled by Rytta',
+  'roll.source.recorded': 'Recorded',
+  'roll.seen.table': 'The whole table sees it.',
+  'roll.seen.roller_dm': 'The roller and the DM see it.',
+  'roll.seen.roller': 'Only the roller sees it.',
+  'roll.notRolled': 'Not rolled',
+  'roll.error.dice-mode':
+    'The DM changed the table dice. This sheet now uses the new ones: check and roll again.',
+  'roll.totalOutOfRange': 'With those dice the total runs from {{min}} to {{max}}.',
+  'roll.someone': 'Another character',
+  'combat.initiative.waitSheet': 'Loading your sheet: it is needed to roll with your bonus.',
+  'combat.initiative.noSheet':
+    'Your sheet could not be read, so your bonus is unknown. Retry to be able to roll.',
+  'combat.initiative.rollFailed':
+    'The initiative could not be rolled. No roll was saved; try again.',
+  'rest.rollFailed': 'The hit dice could not be rolled. No roll was saved; try again.',
   'roll.totalWord': 'Total',
 } as const

@@ -537,9 +537,18 @@ function SheetPanel({
           lines={attackList}
           renderRoll={(line, part, content) => {
             const specs = attackSpecs(line)
-            const spec = part === 'hit' ? specs.hit : specs.damage
+            const spec =
+              part === 'hit' ? specs.hit : part === 'damage' ? specs.damage : specs.versatile
             return (
-              <RollPoint spec={editing ? null : spec} formula="replace">
+              <RollPoint
+                spec={editing ? null : spec}
+                formula={part === 'versatile' ? 'none' : 'replace'}
+                describe={
+                  part === 'hit'
+                    ? t('inventory.attacks.toHit', { value: signed(line.attack) })
+                    : undefined
+                }
+              >
                 {content}
               </RollPoint>
             )
@@ -697,7 +706,7 @@ function SheetPanel({
             />
             {canEdit && !editing && <DiceModeChoice campaignId={campaign.id} />}
             <AbilityStrip {...props} />
-            {open === null && <RollResultSlot where="page" campaignId={campaign.id} />}
+            {open === null && <RollResultSlot where="page" />}
             <RecentRolls campaignId={campaign.id} names={rollerNames} />
           </div>
           <section className="panel-tiles-wrap" aria-labelledby="panel-tiles-title">
@@ -804,7 +813,7 @@ function SheetPanel({
           alert={errorAlert}
         >
           {open && detail[open]}
-          {open !== null && <RollResultSlot where="sheet" campaignId={campaign.id} />}
+          {open !== null && <RollResultSlot where="sheet" />}
         </BlockSheet>
         <PersonaliseDrawer
           opened={personalise}

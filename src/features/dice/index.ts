@@ -8,7 +8,8 @@ export { RecentRolls } from './ui/recent-rolls'
 export { DiceModeChoice } from './ui/mode-choice'
 export { useDiceMode } from './ui/use-dice-mode'
 export { useDice } from './ui/dice-context'
-export { useQuietRollLog } from './ui/quiet-log'
+export { useAppRoll } from './ui/use-app-roll'
+export { failureReason } from './ui/failure-reason'
 export {
   attackSpecs,
   checkSpec,
@@ -17,5 +18,6 @@ export {
   hitDiceExpression,
   d20Expression,
 } from './domain/roll'
-export type { RollSpec } from './domain/roll'
+export { attemptFor } from './domain/roll'
+export type { Attempt, RollSpec } from './domain/roll'
 export type { DiceBehaviour } from './domain/mode'

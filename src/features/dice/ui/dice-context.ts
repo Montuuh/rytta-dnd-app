@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { CampaignRoll } from '@/features/campaigns'
 import type { DiceBehaviour } from '../domain/mode'
 import type { RollSpec } from '../domain/roll'
 
@@ -30,11 +31,14 @@ export const useDice = () => useContext(DiceContext)
 
 export type RollResultView = {
   seq: number
-  phase: 'rolling' | 'saving' | 'saved' | 'failed'
+  /** 'rolling': the server is rolling (or recording); 'saved': `roll` is what the server stored;
+   * 'failed': nothing was rolled or stored (retry with the same request id). */
+  phase: 'rolling' | 'saved' | 'failed'
   spec: RollSpec
-  dice: number[]
-  total: number
-  /** Why the save failed (a CampaignSettingsReason). */
+  /** The id of this roll: kept across retries, never derived from its content. */
+  requestId: string
+  roll?: CampaignRoll
+  /** Why it failed (a CampaignSettingsReason). */
   reason?: string
 }
 export const RollResultContext = createContext<{

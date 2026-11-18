@@ -72,13 +72,18 @@ export function attackSpecs(line: {
   attack: number
   dice: string
   damageBonus: number
-}): { hit: RollSpec | null; damage: RollSpec | null } {
+  versatileDice?: string | null
+}): { hit: RollSpec | null; damage: RollSpec | null; versatile: RollSpec | null } {
   const label = line.name.trim().slice(0, 80)
   const hit = d20Expression(line.attack)
   const damage = damageExpression(line.dice, line.damageBonus)
+  const versatile = line.versatileDice
+    ? damageExpression(line.versatileDice, line.damageBonus)
+    : null
   return {
     hit: hit ? { kind: 'attack', label, expression: hit } : null,
     damage: damage ? { kind: 'damage', label, expression: damage } : null,
+    versatile: versatile ? { kind: 'damage', label, expression: versatile } : null,
   }
 }
 
@@ -159,13 +164,20 @@ export function typedDice(expression: string, typed: readonly string[]): TypedDi
   return { ok: true, dice, total: maths.total }
 }
 
-/** A typed total alone (a large pool, or a Player who added it up): the database accepts any
- * whole total it can store for a valid expression. */
-export function typedTotal(value: string): number | null {
+/** A typed total alone (a large pool): a whole number the dice and the modifier can add up to. */
+export type TypedTotal =
+  | { ok: true; total: number }
+  | { ok: false; reason: 'format' | 'range'; min?: number; max?: number }
+
+export function typedTotal(expression: string, value: string): TypedTotal {
   const text = value.trim().replace('−', '-')
-  if (!/^-?[0-9]{1,4}$/.test(text)) return null
+  if (!/^-?[0-9]{1,4}$/.test(text)) return { ok: false, reason: 'format' }
   const total = Number(text)
-  return total >= -999 && total <= 9999 ? total : null
+  const range = totalRange(expression)
+  if (!range) return { ok: false, reason: 'format' }
+  return total >= range.min && total <= range.max
+    ? { ok: true, total }
+    : { ok: false, reason: 'range', ...range }
 }
 
 /** Where a typed total can fall: the lowest and highest the dice allow plus the modifier. */
@@ -183,31 +195,31 @@ export function totalRange(expression: string): { min: number; max: number } | n
   return { min, max }
 }
 
-/** One request id per roll intent: the same payload keeps its id across retries, so a roll that
- * was saved but whose answer was lost is returned by the server instead of recorded twice. */
-export function createRollRequestIds(newId: () => string) {
-  const ids = new Map<string, string>()
-  return {
-    idFor(key: string) {
-      let id = ids.get(key)
-      if (!id) {
-        id = newId()
-        ids.set(key, id)
-      }
-      return id
-    },
-    done(key: string) {
-      ids.delete(key)
-    },
-    reset() {
-      ids.clear()
-    },
-  }
+/** One request id per attempt to record or roll. A retry of the same attempt (the same payload
+ * after a failure) keeps its id, so a roll that was stored but whose answer was lost is returned
+ * by the server instead of being made twice; a different payload is a different attempt. */
+export type Attempt = { id: string; key: string }
+
+export function attemptFor(previous: Attempt | null, key: string, newId: () => string): Attempt {
+  return previous && previous.key === key ? previous : { id: newId(), key }
 }
 
-export const rollPayloadKey = (
+export const payloadKey = (
   characterId: string | null,
   spec: RollSpec,
   dice: readonly number[],
   total: number,
 ) => JSON.stringify([characterId, spec.kind, spec.label, spec.expression, dice, total])
+
+/** What a screen reader hears when a roll lands: the roll, its maths and total, then who made it
+ * and who sees it. */
+export function announcement(parts: {
+  name: string
+  maths: string | null
+  total: number
+  source: string
+  seen: string
+}): string {
+  const result = parts.maths ? `${parts.maths} = ${parts.total}` : `${parts.total}`
+  return `${parts.name}: ${result}. ${parts.source}. ${parts.seen}`
+}

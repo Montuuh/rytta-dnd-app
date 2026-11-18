@@ -1,4 +1,4 @@
-import { test, expect, type Page, type TestInfo } from '@playwright/test'
+import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { beaId, campaignId, characterId, identityFixture, playerId } from './fixtures/identity.ts'
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
@@ -287,8 +287,32 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   // Measuring: a drag reads in feet and squares (SRD: one square per step, 5 feet).
   await page.keyboard.press('m')
   await expect(page.getByRole('radio', { name: 'Medir' })).toHaveAttribute('aria-checked', 'true')
-  const box = (await board.boundingBox())!
-  const world = (await board.locator('.tt-world').boundingBox())!
+  // The drag is computed only from a layout that has stopped moving, never from the one before it.
+  const settledBox = async (target: Locator) => {
+    let previous = ''
+    let steady = 0
+    let box = (await target.boundingBox())!
+    await expect
+      .poll(
+        async () => {
+          box = (await target.boundingBox())!
+          const key = [box.x, box.y, box.width, box.height].map(Math.round).join()
+          steady = key === previous ? steady + 1 : 0
+          previous = key
+          return steady
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBeGreaterThanOrEqual(3)
+    return box
+  }
+  const box = await settledBox(board)
+  // Until its first fit the view is the opening one (zoom 0.5: the world is 47 squares of 32px and
+  // wider than the board); the fit makes the whole map fit the board. Wait for that before measuring.
+  await expect
+    .poll(async () => (await board.locator('.tt-world').boundingBox())!.width, { timeout: 15_000 })
+    .toBeLessThanOrEqual(box.width + 1)
+  const world = await settledBox(board.locator('.tt-world'))
   const square = world.width / 47
   const sx = Math.max(box.x + 20, world.x + square * 2.5)
   const sy = Math.max(box.y + 20, world.y + square * 2.5)

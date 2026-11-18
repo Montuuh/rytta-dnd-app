@@ -78,6 +78,11 @@ html[data-mantine-color-scheme='light'] {
   --info: #18577a;
   --info-soft: rgba(24, 87, 122, 0.1);
 }
+/* Mantine's own error red is 3.6:1 (dark) and 2.9:1 (light): field errors use the accessible token.
+   The extra :root outranks Mantine's own scheme rule. */
+html[data-mantine-color-scheme]:root {
+  --mantine-color-error: var(--danger);
+}
 body {
   margin: 0;
 }
@@ -852,7 +857,7 @@ main h3 {
 }
 .skill-row {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto 3ch;
+  grid-template-columns: 24px minmax(0, 1fr) auto minmax(3ch, auto);
   align-items: center;
   gap: 8px;
   min-height: 36px;

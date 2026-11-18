@@ -21,6 +21,7 @@ import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowDown,
+  Dices,
   Ellipsis,
   Eye,
   History,
@@ -56,12 +57,13 @@ import { LeaveCampaignDialog } from './leave'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { FirstSession } from './first-session'
+import { DiceSettingsControl } from './dice-settings'
 import { PartyLevelControl } from './party-level'
 import './dm-center.css'
 
 type Confirmation = { action: CampaignAction; message: string }
-type DmPanel = 'members' | 'modules' | 'items' | 'bestiary' | 'audit'
-const dmPanels: DmPanel[] = ['members', 'modules', 'items', 'bestiary', 'audit']
+type DmPanel = 'members' | 'modules' | 'dice' | 'items' | 'bestiary' | 'audit'
+const dmPanels: DmPanel[] = ['members', 'modules', 'dice', 'items', 'bestiary', 'audit']
 type AuditFilter = 'all' | 'characters' | 'resources'
 
 /** The DM Command Center. `itemsPanel` and `bestiaryPanel` are composed by the page so the
@@ -115,7 +117,7 @@ export function CampaignMembers({
   useEffect(() => {
     document
       .querySelector('.dm-tabs-list [data-active]')
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+      ?.scrollIntoView({ block: 'nearest', inline: 'center' })
   }, [activePanel, wide])
   const [auditFilter, setAuditFilter] = useState<AuditFilter>('all')
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
@@ -205,6 +207,7 @@ export function CampaignMembers({
   const enabledModules = new Set(campaign.player_modules ?? ['party'])
   const showMembers = activePanel === 'members'
   const showModules = activePanel === 'modules'
+  const showDice = activePanel === 'dice'
   const showItems = activePanel === 'items' && !!itemsPanel
   const showBestiary = activePanel === 'bestiary' && !!bestiaryPanel
   const showAudit = activePanel === 'audit'
@@ -266,6 +269,7 @@ export function CampaignMembers({
                 [
                   ['members', 'dm.panelMembers', Users],
                   ['modules', 'dm.panelModules', Shield],
+                  ['dice', 'dm.panelDice', Dices],
                   ['items', 'dm.panelItems', Package],
                   ['bestiary', 'dm.panelBestiary', PawPrint],
                   ['audit', 'dm.panelAudit', History],
@@ -464,6 +468,15 @@ export function CampaignMembers({
                       </ul>
                     </Stack>
                   </section>
+                )}
+                {showDice && (
+                  <DiceSettingsControl
+                    campaignId={campaign.id}
+                    current={{
+                      dice_mode: campaign.dice_mode,
+                      roll_visibility: campaign.roll_visibility,
+                    }}
+                  />
                 )}
                 {showItems && itemsPanel}
                 {showBestiary && bestiaryPanel}

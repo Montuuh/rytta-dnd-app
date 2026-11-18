@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { partyLevelSchema } from './settings'
+import { diceModes, partyLevelSchema, rollVisibilities } from './settings'
 
 export const campaignModuleKeys = [
   'party',
@@ -25,6 +25,9 @@ export const campaignSchema = z.object({
   player_modules: z.array(z.string()).default(['party']),
   /** RYT-130: the level the DM set for the party; null until set (or before the migration). */
   party_level: partyLevelSchema.nullable().default(null),
+  /** RYT-133: how the table rolls and who reads the rolls; defaults match the database. */
+  dice_mode: z.enum(diceModes).default('physical'),
+  roll_visibility: z.enum(rollVisibilities).default('roller_dm'),
 })
 export type Campaign = z.infer<typeof campaignSchema>
 

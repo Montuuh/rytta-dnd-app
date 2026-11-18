@@ -5,6 +5,7 @@ export {
   membersQuery,
   sentInvitationsQuery,
   useCampaignAction,
+  useSetDiceSettings,
   useSetPartyLevel,
 } from './api'
 export { CampaignAccessError } from './domain/errors'

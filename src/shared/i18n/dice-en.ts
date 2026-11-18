@@ -1,0 +1,136 @@
+/** RYT-133: the table's dice (the DM's setting), what the sheet says to roll, rolls in the app and
+ * the recent rolls. */
+export const diceEn = {
+  'dm.panelDice': 'Dice',
+  'diceSettings.title': 'Table dice',
+  'diceSettings.hint':
+    'Choose how the table rolls and who sees the rolls made or recorded in the app.',
+  'diceSettings.current': 'In use',
+  'diceSettings.modeLegend': 'How the table rolls',
+  'diceSettings.visibilityLegend': 'Who sees the rolls',
+  'diceSettings.mode.physical': 'Physical dice',
+  'diceSettings.mode.physicalHint':
+    'Each Player rolls their own dice. The sheet says what to roll and what to add, and the result can be recorded: it is marked as recorded.',
+  'diceSettings.mode.app': 'Dice in the app',
+  'diceSettings.mode.appHint':
+    'Rytta rolls the dice for checks, saves, attacks, damage, initiative and hit dice, and records every roll. It is marked as rolled by Rytta and nobody can change it.',
+  'diceSettings.mode.player': 'Each Player chooses',
+  'diceSettings.mode.playerHint':
+    'Each one picks physical or in-app dice on their own device. Physical dice until they choose.',
+  'diceSettings.visibility.roller_dm': 'The roller and the DM',
+  'diceSettings.visibility.roller_dmHint': 'The rest of the table does not see the roll.',
+  'diceSettings.visibility.table': 'The whole table',
+  'diceSettings.visibility.tableHint': 'Every active member sees each roll.',
+  'diceSettings.visibility.roller': 'Only the roller',
+  'diceSettings.visibility.rollerHint': 'Not even the DM sees the roll.',
+  'diceSettings.apply': 'Apply changes',
+  'diceSettings.saved': 'Dice settings saved.',
+  'diceSettings.confirmTitle': 'Change the table dice?',
+  'diceSettings.confirmMode.physical':
+    'Players roll their own dice. The sheets say what to roll, and initiative and hit dice are typed in. No character data changes.',
+  'diceSettings.confirmMode.app':
+    'Players will roll in the app: Rytta rolls and records every roll, initiative and hit dice included. On the sheets, the numbers stop saying what to roll and roll when tapped. No character data changes.',
+  'diceSettings.confirmMode.player':
+    'Each Player chooses on their device; until they do, they use physical dice.',
+  'diceSettings.confirmVisibility.wider':
+    'Earlier rolls are not shown to more people: they stay visible only to those who could see them when they were made.',
+  'diceSettings.confirmVisibility.narrower':
+    'Players stop seeing each other\u0027s rolls, earlier ones included.',
+  'diceSettings.errorTitle': 'The dice settings were not saved',
+  'diceSettings.error.unavailable': 'Could not reach the server. Nothing changed; try again.',
+  'diceSettings.error.forbidden': 'Only a DM of this campaign can change the dice.',
+  'diceSettings.error.invalid': 'Those settings are not valid. Close this and choose again.',
+  'diceSettings.error.request-mismatch':
+    'That request was already used for other settings. Close this and apply the changes again.',
+
+  'diceChoice.label': 'Your dice',
+  'diceChoice.physical': 'Physical',
+  'diceChoice.app': 'In the app',
+  'diceChoice.hint': 'Each Player chooses on their device; your choice is saved here.',
+
+  'roll.name.ability': '{{ability}} check',
+  'roll.name.save': '{{ability}} save',
+  'roll.name.initiative': 'Initiative',
+  'roll.name.hitDie': 'Hit dice',
+  'roll.name.deathSave': 'Death save',
+  'roll.name.attack': 'Attack with {{weapon}}',
+  'roll.name.damage': 'Damage with {{weapon}}',
+  'roll.kind.ability': 'Ability check',
+  'roll.kind.skill': 'Skill',
+  'roll.kind.save': 'Save',
+  'roll.kind.attack': 'Attack',
+  'roll.kind.damage': 'Damage',
+  'roll.kind.initiative': 'Initiative',
+  'roll.kind.death_save': 'Death save',
+  'roll.kind.hit_die': 'Hit dice',
+  'roll.kind.custom': 'Roll',
+  'roll.rollAction': 'Roll {{name}}, {{formula}}',
+  'roll.recordAction': 'Record the roll for {{name}}, {{formula}}',
+  'roll.hintApp': 'Tap an underlined number to roll the dice.',
+  'roll.hintPhysical':
+    'Roll what each line says and tap the underlined number to record the result.',
+  'roll.recordTitle': 'Record: {{name}}',
+  'roll.recordFormula': 'Roll {{formula}}.',
+  'roll.dieSingle': 'd{{sides}} result',
+  'roll.dieN': 'Die {{n}} (d{{sides}})',
+  'roll.dieRange': '1 to {{max}}',
+  'roll.dieError': 'Enter a number from 1 to {{max}}.',
+  'roll.totalLabel': 'Roll total',
+  'roll.totalRange': 'Between {{min}} and {{max}}',
+  'roll.totalError': 'Enter the total as a whole number.',
+  'roll.sum': '{{maths}} = {{total}}',
+  'roll.sumTotal': 'Total {{total}}',
+  'roll.record': 'Record',
+  'roll.errorTitle': 'The roll did not reach the table',
+  'roll.error.unavailable':
+    'Could not reach the server. The roll was not made or recorded; try again.',
+  'roll.error.forbidden': 'Your account cannot record rolls in this campaign.',
+  'roll.error.invalid': 'The roll is not valid. Check the numbers.',
+  'roll.error.request-mismatch':
+    'That request was already used for another roll. Close this and roll again.',
+  'roll.error.character-unavailable': 'This character cannot roll now (absent or archived).',
+  'roll.error.roll-limit': 'Too many rolls in a row. Wait a moment and try again.',
+  'roll.resultLabel': 'Latest roll',
+  'roll.rollingShort': 'Rolling the dice…',
+  'roll.dismiss': 'Close the roll',
+  'roll.recent': 'Recent rolls',
+  'roll.seeAll': 'See all {{count}}',
+  'roll.loading': 'Loading rolls…',
+  'roll.loadError': 'Could not load the rolls.',
+  'roll.empty': 'No rolls yet.',
+  'roll.dm': 'DM',
+  'roll.you': '{{name}} (you)',
+  'roll.source.app': 'Rolled by Rytta',
+  'roll.source.recorded': 'Recorded',
+  'roll.seen.table': 'The whole table sees it.',
+  'roll.seen.roller_dm': 'The roller and the DM see it.',
+  'roll.seen.roller': 'Only the roller sees it.',
+  'roll.notRolled': 'Not rolled',
+  'roll.error.dice-mode':
+    'The DM changed the table dice. This sheet now uses the new ones: check and roll again.',
+  'roll.totalOutOfRange': 'With those dice the total runs from {{min}} to {{max}}.',
+  'roll.someone': 'Another character',
+  'combat.initiative.waitSheet': 'Loading your sheet: it is needed to roll with your bonus.',
+  'combat.initiative.noSheet':
+    'Your sheet could not be read, so your bonus is unknown. Retry to be able to roll.',
+  'combat.initiative.rollFailed':
+    'The initiative could not be rolled. No roll was saved; try again.',
+  'rest.rollFailed': 'The hit dice could not be rolled. No roll was saved; try again.',
+  'combat.initiative.fixed':
+    'Your initiative is already set to {{total}}. Only the DM can change it.',
+  'combat.initiative.rolledUnsaved': 'You already rolled: {{total}}. Save that roll to set it.',
+  'combat.initiative.logFailed':
+    'Your earlier rolls could not be checked. You can retry or roll anyway.',
+  'combat.initiative.checking': 'Checking your rolls…',
+  'rest.logFailed': 'Your earlier rolls could not be checked. You can retry or roll anyway.',
+  'rest.checking': 'Checking your rolls…',
+  'roll.totalWord': 'Total',
+  'diceSettings.confirmVisibility.narrowerRoller':
+    'With "Only the roller", each Player sees only their own and you stop seeing the Players’ rolls, earlier ones included.',
+  'combat.initiative.rollApp': 'Rytta rolls d20 {{bonus}} for you.',
+  'combat.initiative.alreadyRolled': 'You already rolled: {{total}}. Only the DM can change it.',
+  'rest.alreadyRolled':
+    'You already rolled the hit dice: {{roll}}. With the roll made, how many you spend cannot change.',
+  'rest.notRolled': 'Not rolled',
+  'rest.rollResult': 'Your roll',
+} as const

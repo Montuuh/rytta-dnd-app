@@ -3,8 +3,8 @@ import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
 import { slowPollMs } from '@/shared/lib/live-poll'
 import type { CampaignRepository } from './domain/campaign'
-import { setPartyLevel } from './data/settings-repository'
-import { CampaignSettingsError } from './domain/settings'
+import { setDiceSettings, setPartyLevel } from './data/settings-repository'
+import { CampaignSettingsError, type DiceSettings } from './domain/settings'
 
 async function repository(): Promise<CampaignRepository> {
   if (config.VITE_DATA_MODE === 'demo')
@@ -129,6 +129,29 @@ export function useSetPartyLevel(campaignId: string) {
       if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
         throw new CampaignSettingsError('unavailable')
       return setPartyLevel(campaignId, input.level, input.requestId)
+    },
+    onSuccess: async () => {
+      if (controller?.getSnapshot().user?.id !== userId) return
+      await client.invalidateQueries({ queryKey: ['private', userId] })
+    },
+  })
+}
+
+/**
+ * RYT-133: the DM sets how the table rolls and who reads the rolls. Each intent carries one
+ * request id, as the party level does; the campaign list reloads so every screen follows.
+ */
+export function useSetDiceSettings(campaignId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const client = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (input: { settings: DiceSettings; requestId: string }) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new CampaignSettingsError('unavailable')
+      return setDiceSettings(campaignId, input.settings, input.requestId)
     },
     onSuccess: async () => {
       if (controller?.getSnapshot().user?.id !== userId) return

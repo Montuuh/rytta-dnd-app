@@ -1,16 +1,16 @@
 import './dice.css'
 
 /**
- * RYT-082: 3D dice that roll across the screen, as in Foundry. The vendored dice-box build
- * (public/vendor/dice-box, see its NOTICE.md) loads on the first roll only. Reduced motion, no
- * WebGL, a load failure or a stuck roll fall back to an even random roll without animation.
+ * RYT-082/133: 3D dice that tumble across the screen. The vendored dice-box build
+ * (public/vendor/dice-box, see its NOTICE.md) loads on the first tumble only. The engine cannot be
+ * told which faces to land on, so the dice are decoration: a roll's result comes from the server
+ * and the tumble is cleared before the dice settle, so no face on screen can contradict it.
+ * Reduced motion, no WebGL or a load failure play nothing.
  */
 export type DieSides = 4 | 6 | 8 | 10 | 12 | 20
 
 /** Rytta's amber for every die (user decision 2026-11-10). */
 const amber = '#eda145'
-const holdMs = 1200
-const timeoutMs = 9000
 
 type DiceBox = {
   init: () => Promise<unknown>
@@ -21,20 +21,6 @@ type DiceBox = {
 
 let instance: Promise<DiceBox> | null = null
 let stage: HTMLDivElement | null = null
-let clearTimer: number | undefined
-
-/** Even values in 1..sides from the platform's cryptographic generator (rejection sampling). */
-export function randomRolls(count: number, sides: number): number[] {
-  const values: number[] = []
-  const limit = Math.floor(0x1_0000_0000 / sides) * sides
-  const buffer = new Uint32Array(1)
-  while (values.length < count) {
-    crypto.getRandomValues(buffer)
-    const value = buffer[0]!
-    if (value < limit) values.push((value % sides) + 1)
-  }
-  return values
-}
 
 function reducedMotion() {
   try {
@@ -75,56 +61,31 @@ async function load(): Promise<DiceBox> {
   return box
 }
 
-const timeout = () =>
-  new Promise<never>((_, reject) =>
-    window.setTimeout(() => reject(new Error('timeout')), timeoutMs),
-  )
+const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
 /**
- * Rolls `count` dice with `sides` faces and resolves with each die's value. By default the dice
- * stay on the table dimmed for a moment; `hold: 0` clears them the moment they stop, for callers
- * that write the result into the page right under them (the short-rest dock).
+ * Plays a short tumble of `count` dice with `sides` faces for `ms` milliseconds, then fades the
+ * stage out while the dice are still in the air. Resolves when the stage is clear; never rejects
+ * and never reports a value.
  */
-export async function rollDice(
-  count: number,
-  sides: DieSides,
-  { hold = holdMs }: { hold?: number } = {},
-): Promise<number[]> {
-  if (count < 1) return []
-  if (reducedMotion() || !webgl()) return randomRolls(count, sides)
+export async function tumbleDice(count: number, sides: DieSides, ms = 800): Promise<void> {
+  if (count < 1 || reducedMotion() || !webgl()) return
   try {
     instance ??= load()
     const box = await instance
-    window.clearTimeout(clearTimer)
     box.show()
     stage?.classList.remove('is-settled')
     stage?.classList.add('is-rolling')
-    const results = await Promise.race([
-      box.roll(`${count}d${sides}`, { themeColor: amber }),
-      timeout(),
-    ])
-    const values = results.map((result) => result.value)
-    // The dice stay on the table for a moment, dimmed so the number they gave (written into the
-    // page the moment they stop) is readable above them; then the overlay clears (RYT-126 J4-23).
-    const clearStage = () => {
-      stage?.classList.remove('is-rolling', 'is-settled')
-      box.clear()
-    }
-    if (hold <= 0) clearStage()
-    else {
-      stage?.classList.add('is-settled')
-      clearTimer = window.setTimeout(clearStage, hold)
-    }
-    if (
-      values.length !== count ||
-      values.some((value) => !Number.isInteger(value) || value < 1 || value > sides)
-    )
-      return randomRolls(count, sides)
-    return values
+    // The result of the engine's own roll is ignored on purpose.
+    void box.roll(`${count}d${sides}`, { themeColor: amber }).catch(() => undefined)
+    await wait(ms)
+    stage?.classList.remove('is-rolling')
+    // The fade is 0.2s; clear the dice once it is done.
+    await wait(260)
+    box.clear()
   } catch {
     instance = null
     stage?.remove()
     stage = null
-    return randomRolls(count, sides)
   }
 }

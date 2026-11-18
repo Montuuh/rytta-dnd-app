@@ -83,19 +83,19 @@ export default defineConfig({
     {
       name: 'desktop',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,security-headers}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,security-headers}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,security-headers}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,security-headers}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
       testIgnore:
-        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,security-headers}.spec.ts',
+        '**/{identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,security-headers}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     // Rytta targets phones and tablets. Signed-in journeys run at 820px and 390px; the desktop
@@ -112,13 +112,13 @@ export default defineConfig({
         name: 'identity-tablet',
         viewport: { width: 820, height: 1180 },
         specs:
-          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map',
+          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice',
       },
       {
         name: 'identity-mobile',
         viewport: { width: 390, height: 844 },
         specs:
-          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map',
+          'identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice',
       },
     ].map(({ name, viewport, specs }) => ({
       name,

@@ -2,7 +2,17 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ActionIcon, Button, TextInput } from '@mantine/core'
 import { Dices, Minus, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { rollDice, type DieSides } from '@/shared/ui/dice/roll-dice'
+import {
+  DiceModeChoice,
+  attemptFor,
+  failureReason,
+  hitDiceExpression,
+  useAppRoll,
+  useDiceMode,
+  type Attempt,
+} from '@/features/dice'
+import type { CampaignRoll } from '@/features/campaigns'
+import { newRequestId } from '@/shared/lib/request-id'
 import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
 
 /**
@@ -10,6 +20,11 @@ import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
  * Player types the physical dice total or lets Rytta roll 3D dice; CON is added per die.
  */
 export function DiceChooser({
+  campaignId,
+  characterId,
+  rolled,
+  rollsStatus,
+  onRetryRolls,
   die,
   left,
   conMod,
@@ -18,6 +33,14 @@ export function DiceChooser({
   showError = false,
   onChange,
 }: {
+  campaignId: string
+  /** The character that rests; its hit dice rolls are recorded with dice in the app. */
+  characterId: string
+  /** The roll Rytta already made of these hit dice for this rest, read from the roll log. */
+  rolled?: CampaignRoll
+  /** The roll log has loaded: until then nothing is said about an earlier roll. */
+  rollsStatus: 'loading' | 'ready' | 'failed'
+  onRetryRolls: () => void
   die: number
   left: number
   conMod: number
@@ -31,9 +54,14 @@ export function DiceChooser({
   const { t } = useTranslation()
   const id = useId()
   const [rolling, setRolling] = useState(false)
-  /** Each die of the last Rytta roll, shown in the dock once the dice leave the screen. */
-  const [dice, setDice] = useState<{ values: number[]; roll: string } | null>(null)
   const rollInput = useRef<HTMLInputElement>(null)
+  // RYT-133: the table's dice mode decides. Physical dice are typed in; dice in the app are rolled
+  // here and the total is not typed, so the short rest behaves like initiative and the sheet.
+  const { behaviour } = useDiceMode(campaignId)
+  const appDice = behaviour === 'app'
+  const appRoll = useAppRoll(campaignId)
+  const attempt = useRef<Attempt | null>(null)
+  const [failure, setFailure] = useState<string | null>(null)
   const valid = rollValid(value, die)
   useEffect(() => {
     if (showError) rollInput.current?.focus()
@@ -41,20 +69,38 @@ export function DiceChooser({
   const roll = Number(value.roll)
   const heal = valid && value.spent > 0 ? shortRestHeal(value.spent, roll, conMod) : 0
   const con = conMod >= 0 ? `+${conMod}` : `−${Math.abs(conMod)}`
+  // One roll per rest: once Rytta has rolled the hit dice the count and the roll are final.
+  // The roll log is the source; the roll made on this screen covers a log that could not load.
+  const [madeHere, setMadeHere] = useState<CampaignRoll | null>(null)
+  const done = rolled ?? madeHere ?? undefined
+  const rolledAlready = appDice && done !== undefined
+  const dice = done ? { values: done.dice } : null
   const step = (delta: number) => {
+    if (rolledAlready) return
     const spent = Math.min(left, Math.max(0, value.spent + delta))
     if (spent !== value.spent) onChange({ spent, roll: spent === 0 ? '' : value.roll })
   }
   const autoRoll = async () => {
     if (rolling || value.spent === 0 || die === 0) return
+    const expression = hitDiceExpression(value.spent, die, conMod)
+    if (!expression) return
     setRolling(true)
+    setFailure(null)
+    // The server rolls and its dice are the only ones: a failure stops here, and the retry repeats
+    // the same request so a roll that was made is returned, not made again.
+    attempt.current = attemptFor(attempt.current, expression, newRequestId)
     try {
-      // The dice stage sits over the whole page, preview included: it clears when they stop and
-      // the result stays in the dock, below.
-      const values = await rollDice(value.spent, die as DieSides, { hold: 0 })
-      const total = String(values.reduce((sum, item) => sum + item, 0))
-      setDice({ values, roll: total })
+      const stored = await appRoll(
+        { kind: 'hit_die', label: 'hit_die', expression },
+        characterId,
+        attempt.current.id,
+      )
+      attempt.current = null
+      setMadeHere(stored)
+      const total = String(stored.dice.reduce((sum, item) => sum + item, 0))
       onChange({ spent: value.spent, roll: total })
+    } catch (error) {
+      setFailure(failureReason(error))
     } finally {
       setRolling(false)
     }
@@ -62,13 +108,14 @@ export function DiceChooser({
   return (
     <fieldset className="rest-dice">
       <legend className="rest-dice-title">{t('rest.diceTitle', { die, left })}</legend>
+      <DiceModeChoice campaignId={campaignId} />
       <div className="rest-dice-row">
         <div className="rest-stepper" role="group" aria-label={t('rest.diceCount')}>
           <ActionIcon
             variant="default"
             size={44}
             aria-label={t('rest.diceFewer')}
-            aria-disabled={value.spent <= 0 || undefined}
+            aria-disabled={value.spent <= 0 || rolledAlready || undefined}
             onClick={() => step(-1)}
           >
             <Minus size={18} aria-hidden="true" />
@@ -80,13 +127,21 @@ export function DiceChooser({
             variant="default"
             size={44}
             aria-label={t('rest.diceMore')}
-            aria-disabled={value.spent >= left || undefined}
+            aria-disabled={value.spent >= left || rolledAlready || undefined}
             onClick={() => step(1)}
           >
             <Plus size={18} aria-hidden="true" />
           </ActionIcon>
         </div>
-        {value.spent > 0 && (
+        {value.spent > 0 && appDice && (
+          <div className="rest-roll-result">
+            <span className="rest-roll-result-label">{t('rest.rollResult')}</span>
+            <output className="rest-roll-result-value" data-rolled={rolledAlready || undefined}>
+              {rolledAlready ? value.roll : t('rest.notRolled')}
+            </output>
+          </div>
+        )}
+        {value.spent > 0 && !appDice && (
           <TextInput
             id={`${id}-roll`}
             className="rest-roll"
@@ -110,23 +165,45 @@ export function DiceChooser({
           />
         )}
       </div>
-      {value.spent > 0 && (
+      {value.spent > 0 && appDice && rolledAlready && (
+        <p className="rest-dice-note">{t('rest.alreadyRolled', { roll: value.roll })}</p>
+      )}
+      {value.spent > 0 && appDice && !rolledAlready && (
         <Button
           variant="default"
           className="rest-autoroll"
           leftSection={<Dices size={20} aria-hidden="true" />}
           aria-busy={rolling || undefined}
-          aria-disabled={rolling || undefined}
+          aria-disabled={rolling || rollsStatus === 'loading' || undefined}
           aria-describedby={`${id}-sum`}
           onClick={() => void autoRoll()}
         >
-          {rolling ? t('rest.rolling') : t('rest.autoRoll')}
+          {rolling
+            ? t('rest.rolling')
+            : rollsStatus === 'loading'
+              ? t('rest.checking')
+              : failure
+                ? t('common.retry')
+                : t('rest.autoRoll')}
         </Button>
       )}
+      {value.spent > 0 && appDice && !rolledAlready && rollsStatus === 'failed' && (
+        <p className="rest-dice-error" role="alert">
+          {t('rest.logFailed')}{' '}
+          <Button variant="subtle" onClick={onRetryRolls}>
+            {t('common.retry')}
+          </Button>
+        </p>
+      )}
+      {failure && (
+        <p className="rest-dice-error" role="alert">
+          {failure === 'dice-mode' ? t('roll.error.dice-mode') : t('rest.rollFailed')}
+        </p>
+      )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">
-        {dice && value.spent === dice.values.length && value.roll === dice.roll && (
+        {dice && (
           <span className="rest-dice-faces">
-            {t('rest.rolledDice', { dice: dice.values.join(' + ') })}
+            {`${t('rest.rolledDice', { dice: dice.values.join(' + ') })}. ${t('roll.source.app')}.`}
           </span>
         )}
         {value.spent === 0 ? t('rest.noDice') : valid ? t('rest.heal', { roll, con, heal }) : null}

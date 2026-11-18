@@ -525,6 +525,8 @@ export function combatServer() {
         return { deleted: true }
       case 'set_encounter_status': {
         const next = body.new_status as Encounter['status']
+        // As the SQL does: the change of phase is an event (the initiative phase has a start).
+        log(e, actor, 'status', undefined, { detail: { status: next } })
         if (next === 'active') {
           const first = order(e, true)[0]
           if (!first) return fail('No combatants')

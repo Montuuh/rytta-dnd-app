@@ -1,6 +1,6 @@
 import { localizedName } from '@/shared/lib/translations'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Stack, Text, UnstyledButton } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
@@ -39,10 +39,21 @@ const slotIcons: Record<EquipmentSlot, string> = {
   off_hand: 'shield',
 }
 const signed = (value: number) => (value >= 0 ? `+${value}` : `${value}`)
+/** The bonus of a damage line as it is read aloud: ` + 3`, ` − 1`, nothing for 0. */
+const damageBonus = (value: number) =>
+  value === 0 ? '' : value > 0 ? ` + ${value}` : ` − ${-value}`
 
 /** One attack list for the sheet tile, the sheet block and the equipment view: callers compute
  * `lines` once with `attacks(...)` so every place shows the same numbers. */
-export function AttackLines({ lines }: { lines: Attack[] }) {
+export function AttackLines({
+  lines,
+  renderRoll,
+}: {
+  lines: Attack[]
+  /** Wraps the to-hit number and the damage dice of a line, so a sheet can make them rollable;
+   * the equipment view leaves them as text. */
+  renderRoll?: (line: Attack, part: 'hit' | 'damage' | 'versatile', content: ReactNode) => ReactNode
+}) {
   const { t } = useTranslation()
   if (lines.length === 0)
     return (
@@ -50,6 +61,8 @@ export function AttackLines({ lines }: { lines: Attack[] }) {
         {t('inventory.attacks.none')}
       </Text>
     )
+  const wrap = (line: Attack, part: 'hit' | 'damage' | 'versatile', content: ReactNode) =>
+    renderRoll ? renderRoll(line, part, content) : content
   return (
     <ul className="attack-lines">
       {lines.map((line) => {
@@ -65,16 +78,27 @@ export function AttackLines({ lines }: { lines: Attack[] }) {
             <span className="attack-name user-copy">{line.name}</span>
             <span className="attack-bonus">
               <span className="attack-label">{t('inventory.attacks.hitLabel')}</span>{' '}
-              <span
-                className="attack-value"
-                aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
-              >
-                {signed(line.attack)}
-              </span>
+              {wrap(
+                line,
+                'hit',
+                <span
+                  className="attack-value"
+                  aria-label={t('inventory.attacks.toHit', { value: signed(line.attack) })}
+                >
+                  {signed(line.attack)}
+                </span>,
+              )}
             </span>
             <span className="attack-damage">
-              <span className="attack-label">{t('inventory.attacks.damageLabel')}</span> {line.dice}
-              {line.damageBonus ? ` ${signed(line.damageBonus)}` : ''}
+              <span className="attack-label">{t('inventory.attacks.damageLabel')}</span>{' '}
+              {wrap(
+                line,
+                'damage',
+                <>
+                  {line.dice}
+                  {damageBonus(line.damageBonus)}
+                </>,
+              )}
               {line.damageType && (
                 <>
                   {' '}
@@ -86,9 +110,18 @@ export function AttackLines({ lines }: { lines: Attack[] }) {
               {line.itemDamageBonus
                 ? ` · ${t('inventory.attacks.partDamage', { value: signed(line.itemDamageBonus) })}`
                 : ''}
-              {line.versatileDice
-                ? ` · ${t('inventory.attacks.twoHands', { dice: line.versatileDice })}`
-                : ''}
+              {line.versatileDice && (
+                <>
+                  {' · '}
+                  {wrap(
+                    line,
+                    'versatile',
+                    t('inventory.attacks.twoHands', {
+                      dice: `${line.versatileDice}${damageBonus(line.damageBonus)}`,
+                    }),
+                  )}
+                </>
+              )}
               {line.range ? ` · ${line.range} ${t('inventory.card.feet')}` : ''}
             </span>
             <span className="attack-breakdown">{hitParts}</span>

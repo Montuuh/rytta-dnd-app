@@ -6,8 +6,23 @@ import { Check, Dices } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
-import { rollDice } from '@/shared/ui/dice/roll-dice'
-import { initiativeOutlier, isInitiativeTotal, type Combatant } from '../domain/combat'
+import {
+  DiceModeChoice,
+  useOwnRoll,
+  attemptFor,
+  checkSpec,
+  failureReason,
+  useAppRoll,
+  useDiceMode,
+  type Attempt,
+} from '@/features/dice'
+import { newRequestId } from '@/shared/lib/request-id'
+import {
+  initiativeOutlier,
+  initiativeRollState,
+  isInitiativeTotal,
+  type Combatant,
+} from '../domain/combat'
 import { InitiativeKeypad } from './amount-dialog'
 
 /**
@@ -18,6 +33,7 @@ import { InitiativeKeypad } from './amount-dialog'
 export function InitiativeEntry({
   campaignId,
   combatant,
+  since,
   editing,
   pending,
   save,
@@ -25,6 +41,8 @@ export function InitiativeEntry({
 }: {
   campaignId: string
   combatant: Combatant
+  /** When the initiative phase opened (null when unknown): rolls since then count as this fight's. */
+  since: string | null
   /** Reopened over a saved total: Escape and Cancel keep that total. */
   editing: boolean
   pending: boolean
@@ -40,28 +58,59 @@ export function InitiativeEntry({
   })
   const build = sheet.data?.sheet.build
   const bonus = build ? initiativeBonus(build) : null
-  const [amount, setAmount] = useState<number | string>(combatant.initiative ?? '')
+  const [typed, setAmount] = useState<number | string>(combatant.initiative ?? '')
+  const [rolling, setRolling] = useState(false)
+  const [rolled, setRolled] = useState('')
+  // RYT-133: the table's dice mode decides: physical dice are typed in, dice in the app are rolled
+  // here and nothing is typed, so initiative never behaves unlike the sheet and the short rest.
+  const { behaviour } = useDiceMode(campaignId)
+  const appDice = behaviour === 'app'
+  const appRoll = useAppRoll(campaignId)
+  const attempt = useRef<Attempt | null>(null)
+  const [rollFailure, setRollFailure] = useState<string | null>(null)
+  const [rolledTotal, setRolledTotal] = useState<number | null>(null)
+  // One roll per fight, read from the Player's own roll log so it survives a reload or another
+  // device: once Rytta has rolled it the Player cannot roll it again, only save that total; the DM
+  // changes it from the console.
+  const own = useOwnRoll(campaignId)
+  const logged = appDice ? own.find(combatant.character_id ?? null, 'initiative', since) : undefined
+  // What the combat state saved always wins over the roll log (the DM may have changed it).
+  const standing = initiativeRollState(combatant.initiative, rolledTotal ?? logged?.total ?? null)
+  const rolledAlready = appDice && standing.kind !== 'none'
+  const logLoading = appDice && !rolledAlready && since !== null && own.status === 'loading'
+  const logFailed = appDice && !rolledAlready && since !== null && own.status === 'failed'
+  // What the d20 shows: with dice in the app the standing total, else what was typed.
+  const amount: number | string = rolledAlready ? standing.total : typed
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = isInitiativeTotal(value)
   const outOfRange = typeof amount === 'number' && !valid
   // RYT-126 J4-10: a total no d20 + bonus can reach is probably a slip: warned, never blocked.
   const unusual = valid && initiativeOutlier(value, bonus)
-  const [rolling, setRolling] = useState(false)
-  const [rolled, setRolled] = useState('')
+  // Dice in the app roll d20 plus the sheet's bonus: without the bonus there is nothing to roll.
+  const needsSheet = appDice && !rolledAlready && bonus === null
   const rollForMe = async () => {
-    if (rolling) return
+    if (rolling || bonus === null) return
+    const spec = checkSpec('initiative', 'initiative', bonus)
+    if (!spec) return
     setRolling(true)
+    setRollFailure(null)
+    // The server rolls and its dice and total are the only ones: a failure stops here, and the
+    // retry repeats the same request so a roll that was made is returned, not made again.
+    attempt.current = attemptFor(attempt.current, spec.expression, newRequestId)
     try {
-      const [die = 1] = await rollDice(1, 20)
-      const modifier = bonus ?? 0
-      setAmount(die + modifier)
+      const roll = await appRoll(spec, combatant.character_id ?? null, attempt.current.id)
+      attempt.current = null
+      setAmount(roll.total)
+      setRolledTotal(roll.total)
       setRolled(
-        t('combat.initiative.rolled', {
-          die,
-          bonus: modifier >= 0 ? `+ ${modifier}` : `− ${-modifier}`,
-          total: die + modifier,
-        }),
+        `${t('combat.initiative.rolled', {
+          die: roll.dice[0] ?? 0,
+          bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+          total: roll.total,
+        })}. ${t('roll.source.app')}.`,
       )
+    } catch (error) {
+      setRollFailure(failureReason(error))
     } finally {
       setRolling(false)
     }
@@ -103,6 +152,7 @@ export function InitiativeEntry({
         }}
       >
         <div className="combat-entry-face">
+          <DiceModeChoice campaignId={campaignId} />
           <Text component="h3" id={titleId} tabIndex={-1} className="combat-entry-title">
             {t('combat.initiative.yours')}
           </Text>
@@ -122,7 +172,8 @@ export function InitiativeEntry({
               // Out-of-range totals stay as typed and are explained below (RYT-042 F5).
               clampBehavior="none"
               allowDecimal={false}
-              inputMode="numeric"
+              readOnly={appDice}
+              inputMode={appDice ? 'none' : 'numeric'}
               placeholder="?"
               value={amount}
               onChange={setAmount}
@@ -135,41 +186,83 @@ export function InitiativeEntry({
             className={`combat-entry-formula${outOfRange ? ' is-invalid' : unusual ? ' is-unusual' : ''}`}
             aria-live="polite"
           >
-            {outOfRange
-              ? t('combat.initiative.range')
-              : unusual
-                ? t('combat.initiative.unusual', {
-                    bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
-                    min: bonus! + 1,
-                    max: bonus! + 20,
-                  })
-                : rolled
-                  ? rolled
-                  : bonus === null
-                    ? t('combat.initiative.rollPlain')
-                    : t('combat.initiative.roll', {
-                        bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
-                      })}
+            {rollFailure
+              ? rollFailure === 'dice-mode'
+                ? t('roll.error.dice-mode')
+                : t('combat.initiative.rollFailed')
+              : needsSheet
+                ? sheet.isPending
+                  ? t('combat.initiative.waitSheet')
+                  : t('combat.initiative.noSheet')
+                : outOfRange
+                  ? t('combat.initiative.range')
+                  : unusual
+                    ? t('combat.initiative.unusual', {
+                        bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
+                        min: bonus! + 1,
+                        max: bonus! + 20,
+                      })
+                    : rolled
+                      ? rolled
+                      : rolledAlready
+                        ? // Nothing is left to roll: no instruction to roll.
+                          ''
+                        : bonus === null
+                          ? t('combat.initiative.rollPlain')
+                          : t(appDice ? 'combat.initiative.rollApp' : 'combat.initiative.roll', {
+                              bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+                            })}
           </Text>
         </div>
         <div className="combat-entry-keys">
-          <Button
-            variant="default"
-            size="lg"
-            className="combat-entry-roll"
-            leftSection={<Dices size={20} aria-hidden="true" />}
-            aria-disabled={rolling || undefined}
-            aria-busy={rolling || undefined}
-            onClick={() => void rollForMe()}
-          >
-            {t('combat.initiative.rollForMe')}
-          </Button>
-          <InitiativeKeypad
-            onChange={(next) => {
-              setRolled('')
-              setAmount(next)
-            }}
-          />
+          {rolledAlready && (
+            <p className="combat-entry-note" role="status">
+              {standing.kind === 'unsaved'
+                ? t('combat.initiative.rolledUnsaved', { total: standing.total })
+                : standing.kind === 'saved'
+                  ? t('combat.initiative.alreadyRolled', { total: standing.total })
+                  : t('combat.initiative.fixed', { total: standing.total })}
+            </p>
+          )}
+          {logFailed && (
+            <p className="combat-entry-note" role="alert">
+              {t('combat.initiative.logFailed')}{' '}
+              <Button variant="subtle" onClick={own.retry}>
+                {t('common.retry')}
+              </Button>
+            </p>
+          )}
+          {appDice && !rolledAlready && (
+            <Button
+              variant="default"
+              size="lg"
+              className="combat-entry-roll"
+              leftSection={<Dices size={20} aria-hidden="true" />}
+              aria-disabled={rolling || needsSheet || logLoading || undefined}
+              aria-busy={rolling || logLoading || undefined}
+              onClick={() => {
+                if (needsSheet) {
+                  if (sheet.isError) void sheet.refetch()
+                  return
+                }
+                void rollForMe()
+              }}
+            >
+              {logLoading
+                ? t('combat.initiative.checking')
+                : rollFailure || (needsSheet && sheet.isError)
+                  ? t('common.retry')
+                  : t('combat.initiative.rollForMe')}
+            </Button>
+          )}
+          {!appDice && (
+            <InitiativeKeypad
+              onChange={(next) => {
+                setRolled('')
+                setAmount(next)
+              }}
+            />
+          )}
           <div className="combat-entry-actions">
             {editing && (
               <Button variant="subtle" size="lg" onClick={cancel}>
@@ -180,7 +273,8 @@ export function InitiativeEntry({
               type="submit"
               size="lg"
               leftSection={<Check size={20} aria-hidden="true" />}
-              disabled={!valid}
+              // A total that is already saved (rolled, or set by the DM) is not saved again.
+              disabled={!valid || standing.kind === 'saved' || standing.kind === 'set'}
               loading={pending}
             >
               {t('combat.initiative.save')}

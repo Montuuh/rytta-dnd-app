@@ -5,6 +5,8 @@ import {
   canRollDeathSave,
   combatErrorCode,
   initiativeProgress,
+  initiativeRollState,
+  initiativeStartedAt,
   initiativeOutlier,
   initiativeTies,
   isHiddenTurn,
@@ -473,5 +475,59 @@ describe('initiative entry helpers (RYT-126)', () => {
       base(4),
     ]
     expect([...initiativeTies(list)].sort()).toEqual([id(1), id(2)])
+  })
+})
+
+describe('when the initiative phase opened (RYT-133)', () => {
+  const event = (
+    kind: CombatEvent['kind'],
+    status: string | undefined,
+    at: string,
+    undone = false,
+  ) =>
+    ({
+      id: id(1),
+      kind,
+      round: 0,
+      detail: status ? { status } : {},
+      undone,
+      mine: false,
+      undoable: false,
+      created_at: at,
+    }) as CombatEvent
+  it('is the newest visible status event that moved the encounter to initiative', () => {
+    expect(
+      initiativeStartedAt([
+        event('status', 'initiative', '2026-11-18T10:05:00Z'),
+        event('turn', undefined, '2026-11-18T10:06:00Z'),
+        event('status', 'initiative', '2026-11-18T10:00:00Z'),
+        event('status', 'active', '2026-11-18T10:09:00Z'),
+      ]),
+    ).toBe('2026-11-18T10:05:00Z')
+  })
+  it('is unknown when the events do not hold it, and skips an undone one', () => {
+    expect(initiativeStartedAt([])).toBeNull()
+    expect(initiativeStartedAt([event('status', 'active', '2026-11-18T10:09:00Z')])).toBeNull()
+    expect(
+      initiativeStartedAt([event('status', 'initiative', '2026-11-18T10:05:00Z', true)]),
+    ).toBeNull()
+  })
+})
+
+describe('where a Player initiative stands (RYT-133)', () => {
+  it('has no roll and nothing saved', () => {
+    expect(initiativeRollState(undefined, null)).toEqual({ kind: 'none' })
+  })
+  it('has a roll that is not saved yet', () => {
+    expect(initiativeRollState(undefined, 15)).toEqual({ kind: 'unsaved', total: 15 })
+  })
+  it('has a roll that was saved as it was', () => {
+    expect(initiativeRollState(15, 15)).toEqual({ kind: 'saved', total: 15 })
+  })
+  it('lets what is saved win when the DM changed it after the roll', () => {
+    expect(initiativeRollState(9, 15)).toEqual({ kind: 'set', total: 9 })
+  })
+  it('is set when the DM set it and the Player never rolled', () => {
+    expect(initiativeRollState(9, null)).toEqual({ kind: 'set', total: 9 })
   })
 })

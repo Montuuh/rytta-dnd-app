@@ -4254,11 +4254,15 @@
       "title": "Dice: campaign setting, \"what to roll\" sheet, in-app rolls with recent rolls and roll visibility set by the DM",
       "priority": "P1",
       "owner": "backend",
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-124"],
       "sources": [
         "Player journey audit 2026-11-17, findings J2-26 and J4-21: there are no dice outside the short rest and the sheet does not say what to roll.",
-        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046.",
+        "Database part (20261130120000_party_level_dice_settings.sql: dice mode, roll visibility, set_dice_settings, log_roll, roll read policy, roll signals) reviewed and applied to production with RYT-130 on 2026-11-18; SQL denial tests in tests/database/party-level-dice.test.ts.",
+        "Decision during the delivery: in app mode the server rolls (log_roll source app, no dice sent by the client); the 3D animation is decoration; every roll is labelled as rolled by the app or recorded by hand; a failure retries with the same request id and never invents a number. Reason: the first build rolled in the browser and stored the result as a recorded roll, so a Player could send chosen dice.",
+        "Decision during the delivery: in app mode a Player rolls initiative once per fight and hit dice once per rest, a presentation guard derived from the Player's roll log and not enforced by the server (server enforcement in RYT-137).",
+        "Review 2026-11-18 on branch sheet-dice at 290694c: npm run check passes (106 files, 906 tests) and npm run test:e2e passes (1041 passed, 117 skipped, 0 failed; 2 failures on 4a3dcec fixed); independent code review changes addressed in 4af9486; independent UI review CHANGES_REQUIRED on 4af9486, ecc9d9f and 1f264e4, PASS on 290694c; five non-blocking leftovers moved to RYT-135; 3D dice landing on the server's result in RYT-138; merge to main pending (docs/evidence/RYT-133/validation.md)."
       ],
       "scope": "Backend then frontend, built in the order B, setting, A. B: in physical mode the sheet says what to roll and what to add for checks, saves, attacks and damage, and can optionally record the result. Setting (backend): a campaign dice mode chosen by the DM (physical dice, dice in the app, each player chooses), physical by default, and who sees rolls made in the app, also chosen by the DM and enforced by RLS; rolls are recorded through an authorised RPC; migration tested in PRE first. A: in app mode tapping a modifier rolls 3D dice with the maths shown and a recent-rolls strip. Non-goals: rolls on the table screen, automatic rule effects, autonomous release.",
       "acceptance": [
@@ -4277,7 +4281,7 @@
         "PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-133/validation.md"]
     },
     {
       "id": "RYT-134",
@@ -4309,18 +4313,19 @@
     },
     {
       "id": "RYT-135",
-      "title": "Level up, table screen and phone map polish from the UI reviews",
+      "title": "Level up, table screen, phone map and dice polish from the UI reviews",
       "priority": "P2",
       "owner": "frontend",
       "status": "planned",
-      "dependsOn": ["RYT-130", "RYT-131", "RYT-132"],
+      "dependsOn": ["RYT-130", "RYT-131", "RYT-132", "RYT-133"],
       "sources": [
         "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md).",
         "Open check from the RYT-130 production record (2026-11-18): keyboard focus on an option at 150% text on a phone may sit under the sticky footer.",
         "Independent UI review PASS on RYT-131 at e84f3c7, three non-blocking findings on the table screen (docs/evidence/RYT-131/validation.md).",
-        "Independent UI review PASS on RYT-132 at 8b148ac, seven non-blocking findings on the phone map (docs/evidence/RYT-132/validation.md)."
+        "Independent UI review PASS on RYT-132 at 8b148ac, seven non-blocking findings on the phone map (docs/evidence/RYT-132/validation.md).",
+        "Independent UI review PASS on RYT-133 at 290694c, five non-blocking findings on the dice (docs/evidence/RYT-133/validation.md)."
       ],
-      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Phone map: fix the seven non-blocking findings left by the RYT-132 UI review: in landscape while measuring the update notice covers the distance chip and its clear button, the keyboard shortcuts are not announced, the map cannot be panned by keyboard outside measure (pre-existing, also at 820px), the board focus ring shows only on its top edge, the ellipsis hides the trailing number of similar names, the round keys are only on the right, and a name plate still covers about a quarter of the token right below it. Non-goals: new level-up rules, new combat rules, new map tools, DM map editing on the phone, backend or migration changes, multiclass, autonomous release.",
+      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Phone map: fix the seven non-blocking findings left by the RYT-132 UI review: in landscape while measuring the update notice covers the distance chip and its clear button, the keyboard shortcuts are not announced, the map cannot be panned by keyboard outside measure (pre-existing, also at 820px), the board focus ring shows only on its top edge, the ellipsis hides the trailing number of similar names, the round keys are only on the right, and a name plate still covers about a quarter of the token right below it. Dice: fix the five non-blocking findings left by the RYT-133 UI review: if the roll log keeps failing and the rest is closed and reopened, the hit-dice roll made on that screen is forgotten; a disabled \"Save initiative\" is shown where \"Close\" would be clearer; at 390px the proficiency dot sits close to \"DES\" and \"CAR\"; the result card repeats the newest strip entry; the sticky result card is tall at 150% text. Non-goals: new level-up rules, new combat rules, new map tools, DM map editing on the phone, new dice rules or server-side roll limits (RYT-137), the 3D dice engine (RYT-138), backend or migration changes, multiclass, autonomous release.",
       "acceptance": [
         "For an ability at 19 the \"+2\" option no longer says \"Already at 20\"; its label and disabled reason state the real limit, and an ability at 20 still says it is at the cap.",
         "At 820px a failed confirm scrolls so that both the failure alert and the summary row are fully visible.",
@@ -4337,12 +4342,17 @@
         "Similar long names that differ only in a trailing number (for example \"Goblin arquero 14\" and \"Goblin arquero 15\") remain distinguishable on the phone map; the number is not cut off by the ellipsis.",
         "The placement of the round map keys is reviewed for left-handed use: either a documented decision keeps them on the right or the user can place them on the left, kept on that device.",
         "A name plate does not cover the token directly below it at the default zoom on the phone map.",
-        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; phone map at 390px portrait and landscape and 820px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+        "With the roll log failing to load, a hit-dice roll made on a rest is still shown after the rest is closed and reopened in the same session, and is never shown as a new roll or with an invented number, asserted by a browser spec.",
+        "When a Player's initiative is already saved and cannot be changed, the initiative dialog offers a clear way out (for example \"Close\") instead of a disabled \"Save initiative\".",
+        "At 390px the proficiency dot on the sheet does not touch or crowd the \"DES\" and \"CAR\" ability labels, in English and Spanish.",
+        "The roll result card and the recent-rolls strip do not show the same newest roll twice in a way that reads as two rolls.",
+        "At 390px with 150% text the sticky roll result card leaves the sheet usable: it does not cover more than a third of the viewport or it can be collapsed.",
+        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; phone map at 390px portrait and landscape and 820px; dice on the sheet, initiative and hit dice at 390px and 820px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
         "unit tests for the changed option labels and the long-name sizing rule",
         "npm run check",
-        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px; phone map notices, keyboard pan, focus ring, similar names and name plates at 390px portrait and landscape and 820px)",
+        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px; phone map notices, keyboard pan, focus ring, similar names and name plates at 390px portrait and landscape and 820px; dice result card, strip, initiative and hit dice at 390px and 820px)",
         "independent UI review PASS"
       ],
       "evidence": []
@@ -4366,6 +4376,62 @@
       "validation": [
         "npm run check",
         "npm run test:e2e (profile menu focus return at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-137",
+      "title": "One roll per fight and per rest enforced by the server",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": ["RYT-133"],
+      "sources": [
+        "RYT-133 decision 2026-11-18: in app mode a Player rolls initiative once per fight and hit dice once per rest, but the guard is presentation only, derived from the Player's roll log (newest 50 rolls) matched by time to the fight's opening event (newest 60 events) or the rest's creation; outside those windows the roll button is offered again (docs/evidence/RYT-133/validation.md).",
+        "RYT-133 known limit: the DM console can overwrite a Player's initiative but cannot clear or re-roll it."
+      ],
+      "scope": "Backend first, then the frontend changes it needs. Link a server roll to its encounter or rest, or have log_roll refuse a second app roll of the same kind for the same character in the same fight or rest, so the one-roll rule no longer depends on client-side windows. Let the DM clear or re-roll a Player's initiative from the DM console through an authorised, idempotent RPC. Replace the client-side guard with the server's answer and keep a refused roll explained, never invented. Migration tested in PRE first, then reviewed and applied to production within the delivery. Non-goals: physical-mode rolls (recorded by hand), limits on other roll kinds, new rules, the 3D dice engine (RYT-138), autonomous release.",
+      "acceptance": [
+        "In app mode a second server roll of initiative for the same character in the same fight, or of hit dice for the same character in the same rest, is refused by the server whatever the size of the roll log or event history; a repeated request with the same id returns the first result.",
+        "Only a DM of the campaign can clear or re-roll a Player's initiative; after a clear the Player can roll once again.",
+        "SQL denial tests cover anon, outsider, Player and cross-campaign DM for the roll link, the refusal and the DM clear or re-roll.",
+        "The sheet, initiative and hit dice read the one-roll state from the server; a refused roll shows a clear reason and no number.",
+        "The migration is applied in PRE, then production, with the catalog and advisor checks recorded.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for the roll link, the refusal, idempotency, the DM clear or re-roll and denial cases",
+        "npm run check",
+        "npm run test:e2e (initiative and hit dice in app mode and the DM console clear or re-roll at 390px and 820px)",
+        "PRE then production migration verification",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-138",
+      "title": "3D dice that land on the server's result",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-133"],
+      "sources": [
+        "RYT-133 decision 2026-11-18: the server rolls in app mode and the 3D animation fades before the dice settle because the bundled engine cannot land on chosen faces (docs/evidence/RYT-133/validation.md)."
+      ],
+      "scope": "Evaluate a 3D dice engine that accepts predetermined results, so the faces shown when the dice settle match the server's dice and the numbers on the result card. Review its licence, bundle size and content-security-policy needs (workers, WebGL, inline styles or assets) before adopting it; if no engine qualifies, record the decision and keep the current fading animation. Non-goals: rolling in the browser, any change to how or where results are produced, rolls on the table screen, backend changes, autonomous release.",
+      "acceptance": [
+        "A written evaluation records the candidate engines, their licences, bundle cost and content-security-policy needs, and the decision taken.",
+        "If adopted, the settled dice faces always match the server's dice for every die type the sheet rolls, asserted by a unit or browser test, and the result never appears before the server has answered.",
+        "With reduced motion the result appears without animation, unchanged from RYT-133.",
+        "The production content security policy is unchanged or its change is reviewed and recorded; there are no browser console errors.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for mapping server dice to engine faces",
+        "npm run check",
+        "npm run test:e2e (app-mode rolls with and without reduced motion at 390px and 820px)",
+        "licence and content-security-policy review",
         "independent UI review PASS"
       ],
       "evidence": []

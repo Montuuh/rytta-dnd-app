@@ -1,5 +1,6 @@
 import { Checkbox } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
+import { RollHint, RollPoint, checkSpec } from '@/features/dice'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { finalAbilities, modifier, saveBonus, signed } from '../../domain/rules'
 import { abilityKeys, type Ability } from '../../domain/srd'
@@ -36,10 +37,12 @@ export function AbilityStrip({ build, level, editing, change }: PanelProps) {
       <h2 id="panel-abilities-title" className="panel-section-title">
         {t('panel.abilitiesAndSaves')}
       </h2>
+      {!editing && <RollHint />}
       <ul className="ability-strip" data-editing={editing || undefined}>
         {abilityKeys.map((key) => {
           const proficient = build.saves.includes(key)
-          const save = signed(saveBonus(build, level, key))
+          const saveValue = saveBonus(build, level, key)
+          const save = signed(saveValue)
           const name = t(`srd.ability.${key}`)
           return (
             <li key={key} className="ability-medal" data-proficient={proficient || undefined}>
@@ -52,10 +55,18 @@ export function AbilityStrip({ build, level, editing, change }: PanelProps) {
                 </GlossaryTerm>
               </span>
               <span className="ability-mod">
-                <span aria-hidden="true">{signed(modifier(scores[key]))}</span>
-                <span className="visually-hidden">
-                  {t('panel.modifier', { value: signed(modifier(scores[key])) })}
-                </span>
+                <RollPoint
+                  spec={editing ? null : checkSpec('ability', key, modifier(scores[key]))}
+                  formula="append"
+                  dense
+                  className="ability-roll"
+                  describe={t('panel.modifier', { value: signed(modifier(scores[key])) })}
+                >
+                  <span aria-hidden="true">{signed(modifier(scores[key]))}</span>
+                  <span className="visually-hidden">
+                    {t('panel.modifier', { value: signed(modifier(scores[key])) })}
+                  </span>
+                </RollPoint>
               </span>
               {editing ? (
                 <>
@@ -80,14 +91,26 @@ export function AbilityStrip({ build, level, editing, change }: PanelProps) {
                 <>
                   <span className="ability-score">{scores[key]}</span>
                   <span className="ability-save">
-                    <span className="visually-hidden">
-                      {t('sheet.saveLabel', { ability: name, value: save })}
-                      {proficient ? `, ${t('sheet.proficient')}` : ''}
-                    </span>
-                    <span aria-hidden="true">
-                      <span className="ability-save-word">{t('sheet.saveShort')} </span>
-                      {save}
-                    </span>
+                    <RollPoint
+                      spec={checkSpec('save', key, saveValue)}
+                      formula="replace"
+                      dense
+                      className="ability-roll"
+                      describe={`${t('sheet.saveLabel', { ability: name, value: save })}${
+                        proficient ? `, ${t('sheet.proficient')}` : ''
+                      }`}
+                      prefix={
+                        <span className="ability-save-word" aria-hidden="true">
+                          {t('sheet.saveShort')}{' '}
+                        </span>
+                      }
+                    >
+                      <span className="visually-hidden">
+                        {t('sheet.saveLabel', { ability: name, value: save })}
+                        {proficient ? `, ${t('sheet.proficient')}` : ''}
+                      </span>
+                      <span aria-hidden="true">{save}</span>
+                    </RollPoint>
                     {proficient && <span className="ability-save-dot" aria-hidden="true" />}
                   </span>
                 </>

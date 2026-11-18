@@ -1,5 +1,11 @@
 import type { Page } from '@playwright/test'
 import { basicImportMock } from './basic-import.ts'
+import {
+  createDiceStore,
+  type DiceMode,
+  type DiceStore,
+  type RollVisibility,
+} from './dice-store.ts'
 export const dmId = '10000000-0000-4000-8000-000000000001'
 export const playerId = '10000000-0000-4000-8000-000000000002'
 export const campaignId = '20000000-0000-4000-8000-000000000001'
@@ -77,6 +83,11 @@ export async function identityFixture(
     sheetAbilities?: Partial<Record<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha', number>>
     /** RYT-130: the level the DM set for the party (null: not set). */
     partyLevel?: number | null
+    /** RYT-133: the campaign's dice mode and roll visibility (physical and roller_dm by default). */
+    diceMode?: DiceMode
+    rollVisibility?: RollVisibility
+    /** RYT-133: a dice store shared with other pages, to see one table from several accounts. */
+    dice?: DiceStore
     inventory?: boolean
     modules?: string[]
     party?: boolean
@@ -115,6 +126,8 @@ export async function identityFixture(
   } = {},
 ) {
   const currentId = options.as ?? (options.player ? playerId : dmId)
+  const dice =
+    options.dice ?? createDiceStore({ mode: options.diceMode, visibility: options.rollVisibility })
   if (options.signedIn !== false)
     await page.addInitScript(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), {
       key: storageKey,
@@ -762,7 +775,7 @@ export async function identityFixture(
       return failList
         ? respond({ message: 'Unavailable' }, 503)
         : respond(
-            actor !== currentId
+            (actor !== currentId
               ? campaigns.map((c) => ({
                   ...c,
                   role:
@@ -770,7 +783,8 @@ export async function identityFixture(
                       ? (members.find((m) => m.user_id === actor)?.role ?? 'player')
                       : 'dm',
                 }))
-              : campaigns,
+              : campaigns
+            ).map((c) => (c.id === campaignId ? { ...c, ...dice.settings() } : c)),
           )
     if (method === 'list_my_invitations') return respond(pending)
     // RYT-034 default: no trade activity. tests/e2e/fixtures/trades.ts overrides this route.
@@ -1031,6 +1045,46 @@ export async function identityFixture(
       )
       partyRequests.set(String(body.request_id), { actor, payload, result: level })
       return respond(level)
+    }
+    // RYT-133: the dice settings, the roll log and what each account may read of it.
+    const diceMember = () => {
+      const found = members.find((m) => m.user_id === actor)
+      return found ? { role: found.role as 'dm' | 'player', active: true } : undefined
+    }
+    if (method === 'set_dice_settings') {
+      const reply = dice.setDiceSettings(actor, diceMember(), body)
+      return respond(reply.body, reply.status)
+    }
+    if (method === 'log_roll') {
+      const reply = dice.logRoll(
+        actor,
+        diceMember(),
+        (id) => {
+          const found = characters.find(
+            (c) => c.id === id && c.campaign_id === body.target_campaign,
+          )
+          return found
+            ? {
+                id: found.id,
+                user_id: found.user_id,
+                archived: Boolean(found.archived_at),
+                absent: Boolean(found.absent),
+              }
+            : undefined
+        },
+        body,
+      )
+      return respond(reply.body, reply.status)
+    }
+    if (method === 'campaign_rolls') {
+      const before = url.searchParams.get('created_at')?.replace('lt.', '')
+      const limit = Number(url.searchParams.get('limit') ?? 50)
+      return respond(
+        dice
+          .readable(actor, diceMember(), eq('campaign_id') ?? campaignId)
+          .filter((roll) => !before || Date.parse(roll.created_at) < Date.parse(before))
+          .slice(0, limit),
+      )
     }
     if (method === 'apply_level_up') {
       const targetId = String(body.target_character)
@@ -1864,6 +1918,8 @@ export async function identityFixture(
     revokeAccess: () => {
       campaigns = []
     },
+    /** RYT-133: the table's dice store: settings, rolls, failures and the roll signal. */
+    dice,
   }
 }
 

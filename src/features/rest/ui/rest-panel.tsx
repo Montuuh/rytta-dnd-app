@@ -3,6 +3,7 @@ import { Accordion, Alert, Button, Modal } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { Ban, Check, Hourglass, Moon, Sunset, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useDiceMode, useOwnRoll } from '@/features/dice'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useRestAction } from '../api'
 import {
@@ -99,11 +100,27 @@ export function RestPanel({
     if (wasOpen.current && !open && opened) outcomeRef.current?.focus()
     wasOpen.current = open
   }, [open, opened])
-  const choiceOf = (person: RestParticipant): DiceChoice =>
-    choices[person.id] ?? {
-      spent: person.dice_spent,
-      roll: person.dice_roll != null ? String(person.dice_roll) : '',
-    }
+  // RYT-133: with dice in the app, a roll Rytta already made of these hit dice for this rest is
+  // read from the roll log (the rest's start is its creation time), so it survives closing the
+  // panel, a reload and another device.
+  const { behaviour } = useDiceMode(campaignId)
+  const own = useOwnRoll(campaignId)
+  const rolledFor = (person: RestParticipant) =>
+    behaviour === 'app' && short ? own.find(person.id, 'hit_die', state.created_at) : undefined
+  const choiceOf = (person: RestParticipant): DiceChoice => {
+    const rolled = rolledFor(person)
+    if (rolled)
+      return {
+        spent: rolled.dice.length,
+        roll: String(rolled.dice.reduce((sum, item) => sum + item, 0)),
+      }
+    return (
+      choices[person.id] ?? {
+        spent: person.dice_spent,
+        roll: person.dice_roll != null ? String(person.dice_roll) : '',
+      }
+    )
+  }
   // Own and DM-controlled characters preview the dice chosen here, before voting.
   const viewOf = (person: RestParticipant): RecoveryView | null => {
     if (!person.effect) return null
@@ -254,6 +271,11 @@ export function RestPanel({
           )}
           {open && short && person.controlled && effect?.can_rest && (
             <DiceChooser
+              campaignId={campaignId}
+              characterId={person.id}
+              rolled={rolledFor(person)}
+              rollsStatus={own.status}
+              onRetryRolls={own.retry}
               die={effect.hit_die}
               left={effect.dice_left_before}
               room={effect.max_hp - effect.hp_before}

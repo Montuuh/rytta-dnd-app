@@ -263,3 +263,169 @@
   font-size: var(--fs-meta);
   color: var(--success);
 }
+
+/* RYT-133 dice settings: a seal beside the title, then two groups of exclusive rows (a mark, the
+   choice and what it means for the table). The checked row takes the accent border; the input is
+   visually hidden, so its label is the 44px target and carries the focus ring. */
+.dice-set {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+}
+
+.dice-set-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dice-set-head h2 {
+  margin: 0;
+}
+
+.dice-set-head h2:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+.dice-set-seal {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 58px;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-raised));
+  clip-path: polygon(50% 0, 100% 13%, 93% 62%, 50% 100%, 7% 62%, 0 13%);
+}
+
+.dice-set-group {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dice-set-legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.dice-set-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: -1px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dice-set-option:first-of-type {
+  margin-top: 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.dice-set-option:last-of-type {
+  border-radius: 0 0 12px 12px;
+}
+
+.dice-set-option:has(input:checked) {
+  z-index: 1;
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-surface));
+}
+
+.dice-set-option:has(input:focus-visible) {
+  z-index: 2;
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+.dice-set-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 2px solid var(--app-muted);
+  border-radius: 50%;
+}
+
+.dice-set-mark::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  transform: scale(0);
+}
+
+.dice-set-option:has(input:checked) .dice-set-mark {
+  border-color: var(--app-accent);
+}
+
+.dice-set-option:has(input:checked) .dice-set-mark::after {
+  transform: scale(1);
+}
+
+.dice-set-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dice-set-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dice-set-current {
+  margin-inline-start: 8px;
+  font-size: var(--fs-tag);
+  font-weight: 500;
+  color: var(--app-muted);
+}
+
+.dice-set-hint {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.dice-set-saved:empty {
+  display: none;
+}
+
+.dice-set-saved {
+  font-size: var(--fs-meta);
+  color: var(--success);
+}
+
+.dice-set-summary {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dice-set-summary li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.dice-set-summary span {
+  color: var(--app-muted);
+}

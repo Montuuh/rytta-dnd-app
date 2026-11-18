@@ -107,6 +107,7 @@ export const panelEn = {
   'panel.field.death_failures': 'Death save failures',
   'panel.field.heroic_inspiration': 'Heroic Inspiration',
   'panel.field.conditions': 'Conditions',
+  'panel.field.concentration': 'Concentration',
   'panel.field.level': 'Level',
   'panel.field.max_hp': 'Hit point maximum',
   'panel.field.armor_class': 'Armor Class',

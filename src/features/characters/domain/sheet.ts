@@ -122,6 +122,39 @@ export const maxBuildBytes = 60_000
 export const buildFits = (build: Build) =>
   new TextEncoder().encode(JSON.stringify(build)).length <= maxBuildBytes
 
+/**
+ * What `set_character_vitals` accepts as a concentration marker (20261203120000): the text
+ * trimmed of Unicode spaces at both ends, 1 to 100 characters (code points), and none of the
+ * C0, DEL and C1 controls, the zero-width and bidi controls (U+200B to U+200F, U+202A to U+202E,
+ * U+2060 to U+2064, U+2066 to U+2069) or U+FEFF anywhere. Anything else is answered with
+ * `Invalid concentration`, so the client applies exactly this before it sends.
+ */
+export const concentrationMaxLength = 100
+/* eslint-disable no-control-regex */
+const forbiddenInMarker =
+  /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/gu
+/* eslint-enable no-control-regex */
+const unicodeSpaces =
+  /^[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+|[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+$/gu
+export const trimMarkerSpaces = (value: string) => value.replace(unicodeSpaces, '')
+export const hasForbiddenMarkerCharacters = (value: string) => {
+  forbiddenInMarker.lastIndex = 0
+  return forbiddenInMarker.test(value)
+}
+export const stripForbiddenMarkerCharacters = (value: string) =>
+  value.replace(forbiddenInMarker, '')
+const codePoints = (value: string) => Array.from(value).length
+/** The marker to send for `value`, or null when the server would refuse it. */
+export function markerFor(value: string): string | null {
+  const trimmed = trimMarkerSpaces(value)
+  return trimmed.length > 0 &&
+    codePoints(trimmed) <= concentrationMaxLength &&
+    !hasForbiddenMarkerCharacters(trimmed)
+    ? trimmed
+    : null
+}
+export const concentrationSchema = z.string().refine((value) => markerFor(value) !== null)
+
 const safeRevision = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
 // A never-saved sheet stores {}; expose it as "no build yet" rather than failing.
 const storedBuild = z.preprocess(
@@ -150,6 +183,12 @@ export const vitalsSchema = z.object({
   conditions: z.array(z.enum(conditionKeys)),
   slots_used: z.array(z.number().int().min(0).max(9)).length(9),
   tracker_uses: z.record(z.string().max(40), z.number().int().min(0).max(999)),
+  /** RYT-134: the spell the character concentrates on (the server keeps 1 to 100 characters). */
+  concentration: z
+    .string()
+    .max(100)
+    .nullish()
+    .transform((value) => value ?? null),
   revision: safeRevision,
 })
 export type Vitals = z.infer<typeof vitalsSchema>
@@ -188,7 +227,14 @@ export type SheetAction =
       complete: boolean
       requestId: string
     }
-  | { kind: 'vitals'; characterId: string; values: Vitals; requestId: string }
+  | {
+      kind: 'vitals'
+      characterId: string
+      values: Vitals
+      requestId: string
+      /** RYT-134: present only when this write sets (`value`) or clears (`null`) the marker. */
+      concentration?: { value: string | null }
+    }
   | { kind: 'rename'; characterId: string; name: string; requestId: string }
 
 /** RYT-070: whether the play lock applies to the caller (a Player whose character fights). */

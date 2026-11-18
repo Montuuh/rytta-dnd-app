@@ -71,13 +71,15 @@ import {
   speedBreakdown,
   spellcasting,
 } from '../../domain/rules'
-import type { Build, SheetBlock, SheetDraft, SheetRow, Vitals } from '../../domain/sheet'
+import type { CastPlan } from '../../domain/casting'
+import type { Build, SheetBlock, SheetDraft, SheetRow, Spell, Vitals } from '../../domain/sheet'
 import { skillKeys } from '../../domain/srd'
 import { CreationChooser } from '../creation/chooser'
 import { LevelUpPrompt } from '../level-up/level-up-prompt'
 import { LevelUpSheet, type LevelUpSnapshot } from '../level-up/level-up-sheet'
 import { useCharacterLabels } from '../labels'
 import { AbilityStrip } from './abilities'
+import { CastDialog, type CastGuard, type CastTarget } from './cast-dialog'
 import { ConditionsBlock, FeaturesBlock, NotesBlock, SkillsBlock, SpellsBlock } from './blocks'
 import { SheetHero } from './hero'
 import { HistoryBlock } from './history-block'
@@ -262,6 +264,8 @@ function SheetPanel({
   const campaign = useCampaign()
   const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
+  // RYT-134: a cast keeps its own error and pending state, shown inside its dialog.
+  const castAction = useSheetAction(campaign.id)
   const submit = useSubmitGuard()
   const resourceNames = useResourceNames()
   const trackerLabel = useTrackerLabel()
@@ -297,8 +301,17 @@ function SheetPanel({
     snapshot: LevelUpSnapshot
   } | null>(null)
   const [optimistic, setOptimistic] = useState<Vitals | null>(null)
+  const [cast, setCast] = useState<{ target: CastTarget; opened: boolean } | null>(null)
+  const [castNote, setCastNote] = useState<string | null>(null)
+  const [announce, setAnnounce] = useState('')
+  const castOpener = useRef<HTMLElement | null>(null)
+  const castBusy = useRef(false)
   const inFlight = useRef(false)
-  const queued = useRef<{ values: Vitals; done?: PanelNotice } | null>(null)
+  const queued = useRef<{
+    values: Vitals
+    done?: PanelNotice
+    marker?: { value: string | null }
+  } | null>(null)
   const latestRevision = useRef<number | null>(null)
   // Server play state caught up with the last write: drop the local copy.
   useEffect(() => {
@@ -438,17 +451,24 @@ function SheetPanel({
       // Mutation state exposes error feedback inside the panel alert.
     }
   }
-  const commit = (values: Vitals, done?: PanelNotice) => {
+  const commit: PanelProps['commit'] = (values, done, marker) => {
     setNotice(null)
     setOptimistic(values)
-    queued.current = { values, done }
+    if (marker) {
+      const named = marker.value ?? shownVitals.concentration ?? ''
+      setAnnounce(
+        t(marker.value === null ? 'cast.marker.ended' : 'cast.marker.set', { name: named }),
+      )
+    }
+    // A marker change still waiting for its turn is not lost when a newer tap replaces the write.
+    queued.current = { values, done, marker: marker ?? queued.current?.marker }
     pump()
   }
   // One play-state write at a time; the newest tap waits and is sent on the fresh revision, so
   // quick taps (two slots, three pips) all count. The sheet shows the tapped state meanwhile.
   const pump = () => {
-    if (inFlight.current || !queued.current) return
-    const { values, done } = queued.current
+    if (inFlight.current || castBusy.current || !queued.current) return
+    const { values, done, marker } = queued.current
     queued.current = null
     inFlight.current = true
     const revision = latestRevision.current ?? values.revision
@@ -458,6 +478,7 @@ function SheetPanel({
         characterId: character.id,
         values: { ...values, revision },
         requestId: newRequestId(),
+        ...(marker ? { concentration: marker } : {}),
       })
       .then((next) => {
         latestRevision.current = typeof next === 'number' ? next : revision + 1
@@ -472,6 +493,70 @@ function SheetPanel({
         inFlight.current = false
         pump()
       })
+  }
+  // RYT-134: a cast is one write that spends the slot and sets the marker together, on the
+  // revision this sheet last saw; the dialog repeats the same request id only to retry it.
+  const applyCast = async (plan: CastPlan, guard: CastGuard) => {
+    if (!cast) return
+    const { spell, name } = cast.target
+    const text = [
+      plan.spent !== null
+        ? t('cast.done.slot', { name, level: plan.spent })
+        : spell.level === 0
+          ? t('cast.done.cantrip', { name })
+          : t('cast.done.ritual', { name }),
+      plan.concentration ? t('cast.done.concentrating', { name: plan.concentration.value }) : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+    // Nothing to spend or mark (a ritual, a plain cantrip): there is nothing to write either.
+    if (plan.spent === null && !plan.concentration) {
+      setCastNote(text)
+      setAnnounce(text)
+      return
+    }
+    // A tap on a slot or a pip is still on its way: the cast waits for its revision.
+    if (inFlight.current || queued.current) throw new Error('busy')
+    const revision = latestRevision.current ?? vitals.revision
+    const key = JSON.stringify([revision, plan.vitals, plan.concentration])
+    castBusy.current = true
+    try {
+      const next = await castAction.mutateAsync({
+        kind: 'vitals',
+        characterId: character.id,
+        values: { ...plan.vitals, revision },
+        requestId: guard.idFor(key),
+        ...(plan.concentration ? { concentration: plan.concentration } : {}),
+      })
+      guard.done(key)
+      latestRevision.current = typeof next === 'number' ? next : revision + 1
+      setOptimistic({ ...plan.vitals, revision: latestRevision.current })
+      setNotice(null)
+      setCastNote(text)
+      setAnnounce(text)
+    } catch (error) {
+      // The sheet reloads after a stale answer; what the write started from is gone.
+      if (error instanceof Error && error.message === 'stale') {
+        latestRevision.current = null
+        setOptimistic(null)
+      }
+      throw error
+    } finally {
+      castBusy.current = false
+      pump()
+    }
+  }
+  const startCast = (spell: Spell, name: string, opener: HTMLElement) => {
+    castOpener.current = opener
+    if (spell.level === 0 && !spell.concentration) {
+      // Nothing to spend or mark: say so, so the tap is never silent.
+      const text = t('cast.done.cantrip', { name })
+      setCastNote(text)
+      setAnnounce(text)
+      return
+    }
+    castAction.reset()
+    setCast({ target: { spell, name }, opened: true })
   }
   const change: PanelProps['change'] = (update, done) => {
     if (draft) setDraft((current) => (current ? update(current) : current))
@@ -508,6 +593,8 @@ function SheetPanel({
     locked,
     levelLocked: !realDm,
     commit,
+    onCast: startCast,
+    castNote,
     change,
     onStartEdit: canEdit && !editing && !action.isPending ? startEditing : undefined,
   }
@@ -582,9 +669,13 @@ function SheetPanel({
         ? 'panel.lockedError'
         : action.error?.message === 'forbidden'
           ? 'sheet.forbidden'
-          : action.error?.message === 'level-up'
-            ? 'levelUp.error.useLevelUp'
-            : 'sheet.unavailable'
+          : action.error?.message === 'absent'
+            ? 'cast.error.absent'
+            : action.error?.message === 'concentration'
+              ? 'cast.error.concentration'
+              : action.error?.message === 'level-up'
+                ? 'levelUp.error.useLevelUp'
+                : 'sheet.unavailable'
   // What a save changed on class resources is said in the open sheet too, where the player is
   // looking, and lists what moved.
   const syncedNote =
@@ -685,6 +776,9 @@ function SheetPanel({
         )}
         <div aria-live="polite" className="visually-hidden-live">
           {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
+        </div>
+        <div aria-live="polite" className="visually-hidden-live">
+          {announce}
         </div>
         {levelUpDue && !editing && campaign.party_level !== null && (
           <LevelUpPrompt
@@ -807,7 +901,7 @@ function SheetPanel({
         )}
         <BlockSheet
           opened={open !== null}
-          closeOnEscape={libraryTab === null && !personalise}
+          closeOnEscape={libraryTab === null && !personalise && !cast?.opened}
           onClose={() => setOpen(null)}
           title={open ? tileTitle(open) : ''}
           alert={errorAlert}
@@ -860,6 +954,22 @@ function SheetPanel({
             characterId={character.id}
             characterName={character.name}
             snapshot={levelUp.snapshot}
+          />
+        )}
+        {cast && (
+          <CastDialog
+            opened={cast.opened}
+            target={cast.target}
+            build={build}
+            level={shown.level}
+            vitals={shownVitals}
+            onClose={() => setCast((current) => current && { ...current, opened: false })}
+            apply={applyCast}
+            returnTo={() =>
+              castOpener.current?.isConnected
+                ? castOpener.current
+                : document.querySelector<HTMLElement>('[data-cast-note]')
+            }
           />
         )}
         <RestRequestDialog

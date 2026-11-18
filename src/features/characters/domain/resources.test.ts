@@ -43,6 +43,7 @@ const vitals = (uses: Record<string, number> = {}): Vitals => ({
   conditions: [],
   slots_used: Array<number>(9).fill(0),
   tracker_uses: uses,
+  concentration: null,
   revision: 1,
 })
 const goliath = (level = 1, choice?: string) => {

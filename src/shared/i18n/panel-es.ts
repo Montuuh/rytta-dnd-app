@@ -110,6 +110,7 @@ export const panelEs = {
   'panel.field.death_failures': 'Fallos en salvaciones contra muerte',
   'panel.field.heroic_inspiration': 'Inspiración heroica',
   'panel.field.conditions': 'Condiciones',
+  'panel.field.concentration': 'Concentración',
   'panel.field.level': 'Nivel',
   'panel.field.max_hp': 'Puntos de golpe máximos',
   'panel.field.armor_class': 'Clase de armadura',

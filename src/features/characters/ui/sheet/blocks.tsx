@@ -30,6 +30,8 @@ import {
   Orbit,
   Plus,
   Trash2,
+  WandSparkles,
+  X,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -42,9 +44,16 @@ import {
   glossaryIds,
   useGlossaryName,
 } from '@/features/glossary'
+import { castAvailability, type CastAvailability } from '../../domain/casting'
 import { removeFeature } from '../../domain/progression'
 import { isClassKey, signed, skillBonus, spellcasting } from '../../domain/rules'
-import { featureSources, type Feature, type Spell } from '../../domain/sheet'
+import {
+  featureSources,
+  hasForbiddenMarkerCharacters,
+  markerFor,
+  type Feature,
+  type Spell,
+} from '../../domain/sheet'
 import {
   conditionKeys,
   skillAbilities,
@@ -354,12 +363,17 @@ function SpellRow({
   spell,
   editing,
   canEdit,
+  availability,
+  onCast,
   onPrepared,
   onRemove,
 }: {
   spell: Spell
   editing: boolean
   canEdit: boolean
+  /** What casting it can do now; null when this row offers no casting. */
+  availability: CastAvailability | null
+  onCast: (name: string, opener: HTMLElement) => void
   onPrepared: (prepared: boolean) => void
   onRemove: () => void
 }) {
@@ -371,7 +385,7 @@ function SpellRow({
     spell.ritual ? t('sheet.ritual') : null,
   ].filter(Boolean)
   return (
-    <li className="feature-row">
+    <li className="feature-row spell-row">
       <div className="feature-main">
         <Text fw={600} className="user-copy">
           {spell.ref ? <GlossaryTerm id={spell.ref}>{name}</GlossaryTerm> : name}
@@ -388,14 +402,39 @@ function SpellRow({
         )}
         {!spell.ref && <GlossaryNameLink name={spell.name} />}
       </div>
-      {spell.level > 0 && !editing && (
-        <Checkbox
-          size="md"
-          label={t('sheet.prepared')}
-          checked={spell.prepared}
-          disabled={!canEdit}
-          onChange={(event) => onPrepared(event.currentTarget.checked)}
-        />
+      {((spell.level > 0 && !editing) || availability) && (
+        <div className="spell-actions">
+          {spell.level > 0 && !editing && (
+            <Checkbox
+              size="md"
+              label={t('sheet.prepared')}
+              checked={spell.prepared}
+              disabled={!canEdit}
+              onChange={(event) => onPrepared(event.currentTarget.checked)}
+            />
+          )}
+          {availability && availability !== 'blocked' && (
+            <Button
+              variant="subtle"
+              className="cast-trigger"
+              aria-label={t('cast.actionNamed', { name })}
+              leftSection={<WandSparkles size={18} aria-hidden="true" />}
+              onClick={(event) => onCast(name, event.currentTarget)}
+            >
+              {t('cast.action')}
+            </Button>
+          )}
+          {availability === 'ritual-only' && (
+            <Text size="sm" c="dimmed" className="cast-why">
+              {t('cast.ritualOnly')}
+            </Text>
+          )}
+          {availability === 'blocked' && (
+            <Text size="sm" c="dimmed" className="cast-why">
+              {spell.level > 1 ? t('cast.noSlotsFrom', { level: spell.level }) : t('cast.noSlots')}
+            </Text>
+          )}
+        </div>
       )}
       {editing && (
         <ActionIcon
@@ -414,7 +453,7 @@ function SpellRow({
 
 export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
   const { t } = useTranslation()
-  const { build, level, editing, canEdit, change } = props
+  const { build, level, editing, canEdit, change, vitals, onCast, castNote } = props
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [spellLevel, setSpellLevel] = useState('0')
@@ -454,6 +493,12 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
           {t('sheet.notCaster')}
         </Text>
       )}
+      {castNote && (
+        <Text size="sm" className="cast-note" tabIndex={-1} data-cast-note>
+          {castNote}
+        </Text>
+      )}
+      {canEdit && !editing && <ConcentrationManual {...props} />}
       {build.spells.length === 0 && casting && (
         <Text size="sm" c="dimmed">
           {t('sheet.noSpells')}
@@ -475,6 +520,12 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
                   spell={spell}
                   editing={editing}
                   canEdit={canEdit}
+                  availability={
+                    canEdit && !editing && (spell.level === 0 || spell.prepared)
+                      ? castAvailability(spell, build, level, vitals)
+                      : null
+                  }
+                  onCast={(spellName, opener) => onCast(spell, spellName, opener)}
                   onPrepared={(prepared) =>
                     setSpells((spells) =>
                       spells.map((item) => (item.id === spell.id ? { ...item, prepared } : item)),
@@ -560,6 +611,69 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
         </Stack>
       )}
     </Stack>
+  )
+}
+
+/** RYT-134: the concentration marker by hand, for a ruling at the table. Casting sets it on its
+ * own; this ends it or marks it without casting. */
+function ConcentrationManual({ vitals, commit }: PanelProps) {
+  const { t } = useTranslation()
+  const [text, setText] = useState('')
+  // A pasted invisible or control character is refused in the field, never sent to the server.
+  const invalid = hasForbiddenMarkerCharacters(text)
+  const marker = invalid ? null : markerFor(text)
+  const set = () => {
+    if (!marker) return
+    commit({ ...vitals, concentration: marker }, undefined, { value: marker })
+    setText('')
+  }
+  return (
+    <section aria-labelledby="cast-manual-title" className="cast-manual">
+      <Text fw={600} id="cast-manual-title">
+        {t('cast.manual.heading')}
+      </Text>
+      {vitals.concentration ? (
+        <div className="cast-manual-current">
+          <Text className="user-copy">{vitals.concentration}</Text>
+          <Button
+            variant="default"
+            leftSection={<X size={16} aria-hidden="true" />}
+            aria-label={t('cast.marker.endNamed', { name: vitals.concentration })}
+            onClick={() => commit({ ...vitals, concentration: null }, undefined, { value: null })}
+          >
+            {t('cast.marker.end')}
+          </Button>
+        </div>
+      ) : (
+        <Text size="sm" c="dimmed">
+          {t('cast.manual.none')}
+        </Text>
+      )}
+      <form
+        className="cast-manual-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          set()
+        }}
+      >
+        <TextInput
+          label={t('cast.manual.label')}
+          description={t('cast.manual.hint')}
+          maxLength={100}
+          value={text}
+          error={invalid ? t('cast.manual.invalid') : undefined}
+          onChange={(event) => setText(event.currentTarget.value)}
+        />
+        <Button
+          type="submit"
+          variant="default"
+          aria-disabled={!marker || undefined}
+          aria-label={t('cast.manual.setNamed')}
+        >
+          {t('cast.manual.set')}
+        </Button>
+      </form>
+    </section>
   )
 }
 

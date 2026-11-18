@@ -24,10 +24,12 @@ import { viewerEn } from './viewer-en'
 import { legalEn } from './legal-en'
 import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
+import { castEn } from './cast-en'
 export const en = {
   ...legalEn,
   ...diceEn,
   ...levelupEn,
+  ...castEn,
   ...identityEn,
   ...charactersEn,
   ...sheetEn,

@@ -70,3 +70,36 @@ describe('the failed roll alert is legible in every theme', () => {
       expect(contrast(tokens.text, tokens.surface), `${id} message`).toBeGreaterThanOrEqual(4.5)
     })
 })
+
+// RYT-134: the cast dialog's alert and the concentration marker. The alert takes the plain surface
+// with the error token for its title and the text token for its message; the marker sits on the
+// plain surface too, with the muted token for its label and the choice details.
+const panel = readFileSync(
+  new URL('../../src/features/characters/ui/sheet/panel.css', import.meta.url),
+  'utf8',
+)
+describe('the casting surfaces are legible in every theme', () => {
+  it('draws the cast alert and the marker on the plain surface', () => {
+    const alert = /\.cast-alert\.mantine-Alert-root\s*\{([^}]*)\}/.exec(panel)![1]!
+    expect(alert).toMatch(/--alert-bg:\s*var\(--app-surface\)/)
+    expect(alert).toMatch(/background-color:\s*var\(--app-surface\)/)
+    expect(panel).toMatch(/\.cast-alert \.mantine-Alert-title\s*\{[^}]*color:\s*var\(--danger\)/)
+    expect(panel).toMatch(
+      /\.cast-alert \.mantine-Alert-message\s*\{[^}]*color:\s*var\(--app-text\)/,
+    )
+    const marker = /\.sheet-concentration\s*\{([^}]*)\}/.exec(panel)![1]!
+    expect(marker).toMatch(/background:\s*var\(--app-surface\)/)
+    expect(panel).toMatch(/\.sheet-concentration-label\s*\{[^}]*color:\s*var\(--app-muted\)/)
+    expect(panel).toMatch(/\.cast-option-detail\s*\{[^}]*color:\s*var\(--app-muted\)/)
+    expect(panel).toMatch(/\.cast-option\s*\{[^}]*background:\s*var\(--app-surface\)/)
+  })
+  for (const id of classThemeIds)
+    it(`title, message, label and choice text read at 4.5:1 on ${id}`, () => {
+      const { scheme, tokens } = classThemes[id]
+      expect(contrast(danger(scheme), tokens.surface), `${id} title`).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(tokens.text, tokens.surface), `${id} message`).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(tokens.muted, tokens.surface), `${id} label`).toBeGreaterThanOrEqual(4.5)
+      // The accent edge and the icon are decoration beside text, but still 3:1 for non-text.
+      expect(contrast(tokens.accent, tokens.surface), `${id} accent`).toBeGreaterThanOrEqual(3)
+    })
+})

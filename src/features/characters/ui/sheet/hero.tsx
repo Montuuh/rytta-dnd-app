@@ -12,7 +12,7 @@ import {
   Tooltip,
   UnstyledButton,
 } from '@mantine/core'
-import { Heart, Pencil, Shield, Sparkles, Swords } from 'lucide-react'
+import { Focus, Heart, Pencil, Shield, Sparkles, Swords, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm } from '@/features/glossary'
 import { PortraitPlate } from '@/features/inventory'
@@ -317,6 +317,26 @@ export function SheetHero(props: HeroProps) {
             )
           })}
         </section>
+      )}
+      {vitals.concentration && (
+        <div className="sheet-concentration">
+          <Focus size={20} aria-hidden="true" className="sheet-concentration-icon" />
+          <p className="sheet-concentration-text">
+            <span className="sheet-concentration-label">{t('cast.marker.label')}</span>
+            <span className="sheet-concentration-name user-copy">{vitals.concentration}</span>
+          </p>
+          {canEdit && !editing && (
+            <Button
+              variant="subtle"
+              className="sheet-concentration-end"
+              leftSection={<X size={16} aria-hidden="true" />}
+              aria-label={t('cast.marker.endNamed', { name: vitals.concentration })}
+              onClick={() => commit({ ...vitals, concentration: null }, undefined, { value: null })}
+            >
+              {t('cast.marker.end')}
+            </Button>
+          )}
+        </div>
       )}
       {!editing && (
         <dl className="sheet-statline">

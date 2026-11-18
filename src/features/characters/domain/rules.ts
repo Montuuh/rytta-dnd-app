@@ -596,7 +596,8 @@ export function restRecovery(
 }
 
 /** 2024 rests: a long rest restores HP, all hit dice, slots and uses; a short rest restores
- * short-rest uses and pact slots. Exhaustion stays a DM-controlled resource. */
+ * short-rest uses and pact slots. A long rest also ends concentration (RYT-134).
+ * Exhaustion stays a DM-controlled resource. */
 export function applyRest(vitals: Vitals, build: Build, maxHp: number, kind: 'short' | 'long') {
   const tracker_uses = Object.fromEntries(
     Object.entries(vitals.tracker_uses).filter(([trackerId]) => {
@@ -620,5 +621,7 @@ export function applyRest(vitals: Vitals, build: Build, maxHp: number, kind: 'sh
     death_failures: 0,
     slots_used: Array<number>(9).fill(0),
     tracker_uses,
+    // The server's long rest ends the marker; a short rest leaves it.
+    concentration: null,
   }
 }

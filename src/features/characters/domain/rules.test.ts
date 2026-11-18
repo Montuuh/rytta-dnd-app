@@ -42,6 +42,7 @@ const vitals: Vitals = {
   conditions: [],
   slots_used: [2, 1, 0, 0, 0, 0, 0, 0, 0],
   tracker_uses: { short: 1, long: 2, none: 1 },
+  concentration: null,
   revision: 4,
 }
 
@@ -119,6 +120,9 @@ describe('play state', () => {
         { id: 'none', name: 'N', max: 2, reset: 'none' as const },
       ],
     }
+    const marked = { ...vitals, concentration: 'Bless' }
+    expect(applyRest(marked, build, 20, 'short').concentration).toBe('Bless')
+    expect(applyRest(marked, build, 20, 'long').concentration).toBeNull()
     const short = applyRest(vitals, build, 20, 'short')
     expect(short.tracker_uses).toEqual({ long: 2, none: 1 })
     expect(short.slots_used).toEqual(Array(9).fill(0))

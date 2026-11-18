@@ -71,6 +71,8 @@ const overviewColumns = [
   'exhaustion',
   'conditions',
 ].sort()
+/** Characters created in the same instant are listed by id, so tests compare them sorted. */
+const sameInstant = (...ids: string[]) => [...ids].sort()
 const claimableColumns = [
   'id',
   'name',
@@ -481,7 +483,9 @@ describe('RYT-096 free character list and portraits', () => {
     await asUser(dm)
     await pub.absent(s.c, s.juno, false)
     await asUser(player)
-    expect((await pub.claimable(s.c)).map((row) => row.id)).toEqual([s.ilsa, s.juno])
+    expect((await pub.claimable(s.c)).map((row) => row.id).sort()).toEqual(
+      sameInstant(s.ilsa, s.juno),
+    )
     // A Player of another campaign lists only that campaign's free characters.
     await asUser(otherPlayer)
     expect((await pub.claimable(s.other)).map((row) => row.id)).toEqual([s.foreign])
@@ -850,7 +854,9 @@ describe('RYT-096 only characters that never had a Player are free', () => {
     for (const ch of [s.arin, s.bea])
       expect(await pub.character(ch)).toEqual({ user_id: null, is_active: true })
     await asUser(newcomer)
-    expect((await pub.claimable(s.c)).map((row) => row.id)).toEqual([s.ilsa, s.juno])
+    expect((await pub.claimable(s.c)).map((row) => row.id).sort()).toEqual(
+      sameInstant(s.ilsa, s.juno),
+    )
     for (const ch of [s.arin, s.bea]) {
       expect(await visible(paths.get(ch)!)).toBe(false)
       await expect(pub.claim(s.c, ch)).rejects.toMatchObject({
@@ -901,7 +907,9 @@ describe('RYT-096 only characters that never had a Player are free', () => {
     await asUser(dm)
     await db.query('select public.revoke_campaign_invitation($1)', [invitation])
     await asUser(player)
-    expect((await pub.claimable(s.c)).map((row) => row.id)).toEqual([s.ilsa, s.juno])
+    expect((await pub.claimable(s.c)).map((row) => row.id).sort()).toEqual(
+      sameInstant(s.ilsa, s.juno),
+    )
     expect(await visible(path)).toBe(true)
     // The recipient declining frees it as well.
     await asUser(dm)
@@ -911,7 +919,9 @@ describe('RYT-096 only characters that never had a Player are free', () => {
     await asUser(peer)
     await db.query('select public.respond_campaign_invitation($1,false)', [second])
     await asUser(player)
-    expect((await pub.claimable(s.c)).map((row) => row.id)).toEqual([s.ilsa, s.juno])
+    expect((await pub.claimable(s.c)).map((row) => row.id).sort()).toEqual(
+      sameInstant(s.ilsa, s.juno),
+    )
     // An expired invitation can no longer be accepted, so it reserves nothing.
     await asUser(dm)
     const third = await pub.inviteCharacter(s.c, s.juno, 'late@example.com')
@@ -924,7 +934,9 @@ describe('RYT-096 only characters that never had a Player are free', () => {
       [third],
     )
     await asUser(player)
-    expect((await pub.claimable(s.c)).map((row) => row.id)).toEqual([s.ilsa, s.juno])
+    expect((await pub.claimable(s.c)).map((row) => row.id).sort()).toEqual(
+      sameInstant(s.ilsa, s.juno),
+    )
     expect(await pub.claim(s.c, s.juno)).toBe(s.juno)
   })
 })

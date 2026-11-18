@@ -443,8 +443,8 @@ test('RYT-131 the plate moves by pointer and keys, shrinks, and keeps the choice
   await expect(turn).toHaveAttribute('data-corner', 'bottom-left')
 
   // Pointer: dragging follows the pointer and snaps to the corner it is released in.
-  const handle = (await move.boundingBox())!
-  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2)
+  // hover waits until the plate has stopped moving to its new corner, so the press lands on the handle.
+  await move.hover()
   await page.mouse.down()
   await page.mouse.move(900, 120, { steps: 6 })
   await expect(turn).toHaveClass(/is-dragging/)

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { partyLevelSchema } from './settings'
 
 export const campaignModuleKeys = [
   'party',
@@ -22,6 +23,8 @@ export const campaignSchema = z.object({
   created_at: z.iso.datetime({ offset: true }),
   role: z.enum(['dm', 'player']),
   player_modules: z.array(z.string()).default(['party']),
+  /** RYT-130: the level the DM set for the party; null until set (or before the migration). */
+  party_level: partyLevelSchema.nullable().default(null),
 })
 export type Campaign = z.infer<typeof campaignSchema>
 

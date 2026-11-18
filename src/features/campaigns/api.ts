@@ -3,6 +3,8 @@ import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
 import { slowPollMs } from '@/shared/lib/live-poll'
 import type { CampaignRepository } from './domain/campaign'
+import { setPartyLevel } from './data/settings-repository'
+import { CampaignSettingsError } from './domain/settings'
 
 async function repository(): Promise<CampaignRepository> {
   if (config.VITE_DATA_MODE === 'demo')
@@ -106,6 +108,30 @@ export function useCampaignAction() {
           predicate: (q) =>
             q.queryKey[0] === 'private' && q.queryKey[1] === userId && q.queryKey[2] === 'campaign',
         })
+      await client.invalidateQueries({ queryKey: ['private', userId] })
+    },
+  })
+}
+
+/**
+ * RYT-130: the DM sets (or clears) the party level. Each intent carries one request id; pressing
+ * the retry with the same id never applies twice. Campaigns, characters and the audit trail
+ * reload, so the Players' prompt and the DM's count follow.
+ */
+export function useSetPartyLevel(campaignId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const client = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (input: { level: number | null; requestId: string }) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new CampaignSettingsError('unavailable')
+      return setPartyLevel(campaignId, input.level, input.requestId)
+    },
+    onSuccess: async () => {
+      if (controller?.getSnapshot().user?.id !== userId) return
       await client.invalidateQueries({ queryKey: ['private', userId] })
     },
   })

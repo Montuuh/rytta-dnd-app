@@ -5,7 +5,8 @@ export function auditFamily(event: AuditEvent): AuditEventFamily {
   if (event.kind.startsWith('character_resources') || event.kind === 'resources_updated')
     return 'resources'
   if (event.kind.startsWith('character_vitals')) return 'vitals'
-  if (event.kind.startsWith('character_sheets')) return 'sheet'
+  // RYT-130: a level-up records the level and maximum hit points before and after.
+  if (event.kind.startsWith('character_sheets') || event.kind === 'level_up') return 'sheet'
   return 'character'
 }
 

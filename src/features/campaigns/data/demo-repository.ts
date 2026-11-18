@@ -10,6 +10,7 @@ export const demoCampaignRepository: CampaignRepository = {
         created_at: '2026-10-27T00:00:00Z',
         role: 'dm',
         player_modules: ['party'],
+        party_level: null,
       },
     ]
   },

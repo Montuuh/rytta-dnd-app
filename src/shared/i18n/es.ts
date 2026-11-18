@@ -23,9 +23,11 @@ import { accountEs } from './account-es'
 import { libraryEs } from './library-es'
 import { viewerEs } from './viewer-es'
 import { legalEs } from './legal-es'
+import { levelupEs } from './levelup-es'
 
 export const es = {
   ...legalEs,
+  ...levelupEs,
   ...identityEs,
   ...charactersEs,
   ...sheetEs,

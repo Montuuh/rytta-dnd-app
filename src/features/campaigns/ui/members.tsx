@@ -56,6 +56,7 @@ import { LeaveCampaignDialog } from './leave'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { FirstSession } from './first-session'
+import { PartyLevelControl } from './party-level'
 import './dm-center.css'
 
 type Confirmation = { action: CampaignAction; message: string }
@@ -70,11 +71,17 @@ export function CampaignMembers({
   itemsPanel,
   bestiaryPanel,
   characterCount,
+  partyBelow,
+  partySuggested,
 }: {
   itemsPanel?: ReactNode
   bestiaryPanel?: ReactNode
   /** Characters in play, once loaded by the page; drives the first-session checklist. */
   characterCount?: number
+  /** Finished characters below the party level, once the party list has loaded (RYT-130). */
+  partyBelow?: number
+  /** The highest level among finished sheets: where the party level starts while unset. */
+  partySuggested?: number
 } = {}) {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
@@ -285,6 +292,12 @@ export function CampaignMembers({
                         }}
                       />
                     )}
+                    <PartyLevelControl
+                      campaignId={campaign.id}
+                      current={campaign.party_level}
+                      below={partyBelow}
+                      suggested={partySuggested}
+                    />
                     <section aria-label={t('dm.panelMembers')}>
                       <Stack gap="sm">
                         <Group justify="space-between" align="center" wrap="nowrap" gap="sm">

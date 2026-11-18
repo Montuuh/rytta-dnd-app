@@ -5,6 +5,7 @@ export {
   membersQuery,
   sentInvitationsQuery,
   useCampaignAction,
+  useSetPartyLevel,
 } from './api'
 export { CampaignAccessError } from './domain/errors'
 export type { AuditEvent, Campaign, CampaignModuleKey, CampaignRepository } from './domain/campaign'

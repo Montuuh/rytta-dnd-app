@@ -19,6 +19,8 @@ export const partyMemberSchema = z.object({
   armor_class: z.number().int().nullable(),
   exhaustion: z.number().int().nullable(),
   conditions: z.array(z.enum(conditionKeys)).nullable(),
+  /** RYT-130: a finished sheet below the party level the DM set. */
+  below_party_level: z.boolean().optional(),
 })
 export type PartyMember = z.infer<typeof partyMemberSchema>
 

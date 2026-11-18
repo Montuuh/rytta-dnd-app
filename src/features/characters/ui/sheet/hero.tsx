@@ -35,6 +35,7 @@ import { deathState, toneOf } from './hp-tone'
 import { Pips } from './pips'
 import { HpDialog, type HpMode } from './vitals-panel'
 import { Stepper } from './widgets'
+import { LockedLevel } from '../level-up/locked-level'
 import type { PanelProps } from './panel-types'
 import type { Vitals } from '../../domain/sheet'
 
@@ -219,7 +220,7 @@ export function SheetHero(props: HeroProps) {
         emblem={classEmblem(build.classKey)}
       >
         <div className="sheet-plate-identity">
-          <Title order={1} id="sheet-name" className="user-copy">
+          <Title order={1} id="sheet-name" className="user-copy" tabIndex={-1}>
             {props.name}
           </Title>
           <Text className="sheet-plate-sub user-copy preserve-lines">{props.subtitle}</Text>
@@ -807,14 +808,18 @@ function EditStats(props: HeroProps) {
         <div className="panel-stat" data-key="level">
           <dt>{t('wizard.level')}</dt>
           <dd>
-            <Stepper
-              label={t('wizard.level')}
-              name={t('panel.levelName')}
-              value={level}
-              min={1}
-              max={20}
-              onChange={(value) => props.change((draft) => ({ ...draft, level: value }))}
-            />
+            {props.levelLocked ? (
+              <LockedLevel level={level} />
+            ) : (
+              <Stepper
+                label={t('wizard.level')}
+                name={t('panel.levelName')}
+                value={level}
+                min={1}
+                max={20}
+                onChange={(value) => props.change((draft) => ({ ...draft, level: value }))}
+              />
+            )}
           </dd>
         </div>
       </dl>

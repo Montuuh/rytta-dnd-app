@@ -11,7 +11,7 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Check,
@@ -25,7 +25,13 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
+import {
+  campaignsQuery,
+  isBelowPartyLevel,
+  useCampaign,
+  useCampaignView,
+  useIsRealDm,
+} from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
 import {
   attacks,
@@ -59,6 +65,8 @@ import {
 import type { Build, SheetBlock, SheetDraft, SheetRow, Vitals } from '../../domain/sheet'
 import { skillKeys } from '../../domain/srd'
 import { CreationChooser } from '../creation/chooser'
+import { LevelUpPrompt } from '../level-up/level-up-prompt'
+import { LevelUpSheet, type LevelUpSnapshot } from '../level-up/level-up-sheet'
 import { useCharacterLabels } from '../labels'
 import { AbilityStrip } from './abilities'
 import { ConditionsBlock, FeaturesBlock, NotesBlock, SkillsBlock, SpellsBlock } from './blocks'
@@ -81,6 +89,7 @@ export function CharacterSheetPage() {
   const realDm = useIsRealDm()
   const { playerPreview, previewUserId } = useCampaignView()
   const userId = state.user!.id
+  const client = useQueryClient()
   const query = useQuery(sheetQuery(userId, campaign.id, characterId))
   const lock = useQuery({
     ...playLockQuery(userId, campaign.id, characterId),
@@ -191,7 +200,11 @@ export function CharacterSheetPage() {
       exhaustion={exhaustion}
       characterPath={characterPath}
       refresh={{
-        run: () => void query.refetch(),
+        // The party level may have moved too: the level-up prompt follows it.
+        run: () => {
+          void query.refetch()
+          void client.invalidateQueries({ queryKey: campaignsQuery(userId).queryKey })
+        },
         fetching: query.isFetching,
         updatedAt: query.dataUpdatedAt,
       }}
@@ -238,6 +251,7 @@ function SheetPanel({
   const { t } = useTranslation()
   const { state } = useAuth()
   const campaign = useCampaign()
+  const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
   const submit = useSubmitGuard()
   const resourceNames = useResourceNames()
@@ -262,6 +276,11 @@ function SheetPanel({
   const [leaving, setLeaving] = useState<string | null>(null)
   const [cancelAsk, setCancelAsk] = useState(false)
   const [syncInfo, setSyncInfo] = useState<string | null>(null)
+  const [levelUp, setLevelUp] = useState<{
+    token: number
+    opened: boolean
+    snapshot: LevelUpSnapshot
+  } | null>(null)
   const [optimistic, setOptimistic] = useState<Vitals | null>(null)
   const inFlight = useRef(false)
   const queued = useRef<{ values: Vitals; done?: PanelNotice } | null>(null)
@@ -279,6 +298,20 @@ function SheetPanel({
   const pencil = useRef<HTMLButtonElement>(null)
   const editHeading = useRef<HTMLParagraphElement>(null)
   const editing = draft !== null
+  // RYT-130: the DM raised the party level above this finished character; its Player levels up.
+  const levelUpDue =
+    !realDm && ownSheet && canEdit && isBelowPartyLevel(sheet.level, campaign.party_level)
+  const openLevelUp = () =>
+    setLevelUp((previous) => ({
+      token: (previous?.token ?? 0) + 1,
+      opened: true,
+      snapshot: {
+        level: sheet.level,
+        maxHp: sheet.max_hp,
+        build: savedBuild,
+        revision: sheet.revision,
+      },
+    }))
   const saved = fromSheet(sheet, savedBuild, character.name)
   const shown = draft ?? saved
   const build = shown.build
@@ -458,6 +491,7 @@ function SheetPanel({
     editing,
     pending: action.isPending,
     locked,
+    levelLocked: !realDm,
     commit,
     change,
     onStartEdit: canEdit && !editing && !action.isPending ? startEditing : undefined,
@@ -508,7 +542,9 @@ function SheetPanel({
         ? 'panel.lockedError'
         : action.error?.message === 'forbidden'
           ? 'sheet.forbidden'
-          : 'sheet.unavailable'
+          : action.error?.message === 'level-up'
+            ? 'levelUp.error.useLevelUp'
+            : 'sheet.unavailable'
   // What a save changed on class resources is said in the open sheet too, where the player is
   // looking, and lists what moved.
   const syncedNote =
@@ -609,6 +645,15 @@ function SheetPanel({
       <div aria-live="polite" className="visually-hidden-live">
         {action.isPending ? t('sheet.saving') : notice ? t(notice) : ''}
       </div>
+      {levelUpDue && !editing && campaign.party_level !== null && (
+        <LevelUpPrompt
+          name={character.name}
+          level={sheet.level}
+          party={campaign.party_level}
+          locked={locked}
+          onStart={openLevelUp}
+        />
+      )}
       <div className="panel-layout">
         <div className="panel-main">
           <SheetHero
@@ -760,6 +805,18 @@ function SheetPanel({
           stopEditing()
         }}
       />
+      {levelUp && (
+        <LevelUpSheet
+          key={levelUp.token}
+          opened={levelUp.opened}
+          onClose={() => setLevelUp((current) => current && { ...current, opened: false })}
+          onAgain={levelUpDue && !locked ? openLevelUp : null}
+          campaignId={campaign.id}
+          characterId={character.id}
+          characterName={character.name}
+          snapshot={levelUp.snapshot}
+        />
+      )}
       <RestRequestDialog
         kind={rest}
         preview={restPreview}

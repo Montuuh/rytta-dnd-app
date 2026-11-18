@@ -47,6 +47,8 @@ const liveColumns = [
   'conditions',
   // RYT-130: computed from the party level (20261130120000).
   'below_party_level',
+  // RYT-134: the concentration marker, under the rule of conditions (20261203120000).
+  'concentration',
 ].sort()
 
 async function setup(schema = 'public') {
@@ -148,9 +150,9 @@ describe('RYT-031 party live sharing', () => {
       conditions: ['poisoned'],
     })
     // Random UUIDs can contain "500"; check every value except the ids, and the gold amount
-    // only as a whole number.
+    // only as a whole number. Rations as a whole word: "concentration" is a live field (RYT-134).
     const values = JSON.stringify(rows.map(({ id: _id, ...live }) => live))
-    expect(values).not.toMatch(/gold|water|ration|secret plan|\b500\b/)
+    expect(values).not.toMatch(/gold|water|\brations?\b|secret plan|\b500\b/)
     expect(rows.find((row) => row.id === Arin)!.is_own).toBe(true)
     // Base policies stay owner-only.
     expect(
@@ -180,6 +182,7 @@ describe('RYT-031 party live sharing', () => {
       armor_class: null,
       exhaustion: null,
       conditions: null,
+      concentration: null,
     })
     await asUser(hidden)
     const own = await overview(c)

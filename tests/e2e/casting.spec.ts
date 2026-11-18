@@ -326,9 +326,10 @@ test('RYT-134 concentration: the slot and the marker are one request; another sp
     .getByRole('button', { name: 'Terminar la concentración en Inmovilizar persona' })
     .click()
   await expect(marker).toHaveCount(0)
-  expect(f.vitalsCalls).toHaveLength(4)
+  // The marker leaves at once; its write follows when the cast's own write has finished.
+  await expect.poll(() => f.vitalsCalls.length).toBe(4)
   expect(f.vitalsCalls[3]).toMatchObject({ change_concentration: true, new_concentration: null })
-  expect(f.vitalsOf(characterId)!.concentration).toBeNull()
+  await expect.poll(() => f.vitalsOf(characterId)!.concentration).toBeNull()
 })
 
 test('RYT-134 manual rulings: slots by hand, the marker by hand, and a pasted invisible character is refused in the field', async ({

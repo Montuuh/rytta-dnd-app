@@ -13,6 +13,23 @@ export function orderLayout(count: number, width: number) {
   return { columns, rows: Math.max(1, Math.ceil(n / columns)) }
 }
 
+/** What a name's box reports when it is set at the normal size without breaking inside words. */
+export type NameFit = {
+  /** The column the name has, and the width its words need when none is broken. */
+  clientWidth: number
+  scrollWidth: number
+  /** The height of the whole name (no line limit) and of one line of it. */
+  height: number
+  lineHeight: number
+}
+
+/**
+ * A name takes the smaller type only when it does not fit at the normal size: a word wider than the
+ * column, or more than the two lines the row allows. One pixel of rounding is not an overflow.
+ */
+export const nameOverflows = (fit: NameFit) =>
+  fit.scrollWidth > fit.clientWidth + 1 || fit.height > fit.lineHeight * 2 + 1
+
 /** Who acts and when, as far as the table projection says (hidden turns carry no name). */
 export type TurnMark = {
   activeId: string | null

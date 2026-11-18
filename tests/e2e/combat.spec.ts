@@ -911,7 +911,7 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await evidence(page, info.project.name, 'player-initiative-150', 'RYT-042')
   await page.evaluate(() => (document.documentElement.style.fontSize = ''))
-  await entry.getByRole('button', { name: 'Cancelar' }).click()
+  await entry.getByRole('button', { name: 'Cerrar' }).click()
   await expect(edit).toBeFocused()
 
   // The fight starts: the own total is locked and the turn banner takes over.

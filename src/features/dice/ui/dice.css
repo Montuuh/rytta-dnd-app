@@ -73,6 +73,11 @@
   bottom: 0;
   z-index: 2;
   margin-top: 12px;
+  /* At large text a failed roll (reason and retry) would cover most of the sheet: the card is never
+     taller than a third of the screen and scrolls inside itself past that (RYT-135). */
+  max-height: 33dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .roll-result[data-phase='failed'] {
@@ -154,6 +159,17 @@
 
 .roll-result-retry {
   margin-top: 8px;
+}
+
+/* In the sheet's capped card the retry sits right under the reason's title, above the long text, so the
+   roll's name, the title and the retry are all in view without scrolling at large text. */
+.roll-result[data-where='sheet'] .roll-result-alert .mantine-Alert-message {
+  display: flex;
+  flex-direction: column;
+}
+.roll-result[data-where='sheet'] .roll-result-alert .roll-result-retry {
+  order: -1;
+  margin: 0 0 8px;
 }
 
 .roll-result-retry button {

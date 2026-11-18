@@ -1,5 +1,5 @@
 import { PlayerEffects } from './visibility'
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Button, Drawer, Switch } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
@@ -39,11 +39,14 @@ import { TabletopEditor } from './editor'
 import { TabletopLibrary } from './library'
 import { MeasureTape, PingRipple, StoryPlate } from './overlays'
 import { U } from './palette'
-import { PhoneStrip, PhoneTools } from './phone-map'
+import { PhoneChip, PhoneStrip, PhoneTools } from './phone-map'
 import { TableScreen } from './table-screen'
 import { useTurnAnnouncement } from './use-turn-announcement'
 import { useBoardView } from './viewport'
 import './tabletop.css'
+
+/** How far one arrow key moves the map, in screen pixels. */
+const panStep = 96
 
 function HiddenTabletop() {
   const { t } = useTranslation()
@@ -248,20 +251,27 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
     document.documentElement.classList.add('tt-pm-mode')
     return () => document.documentElement.classList.remove('tt-pm-mode')
   }, [mapPage])
+  const keysId = useId()
   const world = scene && view && (
     <div
       className={`tt-viewport ${measuring ? 'tool-measure' : 'tool-select'}`}
       {...board.bind}
-      role={measuring || phone ? 'application' : 'img'}
-      tabIndex={measuring || phone ? 0 : undefined}
+      role="application"
+      tabIndex={0}
+      aria-describedby={keysId}
+      aria-keyshortcuts={
+        measuring
+          ? 'Plus - 0 ArrowUp ArrowDown ArrowLeft ArrowRight Enter Escape'
+          : 'Plus - 0 ArrowUp ArrowDown ArrowLeft ArrowRight'
+      }
       onFocus={(e) => {
         // The keyboard cursor is for the keyboard: a tap that focuses the board does not draw it.
         if (measuring && e.currentTarget.matches(':focus-visible'))
           setCursor((p) => p ?? cellCenter(board.center()))
       }}
       onKeyDown={(e) => {
-        // The phone map zooms from the keyboard like the editor does: + and - step, 0 fits the map.
-        if (phone && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // The map zooms from the keyboard like the editor does: + and - step, 0 fits the map.
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
           const step =
             e.key === '+' || e.key === '=' ? 1.25 : e.key === '-' || e.key === '_' ? 0.8 : 0
           if (step || e.key === '0') {
@@ -271,10 +281,16 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             return
           }
         }
-        if (!measuring) return
-        const at = cursor ?? cellCenter(board.center())
         const dx = Number(e.key === 'ArrowRight') - Number(e.key === 'ArrowLeft'),
           dy = Number(e.key === 'ArrowDown') - Number(e.key === 'ArrowUp')
+        if (!measuring) {
+          // Outside the measure the arrows pan the map, a little under a finger's width each.
+          if (!dx && !dy) return
+          board.panBy(-dx * panStep, -dy * panStep)
+          e.preventDefault()
+          return
+        }
+        const at = cursor ?? cellCenter(board.center())
         if (dx || dy) {
           const next: Point = [
             clamp(at[0] + dx, 0.5, scene.cols - 0.5),
@@ -297,6 +313,9 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
       }}
       aria-label={t('tabletop.player.board', { name: scene.name })}
     >
+      <span id={keysId} className="visually-hidden" aria-hidden="true">
+        {t(measuring ? 'tabletop.player.boardKeysMeasure' : 'tabletop.player.boardKeys')}
+      </span>
       <div
         className="tt-world-wrap"
         style={
@@ -312,6 +331,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
           scene={scene}
           items={view.items}
           mode="player"
+          phone={phone}
           combatants={combatants}
           overlay={
             <>
@@ -404,20 +424,11 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             effectsRef={effectsKey}
           />
           {measuring && (
-            <div className="tt-pm-chip">
-              {shown.length > 1 ? (
-                <span className="tt-readout-feet" aria-live="polite">
-                  {t('tabletop.measure.feet', { count: route.feet })}
-                </span>
-              ) : (
-                <span>{t('tabletop.phone.measureHint')}</span>
-              )}
-              {points.length > 0 && (
-                <button type="button" className="tt-text-action" onClick={() => setPoints([])}>
-                  {t('tabletop.measure.clear')}
-                </button>
-              )}
-            </div>
+            <PhoneChip
+              feet={shown.length > 1 ? route.feet : null}
+              canClear={points.length > 0}
+              onClear={() => setPoints([])}
+            />
           )}
         </div>
         <div className="visually-hidden" aria-live="polite" aria-atomic="true">

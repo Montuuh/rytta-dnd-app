@@ -273,7 +273,7 @@ test('RYT-134 concentration: the slot and the marker are one request; another sp
     new_concentration: 'Bendición',
   })
   await expect(sheet.locator('[data-cast-note]')).toHaveText(
-    'Lanzaste Bendición con un espacio de nivel 1. Quedan 3 de 4. Te concentras en Bendición.',
+    'Lanzaste Bendición con un espacio de nivel 1. Quedan 3 de 4. Te concentras en este conjuro.',
   )
 
   // A second concentration spell asks first; cancelling changes nothing.
@@ -326,9 +326,10 @@ test('RYT-134 concentration: the slot and the marker are one request; another sp
     .getByRole('button', { name: 'Terminar la concentración en Inmovilizar persona' })
     .click()
   await expect(marker).toHaveCount(0)
-  expect(f.vitalsCalls).toHaveLength(4)
+  // The marker leaves at once; its write follows when the cast's own write has finished.
+  await expect.poll(() => f.vitalsCalls.length).toBe(4)
   expect(f.vitalsCalls[3]).toMatchObject({ change_concentration: true, new_concentration: null })
-  expect(f.vitalsOf(characterId)!.concentration).toBeNull()
+  await expect.poll(() => f.vitalsOf(characterId)!.concentration).toBeNull()
 })
 
 test('RYT-134 manual rulings: slots by hand, the marker by hand, and a pasted invisible character is refused in the field', async ({
@@ -1212,3 +1213,118 @@ for (const theme of ['default', 'parchment', 'bard'])
     await expect(sheet.locator('[data-cast-note]')).toBeVisible()
     await audit(page, `${theme}: note 150%`)
   })
+
+/**
+ * A cast that meets a manual slot tap still on its way waits for it. The order of events is set
+ * by hand: time is frozen, so the cast's 50ms poll wakes only when the test lets it, and the reload
+ * the tap's answer triggers is let through, rendered, and only then does the cast wake.
+ */
+for (const outcome of ['saves', 'fails'] as const)
+  test(`RYT-135 a cast that meets a manual slot tap still on its way waits for it, and the tap ${outcome}`, async ({
+    page,
+  }) => {
+    test.setTimeout(60_000)
+    const f = await open(page)
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    let seen = 0
+    await page.route(/\/rpc\/set_character_vitals$/, async (route) => {
+      seen += 1
+      if (seen === 1) {
+        await gate
+        // The tap's request is held; it then fails here, or reaches the server.
+        if (outcome === 'fails')
+          return route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: '{"message":"down"}',
+          })
+      }
+      await route.fallback()
+    })
+    const resources = await openSpells(page, /Recursos/)
+    await resources.getByRole('button', { name: 'Gastar un espacio de nivel 1' }).first().click()
+    await expect.poll(() => seen).toBe(1)
+    await page.keyboard.press('Escape')
+
+    const sheet = await openSpells(page)
+    await rowOf(sheet, 'Palabra sanadora')
+      .getByRole('button', { name: /Lanzar/ })
+      .click()
+    const dialog = castDialog(page, 'Lanzar Palabra sanadora')
+    await page.clock.install()
+    await page.clock.pauseAt(new Date(Date.now() + 5_000))
+    await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
+    // Waiting: the cast has sent nothing, nothing was spent, and no result is claimed.
+    await expect(dialog.getByRole('button', { name: /Guardando/ })).toBeVisible()
+    expect(seen).toBe(1)
+    expect(f.vitalsCalls).toHaveLength(0)
+    expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
+    await expect(sheet.locator('[data-cast-note]')).toHaveCount(0)
+
+    // The tap's answer arrives. Let the sheet react to it (notifications are timers: a few ms of
+    // frozen time, less than the cast's 50ms poll) and render, then wake the cast.
+    release()
+    if (outcome === 'saves') {
+      // The reload the tap's answer triggers is let through and rendered before the cast wakes.
+      await page.waitForResponse(
+        (response) =>
+          response.url().includes('character_vitals') && response.request().method() === 'GET',
+      )
+      await page.clock.runFor(10)
+      await page.evaluate(async () => {
+        // Two real macrotasks (the frozen clock does not fake MessageChannel): React has committed.
+        for (let turn = 0; turn < 2; turn += 1)
+          await new Promise((done) => {
+            const channel = new MessageChannel()
+            channel.port1.onmessage = () => done(null)
+            channel.port2.postMessage(0)
+          })
+      })
+      await page.clock.runFor(100)
+    } else {
+      // The tap fails: the cast wakes once it is over, and finds the sheet rolled back.
+      await page.clock.runFor(200)
+    }
+    await page.clock.resume()
+    if (outcome === 'fails') {
+      // Nothing was sent by the cast: the dialog says why, which slot is selected, and casts on the
+      // next press from the slots as they are.
+      const alert = dialog.getByRole('alert')
+      await expect(alert).toContainText('no se guardó')
+      await expect(alert).toContainText('Elegido: espacio de nivel 1')
+      await expect(alert).not.toContainText('otro dispositivo')
+      expect(f.vitalsCalls).toHaveLength(0)
+      expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
+      await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
+    }
+    await expect(dialog).toHaveCount(0)
+    const expected = outcome === 'saves' ? [2, 0, 0, 0, 0, 0, 0, 0, 0] : [1, 0, 0, 0, 0, 0, 0, 0, 0]
+    expect(f.vitalsCalls.at(-1)).toMatchObject({
+      new_slots_used: expected,
+      expected_revision: outcome === 'saves' ? 1 : 0,
+    })
+    expect(f.vitalsOf(characterId)!.slots_used).toEqual(expected)
+    await expect(sheet.locator('[data-cast-note]')).toHaveText(
+      `Lanzaste Palabra sanadora con un espacio de nivel 1. Quedan ${outcome === 'saves' ? 2 : 3} de 4.`,
+    )
+  })
+
+test('RYT-135 when the cast spell is also the new concentration the note names it once', async ({
+  page,
+}) => {
+  const f = await open(page)
+  const sheet = await openSpells(page)
+  await rowOf(sheet, 'Bendición')
+    .getByRole('button', { name: /Lanzar/ })
+    .click()
+  await castDialog(page, 'Lanzar Bendición')
+    .getByRole('button', { name: 'Lanzar', exact: true })
+    .click()
+  const note = sheet.locator('[data-cast-note]')
+  await expect(note).toHaveText(
+    'Lanzaste Bendición con un espacio de nivel 1. Quedan 3 de 4. Te concentras en este conjuro.',
+  )
+  expect(((await note.textContent()) ?? '').split('Bendición')).toHaveLength(2)
+  expect(f.vitalsOf(characterId)!.concentration).toBe('Bendición')
+})

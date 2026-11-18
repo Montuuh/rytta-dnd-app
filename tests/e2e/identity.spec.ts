@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import {
   identityFixture,
@@ -8,7 +8,7 @@ import {
   session,
   playerId,
 } from './fixtures/identity.ts'
-import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
+import { capture, expectTouchTargets, focusAcrossFrames, limitMatrix } from './fixtures/audit.ts'
 
 test('Google sign-in uses PKCE and an exact Pages callback; no private requests while signed out', async ({
   page,
@@ -1008,4 +1008,136 @@ test('J1-15 signed out, the gear opens Settings directly and Back closes it', as
   await expect(drawer).toHaveCount(0)
   expect(page.url()).toBe(start)
   await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
+})
+
+const focusLabel = (page: Page) =>
+  page.evaluate(() => {
+    const active = document.activeElement as HTMLElement | null
+    return {
+      inDialog: Boolean(active?.closest('[role="dialog"]')),
+      label: active?.getAttribute('aria-label') ?? active?.textContent?.trim().slice(0, 40) ?? '',
+    }
+  })
+
+for (const dialog of ['handover', 'invite'] as const)
+  for (const [key, delay] of [
+    ['Tab', 60],
+    ['Tab', 150],
+    ['Shift+Tab', 100],
+  ] as const)
+    test(`RYT-135 ${key} ${delay}ms after Escape moves on from the closing ${dialog} dialog instead of being swallowed`, async ({
+      page,
+    }) => {
+      let trigger: Locator
+      const triggerLabel = dialog === 'handover' ? 'Acciones de Arin' : 'Invitar jugador'
+      if (dialog === 'handover') trigger = await openHandoverDialog(page)
+      else {
+        await identityFixture(page)
+        await page.goto(`./#/campaign/${campaignId}/members`)
+        trigger = page
+          .getByRole('region', { name: 'Miembros' })
+          .getByRole('button', { name: 'Invitar jugador', exact: true })
+        await trigger.click()
+        await expect(page.getByRole('dialog')).toBeVisible()
+      }
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(delay)
+      await page.keyboard.press(key)
+      // Whenever it is read, in the dialog's last frames or after it has gone, focus is never inside the
+      // dialog. Where another control follows the trigger it is on that control, not pulled back.
+      const another = dialog === 'invite' || key === 'Shift+Tab'
+      for (const wait of [0, 80, 250, 1_500]) {
+        await page.waitForTimeout(wait)
+        const at = await focusLabel(page)
+        expect(at.inDialog, `at +${wait}ms`).toBe(false)
+        if (another) expect(at.label, `at +${wait}ms`).not.toBe(triggerLabel)
+      }
+      if (another) await expect(trigger).not.toBeFocused()
+      await expect(page.getByRole('dialog')).toHaveCount(0)
+    })
+
+test('RYT-135 Escape pressed in the same frame as the dialog opens closes it and returns focus', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const arinMenu = page.getByRole('button', { name: 'Acciones de Arin', exact: true })
+  await arinMenu.click()
+  const item = page.getByRole('menuitem', { name: 'Nombrar DM', exact: true })
+  await item.focus()
+  // Both keys are sent back to back, before the dialog has rendered.
+  await Promise.all([page.keyboard.press('Enter'), page.keyboard.press('Escape')])
+  // Frames pass first, so "no dialog" is read after it had every chance to open, not before.
+  await focusAcrossFrames(page, 30)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(arinMenu).toBeFocused()
+  // The same for the invitation dialog.
+  const invite = page.getByRole('button', { name: 'Invitar jugador', exact: true })
+  await invite.focus()
+  await Promise.all([page.keyboard.press('Enter'), page.keyboard.press('Escape')])
+  await focusAcrossFrames(page, 30)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(invite).toBeFocused()
+  // And the dialogs still open and close normally afterwards.
+  await invite.click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(invite).toBeFocused()
+  await arinMenu.click()
+  await item.click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Cancelar', exact: true })
+    .last()
+    .click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('RYT-136 the profile menu returns focus on Escape and after a choice that opens a panel, never after the person moved on', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const trigger = page.getByRole('button', { name: /Sesión de/ })
+  await expect(trigger).toBeVisible()
+  // The keyboard opens the menu; a slow page may need the key again, so it is retried until it shows.
+  const openMenu = () =>
+    expect(async () => {
+      if (!(await page.getByRole('menu').isVisible())) {
+        await trigger.focus()
+        await page.keyboard.press('Enter')
+      }
+      await expect(page.getByRole('menu')).toBeVisible({ timeout: 1_500 })
+    }).toPass()
+
+  // Escape, once: back on the trigger, and it stays there.
+  await openMenu()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  // It stays there, frame after frame.
+  expect(new Set(await focusAcrossFrames(page, 40)).size).toBe(1)
+  await expect(trigger).toBeFocused()
+
+  // A choice that opens a panel: the panel hands focus back when it closes.
+  await openMenu()
+  await page.getByRole('menuitem', { name: 'Ajustes' }).click()
+  const settings = page.getByRole('dialog', { name: 'Ajustes' })
+  await expect(settings).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(settings).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+
+  // Another control chosen while the menu is open (a click closes the menu): focus belongs to it, now
+  // and after the menu has finished leaving.
+  await openMenu()
+  const other = page.locator('.dm-tabs-list [role="tab"][data-panel="modules"]')
+  await other.click()
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  // Frame after frame, until the menu has long finished leaving, focus stays on the chosen control.
+  expect(new Set(await focusAcrossFrames(page, 90)).size).toBe(1)
+  await expect(other).toBeFocused()
+  await expect(trigger).not.toBeFocused()
 })

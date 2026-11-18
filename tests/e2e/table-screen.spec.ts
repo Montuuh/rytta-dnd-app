@@ -1,7 +1,7 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { beaId, campaignId, characterId, identityFixture } from './fixtures/identity.ts'
-import { expectTouchTargets } from './fixtures/audit.ts'
+import { expectTouchTargets, focusAcrossFrames } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
 
@@ -321,7 +321,7 @@ test('RYT-131 without a map a Player gets an honest message for each failure', a
   await page.route(/\/rpc\/get_combat_state$/, (route) => route.abort('connectionrefused'))
   await page.reload()
   const alert = page.getByRole('alert')
-  await expect(alert).toContainText('La mesa no se cargó', { timeout: 20_000 })
+  await expect(alert).toContainText('El combate no se cargó', { timeout: 20_000 })
   await expect(alert).not.toContainText('no puede ver')
   await expect(alert.getByRole('button', { name: 'Reintentar' })).toBeVisible()
 })
@@ -567,9 +567,64 @@ async function expectRowsApart(page: Page) {
   expect(problems).toEqual([])
 }
 
-for (const size of sizes.slice(0, 2))
-  for (const zoom of ['100%', '150%']) {
-    test(`RYT-131 long names stay in their rows at ${size.name}px and ${zoom} text`, async ({
+// Verdana is wider than the fonts the app asks for: CI runs on Linux with wider glyphs and a
+// minimum font size, so every size rule is also read with it.
+const wideFont = '* { font-family: Verdana, sans-serif !important }'
+
+/** The size of a name's type and whether it was made smaller because it did not fit. */
+const nameTypes = (page: Page) =>
+  page.evaluate(async () => {
+    // Two frames let the instant transitions of reduced motion finish before the type is read.
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+    return Object.fromEntries(
+      [...document.querySelectorAll<HTMLElement>('.tt-order-name')].map((el) => [
+        el.textContent!,
+        { small: el.hasAttribute('data-long'), size: parseFloat(getComputedStyle(el).fontSize) },
+      ]),
+    )
+  })
+
+test('RYT-135 with reduced motion the names are measured once and then left alone', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1280, height: 720 })
+  const { combat } = await prepare(page, 'player')
+  seedFight(combat, 9, { long: true })
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await expect(page.locator('.tt-order-row')).toHaveCount(14, { timeout: 15_000 })
+  await expect(page.getByText('Guardiana Ancestral de la Cripta')).toBeVisible()
+  // Once the screen has settled, nothing measures the names again: no attribute flips and every
+  // name keeps its height, frame after frame.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const names = [...document.querySelectorAll<HTMLElement>('.tt-order-name')]
+          let flips = 0
+          const watcher = new MutationObserver((records) => (flips += records.length))
+          for (const el of names)
+            watcher.observe(el, { attributes: true, attributeFilter: ['data-long'] })
+          const heights = new Set<string>()
+          for (let frame = 0; frame < 60; frame += 1) {
+            await new Promise((done) => requestAnimationFrame(done))
+            heights.add(names.map((el) => Math.round(el.getBoundingClientRect().height)).join())
+          }
+          watcher.disconnect()
+          return { flips, layouts: heights.size }
+        }),
+      { timeout: 20_000 },
+    )
+    .toEqual({ flips: 0, layouts: 1 })
+})
+
+for (const size of sizes)
+  for (const [zoom, wide] of [
+    ['100%', false],
+    ['150%', false],
+    ['100%', true],
+  ] as const) {
+    test(`RYT-131 long names stay in their rows at ${size.name}px and ${zoom} text${wide ? ' with a wide font' : ''}`, async ({
       page,
     }) => {
       test.setTimeout(90_000)
@@ -579,14 +634,42 @@ for (const size of sizes.slice(0, 2))
       await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
       await expect(page.locator('.tt-order-row')).toHaveCount(14, { timeout: 15_000 })
       await page.evaluate((fontSize) => (document.documentElement.style.fontSize = fontSize), zoom)
+      if (wide) await page.addStyleTag({ content: wideFont })
       await expect(page.getByText('Guardiana Ancestral de la Cripta')).toBeVisible()
       await expectRowsApart(page)
+      await audit(page)
+      // A trailing number never wraps away from its word ("Goblin" over "3").
+      expect(
+        await page.evaluate(
+          () =>
+            [...document.querySelectorAll('.tt-order-tail')].filter(
+              (tail) => tail.getClientRects().length > 1,
+            ).length,
+        ),
+      ).toBe(0)
+      // RYT-135: only a name that does not fit at the normal size takes the smaller type.
+      await expect
+        .poll(async () => {
+          const types = await nameTypes(page)
+          return {
+            plain: !types['Goblin 1']!.small && !types['Arin']!.small,
+            longest: types['Guardiana Ancestral de la Cripta Olvidada de Vadoscuro']!.small,
+          }
+        })
+        .toEqual({ plain: true, longest: true })
+      const types = await nameTypes(page)
+      for (const [name, type] of Object.entries(types))
+        if (!type.small) expect(type.size, name).toBe(types['Goblin 1']!.size)
+        else expect(type.size, name).toBeLessThan(types['Goblin 1']!.size)
+      // A name that is long by its letters but fits keeps the type of the others (wide screens).
+      if (size.width >= 1920 && zoom === '100%' && !wide)
+        expect(types['Figura Encapuchada']!.small).toBe(false)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       )
       if (process.env.RYT_EVIDENCE)
         await page.screenshot({
-          path: `${evidenceDir}/order-long-names-${size.name}-${zoom.replace('%', '')}.png`,
+          path: `docs/evidence/ui-review/ryt-135/order-long-names-${size.name}-${zoom.replace('%', '')}${wide ? '-wide' : ''}.png`,
         })
     })
   }
@@ -745,4 +828,190 @@ test('RYT-131 evidence captures', async ({ page }) => {
           })
         }
   }
+})
+
+test('RYT-135 leaving the table screen puts keyboard focus back on the Player link', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const { combat } = await prepare(page, 'player')
+  seedFight(combat)
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  const link = page.getByRole('link', { name: /Pantalla de mesa/ })
+  await expect(link).toBeVisible({ timeout: 15_000 })
+  for (const leave of ['Escape', 'key'] as const) {
+    await link.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
+    if (leave === 'Escape') await page.keyboard.press('Escape')
+    else {
+      await page.getByRole('button', { name: 'Salir de la pantalla de mesa' }).focus()
+      await page.keyboard.press('Enter')
+    }
+    await expect(page.locator('.tt-order')).toHaveCount(0)
+    await expect(link).toBeFocused()
+    // It stays there: focus is not taken again, frame after frame.
+    expect(new Set(await focusAcrossFrames(page, 40)).size).toBe(1)
+    await expect(link).toBeFocused()
+  }
+  // A Player who moves on before the return finishes keeps the control they chose.
+  await link.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
+  await page.keyboard.press('Escape')
+  // The screen is gone and the link is back before the person moves on with Tab.
+  await expect(page.locator('.tt-order')).toHaveCount(0)
+  await expect(link).toBeVisible()
+  await page.keyboard.press('Tab')
+  const after = await focusAcrossFrames(page, 40)
+  expect(after.some((label) => label.includes('Pantalla de mesa'))).toBe(false)
+  expect(new Set(after).size).toBe(1)
+  await expect(link).not.toBeFocused()
+})
+
+test('RYT-135 a fight that cannot be loaded says the fight, in English too', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.addInitScript(() => localStorage.setItem('rytta-language', 'en'))
+  await page.setViewportSize(sizes[1]!)
+  const { combat } = await prepare(page, 'player', { modules: ['party', 'combat'], closed: true })
+  seedFight(combat, 2)
+  await page.route(/\/rpc\/get_combat_state$/, (route) => route.abort('connectionrefused'))
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  const alert = page.getByRole('alert')
+  await expect(alert).toContainText('The fight did not load', { timeout: 20_000 })
+  await expect(alert).not.toContainText('tabletop')
+  await expect(alert.getByRole('button', { name: /Try again|Retry/ })).toBeVisible()
+})
+
+test('RYT-131 the offline state stays visible on the order screen and goes with the connection', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const { combat } = await prepare(page, 'player')
+  seedFight(combat, 3)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  const order = page.locator('.tt-order')
+  await expect(order).toBeVisible({ timeout: 15_000 })
+  const offline = page.locator('.tt-status-net.is-offline')
+  await expect(offline).toHaveCount(0)
+  await context.setOffline(true)
+  await expect(offline).toBeVisible()
+  await expect(offline).toContainText('Sin conexión')
+  // More than words: the order is marked and the acting name is underlined.
+  await expect(order).toHaveClass(/is-stale/)
+  expect(
+    await order
+      .locator('.tt-order-actor')
+      .evaluate((el) => getComputedStyle(el).textDecorationLine),
+  ).toBe('underline')
+  await expectTouchTargets(page, '.tt-status button:visible')
+  await audit(page)
+  await context.setOffline(false)
+  await expect(offline).toHaveCount(0)
+  await expect(order).not.toHaveClass(/is-stale/)
+})
+
+test('RYT-131 the offline state stays visible on the plate over the map and goes with the connection', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  const { combat, server } = await prepare(page, 'dm')
+  seedFight(combat, 3)
+  putSceneOnTable(server)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await begin(page)
+  const turn = plate(page)
+  await expect(turn).toBeVisible({ timeout: 15_000 })
+  await expect(turn).not.toHaveClass(/is-stale/)
+  await context.setOffline(true)
+  await expect(turn).toHaveClass(/is-stale/)
+  await expect(turn.locator('.tt-turnplate-stale')).toContainText('Sin conexión')
+  await expect(page.locator('.tt-status-net.is-offline')).toBeVisible()
+  await audit(page)
+  await context.setOffline(false)
+  await expect(turn).not.toHaveClass(/is-stale/)
+  await expect(page.locator('.tt-status-net.is-offline')).toHaveCount(0)
+})
+
+/** Records the behaviour each scrollIntoView call asked for, to read what a motion setting did. */
+async function spyOnScrolling(page: Page) {
+  await page.addInitScript(() => {
+    const scrolls: string[] = []
+    ;(window as unknown as { scrolls: string[] }).scrolls = scrolls
+    const original = Element.prototype.scrollIntoView
+    Element.prototype.scrollIntoView = function (arg?: boolean | ScrollIntoViewOptions) {
+      scrolls.push(typeof arg === 'object' ? (arg.behavior ?? 'auto') : 'auto')
+      return original.call(this, arg as ScrollIntoViewOptions)
+    }
+  })
+}
+const scrolls = (page: Page) =>
+  page.evaluate(() => (window as unknown as { scrolls: string[] }).scrolls)
+
+/** Everything inside an element that could move: a transition with a length or a running animation. */
+const motionOf = (element: Locator) =>
+  element.evaluate((el) =>
+    [el, ...el.querySelectorAll('*')].flatMap((node) => {
+      const style = getComputedStyle(node)
+      const durations = style.transitionDuration.split(',').map((d) => parseFloat(d))
+      const moving = durations.some((d) => d > 0.001) && style.transitionProperty !== 'none'
+      const animated = style.animationName !== 'none' && parseFloat(style.animationDuration) > 0.001
+      return moving || animated ? [`${node.tagName}.${String(node.className)}`] : []
+    }),
+  )
+
+test('RYT-131 reduced motion: the acting row and the plate neither transition nor animate, and the order follows without smoothing', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  await spyOnScrolling(page)
+  const { combat, server } = await prepare(page, 'dm')
+  const { pass } = seedFight(combat, 13)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  const order = page.locator('.tt-order')
+  await expect(order).toBeVisible({ timeout: 15_000 })
+  const acting = order.locator('.tt-order-row[aria-current="step"]')
+  await expect(acting).toContainText('Arin')
+  expect(await motionOf(acting)).toEqual([])
+  pass()
+  await expect(acting).toContainText('Bea', { timeout: 20_000 })
+  expect(await motionOf(acting)).toEqual([])
+  expect(await motionOf(order.locator('.tt-order-now'))).toEqual([])
+  const followed = await scrolls(page)
+  expect(followed.length).toBeGreaterThan(0)
+  expect(followed.every((behavior) => behavior === 'auto')).toBe(true)
+
+  // With a map, the plate and everything on it.
+  putSceneOnTable(server)
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await begin(page)
+  const turn = plate(page)
+  await expect(turn).toBeVisible({ timeout: 15_000 })
+  expect(await motionOf(turn)).toEqual([])
+  // Moving it jumps to the corner.
+  await turn.getByRole('button', { name: /^Mover la placa de turno/ }).focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(turn).toHaveAttribute('data-corner', 'top-right')
+  expect(await motionOf(turn)).toEqual([])
+})
+
+test('RYT-131 without a reduced-motion setting the order follows the turn smoothly', async ({
+  page,
+}) => {
+  // The control for the test above: the same spy sees "smooth" when motion is allowed.
+  test.setTimeout(90_000)
+  await page.setViewportSize(sizes[1]!)
+  await spyOnScrolling(page)
+  const { combat } = await prepare(page, 'dm')
+  seedFight(combat, 13)
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto(`./#/campaign/${campaignId}/tabletop-table`)
+  await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
+  expect(await scrolls(page)).toContain('smooth')
 })

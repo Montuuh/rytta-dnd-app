@@ -44,6 +44,7 @@ import {
   membersQuery,
   type Campaign,
 } from '@/features/campaigns'
+import { closeOnEscapeWhileOpening } from '@/shared/ui/escape-while-opening'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { artUrl } from '@/shared/ui/art-url'
@@ -314,6 +315,25 @@ export function Layout() {
   const menuButton = useRef<HTMLButtonElement>(null)
   const previewSwitch = useRef<HTMLInputElement>(null)
   const restoreMenuFocus = useRef(false)
+  const stopEarlyEscape = useRef(() => {})
+  useEffect(() => () => stopEarlyEscape.current(), [])
+  // RYT-136: focus goes back to the trigger once, and only while it is still where the menu left it
+  // (inside the closing menu or on the page): a person who has tabbed or clicked to another control
+  // keeps it. A choice that opens a dialog or a drawer, or leaves the page, has cleared the flag:
+  // that overlay hands focus back itself.
+  const closeProfileMenu = () => {
+    stopEarlyEscape.current()
+    close()
+    // The dropdown may only mount after this call (Escape in the frame it opens) and then takes
+    // focus for its first item: it is what is leaving, so look for it once the frame has rendered.
+    requestAnimationFrame(() => {
+      if (!restoreMenuFocus.current) return
+      focusWhenReady(() => menuButton.current, {
+        from: menuButton.current,
+        leaving: [...document.querySelectorAll('[role="menu"]')],
+      })
+    })
+  }
   const { pathname } = useLocation()
   const campaignId = pathname.match(/^\/campaign\/([^/]+)/)?.[1]
   const campaigns = useQuery({
@@ -542,16 +562,18 @@ export function Layout() {
                         if (value) {
                           restoreMenuFocus.current = true
                           open()
-                        } else close()
+                          // Escape in the frame the menu opens reaches no listener yet: close it from the page.
+                          stopEarlyEscape.current()
+                          stopEarlyEscape.current = closeOnEscapeWhileOpening(() =>
+                            closeProfileMenu(),
+                          )
+                        } else closeProfileMenu()
                       }}
                       position="bottom-end"
                       width={260}
                       withinPortal
                       withInitialFocusPlaceholder={false}
                       returnFocus={false}
-                      onExitTransitionEnd={() => {
-                        if (restoreMenuFocus.current) menuButton.current?.focus()
-                      }}
                     >
                       <Menu.Target>
                         <Button

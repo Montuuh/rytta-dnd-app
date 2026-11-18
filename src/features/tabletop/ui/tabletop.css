@@ -438,6 +438,17 @@
   outline: 2px solid var(--app-focus);
   outline-offset: -2px;
 }
+/* The map paints over the board's own outline once it covers it: the ring is a border drawn above the
+   map on all four edges (a border survives forced colours; a shadow does not). */
+.tt-viewport:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: 3px solid var(--app-focus);
+  border-radius: inherit;
+  pointer-events: none;
+}
 .tt-viewport.is-moving {
   cursor: copy;
 }
@@ -2965,8 +2976,25 @@ html.tt-table-mode {
   line-clamp: 2;
   overflow: hidden;
 }
+/* Never animated, the name or the parts inside it that inherit its size: the size is measured and
+   corrected in one pass, and a transition (reduced motion shortens them to a blink, it does not
+   remove them) would make each pass start another. */
+.tt-order-name,
+.tt-order-name * {
+  transition-property: none !important;
+}
+.tt-order-tail {
+  white-space: nowrap;
+}
 .tt-order-name[data-long] {
   font-size: 0.7em;
+}
+/* Measuring the normal size: a word wider than the column overflows instead of breaking, and
+   the whole name is as tall as its lines. */
+.tt-order-name[data-measuring] {
+  overflow-wrap: normal;
+  -webkit-line-clamp: none;
+  line-clamp: none;
 }
 .tt-order-initiative {
   min-width: 2ch;
@@ -3060,7 +3088,8 @@ html.tt-pm-mode .update-notice {
   html.tt-pm-mode .update-notice {
     top: auto;
     left: 0.75rem;
-    bottom: 0.75rem;
+    /* Above the measure readout while it shows (PhoneChip sets the distance), else at the corner. */
+    bottom: var(--tt-pm-above-chip, 0.75rem);
     transform: none;
     width: min(26rem, calc(100vw - 6rem));
   }
@@ -3327,6 +3356,27 @@ html.tt-pm-mode {
   line-height: 21px;
   transform: translateX(-50%) scale(var(--tt-label-k, 1));
   transform-origin: 50% 0;
+}
+/* "Goblin arquero 14" and "… 15" stay apart: the cut falls in the words, never in the number. */
+.tt-pm .tt-token-name.is-split {
+  display: flex;
+  justify-content: center;
+}
+.tt-pm .tt-token-name-head {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tt-pm .tt-token-name-tail {
+  flex: none;
+  white-space: pre;
+}
+/* A token right above another wears its plate inside its own foot, so it never covers the one below. */
+.tt-pm .tt-token[data-crowded] > .tt-token-name {
+  top: auto;
+  bottom: 2px;
+  transform-origin: 50% 100%;
 }
 .tt-pm .tt-world-wrap[data-labels='hidden'] .tt-token-name {
   display: none;

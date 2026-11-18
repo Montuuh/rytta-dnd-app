@@ -29,6 +29,7 @@ export const restEs = {
   'rest.slots': 'Espacios de conjuro',
   'rest.concentration': 'Concentración',
   'rest.concentrationEnds': 'Termina: {{name}}',
+  'rest.longEndsConcentration': 'Un descanso largo termina las concentraciones en curso.',
   'rest.slotLevel': 'nivel {{level}} +{{count}}',
   'rest.diceTitle': 'Dados de golpe que gastas (d{{die}}, te quedan {{left}})',
   'rest.diceCount': 'Dados que gastas',

@@ -9,6 +9,7 @@ export const partyEn = {
   'party.liveTemp': '+{{value}} temporary',
   'party.liveAc': 'Armor class {{value}}',
   'party.liveConditions': 'Conditions of {{name}}',
+  'party.liveConcentration': 'Concentrating: {{spell}}',
   'party.liveNoSheet': 'Status not available yet',
   'party.acShort': 'AC',
   'party.water': 'Water',

@@ -675,6 +675,7 @@ export const tabletopEs = {
     'Toca una vez para empezar: sonido, pantalla completa y pantalla siempre encendida.',
   'tabletop.table.start': 'Empezar',
   'tabletop.table.nothing': 'No hay nada en la mesa',
+  'tabletop.table.fightLoad': 'El combate no se cargó. Revisa la conexión y vuelve a intentarlo.',
   'tabletop.table.forbidden': 'Esta cuenta no puede ver la mesa de esta campaña.',
   'tabletop.table.round': 'Ronda {{round}}',
   'tabletop.table.live': 'En directo',
@@ -687,6 +688,10 @@ export const tabletopEs = {
   'tabletop.player.nothing': 'Cuando el DM ponga una escena en la mesa aparecerá aquí.',
   'tabletop.player.measure': 'Medir',
   'tabletop.player.board': 'Mapa de {{name}}',
+  'tabletop.player.boardKeys':
+    'Las flechas mueven el mapa. Más y menos acercan y alejan; 0 encaja todo el mapa.',
+  'tabletop.player.boardKeysMeasure':
+    'Las flechas mueven el cursor; Intro añade un punto; Escape termina la medida. Más y menos acercan y alejan; 0 encaja todo el mapa.',
   'tabletop.announce.tool': 'Herramienta: {{tool}}.',
   'tabletop.announce.moved': 'Se movió {{name}}.',
   'tabletop.announce.removed': 'Se quitó del mapa.',

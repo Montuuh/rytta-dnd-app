@@ -90,6 +90,14 @@ test('RYT-130 the DM sets the party level: confirmation, retry with the same req
   await section.getByRole('button', { name: 'Fijar nivel 6' }).click()
   const dialog = page.getByRole('dialog', { name: '¿Fijar el nivel del grupo en 6?' })
   await expect(dialog).toContainText('Ninguna ficha cambia hasta que la confirmen.')
+  // RYT-135: the header key and the footer button do not share a name.
+  const names = await dialog
+    .getByRole('button')
+    .evaluateAll((buttons) =>
+      buttons.map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim() ?? ''),
+    )
+  expect(names).toEqual(['Cerrar', 'Cancelar', 'Confirmar'])
+  expect(new Set(names).size).toBe(names.length)
   expect(fixture.calls.filter((call) => call.method === 'set_party_level')).toHaveLength(0)
   await audit(page, info.outputPath('party-level-confirm.png'))
   await evidence(page, 'dm-party-level-confirm')
@@ -278,6 +286,12 @@ test('RYT-130 a failed level-up leaves the character as it was and the retry rep
   await expect(dialog.getByRole('alert')).toContainText('La subida de nivel no se guardó')
   await expect(dialog.getByRole('alert')).toContainText('Tu personaje no ha cambiado.')
   await expectSeenAndFocused(dialog.getByRole('alert'))
+  // RYT-135: at 820px the summary row ("Arin 4 → 5") is whole under the header with the alert.
+  if (page.viewportSize()!.width >= 768) {
+    const header = (await dialog.locator('header').boundingBox())!
+    const who = (await dialog.locator('.levelup-who').boundingBox())!
+    expect(who.y).toBeGreaterThanOrEqual(header.y + header.height - 1)
+  }
   await evidence(page, 'level-up-error')
   await expect(dialog.getByRole('button', { name: 'Reintentar' })).toBeVisible()
   // The sheet underneath still reads level 4.
@@ -747,12 +761,13 @@ test('RYT-130 +2 to one score and a score already at 20', async ({ page }) => {
   await dialog.getByRole('radio', { name: '+2 a una característica' }).locator('xpath=..').click()
   // 19 + 2 would pass 20: it cannot be picked and says so.
   await expect(intelligence).toHaveAttribute('aria-disabled', 'true')
-  await expect(intelligence).toContainText('Ya en 20')
+  await expect(intelligence).toContainText('Pasaría de 20')
+  await expect(intelligence).not.toContainText('Ya en 20')
   await intelligence.click({ force: true })
   await expect(dialog.getByText('0 de 1 elegidas')).toBeVisible()
   // +1 to two scores can still take it to 20.
   await dialog.getByRole('radio', { name: '+1 a dos características' }).locator('xpath=..').click()
-  await expect(intelligence).not.toContainText('Ya en 20')
+  await expect(intelligence).not.toContainText('Pasaría de 20')
   await dialog.getByRole('radio', { name: '+2 a una característica' }).locator('xpath=..').click()
   await dialog.getByRole('button', { name: /^Sabiduría/ }).click()
   await expect(dialog.getByRole('button', { name: /^Sabiduría/ })).toContainText('10 → 12')
@@ -766,3 +781,167 @@ test('RYT-130 +2 to one score and a score already at 20', async ({ page }) => {
       .baseAbilities,
   ).toMatchObject({ wis: 12, int: 19 })
 })
+
+test('RYT-135 a score at 20 says it is at the cap and a 19 says +2 would pass it', async ({
+  page,
+}) => {
+  await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    sheetClass: 'wizard',
+    sheetLevel: 11,
+    sheetAbilities: { int: 20, wis: 19 },
+    partyLevel: 12,
+  })
+  await page.goto(sheetUrl)
+  const dialog = await openLevelUp(page, 12)
+  const next = dialog.getByRole('button', { name: 'Siguiente' })
+  await next.click()
+  await next.click()
+  await dialog.getByRole('radio', { name: '+2 a una característica' }).locator('xpath=..').click()
+  const atCap = dialog.getByRole('button', { name: /^Inteligencia/ })
+  const wouldPass = dialog.getByRole('button', { name: /^Sabiduría/ })
+  await expect(atCap).toContainText('Ya en 20')
+  await expect(atCap).toHaveAttribute('aria-disabled', 'true')
+  await expect(wouldPass).toContainText('Pasaría de 20')
+  await expect(wouldPass).toHaveAttribute('aria-disabled', 'true')
+})
+
+/** Wide font as on Linux CI, which has wider glyphs and a minimum font size. */
+const wideFont = '* { font-family: Verdana, sans-serif !important }'
+
+for (const wide of [false, true])
+  test(`RYT-135 at 150% text the typed-roll hint sits with its input and focus stays clear of the footer${wide ? ' (wide font)' : ''}`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'identity-mobile', 'The phone sheet is checked at 390px.')
+    test.setTimeout(90_000)
+    await identityFixture(page, {
+      player: true,
+      sheet: 'complete',
+      sheetLevel: 3,
+      sheetSubclass: '',
+      partyLevel: 4,
+    })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(sheetUrl)
+    await page.addStyleTag({ content: `html { font-size: 150%; } ${wide ? wideFont : ''}` })
+    const dialog = await openLevelUp(page, 4)
+    await dialog
+      .getByRole('radio', { name: /Mi tirada/ })
+      .locator('xpath=..')
+      .click()
+    const input = dialog.getByRole('textbox', { name: 'Tirada del d8' })
+    const hint = dialog.getByText('Escribe tu tirada, de 1 a 8, para continuar.')
+    await expect(hint).toBeVisible()
+    // Read with the input, and on screen with it: no scrolling to find why Next waits.
+    const described = await input.getAttribute('aria-describedby')
+    expect(described).toContain((await hint.getAttribute('id'))!)
+    const viewport = page.viewportSize()!
+    const footer = (await dialog.locator('.levelup-footer').boundingBox())!
+    for (const box of [(await hint.boundingBox())!, (await input.boundingBox())!]) {
+      expect(box.y).toBeGreaterThanOrEqual(0)
+      expect(box.y + box.height).toBeLessThanOrEqual(Math.min(viewport.height, footer.y + 1))
+    }
+    await input.fill('5')
+    await expect(hint).toHaveCount(0)
+
+    // Moving focus through the options never leaves the focused one under the sticky footer.
+    const next = dialog.getByRole('button', { name: 'Siguiente' })
+    await next.click()
+    await next.click()
+    await expect(dialog.getByRole('heading', { name: 'Elecciones del nivel 4' })).toBeFocused()
+    const seen: string[] = []
+    for (let step = 0; step < 24; step += 1) {
+      await page.keyboard.press('Tab')
+      // Let the browser's scroll-into-view settle before reading the boxes.
+      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => done(null))))
+      const read = await page.evaluate(() => {
+        const active = document.activeElement as HTMLElement
+        if (!active || active.closest('.levelup-footer') || !active.closest('.levelup-modal-body'))
+          return null
+        const target = active.closest('label') ?? active
+        const box = target.getBoundingClientRect()
+        const footerBox = document.querySelector('.levelup-footer')!.getBoundingClientRect()
+        const headerBox = document.querySelector('[role="dialog"] header')!.getBoundingClientRect()
+        return {
+          name: (active.getAttribute('aria-label') ?? target.textContent ?? '').slice(0, 30),
+          top: box.top,
+          bottom: box.bottom,
+          footerTop: footerBox.top,
+          headerBottom: headerBox.bottom,
+        }
+      })
+      if (!read) break
+      seen.push(read.name)
+      expect(read.bottom, `${read.name} sits above the footer`).toBeLessThanOrEqual(
+        read.footerTop + 1,
+      )
+      expect(read.top, `${read.name} sits under the header`).toBeGreaterThanOrEqual(
+        read.headerBottom - 1,
+      )
+    }
+    expect(seen.length).toBeGreaterThan(2)
+  })
+
+// RYT-135: axe on every changed state, in Hearth, Parchment and a class theme, at 100% and 150% text.
+for (const theme of ['default', 'parchment', 'wizard'] as const)
+  for (const percent of [100, 150])
+    test(`RYT-135 axe is clean on the level-up polish states in ${theme} at ${percent}% text`, async ({
+      page,
+    }, info) => {
+      test.setTimeout(90_000)
+      await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+      await identityFixture(page, {
+        player: true,
+        sheet: 'complete',
+        sheetClass: 'wizard',
+        sheetLevel: 11,
+        sheetAbilities: { int: 19, wis: 10 },
+        partyLevel: 12,
+      })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(sheetUrl)
+      await page.addStyleTag({ content: `html { font-size: ${percent}%; }` })
+      const dialog = await openLevelUp(page, 12)
+      // The typed roll with the reason Next waits.
+      await dialog
+        .getByRole('radio', { name: /Mi tirada/ })
+        .locator('xpath=..')
+        .click()
+      await expect(dialog.getByText('Escribe tu tirada')).toBeVisible()
+      await audit(page, info.outputPath(`hint-${theme}-${percent}.png`))
+      await dialog.getByRole('textbox', { name: /Tirada del d/ }).fill('4')
+      const next = dialog.getByRole('button', { name: 'Siguiente' })
+      await next.click()
+      await next.click()
+      // The capped tile and the focused option.
+      await dialog
+        .getByRole('radio', { name: '+2 a una característica' })
+        .locator('xpath=..')
+        .click()
+      await expect(dialog.getByRole('button', { name: /^Inteligencia/ })).toContainText(
+        'Pasaría de 20',
+      )
+      await dialog.getByRole('button', { name: /^Sabiduría/ }).focus()
+      await audit(page, info.outputPath(`capped-${theme}-${percent}.png`))
+      if (process.env.RYT_EVIDENCE && info.project.name !== 'identity-desktop')
+        await page.screenshot({
+          path: `docs/evidence/ui-review/ryt-135/level-up-capped-${theme}-${percent}-${info.project.name === 'identity-mobile' ? '390' : '820'}.png`,
+        })
+    })
+
+for (const theme of ['default', 'parchment', 'wizard'] as const)
+  test(`RYT-135 axe is clean on the DM party-level dialog in ${theme}`, async ({ page }, info) => {
+    await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+    await identityFixture(page, { party: true, sheet: 'complete' })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(membersUrl)
+    const section = page.getByRole('region', { name: /Nivel del grupo/ })
+    await section.getByRole('button', { name: 'Subir el nivel del grupo' }).click()
+    await section.getByRole('button', { name: 'Fijar nivel 6' }).click()
+    await expect(
+      page.getByRole('dialog', { name: '¿Fijar el nivel del grupo en 6?' }),
+    ).toBeVisible()
+    await audit(page, info.outputPath(`dm-dialog-${theme}.png`))
+  })

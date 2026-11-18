@@ -1,11 +1,12 @@
-import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ActionIcon, Button, NativeSelect, Text, TextInput } from '@mantine/core'
-import { Check, Info, Plus, Search, TriangleAlert, X } from 'lucide-react'
+import { Check, Plus, Search, TriangleAlert, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm, useSrdLibrary } from '@/features/glossary'
 import { Stepper } from '@/features/inventory'
 import {
   canRaise,
+  capReason,
   hitDieAverage,
   hitPointGain,
   type ChoiceKind,
@@ -99,6 +100,12 @@ export function HitPointsStep({
   const average = hitDieAverage(die)
   const averageGain = hitPointGain(die, con, { kind: 'average' })!
   const gain = hitPointGain(die, con, value)
+  // Choosing the typed roll brings the input, with the reason Next waits, above the sticky footer.
+  const roll = useRef<HTMLDivElement>(null)
+  const rolling = value.kind === 'roll'
+  useEffect(() => {
+    if (rolling) roll.current?.scrollIntoView({ block: 'nearest' })
+  }, [rolling])
   return (
     <div className="levelup-step">
       <fieldset className="levelup-choices">
@@ -123,23 +130,20 @@ export function HitPointsStep({
         />
       </fieldset>
       {value.kind === 'roll' && (
-        <Stepper
-          label={t('levelUp.hp.rollLabel', { die })}
-          value={value.roll}
-          min={1}
-          max={die}
-          placeholder={`1–${die}`}
-          minMessage={t('levelUp.hp.rollMin')}
-          maxMessage={t('levelUp.hp.rollMax', { die })}
-          onChange={(roll) => onChange({ kind: 'roll', roll })}
-          autoFocus
-        />
-      )}
-      {value.kind === 'roll' && gain === null && (
-        <Text size="sm" className="levelup-need" role="status">
-          <Info size={16} aria-hidden="true" />
-          {t('levelUp.hp.rollNeeded', { die })}
-        </Text>
+        <div className="levelup-roll" ref={roll}>
+          <Stepper
+            label={t('levelUp.hp.rollLabel', { die })}
+            value={value.roll}
+            min={1}
+            max={die}
+            placeholder={`1–${die}`}
+            minMessage={t('levelUp.hp.rollMin')}
+            maxMessage={t('levelUp.hp.rollMax', { die })}
+            onChange={(roll) => onChange({ kind: 'roll', roll })}
+            description={gain === null ? t('levelUp.hp.rollNeeded', { die }) : undefined}
+            autoFocus
+          />
+        </div>
       )}
       <div className="levelup-hpline" aria-live="polite">
         <span className="levelup-hpline-label">{t('levelUp.hp.newMax')}</span>
@@ -522,7 +526,11 @@ function ImprovementChoice({
                       {on
                         ? `${from} → ${from + amount}`
                         : capped
-                          ? t('levelUp.improvement.capped')
+                          ? t(
+                              capReason(build, ability) === 'at-cap'
+                                ? 'levelUp.improvement.capped'
+                                : 'levelUp.improvement.wouldPass',
+                            )
                           : from}
                     </span>
                   </button>

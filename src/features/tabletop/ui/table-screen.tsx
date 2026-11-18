@@ -291,6 +291,8 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const failed =
     (loadFailed && !mapForbidden) || (!scene && Boolean(view || mapForbidden) && combatFailed)
   const forbidden = mapForbidden && combatDenied
+  // The map's own failure says the tabletop failed; a fight that cannot be read says the fight did.
+  const fightOnly = failed && !(loadFailed && !mapForbidden)
   const waiting = scene ? false : (!view && !mapForbidden) || (!combat.data && !combat.isError)
 
   return (
@@ -303,7 +305,15 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       {failed || forbidden ? (
         <div className="tt-table-empty" role="alert">
           <Compass size={48} aria-hidden="true" />
-          <p>{t(forbidden ? 'tabletop.table.forbidden' : 'tabletop.error.load')}</p>
+          <p>
+            {t(
+              forbidden
+                ? 'tabletop.table.forbidden'
+                : fightOnly
+                  ? 'tabletop.table.fightLoad'
+                  : 'tabletop.error.load',
+            )}
+          </p>
           {!forbidden && (
             <button
               type="button"

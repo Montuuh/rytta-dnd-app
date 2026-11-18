@@ -11,6 +11,7 @@ import { rollsQuery, rollsScope } from '../api'
 import { subscribeRolls } from '../data/repository'
 import { formulaOf, mathsText, rollMaths } from '../domain/roll'
 import { rollerOf } from '../domain/rolls'
+import { useRollResult } from './dice-context'
 import { useHeldRolls } from './held-rolls'
 import { useRollName } from './roll-name'
 import { useDiceMode } from './use-dice-mode'
@@ -93,8 +94,16 @@ export function RecentRolls({
   )
   const held = useHeldRolls()
   const rolls = (query.data ?? []).filter((roll) => !held.has(roll.id))
+  // The roll on the result card is not listed again beside it: that would read as two rolls. The
+  // card is dismissed or replaced and the roll takes its place here; the full list keeps every roll.
+  const shown = useRollResult()?.result
+  const onCard = shown?.phase === 'saved' ? (shown.roll?.id ?? null) : null
   // With physical dice the strip appears once someone has recorded a roll, never before.
   if (behaviour === 'physical' && rolls.length === 0) return null
+  // The session's only roll is on the card: the strip has nothing to list, so it is not drawn (a bare
+  // heading would read as an empty section). It returns with the next roll or when the card goes.
+  const others = rolls.filter((roll) => roll.id !== onCard)
+  if (rolls.length > 0 && others.length === 0 && !query.isError) return null
   const who = (roll: CampaignRoll) => {
     const roller = rollerOf(roll.character_id, names)
     return roller.kind === 'dm'
@@ -146,7 +155,7 @@ export function RecentRolls({
           {t('roll.empty')}
         </Text>
       )}
-      {rolls.length > 0 && list(rolls.slice(0, previewCount))}
+      {rolls.length > 0 && list(others.slice(0, previewCount))}
       <Drawer
         opened={all}
         onClose={() => setAll(false)}

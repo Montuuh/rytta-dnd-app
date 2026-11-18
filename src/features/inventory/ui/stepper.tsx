@@ -189,7 +189,7 @@ export function Stepper({
           spellCheck={false}
           data-autofocus={autoFocus || undefined}
           aria-label={hideLabel ? label : undefined}
-          aria-describedby={reasonId}
+          aria-describedby={description ? `${id}-description ${reasonId}` : reasonId}
           aria-invalid={edge === 'digits' || undefined}
           disabled={disabled}
           placeholder={placeholder}

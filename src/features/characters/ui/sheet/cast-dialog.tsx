@@ -28,11 +28,12 @@ export type CastSubmission = {
 export type CastHeld = MutableRefObject<CastSubmission | null>
 /** What the sheet answers with when it refuses or fails a cast; `null` means it was saved. */
 export type CastFailure =
-  'unavailable' | 'busy' | 'stale' | 'forbidden' | 'absent' | 'concentration'
+  'unavailable' | 'busy' | 'stale' | 'tap' | 'forbidden' | 'absent' | 'concentration'
 
 const failureOf = (message: string): CastFailure =>
   message === 'stale' ||
   message === 'busy' ||
+  message === 'tap' ||
   message === 'forbidden' ||
   message === 'absent' ||
   message === 'concentration'
@@ -73,7 +74,12 @@ export function CastDialog({
   inEncounter: boolean
   onClose: () => void
   /** Writes the cast; rejects with an Error whose message names the failure. */
-  apply: (plan: CastPlan, base: Vitals, held: CastHeld) => Promise<void>
+  apply: (
+    plan: CastPlan,
+    held: CastHeld,
+    /** Builds the plan again on a fresher play state, after waiting for another write. */
+    replan: (fresh: Vitals) => CastPlan | null,
+  ) => Promise<void>
   /** Where focus goes when the dialog closes. */
   returnTo: () => HTMLElement | null | undefined
 }) {
@@ -146,7 +152,7 @@ export function CastDialog({
       setPending(true)
       setFailure(null)
       try {
-        await apply(plan, basis, held)
+        await apply(plan, held, (fresh) => planCast(spell, mode, build, level, fresh, markerName))
         return 'saved' as const
       } catch (error) {
         const next = failureOf(error instanceof Error ? error.message : '')
@@ -156,6 +162,9 @@ export function CastDialog({
           held.current = null
           setFrozen(null)
         }
+        // The slot tap this cast waited for failed: the slots are back as they were, so the options
+        // start again from the first one and the message says which is selected.
+        if (next === 'tap') setPicked(null)
         setFailure(next)
         setFailedAt((count) => count + 1)
         return 'failed' as const
@@ -169,7 +178,11 @@ export function CastDialog({
   const failureText = failure
     ? availability === 'blocked' && failure === 'stale'
       ? t('cast.error.noSlot')
-      : t(`cast.error.${failure}`)
+      : failure === 'tap'
+        ? mode?.kind === 'slot'
+          ? t('cast.error.tap', { level: mode.level })
+          : t('cast.error.tapPlain')
+        : t(`cast.error.${failure}`)
     : ''
 
   return (

@@ -54,6 +54,7 @@ describe('party teammates', () => {
       armorClass: 14,
       exhaustion: 2,
       conditions: [],
+      concentration: null,
       ratio: 38,
       tone: 'wounded',
     })
@@ -61,6 +62,13 @@ describe('party teammates', () => {
     expect(teammateLive(row({ sheet_status: 'draft' }))).toBeNull()
     expect(teammateLive(row({ sheet_status: null }))).toBeNull()
     expect(teammateLive(row({ current_hp: null }))).toBeNull()
+  })
+  it('carries a shared teammate concentration and hides it where the state is not shared (RYT-135)', () => {
+    expect(teammateLive(row({ concentration: 'Bendición' }))?.concentration).toBe('Bendición')
+    expect(teammateLive(row({}))?.concentration).toBeNull()
+    expect(teammateLive(unshared({ concentration: null }))).toBeNull()
+    // Rows from a server that predates the column still parse.
+    expect(row({ concentration: undefined }).concentration).toBeUndefined()
   })
   it('hides the live state of an unshared teammate even when the data is present', () => {
     // A DM previewing a Player receives every field; sharing still decides what is shown.

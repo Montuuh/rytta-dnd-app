@@ -169,6 +169,23 @@ export function useBoardView(
       y: el.clientHeight / 2 - (y + h / 2) * U * v.z,
     })
   }
+  /** Moves the view by screen pixels (the keyboard's arrows). */
+  const panBy = (dx: number, dy: number) => {
+    touch()
+    setView((v) => {
+      if (!el) return { ...v, x: v.x + dx, y: v.y + dy }
+      // Part of the map always stays in view: a quarter of the board, at least, remains on screen.
+      const keepX = el.clientWidth / 4
+      const keepY = el.clientHeight / 4
+      const clampTo = (value: number, size: number, board: number, keep: number) =>
+        Math.min(board - keep, Math.max(keep - size, value))
+      return {
+        ...v,
+        x: clampTo(v.x + dx, cols * U * v.z, el.clientWidth, keepX),
+        y: clampTo(v.y + dy, rows * U * v.z, el.clientHeight, keepY),
+      }
+    })
+  }
   /** Pans to centre a point in squares, at a zoom where tokens read (RYT-126 J4-26). */
   const centerOn = (x: number, y: number) => {
     if (!el) return
@@ -301,6 +318,7 @@ export function useBoardView(
     /** True once the person has panned, zoomed or centred the view. */
     interacted: () => interacted.current,
     reveal,
+    panBy,
     /** Spread on the viewport element: its callback ref and pointer handlers. */
     bind: {
       ref: setEl,

@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { identityFixture, beaId, campaignId, characterId, playerId } from './fixtures/identity.ts'
+import {
+  identityFixture,
+  beaId,
+  catoId,
+  campaignId,
+  characterId,
+  playerId,
+} from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
 import type { Page } from '@playwright/test'
 
@@ -188,6 +195,34 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Actualizar', exact: true }).click()
   await expect(arin.getByText('70', { exact: true })).toBeVisible()
+})
+
+test('Profile menu: Enter opens it, Escape closes it and focus returns to the trigger', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const trigger = page.getByRole('button', { name: /Sesión de player@example.com/ })
+  // Let the page settle first: the header re-renders while data loads and would blur the trigger.
+  await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
+  await trigger.focus()
+  await expect(trigger).toBeFocused()
+  // Record that the menu did open, so a menu that never opened cannot pass for one that closed.
+  await page.evaluate(() => {
+    const seen = window as unknown as { menuSeen?: boolean }
+    seen.menuSeen = false
+    new MutationObserver(() => {
+      if (document.querySelector('[role="menu"]')) seen.menuSeen = true
+    }).observe(document.body, { childList: true, subtree: true })
+  })
+  await trigger.press('Enter')
+  // No wait for the dropdown: Escape in the frame the menu opens must still close it.
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  expect(await page.evaluate(() => (window as unknown as { menuSeen?: boolean }).menuSeen)).toBe(
+    true,
+  )
+  await expect(trigger).toBeFocused()
 })
 
 test('Player sees own resources read-only; account menu returns home without leaving membership', async ({
@@ -540,6 +575,30 @@ async function axeAndTargets(page: Page) {
   await expectTouchTargets(page, 'main button:visible, [role="dialog"] button:visible')
 }
 
+test('RYT-135 a teammate concentration is shown in the party plates only where conditions are', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+  f.vitalsOf(characterId)!.concentration = 'Orientación'
+  f.vitalsOf(beaId)!.concentration = 'Bendición de la hoguera'
+  f.vitalsOf(catoId)!.concentration = 'Sanar'
+  const overview = page.waitForResponse('**/rest/v1/rpc/get_party_overview')
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const party = page.getByRole('region', { name: 'Compañeros', exact: true })
+  const bea = party.getByRole('article', { name: 'Bea' })
+  await expect(bea.getByText('Concentración: Bendición de la hoguera')).toBeVisible()
+  const own = page.getByRole('article', { name: 'Arin', exact: true })
+  await expect(own.getByText('Concentración: Orientación')).toBeVisible()
+  // The teammate the DM does not share shows nothing, and the name never reaches the page.
+  const cato = party.getByRole('article', { name: 'Cato' })
+  await expect(cato).toContainText('Estado no compartido')
+  await expect(cato.getByText('Concentración')).toHaveCount(0)
+  const rows = (await (await overview).json()) as { name: string; concentration: string | null }[]
+  expect(rows.find((row) => row.name === 'Cato')!.concentration).toBeNull()
+  expect(await page.content()).not.toContain('Sanar')
+  await axeAndTargets(page)
+})
+
 test('RYT-031/097 Player sees teammates; live state only for those the DM shares', async ({
   page,
 }, info) => {
@@ -734,3 +793,24 @@ test('RYT-097 a teammate portrait opens the viewer and Escape returns to it', as
   await page.keyboard.press('Escape')
   await expect(mine).toBeFocused()
 })
+
+for (const theme of ['default', 'parchment', 'wizard'] as const)
+  for (const percent of [100, 150])
+    test(`RYT-135 axe is clean on the party plates with a concentration in ${theme} at ${percent}% text`, async ({
+      page,
+    }, info) => {
+      limitMatrix(info, theme === 'default' && percent === 100)
+      await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+      const f = await identityFixture(page, { player: true, party: true, sheet: 'complete' })
+      f.vitalsOf(characterId)!.concentration = 'Orientación'
+      f.vitalsOf(beaId)!.concentration = 'Bendición de la hoguera con un nombre muy largo'
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(`./#/campaign/${campaignId}/party`)
+      await page.addStyleTag({ content: `html { font-size: ${percent}%; }` })
+      await expect(page.getByText('Concentración: Orientación')).toBeVisible()
+      await axeAndTargets(page)
+      if (process.env.RYT_EVIDENCE && theme === 'default')
+        await page.screenshot({
+          path: `docs/evidence/ui-review/ryt-135/party-concentration-${percent}-${info.project.name === 'identity-mobile' ? '390' : '820'}.png`,
+        })
+    })

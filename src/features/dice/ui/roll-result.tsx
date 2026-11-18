@@ -37,7 +37,8 @@ export function RollResultSlot({ where }: { where: 'page' | 'sheet' }) {
   const result = shared?.result ?? null
   const failedSeq = result?.phase === 'failed' ? result.seq : 0
   useEffect(() => {
-    if (failedSeq) alert.current?.focus()
+    // The card stays at its top (the roll's name and the way to retry): focus does not scroll it.
+    if (failedSeq) alert.current?.focus({ preventScroll: true })
   }, [failedSeq])
   if (!shared || !result) return null
   const { spec } = result

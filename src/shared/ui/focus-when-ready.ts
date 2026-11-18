@@ -23,9 +23,11 @@ export function focusWhenReady(
     timeout?: number
     settle?: number
     from?: Element | null
-    leaving?: Element | null
+    /** One overlay, or several that are leaving together (a menu and the dialog it opened). */
+    leaving?: Element | null | (Element | null)[]
   } = {},
 ) {
+  const leavingAll = [leaving ?? null].flat().filter((el): el is Element => el !== null)
   const resolve = () =>
     (typeof target === 'string' ? document.querySelector<HTMLElement>(target) : target()) ?? null
   const start = performance.now()
@@ -40,7 +42,7 @@ export function focusWhenReady(
     active === from ||
     !active.isConnected ||
     active.getAttribute('role') === 'dialog' ||
-    Boolean(leaving?.contains(active))
+    leavingAll.some((overlay) => overlay.contains(active))
 
   const tick = () => {
     const now = performance.now()
@@ -50,7 +52,7 @@ export function focusWhenReady(
       heldSince ||= now
       // Done once the hold window has passed AND the closing overlay is gone: its late removal
       // would otherwise drop focus on the page with nobody left to give it back.
-      if (now - heldSince >= settle && !leaving?.isConnected) return
+      if (now - heldSince >= settle && !leavingAll.some((overlay) => overlay.isConnected)) return
     } else if (fallen(active) || (heldSince && active === document.body)) {
       if (el?.isConnected) {
         el.focus({ preventScroll })

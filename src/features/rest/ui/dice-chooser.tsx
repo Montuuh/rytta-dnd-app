@@ -23,6 +23,7 @@ export function DiceChooser({
   campaignId,
   characterId,
   rolled,
+  onRolled,
   rollsStatus,
   onRetryRolls,
   die,
@@ -38,6 +39,8 @@ export function DiceChooser({
   characterId: string
   /** The roll Rytta already made of these hit dice for this rest, read from the roll log. */
   rolled?: CampaignRoll
+  /** The server made a roll on this screen: the panel keeps it for when the log cannot be read. */
+  onRolled: (roll: CampaignRoll) => void
   /** The roll log has loaded: until then nothing is said about an earlier roll. */
   rollsStatus: 'loading' | 'ready' | 'failed'
   onRetryRolls: () => void
@@ -70,11 +73,10 @@ export function DiceChooser({
   const heal = valid && value.spent > 0 ? shortRestHeal(value.spent, roll, conMod) : 0
   const con = conMod >= 0 ? `+${conMod}` : `−${Math.abs(conMod)}`
   // One roll per rest: once Rytta has rolled the hit dice the count and the roll are final.
-  // The roll log is the source; the roll made on this screen covers a log that could not load.
-  const [madeHere, setMadeHere] = useState<CampaignRoll | null>(null)
-  const done = rolled ?? madeHere ?? undefined
-  const rolledAlready = appDice && done !== undefined
-  const dice = done ? { values: done.dice } : null
+  // The roll log is the source; the panel also keeps the roll made on this screen, so a log that
+  // could not load does not make a reopened rest forget it.
+  const rolledAlready = appDice && rolled !== undefined
+  const dice = rolled ? { values: rolled.dice } : null
   const step = (delta: number) => {
     if (rolledAlready) return
     const spent = Math.min(left, Math.max(0, value.spent + delta))
@@ -96,7 +98,7 @@ export function DiceChooser({
         attempt.current.id,
       )
       attempt.current = null
-      setMadeHere(stored)
+      onRolled(stored)
       const total = String(stored.dice.reduce((sum, item) => sum + item, 0))
       onChange({ spent: value.spent, roll: total })
     } catch (error) {

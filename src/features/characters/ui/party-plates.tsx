@@ -30,6 +30,7 @@ import {
   Radio,
   ScrollText,
   Shield,
+  Sparkles,
   Unlink,
   UserRound,
   Utensils,
@@ -136,6 +137,7 @@ export function HeroPlate({
           <div className="party-hero-status">
             <ExhaustionDots level={exhaustion} labelled />
             <ConditionList name={character.name} conditions={live?.conditions ?? []} />
+            <ConcentrationLine spell={live?.concentration ?? null} />
           </div>
           <Ledger character={character} />
           {summary?.status !== 'draft' && (
@@ -256,6 +258,7 @@ export function TeammateCard({
             </div>
             {live.exhaustion > 0 && <ExhaustionDots level={live.exhaustion} />}
             <ConditionList name={member.name} conditions={live.conditions} />
+            <ConcentrationLine spell={live.concentration} />
           </>
         ) : (
           <p className="party-mate-note">{note}</p>
@@ -467,6 +470,18 @@ function ExhaustionDots({ level, labelled = false }: { level: number; labelled?:
         </span>
       )}
     </span>
+  )
+}
+
+/** RYT-135: the spell a character concentrates on, where the party can already read its conditions. */
+function ConcentrationLine({ spell }: { spell: string | null }) {
+  const { t } = useTranslation()
+  if (!spell) return null
+  return (
+    <p className="party-concentration">
+      <Sparkles size={14} aria-hidden="true" />
+      <span className="user-copy">{t('party.liveConcentration', { spell })}</span>
+    </p>
   )
 }
 

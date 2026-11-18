@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Group, Loader, Text } from '@mantine/core'
 import { ArrowLeft, ArrowRight, Check, TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -85,6 +85,8 @@ export function LevelUpSheet({
   const heading = useRef<HTMLHeadingElement>(null)
   const settled = useRef(false)
   const alert = useRef<HTMLDivElement>(null)
+  const who = useRef<HTMLDivElement>(null)
+  const observer = useRef<ResizeObserver | null>(null)
   const { level, build } = snapshot
   const toLevel = level + 1
   const custom = !isClassKey(build.classKey)
@@ -127,9 +129,32 @@ export function LevelUpSheet({
   const failed = mutation.isError ? mutation.submittedAt : 0
   useEffect(() => {
     if (!failed) return
-    alert.current?.scrollIntoView({ block: 'start' })
+    // The character row first, so the summary and the alert read together under the header;
+    // when both do not fit above the footer, the alert wins.
+    who.current?.scrollIntoView({ block: 'start' })
+    const box = alert.current?.getBoundingClientRect()
+    const footer = document.querySelector('.levelup-footer')?.getBoundingClientRect()
+    if (box && footer && box.bottom > footer.top) alert.current?.scrollIntoView({ block: 'start' })
     alert.current?.focus({ preventScroll: true })
   }, [failed])
+
+  // The header and the footer stick over the scrolling sheet: their heights keep the focused
+  // option and the failure notice clear of them (scroll margins in level-up.css).
+  const footerRef = useCallback((footer: HTMLDivElement | null) => {
+    observer.current?.disconnect()
+    observer.current = null
+    if (!footer || typeof ResizeObserver === 'undefined') return
+    const body = footer.parentElement
+    const header = footer.closest('[role="dialog"]')?.querySelector<HTMLElement>('header')
+    const measure = () => {
+      body?.style.setProperty('--levelup-footer', `${footer.offsetHeight}px`)
+      body?.style.setProperty('--levelup-header', `${header?.offsetHeight ?? 0}px`)
+    }
+    measure()
+    observer.current = new ResizeObserver(measure)
+    observer.current.observe(footer)
+    if (header) observer.current.observe(header)
+  }, [])
 
   const close = () => {
     if (pending) return
@@ -200,7 +225,7 @@ export function LevelUpSheet({
       closeButtonProps={{ 'aria-label': t('panel.close'), size: 44, disabled: pending }}
       classNames={{ body: 'levelup-modal-body' }}
     >
-      <div className="levelup-who">
+      <div className="levelup-who" ref={who}>
         <Text fw={600} className="user-copy">
           {characterName}
         </Text>
@@ -219,7 +244,7 @@ export function LevelUpSheet({
             {t('levelUp.done.title', { level: summary.toLevel })}
           </h3>
           <DoneView summary={summary} />
-          <div className="levelup-footer">
+          <div className="levelup-footer" ref={footerRef}>
             <Group justify="flex-end" gap="sm">
               {onAgain ? (
                 <Button variant="default" onClick={onClose}>
@@ -308,7 +333,7 @@ export function LevelUpSheet({
           {step === 'review' && plan && reviewSummary && (
             <ReviewStep plan={plan} summary={reviewSummary} onChoices={() => go('choices')} />
           )}
-          <div className="levelup-footer">
+          <div className="levelup-footer" ref={footerRef}>
             <Group justify="space-between" gap="sm" className="levelup-footer-row">
               <Button
                 variant="default"

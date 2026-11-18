@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyChoices,
   canRaise,
+  capReason,
   hasChoices,
   hitDieAverage,
   hitPointGain,
@@ -197,6 +198,15 @@ describe('RYT-130 choices by class and level', () => {
       bonuses: { str: 0, dex: 1, con: 0, int: 0, wis: 0, cha: 0 },
     })
     expect(canRaise(build, 'dex', 1)).toBe(false)
+  })
+
+  it('names the real limit: a 19 would pass 20, only a 20 is at the cap', () => {
+    const build = character('wizard', 11, {
+      baseAbilities: { str: 8, dex: 14, con: 14, int: 19, wis: 20, cha: 10 },
+    })
+    expect(capReason(build, 'int')).toBe('would-pass')
+    expect(capReason(build, 'wis')).toBe('at-cap')
+    expect(capReason(build, 'str')).toBe('would-pass')
   })
 })
 

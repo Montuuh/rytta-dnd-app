@@ -184,6 +184,11 @@ export function canRaise(build: Build, ability: Ability, amount: 1 | 2) {
   return finalAbilities(build)[ability] + amount <= abilityCap
 }
 
+/** Why a tile cannot take the increase: the score is already at the cap, or the increase would pass it. */
+export function capReason(build: Build, ability: Ability): 'at-cap' | 'would-pass' {
+  return finalAbilities(build)[ability] >= abilityCap ? 'at-cap' : 'would-pass'
+}
+
 function improvementValid(build: Build, improvement: Improvement | null) {
   if (!improvement) return false
   if (improvement.kind === 'feat') return improvement.name.trim().length > 0

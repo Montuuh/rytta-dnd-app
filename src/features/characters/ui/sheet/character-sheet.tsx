@@ -320,6 +320,13 @@ function SheetPanel({
     say?: string
   } | null>(null)
   const latestRevision = useRef<number | null>(null)
+  // What this render shows and what the server last said, for a cast that resumes after waiting:
+  // its closure is from before the wait. Declared before the effect below so both are current
+  // in the same commit, when the reload that lands clears `latestRevision`.
+  const live = useRef({ vitals, shown: vitals })
+  useEffect(() => {
+    live.current = { vitals, shown: optimistic ?? vitals }
+  })
   // Server play state caught up with the last write: drop the local copy.
   useEffect(() => {
     if (!optimistic || inFlight.current || queued.current) return
@@ -526,47 +533,62 @@ function SheetPanel({
   // revision this sheet last saw. The submission (what it sends, the revision, the request id) is
   // kept in `held` until it succeeds or is refused, so a retry after a lost reply resends exactly
   // it and the server replays it instead of spending a second slot.
-  const applyCast = async (plan: CastPlan, base: Vitals, held: CastHeld) => {
+  const applyCast = async (
+    first: CastPlan,
+    held: CastHeld,
+    replan: (fresh: Vitals) => CastPlan | null,
+  ) => {
     if (!cast) return
     const { spell, name } = cast.target
-    const left = (level: number) =>
-      slotsFor(build.casterKind, shown.level)[level - 1]! - (plan.vitals.slots_used[level - 1] ?? 0)
-    const text = [
-      plan.spent !== null
-        ? t('cast.done.slot', {
-            name,
-            level: plan.spent,
-            left: left(plan.spent),
-            max: slotsFor(build.casterKind, shown.level)[plan.spent - 1]!,
-          })
-        : spell.level === 0
-          ? t('cast.done.noSlot', { name })
-          : t('cast.done.ritual', { name }),
-      // The spell just named is the one concentrated on: the note names it once.
-      plan.concentration
-        ? plan.concentration.value === name
-          ? t('cast.done.concentratingHere')
-          : t('cast.done.concentrating', { name: plan.concentration.value })
-        : null,
-    ]
-      .filter(Boolean)
-      .join(' ')
+    const noteOf = (plan: CastPlan) => {
+      const left = (level: number) =>
+        slotsFor(build.casterKind, shown.level)[level - 1]! -
+        (plan.vitals.slots_used[level - 1] ?? 0)
+      return [
+        plan.spent !== null
+          ? t('cast.done.slot', {
+              name,
+              level: plan.spent,
+              left: left(plan.spent),
+              max: slotsFor(build.casterKind, shown.level)[plan.spent - 1]!,
+            })
+          : spell.level === 0
+            ? t('cast.done.noSlot', { name })
+            : t('cast.done.ritual', { name }),
+        // The spell just named is the one concentrated on: the note names it once.
+        plan.concentration
+          ? plan.concentration.value === name
+            ? t('cast.done.concentratingHere')
+            : t('cast.done.concentrating', { name: plan.concentration.value })
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    }
     // Nothing to spend or mark (a ritual): there is nothing to write either.
-    if (plan.spent === null && !plan.concentration) {
+    if (first.spent === null && !first.concentration) {
+      const text = noteOf(first)
       setCastNote({ text, spellId: spell.id })
       say(text)
       return
     }
     if (!held.current) {
       await whenIdle()
+      // The wait may have changed what the sheet is: the tap it waited for landed (or failed).
+      // The plan is built again on the state and revision as they are now, never on the ones
+      // the dialog saw when it opened.
+      const fresh = live.current.shown
+      const plan = replan(fresh)
+      if (!plan) throw new Error('stale')
       held.current = {
         plan,
-        base,
-        revision: latestRevision.current ?? vitals.revision,
+        base: fresh,
+        revision: latestRevision.current ?? live.current.vitals.revision,
         requestId: newRequestId(),
       }
     }
     const sent = held.current
+    const text = noteOf(sent.plan)
     castBusy.current = true
     try {
       const next = await castAction.mutateAsync({

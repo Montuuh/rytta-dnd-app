@@ -73,7 +73,12 @@ export function CastDialog({
   inEncounter: boolean
   onClose: () => void
   /** Writes the cast; rejects with an Error whose message names the failure. */
-  apply: (plan: CastPlan, base: Vitals, held: CastHeld) => Promise<void>
+  apply: (
+    plan: CastPlan,
+    held: CastHeld,
+    /** Builds the plan again on a fresher play state, after waiting for another write. */
+    replan: (fresh: Vitals) => CastPlan | null,
+  ) => Promise<void>
   /** Where focus goes when the dialog closes. */
   returnTo: () => HTMLElement | null | undefined
 }) {
@@ -146,7 +151,7 @@ export function CastDialog({
       setPending(true)
       setFailure(null)
       try {
-        await apply(plan, basis, held)
+        await apply(plan, held, (fresh) => planCast(spell, mode, build, level, fresh, markerName))
         return 'saved' as const
       } catch (error) {
         const next = failureOf(error instanceof Error ? error.message : '')

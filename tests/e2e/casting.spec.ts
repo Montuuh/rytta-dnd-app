@@ -1237,6 +1237,11 @@ test('RYT-135 a cast that meets a manual slot tap still on its way waits for it:
     .getByRole('button', { name: /Lanzar/ })
     .click()
   const dialog = castDialog(page, 'Lanzar Palabra sanadora')
+  // The cast's wait polls on a timer. Time is frozen from here so the order of events is the one
+  // that used to lose: the tap saves, the sheet reloads with its new revision, and only then the
+  // waiting cast wakes up.
+  await page.clock.install()
+  await page.clock.pauseAt(new Date(Date.now() + 5_000))
   await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
   // Waiting: the cast has sent nothing, nothing was spent, and no result is claimed.
   await page.waitForTimeout(800)
@@ -1247,7 +1252,17 @@ test('RYT-135 a cast that meets a manual slot tap still on its way waits for it:
   await expect(dialog).toBeVisible()
 
   // The tap lands first; the cast then goes out on the revision that tap made, spending one more.
+  const reloaded = page.waitForResponse(
+    (response) =>
+      response.url().includes('character_vitals') && response.request().method() === 'GET',
+  )
   release()
+  await reloaded
+  // The reloaded sheet has rendered (the tap's local copy is dropped) before the cast wakes.
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  expect(f.vitalsCalls).toHaveLength(1)
+  await page.clock.runFor(200)
+  await page.clock.resume()
   await expect(dialog).toHaveCount(0)
   expect(f.vitalsCalls).toHaveLength(2)
   expect(f.vitalsCalls[0]).toMatchObject({

@@ -316,7 +316,7 @@ test('the account section reads in English', async ({ page }) => {
   await settings.getByRole('button', { name: 'Delete my account…' }).click()
   const dialog = page.getByRole('dialog', { name: 'Delete your account' })
   await expect(dialog.getByRole('textbox', { name: 'Type DELETE to confirm' })).toBeVisible()
-  await expect(dialog).toContainText('This cannot be undone.')
+  await expect(dialog).toContainText('Deleting your Rytta account is permanent.')
 })
 
 // RYT-123 J1-01: a destructive action is never queued for when the network returns.

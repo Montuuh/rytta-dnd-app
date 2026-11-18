@@ -98,6 +98,12 @@
   min-height: 48px;
 }
 
+.landing-copy .landing-example.mantine-Button-root,
+.landing-copy .landing-example .mantine-Button-label {
+  color: #f5ebd6;
+  border-color: rgb(245 235 214 / 0.65);
+}
+
 /* Google's neutral button: white fill, grey outline, dark ink. */
 .landing-copy .sign-in-google {
   --button-bg: #ffffff;

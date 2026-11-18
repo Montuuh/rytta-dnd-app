@@ -70,6 +70,22 @@ All addressed in `e84f3c7`:
 - One announcement per turn change.
 - Network responses and the DOM checked for hidden names.
 
+## Merge and release
+
+- PR 16 merged to `main` after its checks and browser tests passed (merge commit `f38f820`); live
+  at https://rytta.pages.dev with that build id.
+- A later fix shipped with PR 17 (RYT-132): on an uncalibrated map with a wide font, the status
+  bar's font size depended on a square size derived from the bar's own height, so the bar
+  oscillated between one and two rows and the turn plate moved with it. Seen on Linux CI. The bar
+  now uses a size that does not depend on its height. Rendered check by the independent UI reviewer
+  with a wide font and a forced minimum font size: stable over 24 samples at 1280px and 1920px.
+
+## Acceptance gaps
+
+- The offline or stale state from RYT-126 is implemented on the screen, but no browser test or
+  recorded check shows it there.
+- Reduced motion is emulated in every table screen test but not asserted.
+
 ## Not verified
 
 - Closing a real new tab opened by the DM.
@@ -81,8 +97,9 @@ All addressed in `e84f3c7`:
 - A real screen reader.
 - Hosted realtime (the fixtures poll).
 - WebKit for this spec.
+- Real phones and tablets.
 
 ## Status
 
-Review. Local checks and both independent reviews are recorded above; the merge to `main` is
-pending. Follow-ups are in RYT-135.
+Review. Merged to `main` (`f38f820`) and live, with both independent reviews recorded above.
+It stays in review until the acceptance gaps above have evidence. Follow-ups are in RYT-135.

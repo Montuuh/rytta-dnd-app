@@ -78,6 +78,30 @@ not returned. Covered by unit tests with fake timers; the affected browser test 
 repeats, including with a 10x CPU throttle; the leave-campaign dialog was checked rendered during
 the independent UI review.
 
+## Linux CI failures before the merge
+
+Three failures seen only on Linux CI were investigated before the merge:
+
+1. Map labels changed height between zoom levels. Their constant size was achieved with a font
+   size below Chromium's minimum on Linux. This was a product bug against the acceptance. Labels
+   are now drawn at 14px and scaled.
+2. The table screen status bar oscillated between one and two rows (recorded in RYT-131).
+3. A focus return in the members dialogs. It could not be reproduced locally and was hardened.
+   A double focus return that pulled focus back after a quick Tab was then removed. A new browser
+   test fails 24 of 24 times on the old code and passes on the new.
+
+Independent UI review: final PASS on `8a88f48`.
+
+New non-blocking leftovers, moved to RYT-135:
+
+- at 820px a Tab within about 200ms after Escape is swallowed by the closing dialog's focus trap;
+- Escape pressed in the same frame as opening the dialog is lost.
+
+## Merge and release
+
+PR 17 merged to `main` (merge commit `b923506`); live at https://rytta.pages.dev with that build
+id.
+
 ## Not verified
 
 - Real phones: hardware Back, iOS safe areas and real pinch. Pinch was driven through the
@@ -88,8 +112,9 @@ the independent UI review.
 - Visibility against the hosted database: the fixtures filter server-side and the client asks for
   nothing new.
 - WebKit for the new spec.
+- Real tablets.
 
 ## Status
 
-Review. Local checks and both independent reviews are recorded above; the merge to `main` is
-pending. Follow-ups are in RYT-135.
+Done. Merged to `main` (`b923506`) and live; the independent code review and the final UI
+review PASS on `8a88f48` are recorded above. Follow-ups are in RYT-135.

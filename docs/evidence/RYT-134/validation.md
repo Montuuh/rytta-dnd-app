@@ -59,7 +59,7 @@ The migration:
 |---------|---------|
 | First version | SAFE, three low findings, all addressed |
 | Escape version | SAFE, one low finding (storage amplification), addressed in `cc9af44` |
-| Placeholder version (`fcfdc8f`) | PENDING: re-check before production |
+| Placeholder version (`fcfdc8f`), the final form | SAFE |
 
 ## Local validation
 
@@ -116,7 +116,40 @@ Not verified on staging:
 
 ## Hosted production
 
-PENDING: applied right before the merge.
+Applied right before the merge, on 2026-11-18:
+
+- Recorded as `20261118123502 sheet_concentration`. The stored text is identical to the committed
+  file (md5 `3b0be2f3b1c635f0013232f6226d38b3`, 32534 bytes).
+- Read-only verification in the production and PRE schemas:
+  - `concentration` is text and nullable, null on every existing row;
+  - a checksum of the play state over the pre-existing columns is identical before and after, in
+    public and in PRE;
+  - row counts unchanged: 15 and 2 play states, 636 and 33 character events, 311 and 19 stored
+    requests, 8 accounts;
+  - the escapes are intact in the constraint and in the function, with identical classes in both;
+  - one 15-argument `set_character_vitals` per schema, with two defaults, security definer and an
+    empty search_path;
+  - grants as before: no anon, no PUBLIC; the two private functions are not executable by clients;
+  - the PRE copies carry no production schema references;
+  - RLS on every table;
+  - the nightly pruning job is active.
+- Call resolution:
+  - the 13-named-argument call of the previous frontend resolves to the new function and is
+    refused with `Forbidden` for a session without identity, writing nothing;
+  - through the real HTTP API with the public key, both the 13-argument and the 15-argument calls
+    resolve (answer: permission denied for anon), while a call with an unknown argument answers
+    "function not found", before and after the apply.
+- Advisors: nothing new beyond the known class for RPCs.
+
+Not verified in production:
+
+- behaviour with a real Player or DM session (set, clear, replay, long rest);
+- the full denial matrix on the hosted database.
+
+## Merge and release
+
+PR 19 merged to `main` right after the apply (merge commit `953343a`); live at
+https://rytta.pages.dev with that build id.
 
 ## Independent code review
 
@@ -168,14 +201,17 @@ Non-blocking leftovers, moved to RYT-135:
 
 ## Not verified
 
-- Hosted Supabase through the real API.
+- Hosted Supabase through the real API with a signed-in session (the anonymous calls are
+  recorded above).
 - A real screen reader.
 - WebKit and iOS.
+- Real phones and tablets.
+- Hosted realtime.
 - English beyond reading the strings in the last pass.
 - The cast flow as the DM in the last pass.
 
 ## Status
 
-Review. Local checks, the staging apply and the independent code and UI reviews are recorded above.
-The security re-check of `fcfdc8f`, the production apply and the merge to `main` are pending.
-Follow-ups are in RYT-135 and RYT-139.
+Done. Local checks, the staging apply, the production apply and its verification, the independent
+security review SAFE on the final migration form, and the independent code and UI reviews are
+recorded above. Merged to `main` (`953343a`) and live. Follow-ups are in RYT-135 and RYT-139.

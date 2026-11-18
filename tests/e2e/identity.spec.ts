@@ -1112,12 +1112,10 @@ test('RYT-136 the profile menu returns focus on Escape and after a choice that o
       await expect(page.getByRole('menu')).toBeVisible({ timeout: 1_500 })
     }).toPass()
 
-  // Escape: back on the trigger, and it stays there. A slow page may need the key again.
+  // Escape, once: back on the trigger, and it stays there.
   await openMenu()
-  await expect(async () => {
-    if (await page.getByRole('menu').isVisible()) await page.keyboard.press('Escape')
-    await expect(page.getByRole('menu')).toHaveCount(0, { timeout: 1_500 })
-  }).toPass()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
   await expect(trigger).toBeFocused()
   // It stays there, frame after frame.
   expect(new Set(await focusAcrossFrames(page, 40)).size).toBe(1)

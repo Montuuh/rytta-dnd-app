@@ -207,10 +207,21 @@ test('Profile menu: Enter opens it, Escape closes it and focus returns to the tr
   await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
   await trigger.focus()
   await expect(trigger).toBeFocused()
+  // Record that the menu did open, so a menu that never opened cannot pass for one that closed.
+  await page.evaluate(() => {
+    const seen = window as unknown as { menuSeen?: boolean }
+    seen.menuSeen = false
+    new MutationObserver(() => {
+      if (document.querySelector('[role="menu"]')) seen.menuSeen = true
+    }).observe(document.body, { childList: true, subtree: true })
+  })
   await trigger.press('Enter')
   // No wait for the dropdown: Escape in the frame the menu opens must still close it.
   await page.keyboard.press('Escape')
   await expect(page.getByRole('menu')).toHaveCount(0)
+  expect(await page.evaluate(() => (window as unknown as { menuSeen?: boolean }).menuSeen)).toBe(
+    true,
+  )
   await expect(trigger).toBeFocused()
 })
 

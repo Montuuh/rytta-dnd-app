@@ -457,8 +457,11 @@
       "priority": "P0",
       "owner": "reviewer",
       "status": "planned",
-      "dependsOn": ["RYT-001", "RYT-002", "RYT-003", "RYT-004", "RYT-005", "RYT-013"],
-      "sources": ["User: mobile/tablet and Pages"],
+      "dependsOn": ["RYT-001", "RYT-002", "RYT-003", "RYT-004", "RYT-005", "RYT-013", "RYT-116"],
+      "sources": [
+        "User: mobile/tablet and Pages",
+        "Producer upkeep 2026-11-18: added RYT-116 as a dependency. Criterion 4 (backup and restore) and the multi-account checks need the staging project with its own sign-in and the restore rehearsal that RYT-116 delivers."
+      ],
       "scope": "Staging verification, accessibility, backup/restore and deployment evidence.",
       "acceptance": [
         "Exercise real Supabase Auth/PostgREST/RLS/Realtime with multiple accounts.",
@@ -3722,7 +3725,8 @@
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Scalability audit findings: S1 (polling continues while realtime is connected), S2 (membership policy helpers run per row), S3 (idempotency and history tables grow without bound), S5 (one signed URL request per image), S6 (unindexed foreign keys).",
         "Progress 2026-11-17: migration applied (hosted version 20261117012908); 76 indexes, 0 of 87 foreign keys without a covering index; 29 policies rewritten with identical visibility; prune not scheduled (pg_cron absent). Open: back-off for trades, rest and campaign polling, storage request spec, first prune with owner approval.",
-        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Moved back from review: back-off for trades, rest and campaign polling and the browser spec counting Storage requests are not implemented; the first prune still needs owner approval (RYT-119)."
+        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Moved back from review: back-off for trades, rest and campaign polling and the browser spec counting Storage requests are not implemented; the first prune still needs owner approval (RYT-119).",
+        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status."
       ],
       "scope": "Indexes for the unindexed foreign keys and RLS lookups listed in the audit, confirmed against the hosted advisors. Membership-based policies that call a helper per row are rewritten to compare against set-based lookups of the caller's campaigns, DM campaigns and characters. Idempotency tables gain created_at and a scheduled job prunes them and bounds history snapshots after their undo window. Item, shop and creature images are signed in batches per screen instead of one request each. Combat, trades and rest polling backs off when their realtime channel is connected and falls back to the current interval when it is not. Reviewed backward-compatible migrations, tested in PRE first. Non-goals: changing the transport architecture (broadcast channels, revision signals), new features, autonomous release.",
       "acceptance": [
@@ -3874,7 +3878,8 @@
       "dependsOn": ["RYT-113", "RYT-114"],
       "sources": [
         "RYT-113 and RYT-114 evidence 2026-11-17: actor-level, realtime, storage quota and concurrency behaviour were tested only on PGlite; pg_cron is not installed, so private.prune_stale_rows is not scheduled.",
-        "Progress 2026-11-17: hosted PRE actor checks and production catalog checks done for both rollouts (seven migrations). Open: realtime delivery filtering, real Storage rejection text, true concurrency, the per-recipient flood trade-off record, production Auth-user deletion and scheduling private.prune_stale_rows (pg_cron absent; first run needs owner approval)."
+        "Progress 2026-11-17: hosted PRE actor checks and production catalog checks done for both rollouts (seven migrations). Open: realtime delivery filtering, real Storage rejection text, true concurrency, the per-recipient flood trade-off record, production Auth-user deletion and scheduling private.prune_stale_rows (pg_cron absent; first run needs owner approval).",
+        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status."
       ],
       "scope": "Verify the RYT-113 and RYT-114 migrations against the hosted PRE schema: actor-level denial and quota tests (anon, outsider, Player, cross-campaign DM), realtime filtering of encounter_signals, the storage quota rejection text, concurrency of the seat cap, the per-recipient invitation flood trade-off and the byte-quota query plan on storage.objects. Schedule or run private.prune_stale_rows only with owner approval. Also covers the second rollout (RYT-115 and RYT-118 migrations), including production removal of the Auth user by delete_my_account once a safe test account exists. Non-goals: new features, destructive data changes, promoting PRE data into production, autonomous release.",
       "acceptance": [

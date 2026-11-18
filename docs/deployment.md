@@ -97,14 +97,47 @@ through a pull request whose checks and browser tests passed. A production build
 `RYTTA_ALLOW_UNPUBLISHED_OWNER=1` (set in `playwright.config.ts`, not a `VITE_` variable, so it
 never reaches a bundle). No database migration runs from any build.
 
-## Supabase production
+## Environments
 
-Provision separately. Apply reviewed migrations with the CLI process, configure providers,
-Google sign-in and exact Auth redirect URLs, then test anon/player/DM/outsider accounts.
-See [Google and Supabase setup](setup-google-supabase.md). In-app invitations need no SMTP.
-Secrets stay server-side. Storage policies and Realtime setup are later tickets.
-Set backup/restore ownership and retention before real campaigns.
-PKCE callbacks return to the deployed base URL with query parameters; never implicit fragments.
+Decision, costs and open items: [ADR 048](decisions/048-environments-staging.md). Three
+environments exist today, all on free plans:
+
+| Environment | Backend                                                       | Frontend                                 | Data                             |
+| ----------- | ------------------------------------------------------------- | ---------------------------------------- | -------------------------------- |
+| Production  | the production Supabase project, `public` / `private` schemas | https://rytta.pages.dev, built from main | real campaigns                   |
+| Staging     | a separate Supabase project (same organisation, eu-west-1)    | none yet                                 | none: no data and no users       |
+| PRE         | `pre` / `pre_private` schemas inside the production project   | local development and loopback previews  | copied from production (ADR 007) |
+
+- Staging has the full migration history, replayed from zero. It has no OAuth client, no
+  redirect URLs and no seed yet, so nobody signs in there; checks run as actors inside
+  rolled-back statements.
+- PRE keeps working as [PRE environment](pre-environment.md) describes, and every migration
+  still mirrors itself into it, until staging replaces it for local development.
+- Configure providers, Google sign-in and exact Auth redirect URLs per project; see
+  [Google and Supabase setup](setup-google-supabase.md). In-app invitations need no SMTP.
+  Secrets stay server-side and are entered by the owner, never by tooling. PKCE callbacks return
+  to the deployed base URL with query parameters; never implicit fragments.
+- Backups: the free plan has no automated daily backups and no point-in-time recovery. Scheduled
+  logical exports and a restore rehearsal into staging are still open.
+- The nightly retention job is scheduled and active in production.
+
+SQL sent to a hosted database is plain ASCII without backslash escapes (the delivery path decodes
+backslash-u escapes in transit; build such text inside the database), and the committed LF
+content is applied, never the CRLF working copy.
+
+Applying a migration to the hosted databases, by hand until CI promotion exists:
+
+1. Confirm the hosted history of staging and production, and that the migration is not applied.
+2. Apply the committed LF file to staging.
+3. Compare the md5 and length of the statement stored in staging's migration history with the
+   file; any difference stops the procedure.
+4. Verify the new objects in staging's catalog and run an actor-level check (the allowed role
+   succeeds, anon, outsider, Player and cross-campaign DM are denied, as the migration requires)
+   inside a statement that is rolled back.
+5. In production, take a checksum of the existing data the migration must not change.
+6. Apply the same file to production and repeat the md5 and length comparison.
+7. Take the checksum again and compare it with step 5; repeat the catalog check. Log both
+   applies, versions and checksums in the ticket evidence.
 
 ## Releases with a paired migration
 

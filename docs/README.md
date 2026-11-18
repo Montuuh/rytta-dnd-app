@@ -119,3 +119,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     pictures of RYT-112, their rules, regeneration steps, provenance and credits.
 58. [ADR 047: hosting on Cloudflare Workers static assets](decisions/047-hosting-cloudflare-pages.md):
     security headers, caching and the site at the domain root (RYT-116).
+59. [ADR 048: three environments, a staging project and the hosted migration procedure](decisions/048-environments-staging.md):
+    production, staging and PRE as they are, costs, the SQL delivery rules and what remains open.

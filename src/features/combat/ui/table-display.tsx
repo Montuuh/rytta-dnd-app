@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
+  Button,
   Group,
   Loader,
   Stack,
@@ -9,8 +10,9 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
-import { ChevronsRight, EyeOff, Hourglass, Pencil } from 'lucide-react'
+import { ChevronsRight, EyeOff, Hourglass, Monitor, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import {
   canEndTurn,
@@ -114,20 +116,40 @@ export function TableDisplay({
       <VisuallyHidden aria-live="polite">{announcement.text}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{saved}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{deathNews}</VisuallyHidden>
-      <header>
-        <Title order={1} className="combat-table-title">
-          {encounter.name}
-        </Title>
-        <Group gap="sm" mt={4}>
-          <Text fw={700} className="combat-table-round">
-            {status === 'active'
-              ? t('combat.round', { round: encounter.round })
-              : t(`combat.status.${status}`)}
-          </Text>
-          {status !== 'ended' && (
-            <NetworkState stale={stale} connected={connected} retry={retry} updatedAt={updatedAt} />
-          )}
-        </Group>
+      <header className="combat-table-head">
+        <div>
+          <Title order={1} className="combat-table-title">
+            {encounter.name}
+          </Title>
+          <Group gap="sm" mt={4}>
+            <Text fw={700} className="combat-table-round">
+              {status === 'active'
+                ? t('combat.round', { round: encounter.round })
+                : t(`combat.status.${status}`)}
+            </Text>
+            {status !== 'ended' && (
+              <NetworkState
+                stale={stale}
+                connected={connected}
+                retry={retry}
+                updatedAt={updatedAt}
+              />
+            )}
+          </Group>
+        </div>
+        {(status === 'active' || status === 'initiative') && (
+          // RYT-131: every member opens the same chrome-less table screen from here.
+          <Button
+            component={Link}
+            to={`/campaign/${campaignId}/tabletop-table`}
+            variant="default"
+            size="md"
+            className="combat-table-screen"
+            leftSection={<Monitor size={20} aria-hidden="true" />}
+          >
+            {t('combat.table.screen')}
+          </Button>
+        )}
       </header>
       <RunnerError error={error} trigger={trigger} onClose={clear} />
 

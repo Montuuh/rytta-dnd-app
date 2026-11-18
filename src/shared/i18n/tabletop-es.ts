@@ -678,7 +678,6 @@ export const tabletopEs = {
   'tabletop.table.nothingHelp': 'El DM pone una escena en la mesa desde Rytta.',
   'tabletop.table.forbidden': 'Esta cuenta no puede ver la mesa de esta campaña.',
   'tabletop.table.round': 'Ronda {{round}}',
-  'tabletop.table.turn': 'Turno de {{name}}',
   'tabletop.table.live': 'En directo',
   'tabletop.table.offline': 'Sin conexión',
   'tabletop.table.uncalibrated': 'Sin configurar: el mapa llena la pantalla',
@@ -753,9 +752,24 @@ export const tabletopEs = {
   'tabletop.door.title': 'Puerta {{state}}',
   // RYT-126: table screen liveness and the Player's map.
   'tabletop.table.offlineSince': 'Sin conexión · hace {{seconds}} s',
-  'tabletop.table.after': 'Después: {{name}}',
   'tabletop.table.hiddenTurn': 'Turno oculto',
   'tabletop.table.retry': 'Reintentar',
   'tabletop.table.retrying': 'Reintentando…',
+  // RYT-131: la pantalla de mesa única para el combate.
+  'tabletop.table.leave': 'Salir de la pantalla de mesa',
+  'tabletop.table.announce': 'Turno de {{name}}, ronda {{round}}',
+  'tabletop.table.announceHidden': 'Un turno fuera de vista, ronda {{round}}',
+  'tabletop.table.nothingFight':
+    'El DM pone una escena en la mesa o empieza un combate desde Rytta.',
+  'tabletop.table.initiativeValue': 'Iniciativa {{count}}',
+  'tabletop.plate.label': 'Placa de turno',
+  'tabletop.plate.move': 'Mover la placa de turno (las flechas eligen una esquina)',
+  'tabletop.plate.shrink': 'Reducir la placa de turno',
+  'tabletop.plate.grow': 'Ampliar la placa de turno',
+  'tabletop.plate.moved': 'Placa de turno en la esquina {{corner}}',
+  'tabletop.plate.corner.top-left': 'superior izquierda',
+  'tabletop.plate.corner.top-right': 'superior derecha',
+  'tabletop.plate.corner.bottom-left': 'inferior izquierda',
+  'tabletop.plate.corner.bottom-right': 'inferior derecha',
   'tabletop.zoom.mine': 'Centrar en mi ficha',
 } satisfies Record<keyof typeof tabletopEn, string>

@@ -1,18 +1,22 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Compass, Ruler, Volume2, VolumeX, Wifi, WifiOff } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router'
+import { Compass, LogOut, Ruler, Volume2, VolumeX, Wifi, WifiOff } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import {
   combatStateQuery,
   Elapsed,
   isHiddenTurn,
+  isLive,
   nextUp,
+  turnOrder,
   useCombatRealtime,
   useFreshness,
 } from '@/features/combat'
 import { mediaQuery, tabletopQuery, useTabletopRealtime } from '../api'
 import { tabletopPollMs } from '../domain/model'
+import { turnMark } from '../domain/table-order'
 import { audioPlan, TableAudio } from '../audio/engine'
 import { fromSetup, squareCss } from '../domain/calibration'
 import { Board } from './board'
@@ -20,11 +24,17 @@ import { U } from './palette'
 import { TableRuler } from './calibration'
 import { TableMeasure } from './table-measure'
 import { MeasureTape, PingRipple, StoryPlate } from './overlays'
+import { TableOrder } from './table-order'
+import { TurnPlate } from './table-plate'
+import { useTurnAnnouncement } from './use-turn-announcement'
 
 /**
- * The table screen (ADR 032): the scene on the table at the calibrated scale, centred on the table
- * frame, read-only and without app chrome. It always uses the table projection, so a DM account on
- * the table shows no secrets. It plays the table's audio after one tap.
+ * The one table screen (ADR 032, ADR 046): without app chrome and read-only, for every member of the
+ * campaign. With a scene on the table it is the map at the calibrated scale, centred on the table
+ * frame, with a turn plate over a corner while a fight is live (it plays the table's audio after one
+ * tap). Without a scene, or where the account may not read the map, a live fight is the "now and
+ * next" screen with the whole order. It always reads the table projection, so a DM account on the
+ * table shows no secrets, and Escape or the Leave key goes back.
  */
 export function TableScreen({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
@@ -53,12 +63,14 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     setRetrying(false)
   }
   const loadFailed = query.isError && !view
+  // A Player whose DM has not opened the map still has the fight: the screen shows the order.
+  const mapForbidden = loadFailed && query.error.message === 'forbidden'
   // A map that failed to load tries again by itself every few seconds (the button does it now).
   useEffect(() => {
-    if (!loadFailed || query.error?.message === 'forbidden') return
+    if (!loadFailed || mapForbidden) return
     const timer = window.setInterval(() => void refetchView(), 8_000)
     return () => window.clearInterval(timer)
-  }, [loadFailed, query.error, refetchView])
+  }, [loadFailed, mapForbidden, refetchView])
   const track = useQuery(mediaQuery(userId, view?.track?.path))
   const [started, setStarted] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -83,9 +95,17 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
+  const scene = view?.scene ?? null
+  const allCombatants = combat.data?.combatants ?? []
+  const encounter = combat.data?.encounter
+  const active = allCombatants.find((c) => c.is_active)
+  const fight = encounter && isLive(encounter.status) ? encounter : null
+  // The map screen waits for its one tap; the order screen has no sound to unlock.
+  const orderMode = Boolean(fight) && !scene && (Boolean(view) || mapForbidden)
   // Keep the screen awake while the table is open (where the browser allows it).
+  const awake = started || orderMode
   useEffect(() => {
-    if (!started) return
+    if (!awake) return
     let lock: { release: () => Promise<void> } | null = null
     const request = () =>
       (
@@ -103,7 +123,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       document.removeEventListener('visibilitychange', again)
       void lock?.release().catch(() => undefined)
     }
-  }, [started])
+  }, [awake])
   useEffect(() => () => audio.current?.dispose(), [])
   const plan = useMemo(() => audioPlan(view?.live), [view?.live])
   useEffect(() => {
@@ -132,7 +152,33 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     await document.documentElement.requestFullscreen?.().catch(() => undefined)
   }
 
-  const scene = view?.scene ?? null
+  // Leaving: the key and Escape go back to where the screen was opened from (a screen opened on its
+  // own, such as the TV, goes to the campaign). Full screen ends with the screen.
+  const navigate = useNavigate()
+  const location = useLocation()
+  const leave = useCallback(
+    () =>
+      location.key !== 'default'
+        ? navigate(-1)
+        : navigate(`/campaign/${campaignId}`, { replace: true }),
+    [location.key, navigate, campaignId],
+  )
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return
+      e.preventDefault()
+      leave()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [leave])
+  useEffect(
+    () => () => {
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+    },
+    [],
+  )
+
   const calibration = fromSetup(view?.live.screen)
   // RYT-126 J4-34: an uncalibrated map fits the space above the status bar, not the whole screen.
   const statusBar = useRef<HTMLDivElement>(null)
@@ -162,9 +208,6 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     () => new Map((combat.data?.combatants ?? []).map((c) => [c.id, c])),
     [combat.data],
   )
-  const encounter = combat.data?.encounter
-  const active = combat.data?.combatants.find((c) => c.is_active)
-  const fight = encounter && (encounter.status === 'active' || encounter.status === 'initiative')
   const measure = view?.live.measure
   const ping = view?.live.ping ?? null
   // RYT-126 J4-18: a shared measure and ping belong to the scene they were made on. When the scene
@@ -182,26 +225,33 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const measureFresh =
     measure && measure.at !== hidden.measure && now - Date.parse(measure.at) < 10 * 60 * 1000
   const shownPing = ping && ping.at !== hidden.ping ? ping : null
-  const hiddenTurn = isHiddenTurn(encounter, combat.data?.combatants ?? [])
-  const upNext = nextUp(combat.data?.combatants ?? [])
+  const hiddenTurn = isHiddenTurn(encounter, allCombatants)
+  const upNext = nextUp(allCombatants)
+  const announcement = useTurnAnnouncement(
+    turnMark(encounter?.status, encounter?.round ?? 0, encounter?.active_combatant, active),
+    combat.data !== undefined,
+  )
+  const ready = {
+    ready: allCombatants.filter((c) => c.initiative !== undefined).length,
+    total: allCombatants.length,
+  }
+  // The map failed to load (not "not allowed"), or there is no map and the fight did not load.
+  const failed =
+    (loadFailed && !mapForbidden) || (!scene && Boolean(view) && combat.isError && !combat.data)
+  const forbidden = mapForbidden && combat.isError && !combat.data
+  const waiting = scene ? false : (!view && !mapForbidden) || (!combat.data && !combat.isError)
 
   return (
     <div
-      className={`tt-table ${calibration?.flip ? 'is-flipped' : ''}`}
+      className={`tt-table ${calibration?.flip ? 'is-flipped' : ''}${orderMode ? ' is-order' : ''}`}
       // Words on the table are sized in squares, so they read the same on any screen.
       style={{ '--tt-sq': `${square}px` } as CSSProperties}
     >
-      {loadFailed ? (
+      {failed || forbidden ? (
         <div className="tt-table-empty" role="alert">
           <Compass size={48} aria-hidden="true" />
-          <p>
-            {t(
-              query.error.message === 'forbidden'
-                ? 'tabletop.table.forbidden'
-                : 'tabletop.error.load',
-            )}
-          </p>
-          {query.error.message !== 'forbidden' && (
+          <p>{t(forbidden ? 'tabletop.table.forbidden' : 'tabletop.error.load')}</p>
+          {!forbidden && (
             <button
               type="button"
               className="tt-status-button"
@@ -212,15 +262,28 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
             </button>
           )}
         </div>
-      ) : !view ? (
+      ) : waiting ? (
         <div className="tt-table-empty">
           <p>{t('tabletop.loading')}</p>
         </div>
-      ) : !scene ? (
+      ) : !scene && fight && encounter ? (
+        <TableOrder
+          name={encounter.name}
+          status={fight.status as 'initiative' | 'active'}
+          round={fight.round}
+          order={fight.status === 'initiative' ? allCombatants : turnOrder(allCombatants)}
+          active={active ?? null}
+          next={upNext}
+          hiddenTurn={hiddenTurn}
+          ready={ready}
+          stale={stale}
+          width={size.w}
+        />
+      ) : !scene || !view ? (
         <div className="tt-table-empty">
           <Compass size={56} aria-hidden="true" />
           <p className="tt-table-empty-title">{t('tabletop.table.nothing')}</p>
-          <p>{t('tabletop.table.nothingHelp')}</p>
+          <p>{t(combat.data ? 'tabletop.table.nothingFight' : 'tabletop.table.nothingHelp')}</p>
         </div>
       ) : (
         // Keyed by scene: a new scene fades in instead of cutting (reduced motion: no fade).
@@ -252,6 +315,19 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
           }}
         />
       )}
+      {scene && fight && (
+        <TurnPlate
+          status={fight.status as 'initiative' | 'active'}
+          round={fight.round}
+          active={active ?? null}
+          next={upNext}
+          hiddenTurn={hiddenTurn}
+          ready={ready}
+          stale={stale}
+          flipped={Boolean(calibration?.flip)}
+          barHeight={barHeight}
+        />
+      )}
       {view?.card && <StoryPlate card={view.card} fit />}
       {ruler && calibration && (
         <div className="tt-ruler-wrap">
@@ -260,17 +336,6 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
       )}
       <div className="tt-status" role="status" ref={statusBar}>
         {scene && <span className="tt-status-scene">{scene.name}</span>}
-        {fight && (
-          <span className={`tt-status-turn${stale ? ' is-stale' : ''}`}>
-            {t('tabletop.table.round', { round: encounter.round })}
-            {hiddenTurn
-              ? ` · ${t('tabletop.table.hiddenTurn')}`
-              : active
-                ? ` · ${t('tabletop.table.turn', { name: active.name })}`
-                : ''}
-            {!hiddenTurn && upNext ? ` · ${t('tabletop.table.after', { name: upNext.name })}` : ''}
-          </span>
-        )}
         {stale ? (
           <span className="tt-status-net is-offline">
             <WifiOff size={14} aria-hidden="true" />
@@ -331,8 +396,15 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
             </button>
           </>
         )}
+        <button type="button" className="tt-status-button tt-leave" onClick={leave}>
+          <LogOut size={14} aria-hidden="true" />
+          {t('tabletop.table.leave')}
+        </button>
       </div>
-      {!started && (
+      <div className="visually-hidden" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </div>
+      {!started && !orderMode && !waiting && (
         <div
           className="tt-start"
           role="dialog"

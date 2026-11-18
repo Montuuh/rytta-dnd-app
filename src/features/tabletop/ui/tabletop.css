@@ -1977,6 +1977,10 @@ html.tt-table-mode body {
   overflow: hidden;
   background: #0b0806;
 }
+/* Full screen means all of it: no reserved scrollbar strip beside the map or the order. */
+html.tt-table-mode {
+  scrollbar-gutter: auto;
+}
 .tt-table {
   position: fixed;
   inset: 0;
@@ -2618,14 +2622,7 @@ html.tt-table-mode body {
     opacity: 0;
   }
 }
-/* Stale data is dimmed and said once; the turn text is the one thing the table reads (J4-03, J4-19). */
-.tt-status-turn {
-  color: #f5ebd6;
-  font-weight: 700;
-}
-.tt-status-turn.is-stale {
-  opacity: 0.45;
-}
+/* Stale data is said once, in the status bar (J4-03). */
 .tt-status-net.is-offline {
   color: #f6c478;
   font-weight: 700;
@@ -2642,4 +2639,316 @@ html.tt-table-mode body {
 .tt-world[data-mode='table'] .tt-token-name {
   top: 88%;
   bottom: auto;
+}
+
+/* RYT-131: the one table screen for combat ------------------------------------------------------ */
+
+.tt-leave {
+  margin-left: auto;
+}
+
+/* The turn plate over the map: now and next in a corner, moved and shrunk by the table. It wears the
+   app's semantic tokens, so it reads in Hearth and in Parchment over any map. */
+.tt-plate {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  gap: 0.5rem;
+  width: clamp(15rem, 26vw, 24rem);
+  padding: 0.5rem 0.75rem 0.75rem;
+  border: 2px solid var(--app-accent);
+  border-radius: 14px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  --tt-edge: 0.75rem;
+}
+.tt-plate[data-size='small'] {
+  width: auto;
+  min-width: 11rem;
+  max-width: min(22rem, 60vw);
+}
+.tt-plate[data-corner^='top'] {
+  top: var(--tt-edge);
+}
+.tt-plate[data-corner^='bottom'] {
+  bottom: calc(var(--tt-bar, 3rem) + var(--tt-edge) / 2);
+}
+.tt-plate[data-corner$='left'] {
+  left: var(--tt-edge);
+}
+.tt-plate[data-corner$='right'] {
+  right: var(--tt-edge);
+}
+.tt-plate.is-dragging {
+  z-index: 7;
+  opacity: 0.9;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+}
+/* A plate that may be out of date says so by its border as well as in the status bar. */
+.tt-plate.is-stale {
+  border-style: dashed;
+}
+.tt-plate-head {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.tt-plate-round {
+  margin: 0 auto 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--app-muted);
+}
+.tt-plate-key {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-raised);
+  color: var(--app-text);
+  cursor: pointer;
+  touch-action: none;
+}
+.tt-plate-key:hover {
+  background: var(--app-hover);
+}
+.tt-plate-key:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.tt-plate-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.tt-plate-line p {
+  margin: 0;
+}
+.tt-plate-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.tt-plate-name {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(1.5rem, calc(var(--tt-sq, 40px) * 0.7), 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.tt-plate-next {
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(1.125rem, calc(var(--tt-sq, 40px) * 0.5), 1.75rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.tt-plate-line.is-next {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--app-border);
+}
+
+/* Without a map: the order itself is the screen. Theme tokens, not the map's fixed night. */
+.tt-table.is-order {
+  display: flex;
+  flex-direction: column;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+.tt-table.is-order .tt-status {
+  position: static;
+  max-width: none;
+  border-top: 1px solid var(--app-border);
+  border-radius: 0;
+  background: var(--app-surface);
+  color: var(--app-muted);
+}
+.tt-table.is-order .tt-status-button {
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+.tt-table.is-order .tt-status-net.is-offline,
+.tt-table.is-order .tt-status-warn {
+  color: var(--danger);
+}
+.tt-order {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1.6vh, 1.25rem);
+  padding: clamp(0.75rem, 2.2vh, 1.75rem) clamp(0.75rem, 2.4vw, 2.5rem) 0;
+}
+.tt-order-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(0.5rem, 1.6vh, 1.25rem) clamp(1rem, 3vw, 3rem);
+  align-items: center;
+}
+@media (min-width: 62em) {
+  .tt-order-head {
+    grid-template-columns: minmax(10rem, 0.7fr) minmax(0, 1.8fr) minmax(0, 1.2fr);
+  }
+}
+.tt-order-fight h1 {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(1.25rem, 3vh, 2rem);
+  line-height: 1.15;
+}
+.tt-order-fight p {
+  margin: 0.15rem 0 0;
+  font-size: clamp(1rem, 2.4vh, 1.5rem);
+  font-weight: 700;
+  color: var(--app-muted);
+}
+.tt-order-now,
+.tt-order-next {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.6vw, 1.5rem);
+  min-width: 0;
+  --token-size: clamp(48px, 9vh, 104px);
+}
+.tt-order-now {
+  padding-left: clamp(0.75rem, 1.5vw, 1.5rem);
+  border-left: 0.5rem solid var(--app-accent);
+}
+.tt-order-next {
+  --token-size: clamp(40px, 6.5vh, 72px);
+}
+.tt-order-now > div,
+.tt-order-next > div {
+  min-width: 0;
+}
+.tt-order p {
+  margin: 0;
+}
+.tt-order-label {
+  font-size: clamp(0.875rem, 2vh, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.tt-order-actor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(2rem, 7.5vh, 5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.tt-order-actor svg {
+  flex: none;
+  width: 0.9em;
+  height: 0.9em;
+}
+.tt-order-after {
+  font-family: Georgia, Cambria, serif;
+  font-size: clamp(1.5rem, 4.2vh, 3rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+/* Each row is as tall as the screen allows (container units), and the list scrolls only when more
+   than the screen can hold at a readable size are on it. */
+.tt-order-list {
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(var(--tt-cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--tt-rows), minmax(3.5rem, 1fr));
+  column-gap: clamp(0.75rem, 2vw, 2rem);
+  margin: 0;
+  padding: 0 0 clamp(0.5rem, 1.6vh, 1.25rem);
+  list-style: none;
+  overflow-y: auto;
+}
+.tt-order-row {
+  --row: calc(100cqh / var(--tt-rows));
+  --token-size: clamp(36px, calc(var(--row) * 0.66), 84px);
+  display: grid;
+  grid-template-columns: 1.5rem auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0 clamp(0.5rem, 1vw, 1rem);
+  min-width: 0;
+  padding-right: 0.5rem;
+  border-bottom: 1px solid var(--app-border);
+  font-size: clamp(1.25rem, calc(var(--row) * 0.4), 2.5rem);
+}
+.tt-order-mark {
+  display: grid;
+  place-items: center;
+  color: var(--app-accent);
+}
+.tt-order-mark svg {
+  width: 1.4em;
+  height: 1.4em;
+}
+.tt-order-name {
+  min-width: 0;
+  font-family: Georgia, Cambria, serif;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.tt-order-initiative {
+  min-width: 2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--app-muted);
+}
+.tt-order-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: 0.6em;
+  font-weight: 700;
+  color: var(--app-muted);
+}
+.tt-order-state svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+/* The acting row: chevron, weight, a ruled bar and the raised mat, so colour is never alone. */
+.tt-order-row.is-active {
+  background: var(--app-raised);
+  border-bottom-color: var(--app-accent);
+  box-shadow: inset 0.4rem 0 0 var(--app-accent);
+  font-weight: 700;
+}
+.tt-order-row.is-active .tt-order-initiative {
+  color: var(--app-text);
+}
+.tt-order-row.is-defeated .tt-order-name {
+  text-decoration: line-through;
+  text-decoration-thickness: 0.08em;
+  color: var(--app-muted);
+}
+.tt-order.is-stale .tt-order-actor {
+  text-decoration: underline dashed;
+  text-decoration-thickness: 0.05em;
+  text-underline-offset: 0.15em;
+}
+
+@media (max-width: 47.99em) {
+  .tt-order-list {
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    grid-auto-rows: minmax(3.5rem, auto);
+  }
 }

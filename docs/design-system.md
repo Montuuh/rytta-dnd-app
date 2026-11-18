@@ -403,8 +403,9 @@ amber double ring for the active turn (static with reduced motion), translucent 
 fog with paper fibre and feathered edges on the table and phones, an amber measuring tape over a dark halo
 with a diamond per counted square, and areas filled at 28 % in their damage colour with corner ticks on
 caught squares and the shape and damage named in words. The table screen has no chrome: the map at the
-calibrated scale, a small status corner (scene, round and turn, connection in words, ruler and mute),
-a start overlay for the one tap browsers need, and story cards on a parchment plate set large.
+calibrated scale, a small status corner (scene, connection in words, ruler, mute and Leave), a turn
+plate while a fight is live (below), a start overlay for the one tap browsers need, and story cards on a
+parchment plate set large.
 
 ## Level up (RYT-130)
 
@@ -425,3 +426,36 @@ review. The confirm stays unavailable while a choice is missing and writes every
 transactional call; a failure leaves the character unchanged and the same button retries the same
 request. After the write the sheet shows what changed. The manual level field of a finished sheet
 is replaced by the locked value and a pointer for Players; the DM keeps the stepper.
+
+## The table screen for combat (RYT-131, ADR 046)
+
+One chrome-less screen at `#/campaign/:id/tabletop-table`, read-only, for every member of the campaign.
+It reads the table projection only, so hidden creatures, real names behind an alias and DM fields are
+never in the page, whoever opens it. The way in is a "Table screen" link in the header of the fight's
+table view, for the DM and for Players; Escape or the "Leave the table screen" key in the status bar
+(44px, always visible) goes back to where it was opened, or to the campaign when it was opened on its
+own, and ends full screen with it. Escape first closes the ruler or the browser's full screen.
+
+- With a scene on the table: the map fills the screen and the turn plate sits over a corner while a
+  fight is live. The plate is a raised surface in the semantic tokens with an accent border (so it
+  reads over any map in Hearth and in Parchment): the round, a 44px move key and a 44px shrink key,
+  then "Now" (token and name in the serif) and "Up next" under a hairline. It moves by dragging the
+  move key (it follows the pointer and snaps to the corner it is released in), by the arrow keys on
+  that key, or by pressing it (next corner clockwise); each move is said in a live region. Shrinking
+  keeps the acting name alone. A hidden creature's turn shows only "Hidden turn", and collecting
+  initiative shows how many are ready. The corner and size live in `localStorage['rytta-table-plate']`
+  and fall back to top left and full size when storage is blocked. Bottom corners stay above the
+  status bar. Position changes are instant, so reduced motion has nothing to cut. A stale plate has a
+  dashed border; the offline state and its age stay in the status bar.
+- Without a scene (or where the Player's DM has not opened the map): the order is the screen, in the
+  semantic tokens of the chosen theme. A header carries the fight, the round, "Now" in display size
+  (up to 5rem) and "Up next". Below, the whole turn order reads down two or three columns
+  (`orderLayout`: one column up to 4 combatants, two up to 10, three beyond that from 1000px; a tablet
+  keeps two). Each row is as tall as the screen allows (container units), so 16 combatants fit without
+  scrolling at 1280x720, 1920x1080 and 820x1180, with names from 26px to 40px; a longer order scrolls
+  and the acting row is scrolled into view. The acting row has a chevron, bold weight, the raised mat
+  and a ruled accent bar, never colour alone. Defeated rows are struck through with a skull and the
+  word. Initiative totals sit at the row's edge with a visually hidden "Initiative N".
+- Each turn change (and each new round) is announced once by a polite live region ("Arin's turn, round
+  2"; a hidden creature's turn is announced without a name). The first state after opening is not
+  announced. The full-screen strip reserved by `scrollbar-gutter` is off while the screen is open.

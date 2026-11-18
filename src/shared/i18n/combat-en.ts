@@ -297,6 +297,7 @@ export const combatEn = {
   'combat.view.label': 'Encounter view',
   'combat.view.table': 'Order',
   'combat.view.console': 'DM console',
+  'combat.table.screen': 'Table screen',
   'combat.table.rolling': 'Roll initiative',
   'combat.table.ready': '{{ready}} of {{total}} ready',
   'combat.initiative.yours': 'Your initiative',

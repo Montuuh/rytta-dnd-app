@@ -215,11 +215,19 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   const calibration = fromSetup(view?.live.screen)
   // RYT-126 J4-34: an uncalibrated map fits the space above the status bar, not the whole screen.
   const statusBar = useRef<HTMLDivElement>(null)
+  const tableRoot = useRef<HTMLDivElement>(null)
   const [barHeight, setBarHeight] = useState(0)
   useEffect(() => {
     const node = statusBar.current
     if (!node || typeof ResizeObserver === 'undefined') return
-    const measure = () => setBarHeight(node.offsetHeight + 24)
+    const measure = () => {
+      const height = node.offsetHeight + 24
+      // The plate's bottom corners follow the bar in the same frame: the offset is set on the root
+      // here, not after a React render, so a bar that grows (a wider font, the live mark arriving)
+      // never leaves the plate under it for a frame.
+      tableRoot.current?.style.setProperty('--tt-bar', `${height}px`)
+      setBarHeight(height)
+    }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(node)
@@ -230,6 +238,14 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
     ? squareCss(calibration, size.dpr)
     : scene
       ? Math.min(size.w / scene.cols, fitHeight / scene.rows)
+      : 64
+  // The status bar's own type is sized from a square that does not depend on the bar's height: the
+  // fitted square does (the map fits above the bar), so sizing the bar from it made the two chase each
+  // other, forever, whenever the bar sat on the edge of wrapping (a wider font).
+  const barSquare = calibration
+    ? square
+    : scene
+      ? Math.min(size.w / scene.cols, size.h / scene.rows)
       : 64
   const z = square / U
   const cx = view?.live.view_x ?? (scene ? scene.cols / 2 : 0)
@@ -279,9 +295,10 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
 
   return (
     <div
+      ref={tableRoot}
       className={`tt-table ${calibration?.flip ? 'is-flipped' : ''}${orderMode ? ' is-order' : ''}`}
       // Words on the table are sized in squares, so they read the same on any screen.
-      style={{ '--tt-sq': `${square}px` } as CSSProperties}
+      style={{ '--tt-sq': `${square}px`, '--tt-sq-bar': `${barSquare}px` } as CSSProperties}
     >
       {failed || forbidden ? (
         <div className="tt-table-empty" role="alert">
@@ -363,7 +380,6 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
           ready={ready}
           stale={stale}
           flipped={Boolean(calibration?.flip)}
-          barHeight={barHeight}
         />
       )}
       {view?.card && <StoryPlate card={view.card} fit />}

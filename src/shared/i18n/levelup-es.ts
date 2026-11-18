@@ -98,6 +98,7 @@ export const levelupEs = {
   'levelUp.improvement.feat': 'Una dote',
   'levelUp.improvement.picked': '{{done}} de {{total}} elegidas',
   'levelUp.improvement.capped': 'Ya en 20',
+  'levelUp.improvement.wouldPass': 'Pasaría de 20',
   'levelUp.improvement.scores': 'Características',
   'levelUp.feat.name': 'Nombre de la dote',
   'levelUp.spells.title': 'Conjuros nuevos',

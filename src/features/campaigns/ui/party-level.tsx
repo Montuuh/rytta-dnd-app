@@ -174,7 +174,7 @@ export function PartyLevelControl({
           const target = apply.current?.isConnected ? apply.current : heading.current
           target?.focus()
         }}
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44, disabled: pending }}
+        closeButtonProps={{ 'aria-label': t('panel.close'), size: 44, disabled: pending }}
       >
         <Stack>
           <Text>

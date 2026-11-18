@@ -95,6 +95,7 @@ export const levelupEn = {
   'levelUp.improvement.feat': 'A feat',
   'levelUp.improvement.picked': '{{done}} of {{total}} chosen',
   'levelUp.improvement.capped': 'Already at 20',
+  'levelUp.improvement.wouldPass': 'Would pass 20',
   'levelUp.improvement.scores': 'Scores',
   'levelUp.feat.name': 'Feat name',
   'levelUp.spells.title': 'New spells',

@@ -106,6 +106,18 @@ ones too) and the replies from production, so editors are granted again after `p
 packs cannot be deleted through the API, so a takedown is an owner SQL operation (delete the pack
 row, which cascades to its entries).
 
+Loot distribution (RYT-144, migration `20261205120000`): `distribute_loot` locks the campaign
+and checks active DM membership before replay. It checks the current item revision and campaign
+for each active recipient, then records a DM grant and inventory event for each distinct
+item/recipient pair. All grants and the optional named batch commit together. At most 100 pairs,
+1000 units per pair and 32 KB of allocations are accepted. The request digest and receipt use
+the inventory request ledger and its 30-day pruning window. A saved batch belongs to the
+campaign and is readable by its DMs, 20 per page through `list_loot_batches`. It keeps item IDs,
+character IDs and quantities, so removed items or recipients must be replaced before reuse.
+Each receipt entry identifies its inventory event. The per-campaign batch quota defaults to 100.
+A campaign DM can free a slot through the idempotent `delete_loot_batch` RPC without changing stock.
+The private batch table has RLS enabled and no client grants. Campaign deletion removes its batches.
+
 Items economy (ADR 043 and ADR 044, RYT-104–107, migrations `20261120120000` and
 `20261121120000`): money is gp with two decimals (`numeric(12,2)`), validated on the server.
 RPCs refuse negative amounts, values over the column limit and more decimals than the private

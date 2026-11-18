@@ -2665,10 +2665,8 @@ test('RYT-137 initiative: after a keyboard re-roll from the combatant detail men
   await context.close()
 })
 
-test('RYT-137 initiative: a re-roll whose reply is lost is retried with the same id and rolls once', async ({
-  browser,
-}, info) => {
-  test.setTimeout(150_000)
+/** A DM page on a fight where Arin rolled 13 and saved it; the next faces are 8 and 5. */
+async function lostRerollTable(browser: Browser, info: TestInfo) {
   const { server, page, f, entry, context } = await initiativePage(browser, info)
   serverFaces(f, [11, 8, 5])
   await entry.getByRole('button', { name: 'Tirar por mí' }).click()
@@ -2688,21 +2686,33 @@ test('RYT-137 initiative: a re-roll whose reply is lost is retried with the same
       ids.push((request.postDataJSON() as { request_id: string }).request_id)
   })
   const menuButton = dm.getByRole('button', { name: 'Opciones de Arin' })
-  f.dice.loseResetReplyNext = true
-  const refreshed = dm.waitForResponse((response) =>
-    response.url().includes('/rpc/get_roll_context'),
-  )
+  const reroll = dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' })
+  // The state is loaded once the menu offers the re-roll.
   await menuButton.click()
-  await dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' }).click()
+  await expect(reroll).toBeVisible()
+  await dm.keyboard.press('Escape')
+  await expect(menuButton).toBeFocused()
+  return { server, f, dm, ids, menuButton, reroll, close: [dmContext, context] }
+}
+
+test('RYT-137 initiative: a re-roll whose reply is lost is retried at once with the same id and rolls once', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const { server, f, dm, ids, menuButton, reroll, close } = await lostRerollTable(browser, info)
+  // The state cannot be read again, so the DM cannot see that the first try applied.
+  await dm.route(/\/rest\/v1\/rpc\/get_roll_context/, (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' }),
+  )
+  f.dice.loseResetReplyNext = true
+  await menuButton.click()
+  await reroll.click()
   await expect(dm.getByRole('alert')).toBeVisible()
   // The first try applied: one new roll (8 + 2) is in force and the order shows it.
   expect(arinCombatant(server).initiative).toBe(10)
   expect(f.dice.rolls.filter((roll) => !roll.superseded_at)).toHaveLength(1)
-  // The state is read again after the failure and now shows this DM's own roll as the one in force:
-  // the retry must not read that as a reason to roll once more.
-  await refreshed
   await menuButton.click()
-  await dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' }).click()
+  await reroll.click()
   await expect.poll(() => ids.length).toBe(2)
   expect(ids[1]).toBe(ids[0])
   await expect(dm.getByText('La iniciativa de Arin se ha tirado de nuevo.')).toBeAttached()
@@ -2712,6 +2722,100 @@ test('RYT-137 initiative: a re-roll whose reply is lost is retried with the same
   expect(f.dice.serverDice).toEqual([5])
   expect(arinCombatant(server).initiative).toBe(10)
   await expect(arinRow(dm)).toContainText('10')
+  for (const context of close) await context.close()
+})
+
+test('RYT-137 initiative: a lost re-roll the DM never retried is announced when the state shows it, and a later re-roll rolls', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const { server, f, dm, ids, menuButton, reroll, close } = await lostRerollTable(browser, info)
+  f.dice.loseResetReplyNext = true
+  const refreshed = dm.waitForResponse((response) =>
+    response.url().includes('/rpc/get_roll_context'),
+  )
+  await menuButton.click()
+  await reroll.click()
+  await expect(dm.getByRole('alert')).toBeVisible()
+  await refreshed
+  // The state shows this DM's own new roll: the attempt is over and it is said, with nothing sent.
+  await expect(dm.getByText('La iniciativa de Arin se ha tirado de nuevo.')).toBeAttached()
+  expect(ids).toHaveLength(1)
+  expect(arinCombatant(server).initiative).toBe(10)
+  // Much later the DM re-rolls on purpose: a new request, a new id, and it rolls (5 + 2).
+  await menuButton.click()
+  await reroll.click()
+  await expect.poll(() => ids.length).toBe(2)
+  expect(ids[1]).not.toBe(ids[0])
+  await expect.poll(() => arinCombatant(server).initiative).toBe(7)
+  expect(f.dice.rolls.filter((roll) => !roll.superseded_at)).toHaveLength(1)
+  expect(f.dice.rolls).toHaveLength(3)
+  for (const context of close) await context.close()
+})
+
+test('RYT-137 initiative: after Escape, reopening the menu and choosing with Enter, focus is still on the menu button a second later', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const { server, page, f, entry, context } = await initiativePage(browser, info)
+  serverFaces(f, [11])
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 13')
+  await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
+  await expect(page.locator('.combat-entry')).toHaveCount(0)
+  const { page: dm, context: dmContext } = await dmOnTable(
+    browser,
+    info,
+    f,
+    server,
+    server.encounters[0]!.id,
+  )
+  const menuButton = dm.getByRole('button', { name: 'Opciones de Arin' })
+  // Open and read the menu, Escape, open it again, choose with the keyboard (the sequence that
+  // leaves focus on the menu's own hidden focus target while it closes).
+  await menuButton.focus()
+  await dm.keyboard.press('Enter')
+  await expect(dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })).toBeVisible()
+  await dm.keyboard.press('Escape')
+  await expect(menuButton).toBeFocused()
+  await menuButton.focus()
+  await dm.keyboard.press('Enter')
+  const clear = dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })
+  await expect(clear).toBeVisible()
+  await clear.focus()
+  await dm.keyboard.press('Enter')
+  await expect(arinRow(dm)).not.toContainText('13')
+  // A second of frames: the menu has closed and unmounted by then.
+  await expectFocusStays(dm, 'Opciones de Arin')
+  await dmContext.close()
+  await context.close()
+})
+
+test('RYT-137 initiative: focus the DM moved to another control after a reset is left there', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const { server, page, f, entry, context } = await initiativePage(browser, info)
+  serverFaces(f, [11])
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 13')
+  await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
+  await expect(page.locator('.combat-entry')).toHaveCount(0)
+  const { page: dm, context: dmContext } = await dmOnTable(
+    browser,
+    info,
+    f,
+    server,
+    server.encounters[0]!.id,
+  )
+  await dm.getByRole('button', { name: 'Opciones de Arin' }).focus()
+  await dm.keyboard.press('Enter')
+  await dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' }).click()
+  // The DM goes to Bea's menu button at once: nothing pulls focus back to Arin's.
+  const bea = dm.getByRole('button', { name: 'Opciones de Bea' })
+  await bea.focus()
+  await expect(arinRow(dm)).not.toContainText('13')
+  await expectFocusStays(dm, 'Opciones de Bea')
   await dmContext.close()
   await context.close()
 })

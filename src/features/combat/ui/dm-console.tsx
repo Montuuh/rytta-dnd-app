@@ -93,13 +93,22 @@ export function DmConsole({
     run,
     encounter.status,
     diceMode !== 'physical',
+    (characterId) => {
+      const name = state.combatants.find((c) => c.character_id === characterId)?.name
+      if (name) setAnnouncement(t('combat.reset.rerolled', { name }))
+    },
   )
   // The row moves in the order when its initiative changes, which can drop the focus the menu gave
   // back: the menu's button takes it once more (and keeps it) when the action is done.
   const resetRoll = async (combatant: Combatant, mode: 'clear' | 'reroll', returnId: string) => {
     const from = document.activeElement
     const done = await initiativeRoll.reset(combatant, mode)
-    focusWhenReady(`[data-return-focus="${returnId}"]`, { from, preventScroll: true })
+    // The menu that was open is still closing: focus inside it is focus that fell, not a choice.
+    focusWhenReady(`[data-return-focus="${returnId}"]`, {
+      from,
+      preventScroll: true,
+      leaving: from?.closest('[role="menu"]') ?? null,
+    })
     if (done)
       setAnnouncement(
         t(mode === 'clear' ? 'combat.reset.cleared' : 'combat.reset.rerolled', {

@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
-import { createAttemptBook, rerollExpression, resetSlot, useRollContext } from '@/features/dice'
+import {
+  createAttemptBook,
+  reRollApplied,
+  rerollExpression,
+  resetSlot,
+  useRollContext,
+} from '@/features/dice'
 import { newRequestId } from '@/shared/lib/request-id'
 import { isLive, type Combatant, type EncounterStatus } from '../domain/combat'
 import type { Run } from './helpers'
@@ -21,6 +27,8 @@ export function useResetInitiative(
   run: Run,
   status: EncounterStatus,
   enabled: boolean,
+  /** A re-roll whose reply was lost turned out to have applied: say so once. */
+  onApplied?: (characterId: string) => void,
 ) {
   const { state } = useAuth()
   const cache = useQueryClient()
@@ -40,6 +48,21 @@ export function useResetInitiative(
     if (context.status !== 'ready') return
     attempts.current.prune((slot) => spent(slot.split(':')[0]!, 'initiative'))
   }, [context.status, spent, encounterId])
+  // A re-roll whose reply was lost shows up as this DM's own roll in force: the attempt is over and
+  // is announced once, so a deliberate re-roll much later is a new intent and rolls. Attempts that
+  // are in flight are left to their own answer.
+  const inFlight = useRef(new Set<string>())
+  useEffect(() => {
+    if (context.status !== 'ready') return
+    for (const [slot, attempt] of attempts.current.entries()) {
+      if (inFlight.current.has(slot)) continue
+      const characterId = slot.split(':')[0]!
+      if (reRollApplied(attempt, roll(characterId, 'initiative'), state.user?.id)) {
+        attempts.current.done(slot)
+        onApplied?.(characterId)
+      }
+    }
+  }, [context.status, roll, state.user, onApplied])
   const reset = useCallback(
     async (combatant: Combatant, mode: 'clear' | 'reroll') => {
       const characterId = combatant.character_id
@@ -65,27 +88,17 @@ export function useResetInitiative(
         slot,
         `${encounterId ?? ''}|${inForce?.id ?? 'unreadable'}|${expression ?? 'clear'}`,
         newRequestId,
-        {
-          expression,
-          // A re-roll whose reply was lost did apply: the roll now in force is this DM's own, and
-          // the retry asks again with the same id and payload, so the server answers with the
-          // first result instead of rolling a second time.
-          reuse: (previous) =>
-            previous.expression !== null &&
-            expression !== null &&
-            previous.signature.startsWith(`${encounterId ?? ''}|`) &&
-            inForce?.roller_id === state.user?.id,
-        },
+        { expression },
       )
+      inFlight.current.add(slot)
       const done = await run({
         kind: 'resetRoll',
         characterId,
         expression: attempt.expression,
         requestId: attempt.id,
       })
-      if (done) {
-        attempts.current.done(slot)
-      }
+      inFlight.current.delete(slot)
+      if (done) attempts.current.done(slot)
       return done
     },
     [roll, run, cache, state.user, campaignId, encounterId],

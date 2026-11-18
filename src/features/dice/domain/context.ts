@@ -145,6 +145,7 @@ export function createAttemptBook() {
       for (const slot of [...slots.keys()]) if (!stillSpent(slot)) slots.delete(slot)
     },
     has: (slot: string) => slots.has(slot),
+    entries: (): [string, ResetAttempt][] => [...slots.entries()],
   }
 }
 export const resetSlot = (characterId: string, kind: OneRollKind) => `${characterId}:${kind}`
@@ -171,4 +172,19 @@ export function withRoll(context: RollContext, roll: CampaignRoll): RollContext 
       : [...context.spent, { character_id: characterId, kind }],
     rolls: [...context.rolls.filter((item) => item.id !== roll.id), roll],
   }
+}
+
+/**
+ * Whether a re-roll attempt already applied: the roll in force is the DM's own and is not the one
+ * the attempt started from (the first try's reply was lost). The attempt is then over, so a
+ * deliberate re-roll made much later is a new intent with a new request id, not a replay.
+ */
+export function reRollApplied(
+  attempt: ResetAttempt,
+  inForce: CampaignRoll | undefined,
+  dmId: string | undefined,
+): boolean {
+  if (attempt.expression === null || !inForce || !dmId) return false
+  const started = attempt.signature.split('|')[1]
+  return inForce.roller_id === dmId && inForce.id !== started
 }

@@ -28,11 +28,16 @@ export function createRollsHub(
     closed: boolean
   }
   const entries = new Map<string, Entry>()
+  // A channel that is being removed is still handed out by the client until the removal is done,
+  // so a listener that arrives in the same commit as the last one left waits for it.
+  const removals = new Map<string, Promise<unknown>>()
 
   function open(campaignId: string, entry: Entry) {
     void (async () => {
       try {
         const { db, schema } = await connect()
+        await removals.get(campaignId)
+        if (entry.closed) return
         const campaign = z.uuid().parse(campaignId)
         const notify = () => {
           for (const listener of [...entry.listeners]) listener()
@@ -55,10 +60,21 @@ export function createRollsHub(
             entry.status.set(next === 'SUBSCRIBED')
             notify()
           })
-        entry.stop = () => void db.removeChannel(channel)
+        entry.stop = () => {
+          const removal = Promise.resolve(db.removeChannel(channel)).catch(() => undefined)
+          removals.set(campaignId, removal)
+          void removal.finally(() => {
+            if (removals.get(campaignId) === removal) removals.delete(campaignId)
+          })
+        }
         if (entry.closed) entry.stop()
       } catch {
-        // Polling keeps the screens fresh without realtime.
+        // Polling keeps the screens fresh without realtime. The next listener tries again.
+        if (entries.get(campaignId) === entry) entries.delete(campaignId)
+        if (!entry.closed) {
+          entry.closed = true
+          entry.status.release()
+        }
       }
     })()
   }
@@ -74,6 +90,7 @@ export function createRollsHub(
     const mine = entry
     return () => {
       if (!mine.listeners.delete(onChange) || mine.listeners.size > 0) return
+      if (mine.closed) return
       mine.closed = true
       mine.status.release()
       mine.stop?.()

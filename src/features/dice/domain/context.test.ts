@@ -5,6 +5,7 @@ import {
   initiativeModifier,
   isSpent,
   createAttemptBook,
+  reRollApplied,
   rerollExpression,
   resetSlot,
   rollContextSchema,
@@ -233,5 +234,23 @@ describe('request ids of the DM resets', () => {
     book.prune((slot) => slot === b)
     expect(book.has(a)).toBe(false)
     expect(book.has(b)).toBe(true)
+  })
+})
+
+describe('a re-roll whose reply was lost', () => {
+  const me = '99999999-9999-4999-8999-999999999999'
+  const attempt = { id: 'x', signature: 'fight|roll-a|d20+2', expression: 'd20+2' }
+  it('is applied once this DM roll is the one in force and is not the one it started from', () => {
+    expect(reRollApplied(attempt, roll({ id: 'roll-b', roller_id: me }), me)).toBe(true)
+  })
+  it('is not applied while the roll in force is still the starting one, a Player one or unreadable', () => {
+    expect(reRollApplied(attempt, roll({ id: 'roll-a', roller_id: me }), me)).toBe(false)
+    expect(reRollApplied(attempt, roll({ id: 'roll-b', roller_id: user }), me)).toBe(false)
+    expect(reRollApplied(attempt, undefined, me)).toBe(false)
+  })
+  it('never applies to a clear', () => {
+    expect(
+      reRollApplied({ ...attempt, expression: null }, roll({ id: 'roll-b', roller_id: me }), me),
+    ).toBe(false)
   })
 })

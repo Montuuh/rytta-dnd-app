@@ -14,6 +14,7 @@ export { rollContextScope } from './api'
 export {
   createAttemptBook,
   initiativeExpression,
+  reRollApplied,
   rerollExpression,
   resetSlot,
 } from './domain/context'

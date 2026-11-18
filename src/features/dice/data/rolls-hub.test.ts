@@ -33,16 +33,22 @@ function fakeClient() {
       }
       return channel as never
     },
+    // Like the real client: the channel stays handed out (subscribed) until the removal is done.
     removeChannel(channel) {
       const topic = (channel as unknown as { topic: string }).topic
       removed.push(topic)
-      channels.delete(topic)
+      return new Promise((done) =>
+        setTimeout(() => {
+          channels.delete(topic)
+          done('ok')
+        }, 5),
+      )
     },
   }
   return { db, channels, removed }
 }
 const tracker = () => ({ set: vi.fn(), release: vi.fn() })
-const settle = () => new Promise((done) => setTimeout(done, 0))
+const settle = (ms = 0) => new Promise((done) => setTimeout(done, ms))
 
 describe('one realtime subscription per campaign', () => {
   it('gives every listener the signal, with one channel', async () => {
@@ -114,6 +120,44 @@ describe('one realtime subscription per campaign', () => {
     expect(status.set).toHaveBeenLastCalledWith(false)
     expect(a).toHaveBeenCalledTimes(2)
     expect(b).toHaveBeenCalledTimes(2)
+  })
+
+  it('joins a new listener that arrives in the same commit as the last one left', async () => {
+    const { db, channels } = fakeClient()
+    const subscribe = createRollsHub(async () => ({ db, schema: 'pre' }), tracker)
+    const first = vi.fn()
+    const stop = subscribe(campaign, first)
+    await settle()
+    // The last listener leaves and a new one arrives at once (a route change, StrictMode).
+    stop()
+    const next = vi.fn()
+    subscribe(campaign, next)
+    await settle(30)
+    channels.get(`rolls:${campaign}`)!.bindings[0]!()
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(first).not.toHaveBeenCalled()
+  })
+
+  it('tries again for the next listener after a failure to connect', async () => {
+    const { db, channels } = fakeClient()
+    let calls = 0
+    const status = tracker()
+    const subscribe = createRollsHub(
+      async () => {
+        calls += 1
+        if (calls === 1) throw new Error('offline')
+        return { db, schema: 'pre' }
+      },
+      () => status,
+    )
+    subscribe(campaign, vi.fn())
+    await settle()
+    const again = vi.fn()
+    subscribe(campaign, again)
+    await settle()
+    expect(calls).toBe(2)
+    channels.get(`rolls:${campaign}`)!.bindings[0]!()
+    expect(again).toHaveBeenCalledTimes(1)
   })
 
   it('stays quiet when the realtime client cannot be reached', async () => {

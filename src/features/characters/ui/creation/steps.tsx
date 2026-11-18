@@ -35,6 +35,7 @@ import {
   type StepGap,
 } from '../../domain/creation'
 import { syncProgression } from '../../domain/progression'
+import { LockedLevel } from '../level-up/locked-level'
 import { reseedStandard, standardAbilitiesFor } from '../../domain/quick'
 import {
   defaultArmorClass,
@@ -81,6 +82,8 @@ export type Session = {
   classLoss: ClassLoss | null
   setClassLoss: (loss: ClassLoss | null) => void
   editing: boolean
+  /** RYT-130: the level is not edited by hand (a Player's finished sheet). */
+  levelLocked: boolean
   name: string
   setName: (name: string) => void
   gaps: { step: CreationStep; gap: StepGap }[]
@@ -252,14 +255,18 @@ function ClassStep(props: StepProps) {
           <Text size="sm" fw={500} mb={4}>
             {t('wizard.level')}
           </Text>
-          <Stepper
-            label={t('wizard.level')}
-            name={t('panel.levelName')}
-            value={draft.level}
-            min={1}
-            max={20}
-            onChange={(level) => setDraft((current) => ({ ...current, level }))}
-          />
+          {session.levelLocked ? (
+            <LockedLevel level={draft.level} />
+          ) : (
+            <Stepper
+              label={t('wizard.level')}
+              name={t('panel.levelName')}
+              value={draft.level}
+              min={1}
+              max={20}
+              onChange={(level) => setDraft((current) => ({ ...current, level }))}
+            />
+          )}
         </div>
       </SimpleGrid>
     </Stack>

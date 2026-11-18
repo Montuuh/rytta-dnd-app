@@ -12,7 +12,7 @@ import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { useCampaign, useCampaignView } from '@/features/campaigns'
+import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
 import { CharacterPortrait } from '@/features/inventory'
 import { sheetQuery, useSheetAction } from '../../api'
@@ -173,6 +173,7 @@ function Wizard({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const campaign = useCampaign()
+  const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
   const library = useSrdLibrary()
   const names = useResourceNames()
@@ -325,6 +326,8 @@ function Wizard({
     classLoss,
     setClassLoss,
     editing,
+    // RYT-130: a finished sheet changes level by leveling up, unless the DM edits it.
+    levelLocked: editing && !realDm,
     name: displayName,
     setName: setDisplayName,
     gaps: reviewGaps,
@@ -443,7 +446,9 @@ function Wizard({
                   ? 'sheet.stale'
                   : action.error.message === 'forbidden'
                     ? 'sheet.forbidden'
-                    : 'sheet.unavailable',
+                    : action.error.message === 'level-up'
+                      ? 'levelUp.error.useLevelUp'
+                      : 'sheet.unavailable',
               )}
             </Text>
             {action.error.message === 'stale' && (

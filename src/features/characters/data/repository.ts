@@ -353,9 +353,11 @@ export async function changeSheet(campaignId: string, action: SheetAction) {
         ? 'stale'
         : message.includes('Encounter locked')
           ? 'locked'
-          : message.includes('Forbidden')
-            ? 'forbidden'
-            : 'unavailable',
+          : message.includes('Use level up')
+            ? 'level-up'
+            : message.includes('Forbidden')
+              ? 'forbidden'
+              : 'unavailable',
     )
   }
   return result.data

@@ -4151,7 +4151,7 @@
       "title": "Level up: party level set by the DM and the guided level-up sheet",
       "priority": "P1",
       "owner": "backend",
-      "status": "in_progress",
+      "status": "review",
       "dependsOn": ["RYT-124"],
       "sources": [
         "Player journey audit 2026-11-17, finding J2-06: there is no level-up flow; level, hit points and features are edited by hand.",
@@ -4174,7 +4174,7 @@
         "PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-130/validation.md"]
     },
     {
       "id": "RYT-131",
@@ -4286,6 +4286,32 @@
         "unit tests for the changed domain logic",
         "npm run check",
         "npm run test:e2e (casting from the sheet at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-135",
+      "title": "Level up polish from the UI review",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-130"],
+      "sources": [
+        "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md)."
+      ],
+      "scope": "Fix the four non-blocking findings left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, and the duplicate Cancel names in the DM dialog. Non-goals: new level-up rules, backend or migration changes, multiclass, autonomous release.",
+      "acceptance": [
+        "For an ability at 19 the \"+2\" option no longer says \"Already at 20\"; its label and disabled reason state the real limit, and an ability at 20 still says it is at the cap.",
+        "At 820px a failed confirm scrolls so that both the failure alert and the summary row are fully visible.",
+        "At 390px with 150% text the typed-roll hint is visible together with the roll input without scrolling, or is tied to it by a description that is read with the input.",
+        "The DM party-level dialog has no two controls with the same accessible name; each Cancel-like control says what it cancels or one of them is removed.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the changed option labels",
+        "npm run check",
+        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px)",
         "independent UI review PASS"
       ],
       "evidence": []

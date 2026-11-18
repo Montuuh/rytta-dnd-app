@@ -5,6 +5,7 @@ export {
   membersQuery,
   sentInvitationsQuery,
   useCampaignAction,
+  useSetPartyLevel,
 } from './api'
 export { CampaignAccessError } from './domain/errors'
 export type { AuditEvent, Campaign, CampaignModuleKey, CampaignRepository } from './domain/campaign'
@@ -43,6 +44,7 @@ export type {
   RollSource,
   RollVisibility,
 } from './domain/settings'
+export { partyBelow, partySuggested } from './domain/party-level'
 export { CampaignHub } from './ui/hub'
 export { LeaveCampaignDialog, LeaveCampaignItem } from './ui/leave'
 export { CampaignBoundary } from './ui/campaign-boundary'

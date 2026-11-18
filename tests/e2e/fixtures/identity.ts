@@ -68,6 +68,15 @@ export async function identityFixture(
     callbackError?: boolean
     twoDms?: boolean
     sheet?: 'draft' | 'complete'
+    /** RYT-130: level of the complete sample sheets (default 5). */
+    sheetLevel?: number
+    /** RYT-130: the subclass of the complete sample sheets; '' leaves it to choose. */
+    sheetSubclass?: string
+    /** RYT-130: a wizard instead of the sample bard, and base scores to override. */
+    sheetClass?: 'wizard'
+    sheetAbilities?: Partial<Record<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha', number>>
+    /** RYT-130: the level the DM set for the party (null: not set). */
+    partyLevel?: number | null
     inventory?: boolean
     modules?: string[]
     party?: boolean
@@ -122,6 +131,7 @@ export async function identityFixture(
           role: options.player ? 'player' : 'dm',
           player_modules:
             options.modules ?? (options.inventory ? ['party', 'inventory'] : ['party']),
+          party_level: options.partyLevel ?? null,
         },
         {
           id: otherCampaignId,
@@ -130,6 +140,7 @@ export async function identityFixture(
           created_at: '2026-10-26T00:00:00Z',
           role: 'player',
           player_modules: ['party'],
+          party_level: null,
         },
       ]
   let pending = [
@@ -298,17 +309,28 @@ export async function identityFixture(
     character: string,
     kind: string,
     changes: { field: string; before: unknown; after: unknown }[],
+    at = new Date(Date.now() + history.length).toISOString(),
   ) =>
     history.push({
       id: crypto.randomUUID(),
-      at: new Date(Date.now() + history.length).toISOString(),
+      at,
       kind,
       actor_id: currentId,
       character,
       changes,
     })
   const sheets = new Map<string, SheetRow>(
-    characters.map((c) => [c.id, options.sheet === 'complete' ? sampleSheet() : blankSheet()]),
+    characters.map((c) => [
+      c.id,
+      options.sheet === 'complete'
+        ? sampleSheet({
+            level: options.sheetLevel,
+            subclass: options.sheetSubclass,
+            wizard: options.sheetClass === 'wizard',
+            abilities: options.sheetAbilities,
+          })
+        : blankSheet(),
+    ]),
   )
   if (options.armorClassOverride !== undefined)
     for (const sheet of sheets.values()) {
@@ -614,6 +636,11 @@ export async function identityFixture(
   }
   let portraitPath: string | null = null
   let nextVitalsStale = false
+  // RYT-130: idempotency of the party level and level-up RPCs, and one-shot failures.
+  const partyRequests = new Map<string, { actor: string; payload: string; result: number | null }>()
+  const levelUpRequests = new Map<string, { actor: string; payload: string; revision: number }>()
+  let nextPartyLevelError: string | null = null
+  let nextLevelUpError: string | null = null
   let sent: { id: string; email: string; expires_at: string }[] = []
   const characterEvents: {
     id: string
@@ -656,6 +683,7 @@ export async function identityFixture(
   const usernameHeldByOther = (name: string, actor: string) =>
     [...usernames].some(([id, held]) => id !== actor && held.toLowerCase() === name.toLowerCase())
   let failList = false
+  const partyLevelOf = (id: string) => campaigns.find((c) => c.id === id)?.party_level ?? null
   // RYT-115: prepare_account_deletion must run before delete_my_account; objects are Storage rows.
   let accountPrepared = false
   let accountBlockedNow = Boolean(options.account?.blocked)
@@ -766,6 +794,7 @@ export async function identityFixture(
           created_at: '2026-10-27T00:00:00Z',
           role: 'dm',
           player_modules: ['party'],
+          party_level: null,
         },
       ]
       return respond(id)
@@ -780,6 +809,7 @@ export async function identityFixture(
           created_at: '2026-10-27T00:00:00Z',
           role: 'player',
           player_modules: ['party'],
+          party_level: null,
         })
       pending = []
       return respond(target.campaign_id)
@@ -876,9 +906,21 @@ export async function identityFixture(
     }
     if (method === 'get_character_history') {
       // The audit rows of the party fixture, turned into field changes like the RPC does.
-      const quiet = ['id', 'campaign_id', 'character_id', 'revision', 'user_id', 'created_at']
+      const quiet = [
+        'id',
+        'campaign_id',
+        'character_id',
+        'revision',
+        'user_id',
+        'created_at',
+        'party_level',
+      ]
       const audited = characterEvents
-        .filter((e) => e.character_id === body.target_character && e.kind.endsWith(':UPDATE'))
+        .filter(
+          (e) =>
+            e.character_id === body.target_character &&
+            (e.kind.endsWith(':UPDATE') || e.kind === 'level_up'),
+        )
         .map((e) => ({
           id: e.id,
           at: e.created_at,
@@ -931,6 +973,13 @@ export async function identityFixture(
       const row = sheets.get(String(body.target_character))!
       if (row.revision !== body.expected_revision)
         return respond({ message: 'Stale revision' }, 400)
+      // RYT-130: a complete sheet changes level only by leveling up, unless the DM edits it.
+      if (
+        members.find((m) => m.user_id === actor)?.role !== 'dm' &&
+        row.status === 'complete' &&
+        Number(body.new_level) !== row.level
+      )
+        return respond({ message: 'Use level up' }, 400)
       const completing = row.status === 'draft' && body.mark_complete === true
       const nextBuild = body.new_build as Record<string, unknown>
       const changes = [
@@ -956,6 +1005,122 @@ export async function identityFixture(
       const state = vitals.get(String(body.target_character))!
       if (completing) state.current_hp = row.max_hp
       if (changes.length) record(String(body.target_character), 'character_sheets:UPDATE', changes)
+      return respond(row.revision)
+    }
+    if (method === 'set_party_level') {
+      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (!dm) return respond({ code: '42501', message: 'Forbidden' }, 403)
+      if (!body.request_id) return respond({ code: '22023', message: 'Invalid request' }, 400)
+      const level = body.new_level === null ? null : Number(body.new_level)
+      const payload = JSON.stringify([body.target_campaign, level])
+      const prior = partyRequests.get(String(body.request_id))
+      // The replay comes first, as in the SQL: the same request returns what it returned.
+      if (prior)
+        return prior.actor === actor && prior.payload === payload
+          ? respond(prior.result)
+          : respond({ code: '22023', message: 'Request mismatch' }, 400)
+      if (nextPartyLevelError) {
+        const message = nextPartyLevelError
+        nextPartyLevelError = null
+        return respond({ message }, message === 'Unavailable' ? 503 : 400)
+      }
+      if (level !== null && !(Number.isInteger(level) && level >= 1 && level <= 20))
+        return respond({ code: '22023', message: 'Invalid level' }, 400)
+      campaigns = campaigns.map((c) =>
+        c.id === body.target_campaign ? { ...c, party_level: level } : c,
+      )
+      partyRequests.set(String(body.request_id), { actor, payload, result: level })
+      return respond(level)
+    }
+    if (method === 'apply_level_up') {
+      const targetId = String(body.target_character)
+      const character = characters.find((c) => c.id === targetId)
+      const row = sheets.get(targetId)
+      const dm = members.find((m) => m.user_id === actor)?.role === 'dm'
+      if (!character || !row || (!dm && character.user_id !== actor))
+        return respond({ code: '42501', message: 'Forbidden' }, 403)
+      if (!body.request_id) return respond({ code: '22023', message: 'Invalid request' }, 400)
+      const payload = JSON.stringify([
+        targetId,
+        body.expected_revision,
+        body.new_level,
+        body.new_max_hp,
+        body.new_build,
+      ])
+      const prior = levelUpRequests.get(String(body.request_id))
+      if (prior)
+        return prior.actor === actor && prior.payload === payload
+          ? respond(prior.revision)
+          : respond({ code: '22023', message: 'Request mismatch' }, 400)
+      if (nextLevelUpError) {
+        const message = nextLevelUpError
+        nextLevelUpError = null
+        return respond({ message }, message === 'Unavailable' ? 503 : 400)
+      }
+      // A Player cannot level an archived or an absent character; the DM can.
+      if (!dm && (character.archived_at || character.absent))
+        return respond({ code: '42501', message: 'Character unavailable' }, 403)
+      if (!dm && options.inEncounter) return respond({ message: 'Encounter locked' }, 400)
+      if (row.revision !== body.expected_revision)
+        return respond({ message: 'Stale revision' }, 400)
+      if (row.status !== 'complete') return respond({ message: 'Sheet incomplete' }, 400)
+      const level = Number(body.new_level)
+      const maxHp = Number(body.new_max_hp)
+      const nextBuild = body.new_build as Record<string, unknown>
+      const party = partyLevelOf(String(body.target_campaign))
+      if (
+        !(level > row.level && level <= 20) ||
+        maxHp < row.max_hp ||
+        (!dm && (level !== row.level + 1 || maxHp - row.max_hp < 1 || maxHp - row.max_hp > 64))
+      )
+        return respond({ code: '22023', message: 'Invalid level' }, 400)
+      if (!dm && nextBuild.classKey !== row.build.classKey)
+        return respond({ message: 'Class change' }, 400)
+      if (!dm && (party === null || level > party))
+        return respond({ message: 'Above party level' }, 400)
+      const before = { level: row.level, max_hp: row.max_hp }
+      const changes = [
+        ...(before.level !== level ? [{ field: 'level', before: before.level, after: level }] : []),
+        ...(before.max_hp !== maxHp
+          ? [{ field: 'max_hp', before: before.max_hp, after: maxHp }]
+          : []),
+        ...[...new Set([...Object.keys(row.build), ...Object.keys(nextBuild)])]
+          .filter((key) => JSON.stringify(row.build[key]) !== JSON.stringify(nextBuild[key]))
+          .map((key) => ({
+            field: `build.${key}`,
+            before: row.build[key] ?? null,
+            after: nextBuild[key] ?? null,
+          })),
+      ]
+      Object.assign(row, { level, max_hp: maxHp, build: nextBuild, revision: row.revision + 1 })
+      // One transaction: the level_up entry, the sheet row and the play-state row share their time.
+      const at = new Date().toISOString()
+      const state = vitals.get(targetId)! as VitalsRow & { current_hp: number }
+      const hpBefore = state.current_hp
+      // Play state moves only when the maximum rose, as in the SQL.
+      if (maxHp > before.max_hp) {
+        state.current_hp = Math.min(state.current_hp + (maxHp - before.max_hp), maxHp)
+        state.revision += 1
+        record(
+          targetId,
+          'character_vitals:UPDATE',
+          [{ field: 'current_hp', before: hpBefore, after: state.current_hp }],
+          at,
+        )
+      }
+      record(targetId, 'character_sheets:UPDATE', changes, at)
+
+      characterEvents.unshift({
+        id: crypto.randomUUID(),
+        campaign_id: campaignId,
+        character_id: targetId,
+        actor_id: actor,
+        kind: 'level_up',
+        before_value: { level: before.level, max_hp: before.max_hp },
+        after_value: { level, max_hp: maxHp, party_level: party },
+        created_at: at,
+      })
+      levelUpRequests.set(String(body.request_id), { actor, payload, revision: row.revision })
       return respond(row.revision)
     }
     if (method === 'set_character_vitals') {
@@ -1304,6 +1469,10 @@ export async function identityFixture(
               armor_class: live ? (sheet?.armor_class ?? null) : null,
               exhaustion: live ? c.character_resources.exhaustion : null,
               conditions: live ? ((state?.conditions as string[] | undefined) ?? []) : null,
+              below_party_level:
+                sheet?.status === 'complete' &&
+                partyLevelOf(String(body.target_campaign)) !== null &&
+                sheet.level < partyLevelOf(String(body.target_campaign))!,
             }
           }),
       )
@@ -1676,6 +1845,22 @@ export async function identityFixture(
     failCampaigns: () => {
       failList = true
     },
+    /** RYT-130: the next set_party_level fails (nothing applied) with this server message. */
+    failNextPartyLevel: (message = 'Unavailable') => {
+      nextPartyLevelError = message
+    },
+    /** RYT-130: the next apply_level_up fails (nothing applied) with this server message. */
+    failNextLevelUp: (message = 'Unavailable') => {
+      nextLevelUpError = message
+    },
+    /** RYT-130: the DM changes the party level from elsewhere. */
+    setPartyLevel: (level: number | null) => {
+      campaigns = campaigns.map((c) => (c.id === campaignId ? { ...c, party_level: level } : c))
+    },
+    /** RYT-130: another device saved the sheet, so the revision a level-up started from is stale. */
+    staleSheet: (id = characterId) => {
+      sheets.get(id)!.revision += 1
+    },
     revokeAccess: () => {
       campaigns = []
     },
@@ -1683,17 +1868,49 @@ export async function identityFixture(
 }
 
 /** A complete level 5 bard used to render the sheet without walking the wizard. */
-export function sampleSheet() {
+export function sampleSheet({
+  level = 5,
+  subclass,
+  wizard = false,
+  abilities,
+}: {
+  level?: number
+  subclass?: string
+  wizard?: boolean
+  abilities?: Record<string, number>
+} = {}) {
+  const base = sampleSheetBase(level, subclass)
+  if (!wizard && !abilities) return base
+  return {
+    ...base,
+    build: {
+      ...base.build,
+      ...(wizard
+        ? {
+            classKey: 'wizard',
+            classLabel: 'Mago',
+            subclassKey: 'evoker',
+            hitDie: 6,
+            spellAbility: 'int',
+            saves: ['int', 'wis'],
+          }
+        : {}),
+      baseAbilities: { ...base.build.baseAbilities, ...abilities },
+    },
+  }
+}
+
+function sampleSheetBase(level: number, subclass?: string) {
   return {
     status: 'complete',
-    level: 5,
+    level,
     max_hp: 38,
     armor_class: 14,
     revision: 3,
     build: {
       classKey: 'bard',
       classLabel: 'Bardo',
-      subclass: 'Colegio del Saber',
+      subclass: subclass ?? 'Colegio del Saber',
       speciesKey: 'elf',
       speciesLabel: 'Elfo',
       backgroundKey: 'sage',

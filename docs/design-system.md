@@ -405,3 +405,23 @@ with a diamond per counted square, and areas filled at 28 % in their damage colo
 caught squares and the shape and damage named in words. The table screen has no chrome: the map at the
 calibrated scale, a small status corner (scene, round and turn, connection in words, ruler and mute),
 a start overlay for the one tap browsers need, and story cards on a parchment plate set large.
+
+## Level up (RYT-130)
+
+The DM sets the party level in the DM Command Center (Members tab): a shield seal with the level,
+a 44px −/value/+ stepper that starts at the highest finished sheet, and one confirmation that says
+what the change does (raising prompts the Players, lowering or clearing only stops the prompts; no
+sheet changes). Each request carries one id, so the retry after a failure never applies twice. A
+line counts the finished characters still below the level.
+
+A Player below the party level sees one prompt on the sheet with a single action. It opens the
+guided level-up: a full-screen sheet on phones and a modal from 48em, owned by the overlay wrappers
+(Back and Escape close it, focus returns to the prompt or the sheet name). Four steps with a
+segmented progress bar and a sticky footer: hit points (hit-die average plus Constitution, or a
+typed roll within the die, with the new maximum), what the level grants (class features by name with
+glossary links, resources, proficiency bonus, spell slots), the required choices (subclass,
+ability increase or feat, new spells; status in words and an icon, never colour alone) and a
+review. The confirm stays unavailable while a choice is missing and writes everything in one
+transactional call; a failure leaves the character unchanged and the same button retries the same
+request. After the write the sheet shows what changed. The manual level field of a finished sheet
+is replaced by the locked value and a pointer for Players; the DM keeps the stepper.

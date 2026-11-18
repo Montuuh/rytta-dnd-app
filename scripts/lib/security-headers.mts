@@ -15,9 +15,13 @@ export function inlineScripts(html: string): string[] {
   return found
 }
 
-/** CSP source expression for one inline script: its exact bytes, hashed. */
+/**
+ * CSP source expression for one inline script. The HTML parser turns CRLF and lone CR into LF
+ * before the browser hashes the script, so a checkout with Windows line endings must hash the
+ * same normalised text.
+ */
 export const scriptHash = (source: string) =>
-  `'sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}'`
+  `'sha256-${createHash('sha256').update(source.replace(/\r\n?/g, '\n'), 'utf8').digest('base64')}'`
 
 /** The browser origins the backend needs, from the public Supabase URL; none in demo builds. */
 export function backendSources(backendUrl: string | undefined) {

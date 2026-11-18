@@ -8,6 +8,7 @@ import {
 import { z } from 'zod'
 import { rosterOf } from './domain/roster'
 import { useAuth } from '@/features/auth'
+import { applyLevelUp, CampaignSettingsError, type LevelUpInput } from '@/features/campaigns'
 import {
   changeCharacter,
   changeSheet,
@@ -349,8 +350,39 @@ export function useSheetAction(campaignId: string) {
     },
     onSettled: async (_data, error) => {
       if (controller?.getSnapshot().user?.id !== userId) return
-      if (!error || error.message === 'stale' || error.message === 'locked')
+      if (
+        !error ||
+        error.message === 'stale' ||
+        error.message === 'locked' ||
+        error.message === 'level-up'
+      )
         await cache.invalidateQueries({ queryKey: scope })
+    },
+  })
+}
+
+/**
+ * RYT-130: the guided level-up, one transactional write. A failure leaves the sheet as it was;
+ * the caller repeats the same request id to retry, so a reply lost on the way never applies twice.
+ * A refused write ('stale', 'above-party-level'...) refreshes the sheet and the campaign, whose
+ * party level may have moved.
+ */
+export function useApplyLevelUp() {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (input: LevelUpInput) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new CampaignSettingsError('unavailable')
+      return applyLevelUp(input)
+    },
+    onSettled: async (_data, error) => {
+      if (controller?.getSnapshot().user?.id !== userId) return
+      if (!error || (error instanceof CampaignSettingsError && error.reason !== 'unavailable'))
+        await cache.invalidateQueries({ queryKey: ['private', userId] })
     },
   })
 }

@@ -28,6 +28,8 @@ export type PanelProps = {
   pending: boolean
   /** RYT-070: a Player whose character fights a live encounter. */
   locked: boolean
+  /** RYT-130: a Player's finished sheet changes level by leveling up, not by hand. */
+  levelLocked: boolean
   commit: (values: Vitals, notice?: PanelNotice) => void
   /** Build changes: into the edit draft while editing, otherwise saved at once. */
   change: (update: (draft: SheetDraft) => SheetDraft, notice?: PanelNotice) => void

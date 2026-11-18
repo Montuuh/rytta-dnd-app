@@ -9,7 +9,7 @@ export type HistoryLine =
   | { key: 'number'; field: string; before: number | null; after: number }
   | { key: 'text'; field: string; before: string; after: string }
   | { key: 'toggle'; field: string; on: boolean }
-  | { key: 'added' | 'removed'; field: string; name: string }
+  | { key: 'added' | 'removed'; field: string; name: string; ref?: string }
   | { key: 'edited'; field: string }
   | { key: 'completed' }
   | { key: 'created' }
@@ -18,7 +18,7 @@ export type HistoryLine =
   | { key: 'ability'; ability: string; before: number; after: number }
   | { key: 'skill'; skill: string; before: string | null; after: string | null }
 
-export type HistoryFamily = 'hp' | 'play' | 'sheet' | 'identity' | 'resources'
+export type HistoryFamily = 'hp' | 'play' | 'sheet' | 'identity' | 'resources' | 'levelUp'
 
 const num = (value: unknown) => (typeof value === 'number' ? value : null)
 const str = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -31,7 +31,14 @@ const named = (value: unknown) =>
   list(value).flatMap((item) => {
     const entry = record(item)
     return typeof entry.id === 'string' && typeof entry.name === 'string'
-      ? [{ id: entry.id, name: entry.name, max: num(entry.max) }]
+      ? [
+          {
+            id: entry.id,
+            name: entry.name,
+            max: num(entry.max),
+            key: typeof entry.key === 'string' ? entry.key : undefined,
+          },
+        ]
       : []
   })
 
@@ -53,6 +60,8 @@ const quiet = new Set([
 ])
 
 export function familyOf(item: HistoryItem): HistoryFamily {
+  // RYT-130: a level-up is its own entry, apart from a manual edit of the sheet.
+  if (item.kind === 'level_up') return 'levelUp'
   const table = item.kind.split(':')[0]
   if (table === 'character_vitals')
     return item.changes.some((c) => ['current_hp', 'temp_hp'].includes(c.field)) ? 'hp' : 'play'
@@ -96,10 +105,20 @@ function buildLines(field: string, before: unknown, after: unknown): HistoryLine
     const lines: HistoryLine[] = [
       ...[...b.values()]
         .filter((item) => !a.has(item.id))
-        .map((item) => ({ key: 'added' as const, field, name: item.name })),
+        .map((item) => ({
+          key: 'added' as const,
+          field,
+          name: item.name,
+          ...(item.key ? { ref: item.key } : {}),
+        })),
       ...[...a.values()]
         .filter((item) => !b.has(item.id))
-        .map((item) => ({ key: 'removed' as const, field, name: item.name })),
+        .map((item) => ({
+          key: 'removed' as const,
+          field,
+          name: item.name,
+          ...(item.key ? { ref: item.key } : {}),
+        })),
     ]
     if (field === 'trackers')
       for (const item of b.values()) {
@@ -189,4 +208,38 @@ export function describeHistory(item: HistoryItem): HistoryLine[] {
     lines.push({ key: 'text', field, before: str(before), after: str(after) })
   }
   return lines
+}
+
+/**
+ * RYT-130: a level-up writes its own entry and, in the same transaction, the rows of the sheet and
+ * of the play state it touched. Those share the `at` of the level-up entry, so they are folded
+ * into it: the entry keeps its level and maximum hit points and gains the choices and features
+ * the sheet row recorded, and the rows that only repeat them (level, maximum, the rise of current
+ * hit points) disappear.
+ */
+export function foldLevelUps(items: HistoryItem[]): HistoryItem[] {
+  const ups = new Set(items.filter((item) => item.kind === 'level_up').map((item) => item.at))
+  if (ups.size === 0) return items
+  const extra = new Map<string, HistoryItem['changes']>()
+  const kept: HistoryItem[] = []
+  for (const item of items) {
+    const sameTransaction =
+      item.kind !== 'level_up' &&
+      ups.has(item.at) &&
+      (item.kind === 'character_sheets:UPDATE' || item.kind === 'character_vitals:UPDATE')
+    if (!sameTransaction) {
+      kept.push(item)
+      continue
+    }
+    if (item.kind === 'character_sheets:UPDATE')
+      extra.set(item.at, [
+        ...(extra.get(item.at) ?? []),
+        ...item.changes.filter((change) => change.field !== 'level' && change.field !== 'max_hp'),
+      ])
+  }
+  return kept.map((item) =>
+    item.kind === 'level_up' && extra.has(item.at)
+      ? { ...item, changes: [...item.changes, ...extra.get(item.at)!] }
+      : item,
+  )
 }

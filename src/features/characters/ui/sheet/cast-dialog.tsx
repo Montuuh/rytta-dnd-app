@@ -267,7 +267,9 @@ export function CastDialog({
             title={t('cast.error.title')}
             className="cast-alert"
           >
-            {failureText} {t('cast.error.unchanged')}
+            {failureText}
+            {/* After a lost reply it is not known whether it was saved: no claim either way. */}
+            {failure !== 'unavailable' && ` ${t('cast.error.unchanged')}`}
           </Alert>
         )}
         <Group justify="flex-end" gap="sm" className="cast-footer">

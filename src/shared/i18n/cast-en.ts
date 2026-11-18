@@ -20,7 +20,8 @@ export const castEn = {
   'cast.saving': 'Saving…',
   'cast.error.title': 'The spell was not cast',
   'cast.error.unchanged': 'Your sheet is unchanged.',
-  'cast.error.unavailable': 'Could not save. Check your connection and try again.',
+  'cast.error.unavailable':
+    'Could not confirm it was saved. Trying again will not spend a second slot.',
   'cast.error.busy': 'Another change is still saving. Wait until it finishes, then try again.',
   'cast.error.stale':
     'Your sheet changed on another device. It is up to date now: check the slots and cast again.',
@@ -50,10 +51,12 @@ export const castEn = {
   'cast.unnamed': 'a spell',
   'cast.willMark': 'It will be marked on your sheet.',
   'cast.combatNote':
-    'A fight is on: the DM keeps a separate concentration tracker and has to update it.',
+    'A fight is on: the DM keeps a separate concentration tracker. Tell the DM so it is noted in the fight.',
   'cast.done.noSlot': 'You cast {{name}}. It spends no slot.',
   'cast.manual.open': 'Concentration by hand',
   'cast.manual.clean': 'Clean the name',
   'cast.marker.combat': 'In a fight the DM keeps a separate concentration record.',
   'cast.pactLeft': 'Pact slots, level {{level}}: {{left}} of {{max}} left',
+  'cast.marker.endedUndo': 'Concentration on {{name}} ended. You can undo it.',
+  'cast.marker.undoGone': 'It can no longer be undone.',
 } as const

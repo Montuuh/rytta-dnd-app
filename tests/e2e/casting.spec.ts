@@ -400,8 +400,10 @@ test('RYT-134 a failed save leaves the slots as they were, says so where it is s
   await dialog.getByRole('button', { name: 'Lanzar', exact: true }).click()
   const alert = dialog.getByRole('alert')
   await expect(alert).toContainText('No se lanzó el conjuro')
-  await expect(alert).toContainText('No se pudo guardar')
-  await expect(alert).toContainText('Tu ficha sigue como estaba.')
+  await expect(alert).toContainText('No se pudo confirmar si se guardó')
+  await expect(alert).toContainText('Reintentar no gasta otro espacio')
+  // Whether it was saved is not known: the alert does not claim the sheet is unchanged.
+  await expect(alert).not.toContainText('Tu ficha sigue como estaba')
   await expect(alert).toBeFocused()
   expect(f.vitalsOf(characterId)!.slots_used).toEqual(fresh)
   expect(f.vitalsOf(characterId)!.concentration).toBeNull()
@@ -936,9 +938,7 @@ test('RYT-134 during a live encounter the hero and the dialog say the DM keeps a
     .getByRole('button', { name: /Lanzar/ })
     .click()
   const dialog = castDialog(page, 'Lanzar Inmovilizar persona')
-  await expect(dialog).toContainText(
-    'el DM lleva su propio registro de concentración y debe actualizarlo',
-  )
+  await expect(dialog).toContainText('Avisa al DM para que la anote en el combate')
   await audit(page, 'combat dialog')
   await evidence(page, 'combat-dialog')
   await dialog.getByRole('button', { name: 'Cancelar' }).click()
@@ -958,7 +958,7 @@ test('RYT-134 outside a fight the sheet says nothing about the DM tracker', asyn
   await rowOf(sheet, 'Inmovilizar persona')
     .getByRole('button', { name: /Lanzar/ })
     .click()
-  await expect(castDialog(page)).not.toContainText('registro de concentración y debe')
+  await expect(castDialog(page)).not.toContainText('Avisa al DM')
 })
 
 test('RYT-134 the dialog names what it does: the heading, both spells and what is marked', async ({
@@ -1039,4 +1039,176 @@ for (const theme of ['default', 'parchment', 'bard'])
       .getByRole('button', { name: /Lanzar/ })
       .click()
     await audit(page, `${theme}: combat dialog`)
+  })
+
+// ---------------------------------------------------------------------------------------------
+// Second review round: nothing covers a control, the undo is whole, focus never falls to <body>.
+// ---------------------------------------------------------------------------------------------
+
+const intersects = (
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+
+for (const percent of [100, 150])
+  test(`RYT-134 the result note covers no control after a cast from the last castable row, at ${percent}% text`, async ({
+    page,
+  }) => {
+    await open(page)
+    await page.addStyleTag({ content: `html { font-size: ${percent}% !important; }` })
+    const sheet = await openSpells(page)
+    const row = rowOf(sheet, 'Bola de fuego')
+    await row.scrollIntoViewIfNeeded()
+    const trigger = row.getByRole('button', { name: /Lanzar/ })
+    await trigger.click()
+    await castDialog(page, 'Lanzar Bola de fuego')
+      .getByRole('button', { name: 'Lanzar', exact: true })
+      .click()
+    await expect(castDialog(page)).toHaveCount(0)
+    const note = sheet.locator('[data-cast-note]')
+    await expect(note).toBeVisible()
+    await expect(trigger).toBeFocused()
+    await expect(note).toBeInViewport()
+    const noteBox = (await note.boundingBox())!
+    // The focused control and every Lanzar on screen stay clear of the note, and what is on top
+    // at the focused control's centre is the control itself.
+    expect(intersects((await trigger.boundingBox())!, noteBox)).toBe(false)
+    const triggers = sheet.getByRole('button', { name: /^Lanzar / })
+    for (let index = 0; index < (await triggers.count()); index++) {
+      const box = await triggers.nth(index).boundingBox()
+      if (box) expect(intersects(box, noteBox), `Lanzar #${index}`).toBe(false)
+    }
+    const obscured = await trigger.evaluate((element) => {
+      const box = element.getBoundingClientRect()
+      const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+      return !element.contains(top)
+    })
+    expect(obscured).toBe(false)
+    await audit(page, `note ${percent}%`)
+    await evidence(page, `note-inline-${percent}`)
+  })
+
+for (const [label, marker] of [
+  ['a short name', 'Bendición'],
+  ['a long name', longName],
+] as const)
+  for (const percent of [100, 150])
+    test(`RYT-134 "Deshacer" is whole with ${label} at ${percent}% text`, async ({ page }) => {
+      await open(page, { concentration: marker })
+      await page.addStyleTag({ content: `html { font-size: ${percent}% !important; }` })
+      await page
+        .locator('.sheet-concentration')
+        .getByRole('button', { name: /Terminar/ })
+        .click()
+      const undo = page.locator('.sheet-undo-marker')
+      await expect(undo).toBeVisible()
+      const button = undo.getByRole('button', { name: 'Deshacer' })
+      expect(
+        await button.evaluate((element) => element.scrollWidth > element.clientWidth + 1),
+      ).toBe(false)
+      const box = (await button.boundingBox())!
+      const hero = (await page.locator('.panel-hero').boundingBox())!
+      expect(box.width).toBeGreaterThan(60)
+      expect(box.x).toBeGreaterThanOrEqual(hero.x)
+      expect(box.x + box.width).toBeLessThanOrEqual(hero.x + hero.width + 0.5)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      await audit(page, `undo ${label} ${percent}%`)
+      await evidence(page, `undo-${label.includes('long') ? 'long' : 'short'}-${percent}`)
+    })
+
+test('RYT-134 focus follows the marker: to Deshacer after ending, to Terminar after undoing', async ({
+  page,
+}) => {
+  const f = await open(page, { concentration: 'Bendición' })
+  const marker = page.locator('.sheet-concentration')
+  await marker.getByRole('button', { name: /Terminar/ }).click()
+  const undo = page.locator('.sheet-undo-marker').getByRole('button', { name: 'Deshacer' })
+  await expect(undo).toBeFocused()
+  await expect(
+    page
+      .locator('[aria-live="polite"]')
+      .filter({ hasText: 'Concentración en Bendición terminada. Puedes deshacer.' }),
+  ).toHaveCount(1)
+  await undo.click()
+  await expect(
+    page.locator('.sheet-concentration').getByRole('button', { name: /Terminar/ }),
+  ).toBeFocused()
+  await expect.poll(() => f.vitalsOf(characterId)!.concentration).toBe('Bendición')
+})
+
+test('RYT-134 when the undo runs out, it is said politely and focus is not left on a vanished control', async ({
+  page,
+}) => {
+  await page.clock.install()
+  await open(page, { concentration: 'Bendición' })
+  await page
+    .locator('.sheet-concentration')
+    .getByRole('button', { name: /Terminar/ })
+    .click()
+  const undo = page.locator('.sheet-undo-marker')
+  await expect(undo.getByRole('button', { name: 'Deshacer' })).toBeFocused()
+  await page.clock.fastForward(12_500)
+  await expect(undo).toHaveCount(0)
+  await expect(
+    page.locator('[aria-live="polite"]').filter({ hasText: 'Ya no se puede deshacer.' }),
+  ).toHaveCount(1)
+  await expect(page.locator('#sheet-name')).toBeFocused()
+})
+
+test('RYT-134 cleaning the manual name leaves focus in the field', async ({ page }) => {
+  await open(page)
+  const sheet = await openSpells(page)
+  await sheet.getByRole('button', { name: 'Concentración a mano' }).click()
+  const field = sheet.getByLabel('Conjuro en el que te concentras')
+  await field.fill('Sanar\u200b')
+  await sheet.getByRole('button', { name: 'Limpiar el nombre' }).click()
+  await expect(field).toBeFocused()
+  await expect(field).toHaveValue('Sanar')
+})
+
+test('RYT-134 preparing or unpreparing a spell retires the last cast note', async ({ page }) => {
+  await open(page)
+  const sheet = await openSpells(page)
+  await rowOf(sheet, 'Luz').getByRole('button', { name: 'Lanzar Luz' }).click()
+  await expect(sheet.locator('[data-cast-note]')).toHaveCount(1)
+  await rowOf(sheet, 'Escudo').locator('label', { hasText: 'Preparado' }).click()
+  await expect(sheet.locator('[data-cast-note]')).toHaveCount(0)
+})
+
+test('RYT-134 a pact caster sees the pact slots before the levelled spells and where they choose', async ({
+  page,
+}) => {
+  await open(page, { sheetCaster: 'pact' })
+  const sheet = await openSpells(page)
+  const line = sheet.getByText('Espacios de pacto de nivel 3: quedan 2 de 2')
+  await expect(line).toBeVisible()
+  const lineBox = (await line.boundingBox())!
+  const firstLevelled = (await sheet.getByText('Nivel 1', { exact: true }).first().boundingBox())!
+  expect(lineBox.y).toBeLessThan(firstLevelled.y)
+  await rowOf(sheet, 'Palabra sanadora')
+    .getByRole('button', { name: /Lanzar/ })
+    .click()
+  const dialog = castDialog(page, 'Lanzar Palabra sanadora')
+  await expect(dialog.getByRole('radio')).toHaveCount(1)
+  await expect(dialog).toContainText('Nivel 3, espacio de pacto')
+  await expect(dialog).toContainText('quedan 2 de 2')
+  await audit(page, 'pact')
+})
+
+for (const theme of ['default', 'parchment', 'bard'])
+  test(`RYT-134 axe is clean on the inline note and the undo at 150% text in ${theme}`, async ({
+    page,
+  }) => {
+    await open(page, { concentration: longName }, { theme })
+    await page.addStyleTag({ content: 'html { font-size: 150% !important; }' })
+    await page
+      .locator('.sheet-concentration')
+      .getByRole('button', { name: /Terminar/ })
+      .click()
+    await expect(page.locator('.sheet-undo-marker')).toBeVisible()
+    await audit(page, `${theme}: undo 150%`)
+    const sheet = await openSpells(page)
+    await rowOf(sheet, 'Luz').getByRole('button', { name: 'Lanzar Luz' }).click()
+    await expect(sheet.locator('[data-cast-note]')).toBeVisible()
+    await audit(page, `${theme}: note 150%`)
   })

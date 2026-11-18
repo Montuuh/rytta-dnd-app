@@ -308,7 +308,7 @@ function SheetPanel({
   const [cast, setCast] = useState<{ token: number; target: CastTarget; opened: boolean } | null>(
     null,
   )
-  const [castNote, setCastNote] = useState<string | null>(null)
+  const [castNote, setCastNote] = useState<{ text: string; spellId: string } | null>(null)
   const [announce, setAnnounce] = useState('')
   const castOpener = useRef<HTMLElement | null>(null)
   const castBusy = useRef(false)
@@ -469,9 +469,11 @@ function SheetPanel({
     setCastNote(null)
     setOptimistic(values)
     const saying = marker
-      ? t(marker.value === null ? 'cast.marker.ended' : 'cast.marker.set', {
-          name: marker.value ?? shownVitals.concentration ?? '',
-        })
+      ? marker.value === null
+        ? t(marker.undoable ? 'cast.marker.endedUndo' : 'cast.marker.ended', {
+            name: shownVitals.concentration ?? '',
+          })
+        : t('cast.marker.set', { name: marker.value })
       : undefined
     // A marker change still waiting for its turn is not lost when a newer tap replaces the write.
     queued.current = {
@@ -546,7 +548,7 @@ function SheetPanel({
       .join(' ')
     // Nothing to spend or mark (a ritual): there is nothing to write either.
     if (plan.spent === null && !plan.concentration) {
-      setCastNote(text)
+      setCastNote({ text, spellId: spell.id })
       say(text)
       return
     }
@@ -573,7 +575,7 @@ function SheetPanel({
       latestRevision.current = typeof next === 'number' ? next : sent.revision + 1
       setOptimistic({ ...sent.plan.vitals, revision: latestRevision.current })
       setNotice(null)
-      setCastNote(text)
+      setCastNote({ text, spellId: spell.id })
       say(text)
     } catch (error) {
       // The sheet reloads after a stale answer; what the write started from is gone.
@@ -593,7 +595,7 @@ function SheetPanel({
     if (spell.level === 0 && !spell.concentration) {
       // Nothing to spend or mark, so nothing is saved: say that, so the tap is never silent.
       const text = t('cast.done.cantrip', { name })
-      setCastNote(text)
+      setCastNote({ text, spellId: spell.id })
       say(text)
       return
     }
@@ -605,6 +607,8 @@ function SheetPanel({
     }))
   }
   const change: PanelProps['change'] = (update, done) => {
+    // Any edit of the sheet (a spell prepared or not, a new spell) retires the last cast's note.
+    setCastNote(null)
     if (draft) setDraft((current) => (current ? update(current) : current))
     else void save(update(saved), done)
   }
@@ -640,6 +644,7 @@ function SheetPanel({
     inEncounter,
     levelLocked: !realDm,
     commit,
+    say,
     onCast: startCast,
     castNote,
     change,

@@ -367,6 +367,7 @@ function SpellRow({
   editing,
   canEdit,
   availability,
+  note,
   onCast,
   onPrepared,
   onRemove,
@@ -376,6 +377,8 @@ function SpellRow({
   canEdit: boolean
   /** What casting it can do now; null when this row offers no casting. */
   availability: CastAvailability | null
+  /** What the last cast of this spell did, right under it: nothing it can cover. */
+  note: string | null
   onCast: (name: string, opener: HTMLElement) => void
   onPrepared: (prepared: boolean) => void
   onRemove: () => void
@@ -383,6 +386,10 @@ function SpellRow({
   const { t } = useTranslation()
   const glossaryName = useGlossaryName()
   const name = (spell.ref && glossaryName(spell.ref)) || spell.name
+  const noteRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (note) noteRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [note])
   const marks = [
     spell.concentration ? t('sheet.concentration') : null,
     spell.ritual ? t('sheet.ritual') : null,
@@ -438,6 +445,11 @@ function SpellRow({
             </Text>
           )}
         </div>
+      )}
+      {note && (
+        <Text size="sm" className="cast-note" tabIndex={-1} data-cast-note ref={noteRef}>
+          {note}
+        </Text>
       )}
       {editing && (
         <ActionIcon
@@ -505,6 +517,20 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
           {t('sheet.noSpells')}
         </Text>
       )}
+      {build.casterKind === 'pact' && (
+        <Text size="sm" c="dimmed">
+          {slotMax
+            .map((count, index) => (count > 0 ? index + 1 : 0))
+            .filter(Boolean)
+            .map((slotLevel) =>
+              t('cast.pactLeft', {
+                level: slotLevel,
+                left: slotLeft(slotLevel),
+                max: slotMax[slotLevel - 1]!,
+              }),
+            )}
+        </Text>
+      )}
       {levels.map((spellLevelKey) => (
         <section key={spellLevelKey} aria-labelledby={`spells-${spellLevelKey}`}>
           <Text size="sm" c="dimmed" fw={600} id={`spells-${spellLevelKey}`}>
@@ -530,6 +556,7 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
                   spell={spell}
                   editing={editing}
                   canEdit={canEdit}
+                  note={castNote?.spellId === spell.id ? castNote.text : null}
                   availability={
                     canEdit && !editing && (spell.level === 0 || spell.prepared)
                       ? castAvailability(spell, build, level, vitals)
@@ -570,20 +597,6 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
             {t('panel.ownSpell')}
           </Button>
         </Group>
-      )}
-      {build.casterKind === 'pact' && (
-        <Text size="sm" c="dimmed">
-          {slotMax
-            .map((count, index) => (count > 0 ? index + 1 : 0))
-            .filter(Boolean)
-            .map((slotLevel) =>
-              t('cast.pactLeft', {
-                level: slotLevel,
-                left: slotLeft(slotLevel),
-                max: slotMax[slotLevel - 1]!,
-              }),
-            )}
-        </Text>
       )}
       {adding && (
         <Stack gap="xs" className="panel-inline-form">
@@ -635,13 +648,6 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
         </Stack>
       )}
       {canEdit && !editing && <ConcentrationManual {...props} />}
-      {castNote && (
-        // Pinned to the bottom edge of the sheet while the list scrolls, under the thumb: the
-        // result of a cast is read where it is made.
-        <Text size="sm" className="cast-note" tabIndex={-1} data-cast-note>
-          {castNote}
-        </Text>
-      )}
     </Stack>
   )
 }
@@ -652,6 +658,7 @@ function ConcentrationManual({ vitals, commit }: PanelProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
+  const field = useRef<HTMLInputElement>(null)
   // A pasted invisible or control character is refused in the field, never sent to the server.
   const invalid = hasForbiddenMarkerCharacters(text)
   const marker = invalid ? null : markerFor(text)
@@ -710,13 +717,18 @@ function ConcentrationManual({ vitals, commit }: PanelProps) {
               description={t('cast.manual.hint')}
               maxLength={100}
               value={text}
+              ref={field}
               error={invalid ? t('cast.manual.invalid') : undefined}
               onChange={(event) => setText(event.currentTarget.value)}
             />
             {invalid && (
               <Button
                 variant="default"
-                onClick={() => setText(trimMarkerSpaces(stripForbiddenMarkerCharacters(text)))}
+                onClick={() => {
+                  setText(trimMarkerSpaces(stripForbiddenMarkerCharacters(text)))
+                  // The button goes away once the name is clean: focus stays with the field.
+                  field.current?.focus()
+                }}
               >
                 {t('cast.manual.clean')}
               </Button>

@@ -22,7 +22,7 @@ export const castEs = {
   'cast.saving': 'Guardando…',
   'cast.error.title': 'No se lanzó el conjuro',
   'cast.error.unchanged': 'Tu ficha sigue como estaba.',
-  'cast.error.unavailable': 'No se pudo guardar. Revisa la conexión y vuelve a intentarlo.',
+  'cast.error.unavailable': 'No se pudo confirmar si se guardó. Reintentar no gasta otro espacio.',
   'cast.error.busy': 'Otro cambio sigue guardándose. Espera a que termine y vuelve a intentarlo.',
   'cast.error.stale':
     'Tu ficha cambió en otro dispositivo. Ya está al día: revisa los espacios y vuelve a lanzar.',
@@ -53,10 +53,12 @@ export const castEs = {
   'cast.unnamed': 'un conjuro',
   'cast.willMark': 'Se marcará en tu ficha.',
   'cast.combatNote':
-    'Hay un combate en curso: el DM lleva su propio registro de concentración y debe actualizarlo.',
+    'Hay un combate en curso: el DM lleva su propio registro de concentración. Avisa al DM para que la anote en el combate.',
   'cast.done.noSlot': 'Lanzaste {{name}}. No gasta espacio.',
   'cast.manual.open': 'Concentración a mano',
   'cast.manual.clean': 'Limpiar el nombre',
   'cast.marker.combat': 'En combate el DM lleva su propio registro de concentración.',
   'cast.pactLeft': 'Espacios de pacto de nivel {{level}}: quedan {{left}} de {{max}}',
+  'cast.marker.endedUndo': 'Concentración en {{name}} terminada. Puedes deshacer.',
+  'cast.marker.undoGone': 'Ya no se puede deshacer.',
 } satisfies Record<keyof typeof castEn, string>

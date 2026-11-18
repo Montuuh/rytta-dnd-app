@@ -98,6 +98,41 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   expect(errors).toEqual([])
 })
 
+async function openHandoverDialog(page: Page) {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/members`)
+  const arinMenu = page.getByRole('button', { name: 'Acciones de Arin', exact: true })
+  await arinMenu.click()
+  await page.getByRole('menuitem', { name: 'Nombrar DM', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  return arinMenu
+}
+
+test('a members dialog closed with Escape returns focus to its trigger', async ({ page }) => {
+  const arinMenu = await openHandoverDialog(page)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(arinMenu).toBeFocused()
+  // And it stays there: no second return pulls it again later.
+  await page.waitForTimeout(2_000)
+  await expect(arinMenu).toBeFocused()
+})
+
+test('Shift+Tab while the dialog is closing keeps focus on the control the person moved to', async ({
+  page,
+}) => {
+  const arinMenu = await openHandoverDialog(page)
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(100)
+  await page.keyboard.press('Shift+Tab')
+  const moved = await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 200))
+  // Whatever the dialog's last frames did, 2s later (past any second return) focus has not been pulled
+  // back to the trigger from where the person moved it.
+  await page.waitForTimeout(2_000)
+  expect(await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 200))).toBe(moved)
+  expect(await arinMenu.evaluate((el) => el === document.activeElement)).toBe(false)
+})
+
 test('DM invites, cancels and hands over before leaving; campaign routes stay scoped', async ({
   page,
 }) => {

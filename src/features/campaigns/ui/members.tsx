@@ -142,10 +142,16 @@ export function CampaignMembers({
     setConfirmation(next)
   }
   // Focus goes back to the control that opened the dialog, however the dialog was left (Escape, a
-  // button, Back) and even if its exit transition never reports the end (a close pressed while it was
-  // still opening): the helper keeps trying until the closing dialog is gone, and gives up if the
-  // person has moved on.
-  const restoreTriggerFocus = () => focusWhenReady(() => trigger.current)
+  // button, Back). The return starts when the dialog closes and waits for it to go; it gives up as soon
+  // as the person moves focus elsewhere, so the dialogs start no second return at the end of their exit
+  // transition (that one took the control the person had just tabbed to for fallen focus).
+  const restoreTriggerFocus = () =>
+    focusWhenReady(() => trigger.current, {
+      // Focus on any control but the trigger counts as the person having moved on, even when this
+      // runs a second time with focus already back on the trigger.
+      from: trigger.current,
+      leaving: document.activeElement?.closest('[role="dialog"]') ?? null,
+    })
   const closeConfirmation = () => {
     setConfirmation(null)
     restoreTriggerFocus()
@@ -536,7 +542,6 @@ export function CampaignMembers({
         onClose={closeInvite}
         title={t('members.invite')}
         returnFocus={false}
-        onExitTransitionEnd={restoreTriggerFocus}
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
         <form onSubmit={handleInviteSubmit}>
@@ -576,7 +581,6 @@ export function CampaignMembers({
         onClose={closeConfirmation}
         title={t('members.confirm')}
         returnFocus={false}
-        onExitTransitionEnd={restoreTriggerFocus}
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
         <Stack>

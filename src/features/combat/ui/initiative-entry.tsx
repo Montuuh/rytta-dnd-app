@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth'
 import { initiativeBonus, sheetQuery } from '@/features/characters'
 import {
   DiceModeChoice,
+  useOwnRoll,
   attemptFor,
   checkSpec,
   failureReason,
@@ -27,6 +28,7 @@ import { InitiativeKeypad } from './amount-dialog'
 export function InitiativeEntry({
   campaignId,
   combatant,
+  since,
   editing,
   pending,
   save,
@@ -34,6 +36,8 @@ export function InitiativeEntry({
 }: {
   campaignId: string
   combatant: Combatant
+  /** When the initiative phase opened (null when unknown): rolls since then count as this fight's. */
+  since: string | null
   /** Reopened over a saved total: Escape and Cancel keep that total. */
   editing: boolean
   pending: boolean
@@ -49,12 +53,7 @@ export function InitiativeEntry({
   })
   const build = sheet.data?.sheet.build
   const bonus = build ? initiativeBonus(build) : null
-  const [amount, setAmount] = useState<number | string>(combatant.initiative ?? '')
-  const value = typeof amount === 'number' ? amount : Number.NaN
-  const valid = isInitiativeTotal(value)
-  const outOfRange = typeof amount === 'number' && !valid
-  // RYT-126 J4-10: a total no d20 + bonus can reach is probably a slip: warned, never blocked.
-  const unusual = valid && initiativeOutlier(value, bonus)
+  const [typed, setAmount] = useState<number | string>(combatant.initiative ?? '')
   const [rolling, setRolling] = useState(false)
   const [rolled, setRolled] = useState('')
   // RYT-133: the table's dice mode decides: physical dice are typed in, dice in the app are rolled
@@ -65,9 +64,21 @@ export function InitiativeEntry({
   const attempt = useRef<Attempt | null>(null)
   const [rollFailure, setRollFailure] = useState<string | null>(null)
   const [rolledTotal, setRolledTotal] = useState<number | null>(null)
-  // One roll per fight: once Rytta has rolled it (now, or before the entry was reopened) the Player
-  // cannot roll it again; only the DM changes it from the console.
-  const rolledAlready = appDice && (combatant.initiative != null || rolledTotal !== null)
+  // One roll per fight, read from the Player's own roll log so it survives a reload or another
+  // device: once Rytta has rolled it the Player cannot roll it again, only save that total; the DM
+  // changes it from the console.
+  const own = useOwnRoll(campaignId)
+  const logged = appDice ? own.find(combatant.character_id ?? null, 'initiative', since) : undefined
+  const rollTotal = rolledTotal ?? logged?.total ?? null
+  const rolledAlready = appDice && (combatant.initiative != null || rollTotal !== null)
+  const waitingForLog = appDice && since !== null && !own.ready
+  // What the d20 shows: what was typed or rolled here, else the roll the log already holds.
+  const amount: number | string = typed !== '' ? typed : (rollTotal ?? '')
+  const value = typeof amount === 'number' ? amount : Number.NaN
+  const valid = isInitiativeTotal(value)
+  const outOfRange = typeof amount === 'number' && !valid
+  // RYT-126 J4-10: a total no d20 + bonus can reach is probably a slip: warned, never blocked.
+  const unusual = valid && initiativeOutlier(value, bonus)
   // Dice in the app roll d20 plus the sheet's bonus: without the bonus there is nothing to roll.
   const needsSheet = appDice && bonus === null
   const rollForMe = async () => {
@@ -196,12 +207,14 @@ export function InitiativeEntry({
         <div className="combat-entry-keys">
           {rolledAlready && (
             <p className="combat-entry-note" role="status">
-              {t('combat.initiative.alreadyRolled', {
-                total: rolledTotal ?? combatant.initiative ?? 0,
-              })}
+              {rollTotal === null
+                ? t('combat.initiative.fixed', { total: combatant.initiative ?? 0 })
+                : combatant.initiative === rollTotal
+                  ? t('combat.initiative.alreadyRolled', { total: rollTotal })
+                  : t('combat.initiative.rolledUnsaved', { total: rollTotal })}
             </p>
           )}
-          {appDice && !rolledAlready && (
+          {appDice && !rolledAlready && !waitingForLog && (
             <Button
               variant="default"
               size="lg"

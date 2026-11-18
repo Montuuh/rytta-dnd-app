@@ -788,8 +788,17 @@ test('RYT-133 initiative follows the campaign dice: typed with physical dice, ro
       expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [13], total: 15 })
       // Rolled once: no second roll, whatever the total.
       await expect(rollButton).toHaveCount(0)
-      await expect(entry).toContainText('Ya tiraste: 15. Solo el DM puede cambiarla.')
+      await expect(entry).toContainText('Ya tiraste: 15. Guarda esa tirada para fijarla.')
       await expect(entry.locator('.combat-entry-formula')).toContainText('Tirada por Rytta')
+      // The roll lives in the Player's own roll log, not in the screen: after a reload the entry
+      // reopens with that same server roll and no roll button, and the same total is what is saved.
+      await page.reload()
+      await expect(entry).toBeVisible({ timeout: 15_000 })
+      await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+      await expect(field).toHaveValue('15')
+      await expect(entry).toContainText('Ya tiraste: 15. Guarda esa tirada para fijarla.')
+      await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeEnabled()
+      expect(f.dice.rolls).toHaveLength(1)
     }
     await expectTouchTargets(page, '.combat-entry button:visible', { height: 44 })
     await context.close()
@@ -840,6 +849,25 @@ test('RYT-133 hit dice follow the campaign dice: typed with physical dice, rolle
     recorded_total: null,
   })
   expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [6], total: 8 })
+
+  // Closing the panel and opening it again, or reloading, keeps the roll: it is read from the roll
+  // log, so there is no second roll to make and the count cannot change.
+  for (const how of ['reopen', 'reload'] as const) {
+    if (how === 'reload') await page.reload()
+    else await page.keyboard.press('Escape')
+    await page
+      .getByRole('region', { name: 'Descanso del grupo' })
+      .getByRole('button', { name: /^(Votar|Ver)$/ })
+      .click()
+    const again = page
+      .getByRole('dialog', { name: 'Descanso del grupo' })
+      .getByRole('group', { name: /Dados de golpe que gastas/ })
+    await expect(again.locator('.rest-roll-result-value')).toHaveText('6')
+    await expect(again.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+    await expect(again).toContainText('Ya tiraste los dados de golpe: 6.')
+    await expect(again.locator('.rest-stepper-value')).toHaveText('1')
+    expect(f.dice.rolls).toHaveLength(1)
+  }
 })
 
 test('RYT-133 the DM can roll for a character on its sheet, rolled for that character', async ({
@@ -986,23 +1014,24 @@ test('RYT-133 one reveal moment: the strip does not show the roll while the card
   await expect(card.locator('.roll-result-total')).toHaveText('16')
 })
 
-test('RYT-133 Parchment: the record dialog error is legible (axe, contrast included)', async ({
-  page,
-}) => {
-  await page.addInitScript(() => localStorage.setItem('rytta-theme', 'parchment'))
-  await identityFixture(page, { player: true, sheet: 'complete', party: true })
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(sheetUrl)
-  await page
-    .getByRole('button', { name: 'Anotar la tirada de Prueba de Destreza, d20 + 2' })
-    .click()
-  const record = page.getByRole('dialog', { name: 'Anotar: Prueba de Destreza' })
-  await record.getByRole('textbox', { name: 'Resultado del d20' }).fill('25')
-  await record.getByRole('button', { name: 'Anotar', exact: true }).click()
-  await expect(record.getByText('Escribe un número de 1 a 20.')).toBeVisible()
-  const result = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
-    .include('[role="dialog"]')
-    .analyze()
-  expect(result.violations).toEqual([])
-})
+for (const theme of ['parchment', 'default', 'bard'])
+  test(`RYT-133 ${theme}: the record dialog error is legible (axe, contrast included)`, async ({
+    page,
+  }) => {
+    await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+    await identityFixture(page, { player: true, sheet: 'complete', party: true })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(sheetUrl)
+    await page
+      .getByRole('button', { name: 'Anotar la tirada de Prueba de Destreza, d20 + 2' })
+      .click()
+    const record = page.getByRole('dialog', { name: 'Anotar: Prueba de Destreza' })
+    await record.getByRole('textbox', { name: 'Resultado del d20' }).fill('25')
+    await record.getByRole('button', { name: 'Anotar', exact: true }).click()
+    await expect(record.getByText('Escribe un número de 1 a 20.')).toBeVisible()
+    const result = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+      .include('[role="dialog"]')
+      .analyze()
+    expect(result.violations).toEqual([])
+  })

@@ -18,7 +18,7 @@ import {
   typedTotal,
 } from './roll'
 import { diceBehaviour, readDiceChoice } from './mode'
-import { mergeRoll, rollerOf } from './rolls'
+import { mergeRoll, ownRollSince, rollerOf } from './rolls'
 import type { CampaignRoll } from '@/features/campaigns'
 
 describe('expressions', () => {
@@ -239,5 +239,47 @@ describe('what is announced', () => {
         seen: 'Solo la ves tú.',
       }),
     ).toBe('Daño: 7. Anotada. Solo la ves tú.')
+  })
+})
+
+describe('a roll already made this rest or fight', () => {
+  const make = (over: Partial<CampaignRoll>): CampaignRoll => ({
+    id: 'r1',
+    campaign_id: 'c',
+    character_id: 'ch',
+    roller_id: 'me',
+    label: 'hit_die',
+    expression: '1d8+2',
+    dice: [6],
+    total: 8,
+    kind: 'hit_die',
+    source: 'app',
+    visibility: 'roller_dm',
+    created_at: '2026-11-18T10:05:00+00:00',
+    ...over,
+  })
+  const query = {
+    userId: 'me',
+    characterId: 'ch',
+    kind: 'hit_die' as const,
+    since: '2026-11-18T10:00:00+00:00',
+  }
+  it('finds the viewer’s own roll of that kind for that character since the start', () => {
+    expect(ownRollSince([make({})], query)?.id).toBe('r1')
+    // The newest one when there are several.
+    expect(
+      ownRollSince([make({}), make({ id: 'r2', created_at: '2026-11-18T10:07:00+00:00' })], query)
+        ?.id,
+    ).toBe('r2')
+  })
+  it('ignores rolls before the start, by others, of another kind or for another character', () => {
+    expect(ownRollSince([make({ created_at: '2026-11-18T09:59:00+00:00' })], query)).toBeUndefined()
+    expect(ownRollSince([make({ roller_id: 'someone' })], query)).toBeUndefined()
+    expect(ownRollSince([make({ kind: 'initiative' })], query)).toBeUndefined()
+    expect(ownRollSince([make({ character_id: 'other' })], query)).toBeUndefined()
+  })
+  it('derives nothing when the start is unknown', () => {
+    expect(ownRollSince([make({})], { ...query, since: null })).toBeUndefined()
+    expect(ownRollSince([make({})], { ...query, since: 'not a date' })).toBeUndefined()
   })
 })

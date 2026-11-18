@@ -29,10 +29,9 @@
 
 .roll-point-text {
   display: block;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--app-accent) 75%, transparent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 6px;
+  /* The underline is a border, so it takes room and can never run into what sits under it. */
+  padding-bottom: 2px;
+  border-bottom: 2px solid color-mix(in srgb, var(--app-accent) 75%, transparent);
 }
 
 .roll-point:hover {

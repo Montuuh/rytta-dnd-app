@@ -15,7 +15,7 @@ export const diceEs = {
     'Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.',
   'diceSettings.mode.app': 'Dados en la app',
   'diceSettings.mode.appHint':
-    'Rytta tira los dados y anota cada tirada, también la de iniciativa y los dados de golpe. Queda marcada como tirada por Rytta y nadie puede cambiarla.',
+    'Rytta tira los dados de las pruebas, salvaciones, ataques, daño, iniciativa y dados de golpe, y anota cada tirada. Queda marcada como tirada por Rytta y nadie puede cambiarla.',
   'diceSettings.mode.player': 'Cada jugador elige',
   'diceSettings.mode.playerHint':
     'Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.',
@@ -120,13 +120,17 @@ export const diceEs = {
     'No se pudo tirar la iniciativa. No se ha guardado ninguna tirada; inténtalo de nuevo.',
   'rest.rollFailed':
     'No se pudieron tirar los dados de golpe. No se ha guardado ninguna tirada; inténtalo de nuevo.',
+  'combat.initiative.fixed':
+    'Tu iniciativa ya está fijada en {{total}}. Solo el DM puede cambiarla.',
+  'combat.initiative.rolledUnsaved': 'Ya tiraste: {{total}}. Guarda esa tirada para fijarla.',
   'roll.totalWord': 'Total',
   'diceSettings.confirmVisibility.narrowerRoller':
     'Con «Solo quien tira», cada jugador solo ve las suyas y tú dejas de ver las de los jugadores, las anteriores incluidas.',
   'combat.initiative.rollApp': 'Rytta tira d20 {{bonus}} por ti.',
   'combat.initiative.rollApp0': 'Rytta tira d20 por ti.',
   'combat.initiative.alreadyRolled': 'Ya tiraste: {{total}}. Solo el DM puede cambiarla.',
-  'rest.alreadyRolled': 'Ya tiraste los dados de golpe: {{roll}}.',
+  'rest.alreadyRolled':
+    'Ya tiraste los dados de golpe: {{roll}}. Con la tirada hecha no se puede cambiar cuántos gastas.',
   'rest.notRolled': 'Sin tirar',
   'rest.rollResult': 'Tu tirada',
 } satisfies Record<keyof typeof diceEn, string>

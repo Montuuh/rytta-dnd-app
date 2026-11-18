@@ -1,0 +1,49 @@
+import { readFileSync } from 'node:fs'
+import { DEFAULT_THEME } from '@mantine/core'
+import { describe, expect, it } from 'vitest'
+import { classThemeIds, classThemes } from '../../src/shared/theme/class-themes.ts'
+
+// RYT-133 review: Mantine's own field error red failed 4.5:1 in Hearth (3.56:1) and Parchment
+// (2.87:1). Every scheme now takes the app's `--danger` token; this keeps it legible on every
+// theme's surfaces and on the field backgrounds Mantine draws.
+const css = readFileSync(new URL('../../src/app/styles.css', import.meta.url), 'utf8')
+const channel = (value: number) => {
+  const c = value / 255
+  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+}
+const luminance = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16)
+  return 0.2126 * channel(n >> 16) + 0.7152 * channel((n >> 8) & 255) + 0.0722 * channel(n & 255)
+}
+const contrast = (a: string, b: string) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+  return (hi! + 0.05) / (lo! + 0.05)
+}
+/** The `--danger` value declared in the base block of a scheme. */
+const danger = (scheme: 'dark' | 'light') => {
+  const block =
+    scheme === 'dark'
+      ? css.slice(0, css.indexOf("html[data-mantine-color-scheme='light'] {"))
+      : css.slice(css.indexOf("html[data-mantine-color-scheme='light'] {"))
+  return /--danger:\s*(#[0-9a-f]{6})/i.exec(block)![1]!
+}
+
+describe('field errors use the accessible error token in every scheme', () => {
+  it('points Mantine’s error colour at --danger for dark and light', () => {
+    expect(css).toMatch(
+      /html\[data-mantine-color-scheme\]:root\s*\{[^}]*--mantine-color-error:\s*var\(--danger\)/,
+    )
+  })
+  const fieldBackground: Record<'dark' | 'light', string> = {
+    dark: DEFAULT_THEME.colors.dark[6]!,
+    light: '#ffffff',
+  }
+  for (const id of classThemeIds) {
+    it(`reads at 4.5:1 on ${id}`, () => {
+      const { scheme, tokens } = classThemes[id]
+      const error = danger(scheme)
+      for (const background of [tokens.bg, tokens.surface, tokens.raised, fieldBackground[scheme]])
+        expect(contrast(error, background), `${id} on ${background}`).toBeGreaterThanOrEqual(4.5)
+    })
+  }
+})

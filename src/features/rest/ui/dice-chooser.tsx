@@ -11,6 +11,7 @@ import {
   useDiceMode,
   type Attempt,
 } from '@/features/dice'
+import type { CampaignRoll } from '@/features/campaigns'
 import { newRequestId } from '@/shared/lib/request-id'
 import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
 
@@ -21,6 +22,8 @@ import { rollValid, shortRestHeal, type DiceChoice } from '../domain/rest'
 export function DiceChooser({
   campaignId,
   characterId,
+  rolled,
+  rollsReady,
   die,
   left,
   conMod,
@@ -32,6 +35,10 @@ export function DiceChooser({
   campaignId: string
   /** The character that rests; its hit dice rolls are recorded with dice in the app. */
   characterId: string
+  /** The roll Rytta already made of these hit dice for this rest, read from the roll log. */
+  rolled?: CampaignRoll
+  /** The roll log has loaded: until then nothing is said about an earlier roll. */
+  rollsReady: boolean
   die: number
   left: number
   conMod: number
@@ -45,8 +52,6 @@ export function DiceChooser({
   const { t } = useTranslation()
   const id = useId()
   const [rolling, setRolling] = useState(false)
-  /** Each die of the last Rytta roll, shown in the dock once the dice leave the screen. */
-  const [dice, setDice] = useState<{ values: number[]; roll: string } | null>(null)
   const rollInput = useRef<HTMLInputElement>(null)
   // RYT-133: the table's dice mode decides. Physical dice are typed in; dice in the app are rolled
   // here and the total is not typed, so the short rest behaves like initiative and the sheet.
@@ -63,8 +68,8 @@ export function DiceChooser({
   const heal = valid && value.spent > 0 ? shortRestHeal(value.spent, roll, conMod) : 0
   const con = conMod >= 0 ? `+${conMod}` : `−${Math.abs(conMod)}`
   // One roll per rest: once Rytta has rolled the hit dice the count and the roll are final.
-  const rolledAlready =
-    appDice && dice !== null && value.roll === dice.roll && value.spent === dice.values.length
+  const rolledAlready = appDice && rolled !== undefined
+  const dice = rolled ? { values: rolled.dice } : null
   const step = (delta: number) => {
     if (rolledAlready) return
     const spent = Math.min(left, Math.max(0, value.spent + delta))
@@ -87,7 +92,6 @@ export function DiceChooser({
       )
       attempt.current = null
       const total = String(stored.dice.reduce((sum, item) => sum + item, 0))
-      setDice({ values: stored.dice, roll: total })
       onChange({ spent: value.spent, roll: total })
     } catch (error) {
       setFailure(failureReason(error))
@@ -164,7 +168,7 @@ export function DiceChooser({
           className="rest-autoroll"
           leftSection={<Dices size={20} aria-hidden="true" />}
           aria-busy={rolling || undefined}
-          aria-disabled={rolling || undefined}
+          aria-disabled={rolling || !rollsReady || undefined}
           aria-describedby={`${id}-sum`}
           onClick={() => void autoRoll()}
         >
@@ -177,7 +181,7 @@ export function DiceChooser({
         </p>
       )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">
-        {dice && value.spent === dice.values.length && value.roll === dice.roll && (
+        {dice && (
           <span className="rest-dice-faces">
             {`${t('rest.rolledDice', { dice: dice.values.join(' + ') })}. ${t('roll.source.app')}.`}
           </span>

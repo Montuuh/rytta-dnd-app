@@ -13,7 +13,7 @@ export const diceEn = {
     'Each Player rolls their own dice. The sheet says what to roll and what to add, and the result can be recorded: it is marked as recorded.',
   'diceSettings.mode.app': 'Dice in the app',
   'diceSettings.mode.appHint':
-    'Rytta rolls the dice and records every roll, initiative and hit dice included. It is marked as rolled by Rytta and nobody can change it.',
+    'Rytta rolls the dice for checks, saves, attacks, damage, initiative and hit dice, and records every roll. It is marked as rolled by Rytta and nobody can change it.',
   'diceSettings.mode.player': 'Each Player chooses',
   'diceSettings.mode.playerHint':
     'Each one picks physical or in-app dice on their own device. Physical dice until they choose.',
@@ -116,13 +116,17 @@ export const diceEn = {
   'combat.initiative.rollFailed':
     'The initiative could not be rolled. No roll was saved; try again.',
   'rest.rollFailed': 'The hit dice could not be rolled. No roll was saved; try again.',
+  'combat.initiative.fixed':
+    'Your initiative is already set to {{total}}. Only the DM can change it.',
+  'combat.initiative.rolledUnsaved': 'You already rolled: {{total}}. Save that roll to set it.',
   'roll.totalWord': 'Total',
   'diceSettings.confirmVisibility.narrowerRoller':
     'With "Only the roller", each Player sees only their own and you stop seeing the Players’ rolls, earlier ones included.',
   'combat.initiative.rollApp': 'Rytta rolls d20 {{bonus}} for you.',
   'combat.initiative.rollApp0': 'Rytta rolls d20 for you.',
   'combat.initiative.alreadyRolled': 'You already rolled: {{total}}. Only the DM can change it.',
-  'rest.alreadyRolled': 'You already rolled the hit dice: {{roll}}.',
+  'rest.alreadyRolled':
+    'You already rolled the hit dice: {{roll}}. With the roll made, how many you spend cannot change.',
   'rest.notRolled': 'Not rolled',
   'rest.rollResult': 'Your roll',
 } as const

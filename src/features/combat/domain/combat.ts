@@ -777,3 +777,16 @@ export function previewAsPlayer(state: CombatState, ownCharacterIds: ReadonlySet
       })),
   }
 }
+
+/**
+ * When the DM opened the initiative phase of the live encounter: the newest visible `status` event
+ * that moved it to `initiative`. Null when the events do not hold it (the window is the newest 60),
+ * in which case nothing about earlier rolls is derived.
+ */
+export function initiativeStartedAt(events: readonly CombatEvent[]): string | null {
+  let found: string | null = null
+  for (const event of events)
+    if (event.kind === 'status' && event.detail.status === 'initiative' && !event.undone)
+      if (found === null || event.created_at > found) found = event.created_at
+  return found
+}

@@ -9,6 +9,7 @@ export { DiceModeChoice } from './ui/mode-choice'
 export { useDiceMode } from './ui/use-dice-mode'
 export { useDice } from './ui/dice-context'
 export { useAppRoll } from './ui/use-app-roll'
+export { useOwnRoll } from './ui/use-own-roll'
 export { failureReason } from './ui/failure-reason'
 export {
   attackSpecs,

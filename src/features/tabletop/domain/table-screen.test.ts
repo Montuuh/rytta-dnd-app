@@ -12,6 +12,7 @@ import {
   writePlate,
 } from './table-plate'
 import {
+  nameOverflows,
   nextAnnouncement,
   orderLayout,
   sameTurn,
@@ -156,5 +157,22 @@ describe('plate position', () => {
     for (let i = 0; i < 4; i++) seen.add((corner = nextCorner(corner)))
     expect(seen.size).toBe(4)
     expect(corner).toBe(defaultPlate.corner)
+  })
+})
+
+describe('RYT-135 the order screen keeps the normal type for a name that fits', () => {
+  const fits = { clientWidth: 300, scrollWidth: 300, height: 88, lineHeight: 44 }
+  it('fits on one or two lines', () => {
+    expect(nameOverflows({ ...fits, height: 44 })).toBe(false)
+    expect(nameOverflows(fits)).toBe(false)
+  })
+  it('rounds one pixel away', () => {
+    expect(nameOverflows({ ...fits, scrollWidth: 301, height: 89 })).toBe(false)
+  })
+  it('shrinks a name of three lines', () => {
+    expect(nameOverflows({ ...fits, height: 132 })).toBe(true)
+  })
+  it('shrinks a name with a word wider than the column', () => {
+    expect(nameOverflows({ ...fits, scrollWidth: 340, height: 44 })).toBe(true)
   })
 })

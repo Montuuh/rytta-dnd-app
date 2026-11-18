@@ -160,6 +160,59 @@ export function PhoneStrip({
   )
 }
 
+/**
+ * The measure readout and its clear key, bottom left. Its height is shared with the page (a notice
+ * that sits at the same corner when the phone is on its side stacks above it instead of covering it).
+ */
+export function PhoneChip({
+  feet,
+  canClear,
+  onClear,
+}: {
+  /** The route's length, or null while there is nothing to read yet. */
+  feet: number | null
+  canClear: boolean
+  onClear: () => void
+}) {
+  const { t } = useTranslation()
+  const chip = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const node = chip.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+    const root = document.documentElement
+    const measure = () =>
+      root.style.setProperty(
+        '--tt-pm-above-chip',
+        `${Math.max(0, window.innerHeight - node.getBoundingClientRect().top) + 8}px`,
+      )
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    window.addEventListener('resize', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+      root.style.removeProperty('--tt-pm-above-chip')
+    }
+  }, [])
+  return (
+    <div className="tt-pm-chip" ref={chip}>
+      {feet !== null ? (
+        <span className="tt-readout-feet" aria-live="polite">
+          {t('tabletop.measure.feet', { count: feet })}
+        </span>
+      ) : (
+        <span>{t('tabletop.phone.measureHint')}</span>
+      )}
+      {canClear && (
+        <button type="button" className="tt-text-action" onClick={onClear}>
+          {t('tabletop.measure.clear')}
+        </button>
+      )}
+    </div>
+  )
+}
+
 type ToolsProps = {
   /** What the first key does: centre on my token, or fit the whole map (always one tap away). */
   action: 'centre' | 'fit'

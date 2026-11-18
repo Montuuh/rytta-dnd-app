@@ -1,11 +1,8 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, EyeOff, Skull } from 'lucide-react'
 import { CombatantToken, type Combatant } from '@/features/combat'
-import { orderLayout } from '../domain/table-order'
-
-/** A name that needs a smaller type to keep its words whole: long, or with a long word. */
-const isLong = (name: string) => name.length > 22 || name.split(/\s+/).some((w) => w.length > 9)
+import { nameOverflows, orderLayout } from '../domain/table-order'
 
 type Props = {
   name: string
@@ -42,11 +39,52 @@ export function TableOrder({
   const { t } = useTranslation()
   const { columns, rows } = orderLayout(order.length, width)
   const activeRow = useRef<HTMLLIElement>(null)
+  const list = useRef<HTMLOListElement>(null)
+  const names = order.map((c) => c.name).join('|')
   const activeId = active?.id ?? null
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     activeRow.current?.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' })
   }, [activeId])
+
+  // A name takes the smaller type only when it does not fit at the normal size, in the row it has
+  // now: measured with words kept whole, again whenever the list is resized. The attribute is set
+  // here and not by React, so a re-render never undoes it.
+  useLayoutEffect(() => {
+    const root = list.current
+    if (!root) return
+    const measure = () => {
+      for (const el of root.querySelectorAll<HTMLElement>('.tt-order-name')) {
+        el.removeAttribute('data-long')
+        el.setAttribute('data-measuring', '')
+        const fit = {
+          clientWidth: el.clientWidth,
+          scrollWidth: el.scrollWidth,
+          height: el.getBoundingClientRect().height,
+          lineHeight: parseFloat(getComputedStyle(el).lineHeight),
+        }
+        if (nameOverflows(fit)) el.setAttribute('data-long', '')
+        el.removeAttribute('data-measuring')
+      }
+    }
+    // Row type is sized from the list's height, which settles over a few frames as the status bar
+    // and the keys arrive: measure again once it has.
+    let frame = 0
+    const settle = () => {
+      measure()
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(measure)
+      })
+    }
+    settle()
+    const observer = new ResizeObserver(settle)
+    observer.observe(root)
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+    }
+  }, [names, columns, rows])
 
   return (
     <section className={`tt-order${stale ? ' is-stale' : ''}`} aria-labelledby="tt-order-title">
@@ -93,6 +131,7 @@ export function TableOrder({
         )}
       </header>
       <ol
+        ref={list}
         className="tt-order-list"
         // A long order scrolls; the keyboard can reach it.
         tabIndex={0}
@@ -113,11 +152,7 @@ export function TableOrder({
                 {isActive && <ChevronRight strokeWidth={3} />}
               </span>
               <CombatantToken combatant={c} showActive={false} />
-              <span
-                className="tt-order-name"
-                title={c.name}
-                data-long={isLong(c.name) || undefined}
-              >
+              <span className="tt-order-name" title={c.name}>
                 {c.name}
               </span>
               {down && (

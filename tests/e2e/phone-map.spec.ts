@@ -43,7 +43,14 @@ async function prepare(
 /** A scene with the own token, a hidden creature, DM notes, an event, a secret door, fog and light. */
 function seedScene(
   server: ReturnType<typeof tabletopServer>,
-  options: { effects?: boolean; fog?: boolean; name?: string; crowd?: boolean } = {},
+  options: {
+    effects?: boolean
+    fog?: boolean
+    name?: string
+    crowd?: boolean
+    stack?: boolean
+    similar?: boolean
+  } = {},
 ) {
   const scene = server.act('save_tabletop_scene', {
     target_campaign: campaignId,
@@ -91,6 +98,41 @@ function seedScene(
           data: { state: 'closed', secret: true },
         },
         { kind: 'prop', x: 3, y: 7, w: 1, h: 1, data: { prop: 'campfire' } },
+        // RYT-135: two tokens one square apart, one right above the other.
+        ...(options.stack
+          ? [
+              {
+                kind: 'token',
+                x: 5,
+                y: 5,
+                w: 1,
+                h: 1,
+                label: 'Arquero 1',
+                data: { color: 'slate' },
+              },
+              {
+                kind: 'token',
+                x: 5,
+                y: 6,
+                w: 1,
+                h: 1,
+                label: 'Arquero 2',
+                data: { color: 'slate' },
+              },
+            ]
+          : []),
+        // RYT-135: names that differ only in their trailing number.
+        ...(options.similar
+          ? [14, 15].map((n, i) => ({
+              kind: 'token',
+              x: 5 + i * 3,
+              y: 3,
+              w: 1,
+              h: 1,
+              label: `Goblin arquero veterano del puente ${n}`,
+              data: { color: 'slate' },
+            }))
+          : []),
         // Goblins one square apart: their plates must never cover each other's tokens.
         ...(options.crowd
           ? Array.from({ length: 6 }, (_, i) => ({
@@ -902,4 +944,288 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     await pinch(page, 40, 110)
     await expect.poll(() => zoomOf(page)).toBeGreaterThan(centred)
     await page.screenshot({ path: `${name}-pinched.png` })
+  })
+
+// RYT-135: the polish left by the UI review of the phone map.
+const polishDir = 'docs/evidence/ui-review/ryt-135'
+const wideFont = '* { font-family: Verdana, sans-serif !important }'
+const onPhoneOrTablet = (info: TestInfo) =>
+  info.project.name === 'identity-mobile' || info.project.name === 'identity-tablet'
+
+test('RYT-135 on its side the update notice stacks above the measure readout and its clear key', async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  await page.setViewportSize(landscape)
+  await page.route('**/version.json*', (route) =>
+    route.fulfill({ json: { id: 'older-build', builtAt: '2026-01-01T00:00:00Z' } }),
+  )
+  const { server } = await prepare(page, { player: false, party: false })
+  seedScene(server)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
+  const update = page.locator('.update-notice')
+  await expect(update).toBeVisible()
+  await page.getByRole('button', { name: 'Medir' }).click()
+  const board = (await page.locator('.tt-viewport').boundingBox())!
+  await page.touchscreen.tap(board.x + board.width / 2, board.y + board.height / 2)
+  const chip = page.locator('.tt-pm-chip')
+  const clear = page.getByRole('button', { name: 'Borrar la medida' })
+  await expect(clear).toBeVisible()
+  const wait = async () => {
+    // The notice has moved once its box stops changing (three equal reads).
+    let last = ''
+    let same = 0
+    await expect
+      .poll(async () => {
+        const now = JSON.stringify([await update.boundingBox(), await chip.boundingBox()])
+        same = now === last ? same + 1 : 0
+        last = now
+        return same
+      })
+      .toBeGreaterThanOrEqual(3)
+  }
+  await wait()
+  const { width, height } = landscape
+  for (const box of [(await chip.boundingBox())!, (await clear.boundingBox())!]) {
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.y).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(width + 0.5)
+    expect(box.y + box.height).toBeLessThanOrEqual(height + 0.5)
+  }
+  const notice = (await update.boundingBox())!
+  const readout = (await chip.boundingBox())!
+  expect(notice.y + notice.height).toBeLessThanOrEqual(readout.y + 0.5)
+  // The clear key is operable: nothing else is on top of it.
+  await clear.click({ trial: true })
+  await audit(page)
+  if (process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `${polishDir}/measure-notice-844x390.png` })
+  await clear.click()
+  await expect(clear).toHaveCount(0)
+  // With the readout gone the notice settles back to the corner.
+  await page.getByRole('button', { name: 'Medir' }).click()
+  await expect(chip).toHaveCount(0)
+})
+
+test('RYT-135 the board announces its keys and the map pans by keyboard outside the measure', async ({
+  page,
+}, info) => {
+  test.skip(!onPhoneOrTablet(info), 'Checked at 390px and 820px.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server)
+  await open(page)
+  const board = page.getByRole('application', { name: 'Mapa de Puente de Vado' })
+  await expect(board).toHaveAttribute('aria-keyshortcuts', /Plus Minus 0 ArrowUp/)
+  await expect(board).toHaveAccessibleDescription(
+    'Las flechas mueven el mapa. Más y menos acercan y alejan; 0 encaja todo el mapa.',
+  )
+  const origin = () =>
+    page.locator('.tt-world-wrap').evaluate((el) => {
+      const m = new DOMMatrix(getComputedStyle(el).transform)
+      return { x: m.e, y: m.f, z: m.a }
+    })
+  // The board is reached by Tab and keeps the focus while it pans.
+  await board.focus()
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(board).toBeFocused()
+  const start = await origin()
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(async () => (await origin()).x).toBeLessThan(start.x - 50)
+  await page.keyboard.press('ArrowDown')
+  await expect.poll(async () => (await origin()).y).toBeLessThan(start.y - 50)
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('ArrowUp')
+  await expect.poll(async () => Math.round((await origin()).x - start.x)).toBe(0)
+  await expect.poll(async () => Math.round((await origin()).y - start.y)).toBe(0)
+  // The arrows move the cursor, not the map, while measuring (and the hint says so).
+  await page
+    .getByRole('button', { name: 'Medir' })
+    .or(page.getByRole('switch', { name: 'Medir' }))
+    .click()
+  await board.focus()
+  await expect(board).toHaveAccessibleDescription(
+    /Las flechas mueven el cursor; Intro añade un punto/,
+  )
+  expect(await origin()).toMatchObject({ z: start.z })
+})
+
+/** Whether the pixels along the middle of each edge of an element are the focus colour. */
+async function ringOnEveryEdge(page: Page) {
+  const box = (await page.locator('.tt-viewport').boundingBox())!
+  const { width, height } = page.viewportSize()!
+  const shot = (await page.screenshot()).toString('base64')
+  return page.evaluate(
+    async ({ shot, box, width, height }) => {
+      const probe = document.createElement('i')
+      probe.style.color = 'var(--app-focus)'
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color.match(/\d+/g)!.map(Number)
+      probe.remove()
+      const image = await createImageBitmap(
+        await (await fetch(`data:image/png;base64,${shot}`)).blob(),
+      )
+      const canvas = new OffscreenCanvas(image.width, image.height)
+      const context = canvas.getContext('2d')!
+      context.drawImage(image, 0, 0)
+      const near = (x: number, y: number) => {
+        const [r, g, b] = context.getImageData(Math.round(x), Math.round(y), 1, 1).data
+        return (
+          Math.abs(r! - colour[0]!) + Math.abs(g! - colour[1]!) + Math.abs(b! - colour[2]!) < 40
+        )
+      }
+      const right = Math.min(box.x + box.width, width)
+      const bottom = Math.min(box.y + box.height, height)
+      const midX = (box.x + right) / 2
+      const midY = (box.y + bottom) / 2
+      return {
+        top: near(midX, box.y + 1.5),
+        bottom: near(midX, bottom - 1.5),
+        left: near(box.x + 1.5, midY),
+        right: near(right - 1.5, midY),
+      }
+    },
+    { shot, box, width, height },
+  )
+}
+
+for (const wide of [false, true])
+  test(`RYT-135 the focus ring of the board shows on all four edges once the map covers it${wide ? ' (wide font)' : ''}`, async ({
+    page,
+  }, info) => {
+    test.skip(!onPhoneOrTablet(info), 'Checked at 390px and 820px.')
+    test.setTimeout(90_000)
+    const { server } = await prepare(page)
+    seedScene(server)
+    await open(page)
+    if (wide) await page.addStyleTag({ content: wideFont })
+    const board = page.getByRole('application', { name: 'Mapa de Puente de Vado' })
+    await board.focus()
+    // Zoomed in, the map covers the board edge to edge.
+    for (let n = 0; n < 4; n += 1) await page.keyboard.press('+')
+    await expect(board).toBeFocused()
+    await expect
+      .poll(() => ringOnEveryEdge(page))
+      .toEqual({
+        top: true,
+        bottom: true,
+        left: true,
+        right: true,
+      })
+    if (process.env.RYT_EVIDENCE && !wide)
+      await page.screenshot({
+        path: `${polishDir}/board-focus-${info.project.name === 'identity-mobile' ? '390' : '820'}.png`,
+      })
+  })
+
+for (const wide of [false, true])
+  test(`RYT-135 names that differ only in a trailing number stay apart under the ellipsis${wide ? ' (wide font)' : ''}`, async ({
+    page,
+  }, info) => {
+    test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+    test.setTimeout(90_000)
+    const { server } = await prepare(page)
+    seedScene(server, { similar: true })
+    await open(page)
+    if (wide) await page.addStyleTag({ content: wideFont })
+    const plates = page.locator('.tt-viewport .tt-token-name', { hasText: 'Goblin arquero' })
+    await expect(plates).toHaveCount(2)
+    const read = await plates.evaluateAll((all) =>
+      all.map((plate) => {
+        const head = plate.querySelector<HTMLElement>('.tt-token-name-head')!
+        const tail = plate.querySelector<HTMLElement>('.tt-token-name-tail')!
+        const box = plate.getBoundingClientRect()
+        return {
+          text: plate.textContent,
+          tail: tail.textContent,
+          cut: head.scrollWidth > head.clientWidth + 1,
+          tailInside: tail.getBoundingClientRect().right <= box.right + 0.5 && tail.offsetWidth > 0,
+          visible: getComputedStyle(plate).display !== 'none',
+        }
+      }),
+    )
+    expect(read.map((r) => r.tail).sort()).toEqual([' 14', ' 15'])
+    for (const plate of read) {
+      expect(plate.cut).toBe(true)
+      expect(plate.tailInside).toBe(true)
+      expect(plate.visible).toBe(true)
+    }
+    expect(new Set(read.map((r) => r.text)).size).toBe(2)
+  })
+
+test('RYT-135 a name plate does not cover the token right below its own', async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server, { stack: true })
+  await open(page)
+  const token = (label: string) => page.locator('.tt-viewport .tt-token', { hasText: label })
+  const above = token('Arquero 1')
+  const plate = above.locator('.tt-token-name')
+  await expect(plate).toBeVisible()
+  const read = async () => ({
+    plate: (await plate.boundingBox())!,
+    own: (await above.boundingBox())!,
+    below: (await token('Arquero 2').boundingBox())!,
+  })
+  // Settled layout: three equal reads before measuring.
+  let last = ''
+  let same = 0
+  await expect
+    .poll(async () => {
+      const now = JSON.stringify(await read())
+      same = now === last ? same + 1 : 0
+      last = now
+      return same
+    })
+    .toBeGreaterThanOrEqual(3)
+  const { plate: p, own, below } = await read()
+  const overlap =
+    Math.max(0, Math.min(p.x + p.width, below.x + below.width) - Math.max(p.x, below.x)) *
+    Math.max(0, Math.min(p.y + p.height, below.y + below.height) - Math.max(p.y, below.y))
+  expect(overlap).toBeLessThanOrEqual(1)
+  // It sits inside its own token's foot instead.
+  expect(p.y).toBeGreaterThanOrEqual(own.y - 1)
+  expect(p.y + p.height).toBeLessThanOrEqual(own.y + own.height + 1)
+  // A token with nothing under it keeps its plate hanging below.
+  const lone = token('Bandido')
+  if (await lone.count()) {
+    const loneBox = (await lone.boundingBox())!
+    const loneName = (await lone.locator('.tt-token-name').boundingBox())!
+    expect(loneName.y + loneName.height).toBeGreaterThan(loneBox.y + loneBox.height)
+  }
+})
+
+for (const theme of ['default', 'parchment', 'wizard'] as const)
+  test(`RYT-135 axe is clean on the phone map polish states in ${theme}`, async ({
+    page,
+  }, info) => {
+    test.skip(!onPhoneOrTablet(info), 'Checked at 390px and 820px.')
+    test.setTimeout(90_000)
+    const { server } = await prepare(page, { theme })
+    seedScene(server, { stack: true, similar: true })
+    await open(page)
+    const board = page.getByRole('application', { name: 'Mapa de Puente de Vado' })
+    await board.focus()
+    await page.keyboard.press('+')
+    await expect(board).toBeFocused()
+    await audit(page)
+    if (process.env.RYT_EVIDENCE)
+      await page.screenshot({
+        path: `${polishDir}/map-${theme}-${info.project.name === 'identity-mobile' ? '390' : '820'}.png`,
+      })
+    // Measuring: the keys and the readout, with the board still focused.
+    await page
+      .getByRole('button', { name: 'Medir' })
+      .or(page.getByRole('switch', { name: 'Medir' }))
+      .click()
+    await audit(page)
   })

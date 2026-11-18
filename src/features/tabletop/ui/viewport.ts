@@ -169,6 +169,11 @@ export function useBoardView(
       y: el.clientHeight / 2 - (y + h / 2) * U * v.z,
     })
   }
+  /** Moves the view by screen pixels (the keyboard's arrows). */
+  const panBy = (dx: number, dy: number) => {
+    touch()
+    setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }))
+  }
   /** Pans to centre a point in squares, at a zoom where tokens read (RYT-126 J4-26). */
   const centerOn = (x: number, y: number) => {
     if (!el) return
@@ -301,6 +306,7 @@ export function useBoardView(
     /** True once the person has panned, zoomed or centred the view. */
     interacted: () => interacted.current,
     reveal,
+    panBy,
     /** Spread on the viewport element: its callback ref and pointer handlers. */
     bind: {
       ref: setEl,

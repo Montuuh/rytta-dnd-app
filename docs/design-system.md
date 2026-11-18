@@ -502,7 +502,11 @@ Long names and scene titles end in an ellipsis (the full text stays in the page)
 without overlap at large text (round first, then "next" on its own row). Notices that ask for
 something (a rest vote, leaving the Player view) stay, right under the strip, and the update notice
 moves to the top. The page chrome is removed by `html.tt-pm-mode`, a class the map sets itself.
-Not done: keys on the left for left-handed use.
+Decision (RYT-135): the round keys stay on the right edge, with no setting to move them. The measure
+readout sits at the opposite corner, so the two never share a side, and every key is a secondary way of
+doing what a finger on the map already does (pan, pinch, tap); the first key's job (centre, fit) is also
+reachable by the keyboard (`0` fits the map). A per-device switch would add a setting for three
+secondary keys; revisit it if left-handed Players ask for it.
 
 The first round key always has a way to the whole map: it fits the map, and once fitted it centres on
 the Player's token again (its name and icon change with what it will do). The board is a keyboard stop on
@@ -512,6 +516,13 @@ line with an ellipsis, at most two squares wide, and show from 0.9 zoom up. The 
 strip (preview and rest first, then the update notice); on a phone on its side they share one scrolling
 row and the update notice moves to the bottom left. While initiative is collected, the Player's own
 roll is the main line and "n of m ready" the small one.
+
+RYT-135 polish: the board is a keyboard stop at every width and announces its keys (`aria-keyshortcuts`
+and a description): the arrows pan the map by 96px, `+` and `-` zoom, `0` fits (while measuring the arrows
+move the cursor, as before). Its focus ring is a 3px border drawn above the map on all four edges. On a
+phone a long name keeps its trailing number outside the ellipsis ("Goblin arquero 14" and "… 15" stay
+apart), and a token right above another wears its name plate inside its own foot instead of covering the
+token below. On its side, the update notice stacks above the measure readout while it shows.
 
 ## Dice (RYT-133, ADR 046)
 

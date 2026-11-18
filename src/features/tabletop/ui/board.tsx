@@ -19,6 +19,7 @@ import { classEmblem } from '@/features/characters'
 import { useCampaignPortraits } from '@/features/inventory'
 import { mediaQuery } from '../api'
 import { cellMaskPath } from '../domain/visibility'
+import { hasTokenBelow, splitTrailingNumber } from '../domain/token-name'
 import { areaCells, areaPath, circlePath, stillHidden, stillRevealed } from '../domain/geometry'
 import {
   isPassage,
@@ -75,6 +76,8 @@ interface BoardProps {
   showPassages?: boolean
   /** RYT-077: the prop the DM is about to place, drawn translucent where it would go. */
   ghost?: ItemOf<'prop'> | null
+  /** The phone map (RYT-135): plates keep a trailing number and never cover the token below. */
+  phone?: boolean
 }
 
 /**
@@ -204,6 +207,8 @@ export const Board = memo(function Board(props: BoardProps) {
           portrait={item.character_id ? (portraits.get(item.character_id) ?? null) : null}
           selected={props.selectedId === item.id}
           dragging={props.drag?.id === item.id}
+          phone={props.phone}
+          crowded={props.phone ? hasTokenBelow(item, tokens) : false}
           onPointerDown={props.onItemPointerDown}
           onKeyDown={props.onItemKeyDown}
           onActivate={props.onItemActivate}
@@ -968,6 +973,23 @@ function PinShape({
   )
 }
 
+/** The plate under a token. On the phone map the trailing number stays outside the ellipsis. */
+function TokenName({ name, split }: { name: string; split: boolean }) {
+  const { head, tail } = split ? splitTrailingNumber(name) : { head: name, tail: '' }
+  return (
+    <span className={`tt-token-name${tail ? ' is-split' : ''}`}>
+      {tail ? (
+        <>
+          <span className="tt-token-name-head">{head}</span>
+          <span className="tt-token-name-tail">{tail}</span>
+        </>
+      ) : (
+        name
+      )}
+    </span>
+  )
+}
+
 function MapToken({
   item,
   mode,
@@ -975,6 +997,8 @@ function MapToken({
   portrait,
   selected,
   dragging,
+  phone,
+  crowded,
   onPointerDown,
   onKeyDown,
   onActivate,
@@ -985,6 +1009,8 @@ function MapToken({
   portrait: string | null
   selected: boolean
   dragging: boolean
+  phone?: boolean
+  crowded: boolean
   onPointerDown?: BoardProps['onItemPointerDown']
   onKeyDown?: BoardProps['onItemKeyDown']
   onActivate?: BoardProps['onItemActivate']
@@ -1051,7 +1077,7 @@ function MapToken({
       {defeated && <Skull className="tt-token-mark" aria-hidden="true" />}
       {mode === 'dm' && item.hidden && <EyeOff className="tt-token-hidden" aria-hidden="true" />}
       {mode === 'dm' && item.locked && <Lock className="tt-token-lock" aria-hidden="true" />}
-      <span className="tt-token-name">{name}</span>
+      <TokenName name={name} split={phone === true} />
     </>
   )
   const className = [
@@ -1064,7 +1090,12 @@ function MapToken({
   ].join(' ')
   if (mode !== 'dm')
     return (
-      <div className={className} style={style} data-item={item.id}>
+      <div
+        className={className}
+        style={style}
+        data-item={item.id}
+        data-crowded={crowded || undefined}
+      >
         {body}
       </div>
     )

@@ -665,6 +665,7 @@ export const tabletopEn = {
   'tabletop.table.startBody': 'Tap once to start: sound, full screen and keep the screen awake.',
   'tabletop.table.start': 'Start',
   'tabletop.table.nothing': 'Nothing on the table',
+  'tabletop.table.fightLoad': 'The fight did not load. Check the connection and try again.',
   'tabletop.table.forbidden': 'This account cannot see the table of this campaign.',
   'tabletop.table.round': 'Round {{round}}',
   'tabletop.table.live': 'Live',
@@ -677,6 +678,10 @@ export const tabletopEn = {
   'tabletop.player.nothing': 'When the DM puts a scene on the table it appears here.',
   'tabletop.player.measure': 'Measure',
   'tabletop.player.board': 'Map of {{name}}',
+  'tabletop.player.boardKeys':
+    'Arrow keys move the map. Plus and minus zoom; 0 fits the whole map.',
+  'tabletop.player.boardKeysMeasure':
+    'Arrow keys move the cursor; Enter adds a point; Escape ends the measure. Plus and minus zoom; 0 fits the whole map.',
   'tabletop.announce.tool': 'Tool: {{tool}}.',
   'tabletop.announce.moved': '{{name}} moved.',
   'tabletop.announce.removed': 'Removed from the map.',

@@ -337,7 +337,7 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     seedScene(server, { effects: true })
     await open(page)
     // On open: the map covers most of the board at a zoom where tokens read, token visible and clear.
-    await expect.poll(() => zoomOf(page)).toBeGreaterThanOrEqual(0.59)
+    await expect.poll(() => zoomOf(page)).toBeGreaterThanOrEqual(0.89)
     const covered = await page.evaluate(() => {
       const board = document.querySelector('.tt-viewport')!.getBoundingClientRect()
       const world = document.querySelector('.tt-world')!.getBoundingClientRect()
@@ -348,15 +348,56 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     expect(covered).toBeGreaterThan(0.7)
     await expectTokenClear(page)
 
-    // Zoomed far out, the key brings the token back, still clear.
+    // Zoomed far out by a pinch, fit and then centre again: still clear of the keys.
     await pinch(page, 120, 20)
     await expect.poll(() => zoomOf(page)).toBeLessThan(0.45)
+    await page.getByRole('button', { name: 'Encajar el mapa' }).click()
     await page.getByRole('button', { name: 'Centrar en mi ficha' }).click()
-    await expect.poll(() => zoomOf(page)).toBeGreaterThanOrEqual(0.59)
+    await expect.poll(() => zoomOf(page)).toBeGreaterThanOrEqual(0.89)
     await expectTokenClear(page)
   })
 
-test('RYT-132 without a token the map opens covering the screen, and the fit key stays one tap away', async ({
+test('RYT-132 one tap or one key press shows the whole map, and another returns to the token', async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server, { effects: true })
+  await open(page)
+  const board = (await page.locator('.tt-viewport').boundingBox())!
+  const worldWidth = async () => (await page.locator('.tt-world').boundingBox())!.width
+  expect(await worldWidth()).toBeGreaterThan(board.width)
+
+  // One tap: the first key says what it does and shows the whole map.
+  const key = page.getByRole('button', { name: 'Encajar el mapa' })
+  await expect(page.getByRole('button', { name: 'Centrar en mi ficha' })).toHaveCount(0)
+  await key.click()
+  await expect.poll(worldWidth).toBeLessThanOrEqual(board.width)
+  // The key now goes back to the token, which stays off the keys.
+  const back = page.getByRole('button', { name: 'Centrar en mi ficha' })
+  await expect(back).toBeVisible()
+  await back.click()
+  await expect.poll(worldWidth).toBeGreaterThan(board.width)
+  await expectTokenClear(page)
+
+  // The keyboard: the board is a stop, + and - zoom, 0 fits the map.
+  const stage = page.getByRole('application', { name: 'Mapa de Puente de Vado' })
+  await stage.focus()
+  const zoom = await zoomOf(page)
+  await page.keyboard.press('+')
+  await expect.poll(() => zoomOf(page)).toBeGreaterThan(zoom)
+  await page.keyboard.press('-')
+  await page.keyboard.press('-')
+  await expect.poll(() => zoomOf(page)).toBeLessThan(zoom)
+  await page.keyboard.press('0')
+  await expect.poll(worldWidth).toBeLessThanOrEqual(board.width)
+  await expect(page.getByRole('button', { name: 'Centrar en mi ficha' })).toBeVisible()
+  await expectReachable(page)
+  await audit(page)
+})
+
+test('RYT-132 without a token the map opens framing the tokens, and the fit key stays one tap away', async ({
   page,
 }, info) => {
   test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
@@ -365,13 +406,14 @@ test('RYT-132 without a token the map opens covering the screen, and the fit key
   seedScene(server)
   server.items.find((i) => i.label === 'Centinela')!.controllable = false
   await open(page)
+  // Both visible tokens are in the frame on open, and the map is not just empty grid.
+  for (const name of ['Centinela', 'Bandido'])
+    await expect(page.locator('.tt-viewport .tt-token', { hasText: name })).toBeInViewport()
   const board = (await page.locator('.tt-viewport').boundingBox())!
-  const world = (await page.locator('.tt-world').boundingBox())!
-  expect(world.height).toBeGreaterThanOrEqual(board.height - 1)
   await page.getByRole('button', { name: 'Encajar el mapa' }).click()
   await expect
     .poll(async () => (await page.locator('.tt-world').boundingBox())!.width)
-    .toBeLessThan(board.width)
+    .toBeLessThanOrEqual(board.width)
 })
 
 for (const view of [{ width: 390, height: 844 }, { width: 360, height: 640 }, landscape])
@@ -554,7 +596,10 @@ test('RYT-132 labels keep their size while a square can hold them, then give way
   const opened = await plate()
   expect(opened.zoom).toBeGreaterThanOrEqual(0.59)
   expect(opened.height).toBeGreaterThanOrEqual(14)
-  expect((await name.boundingBox())!.width).toBeLessThanOrEqual(3 * 64 * opened.zoom + 1)
+  // One line, at most two squares wide and under 40% of a square tall: it cannot bury its neighbours.
+  const shape = (await name.boundingBox())!
+  expect(shape.width).toBeLessThanOrEqual(2 * 64 * opened.zoom + 1)
+  expect(shape.height).toBeLessThanOrEqual(0.4 * 64 * opened.zoom + 1)
 
   // A pinch zooms in; the plate keeps its size on screen (the map and tokens grew).
   await pinch(page, 40, 120)
@@ -588,6 +633,75 @@ test('RYT-132 notices that ask for something stay on the phone map', async ({ pa
   await banner.getByRole('button', { name: 'Votar' }).click()
   await expect(page.getByRole('dialog', { name: 'Descanso del grupo' })).toBeVisible()
   await audit(page)
+})
+
+for (const view of [{ width: 390, height: 844 }, landscape])
+  test(`RYT-132 the notices stack and stay readable with every one showing at ${view.width}x${view.height}`, async ({
+    page,
+  }, info) => {
+    test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+    test.setTimeout(90_000)
+    await page.setViewportSize(view)
+    await page.route('**/version.json*', (route) =>
+      route.fulfill({ json: { id: 'older-build', builtAt: '2026-01-01T00:00:00Z' } }),
+    )
+    const { server, fixture } = await prepare(page, { player: false, party: false })
+    seedScene(server)
+    fixture.openRest('long', { user: dmId, character: null })
+    await page.goto(`./#/campaign/${campaignId}/party`)
+    await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+    await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+    await page.goto(`./#/campaign/${campaignId}/tabletop`)
+    await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
+    const preview = page.locator('.preview-banner')
+    const rest = page.getByRole('region', { name: 'Descanso del grupo' })
+    const update = page.locator('.update-notice')
+    await expect(preview).toBeVisible()
+    await expect(rest).toBeVisible()
+    await expect(update).toBeVisible()
+    const leave = page.getByRole('button', { name: 'Volver a vista DM' })
+    await leave.click({ trial: true })
+    // No notice paints over another, and the Player's view is still left in one tap.
+    const boxes = await Promise.all(
+      [preview, rest, update].map(async (notice) => (await notice.boundingBox())!),
+    )
+    for (const [i, a] of boxes.entries())
+      for (const b of boxes.slice(i + 1))
+        expect(
+          a.x + a.width <= b.x + 0.5 ||
+            b.x + b.width <= a.x + 0.5 ||
+            a.y + a.height <= b.y + 0.5 ||
+            b.y + b.height <= a.y + 0.5,
+        ).toBe(true)
+    // In landscape the map keeps most of the height.
+    if (view.width > view.height) {
+      const strip = (await page.locator('.tt-pm-strip').boundingBox())!
+      const top = Math.max(...boxes.slice(0, 2).map((b) => b.y + b.height))
+      expect(view.height - top).toBeGreaterThan(view.height * 0.55)
+      expect(strip.height).toBeLessThan(80)
+    }
+    for (const key of await page.locator('.tt-pm-fab').all()) await key.click({ trial: true })
+    await audit(page)
+    if (process.env.RYT_EVIDENCE)
+      await page.screenshot({ path: `${evidenceDir}/notices-${view.width}x${view.height}.png` })
+    await leave.click()
+    await expect(page.locator('.tt-pm')).toHaveCount(0)
+  })
+
+test("RYT-132 initiative puts the Player's own roll first and the count second", async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server, combat } = await prepare(page)
+  seedScene(server)
+  const { encounter } = seedFight(combat)
+  encounter.status = 'initiative'
+  for (const c of encounter.combatants) c.initiative = undefined
+  await open(page)
+  const now = page.locator('.tt-pm-now')
+  await expect(now.locator('.tt-pm-name')).toHaveText('Te falta tirar iniciativa')
+  await expect(now.locator('.tt-pm-label')).toContainText('listos')
 })
 
 test('RYT-132 a DM in the Player view can still leave it from the phone map', async ({
@@ -658,7 +772,10 @@ test('RYT-132 the keys show a visible focus and the strip leads back to the camp
   seedScene(server, { effects: true })
   await open(page)
   await page.getByRole('link', { name: 'Volver a la campaña' }).focus()
-  for (const name of ['Centrar en mi ficha', 'Medir', 'Efectos de mi ficha']) {
+  // The board is a stop (zoom keys), then the three keys.
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('application', { name: 'Mapa de Puente de Vado' })).toBeFocused()
+  for (const name of ['Encajar el mapa', 'Medir', 'Efectos de mi ficha']) {
     await page.keyboard.press('Tab')
     const key = page.getByRole('button', { name })
     await expect(key).toBeFocused()
@@ -776,8 +893,10 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     await pinch(page, 120, 15)
     await expect.poll(() => zoomOf(page)).toBeLessThan(0.5)
     await page.screenshot({ path: `${name}-zoomed-out.png` })
+    await page.getByRole('button', { name: 'Encajar el mapa' }).click()
+    await page.screenshot({ path: `${name}-fitted.png` })
     await page.getByRole('button', { name: 'Centrar en mi ficha' }).click()
-    await expect.poll(() => zoomOf(page)).toBeGreaterThan(0.58)
+    await expect.poll(() => zoomOf(page)).toBeGreaterThan(0.88)
     await page.screenshot({ path: `${name}-centred.png` })
     const centred = await zoomOf(page)
     await pinch(page, 40, 110)

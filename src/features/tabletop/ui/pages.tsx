@@ -23,6 +23,9 @@ import { cellCenter, clamp, measurePath, type Point } from '../domain/geometry'
 import { tabletopPollMs } from '../domain/model'
 import {
   centreOnToken,
+  fitRegion,
+  labelMinZoom,
+  tokensRegion,
   coverView,
   labelScale,
   labelsShown,
@@ -183,6 +186,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
       // Opening: close enough that the map covers the screen (squares of about a finger's width).
       zoom: framing && scene ? Math.min(1.2, coverZoom(scene.cols, scene.rows, box)) : board.view.z,
       unit: U,
+      minZoom: labelMinZoom,
     })
     board.place({ z: next.z, x: next.x, y: next.y }, framing)
     return true
@@ -204,10 +208,30 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
     if (ownToken) {
       if (centre(true)) done.mode = 'token'
     } else {
-      board.place(coverView({ w: box.width, h: box.height }, scene.cols, scene.rows, U), true)
+      // No token of the Player's: frame the tokens on the table, or cover the map when there are none.
+      const region = tokensRegion(
+        (view?.items ?? []).filter((item) => item.kind === 'token'),
+        scene.cols,
+        scene.rows,
+      )
+      const viewport = { w: box.width, h: box.height }
+      board.place(
+        region ? fitRegion(viewport, region, U) : coverView(viewport, scene.cols, scene.rows, U),
+        true,
+      )
       done.mode = 'cover'
     }
   })
+  // What the first key does next: after centring it fits the whole map, after fitting it centres.
+  const [framing, setFraming] = useState<'token' | 'map'>('token')
+  const fitMap = () => {
+    board.fit()
+    setFraming('map')
+  }
+  const toToken = () => {
+    centre()
+    setFraming('token')
+  }
   // The effects sheet belongs to the phone map and to a token that can still use them.
   const sheetOpen = effectsOpen && phone && canEffects
   if (effectsOpen && !sheetOpen) setEffectsOpen(false)
@@ -228,14 +252,25 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
     <div
       className={`tt-viewport ${measuring ? 'tool-measure' : 'tool-select'}`}
       {...board.bind}
-      role={measuring ? 'application' : 'img'}
-      tabIndex={measuring ? 0 : undefined}
+      role={measuring || phone ? 'application' : 'img'}
+      tabIndex={measuring || phone ? 0 : undefined}
       onFocus={(e) => {
         // The keyboard cursor is for the keyboard: a tap that focuses the board does not draw it.
         if (measuring && e.currentTarget.matches(':focus-visible'))
           setCursor((p) => p ?? cellCenter(board.center()))
       }}
       onKeyDown={(e) => {
+        // The phone map zooms from the keyboard like the editor does: + and - step, 0 fits the map.
+        if (phone && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          const step =
+            e.key === '+' || e.key === '=' ? 1.25 : e.key === '-' || e.key === '_' ? 0.8 : 0
+          if (step || e.key === '0') {
+            if (step) board.zoomAt(step)
+            else fitMap()
+            e.preventDefault()
+            return
+          }
+        }
         if (!measuring) return
         const at = cursor ?? cellCenter(board.center())
         const dx = Number(e.key === 'ArrowRight') - Number(e.key === 'ArrowLeft'),
@@ -358,8 +393,8 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
           {world}
           <PhoneTools
             toolsRef={tools}
-            canCentre={Boolean(ownToken)}
-            onCentre={ownToken ? () => centre() : board.fit}
+            action={ownToken && framing === 'map' ? 'centre' : 'fit'}
+            onAction={ownToken && framing === 'map' ? toToken : fitMap}
             measuring={measuring}
             onMeasure={() => setMeasuring((on) => !on)}
             measureRef={measureKey}

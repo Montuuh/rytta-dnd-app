@@ -4,6 +4,8 @@ import {
   boxesOverlap,
   centreOnToken,
   coverView,
+  fitRegion,
+  tokensRegion,
   freeArea,
   labelMinZoom,
   labelScale,
@@ -36,8 +38,9 @@ describe('labelsShown', () => {
     expect(labelsShown(1.5)).toBe(true)
   })
 
-  it('keeps a plate of 112px under four squares wide at the smallest zoom that shows it', () => {
-    expect(112 / (unit * labelMinZoom)).toBeLessThan(4)
+  it('keeps a one-line plate under 40% of a square tall and two squares wide where it shows', () => {
+    expect(21 / (unit * labelMinZoom)).toBeLessThan(0.4)
+    expect(112 / (unit * labelMinZoom)).toBeLessThanOrEqual(2)
   })
 })
 
@@ -47,6 +50,32 @@ describe('coverView', () => {
     expect(view.z).toBeCloseTo(788 / (12 * unit), 10)
     expect(view.x).toBeCloseTo((390 - 20 * unit * view.z) / 2, 6)
     expect(view.y).toBeCloseTo(0, 6)
+  })
+})
+
+describe('tokensRegion and fitRegion', () => {
+  it('frames the tokens with room around them, inside the map', () => {
+    const region = tokensRegion(
+      [
+        { x: 14, y: 8, w: 1, h: 1 },
+        { x: 16, y: 9, w: 1, h: 1 },
+      ],
+      20,
+      12,
+    )!
+    expect(region).toEqual({ x: 12, y: 6, w: 7, h: 6 })
+    const view = fitRegion({ w: 390, h: 788 }, region, unit)
+    expect(view.z).toBeCloseTo(Math.min(1.2, 390 / (7 * unit)), 10)
+    // The centre of the region lands in the middle of the board.
+    expect(view.x + 15.5 * unit * view.z).toBeCloseTo(195, 6)
+    expect(view.y + 9 * unit * view.z).toBeCloseTo(394, 6)
+  })
+
+  it('has no region without tokens, and never leaves the map', () => {
+    expect(tokensRegion([], 20, 12)).toBeNull()
+    const edge = tokensRegion([{ x: 0, y: 0, w: 1, h: 1 }], 20, 12)!
+    expect(edge.x).toBe(0)
+    expect(edge.y).toBe(0)
   })
 })
 

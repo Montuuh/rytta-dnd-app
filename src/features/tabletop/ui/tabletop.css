@@ -3037,9 +3037,33 @@ html.tt-pm-mode .top-notices {
   max-height: 40dvh;
   overflow-y: auto;
 }
+/* Stacked, never over each other: the strip, then the notices that ask for something, then this one. */
 html.tt-pm-mode .update-notice {
-  top: calc(var(--tt-pm-strip, 56px) + 0.5rem);
+  top: calc(var(--tt-pm-strip, 56px) + var(--tt-pm-notices, 0px) + 0.5rem);
   bottom: auto;
+}
+/* On its side a phone has no height to spare: the notices share one scrolling row, and the update
+   notice sits at the bottom left, clear of the keys. */
+@media (max-height: 30em) {
+  html.tt-pm-mode .top-notices {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    max-height: none;
+    overflow: auto hidden;
+  }
+  html.tt-pm-mode .top-notices > * {
+    flex: 0 0 auto;
+    max-width: min(26rem, 70vw);
+    min-height: 0;
+  }
+  html.tt-pm-mode .update-notice {
+    top: auto;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    transform: none;
+    width: min(26rem, calc(100vw - 6rem));
+  }
 }
 html.tt-pm-mode {
   overflow: hidden;
@@ -3285,10 +3309,16 @@ html.tt-pm-mode {
 }
 
 /* Name plates and the acting ring keep their size on screen at every zoom, in the range where a square
-   can hold them: a plate is at most three squares wide, and below the zoom threshold (`labelsShown`)
+   can hold them: a plate is one line, at most two squares wide, and below the zoom threshold (`labelsShown`)
    the tokens show their own monogram alone. The ring is capped so it never outgrows its neighbours. */
 .tt-pm .tt-token-name {
-  max-width: min(calc(112px * var(--tt-label-k, 1)), 192px);
+  display: block;
+  max-width: min(calc(112px * var(--tt-label-k, 1)), 128px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
   padding: calc(1px * var(--tt-label-k, 1)) calc(6px * var(--tt-label-k, 1));
   border-radius: calc(6px * var(--tt-label-k, 1));
   font-size: calc(14px * var(--tt-label-k, 1));

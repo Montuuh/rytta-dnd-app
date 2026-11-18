@@ -59,13 +59,19 @@ export function PhoneStrip({
     const node = strip.current
     if (!node || typeof ResizeObserver === 'undefined') return
     const root = document.documentElement
-    const measure = () => root.style.setProperty('--tt-pm-strip', `${node.offsetHeight}px`)
+    const notices = document.querySelector<HTMLElement>('.top-notices')
+    const measure = () => {
+      root.style.setProperty('--tt-pm-strip', `${node.offsetHeight}px`)
+      root.style.setProperty('--tt-pm-notices', `${notices?.offsetHeight ?? 0}px`)
+    }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(node)
+    if (notices) observer.observe(notices)
     return () => {
       observer.disconnect()
       root.style.removeProperty('--tt-pm-strip')
+      root.style.removeProperty('--tt-pm-notices')
     }
   }, [])
   const yours = fight?.status === 'active' && active?.is_own === true
@@ -88,11 +94,16 @@ export function PhoneStrip({
       ) : fight.status === 'initiative' ? (
         <div className="tt-pm-now">
           <div>
+            {/* The Player's own roll is the line to read; how many are ready is the small one. */}
             <p className="tt-pm-label">
-              {t(mustRoll ? 'tabletop.phone.rollYours' : 'combat.table.rolling')}
+              {mustRoll
+                ? t('combat.table.ready', { ready: ready.ready, total: ready.total })
+                : t('combat.table.rolling')}
             </p>
             <p className="tt-pm-name">
-              {t('combat.table.ready', { ready: ready.ready, total: ready.total })}
+              {mustRoll
+                ? t('tabletop.phone.rollYours')
+                : t('combat.table.ready', { ready: ready.ready, total: ready.total })}
             </p>
           </div>
         </div>
@@ -150,9 +161,9 @@ export function PhoneStrip({
 }
 
 type ToolsProps = {
-  /** Without an own token the first key fits the whole map instead of centring on it. */
-  canCentre: boolean
-  onCentre: () => void
+  /** What the first key does: centre on my token, or fit the whole map (always one tap away). */
+  action: 'centre' | 'fit'
+  onAction: () => void
   measuring: boolean
   onMeasure: () => void
   measureRef: Ref<HTMLButtonElement>
@@ -169,8 +180,8 @@ type ToolsProps = {
  * effects; nothing here is a new map tool.
  */
 export function PhoneTools({
-  canCentre,
-  onCentre,
+  action,
+  onAction,
   measuring,
   onMeasure,
   measureRef,
@@ -186,11 +197,11 @@ export function PhoneTools({
       <button
         type="button"
         className="tt-pm-fab"
-        onClick={onCentre}
-        aria-label={t(canCentre ? 'tabletop.zoom.mine' : 'tabletop.zoom.fit')}
-        title={t(canCentre ? 'tabletop.zoom.mine' : 'tabletop.zoom.fit')}
+        onClick={onAction}
+        aria-label={t(action === 'centre' ? 'tabletop.zoom.mine' : 'tabletop.zoom.fit')}
+        title={t(action === 'centre' ? 'tabletop.zoom.mine' : 'tabletop.zoom.fit')}
       >
-        {canCentre ? (
+        {action === 'centre' ? (
           <LocateFixed size={22} aria-hidden="true" />
         ) : (
           <Maximize size={22} aria-hidden="true" />

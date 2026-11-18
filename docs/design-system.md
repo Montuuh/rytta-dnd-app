@@ -503,3 +503,12 @@ without overlap at large text (round first, then "next" on its own row). Notices
 something (a rest vote, leaving the Player view) stay, right under the strip, and the update notice
 moves to the top. The page chrome is removed by `html.tt-pm-mode`, a class the map sets itself.
 Not done: keys on the left for left-handed use.
+
+The first round key always has a way to the whole map: it fits the map, and once fitted it centres on
+the Player's token again (its name and icon change with what it will do). The board is a keyboard stop on
+the phone map: `+` and `-` zoom, `0` fits the map (as in the editor). Without a token of the Player's,
+the map opens framing the tokens on the table (the whole map when there are none). Name plates are one
+line with an ellipsis, at most two squares wide, and show from 0.9 zoom up. The notices stack under the
+strip (preview and rest first, then the update notice); on a phone on its side they share one scrolling
+row and the update notice moves to the bottom left. While initiative is collected, the Player's own
+roll is the main line and "n of m ready" the small one.

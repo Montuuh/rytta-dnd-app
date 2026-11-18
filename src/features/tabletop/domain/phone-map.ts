@@ -19,14 +19,14 @@ export const boardMinZoom = 0.08
 export const boardMaxZoom = 4
 
 /**
- * Name plates keep their size on screen only while the squares are big enough to hold them: below this
- * zoom (a square under about 35px) a plate would span four or more squares and cover its neighbours,
- * so the tokens show their own monogram alone.
+ * Name plates keep their size on screen only while the squares are big enough to hold them: a plate is
+ * one line (about 21px) and hangs under its token, so below this zoom (a square under about 58px) it
+ * would take more than a third of the row below; the tokens then show their own monogram alone.
  */
-export const labelMinZoom = 0.55
+export const labelMinZoom = 0.9
 export const labelsShown = (zoom: number) => zoom >= labelMinZoom
 /** A plate is never wider than this many squares, in world pixels per square `unit`. */
-export const labelMaxSquares = 3
+export const labelMaxSquares = 2
 
 export type Box = { x: number; y: number; w: number; h: number }
 
@@ -73,6 +73,49 @@ export function coverView(
     Math.min(boardMaxZoom, Math.max(viewport.w / (cols * unit), viewport.h / (rows * unit))),
   )
   return { z, x: (viewport.w - cols * unit * z) / 2, y: (viewport.h - rows * unit * z) / 2 }
+}
+
+/** The squares a set of tokens takes, with `pad` squares around them and at least `minSpan` each way. */
+export function tokensRegion(
+  tokens: readonly Box[],
+  cols: number,
+  rows: number,
+  pad = 2,
+  minSpan = 6,
+): Box | null {
+  if (tokens.length === 0) return null
+  const left = Math.min(...tokens.map((t) => t.x)) - pad
+  const top = Math.min(...tokens.map((t) => t.y)) - pad
+  const right = Math.max(...tokens.map((t) => t.x + t.w)) + pad
+  const bottom = Math.max(...tokens.map((t) => t.y + t.h)) + pad
+  const w = Math.min(cols, Math.max(minSpan, right - left))
+  const h = Math.min(rows, Math.max(minSpan, bottom - top))
+  const cx = (left + right) / 2
+  const cy = (top + bottom) / 2
+  return {
+    x: Math.max(0, Math.min(cols - w, cx - w / 2)),
+    y: Math.max(0, Math.min(rows - h, cy - h / 2)),
+    w,
+    h,
+  }
+}
+
+/** The view that shows all of a region of squares, centred, at most `maxZoom` close. */
+export function fitRegion(
+  viewport: { w: number; h: number },
+  region: Box,
+  unit: number,
+  maxZoom = 1.2,
+) {
+  const z = Math.max(
+    boardMinZoom,
+    Math.min(maxZoom, viewport.w / (region.w * unit), viewport.h / (region.h * unit)),
+  )
+  return {
+    z,
+    x: viewport.w / 2 - (region.x + region.w / 2) * unit * z,
+    y: viewport.h / 2 - (region.y + region.h / 2) * unit * z,
+  }
 }
 
 export type CentreInput = {

@@ -678,7 +678,7 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   await expect(page.getByRole('heading', { level: 1, name: 'Puente de Vado' })).toBeVisible({
     timeout: 15_000,
   })
-  const board = page.getByRole('img', { name: 'Mapa de Puente de Vado' })
+  const board = page.getByLabel('Mapa de Puente de Vado')
   await expect(board.locator('.tt-token', { hasText: 'Centinela' })).toBeVisible()
   await expect(board.locator('.tt-token', { hasText: 'Ogro emboscado' })).toHaveCount(0)
   await expect(board.locator('.tt-pin')).toHaveCount(0)
@@ -726,7 +726,7 @@ test('RYT-113 a teammate under a table alias shows only the alias on the Player 
     ],
   })
   await page.goto(`./#/campaign/${campaignId}/tabletop`)
-  const board = page.getByRole('img', { name: 'Mapa de Puente de Vado' })
+  const board = page.getByLabel('Mapa de Puente de Vado')
   await expect(board.locator('.tt-token', { hasText: 'Encapuchada' })).toBeVisible({
     timeout: 15_000,
   })

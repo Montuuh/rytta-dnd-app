@@ -8,7 +8,7 @@ import {
   session,
   playerId,
 } from './fixtures/identity.ts'
-import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
+import { capture, expectTouchTargets, focusAcrossFrames, limitMatrix } from './fixtures/audit.ts'
 
 test('Google sign-in uses PKCE and an exact Pages callback; no private requests while signed out', async ({
   page,
@@ -1067,12 +1067,15 @@ test('RYT-135 Escape pressed in the same frame as the dialog opens closes it and
   await item.focus()
   // Both keys are sent back to back, before the dialog has rendered.
   await Promise.all([page.keyboard.press('Enter'), page.keyboard.press('Escape')])
+  // Frames pass first, so "no dialog" is read after it had every chance to open, not before.
+  await focusAcrossFrames(page, 30)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(arinMenu).toBeFocused()
   // The same for the invitation dialog.
   const invite = page.getByRole('button', { name: 'Invitar jugador', exact: true })
   await invite.focus()
   await Promise.all([page.keyboard.press('Enter'), page.keyboard.press('Escape')])
+  await focusAcrossFrames(page, 30)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(invite).toBeFocused()
   // And the dialogs still open and close normally afterwards.
@@ -1109,12 +1112,15 @@ test('RYT-136 the profile menu returns focus on Escape and after a choice that o
       await expect(page.getByRole('menu')).toBeVisible({ timeout: 1_500 })
     }).toPass()
 
-  // Escape: back on the trigger, and it stays there.
+  // Escape: back on the trigger, and it stays there. A slow page may need the key again.
   await openMenu()
-  await page.keyboard.press('Escape')
-  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(async () => {
+    if (await page.getByRole('menu').isVisible()) await page.keyboard.press('Escape')
+    await expect(page.getByRole('menu')).toHaveCount(0, { timeout: 1_500 })
+  }).toPass()
   await expect(trigger).toBeFocused()
-  await page.waitForTimeout(800)
+  // It stays there, frame after frame.
+  expect(new Set(await focusAcrossFrames(page, 40)).size).toBe(1)
   await expect(trigger).toBeFocused()
 
   // A choice that opens a panel: the panel hands focus back when it closes.
@@ -1132,9 +1138,8 @@ test('RYT-136 the profile menu returns focus on Escape and after a choice that o
   const other = page.locator('.dm-tabs-list [role="tab"][data-panel="modules"]')
   await other.click()
   await expect(page.getByRole('menu')).toHaveCount(0)
-  for (const wait of [0, 150, 400, 1_500]) {
-    await page.waitForTimeout(wait)
-    await expect(other, `at +${wait}ms`).toBeFocused()
-    await expect(trigger, `at +${wait}ms`).not.toBeFocused()
-  }
+  // Frame after frame, until the menu has long finished leaving, focus stays on the chosen control.
+  expect(new Set(await focusAcrossFrames(page, 90)).size).toBe(1)
+  await expect(other).toBeFocused()
+  await expect(trigger).not.toBeFocused()
 })

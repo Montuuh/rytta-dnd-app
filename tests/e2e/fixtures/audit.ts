@@ -43,3 +43,23 @@ export async function capture(
 export function limitMatrix(info: TestInfo, base: boolean) {
   test.skip(!base && !info.project.name.endsWith('mobile'), 'Full matrix runs at 390px only')
 }
+
+/**
+ * Lets `count` animation frames pass and says which control held focus at the end of each, as its
+ * accessible label or text. For "focus stays where it is" and "nothing opens later" checks, so a
+ * test waits for frames, never for a fixed time.
+ */
+export async function focusAcrossFrames(page: Page, count = 30): Promise<string[]> {
+  return page.evaluate(async (frames) => {
+    const seen: string[] = []
+    for (let frame = 0; frame < frames; frame += 1) {
+      await new Promise((done) => requestAnimationFrame(done))
+      const active = document.activeElement as HTMLElement | null
+      seen.push(
+        active?.getAttribute('aria-label') ??
+          `${active?.tagName ?? 'none'}:${(active?.textContent ?? '').trim().slice(0, 30)}`,
+      )
+    }
+    return seen
+  }, count)
+}

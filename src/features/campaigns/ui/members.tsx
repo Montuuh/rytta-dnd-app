@@ -142,6 +142,15 @@ export function CampaignMembers({
   })
   // An Escape pressed in the same frame as the control that opens a dialog closes it too.
   const stopEarlyEscape = useRef<() => void>(() => {})
+  // The dialog made inert while it leaves, so only that one is let work again (and on leaving the page).
+  const madeInert = useRef<Element | null>(null)
+  useEffect(
+    () => () => {
+      stopEarlyEscape.current()
+      madeInert.current?.removeAttribute('inert')
+    },
+    [],
+  )
   const openConfirmation = (next: Confirmation, target: HTMLElement) => {
     trigger.current = target
     setConfirmation(next)
@@ -153,10 +162,21 @@ export function CampaignMembers({
   // as the person moves focus elsewhere, so the dialogs start no second return at the end of their exit
   // transition (that one took the control the person had just tabbed to for fallen focus).
   const restoreTriggerFocus = () => {
-    const leaving = document.activeElement?.closest('[role="dialog"], [role="menu"]') ?? null
+    // The dialog that is closing, and the menu that opened it when the close comes before the dialog
+    // had focus (an Escape in the same frame as the choice): both are leaving.
+    const dialogs = [
+      document.activeElement?.closest('[role="dialog"]') ??
+        document.querySelector('[role="dialog"]'),
+      document.activeElement?.closest('[role="menu"]') ?? null,
+    ].filter((el): el is Element => el !== null)
+    const leaving = dialogs
     // The closing dialog stays mounted, after the trigger in the page, for its exit transition: Tab
     // pressed right after Escape would land in it and be lost. Inert, it is skipped at once.
-    if (leaving?.getAttribute('role') === 'dialog') leaving.setAttribute('inert', '')
+    const dialog = dialogs.find((el) => el.getAttribute('role') === 'dialog')
+    if (dialog) {
+      dialog.setAttribute('inert', '')
+      madeInert.current = dialog
+    }
     stopEarlyEscape.current()
     focusWhenReady(() => trigger.current, {
       // Focus on any control but the trigger counts as the person having moved on, even when this
@@ -216,10 +236,10 @@ export function CampaignMembers({
   }
   // A dialog opened again before the last one finished leaving is the same element: let it work.
   useEffect(() => {
-    if (confirmation || inviteOpen)
-      document
-        .querySelectorAll('[role="dialog"][inert]')
-        .forEach((el) => el.removeAttribute('inert'))
+    if (confirmation || inviteOpen) {
+      madeInert.current?.removeAttribute('inert')
+      madeInert.current = null
+    }
   }, [confirmation, inviteOpen])
   const lastDm =
     dm &&

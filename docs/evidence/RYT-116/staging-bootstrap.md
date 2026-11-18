@@ -117,3 +117,13 @@ Remediation references:
 - **Decision on `pre_admin`**: keep it as inert history-parity tooling or remove it with a
   staging-only step.
 - Free-plan limits apply (project pauses after inactivity, no backups beyond the plan default).
+
+## First production backup (2026-11-18)
+
+- The Backup workflow ran on main (run 44362679087) and stored roles, schema and data as a 14-day
+  artifact with a checksum manifest (data 7.9 MB, schema 1.5 MB).
+- Checksums verified after download; the local copy was deleted afterwards.
+- Row counts of the 70 non-empty application, auth and storage tables in the dump equal production
+  at the time. The platform-managed `auth.schema_migrations` and `storage.migrations` tables are
+  not part of the dump.
+- Not done: a restore rehearsal. It needs a staging database connection.

@@ -197,6 +197,23 @@ test('DM creates before assignment, edits whole homebrew units and recovers from
   await expect(arin.getByText('70', { exact: true })).toBeVisible()
 })
 
+test('Profile menu: Enter opens it, Escape closes it and focus returns to the trigger', async ({
+  page,
+}) => {
+  await identityFixture(page, { player: true })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  const trigger = page.getByRole('button', { name: /Sesión de player@example.com/ })
+  // Let the page settle first: the header re-renders while data loads and would blur the trigger.
+  await expect(page.getByText('Tu personaje', { exact: true })).toBeVisible()
+  await trigger.focus()
+  await expect(trigger).toBeFocused()
+  await trigger.press('Enter')
+  // No wait for the dropdown: Escape in the frame the menu opens must still close it.
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+})
+
 test('Player sees own resources read-only; account menu returns home without leaving membership', async ({
   page,
 }) => {
@@ -221,7 +238,8 @@ test('Player sees own resources read-only; account menu returns home without lea
   await expect(page.getByRole('menu')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(menu).toBeFocused()
-  // (Enter then an immediate Escape is a same-frame race: the menu opens by click here.)
+  await menu.press('Enter')
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: /Sesión de player@example.com/ }).click()
   await page.getByRole('menuitem', { name: 'Mis campañas', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Mis campañas', exact: true })).toBeVisible()

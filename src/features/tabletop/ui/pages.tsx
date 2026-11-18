@@ -1,5 +1,5 @@
 import { PlayerEffects } from './visibility'
-import { useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Button, Drawer, Switch } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
@@ -14,7 +14,6 @@ import {
   isLive,
   nextUp,
   useCombatRealtime,
-  useFreshness,
 } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
 import { Drawer as BackDrawer } from '@/shared/ui/overlays'
@@ -22,7 +21,14 @@ import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { tabletopQuery, useTabletopRealtime } from '../api'
 import { cellCenter, clamp, measurePath, type Point } from '../domain/geometry'
 import { tabletopPollMs } from '../domain/model'
-import { centreOnToken, labelScale, phoneMapQuery, type Box } from '../domain/phone-map'
+import {
+  centreOnToken,
+  coverView,
+  labelScale,
+  labelsShown,
+  phoneMapQuery,
+  type Box,
+} from '../domain/phone-map'
 import { turnMark } from '../domain/table-order'
 import { effectTokens } from '../domain/visibility'
 import { Board } from './board'
@@ -149,11 +155,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
   const fight = encounter && isLive(encounter.status) ? encounter : null
   const active = allCombatants.find((c) => c.is_active) ?? null
   const known = [query.dataUpdatedAt, combat.dataUpdatedAt].filter((at) => at > 0)
-  const stale = useFreshness(
-    known.length > 0 ? Math.min(...known) : 0,
-    (query.isError && query.data !== undefined) || (combat.isError && combat.data !== undefined),
-    tabletopPollMs(connected) + 15_000,
-  )
+  const mustRoll = allCombatants.some((c) => c.is_own && c.initiative === undefined)
   const announcement = useTurnAnnouncement(
     turnMark(
       encounter?.status,
@@ -165,9 +167,11 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
   )
   const scale = labelScale(board.view.z)
   const plateScale = phone ? labelScale(board.view.z, 0.55) : 1
-  const centre = () => {
+  const coverZoom = (cols: number, rows: number, box: DOMRect) =>
+    Math.max(box.width / (cols * U), box.height / (rows * U))
+  const centre = (framing = false) => {
     const box = board.box()
-    if (!box || !ownToken) return
+    if (!box || !ownToken) return false
     const keys: Box[] = [...(tools.current?.querySelectorAll('button') ?? [])].map((key) => {
       const r = key.getBoundingClientRect()
       return { x: r.x - box.x, y: r.y - box.y, w: r.width, h: r.height }
@@ -176,19 +180,60 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
       viewport: { w: box.width, h: box.height },
       buttons: keys,
       token: ownToken,
-      zoom: board.view.z,
+      // Opening: close enough that the map covers the screen (squares of about a finger's width).
+      zoom: framing && scene ? Math.min(1.2, coverZoom(scene.cols, scene.rows, box)) : board.view.z,
       unit: U,
     })
-    board.place({ z: next.z, x: next.x, y: next.y })
+    board.place({ z: next.z, x: next.x, y: next.y }, framing)
+    return true
   }
+  // The phone map opens on the own token at a zoom where tokens read, or covering the screen when the
+  // Player has none, so the first view is a map and not a small board. Once the person moves the view,
+  // it is theirs; a token that arrives late still upgrades an opening that only covered.
+  const opening = useRef<{ scene: string; mode: 'none' | 'cover' | 'token' }>({
+    scene: '',
+    mode: 'none',
+  })
+  useEffect(() => {
+    if (!phone || !scene) return
+    if (opening.current.scene !== scene.id) opening.current = { scene: scene.id, mode: 'none' }
+    const done = opening.current
+    if (board.interacted() || done.mode === 'token' || (done.mode === 'cover' && !ownToken)) return
+    const box = board.box()
+    if (!box || box.width === 0 || !tools.current) return
+    if (ownToken) {
+      if (centre(true)) done.mode = 'token'
+    } else {
+      board.place(coverView({ w: box.width, h: box.height }, scene.cols, scene.rows, U), true)
+      done.mode = 'cover'
+    }
+  })
+  // The effects sheet belongs to the phone map and to a token that can still use them.
+  const sheetOpen = effectsOpen && phone && canEffects
+  if (effectsOpen && !sheetOpen) setEffectsOpen(false)
+  const sheetWasOpen = useRef(false)
+  useEffect(() => {
+    // The key that opened the sheet is gone with the effects: focus goes to the next one.
+    if (sheetWasOpen.current && !sheetOpen && phone && !canEffects) measureKey.current?.focus()
+    sheetWasOpen.current = sheetOpen
+  }, [sheetOpen, phone, canEffects])
+  // The phone map has no page chrome: the root says so (a class works where `:has()` does not).
+  const mapPage = phone && Boolean(scene && view)
+  useEffect(() => {
+    if (!mapPage) return
+    document.documentElement.classList.add('tt-pm-mode')
+    return () => document.documentElement.classList.remove('tt-pm-mode')
+  }, [mapPage])
   const world = scene && view && (
     <div
       className={`tt-viewport ${measuring ? 'tool-measure' : 'tool-select'}`}
       {...board.bind}
       role={measuring ? 'application' : 'img'}
       tabIndex={measuring ? 0 : undefined}
-      onFocus={() => {
-        if (measuring) setCursor((p) => p ?? cellCenter(board.center()))
+      onFocus={(e) => {
+        // The keyboard cursor is for the keyboard: a tap that focuses the board does not draw it.
+        if (measuring && e.currentTarget.matches(':focus-visible'))
+          setCursor((p) => p ?? cellCenter(board.center()))
       }}
       onKeyDown={(e) => {
         if (!measuring) return
@@ -226,6 +271,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             ...(phone && { '--tt-z': board.view.z, '--tt-label-k': scale }),
           } as CSSProperties
         }
+        data-labels={phone && !labelsShown(board.view.z) ? 'hidden' : undefined}
       >
         <Board
           scene={scene}
@@ -290,14 +336,30 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             ready: allCombatants.filter((c) => c.initiative !== undefined).length,
             total: allCombatants.length,
           }}
-          stale={stale}
+          mustRoll={mustRoll}
+          updatedAt={known.length > 0 ? Math.min(...known) : 0}
+          failing={
+            (query.isError && query.data !== undefined) ||
+            (combat.isError && combat.data !== undefined)
+          }
+          staleAfter={tabletopPollMs(connected) + 15_000}
         />
-        <div className="tt-pm-board">
+        <div
+          className="tt-pm-board"
+          onKeyDown={(e) => {
+            // Escape closes the measure from the board, its key or its chip alike.
+            if (e.key !== 'Escape' || e.defaultPrevented || !measuring) return
+            e.preventDefault()
+            setMeasuring(false)
+            setCursor(null)
+            measureKey.current?.focus()
+          }}
+        >
           {world}
           <PhoneTools
             toolsRef={tools}
             canCentre={Boolean(ownToken)}
-            onCentre={ownToken ? centre : board.fit}
+            onCentre={ownToken ? () => centre() : board.fit}
             measuring={measuring}
             onMeasure={() => setMeasuring((on) => !on)}
             measureRef={measureKey}
@@ -328,11 +390,12 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
         </div>
         <BackDrawer
           closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
-          opened={effectsOpen}
+          opened={sheetOpen}
           onClose={() => setEffectsOpen(false)}
           position="bottom"
           size="auto"
           title={t('tabletop.phone.effects')}
+          classNames={{ body: 'tt-pm-sheet' }}
         >
           <PlayerEffects campaignId={campaignId} items={view.items} lighting={lighting} />
         </BackDrawer>

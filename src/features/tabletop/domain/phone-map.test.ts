@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { boxesOverlap, centreOnToken, freeArea, labelScale, type Box } from './phone-map'
+import {
+  boardMinZoom,
+  boxesOverlap,
+  centreOnToken,
+  coverView,
+  freeArea,
+  labelMinZoom,
+  labelScale,
+  labelsShown,
+  type Box,
+} from './phone-map'
 
 const unit = 64
 // Three round 48px buttons stacked at the bottom right of a 390 x 788 board, as the screen lays them.
@@ -15,6 +25,28 @@ describe('labelScale', () => {
 
   it('never divides by zero', () => {
     expect(Number.isFinite(labelScale(0))).toBe(true)
+  })
+})
+
+describe('labelsShown', () => {
+  it('shows name plates only where a square is big enough to keep them off their neighbours', () => {
+    expect(labelsShown(0.29)).toBe(false)
+    expect(labelsShown(labelMinZoom - 0.01)).toBe(false)
+    expect(labelsShown(labelMinZoom)).toBe(true)
+    expect(labelsShown(1.5)).toBe(true)
+  })
+
+  it('keeps a plate of 112px under four squares wide at the smallest zoom that shows it', () => {
+    expect(112 / (unit * labelMinZoom)).toBeLessThan(4)
+  })
+})
+
+describe('coverView', () => {
+  it('covers the board and centres the map', () => {
+    const view = coverView({ w: 390, h: 788 }, 20, 12, unit)
+    expect(view.z).toBeCloseTo(788 / (12 * unit), 10)
+    expect(view.x).toBeCloseTo((390 - 20 * unit * view.z) / 2, 6)
+    expect(view.y).toBeCloseTo(0, 6)
   })
 })
 
@@ -71,6 +103,21 @@ describe('centreOnToken', () => {
     })
     expect(view.z).toBeLessThan(0.6)
     expect(view.clear).toBe(true)
+  })
+
+  it('never goes below the board own smallest zoom, and the token stays where it was placed', () => {
+    const buttons = column(390, 788)
+    const colossus = { x: 0, y: 0, w: 400, h: 400 }
+    const view = centreOnToken({
+      viewport: { w: 390, h: 788 },
+      buttons,
+      token: colossus,
+      zoom: 1,
+      unit,
+    })
+    expect(view.z).toBe(boardMinZoom)
+    const centre = view.x + 200 * unit * view.z
+    expect(centre).toBeCloseTo(view.free.x + view.free.w / 2, 6)
   })
 
   it('says so when no zoom keeps the token off the buttons', () => {

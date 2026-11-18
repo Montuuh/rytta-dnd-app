@@ -1,4 +1,4 @@
-import type { Ref } from 'react'
+import { useEffect, useRef, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import {
@@ -11,7 +11,7 @@ import {
   Swords,
   WifiOff,
 } from 'lucide-react'
-import { CombatantToken, type Combatant } from '@/features/combat'
+import { CombatantToken, useFreshness, type Combatant } from '@/features/combat'
 
 type StripProps = {
   campaignId: string
@@ -22,13 +22,20 @@ type StripProps = {
   next: Combatant | null
   hiddenTurn: boolean
   ready: { ready: number; total: number }
-  stale: boolean
+  /** This Player has a character that still has to roll initiative. */
+  mustRoll: boolean
+  /** When the data last arrived (ms, 0 before the first answer) and whether the last fetch failed. */
+  updatedAt: number
+  failing: boolean
+  staleAfter: number
 }
 
 /**
  * The compact turn strip over the phone map (RYT-132): the way back to the campaign, who acts now
  * and who is next. On the Player's own turn the whole strip turns to the accent and says so in
- * words; a hidden creature's turn says only that it is hidden (the projection has no name).
+ * words; a hidden creature's turn says only that it is hidden (the projection has no name). Long
+ * names end in an ellipsis (the text stays whole for assistive technology); the strip reflows into a
+ * second row for "next" at large text and drops the round before it would crowd the turn.
  */
 export function PhoneStrip({
   campaignId,
@@ -38,12 +45,35 @@ export function PhoneStrip({
   next,
   hiddenTurn,
   ready,
-  stale,
+  mustRoll,
+  updatedAt,
+  failing,
+  staleAfter,
 }: StripProps) {
   const { t } = useTranslation()
+  // Staleness is derived here, so its five-second tick re-renders the strip and not the whole map.
+  const stale = useFreshness(updatedAt, failing, staleAfter)
+  const strip = useRef<HTMLElement>(null)
+  // The notices that ask for something (a rest vote, leaving the Player view) sit right under it.
+  useEffect(() => {
+    const node = strip.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+    const root = document.documentElement
+    const measure = () => root.style.setProperty('--tt-pm-strip', `${node.offsetHeight}px`)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--tt-pm-strip')
+    }
+  }, [])
   const yours = fight?.status === 'active' && active?.is_own === true
   return (
-    <header className={`tt-pm-strip${yours ? ' is-yours' : ''}${stale ? ' is-stale' : ''}`}>
+    <header
+      ref={strip}
+      className={`tt-pm-strip${yours ? ' is-yours' : ''}${stale ? ' is-stale' : ''}`}
+    >
       <Link
         to={`/campaign/${campaignId}`}
         className="tt-pm-leave"
@@ -52,11 +82,15 @@ export function PhoneStrip({
         <ChevronLeft size={24} aria-hidden="true" />
       </Link>
       {!fight ? (
-        <p className="tt-pm-scene">{sceneName}</p>
+        <p className="tt-pm-scene" title={sceneName}>
+          {sceneName}
+        </p>
       ) : fight.status === 'initiative' ? (
         <div className="tt-pm-now">
           <div>
-            <p className="tt-pm-label">{t('combat.table.rolling')}</p>
+            <p className="tt-pm-label">
+              {t(mustRoll ? 'tabletop.phone.rollYours' : 'combat.table.rolling')}
+            </p>
             <p className="tt-pm-name">
               {t('combat.table.ready', { ready: ready.ready, total: ready.total })}
             </p>
@@ -76,25 +110,31 @@ export function PhoneStrip({
             {active && <CombatantToken combatant={active} showActive={false} size={32} />}
             <div>
               <p className="tt-pm-label">
-                {yours ? (
-                  <>
-                    <Swords size={16} aria-hidden="true" />
-                    {t('combat.turn.yours')}
-                  </>
-                ) : (
-                  t('combat.turn.now')
-                )}
+                <span className="tt-pm-state">
+                  {yours ? (
+                    <>
+                      <Swords size={16} aria-hidden="true" />
+                      {t('combat.turn.yours')}
+                    </>
+                  ) : (
+                    t('combat.turn.now')
+                  )}
+                </span>
                 <span className="tt-pm-round">
                   {t('tabletop.table.round', { round: fight.round })}
                 </span>
               </p>
-              <p className="tt-pm-name">{active?.name ?? '—'}</p>
+              <p className="tt-pm-name" title={active?.name}>
+                {active?.name ?? '—'}
+              </p>
             </div>
           </div>
           {next && (
             <div className="tt-pm-next">
               <p className="tt-pm-label">{t('combat.turn.upNext')}</p>
-              <p className="tt-pm-name">{next.name}</p>
+              <p className="tt-pm-name" title={next.name}>
+                {next.name}
+              </p>
             </div>
           )}
         </>

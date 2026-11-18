@@ -690,8 +690,10 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   // the board is the page (RYT-132, phone-map.spec.ts), so the page layout is checked from 820px up.
   if (!phone(info)) await expectBoardFits(page)
   // A private measure: the switch, then a drag (a round key on the phone map).
-  if (phone(info)) await page.getByRole('button', { name: 'Medir' }).click()
-  else await page.getByLabel('Medir').check()
+  if (phone(info)) {
+    await zoomOutPhoneMap(page)
+    await page.getByRole('button', { name: 'Medir' }).click()
+  } else await page.getByLabel('Medir').check()
   const world = (await page.locator('.tt-world').boundingBox())!
   const sq = world.width / 20
   await page.mouse.move(world.x + 3.5 * sq, world.y + 3.5 * sq)
@@ -756,6 +758,17 @@ test('RYT-086 the Player board fits below a scene title that wraps', async ({ pa
   if (size(info) !== 'desktop') expect((await title.boundingBox())!.height).toBeGreaterThan(60)
   await expectBoardFits(page)
 })
+
+/** The phone map opens close on the own token (RYT-132); a measure across seven squares needs the
+ * whole map in view, so zoom out with the wheel first. */
+async function zoomOutPhoneMap(page: Page) {
+  const box = (await page.locator('.tt-viewport').boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.wheel(0, 900)
+  await expect
+    .poll(async () => (await page.locator('.tt-world').boundingBox())!.width)
+    .toBeLessThan(box.width)
+}
 
 /** The Player board and its zoom stack end above the phone bottom bar, or inside the viewport. */
 async function expectBoardFits(page: Page) {
@@ -1052,8 +1065,10 @@ test('RYT-101 Player measures seven squares by drag, touch and keyboard', async 
   const measure = phone(info)
     ? page.getByRole('button', { name: 'Medir' })
     : page.getByRole('switch', { name: 'Medir' })
-  if (phone(info)) await measure.click()
-  else await measure.check()
+  if (phone(info)) {
+    await zoomOutPhoneMap(page)
+    await measure.click()
+  } else await measure.check()
   const board = page.getByRole('application')
   const readout = page.locator('.tt-player-tools .tt-readout-feet, .tt-pm-chip .tt-readout-feet')
   const clear = page.getByRole('button', { name: 'Borrar la medida' })
@@ -1196,7 +1211,7 @@ for (const language of ['es', 'en'])
       await expect(
         playerPage.getByRole('status').filter({ hasText: /Efecto aplicado|Effect applied/ }),
       ).toBeVisible()
-      await audit(playerPage, phone(info) ? 'body' : 'main', phone(info) ? '.tt-world' : undefined)
+      await audit(playerPage, phone(info) ? 'body' : 'main')
       await expectTouchTargets(playerPage.locator('.tt-player-effects'), 'button:visible')
       if (process.env.RYT_EVIDENCE)
         await playerPage.screenshot({

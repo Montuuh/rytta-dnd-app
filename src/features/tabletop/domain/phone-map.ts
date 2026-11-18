@@ -14,6 +14,20 @@ export const phoneMapQuery = '(max-width: 47.99em), (max-height: 30em) and (max-
  */
 export const labelScale = (zoom: number, design = 1) => design / Math.max(zoom, 0.01)
 
+/** The board's own limits (`viewport.ts`): centring never asks for a zoom outside them. */
+export const boardMinZoom = 0.08
+export const boardMaxZoom = 4
+
+/**
+ * Name plates keep their size on screen only while the squares are big enough to hold them: below this
+ * zoom (a square under about 35px) a plate would span four or more squares and cover its neighbours,
+ * so the tokens show their own monogram alone.
+ */
+export const labelMinZoom = 0.55
+export const labelsShown = (zoom: number) => zoom >= labelMinZoom
+/** A plate is never wider than this many squares, in world pixels per square `unit`. */
+export const labelMaxSquares = 3
+
 export type Box = { x: number; y: number; w: number; h: number }
 
 export const boxesOverlap = (a: Box, b: Box) =>
@@ -42,6 +56,23 @@ export function freeArea(viewport: { w: number; h: number }, buttons: readonly B
     (best, box) => (area(box) > area(best) ? box : best),
     candidates[0] ?? whole,
   )
+}
+
+/**
+ * The view that covers a board of `cols` x `rows` squares (no empty surround on the short side),
+ * centred on the map: where a phone opens a map with no token of the Player's to go to.
+ */
+export function coverView(
+  viewport: { w: number; h: number },
+  cols: number,
+  rows: number,
+  unit: number,
+) {
+  const z = Math.max(
+    boardMinZoom,
+    Math.min(boardMaxZoom, Math.max(viewport.w / (cols * unit), viewport.h / (rows * unit))),
+  )
+  return { z, x: (viewport.w - cols * unit * z) / 2, y: (viewport.h - rows * unit * z) / 2 }
 }
 
 export type CentreInput = {
@@ -82,7 +113,7 @@ export function centreOnToken({
   const span = Math.max(token.w, token.h) * unit
   // The token and its plate take at most three fifths of the smaller side of the free space.
   const fits = (Math.min(free.w, free.h - plate) * 0.6) / span
-  const z = Math.max(0.05, Math.min(Math.max(zoom, minZoom), fits))
+  const z = Math.max(boardMinZoom, Math.min(boardMaxZoom, Math.max(zoom, minZoom), fits))
   const covered: Box = {
     x: cx - (token.w * unit * z) / 2,
     y: cy - (token.h * unit * z) / 2,

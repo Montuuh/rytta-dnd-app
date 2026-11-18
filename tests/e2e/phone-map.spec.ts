@@ -1,6 +1,6 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { beaId, campaignId, characterId, identityFixture } from './fixtures/identity.ts'
+import { beaId, campaignId, characterId, dmId, identityFixture } from './fixtures/identity.ts'
 import { expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
@@ -9,9 +9,14 @@ import { tabletopServer } from './fixtures/tabletop.ts'
 const evidenceDir = 'docs/evidence/ui-review/ryt-132'
 const secret = ['Ogro emboscado', 'Trampa', 'CD 15 para verla', 'Emboscada oculta']
 const landscape = { width: 844, height: 390 }
+const longName = 'Guardián ancestral de las Colinas de Ceniza'
+const longScene = 'La Cripta del Rey Hechicero bajo las Colinas de Ceniza y el Puente Roto'
 const mobile = (info: TestInfo) => info.project.name === 'identity-mobile'
 
-async function prepare(page: Page, options: { language?: string; theme?: string } = {}) {
+async function prepare(
+  page: Page,
+  options: { language?: string; theme?: string; player?: boolean; party?: boolean } = {},
+) {
   const server = tabletopServer()
   const combat = combatServer()
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -23,21 +28,22 @@ async function prepare(page: Page, options: { language?: string; theme?: string 
       },
       { language: options.language, theme: options.theme },
     )
-  await identityFixture(page, {
-    party: true,
+  const fixture = await identityFixture(page, {
+    party: options.party ?? true,
     sheet: 'complete',
     modules: ['party', 'combat', 'tabletop'],
-    player: true,
+    player: options.player ?? true,
+    linkedPlayer: options.player === false,
   })
   await combat.install(page)
   await server.install(page)
-  return { server, combat }
+  return { server, combat, fixture }
 }
 
 /** A scene with the own token, a hidden creature, DM notes, an event, a secret door, fog and light. */
 function seedScene(
   server: ReturnType<typeof tabletopServer>,
-  options: { effects?: boolean; fog?: boolean } = {},
+  options: { effects?: boolean; fog?: boolean; name?: string; crowd?: boolean } = {},
 ) {
   const scene = server.act('save_tabletop_scene', {
     target_campaign: campaignId,
@@ -45,7 +51,7 @@ function seedScene(
     expected_revision: null,
     request_id: 'scene',
     fields: {
-      name: 'Puente de Vado',
+      name: options.name ?? 'Puente de Vado',
       map_kind: 'blank',
       ground: 'grass',
       cols: 20,
@@ -85,6 +91,18 @@ function seedScene(
           data: { state: 'closed', secret: true },
         },
         { kind: 'prop', x: 3, y: 7, w: 1, h: 1, data: { prop: 'campfire' } },
+        // Goblins one square apart: their plates must never cover each other's tokens.
+        ...(options.crowd
+          ? Array.from({ length: 6 }, (_, i) => ({
+              kind: 'token',
+              x: 6 + i,
+              y: 9,
+              w: 1,
+              h: 1,
+              label: `Duende ${i + 1}`,
+              data: { color: 'slate' },
+            }))
+          : []),
       ],
     },
   }) as { id: string }
@@ -111,7 +129,7 @@ function seedScene(
 }
 
 /** Arin acts first, Bea is next; two goblins and a hidden creature complete the order. */
-function seedFight(combat: ReturnType<typeof combatServer>) {
+function seedFight(combat: ReturnType<typeof combatServer>, options: { long?: boolean } = {}) {
   const { encounter_id: id } = combat.act('create_encounter', {
     encounter_name: 'Paso del vado',
   }) as { encounter_id: string }
@@ -120,6 +138,15 @@ function seedFight(combat: ReturnType<typeof combatServer>) {
     entries: [
       { kind: 'character', character_id: characterId },
       { kind: 'character', character_id: beaId },
+      ...(options.long
+        ? [
+            {
+              kind: 'npc',
+              name: longName,
+              max_hp: 20,
+            },
+          ]
+        : []),
       { kind: 'npc', name: 'Wyvern oculta', hidden: true, max_hp: 30 },
       { kind: 'npc', name: 'Goblin', count: 2, max_hp: 7, armor_class: 12 },
     ],
@@ -183,6 +210,23 @@ async function pinch(page: Page, from: number, to: number) {
     })
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await cdp.detach()
+}
+
+/** The strip, the board and every key lie inside the viewport and can be pressed (a fixed layer that
+ * is wider than the screen hides its overflow, so the page's own scroll width cannot tell). */
+async function expectReachable(page: Page) {
+  const { width, height } = page.viewportSize()!
+  for (const selector of ['.tt-pm', '.tt-pm-strip', '.tt-viewport', '.tt-pm-fab', '.tt-pm-leave']) {
+    for (const element of await page.locator(selector).all()) {
+      const box = (await element.boundingBox())!
+      expect(box.x, selector).toBeGreaterThanOrEqual(0)
+      expect(box.y, selector).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width, selector).toBeLessThanOrEqual(width + 0.5)
+      expect(box.y + box.height, selector).toBeLessThanOrEqual(height + 0.5)
+    }
+  }
+  for (const key of await page.locator('.tt-pm-fab, .tt-pm-leave').all())
+    await key.click({ trial: true })
 }
 
 async function expectBoardIsThePage(page: Page, width: number, height: number) {
@@ -262,8 +306,28 @@ for (const view of [
     expect(errors).toEqual([])
   })
 
+/** The own token (with its name plate) is inside the board and off every floating key. */
+async function expectTokenClear(page: Page) {
+  const token = page.locator('.tt-viewport .tt-token', { hasText: 'Centinela' })
+  const box = (await token.boundingBox())!
+  const board = (await page.locator('.tt-viewport').boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(board.x)
+  expect(box.x + box.width).toBeLessThanOrEqual(board.x + board.width)
+  expect(box.y).toBeGreaterThanOrEqual(board.y)
+  expect(box.y + box.height).toBeLessThanOrEqual(board.y + board.height)
+  for (const key of await page.locator('.tt-pm-fab').all()) {
+    const k = (await key.boundingBox())!
+    const overlap =
+      box.x < k.x + k.width &&
+      k.x < box.x + box.width &&
+      box.y < k.y + k.height &&
+      k.y < box.y + box.height
+    expect(overlap).toBe(false)
+  }
+}
+
 for (const view of [{ width: 390, height: 844 }, landscape])
-  test(`RYT-132 centring keeps the own token clear of the floating keys at ${view.width}x${view.height}`, async ({
+  test(`RYT-132 the map opens on the own token and centring keeps it clear of the keys at ${view.width}x${view.height}`, async ({
     page,
   }, info) => {
     test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
@@ -272,26 +336,138 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     const { server } = await prepare(page)
     seedScene(server, { effects: true })
     await open(page)
-    const before = await zoomOf(page)
+    // On open: the map covers most of the board at a zoom where tokens read, token visible and clear.
+    await expect.poll(() => zoomOf(page)).toBeGreaterThanOrEqual(0.59)
+    const covered = await page.evaluate(() => {
+      const board = document.querySelector('.tt-viewport')!.getBoundingClientRect()
+      const world = document.querySelector('.tt-world')!.getBoundingClientRect()
+      const w = Math.max(0, Math.min(board.right, world.right) - Math.max(board.left, world.left))
+      const h = Math.max(0, Math.min(board.bottom, world.bottom) - Math.max(board.top, world.top))
+      return (w * h) / (board.width * board.height)
+    })
+    expect(covered).toBeGreaterThan(0.7)
+    await expectTokenClear(page)
+
+    // Zoomed far out, the key brings the token back, still clear.
+    await pinch(page, 120, 20)
+    await expect.poll(() => zoomOf(page)).toBeLessThan(0.45)
     await page.getByRole('button', { name: 'Centrar en mi ficha' }).click()
-    const token = page.locator('.tt-viewport .tt-token', { hasText: 'Centinela' })
-    await expect.poll(() => zoomOf(page)).toBeGreaterThan(before)
-    const box = (await token.boundingBox())!
-    const board = (await page.locator('.tt-viewport').boundingBox())!
-    // The token (with its name plate) is inside the board and off every key.
-    expect(box.x).toBeGreaterThanOrEqual(board.x)
-    expect(box.x + box.width).toBeLessThanOrEqual(board.x + board.width)
-    expect(box.y).toBeGreaterThanOrEqual(board.y)
-    expect(box.y + box.height).toBeLessThanOrEqual(board.y + board.height)
-    for (const key of await page.locator('.tt-pm-fab').all()) {
-      const k = (await key.boundingBox())!
-      const overlap =
-        box.x < k.x + k.width &&
-        k.x < box.x + box.width &&
-        box.y < k.y + k.height &&
-        k.y < box.y + box.height
-      expect(overlap).toBe(false)
+    await expect.poll(() => zoomOf(page)).toBeGreaterThanOrEqual(0.59)
+    await expectTokenClear(page)
+  })
+
+test('RYT-132 without a token the map opens covering the screen, and the fit key stays one tap away', async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server)
+  server.items.find((i) => i.label === 'Centinela')!.controllable = false
+  await open(page)
+  const board = (await page.locator('.tt-viewport').boundingBox())!
+  const world = (await page.locator('.tt-world').boundingBox())!
+  expect(world.height).toBeGreaterThanOrEqual(board.height - 1)
+  await page.getByRole('button', { name: 'Encajar el mapa' }).click()
+  await expect
+    .poll(async () => (await page.locator('.tt-world').boundingBox())!.width)
+    .toBeLessThan(board.width)
+})
+
+for (const view of [{ width: 390, height: 844 }, { width: 360, height: 640 }, landscape])
+  test(`RYT-132 a long name or scene title never pushes the keys off the screen at ${view.width}x${view.height}`, async ({
+    page,
+  }, info) => {
+    test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+    test.setTimeout(120_000)
+    await page.setViewportSize(view)
+    const { server, combat } = await prepare(page)
+    seedScene(server, { effects: true, name: longScene })
+    const { id, encounter } = seedFight(combat, { long: true })
+    // Pass turns until the long-named creature acts.
+    for (let i = 0; i < 8; i++) {
+      const current = encounter.combatants.find((c) => c.id === encounter.active)
+      if (current?.name === longName) break
+      combat.act('advance_turn', {
+        target_encounter: id,
+        direction: 1,
+        expected_active: encounter.active,
+        request_id: crypto.randomUUID(),
+      })
     }
+    await open(page)
+    await expect(page.locator('.tt-pm-strip')).toContainText('Guardián ancestral')
+    await expectReachable(page)
+    // The whole name is still in the page for assistive technology.
+    await expect(page.locator('.tt-pm-name', { hasText: longName }).first()).toHaveText(longName)
+    await audit(page)
+    if (process.env.RYT_EVIDENCE)
+      await page.screenshot({ path: `${evidenceDir}/long-names-${view.width}x${view.height}.png` })
+  })
+
+for (const view of [{ width: 390, height: 844 }, landscape])
+  test(`RYT-132 a scene title that long with no fight keeps the keys reachable at ${view.width}x${view.height}`, async ({
+    page,
+  }, info) => {
+    test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+    await page.setViewportSize(view)
+    const { server } = await prepare(page)
+    seedScene(server, { effects: true, name: longScene })
+    await open(page)
+    await expect(page.locator('.tt-pm-strip')).toContainText(longScene.slice(0, 20))
+    await expectReachable(page)
+    await audit(page)
+  })
+
+for (const view of [
+  { name: '360', width: 360, height: 640, size: '' },
+  { name: '260 (390 at 150%)', width: 260, height: 563, size: '' },
+  { name: '390 with text at 150%', width: 390, height: 844, size: '150%' },
+])
+  test(`RYT-132 the own-turn strip reflows without overlap at ${view.name}`, async ({
+    page,
+  }, info) => {
+    test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+    test.setTimeout(90_000)
+    await page.setViewportSize(view)
+    const { server, combat } = await prepare(page)
+    seedScene(server)
+    seedFight(combat)
+    await open(page)
+    if (view.size)
+      await page.evaluate((size) => (document.documentElement.style.fontSize = size), view.size)
+    const strip = page.locator('.tt-pm-strip')
+    await expect(strip).toContainText('¡Te toca!')
+    type Rect = { x: number; y: number; w: number; h: number } | null
+    const boxes = await strip.evaluate((el) => {
+      const box = (selector: string): Rect => {
+        const node = el.querySelector(selector)
+        if (!node || getComputedStyle(node).display === 'none') return null
+        const r = node.getBoundingClientRect()
+        return { x: r.x, y: r.y, w: r.width, h: r.height }
+      }
+      return {
+        state: box('.tt-pm-state'),
+        round: box('.tt-pm-round'),
+        next: box('.tt-pm-next'),
+        now: box('.tt-pm-now'),
+        stripWidth: el.getBoundingClientRect().width,
+      }
+    })
+    // "¡Te toca!" stays on one line, and nothing paints over anything else.
+    expect(boxes.state!.h).toBeLessThan(30)
+    const apart = (a: Rect, b: Rect) =>
+      !a ||
+      !b ||
+      a.x + a.w <= b.x + 0.5 ||
+      b.x + b.w <= a.x + 0.5 ||
+      a.y + a.h <= b.y + 0.5 ||
+      b.y + b.h <= a.y + 0.5
+    expect(apart(boxes.state, boxes.round)).toBe(true)
+    expect(apart(boxes.now, boxes.next)).toBe(true)
+    expect(boxes.state!.x + boxes.state!.w).toBeLessThanOrEqual(boxes.stripWidth + 0.5)
+    await expectReachable(page)
+    await audit(page)
   })
 
 test('RYT-132 Back closes the measure and the effects sheet before it leaves the map', async ({
@@ -329,8 +505,9 @@ test('RYT-132 Back closes the measure and the effects sheet before it leaves the
   await expect(sheet).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(sheet).toHaveCount(0)
+  // Escape works from the key itself (focus stays where the tap left it), not only from the board.
   await measure.click()
-  await page.getByRole('application').focus()
+  await expect(measure).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('Escape')
   await expect(measure).toHaveAttribute('aria-pressed', 'false')
   await expect(measure).toBeFocused()
@@ -347,44 +524,129 @@ test('RYT-132 measuring works by touch on the phone map', async ({ page }, info)
   seedScene(server)
   await open(page)
   await page.getByRole('button', { name: 'Medir' }).click()
+  // Two squares from the own token (the map opens at a zoom where seven would leave the screen).
   const world = (await page.locator('.tt-world').boundingBox())!
   const sq = world.width / 20
-  await page.touchscreen.tap(world.x + 3.5 * sq, world.y + 3.5 * sq)
-  await page.touchscreen.tap(world.x + 10.5 * sq, world.y + 3.5 * sq)
-  await expect(page.locator('.tt-pm-chip .tt-readout-feet')).toHaveText('35 pies')
+  const at = (await page.locator('.tt-viewport .tt-token', { hasText: 'Centinela' }).boundingBox())!
+  const [x, y] = [at.x + at.width / 2, at.y + sq / 2]
+  await page.touchscreen.tap(x, y)
+  await page.touchscreen.tap(x + 2 * sq, y)
+  await expect(page.locator('.tt-pm-chip .tt-readout-feet')).toHaveText('10 pies')
   await page.getByRole('button', { name: 'Borrar la medida' }).click()
   await expect(page.locator('.tt-pm-chip .tt-readout-feet')).toHaveCount(0)
 })
 
-test('RYT-132 labels keep their size at every zoom, and a pinch zooms the map', async ({
+test('RYT-132 labels keep their size while a square can hold them, then give way to the monograms', async ({
   page,
 }, info) => {
   test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
   test.setTimeout(90_000)
   const { server } = await prepare(page)
-  seedScene(server)
+  seedScene(server, { crowd: true })
   await open(page)
-  const name = page.locator('.tt-viewport .tt-token-name', { hasText: 'Bandido' })
+  const name = page.locator('.tt-viewport .tt-token-name', { hasText: 'Duende 3' })
   const plate = async () => {
     const box = (await name.boundingBox())!
-    return { width: box.width, height: box.height, zoom: await zoomOf(page) }
+    return { height: box.height, zoom: await zoomOf(page) }
   }
-  const fitted = await plate()
-  // Readable from the start (it was 13px times the zoom of the fitted board, about 4px).
-  expect(fitted.height).toBeGreaterThanOrEqual(14)
+  // Opens at a zoom where tokens read: plates show at the size of their text, no wider than three squares.
+  await expect(name).toBeVisible()
+  const opened = await plate()
+  expect(opened.zoom).toBeGreaterThanOrEqual(0.59)
+  expect(opened.height).toBeGreaterThanOrEqual(14)
+  expect((await name.boundingBox())!.width).toBeLessThanOrEqual(3 * 64 * opened.zoom + 1)
 
-  // The pinch (two touches spreading apart) zooms in; the buttons below are not involved.
+  // A pinch zooms in; the plate keeps its size on screen (the map and tokens grew).
   await pinch(page, 40, 120)
-  await expect.poll(() => zoomOf(page)).toBeGreaterThan(fitted.zoom * 1.5)
+  await expect.poll(() => zoomOf(page)).toBeGreaterThan(opened.zoom * 1.4)
+  await expect(name).toBeVisible()
   const closer = await plate()
-  expect(Math.abs(closer.height - fitted.height)).toBeLessThanOrEqual(1.5)
-  expect(Math.abs(closer.width - fitted.width)).toBeLessThanOrEqual(2)
+  expect(Math.abs(closer.height - opened.height)).toBeLessThanOrEqual(1.5)
 
-  // And back out, past the fit: the same size again.
-  await pinch(page, 120, 20)
-  await expect.poll(() => zoomOf(page)).toBeLessThan(closer.zoom / 2)
-  const farther = await plate()
-  expect(Math.abs(farther.height - fitted.height)).toBeLessThanOrEqual(1.5)
+  // Zoomed far out the squares are small: no plate may cover the neighbours, the tokens show alone.
+  await pinch(page, 120, 15)
+  await expect.poll(() => zoomOf(page)).toBeLessThan(0.5)
+  await expect(page.locator('.tt-world-wrap')).toHaveAttribute('data-labels', 'hidden')
+  await expect(page.locator('.tt-viewport .tt-token-name:visible')).toHaveCount(0)
+  await expect(page.locator('.tt-viewport .tt-token')).toHaveCount(8)
+})
+
+test('RYT-132 notices that ask for something stay on the phone map', async ({ page }, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  // A rest the DM asked for: the Player can still read it and vote.
+  const { server, fixture } = await prepare(page)
+  seedScene(server)
+  fixture.openRest('long', { user: dmId, character: null })
+  await open(page)
+  const banner = page.getByRole('region', { name: 'Descanso del grupo' })
+  await expect(banner).toBeVisible()
+  await expectTouchTargets(banner, 'button:visible')
+  const strip = (await page.locator('.tt-pm-strip').boundingBox())!
+  expect((await banner.boundingBox())!.y).toBeGreaterThanOrEqual(strip.y + strip.height - 1)
+  await expectReachable(page)
+  await banner.getByRole('button', { name: 'Votar' }).click()
+  await expect(page.getByRole('dialog', { name: 'Descanso del grupo' })).toBeVisible()
+  await audit(page)
+})
+
+test('RYT-132 a DM in the Player view can still leave it from the phone map', async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page, { player: false, party: false })
+  seedScene(server)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
+  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
+  const leave = page.getByRole('button', { name: 'Volver a vista DM' })
+  await expect(leave).toBeVisible()
+  await expectTouchTargets(page.locator('.preview-banner'), 'button:visible')
+  await expectReachable(page)
+  await leave.click()
+  await expect(page.locator('.tt-pm')).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Mesa' })).toBeVisible()
+})
+
+test('RYT-132 rotating the phone keeps the own token on screen, and the sheet closes with the mode', async ({
+  page,
+}, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server, { effects: true })
+  await open(page)
+  await expectTokenClear(page)
+  // Pan the view by hand, then turn the phone: the world point at the centre stays there.
+  await page.setViewportSize(landscape)
+  await expect(page.locator('.tt-viewport .tt-token', { hasText: 'Centinela' })).toBeInViewport()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('.tt-viewport .tt-token', { hasText: 'Centinela' })).toBeInViewport()
+  // Past the phone threshold the page layout returns and the open sheet is gone, not waiting.
+  await page.getByRole('button', { name: 'Efectos de mi ficha' }).click()
+  await expect(page.getByRole('dialog', { name: 'Efectos de mi ficha' })).toBeVisible()
+  await page.setViewportSize({ width: 820, height: 1180 })
+  await expect(page.locator('.tt-pm')).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: 'Efectos de mi ficha' })).toHaveCount(0)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('.tt-pm')).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Efectos de mi ficha' })).toHaveCount(0)
+  await expect(page.locator('.tt-viewport .tt-token', { hasText: 'Centinela' })).toBeInViewport()
+})
+
+test('RYT-132 a tap on the map does not draw the keyboard cursor', async ({ page }, info) => {
+  test.skip(!mobile(info), 'The phone layout runs at the 390px project.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server)
+  await open(page)
+  await page.getByRole('button', { name: 'Medir' }).click()
+  const board = (await page.locator('.tt-viewport').boundingBox())!
+  await page.touchscreen.tap(board.x + 100, board.y + 200)
+  await expect(page.locator('.tt-viewport rect[stroke="var(--app-focus)"]')).toHaveCount(0)
 })
 
 test('RYT-132 the keys show a visible focus and the strip leads back to the campaign', async ({
@@ -510,10 +772,12 @@ for (const view of [{ width: 390, height: 844 }, landscape])
     await open(page)
     const name = `${evidenceDir}/open-${view.width}x${view.height}`
     await expect(page.locator('.tt-viewport .tt-token')).toHaveCount(2)
-    await page.screenshot({ path: `${name}-fitted.png` })
-    const fitted = await zoomOf(page)
+    await page.screenshot({ path: `${name}-opened.png` })
+    await pinch(page, 120, 15)
+    await expect.poll(() => zoomOf(page)).toBeLessThan(0.5)
+    await page.screenshot({ path: `${name}-zoomed-out.png` })
     await page.getByRole('button', { name: 'Centrar en mi ficha' }).click()
-    await expect.poll(() => zoomOf(page)).toBeGreaterThan(fitted)
+    await expect.poll(() => zoomOf(page)).toBeGreaterThan(0.58)
     await page.screenshot({ path: `${name}-centred.png` })
     const centred = await zoomOf(page)
     await pinch(page, 40, 110)

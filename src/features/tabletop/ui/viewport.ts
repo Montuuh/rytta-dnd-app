@@ -80,15 +80,39 @@ export function useBoardView(
   const pinch = useRef<{ d: number; cx: number; cy: number; view: ViewState } | null>(null)
   /** Until the person pans or zooms, the board refits whenever its box changes size. */
   const touched = useRef(false)
+  /** True once a person (not the app framing the map) has moved the view. */
+  const interacted = useRef(false)
+  /** The viewport's size at the last fit or move, so a resize can keep the centre of the view. */
+  const lastSize = useRef<{ w: number; h: number; cols: number; rows: number } | null>(null)
+  const touch = () => {
+    touched.current = true
+    interacted.current = true
+  }
   const cols = size?.cols ?? 0
   const rows = size?.rows ?? 0
 
-  // Fit per scene size and on resize, until the person moves the view themselves.
+  // Fit per scene size and on resize, until the person moves the view themselves. A view that was
+  // moved keeps the world point at its centre when the box changes (rotation, split screen, or the
+  // viewport element being replaced when the layout switches).
   useEffect(() => {
     if (!el || !cols || !rows) return
-    touched.current = false
     const run = () => {
-      if (touched.current || el.clientWidth === 0) return
+      const w = el.clientWidth
+      const h = el.clientHeight
+      if (w === 0) return
+      const previous = lastSize.current
+      const sameScene = previous?.cols === cols && previous.rows === rows
+      lastSize.current = { w, h, cols, rows }
+      if (previous && !sameScene) {
+        touched.current = false
+        interacted.current = false
+      }
+      if (touched.current) {
+        const dx = previous && sameScene ? (w - previous.w) / 2 : 0
+        const dy = previous && sameScene ? (h - previous.h) / 2 : 0
+        if (dx || dy) setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }))
+        return
+      }
       setView(fitView(el, { cols, rows }))
     }
     const observer = new ResizeObserver(run)
@@ -101,7 +125,7 @@ export function useBoardView(
     const wheel = (event: WheelEvent) => {
       event.preventDefault()
       const factor = Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015))
-      touched.current = true
+      touch()
       setView((v) => zoomView(el, v, factor, event.clientX, event.clientY))
     }
     el.addEventListener('wheel', wheel, { passive: false })
@@ -119,7 +143,7 @@ export function useBoardView(
     if (el && cols && rows) setView(fitView(el, { cols, rows }))
   }
   const zoomAt = (factor: number) => {
-    touched.current = true
+    touch()
     if (el) setView((v) => zoomView(el, v, factor))
   }
   /** Pans (keeping the zoom) so a box in squares is inside the viewport, centring it if not. */
@@ -138,7 +162,7 @@ export function useBoardView(
       bottom <= el.clientHeight - margin
     )
       return
-    touched.current = true
+    touch()
     setView({
       z: v.z,
       x: el.clientWidth / 2 - (x + w / 2) * U * v.z,
@@ -148,15 +172,17 @@ export function useBoardView(
   /** Pans to centre a point in squares, at a zoom where tokens read (RYT-126 J4-26). */
   const centerOn = (x: number, y: number) => {
     if (!el) return
-    touched.current = true
+    touch()
     setView((v) => {
       const z = Math.max(v.z, 0.6)
       return { z, x: el.clientWidth / 2 - x * U * z, y: el.clientHeight / 2 - y * U * z }
     })
   }
-  /** Puts the view where a caller worked it out (centring clear of floating buttons). */
-  const place = (next: ViewState) => {
+  /** Puts the view where a caller worked it out (centring clear of floating buttons). `framing`
+   * is the app's own opening view: it does not count as the person moving the map. */
+  const place = (next: ViewState, framing = false) => {
     touched.current = true
+    if (!framing) interacted.current = true
     setView({ ...next, z: Math.max(minZ, Math.min(maxZ, next.z)) })
   }
   /** The viewport's size and place on the page, or null before it is mounted. */
@@ -209,7 +235,7 @@ export function useBoardView(
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
     const p = pinch.current
     if (p && pointers.current.size >= 2 && el) {
-      touched.current = true
+      touch()
       const [a, b] = [...pointers.current.values()]
       const d = Math.hypot(a!.x - b!.x, a!.y - b!.y)
       const cx = (a!.x + b!.x) / 2
@@ -232,7 +258,7 @@ export function useBoardView(
     if (!g.moved) return
     if (g.claimed) latest.current.handlers.onMove?.(toWorld(event.clientX, event.clientY))
     else if (g.pan) {
-      touched.current = true
+      touch()
       setView((v) => ({ ...v, x: g.vx + event.clientX - g.sx, y: g.vy + event.clientY - g.sy }))
     }
   }
@@ -272,6 +298,8 @@ export function useBoardView(
     centerOn,
     place,
     box,
+    /** True once the person has panned, zoomed or centred the view. */
+    interacted: () => interacted.current,
     reveal,
     /** Spread on the viewport element: its callback ref and pointer handlers. */
     bind: {

@@ -3022,11 +3022,28 @@ html.tt-table-mode {
    rest and three round keys floating over it. Name plates keep their size on screen at every zoom
    (`--tt-label-k` is the inverse of the board's zoom). Semantic tokens only, so both themes read. */
 
-.app-layout:has(.tt-pm) :is(.app-header, .top-notices, .bottom-nav) {
+/* `html.tt-pm-mode` is set by the map itself (it works where `:has()` does not). Only the header and
+   the bottom bar go; a notice that asks for something (a rest vote, leaving the Player view) stays,
+   right under the strip. In a browser without `:has()` the map still covers the page chrome. */
+html.tt-pm-mode :is(.app-header, .bottom-nav) {
   display: none;
 }
-html:has(.tt-pm) {
+html.tt-pm-mode .top-notices {
+  position: fixed;
+  z-index: 101;
+  top: var(--tt-pm-strip, 56px);
+  left: 0;
+  right: 0;
+  max-height: 40dvh;
+  overflow-y: auto;
+}
+html.tt-pm-mode .update-notice {
+  top: calc(var(--tt-pm-strip, 56px) + 0.5rem);
+  bottom: auto;
+}
+html.tt-pm-mode {
   overflow: hidden;
+  overscroll-behavior: none;
   scrollbar-gutter: auto;
 }
 .tt-pm {
@@ -3034,6 +3051,8 @@ html:has(.tt-pm) {
   inset: 0;
   z-index: 100;
   display: grid;
+  /* A single column that can shrink: a long name must never widen the map past the screen. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   background: var(--app-bg);
   color: var(--app-text);
@@ -3048,6 +3067,9 @@ html:has(.tt-pm) {
 }
 
 .tt-pm-strip {
+  container-type: inline-size;
+  min-width: 0;
+  touch-action: manipulation;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -3114,6 +3136,14 @@ html:has(.tt-pm) {
 .tt-pm-now > div,
 .tt-pm-next {
   min-width: 0;
+  overflow: hidden;
+}
+.tt-pm-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: none;
+  white-space: nowrap;
 }
 .tt-pm-next {
   flex: 0 1 36%;
@@ -3136,12 +3166,28 @@ html:has(.tt-pm) {
   color: inherit;
 }
 .tt-pm-round {
-  margin-left: auto;
+  min-width: 0;
   padding-left: 0.5rem;
+  overflow: hidden;
   font-weight: 400;
   letter-spacing: 0;
+  text-overflow: ellipsis;
   text-transform: none;
   white-space: nowrap;
+}
+/* Narrow strips (a small phone, or text at 150%) lose the round first, then "next" moves to a row of
+   its own: nothing overlaps and nothing is cut off. */
+@container (max-width: 24rem) {
+  .tt-pm-round {
+    display: none;
+  }
+}
+@container (max-width: 18rem) {
+  .tt-pm-next {
+    flex: 1 0 100%;
+    padding: 0 0.5rem 0.25rem 2.75rem;
+    border-left: 0;
+  }
 }
 .tt-pm-name {
   margin: 0;
@@ -3188,6 +3234,7 @@ html:has(.tt-pm) {
   width: 48px;
   height: 48px;
   padding: 0;
+  touch-action: manipulation;
   border: 1.5px solid var(--app-border);
   border-radius: 50%;
   background: var(--app-surface);
@@ -3232,19 +3279,24 @@ html:has(.tt-pm) {
   font-size: 1.25rem;
   font-weight: 700;
 }
-.mantine-Drawer-body .tt-player-effects {
+.tt-pm-sheet .tt-player-effects {
   max-height: none;
   overflow: visible;
 }
 
-/* Name plates and the acting ring keep their size on screen at every zoom. */
+/* Name plates and the acting ring keep their size on screen at every zoom, in the range where a square
+   can hold them: a plate is at most three squares wide, and below the zoom threshold (`labelsShown`)
+   the tokens show their own monogram alone. The ring is capped so it never outgrows its neighbours. */
 .tt-pm .tt-token-name {
-  max-width: calc(112px * var(--tt-label-k, 1));
+  max-width: min(calc(112px * var(--tt-label-k, 1)), 192px);
   padding: calc(1px * var(--tt-label-k, 1)) calc(6px * var(--tt-label-k, 1));
   border-radius: calc(6px * var(--tt-label-k, 1));
   font-size: calc(14px * var(--tt-label-k, 1));
 }
+.tt-pm .tt-world-wrap[data-labels='hidden'] .tt-token-name {
+  display: none;
+}
 .tt-pm .tt-token.is-active::after {
-  inset: calc(-6px * var(--tt-label-k, 1));
-  border-width: calc(3px * var(--tt-label-k, 1));
+  inset: calc(-6px * min(var(--tt-label-k, 1), 1.5));
+  border-width: calc(3px * min(var(--tt-label-k, 1), 1.5));
 }

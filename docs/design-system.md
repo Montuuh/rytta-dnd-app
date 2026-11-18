@@ -493,3 +493,13 @@ Name plates, the acting ring and the measuring readout keep their size on screen
 (`--tt-label-k`, the inverse of the zoom). Tablets and laptops keep the page layout. The phone map
 reads the Player projection only: hidden creatures, notes, events, secret doors, the room list and
 fog stay as hidden as on the page layout.
+
+RYT-132 review changes: the map opens on the own token at a zoom where the map covers the screen
+(covering the screen, centred, when the Player has no token); it keeps the world point at its centre
+across rotation and a layout switch. Name plates appear from a zoom where a square can hold them
+(`labelMinZoom`), are at most three squares wide, and give way to the tokens' monograms below it.
+Long names and scene titles end in an ellipsis (the full text stays in the page); the strip reflows
+without overlap at large text (round first, then "next" on its own row). Notices that ask for
+something (a rest vote, leaving the Player view) stay, right under the strip, and the update notice
+moves to the top. The page chrome is removed by `html.tt-pm-mode`, a class the map sets itself.
+Not done: keys on the left for left-handed use.

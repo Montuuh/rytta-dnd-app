@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { config } from '@/shared/lib/config'
 import { trackLiveChannel } from '@/shared/lib/live-poll'
-import { restError, restStateSchema, type RestAction } from '../domain/rest'
+import { hitDiceResetSchema, restError, restStateSchema, type RestAction } from '../domain/rest'
 
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw new Error('Demo is read-only')
@@ -46,6 +46,20 @@ export async function changeRest(campaignId: string, action: RestAction) {
           })
   if (result.error) throw new Error(restError(result.error.message))
   return restStateSchema.parse(result.data)
+}
+
+/** RYT-137 (DM): sets a character's hit-dice roll aside so they can roll again, and removes the
+ * vote made with it. The request id names the intent: a retry sends the same one. */
+export async function resetHitDiceRoll(campaignId: string, characterId: string, requestId: string) {
+  const { data, error } = await (
+    await client()
+  ).rpc('reset_hit_dice_roll', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_character: z.uuid().parse(characterId),
+    request_id: z.uuid().parse(requestId),
+  })
+  if (error) throw new Error(restError(error.message))
+  return hitDiceResetSchema.parse(data)
 }
 
 /**

@@ -2446,3 +2446,8 @@ button.combat-image-picker:focus-visible {
 .combat-table-screen {
   min-height: 44px;
 }
+
+/* A destructive menu item in the theme's own danger colour (AA in both themes). */
+.combat-menu .combat-menu-danger {
+  color: var(--danger);
+}

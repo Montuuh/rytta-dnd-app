@@ -147,6 +147,28 @@ creation and editing of definitions in part 2. Neither switch is executable by c
   Not tested: real Storage uploads and signed URLs for shop images, PostgREST numeric
   serialisation and real concurrency.
 
+One roll per fight and per rest (RYT-137, migration `20261204120000`): with dice in the app the
+server owns the rule. `log_roll` (same signature) links a server roll of initiative to the live
+encounter in which the character is a visible combatant, and a server roll of hit dice to the
+open rest; the client sends no context. A second roll of that kind for the character while the
+first is in force is refused with `Already rolled`; an initiative roll must be `d20` with a
+modifier from -20 to 30 and hit dice N dice of the sheet's die with N up to the dice left
+(`Invalid roll`). In `dice_mode = 'app'`, `set_initiative` and `vote_rest` of a non-DM must match
+the character's roll in force (`Roll required`); the DM is never restricted.
+
+- `get_roll_context(target_campaign)` returns the live encounter, the open rest, who has used
+  their roll (`spent`: the DM every character, a Player their own, no roll content) and the rolls
+  in force the caller may read, under exactly the `campaign_rolls_read` rule.
+- `reset_initiative_roll(target_campaign, target_character, reroll_expression, request_id)` and
+  `reset_hit_dice_roll(target_campaign, target_character, request_id)` are DM only, campaign
+  locked and idempotent (`Request mismatch` on another payload); the second removes the vote made
+  with the roll. SQL tests deny anon, outsiders, Players and a DM of another campaign.
+- Known and accepted: the flat modifier of an expression (initiative bonus, Constitution bonus)
+  is declared by the client, since the server knows neither (the d20 and the hit dice are the
+  server's); the DM can read the expression. A DM re-roll sent straight to the RPC for a hidden
+  combatant is stored with the campaign's visibility, not specially hidden. The frontend only
+  offers the resets where `get_roll_context` shows a roll in force.
+
 ## Constraints and planned operations
 
 Assigned characters require membership in the same campaign; unassigned characters have null user_id. Resources use a composite

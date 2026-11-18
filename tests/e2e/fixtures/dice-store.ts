@@ -5,6 +5,11 @@
  * can be shared by several signed-in pages (`identityFixture(page, { dice: store })`) to see the
  * same table from a DM and from other Players. Authorization itself is tested against PostgreSQL
  * in tests/database.
+ *
+ * RYT-137 (20261204120000): app rolls of initiative and hit dice are linked to the live fight or
+ * the open rest, one per character is in force at a time (`Already rolled`), the DM resets them,
+ * and `get_roll_context` reports the one-roll state. The fixture does not own fights or rests: the
+ * page fixtures wire them in through `store.world`.
  */
 export type DiceMode = 'physical' | 'app' | 'player'
 export type RollVisibility = 'table' | 'roller' | 'roller_dm'
@@ -21,6 +26,18 @@ export type StoredRoll = {
   source: 'app' | 'recorded'
   visibility: RollVisibility
   created_at: string
+  encounter_id?: string | null
+  rest_id?: string | null
+  superseded_at?: string | null
+}
+/** What the server knows outside the roll log: the live fight, the open rest, the hit dice. */
+export type DiceWorld = {
+  /** The live encounter and the characters in it that are not hidden; null without one. */
+  fight: (campaignId: string) => { id: string; characters: string[] } | null
+  /** The open, unexpired rest request; null without one. */
+  openRest: () => string | null
+  /** The sheet's hit die and the hit dice a character has left; null when it has no sheet. */
+  hitDice: (characterId: string) => { die: number; left: number } | null
 }
 export type DiceReply = { status: number; body: unknown }
 type Failure = { code: string; message: string }
@@ -113,13 +130,95 @@ export function createDiceStore(
     revision: 0,
     settingsRequests: new Map<string, { actor: string; payload: string; result: unknown }>(),
     /** The next set_dice_settings or log_roll fails with this server message (nothing applied). */
-    failNext: null as { rpc: 'set_dice_settings' | 'log_roll'; message: string } | null,
+    failNext: null as {
+      rpc: 'set_dice_settings' | 'log_roll' | 'reset_hit_dice_roll' | 'reset_initiative_roll'
+      message: string
+    } | null,
     /** The next log_roll is stored but its reply is lost (503): a retry with the same request id
      * must return the stored roll. */
     loseReplyNext: false,
+    /** The next reset (hit dice or initiative) is applied but its reply is lost (503): a retry with
+     * the same request id must return the first result. */
+    loseResetReplyNext: false,
     /** Deterministic server dice for source 'app' (consumed in order, else random). */
     serverDice: [] as number[],
     clock: () => Date.now(),
+    /** RYT-137: wired by the page fixtures (rest and combat); nothing is live by default. */
+    world: {
+      fight: () => null,
+      openRest: () => null,
+      hitDice: () => null,
+    } as DiceWorld,
+    /** Rests completed so far: a hit-dice roll lasts until one completes after it. */
+    restsCompleted: 0,
+    /** The rests completed when each roll was made. */
+    epochs: new Map<string, number>(),
+    resetRequests: new Map<string, { actor: string; payload: string; result: unknown }>(),
+    /** private.roll_in_force: a linked app roll, not superseded, that still counts. */
+    inForce(roll: StoredRoll) {
+      if (roll.source !== 'app' || roll.superseded_at) return false
+      if (roll.kind === 'initiative')
+        return (
+          Boolean(roll.encounter_id) &&
+          roll.encounter_id === store.world.fight(roll.campaign_id)?.id
+        )
+      if (roll.kind === 'hit_die')
+        return Boolean(roll.rest_id) && store.epochs.get(roll.id) === store.restsCompleted
+      return false
+    },
+    /** The server's roll of an expression (the faces given to the store first, else random). */
+    evaluate(expression: string) {
+      const probe = rollEval(expression, null)
+      if (!probe) return null
+      const forced =
+        store.serverDice.length >= probe.dice.length
+          ? rollEval(expression, store.serverDice.slice(0, probe.dice.length))
+          : null
+      if (forced) store.serverDice = store.serverDice.slice(probe.dice.length)
+      return forced ?? probe
+    },
+    /** Sets a character's roll of a kind aside (the DM's reset); returns the roll set aside. */
+    supersede(campaignId: string, characterId: string, kind: 'initiative' | 'hit_die') {
+      const found = store.rolls
+        .filter(
+          (roll) =>
+            roll.campaign_id === campaignId &&
+            roll.character_id === characterId &&
+            roll.kind === kind &&
+            store.inForce(roll),
+        )
+        .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id))
+      for (const roll of found) roll.superseded_at = new Date(store.clock()).toISOString()
+      if (found.length) store.revision += 1
+      return found[0]?.id ?? null
+    },
+    /** get_roll_context for one viewer. `owner` says who plays a character. */
+    context(
+      viewer: string,
+      member: DiceMember | undefined,
+      campaignId: string,
+      owner: (characterId: string) => string | null | undefined,
+    ) {
+      if (!member?.active) return null
+      const dm = member.role === 'dm'
+      const current = store.rolls
+        .filter(
+          (roll) =>
+            roll.campaign_id === campaignId &&
+            (roll.kind === 'initiative' || roll.kind === 'hit_die') &&
+            store.inForce(roll),
+        )
+        .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+      const readable = new Set(store.readable(viewer, member, campaignId).map((roll) => roll.id))
+      return {
+        encounter_id: store.world.fight(campaignId)?.id ?? null,
+        rest_id: store.world.openRest(),
+        spent: current
+          .filter((roll) => dm || owner(roll.character_id ?? '') === viewer)
+          .map((roll) => ({ character_id: roll.character_id, kind: roll.kind })),
+        rolls: current.filter((roll) => readable.has(roll.id)),
+      }
+    },
     settings() {
       return { dice_mode: store.dice_mode, roll_visibility: store.roll_visibility }
     },
@@ -229,15 +328,31 @@ export function createDiceStore(
       if (body.roll_source === 'app') {
         if (!dm && store.dice_mode === 'physical') return refuse('P0001', 'Dice mode')
         if (given !== null || body.recorded_total != null) return refuse('22023', 'Invalid roll')
-        const probe = rollEval(expression, null)
-        if (probe) {
-          const forced =
-            store.serverDice.length >= probe.dice.length
-              ? rollEval(expression, store.serverDice.slice(0, probe.dice.length))
-              : null
-          if (forced) store.serverDice = store.serverDice.slice(probe.dice.length)
-          dice = (forced ?? probe).dice
-          total = (forced ?? probe).total
+        // What a server roll for a character may be: initiative is a d20 with a modifier from
+        // -20 to 30, hit dice are N dice of the sheet's die with N up to the dice left.
+        if (target !== null && body.roll_kind === 'initiative') {
+          const match = /^1?d20(?:([+-])(\d{1,2}))?$/.exec(expression)
+          const modifier = match?.[2] ? Number(match[2]) * (match[1] === '-' ? -1 : 1) : 0
+          if (!match || modifier < -20 || modifier > 30) return refuse('22023', 'Invalid roll')
+        }
+        if (target !== null && body.roll_kind === 'hit_die') {
+          const sheet = store.world.hitDice(target)
+          const match = /^(\d{0,2})d(\d{1,3})(?:[+-]\d{1,3})?$/.exec(expression)
+          const count = match ? Number(match[1] || 1) : 0
+          if (
+            !sheet ||
+            !match ||
+            ![6, 8, 10, 12].includes(sheet.die) ||
+            Number(match[2]) !== sheet.die ||
+            count < 1 ||
+            count > sheet.left
+          )
+            return refuse('22023', 'Invalid roll')
+        }
+        const evaluated = store.evaluate(expression)
+        if (evaluated) {
+          dice = evaluated.dice
+          total = evaluated.total
         }
       } else if (given === null || given.length === 0) {
         const valid = rollEval(expression, null)
@@ -260,6 +375,26 @@ export function createDiceStore(
         ).length >= 30
       )
         return refuse('P0001', 'Roll limit')
+      // The fight or rest of a server roll for a character is derived here, never sent.
+      let encounterId: string | null = null
+      let restId: string | null = null
+      if (body.roll_source === 'app' && target !== null) {
+        const fight = store.world.fight(String(body.target_campaign))
+        if (body.roll_kind === 'initiative')
+          encounterId = fight?.characters.includes(target) ? fight.id : null
+        if (body.roll_kind === 'hit_die') restId = store.world.openRest()
+        if (
+          (encounterId || restId) &&
+          store.rolls.some(
+            (roll) =>
+              roll.campaign_id === body.target_campaign &&
+              roll.character_id === target &&
+              roll.kind === body.roll_kind &&
+              store.inForce(roll),
+          )
+        )
+          return refuse('P0001', 'Already rolled')
+      }
       const saved: StoredRoll = {
         id,
         campaign_id: String(body.target_campaign),
@@ -273,7 +408,11 @@ export function createDiceStore(
         source: body.roll_source as 'app' | 'recorded',
         visibility: store.roll_visibility,
         created_at: new Date(now).toISOString(),
+        encounter_id: encounterId,
+        rest_id: restId,
+        superseded_at: null,
       }
+      store.epochs.set(id, store.restsCompleted)
       store.rolls.push(saved)
       store.rolls = store.rolls
         .sort(
@@ -286,6 +425,40 @@ export function createDiceStore(
         return { status: 503, body: { message: 'Unavailable' } }
       }
       return { status: 200, body: saved }
+    },
+    /** reset_hit_dice_roll: the DM sets a character's hit-dice roll aside; the vote made with it
+     * goes too (`removeVote` says whether there was one). Idempotent on the request id. */
+    resetHitDice(
+      actor: string,
+      member: DiceMember | undefined,
+      character: (id: string) => DiceCharacter | undefined,
+      body: Record<string, unknown>,
+      removeVote: (characterId: string) => boolean,
+    ): DiceReply {
+      if (!member?.active || member.role !== 'dm') return refuse('42501', 'Forbidden')
+      if (!body.request_id) return refuse('22023', 'Invalid request')
+      const payload = JSON.stringify([body.target_campaign, body.target_character])
+      const prior = store.resetRequests.get(String(body.request_id))
+      if (prior)
+        return prior.actor === actor && prior.payload === payload
+          ? { status: 200, body: prior.result }
+          : refuse('22023', 'Request mismatch')
+      if (store.failNext?.rpc === 'reset_hit_dice_roll') {
+        const { message } = store.failNext
+        store.failNext = null
+        return { status: message === 'Unavailable' ? 503 : 400, body: { message } }
+      }
+      const target = String(body.target_character)
+      if (!character(target)) return refuse('42501', 'Character unavailable')
+      const old = store.supersede(String(body.target_campaign), target, 'hit_die')
+      const cleared = old !== null && store.world.openRest() !== null ? removeVote(target) : false
+      const result = { superseded_roll: old, vote_cleared: cleared }
+      store.resetRequests.set(String(body.request_id), { actor, payload, result })
+      if (store.loseResetReplyNext) {
+        store.loseResetReplyNext = false
+        return { status: 503, body: { message: 'Unavailable' } }
+      }
+      return { status: 200, body: result }
     },
   }
   return store

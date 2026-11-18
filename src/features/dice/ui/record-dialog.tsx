@@ -168,7 +168,9 @@ function RecordForm({
     failure === 'dice-mode' ||
     failure === 'request-mismatch' ||
     failure === 'character-unavailable' ||
-    failure === 'roll-limit'
+    failure === 'roll-limit' ||
+    failure === 'already-rolled' ||
+    failure === 'roll-required'
       ? failure
       : 'unavailable'
   return (

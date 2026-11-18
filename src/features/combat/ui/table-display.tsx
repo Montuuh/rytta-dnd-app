@@ -18,7 +18,6 @@ import {
   canEnterInitiative,
   deathState,
   initiativeProgress,
-  initiativeStartedAt,
   initiativeTies,
   isHiddenTurn,
   nextUp,
@@ -308,7 +307,7 @@ export function TableDisplay({
                 <InitiativeEntry
                   campaignId={campaignId}
                   combatant={c}
-                  since={initiativeStartedAt(state.events)}
+                  encounterId={encounter.id}
                   editing={c.initiative !== undefined}
                   pending={pending}
                   cancel={() => {

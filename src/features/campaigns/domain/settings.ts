@@ -66,6 +66,12 @@ export const campaignRollSchema = z.object({
    * the current setting. */
   visibility: z.enum(rollVisibilities),
   created_at: z.iso.datetime({ offset: true }),
+  /** RYT-137: the fight an app initiative roll belongs to, and the rest an app hit-dice roll was
+   * made in. Set by the server, never sent by the client; null for every other roll. */
+  encounter_id: z.uuid().nullable().default(null),
+  rest_id: z.uuid().nullable().default(null),
+  /** Set when the DM cleared or re-rolled it: a superseded roll no longer counts. */
+  superseded_at: z.iso.datetime({ offset: true }).nullable().default(null),
 })
 export type CampaignRoll = z.infer<typeof campaignRollSchema>
 
@@ -122,6 +128,8 @@ export type CampaignSettingsReason =
   | 'character-absent'
   | 'dice-mode'
   | 'roll-limit'
+  | 'already-rolled'
+  | 'roll-required'
   | 'unavailable'
 export class CampaignSettingsError extends Error {
   readonly reason: CampaignSettingsReason
@@ -141,6 +149,8 @@ const settingsMessages: [string, CampaignSettingsReason][] = [
   ['Character absent', 'character-absent'],
   ['Dice mode', 'dice-mode'],
   ['Roll limit', 'roll-limit'],
+  ['Already rolled', 'already-rolled'],
+  ['Roll required', 'roll-required'],
   ['Invalid level', 'invalid'],
   ['Invalid settings', 'invalid'],
   ['Invalid roll', 'invalid'],

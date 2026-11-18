@@ -20,6 +20,11 @@ export type CombatFunctions = {
     tiebreak_bonus: number | null
   }>
   roll_npc_initiative: Mutation<{ target_encounter: string }>
+  /** RYT-137: the DM clears (null) or re-rolls a Player's initiative roll. */
+  reset_initiative_roll: Mutation<{
+    target_character: string
+    reroll_expression: string | null
+  }>
   set_turn_order: Mutation<{ target_encounter: string; ordered_ids: string[] }>
   advance_turn: Mutation<{
     target_encounter: string

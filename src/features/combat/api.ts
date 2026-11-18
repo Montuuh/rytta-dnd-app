@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
+import { rollContextScope } from '@/features/dice'
 import {
   changeCombat,
   combatImageUrl,
@@ -140,6 +141,10 @@ export function useCombatAction(campaignId: string) {
     onSettled: async (_result, _error, action) => {
       if (!current() || !userId) return
       await cache.invalidateQueries({ queryKey: combatScope(userId, campaignId) })
+      // RYT-137: a fight starting or ending, a combatant leaving and the DM's resets change which
+      // rolls the server counts.
+      if (['resetRoll', 'initiative', 'status', 'remove', 'update', 'add'].includes(action.kind))
+        await cache.invalidateQueries({ queryKey: rollContextScope(userId, campaignId) })
       // Character hit points and conditions are shared with the sheet and the party page.
       if (['hp', 'condition', 'deathSave', 'effect', 'removeEffect', 'undo'].includes(action.kind))
         await cache.invalidateQueries({

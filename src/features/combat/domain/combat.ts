@@ -354,6 +354,9 @@ export type CombatAction =
   | { kind: 'remove'; combatantId: string }
   | { kind: 'initiative'; combatantId: string; total: number; bonus: number | null }
   | { kind: 'roll'; encounterId: string }
+  /** RYT-137 (DM): clear a Player's initiative roll (expression null) or re-roll it on the
+   * server. The request id belongs to the intent: a retry sends the same one. */
+  | { kind: 'resetRoll'; characterId: string; expression: string | null; requestId: string }
   | { kind: 'order'; encounterId: string; ids: string[] }
   | { kind: 'turn'; encounterId: string; direction: 1 | -1; expected: string | null }
   | { kind: 'jump'; encounterId: string; target: string; expected: string | null }
@@ -398,6 +401,9 @@ export const combatErrorCodes = [
   'initiativeClosed',
   'notYourTurn',
   'alreadyRolled',
+  'rollRequired',
+  'invalidRoll',
+  'rollLimit',
   'alreadyModified',
   'gone',
   'invalid',
@@ -422,6 +428,9 @@ export function combatErrorCode(message: string): CombatErrorCode {
     [/Initiative closed/, 'initiativeClosed'],
     [/Not your turn/, 'notYourTurn'],
     [/Already rolled/, 'alreadyRolled'],
+    [/Roll required/, 'rollRequired'],
+    [/Invalid roll/, 'invalidRoll'],
+    [/Roll limit/, 'rollLimit'],
     [/Already modified/, 'alreadyModified'],
     [/(Encounter|Combatant|Effect|Event|Template|Character) unavailable/, 'gone'],
     [/Invalid request|Request mismatch/, 'invalid'],
@@ -778,21 +787,8 @@ export function previewAsPlayer(state: CombatState, ownCharacterIds: ReadonlySet
   }
 }
 
-/**
- * When the DM opened the initiative phase of the live encounter: the newest visible `status` event
- * that moved it to `initiative`. Null when the events do not hold it (the window is the newest 60),
- * in which case nothing about earlier rolls is derived.
- */
-export function initiativeStartedAt(events: readonly CombatEvent[]): string | null {
-  let found: string | null = null
-  for (const event of events)
-    if (event.kind === 'status' && event.detail.status === 'initiative' && !event.undone)
-      if (found === null || event.created_at > found) found = event.created_at
-  return found
-}
-
 /** Where a Player's initiative stands in app mode (RYT-133): what the combat state saved always wins
- * over what the Player's roll log holds, so a total the DM changed is never presented as the
+ * over what the server's roll holds, so a total the DM changed is never presented as the
  * Player's own roll or offered for saving. */
 export type InitiativeRollState =
   | { kind: 'none' }

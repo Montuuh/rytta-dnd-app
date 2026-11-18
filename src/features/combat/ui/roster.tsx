@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Menu, Stack, Text, VisuallyHidden } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
-import { Dice5, Ellipsis, Play, UserMinus, UserPlus } from 'lucide-react'
+import { Dice5, Dices, Ellipsis, Eraser, Play, UserMinus, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { joinPlacement, type Combatant } from '../domain/combat'
 
@@ -15,6 +15,8 @@ export function RowActions({
   onChange,
   onJump,
   onInitiative,
+  onClearRoll,
+  onRerollInitiative,
   onRemove,
 }: {
   combatant: Combatant
@@ -23,6 +25,9 @@ export function RowActions({
   /** Present when the turn can be handed to this combatant. */
   onJump?: () => void
   onInitiative: () => void
+  /** RYT-137: present while the server holds this character's initiative roll. */
+  onClearRoll?: () => void
+  onRerollInitiative?: () => void
   onRemove: () => void
 }) {
   const { t } = useTranslation()
@@ -48,9 +53,22 @@ export function RowActions({
         <Menu.Item leftSection={<Dice5 size={16} aria-hidden="true" />} onClick={onInitiative}>
           {t('combat.row.initiative')}
         </Menu.Item>
+        {onClearRoll && (
+          <Menu.Item leftSection={<Eraser size={16} aria-hidden="true" />} onClick={onClearRoll}>
+            {t('combat.row.clearRoll')}
+          </Menu.Item>
+        )}
+        {onRerollInitiative && (
+          <Menu.Item
+            leftSection={<Dices size={16} aria-hidden="true" />}
+            onClick={onRerollInitiative}
+          >
+            {t('combat.row.rerollInitiative')}
+          </Menu.Item>
+        )}
         <Menu.Divider />
         <Menu.Item
-          color="red"
+          className="combat-menu-danger"
           leftSection={<UserMinus size={16} aria-hidden="true" />}
           onClick={onRemove}
         >

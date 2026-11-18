@@ -13,6 +13,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { Drawer, Modal } from '@/shared/ui/overlays'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import {
@@ -47,6 +48,8 @@ import { CombatantDetail } from './combatant-detail'
 import { EncounterBalance } from './encounter-balance'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
+import { useDiceMode } from '@/features/dice'
+import { useResetInitiative } from './reset-roll'
 import { NetworkState, RunnerError } from './parts'
 import { RemoveCombatantDialog, RowActions } from './roster'
 import { CombatantToken } from './token'
@@ -82,6 +85,37 @@ export function DmConsole({
   // the detail: a turn change then keeps it on the same combatant instead of swapping it away.
   const [detailBusy, setDetailBusy] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  // RYT-137: the DM clears or re-rolls a Player's initiative roll where the server holds one.
+  // Nothing is requested while the table rolls with physical dice: no roll can be held.
+  const { mode: diceMode } = useDiceMode(campaignId)
+  const initiativeRoll = useResetInitiative(
+    campaignId,
+    run,
+    encounter.status,
+    diceMode !== 'physical',
+    (characterId) => {
+      const name = state.combatants.find((c) => c.character_id === characterId)?.name
+      if (name) setAnnouncement(t('combat.reset.rerolled', { name }))
+    },
+  )
+  // The row moves in the order when its initiative changes, which can drop the focus the menu gave
+  // back: the menu's button takes it once more (and keeps it) when the action is done.
+  const resetRoll = async (combatant: Combatant, mode: 'clear' | 'reroll', returnId: string) => {
+    const from = document.activeElement
+    const done = await initiativeRoll.reset(combatant, mode)
+    // The menu that was open is still closing: focus inside it is focus that fell, not a choice.
+    focusWhenReady(`[data-return-focus="${returnId}"]`, {
+      from,
+      preventScroll: true,
+      leaving: from?.closest('[role="menu"]') ?? null,
+    })
+    if (done)
+      setAnnouncement(
+        t(mode === 'clear' ? 'combat.reset.cleared' : 'combat.reset.rerolled', {
+          name: combatant.name,
+        }),
+      )
+  }
   const [seenActive, setSeenActive] = useState(activeId)
   if (seenActive !== activeId) {
     setSeenActive(activeId)
@@ -228,6 +262,16 @@ export function DmConsole({
       run={run}
       pending={pending}
       onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
+      onClearRoll={
+        initiativeRoll.canReset(selected)
+          ? () => void resetRoll(selected, 'clear', `detail-menu-${selected.id}`)
+          : undefined
+      }
+      onRerollInitiative={
+        initiativeRoll.canReset(selected)
+          ? () => void resetRoll(selected, 'reroll', `detail-menu-${selected.id}`)
+          : undefined
+      }
       onRemove={
         status !== 'ended'
           ? () => fromMenu(`detail-menu-${selected.id}`, () => setRemoving(selected))
@@ -291,6 +335,16 @@ export function DmConsole({
                   }
                   onInitiative={() =>
                     fromMenu(`row-menu-${combatant.id}`, () => setInitiativeFor(combatant))
+                  }
+                  onClearRoll={
+                    initiativeRoll.canReset(combatant)
+                      ? () => void resetRoll(combatant, 'clear', `row-menu-${combatant.id}`)
+                      : undefined
+                  }
+                  onRerollInitiative={
+                    initiativeRoll.canReset(combatant)
+                      ? () => void resetRoll(combatant, 'reroll', `row-menu-${combatant.id}`)
+                      : undefined
                   }
                   onRemove={() =>
                     fromMenu(`row-menu-${combatant.id}`, () => setRemoving(combatant))

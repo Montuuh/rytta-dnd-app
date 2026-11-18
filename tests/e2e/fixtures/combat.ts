@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { beaId, catoId, characterId, dmId, peerId, playerId, hiddenPeerId } from './identity.ts'
+import type { DiceStore } from './dice-store.ts'
 
 // RYT-007 SDK contract fixture: one in-memory combat state shared by several browser contexts.
 // It mirrors the RPC results and the role projection the UI relies on; authorization, atomicity
@@ -115,6 +116,9 @@ export function combatServer() {
   /** RYT-118: SRD class key per character (character_sheets.build.classKey). */
   const classes: Record<string, string> = {}
   const requests = new Map<string, unknown>()
+  /** RYT-137: the roll store of the same table, wired by `useDice`. Without it nothing is limited. */
+  let dice: DiceStore | null = null
+  const liveFight = () => encounters.find((x) => ['initiative', 'active'].includes(x.status))
   const find = (id: unknown) => encounters.find((e) => e.id === id)
   const owning = (id: unknown) => encounters.find((e) => e.combatants.some((c) => c.id === id))
   const order = (e: Encounter, turnsOnly: boolean) =>
@@ -408,6 +412,7 @@ export function combatServer() {
       'add_combatants',
       'update_combatant',
       'remove_combatant',
+      'reset_initiative_roll',
       'roll_npc_initiative',
       'set_turn_order',
       'set_active_turn',
@@ -419,6 +424,64 @@ export function combatServer() {
       'set_srd_bestiary',
     ])
     if (dmOnly.has(method) && !dm) return fail('Forbidden')
+    // RYT-137 (20261204120000): the DM clears a Player's initiative roll, or re-rolls it.
+    if (method === 'reset_initiative_roll') {
+      if (!dice) return fail('Unavailable')
+      const live = liveFight()
+      if (!live) return fail('Encounter closed')
+      const row = live.combatants.find((x) => x.character_id === body.target_character)
+      if (!row) return fail('Combatant unavailable')
+      const expression = (body.reroll_expression as string | null) ?? null
+      if (expression !== null) {
+        const match = /^1?d20(?:([+-])(\d{1,2}))?$/.exec(expression)
+        const modifier = match?.[2] ? Number(match[2]) * (match[1] === '-' ? -1 : 1) : 0
+        if (!match || modifier < -20 || modifier > 30) return fail('Invalid roll')
+      }
+      if (dice.failNext?.rpc === 'reset_initiative_roll') {
+        const { message } = dice.failNext
+        dice.failNext = null
+        return fail(message)
+      }
+      const old = dice.supersede(
+        String(body.target_campaign),
+        String(body.target_character),
+        'initiative',
+      )
+      let roll: Record<string, unknown> | null = null
+      let total: number | undefined
+      if (expression !== null) {
+        const rolled = dice.evaluate(expression)!
+        total = rolled.total
+        roll = {
+          id: crypto.randomUUID(),
+          campaign_id: String(body.target_campaign),
+          character_id: String(body.target_character),
+          roller_id: actor,
+          label: 'initiative',
+          expression,
+          dice: rolled.dice,
+          total: rolled.total,
+          kind: 'initiative',
+          source: 'app',
+          visibility: dice.roll_visibility,
+          created_at: new Date(dice.clock()).toISOString(),
+          encounter_id: row.hidden ? null : live.id,
+          rest_id: null,
+          superseded_at: null,
+        }
+        dice.rolls.push(roll as never)
+        dice.revision += 1
+      }
+      for (const x of live.combatants)
+        if (x.id === row.id || (row.group_key && x.group_key === row.group_key))
+          x.initiative = total
+      log(live, actor, 'initiative', row, {
+        amount: total,
+        detail: { reset: expression === null ? 'clear' : 'reroll' },
+      })
+      bump(live)
+      return result(live, { superseded_roll: old, roll })
+    }
     // RYT-089: the campaign's official bestiary, as set_srd_bestiary does it.
     if (method === 'set_srd_bestiary') {
       const srd = body.target_srd === null ? null : String(body.target_srd)
@@ -689,6 +752,23 @@ export function combatServer() {
         if (!dm && (e.status === 'ended' || e.status === 'draft')) return fail('Encounter closed')
         if (!dm && e.status === 'active' && target.initiative !== undefined)
           return fail('Initiative closed')
+        // RYT-137: with dice in the app a Player saves the total of their own roll in force (or the
+        // total the combatant already has).
+        if (
+          !dm &&
+          dice?.dice_mode === 'app' &&
+          target.initiative !== Number(body.initiative_total) &&
+          !dice.rolls.some(
+            (roll) =>
+              roll.character_id === target.character_id &&
+              roll.kind === 'initiative' &&
+              roll.encounter_id === e.id &&
+              dice!.inForce(roll) &&
+              /^1?d20([+-]\d{1,2})?$/.test(roll.expression) &&
+              roll.total === Number(body.initiative_total),
+          )
+        )
+          return fail('Roll required')
         for (const c of e.combatants)
           if (c.id === target.id || (target.group_key && c.group_key === target.group_key)) {
             c.initiative = Number(body.initiative_total)
@@ -962,6 +1042,22 @@ export function combatServer() {
     act(method: string, body: Record<string, unknown>, actor = dmId) {
       return handle(actor, method, body)
     },
+    /** RYT-137: share the roll store of the page fixture, so the live fight is what links an
+     * initiative roll and set_initiative asks for the Player's own roll in app mode. */
+    useDice(store: DiceStore) {
+      dice = store
+      store.world.fight = () => {
+        const live = liveFight()
+        return live
+          ? {
+              id: live.id,
+              characters: live.combatants
+                .filter((c) => c.kind === 'character' && !c.hidden)
+                .map((c) => c.character_id!),
+            }
+          : null
+      }
+    },
     /** RYT-042: Arin, Bea and two goblins while the DM collects initiative (no totals yet). */
     seedInitiative() {
       const e = mutate(dmId, true, 'create_encounter', { encounter_name: 'Bridge ambush' }) as {
@@ -1044,7 +1140,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_srd_bestiary|set_srd_bestiary)$/,
+        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_srd_bestiary|set_srd_bestiary)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!
@@ -1063,6 +1159,18 @@ export function combatServer() {
             /* empty */
           }
           const out = handle(actor, method, body)
+          // The reset was applied but the answer never arrived (the replay returns the first result).
+          if (method === 'reset_initiative_roll' && dice?.loseResetReplyNext) {
+            const failed = out && typeof out === 'object' && 'error' in out
+            if (!failed) {
+              dice.loseResetReplyNext = false
+              return route.fulfill({
+                status: 503,
+                contentType: 'application/json',
+                body: '{"message":"Unavailable"}',
+              })
+            }
+          }
           if (out && typeof out === 'object' && 'error' in out && Object.keys(out).length === 1)
             return route.fulfill({
               status: 400,

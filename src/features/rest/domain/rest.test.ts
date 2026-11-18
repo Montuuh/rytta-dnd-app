@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  hitDiceResetSchema,
   minutesLeft,
   restError,
   restStateSchema,
@@ -63,10 +64,25 @@ describe('RYT-080 group rest domain', () => {
     expect(restError('Invalid dice')).toBe('dice')
     expect(restError('Cannot rest')).toBe('cannotRest')
     expect(restError('Forbidden')).toBe('forbidden')
+    expect(restError('Roll required')).toBe('rollRequired')
+    expect(restError('Roll limit')).toBe('rollLimit')
     expect(restError('boom')).toBe('unavailable')
     const s = state([])
     expect(minutesLeft(s, Date.parse('2026-11-10T10:01:30Z'))).toBe(9)
     expect(minutesLeft(s, Date.parse('2026-11-10T11:00:00Z'))).toBe(0)
+  })
+
+  it('reads the answer of a hit-dice reset and refuses anything else', () => {
+    const id = crypto.randomUUID()
+    expect(hitDiceResetSchema.parse({ superseded_roll: id, vote_cleared: true })).toEqual({
+      superseded_roll: id,
+      vote_cleared: true,
+    })
+    expect(
+      hitDiceResetSchema.parse({ superseded_roll: null, vote_cleared: false }).vote_cleared,
+    ).toBe(false)
+    expect(() => hitDiceResetSchema.parse({ superseded_roll: 'x', vote_cleared: false })).toThrow()
+    expect(() => hitDiceResetSchema.parse({ superseded_roll: null })).toThrow()
   })
 
   it('accepts no request and rejects malformed effects', () => {

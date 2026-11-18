@@ -765,4 +765,8 @@ export const tabletopEn = {
   'tabletop.plate.corner.bottom-left': 'bottom left',
   'tabletop.plate.corner.bottom-right': 'bottom right',
   'tabletop.zoom.mine': 'Centre on my token',
+  // RYT-132: the map on a phone.
+  'tabletop.phone.leave': 'Back to the campaign',
+  'tabletop.phone.effects': 'Effects of my token',
+  'tabletop.phone.measureHint': 'Drag across the map to measure',
 } as const

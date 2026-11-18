@@ -775,4 +775,8 @@ export const tabletopEs = {
   'tabletop.plate.corner.bottom-left': 'inferior izquierda',
   'tabletop.plate.corner.bottom-right': 'inferior derecha',
   'tabletop.zoom.mine': 'Centrar en mi ficha',
+  // RYT-132: the map on a phone.
+  'tabletop.phone.leave': 'Volver a la campaña',
+  'tabletop.phone.effects': 'Efectos de mi ficha',
+  'tabletop.phone.measureHint': 'Arrastra por el mapa para medir',
 } satisfies Record<keyof typeof tabletopEn, string>

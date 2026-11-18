@@ -472,3 +472,24 @@ network failure of the fight says so with a retry.
   each sentence so two turns with the same words are both read out ("Arin's turn, round
   2"; a hidden creature's turn is announced without a name). The first state after opening is not
   announced. The full-screen strip reserved by `scrollbar-gutter` is off while the screen is open.
+
+## The map on a phone (RYT-132, ADR 046)
+
+On a phone (under 48em wide, or a short screen up to 60em wide, so landscape too) the Player's map at
+`#/campaign/:id/tabletop` is the page: the header, notices and bottom bar are removed, not covered, and
+the page does not scroll. A compact turn strip (semantic tokens, 56px) leads: a 44px back link to the
+campaign, "Now" with the acting token and name, "Up next", and the round. On the Player's own turn the
+strip turns to the accent and says "Your turn!" with a glyph (never colour alone); a hidden creature's
+turn says only "Hidden turn"; collecting initiative shows how many are ready; stale data adds a dashed
+rule and an "offline" line. With no fight the strip names the scene. The map fills the rest edge to
+edge (no frame, no radius) and keeps pan, pinch and wheel zoom. Three round 48px keys float at the
+thumb's edge, over the map, in this order: centre on my token (fits the map when the Player has no
+token), measure (a toggle that opens the existing measure; a chip at the bottom left gives the hint,
+the distance and "Clear") and, only for a token the DM lets act on the map, effects (the existing
+effects list in a bottom sheet). Centring puts the token and its name in the largest area the keys
+leave free, at a zoom where tokens read, so it never sits under a key (`centreOnToken`). Focus is a
+3px ring; Back closes the measure or the sheet before it leaves the page, and Escape does the same.
+Name plates, the acting ring and the measuring readout keep their size on screen at every zoom
+(`--tt-label-k`, the inverse of the zoom). Tablets and laptops keep the page layout. The phone map
+reads the Player projection only: hidden creatures, notes, events, secret doors, the room list and
+fog stay as hidden as on the page layout.

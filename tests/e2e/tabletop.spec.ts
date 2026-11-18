@@ -670,7 +670,7 @@ test('RYT-055 the table screen shows only what the table may see', async ({ page
 
 test('RYT-055 Players read the scene on the table only while the module is open', async ({
   page,
-}) => {
+}, info) => {
   test.setTimeout(90_000)
   const { server } = await prepare(page, ['party', 'tabletop'], true)
   seedScene(server)
@@ -686,10 +686,12 @@ test('RYT-055 Players read the scene on the table only while the module is open'
   expect(
     server.calls.filter((c) => c.method === 'get_tabletop').every((c) => c.body.as_table === false),
   ).toBe(true)
-  // RYT-085: the board and its zoom stack fit the viewport (above the phone bottom bar).
-  await expectBoardFits(page)
-  // A private measure: the switch, then a drag.
-  await page.getByLabel('Medir').check()
+  // RYT-085: the board and its zoom stack fit the viewport (above the phone bottom bar). On a phone
+  // the board is the page (RYT-132, phone-map.spec.ts), so the page layout is checked from 820px up.
+  if (!phone(info)) await expectBoardFits(page)
+  // A private measure: the switch, then a drag (a round key on the phone map).
+  if (phone(info)) await page.getByRole('button', { name: 'Medir' }).click()
+  else await page.getByLabel('Medir').check()
   const world = (await page.locator('.tt-world').boundingBox())!
   const sq = world.width / 20
   await page.mouse.move(world.x + 3.5 * sq, world.y + 3.5 * sq)
@@ -743,6 +745,7 @@ test('RYT-055 the tabletop stays closed to Players until the DM opens it', async
 })
 
 test('RYT-086 the Player board fits below a scene title that wraps', async ({ page }, info) => {
+  test.skip(phone(info), 'The phone map has no page head: the board is the page (RYT-132).')
   const { server } = await prepare(page, ['party', 'tabletop'], true)
   const name = 'La Cripta del Rey Hechicero bajo las Colinas de Ceniza y el Puente Roto'
   seedScene(server, name)
@@ -1046,10 +1049,13 @@ test('RYT-101 Player measures seven squares by drag, touch and keyboard', async 
   const outlines = page.locator('.tt-own-token-outlines > g')
   await expect(outlines).toHaveCount(1)
   await expect(outlines).toHaveAttribute('transform', 'translate(4.5 4.5)')
-  const measure = page.getByRole('switch', { name: 'Medir' })
-  await measure.check()
+  const measure = phone(info)
+    ? page.getByRole('button', { name: 'Medir' })
+    : page.getByRole('switch', { name: 'Medir' })
+  if (phone(info)) await measure.click()
+  else await measure.check()
   const board = page.getByRole('application')
-  const readout = page.locator('.tt-player-tools .tt-readout-feet')
+  const readout = page.locator('.tt-player-tools .tt-readout-feet, .tt-pm-chip .tt-readout-feet')
   const clear = page.getByRole('button', { name: 'Borrar la medida' })
   const [x, y] = await squareAt(page, 20, 3, 3)
   const [endX] = await squareAt(page, 20, 10, 3)
@@ -1167,6 +1173,13 @@ for (const language of ['es', 'en'])
       await server.install(playerPage)
       await combatServer().install(playerPage)
       await playerPage.goto(`./#/campaign/${campaignId}/tabletop`)
+      // On a phone the effects open from a round key over the map, in a sheet (RYT-132).
+      if (phone(info))
+        await playerPage
+          .getByRole('button', {
+            name: language === 'es' ? 'Efectos de mi ficha' : 'Effects of my token',
+          })
+          .click()
       const torch = playerPage.getByRole('button', {
         name: language === 'es' ? 'Encender antorcha' : 'Light torch',
         exact: true,
@@ -1183,7 +1196,7 @@ for (const language of ['es', 'en'])
       await expect(
         playerPage.getByRole('status').filter({ hasText: /Efecto aplicado|Effect applied/ }),
       ).toBeVisible()
-      await audit(playerPage, 'main')
+      await audit(playerPage, phone(info) ? 'body' : 'main', phone(info) ? '.tt-world' : undefined)
       await expectTouchTargets(playerPage.locator('.tt-player-effects'), 'button:visible')
       if (process.env.RYT_EVIDENCE)
         await playerPage.screenshot({

@@ -1,22 +1,38 @@
 import { PlayerEffects } from './visibility'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Button, Drawer, Switch } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useParams } from 'react-router'
 import { LocateFixed, Maximize, Minus, Plus } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useIsRealDm } from '@/features/campaigns'
-import { combatStateQuery, useCombatRealtime } from '@/features/combat'
+import {
+  combatStateQuery,
+  isHiddenTurn,
+  isLive,
+  nextUp,
+  useCombatRealtime,
+  useFreshness,
+} from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
+import { Drawer as BackDrawer } from '@/shared/ui/overlays'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { tabletopQuery, useTabletopRealtime } from '../api'
 import { cellCenter, clamp, measurePath, type Point } from '../domain/geometry'
+import { tabletopPollMs } from '../domain/model'
+import { centreOnToken, labelScale, phoneMapQuery, type Box } from '../domain/phone-map'
+import { turnMark } from '../domain/table-order'
+import { effectTokens } from '../domain/visibility'
 import { Board } from './board'
 import { TabletopEditor } from './editor'
 import { TabletopLibrary } from './library'
 import { MeasureTape, PingRipple, StoryPlate } from './overlays'
+import { U } from './palette'
+import { PhoneStrip, PhoneTools } from './phone-map'
 import { TableScreen } from './table-screen'
+import { useTurnAnnouncement } from './use-turn-announcement'
 import { useBoardView } from './viewport'
 import './tabletop.css'
 
@@ -66,8 +82,14 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
   const combat = useQuery(combatStateQuery(userId, campaignId, null, false))
   const view = query.data
   const scene = view?.scene ?? null
+  // RYT-132: on a phone the board is the page, with a turn strip and floating keys.
+  const phone = useMediaQuery(phoneMapQuery, undefined, { getInitialValueInEffect: false })
   const [cursor, setCursor] = useState<Point | null>(null)
   const [measuring, setMeasuring] = useState(false)
+  const [effectsOpen, setEffectsOpen] = useState(false)
+  const measureKey = useRef<HTMLButtonElement>(null)
+  const effectsKey = useRef<HTMLButtonElement>(null)
+  const tools = useRef<HTMLDivElement>(null)
   const [points, setPoints] = useState<Point[]>([])
   const [dismissed, setDismissed] = useState<string | null>(null)
   const origin = useRef<Point | null>(null)
@@ -115,6 +137,209 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
   const route = measurePath(shown)
   const card = view?.card && dismissed !== view.card.id ? view.card : null
   useBackToClose(Boolean(card), () => setDismissed(card?.id ?? null))
+  // Back closes the measure on a phone before it leaves the page (the effects sheet does the same).
+  useBackToClose(phone && measuring, () => setMeasuring(false))
+  const lighting = !!scene?.visibility?.lighting
+  const canEffects = Boolean(
+    view && (scene?.visibility?.vision || lighting) && effectTokens(view.items, lighting).length,
+  )
+  // The turn strip reads what the combat screens read; stale is derived as the table screen does it.
+  const allCombatants = combat.data?.combatants ?? []
+  const encounter = combat.data?.encounter
+  const fight = encounter && isLive(encounter.status) ? encounter : null
+  const active = allCombatants.find((c) => c.is_active) ?? null
+  const known = [query.dataUpdatedAt, combat.dataUpdatedAt].filter((at) => at > 0)
+  const stale = useFreshness(
+    known.length > 0 ? Math.min(...known) : 0,
+    (query.isError && query.data !== undefined) || (combat.isError && combat.data !== undefined),
+    tabletopPollMs(connected) + 15_000,
+  )
+  const announcement = useTurnAnnouncement(
+    turnMark(
+      encounter?.status,
+      encounter?.round ?? 0,
+      encounter?.active_combatant,
+      active ?? undefined,
+    ),
+    combat.data !== undefined,
+  )
+  const scale = labelScale(board.view.z)
+  const plateScale = phone ? labelScale(board.view.z, 0.55) : 1
+  const centre = () => {
+    const box = board.box()
+    if (!box || !ownToken) return
+    const keys: Box[] = [...(tools.current?.querySelectorAll('button') ?? [])].map((key) => {
+      const r = key.getBoundingClientRect()
+      return { x: r.x - box.x, y: r.y - box.y, w: r.width, h: r.height }
+    })
+    const next = centreOnToken({
+      viewport: { w: box.width, h: box.height },
+      buttons: keys,
+      token: ownToken,
+      zoom: board.view.z,
+      unit: U,
+    })
+    board.place({ z: next.z, x: next.x, y: next.y })
+  }
+  const world = scene && view && (
+    <div
+      className={`tt-viewport ${measuring ? 'tool-measure' : 'tool-select'}`}
+      {...board.bind}
+      role={measuring ? 'application' : 'img'}
+      tabIndex={measuring ? 0 : undefined}
+      onFocus={() => {
+        if (measuring) setCursor((p) => p ?? cellCenter(board.center()))
+      }}
+      onKeyDown={(e) => {
+        if (!measuring) return
+        const at = cursor ?? cellCenter(board.center())
+        const dx = Number(e.key === 'ArrowRight') - Number(e.key === 'ArrowLeft'),
+          dy = Number(e.key === 'ArrowDown') - Number(e.key === 'ArrowUp')
+        if (dx || dy) {
+          const next: Point = [
+            clamp(at[0] + dx, 0.5, scene.cols - 0.5),
+            clamp(at[1] + dy, 0.5, scene.rows - 0.5),
+          ]
+          setCursor(next)
+          board.reveal(next[0] - 0.5, next[1] - 0.5)
+        } else if (e.key === 'Enter' || e.key === ' ') setPoints((p) => [...p, at].slice(-16))
+        else if (e.key === 'Escape') {
+          setMeasuring(false)
+          setCursor(null)
+          if (phone) measureKey.current?.focus()
+          else
+            e.currentTarget
+              .closest('.tt-player')
+              ?.querySelector<HTMLInputElement>('.tt-player-tools input')
+              ?.focus()
+        } else return
+        e.preventDefault()
+      }}
+      aria-label={t('tabletop.player.board', { name: scene.name })}
+    >
+      <div
+        className="tt-world-wrap"
+        style={
+          {
+            transform: `translate(${board.view.x}px, ${board.view.y}px) scale(${board.view.z})`,
+            // Labels keep their size on screen: the phone map multiplies them by the inverse zoom.
+            ...(phone && { '--tt-z': board.view.z, '--tt-label-k': scale }),
+          } as CSSProperties
+        }
+      >
+        <Board
+          scene={scene}
+          items={view.items}
+          mode="player"
+          combatants={combatants}
+          overlay={
+            <>
+              {view.live.measure && (
+                <MeasureTape points={view.live.measure.points} plateScale={plateScale} />
+              )}
+              {measuring && cursor && (
+                <rect
+                  x={cursor[0] - 0.5}
+                  y={cursor[1] - 0.5}
+                  width={1}
+                  height={1}
+                  fill="none"
+                  stroke="var(--app-focus)"
+                  strokeWidth={0.07}
+                />
+              )}
+              <MeasureTape points={shown} plateScale={plateScale} />
+              <PingRipple ping={view.live.ping} />
+            </>
+          }
+        />
+      </div>
+    </div>
+  )
+  const storyDrawer = (
+    <Drawer
+      closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
+      opened={Boolean(card)}
+      onClose={() => setDismissed(card?.id ?? null)}
+      position="bottom"
+      size="auto"
+      title={t('tabletop.story.onTable')}
+    >
+      {card && <StoryPlate card={card} />}
+      <Button variant="default" fullWidth mt="md" onClick={() => setDismissed(card?.id ?? null)}>
+        {t('tabletop.story.close')}
+      </Button>
+    </Drawer>
+  )
+
+  // The board is the page: no header or bar, a turn strip on top and floating keys over the map.
+  if (phone && scene && view)
+    return (
+      <div className="tt-pm">
+        <h1 className="visually-hidden">{scene.name}</h1>
+        <PhoneStrip
+          campaignId={campaignId}
+          sceneName={scene.name}
+          fight={
+            fight ? { status: fight.status as 'initiative' | 'active', round: fight.round } : null
+          }
+          active={active}
+          next={nextUp(allCombatants)}
+          hiddenTurn={isHiddenTurn(encounter, allCombatants)}
+          ready={{
+            ready: allCombatants.filter((c) => c.initiative !== undefined).length,
+            total: allCombatants.length,
+          }}
+          stale={stale}
+        />
+        <div className="tt-pm-board">
+          {world}
+          <PhoneTools
+            toolsRef={tools}
+            canCentre={Boolean(ownToken)}
+            onCentre={ownToken ? centre : board.fit}
+            measuring={measuring}
+            onMeasure={() => setMeasuring((on) => !on)}
+            measureRef={measureKey}
+            effects={canEffects}
+            effectsOpen={effectsOpen}
+            onEffects={() => setEffectsOpen(true)}
+            effectsRef={effectsKey}
+          />
+          {measuring && (
+            <div className="tt-pm-chip">
+              {shown.length > 1 ? (
+                <span className="tt-readout-feet" aria-live="polite">
+                  {t('tabletop.measure.feet', { count: route.feet })}
+                </span>
+              ) : (
+                <span>{t('tabletop.phone.measureHint')}</span>
+              )}
+              {points.length > 0 && (
+                <button type="button" className="tt-text-action" onClick={() => setPoints([])}>
+                  {t('tabletop.measure.clear')}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="visually-hidden" aria-live="polite" aria-atomic="true">
+          {announcement}
+        </div>
+        <BackDrawer
+          closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
+          opened={effectsOpen}
+          onClose={() => setEffectsOpen(false)}
+          position="bottom"
+          size="auto"
+          title={t('tabletop.phone.effects')}
+        >
+          <PlayerEffects campaignId={campaignId} items={view.items} lighting={lighting} />
+        </BackDrawer>
+        {storyDrawer}
+      </div>
+    )
+
   return (
     <div className="tt-library tt-player">
       <PageHead
@@ -149,11 +374,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             </p>
           )}
           {(scene.visibility?.vision || scene.visibility?.lighting) && (
-            <PlayerEffects
-              campaignId={campaignId}
-              items={view.items}
-              lighting={!!scene.visibility.lighting}
-            />
+            <PlayerEffects campaignId={campaignId} items={view.items} lighting={lighting} />
           )}
           <div className="tt-player-tools">
             <Switch
@@ -173,72 +394,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
             )}
           </div>
           <div className="tt-board-frame tt-player-board">
-            <div
-              className={`tt-viewport ${measuring ? 'tool-measure' : 'tool-select'}`}
-              {...board.bind}
-              role={measuring ? 'application' : 'img'}
-              tabIndex={measuring ? 0 : undefined}
-              onFocus={() => {
-                if (measuring) setCursor((p) => p ?? cellCenter(board.center()))
-              }}
-              onKeyDown={(e) => {
-                if (!measuring) return
-                const at = cursor ?? cellCenter(board.center())
-                const dx = Number(e.key === 'ArrowRight') - Number(e.key === 'ArrowLeft'),
-                  dy = Number(e.key === 'ArrowDown') - Number(e.key === 'ArrowUp')
-                if (dx || dy) {
-                  const next: Point = [
-                    clamp(at[0] + dx, 0.5, scene.cols - 0.5),
-                    clamp(at[1] + dy, 0.5, scene.rows - 0.5),
-                  ]
-                  setCursor(next)
-                  board.reveal(next[0] - 0.5, next[1] - 0.5)
-                } else if (e.key === 'Enter' || e.key === ' ')
-                  setPoints((p) => [...p, at].slice(-16))
-                else if (e.key === 'Escape') {
-                  setMeasuring(false)
-                  setCursor(null)
-                  e.currentTarget
-                    .closest('.tt-player')
-                    ?.querySelector<HTMLInputElement>('.tt-player-tools input')
-                    ?.focus()
-                } else return
-                e.preventDefault()
-              }}
-              aria-label={t('tabletop.player.board', { name: scene.name })}
-            >
-              <div
-                className="tt-world-wrap"
-                style={{
-                  transform: `translate(${board.view.x}px, ${board.view.y}px) scale(${board.view.z})`,
-                }}
-              >
-                <Board
-                  scene={scene}
-                  items={view.items}
-                  mode="player"
-                  combatants={combatants}
-                  overlay={
-                    <>
-                      {view.live.measure && <MeasureTape points={view.live.measure.points} />}
-                      {measuring && cursor && (
-                        <rect
-                          x={cursor[0] - 0.5}
-                          y={cursor[1] - 0.5}
-                          width={1}
-                          height={1}
-                          fill="none"
-                          stroke="var(--app-focus)"
-                          strokeWidth={0.07}
-                        />
-                      )}
-                      <MeasureTape points={shown} />
-                      <PingRipple ping={view.live.ping} />
-                    </>
-                  }
-                />
-              </div>
-            </div>
+            {world}
             <div className="tt-zoom" role="group" aria-label={t('tabletop.zoom.label')}>
               <button
                 type="button"
@@ -280,19 +436,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
           </div>
         </>
       )}
-      <Drawer
-        closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
-        opened={Boolean(card)}
-        onClose={() => setDismissed(card?.id ?? null)}
-        position="bottom"
-        size="auto"
-        title={t('tabletop.story.onTable')}
-      >
-        {card && <StoryPlate card={card} />}
-        <Button variant="default" fullWidth mt="md" onClick={() => setDismissed(card?.id ?? null)}>
-          {t('tabletop.story.close')}
-        </Button>
-      </Drawer>
+      {storyDrawer}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { ItemOf } from './model'
+import type { Item, ItemOf } from './model'
 
 /** Compress a server cell mask into horizontal runs for one SVG path. */
 export function cellMaskPath(cells: readonly number[], cols: number, rows: number) {
@@ -27,3 +27,12 @@ export function lightRadius(item: ItemOf<'token'> | ItemOf<'prop'>) {
       : 0)
   )
 }
+
+/** The Player's own tokens that may use a map effect: what the effects panel lists. */
+export const effectTokens = (items: readonly Item[], lighting: boolean) =>
+  items.filter(
+    (i): i is ItemOf<'token'> =>
+      i.kind === 'token' &&
+      Boolean(i.controllable) &&
+      Boolean(i.data.map_actions?.some((e) => lighting || e === 'reveal')),
+  )

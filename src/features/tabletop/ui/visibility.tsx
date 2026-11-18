@@ -11,7 +11,7 @@ import {
   type Scene,
   type Visibility,
 } from '../domain/model'
-import { lightRadius } from '../domain/visibility'
+import { effectTokens, lightRadius } from '../domain/visibility'
 
 export function VisibilitySettings({ campaignId, scene }: { campaignId: string; scene: Scene }) {
   const { t } = useTranslation()
@@ -128,12 +128,7 @@ export function PlayerEffects({
   const { t } = useTranslation()
   const action = useTabletopAction(campaignId)
   const [retry, setRetry] = useState<Parameters<typeof action.mutate>[0] | null>(null)
-  const tokens = items.filter(
-    (i): i is ItemOf<'token'> =>
-      i.kind === 'token' &&
-      Boolean(i.controllable) &&
-      Boolean(i.data.map_actions?.some((e) => lighting || e === 'reveal')),
-  )
+  const tokens = effectTokens(items, lighting)
   if (!tokens.length) return null
   const send = (a: Parameters<typeof action.mutate>[0]) => {
     setRetry(a)

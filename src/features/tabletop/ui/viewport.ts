@@ -154,6 +154,13 @@ export function useBoardView(
       return { z, x: el.clientWidth / 2 - x * U * z, y: el.clientHeight / 2 - y * U * z }
     })
   }
+  /** Puts the view where a caller worked it out (centring clear of floating buttons). */
+  const place = (next: ViewState) => {
+    touched.current = true
+    setView({ ...next, z: Math.max(minZ, Math.min(maxZ, next.z)) })
+  }
+  /** The viewport's size and place on the page, or null before it is mounted. */
+  const box = () => (el ? el.getBoundingClientRect() : null)
   /** The square at the centre of the viewport. */
   const center = (): WorldPoint => {
     if (!el) return [cols / 2, rows / 2]
@@ -263,6 +270,8 @@ export function useBoardView(
     zoomAt,
     center,
     centerOn,
+    place,
+    box,
     reveal,
     /** Spread on the viewport element: its callback ref and pointer handlers. */
     bind: {

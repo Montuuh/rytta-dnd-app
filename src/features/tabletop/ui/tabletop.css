@@ -3016,3 +3016,235 @@ html.tt-table-mode {
     grid-auto-rows: minmax(3.5rem, auto);
   }
 }
+
+/* RYT-132: the map on a phone (ADR 046) ------------------------------------------------------------
+   The board is the page: no header, no bottom bar, a compact turn strip on top, the map filling the
+   rest and three round keys floating over it. Name plates keep their size on screen at every zoom
+   (`--tt-label-k` is the inverse of the board's zoom). Semantic tokens only, so both themes read. */
+
+.app-layout:has(.tt-pm) :is(.app-header, .top-notices, .bottom-nav) {
+  display: none;
+}
+html:has(.tt-pm) {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+.tt-pm {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+.tt-pm-board {
+  position: relative;
+  min-height: 0;
+}
+.tt-pm .tt-viewport {
+  border: 0;
+  border-radius: 0;
+}
+
+.tt-pm-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.5rem;
+  min-height: 56px;
+  padding: env(safe-area-inset-top) max(0.5rem, env(safe-area-inset-right)) 0
+    max(0.25rem, env(safe-area-inset-left));
+  background: var(--app-surface);
+  border-bottom: 2px solid var(--app-border);
+  color: var(--app-text);
+}
+.tt-pm-strip.is-yours {
+  background: var(--app-accent);
+  border-bottom-color: var(--app-accent);
+  color: var(--app-on-accent);
+}
+.tt-pm-strip.is-stale {
+  border-bottom-style: dashed;
+}
+.tt-pm-leave {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  color: inherit;
+}
+.tt-pm-leave:hover {
+  background: var(--app-hover);
+}
+.tt-pm-strip.is-yours .tt-pm-leave:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+.tt-pm-leave:focus-visible,
+.tt-pm-fab:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.tt-pm-strip.is-yours .tt-pm-leave:focus-visible {
+  outline-color: var(--app-on-accent);
+}
+.tt-pm-scene {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tt-pm-now,
+.tt-pm-next {
+  min-width: 0;
+}
+.tt-pm-now {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tt-pm-now > div,
+.tt-pm-next {
+  min-width: 0;
+}
+.tt-pm-next {
+  flex: 0 1 36%;
+  padding-left: 0.5rem;
+  border-left: 1px solid currentColor;
+}
+.tt-pm-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+.tt-pm-strip.is-yours .tt-pm-label {
+  color: inherit;
+}
+.tt-pm-round {
+  margin-left: auto;
+  padding-left: 0.5rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+.tt-pm-name {
+  margin: 0;
+  overflow: hidden;
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tt-pm-next .tt-pm-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.tt-pm-offline {
+  display: flex;
+  flex: 1 0 100%;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0 0.5rem 0.25rem 2.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--warn);
+}
+.tt-pm-strip.is-yours .tt-pm-offline {
+  color: inherit;
+}
+
+/* The floating keys: round, 48px, in a column at the thumb's edge. */
+.tt-pm-tools {
+  position: absolute;
+  z-index: 5;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.tt-pm-fab {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1.5px solid var(--app-border);
+  border-radius: 50%;
+  background: var(--app-surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  color: var(--app-text);
+  cursor: pointer;
+}
+.tt-pm-fab:hover {
+  background: var(--app-hover);
+}
+.tt-pm-fab[aria-pressed='true'],
+.tt-pm-fab[aria-expanded='true'] {
+  border-color: var(--app-accent);
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tt-pm-fab {
+    transition: background-color 120ms ease-out;
+  }
+}
+.tt-pm-chip {
+  position: absolute;
+  z-index: 5;
+  left: max(0.75rem, env(safe-area-inset-left));
+  bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: calc(100% - 5.5rem - env(safe-area-inset-left) - env(safe-area-inset-right));
+  min-height: 48px;
+  padding: 0 0.25rem 0 0.875rem;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  color: var(--app-text);
+  font-size: var(--fs-meta);
+}
+.tt-pm-chip .tt-readout-feet {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.mantine-Drawer-body .tt-player-effects {
+  max-height: none;
+  overflow: visible;
+}
+
+/* Name plates and the acting ring keep their size on screen at every zoom. */
+.tt-pm .tt-token-name {
+  max-width: calc(112px * var(--tt-label-k, 1));
+  padding: calc(1px * var(--tt-label-k, 1)) calc(6px * var(--tt-label-k, 1));
+  border-radius: calc(6px * var(--tt-label-k, 1));
+  font-size: calc(14px * var(--tt-label-k, 1));
+}
+.tt-pm .tt-token.is-active::after {
+  inset: calc(-6px * var(--tt-label-k, 1));
+  border-width: calc(3px * var(--tt-label-k, 1));
+}

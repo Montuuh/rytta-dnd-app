@@ -77,6 +77,7 @@ export function InitiativeEntry({
   // What the combat state saved always wins over the roll log (the DM may have changed it).
   const standing = initiativeRollState(combatant.initiative, rolledTotal ?? logged?.total ?? null)
   const rolledAlready = appDice && standing.kind !== 'none'
+  const settled = standing.kind === 'saved' || standing.kind === 'set'
   const logLoading = appDice && !rolledAlready && since !== null && own.status === 'loading'
   const logFailed = appDice && !rolledAlready && since !== null && own.status === 'failed'
   // What the d20 shows: with dice in the app the standing total, else what was typed.
@@ -264,21 +265,28 @@ export function InitiativeEntry({
             />
           )}
           <div className="combat-entry-actions">
-            {editing && (
+            {editing && !settled && (
               <Button variant="subtle" size="lg" onClick={cancel}>
                 {t('action.cancel')}
               </Button>
             )}
-            <Button
-              type="submit"
-              size="lg"
-              leftSection={<Check size={20} aria-hidden="true" />}
-              // A total that is already saved (rolled, or set by the DM) is not saved again.
-              disabled={!valid || standing.kind === 'saved' || standing.kind === 'set'}
-              loading={pending}
-            >
-              {t('combat.initiative.save')}
-            </Button>
+            {editing && settled ? (
+              // A total that is already saved (rolled, or set by the DM) cannot be saved again: the
+              // way out says so instead of a disabled "Save".
+              <Button type="button" size="lg" onClick={cancel}>
+                {t('panel.close')}
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                size="lg"
+                leftSection={<Check size={20} aria-hidden="true" />}
+                disabled={!valid || settled}
+                loading={pending}
+              >
+                {t('combat.initiative.save')}
+              </Button>
+            )}
           </div>
         </div>
       </form>

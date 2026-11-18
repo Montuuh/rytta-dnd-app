@@ -18,6 +18,7 @@ import {
 } from '../domain/rest'
 import { Campfire } from './campfire'
 import { DiceChooser } from './dice-chooser'
+import { madeRoll, madeRollKey, rememberMadeRoll } from './made-rolls'
 import { PersonToken } from './person-token'
 import { RecoveryLines } from './recovery'
 import { isEmptyRecovery, useEffectView, type RecoveryView } from './recovery-view'
@@ -105,8 +106,11 @@ export function RestPanel({
   // panel, a reload and another device.
   const { behaviour } = useDiceMode(campaignId)
   const own = useOwnRoll(campaignId)
+  const madeKey = (person: RestParticipant) => madeRollKey(campaignId, person.id, state.created_at)
   const rolledFor = (person: RestParticipant) =>
-    behaviour === 'app' && short ? own.find(person.id, 'hit_die', state.created_at) : undefined
+    behaviour === 'app' && short
+      ? (own.find(person.id, 'hit_die', state.created_at) ?? madeRoll(madeKey(person)))
+      : undefined
   const choiceOf = (person: RestParticipant): DiceChoice => {
     const rolled = rolledFor(person)
     if (rolled)
@@ -274,6 +278,7 @@ export function RestPanel({
               campaignId={campaignId}
               characterId={person.id}
               rolled={rolledFor(person)}
+              onRolled={(roll) => rememberMadeRoll(madeKey(person), roll)}
               rollsStatus={own.status}
               onRetryRolls={own.retry}
               die={effect.hit_die}
@@ -366,6 +371,8 @@ export function RestPanel({
               {requested}
               {open && <> {t('rest.expiresIn', { count: minutesLeft(state, now) })}</>}
             </p>
+            {/* RYT-135: what a long rest costs is said where the table decides to take it. */}
+            {open && !short && <p className="rest-meta">{t('rest.longEndsConcentration')}</p>}
           </div>
         </div>
         {action.isError && (

@@ -73,6 +73,11 @@
   bottom: 0;
   z-index: 2;
   margin-top: 12px;
+  /* At large text a failed roll (reason and retry) would cover most of the sheet: the card is never
+     taller than a third of the screen and scrolls inside itself past that (RYT-135). */
+  max-height: 33dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .roll-result[data-phase='failed'] {

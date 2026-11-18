@@ -48,6 +48,14 @@ const settingsCalls = (calls: { method: string; body: Record<string, unknown> }[
 const medal = (page: Page, key: 'FUE' | 'DES' | 'CON' | 'INT' | 'SAB' | 'CAR') =>
   page.locator('.ability-medal', { has: page.locator('abbr', { hasText: key }) })
 
+/** The result card and the strip never list the newest roll twice: dismiss the card to read the strip. */
+async function dismissCard(page: Page) {
+  const close = page.getByRole('button', {
+    name: /^(Cerrar la tirada|Dismiss the roll|Close the roll)/,
+  })
+  if (await close.count()) await close.first().click()
+}
+
 async function openTile(page: Page, name: RegExp) {
   const tile = page.locator('.panel-tile').filter({ hasText: name })
   await tile.click()
@@ -269,7 +277,8 @@ test('RYT-133 physical dice: each line says what to roll, and the result can be 
   await audit(page)
   await page.keyboard.press('Escape')
 
-  // The strip on the sheet lists it, marked as recorded.
+  // The strip on the sheet lists it, marked as recorded, once the card is out of the way.
+  await dismissCard(page)
   const strip = page.getByRole('region', { name: 'Últimas tiradas' })
   await expect(strip.locator('.roll-entry')).toHaveCount(1)
   await expect(strip.locator('.roll-entry-name')).toHaveText('Daño de Espada larga · Arin (tú)')
@@ -348,17 +357,23 @@ test('RYT-133 dice in the app: Rytta rolls on the server, the card and the strip
     recorded_total: null,
   })
   expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [14], total: 16 })
-  // The strip agrees with the card and labels the source.
+  // The card holds the newest roll, so the strip does not list it twice (RYT-135); with the card
+  // dismissed the strip agrees with it and labels the source.
+  await expect(strip.locator('.roll-entry')).toHaveCount(0)
+  await expect(check).toBeFocused()
+  await dismissCard(page)
   await expect(strip.locator('.roll-entry-total').first()).toContainText('16')
   await expect(strip.locator('.roll-entry-maths').first()).toContainText(
     '14 + 2 · Tirada por Rytta',
   )
-  await expect(check).toBeFocused()
   await audit(page)
 
   // A save of Dexterity, rolled from the strip of abilities too.
   await page.getByRole('button', { name: 'Tirar Salvación de Destreza, d20 + 5' }).click()
   await expect(result.locator('.roll-result-total')).toHaveText('8')
+  await expect(strip.locator('.roll-entry')).toHaveCount(1)
+  await expect(strip.locator('.roll-entry-total').first()).toContainText('16')
+  await dismissCard(page)
   await expect(strip.locator('.roll-entry')).toHaveCount(2)
   await expect(strip.locator('.roll-entry-total').first()).toContainText('8')
 
@@ -885,7 +900,8 @@ test('RYT-133 the DM can roll for a character on its sheet, rolled for that char
   await page.getByRole('button', { name: 'Tirar Prueba de Destreza, d20 + 2' }).click()
   await expect(page.locator('.roll-result-total')).toHaveText('12')
   expect(logged(f.calls)[0]!.body).toMatchObject({ target_character: characterId })
-  // The DM reads their own roll in the strip.
+  // The DM reads their own roll in the strip, once the card is dismissed.
+  await dismissCard(page)
   await expect(page.locator('.roll-entry-name')).toContainText('Prueba de Destreza · Arin (tú)')
 })
 
@@ -911,6 +927,7 @@ test('RYT-133 English and the light theme: labels in the viewer language, nothin
   const result = page.getByRole('region', { name: 'Latest roll' })
   await expect(result).toContainText('Dexterity check')
   await expect(result).toContainText('Rolled by Rytta. The whole table sees it.')
+  await dismissCard(page)
   await expect(page.locator('.roll-entry-name')).toContainText('Dexterity check · Arin (you)')
   await audit(page)
   if (process.env.RYT_CAPTURE) await page.screenshot({ path: info.outputPath('dice-en-light.png') })
@@ -938,6 +955,96 @@ test('RYT-133 the dice stay usable at 150% text', async ({ page }) => {
     true,
   )
 })
+
+for (const [theme, wide] of [
+  ['default', false],
+  ['default', true],
+  ['parchment', false],
+  ['bard', false],
+] as const)
+  test(`RYT-135 at 150% text the sticky roll card leaves the sheet usable, rolled and failed in ${theme}${wide ? ' (wide font)' : ''}`, async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'identity-mobile', 'The phone sheet is checked at 390px.')
+    test.setTimeout(90_000)
+    await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+    const f = await identityFixture(page, {
+      player: true,
+      sheet: 'complete',
+      party: true,
+      diceMode: 'app',
+    })
+    serverFaces(f, [7, 12])
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(sheetUrl)
+    await page.addStyleTag({
+      content: `html { font-size: 150% !important; } ${wide ? '* { font-family: Verdana, sans-serif !important }' : ''}`,
+    })
+    const skills = await openTile(page, /Habilidades/)
+    const viewport = page.viewportSize()!
+    const card = skills.sheet.getByRole('region', { name: 'Última tirada' })
+    await skills.sheet.getByRole('button', { name: /Tirar Percepción, d20 \+ 3/ }).click()
+    await expect(card.locator('.roll-result-total')).toHaveText('10')
+    const rolled = (await card.boundingBox())!
+    expect(rolled.height).toBeLessThanOrEqual(viewport.height / 3)
+    // A failed roll adds the reason and a retry: still no more than a third of the screen.
+    f.dice.failNext = { rpc: 'log_roll', message: 'Unavailable' }
+    await skills.sheet.getByRole('button', { name: /Tirar Percepción, d20 \+ 3/ }).click()
+    await expect(card.getByRole('alert')).toBeVisible()
+    const failed = (await card.boundingBox())!
+    expect(failed.height).toBeLessThanOrEqual(viewport.height / 3)
+    // Past a third of the screen the card scrolls inside itself: the retry is still reachable.
+    await card.getByRole('button', { name: 'Reintentar' }).click({ trial: true })
+    await expectTouchTargets(page, '.roll-result button:visible')
+    await axeClean(page, `failed roll card in ${theme}`)
+    if (process.env.RYT_EVIDENCE && !wide && theme === 'default')
+      await page.screenshot({ path: 'docs/evidence/ui-review/ryt-135/roll-card-150-390.png' })
+  })
+
+for (const language of ['es', 'en'])
+  for (const wide of [false, true])
+    test(`RYT-135 the proficiency dot keeps clear of the ability names in ${language}${wide ? ' with a wide font' : ''}`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== 'identity-mobile', 'The 390px phone is the tight case.')
+      await page.addInitScript((lang) => localStorage.setItem('rytta-language', lang), language)
+      await identityFixture(page, { player: true, sheet: 'complete', party: true })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto(sheetUrl)
+      if (wide)
+        await page.addStyleTag({ content: '* { font-family: Verdana, sans-serif !important }' })
+      for (const percent of [100, 150]) {
+        await page.addStyleTag({ content: `html { font-size: ${percent}% !important; }` })
+        await expect(page.locator('.ability-medal .ability-save-dot').first()).toBeAttached()
+        const gaps = await page.locator('.ability-medal').evaluateAll((items) =>
+          items.flatMap((item) => {
+            const dot = item.querySelector('.ability-save-dot')
+            if (!dot) return []
+            const d = dot.getBoundingClientRect()
+            const name = item.querySelector('.ability-name')!.textContent ?? ''
+            return [
+              '.ability-name abbr',
+              '.ability-mod',
+              '.ability-score',
+              '.ability-save .roll-point-text',
+              '.ability-save .roll-point-formula',
+            ].flatMap((selector) =>
+              [...item.querySelectorAll(selector)].map((part) => {
+                const r = part.getBoundingClientRect()
+                // Distance between the two boxes (0 when they touch or overlap).
+                const dx = Math.max(r.left - d.right, d.left - r.right, 0)
+                const dy = Math.max(r.top - d.bottom, d.top - r.bottom, 0)
+                return { name: `${name} ${selector}`, gap: Math.hypot(dx, dy) }
+              }),
+            )
+          }),
+        )
+        // The two proficient saves of the sample sheet carry a dot.
+        expect(gaps.length).toBeGreaterThan(0)
+        for (const { name, gap } of gaps)
+          expect(gap, `${percent}% ${name}`).toBeGreaterThanOrEqual(3)
+      }
+    })
 
 test('RYT-133 physical formulas stay inside their own medal, at 100% and at 150% text', async ({
   page,
@@ -1010,8 +1117,11 @@ test('RYT-133 one reveal moment: the strip does not show the roll while the card
   await expect(strip.locator('.roll-entry')).toHaveCount(0)
   await expect(spoken(page)).not.toContainText('= 16')
   await expect(card).toHaveAttribute('data-phase', 'saved', { timeout: 20_000 })
-  await expect(strip.locator('.roll-entry')).toHaveCount(1)
+  // The card shows it; the strip lists it only once the card is gone.
+  await expect(strip.locator('.roll-entry')).toHaveCount(0)
   await expect(card.locator('.roll-result-total')).toHaveText('16')
+  await dismissCard(page)
+  await expect(strip.locator('.roll-entry')).toHaveCount(1)
 })
 
 for (const theme of ['parchment', 'default', 'bard'])
@@ -1095,7 +1205,10 @@ test('RYT-133 initiative: a total the DM changed wins over the Player roll, and 
   await expect(entry).toBeVisible()
   await expect(entry).toContainText('Ya tiraste: 13. Solo el DM puede cambiarla.')
   await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
-  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
+  // RYT-135: nothing is left to save, so the way out is "Cerrar", not a disabled "Guardar".
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toHaveCount(0)
+  await expect(entry.getByRole('button', { name: 'Cancelar' })).toHaveCount(0)
+  await expect(entry.getByRole('button', { name: 'Cerrar' })).toBeVisible()
   await expect(entry.locator('.combat-entry-formula')).not.toContainText('Rytta tira')
   // The DM sets 9: the row, the d20 and the note all say 9, and the 13 is not offered again.
   server.act('set_initiative', {
@@ -1112,7 +1225,10 @@ test('RYT-133 initiative: a total the DM changed wins over the Player roll, and 
   )
   await expect(entry).not.toContainText('Ya tiraste: 13')
   await expect(entry).not.toContainText('Guarda esa tirada')
-  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toHaveCount(0)
+  await entry.getByRole('button', { name: 'Cerrar' }).click()
+  await expect(page.locator('.combat-entry')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Editar la iniciativa de Arin' })).toBeFocused()
   await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
   expect(f.dice.rolls).toHaveLength(1)
   await context.close()
@@ -1203,6 +1319,58 @@ test('RYT-133 hit dice: if the roll log cannot load, it says so, retries, and th
   await expect(dice).toContainText('Ya tiraste los dados de golpe: 6.')
 })
 
+test('RYT-135 hit dice: with the roll log down, the roll made on the rest is still there when it is reopened', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const f = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    party: true,
+    diceMode: 'app',
+  })
+  // The log never answers: only this screen knows the roll.
+  await page.route(/\/rest\/v1\/campaign_rolls/, (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' }),
+  )
+  serverFaces(f, [6, 3])
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await page.getByRole('button', { name: 'Descanso corto' }).click()
+  await page
+    .getByRole('dialog', { name: '¿Pedir un descanso corto al grupo?' })
+    .getByRole('button', { name: 'Pedir descanso' })
+    .click()
+  const dice = () =>
+    page
+      .getByRole('dialog', { name: 'Descanso del grupo' })
+      .getByRole('group', { name: /Dados de golpe que gastas/ })
+  await dice().getByRole('button', { name: 'Gastar un dado más' }).click()
+  await expect(
+    dice().getByRole('alert').filter({ hasText: 'No se pudieron comprobar' }),
+  ).toBeVisible({ timeout: 20_000 })
+  await dice().getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(dice().locator('.rest-roll-result-value')).toHaveText('6')
+  expect(f.dice.rolls).toHaveLength(1)
+
+  // Closed and opened again in the same session, the log still failing: the same roll, nothing new.
+  await page.keyboard.press('Escape')
+  await page
+    .getByRole('region', { name: 'Descanso del grupo' })
+    .getByRole('button', { name: /^(Votar|Ver)$/ })
+    .click()
+  await expect(dice().locator('.rest-roll-result-value')).toHaveText('6')
+  await expect(dice()).toContainText('Ya tiraste los dados de golpe: 6.')
+  await expect(dice().locator('.rest-dice-faces')).toContainText('Tirada por Rytta')
+  await expect(dice().locator('.rest-stepper-value')).toHaveText('1')
+  await expect(dice().getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+  await expect(dice().getByRole('button', { name: 'Gastar un dado más' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  expect(f.dice.rolls).toHaveLength(1)
+})
+
 async function axeClean(page: Page, label: string) {
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
@@ -1213,7 +1381,7 @@ async function axeClean(page: Page, label: string) {
   ).toEqual([])
 }
 
-for (const theme of ['default', 'parchment'])
+for (const theme of ['default', 'parchment', 'bard'])
   test(`RYT-133 axe is clean on every dice state in ${theme}: rolled, failed, stale mode, record error`, async ({
     page,
   }) => {
@@ -1251,7 +1419,7 @@ for (const theme of ['default', 'parchment'])
     await axeClean(page, `${theme}: record error`)
   })
 
-for (const theme of ['default', 'parchment'])
+for (const theme of ['default', 'parchment', 'bard'])
   test(`RYT-133 axe is clean on initiative states in ${theme}: log failed, rolled, saved, set by the DM`, async ({
     browser,
   }, info) => {
@@ -1286,7 +1454,7 @@ for (const theme of ['default', 'parchment'])
     await first.context.close()
   })
 
-for (const theme of ['default', 'parchment'])
+for (const theme of ['default', 'parchment', 'bard'])
   test(`RYT-133 axe is clean on the hit dice states in ${theme}: log failed, rolled`, async ({
     page,
   }) => {

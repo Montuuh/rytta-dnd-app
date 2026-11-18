@@ -3785,7 +3785,8 @@
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit findings H-2 (PRE schema reachable by every production session with a stale copy of all tenants' data), M-4 (no CSP or anti-framing headers on the shared static origin) and L-8 (localhost callbacks allowlisted on production); environment audit section 2 and operations gaps 3 and 7.",
         "Hosting update 2026-11-18: ADR 047 (updated 2026-11-18) moved the site to the Cloudflare Pages project rytta at https://rytta.pages.dev; the repository is private and the old GitHub Pages site and the first Worker are removed; the staging project bootstrap is recorded in docs/evidence/RYT-116/staging-bootstrap.md. Not closed: no criterion is fully evidenced yet; criterion 5 still needs a recorded header check and CSP-clean browser run on the live site.",
-        "Observation 2026-11-18 from RYT-134: hosted migrations are delivered through a path that decodes backslash-u escapes in transit, so migrations must not contain them; build such characters server-side instead. The staging apply caught it before production (docs/evidence/RYT-134/validation.md)."
+        "Observation 2026-11-18 from RYT-134: hosted migrations are delivered through a path that decodes backslash-u escapes in transit, so migrations must not contain them; build such characters server-side instead. The staging apply caught it before production (docs/evidence/RYT-134/validation.md).",
+        "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -4196,7 +4197,7 @@
       "title": "One table screen for combat: turn plate over the map and the \"now and next\" screen without a map",
       "priority": "P1",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-126"],
       "sources": [
         "Player journey audit 2026-11-17, findings J4-01, J4-02 and J4-19: combat on a shared screen keeps DM chrome, scrolls and uses small type.",
@@ -4204,7 +4205,8 @@
         "Producer upkeep 2026-11-18: in progress on branch table-screen.",
         "Review 2026-11-18 on branch table-screen at e84f3c7: npm run check and npm run test:e2e pass (935 passed, 77 skipped, 0 failed); independent code review changes addressed in e84f3c7; independent UI review CHANGES_REQUIRED on cd1842d, PASS on e84f3c7; three non-blocking leftovers moved to RYT-135; merge to main pending (docs/evidence/RYT-131/validation.md).",
         "Release 2026-11-18: PR 16 merged to main after its checks and browser tests passed (merge commit f38f820), live at https://rytta.pages.dev with that build id; a later fix in PR 17 stopped the status bar oscillating between one and two rows on an uncalibrated map with a wide font (seen on Linux CI), checked rendered by the independent UI reviewer with a wide font and a forced minimum font size, stable over 24 samples at 1280px and 1920px (docs/evidence/RYT-131/validation.md).",
-        "Kept in review 2026-11-18: acceptance criterion 4 (the offline or stale state from RYT-126 stays visible) has no browser test or recorded check on the table screen, and the reduced-motion part of criterion 5 is emulated but not asserted."
+        "Kept in review 2026-11-18: acceptance criterion 4 (the offline or stale state from RYT-126 stays visible) has no browser test or recorded check on the table screen, and the reduced-motion part of criterion 5 is emulated but not asserted.",
+        "Release 2026-11-18: both missing proofs landed with RYT-135 in PR 21 (merge commit 97108a8, checks and browser test shards 1 to 4 passed, live at https://rytta.pages.dev with build id 97108a8404d6): browser specs show the offline and stale state on the order screen and on the turn plate and clear it when the connection returns (criterion 4), and assert reduced motion both ways (criterion 5); independent UI review PASS on source snapshot ae070a65ae2ee6293a7ed966e7c0e47cbbb5c986bd553671a04ba8eea6834d77. Done: every acceptance criterion has evidence (docs/evidence/RYT-131/validation.md); not verified: real screen readers, WebKit, real phones, tablets and televisions, hosted realtime."
       ],
       "scope": "One table screen for combat. With a map: the map full screen with a turn plate (now / next) over a corner that can be moved or shrunk. Without a map: a chrome-less \"now and next\" screen with the whole order in two or three columns, large type readable at 1-2 m, the acting row followed automatically. Any member of the campaign may open it; it reads the existing Table projection only. It does not depend on RYT-132 (map on the phone); either may be built first. Non-goals: dice on the table screen, new combat rules, backend changes, autonomous release.",
       "acceptance": [
@@ -4325,7 +4327,7 @@
       "title": "Level up, table screen, phone map, dice and casting polish from the UI reviews",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-130", "RYT-131", "RYT-132", "RYT-133", "RYT-134"],
       "sources": [
         "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md).",
@@ -4334,7 +4336,8 @@
         "Independent UI review PASS on RYT-132 at 8b148ac, seven non-blocking findings on the phone map (docs/evidence/RYT-132/validation.md).",
         "Independent UI review PASS on RYT-133 at 290694c, five non-blocking findings on the dice (docs/evidence/RYT-133/validation.md).",
         "Independent UI review PASS on RYT-134 at 11fd4d3, four non-blocking findings on casting from the sheet (docs/evidence/RYT-134/validation.md).",
-        "Independent UI review final PASS on RYT-132 at 8a88f48 (2026-11-18), two new non-blocking findings on the members dialogs: at 820px a Tab within about 200ms after Escape is swallowed by the closing dialog's focus trap, and Escape pressed in the same frame as opening the dialog is lost (docs/evidence/RYT-132/validation.md)."
+        "Independent UI review final PASS on RYT-132 at 8a88f48 (2026-11-18), two new non-blocking findings on the members dialogs: at 820px a Tab within about 200ms after Escape is swallowed by the closing dialog's focus trap, and Escape pressed in the same frame as opening the dialog is lost (docs/evidence/RYT-132/validation.md).",
+        "Release 2026-11-18: PR 21 \"Table polish\" merged to main as 97108a8 after its checks and browser test shards 1 to 4 passed; live at https://rytta.pages.dev with build id 97108a8404d6. Local npm run check: 1015 unit and database tests, build clean. Independent code review: all ten findings fixed. Independent UI review CHANGES_REQUIRED twice (a bare recent-rolls heading after the first roll; a reduced-motion re-measure loop on the order screen, fixed in d8141c1 with a spec, and the failed-tap notice reworded), then PASS on source snapshot ae070a65ae2ee6293a7ed966e7c0e47cbbb5c986bd553671a04ba8eea6834d77. Criterion 14 is met by the documented decision in docs/design-system.md: the round keys stay on the right, to revisit if left-handed Players ask. Done: every acceptance criterion has evidence (docs/evidence/RYT-135/validation.md). Minor leftovers: at 820px and 1280px with 150% text a 13-letter word can break inside the word in the order list; the level-up step labels peek under the sticky header (cosmetic). Not verified: real screen readers, WebKit, real Linux fonts (emulated), owner smoke test on real devices and sessions."
       ],
       "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Phone map: fix the seven non-blocking findings left by the RYT-132 UI review: in landscape while measuring the update notice covers the distance chip and its clear button, the keyboard shortcuts are not announced, the map cannot be panned by keyboard outside measure (pre-existing, also at 820px), the board focus ring shows only on its top edge, the ellipsis hides the trailing number of similar names, the round keys are only on the right, and a name plate still covers about a quarter of the token right below it. Members dialogs: fix the two non-blocking findings left by the final RYT-132 UI review: at 820px a Tab within about 200ms after Escape is swallowed by the closing dialog's focus trap, and Escape pressed in the same frame as opening the dialog is lost. Dice: fix the five non-blocking findings left by the RYT-133 UI review: if the roll log keeps failing and the rest is closed and reopened, the hit-dice roll made on that screen is forgotten; a disabled \"Save initiative\" is shown where \"Close\" would be clearer; at 390px the proficiency dot sits close to \"DES\" and \"CAR\"; the result card repeats the newest strip entry; the sticky result card is tall at 150% text. Casting: fix the four non-blocking findings left by the RYT-134 UI review: when the cast spell is also the new concentration the result note repeats the name, a teammate's concentration is not shown in the party plates, the group rest panel does not say that concentration ends, and there is no dedicated browser test for a cast waiting on a manual tap. Non-goals: new level-up rules, new combat rules, new map tools, DM map editing on the phone, new dice rules or server-side roll limits (RYT-137), the 3D dice engine (RYT-138), one concentration shared by the sheet and the fight (RYT-139), backend or migration changes, multiclass, autonomous release.",
       "acceptance": [
@@ -4372,17 +4375,18 @@
         "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px; phone map notices, keyboard pan, focus ring, similar names and name plates at 390px portrait and landscape and 820px; members dialogs Tab and Escape timing at 820px; dice result card, strip, initiative and hit dice at 390px and 820px; casting result note, manual-tap cast, party plates and group rest panel at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-135/validation.md"]
     },
     {
       "id": "RYT-136",
       "title": "Profile menu: do not pull focus back to its trigger after the user has moved on",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
-        "Observed 2026-11-18 while reviewing focus return on branch phone-map (RYT-132): pre-existing behaviour in src/app/layout.tsx, where the profile menu exit-transition handler focuses the menu trigger whenever the menu was opened, even after keyboard focus has moved to another control."
+        "Observed 2026-11-18 while reviewing focus return on branch phone-map (RYT-132): pre-existing behaviour in src/app/layout.tsx, where the profile menu exit-transition handler focuses the menu trigger whenever the menu was opened, even after keyboard focus has moved to another control.",
+        "Release 2026-11-18 with RYT-135 in PR 21 (merge commit 97108a8, checks and browser test shards 1 to 4 passed, live at https://rytta.pages.dev): Escape returns focus to the trigger, also when pressed in the frame the menu opens; a choice that opens a panel returns focus; focus is not pulled back once the person has moved on. The browser spec at 390px and 820px proves the menu opened and presses Escape once; independent UI review rendered the menu at 390px and 820px in three themes and gave PASS on source snapshot ae070a65ae2ee6293a7ed966e7c0e47cbbb5c986bd553671a04ba8eea6834d77. Done (docs/evidence/RYT-135/validation.md); not verified: real screen readers, WebKit."
       ],
       "scope": "Fix the profile menu close path in src/app/layout.tsx so that focus returns to the menu trigger only when focus is still inside the closing menu or on the page body; if the user has tabbed or clicked to another control, focus stays there. Non-goals: other menus or dialogs, the shared focus helpers beyond what this fix needs, visual changes, backend changes, autonomous release.",
       "acceptance": [
@@ -4395,14 +4399,14 @@
         "npm run test:e2e (profile menu focus return at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-135/validation.md"]
     },
     {
       "id": "RYT-137",
       "title": "One roll per fight and per rest enforced by the server",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "in_progress",
       "dependsOn": ["RYT-133"],
       "sources": [
         "RYT-133 decision 2026-11-18: in app mode a Player rolls initiative once per fight and hit dice once per rest, but the guard is presentation only, derived from the Player's roll log (newest 50 rolls) matched by time to the fight's opening event (newest 60 events) or the rest's creation; outside those windows the roll button is offered again (docs/evidence/RYT-133/validation.md).",

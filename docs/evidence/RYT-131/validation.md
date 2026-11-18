@@ -99,7 +99,23 @@ All addressed in `e84f3c7`:
 - WebKit for this spec.
 - Real phones and tablets.
 
+## Acceptance gaps closed (PR 21)
+
+Both gaps above were closed by browser specs in `tests/e2e/table-screen.spec.ts`, delivered with
+RYT-135 in PR 21 (merge commit `97108a8`; checks and browser test shards 1 to 4 passed; live at
+https://rytta.pages.dev with build id `97108a8404d6-…`):
+
+- Criterion 4: going offline shows the offline state and marks the order screen stale, and on the map
+  marks the turn plate stale with its notice; both clear when the connection returns.
+- Criterion 5: with reduced motion the acting row and the plate neither transition nor animate and
+  the order follows without smoothing; without the setting the order follows smoothly. The order
+  screen also measures long names once and then leaves them alone under reduced motion (a re-measure
+  loop found by the UI review was fixed in `d8141c1`).
+- Independent UI review PASS on source snapshot
+  `ae070a65ae2ee6293a7ed966e7c0e47cbbb5c986bd553671a04ba8eea6834d77` (the source merged in PR 21),
+  including both proofs. Details in `docs/evidence/RYT-135/validation.md`.
+
 ## Status
 
-Review. Merged to `main` (`f38f820`) and live, with both independent reviews recorded above.
-It stays in review until the acceptance gaps above have evidence. Follow-ups are in RYT-135.
+Done. Every acceptance criterion has evidence: the earlier review and release above, plus the two
+proofs added in PR 21. The "Not verified" list above still applies. Follow-ups shipped in RYT-135.

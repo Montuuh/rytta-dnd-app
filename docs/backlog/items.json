@@ -4597,7 +4597,7 @@
       "title": "Table activation and campaign preparation",
       "priority": "P1",
       "owner": "producer",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": ["Product audit, 18 November 2026: activate a table and prepare a campaign."],
       "scope": "Public turn example, invitation handoff, first session, campaign context, command centre, character assignment, reviewed loot distribution and shop management.",
@@ -4611,7 +4611,7 @@
       "validation": [
         "Project checks, browser workflows at 390px and 820px, accessibility, independent UI review, SQL and hosted migration verification."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-144/validation.md"]
     }
   ]
 }

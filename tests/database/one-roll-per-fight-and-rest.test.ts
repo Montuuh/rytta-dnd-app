@@ -357,8 +357,8 @@ describe('linking a server roll to its fight or rest', () => {
     expect((await s.stored(c)).map((r) => r.id)).toEqual([first.id])
   })
 
-  it.each(schemas)('%s: a new encounter or a new rest allows one new roll', async (schema) => {
-    const { s, c, dm, player, arin } = await table(schema)
+  it.each(schemas)('%s: a new encounter or a spent roll allows one new roll', async (schema) => {
+    const { s, c, dm, player, peer, arin, bea } = await table(schema)
     const first = await s.fight(c, dm, [arin])
     await asUser(player)
     await s.app(c, arin, 'initiative', 'd20+2')
@@ -372,8 +372,11 @@ describe('linking a server roll to its fight or rest', () => {
 
     const r1 = await s.rest(c, dm)
     await asUser(player)
-    await s.app(c, arin, 'hit_die', '1d10')
-    await s.cancelRest(c, dm, r1)
+    const one = await s.app(c, arin, 'hit_die', '1d10')
+    await asUser(player)
+    await db.query(`select ${schema}.vote_rest($1,$2,$3,'yes',1,$4)`, [c, r1, arin, one.dice[0]])
+    await asUser(peer)
+    await db.query(`select ${schema}.vote_rest($1,$2,$3,'yes',0,null)`, [c, r1, bea])
     const r2 = await s.rest(c, dm)
     await asUser(player)
     expect(await s.app(c, arin, 'hit_die', '1d10')).toMatchObject({ rest_id: r2 })
@@ -655,7 +658,7 @@ describe('the DM clears or re-rolls an initiative', () => {
         {
           actor_id: dm,
           amount: null,
-          detail: { reset: 'clear', superseded_roll: first.id },
+          detail: { reset: 'clear' },
           visible: true,
         },
       ])
@@ -696,7 +699,7 @@ describe('the DM clears or re-rolls an initiative', () => {
         `select amount, detail from ${schema}.encounter_events where encounter_id=$1 and detail ? 'reset'`,
         [e],
       ),
-    ).toEqual([{ amount: total, detail: { reset: 'reroll', superseded_roll: first.id } }])
+    ).toEqual([{ amount: total, detail: { reset: 'reroll' } }])
     // With nothing to supersede the re-roll still works (the Player had not rolled).
     await asUser(dm)
     const again = await s.reset(c, arin, 'd20')
@@ -962,10 +965,10 @@ describe('saved totals come from the server roll', () => {
   )
 
   it.each(schemas)(
-    '%s: hit dice: the vote carries the count and sum of the roll of this rest',
+    '%s: hit dice: the vote carries the count and sum of the roll in force',
     async (schema) => {
       const { s, c, dm, player, arin } = await table(schema)
-      let r = await s.rest(c, dm)
+      const r = await s.rest(c, dm)
       // No roll yet.
       await asUser(player)
       expect(await codeOf(vote(schema, c, r, arin, 'yes', 1, 5))).toEqual({
@@ -999,35 +1002,6 @@ describe('saved totals come from the server roll', () => {
       await asUser(player)
       await vote(schema, c, r, arin, 'no', null, null)
       expect(await votes(schema, r)).toMatchObject([{ vote: 'no', dice_spent: 0 }])
-      // A roll of another rest does not count.
-      r = await s.rest(c, dm)
-      await asUser(player)
-      await expect(vote(schema, c, r, arin, 'yes', 2, sum)).rejects.toThrow(/Roll required/)
-      // Nor a roll of another die than the sheet's (a d10).
-      await asUser(player)
-      const d6 = await s.app(c, arin, 'hit_die', '2d6')
-      await asUser(player)
-      await expect(
-        vote(
-          schema,
-          c,
-          r,
-          arin,
-          'yes',
-          2,
-          d6.dice.reduce((a, b) => a + b, 0),
-        ),
-      ).rejects.toThrow(/Roll required/)
-      expect(await votes(schema, r)).toEqual([])
-      await s.cancelRest(c, dm, r)
-      // One die: the frontend writes 1d10; d10 is accepted as well.
-      r = await s.rest(c, dm)
-      await asUser(player)
-      const one = await s.app(c, arin, 'hit_die', '1d10')
-      await asUser(player)
-      await vote(schema, c, r, arin, 'yes', 1, one.dice[0]!)
-      expect(await votes(schema, r)).toMatchObject([{ dice_spent: 1, dice_roll: one.dice[0] }])
-      await s.cancelRest(c, dm, r)
       // A long rest needs no dice.
       await asUser(dm)
       const long = (
@@ -1077,6 +1051,298 @@ describe('saved totals come from the server roll', () => {
       await s.cancelRest(c, dm, r)
     }
   })
+  const sumOf = (roll: Roll) => roll.dice.reduce((a, b) => a + b, 0)
+  const playerRest = async (schema: Schema, c: string, who: string) => {
+    await asUser(who)
+    return (
+      await scalar<{ id: string }>(`select ${schema}.request_rest($1,'short',$2) result`, [
+        c,
+        randomUUID(),
+      ])
+    ).id
+  }
+  const restStatus = async (schema: Schema, r: string) => {
+    await asSystem()
+    return scalar(`select status result from ${schema}.rest_requests where id=$1`, [r])
+  }
+  const resetDice = (schema: Schema, c: string, ch: string, id = randomUUID()) =>
+    scalar<Json>(`select ${schema}.reset_hit_dice_roll($1,$2,$3) result`, [c, ch, id])
+
+  it.each(schemas)(
+    '%s: hit dice: cancelling and opening a rest again never gives a new roll',
+    async (schema) => {
+      const { s, c, player, arin } = await table(schema)
+      // The Player opens and cancels rests: the requester may cancel.
+      let r = await playerRest(schema, c, player)
+      await asUser(player)
+      const kept = await s.app(c, arin, 'hit_die', '2d10')
+      for (let i = 0; i < 3; i++) {
+        await asUser(player)
+        await db.query(`select ${schema}.cancel_rest($1,$2)`, [c, r])
+        expect(await restStatus(schema, r)).toBe('cancelled')
+        r = await playerRest(schema, c, player)
+        await asUser(player)
+        expect(await codeOf(s.app(c, arin, 'hit_die', '2d10'))).toEqual({
+          code: 'P0001',
+          message: 'Already rolled',
+        })
+      }
+      // Only the first roll exists and it is still the character's roll.
+      expect((await s.stored(c)).map((x) => x.id)).toEqual([kept.id])
+      await asUser(player)
+      expect(await s.context(c)).toMatchObject({
+        rest_id: r,
+        spent: [{ character_id: arin, kind: 'hit_die' }],
+        rolls: [{ id: kept.id }],
+      })
+      // It is used as it is: another number of dice is refused, its own dice are accepted.
+      await asUser(player)
+      await expect(vote(schema, c, r, arin, 'yes', 1, kept.dice[0]!)).rejects.toThrow(
+        /Roll required/,
+      )
+      await asUser(player)
+      await vote(schema, c, r, arin, 'yes', 2, sumOf(kept))
+      expect(await votes(schema, r)).toMatchObject([{ dice_spent: 2, dice_roll: sumOf(kept) }])
+    },
+  )
+
+  it.each(schemas)(
+    '%s: hit dice: a "no" or an expiry keeps the roll; spending it in a completed rest frees it',
+    async (schema) => {
+      const { s, c, dm, player, peer, arin, bea } = await table(schema)
+      // A rest the DM opened, rejected by the Player's own "no".
+      let r = await s.rest(c, dm)
+      await asUser(player)
+      const kept = await s.app(c, arin, 'hit_die', '1d10')
+      await asUser(player)
+      await vote(schema, c, r, arin, 'no', null, null)
+      expect(await restStatus(schema, r)).toBe('rejected')
+      r = await playerRest(schema, c, player)
+      await asUser(player)
+      await expect(s.app(c, arin, 'hit_die', '1d10')).rejects.toThrow(/Already rolled/)
+      // Expired.
+      await asSystem()
+      await db.query(
+        `update ${schema}.rest_requests set expires_at = now() - interval '1 second' where id=$1`,
+        [r],
+      )
+      r = await s.rest(c, dm)
+      await asUser(player)
+      await expect(s.app(c, arin, 'hit_die', '1d10')).rejects.toThrow(/Already rolled/)
+      expect((await s.stored(c)).map((x) => x.id)).toEqual([kept.id])
+      // Used in a rest that completes: the dice are spent and the slot is free.
+      await asUser(player)
+      await vote(schema, c, r, arin, 'yes', 1, kept.dice[0]!)
+      await asUser(peer)
+      await vote(schema, c, r, bea, 'yes', 0, null)
+      expect(await restStatus(schema, r)).toBe('done')
+      await asUser(player)
+      expect((await s.context(c)).spent).toEqual([])
+      r = await s.rest(c, dm)
+      await asUser(player)
+      expect(await s.app(c, arin, 'hit_die', '1d10')).toMatchObject({ rest_id: r })
+    },
+  )
+
+  it.each(schemas)(
+    '%s: hit dice: a rest completed without spending them keeps the roll',
+    async (schema) => {
+      const { s, c, dm, player, peer, arin, bea } = await table(schema)
+      let r = await s.rest(c, dm)
+      await asUser(player)
+      const kept = await s.app(c, arin, 'hit_die', '1d10')
+      await asUser(player)
+      await vote(schema, c, r, arin, 'yes', 0, null)
+      await asUser(peer)
+      await vote(schema, c, r, bea, 'yes', 0, null)
+      expect(await restStatus(schema, r)).toBe('done')
+      r = await s.rest(c, dm)
+      await asUser(player)
+      await expect(s.app(c, arin, 'hit_die', '1d10')).rejects.toThrow(/Already rolled/)
+      await asUser(player)
+      expect((await s.context(c)).rolls.map((x) => x.id)).toEqual([kept.id])
+    },
+  )
+
+  it.each(schemas)(
+    '%s: hit dice: only the sheet die and the dice left, for anyone',
+    async (schema) => {
+      const { s, c, dm, player, arin } = await table(schema)
+      const r = await s.rest(c, dm)
+      // The sheet: a d10, level 3, nothing spent.
+      for (const expr of ['2d6', '4d10', '0d10', '2d10+2d6', 'd20', '2d10kh1']) {
+        await asUser(player)
+        await expect(s.app(c, arin, 'hit_die', expr), expr).rejects.toThrow(/Invalid roll/)
+      }
+      await asUser(dm)
+      await expect(s.app(c, arin, 'hit_die', '2d6')).rejects.toThrow(/Invalid roll/)
+      expect(await s.stored(c)).toEqual([])
+      await asUser(player)
+      expect(await s.app(c, arin, 'hit_die', '3d10-3')).toMatchObject({ rest_id: r })
+    },
+  )
+
+  it.each(schemas)(
+    '%s: hit dice: the DM resets the roll, idempotently; the vote made with it goes',
+    async (schema) => {
+      const { s, c, other, dm, player, peer, outsider, otherDm, arin, bea } = await table(schema)
+      const r = await s.rest(c, dm)
+      await asUser(player)
+      const first = await s.app(c, arin, 'hit_die', '2d10')
+      await asUser(player)
+      await vote(schema, c, r, arin, 'yes', 2, sumOf(first))
+      await asAnon()
+      await expect(resetDice(schema, c, arin)).rejects.toThrow(/permission denied/)
+      for (const who of [outsider, otherDm, player, peer]) {
+        await asUser(who)
+        await expect(resetDice(schema, c, arin)).rejects.toThrow(/Forbidden/)
+      }
+      // A DM of another campaign through their own campaign id reaches no character here.
+      await asUser(otherDm)
+      await expect(resetDice(schema, other, arin)).rejects.toThrow(/Character unavailable/)
+      expect((await s.stored(c))[0]).toMatchObject({ id: first.id, superseded_at: null })
+      expect(await votes(schema, r)).toHaveLength(1)
+
+      const id = randomUUID()
+      await asUser(dm)
+      const once = await resetDice(schema, c, arin, id)
+      expect(once).toEqual({ superseded_roll: first.id, vote_cleared: true })
+      await asUser(dm)
+      expect(await resetDice(schema, c, arin, id)).toEqual(once)
+      await asUser(dm)
+      await expect(resetDice(schema, c, bea, id)).rejects.toThrow(/Request mismatch/)
+      expect(await votes(schema, r)).toEqual([])
+      const log = await s.stored(c)
+      expect(log).toHaveLength(1)
+      expect(log[0]!.superseded_at).not.toBeNull()
+      await asUser(dm)
+      expect(
+        await rows(
+          `select actor_id, before_value, after_value from ${schema}.campaign_events
+            where campaign_id=$1 and kind='hit_dice_reset'`,
+          [c],
+        ),
+      ).toEqual([
+        {
+          actor_id: dm,
+          before_value: { roll_id: first.id },
+          after_value: { character_id: arin, vote_cleared: true },
+        },
+      ])
+      // The Player rolls again, another number of dice, and votes with it.
+      await asUser(player)
+      const second = await s.app(c, arin, 'hit_die', '1d10')
+      await asUser(player)
+      await vote(schema, c, r, arin, 'yes', 1, second.dice[0]!)
+      // Nothing in force for Bea: nothing changes and nothing is recorded.
+      await asUser(dm)
+      expect(await resetDice(schema, c, bea)).toEqual({
+        superseded_roll: null,
+        vote_cleared: false,
+      })
+      await asUser(dm)
+      expect(
+        await scalar<number>(
+          `select count(*)::int result from ${schema}.campaign_events where campaign_id=$1 and kind='hit_dice_reset'`,
+          [c],
+        ),
+      ).toBe(1)
+    },
+  )
+
+  it.each(schemas)(
+    '%s: initiative: only a d20 with a bounded modifier occupies the slot',
+    async (schema) => {
+      const { s, c, dm, player, arin } = await table(schema)
+      const e = await s.fight(c, dm, [arin])
+      for (const expr of ['d2+97', '2d20kh1', 'd20+31', 'd20-21', '1d12', 'd20+2d6', '2d20']) {
+        await asUser(player)
+        await expect(s.app(c, arin, 'initiative', expr), expr).rejects.toThrow(/Invalid roll/)
+      }
+      await asUser(dm)
+      await expect(s.app(c, arin, 'initiative', 'd2+97')).rejects.toThrow(/Invalid roll/)
+      expect(await s.stored(c)).toEqual([])
+      // A DM roll without a character keeps any valid expression (an NPC's advantage).
+      await asUser(dm)
+      expect(await s.app(c, null, 'initiative', '2d20kh1')).toMatchObject({ encounter_id: null })
+      await asUser(player)
+      expect(await s.app(c, arin, 'initiative', 'd20+30')).toMatchObject({ encounter_id: e })
+      // A linked roll of another shape (written directly) is not accepted by set_initiative.
+      await asUser(dm)
+      await s.reset(c, arin, null)
+      await asSystem()
+      await db.query(
+        `insert into ${schema}.campaign_rolls(id, campaign_id, character_id, roller_id, expression, dice, total,
+           kind, source, visibility, encounter_id) values ($1,$2,$3,$4,'d2+97','{1}',98,'initiative','app','roller_dm',$5)`,
+        [randomUUID(), c, arin, player, e],
+      )
+      const { id: combatant } = await s.combatant(e, arin)
+      await asUser(player)
+      await expect(setInitiative(schema, c, combatant, 98)).rejects.toThrow(/Roll required/)
+    },
+  )
+
+  it.each(schemas)('%s: a hidden character is not linked', async (schema) => {
+    const { s, c, dm, player, arin } = await table(schema)
+    const e = await s.fight(c, dm, [arin])
+    await asSystem()
+    await db.query(
+      `update ${schema}.encounter_combatants set hidden = true where encounter_id=$1 and character_id=$2`,
+      [e, arin],
+    )
+    for (let i = 0; i < 2; i++) {
+      await asUser(player)
+      expect(await s.app(c, arin, 'initiative', 'd20+2')).toMatchObject({ encounter_id: null })
+    }
+    await asUser(player)
+    expect(await s.context(c)).toMatchObject({ encounter_id: e, spent: [], rolls: [] })
+  })
+
+  it.each(schemas)(
+    '%s: re-roll: modifier checked before rolling, the rate limit and the group',
+    async (schema) => {
+      const { s, c, dm, arin, bea } = await table(schema)
+      const e = await s.fight(c, dm, [arin, bea])
+      for (const expr of ['d20-30', 'd20+31', 'd20-21', 'd2+97'])
+        for (let i = 0; i < 3; i++) {
+          await asUser(dm)
+          await expect(s.reset(c, arin, expr), expr).rejects.toThrow(/Invalid roll/)
+        }
+      // The combatant's group follows, as set_initiative writes it.
+      await asSystem()
+      await db.query(
+        `update ${schema}.encounter_combatants set group_key = 'Party' where encounter_id=$1`,
+        [e],
+      )
+      await asUser(dm)
+      const rolled = await s.reset(c, arin, 'd20+30')
+      expect((await s.combatant(e, bea)).initiative).toBe(rolled.roll!.total)
+      expect((await s.combatant(e, arin)).initiative).toBe(rolled.roll!.total)
+      await asUser(dm)
+      await s.reset(c, arin, null)
+      expect((await s.combatant(e, bea)).initiative).toBeNull()
+      // The DM's re-rolls count against the DM's per-minute limit, like log_roll.
+      const q = priv(schema)
+      await asSystem()
+      const limit = await scalar<number>(
+        `select max_count result from ${q}.quota_limits where quota = 'rolls_per_minute'`,
+      )
+      await db.query(`update ${q}.quota_limits set max_count = 1 where quota = 'rolls_per_minute'`)
+      try {
+        await asUser(dm)
+        await expect(s.reset(c, arin, 'd20')).rejects.toThrow(/Roll limit/)
+        // Clearing rolls nothing and is not limited.
+        await asUser(dm)
+        await s.reset(c, arin, null)
+      } finally {
+        await asSystem()
+        await db.query(
+          `update ${q}.quota_limits set max_count = $1 where quota = 'rolls_per_minute'`,
+          [limit],
+        )
+      }
+    },
+  )
 })
 
 describe('grants and the PRE mirror', () => {
@@ -1099,33 +1365,37 @@ describe('grants and the PRE mirror', () => {
        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname in ('public', 'private', 'pre', 'pre_private')
          and p.proname in ('log_roll', 'get_roll_context', 'reset_initiative_roll', 'prune_stale_rows',
-           'set_initiative', 'vote_rest')
+           'set_initiative', 'vote_rest', 'reset_hit_dice_roll', 'roll_in_force')
        order by 1`,
     )
     expect(fns.map((f) => f.fn)).toEqual([
       'pre.get_roll_context',
       'pre.log_roll',
+      'pre.reset_hit_dice_roll',
       'pre.reset_initiative_roll',
       'pre.set_initiative',
       'pre.vote_rest',
       'pre_private.prune_stale_rows',
+      'pre_private.roll_in_force',
       'private.prune_stale_rows',
+      'private.roll_in_force',
       'public.get_roll_context',
       'public.log_roll',
+      'public.reset_hit_dice_roll',
       'public.reset_initiative_roll',
       'public.set_initiative',
       'public.vote_rest',
     ])
     for (const f of fns) {
-      const helper = f.fn.endsWith('prune_stale_rows')
+      const helper = /prune_stale_rows|roll_in_force/.test(f.fn)
       expect(f.proconfig, f.fn).toEqual(['search_path=""'])
       expect(f.prosecdef, f.fn).toBe(true)
       expect(f.anon, f.fn).toBe(false)
       expect(f.pub, f.fn).toBe(false)
       expect(f.auth, f.fn).toBe(!helper)
-      expect(f.provolatile, f.fn).toBe(f.fn.endsWith('get_roll_context') ? 's' : 'v')
+      expect(f.provolatile, f.fn).toBe(/get_roll_context|roll_in_force/.test(f.fn) ? 's' : 'v')
       if (f.fn.startsWith('pre')) expect(f.prosrc, f.fn).not.toMatch(/\bpublic\.|\bprivate\./)
-      expect(f.prosrc, f.fn).toMatch(/superseded_at/)
+      expect(f.prosrc, f.fn).toMatch(/superseded_at|roll_in_force/)
     }
     // Columns, keys, checks and indexes exist in both environments.
     expect(

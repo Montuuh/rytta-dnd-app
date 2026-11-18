@@ -1825,7 +1825,7 @@ async function playerPage(
   const page = await context.newPage()
   page.on('pageerror', (e) => errors.push(e.message))
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await identityFixture(page, {
+  const fixture = await identityFixture(page, {
     player: true,
     party: true,
     sheet: 'complete',
@@ -1833,6 +1833,8 @@ async function playerPage(
     as,
     diceMode,
   })
+  // RYT-137: the roll store knows which fight is live, as the server does.
+  server.useDice(fixture.dice)
   await server.install(page)
   await page.goto(`./#/campaign/${campaignId}/combat`)
   await expect(page.getByRole('heading', { level: 1, name: 'Bridge ambush' })).toBeVisible({

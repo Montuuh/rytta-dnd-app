@@ -4,7 +4,7 @@ import { useMediaQuery } from '@mantine/hooks'
 import { Ban, Check, Hourglass, Moon, RotateCcw, Sunset, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { attemptFor, useDiceMode, useRollContext, type Attempt } from '@/features/dice'
+import { createAttemptBook, resetSlot, useDiceMode, useRollContext } from '@/features/dice'
 import { newRequestId } from '@/shared/lib/request-id'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
@@ -107,8 +107,11 @@ export function RestPanel({
   // RYT-137: with dice in the app, the hit-dice roll the server holds for a character (made in
   // this rest, or kept from one that did not complete) is read from the server's one-roll state,
   // so it survives closing the panel, a reload and another device.
-  const { behaviour } = useDiceMode(campaignId)
-  const own = useRollContext(campaignId)
+  const { behaviour, mode } = useDiceMode(campaignId)
+  // Only where it is used: dice in the app, or the DM (who can reset any character's roll).
+  const own = useRollContext(campaignId, {
+    enabled: behaviour === 'app' || (state.dm && mode !== 'physical'),
+  })
   const userId = useAuth().state.user!.id
   const madeKey = (person: RestParticipant) =>
     madeRollKey(userId, campaignId, person.id, state.created_at)
@@ -128,12 +131,16 @@ export function RestPanel({
         spent: rolled.dice.length,
         roll: String(rolled.dice.reduce((sum, item) => sum + item, 0)),
       }
-    return (
-      choices[person.id] ?? {
-        spent: person.dice_spent,
-        roll: person.dice_roll != null ? String(person.dice_roll) : '',
-      }
-    )
+    // A roll the server holds but this account cannot read fixes the dice and blocks spending
+    // any: the vote that can succeed is the one without dice.
+    if (spentHidden(person)) return { spent: 0, roll: '' }
+    const typed = choices[person.id] ?? {
+      spent: person.dice_spent,
+      roll: person.dice_roll != null ? String(person.dice_roll) : '',
+    }
+    // With dice in the app the roll is never typed: without a server roll there is no roll, so a
+    // roll the DM discarded is not kept on this screen.
+    return behaviour === 'app' && short ? { spent: typed.spent, roll: '' } : typed
   }
   // Own and DM-controlled characters preview the dice chosen here, before voting.
   const viewOf = (person: RestParticipant): RecoveryView | null => {
@@ -181,20 +188,33 @@ export function RestPanel({
       roll: withDice && choice.spent > 0 ? Number(choice.roll) : null,
     })
   }
-  // RYT-137 (DM): set a Player's hit-dice roll aside. One request id per intent: a retry after a
-  // failure repeats it, and a new reset starts over.
+  // RYT-137 (DM): discard a Player's hit-dice roll. Each character has its own attempt: a retry of
+  // the same intent (same rest, same roll in force) repeats its request id, a new intent gets a
+  // new one, and an attempt ends with its success or when the server no longer holds the roll.
   const resetDice = useResetHitDice(campaignId)
-  const resetAttempt = useRef<Attempt | null>(null)
+  const attempts = useRef(createAttemptBook())
+  const { spent: rollSpent, status: rollStatus } = own
+  useEffect(() => {
+    if (rollStatus !== 'ready') return
+    attempts.current.prune((slot) => rollSpent(slot.split(':')[0]!, 'hit_die'))
+  }, [rollStatus, rollSpent, state.id])
   const [resetNote, setResetNote] = useState('')
   const resetRoll = (person: RestParticipant) => {
     if (resetDice.isPending) return
     const from = document.activeElement
-    resetAttempt.current = attemptFor(resetAttempt.current, person.id, newRequestId)
+    const slot = resetSlot(person.id, 'hit_die')
+    const attempt = attempts.current.forIntent(
+      slot,
+      `${state.id}|${own.roll(person.id, 'hit_die')?.id ?? 'unreadable'}`,
+      newRequestId,
+    )
+    // A repeat of the same reset is announced again: the text is emptied first.
+    setResetNote('')
     resetDice.mutate(
-      { characterId: person.id, requestId: resetAttempt.current.id },
+      { characterId: person.id, requestId: attempt.id },
       {
         onSuccess: (done) => {
-          resetAttempt.current = null
+          attempts.current.done(slot)
           setResetNote(
             t(done.vote_cleared ? 'rest.dm.resetDoneVote' : 'rest.dm.resetDone', {
               name: person.name,
@@ -345,7 +365,7 @@ export function RestPanel({
             <div className="rest-dm-reset">
               <p className="rest-dice-note">{t('rest.dm.resetNote', { name: person.name })}</p>
               <Button
-                variant="default"
+                variant="subtle"
                 leftSection={<RotateCcw size={18} aria-hidden="true" />}
                 aria-disabled={resetDice.isPending || undefined}
                 onClick={() => resetRoll(person)}
@@ -450,7 +470,7 @@ export function RestPanel({
             })}
           </Alert>
         )}
-        <p className="visually-hidden" role="status">
+        <p className="rest-reset-note" role="status">
           {resetNote}
         </p>
         {open ? (

@@ -11,7 +11,13 @@ export { useDice } from './ui/dice-context'
 export { useAppRoll } from './ui/use-app-roll'
 export { useRollContext } from './ui/use-roll-context'
 export { rollContextScope } from './api'
-export { initiativeExpression, rerollExpression } from './domain/context'
+export {
+  createAttemptBook,
+  initiativeExpression,
+  rerollExpression,
+  resetSlot,
+} from './domain/context'
+export type { OneRollKind } from './domain/context'
 export { failureReason } from './ui/failure-reason'
 export {
   attackSpecs,

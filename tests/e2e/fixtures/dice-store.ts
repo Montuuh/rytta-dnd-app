@@ -137,6 +137,9 @@ export function createDiceStore(
     /** The next log_roll is stored but its reply is lost (503): a retry with the same request id
      * must return the stored roll. */
     loseReplyNext: false,
+    /** The next reset (hit dice or initiative) is applied but its reply is lost (503): a retry with
+     * the same request id must return the first result. */
+    loseResetReplyNext: false,
     /** Deterministic server dice for source 'app' (consumed in order, else random). */
     serverDice: [] as number[],
     clock: () => Date.now(),
@@ -451,6 +454,10 @@ export function createDiceStore(
       const cleared = old !== null && store.world.openRest() !== null ? removeVote(target) : false
       const result = { superseded_roll: old, vote_cleared: cleared }
       store.resetRequests.set(String(body.request_id), { actor, payload, result })
+      if (store.loseResetReplyNext) {
+        store.loseResetReplyNext = false
+        return { status: 503, body: { message: 'Unavailable' } }
+      }
       return { status: 200, body: result }
     },
   }

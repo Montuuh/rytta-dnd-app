@@ -47,6 +47,27 @@ const serverFaces = (f: { dice: { serverDice: number[] } }, faces: number[]) => 
   f.dice.serverDice.push(...faces)
 }
 
+/**
+ * The page keeps the one-roll state it first read until the server refuses a roll: another device
+ * rolled meanwhile, and the refusal (not a poll) is what makes the page read the state again.
+ * Register it before the page loads.
+ */
+async function staleUntilRefusal(page: Page) {
+  let first: string | null = null
+  let refused = false
+  page.on('response', async (response) => {
+    const url = response.url()
+    if (url.includes('/rpc/log_roll') && response.status() === 400) refused = true
+    if (url.includes('/rpc/get_roll_context') && first === null && !refused)
+      first = await response.text()
+  })
+  await page.route(/\/rest\/v1\/rpc\/get_roll_context/, (route) =>
+    first === null || refused
+      ? route.fallback()
+      : route.fulfill({ status: 200, contentType: 'application/json', body: first }),
+  )
+}
+
 const logged = (calls: { method: string; body: Record<string, unknown> }[]) =>
   calls.filter((call) => call.method === 'log_roll')
 const settingsCalls = (calls: { method: string; body: Record<string, unknown> }[]) =>
@@ -1172,7 +1193,7 @@ const arinId = (server: ReturnType<typeof combatServer>) =>
 async function initiativePage(
   browser: Browser,
   info: TestInfo,
-  options: { theme?: string; failLog?: { on: boolean; hits?: number } } = {},
+  options: { theme?: string; failLog?: { on: boolean; hits?: number }; stale?: boolean } = {},
 ) {
   const server = combatServer()
   server.seedInitiative()
@@ -1193,6 +1214,7 @@ async function initiativePage(
   })
   server.useDice(f.dice)
   await server.install(page)
+  if (options.stale) await staleUntilRefusal(page)
   const failLog = options.failLog
   if (failLog)
     await page.route(/\/rest\/v1\/rpc\/get_roll_context/, (route) => {
@@ -1601,9 +1623,10 @@ test('RYT-137 initiative: a second roll is refused with its reason and no number
   browser,
 }, info) => {
   test.setTimeout(120_000)
-  const { page, f, entry, context } = await initiativePage(browser, info)
+  const { page, f, entry, context } = await initiativePage(browser, info, { stale: true })
   serverFaces(f, [11, 4])
   // The same account rolled on another device: the server holds the roll, this page has not read it.
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeVisible()
   const first = otherDevice(f, 'initiative', 'd20+2')
   expect(first.total).toBe(13)
   const refused = page.waitForResponse(
@@ -1616,7 +1639,7 @@ test('RYT-137 initiative: a second roll is refused with its reason and no number
   )
   // Nothing was rolled: the only number is the first roll.
   await expect(entry).not.toContainText('Salió 4')
-  await expect(entry).toContainText('Ya tiraste: 13', { timeout: 20_000 })
+  await expect(entry).toContainText('Ya tiraste: 13')
   await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
   expect(f.dice.rolls).toHaveLength(1)
   await audit(page)
@@ -1684,9 +1707,14 @@ test('RYT-137 initiative: saving a total the server does not hold is refused as 
   ).toBeVisible()
   expect(arinCombatant(server).initiative).toBeUndefined()
   // The state is read again: the cleared Player can roll once more, and the new roll saves.
+  // The refused save is what makes the page read the state again (not the next poll): the roll is
+  // offered again at once, with an empty d20 and no old total to save.
   await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeVisible({
-    timeout: 20_000,
+    timeout: 5_000,
   })
+  await expect(entry.locator('.combat-d20-input input')).toHaveValue('')
+  await expect(entry).not.toContainText('Ya tiraste')
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
   await page.unroute(/\/rest\/v1\/rpc\/set_initiative/)
   await entry.getByRole('button', { name: 'Tirar por mí' }).click()
   await expect(entry).toContainText('Ya tiraste: 6. Guarda esa tirada para fijarla.')
@@ -1703,6 +1731,11 @@ test('RYT-137 initiative: the DM clears a Player roll from the row menu and the 
   test.setTimeout(150_000)
   const { server, page, f, entry, context } = await initiativePage(browser, info)
   serverFaces(f, [11, 4])
+  let reads = 0
+  page.on('request', (request) => {
+    if (request.url().includes('/rpc/get_roll_context')) reads += 1
+  })
+  const contextReads = () => reads
   await entry.getByRole('button', { name: 'Tirar por mí' }).click()
   await expect(entry).toContainText('Ya tiraste: 13')
   await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
@@ -1715,6 +1748,7 @@ test('RYT-137 initiative: the DM clears a Player roll from the row menu and the 
     server,
     server.encounters[0]!.id,
   )
+  let readsBeforeClear = 0
   const menuButton = dm.getByRole('button', { name: 'Opciones de Arin' })
   // Bea has not rolled: nothing to clear for her.
   const beaMenu = dm.getByRole('button', { name: 'Opciones de Bea' })
@@ -1731,6 +1765,7 @@ test('RYT-137 initiative: the DM clears a Player roll from the row menu and the 
   await expect(dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' })).toBeVisible()
   await expectTouchTargets(dm, '.combat-menu [role="menuitem"]:visible', { height: 44 })
   await clear.focus()
+  readsBeforeClear = contextReads()
   await dm.keyboard.press('Enter')
   await expect(clear).toBeHidden()
   await expect(menuButton).toBeFocused()
@@ -1744,10 +1779,15 @@ test('RYT-137 initiative: the DM clears a Player roll from the row menu and the 
   await dm.keyboard.press('Escape')
   await dmContext.close()
 
-  // The Player reads the new state and rolls once again; the second roll is the one in force.
-  await page.reload()
-  await expect(entry).toBeVisible({ timeout: 15_000 })
-  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeVisible()
+  // The Player's screen follows live, without a reload: the combat state shows the clear, which
+  // makes the page read the one-roll state again, so the roll is offered with nothing to save.
+  await expect(entry).toBeVisible({ timeout: 8_000 })
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeVisible({
+    timeout: 8_000,
+  })
+  await expect(entry.locator('.combat-d20-input input')).toHaveValue('')
+  await expect(entry).not.toContainText('Ya tiraste')
+  expect(contextReads()).toBeGreaterThan(readsBeforeClear)
   await entry.getByRole('button', { name: 'Tirar por mí' }).click()
   await expect(entry).toContainText('Ya tiraste: 6. Guarda esa tirada para fijarla.')
   await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
@@ -1821,6 +1861,10 @@ test('RYT-137 initiative: with physical dice nothing changes and any total saves
   })
   server.useDice(f.dice)
   await server.install(page)
+  const contextReads: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('/rpc/get_roll_context')) contextReads.push(request.url())
+  })
   await page.goto(`./#/campaign/${campaignId}/combat`)
   const entry = page.locator('.combat-entry')
   await expect(entry).toBeVisible({ timeout: 15_000 })
@@ -1831,11 +1875,13 @@ test('RYT-137 initiative: with physical dice nothing changes and any total saves
   await expect(page.locator('.combat-entry')).toHaveCount(0)
   expect(arinCombatant(server).initiative).toBe(17)
   expect(logged(f.calls)).toHaveLength(0)
+  // Physical dice hold no roll: the one-roll state is never requested.
+  expect(contextReads).toEqual([])
   await context.close()
 })
 
 /** A Player page with dice in the app, ready to ask for a short rest. */
-async function hitDicePage(page: Page, options: { failContext?: boolean } = {}) {
+async function hitDicePage(page: Page, options: { failContext?: boolean; stale?: boolean } = {}) {
   const f = await identityFixture(page, {
     player: true,
     sheet: 'complete',
@@ -1846,6 +1892,7 @@ async function hitDicePage(page: Page, options: { failContext?: boolean } = {}) 
     await page.route(/\/rest\/v1\/rpc\/get_roll_context/, (route) =>
       route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' }),
     )
+  if (options.stale) await staleUntilRefusal(page)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   return f
 }
@@ -1865,7 +1912,7 @@ test('RYT-137 hit dice: a second roll is refused with its reason and no number',
   page,
 }) => {
   test.setTimeout(90_000)
-  const f = await hitDicePage(page)
+  const f = await hitDicePage(page, { stale: true })
   serverFaces(f, [6, 3])
   await page.goto(sheetUrl)
   await askShortRest(page)
@@ -1879,10 +1926,12 @@ test('RYT-137 hit dice: a second roll is refused with its reason and no number',
   )
   await dice.getByRole('button', { name: 'Tirar por mí' }).click()
   expect(((await (await refused).json()) as { message: string }).message).toBe('Already rolled')
-  await expect(dice.getByRole('alert')).toContainText('Rytta ya tiene tus dados de golpe')
+  await expect(
+    dice.getByRole('status').filter({ hasText: 'Rytta ya tiene tu tirada' }),
+  ).toBeVisible()
   // The refused request stored nothing, and the roll shown afterwards is the one the server holds.
   expect(f.dice.rolls).toHaveLength(1)
-  await expect(dice.locator('.rest-roll-result-value')).toHaveText('6', { timeout: 20_000 })
+  await expect(dice.locator('.rest-roll-result-value')).toHaveText('6')
   await expect(dice.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
   await audit(page)
 })
@@ -1981,9 +2030,13 @@ test('RYT-137 hit dice: voting with dice the server does not hold is refused, an
   ).toBeVisible()
   await page.unroute(/\/rest\/v1\/rpc\/vote_rest/)
   // Read again: no roll in force, so Rytta offers one, and the new roll is the one that counts.
+  // The refused vote is what makes the panel read the state again: the old roll is gone from the
+  // result and from the heal line, not just from the button.
   await expect(dice().locator('.rest-roll-result-value')).toHaveText('Sin tirar', {
-    timeout: 20_000,
+    timeout: 5_000,
   })
+  await expect(dice().locator('.rest-dice-faces')).toHaveCount(0)
+  await expect(dice().locator('.rest-dice-sum')).not.toContainText('Tirada 6')
   await dice().getByRole('button', { name: 'Tirar por mí' }).click()
   await expect(dice().locator('.rest-roll-result-value')).toHaveText('3')
   expect(f.dice.rolls.filter((roll) => !roll.superseded_at)).toHaveLength(1)
@@ -2008,7 +2061,9 @@ test('RYT-137 hit dice: the DM resets a Player roll from the rest panel, and the
   const person = panel.locator('.rest-person', { hasText: 'Arin' })
   const control = person.locator('.mantine-Accordion-control')
   if ((await control.getAttribute('aria-expanded')) !== 'true') await control.click()
-  const reset = person.getByRole('button', { name: 'Restablecer los dados de golpe de Arin' })
+  const reset = person.getByRole('button', {
+    name: 'Descartar la tirada de dados de golpe de Arin',
+  })
   await expect(person).toContainText('Arin ya tiró los dados de golpe')
   await expectTouchTargets(page, '.rest-dm-reset .mantine-Button-root:visible', { height: 44 })
   await audit(page)
@@ -2046,15 +2101,20 @@ for (const theme of ['default', 'parchment'])
     browser,
   }, info) => {
     test.setTimeout(150_000)
-    const { server, page, f, entry, context } = await initiativePage(browser, info, { theme })
+    const { server, page, f, entry, context } = await initiativePage(browser, info, {
+      theme,
+      stale: true,
+    })
     serverFaces(f, [11, 4])
     // 1. The refusal says why and shows no number of its own.
+    // The state is read (the roll is offered) before the other device rolls.
+    await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeVisible()
     otherDevice(f, 'initiative', 'd20+2')
     await entry.getByRole('button', { name: 'Tirar por mí' }).click()
     await expect(entry.locator('.combat-entry-formula')).toContainText(
       'Rytta ya tiene tu tirada de iniciativa de este combate',
     )
-    await expect(entry).toContainText('Ya tiraste: 13', { timeout: 20_000 })
+    await expect(entry).toContainText('Ya tiraste: 13')
     await axeClean(page, `${theme}: initiative refused`)
     await evidence(page, info, `initiative-refused-${theme}`)
     await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
@@ -2097,7 +2157,7 @@ for (const theme of ['default', 'parchment'])
     })
     const page = await playerContext.newPage()
     await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
-    const f = await hitDicePage(page)
+    const f = await hitDicePage(page, { stale: true })
     serverFaces(f, [6, 3])
     await page.goto(sheetUrl)
     await askShortRest(page)
@@ -2106,7 +2166,9 @@ for (const theme of ['default', 'parchment'])
     await expect(dice.getByRole('button', { name: 'Tirar por mí' })).toBeVisible()
     otherDevice(f, 'hit_die', '1d8+2')
     await dice.getByRole('button', { name: 'Tirar por mí' }).click()
-    await expect(dice.getByRole('alert')).toContainText('Rytta ya tiene tus dados de golpe')
+    await expect(
+      dice.getByRole('status').filter({ hasText: 'Rytta ya tiene tu tirada' }),
+    ).toBeVisible()
     await axeClean(page, `${theme}: hit dice refused`)
     await evidence(page, info, `hit-dice-refused-${theme}`)
     await playerContext.close()
@@ -2128,7 +2190,9 @@ for (const theme of ['default', 'parchment'])
     const person = panel.locator('.rest-person', { hasText: 'Arin' })
     const control = person.locator('.mantine-Accordion-control')
     if ((await control.getAttribute('aria-expanded')) !== 'true') await control.click()
-    const reset = person.getByRole('button', { name: 'Restablecer los dados de golpe de Arin' })
+    const reset = person.getByRole('button', {
+      name: 'Descartar la tirada de dados de golpe de Arin',
+    })
     await expect(reset).toBeVisible()
     await reset.scrollIntoViewIfNeeded()
     await axeClean(dm, `${theme}: DM hit dice reset`)
@@ -2164,9 +2228,329 @@ test('RYT-137 hit dice: a roll the DM made for the character counts and is said,
     .getByRole('button', { name: /^(Votar|Ver)$/ })
     .click()
   const dice = diceGroup(page)
-  await dice.getByRole('button', { name: 'Gastar un dado más' }).click()
-  await expect(dice).toContainText('Ya hay una tirada tuya de dados de golpe', { timeout: 20_000 })
+  await expect(dice).toContainText('Hay una tirada de dados de golpe tuya que no puedes ver')
+  // Coherent: no "not rolled" next to a roll that exists, no roll to make, the count is fixed.
   await expect(dice.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
-  await expect(dice.locator('.rest-roll-result-value')).toHaveText('Sin tirar')
+  await expect(dice.locator('.rest-roll-result-value')).toHaveCount(0)
+  await expect(dice.getByRole('button', { name: 'Gastar un dado más' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await expect(dice.locator('.rest-stepper-value')).toHaveText('0')
+  // The vote that can succeed is the one without dice: it goes through, and nothing is dead.
+  const panel = page.getByRole('dialog', { name: 'Descanso del grupo' })
+  await panel.getByRole('button', { name: 'Descansar', exact: true }).click()
+  await expect
+    .poll(() => f.calls.filter((call) => call.method === 'vote_rest').length)
+    .toBeGreaterThan(0)
+  const vote = f.calls.filter((call) => call.method === 'vote_rest').at(-1)!
+  expect(vote.body).toMatchObject({ vote_value: 'yes', spent: 0 })
+  await expect(panel.getByRole('alert')).toHaveCount(0)
   expect(f.dice.rolls).toHaveLength(1)
 })
+
+const resetCalls = (calls: { method: string; body: Record<string, unknown> }[], method: string) =>
+  calls.filter((call) => call.method === method)
+
+test('RYT-137 initiative: a clear whose reply is lost is retried with the same id; a later roll and clear use a new one', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const { server, page, f, entry, context } = await initiativePage(browser, info)
+  serverFaces(f, [11, 4])
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 13')
+  await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
+  await expect(page.locator('.combat-entry')).toHaveCount(0)
+
+  const { page: dm, context: dmContext } = await dmOnTable(
+    browser,
+    info,
+    f,
+    server,
+    server.encounters[0]!.id,
+  )
+  const resets: string[] = []
+  dm.on('request', (request) => {
+    if (!request.url().includes('/rpc/reset_initiative_roll')) return
+    resets.push((request.postDataJSON() as { request_id: string }).request_id)
+  })
+  const menuButton = dm.getByRole('button', { name: 'Opciones de Arin' })
+  // The state is loaded once the menu offers the clear.
+  await menuButton.click()
+  await expect(dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })).toBeVisible()
+  await dm.keyboard.press('Escape')
+  await expect(menuButton).toBeFocused()
+  // The one-roll state cannot be read now: the menu keeps offering the clear, the server decides.
+  await dm.route(/\/rest\/v1\/rpc\/get_roll_context/, (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' }),
+  )
+  f.dice.loseResetReplyNext = true
+  await menuButton.click()
+  await dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' }).click()
+  await expect(dm.getByRole('alert')).toBeVisible()
+  expect(arinCombatant(server).initiative).toBeUndefined()
+  expect(f.dice.rolls[0]!.superseded_at).toBeTruthy()
+  const firstSuperseded = f.dice.rolls[0]!.superseded_at
+  await menuButton.click()
+  await dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' }).click()
+  await expect(dm.getByText('Arin puede volver a tirar su iniciativa.')).toBeAttached()
+  expect(resets).toHaveLength(2)
+  expect(resets[1]).toBe(resets[0])
+  // The replay returned the first result: nothing was cleared twice.
+  expect(f.dice.rolls[0]!.superseded_at).toBe(firstSuperseded)
+
+  // The Player rolls again; the DM reads the state and clears the new roll: a new request id that
+  // really clears.
+  await page.reload()
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 6')
+  await dm.unroute(/\/rest\/v1\/rpc\/get_roll_context/)
+  await dm.reload()
+  await expect(arinRow(dm)).toBeVisible({ timeout: 15_000 })
+  await dm.getByRole('button', { name: 'Opciones de Arin' }).click()
+  await dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' }).click()
+  await expect.poll(() => resets.length).toBe(3)
+  expect(resets[2]).not.toBe(resets[0])
+  await expect.poll(() => f.dice.rolls.filter((roll) => !roll.superseded_at).length).toBe(0)
+  await dmContext.close()
+  await context.close()
+})
+
+test('RYT-137 hit dice: a discard whose reply is lost is retried with the same id; a later roll and discard use a new one', async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  const f = await identityFixture(page, { party: true, sheet: 'complete', diceMode: 'app' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  f.openRest('short', { user: playerId, character: characterId })
+  const made = otherDevice(f, 'hit_die', '1d8+2')
+  f.restVote(characterId, 'yes', 1, made.dice[0]!)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('region', { name: 'Descanso del grupo' }).getByRole('button').first().click()
+  const panel = page.getByRole('dialog', { name: 'Descanso del grupo' })
+  const person = panel.locator('.rest-person', { hasText: 'Arin' })
+  const control = person.locator('.mantine-Accordion-control')
+  if ((await control.getAttribute('aria-expanded')) !== 'true') await control.click()
+  const reset = person.getByRole('button', {
+    name: 'Descartar la tirada de dados de golpe de Arin',
+  })
+  await expect(reset).toBeVisible()
+  // The state cannot be read from here on: the button stays and the server decides.
+  await page.route(/\/rest\/v1\/rpc\/get_roll_context/, (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' }),
+  )
+  f.dice.loseResetReplyNext = true
+  await reset.click()
+  await expect(panel.getByRole('alert')).toBeVisible()
+  const superseded = f.dice.rolls[0]!.superseded_at
+  expect(superseded).toBeTruthy()
+  await reset.click()
+  await expect(panel.locator('.rest-reset-note')).toContainText('Tirada descartada')
+  const calls = resetCalls(f.calls, 'reset_hit_dice_roll')
+  expect(calls).toHaveLength(2)
+  expect(calls[1]!.body.request_id).toBe(calls[0]!.body.request_id)
+  expect(f.dice.rolls[0]!.superseded_at).toBe(superseded)
+
+  // A new roll, then a new discard: a new request id, and it really discards the new roll.
+  await page.unroute(/\/rest\/v1\/rpc\/get_roll_context/)
+  const second = otherDevice(f, 'hit_die', '1d8+2')
+  await page.reload()
+  await page.getByRole('region', { name: 'Descanso del grupo' }).getByRole('button').first().click()
+  const again = page.getByRole('dialog', { name: 'Descanso del grupo' }).locator('.rest-person', {
+    hasText: 'Arin',
+  })
+  const againControl = again.locator('.mantine-Accordion-control')
+  if ((await againControl.getAttribute('aria-expanded')) !== 'true') await againControl.click()
+  await again.getByRole('button', { name: 'Descartar la tirada de dados de golpe de Arin' }).click()
+  await expect.poll(() => resetCalls(f.calls, 'reset_hit_dice_roll').length).toBe(3)
+  const third = resetCalls(f.calls, 'reset_hit_dice_roll')[2]!
+  expect(third.body.request_id).not.toBe(calls[0]!.body.request_id)
+  expect(f.dice.rolls.find((roll) => roll.id === second.id)!.superseded_at).toBeTruthy()
+})
+
+test('RYT-137 initiative: a roll the DM made that the Player cannot read is said, and nothing offers to save', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { page, f, entry, context } = await initiativePage(browser, info)
+  serverFaces(f, [9])
+  // The DM rolls Arin's initiative without fixing the total: the Player cannot read the DM's roll.
+  const reply = f.dice.logRoll(dmId, { role: 'dm', active: true }, arinOnly, {
+    target_campaign: campaignId,
+    target_character: characterId,
+    roll_label: 'initiative',
+    roll_expression: 'd20+2',
+    roll_kind: 'initiative',
+    roll_source: 'app',
+    recorded_dice: null,
+    recorded_total: null,
+    request_id: crypto.randomUUID(),
+  })
+  expect(reply.status).toBe(200)
+  await page.reload()
+  await expect(entry).toBeVisible({ timeout: 15_000 })
+  await expect(entry).toContainText('Ya hay una tirada tuya en este combate')
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toHaveCount(0)
+  await audit(page)
+  await context.close()
+})
+
+test('RYT-137 initiative: the DM re-roll uses the sheet bonus when the roll is unreadable and none is saved', async ({
+  browser,
+}, info) => {
+  test.setTimeout(150_000)
+  const { server, f, entry, context } = await initiativePage(browser, info)
+  // Only the roller reads their roll: the DM cannot read the expression.
+  f.dice.roll_visibility = 'roller'
+  serverFaces(f, [11, 8])
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 13')
+  // Rolled but not saved: no bonus is saved on the combatant either.
+  expect(arinCombatant(server).initiative_bonus).toBe(0)
+  const { page: dm, context: dmContext } = await dmOnTable(
+    browser,
+    info,
+    f,
+    server,
+    server.encounters[0]!.id,
+  )
+  await dm.getByRole('button', { name: 'Opciones de Arin' }).click()
+  await dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' }).click()
+  await expect.poll(() => arinCombatant(server).initiative).toBe(10)
+  expect(f.dice.rolls.find((roll) => !roll.superseded_at)).toMatchObject({
+    expression: 'd20+2',
+    total: 10,
+  })
+  await dmContext.close()
+  await context.close()
+})
+
+for (const theme of ['default', 'parchment'])
+  test(`RYT-137 English: the refused roll, the DM menu, the hit-dice refusal and the DM discard in ${theme}`, async ({
+    browser,
+  }, info) => {
+    test.setTimeout(180_000)
+    const english = (page: Page) =>
+      page.addInitScript(
+        ([language, id]) => {
+          localStorage.setItem('rytta-language', language!)
+          localStorage.setItem('rytta-theme', id!)
+        },
+        ['en', theme],
+      )
+    // Initiative: refused, then the DM menu.
+    const server = combatServer()
+    server.seedInitiative()
+    const context = await browser.newContext({
+      viewport: info.project.use.viewport,
+      hasTouch: info.project.use.hasTouch,
+    })
+    const page = await context.newPage()
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await english(page)
+    const f = await identityFixture(page, {
+      player: true,
+      party: true,
+      sheet: 'complete',
+      modules: ['party', 'combat'],
+      diceMode: 'app',
+    })
+    server.useDice(f.dice)
+    await server.install(page)
+    await staleUntilRefusal(page)
+    serverFaces(f, [11, 4])
+    await page.goto(`./#/campaign/${campaignId}/combat`)
+    const entry = page.locator('.combat-entry')
+    await expect(entry).toBeVisible({ timeout: 15_000 })
+    await expect(entry.getByRole('button', { name: 'Roll for me' })).toBeVisible()
+    otherDevice(f, 'initiative', 'd20+2')
+    await entry.getByRole('button', { name: 'Roll for me' }).click()
+    await expect(entry.locator('.combat-entry-formula')).toContainText(
+      'Rytta already has your initiative roll for this fight.',
+    )
+    await expect(entry).toContainText('You already rolled: 13')
+    await axeClean(page, `${theme}: initiative refused (en)`)
+    await evidence(page, info, `en-initiative-refused-${theme}`)
+    await entry.getByRole('button', { name: 'Save initiative' }).click()
+    await expect(page.locator('.combat-entry')).toHaveCount(0)
+    const dmContext = await browser.newContext({
+      viewport: info.project.use.viewport,
+      hasTouch: info.project.use.hasTouch,
+    })
+    const dm = await dmContext.newPage()
+    await dm.emulateMedia({ reducedMotion: 'reduce' })
+    await english(dm)
+    await identityFixture(dm, {
+      party: true,
+      linkedPlayer: true,
+      sheet: 'complete',
+      modules: ['party', 'combat'],
+      dice: f.dice,
+    })
+    await server.install(dm)
+    await dm.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+    await dm.getByRole('button', { name: 'Options for Arin' }).click()
+    await expect(dm.getByRole('menuitem', { name: 'Clear their initiative roll' })).toBeVisible()
+    await evidence(dm, info, `en-dm-menu-${theme}`)
+    await dm.keyboard.press('Escape')
+    await dmContext.close()
+    await context.close()
+
+    // Hit dice: refused for the Player, then the DM's discard in the rest panel.
+    const playerContext = await browser.newContext({
+      viewport: info.project.use.viewport,
+      hasTouch: info.project.use.hasTouch,
+    })
+    const player = await playerContext.newPage()
+    await english(player)
+    const g = await hitDicePage(player, { stale: true })
+    serverFaces(g, [6, 3])
+    await player.goto(sheetUrl)
+    await player.getByRole('button', { name: 'Short rest' }).click()
+    await player
+      .getByRole('dialog', { name: 'Ask the group for a short rest?' })
+      .getByRole('button', { name: 'Ask for the rest' })
+      .click()
+    const dice = player
+      .getByRole('dialog', { name: 'Group rest' })
+      .getByRole('group', { name: /Hit dice you spend/ })
+    await dice.getByRole('button', { name: 'Spend one die more' }).click()
+    await expect(dice.getByRole('button', { name: 'Roll for me' })).toBeVisible()
+    otherDevice(g, 'hit_die', '1d8+2')
+    await dice.getByRole('button', { name: 'Roll for me' }).click()
+    await expect(
+      dice.getByRole('status').filter({ hasText: 'Rytta already has your' }),
+    ).toBeVisible()
+    await axeClean(player, `${theme}: hit dice refused (en)`)
+    await evidence(player, info, `en-hit-dice-refused-${theme}`)
+    await playerContext.close()
+
+    const dmRest = await browser.newContext({
+      viewport: info.project.use.viewport,
+      hasTouch: info.project.use.hasTouch,
+    })
+    const dmPage = await dmRest.newPage()
+    await english(dmPage)
+    const h = await identityFixture(dmPage, { party: true, sheet: 'complete', diceMode: 'app' })
+    await dmPage.emulateMedia({ reducedMotion: 'reduce' })
+    h.openRest('short', { user: playerId, character: characterId })
+    otherDevice(h, 'hit_die', '1d8+2')
+    await dmPage.goto(`./#/campaign/${campaignId}/party`)
+    await dmPage.getByRole('region', { name: 'Group rest' }).getByRole('button').first().click()
+    const row = dmPage
+      .getByRole('dialog', { name: 'Group rest' })
+      .locator('.rest-person', { hasText: 'Arin' })
+    const control = row.locator('.mantine-Accordion-control')
+    if ((await control.getAttribute('aria-expanded')) !== 'true') await control.click()
+    const discard = row.getByRole('button', { name: 'Discard the hit-dice roll of Arin' })
+    await expect(discard).toBeVisible()
+    await discard.scrollIntoViewIfNeeded()
+    await axeClean(dmPage, `${theme}: DM discard (en)`)
+    await evidence(dmPage, info, `en-dm-hit-dice-discard-${theme}`)
+    await discard.click()
+    await expect(dmPage.locator('.rest-reset-note')).toContainText('Roll discarded')
+    await evidence(dmPage, info, `en-dm-hit-dice-discarded-${theme}`)
+    await dmRest.close()
+  })

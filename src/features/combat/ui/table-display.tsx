@@ -307,6 +307,7 @@ export function TableDisplay({
                 <InitiativeEntry
                   campaignId={campaignId}
                   combatant={c}
+                  encounterId={encounter.id}
                   editing={c.initiative !== undefined}
                   pending={pending}
                   cancel={() => {

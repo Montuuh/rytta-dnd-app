@@ -47,6 +47,7 @@ import { CombatantDetail } from './combatant-detail'
 import { EncounterBalance } from './encounter-balance'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
+import { useDiceMode } from '@/features/dice'
 import { useResetInitiative } from './reset-roll'
 import { NetworkState, RunnerError } from './parts'
 import { RemoveCombatantDialog, RowActions } from './roster'
@@ -84,7 +85,14 @@ export function DmConsole({
   const [detailBusy, setDetailBusy] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   // RYT-137: the DM clears or re-rolls a Player's initiative roll where the server holds one.
-  const initiativeRoll = useResetInitiative(campaignId, run, encounter.status)
+  // Nothing is requested while the table rolls with physical dice: no roll can be held.
+  const { mode: diceMode } = useDiceMode(campaignId)
+  const initiativeRoll = useResetInitiative(
+    campaignId,
+    run,
+    encounter.status,
+    diceMode !== 'physical',
+  )
   const resetRoll = async (combatant: Combatant, mode: 'clear' | 'reroll') => {
     if (await initiativeRoll.reset(combatant, mode))
       setAnnouncement(

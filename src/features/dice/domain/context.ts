@@ -91,16 +91,52 @@ export function initiativeExpression(modifier: number): string | null {
 
 /**
  * The expression the DM re-rolls with: the bonus of the Player's roll when the DM can read it,
- * else the bonus saved on the combatant, else none. The server does not know the sheet's bonus,
- * so this is the client's, kept inside what the server accepts.
+ * else the sheet's initiative bonus, else the one saved on the combatant, else none. The server
+ * knows none of them, so this is the client's, kept inside what the server accepts.
  */
-export function rerollExpression(existing: CampaignRoll | undefined, savedBonus: number | null) {
+export function rerollExpression(
+  existing: CampaignRoll | undefined,
+  sheetBonus: number | null,
+  savedBonus: number | null,
+): string {
   const fromRoll = existing ? initiativeModifier(existing.expression) : null
-  const bonus = fromRoll ?? savedBonus ?? 0
-  return initiativeExpression(
-    Math.min(initiativeBonusRange.max, Math.max(initiativeBonusRange.min, bonus)),
+  const bonus = fromRoll ?? sheetBonus ?? savedBonus ?? 0
+  return (
+    initiativeExpression(
+      Math.min(initiativeBonusRange.max, Math.max(initiativeBonusRange.min, bonus)),
+    ) ?? 'd20'
   )
 }
+
+/**
+ * Request ids of the DM's resets. One attempt per character and kind (the slot); its signature
+ * says what the intent was (the fight or rest, the roll in force when readable, clear or re-roll).
+ * The same signature on the same slot is a retry and keeps its id; another signature is a new
+ * intent and gets a new one. An attempt ends with its success and when the server no longer marks
+ * the slot as spent, so one pending attempt never touches another's.
+ */
+export type ResetAttempt = { id: string; signature: string }
+export function createAttemptBook() {
+  const slots = new Map<string, ResetAttempt>()
+  return {
+    forIntent(slot: string, signature: string, newId: () => string): ResetAttempt {
+      const found = slots.get(slot)
+      if (found && found.signature === signature) return found
+      const next = { id: newId(), signature }
+      slots.set(slot, next)
+      return next
+    },
+    done(slot: string) {
+      slots.delete(slot)
+    },
+    /** Drops the attempts of slots the server no longer marks as spent. */
+    prune(stillSpent: (slot: string) => boolean) {
+      for (const slot of [...slots.keys()]) if (!stillSpent(slot)) slots.delete(slot)
+    },
+    has: (slot: string) => slots.has(slot),
+  }
+}
+export const resetSlot = (characterId: string, kind: OneRollKind) => `${characterId}:${kind}`
 
 /**
  * The context with a roll the server just stored added to it, so the screen shows the roll at once

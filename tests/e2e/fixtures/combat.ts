@@ -1159,6 +1159,18 @@ export function combatServer() {
             /* empty */
           }
           const out = handle(actor, method, body)
+          // The reset was applied but the answer never arrived (the replay returns the first result).
+          if (method === 'reset_initiative_roll' && dice?.loseResetReplyNext) {
+            const failed = out && typeof out === 'object' && 'error' in out
+            if (!failed) {
+              dice.loseResetReplyNext = false
+              return route.fulfill({
+                status: 503,
+                contentType: 'application/json',
+                body: '{"message":"Unavailable"}',
+              })
+            }
+          }
           if (out && typeof out === 'object' && 'error' in out && Object.keys(out).length === 1)
             return route.fulfill({
               status: 400,

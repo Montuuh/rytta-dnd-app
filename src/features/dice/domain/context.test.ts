@@ -4,7 +4,9 @@ import {
   initiativeExpression,
   initiativeModifier,
   isSpent,
+  createAttemptBook,
   rerollExpression,
+  resetSlot,
   rollContextSchema,
   rollInForce,
   withRoll,
@@ -156,12 +158,13 @@ describe('initiative expressions', () => {
     expect(initiativeModifier('2d20+1')).toBeNull()
     expect(initiativeModifier('d8+1')).toBeNull()
   })
-  it('re-rolls with the bonus of the Player roll, else the saved bonus, else none', () => {
-    expect(rerollExpression(roll({ expression: 'd20+4' }), 1)).toBe('d20+4')
-    expect(rerollExpression(undefined, 3)).toBe('d20+3')
-    expect(rerollExpression(undefined, null)).toBe('d20')
-    expect(rerollExpression(undefined, 99)).toBe('d20+30')
-    expect(rerollExpression(undefined, -99)).toBe('d20-20')
+  it('re-rolls with the bonus of the Player roll, then the sheet, then the saved one, else none', () => {
+    expect(rerollExpression(roll({ expression: 'd20+4' }), 6, 1)).toBe('d20+4')
+    expect(rerollExpression(undefined, 6, 1)).toBe('d20+6')
+    expect(rerollExpression(undefined, null, 3)).toBe('d20+3')
+    expect(rerollExpression(undefined, null, null)).toBe('d20')
+    expect(rerollExpression(undefined, 99, null)).toBe('d20+30')
+    expect(rerollExpression(undefined, -99, null)).toBe('d20-20')
   })
 })
 
@@ -183,5 +186,38 @@ describe('a roll the server just stored', () => {
   it('counts a hit-dice roll made in any rest', () => {
     const hit = roll({ kind: 'hit_die', encounter_id: null, rest_id: other, expression: '1d8+2' })
     expect(isSpent(withRoll(empty, hit), arin, 'hit_die')).toBe(true)
+  })
+})
+
+describe('request ids of the DM resets', () => {
+  let n = 0
+  const id = () => `id-${++n}`
+  it('keeps the id of a retry and gives a new intent a new one', () => {
+    const book = createAttemptBook()
+    const slot = resetSlot(arin, 'initiative')
+    const first = book.forIntent(slot, 'fight-1|roll-a|clear', id)
+    expect(book.forIntent(slot, 'fight-1|roll-a|clear', id)).toBe(first)
+    // A later roll, then a new clear: another signature, another id.
+    expect(book.forIntent(slot, 'fight-1|roll-b|clear', id).id).not.toBe(first.id)
+  })
+  it('ends an attempt on success without touching another slot', () => {
+    const book = createAttemptBook()
+    const a = resetSlot(arin, 'initiative')
+    const b = resetSlot(bea, 'initiative')
+    const pending = book.forIntent(b, 'x', id)
+    book.forIntent(a, 'x', id)
+    book.done(a)
+    expect(book.has(a)).toBe(false)
+    expect(book.forIntent(b, 'x', id)).toBe(pending)
+  })
+  it('drops the attempts of slots the server no longer marks as spent', () => {
+    const book = createAttemptBook()
+    const a = resetSlot(arin, 'initiative')
+    const b = resetSlot(bea, 'hit_die')
+    book.forIntent(a, 'x', id)
+    book.forIntent(b, 'x', id)
+    book.prune((slot) => slot === b)
+    expect(book.has(a)).toBe(false)
+    expect(book.has(b)).toBe(true)
   })
 })

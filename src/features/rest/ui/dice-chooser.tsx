@@ -85,7 +85,7 @@ export function DiceChooser({
   const lockedHidden = appDice && !rolledAlready && spentHidden
   const dice = rolled ? { values: rolled.dice } : null
   const step = (delta: number) => {
-    if (rolledAlready) return
+    if (rolledAlready || lockedHidden) return
     const spent = Math.min(left, Math.max(0, value.spent + delta))
     if (spent !== value.spent) onChange({ spent, roll: spent === 0 ? '' : value.roll })
   }
@@ -126,7 +126,7 @@ export function DiceChooser({
             variant="default"
             size={44}
             aria-label={t('rest.diceFewer')}
-            aria-disabled={value.spent <= 0 || rolledAlready || undefined}
+            aria-disabled={value.spent <= 0 || rolledAlready || lockedHidden || undefined}
             onClick={() => step(-1)}
           >
             <Minus size={18} aria-hidden="true" />
@@ -138,7 +138,7 @@ export function DiceChooser({
             variant="default"
             size={44}
             aria-label={t('rest.diceMore')}
-            aria-disabled={value.spent >= left || rolledAlready || undefined}
+            aria-disabled={value.spent >= left || rolledAlready || lockedHidden || undefined}
             onClick={() => step(1)}
           >
             <Plus size={18} aria-hidden="true" />
@@ -179,9 +179,7 @@ export function DiceChooser({
       {value.spent > 0 && appDice && rolledAlready && (
         <p className="rest-dice-note">{t('rest.alreadyRolled', { roll: value.roll })}</p>
       )}
-      {value.spent > 0 && lockedHidden && (
-        <p className="rest-dice-note">{t('rest.rolledHidden')}</p>
-      )}
+      {lockedHidden && <p className="rest-dice-note">{t('rest.rolledHidden')}</p>}
       {value.spent > 0 && appDice && !rolledAlready && !lockedHidden && (
         <Button
           variant="default"
@@ -213,16 +211,21 @@ export function DiceChooser({
             </Button>
           </p>
         )}
-      {failure && (
-        <p className="rest-dice-error" role="alert">
-          {failure === 'dice-mode'
-            ? t('roll.error.dice-mode')
-            : failure === 'already-rolled'
-              ? t('rest.refusedAlready')
+      {failure === 'already-rolled' ? (
+        // The refusal is a state, not a fault: neutral text, not an alert.
+        <p className="rest-dice-note" role="status">
+          {t('rest.refusedAlready')}
+        </p>
+      ) : (
+        failure && (
+          <p className="rest-dice-error" role="alert">
+            {failure === 'dice-mode'
+              ? t('roll.error.dice-mode')
               : failure === 'invalid'
                 ? t('rest.refusedInvalid')
                 : t('rest.rollFailed')}
-        </p>
+          </p>
+        )
       )}
       <p className="rest-dice-sum" id={`${id}-sum`} role="status">
         {dice && (

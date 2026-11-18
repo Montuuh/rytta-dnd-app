@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { rollContextQuery, rollContextScope } from '../api'
+import { subscribeRolls } from '../data/repository'
 import { isSpent, rollInForce, type OneRollKind } from '../domain/context'
 import { useHeldRolls } from './held-rolls'
 
@@ -11,28 +12,53 @@ import { useHeldRolls } from './held-rolls'
  * from event times. `status` says whether it is loading, loaded or failed: nothing is said about a
  * roll before it has loaded, rolling stays possible when it failed (the server refuses a second
  * roll) and a retry reads it again.
+ *
+ * - `enabled` false (physical dice, nobody to reset anything): nothing is requested and the state
+ *   reads as empty and loaded.
+ * - `expectEncounter`: the fight the screen shows. A state that names another fight is not this
+ *   fight's: it reads as loading and is requested again.
+ * - The roll signal (a roll, a DM reset) refetches it at once; polling is the fallback.
  */
-export function useRollContext(campaignId: string) {
+export function useRollContext(
+  campaignId: string,
+  { enabled = true, expectEncounter }: { enabled?: boolean; expectEncounter?: string } = {},
+) {
   const { state } = useAuth()
   const userId = state.user!.id
   const cache = useQueryClient()
-  const query = useQuery(rollContextQuery(userId, campaignId))
+  const query = useQuery({ ...rollContextQuery(userId, campaignId), enabled })
   const held = useHeldRolls()
+  useEffect(() => {
+    if (!enabled) return
+    return subscribeRolls(campaignId, () => {
+      void cache.invalidateQueries({ queryKey: rollContextScope(userId, campaignId) })
+    })
+  }, [enabled, campaignId, userId, cache])
+  const wrongFight =
+    expectEncounter !== undefined && query.isSuccess && query.data.encounter_id !== expectEncounter
+  const refetch = query.refetch
+  useEffect(() => {
+    if (wrongFight && !query.isFetching) void refetch()
+  }, [wrongFight, expectEncounter, query.isFetching, refetch])
+  const usable = enabled && !wrongFight ? query.data : undefined
   const spent = useCallback(
-    (characterId: string | null, kind: OneRollKind) => isSpent(query.data, characterId, kind, held),
-    [query.data, held],
+    (characterId: string | null, kind: OneRollKind) => isSpent(usable, characterId, kind, held),
+    [usable, held],
   )
   const roll = useCallback(
-    (characterId: string | null, kind: OneRollKind) =>
-      rollInForce(query.data, characterId, kind, held),
-    [query.data, held],
+    (characterId: string | null, kind: OneRollKind) => rollInForce(usable, characterId, kind, held),
+    [usable, held],
   )
   // Three states, never two: loading, loaded, or failed.
-  const status: 'loading' | 'ready' | 'failed' = query.isSuccess
+  const status: 'loading' | 'ready' | 'failed' = !enabled
     ? 'ready'
-    : query.isError
-      ? 'failed'
-      : 'loading'
+    : wrongFight
+      ? 'loading'
+      : query.isSuccess
+        ? 'ready'
+        : query.isError
+          ? 'failed'
+          : 'loading'
   const refresh = useCallback(
     () => cache.invalidateQueries({ queryKey: rollContextScope(userId, campaignId) }),
     [cache, userId, campaignId],
@@ -41,8 +67,8 @@ export function useRollContext(campaignId: string) {
     spent,
     roll,
     status,
-    encounterId: query.data?.encounter_id ?? null,
-    restId: query.data?.rest_id ?? null,
+    encounterId: usable?.encounter_id ?? null,
+    restId: usable?.rest_id ?? null,
     refresh,
     retry: () => void query.refetch(),
   }

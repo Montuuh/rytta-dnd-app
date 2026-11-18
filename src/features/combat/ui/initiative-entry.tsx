@@ -33,6 +33,7 @@ import { InitiativeKeypad } from './amount-dialog'
 export function InitiativeEntry({
   campaignId,
   combatant,
+  encounterId,
   editing,
   pending,
   save,
@@ -40,6 +41,8 @@ export function InitiativeEntry({
 }: {
   campaignId: string
   combatant: Combatant
+  /** The fight this entry belongs to: the server's one-roll state must name the same one. */
+  encounterId: string
   /** Reopened over a saved total: Escape and Cancel keep that total. */
   editing: boolean
   pending: boolean
@@ -69,7 +72,7 @@ export function InitiativeEntry({
   // One roll per fight, and the server decides: its one-roll state says whether this character
   // has rolled (also after a reload or on another device). Once it has, the Player cannot roll
   // again, only save that total; the DM clears or re-rolls it from the console.
-  const context = useRollContext(campaignId)
+  const context = useRollContext(campaignId, { enabled: appDice, expectEncounter: encounterId })
   const characterId = combatant.character_id ?? null
   const spent = appDice && context.spent(characterId, 'initiative')
   const logged = appDice ? context.roll(characterId, 'initiative') : undefined
@@ -96,11 +99,9 @@ export function InitiativeEntry({
     void refresh()
   }, [combatant.initiative, refresh])
   // What the d20 shows: with dice in the app the standing total, else what was typed.
-  const amount: number | string = rolledAlready
-    ? standing.kind === 'none'
-      ? ''
-      : standing.total
-    : typed
+  // With dice in the app nothing is typed: the d20 shows only the standing roll or the saved
+  // total, and is empty once the server no longer holds a roll (a DM clear), never an old total.
+  const amount: number | string = appDice ? (standing.kind === 'none' ? '' : standing.total) : typed
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = isInitiativeTotal(value)
   const outOfRange = typeof amount === 'number' && !valid
@@ -108,14 +109,13 @@ export function InitiativeEntry({
   const unusual = valid && initiativeOutlier(value, bonus)
   // Dice in the app roll d20 plus the sheet's bonus: without the bonus there is nothing to roll.
   const needsSheet = appDice && !rolledAlready && bonus === null
+  const badBonus =
+    appDice && !rolledAlready && bonus !== null && initiativeExpression(bonus) === null
   const rollForMe = async () => {
     if (rolling || bonus === null) return
-    const expression = initiativeExpression(bonus)
     // The server only rolls d20 with a bonus from -20 to +30: nothing is sent for another one.
-    if (!expression) {
-      setRollFailure('invalid')
-      return
-    }
+    const expression = initiativeExpression(bonus)
+    if (!expression) return
     const spec = { kind: 'initiative' as const, label: 'initiative', expression }
     setRolling(true)
     setRollFailure(null)
@@ -125,7 +125,6 @@ export function InitiativeEntry({
     try {
       const roll = await appRoll(spec, combatant.character_id ?? null, attempt.current.id)
       attempt.current = null
-      setAmount(roll.total)
       setRolledTotal(roll.total)
       setRolled(
         `${t('combat.initiative.rolled', {
@@ -219,28 +218,32 @@ export function InitiativeEntry({
                   : rollFailure === 'invalid'
                     ? t('combat.initiative.refusedInvalid')
                     : t('combat.initiative.rollFailed')
-              : needsSheet
-                ? sheet.isPending
-                  ? t('combat.initiative.waitSheet')
-                  : t('combat.initiative.noSheet')
-                : outOfRange
-                  ? t('combat.initiative.range')
-                  : unusual
-                    ? t('combat.initiative.unusual', {
-                        bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
-                        min: bonus! + 1,
-                        max: bonus! + 20,
-                      })
-                    : rolled
-                      ? rolled
-                      : rolledAlready
-                        ? // Nothing is left to roll: no instruction to roll.
-                          ''
-                        : bonus === null
-                          ? t('combat.initiative.rollPlain')
-                          : t(appDice ? 'combat.initiative.rollApp' : 'combat.initiative.roll', {
-                              bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
-                            })}
+              : badBonus
+                ? t('combat.initiative.bonusRange', {
+                    bonus: bonus! > 0 ? `+${bonus}` : `${bonus}`,
+                  })
+                : needsSheet
+                  ? sheet.isPending
+                    ? t('combat.initiative.waitSheet')
+                    : t('combat.initiative.noSheet')
+                  : outOfRange
+                    ? t('combat.initiative.range')
+                    : unusual
+                      ? t('combat.initiative.unusual', {
+                          bonus: bonus! >= 0 ? `+ ${bonus}` : `− ${-bonus!}`,
+                          min: bonus! + 1,
+                          max: bonus! + 20,
+                        })
+                      : rolled && standing.kind !== 'none'
+                        ? rolled
+                        : rolledAlready
+                          ? // Nothing is left to roll: no instruction to roll.
+                            ''
+                          : bonus === null
+                            ? t('combat.initiative.rollPlain')
+                            : t(appDice ? 'combat.initiative.rollApp' : 'combat.initiative.roll', {
+                                bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+                              })}
           </Text>
         </div>
         <div className="combat-entry-keys">
@@ -269,9 +272,10 @@ export function InitiativeEntry({
               size="lg"
               className="combat-entry-roll"
               leftSection={<Dices size={20} aria-hidden="true" />}
-              aria-disabled={rolling || needsSheet || logLoading || undefined}
+              aria-disabled={rolling || needsSheet || badBonus || logLoading || undefined}
               aria-busy={rolling || logLoading || undefined}
               onClick={() => {
+                if (badBonus) return
                 if (needsSheet) {
                   if (sheet.isError) void sheet.refetch()
                   return
@@ -306,7 +310,7 @@ export function InitiativeEntry({
               <Button type="button" size="lg" onClick={cancel}>
                 {t('panel.close')}
               </Button>
-            ) : (
+            ) : rolledHidden ? null : (
               <Button
                 type="submit"
                 size="lg"

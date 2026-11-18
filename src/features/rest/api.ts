@@ -49,7 +49,11 @@ export function useRestAction(campaignId: string) {
     },
     onError: async () => {
       if (userId && controller?.getSnapshot().user?.id === userId)
-        await cache.invalidateQueries({ queryKey: restScope(userId, campaignId) })
+        // A refused vote can mean the server's roll changed (a DM reset): read both again.
+        await Promise.all([
+          cache.invalidateQueries({ queryKey: restScope(userId, campaignId) }),
+          cache.invalidateQueries({ queryKey: rollContextScope(userId, campaignId) }),
+        ])
     },
   })
 }

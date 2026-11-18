@@ -452,6 +452,14 @@
   align-items: flex-start;
   gap: 8px;
 }
+.rest-reset-note {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.rest-reset-note:empty {
+  display: none;
+}
 .rest-dm-reset .mantine-Button-root {
   min-height: 44px;
   height: auto;

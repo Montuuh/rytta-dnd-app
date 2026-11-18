@@ -274,7 +274,8 @@ export function RestPanel({
               campaignId={campaignId}
               characterId={person.id}
               rolled={rolledFor(person)}
-              rollsReady={own.ready}
+              rollsStatus={own.status}
+              onRetryRolls={own.retry}
               die={effect.hit_die}
               left={effect.dice_left_before}
               room={effect.max_hp - effect.hp_before}

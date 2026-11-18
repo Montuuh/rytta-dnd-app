@@ -164,6 +164,23 @@
   scroll-margin-bottom: calc(var(--bottom-nav-h, 0px) + 16px);
 }
 
+/* The card is tinted, so the alert takes the plain surface (Mantine sets its own tint inline through
+   variables): its title keeps the error token and its text the text token, 4.5:1 in every theme. */
+.roll-result-alert.mantine-Alert-root {
+  --alert-bg: var(--app-surface);
+  --alert-color: var(--danger);
+  background-color: var(--app-surface);
+  border: 1px solid var(--danger);
+}
+
+.roll-result-alert .mantine-Alert-title {
+  color: var(--danger);
+}
+
+.roll-result-alert .mantine-Alert-message {
+  color: var(--app-text);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .roll-result:not([data-phase='rolling']) .roll-result-total {
     animation: roll-pop 220ms ease-out;

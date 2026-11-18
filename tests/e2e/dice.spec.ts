@@ -966,8 +966,8 @@ test('RYT-133 physical formulas stay inside their own medal, at 100% and at 150%
     expect(all.length).toBe(12)
     for (const { medal, parts } of medals)
       for (const part of parts) {
-        expect(part.left, `${percent}%`).toBeGreaterThanOrEqual(medal.left - 0.5)
-        expect(part.right, `${percent}%`).toBeLessThanOrEqual(medal.right + 0.5)
+        expect(part.left, `${percent}%`).toBeGreaterThanOrEqual(medal.left + 2)
+        expect(part.right, `${percent}%`).toBeLessThanOrEqual(medal.right - 2)
         expect(part.top, `${percent}%`).toBeGreaterThanOrEqual(medal.top - 0.5)
         expect(part.bottom, `${percent}%`).toBeLessThanOrEqual(medal.bottom + 0.5)
       }
@@ -1034,4 +1034,288 @@ for (const theme of ['parchment', 'default', 'bard'])
       .include('[role="dialog"]')
       .analyze()
     expect(result.violations).toEqual([])
+  })
+
+const arinId = (server: ReturnType<typeof combatServer>) =>
+  server.encounters[0]!.combatants.find((c) => c.name === 'Arin')!.id
+
+async function initiativePage(
+  browser: Browser,
+  info: TestInfo,
+  options: { theme?: string; failLog?: { on: boolean } } = {},
+) {
+  const server = combatServer()
+  server.seedInitiative()
+  const context = await browser.newContext({
+    viewport: info.project.use.viewport,
+    hasTouch: info.project.use.hasTouch,
+  })
+  const page = await context.newPage()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  if (options.theme)
+    await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), options.theme)
+  const f = await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+    diceMode: 'app',
+  })
+  await server.install(page)
+  const failLog = options.failLog
+  if (failLog)
+    await page.route(/\/rest\/v1\/campaign_rolls/, (route) =>
+      failLog.on
+        ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' })
+        : route.fallback(),
+    )
+  await page.goto(`./#/campaign/${campaignId}/combat`)
+  const entry = page.locator('.combat-entry')
+  await expect(entry).toBeVisible({ timeout: 15_000 })
+  return { server, page, f, entry, context }
+}
+
+test('RYT-133 initiative: a total the DM changed wins over the Player roll, and nothing offers to save the old one', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { server, page, f, entry, context } = await initiativePage(browser, info)
+  serverFaces(f, [11])
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 13. Guarda esa tirada para fijarla.')
+  await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
+  await expect(page.locator('.combat-entry')).toHaveCount(0)
+  // Saved as rolled: reopening says so, offers no roll and nothing to save, and no instruction.
+  await page.reload()
+  await page.getByRole('button', { name: 'Editar la iniciativa de Arin' }).click()
+  await expect(entry).toBeVisible()
+  await expect(entry).toContainText('Ya tiraste: 13. Solo el DM puede cambiarla.')
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
+  await expect(entry.locator('.combat-entry-formula')).not.toContainText('Rytta tira')
+  // The DM sets 9: the row, the d20 and the note all say 9, and the 13 is not offered again.
+  server.act('set_initiative', {
+    target_combatant: arinId(server),
+    initiative_total: 9,
+    tiebreak_bonus: null,
+    request_id: 'dm-sets-9',
+  })
+  await page.reload()
+  await page.getByRole('button', { name: 'Editar la iniciativa de Arin' }).click()
+  await expect(entry.locator('.combat-d20-input input')).toHaveValue('9')
+  await expect(entry).toContainText(
+    'Tu iniciativa ya está fijada en 9. Solo el DM puede cambiarla.',
+  )
+  await expect(entry).not.toContainText('Ya tiraste: 13')
+  await expect(entry).not.toContainText('Guarda esa tirada')
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeDisabled()
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+  expect(f.dice.rolls).toHaveLength(1)
+  await context.close()
+})
+
+test('RYT-133 initiative: if the roll log cannot load, it says so, retries, and the flow can still be completed', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const failLog = { on: true }
+  const { page, f, entry, context } = await initiativePage(browser, info, { failLog })
+  serverFaces(f, [11, 4])
+  // Loading is brief; then the failure is said with a retry, and rolling stays possible.
+  const alert = entry.getByRole('alert')
+  await expect(alert).toContainText('No se pudieron comprobar tus tiradas anteriores', {
+    timeout: 20_000,
+  })
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeEnabled()
+  // A retry that fails again changes nothing.
+  await alert.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(alert).toContainText('No se pudieron comprobar', { timeout: 20_000 })
+  // The retry works once the log answers: the message goes away.
+  failLog.on = false
+  await alert.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(entry.getByRole('alert')).toHaveCount(0, { timeout: 20_000 })
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry.locator('.combat-d20-input input')).toHaveValue('13')
+  await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
+  await expect(page.locator('.combat-entry')).toHaveCount(0)
+  await context.close()
+})
+
+test('RYT-133 initiative: rolling anyway while the roll log is down still completes the flow', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { f, entry, context } = await initiativePage(browser, info, { failLog: { on: true } })
+  serverFaces(f, [11])
+  await expect(entry.getByRole('alert')).toContainText('No se pudieron comprobar', {
+    timeout: 20_000,
+  })
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry).toContainText('Ya tiraste: 13. Guarda esa tirada para fijarla.')
+  await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toHaveCount(0)
+  await expect(entry.getByRole('button', { name: 'Guardar iniciativa' })).toBeEnabled()
+  await context.close()
+})
+
+test('RYT-133 hit dice: if the roll log cannot load, it says so, retries, and the roll can still be made', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  const failLog = { on: true }
+  const f = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    party: true,
+    diceMode: 'app',
+  })
+  await page.route(/\/rest\/v1\/campaign_rolls/, (route) =>
+    failLog.on
+      ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' })
+      : route.fallback(),
+  )
+  serverFaces(f, [6, 3])
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await page.getByRole('button', { name: 'Descanso corto' }).click()
+  await page
+    .getByRole('dialog', { name: '¿Pedir un descanso corto al grupo?' })
+    .getByRole('button', { name: 'Pedir descanso' })
+    .click()
+  const dice = page
+    .getByRole('dialog', { name: 'Descanso del grupo' })
+    .getByRole('group', { name: /Dados de golpe que gastas/ })
+  await dice.getByRole('button', { name: 'Gastar un dado más' }).click()
+  const alert = dice.getByRole('alert').filter({ hasText: 'No se pudieron comprobar' })
+  await expect(alert).toBeVisible({ timeout: 20_000 })
+  await expect(dice.getByRole('button', { name: 'Tirar por mí' })).toBeEnabled()
+  failLog.on = false
+  await alert.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(alert).toHaveCount(0, { timeout: 20_000 })
+  await dice.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(dice.locator('.rest-roll-result-value')).toHaveText('6')
+  await expect(dice).toContainText('Ya tiraste los dados de golpe: 6.')
+})
+
+async function axeClean(page: Page, label: string) {
+  const result = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze()
+  expect(
+    result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
+    label,
+  ).toEqual([])
+}
+
+for (const theme of ['default', 'parchment'])
+  test(`RYT-133 axe is clean on every dice state in ${theme}: rolled, failed, stale mode, record error`, async ({
+    page,
+  }) => {
+    test.setTimeout(120_000)
+    await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+    const f = await identityFixture(page, {
+      player: true,
+      sheet: 'complete',
+      party: true,
+      diceMode: 'app',
+    })
+    serverFaces(f, [14, 9])
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(sheetUrl)
+    const result = page.getByRole('region', { name: 'Última tirada' })
+    await page.getByRole('button', { name: 'Tirar Prueba de Destreza, d20 + 2' }).click()
+    await expect(result.locator('.roll-result-total')).toHaveText('16')
+    await axeClean(page, `${theme}: rolled`)
+    f.dice.failNext = { rpc: 'log_roll', message: 'Unavailable' }
+    await page.getByRole('button', { name: 'Tirar Salvación de Destreza, d20 + 5' }).click()
+    await expect(result.getByRole('alert')).toBeVisible()
+    await axeClean(page, `${theme}: failed roll`)
+    // The DM moves the table to physical dice; the retry is refused with the stale-mode text.
+    f.dice.dice_mode = 'physical'
+    await result.getByRole('button', { name: 'Reintentar' }).click()
+    await expect(result.getByRole('alert')).toContainText('El DM ha cambiado', { timeout: 10_000 })
+    await axeClean(page, `${theme}: stale mode`)
+    await page
+      .getByRole('button', { name: 'Anotar la tirada de Prueba de Destreza, d20 + 2' })
+      .click()
+    const record = page.getByRole('dialog', { name: 'Anotar: Prueba de Destreza' })
+    await record.getByRole('textbox', { name: 'Resultado del d20' }).fill('25')
+    await record.getByRole('button', { name: 'Anotar', exact: true }).click()
+    await expect(record.getByText('Escribe un número de 1 a 20.')).toBeVisible()
+    await axeClean(page, `${theme}: record error`)
+  })
+
+for (const theme of ['default', 'parchment'])
+  test(`RYT-133 axe is clean on initiative states in ${theme}: log failed, rolled, saved, set by the DM`, async ({
+    browser,
+  }, info) => {
+    test.setTimeout(120_000)
+    const failLog = { on: true }
+    const first = await initiativePage(browser, info, { theme, failLog })
+    await expect(first.entry.getByRole('alert')).toContainText('No se pudieron comprobar', {
+      timeout: 20_000,
+    })
+    await axeClean(first.page, `${theme}: log failed`)
+    serverFaces(first.f, [11])
+    await first.entry.getByRole('button', { name: 'Tirar por mí' }).click()
+    await expect(first.entry).toContainText('Ya tiraste: 13')
+    await axeClean(first.page, `${theme}: rolled`)
+    failLog.on = false
+    await first.entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
+    await expect(first.page.locator('.combat-entry')).toHaveCount(0)
+    await first.page.reload()
+    await first.page.getByRole('button', { name: 'Editar la iniciativa de Arin' }).click()
+    await expect(first.entry).toContainText('Solo el DM puede cambiarla')
+    await axeClean(first.page, `${theme}: saved`)
+    first.server.act('set_initiative', {
+      target_combatant: arinId(first.server),
+      initiative_total: 9,
+      tiebreak_bonus: null,
+      request_id: 'dm-sets-9',
+    })
+    await first.page.reload()
+    await first.page.getByRole('button', { name: 'Editar la iniciativa de Arin' }).click()
+    await expect(first.entry).toContainText('ya está fijada en 9')
+    await axeClean(first.page, `${theme}: set by the DM`)
+    await first.context.close()
+  })
+
+for (const theme of ['default', 'parchment'])
+  test(`RYT-133 axe is clean on the hit dice states in ${theme}: log failed, rolled`, async ({
+    page,
+  }) => {
+    test.setTimeout(90_000)
+    const failLog = { on: true }
+    await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
+    const f = await identityFixture(page, {
+      player: true,
+      sheet: 'complete',
+      party: true,
+      diceMode: 'app',
+    })
+    await page.route(/\/rest\/v1\/campaign_rolls/, (route) =>
+      failLog.on
+        ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' })
+        : route.fallback(),
+    )
+    serverFaces(f, [6])
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(sheetUrl)
+    await page.getByRole('button', { name: 'Descanso corto' }).click()
+    await page
+      .getByRole('dialog', { name: '¿Pedir un descanso corto al grupo?' })
+      .getByRole('button', { name: 'Pedir descanso' })
+      .click()
+    const dice = page
+      .getByRole('dialog', { name: 'Descanso del grupo' })
+      .getByRole('group', { name: /Dados de golpe que gastas/ })
+    await dice.getByRole('button', { name: 'Gastar un dado más' }).click()
+    await expect(
+      dice.getByRole('alert').filter({ hasText: 'No se pudieron comprobar' }),
+    ).toBeVisible({
+      timeout: 20_000,
+    })
+    await axeClean(page, `${theme}: hit dice log failed`)
+    await dice.getByRole('button', { name: 'Tirar por mí' }).click()
+    await expect(dice.locator('.rest-roll-result-value')).toHaveText('6')
+    await axeClean(page, `${theme}: hit dice rolled`)
   })

@@ -659,6 +659,15 @@ span.sheet-inspiration {
 
 /* RYT-133: a rollable modifier or save stacks its parts in the narrow medal and sits in a row once
    the strip is wide, as the plain numbers do. */
+/* The proficiency dot sits in the medal's corner, so a save formula keeps the whole width. */
+.ability-medal {
+  position: relative;
+}
+.ability-medal .ability-save-dot {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+}
 .ability-roll {
   flex-direction: column;
   gap: 0;

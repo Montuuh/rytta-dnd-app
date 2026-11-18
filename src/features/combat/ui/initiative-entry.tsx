@@ -17,7 +17,12 @@ import {
   type Attempt,
 } from '@/features/dice'
 import { newRequestId } from '@/shared/lib/request-id'
-import { initiativeOutlier, isInitiativeTotal, type Combatant } from '../domain/combat'
+import {
+  initiativeOutlier,
+  initiativeRollState,
+  isInitiativeTotal,
+  type Combatant,
+} from '../domain/combat'
 import { InitiativeKeypad } from './amount-dialog'
 
 /**
@@ -69,18 +74,20 @@ export function InitiativeEntry({
   // changes it from the console.
   const own = useOwnRoll(campaignId)
   const logged = appDice ? own.find(combatant.character_id ?? null, 'initiative', since) : undefined
-  const rollTotal = rolledTotal ?? logged?.total ?? null
-  const rolledAlready = appDice && (combatant.initiative != null || rollTotal !== null)
-  const waitingForLog = appDice && since !== null && !own.ready
-  // What the d20 shows: what was typed or rolled here, else the roll the log already holds.
-  const amount: number | string = typed !== '' ? typed : (rollTotal ?? '')
+  // What the combat state saved always wins over the roll log (the DM may have changed it).
+  const standing = initiativeRollState(combatant.initiative, rolledTotal ?? logged?.total ?? null)
+  const rolledAlready = appDice && standing.kind !== 'none'
+  const logLoading = appDice && !rolledAlready && since !== null && own.status === 'loading'
+  const logFailed = appDice && !rolledAlready && since !== null && own.status === 'failed'
+  // What the d20 shows: with dice in the app the standing total, else what was typed.
+  const amount: number | string = rolledAlready ? standing.total : typed
   const value = typeof amount === 'number' ? amount : Number.NaN
   const valid = isInitiativeTotal(value)
   const outOfRange = typeof amount === 'number' && !valid
   // RYT-126 J4-10: a total no d20 + bonus can reach is probably a slip: warned, never blocked.
   const unusual = valid && initiativeOutlier(value, bonus)
   // Dice in the app roll d20 plus the sheet's bonus: without the bonus there is nothing to roll.
-  const needsSheet = appDice && bonus === null
+  const needsSheet = appDice && !rolledAlready && bonus === null
   const rollForMe = async () => {
     if (rolling || bonus === null) return
     const spec = checkSpec('initiative', 'initiative', bonus)
@@ -197,31 +204,42 @@ export function InitiativeEntry({
                       })
                     : rolled
                       ? rolled
-                      : bonus === null
-                        ? t('combat.initiative.rollPlain')
-                        : t(appDice ? 'combat.initiative.rollApp' : 'combat.initiative.roll', {
-                            bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
-                          })}
+                      : rolledAlready
+                        ? // Nothing is left to roll: no instruction to roll.
+                          ''
+                        : bonus === null
+                          ? t('combat.initiative.rollPlain')
+                          : t(appDice ? 'combat.initiative.rollApp' : 'combat.initiative.roll', {
+                              bonus: bonus >= 0 ? `+ ${bonus}` : `− ${-bonus}`,
+                            })}
           </Text>
         </div>
         <div className="combat-entry-keys">
           {rolledAlready && (
             <p className="combat-entry-note" role="status">
-              {rollTotal === null
-                ? t('combat.initiative.fixed', { total: combatant.initiative ?? 0 })
-                : combatant.initiative === rollTotal
-                  ? t('combat.initiative.alreadyRolled', { total: rollTotal })
-                  : t('combat.initiative.rolledUnsaved', { total: rollTotal })}
+              {standing.kind === 'unsaved'
+                ? t('combat.initiative.rolledUnsaved', { total: standing.total })
+                : standing.kind === 'saved'
+                  ? t('combat.initiative.alreadyRolled', { total: standing.total })
+                  : t('combat.initiative.fixed', { total: standing.total })}
             </p>
           )}
-          {appDice && !rolledAlready && !waitingForLog && (
+          {logFailed && (
+            <p className="combat-entry-note" role="alert">
+              {t('combat.initiative.logFailed')}{' '}
+              <Button variant="subtle" onClick={own.retry}>
+                {t('common.retry')}
+              </Button>
+            </p>
+          )}
+          {appDice && !rolledAlready && (
             <Button
               variant="default"
               size="lg"
               className="combat-entry-roll"
               leftSection={<Dices size={20} aria-hidden="true" />}
-              aria-disabled={rolling || needsSheet || undefined}
-              aria-busy={rolling || undefined}
+              aria-disabled={rolling || needsSheet || logLoading || undefined}
+              aria-busy={rolling || logLoading || undefined}
               onClick={() => {
                 if (needsSheet) {
                   if (sheet.isError) void sheet.refetch()
@@ -230,9 +248,11 @@ export function InitiativeEntry({
                 void rollForMe()
               }}
             >
-              {rollFailure || (needsSheet && sheet.isError)
-                ? t('common.retry')
-                : t('combat.initiative.rollForMe')}
+              {logLoading
+                ? t('combat.initiative.checking')
+                : rollFailure || (needsSheet && sheet.isError)
+                  ? t('common.retry')
+                  : t('combat.initiative.rollForMe')}
             </Button>
           )}
           {!appDice && (
@@ -253,7 +273,8 @@ export function InitiativeEntry({
               type="submit"
               size="lg"
               leftSection={<Check size={20} aria-hidden="true" />}
-              disabled={!valid}
+              // A total that is already saved (rolled, or set by the DM) is not saved again.
+              disabled={!valid || standing.kind === 'saved' || standing.kind === 'set'}
               loading={pending}
             >
               {t('combat.initiative.save')}

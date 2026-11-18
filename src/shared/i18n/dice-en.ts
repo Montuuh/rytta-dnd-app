@@ -119,11 +119,15 @@ export const diceEn = {
   'combat.initiative.fixed':
     'Your initiative is already set to {{total}}. Only the DM can change it.',
   'combat.initiative.rolledUnsaved': 'You already rolled: {{total}}. Save that roll to set it.',
+  'combat.initiative.logFailed':
+    'Your earlier rolls could not be checked. You can retry or roll anyway.',
+  'combat.initiative.checking': 'Checking your rolls…',
+  'rest.logFailed': 'Your earlier rolls could not be checked. You can retry or roll anyway.',
+  'rest.checking': 'Checking your rolls…',
   'roll.totalWord': 'Total',
   'diceSettings.confirmVisibility.narrowerRoller':
     'With "Only the roller", each Player sees only their own and you stop seeing the Players’ rolls, earlier ones included.',
   'combat.initiative.rollApp': 'Rytta rolls d20 {{bonus}} for you.',
-  'combat.initiative.rollApp0': 'Rytta rolls d20 for you.',
   'combat.initiative.alreadyRolled': 'You already rolled: {{total}}. Only the DM can change it.',
   'rest.alreadyRolled':
     'You already rolled the hit dice: {{roll}}. With the roll made, how many you spend cannot change.',

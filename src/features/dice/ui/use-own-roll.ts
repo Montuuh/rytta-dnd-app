@@ -8,8 +8,8 @@ import { useHeldRolls } from './held-rolls'
 
 /**
  * RYT-133: finds the roll the viewer already made of a kind for a character since a moment, in the
- * roll log. It survives closing a screen, a reload and another device. `ready` is false until the
- * log has loaded (nothing can be said about a roll before that). Only the newest rolls of the
+ * roll log. It survives closing a screen, a reload and another device. `status` says whether the log is
+ * loading, loaded or failed (nothing can be said about a roll before it has loaded). Only the newest rolls of the
  * campaign are listed, so a very busy table could push an old roll out of the window.
  */
 export function useOwnRoll(campaignId: string) {
@@ -25,5 +25,12 @@ export function useOwnRoll(campaignId: string) {
       ),
     [query.data, held, userId],
   )
-  return { find, ready: query.isSuccess }
+  // Three states, never two: loading, loaded, or failed (the screen then says so and offers a retry;
+  // rolling stays possible because the server is the one that rolls).
+  const status: 'loading' | 'ready' | 'failed' = query.isSuccess
+    ? 'ready'
+    : query.isError
+      ? 'failed'
+      : 'loading'
+  return { find, status, retry: () => void query.refetch() }
 }

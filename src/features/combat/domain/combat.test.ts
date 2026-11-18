@@ -5,6 +5,7 @@ import {
   canRollDeathSave,
   combatErrorCode,
   initiativeProgress,
+  initiativeRollState,
   initiativeStartedAt,
   initiativeOutlier,
   initiativeTies,
@@ -510,5 +511,23 @@ describe('when the initiative phase opened (RYT-133)', () => {
     expect(
       initiativeStartedAt([event('status', 'initiative', '2026-11-18T10:05:00Z', true)]),
     ).toBeNull()
+  })
+})
+
+describe('where a Player initiative stands (RYT-133)', () => {
+  it('has no roll and nothing saved', () => {
+    expect(initiativeRollState(undefined, null)).toEqual({ kind: 'none' })
+  })
+  it('has a roll that is not saved yet', () => {
+    expect(initiativeRollState(undefined, 15)).toEqual({ kind: 'unsaved', total: 15 })
+  })
+  it('has a roll that was saved as it was', () => {
+    expect(initiativeRollState(15, 15)).toEqual({ kind: 'saved', total: 15 })
+  })
+  it('lets what is saved win when the DM changed it after the roll', () => {
+    expect(initiativeRollState(9, 15)).toEqual({ kind: 'set', total: 9 })
+  })
+  it('is set when the DM set it and the Player never rolled', () => {
+    expect(initiativeRollState(9, null)).toEqual({ kind: 'set', total: 9 })
   })
 })

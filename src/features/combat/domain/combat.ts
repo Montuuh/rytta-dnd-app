@@ -790,3 +790,21 @@ export function initiativeStartedAt(events: readonly CombatEvent[]): string | nu
       if (found === null || event.created_at > found) found = event.created_at
   return found
 }
+
+/** Where a Player's initiative stands in app mode (RYT-133): what the combat state saved always wins
+ * over what the Player's roll log holds, so a total the DM changed is never presented as the
+ * Player's own roll or offered for saving. */
+export type InitiativeRollState =
+  | { kind: 'none' }
+  | { kind: 'unsaved'; total: number }
+  | { kind: 'saved'; total: number }
+  | { kind: 'set'; total: number }
+
+export function initiativeRollState(
+  saved: number | undefined,
+  rolled: number | null,
+): InitiativeRollState {
+  if (saved === undefined)
+    return rolled === null ? { kind: 'none' } : { kind: 'unsaved', total: rolled }
+  return rolled === saved ? { kind: 'saved', total: saved } : { kind: 'set', total: saved }
+}

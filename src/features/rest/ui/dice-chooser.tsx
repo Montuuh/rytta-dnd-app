@@ -23,7 +23,8 @@ export function DiceChooser({
   campaignId,
   characterId,
   rolled,
-  rollsReady,
+  rollsStatus,
+  onRetryRolls,
   die,
   left,
   conMod,
@@ -38,7 +39,8 @@ export function DiceChooser({
   /** The roll Rytta already made of these hit dice for this rest, read from the roll log. */
   rolled?: CampaignRoll
   /** The roll log has loaded: until then nothing is said about an earlier roll. */
-  rollsReady: boolean
+  rollsStatus: 'loading' | 'ready' | 'failed'
+  onRetryRolls: () => void
   die: number
   left: number
   conMod: number
@@ -68,8 +70,11 @@ export function DiceChooser({
   const heal = valid && value.spent > 0 ? shortRestHeal(value.spent, roll, conMod) : 0
   const con = conMod >= 0 ? `+${conMod}` : `−${Math.abs(conMod)}`
   // One roll per rest: once Rytta has rolled the hit dice the count and the roll are final.
-  const rolledAlready = appDice && rolled !== undefined
-  const dice = rolled ? { values: rolled.dice } : null
+  // The roll log is the source; the roll made on this screen covers a log that could not load.
+  const [madeHere, setMadeHere] = useState<CampaignRoll | null>(null)
+  const done = rolled ?? madeHere ?? undefined
+  const rolledAlready = appDice && done !== undefined
+  const dice = done ? { values: done.dice } : null
   const step = (delta: number) => {
     if (rolledAlready) return
     const spent = Math.min(left, Math.max(0, value.spent + delta))
@@ -91,6 +96,7 @@ export function DiceChooser({
         attempt.current.id,
       )
       attempt.current = null
+      setMadeHere(stored)
       const total = String(stored.dice.reduce((sum, item) => sum + item, 0))
       onChange({ spent: value.spent, roll: total })
     } catch (error) {
@@ -168,12 +174,26 @@ export function DiceChooser({
           className="rest-autoroll"
           leftSection={<Dices size={20} aria-hidden="true" />}
           aria-busy={rolling || undefined}
-          aria-disabled={rolling || !rollsReady || undefined}
+          aria-disabled={rolling || rollsStatus === 'loading' || undefined}
           aria-describedby={`${id}-sum`}
           onClick={() => void autoRoll()}
         >
-          {rolling ? t('rest.rolling') : failure ? t('common.retry') : t('rest.autoRoll')}
+          {rolling
+            ? t('rest.rolling')
+            : rollsStatus === 'loading'
+              ? t('rest.checking')
+              : failure
+                ? t('common.retry')
+                : t('rest.autoRoll')}
         </Button>
+      )}
+      {value.spent > 0 && appDice && !rolledAlready && rollsStatus === 'failed' && (
+        <p className="rest-dice-error" role="alert">
+          {t('rest.logFailed')}{' '}
+          <Button variant="subtle" onClick={onRetryRolls}>
+            {t('common.retry')}
+          </Button>
+        </p>
       )}
       {failure && (
         <p className="rest-dice-error" role="alert">

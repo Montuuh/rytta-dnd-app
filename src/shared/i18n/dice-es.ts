@@ -123,11 +123,16 @@ export const diceEs = {
   'combat.initiative.fixed':
     'Tu iniciativa ya está fijada en {{total}}. Solo el DM puede cambiarla.',
   'combat.initiative.rolledUnsaved': 'Ya tiraste: {{total}}. Guarda esa tirada para fijarla.',
+  'combat.initiative.logFailed':
+    'No se pudieron comprobar tus tiradas anteriores. Puedes reintentar o tirar igualmente.',
+  'combat.initiative.checking': 'Comprobando tus tiradas…',
+  'rest.logFailed':
+    'No se pudieron comprobar tus tiradas anteriores. Puedes reintentar o tirar igualmente.',
+  'rest.checking': 'Comprobando tus tiradas…',
   'roll.totalWord': 'Total',
   'diceSettings.confirmVisibility.narrowerRoller':
     'Con «Solo quien tira», cada jugador solo ve las suyas y tú dejas de ver las de los jugadores, las anteriores incluidas.',
   'combat.initiative.rollApp': 'Rytta tira d20 {{bonus}} por ti.',
-  'combat.initiative.rollApp0': 'Rytta tira d20 por ti.',
   'combat.initiative.alreadyRolled': 'Ya tiraste: {{total}}. Solo el DM puede cambiarla.',
   'rest.alreadyRolled':
     'Ya tiraste los dados de golpe: {{roll}}. Con la tirada hecha no se puede cambiar cuántos gastas.',

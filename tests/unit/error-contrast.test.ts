@@ -47,3 +47,26 @@ describe('field errors use the accessible error token in every scheme', () => {
     })
   }
 })
+
+// The failed-roll alert sits inside a tinted card: it takes the plain surface, with the error token
+// for its title and the text token for its message.
+const dice = readFileSync(new URL('../../src/features/dice/ui/dice.css', import.meta.url), 'utf8')
+describe('the failed roll alert is legible in every theme', () => {
+  it('draws on the plain surface with the error and text tokens', () => {
+    const rule = /\.roll-result-alert\.mantine-Alert-root\s*\{([^}]*)\}/.exec(dice)![1]!
+    expect(rule).toMatch(/--alert-bg:\s*var\(--app-surface\)/)
+    expect(rule).toMatch(/background-color:\s*var\(--app-surface\)/)
+    expect(dice).toMatch(
+      /\.roll-result-alert \.mantine-Alert-title\s*\{[^}]*color:\s*var\(--danger\)/,
+    )
+    expect(dice).toMatch(
+      /\.roll-result-alert \.mantine-Alert-message\s*\{[^}]*color:\s*var\(--app-text\)/,
+    )
+  })
+  for (const id of classThemeIds)
+    it(`title and message read at 4.5:1 on ${id}`, () => {
+      const { scheme, tokens } = classThemes[id]
+      expect(contrast(danger(scheme), tokens.surface), `${id} title`).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(tokens.text, tokens.surface), `${id} message`).toBeGreaterThanOrEqual(4.5)
+    })
+})

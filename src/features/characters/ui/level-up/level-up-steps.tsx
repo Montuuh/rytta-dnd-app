@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ActionIcon, Button, NativeSelect, Text, TextInput } from '@mantine/core'
-import { Check, Plus, Search, TriangleAlert, X } from 'lucide-react'
+import { Check, Info, Plus, Search, TriangleAlert, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm, useSrdLibrary } from '@/features/glossary'
 import { Stepper } from '@/features/inventory'
@@ -134,6 +134,12 @@ export function HitPointsStep({
           onChange={(roll) => onChange({ kind: 'roll', roll })}
           autoFocus
         />
+      )}
+      {value.kind === 'roll' && gain === null && (
+        <Text size="sm" className="levelup-need" role="status">
+          <Info size={16} aria-hidden="true" />
+          {t('levelUp.hp.rollNeeded', { die })}
+        </Text>
       )}
       <div className="levelup-hpline" aria-live="polite">
         <span className="levelup-hpline-label">{t('levelUp.hp.newMax')}</span>
@@ -356,7 +362,7 @@ export function ChoicesStep({
           total={requirements.cantrips}
           levels={[0, 0]}
           title={t('levelUp.cantrips.title')}
-          hint={t('levelUp.cantrips.hint')}
+          hint=""
           missing={missing.includes('cantrips')}
           picks={choices.cantrips}
           others={[...choices.spells, ...choices.spellbook]}
@@ -598,10 +604,7 @@ function SpellChoice({
   }, [library, deferred, levelRange, build.classKey, have])
   const shown = rows.slice(0, 40)
   const add = (pick: SpellPick) => !full && onChange([...picks, pick])
-  const levels = Array.from(
-    { length: Math.max(1, levelRange[1]) },
-    (_, i) => i + 1,
-  )
+  const levels = Array.from({ length: Math.max(1, levelRange[1]) }, (_, i) => i + 1)
   return (
     <div className="levelup-card">
       <fieldset className="levelup-fieldset">
@@ -611,8 +614,7 @@ function SpellChoice({
         </legend>
         <Text size="sm" c="dimmed" aria-live="polite">
           {t('levelUp.spells.count', { done: picks.length, total })}
-          {' · '}
-          {hint}
+          {hint ? ` · ${hint}` : ''}
         </Text>
         {picks.length > 0 && (
           <ul className="levelup-list" aria-label={t('levelUp.spells.picks')}>
@@ -633,91 +635,101 @@ function SpellChoice({
             ))}
           </ul>
         )}
-        <TextInput
-          label={t('panel.search')}
-          leftSection={<Search size={16} aria-hidden="true" />}
-          value={query}
-          onChange={(event) => setQuery(event.currentTarget.value)}
-        />
-        <Text size="sm" c="dimmed" aria-live="polite">
-          {library ? t('panel.libraryCount', { count: rows.length }) : t('glossary.loading')}
-        </Text>
-        <ul className="levelup-list levelup-spell-list">
-          {shown.map((spell) => (
-            <li key={spell.id} className="levelup-row">
-              <div className="levelup-row-main">
-                <Text fw={600}>
-                  <GlossaryTerm id={spell.id}>{spell.name}</GlossaryTerm>
-                </Text>
-                <Text size="sm" c="dimmed">
-                  {t('glossary.spell.levelShort', { level: spell.level })}
-                </Text>
-              </div>
-              <ActionIcon
-                size={44}
-                variant="light"
-                aria-disabled={full || undefined}
-                aria-label={t('panel.addNamed', { name: spell.name })}
-                onClick={() =>
-                  add({
-                    id: `lib-${spell.id.slice(6)}`.slice(0, 40),
-                    ref: spell.id,
-                    name: spell.name,
-                    level: spell.level,
-                    concentration: spell.concentration,
-                    ritual: spell.ritual,
-                  })
-                }
-              >
-                <Plus size={18} aria-hidden="true" />
-              </ActionIcon>
-            </li>
-          ))}
-        </ul>
-        {library && rows.length === 0 && (
-          <Text size="sm" c="dimmed">
-            {t('levelUp.spells.none')}
-          </Text>
-        )}
-        {rows.length > shown.length && (
-          <Text size="sm" c="dimmed">
-            {t('panel.refineSearch', { count: rows.length - shown.length })}
-          </Text>
-        )}
-        <div className="levelup-manual">
-          <TextInput
-            label={t('levelUp.spells.manual')}
-            maxLength={100}
-            value={manual}
-            onChange={(event) => setManual(event.currentTarget.value)}
-          />
-          {levelRange[1] > 0 && (
-            <NativeSelect
-              label={t('levelUp.spells.manualLevel')}
-              value={manualLevel}
-              data={levels.map((level) => ({ value: String(level), label: String(level) }))}
-              onChange={(event) => setManualLevel(event.currentTarget.value)}
-            />
-          )}
-          <Button
-            variant="light"
-            aria-disabled={full || !manual.trim() || undefined}
-            onClick={() => {
-              const name = manual.trim()
-              if (!name || full) return
-              add({
-                id: `lvlup-${group[0]}${toLevel}-${Date.now().toString(36)}`.slice(0, 40),
-                name,
-                level: levelRange[1] === 0 ? 0 : Number(manualLevel),
-                concentration: false,
-                ritual: false,
-              })
-              setManual('')
-            }}
-          >
-            {t('levelUp.spells.manualAdd')}
+        {full ? (
+          <Button variant="subtle" className="levelup-inline-button" onClick={() => onChange([])}>
+            {t('levelUp.spells.change')}
           </Button>
-        </div>
+        ) : (
+          <>
+            <TextInput
+              label={t('panel.search')}
+              leftSection={<Search size={16} aria-hidden="true" />}
+              value={query}
+              onChange={(event) => setQuery(event.currentTarget.value)}
+            />
+            <Text size="sm" c="dimmed" aria-live="polite">
+              {library ? t('panel.libraryCount', { count: rows.length }) : t('glossary.loading')}
+            </Text>
+            <ul className="levelup-list levelup-spell-list">
+              {shown.map((spell) => (
+                <li key={spell.id} className="levelup-row">
+                  <div className="levelup-row-main">
+                    <Text fw={600}>
+                      <GlossaryTerm id={spell.id}>{spell.name}</GlossaryTerm>
+                    </Text>
+                    {group !== 'cantrips' && (
+                      <Text size="sm" c="dimmed">
+                        {t('glossary.spell.levelShort', { level: spell.level })}
+                      </Text>
+                    )}
+                  </div>
+                  <ActionIcon
+                    size={44}
+                    variant="light"
+                    aria-disabled={full || undefined}
+                    aria-label={t('panel.addNamed', { name: spell.name })}
+                    onClick={() =>
+                      add({
+                        id: `lib-${spell.id.slice(6)}`.slice(0, 40),
+                        ref: spell.id,
+                        name: spell.name,
+                        level: spell.level,
+                        concentration: spell.concentration,
+                        ritual: spell.ritual,
+                      })
+                    }
+                  >
+                    <Plus size={18} aria-hidden="true" />
+                  </ActionIcon>
+                </li>
+              ))}
+            </ul>
+            {library && rows.length === 0 && (
+              <Text size="sm" c="dimmed">
+                {t('levelUp.spells.none')}
+              </Text>
+            )}
+            {rows.length > shown.length && (
+              <Text size="sm" c="dimmed">
+                {t('panel.refineSearch', { count: rows.length - shown.length })}
+              </Text>
+            )}
+            <div className="levelup-manual">
+              <TextInput
+                label={t('levelUp.spells.manual')}
+                maxLength={100}
+                value={manual}
+                onChange={(event) => setManual(event.currentTarget.value)}
+              />
+              {levelRange[1] > 0 && (
+                <NativeSelect
+                  label={t('levelUp.spells.manualLevel')}
+                  value={manualLevel}
+                  data={levels.map((level) => ({ value: String(level), label: String(level) }))}
+                  onChange={(event) => setManualLevel(event.currentTarget.value)}
+                />
+              )}
+              <Button
+                variant="light"
+                aria-disabled={full || !manual.trim() || undefined}
+                onClick={() => {
+                  const name = manual.trim()
+                  if (!name || full) return
+                  add({
+                    id: `lvlup-${group[0]}${toLevel}-${Date.now().toString(36)}`.slice(0, 40),
+                    name,
+                    level: levelRange[1] === 0 ? 0 : Number(manualLevel),
+                    concentration: false,
+                    ritual: false,
+                  })
+                  setManual('')
+                }}
+              >
+                {t('levelUp.spells.manualAdd')}
+              </Button>
+            </div>
+          </>
+        )}
       </fieldset>
     </div>
   )
@@ -836,7 +848,7 @@ export function DoneView({ summary }: { summary: LevelUpSummary }) {
   const { t } = useTranslation()
   return (
     <div className="levelup-step">
-      <h3 className="levelup-subheading">{t('levelUp.done.changed')}</h3>
+      <h4 className="levelup-subheading">{t('levelUp.done.changed')}</h4>
       <ChangeList summary={summary} />
     </div>
   )

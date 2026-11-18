@@ -10,6 +10,7 @@ import { historyQuery } from '../../api'
 import {
   describeHistory,
   familyOf,
+  foldLevelUps,
   type HistoryFamily,
   type HistoryLine,
 } from '../../domain/history'
@@ -39,7 +40,7 @@ export function HistoryBlock({
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const query = useInfiniteQuery(historyQuery(state.user!.id, campaignId, characterId))
-  const items = query.data?.pages.flat() ?? []
+  const items = foldLevelUps(query.data?.pages.flat() ?? [])
   const text = useHistoryText(build)
   return (
     <Stack gap="md">
@@ -130,7 +131,10 @@ function useHistoryText(build: Build) {
     if (field === 'classKey' && raw === 'custom') return t('panel.history.homebrew')
     return raw
   }
-  const listName = (field: string, name: string) => {
+  const listName = (field: string, name: string, ref?: string) => {
+    // A resource Rytta adds is stored under its key and named when it is drawn.
+    if (field === 'trackers' && ref && i18n.exists(`panel.resource.${ref}`))
+      return t(`panel.resource.${ref}` as 'panel.resource.monk-focus', { defaultValue: name })
     if (field === 'conditions' && (conditionKeys as readonly string[]).includes(name))
       return t(`srd.condition.${name as 'poisoned'}`)
     if (field === 'saves' && (abilityKeys as readonly string[]).includes(name))
@@ -179,12 +183,12 @@ function useHistoryText(build: Build) {
         case 'added':
           return t('panel.history.added', {
             field: fieldLabel(line.field),
-            name: listName(line.field, line.name),
+            name: listName(line.field, line.name, line.ref),
           })
         case 'removed':
           return t('panel.history.removed', {
             field: fieldLabel(line.field),
-            name: listName(line.field, line.name),
+            name: listName(line.field, line.name, line.ref),
           })
         case 'edited':
           return t('panel.history.edited', { field: fieldLabel(line.field) })

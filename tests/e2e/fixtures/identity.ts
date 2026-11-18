@@ -72,6 +72,9 @@ export async function identityFixture(
     sheetLevel?: number
     /** RYT-130: the subclass of the complete sample sheets; '' leaves it to choose. */
     sheetSubclass?: string
+    /** RYT-130: a wizard instead of the sample bard, and base scores to override. */
+    sheetClass?: 'wizard'
+    sheetAbilities?: Partial<Record<'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha', number>>
     /** RYT-130: the level the DM set for the party (null: not set). */
     partyLevel?: number | null
     inventory?: boolean
@@ -306,10 +309,11 @@ export async function identityFixture(
     character: string,
     kind: string,
     changes: { field: string; before: unknown; after: unknown }[],
+    at = new Date(Date.now() + history.length).toISOString(),
   ) =>
     history.push({
       id: crypto.randomUUID(),
-      at: new Date(Date.now() + history.length).toISOString(),
+      at,
       kind,
       actor_id: currentId,
       character,
@@ -319,7 +323,12 @@ export async function identityFixture(
     characters.map((c) => [
       c.id,
       options.sheet === 'complete'
-        ? sampleSheet({ level: options.sheetLevel, subclass: options.sheetSubclass })
+        ? sampleSheet({
+            level: options.sheetLevel,
+            subclass: options.sheetSubclass,
+            wizard: options.sheetClass === 'wizard',
+            abilities: options.sheetAbilities,
+          })
         : blankSheet(),
     ]),
   )
@@ -1084,13 +1093,22 @@ export async function identityFixture(
           })),
       ]
       Object.assign(row, { level, max_hp: maxHp, build: nextBuild, revision: row.revision + 1 })
+      // One transaction: the level_up entry, the sheet row and the play-state row share their time.
+      const at = new Date().toISOString()
       const state = vitals.get(targetId)! as VitalsRow & { current_hp: number }
+      const hpBefore = state.current_hp
       // Play state moves only when the maximum rose, as in the SQL.
       if (maxHp > before.max_hp) {
         state.current_hp = Math.min(state.current_hp + (maxHp - before.max_hp), maxHp)
         state.revision += 1
+        record(
+          targetId,
+          'character_vitals:UPDATE',
+          [{ field: 'current_hp', before: hpBefore, after: state.current_hp }],
+          at,
+        )
       }
-      record(targetId, 'character_sheets:UPDATE', changes)
+      record(targetId, 'character_sheets:UPDATE', changes, at)
 
       characterEvents.unshift({
         id: crypto.randomUUID(),
@@ -1100,7 +1118,7 @@ export async function identityFixture(
         kind: 'level_up',
         before_value: { level: before.level, max_hp: before.max_hp },
         after_value: { level, max_hp: maxHp, party_level: party },
-        created_at: new Date().toISOString(),
+        created_at: at,
       })
       levelUpRequests.set(String(body.request_id), { actor, payload, revision: row.revision })
       return respond(row.revision)
@@ -1850,7 +1868,39 @@ export async function identityFixture(
 }
 
 /** A complete level 5 bard used to render the sheet without walking the wizard. */
-export function sampleSheet({ level = 5, subclass }: { level?: number; subclass?: string } = {}) {
+export function sampleSheet({
+  level = 5,
+  subclass,
+  wizard = false,
+  abilities,
+}: {
+  level?: number
+  subclass?: string
+  wizard?: boolean
+  abilities?: Record<string, number>
+} = {}) {
+  const base = sampleSheetBase(level, subclass)
+  if (!wizard && !abilities) return base
+  return {
+    ...base,
+    build: {
+      ...base.build,
+      ...(wizard
+        ? {
+            classKey: 'wizard',
+            classLabel: 'Mago',
+            subclassKey: 'evoker',
+            hitDie: 6,
+            spellAbility: 'int',
+            saves: ['int', 'wis'],
+          }
+        : {}),
+      baseAbilities: { ...base.build.baseAbilities, ...abilities },
+    },
+  }
+}
+
+function sampleSheetBase(level: number, subclass?: string) {
   return {
     status: 'complete',
     level,

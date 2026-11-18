@@ -28,7 +28,6 @@ export const levelupEn = {
   'partyLevel.error.invalid': 'That level is not valid. Use a level from 1 to 20.',
   'partyLevel.error.request-mismatch':
     'That request was already used for another level. Close this and set the level again.',
-  'partyLevel.demo': 'The demo is read-only. Set the party level in a live campaign.',
 
   'dm.auditEvent.level_up': 'Level up',
   'panel.history.levelUp': 'Level up',
@@ -62,6 +61,7 @@ export const levelupEn = {
   'levelUp.hp.rollLabel': 'Roll on the d{{die}}',
   'levelUp.hp.rollMin': 'The die starts at 1.',
   'levelUp.hp.rollMax': 'The d{{die}} goes up to {{die}}.',
+  'levelUp.hp.rollNeeded': 'Type your roll, from 1 to {{die}}, to continue.',
   'levelUp.hp.gain': '+{{gain}} hit points',
   'levelUp.hp.atLeastOne': 'A level always adds at least 1.',
   'levelUp.hp.newMax': 'New maximum',
@@ -105,6 +105,7 @@ export const levelupEn = {
   'levelUp.spells.manual': 'Not in the list? Type its name',
   'levelUp.spells.manualLevel': 'Spell level',
   'levelUp.spells.manualAdd': 'Add spell',
+  'levelUp.spells.change': 'Change picks',
   'levelUp.spells.picks': 'Your picks',
 
   'levelUp.kind.subclass': 'subclass',
@@ -112,7 +113,6 @@ export const levelupEn = {
   'levelUp.kind.cantrips': 'cantrips',
   'levelUp.kind.spellbook': 'spellbook',
   'levelUp.cantrips.title': 'New cantrip',
-  'levelUp.cantrips.hint': 'Cantrips: pick the new one.',
   'levelUp.spellbook.title': 'Spellbook',
   'levelUp.spellbook.hint': 'Spells to copy into your spellbook; they stay unprepared.',
   'levelUp.kind.spells': 'spells',
@@ -150,7 +150,7 @@ export const levelupEn = {
   'levelUp.error.invalid': 'The server refused those values. Check the hit points and try again.',
   'levelUp.error.request-mismatch':
     'That request was already used for other values. Close this and start again.',
-  'levelUp.error.close': 'Close',
+  'levelUp.error.close': 'Close without saving',
   'levelUp.error.useLevelUp':
     'This sheet is finished: its level changes by leveling up, not by saving it.',
 }

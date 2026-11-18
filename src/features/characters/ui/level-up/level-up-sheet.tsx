@@ -10,6 +10,7 @@ import { useApplyLevelUp } from '../../api'
 import {
   hasChoices,
   levelUpGrants,
+  levelUpRequirements,
   noChoices,
   planLevelUp,
   summarizeLevelUp,
@@ -83,6 +84,7 @@ export function LevelUpSheet({
   const [summary, setSummary] = useState<LevelUpSummary | null>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const settled = useRef(false)
+  const alert = useRef<HTMLDivElement>(null)
   const { level, build } = snapshot
   const toLevel = level + 1
   const custom = !isClassKey(build.classKey)
@@ -99,11 +101,12 @@ export function LevelUpSheet({
     () => (libraryState === 'ready' ? levelUpGrants(build, level, toLevel, features, names) : null),
     [libraryState, build, level, toLevel, features, names],
   )
-  const requirements = plan?.requirements
+  // The steps follow the build and the level, never the hit points typed so far.
+  const requirements = useMemo(() => levelUpRequirements(build, toLevel), [build, toLevel])
   const steps: StepKey[] = [
     'hp',
     'grants',
-    ...(requirements && hasChoices(requirements) ? ['choices' as const] : []),
+    ...(hasChoices(requirements) ? ['choices' as const] : []),
     'review',
   ]
   const index = Math.max(0, steps.indexOf(step))
@@ -120,12 +123,21 @@ export function LevelUpSheet({
     settled.current = true
   }, [step, summary])
 
+  // A failure or a refusal is brought into view and focused, so the reason is never off-screen.
+  const failed = mutation.isError ? mutation.submittedAt : 0
+  useEffect(() => {
+    if (!failed) return
+    alert.current?.scrollIntoView({ block: 'start' })
+    alert.current?.focus({ preventScroll: true })
+  }, [failed])
+
   const close = () => {
     if (pending) return
     onClose()
   }
   const go = (next: StepKey) => {
-    mutation.reset()
+    // A refusal stays: going back and forward must not bring the confirm back.
+    if (!refused) mutation.reset()
     setStep(next)
   }
   const nextBlocked = (step === 'hp' && !plan) || (step === 'grants' && libraryState !== 'ready')
@@ -245,6 +257,19 @@ export function LevelUpSheet({
               })}
             </Text>
           </div>
+          {mutation.isError && step === 'review' && (
+            <Alert
+              ref={alert}
+              tabIndex={-1}
+              color="red"
+              role="alert"
+              icon={<TriangleAlert size={18} aria-hidden="true" />}
+              title={t('levelUp.error.title')}
+              className="levelup-error"
+            >
+              {t(`levelUp.error.${errorKey}`)} {t('levelUp.error.unchanged')}
+            </Alert>
+          )}
           <h3 className="levelup-heading" ref={heading} tabIndex={-1} data-autofocus>
             {step === 'hp' && t('levelUp.hp.heading', { level: toLevel })}
             {step === 'grants' && t('levelUp.grants.heading', { level: toLevel })}
@@ -265,12 +290,12 @@ export function LevelUpSheet({
               grants={grants}
               toLevel={toLevel}
               customClass={custom}
-              subclassPending={Boolean(requirements?.subclass)}
+              subclassPending={requirements.subclass}
               library={libraryState}
               onRetryLibrary={() => glossary?.retry()}
             />
           )}
-          {step === 'choices' && plan && requirements && (
+          {step === 'choices' && plan && (
             <ChoicesStep
               build={build}
               toLevel={toLevel}
@@ -283,19 +308,8 @@ export function LevelUpSheet({
           {step === 'review' && plan && reviewSummary && (
             <ReviewStep plan={plan} summary={reviewSummary} onChoices={() => go('choices')} />
           )}
-          {mutation.isError && (
-            <Alert
-              color="red"
-              role="alert"
-              icon={<TriangleAlert size={18} aria-hidden="true" />}
-              title={t('levelUp.error.title')}
-              className="levelup-error"
-            >
-              {t(`levelUp.error.${errorKey}`)} {t('levelUp.error.unchanged')}
-            </Alert>
-          )}
           <div className="levelup-footer">
-            <Group justify="space-between" gap="sm" wrap="nowrap">
+            <Group justify="space-between" gap="sm" className="levelup-footer-row">
               <Button
                 variant="default"
                 leftSection={<ArrowLeft size={18} aria-hidden="true" />}

@@ -413,7 +413,11 @@ describe('RYT-130 the plan sent to the server', () => {
       { level: 4, maxHp: 24, build },
       { level: plan.level, maxHp: plan.maxHp, build: plan.build },
     )
-    expect(summary).toMatchObject({ fromLevel: 4, toLevel: 5, spells: ['Fireball', 'Fly', 'Web', 'Haste'] })
+    expect(summary).toMatchObject({
+      fromLevel: 4,
+      toLevel: 5,
+      spells: ['Fireball', 'Fly', 'Web', 'Haste'],
+    })
     expect(summary.hp.to).toBeGreaterThan(24)
     expect(summary.grants.slots).toEqual([{ level: 3, from: 0, to: 2 }])
   })

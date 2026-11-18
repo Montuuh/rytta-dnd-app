@@ -37,7 +37,14 @@ const spellsAtLevel: Partial<Record<ClassKey, readonly number[]>> = {
 
 /** Levels at which a spellcasting class learns one more cantrip (SRD 5.2 class tables). */
 export const cantripLevels = [4, 10]
-const cantripClasses: readonly ClassKey[] = ['bard', 'cleric', 'druid', 'sorcerer', 'warlock', 'wizard']
+const cantripClasses: readonly ClassKey[] = [
+  'bard',
+  'cleric',
+  'druid',
+  'sorcerer',
+  'warlock',
+  'wizard',
+]
 /** Spells a Wizard copies into the spellbook with every level after the first. */
 export const spellbookPerLevel = 2
 
@@ -103,7 +110,14 @@ export function levelUpRequirements(build: Build, toLevel: number): LevelUpRequi
   const slots = slotsFor(build.casterKind, toLevel)
   const maxSpellLevel = slots.reduce((top, count, index) => (count > 0 ? index + 1 : top), 0)
   if (!isClassKey(build.classKey))
-    return { subclass: false, improvement: false, spells: 0, cantrips: 0, spellbook: 0, maxSpellLevel }
+    return {
+      subclass: false,
+      improvement: false,
+      spells: 0,
+      cantrips: 0,
+      spellbook: 0,
+      maxSpellLevel,
+    }
   const table = spellsAtLevel[build.classKey]
   const spells =
     table && build.casterKind !== 'none' && toLevel >= 2

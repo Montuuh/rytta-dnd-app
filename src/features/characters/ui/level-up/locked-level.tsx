@@ -18,7 +18,7 @@ export function LockedLevel({ level }: { level: number }) {
         <Lock size={16} aria-hidden="true" />
         <output>{level}</output>
       </span>
-      <Text size="xs" c="dimmed" id="levelup-locked-note">
+      <Text size="xs" c="dimmed">
         {t(below ? 'levelUp.lockedBelow' : 'levelUp.lockedAtParty')}
       </Text>
     </div>

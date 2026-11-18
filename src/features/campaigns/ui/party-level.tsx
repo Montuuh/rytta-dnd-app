@@ -1,8 +1,7 @@
-import { useRef, useState } from 'react'
-import { Alert, Button, Group, Stack, Text } from '@mantine/core'
+import { useEffect, useRef, useState } from 'react'
+import { Alert, Button, Group, Loader, Stack, Text } from '@mantine/core'
 import { Minus, Plus, TriangleAlert, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { config } from '@/shared/lib/config'
 import { newRequestId } from '@/shared/lib/request-id'
 import { Modal } from '@/shared/ui/overlays'
 import { useLongPress } from '@/shared/ui/use-long-press'
@@ -35,23 +34,26 @@ export function PartyLevelControl({
 }) {
   const { t } = useTranslation()
   const mutation = useSetPartyLevel(campaignId)
-  const demo = config.VITE_DATA_MODE === 'demo'
   const [edited, setEdited] = useState<number | null>(null)
   // `undefined`: no question open; `null`: asking to clear the level.
   const [asking, setAsking] = useState<number | null | undefined>(undefined)
   const [saved, setSaved] = useState<string | null>(null)
   const ids = useRef(createPartyRequestIds(newRequestId))
   const apply = useRef<HTMLButtonElement>(null)
+  const alert = useRef<HTMLDivElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const start = current ?? suggested ?? minLevel
   const shown = edited ?? start
   const changed = shown !== current
   const pending = mutation.isPending
-  const move = (delta: number) =>
+  const move = (delta: number) => {
+    // A new value asks again: what was said about the last one no longer applies.
+    setSaved(null)
     setEdited((value) => {
       const next = Math.min(maxLevel, Math.max(minLevel, (value ?? start) + delta))
       return next === current ? null : next
     })
+  }
   const lower = useLongPress(
     () => move(-1),
     () => move(-5),
@@ -64,6 +66,11 @@ export function PartyLevelControl({
     mutation.reset()
     setAsking(level)
   }
+  // The reason is where the keyboard is: focus moves to it, the retry is the next stop.
+  const failedAt = mutation.isError ? mutation.submittedAt : 0
+  useEffect(() => {
+    if (failedAt) alert.current?.focus()
+  }, [failedAt])
   const close = () => {
     if (pending) return
     setAsking(undefined)
@@ -119,7 +126,7 @@ export function PartyLevelControl({
               type="button"
               className="party-level-step"
               aria-label={t('partyLevel.decrease')}
-              disabled={demo || shown <= minLevel}
+              disabled={shown <= minLevel}
               {...lower}
             >
               <Minus size={18} aria-hidden="true" />
@@ -131,28 +138,23 @@ export function PartyLevelControl({
               type="button"
               className="party-level-step"
               aria-label={t('partyLevel.increase')}
-              disabled={demo || shown >= maxLevel}
+              disabled={shown >= maxLevel}
               {...raise}
             >
               <Plus size={18} aria-hidden="true" />
             </button>
           </div>
-          {changed && !demo && (
+          {changed && (
             <Button ref={apply} onClick={() => open(shown)}>
               {t('partyLevel.set', { level: shown })}
             </Button>
           )}
-          {current !== null && !changed && !demo && (
+          {current !== null && !changed && (
             <Button variant="subtle" onClick={() => open(null)}>
               {t('partyLevel.clear')}
             </Button>
           )}
         </Group>
-        {demo && (
-          <Text size="sm" c="dimmed">
-            {t('partyLevel.demo')}
-          </Text>
-        )}
         <div role="status" className="party-level-saved">
           {saved}
         </div>
@@ -184,6 +186,8 @@ export function PartyLevelControl({
           </Text>
           {mutation.isError && (
             <Alert
+              ref={alert}
+              tabIndex={-1}
               color="red"
               role="alert"
               icon={<TriangleAlert size={18} aria-hidden="true" />}
@@ -197,9 +201,12 @@ export function PartyLevelControl({
               {t('action.cancel')}
             </Button>
             <Button
-              loading={pending}
               data-autofocus
-              onClick={() => asking !== undefined && confirm(asking)}
+              // Busy, not disabled: focus stays on the button and in the dialog.
+              aria-disabled={pending || undefined}
+              aria-busy={pending || undefined}
+              leftSection={pending ? <Loader size={16} aria-hidden="true" /> : undefined}
+              onClick={() => !pending && asking !== undefined && confirm(asking)}
             >
               {mutation.isError && errorKey === 'unavailable'
                 ? t('common.retry')

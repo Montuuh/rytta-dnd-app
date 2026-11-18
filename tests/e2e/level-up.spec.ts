@@ -30,6 +30,17 @@ async function evidence(page: Page, name: string, full = false) {
     })
 }
 
+/** A failure or a refusal is where the Player looks: in the viewport, above the footer, focused. */
+async function expectSeenAndFocused(alert: Locator) {
+  await expect(alert).toBeFocused()
+  const box = await alert.boundingBox()
+  const viewport = alert.page().viewportSize()!
+  const footer = await alert.page().locator('.levelup-footer').boundingBox()
+  expect(box!.y).toBeGreaterThanOrEqual(0)
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height)
+  expect(box!.y + box!.height).toBeLessThanOrEqual(footer!.y + 1)
+}
+
 const levelUpCalls = (calls: { method: string; body: Record<string, unknown> }[]) =>
   calls.filter((call) => call.method === 'apply_level_up')
 
@@ -45,16 +56,13 @@ async function pickSpells(
   dialog: Locator,
   count: number,
   language: 'es' | 'en' = 'es',
-  group: 'spells' | 'cantrips' = 'spells',
+  group: 'spells' | 'cantrips' | 'spellbook' = 'spells',
 ) {
-  const title =
-    language === 'es'
-      ? group === 'spells'
-        ? /^Conjuros nuevos/
-        : /^Truco nuevo/
-      : group === 'spells'
-        ? /^New spells/
-        : /^New cantrip/
+  const titles = {
+    es: { spells: /^Conjuros nuevos/, cantrips: /^Truco nuevo/, spellbook: /^Libro de conjuros/ },
+    en: { spells: /^New spells/, cantrips: /^New cantrip/, spellbook: /^Spellbook/ },
+  }
+  const title = titles[language][group]
   const adds = dialog
     .getByRole('group', { name: title })
     .getByRole('button', { name: language === 'es' ? /^Añadir / : /^Add / })
@@ -90,6 +98,10 @@ test('RYT-130 the DM sets the party level: confirmation, retry with the same req
   fixture.failNextPartyLevel()
   await dialog.getByRole('button', { name: 'Confirmar' }).click()
   await expect(dialog.getByRole('alert')).toContainText('No se guardó el nivel del grupo')
+  // Focus stays inside the dialog, on the reason, and the retry is the next stop.
+  await expect(dialog.getByRole('alert')).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(dialog.locator(':focus')).toHaveCount(1)
   await evidence(page, 'dm-party-level-error')
   await dialog.getByRole('button', { name: 'Reintentar' }).click()
   await expect(dialog).toHaveCount(0)
@@ -106,6 +118,10 @@ test('RYT-130 the DM sets the party level: confirmation, retry with the same req
   await audit(page, info.outputPath('party-level-set.png'))
   await evidence(page, 'dm-party-level-set')
 
+  // The notice goes as soon as the value is edited again.
+  await section.getByRole('button', { name: 'Bajar el nivel del grupo' }).click()
+  await expect(section.locator('.party-level-saved')).toBeEmpty()
+  await section.getByRole('button', { name: 'Subir el nivel del grupo' }).click()
   // Lowering only stops the prompts; Escape closes the question and focus comes back.
   const lower = section.getByRole('button', { name: 'Bajar el nivel del grupo' })
   await lower.click()
@@ -184,10 +200,11 @@ test('RYT-130 the Player below the party level levels up through the guided shee
   await dialog.getByRole('button', { name: 'Ir a las elecciones' }).click()
   await pickSpells(dialog, 2)
   await expect(dialog.getByText('2 de 2 elegidos')).toBeVisible()
-  await expect(dialog.getByRole('button', { name: /^Añadir / }).first()).toHaveAttribute(
-    'aria-disabled',
-    'true',
-  )
+  // A full pick collapses to its chips; "Cambiar elección" opens the picker again.
+  await expect(dialog.getByRole('textbox', { name: 'Buscar' })).toHaveCount(0)
+  await dialog.getByRole('button', { name: 'Cambiar elección' }).click()
+  await expect(dialog.getByRole('textbox', { name: 'Buscar' })).toBeVisible()
+  await pickSpells(dialog, 2)
   await dialog.getByRole('button', { name: 'Siguiente' }).click()
   await expect(dialog.getByRole('heading', { name: 'Revisa y confirma' })).toBeFocused()
   await audit(page, info.outputPath('step-review.png'))
@@ -208,7 +225,7 @@ test('RYT-130 the Player below the party level levels up through the guided shee
   const build = sent[0]!.body.new_build as { spells: unknown[]; features: { ref?: string }[] }
   expect(build.spells).toHaveLength(4)
   expect(build.features.some((feature) => feature.ref?.startsWith('feature.bard-'))).toBe(true)
-  await expect(dialog.getByText('Qué ha cambiado')).toBeVisible()
+  await expect(dialog.getByRole('heading', { level: 4, name: 'Qué ha cambiado' })).toBeVisible()
   await expect(dialog).toContainText('Nivel 4 → 5')
   await expect(dialog).toContainText('Puntos de golpe máximos 38 → 45')
   await audit(page, info.outputPath('done.png'))
@@ -225,6 +242,11 @@ test('RYT-130 the Player below the party level levels up through the guided shee
   await expect(history.getByText('Subida de nivel', { exact: true })).toBeVisible()
   await expect(history).toContainText('4 → 5')
   await expect(history).toContainText('38 → 45')
+  // One entry for the level-up: the sheet's own row folds into it and no raw id shows.
+  await expect(history.getByText('Nivel: 4 → 5')).toHaveCount(1)
+  await expect(history.getByText('Puntos de golpe máximos: 38 → 45')).toHaveCount(1)
+  await expect(history).toContainText('Iniciado en la magia')
+  await expect(history).not.toContainText('feat-magic-initiate')
   await evidence(page, 'player-history')
 })
 
@@ -249,6 +271,7 @@ test('RYT-130 a failed level-up leaves the character as it was and the retry rep
   await dialog.getByRole('button', { name: 'Confirmar nivel 5' }).click()
   await expect(dialog.getByRole('alert')).toContainText('La subida de nivel no se guardó')
   await expect(dialog.getByRole('alert')).toContainText('Tu personaje no ha cambiado.')
+  await expectSeenAndFocused(dialog.getByRole('alert'))
   await evidence(page, 'level-up-error')
   await expect(dialog.getByRole('button', { name: 'Reintentar' })).toBeVisible()
   // The sheet underneath still reads level 4.
@@ -280,7 +303,15 @@ test('RYT-130 a sheet changed elsewhere refuses the level-up and offers only a w
   await dialog.getByRole('button', { name: 'Confirmar nivel 5' }).click()
   await expect(dialog.getByRole('alert')).toContainText('La ficha cambió en otro dispositivo')
   await expect(dialog.getByRole('button', { name: 'Reintentar' })).toHaveCount(0)
-  await dialog.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
+  await expectSeenAndFocused(dialog.getByRole('alert'))
+  // Back and forward do not bring the confirm back: the refusal stays.
+  await dialog.getByRole('button', { name: 'Atrás' }).click()
+  await dialog.getByRole('button', { name: 'Siguiente' }).click()
+  await expect(dialog.getByRole('button', { name: 'Confirmar nivel 5' })).toHaveCount(0)
+  await expect(dialog.getByRole('alert')).toContainText('La ficha cambió en otro dispositivo')
+  // The way out is named apart from the header's close button.
+  await expect(dialog.getByRole('button', { name: 'Cerrar', exact: true })).toHaveCount(1)
+  await dialog.getByRole('button', { name: 'Cerrar sin guardar' }).click()
   await expect(dialog).toHaveCount(0)
   // The sheet reloaded: the prompt is there again, from the new revision.
   await openLevelUp(page, 5)
@@ -575,9 +606,10 @@ test('RYT-130 the DM lowers the party level while the sheet is open: the refusal
   await dialog.getByRole('button', { name: 'Confirmar nivel 5' }).click()
   await expect(dialog.getByRole('alert')).toContainText('El nivel del grupo es ahora menor')
   await expect(dialog.getByRole('alert')).toContainText('Tu personaje no ha cambiado.')
+  await expectSeenAndFocused(dialog.getByRole('alert'))
   await expect(dialog.getByRole('button', { name: 'Reintentar' })).toHaveCount(0)
   await evidence(page, 'level-up-above-party')
-  await dialog.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
+  await dialog.getByRole('button', { name: 'Cerrar sin guardar' }).click()
   await expect(dialog).toHaveCount(0)
   // The sheet and the campaign reloaded: nothing changed and no prompt is left.
   await expect(page.getByText('Bardo de nivel 4', { exact: false })).toBeVisible()
@@ -596,4 +628,128 @@ test('RYT-130 an absent character shows no prompt', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Arin' })).toBeVisible()
   await expect(page.getByRole('region', { name: /El grupo es de nivel/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Subir a nivel/ })).toHaveCount(0)
+})
+
+test('RYT-130 the step count stays put and an empty roll says why Next waits', async ({ page }) => {
+  await identityFixture(page, { player: true, sheet: 'complete', sheetLevel: 4, partyLevel: 5 })
+  await page.goto(sheetUrl)
+  const dialog = await openLevelUp(page, 5)
+  await expect(dialog).toContainText('Paso 1 de 4: Puntos de golpe')
+  await dialog.getByRole('radio', { name: /Mi tirada/ }).check({ force: true })
+  await expect(dialog).toContainText('Paso 1 de 4: Puntos de golpe')
+  await expect(dialog.getByText('Escribe tu tirada, de 1 a 8, para continuar.')).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Siguiente' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await dialog.getByRole('textbox', { name: 'Tirada del d8' }).fill('5')
+  await expect(dialog.getByText('Escribe tu tirada, de 1 a 8, para continuar.')).toHaveCount(0)
+  await expect(dialog).toContainText('Paso 1 de 4: Puntos de golpe')
+})
+
+test('RYT-130 the footer buttons are whole in Spanish at 150% text', async ({ page }) => {
+  await identityFixture(page, { player: true, sheet: 'complete', sheetLevel: 4, partyLevel: 5 })
+  await page.goto(sheetUrl)
+  await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+  const dialog = await openLevelUp(page, 5)
+  const whole = async () => {
+    const clipped = await page
+      .locator('.levelup-footer .mantine-Button-label')
+      .evaluateAll((els) =>
+        els
+          .filter(
+            (el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1,
+          )
+          .map((el) => el.textContent),
+      )
+    expect(clipped).toEqual([])
+    for (const button of await page.locator('.levelup-footer button').all()) {
+      const box = await button.boundingBox()
+      expect(box!.x).toBeGreaterThanOrEqual(0)
+      expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    }
+  }
+  await whole()
+  const next = dialog.getByRole('button', { name: 'Siguiente' })
+  await next.click()
+  await next.click()
+  await pickSpells(dialog, 2)
+  await next.click()
+  await expect(dialog.getByRole('button', { name: 'Confirmar nivel 5' })).toBeVisible()
+  await whole()
+})
+
+test('RYT-130 a wizard copies two spells into the spellbook; a feat takes the place of an increase', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    sheetClass: 'wizard',
+    sheetLevel: 11,
+    partyLevel: 12,
+  })
+  await page.goto(sheetUrl)
+  const dialog = await openLevelUp(page, 12)
+  const next = dialog.getByRole('button', { name: 'Siguiente' })
+  await next.click()
+  await next.click()
+  // Level 12: the ability increase and the spellbook, no prepared spells and no cantrip.
+  await expect(dialog.getByRole('group', { name: /^Libro de conjuros/ })).toBeVisible()
+  await expect(dialog.getByRole('group', { name: /^Conjuros nuevos/ })).toHaveCount(0)
+  await expect(dialog.getByRole('group', { name: /^Truco nuevo/ })).toHaveCount(0)
+  await dialog.getByRole('radio', { name: 'Una dote' }).check({ force: true })
+  await dialog.getByRole('textbox', { name: 'Nombre de la dote' }).fill('Alerta')
+  await pickSpells(dialog, 2, 'es', 'spellbook')
+  await expect(dialog.getByText('2 de 2 elegidos')).toBeVisible()
+  await next.click()
+  await dialog.getByRole('button', { name: 'Confirmar nivel 12' }).click()
+  await expect(dialog.getByRole('heading', { name: 'Ahora eres de nivel 12' })).toBeVisible()
+  await expect(dialog).toContainText('Dote: Alerta')
+  const build = levelUpCalls(fixture.calls)[0]!.body.new_build as {
+    features: { name: string; source: string }[]
+    spells: { prepared: boolean; level: number }[]
+  }
+  expect(build.features).toContainEqual(expect.objectContaining({ name: 'Alerta', source: 'feat' }))
+  // The sample sheet holds two spells; the two new ones are not prepared (the spellbook).
+  expect(build.spells).toHaveLength(4)
+  expect(build.spells.filter((spell) => !spell.prepared)).toHaveLength(2)
+})
+
+test('RYT-130 +2 to one score and a score already at 20', async ({ page }) => {
+  const fixture = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    sheetClass: 'wizard',
+    sheetLevel: 11,
+    sheetAbilities: { int: 19, wis: 10 },
+    partyLevel: 12,
+  })
+  await page.goto(sheetUrl)
+  const dialog = await openLevelUp(page, 12)
+  const next = dialog.getByRole('button', { name: 'Siguiente' })
+  await next.click()
+  await next.click()
+  const intelligence = dialog.getByRole('button', { name: /^Inteligencia/ })
+  await dialog.getByRole('radio', { name: '+2 a una característica' }).check({ force: true })
+  // 19 + 2 would pass 20: it cannot be picked and says so.
+  await expect(intelligence).toHaveAttribute('aria-disabled', 'true')
+  await expect(intelligence).toContainText('Ya en 20')
+  await intelligence.click({ force: true })
+  await expect(dialog.getByText('0 de 1 elegidas')).toBeVisible()
+  // +1 to two scores can still take it to 20.
+  await dialog.getByRole('radio', { name: '+1 a dos características' }).check({ force: true })
+  await expect(intelligence).not.toContainText('Ya en 20')
+  await dialog.getByRole('radio', { name: '+2 a una característica' }).check({ force: true })
+  await dialog.getByRole('button', { name: /^Sabiduría/ }).click()
+  await expect(dialog.getByRole('button', { name: /^Sabiduría/ })).toContainText('10 → 12')
+  await pickSpells(dialog, 2, 'es', 'spellbook')
+  await next.click()
+  await dialog.getByRole('button', { name: 'Confirmar nivel 12' }).click()
+  await expect(dialog.getByRole('heading', { name: 'Ahora eres de nivel 12' })).toBeVisible()
+  await expect(dialog).toContainText('Sabiduría 10 → 12')
+  expect(
+    (levelUpCalls(fixture.calls)[0]!.body.new_build as { baseAbilities: Record<string, number> })
+      .baseAbilities,
+  ).toMatchObject({ wis: 12, int: 19 })
 })

@@ -31,7 +31,6 @@ export const levelupEs = {
   'partyLevel.error.invalid': 'Ese nivel no es válido. Usa un nivel del 1 al 20.',
   'partyLevel.error.request-mismatch':
     'Esa petición ya se usó para otro nivel. Cierra esto y fija el nivel otra vez.',
-  'partyLevel.demo': 'La demo es de solo lectura. Fija el nivel del grupo en una campaña real.',
 
   'dm.auditEvent.level_up': 'Subida de nivel',
   'panel.history.levelUp': 'Subida de nivel',
@@ -65,6 +64,7 @@ export const levelupEs = {
   'levelUp.hp.rollLabel': 'Tirada del d{{die}}',
   'levelUp.hp.rollMin': 'El dado empieza en 1.',
   'levelUp.hp.rollMax': 'El d{{die}} llega hasta {{die}}.',
+  'levelUp.hp.rollNeeded': 'Escribe tu tirada, de 1 a {{die}}, para continuar.',
   'levelUp.hp.gain': '+{{gain}} puntos de golpe',
   'levelUp.hp.atLeastOne': 'Un nivel siempre suma al menos 1.',
   'levelUp.hp.newMax': 'Nuevo máximo',
@@ -108,6 +108,7 @@ export const levelupEs = {
   'levelUp.spells.manual': '¿No está en la lista? Escribe su nombre',
   'levelUp.spells.manualLevel': 'Nivel del conjuro',
   'levelUp.spells.manualAdd': 'Añadir conjuro',
+  'levelUp.spells.change': 'Cambiar elección',
   'levelUp.spells.picks': 'Tus elecciones',
 
   'levelUp.kind.subclass': 'subclase',
@@ -115,7 +116,6 @@ export const levelupEs = {
   'levelUp.kind.cantrips': 'trucos',
   'levelUp.kind.spellbook': 'libro de conjuros',
   'levelUp.cantrips.title': 'Truco nuevo',
-  'levelUp.cantrips.hint': 'Trucos: elige el nuevo.',
   'levelUp.spellbook.title': 'Libro de conjuros',
   'levelUp.spellbook.hint': 'Conjuros para copiar en tu libro de conjuros; quedan sin preparar.',
   'levelUp.kind.spells': 'conjuros',
@@ -154,7 +154,7 @@ export const levelupEs = {
     'El servidor rechazó esos valores. Revisa los puntos de golpe e inténtalo de nuevo.',
   'levelUp.error.request-mismatch':
     'Esa petición ya se usó para otros valores. Cierra esto y empieza de nuevo.',
-  'levelUp.error.close': 'Cerrar',
+  'levelUp.error.close': 'Cerrar sin guardar',
   'levelUp.error.useLevelUp':
     'Esta ficha está terminada: su nivel cambia al subir de nivel, no al guardarla.',
 } satisfies Record<keyof typeof levelupEn, string>

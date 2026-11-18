@@ -377,6 +377,13 @@
   background: var(--app-surface);
 }
 
+.levelup-need {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-text);
+}
+
 .levelup-inline-button {
   justify-self: start;
 }
@@ -462,7 +469,29 @@
 }
 
 .levelup-error {
-  margin-top: 4px;
+  scroll-margin-top: 5rem;
+}
+
+.levelup-error:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+/* The footer buttons wrap and may grow, so a long label at 150% text is never cut. */
+.levelup-footer-row {
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.levelup-footer .mantine-Button-root {
+  height: auto;
+  min-height: 44px;
+  padding-block: 8px;
+}
+
+.levelup-footer .mantine-Button-label {
+  white-space: normal;
+  text-align: center;
 }
 
 .levelup-footer {

@@ -1,4 +1,11 @@
-import { test, expect, type Browser, type Page, type TestInfo } from '@playwright/test'
+import {
+  test,
+  expect,
+  type Browser,
+  type Locator,
+  type Page,
+  type TestInfo,
+} from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import {
   beaId,
@@ -359,7 +366,8 @@ test('RYT-133 dice in the app: Rytta rolls on the server, the card and the strip
   expect(f.dice.rolls[0]).toMatchObject({ source: 'app', dice: [14], total: 16 })
   // The card holds the newest roll, so the strip does not list it twice (RYT-135); with the card
   // dismissed the strip agrees with it and labels the source.
-  await expect(strip.locator('.roll-entry')).toHaveCount(0)
+  // The only roll is on the card: no bare heading is left behind.
+  await expect(strip).toHaveCount(0)
   await expect(check).toBeFocused()
   await dismissCard(page)
   await expect(strip.locator('.roll-entry-total').first()).toContainText('16')
@@ -993,6 +1001,16 @@ for (const [theme, wide] of [
     await expect(card.getByRole('alert')).toBeVisible()
     const failed = (await card.boundingBox())!
     expect(failed.height).toBeLessThanOrEqual(viewport.height / 3)
+    // The roll's name, the reason's title and the retry are in view without scrolling the card.
+    const inside = async (locator: Locator) => {
+      const box = (await locator.boundingBox())!
+      const cardBox = (await card.boundingBox())!
+      expect(box.y).toBeGreaterThanOrEqual(cardBox.y - 1)
+      expect(box.y + box.height).toBeLessThanOrEqual(cardBox.y + cardBox.height + 1)
+    }
+    await inside(card.locator('.roll-result-name'))
+    await inside(card.locator('.mantine-Alert-title'))
+    await inside(card.getByRole('button', { name: 'Reintentar' }))
     // Past a third of the screen the card scrolls inside itself: the retry is still reachable.
     await card.getByRole('button', { name: 'Reintentar' }).click({ trial: true })
     await expectTouchTargets(page, '.roll-result button:visible')
@@ -1118,7 +1136,7 @@ test('RYT-133 one reveal moment: the strip does not show the roll while the card
   await expect(spoken(page)).not.toContainText('= 16')
   await expect(card).toHaveAttribute('data-phase', 'saved', { timeout: 20_000 })
   // The card shows it; the strip lists it only once the card is gone.
-  await expect(strip.locator('.roll-entry')).toHaveCount(0)
+  await expect(strip).toHaveCount(0)
   await expect(card.locator('.roll-result-total')).toHaveText('16')
   await dismissCard(page)
   await expect(strip.locator('.roll-entry')).toHaveCount(1)

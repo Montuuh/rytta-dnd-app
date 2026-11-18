@@ -100,6 +100,10 @@ export function RecentRolls({
   const onCard = shown?.phase === 'saved' ? (shown.roll?.id ?? null) : null
   // With physical dice the strip appears once someone has recorded a roll, never before.
   if (behaviour === 'physical' && rolls.length === 0) return null
+  // The session's only roll is on the card: the strip has nothing to list, so it is not drawn (a bare
+  // heading would read as an empty section). It returns with the next roll or when the card goes.
+  const others = rolls.filter((roll) => roll.id !== onCard)
+  if (rolls.length > 0 && others.length === 0 && !query.isError) return null
   const who = (roll: CampaignRoll) => {
     const roller = rollerOf(roll.character_id, names)
     return roller.kind === 'dm'
@@ -151,7 +155,7 @@ export function RecentRolls({
           {t('roll.empty')}
         </Text>
       )}
-      {rolls.length > 0 && list(rolls.filter((roll) => roll.id !== onCard).slice(0, previewCount))}
+      {rolls.length > 0 && list(others.slice(0, previewCount))}
       <Drawer
         opened={all}
         onClose={() => setAll(false)}

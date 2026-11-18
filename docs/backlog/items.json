@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-17",
+  "updatedAt": "2026-11-18",
   "items": [
     {
       "id": "RYT-000",
@@ -3654,12 +3654,13 @@
       "title": "Launch presentation: brand art, landing, app shell and illustrated fallbacks",
       "priority": "P1",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Progress 2026-11-17: npm run check passed (565 tests, build); full e2e 605 passed, 53 skipped, 0 failed. Independent UI review round 1 CHANGES_REQUIRED (16 findings); round 2 CHANGES_REQUIRED (15 resolved, F8 deferred to RYT-118, new blocking R1 on the conditions grid at 390px and minor N2); round 3 pending.",
-        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Independent UI review round 3 PASS; the current recorded PASS covers RYT-112 to RYT-118. F8 resolved by RYT-118. Not committed or released; remaining steps in RYT-122."
+        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Independent UI review round 3 PASS; the current recorded PASS covers RYT-112 to RYT-118. F8 resolved by RYT-118. Not committed or released; remaining steps in RYT-122.",
+        "Done 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, where the owner verified sign-in; every criterion has evidence in docs/evidence/RYT-112/validation.md, including the independent UI review PASS of 2026-11-17."
       ],
       "scope": "A static illustration set under public/art rendered through a shared ArtPlate component. A landing and sign-in page that explains the product with hero art. App icons, a web manifest and a share image. Correct document titles on nested routes. A bottom bar that works with a single enabled module and gives the DM one-tap access to Combat and the table screen; planned modules are hidden. Not-found, error and loading screens that always offer a way home. Campaign covers, illustrated empty states, default class portraits and class emblems in both character creation paths, default shop banners per shop type and item category art fallbacks. Non-goals: schema changes, user-uploaded campaign covers, autonomous release.",
       "acceptance": [
@@ -3689,7 +3690,8 @@
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit findings: H-1 (encounters summary and active_combatant readable by Players through table reads and realtime), H-3 (no quotas on campaigns, scenes or uploaded media), M-1 (set_shop_modifier delete not scoped to its campaign), M-2 (unthrottled invitations and unbounded list_my_invitations).",
         "Progress 2026-11-17: migrations applied to production (hosted 20261117012750 and 20261117013004) and mirrored to PRE with baseline row counts unchanged; npm run test:db 250 passed; two independent security reviews returned safe to apply, one blocking client finding fixed. Hosted actor-level verification moved to RYT-119; hosted Auth settings and the frontend release remain owner actions.",
-        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Hosted PRE actor-level verification passed (RYT-119). Remaining: hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA) and the frontend release, tracked in RYT-122."
+        "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Hosted PRE actor-level verification passed (RYT-119). Remaining: hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA) and the frontend release, tracked in RYT-122.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused."
       ],
       "scope": "Players can no longer read hidden combatants, true creature names, their damage or a hidden active turn through direct reads or realtime of encounters: the realtime signal row carries no secrets and the summary and active combatant live where only the DM can read them, while get_combat_state keeps its masked projection. set_shop_modifier verifies the shop belongs to the target campaign and deletes only within that campaign. Per-account and per-campaign quotas for campaigns, pending invitations, tabletop scenes and uploaded media bytes, enforced server-side. Invitations are rate-limited per inviting DM and per recipient, and list_my_invitations is bounded. Reviewed backward-compatible migrations, tested in PRE first and mirrored there. Non-goals: auth provider, CAPTCHA and rate-limit configuration in the hosted dashboard (owner action, recorded in the evidence), destructive migrations, autonomous release.",
       "acceptance": [
@@ -3751,7 +3753,8 @@
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit finding M-3 and operations gaps 1 and 2: foreign keys to auth users block erasure, no account deletion or export exists, and there is no privacy policy, terms or attribution page.",
-        "Delivered 2026-11-17: migrations applied to production (hosted 20261117063453 and 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply for each; hosted PRE actor checks passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 1 CHANGES_REQUIRED (8 findings, all resolved), round 2 PASS. Remaining: production Auth-user removal unverified, legal text review and draft flag, VITE_CONTACT_EMAIL, frontend release and the privacy URL for the consent screen (RYT-122). Follow-ups RYT-120 and RYT-121."
+        "Delivered 2026-11-17: migrations applied to production (hosted 20261117063453 and 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply for each; hosted PRE actor checks passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 1 CHANGES_REQUIRED (8 findings, all resolved), round 2 PASS. Remaining: production Auth-user removal unverified, legal text review and draft flag, VITE_CONTACT_EMAIL, frontend release and the privacy URL for the consent screen (RYT-122). Follow-ups RYT-120 and RYT-121.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, and the owner approved the legal texts; not Done because criterion 5 still lacks a record of the privacy policy URL on the Google consent screen and criterion 2 lacks evidence that the Auth user is removed in production."
       ],
       "scope": "A signed-in user can export their data and delete their account. Deletion leaves or hands over campaigns (sole-DM campaigns are transferred or deleted after an explicit confirmation), nulls actor and author references, removes memberships, invitations, profile and the user's storage objects, and then removes the Auth user server-side without shipping a server secret to the browser. Foreign keys to Auth users get explicit delete actions. Public privacy policy, terms and SRD and art attribution pages are reachable signed out and linked from the landing page and settings. Backend and frontend work; reviewed migrations tested in PRE first. Non-goals: legal text authorship (owner supplies or approves the text), erasure of PRE copies and retained backups (covered by RYT-116), autonomous release.",
       "acceptance": [
@@ -3780,7 +3783,8 @@
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
-        "Security audit findings H-2 (PRE schema reachable by every production session with a stale copy of all tenants' data), M-4 (no CSP or anti-framing headers on the shared static origin) and L-8 (localhost callbacks allowlisted on production); environment audit section 2 and operations gaps 3 and 7."
+        "Security audit findings H-2 (PRE schema reachable by every production session with a stale copy of all tenants' data), M-4 (no CSP or anti-framing headers on the shared static origin) and L-8 (localhost callbacks allowlisted on production); environment audit section 2 and operations gaps 3 and 7.",
+        "Hosting update 2026-11-18: ADR 047 (updated 2026-11-18) moved the site to the Cloudflare Pages project rytta at https://rytta.pages.dev; the repository is private and the old GitHub Pages site and the first Worker are removed; the staging project bootstrap is recorded in docs/evidence/RYT-116/staging-bootstrap.md. Not closed: no criterion is fully evidenced yet; criterion 5 still needs a recorded header check and CSP-clean browser run on the live site."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -3799,7 +3803,7 @@
         "npm run test:e2e against the staging site",
         "documented backup restore rehearsal"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-116/staging-bootstrap.md"]
     },
     {
       "id": "RYT-117",
@@ -3811,7 +3815,8 @@
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Scalability audit operations gaps 8 and 10: both languages load eagerly in the first bundle, and there is no new-version notice for paired migrations.",
-        "Implemented 2026-11-17: windowed bestiary and glossary (6046 to 1160 and 12977 to 1728 DOM nodes), entry chunk 262 to 136 kB gzip with lazy languages, version notice. UI review rounds 1-4: round 4 CHANGES_REQUIRED with one blocking finding (focus after a successful language retry) and one minor (one-frame default background at mount), both fixed under RYT-123 and not yet re-reviewed. Known limitation: one 97 px step back in WebKit at 820px after a long jump sequence."
+        "Implemented 2026-11-17: windowed bestiary and glossary (6046 to 1160 and 12977 to 1728 DOM nodes), entry chunk 262 to 136 kB gzip with lazy languages, version notice. UI review rounds 1-4: round 4 CHANGES_REQUIRED with one blocking finding (focus after a successful language retry) and one minor (one-frame default background at mount), both fixed under RYT-123 and not yet re-reviewed. Known limitation: one 97 px step back in WebKit at 820px after a long jump sequence.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; findings 20 and 22 were confirmed resolved and the UI review of RYT-123 to RYT-126, which covered these leftovers, ended in PASS on 2026-11-18; not Done because criterion 3 (update notice after a newer build is deployed) has only been checked with a forced or mocked version.json, never against a real deployed build."
       ],
       "scope": "The bestiary (330 creatures) and glossary (838 entries) render only the visible rows through virtualisation or paging while search, filters and deep links keep working. Only the active language's translations load at start; the other loads on switch. A deployed build id lets an open tab detect a newer version and offer a reload without losing unsaved input. Non-goals: offline support or a service worker, backend changes, autonomous release.",
       "acceptance": [
@@ -3835,11 +3840,12 @@
       "title": "Table view tokens show class emblems",
       "priority": "P2",
       "owner": "backend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-112"],
       "sources": [
         "UI review of RYT-112, finding F8 (2026-11-17): the Table combat projection carries no character reference, so player tokens fall back to initials while the DM console shows class emblems.",
-        "Delivered 2026-11-17: migrations applied to production (hosted 20261117063556, 20261117063639 and the combat leave mask in 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply; hosted PRE alias masking check passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 2 PASS. Accepted residuals in docs/security.md. Not committed or released (RYT-122)."
+        "Delivered 2026-11-17: migrations applied to production (hosted 20261117063556, 20261117063639 and the combat leave mask in 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply; hosted PRE alias masking check passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 2 PASS. Accepted residuals in docs/security.md. Not committed or released (RYT-122).",
+        "Done 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; every criterion has evidence in docs/evidence/RYT-118/validation.md, including the hosted migrations and the independent UI review PASS of 2026-11-17."
       ],
       "scope": "Backend first, then frontend. Expose a safe class key in the Table combat projection (not the character id if that would leak hidden data) and use it for the token fallback art. Non-goals: portraits on the Table view, changing combat visibility rules, autonomous release.",
       "acceptance": [
@@ -3890,11 +3896,12 @@
       "title": "A Player with an absent character cannot leave a campaign",
       "priority": "P2",
       "owner": "backend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-115"],
       "sources": [
         "Found during RYT-115 (2026-11-17): change_campaign_member refuses a Player leaving while their character is absent, with the error Character absent.",
-        "Delivered 2026-11-17: migration 20261129120000_absent_character_leave.sql applied to production and mirrored to PRE (hosted version 20261117075346) after an independent security review (safe to apply); npm run test:db 306 passed; a hosted PRE check in a rolled-back transaction showed a Player with an absent character leaving without error and the character back in the pool still absent; production data untouched. No frontend release is needed. Remaining: commit with the release checklist (RYT-122); no behavioural check in production."
+        "Delivered 2026-11-17: migration 20261129120000_absent_character_leave.sql applied to production and mirrored to PRE (hosted version 20261117075346) after an independent security review (safe to apply); npm run test:db 306 passed; a hosted PRE check in a rolled-back transaction showed a Player with an absent character leaving without error and the character back in the pool still absent; production data untouched. No frontend release is needed. Remaining: commit with the release checklist (RYT-122); no behavioural check in production.",
+        "Done 2026-11-18: migration and tests merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; every criterion has evidence in docs/evidence/RYT-120/validation.md (production verified by migration history, behaviour verified on hosted PRE)."
       ],
       "scope": "Let a Player leave a campaign through change_campaign_member while their character is marked absent, releasing the character as for any other leave. Reviewed backward-compatible migration tested in PRE first. Non-goals: changing absence rules in combat or rest, autonomous release.",
       "acceptance": [
@@ -3914,11 +3921,12 @@
       "title": "Account dialog action order and post-deletion notice focus ring",
       "priority": "P2",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-115"],
       "sources": [
         "UI review of RYT-115 round 2 (2026-11-17), notes R2-b and R2-c: in the account dialog the stacked actions have a visual order that differs from the tab order, and the post-deletion notice shows a focus ring that its stylesheet comment says is suppressed.",
-        "Implemented 2026-11-17 and covered by the UI review of RYT-117: action order and the notice focus ring judged correct in rounds 1-4 with no finding; the formal PASS comes with the RYT-117 re-review on the current source."
+        "Implemented 2026-11-17 and covered by the UI review of RYT-117: action order and the notice focus ring judged correct in rounds 1-4 with no finding; the formal PASS comes with the RYT-117 re-review on the current source.",
+        "Done 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; criteria 1 and 2 were judged met at 390px and 820px in both themes in the RYT-117 review rounds, and the later UI review that listed RYT-121 in its scope ended in PASS on 2026-11-18 (docs/evidence/RYT-117/validation.md)."
       ],
       "scope": "Make the visual order of the stacked account dialog actions match their tab order, and make the post-deletion notice focus treatment match its documented intent while keeping a visible focus indicator for keyboard users. Non-goals: changing the deletion flow or copy, autonomous release.",
       "acceptance": [
@@ -3941,7 +3949,8 @@
       "status": "planned",
       "dependsOn": ["RYT-112", "RYT-113", "RYT-115", "RYT-118"],
       "sources": [
-        "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published."
+        "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published.",
+        "Release update 2026-11-18: PR 13 merged to main on 2026-11-18 and the frontend is live at https://rytta.pages.dev on Cloudflare Pages (the GitHub Pages site and the first Worker are gone; the repository is private); the owner verified sign-in there and approved the legal texts. Not closed: still without evidence are the Quality workflow result of PR 13, where the contact and site variables are set now that the build runs on Cloudflare Pages, the hosted Auth settings with their date, the published build matching the merged commit, and the smoke test of Player combat realtime, an image upload and an account export."
       ],
       "scope": "Owner-run release of the launch delivery: commit and review the working tree, set the VITE_CONTACT_EMAIL and VITE_SITE_URL repository variables, apply the hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA), publish the frontend, then smoke-test production. Non-goals: new features, destructive migrations, paid services without an owner decision, autonomous release.",
       "acceptance": [
@@ -3968,7 +3977,8 @@
       "sources": [
         "Player journey audit 2026-11-17, journey 1 (arrival and account), findings J1-01..J1-03, J1-05..J1-09 and J1-11..J1-29.",
         "Player journey audit 2026-11-17, findings J3-06 (Back part) and J4-20: the phone Back button leaves the page instead of closing an open drawer or sheet.",
-        "UI review of RYT-117, two open notes: focus after a successful language retry, and a one-frame default background at mount."
+        "UI review of RYT-117, two open notes: focus after a successful language retry, and a one-frame default background at mount.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, with an independent UI review PASS on the focused re-review of 2026-11-18; not Done because the ticket has no evidence record and criterion 4 lacks evidence for two hub columns on tablet, the landing button above the fold in landscape and deep links restored after sign-in, which the UI review left untested."
       ],
       "scope": "Fix the arrival, invitation, account and app-shell findings of journey 1 and add one shared rule that the phone Back button closes the topmost open dialog, drawer or sheet anywhere in the app. Close the two open RYT-117 review notes. J1-04 (legal text and contact) stays with the owner launch gate in RYT-122; J1-10 (offline reload) moves to RYT-128. Non-goals: a service worker, legal copy approval, backend changes, autonomous release.",
       "acceptance": [
@@ -3995,7 +4005,8 @@
       "status": "in_progress",
       "dependsOn": [],
       "sources": [
-        "Player journey audit 2026-11-17, journey 2 (character creation and sheet), findings J2-01..J2-05, J2-07..J2-23, J2-25 and J2-27..J2-42."
+        "Player journey audit 2026-11-17, journey 2 (character creation and sheet), findings J2-01..J2-05, J2-07..J2-23, J2-25 and J2-27..J2-42.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, with an independent UI review PASS on the focused re-review of 2026-11-18; not Done because the ticket has no evidence record and criterion 6 lacks evidence of the wizards and sheet in a class theme, which the UI review did not cover."
       ],
       "scope": "Fix the creation wizards, quick and blank paths and play sheet findings of journey 2. J2-06 (level-up flow), J2-24 (casting) and J2-26 (dice from the sheet) are new interface pieces and move to RYT-127. Non-goals: a level-up flow, spell casting, a dice roller, backend changes, autonomous release.",
       "acceptance": [
@@ -4022,7 +4033,8 @@
       "status": "in_progress",
       "dependsOn": [],
       "sources": [
-        "Player journey audit 2026-11-17, journey 3 (inventory, shops and trades), findings J3-01..J3-37."
+        "Player journey audit 2026-11-17, journey 3 (inventory, shops and trades), findings J3-01..J3-37.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, with an independent UI review PASS on the focused re-review of 2026-11-18; not Done because the ticket has no evidence record and criterion 5 lacks the recorded item value decision for J3-34 that the scope requires in the evidence."
       ],
       "scope": "Fix the inventory, storefront, cart, orders, ledger and trade findings of journey 3. J3-34: unless the owner decides otherwise, item value stays DM-only and the Sell tab is worded as the shop offer; record that decision in the evidence. The Back part of J3-06 is delivered by the shared rule in RYT-123. Non-goals: Player containers, server-side split or merge, item picture upload for Players, backend changes, autonomous release.",
       "acceptance": [
@@ -4049,7 +4061,8 @@
       "status": "in_progress",
       "dependsOn": [],
       "sources": [
-        "Player journey audit 2026-11-17, journey 4 (combat, table display, map, rest and reference), findings J4-03, J4-04, J4-06..J4-13, J4-15..J4-20 and J4-22..J4-34."
+        "Player journey audit 2026-11-17, journey 4 (combat, table display, map, rest and reference), findings J4-03, J4-04, J4-06..J4-13, J4-15..J4-20 and J4-22..J4-34.",
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, with an independent UI review PASS on the focused re-review of 2026-11-18; not Done because the ticket has no evidence record and criterion 6 lacks evidence for the table screen at 1280px and for 150% text on combat and the table screen, which the UI review left untested."
       ],
       "scope": "Fix the Player combat, tabletop table screen, Player map, rest and glossary findings of journey 4. J4-01, J4-02 (table display mode), J4-05 (phone map layout) and J4-21 (dice) move to RYT-127; J4-14 (recap damage credit) moves to RYT-129; the Back part of J4-20 is the shared rule in RYT-123. Non-goals: a new table display mode, a phone map redesign, a dice roller, backend changes, autonomous release.",
       "acceptance": [
@@ -4151,11 +4164,12 @@
       "title": "Level up: party level set by the DM and the guided level-up sheet",
       "priority": "P1",
       "owner": "backend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-124"],
       "sources": [
         "Player journey audit 2026-11-17, finding J2-06: there is no level-up flow; level, hit points and features are edited by hand.",
-        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046.",
+        "Done 2026-11-18: both migrations applied to production right before the merge (recorded versions 20261118015333 and 20261118015418) with the read-only catalog and advisor checks passing in the production and PRE schemas; PR 15 merged to main (merge commit 0ee61dd) after its checks and browser tests passed, with two test-only fixes and no source change after the UI review PASS on 916776e (docs/evidence/RYT-130/validation.md)."
       ],
       "scope": "Backend first, then frontend. Backend: a campaign party level the DM raises from the DM centre through an authorised, idempotent RPC, and one transactional RPC that writes a character level up (level, hit point maximum, choices); no read-modify-write in the browser; migration tested in PRE first, then reviewed for production. Frontend: a DM centre control to raise the party level, and a guided step-by-step sheet for each Player: hit points with the hit-die average pre-filled or a typed roll; what the level grants by name; choices; one confirm; a \"what changed\" notice. Non-goals: multiclass level up, automatic rule effects of features, experience points, lowering a level, autonomous release.",
       "acceptance": [
@@ -4181,11 +4195,13 @@
       "title": "One table screen for combat: turn plate over the map and the \"now and next\" screen without a map",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "review",
       "dependsOn": ["RYT-126"],
       "sources": [
         "Player journey audit 2026-11-17, findings J4-01, J4-02 and J4-19: combat on a shared screen keeps DM chrome, scrolls and uses small type.",
-        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046."
+        "Owner decision 2026-11-17 on the RYT-127 options page, recorded in ADR 046.",
+        "Producer upkeep 2026-11-18: in progress on branch table-screen.",
+        "Review 2026-11-18 on branch table-screen at e84f3c7: npm run check and npm run test:e2e pass (935 passed, 77 skipped, 0 failed); independent code review changes addressed in e84f3c7; independent UI review CHANGES_REQUIRED on cd1842d, PASS on e84f3c7; three non-blocking leftovers moved to RYT-135; merge to main pending (docs/evidence/RYT-131/validation.md)."
       ],
       "scope": "One table screen for combat. With a map: the map full screen with a turn plate (now / next) over a corner that can be moved or shrunk. Without a map: a chrome-less \"now and next\" screen with the whole order in two or three columns, large type readable at 1-2 m, the acting row followed automatically. Any member of the campaign may open it; it reads the existing Table projection only. It does not depend on RYT-132 (map on the phone); either may be built first. Non-goals: dice on the table screen, new combat rules, backend changes, autonomous release.",
       "acceptance": [
@@ -4202,7 +4218,7 @@
         "npm run test:e2e (table screen with and without a map at 820px, 1280px and 1920px, opened by a DM and by a Player)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-131/validation.md"]
     },
     {
       "id": "RYT-132",
@@ -4292,26 +4308,32 @@
     },
     {
       "id": "RYT-135",
-      "title": "Level up polish from the UI review",
+      "title": "Level up and table screen polish from the UI reviews",
       "priority": "P2",
       "owner": "frontend",
       "status": "planned",
-      "dependsOn": ["RYT-130"],
+      "dependsOn": ["RYT-130", "RYT-131"],
       "sources": [
-        "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md)."
+        "Independent UI review PASS on RYT-130 at 916776e, non-blocking findings (docs/evidence/RYT-130/validation.md).",
+        "Open check from the RYT-130 production record (2026-11-18): keyboard focus on an option at 150% text on a phone may sit under the sticky footer.",
+        "Independent UI review PASS on RYT-131 at e84f3c7, three non-blocking findings on the table screen (docs/evidence/RYT-131/validation.md)."
       ],
-      "scope": "Fix the four non-blocking findings left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, and the duplicate Cancel names in the DM dialog. Non-goals: new level-up rules, backend or migration changes, multiclass, autonomous release.",
+      "scope": "Level up: fix the four non-blocking findings and one open check left by the RYT-130 UI review in the guided level-up sheet and the DM party-level dialog: the \"+2\" ability option label for an ability at 19, the scroll target after a failure at 820px, the typed-roll hint position at 150% text and 390px, the duplicate Cancel names in the DM dialog, and keyboard focus on a level-up option at 150% text on a phone that may sit under the sticky footer. Table screen: fix the three non-blocking findings left by the RYT-131 UI review: focus does not return to the Player's table screen link after leaving the screen, names classed as long always use the smaller type even when they would fit, and the load-error text says the table failed when the fight did. Non-goals: new level-up rules, new combat rules, backend or migration changes, multiclass, autonomous release.",
       "acceptance": [
         "For an ability at 19 the \"+2\" option no longer says \"Already at 20\"; its label and disabled reason state the real limit, and an ability at 20 still says it is at the cap.",
         "At 820px a failed confirm scrolls so that both the failure alert and the summary row are fully visible.",
         "At 390px with 150% text the typed-roll hint is visible together with the roll input without scrolling, or is tied to it by a description that is read with the input.",
         "The DM party-level dialog has no two controls with the same accessible name; each Cancel-like control says what it cancels or one of them is removed.",
-        "390px and 820px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+        "At 390px with 150% text, moving keyboard focus through the level-up options keeps the focused option fully visible above the sticky footer, asserted by a browser spec.",
+        "When a Player leaves the table screen, keyboard focus returns to the control that opened it, asserted by a browser spec.",
+        "On the order screen a long name uses the smaller type only when it would not fit at the normal size; a long name that fits keeps the normal size, and no name overlaps another row or exceeds two lines at 820px, 1280px and 1920px.",
+        "When loading the fight fails, the table screen error text says the fight could not be loaded, in English and Spanish.",
+        "Level up at 390px and 820px; table screen at 820px, 1280px and 1920px; Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
-        "unit tests for the changed option labels",
+        "unit tests for the changed option labels and the long-name sizing rule",
         "npm run check",
-        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px)",
+        "npm run test:e2e (level-up sheet and DM party-level dialog at 390px and 820px; table screen focus return, long names and load error at 820px, 1280px and 1920px)",
         "independent UI review PASS"
       ],
       "evidence": []

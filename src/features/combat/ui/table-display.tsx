@@ -25,6 +25,7 @@ import {
   type CombatState,
   type Combatant,
 } from '../domain/combat'
+import { useCampaign } from '@/features/campaigns'
 import { CombatSummary } from './combat-summary'
 import { DeathSaveTracker } from './death-saves'
 import { useDeathSaveAnnouncements, useResuming, useRunner } from './helpers'
@@ -34,6 +35,7 @@ import { OwnNews } from './own-news'
 import { OwnStrip } from './own-strip'
 import { NetworkState, Pips, RunnerError } from './parts'
 import { RecentEvents } from './recent-events'
+import { TableScreenLink } from './table-screen-link'
 import { CombatantToken } from './token'
 import { useOwnNews } from './use-own-news'
 
@@ -62,6 +64,7 @@ export function TableDisplay({
   updatedAt?: number
 }) {
   const { t } = useTranslation()
+  const isDm = useCampaign().role === 'dm'
   const encounter = state.encounter!
   const status = encounter.status
   const combatants = state.combatants
@@ -114,20 +117,31 @@ export function TableDisplay({
       <VisuallyHidden aria-live="polite">{announcement.text}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{saved}</VisuallyHidden>
       <VisuallyHidden aria-live="polite">{deathNews}</VisuallyHidden>
-      <header>
-        <Title order={1} className="combat-table-title">
-          {encounter.name}
-        </Title>
-        <Group gap="sm" mt={4}>
-          <Text fw={700} className="combat-table-round">
-            {status === 'active'
-              ? t('combat.round', { round: encounter.round })
-              : t(`combat.status.${status}`)}
-          </Text>
-          {status !== 'ended' && (
-            <NetworkState stale={stale} connected={connected} retry={retry} updatedAt={updatedAt} />
-          )}
-        </Group>
+      <header className="combat-table-head">
+        <div>
+          <Title order={1} className="combat-table-title">
+            {encounter.name}
+          </Title>
+          <Group gap="sm" mt={4}>
+            <Text fw={700} className="combat-table-round">
+              {status === 'active'
+                ? t('combat.round', { round: encounter.round })
+                : t(`combat.status.${status}`)}
+            </Text>
+            {status !== 'ended' && (
+              <NetworkState
+                stale={stale}
+                connected={connected}
+                retry={retry}
+                updatedAt={updatedAt}
+              />
+            )}
+          </Group>
+        </div>
+        {(status === 'active' || status === 'initiative') &&
+          // RYT-131: every member opens the same chrome-less table screen from here.
+          // (the DM has it in the bar above both views).
+          !isDm && <TableScreenLink campaignId={campaignId} newTab={false} />}
       </header>
       <RunnerError error={error} trigger={trigger} onClose={clear} />
 

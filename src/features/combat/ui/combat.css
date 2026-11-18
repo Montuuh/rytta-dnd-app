@@ -2427,3 +2427,15 @@ button.combat-image-picker:focus-visible {
 .combat-token.is-defeated .combat-token-emblem {
   filter: grayscale(1);
 }
+
+/* RYT-131: the way to the table screen sits beside the fight's name. */
+.combat-table-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+.combat-table-screen {
+  min-height: 44px;
+}

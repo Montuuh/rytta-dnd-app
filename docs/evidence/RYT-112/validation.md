@@ -1,8 +1,8 @@
 # Delivery RYT-112: launch presentation, brand art, landing, app shell and illustrated fallbacks
 
-Status: review (2026-11-17). Every acceptance criterion is met on the current tree and the
-independent UI review passed in round 3. Not Done: the work is not committed, reviewed as a pull
-request or released (launch checklist RYT-122).
+Status: done (2026-11-18). Every acceptance criterion is met and the independent UI review passed
+in round 3. The work was merged to `main` through PR 13 on 2026-11-18 and is live at
+https://rytta.pages.dev.
 
 ## Outcome
 
@@ -48,7 +48,8 @@ A real link-preview crawler, PWA install, the production build as deployed, real
 keyboards, screen readers, the RYT-113 error strings rendered in the UI (no fixture produces
 them), 150 % text size at 820px and real touch devices.
 
-## Remaining before Done
+## Release
 
-Commit and review the working tree, publish the frontend and smoke-test it in production
-(RYT-122).
+Merged to `main` through PR 13 on 2026-11-18 and published on Cloudflare Pages
+(https://rytta.pages.dev); the owner verified sign-in there. The remaining production smoke test
+is tracked in RYT-122.

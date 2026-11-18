@@ -28,6 +28,8 @@ export function tabletopServer(
     visibleCombatant?: (id: string) => boolean
     /** RYT-113: character id to the alias the live encounter shows it under. */
     aliases?: Record<string, string>
+    /** RYT-131: the DM has not opened the map module, so Players are refused the projection. */
+    closedToPlayers?: boolean
   } = {},
 ) {
   // The character's own Player keeps its token whole, off the table screen.
@@ -179,6 +181,7 @@ export function tabletopServer(
     }
     const dm = actor === dmId
     if (body.target_campaign && body.target_campaign !== campaignId) return { error: 'Forbidden' }
+    if (method === 'get_tabletop' && options.closedToPlayers && !dm) return { error: 'Forbidden' }
     if (method === 'get_tabletop')
       return view(actor, body.target_scene as string | null, Boolean(body.as_table))
     if (method === 'activate_tabletop_effect') {

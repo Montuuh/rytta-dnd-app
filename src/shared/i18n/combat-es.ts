@@ -299,6 +299,8 @@ export const combatEs = {
   'combat.view.label': 'Vista del encuentro',
   'combat.view.table': 'Orden',
   'combat.view.console': 'Consola del DM',
+  'combat.table.newTab': '(se abre en una pestaña nueva)',
+  'combat.table.screen': 'Pantalla de mesa',
   'combat.table.rolling': 'Tirad iniciativa',
   'combat.table.ready': '{{ready}} de {{total}} listos',
   'combat.initiative.yours': 'Tu iniciativa',

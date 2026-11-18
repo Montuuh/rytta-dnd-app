@@ -328,6 +328,7 @@ describe('combat rules', () => {
     expect(healthBand(base(1, { defeated: true, hp_band: 'unhurt' }))).toBe('down')
     expect(healthBand(base(1, { kind: 'lair' }))).toBeNull()
     expect(monogram('Goblin 3')).toBe('G3')
+    expect(monogram('Goblin 12')).toBe('G12')
     expect(monogram('  arin   vale  the bold ')).toBe('AV')
     expect(monogram('Ñandú')).toBe('Ñ')
     // The projection accepts both new fields.

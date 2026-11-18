@@ -149,7 +149,7 @@ export const diceEs = {
   'combat.initiative.rolledHidden':
     'Ya hay una tirada tuya en este combate. Si debe cambiar, el DM puede restablecerla.',
   'rest.rolledHidden':
-    'Hay una tirada de dados de golpe tuya que no puedes ver (la hizo el DM). Hasta que la descarte, no puedes gastar dados.',
+    'Hay una tirada de dados de golpe tuya que no puedes ver (la hizo el DM). Si descansas ahora será sin dados; pide al DM que la descarte antes si quieres gastarlos.',
   'rest.refusedAlready': 'Rytta ya tiene tu tirada de dados de golpe.',
   'rest.refusedInvalid':
     'El servidor no aceptó la tirada: revisa cuántos dados gastas (no más de los que te quedan). No se ha tirado nada.',

@@ -115,14 +115,25 @@ export function rerollExpression(
  * intent and gets a new one. An attempt ends with its success and when the server no longer marks
  * the slot as spent, so one pending attempt never touches another's.
  */
-export type ResetAttempt = { id: string; signature: string }
+export type ResetAttempt = { id: string; signature: string; expression: string | null }
 export function createAttemptBook() {
   const slots = new Map<string, ResetAttempt>()
   return {
-    forIntent(slot: string, signature: string, newId: () => string): ResetAttempt {
+    /**
+     * The attempt of a slot for an intent. The same signature is a retry; `reuse` also accepts a
+     * retry whose signature moved on because the first try did apply (a re-roll whose reply was
+     * lost shows its own roll as the one in force). The attempt keeps the expression it was first
+     * made with, so a retry never sends another payload.
+     */
+    forIntent(
+      slot: string,
+      signature: string,
+      newId: () => string,
+      options: { expression?: string | null; reuse?: (previous: ResetAttempt) => boolean } = {},
+    ): ResetAttempt {
       const found = slots.get(slot)
-      if (found && found.signature === signature) return found
-      const next = { id: newId(), signature }
+      if (found && (found.signature === signature || options.reuse?.(found))) return found
+      const next = { id: newId(), signature, expression: options.expression ?? null }
       slots.set(slot, next)
       return next
     },

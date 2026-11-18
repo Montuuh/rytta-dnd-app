@@ -200,6 +200,20 @@ describe('request ids of the DM resets', () => {
     // A later roll, then a new clear: another signature, another id.
     expect(book.forIntent(slot, 'fight-1|roll-b|clear', id).id).not.toBe(first.id)
   })
+  it('keeps the first attempt of a re-roll whose reply was lost, with its payload', () => {
+    const book = createAttemptBook()
+    const slot = resetSlot(arin, 'initiative')
+    const first = book.forIntent(slot, 'fight-1|roll-a|d20+2', id, { expression: 'd20+2' })
+    // The first try applied: the roll in force changed, and the retry carries its own signature.
+    const retry = book.forIntent(slot, 'fight-1|roll-b|d20+2', id, {
+      expression: 'd20+3',
+      reuse: (previous) => previous.expression !== null,
+    })
+    expect(retry).toBe(first)
+    expect(retry.expression).toBe('d20+2')
+    // Without the reuse rule the changed signature is a new intent.
+    expect(book.forIntent(slot, 'fight-1|roll-c|d20+2', id).id).not.toBe(first.id)
+  })
   it('ends an attempt on success without touching another slot', () => {
     const book = createAttemptBook()
     const a = resetSlot(arin, 'initiative')

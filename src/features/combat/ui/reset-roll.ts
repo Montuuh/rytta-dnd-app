@@ -65,11 +65,22 @@ export function useResetInitiative(
         slot,
         `${encounterId ?? ''}|${inForce?.id ?? 'unreadable'}|${expression ?? 'clear'}`,
         newRequestId,
+        {
+          expression,
+          // A re-roll whose reply was lost did apply: the roll now in force is this DM's own, and
+          // the retry asks again with the same id and payload, so the server answers with the
+          // first result instead of rolling a second time.
+          reuse: (previous) =>
+            previous.expression !== null &&
+            expression !== null &&
+            previous.signature.startsWith(`${encounterId ?? ''}|`) &&
+            inForce?.roller_id === state.user?.id,
+        },
       )
       const done = await run({
         kind: 'resetRoll',
         characterId,
-        expression,
+        expression: attempt.expression,
         requestId: attempt.id,
       })
       if (done) {

@@ -143,7 +143,7 @@ export const diceEn = {
   'combat.initiative.rolledHidden':
     'You already have a roll in this fight. If it has to change, the DM can reset it.',
   'rest.rolledHidden':
-    'There is a hit-dice roll of yours that you cannot see (the DM made it). Until they discard it, you cannot spend dice.',
+    'There is a hit-dice roll of yours that you cannot see (the DM made it). Resting now means no hit dice; ask the DM to discard it first to spend them.',
   'rest.refusedAlready': 'Rytta already has your hit-dice roll.',
   'rest.refusedInvalid':
     'The server did not accept the roll: check how many dice you spend (no more than you have left). Nothing was rolled.',
@@ -163,5 +163,5 @@ export const diceEn = {
   'rest.dm.resetDone': 'Roll discarded: {{name}} can roll again.',
   'rest.dm.resetDoneVote': 'Roll discarded: the vote of {{name}} was removed and they vote again.',
   'combat.initiative.bonusRange':
-    'Your initiative bonus ({{bonus}}) is outside what Rytta can roll: -20 to +30. Fix it on your sheet.',
+    'Your initiative bonus ({{bonus}}) is outside what Rytta can roll: −20 to +30. Fix it on your sheet.',
 } as const

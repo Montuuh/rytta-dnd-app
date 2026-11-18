@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { rollContextQuery, rollContextScope } from '../api'
@@ -36,10 +36,20 @@ export function useRollContext(
   }, [enabled, campaignId, userId, cache])
   const wrongFight =
     expectEncounter !== undefined && query.isSuccess && query.data.encounter_id !== expectEncounter
+  // A state that names another fight is read again once per fight shown; if it still names
+  // another one it stays unusable (never an endless loop of requests), reads as failed so the
+  // screen says so and rolling stays possible (the server decides), and the poll and the signals
+  // keep looking.
   const refetch = query.refetch
+  const [rechecked, setRechecked] = useState<string | null>(null)
   useEffect(() => {
-    if (wrongFight && !query.isFetching) void refetch()
-  }, [wrongFight, expectEncounter, query.isFetching, refetch])
+    if (!wrongFight || query.isFetching || rechecked === (expectEncounter ?? null)) return
+    // Marks this fight as read again before the request, so it is asked for once.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setRechecked(expectEncounter ?? null)
+    void refetch()
+  }, [wrongFight, expectEncounter, query.isFetching, refetch, rechecked])
+  const waitingForRecheck = wrongFight && rechecked !== (expectEncounter ?? null)
   const usable = enabled && !wrongFight ? query.data : undefined
   const spent = useCallback(
     (characterId: string | null, kind: OneRollKind) => isSpent(usable, characterId, kind, held),
@@ -53,7 +63,9 @@ export function useRollContext(
   const status: 'loading' | 'ready' | 'failed' = !enabled
     ? 'ready'
     : wrongFight
-      ? 'loading'
+      ? waitingForRecheck || query.isFetching
+        ? 'loading'
+        : 'failed'
       : query.isSuccess
         ? 'ready'
         : query.isError

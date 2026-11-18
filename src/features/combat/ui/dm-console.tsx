@@ -13,6 +13,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { Drawer, Modal } from '@/shared/ui/overlays'
 import { useMediaQuery, useReducedMotion } from '@mantine/hooks'
 import {
@@ -93,8 +94,13 @@ export function DmConsole({
     encounter.status,
     diceMode !== 'physical',
   )
-  const resetRoll = async (combatant: Combatant, mode: 'clear' | 'reroll') => {
-    if (await initiativeRoll.reset(combatant, mode))
+  // The row moves in the order when its initiative changes, which can drop the focus the menu gave
+  // back: the menu's button takes it once more (and keeps it) when the action is done.
+  const resetRoll = async (combatant: Combatant, mode: 'clear' | 'reroll', returnId: string) => {
+    const from = document.activeElement
+    const done = await initiativeRoll.reset(combatant, mode)
+    focusWhenReady(`[data-return-focus="${returnId}"]`, { from, preventScroll: true })
+    if (done)
       setAnnouncement(
         t(mode === 'clear' ? 'combat.reset.cleared' : 'combat.reset.rerolled', {
           name: combatant.name,
@@ -248,10 +254,14 @@ export function DmConsole({
       pending={pending}
       onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
       onClearRoll={
-        initiativeRoll.canReset(selected) ? () => void resetRoll(selected, 'clear') : undefined
+        initiativeRoll.canReset(selected)
+          ? () => void resetRoll(selected, 'clear', `detail-menu-${selected.id}`)
+          : undefined
       }
       onRerollInitiative={
-        initiativeRoll.canReset(selected) ? () => void resetRoll(selected, 'reroll') : undefined
+        initiativeRoll.canReset(selected)
+          ? () => void resetRoll(selected, 'reroll', `detail-menu-${selected.id}`)
+          : undefined
       }
       onRemove={
         status !== 'ended'
@@ -319,12 +329,12 @@ export function DmConsole({
                   }
                   onClearRoll={
                     initiativeRoll.canReset(combatant)
-                      ? () => void resetRoll(combatant, 'clear')
+                      ? () => void resetRoll(combatant, 'clear', `row-menu-${combatant.id}`)
                       : undefined
                   }
                   onRerollInitiative={
                     initiativeRoll.canReset(combatant)
-                      ? () => void resetRoll(combatant, 'reroll')
+                      ? () => void resetRoll(combatant, 'reroll', `row-menu-${combatant.id}`)
                       : undefined
                   }
                   onRemove={() =>

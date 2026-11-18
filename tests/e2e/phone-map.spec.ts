@@ -1021,7 +1021,7 @@ test('RYT-135 the board announces its keys and the map pans by keyboard outside 
   seedScene(server)
   await open(page)
   const board = page.getByRole('application', { name: 'Mapa de Puente de Vado' })
-  await expect(board).toHaveAttribute('aria-keyshortcuts', /Plus Minus 0 ArrowUp/)
+  await expect(board).toHaveAttribute('aria-keyshortcuts', /Plus - 0 ArrowUp/)
   await expect(board).toHaveAccessibleDescription(
     'Las flechas mueven el mapa. Más y menos acercan y alejan; 0 encaja todo el mapa.',
   )
@@ -1229,3 +1229,27 @@ for (const theme of ['default', 'parchment', 'wizard'] as const)
       .click()
     await audit(page)
   })
+
+test('RYT-135 the arrows cannot pan the map out of the board', async ({ page }, info) => {
+  test.skip(!onPhoneOrTablet(info), 'Checked at 390px and 820px.')
+  test.setTimeout(90_000)
+  const { server } = await prepare(page)
+  seedScene(server)
+  await open(page)
+  const board = page.getByRole('application', { name: 'Mapa de Puente de Vado' })
+  await board.focus()
+  for (const key of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'])
+    for (let press = 0; press < 40; press += 1) await page.keyboard.press(key)
+  // Whichever way it was pushed, part of the map is still inside the board.
+  const visible = await page.evaluate(() => {
+    const frame = document.querySelector('.tt-viewport')!.getBoundingClientRect()
+    const world = document.querySelector('.tt-world')!.getBoundingClientRect()
+    return {
+      across: Math.min(frame.right, world.right) - Math.max(frame.left, world.left),
+      down: Math.min(frame.bottom, world.bottom) - Math.max(frame.top, world.top),
+      frame: { width: frame.width, height: frame.height },
+    }
+  })
+  expect(visible.across).toBeGreaterThan(visible.frame.width / 4 - 2)
+  expect(visible.down).toBeGreaterThan(visible.frame.height / 4 - 2)
+})

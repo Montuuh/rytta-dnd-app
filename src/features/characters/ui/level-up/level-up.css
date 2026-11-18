@@ -496,10 +496,12 @@
   text-align: center;
 }
 
+/* Above the inputs' own sections (the search icon) that would otherwise paint over it. */
 .levelup-footer {
   margin-top: auto;
   position: sticky;
   bottom: 0;
+  z-index: 3;
   margin-inline: calc(var(--mb-padding, 16px) * -1);
   padding: 12px var(--mb-padding, 16px);
   border-top: 1px solid var(--app-border);

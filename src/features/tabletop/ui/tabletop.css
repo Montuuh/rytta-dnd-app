@@ -2976,6 +2976,9 @@ html.tt-table-mode {
   line-clamp: 2;
   overflow: hidden;
 }
+.tt-order-tail {
+  white-space: nowrap;
+}
 .tt-order-name[data-long] {
   font-size: 0.7em;
 }

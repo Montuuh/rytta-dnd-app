@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, EyeOff, Skull } from 'lucide-react'
 import { CombatantToken, type Combatant } from '@/features/combat'
 import { nameOverflows, orderLayout } from '../domain/table-order'
+import { splitTrailingNumber } from '../domain/token-name'
 
 type Props = {
   name: string
@@ -16,6 +17,17 @@ type Props = {
   ready: { ready: number; total: number }
   stale: boolean
   width: number
+}
+
+/** A trailing number stays with its word (a name that wraps never leaves "Goblin" and "3" apart). */
+function NameText({ name }: { name: string }) {
+  const { head, tail } = splitTrailingNumber(name)
+  return (
+    <span>
+      {head}
+      {tail && <span className="tt-order-tail">{tail}</span>}
+    </span>
+  )
 }
 
 /**
@@ -54,18 +66,22 @@ export function TableOrder({
     const root = list.current
     if (!root) return
     const measure = () => {
-      for (const el of root.querySelectorAll<HTMLElement>('.tt-order-name')) {
+      // Three passes, so the page lays out once: mark every name, read every name, then write.
+      const all = [...root.querySelectorAll<HTMLElement>('.tt-order-name')]
+      for (const el of all) {
         el.removeAttribute('data-long')
         el.setAttribute('data-measuring', '')
-        const fit = {
-          clientWidth: el.clientWidth,
-          scrollWidth: el.scrollWidth,
-          height: el.getBoundingClientRect().height,
-          lineHeight: parseFloat(getComputedStyle(el).lineHeight),
-        }
-        if (nameOverflows(fit)) el.setAttribute('data-long', '')
-        el.removeAttribute('data-measuring')
       }
+      const fits = all.map((el) => ({
+        clientWidth: el.clientWidth,
+        scrollWidth: el.scrollWidth,
+        height: el.getBoundingClientRect().height,
+        lineHeight: parseFloat(getComputedStyle(el).lineHeight),
+      }))
+      all.forEach((el, index) => {
+        el.removeAttribute('data-measuring')
+        if (nameOverflows(fits[index]!)) el.setAttribute('data-long', '')
+      })
     }
     // Row type is sized from the list's height, which settles over a few frames as the status bar
     // and the keys arrive: measure again once it has.
@@ -80,8 +96,17 @@ export function TableOrder({
     settle()
     const observer = new ResizeObserver(settle)
     observer.observe(root)
+    // Row type follows container-query units that can resolve a frame late: a name whose box changes
+    // for any reason is measured again (a pass that changes nothing settles at once).
+    for (const el of root.querySelectorAll('.tt-order-name')) observer.observe(el)
+    // A text size, a theme or a font that arrives changes the names without resizing the list.
+    const page = new MutationObserver(settle)
+    page.observe(document.documentElement, { attributes: true })
+    document.fonts?.addEventListener('loadingdone', settle)
     return () => {
       observer.disconnect()
+      page.disconnect()
+      document.fonts?.removeEventListener('loadingdone', settle)
       cancelAnimationFrame(frame)
     }
   }, [names, columns, rows])
@@ -153,7 +178,7 @@ export function TableOrder({
               </span>
               <CombatantToken combatant={c} showActive={false} />
               <span className="tt-order-name" title={c.name}>
-                {c.name}
+                <NameText name={c.name} />
               </span>
               {down && (
                 <span className="tt-order-state">

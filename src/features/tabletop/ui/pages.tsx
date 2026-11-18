@@ -261,8 +261,8 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
       aria-describedby={keysId}
       aria-keyshortcuts={
         measuring
-          ? 'Plus Minus 0 ArrowUp ArrowDown ArrowLeft ArrowRight Enter Escape'
-          : 'Plus Minus 0 ArrowUp ArrowDown ArrowLeft ArrowRight'
+          ? 'Plus - 0 ArrowUp ArrowDown ArrowLeft ArrowRight Enter Escape'
+          : 'Plus - 0 ArrowUp ArrowDown ArrowLeft ArrowRight'
       }
       onFocus={(e) => {
         // The keyboard cursor is for the keyboard: a tap that focuses the board does not draw it.
@@ -313,7 +313,7 @@ function PlayerTabletop({ campaignId }: { campaignId: string }) {
       }}
       aria-label={t('tabletop.player.board', { name: scene.name })}
     >
-      <span id={keysId} className="visually-hidden">
+      <span id={keysId} className="visually-hidden" aria-hidden="true">
         {t(measuring ? 'tabletop.player.boardKeysMeasure' : 'tabletop.player.boardKeys')}
       </span>
       <div

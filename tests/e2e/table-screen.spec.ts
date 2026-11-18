@@ -1,7 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { beaId, campaignId, characterId, identityFixture } from './fixtures/identity.ts'
-import { expectTouchTargets } from './fixtures/audit.ts'
+import { expectTouchTargets, focusAcrossFrames } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
 
@@ -604,6 +604,15 @@ for (const size of sizes)
       await expect(page.getByText('Guardiana Ancestral de la Cripta')).toBeVisible()
       await expectRowsApart(page)
       await audit(page)
+      // A trailing number never wraps away from its word ("Goblin" over "3").
+      expect(
+        await page.evaluate(
+          () =>
+            [...document.querySelectorAll('.tt-order-tail')].filter(
+              (tail) => tail.getClientRects().length > 1,
+            ).length,
+        ),
+      ).toBe(0)
       // RYT-135: only a name that does not fit at the normal size takes the smaller type.
       await expect
         .poll(async () => {
@@ -808,8 +817,8 @@ test('RYT-135 leaving the table screen puts keyboard focus back on the Player li
     }
     await expect(page.locator('.tt-order')).toHaveCount(0)
     await expect(link).toBeFocused()
-    // It stays there: focus is not taken again later.
-    await page.waitForTimeout(1_000)
+    // It stays there: focus is not taken again, frame after frame.
+    expect(new Set(await focusAcrossFrames(page, 40)).size).toBe(1)
     await expect(link).toBeFocused()
   }
   // A Player who moves on before the return finishes keeps the control they chose.
@@ -817,8 +826,13 @@ test('RYT-135 leaving the table screen puts keyboard focus back on the Player li
   await page.keyboard.press('Enter')
   await expect(page.locator('.tt-order')).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Escape')
+  // The screen is gone and the link is back before the person moves on with Tab.
+  await expect(page.locator('.tt-order')).toHaveCount(0)
+  await expect(link).toBeVisible()
   await page.keyboard.press('Tab')
-  await page.waitForTimeout(1_000)
+  const after = await focusAcrossFrames(page, 40)
+  expect(after.some((label) => label.includes('Pantalla de mesa'))).toBe(false)
+  expect(new Set(after).size).toBe(1)
   await expect(link).not.toBeFocused()
 })
 

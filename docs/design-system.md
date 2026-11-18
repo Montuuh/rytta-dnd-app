@@ -504,8 +504,8 @@ something (a rest vote, leaving the Player view) stay, right under the strip, an
 moves to the top. The page chrome is removed by `html.tt-pm-mode`, a class the map sets itself.
 Decision (RYT-135): the round keys stay on the right edge, with no setting to move them. The measure
 readout sits at the opposite corner, so the two never share a side, and every key is a secondary way of
-doing what a finger on the map already does (pan, pinch, tap); the first key's job (centre, fit) is also
-reachable by the keyboard (`0` fits the map). A per-device switch would add a setting for three
+doing what a finger on the map already does (pan, pinch, tap). Only the "fit the map" job of the first key
+has a keyboard equivalent (`0`); "centre on my token" has none yet, and the arrows pan from wherever the view is. A per-device switch would add a setting for three
 secondary keys; revisit it if left-handed Players ask for it.
 
 The first round key always has a way to the whole map: it fits the map, and once fitted it centres on

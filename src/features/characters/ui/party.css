@@ -254,7 +254,9 @@
 .party-concentration svg {
   flex: none;
   color: var(--app-accent);
-  align-self: center;
+  /* On the first line of a wrapped name, not beside its middle. */
+  align-self: flex-start;
+  margin-top: 0.2em;
 }
 .party-concentration .user-copy {
   min-width: 0;

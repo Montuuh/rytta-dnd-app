@@ -75,6 +75,15 @@
 -- notice names every missing PRE object. The DDL is idempotent (add column if not exists, drop
 -- function if exists, create or replace).
 --
+-- Source encoding. The character classes are regular-expression escapes (a backslash, u and four
+-- hex digits per code point), never literal invisible or bidi characters, so the file is printable
+-- ASCII and reviewable. The tool layer that delivers SQL to the hosted database decodes such
+-- escapes for non-control code points before the SQL arrives (seen on the staging apply), which
+-- would store sources that differ from this file. So the file writes the backslash of each escape
+-- as the placeholder @u, which occurs nowhere else in the DDL, and the DO block restores it with
+-- replace(ddl, '@u', chr(92) || 'u') before executing the DDL on production and before the PRE
+-- remap: both environments store the same escapes in the function body and the column check.
+--
 -- Rollout: apply this migration, check that the old thirteen-argument call still answers, then
 -- publish the frontend that sends change_concentration / new_concentration. Rolling back the
 -- frontend needs nothing; the column and arguments are additive for clients.
@@ -84,8 +93,8 @@ declare ddl text := $ddl$
 alter table public.character_vitals add column if not exists concentration text
   constraint character_vitals_concentration_check check (concentration is null or (
     char_length(concentration) between 1 and 100
-    and concentration !~ '[\u0001-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]'
-    and concentration = regexp_replace(concentration, '^[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+|[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+$', '', 'g')));
+    and concentration !~ '[@u0001-@u001f@u007f-@u009f@u200b-@u200f@u202a-@u202e@u2060-@u2064@u2066-@u2069@ufeff]'
+    and concentration = regexp_replace(concentration, '^[@u0020@u00a0@u1680@u2000-@u200a@u202f@u205f@u3000]+|[@u0020@u00a0@u1680@u2000-@u200a@u202f@u205f@u3000]+$', '', 'g')));
 comment on column public.character_vitals.concentration is
   'RYT-134: the spell the character concentrates on; null when not concentrating. RPC writes only.';
 
@@ -115,9 +124,9 @@ begin
   if changing and octet_length(new_concentration) > 1024 then
     raise exception 'Invalid concentration' using errcode = '22023'; end if;
   -- Unicode spaces trimmed at both ends; the same expressions as the column check.
-  cleaned := regexp_replace(new_concentration, '^[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+|[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+$', '', 'g');
+  cleaned := regexp_replace(new_concentration, '^[@u0020@u00a0@u1680@u2000-@u200a@u202f@u205f@u3000]+|[@u0020@u00a0@u1680@u2000-@u200a@u202f@u205f@u3000]+$', '', 'g');
   if changing and cleaned is not null and (char_length(cleaned) not between 1 and 100
-      or cleaned ~ '[\u0001-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]') then
+      or cleaned ~ '[@u0001-@u001f@u007f-@u009f@u200b-@u200f@u202a-@u202e@u2060-@u2064@u2066-@u2069@ufeff]') then
     raise exception 'Invalid concentration' using errcode = '22023'; end if;
   if changing then payload := payload || jsonb_build_array('concentration', new_concentration); end if;
   select * into prior from private.sheet_requests r where r.request_id = set_character_vitals.request_id;
@@ -398,6 +407,9 @@ $fn$;
 $ddl$;
   missing text[];
 begin
+  -- The character classes are written with @u for backslash-u (see the header); the backslash
+  -- is restored here, once, before the DDL runs on production and before the PRE remap.
+  ddl := replace(ddl, '@u', chr(92) || 'u');
   execute ddl;
   select coalesce(array_agg(x.name order by x.ord), '{}') into missing
     from (values

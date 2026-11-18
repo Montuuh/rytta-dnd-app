@@ -481,9 +481,34 @@ describe('the concentration marker', () => {
       const refusedClass = String.raw`'[\u0001-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]'`
       const spaceClass = String.raw`[\u0020\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]`
       const trim = `'^${spaceClass}+|${spaceClass}+$'`
+      const bs = String.fromCharCode(92)
+      // Every refused and trimmed code point except U+0020, which SQL uses everywhere.
+      const literal = new Set<number>()
+      for (const [from, to] of [
+        [0x01, 0x1f],
+        [0x7f, 0x9f],
+        [0xa0, 0xa0],
+        [0x1680, 0x1680],
+        [0x2000, 0x200f],
+        [0x202a, 0x202f],
+        [0x205f, 0x2064],
+        [0x2066, 0x2069],
+        [0x3000, 0x3000],
+        [0xfeff, 0xfeff],
+      ])
+        for (let cp = from; cp <= to; cp++) literal.add(cp)
       for (const text of [check!.def, src]) {
         expect(text).toContain(refusedClass)
         expect(text).toContain(trim)
+        expect(text).toContain(bs + 'u200b-' + bs + 'u200f')
+        expect(text).toContain(bs + 'u00a0')
+        expect(text).not.toContain('@u')
+        // Tabs and line ends of the source layout (CRLF in a Windows checkout) are not in the
+        // classes; nothing else may be.
+        const found = [...text]
+          .map((ch) => ch.codePointAt(0)!)
+          .filter((cp) => literal.has(cp) && cp !== 0x09 && cp !== 0x0a && cp !== 0x0d)
+        expect(found).toEqual([])
       }
     },
   )
@@ -799,18 +824,36 @@ describe('grants and the PRE mirror', () => {
     }
   }, 120000)
 
-  it('keeps the migration file printable ASCII, with the code points as escapes', () => {
+  it('keeps the migration file printable ASCII, with a placeholder for every escape', () => {
     // Invisible or bidi characters in the SQL source could be changed by an editor or a copy and
-    // cannot be reviewed; the regular expressions spell every code point as a \uXXXX escape.
+    // cannot be reviewed, and the transport to the hosted database decodes backslash-u escapes, so
+    // the file writes each escape with the @u placeholder that the DO block turns into a backslash.
     // A Windows checkout may turn LF into CRLF (core.autocrlf); git stores and ships LF.
+    const bs = String.fromCharCode(92)
     const text = readFileSync(`supabase/migrations/${migration}`, 'utf8').replaceAll('\r\n', '\n')
     const outside = [...text]
       .map((ch, index) => ({ index, cp: ch.codePointAt(0)! }))
       .filter(({ cp }) => cp !== 0x0a && (cp < 0x20 || cp > 0x7e))
       .map(({ index, cp }) => `U+${cp.toString(16).padStart(4, '0')} at ${index}`)
     expect(outside).toEqual([])
-    expect(text).toContain(String.raw`\u200b-\u200f`)
-    expect(text).toContain("'^[" + String.fromCharCode(92) + 'u0020')
+    expect(text.includes(bs + 'u')).toBe(false)
+    expect(text.includes(bs)).toBe(false)
+    // Inside the DDL text every @ is the placeholder of one escape (four hex digits), so the
+    // server-side replace touches nothing else: 2 x 13 refused and 2 x 16 trimmed.
+    const open = text.indexOf('$ddl$')
+    const close = text.lastIndexOf('$ddl$')
+    const ddl = text.slice(open + 5, close)
+    expect(ddl.match(/@/g)).toHaveLength(58)
+    expect(ddl.match(/@u[0-9a-f]{4}/g)).toHaveLength(58)
+    expect(ddl).toContain('@u200b-@u200f')
+    expect(ddl).toContain("'^[@u0020@u00a0")
+    // The replace runs once, before the production execute and before the PRE remap.
+    const body = text.slice(close)
+    const replace = body.indexOf("ddl := replace(ddl, '@u', chr(92) || 'u');")
+    expect(replace).toBeGreaterThan(0)
+    expect(body.indexOf("ddl := replace(ddl, '@u'", replace + 1)).toBe(-1)
+    expect(body.indexOf('execute ddl;')).toBeGreaterThan(replace)
+    expect(body.indexOf('execute pre_admin.remap(ddl);')).toBeGreaterThan(replace)
   })
 
   it('keeps PRE writes in PRE', async () => {

@@ -174,6 +174,31 @@ and only then publish the frontend. The frontend already in production keeps wor
 migration: it calls `set_character_vitals` with the thirteen original arguments, which leaves the
 marker untouched. Rolling the frontend back after the migration is safe for the same reason.
 
+## Backups
+
+The free database plan keeps no backups (checked in the project console on 2026-11-18), so the
+repository takes its own. The `Backup` workflow (`.github/workflows/backup.yml`) runs once a day
+and on manual dispatch: it dumps roles, schema and data of production with the Supabase CLI and
+keeps them for 14 days as a workflow artifact of this private repository, with a manifest of
+SHA-256 sums. It does nothing until the repository secret `BACKUP_DB_URL` exists.
+
+Owner steps, once:
+
+1. In the Supabase console of the production project, open Connect and copy the session pooler
+   connection string (it works over IPv4, which the workflow runner needs); put the database
+   password in it. Reset the password there first if it is not known.
+2. In the repository, Settings, Secrets and variables, Actions: add the secret `BACKUP_DB_URL`
+   with that string. It is a secret: never commit it, paste it in an issue or type it in a chat.
+3. Run the workflow once by hand and check that the artifact holds `roles.sql`, `schema.sql`,
+   `data.sql` and `MANIFEST.txt`.
+
+The dump contains personal data (account e-mail addresses and campaign content). The artifact is
+only as private as the repository; download it only when needed and delete local copies.
+
+Not covered: files in Storage (portraits, maps, item pictures) are not in the dump. Restore is
+not rehearsed yet: the plan is to load a dump into the staging project and record the date, the
+steps and how long it took (RYT-116). Until that rehearsal exists, treat the backup as unproven.
+
 ## Vercel fallback
 
 Vite preset, npm ci, npm run build, output dist, base /. Same hash routes work without

@@ -1,0 +1,61 @@
+name: Backup
+# The free database plan keeps no backups, so this takes a logical dump of production once a day
+# and keeps it as a workflow artifact of this private repository. It does nothing until the
+# repository secret BACKUP_DB_URL exists (docs/deployment.md, "Backups"). The dump holds personal
+# data: keep the repository private and the artifact retention short.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backup
+  cancel-in-progress: false
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+    steps:
+      - name: Skip when the secret is not set
+        id: gate
+        run: |
+          if [ -z "$BACKUP_DB_URL" ]; then
+            echo "BACKUP_DB_URL is not set; nothing to back up."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: supabase/setup-cli@v1
+        if: steps.gate.outputs.run == 'true'
+        with:
+          version: latest
+      - name: Dump roles, schema and data
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          mkdir -p backup
+          supabase db dump --db-url "$BACKUP_DB_URL" --role-only -f backup/roles.sql
+          supabase db dump --db-url "$BACKUP_DB_URL" -f backup/schema.sql
+          supabase db dump --db-url "$BACKUP_DB_URL" --data-only --use-copy \
+            --schema public,private,pre,pre_private,auth,storage -f backup/data.sql
+          ls -l backup
+          test -s backup/schema.sql
+          test -s backup/data.sql
+      - name: Record what was saved
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          {
+            echo "taken_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "commit=$GITHUB_SHA"
+            sha256sum backup/*.sql
+          } > backup/MANIFEST.txt
+          cat backup/MANIFEST.txt
+      - uses: actions/upload-artifact@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          name: database-backup-${{ github.run_id }}
+          path: backup/
+          retention-days: 14
+          if-no-files-found: error

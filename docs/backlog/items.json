@@ -3786,7 +3786,8 @@
         "Security audit findings H-2 (PRE schema reachable by every production session with a stale copy of all tenants' data), M-4 (no CSP or anti-framing headers on the shared static origin) and L-8 (localhost callbacks allowlisted on production); environment audit section 2 and operations gaps 3 and 7.",
         "Hosting update 2026-11-18: ADR 047 (updated 2026-11-18) moved the site to the Cloudflare Pages project rytta at https://rytta.pages.dev; the repository is private and the old GitHub Pages site and the first Worker are removed; the staging project bootstrap is recorded in docs/evidence/RYT-116/staging-bootstrap.md. Not closed: no criterion is fully evidenced yet; criterion 5 still needs a recorded header check and CSP-clean browser run on the live site.",
         "Observation 2026-11-18 from RYT-134: hosted migrations are delivered through a path that decodes backslash-u escapes in transit, so migrations must not contain them; build such characters server-side instead. The staging apply caught it before production (docs/evidence/RYT-134/validation.md).",
-        "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done."
+        "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done.",
+        "Progress 2026-11-18: the daily backup workflow ran on main for the first time (run 44362679087: roles, schema and data as a 14-day artifact, checksums verified, row counts equal to production at the time), recorded in docs/evidence/RYT-116/staging-bootstrap.md. Criterion 6 stays open: the restore rehearsal into staging has not been done and needs a staging database connection secret, which the owner has to provide. Staging still has no sign-in (its own OAuth client) and no frontend, and PRE still lives in the production project."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -4406,11 +4407,12 @@
       "title": "One roll per fight and per rest enforced by the server",
       "priority": "P2",
       "owner": "backend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-133"],
       "sources": [
         "RYT-133 decision 2026-11-18: in app mode a Player rolls initiative once per fight and hit dice once per rest, but the guard is presentation only, derived from the Player's roll log (newest 50 rolls) matched by time to the fight's opening event (newest 60 events) or the rest's creation; outside those windows the roll button is offered again (docs/evidence/RYT-133/validation.md).",
-        "RYT-133 known limit: the DM console can overwrite a Player's initiative but cannot clear or re-roll it."
+        "RYT-133 known limit: the DM console can overwrite a Player's initiative but cannot clear or re-roll it.",
+        "Release 2026-11-18: PR 22 merged to main as 00d6167 after its checks and four browser test shards passed; live at https://rytta.pages.dev with build 00d616789cdd. Migration 20261204120000_one_roll_per_fight_and_rest.sql applied first to staging (version 20261118144355) and then once to the production project, which also holds PRE, so public and PRE received the same DDL in the same apply (version 20261118204603, stored statement 61589 bytes, md5 665b1e7cfb28f112535adb8378ad9146, equal to the committed file); pre-checks, catalog post-checks and the security advisor recorded. Local: 1105 unit and database tests; dice, rest and combat browser specs 275 passed at mobile, tablet and desktop. Security review safe to apply; code review ready after three rounds; independent UI review PASS on source snapshot 0c8584ebb861d659177b522655eb672065f938de041fe0b88b71e6679196dd87 after three re-reviews. Done: every acceptance criterion has evidence (docs/evidence/RYT-137/validation.md). Residuals ticketed: RYT-142 (client-declared initiative modifier, hidden-combatant re-roll visibility), RYT-140 (combat error toast), RYT-141 (menu focus after Escape). Not verified: real realtime (fake client only), concurrency with parallel connections on hosted PostgreSQL, real screen readers, WebKit, owner smoke test with real sessions."
       ],
       "scope": "Backend first, then the frontend changes it needs. Link a server roll to its encounter or rest, or have log_roll refuse a second app roll of the same kind for the same character in the same fight or rest, so the one-roll rule no longer depends on client-side windows. Let the DM clear or re-roll a Player's initiative from the DM console through an authorised, idempotent RPC. Replace the client-side guard with the server's answer and keep a refused roll explained, never invented. Migration tested in PRE first, then reviewed and applied to production within the delivery. Non-goals: physical-mode rolls (recorded by hand), limits on other roll kinds, new rules, the 3D dice engine (RYT-138), autonomous release.",
       "acceptance": [
@@ -4428,7 +4430,7 @@
         "PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-137/validation.md"]
     },
     {
       "id": "RYT-138",
@@ -4484,6 +4486,104 @@
         "npm run test:e2e (cast with concentration during a fight, ending it from the sheet and from the DM console, at 390px and 820px)",
         "PRE then production migration verification",
         "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-140",
+      "title": "Combat error toast readable over the list",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Observed 2026-11-18 during the RYT-137 delivery (docs/evidence/RYT-137/validation.md, known out of scope): the combat error toast (.combat-toast, src/features/combat/ui/combat.css line 483) is nearly transparent; its red background is about 14% opaque, so at 390px the text overlaps the combat list and is hard to read."
+      ],
+      "scope": "Give the fixed combat toast an opaque, theme-aware surface so its message reads over any content below it, keeping the danger tone, the existing pause on hover and focus, the close target and the safe-area offset. Check every theme. Non-goals: other notification systems, toast timing or wording, backend changes, autonomous release.",
+      "acceptance": [
+        "The combat error toast has an opaque background in every theme; the list behind it does not show through its text at 390px or 820px.",
+        "Text and close control meet WCAG AA contrast against the toast background in Hearth, Parchment and a class theme.",
+        "The close target stays at least 44px and the toast still pauses on hover and focus.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (a refused combat action showing the toast over the list at 390px and 820px)",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-141",
+      "title": "Menus: Enter after Escape moves focus into the reopened menu",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Observed 2026-11-18 during the RYT-137 delivery (docs/evidence/RYT-137/validation.md, known out of scope): after Escape closes a menu, pressing Enter on the menu button sometimes reopens it without moving focus into it; on the DM row menu 12 of 23 keyboard runs lost focus to the page. Behaviour of the menu library, seen before RYT-137; the focus specs that reopen the menu wait for the items before choosing one."
+      ],
+      "scope": "Investigate first: reproduce on the DM row menu and the other menus built on the same library menu, find whether the cause is the library, its transition or app code, and either fix it (focus lands on the first item every time the menu is reopened with Enter or Space) or, if the fix belongs upstream, document the cause, the affected menus and the workaround in the evidence. Non-goals: replacing the menu library, redesigning menus, backend changes, autonomous release.",
+      "acceptance": [
+        "The cause is recorded with a reproduction (menus affected, steps, frequency).",
+        "Either reopening a menu with Enter or Space after Escape puts focus on its first item in every run of a repeated browser test, or the decision not to fix it here is recorded with the upstream reference and the workaround.",
+        "Escape still returns focus to the menu button and the existing focus specs stay green.",
+        "If the interface changes: 390px and 820px, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e (repeated Escape then Enter on the DM row menu at 390px and 820px)",
+        "independent UI review PASS when the interface changes"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-142",
+      "title": "Initiative modifier derived by the server, and hidden re-rolls kept hidden",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": ["RYT-137"],
+      "sources": [
+        "Security review residuals on RYT-137, 2026-11-18 (docs/evidence/RYT-137/validation.md): in app mode the server rolls the d20 but the initiative modifier is declared by the client, so a Player calling the RPC by hand can declare d20+30; and a DM re-roll sent straight to reset_initiative_roll for a hidden combatant is stored with the campaign roll visibility instead of roller-and-DM."
+      ],
+      "scope": "Backend first, then the frontend changes it needs. For app-mode initiative rolls by a Player, derive the modifier on the server from the character sheet (or cap the declared one to what the sheet allows) so the stored total cannot exceed what the sheet justifies; a DM roll for a creature without a sheet keeps the DM-declared modifier. Store a DM re-roll of a hidden combatant with roller-and-DM visibility. Writes stay in authorised, idempotent RPCs; RLS stays authoritative; the call already in production keeps working or is refused with a clear reason. Migration tested in staging and PRE first, then reviewed and applied to production within the delivery. Non-goals: other roll kinds, physical-mode rolls, changing initiative rules, the pre-existing lock-before-authorization pattern unless the fix touches it, autonomous release.",
+      "acceptance": [
+        "An app-mode initiative roll by a Player stores a modifier derived from (or capped by) the character sheet; a declared modifier above it is refused or replaced, covered by SQL tests.",
+        "A DM re-roll of a hidden combatant is stored with roller-and-DM visibility and is not readable by Players, covered by SQL tests.",
+        "SQL denial tests cover anon, outsider, Player of another character and cross-campaign DM for the changed RPCs.",
+        "The frontend shows the server total; a refused declared modifier shows a clear reason and no invented number.",
+        "The migration is applied in staging and PRE, then production, with the catalog and advisor checks recorded.",
+        "If the interface changes: 390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "SQL tests for the derived modifier, hidden re-roll visibility, idempotency and denial cases",
+        "npm run check",
+        "npm run test:e2e (initiative roll and DM re-roll in app mode at 390px and 820px)",
+        "staging, PRE then production migration verification",
+        "security review",
+        "independent UI review PASS when the interface changes"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-143",
+      "title": "Flaky browser test: Players read enemy health",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Observed 2026-11-18: the browser test \"RYT-043 Players read enemy health as named bands and see tokens, never numbers or secrets\" (tests/e2e/combat.spec.ts) failed 3 times across full runs, unrelated to the changes under test; the cause is a response-body race in the test's own response listener."
+      ],
+      "scope": "Fix the test, not the product: read response bodies in a way that cannot race the page (await the matching response, or collect and await the body promises before asserting), keeping what the test proves (Players never receive enemy numbers or secrets). Non-goals: product changes, other specs unless they share the same helper, autonomous release.",
+      "acceptance": [
+        "The test keeps asserting that Players see named health bands and tokens and that no response carries enemy numbers or secrets.",
+        "The test passes in 30 repeated runs at mobile, tablet and desktop, and in a full browser run."
+      ],
+      "validation": [
+        "npm run test:e2e (the RYT-043 enemy health test repeated 30 times, then the full suite)",
+        "npm run check"
       ],
       "evidence": []
     }

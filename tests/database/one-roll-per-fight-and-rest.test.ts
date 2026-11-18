@@ -1145,24 +1145,137 @@ describe('saved totals come from the server roll', () => {
   )
 
   it.each(schemas)(
-    '%s: hit dice: a rest completed without spending them keeps the roll',
+    '%s: hit dice: any completed rest uses the roll up, short with zero dice or long',
     async (schema) => {
       const { s, c, dm, player, peer, arin, bea } = await table(schema)
+      // A short rest completed with zero dice: the roll cannot be banked for a later rest.
       let r = await s.rest(c, dm)
       await asUser(player)
-      const kept = await s.app(c, arin, 'hit_die', '1d10')
+      const first = await s.app(c, arin, 'hit_die', '1d10')
       await asUser(player)
       await vote(schema, c, r, arin, 'yes', 0, null)
       await asUser(peer)
       await vote(schema, c, r, bea, 'yes', 0, null)
       expect(await restStatus(schema, r)).toBe('done')
+      await asUser(player)
+      expect(await s.context(c)).toMatchObject({ spent: [], rolls: [] })
       r = await s.rest(c, dm)
       await asUser(player)
-      await expect(s.app(c, arin, 'hit_die', '1d10')).rejects.toThrow(/Already rolled/)
+      await expect(vote(schema, c, r, arin, 'yes', 1, first.dice[0]!)).rejects.toThrow(
+        /Roll required/,
+      )
       await asUser(player)
-      expect((await s.context(c)).rolls.map((x) => x.id)).toEqual([kept.id])
+      const second = await s.app(c, arin, 'hit_die', '1d10')
+      expect(second).toMatchObject({ rest_id: r })
+      await s.cancelRest(c, dm, r)
+      // Kept across the cancelled rest, then used up by a long rest.
+      await asUser(player)
+      expect((await s.context(c)).rolls.map((x) => x.id)).toEqual([second.id])
+      await asUser(dm)
+      const long = (
+        await scalar<{ id: string }>(`select ${schema}.request_rest($1,'long',$2) result`, [
+          c,
+          randomUUID(),
+        ])
+      ).id
+      await asUser(player)
+      await vote(schema, c, long, arin, 'yes', null, null)
+      await asUser(peer)
+      await vote(schema, c, long, bea, 'yes', null, null)
+      expect(await restStatus(schema, long)).toBe('done')
+      await asUser(player)
+      expect(await s.context(c)).toMatchObject({ spent: [], rolls: [] })
+      r = await s.rest(c, dm)
+      await asUser(player)
+      expect(await s.app(c, arin, 'hit_die', '1d10')).toMatchObject({ rest_id: r })
     },
   )
+
+  it.each(schemas)(
+    '%s: a hidden character: rolls linked before are unlinked, a DM re-roll is not linked',
+    async (schema) => {
+      const { s, c, dm, player, peer, arin, bea } = await table(schema)
+      await asUser(dm)
+      await s.dice(c, 'app', 'table')
+      const e = await s.fight(c, dm, [arin, bea])
+      await asUser(player)
+      const roll = await s.app(c, arin, 'initiative', 'd20+2')
+      expect(roll.encounter_id).toBe(e)
+      const signal = await s.signal(c)
+      // The DM hides Arin mid-fight (any update of hidden).
+      await asSystem()
+      await db.query(
+        `update ${schema}.encounter_combatants set hidden = true where encounter_id=$1 and character_id=$2`,
+        [e, arin],
+      )
+      expect(await s.signal(c)).toBe(signal + 1)
+      // The roll stays in the log, without its link, for everyone who reads it.
+      for (const who of [peer, player, dm]) {
+        await asUser(who)
+        expect(
+          await rows(`select id, encounter_id from ${schema}.campaign_rolls where id=$1`, [
+            roll.id,
+          ]),
+        ).toEqual([{ id: roll.id, encounter_id: null }])
+      }
+      await asUser(peer)
+      expect((await s.context(c)).rolls).toEqual([])
+      await asUser(player)
+      expect(await s.context(c)).toMatchObject({ spent: [], rolls: [] })
+      // A DM re-roll on the hidden combatant sets the initiative and records the roll unlinked.
+      await asUser(dm)
+      const reroll = await s.reset(c, arin, 'd20+1')
+      expect(reroll.roll).toMatchObject({ encounter_id: null, character_id: arin })
+      expect((await s.combatant(e, arin)).initiative).toBe(reroll.roll!.total)
+      await asUser(peer)
+      expect((await s.context(c)).rolls).toEqual([])
+      // Shown again: the Player has one roll again.
+      await asSystem()
+      await db.query(
+        `update ${schema}.encounter_combatants set hidden = false where encounter_id=$1 and character_id=$2`,
+        [e, arin],
+      )
+      await asUser(player)
+      expect(await s.app(c, arin, 'initiative', 'd20+2')).toMatchObject({ encounter_id: e })
+      await asUser(player)
+      await expect(s.app(c, arin, 'initiative', 'd20+2')).rejects.toThrow(/Already rolled/)
+    },
+  )
+
+  it('serializes the linked rolls of one character before the in-force check', async () => {
+    // PGlite has one connection, so the wait itself cannot be shown here: the source keeps the
+    // lock order, and each environment's copy takes the locks before it checks.
+    await asSystem()
+    for (const schema of schemas) {
+      const src = await scalar(
+        `select p.prosrc result from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = $1 and p.proname = 'log_roll'`,
+        [schema],
+      )
+      const quota = src.indexOf("quota_lock('rolls_per_minute', viewer)")
+      const campaign = src.indexOf('where id = target_campaign for key share')
+      const character = src.search(/and id = target_character\s+for no key update/)
+      const check = src.indexOf('private.roll_in_force(r)) then')
+      const insert = src.indexOf('insert into ' + schema + '.campaign_rolls')
+      expect(
+        [quota, campaign, character, check, insert].every((i) => i > 0),
+        schema,
+      ).toBe(true)
+      expect(quota < campaign && campaign < character && character < check && check < insert).toBe(
+        true,
+      )
+      // The resets take the campaign lock first and no character lock (no cycle with updates of
+      // a character row that take no campaign lock).
+      for (const name of ['reset_initiative_roll', 'reset_hit_dice_roll']) {
+        const reset = await scalar(
+          `select p.prosrc result from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+            where n.nspname = $1 and p.proname = $2`,
+          [schema, name],
+        )
+        expect(reset, name).not.toMatch(/for no key update/)
+      }
+    }
+  })
 
   it.each(schemas)(
     '%s: hit dice: only the sheet die and the dice left, for anyone',

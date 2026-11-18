@@ -15,7 +15,8 @@
 --    context is derived on the server, never taken from the client: for source 'app' and kind
 --    'initiative', the live encounter (status initiative or active; at most one per campaign) in
 --    which the character is a combatant that is not hidden (a hidden character is treated as
---    outside the fight, so nothing reveals it is there); for source 'app' and kind 'hit_die', the
+--    outside the fight, so nothing reveals it is there; see 10 for hiding mid-fight); for source
+--    'app' and kind 'hit_die', the
 --    campaign's open rest request (status open and not yet expired; at most one per campaign). A
 --    character outside a live encounter, a campaign with no open rest, a roll without a
 --    character, any other kind and every 'recorded' roll stay unlinked and unrestricted.
@@ -31,23 +32,31 @@
 -- 4. Roll in force (private.roll_in_force(campaign_rolls), stable): a linked app roll, not
 --    superseded, that still counts:
 --      initiative: while its encounter is live. A new encounter gives one new roll.
---      hit_die: until a later rest completes (status done) in which the character's vote spent
---        hit dice, i.e. until the dice are actually spent. A rest that does not complete
---        (cancelled by the requester or the DM, rejected by one "no", expired) does NOT free the
---        roll: it stays the character's roll and is the one to use on the next rest. So ending a
---        rest and opening another never gives a new roll.
+--      hit_die: until ANY rest of the campaign completes (status done, short or long) after the
+--        roll, whatever the character spent in it: a completed rest uses the roll up, so a good
+--        roll cannot be banked across rests. A rest that does not complete (cancelled by the
+--        requester or the DM, rejected by one "no", expired) does NOT free the roll: it stays the
+--        character's roll and is the one to use on the next rest. So ending a rest and opening
+--        another never gives a new roll; only completing one does, and a rest completes only when
+--        every voter says yes or the DM applies it.
 --    Rule for the kept hit-dice roll, stated plainly: it is used as it is, with its number of
 --    dice and its dice. A Player who wants to spend another number of dice asks the DM to reset
 --    the roll (reset_hit_dice_roll below), then rolls again. Zero dice and a "no" need no roll.
+--    Residual: in a campaign where the Player's character is the only voter (no other active
+--    character with hit points), that Player completes a short rest alone by voting yes, which
+--    uses the roll up; such a table can roll again after each rest it completes, as it could
+--    rest again before.
 -- 5. One roll. log_roll refuses with 'Already rolled' (SQLSTATE P0001, the code of every other
 --    rule refusal: 'Encounter locked', 'Dice mode', 'Roll limit') a linked app roll while that
 --    character already has a roll of that kind in force. Two partial unique indexes on
 --    campaign_rolls, (campaign_id, character_id, encounter_id) for app initiative rolls and
 --    (campaign_id, character_id, rest_id) for app hit-dice rolls, both while superseded_at is
 --    null, make concurrent calls (the Player and the DM) unable to both succeed in one context:
---    the unique violation is also reported as 'Already rolled'. A kept hit-dice roll lives on a
---    closed rest, so a concurrent insert can only race inside the one open rest, where the index
---    decides. A refused call writes nothing (no roll, no trim, no signal). A replay of the same
+--    the unique violation is also reported as 'Already rolled'. Across rests the check is not an
+--    index (a kept roll lives on a closed rest), so log_roll serializes the linked rolls of one
+--    character: before the in-force check it takes the campaign row for key share and then the
+--    character row for no key update; a second caller (the Player and the DM, or a rest changing
+--    in between) waits, and its check then sees the first roll. A refused call writes nothing (no roll, no trim, no signal). A replay of the same
 --    request id is answered before any of this and returns the stored roll, also after it was
 --    superseded. A unique violation on the roll id itself (another user's request id) is reported
 --    as 'Request mismatch'. The DM is bound by the same rule through log_roll and uses the reset
@@ -126,8 +135,37 @@
 -- offers a new roll, which is refused, and its Player can vote only with zero dice until the new
 -- frontend (which reads get_roll_context) is published or the DM resets the roll.
 --
+-- 10. Hidden characters. A trigger on encounter_combatants (private.combat_unlink_hidden_rolls,
+--    after update of hidden) unlinks, when a character combatant becomes hidden, every roll of
+--    that character linked to that encounter (encounter_id set to null; the rolls stay in the
+--    log; the roll signal is bumped). It covers every hide path. reset_initiative_roll on a
+--    hidden combatant sets the initiative and records its roll unlinked. So no read path (the
+--    roll log's encounter_id, get_roll_context, 'Already rolled') shows other members that a
+--    hidden character is in the fight. The Player's one-roll state when the DM hides them
+--    mid-fight: the link is gone (spent is empty), the Player cannot address the hidden
+--    combatant (unchanged combat rule) and the DM sets its initiative; if the DM shows it again,
+--    the Player has one roll again.
+--
+-- Lock order. Linked rolls of one character are serialized and nothing can wait in a cycle:
+-- (1) the caller's roll quota (advisory, quota_lock 'rolls_per_minute'): log_roll, and
+--     reset_initiative_roll when it re-rolls, take it first, before anything else;
+-- (2) the campaign row: for update in the combat, rest and settings RPCs and in both resets (taken
+--     at their start); for key share in log_roll (the share its foreign keys take anyway), taken
+--     before (3). A reset holding it for update therefore excludes every linked log_roll of the
+--     campaign until it commits, so the resets need no character lock;
+-- (3) the character row, for no key update, by log_roll only, for linked kinds, after (2): two
+--     log_roll calls for one character (the Player and the DM, or a rest changing in between)
+--     queue here and the second one's in-force check sees the first roll;
+-- (4) the encounter or the rest (for update in the combat and rest RPCs, after (2); key share
+--     from the roll's foreign keys in log_roll, after (3));
+-- (5) combatant, vitals and vote rows, after (4).
+-- No function holds (2) for update and then waits on (1): the only takers of (1) take it before
+-- (2). log_roll never holds (3) while waiting on (2). Updates of a character row that take no
+-- campaign lock (rename_character) only meet log_roll's key share on (2), which they do not
+-- block, so log_roll waits for them on (3) and they never wait for log_roll.
+--
 -- Security. Every function is security definer with search_path '' (private.prune_stale_rows and
--- private.roll_in_force too). log_roll, set_initiative, vote_rest and prune_stale_rows keep their
+-- private.roll_in_force and the trigger function private.combat_unlink_hidden_rolls too). log_roll, set_initiative, vote_rest and prune_stale_rows keep their
 -- grants (create or replace, restated for the public ones); the three new public functions revoke
 -- all from public and anon and grant execute to authenticated; private.roll_in_force has no
 -- client execute. No table grant or policy changes. The client sends no identity or context:
@@ -195,8 +233,8 @@ alter table public.campaign_events add constraint campaign_events_kind_check
   check (kind in ('party_level', 'dice_settings', 'hit_dice_reset'));
 
 -- ---------------------------------------------------------------------------------------------
--- A linked app roll that still counts: initiative while its encounter is live; hit dice until a
--- later completed rest in which the character spent hit dice.
+-- A linked app roll that still counts: initiative while its encounter is live; hit dice until any
+-- rest of the campaign completes after it (short or long, whatever was spent).
 -- ---------------------------------------------------------------------------------------------
 create or replace function private.roll_in_force(r public.campaign_rolls) returns boolean
 language sql stable security definer set search_path = '' as $fn$
@@ -206,9 +244,7 @@ language sql stable security definer set search_path = '' as $fn$
        where e.campaign_id = r.campaign_id and e.id = r.encounter_id and e.status in ('initiative', 'active'))
     when r.kind = 'hit_die' then r.rest_id is not null and not exists (
       select 1 from public.rest_requests q
-        join private.rest_votes v on v.request_id = q.id
-       where q.campaign_id = r.campaign_id and q.status = 'done' and q.resolved_at >= r.created_at
-         and v.character_id = r.character_id and v.dice_spent > 0)
+       where q.campaign_id = r.campaign_id and q.status = 'done' and q.resolved_at >= r.created_at)
     else false end;
 $fn$;
 revoke all on function private.roll_in_force(public.campaign_rolls) from public, anon, authenticated;
@@ -296,6 +332,14 @@ begin
     raise exception 'Roll limit' using errcode = 'P0001'; end if;
   -- RYT-137: the fight or rest of a server roll, derived here; the client sends no context.
   if roll_source = 'app' and target_character is not null then
+    -- Linked rolls of one character are serialized (see the lock order in the header): the
+    -- campaign key share first, then the character row, then the in-force check sees any
+    -- committed roll of another caller (the Player and the DM).
+    if roll_kind in ('initiative', 'hit_die') then
+      perform 1 from public.campaigns where id = target_campaign for key share;
+      perform 1 from public.characters where campaign_id = target_campaign and id = target_character
+        for no key update;
+    end if;
     if roll_kind = 'initiative' then
       select e.id into in_fight from public.encounters e
         join public.encounter_combatants k on k.campaign_id = e.campaign_id and k.encounter_id = e.id
@@ -382,6 +426,11 @@ declare viewer uuid := auth.uid();
   replay jsonb; e public.encounters; c public.encounter_combatants; old_roll uuid;
   saved public.campaign_rolls; rolled smallint[]; outcome integer; shown text;
 begin
+  -- Lock order (header): the DM's roll quota, then the campaign (which also serializes this reset
+  -- with log_roll for every character of the campaign), then the encounter.
+  if reroll_expression is not null and viewer is not null then
+    perform private.quota_lock('rolls_per_minute', viewer);
+  end if;
   replay := private.combat_begin(target_campaign, request_id, payload);
   if replay is not null then return replay; end if;
   perform private.combat_require_dm(target_campaign);
@@ -397,8 +446,7 @@ begin
     if reroll_expression !~ '^1?d20([+-][0-9]{1,2})?$'
         or coalesce(substring(reroll_expression from '[+-][0-9]{1,2}$')::integer, 0) not between -20 and 30 then
       raise exception 'Invalid roll' using errcode = '22023'; end if;
-    -- The DM's rolls share log_roll's serialization and rate limit.
-    perform private.quota_lock('rolls_per_minute', viewer);
+    -- The DM's rolls share log_roll's rate limit (the quota lock is already held).
     if (select count(*) from public.campaign_rolls r
         where r.roller_id = viewer and r.created_at > now() - interval '1 minute')
         >= private.quota_limit('rolls_per_minute') then
@@ -413,8 +461,9 @@ begin
     select x.roll_visibility into shown from public.campaigns x where x.id = target_campaign;
     insert into public.campaign_rolls(id, campaign_id, character_id, roller_id, label, expression, dice,
         total, kind, source, visibility, encounter_id)
+      -- A hidden combatant's roll is not linked: nothing may show it is in the fight.
       values (gen_random_uuid(), target_campaign, target_character, viewer, 'initiative', reroll_expression,
-        rolled, outcome, 'initiative', 'app', shown, e.id)
+        rolled, outcome, 'initiative', 'app', shown, case when c.hidden then null else e.id end)
       returning * into saved;
     delete from public.campaign_rolls x where x.campaign_id = target_campaign and x.id in (
       select r.id from public.campaign_rolls r where r.campaign_id = target_campaign
@@ -443,6 +492,32 @@ revoke all on function public.reset_initiative_roll(uuid, uuid, text, uuid) from
 grant execute on function public.reset_initiative_roll(uuid, uuid, text, uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------------------------
+-- Hiding a character combatant unlinks its rolls of that encounter (every hide path: the trigger
+-- runs on any update of hidden), so the roll log, get_roll_context and 'Already rolled' never
+-- show other members that a hidden character is in the fight.
+-- ---------------------------------------------------------------------------------------------
+create or replace function private.combat_unlink_hidden_rolls() returns trigger
+language plpgsql security definer set search_path = '' as $fn$
+begin
+  if new.hidden and not old.hidden and new.character_id is not null then
+    update public.campaign_rolls r set encounter_id = null
+      where r.campaign_id = new.campaign_id and r.character_id = new.character_id
+        and r.encounter_id = new.encounter_id;
+    if found then
+      insert into public.campaign_roll_signals as s (campaign_id, revision, updated_at)
+        values (new.campaign_id, 1, now())
+        on conflict (campaign_id) do update set revision = s.revision + 1, updated_at = now();
+    end if;
+  end if;
+  return new;
+end;
+$fn$;
+revoke all on function private.combat_unlink_hidden_rolls() from public, anon, authenticated;
+drop trigger if exists combatants_hidden_unlink on public.encounter_combatants;
+create trigger combatants_hidden_unlink after update of hidden on public.encounter_combatants
+  for each row execute function private.combat_unlink_hidden_rolls();
+
+-- ---------------------------------------------------------------------------------------------
 -- The DM frees a character's hit-dice roll (kept or of the open rest)
 -- ---------------------------------------------------------------------------------------------
 create or replace function public.reset_hit_dice_roll(target_campaign uuid, target_character uuid,
@@ -462,6 +537,8 @@ begin
       raise exception 'Request mismatch' using errcode = '22023'; end if;
     return prior.result;
   end if;
+  -- Lock order (header): the campaign (held since the start; it serializes this reset with
+  -- log_roll), then the open rest.
   if not exists (select 1 from public.characters c where c.campaign_id = target_campaign and c.id = target_character) then
     raise exception 'Character unavailable' using errcode = '42501'; end if;
   with superseded as (

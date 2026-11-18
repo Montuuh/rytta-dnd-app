@@ -1042,7 +1042,7 @@ const arinId = (server: ReturnType<typeof combatServer>) =>
 async function initiativePage(
   browser: Browser,
   info: TestInfo,
-  options: { theme?: string; failLog?: { on: boolean } } = {},
+  options: { theme?: string; failLog?: { on: boolean; hits?: number } } = {},
 ) {
   const server = combatServer()
   server.seedInitiative()
@@ -1064,11 +1064,15 @@ async function initiativePage(
   await server.install(page)
   const failLog = options.failLog
   if (failLog)
-    await page.route(/\/rest\/v1\/campaign_rolls/, (route) =>
-      failLog.on
-        ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"x"}' })
-        : route.fallback(),
-    )
+    await page.route(/\/rest\/v1\/campaign_rolls/, (route) => {
+      if (!failLog.on) return route.fallback()
+      failLog.hits = (failLog.hits ?? 0) + 1
+      return route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{"message":"x"}',
+      })
+    })
   await page.goto(`./#/campaign/${campaignId}/combat`)
   const entry = page.locator('.combat-entry')
   await expect(entry).toBeVisible({ timeout: 15_000 })
@@ -1118,7 +1122,7 @@ test('RYT-133 initiative: if the roll log cannot load, it says so, retries, and 
   browser,
 }, info) => {
   test.setTimeout(120_000)
-  const failLog = { on: true }
+  const failLog: { on: boolean; hits?: number } = { on: true }
   const { page, f, entry, context } = await initiativePage(browser, info, { failLog })
   serverFaces(f, [11, 4])
   // Loading is brief; then the failure is said with a retry, and rolling stays possible.
@@ -1127,8 +1131,11 @@ test('RYT-133 initiative: if the roll log cannot load, it says so, retries, and 
     timeout: 20_000,
   })
   await expect(entry.getByRole('button', { name: 'Tirar por mí' })).toBeEnabled()
-  // A retry that fails again changes nothing.
+  // A retry that fails again changes nothing. The retry is a new request (the query tries twice), so
+  // wait for it to have been answered before the log is allowed to answer.
+  const before = failLog.hits ?? 0
   await alert.getByRole('button', { name: 'Reintentar' }).click()
+  await expect.poll(() => failLog.hits ?? 0, { timeout: 20_000 }).toBeGreaterThan(before + 1)
   await expect(alert).toContainText('No se pudieron comprobar', { timeout: 20_000 })
   // The retry works once the log answers: the message goes away.
   failLog.on = false

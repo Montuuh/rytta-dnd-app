@@ -407,7 +407,9 @@ test('RYT-145 links a draft, previews attendance, and opens an independent copy'
   await page.goto(source)
   await expect(prep).toContainText('Un cofre de plata')
   await edit.click()
+  await expect(dialog).toBeVisible()
   await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
   await expect(edit).toBeFocused()
   await edit.click()
   await dialog.getByRole('checkbox', { checked: true }).uncheck()
@@ -415,4 +417,29 @@ test('RYT-145 links a draft, previews attendance, and opens an independent copy'
   await expect(page.getByRole('region', { name: 'Dificultad del encuentro' })).toContainText(
     'Sin asistentes para calcular la dificultad.',
   )
+})
+
+test('RYT-145 preparation targets and focus remain usable at 150% text', async ({ page }) => {
+  await prepare(page)
+  await page.addStyleTag({ content: 'html {font-size:150%}' })
+  const prep = page.getByRole('region', { name: 'Preparación de la sesión' })
+  for (const name of ['Preparar encuentro', 'Duplicar borrador']) {
+    const trigger = prep.getByRole('button', { name })
+    await trigger.focus()
+    await page.keyboard.press('Enter')
+    const dialog = page.getByRole('dialog', { name })
+    await expect(dialog).toBeVisible()
+    const targets = [
+      ...(await dialog.getByRole('checkbox').all()),
+      dialog.getByRole('button', { name: 'Cerrar', exact: true }),
+    ]
+    for (const target of targets) {
+      const bounds = await target.boundingBox()
+      expect(bounds?.width).toBeGreaterThanOrEqual(44)
+      expect(bounds?.height).toBeGreaterThanOrEqual(44)
+    }
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    await expect(trigger).toBeFocused()
+  }
 })

@@ -2,7 +2,7 @@ import type { sessionEn } from './session-en'
 
 export const sessionEs = {
   'session.journal': 'Diario de sesión',
-  'session.close': 'Cerrar sesión',
+  'session.close': 'Cerrar sesión de juego',
   'session.resume': 'Retomar la última sesión',
   'session.progress': 'Paso {{current}} de 3 · Opcional',
   'session.combat': 'Revisar combate',
@@ -22,6 +22,8 @@ export const sessionEs = {
   'session.recap': 'Resumen para los jugadores',
   'session.share': 'Compartir un resumen con los jugadores',
   'session.audience': 'Los jugadores solo verán el texto que escribas aquí.',
+  'session.playerTitle': 'Resumen de la sesión',
+  'session.retry': 'Reintentar guardado',
   'session.next': 'Siguiente',
   'session.back': 'Atrás',
   'session.skip': 'Omitir',
@@ -31,8 +33,6 @@ export const sessionEs = {
   'session.noRewards': 'No quedan recompensas pendientes.',
   'session.empty': 'Todavía no hay una sesión guardada.',
   'session.noRecap': 'Todavía no se ha compartido un resumen.',
-  'session.open': 'Abrir el diario de sesión',
   'session.error': 'No se ha podido guardar la sesión. Tus cambios siguen aquí.',
-  'session.reload': 'Recargar la sesión guardada',
-  'session.withdraw': 'Borra el texto publicado para retirar el resumen.',
+  'session.reload': 'Descartar mi borrador y cargar la sesión guardada',
 } satisfies Record<keyof typeof sessionEn, string>

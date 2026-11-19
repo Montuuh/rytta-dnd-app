@@ -76,7 +76,7 @@ export const tabletopEs = {
   'tabletop.projection.launch': 'Abrir en otra pestaña',
   'tabletop.projection.launchNewTab': 'Abrir pantalla para jugadores en otra pestaña',
   'tabletop.projection.adjust': 'Ajustar calibración',
-  'tabletop.projection.polling': 'Actualización periódica',
+  'tabletop.projection.polling': 'Los cambios pueden tardar en aparecer',
   'tabletop.projection.stale': 'Vista desactualizada',
   'tabletop.tool.measure': 'Medir',
   'tabletop.tool.area': 'Área',

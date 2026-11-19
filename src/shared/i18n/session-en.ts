@@ -1,6 +1,6 @@
 export const sessionEn = {
   'session.journal': 'Session journal',
-  'session.close': 'Close session',
+  'session.close': 'Close game session',
   'session.resume': 'Resume last session',
   'session.progress': 'Step {{current}} of 3 · Optional',
   'session.combat': 'Review combat',
@@ -20,6 +20,8 @@ export const sessionEn = {
   'session.recap': 'Recap for the players',
   'session.share': 'Share a recap with players',
   'session.audience': 'Players will see only the text entered here.',
+  'session.playerTitle': 'Session recap',
+  'session.retry': 'Retry save',
   'session.next': 'Next',
   'session.back': 'Back',
   'session.skip': 'Skip',
@@ -29,8 +31,6 @@ export const sessionEn = {
   'session.noRewards': 'No pending rewards.',
   'session.empty': 'No session has been saved yet.',
   'session.noRecap': 'No recap has been shared.',
-  'session.open': 'Open session journal',
   'session.error': 'The session could not be saved. Your changes are still here.',
-  'session.reload': 'Reload saved session',
-  'session.withdraw': 'Clear the published text to withdraw the recap.',
+  'session.reload': 'Discard my draft and load the saved session',
 } as const

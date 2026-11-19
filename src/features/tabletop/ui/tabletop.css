@@ -1378,6 +1378,21 @@ button.tt-token:focus-visible {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+.tt-projection-status[data-stale] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--warn);
+  border-radius: var(--mantine-radius-md);
+  background: var(--warn-soft);
+}
+.tt-projection-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tt-projection-message svg {
+  flex: none;
+  color: var(--warn);
+}
 .tt-projection-preview {
   display: grid;
   gap: 0.5rem;

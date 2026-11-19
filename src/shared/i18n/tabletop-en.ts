@@ -72,7 +72,7 @@ export const tabletopEn = {
   'tabletop.projection.launch': 'Open in a new tab',
   'tabletop.projection.launchNewTab': 'Open player screen in a new tab',
   'tabletop.projection.adjust': 'Adjust calibration',
-  'tabletop.projection.polling': 'Periodic refresh',
+  'tabletop.projection.polling': 'Changes may take time to appear',
   'tabletop.projection.stale': 'Preview out of date',
   'tabletop.tool.measure': 'Measure',
   'tabletop.tool.area': 'Area',

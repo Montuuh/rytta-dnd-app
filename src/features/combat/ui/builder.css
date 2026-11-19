@@ -587,13 +587,17 @@
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
-.bld-attendees .mantine-Checkbox-body {
-  min-height: 44px;
-  align-items: center;
-}
-.bld-attendees .mantine-Checkbox-label {
+.bld-attendees .bld-attendee {
   display: flex;
+  width: 100%;
   align-items: center;
   min-height: 44px;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
   overflow-wrap: anywhere;
+}
+.bld-plan-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.5rem;
 }

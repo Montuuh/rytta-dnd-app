@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Alert,
@@ -28,6 +28,7 @@ import {
 } from '@/features/combat'
 import { LootDrawer, catalogueQuery } from '@/features/inventory'
 import { PageHead } from '@/shared/ui/page-head'
+import './session-page.css'
 
 function useContinuity() {
   const campaign = useCampaign()
@@ -47,7 +48,7 @@ function PlayerRecap() {
   const recap = useQuery(sharedRecapQuery(state.user!.id, campaign.id))
   return (
     <Stack>
-      <PageHead title={t('session.recap')} />
+      <PageHead title={t('session.playerTitle')} />
       <QueryFeedback
         pending={recap.isPending}
         error={recap.isError}
@@ -247,18 +248,31 @@ function CloseSession({
   const heading = useRef<HTMLHeadingElement>(null)
   const list = useQuery({ ...encountersQuery(state.user!.id, campaign.id), enabled: step === 0 })
   const catalogue = useQuery({ ...catalogueQuery(state.user!.id, campaign.id), enabled: giving })
+  useEffect(() => {
+    heading.current?.focus()
+  }, [])
+  const initialEncounter = requestedEncounter ?? base.lastEncounter?.id ?? ''
+  const unchanged = [
+    encounterId === initialEncounter,
+    pendingReward === base.pendingReward && !delivered,
+    privateNote === base.privateNote &&
+      nextScene === base.nextScene &&
+      sharedRecap === base.sharedRecap &&
+      sharing === Boolean(base.sharedRecap),
+  ][step]
+  const stale = save.error?.message === 'stale'
   const go = (next: number) => {
     setStep(next)
     requestAnimationFrame(() => heading.current?.focus())
   }
-  const finish = (skip = false) =>
+  const finish = () =>
     save.mutate(
       {
         encounterId: encounterId || null,
         pendingReward: pendingReward.trim(),
-        privateNote: skip ? base.privateNote : privateNote.trim(),
-        nextScene: skip ? base.nextScene : nextScene.trim(),
-        sharedRecap: skip ? base.sharedRecap : sharing ? sharedRecap.trim() : '',
+        privateNote: privateNote.trim(),
+        nextScene: nextScene.trim(),
+        sharedRecap: sharing ? sharedRecap.trim() : '',
         revision: base.revision,
       },
       { onSuccess: () => onExit(true) },
@@ -369,12 +383,14 @@ function CloseSession({
       {save.isError && (
         <Alert color="red" role="alert">
           {t('session.error')}{' '}
-          <Button variant="subtle" onClick={() => void onReload()}>
-            {t('session.reload')}
-          </Button>
+          {stale && (
+            <Button variant="subtle" onClick={() => void onReload()}>
+              {t('session.reload')}
+            </Button>
+          )}
         </Alert>
       )}
-      <Group>
+      <Group className="session-actions">
         <Button
           variant="subtle"
           disabled={save.isPending}
@@ -382,23 +398,29 @@ function CloseSession({
         >
           {t('session.back')}
         </Button>
-        <Button
-          variant="default"
-          disabled={save.isPending}
-          onClick={() => {
-            if (step === 2) {
-              finish(true)
-              return
-            }
-            if (step === 0) setEncounter(base.lastEncounter?.id ?? '')
-            if (step === 1) setReward(base.pendingReward)
-            go(step + 1)
-          }}
-        >
-          {t(step === 2 ? 'session.skipClose' : 'session.skip')}
-        </Button>
+        {unchanged && (
+          <Button
+            variant="default"
+            disabled={save.isPending}
+            onClick={() => {
+              if (step === 2) finish()
+              else {
+                if (step === 0) setEncounter(base.lastEncounter?.id ?? '')
+                go(step + 1)
+              }
+            }}
+          >
+            {t(step === 2 ? 'session.skipClose' : 'session.skip')}
+          </Button>
+        )}
         <Button loading={save.isPending} onClick={() => (step === 2 ? finish() : go(step + 1))}>
-          {t(step === 2 ? 'session.finish' : 'session.next')}
+          {t(
+            step === 2
+              ? save.isError && !stale
+                ? 'session.retry'
+                : 'session.finish'
+              : 'session.next',
+          )}
         </Button>
       </Group>
     </Stack>

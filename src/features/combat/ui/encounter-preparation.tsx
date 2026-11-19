@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Anchor,
   Button,
@@ -16,6 +16,7 @@ import { BookOpen, Copy, NotebookPen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { Modal } from '@/shared/ui/overlays'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { isCombatErrorCode, type Combatant } from '../domain/combat'
 import { encounterBalance, type BalanceCreature, type BalanceMember } from '../domain/difficulty'
 import type { EncounterPlan, EncounterPlanInput } from '../domain/session'
@@ -42,10 +43,16 @@ export function EncounterPreparation(props: PrepProps) {
   const duplicate = useDuplicateEncounterPlan(campaignId)
   const navigate = useNavigate()
   const busy = save.isPending || duplicate.isPending
-  const close = () => {
-    if (!busy) setMode(null)
+  const opener = useRef<HTMLButtonElement | null>(null)
+  const finishEditing = () => {
+    setMode(null)
+    focusWhenReady(() => opener.current, { preventScroll: true })
   }
-  const open = (which: 'edit' | 'duplicate') => {
+  const close = () => {
+    if (!busy) finishEditing()
+  }
+  const open = (which: 'edit' | 'duplicate', trigger: HTMLButtonElement) => {
+    opener.current = trigger
     save.reset()
     duplicate.reset()
     setSaved(false)
@@ -84,14 +91,14 @@ export function EncounterPreparation(props: PrepProps) {
           variant="light"
           leftSection={<NotebookPen size={17} aria-hidden="true" />}
           disabled={!plan.data || props.pending}
-          onClick={() => open('edit')}
+          onClick={(event) => open('edit', event.currentTarget)}
         >
           {t('builder.plan.edit')}
         </Button>
         <Button
           variant="subtle"
           leftSection={<Copy size={16} aria-hidden="true" />}
-          onClick={() => open('duplicate')}
+          onClick={(event) => open('duplicate', event.currentTarget)}
         >
           {t('builder.plan.duplicate')}
         </Button>
@@ -114,9 +121,14 @@ export function EncounterPreparation(props: PrepProps) {
         onClose={close}
         title={t(mode === 'duplicate' ? 'builder.plan.duplicate' : 'builder.plan.edit')}
         centered
+        returnFocus={false}
         closeOnEscape={!busy}
         closeOnClickOutside={!busy}
-        closeButtonProps={{ 'aria-label': t('common.close'), disabled: busy }}
+        closeButtonProps={{
+          'aria-label': t('common.close'),
+          disabled: busy,
+          style: { minWidth: 44, minHeight: 44 },
+        }}
       >
         {error && (
           <Text role="alert" c="red" mb="sm">
@@ -134,7 +146,7 @@ export function EncounterPreparation(props: PrepProps) {
               try {
                 await save.mutateAsync(input)
                 setSaved(true)
-                setMode(null)
+                finishEditing()
               } catch {
                 /* The dialog renders the mutation error. */
               }
@@ -233,18 +245,22 @@ function PreparationForm({
         <fieldset className="bld-attendees">
           <legend>{t('builder.plan.attendees')}</legend>
           {choices.map((member) => (
-            <Checkbox
+            <Checkbox.Card
               key={member.id}
-              label={member.name}
+              className="bld-attendee"
+              withBorder={false}
               checked={selected.has(member.id)}
-              onChange={(event) => {
+              onChange={(checked) => {
                 const next = new Set(selected)
-                if (event.currentTarget.checked) next.add(member.id)
+                if (checked) next.add(member.id)
                 else next.delete(member.id)
                 setAttendanceChanged(true)
                 setSelected(next)
               }}
-            />
+            >
+              <Checkbox.Indicator aria-hidden="true" />
+              <span>{member.name}</span>
+            </Checkbox.Card>
           ))}
           {choices.length === 0 && <Text size="sm">{t('builder.plan.noCharacters')}</Text>}
         </fieldset>
@@ -263,14 +279,14 @@ function PreparationForm({
                 })}
           </Text>
         )}
-        <Group justify="flex-end">
+        <div className="bld-plan-actions">
           <Button variant="default" disabled={busy} onClick={onClose}>
             {t('common.cancel')}
           </Button>
           <Button type="submit" loading={busy} disabled={stale}>
             {t('common.save')}
           </Button>
-        </Group>
+        </div>
       </Stack>
     </form>
   )
@@ -303,14 +319,14 @@ function DuplicateForm({
           onChange={(event) => setName(event.currentTarget.value)}
           data-autofocus
         />
-        <Group justify="flex-end">
+        <div className="bld-plan-actions">
           <Button variant="default" disabled={busy} onClick={onClose}>
             {t('common.cancel')}
           </Button>
           <Button type="submit" disabled={!name.trim()} loading={busy}>
             {t('builder.plan.duplicate')}
           </Button>
-        </Group>
+        </div>
       </Stack>
     </form>
   )

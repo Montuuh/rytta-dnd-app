@@ -282,7 +282,7 @@ function BalanceReading({
     )
   if (balance.party === 0)
     return region(
-      measured.plan.data?.attendanceSet && measured.available.length ? (
+      measured.plan.data?.attendanceSet ? (
         <Text>{t('builder.plan.noAttendees')}</Text>
       ) : (
         <>

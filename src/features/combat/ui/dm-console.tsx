@@ -530,7 +530,7 @@ export function DmConsole({
             </Group>
           </div>
           <Group gap="xs" wrap="nowrap">
-            <Menu position="bottom-end">
+            <Menu position="bottom-end" withInitialFocusPlaceholder={false}>
               <Menu.Target>
                 <ActionIcon
                   variant="default"
@@ -543,6 +543,7 @@ export function DmConsole({
               </Menu.Target>
               <Menu.Dropdown className="combat-menu">
                 <Menu.Item
+                  data-autofocus
                   leftSection={<Pencil size={16} aria-hidden="true" />}
                   onClick={() => {
                     setRename(encounter.name)
@@ -844,7 +845,7 @@ export function DmConsole({
           {active && <Text>{t('combat.flow.endActing', { name: active.name })}</Text>}
           <Text>{t('combat.flow.endBody')}</Text>
         </Stack>
-        <Group justify="flex-end" mt="md">
+        <div className="combat-dialog-actions">
           <Button variant="subtle" data-autofocus onClick={closeEnd}>
             {t('action.cancel')}
           </Button>
@@ -862,7 +863,7 @@ export function DmConsole({
           >
             {t('combat.flow.end')}
           </Button>
-        </Group>
+        </div>
       </Modal>
       <Modal
         opened={confirm === 'delete'}

@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Button, Group, Modal as MantineModal, Stack, Text } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, Monitor, Ruler } from 'lucide-react'
+import { ExternalLink, Monitor, Ruler, TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
@@ -96,13 +96,14 @@ function ProjectionSetup({ campaignId }: { campaignId: string }) {
         : 'tabletop.projection.polling'
   return (
     <Stack gap="md">
-      <div className="tt-projection-status">
-        <Text size="sm" fw={600} role="status">
+      <div className="tt-projection-status" data-stale={stale || undefined}>
+        <Text className="tt-projection-message" size="sm" fw={600} role="status">
+          {stale && <TriangleAlert size={18} aria-hidden="true" />}
           {t(connection)}
         </Text>
         {stale && (
           <Button
-            variant="subtle"
+            variant="default"
             aria-disabled={retrying || undefined}
             onClick={async () => {
               if (retrying) return

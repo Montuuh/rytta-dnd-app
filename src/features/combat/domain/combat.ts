@@ -349,7 +349,7 @@ export type CombatAction =
   | { kind: 'rename'; encounterId: string; name: string }
   | { kind: 'delete'; encounterId: string }
   | { kind: 'status'; encounterId: string; status: EncounterStatus }
-  | { kind: 'add'; encounterId: string; entries: CombatantEntry[] }
+  | { kind: 'add'; encounterId: string; entries: CombatantEntry[]; requestId?: string }
   | { kind: 'update'; combatantId: string; patch: CombatantPatch }
   | { kind: 'remove'; combatantId: string }
   | { kind: 'initiative'; combatantId: string; total: number; bonus: number | null }
@@ -391,6 +391,7 @@ export const combatErrorCodes = [
   'busy',
   'live',
   'closed',
+  'copyLimit',
   'transition',
   'empty',
   'firstTurn',
@@ -418,6 +419,7 @@ export function combatErrorCode(message: string): CombatErrorCode {
     [/Encounter busy/, 'busy'],
     [/Encounter live/, 'live'],
     [/Encounter closed/, 'closed'],
+    [/Draft copy limit/, 'copyLimit'],
     [/Invalid transition/, 'transition'],
     [/No combatants/, 'empty'],
     [/First turn/, 'firstTurn'],
@@ -432,7 +434,7 @@ export function combatErrorCode(message: string): CombatErrorCode {
     [/Invalid roll/, 'invalidRoll'],
     [/Roll limit/, 'rollLimit'],
     [/Already modified/, 'alreadyModified'],
-    [/(Encounter|Combatant|Effect|Event|Template|Character) unavailable/, 'gone'],
+    [/(Encounter|Combatant|Effect|Event|Template|Character|Scene) unavailable/, 'gone'],
     [/Invalid request|Request mismatch/, 'invalid'],
     [/Forbidden/, 'forbidden'],
   ]

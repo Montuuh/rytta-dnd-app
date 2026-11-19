@@ -4,6 +4,26 @@ import type { Json } from './database.generated'
 type Call<A> = { Args: A & { target_campaign: string }; Returns: Json }
 type Mutation<A> = Call<A & { request_id: string }>
 export type CombatFunctions = {
+  get_encounter_plan: Call<{ target_encounter: string }>
+  save_encounter_plan: Mutation<{
+    target_encounter: string
+    expected_revision: number
+    target_scene: string | null
+    planned_reward: string
+    attendees: string[] | null
+  }>
+  duplicate_encounter_plan: Mutation<{ target_encounter: string; encounter_name: string }>
+  get_session_continuity: Call<object>
+  get_shared_session_recap: Call<object>
+  save_session_continuity: Mutation<{
+    expected_revision: number
+    target_encounter: string | null
+    use_latest: boolean
+    private_note: string
+    next_scene: string
+    pending_reward: string
+    shared_recap: string
+  }>
   list_encounters: Call<object>
   get_combat_state: Call<{ target_encounter: string | null; as_table: boolean }>
   list_combatant_templates: Call<object>

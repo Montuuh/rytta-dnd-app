@@ -1,7 +1,7 @@
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, identityFixture } from './fixtures/identity.ts'
-import { expectTouchTargets } from './fixtures/audit.ts'
+import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
 // ADR 028 / RYT-046..049: the DM Command Center bestiary (SRD 5.2.1 + campaign creatures).
@@ -63,6 +63,195 @@ async function jumpTo(page: Page, group: string) {
 async function pick(page: Page, name: RegExp) {
   await page.getByRole('button', { name }).first().click()
 }
+
+for (const [language, theme] of [
+  ['es', 'default'],
+  ['en', 'default'],
+  ['es', 'parchment'],
+  ['en', 'parchment'],
+] as const) {
+  test(`RYT-145 encounter bestiary keeps search and compares, adds and adjusts creatures (${language}, ${theme})`, async ({
+    page,
+  }, info) => {
+    limitMatrix(info, language === 'es' && theme === 'default')
+    test.setTimeout(90_000)
+    const es = language === 'es'
+    const wolf = es ? 'Lobo' : 'Wolf'
+    const zombie = es ? 'Zombi' : 'Zombie'
+    const server = combatServer()
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.addInitScript(
+      ({ language, theme }) => {
+        localStorage.setItem('rytta-language', language)
+        localStorage.setItem('rytta-theme', theme)
+      },
+      { language, theme },
+    )
+    await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+    await server.install(page)
+    const name = 'Cripta'
+    const { encounter_id: encounterId } = server.act('create_encounter', {
+      encounter_name: name,
+    }) as { encounter_id: string }
+    const fight = server.encounters.find((entry) => entry.id === encounterId)!
+    const checkRetry = es && theme === 'default' && phone(info)
+    if (checkRetry) {
+      let firstRequest = ''
+      let attempts = 0
+      await page.route('**/rest/v1/rpc/add_combatants', async (route) => {
+        attempts += 1
+        const body = route.request().postDataJSON() as { request_id: string }
+        if (attempts === 1) {
+          firstRequest = body.request_id
+          server.act('add_combatants', body)
+          await route.abort('failed')
+          return
+        }
+        if (attempts === 2) expect(body.request_id).toBe(firstRequest)
+        await route.fallback()
+      })
+    }
+
+    await page.goto(`./#/campaign/${campaignId}/combat/${encounterId}`)
+    await page
+      .getByRole('link', { name: es ? 'Añadir desde el bestiario' : 'Add from the bestiary' })
+      .click()
+    await expect(page).toHaveURL(new RegExp(`encounter=${encounterId}`))
+    if (!es && theme === 'parchment') {
+      await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+      const favourites = page.locator('.bst-source label').getByText('Favourites', { exact: true })
+      await expect(favourites).toBeVisible()
+      const segment = (await page.locator('.bst-source').boundingBox())!
+      const label = (await favourites.boundingBox())!
+      expect(label.x + label.width).toBeLessThanOrEqual(segment.x + segment.width)
+    }
+    const search = page.getByRole('searchbox', {
+      name: es ? 'Buscar criatura' : 'Search creatures',
+    })
+    await search.fill('wolf')
+    const wolfRow = page.locator('[data-row-key="srd:wolf"]')
+    await wolfRow.getByRole('button', { name: es ? 'Comparar a Lobo' : 'Compare Wolf' }).click()
+    await wolfRow.locator('.bst-row-main').click()
+    const pane = detail(page, info)
+    await expect(pane.getByRole('heading', { name: wolf, exact: true }).first()).toBeVisible()
+    if (sheet(info)) await expect(pane.getByText(name, { exact: true })).toBeVisible()
+    const dial = pane.getByRole('textbox', { name: es ? 'Cuántas' : 'How many' })
+    await dial.fill('3')
+    await capture(page, info.outputPath('contextual-bestiary.png'), { fullPage: false })
+    await expectTouchTargets(pane, '.bst-actions button:visible', { height: 44, width: 44 })
+    await audit(page, sheet(info) ? '[role="dialog"]' : 'body')
+    const addThree = pane.getByRole('button', { name: es ? 'Añadir 3' : 'Add 3', exact: true })
+    await addThree.click()
+    if (checkRetry) {
+      await expect(pane.locator('.bst-encounter-add').getByRole('alert')).toBeInViewport()
+      await expect(addThree).toBeFocused()
+      expect(fight.combatants).toHaveLength(3)
+      await addThree.press('Enter')
+    }
+    await expect(pane.getByRole('status').filter({ hasText: `3 × ${wolf}` })).toBeVisible()
+    await expect(dial).toHaveValue('1')
+
+    if (sheet(info)) {
+      await page.keyboard.press('Escape')
+      await expect(page.locator('.bst-sheet')).toHaveCount(0)
+      await expect(wolfRow.locator('.bst-row-main')).toBeFocused()
+    }
+    await expect(search).toHaveValue('wolf')
+    await search.fill('zombie')
+    const zombieRow = page.locator('[data-row-key="srd:zombie"]')
+    await zombieRow
+      .getByRole('button', { name: es ? 'Comparar a Zombi' : 'Compare Zombie' })
+      .click()
+    const comparison = page.getByRole('region', {
+      name: es ? /Comparar criaturas/ : /Compare creatures/,
+    })
+    await expect(comparison).toContainText(wolf)
+    await expect(comparison).toContainText(zombie)
+    await expect(comparison).toContainText(es ? 'VD 1/4' : 'CR 1/4')
+    await expect(comparison).toContainText(es ? 'Enemigo' : 'Enemy')
+    await capture(page, info.outputPath('creature-comparison.png'), { fullPage: false })
+    await comparison.getByRole('button', { name: zombie, exact: true }).click()
+    await pane.getByRole('button', { name: es ? 'Añadir' : 'Add', exact: true }).click()
+    await expect(pane.getByRole('status').filter({ hasText: `Cripta: ${zombie}` })).toBeVisible()
+    expect(fight.combatants.map((creature) => creature.srd_id)).toEqual([
+      'wolf',
+      'wolf',
+      'wolf',
+      'zombie',
+    ])
+
+    if (sheet(info)) await page.keyboard.press('Escape')
+    await expect(search).toHaveValue('zombie')
+    await page.getByRole('link', { name: es ? 'Volver al encuentro' : 'Back to encounter' }).click()
+    await expect(page).toHaveURL(new RegExp(`/combat/${encounterId}`))
+    await page
+      .locator('.combat-rail:visible .combat-row', { hasText: `${wolf} 2` })
+      .first()
+      .click()
+    await page
+      .getByRole('button', { name: es ? 'Ajustar este ejemplar' : 'Adjust this instance' })
+      .click()
+    const stats = page.getByRole('dialog', {
+      name: new RegExp(`${es ? 'Ajustar ejemplar' : 'Adjust instance'}.*${wolf} 2`),
+    })
+    const oldHp = fight.combatants[1]!.max_hp
+    await stats.getByRole('textbox', { name: es ? 'PG máximos' : 'Max HP', exact: true }).fill('32')
+    await expect(stats.getByText(`${oldHp} → 32`, { exact: false })).toBeVisible()
+    await capture(page, info.outputPath('adjust-instance.png'), { fullPage: false })
+    await audit(page, '[role="dialog"]')
+    await stats.getByRole('button', { name: es ? 'Guardar valores' : 'Save stats' }).click()
+    await expect(stats).toHaveCount(0)
+    expect(fight.combatants.slice(0, 3).map((creature) => creature.max_hp)).toEqual([
+      oldHp,
+      32,
+      oldHp,
+    ])
+    expect(server.templates).toHaveLength(0)
+  })
+}
+
+test('RYT-145 the DM saves a separate campaign variant from an official reference', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('wolf')
+  const row = page.locator('[data-row-key="srd:wolf"]')
+  await row.getByRole('button', { name: 'Añadir Lobo a favoritas' }).click()
+  await expect(page.getByText('Lobo está en favoritas.')).toBeVisible()
+  await row.getByRole('button', { name: 'Quitar Lobo de favoritas' }).click()
+  await expect(page.getByText('Lobo se quitó de favoritas.')).toBeVisible()
+  await row.locator('.bst-row-main').click()
+  const pane = detail(page, info)
+  await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
+  await page.getByRole('menuitem', { name: 'Crear variante de campaña' }).click()
+  const editor = page.getByRole('dialog', { name: 'Variante de campaña de Lobo' })
+  await expect(
+    editor.getByText('Nueva plantilla de campaña para usar en futuros encuentros.'),
+  ).toBeVisible()
+  await editor.getByRole('textbox', { name: 'Nombre', exact: true }).first().fill('Lobo del umbral')
+  await editor.getByText(/cambio[s]? respecto a Lobo/).click()
+  await expect(editor.getByText('Nombre · Lobo → Lobo del umbral')).toBeVisible()
+  await capture(page, info.outputPath('campaign-variant.png'), { fullPage: false })
+  await audit(page, '[role="dialog"]')
+  await editor.getByRole('button', { name: 'Guardar criatura' }).click()
+  await expect(
+    pane.getByRole('heading', { name: 'Lobo del umbral', exact: true }).first(),
+  ).toBeVisible()
+  expect(server.templates).toHaveLength(1)
+  expect(server.templates[0]).toMatchObject({
+    name: 'Lobo del umbral',
+    srd_id: 'wolf',
+    challenge: '1/4',
+  })
+  expect(server.templates[0]?.srd_override).toBeFalsy()
+  if (sheet(info)) await page.keyboard.press('Escape')
+  await expect(row).toBeVisible()
+})
 
 test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', async ({
   page,

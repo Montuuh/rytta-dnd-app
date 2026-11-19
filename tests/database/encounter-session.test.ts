@@ -69,7 +69,12 @@ describe.each(schemas)('%s encounter plans and continuity', (schema) => {
       otherDm = await user('other-dm')
     await asUser(otherDm)
     const foreignCampaign = await scalar(`select ${schema}.create_campaign('Other') result`)
-    const foreignEncounter = (await scalar<{encounter_id:string}>(`select ${schema}.create_encounter($1,'Foreign',$2) result`,[foreignCampaign,randomUUID()])).encounter_id
+    const foreignEncounter = (
+      await scalar<{ encounter_id: string }>(
+        `select ${schema}.create_encounter($1,'Foreign',$2) result`,
+        [foreignCampaign, randomUUID()],
+      )
+    ).encounter_id
     const foreignCharacter = await scalar(
       `select ${schema}.create_character($1,'Foreign') result`,
       [foreignCampaign],
@@ -148,9 +153,21 @@ describe.each(schemas)('%s encounter plans and continuity', (schema) => {
         [campaign, encounter, request],
       )
     await expect(readPlan(foreignEncounter)).rejects.toThrow('Encounter unavailable')
-    await expect(db.query(`select ${schema}.save_encounter_plan($1,$2,0,null,'',null,$3)`,[campaign,foreignEncounter,randomUUID()])).rejects.toThrow('Encounter unavailable')
-    await expect(db.query(`select ${schema}.duplicate_encounter_plan($1,$2,'Other',$3)`,[campaign,foreignEncounter,randomUUID()])).rejects.toThrow('Encounter unavailable')
-    await expect(close(0,foreignEncounter,'')).rejects.toThrow('Encounter unavailable')
+    await expect(
+      db.query(`select ${schema}.save_encounter_plan($1,$2,0,null,'',null,$3)`, [
+        campaign,
+        foreignEncounter,
+        randomUUID(),
+      ]),
+    ).rejects.toThrow('Encounter unavailable')
+    await expect(
+      db.query(`select ${schema}.duplicate_encounter_plan($1,$2,'Other',$3)`, [
+        campaign,
+        foreignEncounter,
+        randomUUID(),
+      ]),
+    ).rejects.toThrow('Encounter unavailable')
+    await expect(close(0, foreignEncounter, '')).rejects.toThrow('Encounter unavailable')
     await expect(plan(0, [a, foreignCharacter])).rejects.toThrow('Invalid request')
     await expect(plan(0, [a], foreignScene)).rejects.toThrow('Scene unavailable')
     const key = randomUUID()
@@ -179,17 +196,31 @@ describe.each(schemas)('%s encounter plans and continuity', (schema) => {
       ]),
       randomUUID(),
     ])
-    const unavailable = await scalar(`select ${schema}.create_character($1,'Away') result`,[campaign])
-    await db.query(`select ${schema}.add_combatants($1,$2,$3,$4)`,[campaign,encounter,JSON.stringify([{kind:'character',character_id:b},{kind:'character',character_id:unavailable}]),randomUUID()])
-    await db.query(`select ${schema}.set_character_absent($1,$2,true)`,[campaign,b])
-    await db.query(`select ${schema}.archive_character($1,$2)`,[campaign,unavailable])
-    const hidden=schema==='pre'?'pre_private':'private'
+    const unavailable = await scalar(`select ${schema}.create_character($1,'Away') result`, [
+      campaign,
+    ])
+    await db.query(`select ${schema}.add_combatants($1,$2,$3,$4)`, [
+      campaign,
+      encounter,
+      JSON.stringify([
+        { kind: 'character', character_id: b },
+        { kind: 'character', character_id: unavailable },
+      ]),
+      randomUUID(),
+    ])
+    await db.query(`select ${schema}.set_character_absent($1,$2,true)`, [campaign, b])
+    await db.query(`select ${schema}.archive_character($1,$2)`, [campaign, unavailable])
+    const hidden = schema === 'pre' ? 'pre_private' : 'private'
     await asSystem()
-    await db.exec(`update ${hidden}.quota_limits set max_count=1 where quota='combatants_per_draft_copy'`)
+    await db.exec(
+      `update ${hidden}.quota_limits set max_count=1 where quota='combatants_per_draft_copy'`,
+    )
     await asUser(dm)
     await expect(duplicate()).rejects.toThrow('Draft copy limit')
     await asSystem()
-    await db.exec(`update ${hidden}.quota_limits set max_count=600 where quota='combatants_per_draft_copy'`)
+    await db.exec(
+      `update ${hidden}.quota_limits set max_count=600 where quota='combatants_per_draft_copy'`,
+    )
     await asUser(dm)
     const copyKey = randomUUID()
     const copied = await duplicate(copyKey)
@@ -253,8 +284,7 @@ describe.each(schemas)('%s encounter plans and continuity', (schema) => {
       if (actor === player) {
         expect(await published()).toBe('Only this text')
         await expect(state(copied.encounter_id)).rejects.toThrow('Encounter unavailable')
-      }
-      else await expect(published()).rejects.toThrow(denial)
+      } else await expect(published()).rejects.toThrow(denial)
       const hidden = schema === 'pre' ? 'pre_private' : 'private'
       for (const table of ['encounter_plans', 'session_handoffs', 'session_publications']) {
         await expect(db.exec(`select * from ${hidden}.${table}`)).rejects.toThrow(
@@ -272,15 +302,28 @@ describe.each(schemas)('%s encounter plans and continuity', (schema) => {
     await asUser(player)
     expect(await published()).toBe('')
     await asUser(dm)
-    await db.query(`select ${schema}.save_session_continuity($1,3,null,true,'','','','',$2)`,[campaign,randomUUID()])
+    await db.query(`select ${schema}.save_session_continuity($1,3,null,true,'','','','',$2)`, [
+      campaign,
+      randomUUID(),
+    ])
     expect((await continuity()).lastEncounter?.id).toBe(encounter)
-    await db.query(`select ${schema}.change_campaign_member($1,$2,null)`,[campaign,player])
+    await db.query(`select ${schema}.change_campaign_member($1,$2,null)`, [campaign, player])
     await asUser(player)
-    for (const call of [published,continuity,()=>readPlan(),()=>plan(0,[a]),()=>duplicate(copyKey),()=>close(0,null,'',closureKey)]) {
+    for (const call of [
+      published,
+      continuity,
+      () => readPlan(),
+      () => plan(0, [a]),
+      () => duplicate(copyKey),
+      () => close(0, null, '', closureKey),
+    ]) {
       await expect(call()).rejects.toThrow('Forbidden')
     }
     await asSystem()
-    const stored=await scalar(`select payload::text result from ${hidden}.combat_requests where request_id=$1`,[closureKey])
+    const stored = await scalar(
+      `select payload::text result from ${hidden}.combat_requests where request_id=$1`,
+      [closureKey],
+    )
     expect(stored).not.toMatch(/DM secret|Emerald|Under the bridge/)
   })
 })

@@ -981,6 +981,13 @@ button.combat-row-main:focus-visible {
   min-width: 0;
   border-top: 1px dashed var(--app-border);
 }
+.combat-target-actions {
+  padding-inline: 0.25rem;
+}
+.combat-target-actions .mantine-Button-root {
+  min-height: 44px;
+  padding-inline: 0.5rem;
+}
 .combat-entry {
   /* A disabled "Save" stays in the palette (Mantine's default is a cool grey; RYT-042 F7). */
   --mantine-color-disabled: color-mix(in srgb, var(--app-accent) 14%, var(--app-surface));

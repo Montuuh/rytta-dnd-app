@@ -1347,47 +1347,91 @@ button.tt-token:focus-visible {
 
 /* ------------------------------------------------------------------ library */
 
-.tt-setup-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.75rem 1rem;
+.tt-device-edit {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
   align-items: center;
-  padding: 1rem;
-  border-radius: 14px;
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--app-border);
 }
-.tt-setup-glyph {
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  color: var(--app-accent);
-  border: 1px solid var(--app-accent);
-}
-.tt-setup-title {
+.tt-device-edit h2 {
   margin: 0;
   font-family: Georgia, Cambria, serif;
   font-size: var(--fs-h3);
 }
-.tt-setup-line {
-  margin: 0.125rem 0 0;
-  color: var(--app-muted);
+.tt-projection-trigger {
+  max-width: 100%;
+  min-height: 44px;
+  height: auto;
+  padding-block: 0.5rem;
 }
-.tt-setup-actions {
-  grid-column: 1 / -1;
+.tt-projection-trigger .mantine-Button-label {
+  white-space: normal;
+  text-align: start;
+}
+.tt-projection-status {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-@media (min-width: 48em) {
-  .tt-setup-card {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-  .tt-setup-actions {
-    grid-column: auto;
-  }
+.tt-projection-preview {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow-wrap: anywhere;
+}
+.tt-projection-preview:empty {
+  display: none;
+}
+.tt-projection-map {
+  position: relative;
+  overflow: hidden;
+  background: var(--app-raised);
+}
+.tt-projection-map-frame {
+  position: absolute;
+  inset: 0;
+}
+.tt-projection-map-frame.is-flipped {
+  transform: rotate(180deg);
+}
+.tt-projection-story .tt-story {
+  position: static;
+  padding: 0;
+  background: none;
+}
+.tt-projection-story .tt-story-plate {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  max-width: 100%;
+  max-height: 14rem;
+  padding: 1rem;
+  overflow: auto;
+  box-shadow: none;
+}
+.tt-projection-story .tt-story-title {
+  font-size: var(--fs-h3);
+}
+.tt-projection-story .tt-story-text p {
+  font-size: var(--fs-body);
+}
+.tt-projection-order {
+  max-height: 9rem;
+  overflow-y: auto;
+  margin: 0;
+  padding-inline-start: 1.5rem;
+}
+.tt-tool-readout {
+  color: var(--app-text);
+  font-size: var(--fs-meta);
+  font-weight: 650;
 }
 .tt-state {
   padding: 2rem 1rem;
@@ -2272,22 +2316,6 @@ html.tt-table-mode {
 
 /* ------------------------------------------------------------------ editor details */
 
-.tt-open-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  min-height: 44px;
-  padding: 0 0.5rem;
-  color: var(--app-accent);
-  font-size: var(--fs-meta);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.tt-open-link:focus-visible {
-  outline: 2px solid var(--app-focus);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
 .tt-angle {
   display: inline-flex;
   align-items: center;
@@ -2601,10 +2629,6 @@ html.tt-table-mode {
   justify-self: center;
   margin-top: 0.75rem;
 }
-.tt-empty-setup {
-  justify-self: center;
-}
-
 /* RYT-126 player journey fixes ------------------------------------------------------------- */
 
 /* The acting ring sits under the name plate, never over it (J4-16); names take two lines (J4-12). */

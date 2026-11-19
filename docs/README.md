@@ -121,3 +121,4 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     security headers, caching and the site at the domain root (RYT-116).
 59. [ADR 048: three environments, a staging project and the hosted migration procedure](decisions/048-environments-staging.md):
     production, staging and PRE as they are, costs, the SQL delivery rules and what remains open.
+60. [ADR 049: campaign session continuity](decisions/049-session-continuity.md) records how the DM handoff, the published recap and item receipts persist.

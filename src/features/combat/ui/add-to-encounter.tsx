@@ -28,7 +28,7 @@ import {
 } from '@/features/bestiary'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { encountersQuery } from '../api'
-import type { CombatantTemplate } from '../domain/combat'
+import type { CombatantTemplate, EncounterSummary } from '../domain/combat'
 import { creatureFormula, npcEntryFor, useSpellLabel, type AddOptions } from './creatures'
 import { useRunner } from './helpers'
 import { RunnerError } from './parts'
@@ -47,6 +47,7 @@ export function AddToEncounterDialog({
   block,
   row,
   template,
+  targetEncounter,
   onClose,
 }: {
   campaignId: string
@@ -54,6 +55,7 @@ export function AddToEncounterDialog({
   block: StatBlock | null
   row?: MonsterRow
   template?: CombatantTemplate
+  targetEncounter?: EncounterSummary
   onClose: () => void
 }) {
   const { t } = useTranslation()
@@ -81,19 +83,25 @@ export function AddToEncounterDialog({
   } | null>(null)
   const [optionsOpen, setOptionsOpen] = useState(false)
   const optionsId = useId()
-  const chosen = encounterId ?? open.find((e) => e.status !== 'draft')?.id ?? open[0]?.id ?? null
+  const chosen =
+    targetEncounter?.id ??
+    encounterId ??
+    open.find((e) => e.status !== 'draft')?.id ??
+    open[0]?.id ??
+    null
   const formula = creatureFormula(block) ?? template?.hp_formula ?? undefined
   const dice = formula ? parseDice(formula) : null
   const trackers = block ? trackersOf(block, spellLabel) : []
   const total = typeof count === 'number' ? count : 1
   const loading = encounters.isPending
   const failed = encounters.isError && !encounters.data
-  const creating = !loading && !failed && open.length === 0
+  const creating = !targetEncounter && !loading && !failed && open.length === 0
   const targetLabel = creating ? newName.trim() : (open.find((e) => e.id === chosen)?.name ?? '')
   const valid =
     !loading &&
     !failed &&
     typeof count === 'number' &&
+    (!targetEncounter || open.some((e) => e.id === targetEncounter.id)) &&
     (creating ? newName.trim().length > 0 : !!chosen)
   // The success state replaces the form: focus moves to its main action.
   const openLink = useRef<HTMLAnchorElement>(null)
@@ -218,6 +226,18 @@ export function AddToEncounterDialog({
                   {t('common.retry')}
                 </Button>
               </Alert>
+            ) : targetEncounter ? (
+              <div>
+                <Text size="sm" c="dimmed">
+                  {t('bestiary.add.encounter')}
+                </Text>
+                <Text fw={650} className="bst-context-name">
+                  {targetEncounter.name}
+                </Text>
+                {!valid && !open.some((e) => e.id === targetEncounter.id) && (
+                  <Alert role="status">{t('bestiary.context.unavailable')}</Alert>
+                )}
+              </div>
             ) : creating ? (
               <TextInput
                 required

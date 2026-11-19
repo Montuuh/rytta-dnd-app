@@ -34,6 +34,7 @@ import {
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useCampaign } from '@/features/campaigns'
 import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import {
   combatConditions,
@@ -46,9 +47,11 @@ import {
 } from '../domain/combat'
 import { AmountDialog } from './amount-dialog'
 import { CreaturePortrait } from './creature-art'
+import { CreatureChanges } from './creature-changes'
 import { CreatureConsole } from './creature-console'
-import { sideLabel, useReturnFocus, type Run } from './helpers'
-import { HpMeter, Pips, StateBadge } from './parts'
+import { useCreatureCatalog } from './creatures'
+import { sideLabel, useReturnFocus, useRunner, type Run } from './helpers'
+import { HpMeter, Pips, RunnerError, StateBadge } from './parts'
 import { CombatantToken } from './token'
 
 type Props = {
@@ -61,6 +64,8 @@ type Props = {
   activeId: string | null
   run: Run
   pending: boolean
+  /** DM console: target the currently displayed combatant without coupling the dialog to selection. */
+  onAmount?: (mode: HpMode) => void
   /** Opens the initiative dialog (DM for anyone, a Player for its own character). */
   onInitiative?: () => void
   /** DM: asks to remove this combatant from the encounter (the caller confirms). */
@@ -75,6 +80,7 @@ export function CombatantDetail(props: Props) {
   const { combatant, dm, status } = props
   const { t } = useTranslation()
   const [hpMode, setHpMode] = useState<HpMode | null>(null)
+  const openAmount = props.onAmount ?? setHpMode
   const live = isLive(status)
   const canAct = combatant.can_act && live && combatant.kind !== 'lair'
   const dying = combatant.kind === 'character' && combatant.hp?.current === 0 && !combatant.defeated
@@ -130,7 +136,7 @@ export function CombatantDetail(props: Props) {
                 variant="default"
                 className="combat-btn-damage"
                 leftSection={<Swords size={16} aria-hidden="true" />}
-                onClick={() => setHpMode('damage')}
+                onClick={() => openAmount('damage')}
               >
                 {t('sheet.damage')}
               </Button>
@@ -138,11 +144,11 @@ export function CombatantDetail(props: Props) {
                 variant="default"
                 className="combat-btn-heal"
                 leftSection={<Heart size={16} aria-hidden="true" />}
-                onClick={() => setHpMode('heal')}
+                onClick={() => openAmount('heal')}
               >
                 {t('sheet.heal')}
               </Button>
-              <Button variant="default" onClick={() => setHpMode('temp')}>
+              <Button variant="default" onClick={() => openAmount('temp')}>
                 {t('sheet.setTemp')}
               </Button>
             </Group>
@@ -280,30 +286,8 @@ function Conditions({ combatant, run, pending, canAct }: Props & { canAct: boole
         )}
       </Group>
       {canAct && editing ? (
-        <div
-          role="group"
-          aria-labelledby={titleId}
-          className="combat-chips"
-          id={`${titleId}-picker`}
-        >
-          {combatConditions.map((key) => (
-            <Chip
-              key={key}
-              size="sm"
-              checked={active.includes(key)}
-              disabled={pending}
-              onChange={(checked) =>
-                void run({
-                  kind: 'condition',
-                  combatantId: combatant.id,
-                  condition: key as CombatCondition,
-                  enabled: checked,
-                })
-              }
-            >
-              {t(`srd.condition.${key}`)}
-            </Chip>
-          ))}
+        <div id={`${titleId}-picker`}>
+          <ConditionPicker combatant={combatant} run={run} pending={pending} />
         </div>
       ) : active.length ? (
         <Group gap={6} mt={6}>
@@ -321,6 +305,31 @@ function Conditions({ combatant, run, pending, canAct }: Props & { canAct: boole
         </Text>
       )}
     </section>
+  )
+}
+
+export function ConditionPicker({
+  combatant,
+  run,
+  pending,
+}: Pick<Props, 'combatant' | 'run' | 'pending'>) {
+  const { t } = useTranslation()
+  return (
+    <div role="group" aria-label={t('combat.conditions')} className="combat-chips">
+      {combatConditions.map((condition) => (
+        <Chip
+          key={condition}
+          size="sm"
+          checked={combatant.conditions?.includes(condition) ?? false}
+          disabled={pending}
+          onChange={(enabled) =>
+            void run({ kind: 'condition', combatantId: combatant.id, condition, enabled })
+          }
+        >
+          {t(`srd.condition.${condition}`)}
+        </Chip>
+      ))}
+    </div>
   )
 }
 
@@ -633,14 +642,26 @@ function DmControls({
   )
   const [editing, setEditing] = useState(false)
   const npc = combatant.kind === 'npc'
+  const canAdjust = npc && status !== 'ended'
+  const draft = status === 'draft'
   const legendary = combatant.legendary
   return (
     <Paper className="combat-panel combat-dm" p="sm">
-      <Group justify="space-between" wrap="nowrap">
+      <Group justify="space-between">
         <Title order={4} className="combat-panel-title">
           {t('combat.dm.title')}
         </Title>
-        {(npc || onRemove || onClearRoll || onRerollInitiative) && (
+        {draft && canAdjust && (
+          <Button
+            variant="light"
+            disabled={pending}
+            onClick={() => setEditing(true)}
+            leftSection={<Pencil size={16} aria-hidden="true" />}
+          >
+            {t('bestiary.instance.adjust')}
+          </Button>
+        )}
+        {((canAdjust && !draft) || onRemove || onClearRoll || onRerollInitiative) && (
           <Menu position="bottom-end">
             <Menu.Target>
               <ActionIcon
@@ -653,12 +674,12 @@ function DmControls({
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown className="combat-menu">
-              {npc && (
+              {canAdjust && !draft && (
                 <Menu.Item
                   leftSection={<Pencil size={16} aria-hidden="true" />}
                   onClick={() => setEditing(true)}
                 >
-                  {t('combat.dm.edit')}
+                  {t('bestiary.instance.adjust')}
                 </Menu.Item>
               )}
               {onClearRoll && (
@@ -677,7 +698,9 @@ function DmControls({
                   {t('combat.row.rerollInitiative')}
                 </Menu.Item>
               )}
-              {(npc || onClearRoll || onRerollInitiative) && onRemove && <Menu.Divider />}
+              {((canAdjust && !draft) || onClearRoll || onRerollInitiative) && onRemove && (
+                <Menu.Divider />
+              )}
               {onRemove && (
                 <Menu.Item
                   className="combat-menu-danger"
@@ -819,15 +842,8 @@ function DmControls({
           </Button>
         </Group>
       </Stack>
-      {editing && (
-        <StatsDialog
-          combatant={combatant}
-          pending={pending}
-          close={() => setEditing(false)}
-          save={async (patch) => {
-            if (await run({ kind: 'update', combatantId: combatant.id, patch })) setEditing(false)
-          }}
-        />
+      {canAdjust && editing && (
+        <StatsDialog combatant={combatant} pending={pending} close={() => setEditing(false)} />
       )}
     </Paper>
   )
@@ -837,49 +853,119 @@ function StatsDialog({
   combatant,
   pending,
   close,
-  save,
 }: {
   combatant: Combatant
   pending: boolean
   close: () => void
-  save: (patch: {
-    name: string
-    max_hp: number
-    current_hp: number
-    armor_class: number
-    initiative_bonus: number
-  }) => void
 }) {
   const { t } = useTranslation()
+  const campaign = useCampaign()
+  const catalog = useCreatureCatalog(campaign.id)
+  const runner = useRunner(campaign.id)
+  const reference = combatant.template_id
+    ? catalog.items.find((item) => item.id === combatant.template_id)
+    : combatant.srd_id
+      ? catalog.rows.get(combatant.srd_id)
+      : undefined
   useReturnFocus()
-  const [name, setName] = useState(combatant.name)
-  const [maxHp, setMaxHp] = useState<number | string>(combatant.hp?.max ?? 1)
-  const [current, setCurrent] = useState<number | string>(combatant.hp?.current ?? 1)
-  const [ac, setAc] = useState<number | string>(combatant.armor_class ?? 10)
-  const [bonus, setBonus] = useState<number | string>(combatant.initiative_bonus ?? 0)
-  const nums = [maxHp, current, ac, bonus]
-  const valid = name.trim().length > 0 && nums.every((n) => typeof n === 'number')
+  const [original] = useState(() => ({
+    name: combatant.name,
+    max_hp: combatant.hp?.max ?? 1,
+    current_hp: combatant.hp?.current ?? 1,
+    armor_class: combatant.armor_class ?? 10,
+    initiative_bonus: combatant.initiative_bonus ?? 0,
+  }))
+  const [name, setName] = useState(original.name)
+  const [maxHp, setMaxHp] = useState<number | string>(original.max_hp)
+  const [current, setCurrent] = useState<number | string>(original.current_hp)
+  const [ac, setAc] = useState<number | string>(original.armor_class)
+  const [bonus, setBonus] = useState<number | string>(original.initiative_bonus)
+  const busy = pending || runner.pending
+  const baselineMax = combatant.hp?.max ?? original.max_hp
+  const baselineCurrent = combatant.hp?.current ?? original.current_hp
+  const numberIn = (value: number | string, min: number, max: number) =>
+    typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
+  const valid =
+    name.trim().length > 0 &&
+    numberIn(maxHp, 1, 99999) &&
+    numberIn(current, 0, 99999) &&
+    numberIn(ac, 0, 99) &&
+    numberIn(bonus, -20, 30)
+  const nextMax = maxHp === original.max_hp ? baselineMax : Number(maxHp)
+  const nextCurrent = Math.min(
+    current === original.current_hp ? baselineCurrent : Number(current),
+    nextMax,
+  )
+  const fields = [
+    { key: 'name', field: t('combat.add.name'), value: name.trim(), before: combatant.name },
+    {
+      key: 'max_hp',
+      field: t('bestiary.instance.maxHp'),
+      value: Number(maxHp),
+      before: baselineMax,
+    },
+    {
+      key: 'current_hp',
+      field: t('bestiary.instance.currentHp'),
+      value: Number(current),
+      before: baselineCurrent,
+    },
+    {
+      key: 'armor_class',
+      field: t('combat.add.ac'),
+      value: Number(ac),
+      before: combatant.armor_class ?? original.armor_class,
+    },
+    {
+      key: 'initiative_bonus',
+      field: t('combat.add.bonus'),
+      value: Number(bonus),
+      before: combatant.initiative_bonus ?? original.initiative_bonus,
+    },
+  ] as const
+  const edited = fields.filter(
+    ({ key, value, before }) => original[key] !== value && before !== value,
+  )
+  const patch = Object.fromEntries(
+    edited.map(({ key, value }) => [key, key === 'current_hp' ? nextCurrent : value]),
+  )
+  const changes = edited
+    .filter(({ key }) => key !== 'current_hp')
+    .map(({ field, before, value }) => ({ field, before, after: value }))
+  if (nextCurrent !== baselineCurrent)
+    changes.push({
+      field: t('bestiary.instance.currentHp'),
+      before: baselineCurrent,
+      after: nextCurrent,
+    })
   return (
     <Modal
       opened
-      onClose={close}
-      title={t('combat.dm.edit')}
+      onClose={busy ? () => undefined : close}
+      title={t('bestiary.instance.title', { name: combatant.name })}
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
       <form
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault()
-          if (!valid) return
-          save({
-            name: name.trim(),
-            max_hp: maxHp as number,
-            current_hp: Math.min(current as number, maxHp as number),
-            armor_class: ac as number,
-            initiative_bonus: bonus as number,
-          })
+          if (!valid || busy || changes.length === 0) return
+          if (await runner.run({ kind: 'update', combatantId: combatant.id, patch })) close()
         }}
       >
         <Stack gap="sm">
+          <RunnerError error={runner.error} trigger={runner.trigger} onClose={runner.clear} />
+          <Text size="sm" c="dimmed">
+            {t('bestiary.scope.instance')}
+          </Text>
+          {reference && (
+            <Text size="sm" c="dimmed">
+              {t('bestiary.instance.reference', {
+                name: 'name' in reference ? reference.name : reference[catalog.language],
+                ac: reference.ac,
+                hp: reference.hp,
+              })}
+            </Text>
+          )}
           <TextInput
             data-autofocus
             label={t('combat.add.name')}
@@ -889,7 +975,7 @@ function StatsDialog({
           />
           <div className="combat-grid-2">
             <NumberInput
-              label={t('combat.add.maxHp')}
+              label={t('bestiary.instance.maxHp')}
               min={1}
               max={99999}
               allowDecimal={false}
@@ -897,7 +983,7 @@ function StatsDialog({
               onChange={setMaxHp}
             />
             <NumberInput
-              label={t('combat.hp.label')}
+              label={t('bestiary.instance.currentHp')}
               min={0}
               max={99999}
               allowDecimal={false}
@@ -921,11 +1007,12 @@ function StatsDialog({
               onChange={setBonus}
             />
           </div>
+          {valid && <CreatureChanges changes={changes} reference={combatant.name} />}
           <Group justify="flex-end">
-            <Button variant="subtle" onClick={close}>
+            <Button variant="subtle" disabled={busy} onClick={close}>
               {t('action.cancel')}
             </Button>
-            <Button type="submit" disabled={!valid || pending} loading={pending}>
+            <Button type="submit" disabled={!valid || busy || changes.length === 0} loading={busy}>
               {t('combat.dm.save')}
             </Button>
           </Group>

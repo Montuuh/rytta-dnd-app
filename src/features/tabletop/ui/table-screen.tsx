@@ -53,7 +53,7 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
   // The channel opens once the map has been read: an account it refuses never subscribes.
   const [permitted, setPermitted] = useState(false)
   const connected = useTabletopRealtime(campaignId, permitted)
-  useCombatRealtime(campaignId, true)
+  const combatConnected = useCombatRealtime(campaignId, true)
   const query = useQuery(tabletopQuery(userId, campaignId, null, true, connected))
   const combat = useQuery(combatStateQuery(userId, campaignId, null, true))
   const view = query.data
@@ -426,14 +426,14 @@ export function TableScreen({ campaignId }: { campaignId: string }) {
               {retrying ? t('tabletop.table.retrying') : t('tabletop.table.retry')}
             </button>
           </span>
-        ) : (
-          connected && (
-            <span className="tt-status-net">
-              <Wifi size={14} aria-hidden="true" />
-              {t('tabletop.table.live')}
-            </span>
-          )
-        )}
+        ) : !waiting && !failed && !forbidden ? (
+          <span className="tt-status-net">
+            {connected || combatConnected ? <Wifi size={14} aria-hidden="true" /> : null}
+            {t(
+              connected || combatConnected ? 'tabletop.table.live' : 'tabletop.projection.polling',
+            )}
+          </span>
+        ) : null}
         {!calibration && scene && (
           <span className="tt-status-warn">{t('tabletop.table.uncalibrated')}</span>
         )}

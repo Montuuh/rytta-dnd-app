@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router'
 import {
   CampaignMembers,
   QueryFeedback,
@@ -24,11 +25,16 @@ export function DmCenterPage() {
   const campaign = useCampaign()
   const { state } = useAuth()
   const { playerPreview } = useCampaignView()
+  const [params] = useSearchParams()
   const dm = campaign.role === 'dm' && !playerPreview
-  const roster = useQuery({ ...characterRosterQuery(state.user!.id, campaign.id), enabled: dm })
-  const party = useQuery({ ...partyOverviewQuery(state.user!.id, campaign.id), enabled: dm })
-  const proposals = usePendingProposalCount(campaign.id, dm)
+  const encounter = params.get('panel') === 'bestiary' ? params.get('encounter') : null
+  const focusedBestiary = dm && Boolean(encounter)
+  const manage = dm && !focusedBestiary
+  const roster = useQuery({ ...characterRosterQuery(state.user!.id, campaign.id), enabled: manage })
+  const party = useQuery({ ...partyOverviewQuery(state.user!.id, campaign.id), enabled: manage })
+  const proposals = usePendingProposalCount(campaign.id, manage)
   const [choice, setChoice] = useState<MemberCharacterChoice | null>(null)
+  if (focusedBestiary) return <BestiaryPanel key={encounter} campaignId={campaign.id} />
   return (
     <>
       <CampaignMembers

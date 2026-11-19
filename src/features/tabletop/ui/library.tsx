@@ -12,16 +12,7 @@ import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import {
-  EllipsisVertical,
-  Grid3x3,
-  ImageUp,
-  Monitor,
-  Plus,
-  Ruler,
-  Trash2,
-  Wand2,
-} from 'lucide-react'
+import { EllipsisVertical, Grid3x3, ImageUp, Monitor, Plus, Trash2, Wand2 } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { TileGroup } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
@@ -33,10 +24,10 @@ import { placeFrame } from '../domain/geometry'
 import { sizePresets } from '../domain/generator'
 import { grounds, type Ground, type SceneSummary } from '../domain/model'
 import { groundColors } from './palette'
-import { CalibrationDialog } from './calibration'
 import { GeneratorDialog } from './generator-dialog'
 import { prepareImage } from './media'
 import { preparedView } from './prepared-view'
+import { TableProjectionButton } from './projection'
 import {
   gridFromName,
   isUvttName,
@@ -51,7 +42,7 @@ import {
 type Flow = 'choose' | 'blank' | 'upload' | 'generate' | null
 
 export function TabletopLibrary({ campaignId }: { campaignId: string }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { state } = useAuth()
   const navigate = useNavigate()
   const query = useQuery(scenesQuery(state.user!.id, campaignId))
@@ -63,7 +54,6 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
     setFlow(null)
     requestAnimationFrame(() => newScene.current?.focus())
   }
-  const [setup, setSetup] = useState(false)
   /** RYT-076: the scene waiting for the DM to confirm its deletion, and what the page says after. */
   const [deleting, setDeleting] = useState<SceneSummary | null>(null)
   // The dialog keeps painting the last scene while it closes.
@@ -96,65 +86,25 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
   const liveId = query.data?.live.scene_id ?? null
   const scenes = query.data?.scenes ?? []
   const open = (id: string) => navigate(id)
-  // Before the first scene the screen is an explanation and one action. The setup card only
-  // appears once there is a saved setup to show; until then "set up the table" is a quiet button
-  // under the main action, so "Not set up" never greets a DM who has no table concept yet.
   const firstScene = !query.isPending && !query.isError && scenes.length === 0
   return (
     <div className="tt-library">
       <PageHead
         title={t('tabletop.title')}
-        actions={
-          firstScene ? undefined : (
-            <Button
-              ref={newScene}
-              leftSection={<Plus size={18} aria-hidden="true" />}
-              onClick={() => setFlow('choose')}
-            >
-              {t('tabletop.newScene')}
-            </Button>
-          )
-        }
+        actions={<TableProjectionButton campaignId={campaignId} />}
       />
-      {(!firstScene || calibration) && (
-        <section className="tt-setup-card" aria-labelledby="tt-setup-title">
-          <span className="tt-setup-glyph" aria-hidden="true">
-            <Ruler size={22} />
-          </span>
-          <div>
-            <h2 id="tt-setup-title" className="tt-setup-title">
-              {t('tabletop.setup.card')}
-            </h2>
-            <p className="tt-setup-line">
-              {calibration
-                ? t('tabletop.setup.summary', {
-                    diagonal: calibration.diagonalIn,
-                    w: calibration.pxW,
-                    h: calibration.pxH,
-                    base: new Intl.NumberFormat(i18n.language).format(calibration.baseMm),
-                    cols: table!.cols,
-                    rows: table!.rows,
-                  })
-                : t('tabletop.setup.none')}
-            </p>
-          </div>
-          <div className="tt-setup-actions">
-            <Button variant="default" onClick={() => setSetup(true)}>
-              {calibration ? t('tabletop.setup.adjust') : t('tabletop.setup.start')}
-            </Button>
-            <Button
-              component="a"
-              variant="subtle"
-              href={`#/campaign/${campaignId}/tabletop-table`}
-              target="_blank"
-              rel="noopener"
-              leftSection={<Monitor size={18} aria-hidden="true" />}
-            >
-              {t('tabletop.openTable')}
-            </Button>
-          </div>
-        </section>
-      )}
+      <div className="tt-device-edit">
+        <h2>{t('tabletop.projection.edit')}</h2>
+        {!firstScene && (
+          <Button
+            ref={newScene}
+            leftSection={<Plus size={18} aria-hidden="true" />}
+            onClick={() => setFlow('choose')}
+          >
+            {t('tabletop.newScene')}
+          </Button>
+        )}
+      </div>
       {query.isPending ? (
         <p className="tt-state">{t('tabletop.loading')}</p>
       ) : query.isError ? (
@@ -176,11 +126,6 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
           >
             {t('tabletop.newScene')}
           </Button>
-          {!calibration && (
-            <Button variant="subtle" className="tt-empty-setup" onClick={() => setSetup(true)}>
-              {t('tabletop.setup.start')}
-            </Button>
-          )}
         </div>
       ) : (
         <ul className="tt-plates" aria-label={t('tabletop.scenes')}>
@@ -298,12 +243,6 @@ export function TabletopLibrary({ campaignId }: { campaignId: string }) {
           onCreated={open}
         />
       )}
-      <CalibrationDialog
-        opened={setup}
-        campaignId={campaignId}
-        current={calibration}
-        onClose={() => setSetup(false)}
-      />
     </div>
   )
 }

@@ -18,7 +18,6 @@ import {
   ArrowLeft,
   Armchair,
   BookOpenText,
-  ExternalLink,
   Frame,
   LayoutPanelLeft,
   Maximize,
@@ -65,6 +64,7 @@ import { CaughtList, Inspector } from './inspector'
 import { PropIcon } from './prop-art'
 import { decodePictures, pictureCount, pictureUrls, variantOf } from './sprites'
 import { preparedView, savePreparedView } from './prepared-view'
+import { TableProjectionButton } from './projection'
 import { AreaOptions, FogOptions, MeasureReadout, OptionStrip, ToolKit } from './kit'
 import { MeasureTape, PingRipple, TableFrame } from './overlays'
 import { AudioPanel, PropsPanel, ScenePanel, StoryPanel, TokensPanel } from './panels'
@@ -343,6 +343,7 @@ function EditorBody({
 
   const setTool = (next: Tool) => {
     setToolState(next)
+    say(t('tabletop.announce.tool', { tool: t(`tabletop.tool.${next}`) }))
     setMoving(null)
     setFrameWaiting(false)
     if (next !== 'prop') setGhostAt(null)
@@ -1004,7 +1005,6 @@ function EditorBody({
       if (found) {
         event.preventDefault()
         setTool(found)
-        say(t('tabletop.announce.tool', { tool: t(`tabletop.tool.${found}`) }))
         return
       }
       if (event.key === 'Escape') {
@@ -1559,30 +1559,10 @@ function EditorBody({
                     {t(`tabletop.panel.${key}`)}
                   </Menu.Item>
                 ))}
-                <Menu.Divider />
-                <Menu.Item
-                  component="a"
-                  href={`#/campaign/${campaignId}/tabletop-table`}
-                  target="_blank"
-                  rel="noopener"
-                  leftSection={<Monitor size={18} aria-hidden="true" />}
-                >
-                  {t('tabletop.openTable')}
-                </Menu.Item>
               </Menu.Dropdown>
             </Menu>
-          ) : (
-            <a
-              className="tt-open-link"
-              href={`#/campaign/${campaignId}/tabletop-table`}
-              target="_blank"
-              rel="noopener"
-            >
-              {t('tabletop.openTable')}
-              <ExternalLink size={16} aria-hidden="true" />
-              <span className="visually-hidden">{t('tabletop.newWindow')}</span>
-            </a>
-          )}
+          ) : null}
+          <TableProjectionButton campaignId={campaignId} />
         </div>
       </header>
       {stale && (
@@ -1594,6 +1574,13 @@ function EditorBody({
       <div className="tt-body">
         {!phone && !compact && <ToolKit tool={tool} onChange={setTool} variant="rail" />}
         <div className="tt-stage">
+          <div className="tt-tool-readout">
+            {t(
+              tool === 'select' || tool === 'measure' || tool === 'fog'
+                ? `tabletop.tool.active.${tool}`
+                : `tabletop.tool.${tool}`,
+            )}
+          </div>
           {(tool !== 'select' || movingItem || frameWaiting) && (
             <OptionStrip label={t('tabletop.strip', { tool: t(`tabletop.tool.${tool}`) })}>
               {strip}

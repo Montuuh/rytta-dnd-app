@@ -99,8 +99,12 @@ function watchTableResponses(page: Page) {
 
 /** The way in from the fight's screen: a Player follows the link; the DM's opens a new tab. */
 async function openScreen(page: Page, role: Role) {
-  const link = page.getByRole('link', { name: /Pantalla de mesa/ })
-  if (role === 'player') return link.click()
+  if (role === 'player') return page.getByRole('link', { name: /Pantalla de mesa/ }).click()
+  await page.getByRole('button', { name: 'Abrir pantalla para jugadores' }).click()
+  const preview = page.getByRole('region', { name: 'Vista previa para jugadores' })
+  await expect(preview).toContainText('Emboscada del puente')
+  for (const text of secret) await expect(preview).not.toContainText(text)
+  const link = page.getByRole('link', { name: 'Abrir pantalla para jugadores en otra pestaña' })
   await expect(link).toHaveAttribute('target', '_blank')
   await expect(link).toHaveAttribute('rel', /noopener/)
   // The fixture backend is per page, so the new tab is followed here at its address.

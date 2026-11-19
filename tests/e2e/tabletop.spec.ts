@@ -130,8 +130,12 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
     expect((await page.locator('.tt-library').boundingBox())!.width).toBeGreaterThan(1380)
 
   // RYT-085: Escape closes the setup and focus goes back to the button that opened it.
-  const setupButton = page.getByRole('button', { name: 'Configurar la mesa' })
+  const projectionButton = page.getByRole('button', { name: 'Abrir pantalla para jugadores' })
+  await projectionButton.click()
+  const projection = page.getByRole('dialog', { name: 'Pantalla para jugadores' })
+  const setupButton = projection.getByRole('button', { name: 'Configurar la mesa' })
   const setup = page.getByRole('dialog', { name: 'Configuración de la pantalla de mesa' })
+  await expect(setupButton).toBeVisible()
   await setupButton.focus()
   await page.keyboard.press('Enter')
   await expect(setup).toBeVisible()
@@ -150,6 +154,8 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
   await expectTouchTargets(setup, 'button:visible, label.bst-tile')
   await setup.getByRole('button', { name: 'Guardar la mesa' }).click()
   await expect(page.getByText(/47 × 26 casillas\./)).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(projectionButton).toBeFocused()
   expect(server.live.screen).toMatchObject({
     diagonal_in: 55,
     px_w: 3840,
@@ -408,6 +414,45 @@ test('RYT-055 the DM sets up the table, generates a dungeon and works the map', 
     '.tt-key:visible, .tt-tab:visible, .tt-zoom button',
   )
   expect(errors).toEqual([])
+})
+
+test('RYT-145 the DM checks the public projection and its freshness before launch', async ({
+  page,
+}, info) => {
+  const { server, combat } = await prepare(page)
+  const sceneId = seedScene(server)
+  combat.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/tabletop`)
+  await expect(page.getByRole('heading', { name: 'Editar en este dispositivo' })).toBeVisible()
+  const projection = page.getByRole('button', { name: 'Abrir pantalla para jugadores' })
+  await projection.click()
+  const dialog = page.getByRole('dialog', { name: 'Pantalla para jugadores' })
+  const preview = dialog.getByRole('region', { name: 'Vista previa para jugadores' })
+  await expect(preview).toContainText('Puente de Vado')
+  await expect(preview).toContainText('Arin')
+  await expect(preview).not.toContainText(/Ogro emboscado|Trampa|CD 15 para verla/)
+  await expect(dialog).not.toContainText('Vista desactualizada')
+  await expectTouchTargets(dialog, 'button:visible, a:visible')
+  await audit(page, '[role="dialog"]')
+  await evidence(page, info, 'ryt-145-player-screen-preview')
+
+  await page.context().setOffline(true)
+  await expect(dialog.getByRole('status')).toHaveText('Vista desactualizada')
+  await expect(preview).toContainText('Puente de Vado')
+  await page.context().setOffline(false)
+  const launch = dialog.getByRole('link', { name: 'Abrir pantalla para jugadores en otra pestaña' })
+  await expect(launch).toHaveAttribute('href', `#/campaign/${campaignId}/tabletop-table`)
+  await expect(launch).toHaveAttribute('target', '_blank')
+  await page.keyboard.press('Escape')
+  await expect(projection).toBeFocused()
+
+  await page.goto(`./#/campaign/${campaignId}/tabletop/${sceneId}`)
+  await expect(page.locator('.tt-tool-readout')).toHaveText('Selección')
+  await page.getByRole('radio', { name: 'Medir' }).click()
+  await expect(page.locator('.tt-tool-readout')).toHaveText('Regla')
+  await page.getByRole('radio', { name: 'Medir' }).focus()
+  await page.keyboard.press('f')
+  await expect(page.locator('.tt-tool-readout')).toHaveText('Visibilidad')
 })
 
 test('RYT-075/076 the DM deletes a scene and chooses what the table shows', async ({

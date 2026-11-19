@@ -351,3 +351,68 @@ test('RYT-098 the art of a creature in the ledger opens the viewer with its cred
   await expect(viewer).toHaveCount(0)
   await expect(picture).toBeFocused()
 })
+
+test('RYT-145 links a draft, previews attendance, and opens an independent copy', async ({
+  page,
+}, info) => {
+  await prepare(page, (server, encounterId) => {
+    server.act('add_combatants', {
+      target_encounter: encounterId,
+      entries: [npc('Ogre', 'ogre', { count: 2 })],
+      request_id: 'ogres',
+    })
+  })
+  const prep = page.getByRole('region', { name: 'Preparación de la sesión' })
+  const edit = prep.getByRole('button', { name: 'Preparar encuentro' })
+  await edit.click()
+  const dialog = page.getByRole('dialog', { name: 'Preparar encuentro' })
+  await expect(dialog.getByRole('status')).toContainText('2200')
+  const attending = dialog.getByRole('checkbox', { checked: true })
+  await expect(attending).toHaveCount(2)
+  await attending.last().uncheck()
+  await expect(dialog.getByRole('status')).toContainText('1100')
+  await expect(dialog.getByRole('status')).toContainText('Dificultad alta')
+  await dialog.getByLabel('Escena del tablero').selectOption({ label: 'Atalaya' })
+  await dialog.getByLabel('Recompensa prevista').fill('Un cofre de plata')
+  await audit(page, '[role="dialog"]')
+  await capture(page, info.outputPath('encounter-preparation.png'))
+  if (process.env.RYT_EVIDENCE)
+    await page.screenshot({ path: `docs/evidence/RYT-145/preparation-${info.project.name}.png` })
+  await dialog.getByRole('button', { name: 'Guardar' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(prep.getByRole('link', { name: 'Atalaya' })).toHaveAttribute(
+    'href',
+    /tabletop\/eb000000/,
+  )
+  await expect(prep).toContainText('Un cofre de plata')
+  await expect(page.getByRole('region', { name: 'Dificultad del encuentro' })).toContainText(
+    'Medido para 1 personaje',
+  )
+  const source = page.url()
+  await expect(prep.getByRole('link', { name: 'Añadir desde el bestiario' })).toHaveAttribute(
+    'href',
+    /panel=bestiary&encounter=/,
+  )
+  await prep.getByRole('button', { name: 'Duplicar borrador' }).click()
+  const copy = page.getByRole('dialog', { name: 'Duplicar borrador' })
+  await copy.getByRole('textbox').fill('Cripta de invierno')
+  await copy.getByRole('button', { name: 'Duplicar borrador' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Cripta de invierno' })).toBeVisible()
+  expect(page.url()).not.toBe(source)
+  await expect(prep).toContainText('Un cofre de plata')
+  await edit.click()
+  await dialog.getByLabel('Recompensa prevista').fill('Otra recompensa')
+  await dialog.getByRole('button', { name: 'Guardar' }).click()
+  await expect(prep).toContainText('Otra recompensa')
+  await page.goto(source)
+  await expect(prep).toContainText('Un cofre de plata')
+  await edit.click()
+  await page.keyboard.press('Escape')
+  await expect(edit).toBeFocused()
+  await edit.click()
+  await dialog.getByRole('checkbox', { checked: true }).uncheck()
+  await dialog.getByRole('button', { name: 'Guardar' }).click()
+  await expect(page.getByRole('region', { name: 'Dificultad del encuentro' })).toContainText(
+    'Sin asistentes para calcular la dificultad.',
+  )
+})

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ComponentType } from 'react'
 import { Alert, Button, Group, Paper, SegmentedControl, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Monitor, SlidersHorizontal, Swords } from 'lucide-react'
@@ -14,7 +14,6 @@ import { DmConsole } from './dm-console'
 import { EncounterGroup, EncounterList } from './encounter-list'
 import { useFreshness } from './helpers'
 import { TableDisplay } from './table-display'
-import { TableScreenLink } from './table-screen-link'
 import './combat.css'
 
 /** The viewer as the screens see it: DM (not previewing), or a Player (real or previewed). */
@@ -151,10 +150,12 @@ function NotFound() {
   )
 }
 
-export function CombatEncounterPage() {
+type ProjectionAction = ComponentType<{ campaignId: string }>
+
+export function CombatEncounterPage({ projection }: { projection: ProjectionAction }) {
   const { dm, enabled } = useCombatViewer()
   if (!dm && !enabled) return <HiddenCombat />
-  return dm ? <DmEncounter /> : <PlayerEncounter />
+  return dm ? <DmEncounter projection={projection} /> : <PlayerEncounter />
 }
 
 /** A Player opening one encounter (a live link or a past fight) gets its table view. */
@@ -196,7 +197,7 @@ function PlayerEncounter() {
 type DmView = 'table' | 'console'
 
 /** The DM opens the table view; the console is one switch away. */
-function DmEncounter() {
+function DmEncounter({ projection }: { projection: ProjectionAction }) {
   const { encounterId } = useParams()
   const { query, data } = useCombatState(encounterId ?? null)
   if (query.isError && !query.data && query.error.message === 'gone') return <NotFound />
@@ -208,7 +209,14 @@ function DmEncounter() {
         retry={() => void query.refetch()}
       />
     )
-  return <DmViews key={encounterId} encounterId={encounterId!} status={data.encounter.status} />
+  return (
+    <DmViews
+      key={encounterId}
+      encounterId={encounterId!}
+      status={data.encounter.status}
+      projection={projection}
+    />
+  )
 }
 
 /**
@@ -216,7 +224,15 @@ function DmEncounter() {
  * targets), so switching back and forth loses nothing. Drafts have no table view: Players and the
  * shared screen never see them. The choice is kept in `?view=` for reloads.
  */
-function DmViews({ encounterId, status }: { encounterId: string; status: EncounterStatus }) {
+function DmViews({
+  encounterId,
+  status,
+  projection: Projection,
+}: {
+  encounterId: string
+  status: EncounterStatus
+  projection: ProjectionAction
+}) {
   const { t } = useTranslation()
   const { campaignId } = useCombatViewer()
   const [params, setParams] = useSearchParams()
@@ -256,7 +272,7 @@ function DmViews({ encounterId, status }: { encounterId: string; status: Encount
         >
           {t('combat.back')}
         </Button>
-        {isLive(status) && <TableScreenLink campaignId={campaignId} newTab />}
+        {isLive(status) && <Projection campaignId={campaignId} />}
         {status !== 'draft' && (
           <SegmentedControl
             value={view}

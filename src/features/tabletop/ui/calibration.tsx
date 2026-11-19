@@ -23,20 +23,24 @@ import {
 export function CalibrationDialog({
   opened,
   onClose,
+  onExitTransitionEnd,
   campaignId,
   current,
 }: {
   opened: boolean
   onClose: () => void
+  onExitTransitionEnd: () => void
   campaignId: string
   current: Calibration | null
 }) {
   const { t } = useTranslation()
   const phone = usePhone()
-  // Stays mounted while closed so Mantine returns focus to the opener; the form inside
-  // unmounts on close and starts from the saved setup on every opening.
+  // The form starts from the saved setup on every opening.
   return (
     <Modal
+      stackId="calibration"
+      returnFocus={false}
+      onExitTransitionEnd={onExitTransitionEnd}
       closeButtonProps={{ 'aria-label': t('tabletop.close'), size: 44 }}
       opened={opened}
       onClose={onClose}

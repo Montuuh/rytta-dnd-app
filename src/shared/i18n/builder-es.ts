@@ -3,6 +3,21 @@ import type { builderEn } from './builder-en'
 // RYT-054 constructor de encuentros: SRD 5.2.1, encuentros de combate (CC-BY-4.0). Las cifras y
 // su unidad van unidas por un espacio duro para que «1500 PX» no se parta entre líneas.
 export const builderEs = {
+  'combat.error.copyLimit': 'Este borrador tiene demasiados combatientes para duplicarlo.',
+  'builder.plan.title': 'Preparación de la sesión',
+  'builder.plan.edit': 'Preparar encuentro',
+  'builder.plan.scene': 'Escena del tablero',
+  'builder.plan.noScene': 'Sin escena vinculada',
+  'builder.plan.reward': 'Recompensa prevista',
+  'builder.plan.duplicate': 'Duplicar borrador',
+  'builder.plan.copyName': 'Copia de {{name}}',
+  'builder.plan.bestiary': 'Añadir desde el bestiario',
+  'builder.plan.loadError': 'No se ha podido cargar la preparación.',
+  'builder.plan.saved': 'Preparación guardada.',
+  'builder.plan.attendees': 'Personajes asistentes',
+  'builder.plan.noCharacters': 'Aún no hay personajes disponibles.',
+  'builder.plan.noAttendees': 'Sin asistentes para calcular la dificultad.',
+  'builder.plan.preview': '{{band}} · {{xp}} PX de enemigos · {{high}} PX de presupuesto alto',
   'builder.region': 'Dificultad del encuentro',
   'builder.title.none': 'Aún no hay enemigos',
   'builder.title.low': 'Dificultad baja',

@@ -12,9 +12,13 @@ import {
   type CombatState,
   type CombatEvent,
   type Combatant,
+  type MutationResult,
 } from '../domain/combat'
 
-export type Run = (action: CombatAction) => Promise<boolean>
+export type Run = (
+  action: CombatAction,
+  onResult?: (result: MutationResult) => void,
+) => Promise<boolean>
 
 // The last control a pointer touched: touch browsers do not always focus a tapped button.
 let lastPointerTarget: HTMLElement | null = null
@@ -45,17 +49,19 @@ export function useRunner(campaignId: string) {
   } | null>(null)
   const { mutateAsync } = action
   const run = useCallback<Run>(
-    async (next) => {
+    async (next, onResult) => {
       const trigger = actionTrigger()
       setFailure(null)
+      let result: MutationResult
       try {
-        await mutateAsync(next)
-        return true
+        result = await mutateAsync(next)
       } catch (error) {
         const code = error instanceof Error ? error.message : 'unavailable'
         setFailure({ code: isCombatErrorCode(code) ? code : 'unavailable', trigger })
         return false
       }
+      onResult?.(result)
+      return true
     },
     [mutateAsync],
   )

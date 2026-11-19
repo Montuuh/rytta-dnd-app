@@ -38,12 +38,14 @@ import {
   StatBlockView,
   type Baseline,
   type BestiaryLanguage,
+  type CreatureListItem,
   type LibraryTrait,
   type SectionKind,
   type StatBlock,
 } from '@/features/bestiary'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
 import type { CombatantTemplate, TemplateInput } from '../domain/combat'
+import { CreatureChanges } from './creature-changes'
 import {
   draftNumbers,
   draftToTemplate,
@@ -77,6 +79,8 @@ export function CreatureEditor({
   unplaced = [],
   basedOn,
   version = false,
+  reference,
+  campaignScope = false,
   onClose,
   onSaved,
   onSubmit,
@@ -95,6 +99,8 @@ export function CreatureEditor({
   basedOn?: string
   /** RYT-089: a new campaign version of the official creature `basedOn` (edited in place). */
   version?: boolean
+  reference?: CreatureListItem
+  campaignScope?: boolean
   onClose: () => void
   /** The saved template id (null for a new one) and the name it was saved with. */
   onSaved: (id: string | null, name: string) => void
@@ -158,13 +164,15 @@ export function CreatureEditor({
       setSubmitError(failure)
       return
     }
-    const ok = await run({
-      kind: 'saveTemplate',
-      templateId: template?.id ?? null,
-      revision: template?.revision ?? null,
-      data: version && !template ? { ...input, srd_override: true } : input,
-    })
-    if (ok) onSaved(template?.id ?? null, input.name)
+    await run(
+      {
+        kind: 'saveTemplate',
+        templateId: template?.id ?? null,
+        revision: template?.revision ?? null,
+        data: version && !template ? { ...input, srd_override: true } : input,
+      },
+      (result) => onSaved(result.id ?? template?.id ?? null, input.name),
+    )
   }
   const setEntries = (kind: SectionKind, entries: DraftEntry[]) =>
     setDraft((current) => ({ ...current, sections: { ...current.sections, [kind]: entries } }))
@@ -456,6 +464,44 @@ export function CreatureEditor({
   )
   // Closing with changes asks first (Escape, the close button, Cancel or a click outside).
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
+  const referenceChanges = reference
+    ? [
+        { field: t('combat.add.name'), before: reference.name, after: input.name },
+        { field: t('bestiary.hp'), before: reference.hp, after: input.max_hp },
+        { field: t('bestiary.ac'), before: reference.ac, after: input.armor_class },
+        {
+          field: t('bestiary.initiative'),
+          before: reference.initiative,
+          after: input.initiative_bonus,
+        },
+        {
+          field: t('bestiary.cr'),
+          before: reference.cr ?? t('bestiary.group.noCr'),
+          after: draft.cr,
+        },
+        {
+          field: t('combat.add.side'),
+          before: t(`combat.side.${reference.side ?? 'enemy'}`),
+          after: t(`combat.side.${draft.side}`),
+        },
+      ]
+    : []
+  const revisedSections = reference
+    ? (
+        [
+          { label: t('bestiary.editor.identity'), fields: ['meta', 'type', 'size'] },
+          { label: t('bestiary.editor.defence'), fields: ['acNote', 'hitDice', 'hitDie', 'speed'] },
+          { label: t('bestiary.abilities'), fields: ['abilities', 'saves'] },
+          { label: t('bestiary.editor.details'), fields: ['details'] },
+          { label: t('bestiary.editor.entries'), fields: ['sections', 'legendary'] },
+          { label: t('bestiary.editor.notes'), fields: ['notes'] },
+        ] satisfies { label: string; fields: (keyof CreatureDraft)[] }[]
+      )
+        .filter(({ fields }) =>
+          fields.some((key) => JSON.stringify(initial[key]) !== JSON.stringify(draft[key])),
+        )
+        .map(({ label }) => label)
+    : []
   // Opened after the closing key event, so the same Escape does not also dismiss the question.
   const requestClose = () => (dirty ? window.setTimeout(() => setConfirming(true), 0) : onClose())
   return (
@@ -470,7 +516,7 @@ export function CreatureEditor({
         (template
           ? t('bestiary.editor.editTitle', { name: template.name })
           : basedOn
-            ? t(version ? 'bestiary.editor.versionTitle' : 'bestiary.editor.basedTitle', {
+            ? t(version ? 'bestiary.editor.versionTitle' : 'bestiary.editor.variantTitle', {
                 name: basedOn,
               })
             : t('bestiary.editor.newTitle'))
@@ -487,6 +533,15 @@ export function CreatureEditor({
           void save()
         }}
       >
+        {campaignScope && (
+          <Text size="sm" c="dimmed">
+            {t(
+              reference && !template && !version
+                ? 'bestiary.scope.variant'
+                : 'bestiary.scope.template',
+            )}
+          </Text>
+        )}
         <RunnerError error={error} trigger={trigger} onClose={clear} />
         {submitError && (
           <ErrorAlert sticky={false} trigger={null} onDismiss={() => setSubmitError(null)}>
@@ -511,6 +566,14 @@ export function CreatureEditor({
           {(wide || view === 'preview') && preview}
         </div>
         <div className="bst-editor-footer">
+          {reference && (
+            <CreatureChanges
+              changes={referenceChanges}
+              sections={revisedSections}
+              reference={reference.name}
+              collapsible
+            />
+          )}
           {estimate && (
             <p className="bst-balance" role="status">
               <Scale size={18} aria-hidden="true" />

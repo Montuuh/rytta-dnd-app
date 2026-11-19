@@ -199,7 +199,12 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
     await page.getByRole('menuitem', { name: 'Dar a personajes', exact: true }).click()
   }
   await page.getByRole('dialog').getByRole('button', { name: 'Arin', exact: true }).click()
-  await page.getByRole('dialog').getByRole('button', { name: 'Dar a personajes' }).click()
+  const delivery = page.getByRole('dialog')
+  await delivery.getByRole('button', { name: 'Revisar reparto' }).click()
+  await expect(delivery).toContainText('Espada del alba × 1')
+  await delivery.getByRole('button', { name: 'Confirmar entrega' }).click()
+  await expect(delivery.getByRole('heading', { name: 'Botín entregado' })).toBeVisible()
+  await delivery.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.goto(url)
   await expect(

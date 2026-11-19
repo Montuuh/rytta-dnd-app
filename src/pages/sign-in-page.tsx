@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Alert, Button, Text } from '@mantine/core'
-import { Backpack, Map as MapIcon, Store, Swords, UserPlus, Users } from 'lucide-react'
+import { Backpack, Eye, Map as MapIcon, Store, Swords, UserPlus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { AccountDeletedNotice, useAccountNotice, useAuth } from '@/features/auth'
 import { ArtPlate } from '@/shared/ui/art'
 import { artUrl } from '@/shared/ui/art-url'
+import { ExampleTurn } from '@/shared/ui/example-turn'
 import { LegalLinks } from './legal-page'
 import './sign-in-page.css'
 
@@ -49,6 +50,7 @@ export function SignInPage() {
   const { state, controller } = useAuth()
   const deletedNotice = useAccountNotice()
   const [busy, setBusy] = useState(false)
+  const [exampleOpen, setExampleOpen] = useState(false)
   const signIn = async () => {
     setBusy(true)
     await controller?.signIn()
@@ -82,15 +84,26 @@ export function SignInPage() {
               )}
             </Alert>
           )}
-          <Button
-            className="sign-in-google"
-            size="md"
-            leftSection={<GoogleMark />}
-            onClick={() => void signIn()}
-            loading={busy}
-          >
-            {t('auth.google')}
-          </Button>
+          <div className="landing-actions">
+            <Button
+              className="sign-in-google"
+              size="md"
+              leftSection={<GoogleMark />}
+              onClick={() => void signIn()}
+              loading={busy}
+            >
+              {t('auth.google')}
+            </Button>
+            <Button
+              className="landing-example"
+              variant="outline"
+              leftSection={<Eye size={18} aria-hidden="true" />}
+              onClick={() => setExampleOpen(true)}
+              aria-haspopup="dialog"
+            >
+              {t('activation.example.open')}
+            </Button>
+          </div>
           {state.issue === 'connection' && (
             <Button
               className="landing-retry"
@@ -124,6 +137,7 @@ export function SignInPage() {
         ))}
       </div>
       <LegalLinks />
+      <ExampleTurn opened={exampleOpen} onClose={() => setExampleOpen(false)} />
     </div>
   )
 }

@@ -26,8 +26,10 @@ import { legalEs } from './legal-es'
 import { diceEs } from './dice-es'
 import { levelupEs } from './levelup-es'
 import { castEs } from './cast-es'
+import { activationEs } from './activation-es'
 
 export const es = {
+  ...activationEs,
   ...legalEs,
   ...diceEs,
   ...levelupEs,

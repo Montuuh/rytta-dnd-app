@@ -9,7 +9,6 @@ import {
   Stack,
   Switch,
   Text,
-  Title,
   Tooltip,
 } from '@mantine/core'
 import { Pencil, Trash2 } from 'lucide-react'
@@ -95,9 +94,7 @@ export function ShopControls({
         <Group justify="space-between" align="start" className="shop-controls-head">
           <div className="shop-controls-title">
             <ShopKind kind={shop.kind} />
-            <Title order={2} id={`shop-${shop.id}`} className="user-copy">
-              {shop.name}
-            </Title>
+
             {shop.description && (
               <Text size="sm" c="dimmed" className="user-copy">
                 {shop.description}

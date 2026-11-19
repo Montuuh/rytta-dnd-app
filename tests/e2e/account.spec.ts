@@ -28,16 +28,16 @@ async function expectAxeClean(page: Page) {
   expect(audit.violations.map((v) => v.id)).toEqual([])
 }
 
-test('the account section sits above the legal links and passes axe', async ({
+test('the account section includes data controls and legal links and passes axe', async ({
   page,
 }, testInfo) => {
   const { settings } = await openSettings(page)
   const section = settings.getByRole('region', { name: 'Tu cuenta' })
   await expect(section.getByRole('button', { name: 'Descargar mis datos' })).toBeVisible()
   await expect(section.getByRole('button', { name: 'Eliminar mi cuenta…' })).toBeVisible()
-  const sectionBox = await section.boundingBox()
-  const legalBox = await settings.getByRole('link', { name: 'Condiciones de uso' }).boundingBox()
-  expect(legalBox!.y).toBeGreaterThan(sectionBox!.y + sectionBox!.height - 1)
+  await expect(section.getByRole('link', { name: 'Política de privacidad' })).toBeVisible()
+  await expect(section.getByRole('link', { name: 'Condiciones de uso' })).toBeVisible()
+  await expect(section).toContainText('te retira de todas tus campañas')
   await expectTouchTargets(section, 'button:visible, a:visible')
   expect(await noOverflow(page)).toBe(true)
   await expectAxeClean(page)
@@ -110,7 +110,7 @@ test('the delete button waits for the exact word; Escape returns focus to the tr
   await expect(dialog).toContainText('Tu perfil y tus membresías')
   await expect(dialog).toContainText('Qué se queda')
   await expect(dialog).toContainText('sin tu nombre')
-  await expect(dialog).toContainText('No se puede deshacer')
+  await expect(dialog).toContainText('El borrado de tu cuenta de Rytta es permanente')
   const confirm = dialog.getByRole('button', { name: 'Eliminar cuenta para siempre' })
   const input = dialog.getByRole('textbox', { name: 'Escribe DELETE para confirmar' })
   await expect(confirm).toBeDisabled()
@@ -316,7 +316,7 @@ test('the account section reads in English', async ({ page }) => {
   await settings.getByRole('button', { name: 'Delete my account…' }).click()
   const dialog = page.getByRole('dialog', { name: 'Delete your account' })
   await expect(dialog.getByRole('textbox', { name: 'Type DELETE to confirm' })).toBeVisible()
-  await expect(dialog).toContainText('This cannot be undone.')
+  await expect(dialog).toContainText('Deleting your Rytta account is permanent.')
 })
 
 // RYT-123 J1-01: a destructive action is never queued for when the network returns.

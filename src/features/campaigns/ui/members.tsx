@@ -16,11 +16,11 @@ import {
   Text,
   TextInput,
 } from '@mantine/core'
-import { useWide } from '@/shared/ui/use-viewport'
 import { useForm } from '@mantine/form'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowDown,
+  CalendarDays,
   Dices,
   Ellipsis,
   Eye,
@@ -33,7 +33,6 @@ import {
   UserMinus,
   UserPlus,
   Users,
-  X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
@@ -60,11 +59,12 @@ import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { FirstSession } from './first-session'
 import { DiceSettingsControl } from './dice-settings'
 import { PartyLevelControl } from './party-level'
+import { InviteInstructions, SentInvitationRow } from './invite-instructions'
 import './dm-center.css'
 
 type Confirmation = { action: CampaignAction; message: string }
-type DmPanel = 'members' | 'modules' | 'dice' | 'items' | 'bestiary' | 'audit'
-const dmPanels: DmPanel[] = ['members', 'modules', 'dice', 'items', 'bestiary', 'audit']
+type DmPanel = 'prepare' | 'members' | 'modules' | 'dice' | 'items' | 'bestiary' | 'audit'
+const dmPanels: DmPanel[] = ['members', 'prepare', 'modules', 'dice', 'items', 'bestiary', 'audit']
 type AuditFilter = 'all' | 'characters' | 'resources'
 
 /** The DM Command Center. `itemsPanel` and `bestiaryPanel` are composed by the page so the
@@ -73,20 +73,32 @@ type AuditFilter = 'all' | 'characters' | 'resources'
 export function CampaignMembers({
   itemsPanel,
   bestiaryPanel,
-  characterCount,
+  roster,
+  rosterFeedback,
+  memberCharacters,
+  onAssign,
+  pendingProposals,
   partyBelow,
   partySuggested,
 }: {
   itemsPanel?: ReactNode
   bestiaryPanel?: ReactNode
-  /** Characters in play, once loaded by the page; drives the first-session checklist. */
-  characterCount?: number
+  roster?: readonly {
+    user_id: string | null
+    archived_at: string | null
+    absent: boolean
+    is_active: boolean
+  }[]
+  rosterFeedback?: ReactNode
+  memberCharacters?: (member: Member) => ReactNode
+  onAssign?: (member: Member) => void
+  pendingProposals?: number
   /** Finished characters below the party level, once the party list has loaded (RYT-130). */
   partyBelow?: number
   /** The highest level among finished sheets: where the party level starts while unset. */
   partySuggested?: number
 } = {}) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { state } = useAuth()
   const user = state.user!
   const campaign = useCampaign()
@@ -113,13 +125,6 @@ export function CampaignMembers({
       },
       { replace: true },
     )
-  const wide = useWide()
-  // Keep the selected tab visible in the horizontally scrolling phone tab rail (deep links).
-  useEffect(() => {
-    document
-      .querySelector('.dm-tabs-list [data-active]')
-      ?.scrollIntoView({ block: 'nearest', inline: 'center' })
-  }, [activePanel, wide])
   const [auditFilter, setAuditFilter] = useState<AuditFilter>('all')
   const members = useQuery({ ...membersQuery(user.id, campaign.id), enabled: dm })
   const invitations = useQuery({ ...sentInvitationsQuery(user.id, campaign.id), enabled: dm })
@@ -128,6 +133,7 @@ export function CampaignMembers({
   const trigger = useRef<HTMLElement | null>(null)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteRecipient, setInviteRecipient] = useState<string | null>(null)
   // RYT-095: the same confirmation as My campaigns and the profile menu.
   const [leaving, setLeaving] = useState(false)
   const leaveButton = useRef<HTMLButtonElement>(null)
@@ -192,6 +198,7 @@ export function CampaignMembers({
   const closeInvite = () => {
     if (!action.isPending) {
       setInviteOpen(false)
+      setInviteRecipient(null)
       inviteForm.reset()
       restoreTriggerFocus()
     }
@@ -199,33 +206,27 @@ export function CampaignMembers({
   useBackToClose(inviteOpen, closeInvite)
   useBackToClose(!!confirmation, closeConfirmation)
   const handleInviteSubmit = inviteForm.onSubmit((values) => {
+    const email = values.email.trim().toLowerCase()
     action.mutate(
-      { kind: 'invite', campaignId: campaign.id, email: values.email },
+      { kind: 'invite', campaignId: campaign.id, email },
       {
         onSuccess: () => {
-          setInviteOpen(false)
-          inviteForm.reset()
+          setInviteRecipient(email)
+          focusWhenReady('[data-invite-instructions]')
         },
       },
     )
   })
-  const hasPlayers =
-    !!members.data?.some((member) => member.role === 'player') || !!invitations.data?.length
-  const modulesChosen = (campaign.player_modules ?? ['party']).some(
-    (key) => key !== 'party' && implementedModuleKeys.has(key),
+  const players = members.data?.filter((member) => member.role === 'player') ?? []
+  const available =
+    roster?.some((entry) => !entry.user_id && !entry.archived_at && !entry.absent) ?? false
+  const unlinked = players.filter(
+    (member) => !roster?.some((entry) => entry.user_id === member.user_id && !entry.archived_at),
   )
-  // Shown while the loaded data says the campaign has no players or no characters yet.
-  const firstSession = {
-    invite: hasPlayers,
-    modules: modulesChosen,
-    characters: (characterCount ?? 0) > 0,
-  }
-  const showFirstSession =
-    dm &&
-    !!members.data &&
-    !!invitations.data &&
-    characterCount !== undefined &&
-    !(firstSession.invite && firstSession.characters)
+  const currentRoster = roster !== undefined
+  const linked = currentRoster && players.length > 0 && !unlinked.length
+  const enabledModules = new Set(campaign.player_modules ?? ['party'])
+  const modulesChosen = [...enabledModules].some((key) => implementedModuleKeys.has(key))
   const openInvite = (target: HTMLElement) => {
     trigger.current = target
     action.reset()
@@ -244,7 +245,6 @@ export function CampaignMembers({
   const lastDm =
     dm &&
     (!members.data || members.isError || members.data.filter((m) => m.role === 'dm').length <= 1)
-  const enabledModules = new Set(campaign.player_modules ?? ['party'])
   const showMembers = activePanel === 'members'
   const showModules = activePanel === 'modules'
   const showDice = activePanel === 'dice'
@@ -289,6 +289,7 @@ export function CampaignMembers({
         title={t(dm ? 'campaign.manage' : 'members.title')}
         description={dm ? undefined : t('members.playerHint')}
         compactOnPhone={dm}
+        titleClassName={dm ? 'dm-admin-heading' : undefined}
         refresh={
           dm && <RefreshControl onRefresh={refreshAll} fetching={fetching} updatedAt={updatedAt} />
         }
@@ -299,7 +300,7 @@ export function CampaignMembers({
           <Tabs
             value={activePanel}
             onChange={(value) => value && setActivePanel(value as DmPanel)}
-            orientation={wide ? 'vertical' : 'horizontal'}
+            orientation="vertical"
             variant="pills"
             keepMounted={false}
             className="dm-tabs dm-tabs-seg"
@@ -308,6 +309,7 @@ export function CampaignMembers({
               {(
                 [
                   ['members', 'dm.panelMembers', Users],
+                  ['prepare', 'dm.prepareSession', CalendarDays],
                   ['modules', 'dm.panelModules', Shield],
                   ['dice', 'dm.panelDice', Dices],
                   ['items', 'dm.panelItems', Package],
@@ -324,28 +326,60 @@ export function CampaignMembers({
                     key={key}
                     value={key}
                     data-panel={key}
+                    aria-label={t(label)}
+                    aria-describedby={
+                      (key === 'members' && invitations.data?.length) ||
+                      (key === 'items' && pendingProposals)
+                        ? `pending-${key}`
+                        : undefined
+                    }
                     leftSection={<Icon size={18} aria-hidden="true" />}
                   >
                     {t(label)}
+                    {key === 'members' && !!invitations.data?.length && (
+                      <small className="dm-nav-count" id={`pending-${key}`}>
+                        {t('dm.pendingInvites', { count: invitations.data.length })}
+                      </small>
+                    )}
+                    {key === 'items' && !!pendingProposals && (
+                      <small className="dm-nav-count" id={`pending-${key}`}>
+                        {t('dm.pendingReview', { count: pendingProposals })}
+                      </small>
+                    )}
                   </Tabs.Tab>
                 ))}
             </Tabs.List>
             <Tabs.Panel value={activePanel} className="dm-tabs-panel">
               <Stack gap="xl">
-                {showMembers && (
+                {activePanel === 'prepare' && (
                   <>
-                    {showFirstSession && (
+                    <QueryFeedback
+                      pending={members.isPending || invitations.isPending}
+                      error={members.isError || invitations.isError}
+                      retry={refreshAll}
+                    />
+                    {rosterFeedback}
+                    {members.isSuccess && invitations.isSuccess && currentRoster && (
                       <FirstSession
                         campaignId={campaign.id}
-                        done={firstSession}
+                        joined={players.length > 0}
+                        pending={invitations.data.length}
+                        modules={modulesChosen}
+                        linked={linked}
+                        available={available}
+                        nextMember={unlinked[0]}
                         onInvite={openInvite}
                         onModules={() => {
                           setActivePanel('modules')
-                          // The checklist row unmounts with the Members panel: focus the chosen tab.
-                          focusWhenReady('.dm-tabs-list [role="tab"][data-panel="modules"]')
+                          focusWhenReady('.dm-tabs-list [data-panel="modules"]')
                         }}
+                        onAssign={(member) => onAssign?.(member)}
                       />
                     )}
+                  </>
+                )}
+                {showMembers && (
+                  <>
                     <PartyLevelControl
                       campaignId={campaign.id}
                       current={campaign.party_level}
@@ -373,12 +407,16 @@ export function CampaignMembers({
                             void members.refetch()
                           }}
                         />
+                        {rosterFeedback}
                         {!members.isError && !!members.data?.length && (
                           <ul className="member-list">
                             {members.data.map((member) => (
                               <MemberRow
                                 key={member.user_id}
                                 member={member}
+                                characters={
+                                  member.role === 'player' ? memberCharacters?.(member) : undefined
+                                }
                                 you={member.user_id === user.id}
                                 protectedDm={member.role === 'dm' && lastDm}
                                 busy={action.isPending}
@@ -405,46 +443,27 @@ export function CampaignMembers({
                           invitations.data &&
                           (invitations.data.length ? (
                             <ul className="member-list">
-                              {invitations.data.map((item) => {
-                                const revoke = t('members.revoke')
-                                return (
-                                  <li key={item.id} className="member-row">
-                                    <div className="member-identity">
-                                      <Text fw={600} className="user-copy">
-                                        {item.email}
-                                      </Text>
-                                      <Text size="sm" c="dimmed">
-                                        {t('hub.expires', {
-                                          date: new Date(item.expires_at).toLocaleDateString(
-                                            i18n.language,
-                                          ),
-                                        })}
-                                      </Text>
-                                    </div>
-                                    <ActionIcon
-                                      variant="subtle"
-                                      color="red"
-                                      size={44}
-                                      aria-label={revoke}
-                                      title={revoke}
-                                      disabled={action.isPending}
-                                      onClick={(event) =>
-                                        openConfirmation(
-                                          {
-                                            action: { kind: 'revoke', invitationId: item.id },
-                                            message: t('members.confirmRevoke', {
-                                              email: item.email,
-                                            }),
-                                          },
-                                          event.currentTarget,
-                                        )
-                                      }
-                                    >
-                                      <X size={20} aria-hidden="true" />
-                                    </ActionIcon>
-                                  </li>
-                                )
-                              })}
+                              {invitations.data.map((item) => (
+                                <SentInvitationRow
+                                  key={item.id}
+                                  invitation={item}
+                                  busy={action.isPending}
+                                  onShare={(target) => {
+                                    trigger.current = target
+                                    setInviteRecipient(item.email)
+                                    setInviteOpen(true)
+                                  }}
+                                  onCancel={(target) =>
+                                    openConfirmation(
+                                      {
+                                        action: { kind: 'revoke', invitationId: item.id },
+                                        message: t('members.confirmRevoke', { email: item.email }),
+                                      },
+                                      target,
+                                    )
+                                  }
+                                />
+                              ))}
                             </ul>
                           ) : (
                             <Text c="dimmed">{t('members.noneSent')}</Text>
@@ -597,37 +616,45 @@ export function CampaignMembers({
         returnFocus={false}
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
-        <form onSubmit={handleInviteSubmit}>
-          <Stack>
-            <Text size="sm" c="dimmed">
-              {t('members.inviteHint')}
-            </Text>
-            <TextInput
-              label={t('members.email')}
-              type="email"
-              data-autofocus
-              {...inviteForm.getInputProps('email')}
-            />
-            <Text size="sm" c="dimmed">
-              {t('members.membershipInvite')}
-            </Text>
-            {action.isError && (
-              <Alert role="alert" color="red" title={t('action.error')}>
-                {t(
-                  `action.${action.error instanceof MembershipError ? action.error.reason : 'unavailable'}`,
-                )}
-              </Alert>
-            )}
-            <Group justify="flex-end">
-              <Button variant="subtle" onClick={closeInvite} disabled={action.isPending}>
-                {t('action.cancel')}
-              </Button>
-              <Button type="submit" loading={action.isPending}>
-                {t('members.invite')}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
+        {inviteRecipient ? (
+          <InviteInstructions
+            email={inviteRecipient}
+            campaign={campaign.name}
+            onClose={closeInvite}
+          />
+        ) : (
+          <form onSubmit={handleInviteSubmit}>
+            <Stack>
+              <Text size="sm" c="dimmed">
+                {t('members.inviteHint')}
+              </Text>
+              <TextInput
+                label={t('members.email')}
+                type="email"
+                data-autofocus
+                {...inviteForm.getInputProps('email')}
+              />
+              <Text size="sm" c="dimmed">
+                {t('members.membershipInvite')}
+              </Text>
+              {action.isError && (
+                <Alert role="alert" color="red" title={t('action.error')}>
+                  {t(
+                    `action.${action.error instanceof MembershipError ? action.error.reason : 'unavailable'}`,
+                  )}
+                </Alert>
+              )}
+              <Group justify="flex-end">
+                <Button variant="subtle" onClick={closeInvite} disabled={action.isPending}>
+                  {t('action.cancel')}
+                </Button>
+                <Button type="submit" loading={action.isPending}>
+                  {t('members.invite')}
+                </Button>
+              </Group>
+            </Stack>
+          </form>
+        )}
       </Modal>
       <Modal
         opened={!!confirmation}
@@ -659,6 +686,7 @@ export function CampaignMembers({
 
 /** One member on a compact row; the role actions live in its menu. */
 function MemberRow({
+  characters,
   member,
   you,
   protectedDm,
@@ -666,6 +694,7 @@ function MemberRow({
   campaignId,
   onConfirm,
 }: {
+  characters?: ReactNode
   member: Member
   you: boolean
   protectedDm: boolean
@@ -752,6 +781,7 @@ function MemberRow({
           )}
         </Menu.Dropdown>
       </Menu>
+      {characters}
     </li>
   )
 }

@@ -9,6 +9,10 @@ import {
   itemImageTtlSeconds,
   itemImageUrl,
   listCampaignPortraits,
+  listLootBatches,
+  deleteLootBatch,
+  distributeLoot,
+  type LootRequest,
   listRoster,
   loadInventory,
   portraitUrl,
@@ -318,4 +322,19 @@ export function usePendingProposalCount(campaignId: string, enabled: boolean) {
     enabled: enabled && Boolean(state.user),
   })
   return query.data?.filter((proposal) => proposal.status === 'pending').length ?? 0
+}
+
+export const lootBatchesQuery = (userId: string, campaignId: string, after: string | null) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'loot-batches', after],
+    queryFn: ({ signal }) => listLootBatches(campaignId, after, signal),
+  })
+export function useDistributeLoot(campaignId: string) {
+  return useCatalogueMutation(campaignId, (input: LootRequest) => distributeLoot(campaignId, input))
+}
+
+export function useDeleteLootBatch(campaignId: string) {
+  return useCatalogueMutation(campaignId, (input: { id: string; requestId: string }) =>
+    deleteLootBatch(campaignId, input.id, input.requestId),
+  )
 }

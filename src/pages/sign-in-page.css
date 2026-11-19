@@ -71,6 +71,7 @@
   color: #f5ebd6;
   font-size: var(--fs-body);
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .landing-note {
@@ -81,6 +82,26 @@
 
 .landing-copy .landing-alert {
   width: 100%;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.landing-actions .landing-example {
+  --button-hover: rgb(245 235 214 / 0.14);
+  --button-color: #f5ebd6;
+  --button-hover-color: #f5ebd6;
+  --button-bd: 1px solid rgb(245 235 214 / 0.6);
+  min-height: 48px;
+}
+
+.landing-copy .landing-example.mantine-Button-root,
+.landing-copy .landing-example .mantine-Button-label {
+  color: #f5ebd6;
+  border-color: rgb(245 235 214 / 0.65);
 }
 
 /* Google's neutral button: white fill, grey outline, dark ink. */

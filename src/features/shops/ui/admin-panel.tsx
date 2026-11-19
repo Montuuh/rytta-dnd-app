@@ -15,7 +15,8 @@ import {
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Check, EyeOff, Lock, Plus, Trash2, Users } from 'lucide-react'
-import { useSearchParams } from 'react-router'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
+import { Link, useSearchParams } from 'react-router'
 import { PageHead } from '@/shared/ui/page-head'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
@@ -104,6 +105,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
       (prior) => {
         const next = new URLSearchParams(prior)
         next.set(key, value)
+        if (key === 'tab') next.delete('ordersFor')
         return next
       },
       { replace: true },
@@ -155,11 +157,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
 
   return (
     <Stack gap="lg" className="shop-admin">
-      <PageHead
-        title={t('admin.title')}
-        headingRef={heading}
-        description={!playersSeeShops ? t('admin.hiddenFromPlayers') : undefined}
-      />
+      <PageHead title={t('admin.title')} headingRef={heading} />
       <QueryFeedback
         pending={admin.isPending}
         error={admin.isError}
@@ -195,6 +193,8 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
           <Tabs.Panel value="shops" pt="md">
             <ShopsTab
               data={data}
+              moduleEnabled={playersSeeShops}
+              onOrders={(shopId) => setParams({ tab: 'ledger', shop: shopId, ordersFor: shopId })}
               selectedId={params.get('shop')}
               busy={action.isPending || adding}
               onSelect={(id) => setParam('shop', id)}
@@ -215,6 +215,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
           </Tabs.Panel>
           <Tabs.Panel value="ledger" pt="md">
             <Ledger
+              initialShop={params.get('ordersFor')}
               data={data}
               busy={action.isPending}
               onAction={(next) =>
@@ -366,6 +367,8 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
 }
 
 function ShopsTab({
+  moduleEnabled,
+  onOrders,
   data,
   selectedId,
   busy,
@@ -381,6 +384,8 @@ function ShopsTab({
   onRemoveListing,
 }: {
   data: ShopAdmin
+  moduleEnabled: boolean
+  onOrders: (shopId: string) => void
   selectedId: string | null
   busy: boolean
   onSelect: (id: string) => void
@@ -420,7 +425,10 @@ function ShopsTab({
             type="button"
             className={`admin-shop-item ${s.id === shop.id ? 'is-active' : ''}`}
             aria-current={s.id === shop.id ? 'true' : undefined}
-            onClick={() => onSelect(s.id)}
+            onClick={() => {
+              onSelect(s.id)
+              focusWhenReady(() => document.getElementById(`shop-${s.id}`))
+            }}
           >
             <span className="admin-shop-head">
               <ShopThumb path={s.image_path} kind={s.kind} />
@@ -462,26 +470,71 @@ function ShopsTab({
         </Button>
       </nav>
       <section className="admin-shop-detail" aria-labelledby={`shop-${shop.id}`}>
-        <ShopControls
-          key={shop.id}
-          campaignId={campaign.id}
-          shop={shop}
-          characters={data.characters}
-          saveDraft={(draft, revision) =>
-            saveAsync(
-              {
-                kind: 'saveShop',
-                shopId: shop.id,
-                revision,
-                draft,
-                requestId: newRequestId(),
-              },
-              t('admin.notice.shopSettings', { name: draft.name }),
-            )
-          }
-          onRename={() => onRename(shop)}
-          onArchive={() => onArchiveShop(shop)}
-        />
+        <Stack gap="xs">
+          <Title order={2} id={`shop-${shop.id}`} tabIndex={-1} className="user-copy">
+            {shop.name}
+          </Title>
+          <Text size="sm" c="dimmed">
+            {!moduleEnabled
+              ? t('admin.effective.moduleOff')
+              : shop.visibility === 'selected' && shop.access.length
+                ? t('admin.visibility.onlyFor', {
+                    names: data.characters
+                      .filter((c) => shop.access.includes(c.id))
+                      .map((c) => c.name)
+                      .join(', '),
+                  })
+                : t(
+                    shop.visibility === 'party'
+                      ? 'admin.effective.party'
+                      : 'admin.effective.hidden',
+                  )}
+          </Text>
+          {!moduleEnabled && (
+            <Button
+              component={Link}
+              to={`/campaign/${campaign.id}/members?panel=modules`}
+              variant="subtle"
+              w="fit-content"
+            >
+              {t('admin.effective.configure')}
+            </Button>
+          )}
+          <Group gap="xs">
+            <Button
+              variant="light"
+              onClick={() => document.getElementById(`stock-${shop.id}`)?.focus()}
+            >
+              {t('admin.listing.title')}
+            </Button>
+            <Button variant="subtle" onClick={() => onOrders(shop.id)}>
+              {t('admin.shop.pending')}
+            </Button>
+          </Group>
+        </Stack>
+        <details key={shop.id} className="merchant-settings">
+          <summary>{t('admin.shop.settings')}</summary>
+          <ShopControls
+            key={shop.id}
+            campaignId={campaign.id}
+            shop={shop}
+            characters={data.characters}
+            saveDraft={(draft, revision) =>
+              saveAsync(
+                {
+                  kind: 'saveShop',
+                  shopId: shop.id,
+                  revision,
+                  draft,
+                  requestId: newRequestId(),
+                },
+                t('admin.notice.shopSettings', { name: draft.name }),
+              )
+            }
+            onRename={() => onRename(shop)}
+            onArchive={() => onArchiveShop(shop)}
+          />
+        </details>
         <StockList
           shop={shop}
           data={data}

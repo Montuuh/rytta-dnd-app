@@ -25,7 +25,9 @@ import { legalEn } from './legal-en'
 import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
 import { castEn } from './cast-en'
+import { activationEn } from './activation-en'
 export const en = {
+  ...activationEn,
   ...legalEn,
   ...diceEn,
   ...levelupEn,

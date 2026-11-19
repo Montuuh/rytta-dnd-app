@@ -18,10 +18,12 @@ type View = 'needs' | 'awaiting' | 'history'
  * revert. Views are a segmented control with live counts; people and shops are chips.
  */
 export function Ledger({
+  initialShop,
   data,
   busy,
   onAction,
 }: {
+  initialShop: string | null
   data: ShopAdmin
   busy: boolean
   onAction: (action: ShopAction) => void
@@ -37,7 +39,7 @@ export function Ledger({
     void orders.refetch().finally(() => setRefreshing(false))
   }
   const [character, setCharacter] = useState('all')
-  const [shop, setShop] = useState('all')
+  const [shop, setShop] = useState(initialShop ?? 'all')
   const filtered = (orders.data ?? []).filter(
     (o) =>
       (character === 'all' || o.character.id === character) &&
@@ -48,7 +50,7 @@ export function Ledger({
     awaiting: filtered.filter((o) => o.status === 'countered'),
     history: filtered.filter((o) => !isOpenOrder(o)),
   }
-  const [chosen, setChosen] = useState<View | null>(null)
+  const [chosen, setChosen] = useState<View | null>(initialShop ? 'needs' : null)
   // Orders the DM just acted on stay in the current view (showing their new status) until
   // the view changes, so the card and the focus inside it never vanish mid-task.
   const [kept, setKept] = useState<string[]>([])
@@ -61,8 +63,8 @@ export function Ledger({
     chosen ??
     (groups.needs.length > 0 ? 'needs' : groups.awaiting.length > 0 ? 'awaiting' : 'history')
   const list = filtered.filter((o) => groups[view].includes(o) || kept.includes(o.id))
-  const shopsWithOrders = data.shops.filter((s) =>
-    (orders.data ?? []).some((o) => o.shop.id === s.id),
+  const shopsWithOrders = data.shops.filter(
+    (s) => s.id === initialShop || (orders.data ?? []).some((o) => o.shop.id === s.id),
   )
   return (
     <Stack gap="md">
@@ -102,7 +104,7 @@ export function Ledger({
           </Group>
         </Chip.Group>
       )}
-      {shopsWithOrders.length > 1 && (
+      {(initialShop || shopsWithOrders.length > 1) && (
         <Chip.Group value={shop} onChange={(v) => setShop(v as string)}>
           <Group gap="xs" className="kind-filter" role="group" aria-label={t('admin.ledger.shop')}>
             <Chip value="all">{t('admin.ledger.allShops')}</Chip>

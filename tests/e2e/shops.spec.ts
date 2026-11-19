@@ -250,6 +250,26 @@ test('a Player without the shops module sees why', async ({ page }) => {
   await expect(page.getByText('El DM todavía no ha abierto las tiendas.')).toBeVisible()
 })
 
+test('RYT-144 the DM can reach stock, pending orders and the campaign visibility setting from a shop', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { inventory: true })
+  await shopsFixture(page, fixture)
+  await page.goto(shops)
+  await expect(page.getByText('Oculta al grupo porque Tiendas está desactivado.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Gestionar módulos de jugadores' })).toHaveAttribute(
+    'href',
+    /panel=modules/,
+  )
+  await expect(page.getByRole('switch', { name: /Abierta/ })).toBeHidden()
+  await page.getByRole('button', { name: 'Existencias', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Existencias' })).toBeFocused()
+  await page.getByRole('button', { name: 'Pedidos pendientes' }).click()
+  await expect(page.getByText('Por responder (0)')).toBeVisible()
+  await page.getByRole('tab', { name: 'Tiendas' }).click()
+  await audit(page, info.outputPath('selected-shop.png'))
+})
+
 test('the DM runs shops inline: create, visibility, stock, prices, ledger and revert', async ({
   page,
 }, info) => {
@@ -260,7 +280,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(shops)
   await expect(page.getByRole('heading', { level: 1, name: 'Tiendas' })).toBeVisible()
-  await expect(page.getByText('Los jugadores aún no ven Tiendas')).toBeVisible()
+  await expect(page.getByText('Oculta al grupo porque Tiendas está desactivado.')).toBeVisible()
   const list = page.getByRole('navigation', { name: 'Tiendas' })
   await expect(list.getByRole('button', { name: /Bóveda del contrabandista/ })).toContainText(
     'Oculta',
@@ -268,6 +288,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await expect(page.getByRole('button', { name: /Anillo de la marea/ })).toContainText('Solo Arin')
   await audit(page, info.outputPath('admin-shops.png'))
 
+  await page.getByText('Ajustes de tienda', { exact: true }).click()
   // Shop settings save as soon as they change; no form.
   const saved = page
     .getByRole('status')
@@ -282,6 +303,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await expect(page.locator('.admin-shop-item.is-active')).toContainText('Oculta')
   await page.getByRole('tab', { name: /Bitácora/ }).click()
   await page.getByRole('tab', { name: 'Tiendas' }).click()
+  await page.getByText('Ajustes de tienda', { exact: true }).click()
   await expect(page.getByRole('radio', { name: 'Con aprobación del DM' })).toBeChecked()
   await page.locator('.shop-controls').getByText('Algunos personajes', { exact: true }).click()
   await page.getByRole('group', { name: 'Personajes que la ven' }).getByText('Arin').click()
@@ -336,6 +358,7 @@ test('the DM runs shops inline: create, visibility, stock, prices, ledger and re
   await expect(page.getByRole('heading', { level: 2, name: 'Herbolario de Mara' })).toBeVisible()
 
   await list.getByRole('button', { name: /Bóveda del contrabandista/ }).click()
+  await page.getByText('Ajustes de tienda', { exact: true }).click()
   const remove = page.getByRole('button', { name: 'Eliminar tienda Bóveda del contrabandista' })
   await remove.click()
   const archive = page.getByRole('dialog', { name: '¿Eliminar Bóveda del contrabandista?' })
@@ -556,6 +579,7 @@ test('RYT-107 the DM uploads, keeps and removes the shop image', async ({ page }
   await shopsFixture(page, fixture)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(shops)
+  await page.getByText('Ajustes de tienda', { exact: true }).click()
   const field = page.getByRole('group', { name: 'Imagen de la tienda' })
   await field.locator('input[type="file"]').setInputFiles({
     name: 'stall.png',

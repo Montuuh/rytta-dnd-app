@@ -965,7 +965,7 @@ test('RYT-135 on its side the update notice stacks above the measure readout and
   seedScene(server)
   await page.goto(`./#/campaign/${campaignId}/party`)
   await page.getByRole('switch', { name: 'Vista jugador', exact: true }).click()
-  await expect(page.getByText('Estás viendo la mesa como Arin')).toBeVisible()
+  await expect(page.getByText('Viendo como jugador · Arin')).toBeVisible()
   await page.goto(`./#/campaign/${campaignId}/tabletop`)
   await expect(page.locator('.tt-pm')).toBeVisible({ timeout: 15_000 })
   const update = page.locator('.update-notice')

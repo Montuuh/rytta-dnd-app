@@ -4619,9 +4619,7 @@
       "priority": "P2",
       "owner": "frontend",
       "status": "review",
-      "dependsOn": [
-        "RYT-144"
-      ],
+      "dependsOn": ["RYT-144"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
         "Merged from the art direction section (colour and borders, icons and tabs). The shop banner strip is dropped: it contradicts the audit request to show stock first and the taller banner already agreed in RYT-125.",
@@ -4638,9 +4636,7 @@
       "validation": [
         "Before and after captures per screen; design critique of the rendered result; independent UI review."
       ],
-      "evidence": [
-      "docs/evidence/RYT-151/validation.md"
-    ]
+      "evidence": ["docs/evidence/RYT-151/validation.md"]
     }
   ]
 }

@@ -4619,9 +4619,7 @@
       "priority": "P2",
       "owner": "frontend",
       "status": "review",
-      "dependsOn": [
-        "RYT-125"
-      ],
+      "dependsOn": ["RYT-125"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
         "Changed from the audit: the hold-to-use seal is an approved design and already has tap and keyboard paths, so it is not replaced without an owner decision. Only the order of actions and the result line are in scope.",

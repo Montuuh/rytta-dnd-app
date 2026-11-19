@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18",
+  "updatedAt": "2026-11-19",
   "items": [
     {
       "id": "RYT-000",
@@ -4597,7 +4597,7 @@
       "title": "Table activation and campaign preparation",
       "priority": "P1",
       "owner": "producer",
-      "status": "done",
+      "status": "review",
       "dependsOn": [],
       "sources": ["Product audit, 18 November 2026: activate a table and prepare a campaign."],
       "scope": "Public turn example, invitation handoff, first session, campaign context, command centre, character assignment, reviewed loot distribution and shop management.",
@@ -4606,12 +4606,205 @@
         "Expose setup outcomes, solo rehearsal, campaign identity and an exit from player preview.",
         "Navigate to active combat, catalogue or bestiary in two actions and manage character links from Members.",
         "Deliver items to several recipients in one reviewed operation and reuse a saved distribution.",
-        "Show effective shop visibility and prioritise stock and pending orders."
+        "Show effective shop visibility and prioritise stock and pending orders.",
+        "Producer review, 19 November 2026: the ticket was closed without an independent UI review record for its source. It stays in review until that verdict is recorded, and the two-account Google sign-in from invitation to an assigned sheet is exercised on the hosted service with its result."
       ],
       "validation": [
         "Project checks, browser workflows at 390px and 820px, accessibility, independent UI review, SQL and hosted migration verification."
       ],
       "evidence": ["docs/evidence/RYT-144/validation.md"]
+    },
+    {
+      "id": "RYT-145",
+      "title": "Creatures, encounters and live sessions",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "in_progress",
+      "dependsOn": ["RYT-144"],
+      "sources": [
+        "19 November 2026: implement the creatures, encounters and live session section of the product audit. The session close uses one optional step per screen."
+      ],
+      "scope": "Contextual bestiary selection, creature variants and instance adjustments, encounter plans, live targeting, public table preview and session continuity.",
+      "acceptance": [
+        "Add three creatures and one different creature to the intended encounter without losing filters; distinguish template and single-instance changes.",
+        "Duplicate a draft, link its scene and rewards, adjust attendees and see difficulty and outstanding initiative.",
+        "Target the correct identical enemy, retain the turn bar and review before ending combat.",
+        "Preview the public display, identify stale connections and see the selected map tool.",
+        "Close a session with three optional screens and retrieve the encounter, reward status, next scene and private note later. Players can read only explicitly shared recap text.",
+        "Producer review, 19 November 2026, before review status: the typecheck passes (the session browser test imports fail it); database tests cover the three private tables and six functions with denials for anon, outsider, Player and cross-campaign DM, replay, stale revision, attendee and duplicate limits, and the PRE copy; a stale save keeps the text the DM typed; player preview shows the Player recap, not the DM journal; a decision record states that a campaign keeps one handoff and one shared recap, replaced on each close; the public example captures are regenerated after the console changes."
+      ],
+      "validation": [
+        "Focused unit, SQL denial and mobile/tablet browser tests; project checks; independent UI and security reviews; hosted staging and PRE rehearsal."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-146",
+      "title": "Pilot with real tables: from the public link to the first shared turn",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "planned",
+      "dependsOn": ["RYT-122", "RYT-144", "RYT-145"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "The audit measured nothing and observed no user; its priorities are proposals. This pilot decides which remaining audit items are built."
+      ],
+      "scope": "Owner-run observation of three to five DMs outside the project, each with one Player, on their own devices. Task: prepare an ambush, invite the Player, hand out a potion and show the first turn on a shared screen. Start with three tables; add two only if the first blocks disagree. Non-goals: paid recruiting, tracking scripts, recording real campaign content, new features during the pilot.",
+      "acceptance": [
+        "A one-page protocol fixes the task, what is recorded per table (first choice, backtracks, help requests, time, first block) and the consent wording.",
+        "Each table is run once on a physical phone and once with a tablet or screen as the shared display; who acts and a closed door are checked from two metres with a miniature on the map.",
+        "Results are recorded per table without personal data, with the step where each table stopped.",
+        "Pass mark: at least four in five (or all three) complete the sequence without spoken help. Every first block becomes a ticket or a recorded decision not to act.",
+        "The deferred audit items (order results by merchant, rest summary for the DM, rules sheet in combat, list and detail on tablet, catalogue art) are each confirmed or dropped with the pilot evidence."
+      ],
+      "validation": [
+        "Protocol and per-table records in docs/evidence/RYT-146; the producer links every resulting ticket."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-147",
+      "title": "Activation and return figures from the database, without tracking scripts",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Changed from the audit: hosting analytics would add a script, and the privacy page states that Rytta has no analytics. The figures come from aggregate, read-only queries run by the owner."
+      ],
+      "scope": "A documented, read-only aggregate report over campaigns created since launch. Activation: first encounter started with a second accepted member within 14 days. Solo preparation counted apart. Return: an activated campaign with DM activity on another day within 28 days. Non-goals: browser instrumentation, per-user rows, new tables, dashboards, any change to the privacy statement beyond what the owner approves.",
+      "acceptance": [
+        "The report returns counts per weekly cohort with denominators and sample size, and nothing that identifies a person or a campaign.",
+        "Demo content, fixture accounts and the owner campaigns are excluded by a stated rule.",
+        "It runs with the owner role only; no function or view is exposed to anon or authenticated callers.",
+        "The definitions and the way to run it are documented, and the privacy page is checked against aggregate use of service data; a needed wording change is listed for the owner.",
+        "A first run on production is recorded with its date."
+      ],
+      "validation": [
+        "Query tested on staging data with known counts; first production run recorded; no migration unless reviewed."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-148",
+      "title": "Help when joining goes wrong: published contact and the wrong Google account",
+      "priority": "P1",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-122"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Producer review: the legal copy still reads that the contact address is pending and will be published before launch, and the service has been open since 18 November 2026."
+      ],
+      "scope": "A person who signs in with an account that has no invitation learns which account is signed in and how to switch, and can reach the contact address from that screen and from the legal pages. Non-goals: a support inbox, email delivery of invitations, the reconnect action summary proposed by the audit (existing stale notices cover it).",
+      "acceptance": [
+        "With the contact variable set, no page shows the pending wording; a build without it fails the release check instead of publishing the placeholder.",
+        "My campaigns with no campaign and no invitation names the signed-in address and offers to switch account in one action.",
+        "The invitation instructions copied by the DM name the address the Player must use, and the empty state repeats that hint.",
+        "The contact address is reachable in two actions from the sign-in page and from an empty My campaigns.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Browser tests for the uninvited account and the missing variable; project checks; independent UI review."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-149",
+      "title": "Item card: using comes first, discarding moves out of the way",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-125"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Changed from the audit: the hold-to-use seal is an approved design and already has tap and keyboard paths, so it is not replaced without an owner decision. Only the order of actions and the result line are in scope."
+      ],
+      "scope": "On the phone item card, the use control and its effect lead; quantity-to-discard, All and Discard move under a secondary action. After use the card states how many remain and the undo window. Options are shown to the owner before building. Non-goals: removing the seal, backend changes, new item art.",
+      "acceptance": [
+        "An options page with the current card and at most two alternatives is approved by the owner before implementation.",
+        "A Player uses one unit and reads the remaining count without the discard controls on screen.",
+        "Short tap, hold and keyboard each consume exactly one unit; a double tap consumes one.",
+        "Discard keeps its confirmation and the stack cap from RYT-125.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Browser tests for the three activation paths; captures at 390px and 820px; independent UI review."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-150",
+      "title": "Confirmed results shown where the action happened: health changes and deliveries",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-145"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Kept from the feedback section only where a second person depends on the result. Level-up, rest and dice flourishes, filter transitions and persistent invitation states are dropped or already delivered."
+      ],
+      "scope": "After the server confirms, damage and healing show the signed change beside the health figure, and a delivery or a consumed unit writes one result line naming the person and the quantity. Buttons show a pending state between tap and confirmation. The table screen never claims that the shared display received a change: it says saved, and the stale marker from RYT-145 covers the rest. Non-goals: receiver acknowledgements, particles, sound, new realtime channels.",
+      "acceptance": [
+        "Applying damage to the second of two identical enemies shows the signed change and the new total on that row only, and the event stays in the log.",
+        "Three quick turn changes end on the right combatant with no queued animation and no focus move.",
+        "On a slow connection a double tap on deliver shows delivering then delivered once; a failure keeps the selection and quantity with retry beside it.",
+        "With reduced motion the figure and marker update at once; the result is announced once to assistive technology.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Browser tests with throttled network and reduced motion; project checks; independent UI review."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-151",
+      "title": "One primary action per screen: filled colour, labelled controls and DM destinations",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-144"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Merged from the art direction section (colour and borders, icons and tabs). The shop banner strip is dropped: it contradicts the audit request to show stock first and the taller banner already agreed in RYT-125."
+      ],
+      "scope": "An inventory of the DM screens for three rules: the filled accent marks the one primary action, an icon-only control with a consequence carries a verb, and the cross only closes. Fix the screens that break them, starting with the item store, the command centre and shops. Options are shown to the owner first. Non-goals: new themes, new fonts, replacing the icon set, card redesigns, tablet split views.",
+      "acceptance": [
+        "An options page lists each screen with its current primary action and the proposed change, and is approved by the owner before implementation.",
+        "In both themes each audited screen has one filled action; decoration and selection no longer use the same fill.",
+        "Every icon-only control that gives, shows to the group, cancels or deletes has a visible verb or sits in a named menu; targets stay 44px.",
+        "Health, gold and initiative use tabular figures with their unit on every audited screen.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Before and after captures per screen; design critique of the rendered result; independent UI review."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-152",
+      "title": "Landing shows play at a table: scene pilot with real captures",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-146"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Reduced from the generated-art section to one pilot. Item, creature and environment batches wait for this result and for the pilot tables; no paid generation without an owner decision."
+      ],
+      "scope": "One table scene in portrait and landscape framings, with real Rytta captures composed on the devices, compared against the current hero. Record the production rules for any generated illustration. Non-goals: regenerating existing art, generated icons or interface mock-ups, catalogue batches, any paid service.",
+      "acceptance": [
+        "The owner approves the brief and the way the image is produced, including its cost, before any asset is made.",
+        "At 390px and 820px, with the headline covered, the pilot DMs or the owner recognise in-person play and the main action; the comparison with the current hero is recorded.",
+        "The asset has a recorded style reference, prompt, version and approved crop; it ships as WebP at display size with reserved space and an accessible fallback.",
+        "The second emblem inside the illustration is removed only if the comparison favours the new scene.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Comparison sheet in both themes and on a slow connection; asset weight against the current hero; independent UI review."
+      ],
+      "evidence": []
     }
   ]
 }

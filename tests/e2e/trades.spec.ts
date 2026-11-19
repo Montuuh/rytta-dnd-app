@@ -313,7 +313,29 @@ test('RYT-149 Give from the item card puts the item on the table and Bea only ac
 
   await arin.getByRole('button', { name: /Poción de curación, cantidad 3/ }).click()
   const card = arin.locator('.item-card-drawer')
-  await card.getByRole('button', { name: 'Más acciones' }).click()
+  const more = card.getByRole('button', { name: 'Más acciones' })
+  await more.click()
+  const menu = arin.getByRole('menu', { name: 'Más acciones' })
+  await expect(menu.getByRole('menuitem')).toHaveText([
+    'Descartar…',
+    'Ofrecer en trueque a…',
+    'Dar a…',
+  ])
+  await audit(arin)
+  // Discard from the menu opens the folded row and lands on its amount.
+  await arin.getByRole('menuitem', { name: 'Descartar…' }).click()
+  await expect(card.getByRole('textbox', { name: 'Cuántos descartar' })).toBeFocused()
+  await expect(card.getByRole('button', { name: 'Descartar…' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
+  // Escape closes the menu first and leaves the card open.
+  await more.click()
+  await arin.keyboard.press('Escape')
+  await expect(menu).toBeHidden()
+  await expect(card).toBeVisible()
+  await expect(more).toBeFocused()
+  await more.click()
   await arin.getByRole('menuitem', { name: 'Dar a…' }).click()
   const share = card.getByRole('region', { name: 'Dar Poción de curación' })
   await expect(share.getByRole('heading', { name: 'Dar Poción de curación' })).toBeFocused()
@@ -323,7 +345,10 @@ test('RYT-149 Give from the item card puts the item on the table and Bea only ac
   await audit(arin)
   await people.getByRole('button', { name: 'Bea' }).click()
   await expect(arin.getByText('Invitación enviada a Bea.')).toBeVisible()
-  await expect(card.getByRole('status').filter({ hasText: 'Esperando a que Bea' })).toBeVisible()
+  await expect(more).toBeFocused()
+  await expect(card.locator('.item-card-live')).toContainText(
+    'Esperando a que Bea acepte el trueque.',
+  )
 
   const invite = bea.getByRole('dialog', { name: 'Arin quiere comerciar contigo' })
   await invite.getByRole('button', { name: 'Abrir el trueque' }).click({ timeout: 15_000 })

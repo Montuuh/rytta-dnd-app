@@ -466,6 +466,6 @@ export const inventoryEs = {
   'inventory.share.giveNote': 'No pides nada a cambio. Será suyo cuando acepte el trueque.',
   'inventory.share.count': 'Cuántos',
   'inventory.share.to': 'A quién',
-  'inventory.share.nobody': 'No hay más Jugadores activos en la campaña.',
+  'inventory.share.waitingShort': 'Esperando a que acepte',
   'inventory.share.waiting': 'Esperando a que {{name}} acepte el trueque.',
 } satisfies Record<keyof typeof inventoryEn, string>

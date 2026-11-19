@@ -4618,7 +4618,7 @@
       "title": "Item card: using comes first, discarding moves out of the way",
       "priority": "P2",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "review",
       "dependsOn": [
         "RYT-125"
       ],
@@ -4639,7 +4639,7 @@
       "validation": [
         "Browser tests for the three activation paths; captures at 390px and 820px; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-149/validation.md"]
     }
   ]
 }

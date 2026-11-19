@@ -46,7 +46,7 @@ for (const [language, scheme] of [
     await seal.focus()
     await page.keyboard.press('Enter')
     await expect(page.getByRole('dialog').locator('.card-result')).toContainText(
-      es ? 'Usaste 1. Te quedan 2' : 'Used 1. 2 left',
+      es ? 'Usaste 1. Te quedan 2' : 'Used one, 2 left',
     )
     await expect(page.locator('.undo-fuse')).toHaveCount(0)
     await expect(page.getByText('×2')).toBeVisible()
@@ -348,14 +348,8 @@ test('RYT-149 tap, hold, keyboard and a double tap each spend exactly one unit',
   // The effect leads; discarding is folded away and the menu names its actions.
   await expect(card.locator('.item-card-effect')).toHaveText('Gasta 1 de 3')
   await expect(card.getByRole('textbox', { name: 'Cuántos descartar' })).toBeHidden()
-  await card.getByRole('button', { name: 'Más acciones' }).click()
-  const menu = page.getByRole('menu', { name: 'Más acciones' })
-  // Offer and Give need a trading partner; they are covered in trades.spec.ts.
-  await expect(menu.getByRole('menuitem')).toHaveText(['Descartar…'])
-  await audit(page, info.outputPath('card-menu.png'))
-  await page.keyboard.press('Escape')
-  await expect(menu).toBeHidden()
-  await expect(card).toBeVisible()
+  // Without anyone to trade with the menu would only repeat the Discard row, so it is left out.
+  await expect(card.getByRole('button', { name: 'Más acciones' })).toHaveCount(0)
   const seal = card.getByRole('button', { name: /Usar 1 × Poción/ })
   // Two activations in a row, as a screen reader's double tap sends them: one unit.
   await seal.evaluate((element: HTMLElement) => {
@@ -382,4 +376,23 @@ test('RYT-149 tap, hold, keyboard and a double tap each spend exactly one unit',
     .getByRole('button', { name: /Deshacer/ })
     .click()
   await expect(card.getByText('×2')).toBeVisible()
+  // A failed use can be tried again; the earlier result line does not claim it worked.
+  let failOnce = true
+  await page.route('**/rpc/use_item', (route) => {
+    if (!failOnce) return route.fallback()
+    failOnce = false
+    return route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
+  })
+  await seal.focus()
+  await page.keyboard.press('Enter')
+  await expect(card.getByRole('alert')).toBeVisible()
+  await expect(card.locator('.card-result')).toHaveCount(0)
+  // The retry is a double activation too: still one request.
+  await seal.evaluate((element: HTMLElement) => {
+    element.click()
+    element.click()
+  })
+  await expect(card.getByRole('alert')).toHaveCount(0)
+  await expect(card.locator('.card-result')).toContainText('Usaste 1. Te queda 1')
+  expect(uses).toHaveLength(4)
 })

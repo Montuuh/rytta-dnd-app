@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { GlossaryTerm, GlossaryText, glossaryIds } from '@/features/glossary'
 import { ActionIcon, Alert, Drawer, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core'
 import { DrawerRoot } from '@/shared/ui/overlays'
@@ -79,11 +79,15 @@ export function ItemCard({
   const [panel, setPanel] = useState<'discard' | 'offer' | 'give' | null>(null)
   const [shareAmount, setShareAmount] = useState<number | null>(1)
   const discardId = useId()
-  const discardToggle = useRef<HTMLButtonElement>(null)
   const discardBody = useRef<HTMLDivElement>(null)
   const shareHeading = useRef<HTMLHeadingElement>(null)
   const offers = useItemOffer()
   const usedRevision = useRef<number | null>(null)
+  const menuTrigger = useRef<HTMLButtonElement>(null)
+  // A failed request leaves the stack unchanged, so the same revision may be used again.
+  useEffect(() => {
+    if (error) usedRevision.current = null
+  }, [error])
   // The DM's field also grants, so it only stops at 1000; a Player can only discard what the stack holds.
   const limit = dm ? 1000 : stack.quantity
   const count = Math.min(amount ?? 1, limit)
@@ -206,20 +210,39 @@ export function ItemCard({
       : null
   // Offer and Give need someone to trade with, so they only exist where the viewer acts as the
   // card's character; an equipped stack is not tradeable.
-  const sharing = canEdit && !dm && offers !== null && !stack.equipped_slot
+  const sharing =
+    canEdit && !dm && offers !== null && offers.partners.length > 0 && !stack.equipped_slot
   const shareLimit = stack.quantity
   const shareCount = Math.min(shareAmount ?? 1, shareLimit)
+  // Focus moves once the panel is on screen and the menu has handed focus back to its trigger.
+  const focusTarget = useRef<'discard' | 'share' | 'menu' | null>(null)
+  useEffect(() => {
+    const target = focusTarget.current
+    if (!target) return
+    focusTarget.current = null
+    const id = window.setTimeout(() => {
+      const element =
+        target === 'discard'
+          ? (discardBody.current?.querySelector<HTMLElement>('input') ??
+            discardBody.current?.querySelector<HTMLElement>('button'))
+          : target === 'share'
+            ? shareHeading.current
+            : menuTrigger.current
+      element?.focus()
+      element?.scrollIntoView({ block: 'nearest' })
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [panel])
+  // A chosen menu item hands focus to its panel instead of back to the menu button.
+  const [handOff, setHandOff] = useState(false)
   const open = (next: typeof panel) => {
+    setHandOff(true)
+    focusTarget.current = next === 'discard' ? 'discard' : next ? 'share' : null
     setPanel(next)
-    requestAnimationFrame(() => {
-      if (next === 'discard')
-        discardBody.current?.querySelector<HTMLElement>('input, button')?.focus()
-      else if (next) shareHeading.current?.focus()
-    })
   }
   const closeShare = () => {
+    focusTarget.current = 'menu'
     setPanel(null)
-    requestAnimationFrame(() => discardToggle.current?.focus())
   }
   const waitingFor =
     offers?.waiting?.itemId === stack.id
@@ -276,15 +299,18 @@ export function ItemCard({
             <span className="user-copy">{name}</span>
           </Drawer.Title>
           <Group gap={4} wrap="nowrap" className="item-card-tools">
-            {canEdit && (
+            {sharing && (
               <Menu
                 position="bottom-end"
                 withinPortal
                 shadow="md"
                 withInitialFocusPlaceholder={false}
+                returnFocus={!handOff}
+                onOpen={() => setHandOff(false)}
               >
                 <Menu.Target>
                   <ActionIcon
+                    ref={menuTrigger}
                     variant="subtle"
                     color="gray"
                     size={44}
@@ -414,24 +440,26 @@ export function ItemCard({
                     </UnstyledButton>
                   )}
                 </Group>
-                {undo && (
-                  <CardResult
-                    text={
-                      undo.used
-                        ? t('inventory.card.usedLeft', { count: stack.quantity })
-                        : undo.message
-                    }
-                    startedAt={undo.startedAt}
-                    pending={pending}
-                    onUndo={undo.onUndo}
-                    onExpire={undo.onExpire}
-                  />
-                )}
-                {waitingFor && (
-                  <Text size="sm" role="status" className="item-card-waiting user-copy">
-                    {t('inventory.share.waiting', { name: waitingFor })}
-                  </Text>
-                )}
+                <div aria-live="polite" className="item-card-live">
+                  {undo && !error && (
+                    <CardResult
+                      text={
+                        undo.used
+                          ? t('inventory.card.usedLeft', { count: stack.quantity })
+                          : undo.message
+                      }
+                      startedAt={undo.startedAt}
+                      pending={pending}
+                      onUndo={undo.onUndo}
+                      onExpire={undo.onExpire}
+                    />
+                  )}
+                  {waitingFor && (
+                    <Text size="sm" className="item-card-waiting user-copy">
+                      {t('inventory.share.waiting', { name: waitingFor })}
+                    </Text>
+                  )}
+                </div>
                 {(panel === 'offer' || panel === 'give') && offers && (
                   <section className="item-card-share" aria-labelledby={`${discardId}-share`}>
                     <h4
@@ -464,47 +492,47 @@ export function ItemCard({
                         onChange={setShareAmount}
                       />
                     )}
-                    {offers.partners.length === 0 ? (
-                      <Text size="sm">{t('inventory.share.nobody')}</Text>
-                    ) : (
-                      <div
-                        role="group"
-                        aria-label={t('inventory.share.to')}
-                        className="item-card-partners"
-                      >
-                        {offers.partners.map((partner) => {
-                          const reason =
-                            offers.tradingWith && offers.tradingWith !== partner.id
+                    <div
+                      role="group"
+                      aria-label={t('inventory.share.to')}
+                      className="item-card-partners"
+                    >
+                      {offers.partners.map((partner) => {
+                        const reason =
+                          offers.waiting?.partnerId === partner.id
+                            ? t('inventory.share.waitingShort')
+                            : offers.waiting
                               ? t('trade.otherOpen')
-                              : partner.busy && offers.tradingWith !== partner.id
-                                ? t('trade.partnerIsBusy', { name: partner.name })
-                                : null
-                          const blocked = Boolean(reason) || pending || offers.waiting !== null
-                          return (
-                            <UnstyledButton
-                              key={partner.id}
-                              className="item-card-partner"
-                              aria-disabled={blocked || undefined}
-                              aria-describedby={reason ? `${discardId}-${partner.id}` : undefined}
-                              onClick={() => {
-                                if (blocked) return
-                                offers.offer({
-                                  partnerId: partner.id,
-                                  partnerName: partner.name,
-                                  itemId: stack.id,
-                                  quantity: shareCount,
-                                  give: panel === 'give',
-                                })
-                                closeShare()
-                              }}
-                            >
-                              <span className="user-copy">{partner.name}</span>
-                              {reason && <small id={`${discardId}-${partner.id}`}>{reason}</small>}
-                            </UnstyledButton>
-                          )
-                        })}
-                      </div>
-                    )}
+                              : offers.tradingWith && offers.tradingWith !== partner.id
+                                ? t('trade.otherOpen')
+                                : partner.busy && offers.tradingWith !== partner.id
+                                  ? t('trade.partnerIsBusy', { name: partner.name })
+                                  : null
+                        const blocked = Boolean(reason) || pending
+                        return (
+                          <UnstyledButton
+                            key={partner.id}
+                            className="item-card-partner"
+                            aria-disabled={blocked || undefined}
+                            aria-describedby={reason ? `${discardId}-${partner.id}` : undefined}
+                            onClick={() => {
+                              if (blocked) return
+                              offers.offer({
+                                partnerId: partner.id,
+                                partnerName: partner.name,
+                                itemId: stack.id,
+                                quantity: shareCount,
+                                give: panel === 'give',
+                              })
+                              closeShare()
+                            }}
+                          >
+                            <span className="user-copy">{partner.name}</span>
+                            {reason && <small id={`${discardId}-${partner.id}`}>{reason}</small>}
+                          </UnstyledButton>
+                        )
+                      })}
+                    </div>
                     <UnstyledButton className="quiet-link" onClick={closeShare}>
                       {t('common.cancel')}
                     </UnstyledButton>
@@ -513,7 +541,6 @@ export function ItemCard({
                 {dm && discardControls}
                 <div className="item-card-discard">
                   <UnstyledButton
-                    ref={discardToggle}
                     className="item-card-disclosure"
                     aria-expanded={panel === 'discard'}
                     aria-controls={`${discardId}-discard`}
@@ -583,7 +610,7 @@ function CardResult({
   return (
     <div className="card-result">
       <div className="card-result-row">
-        <Text size="sm" role="status" className="user-copy card-result-text">
+        <Text size="sm" className="user-copy card-result-text">
           {text}
         </Text>
         <UnstyledButton

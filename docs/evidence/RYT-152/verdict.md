@@ -3,7 +3,7 @@
 Decision, 19 November 2026: the scene does not ship. The landing keeps the current hero and the
 compass emblem in the illustration, exactly as on main.
 
-The owner reviewed the comparison sheet (https://claude.ai/artifact/MSj7DZJrzdZbWf7RMR5VGc):
+The owner reviewed the comparison sheet (private, shared with the owner):
 current hero against the composed scene, headline covered at 390, 820 and 1280 px, Hearth and
 Parchment, English and Spanish, slow connection and blocked image. In their words: "no termina de
 integrarse bien lo del movil y la tablet. Si no se integra bien, prefiero que ni salga nada."

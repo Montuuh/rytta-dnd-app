@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18",
+  "updatedAt": "2026-11-19",
   "items": [
     {
       "id": "RYT-000",
@@ -4612,6 +4612,35 @@
         "Project checks, browser workflows at 390px and 820px, accessibility, independent UI review, SQL and hosted migration verification."
       ],
       "evidence": ["docs/evidence/RYT-144/validation.md"]
+    },
+    {
+      "id": "RYT-151",
+      "title": "One primary action per screen: filled colour, labelled controls and DM destinations",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": [
+        "RYT-144"
+      ],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Merged from the art direction section (colour and borders, icons and tabs). The shop banner strip is dropped: it contradicts the audit request to show stock first and the taller banner already agreed in RYT-125.",
+        "Owner decision on the options page, 19 November 2026: A, the selected tab, filter or shop is marked with accent ink and a rail or underline, and the active filter carries a check mark; A, the filled action is the one used at the table: Distribute loot in the storeroom, Invite player in Members and Add item in Shops. Set level becomes outlined and is enabled only when the number changes."
+      ],
+      "scope": "An inventory of the DM screens for three rules: the filled accent marks the one primary action, an icon-only control with a consequence carries a verb, and the cross only closes. Fix the screens that break them, starting with the item store, the command centre and shops. The owner approved the options on 19 November 2026: selection uses accent ink with a rail or underline, never the fill, and the filled action is the table action of each screen. Non-goals: new themes, new fonts, replacing the icon set, card redesigns, tablet split views.",
+      "acceptance": [
+        "An options page lists each screen with its current primary action and the proposed change, and is approved by the owner before implementation. Approved on 19 November 2026.",
+        "In both themes each audited screen has one filled action; decoration and selection no longer use the same fill.",
+        "Every icon-only control that gives, shows to the group, cancels or deletes has a visible verb or sits in a named menu; targets stay 44px.",
+        "Health, gold and initiative use tabular figures with their unit on every audited screen.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Before and after captures per screen; design critique of the rendered result; independent UI review."
+      ],
+      "evidence": [
+      "docs/evidence/RYT-151/validation.md"
+    ]
     }
   ]
 }

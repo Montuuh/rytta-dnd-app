@@ -69,8 +69,9 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--app-accent);
-  color: var(--app-on-accent);
+  background: var(--app-surface);
+  color: var(--app-accent);
+  box-shadow: inset 0 0 0 1.5px var(--app-accent);
 }
 .bst-tile:has(input:checked) .bst-tile-seal {
   display: grid;
@@ -111,8 +112,9 @@
   color: var(--app-accent);
 }
 .bst-tile:has(input:checked) .bst-type-glyph {
-  background: var(--app-accent);
-  color: var(--app-on-accent);
+  background: var(--app-select-tint);
+  color: var(--app-accent);
+  box-shadow: inset 0 0 0 1.5px var(--app-accent);
 }
 .bst-type-name {
   min-width: 0;

@@ -119,6 +119,7 @@ export function AddCombatants({
           <Stack gap="xs" mt={6}>
             {!running && assignedMissing.length > 0 && (
               <Button
+                variant="outline"
                 leftSection={<Users size={16} aria-hidden="true" />}
                 disabled={pending}
                 onClick={async () =>
@@ -155,6 +156,7 @@ export function AddCombatants({
                     <span className="combat-bench-name">{character.name}</span>
                     <span className="combat-bench-add" aria-hidden="true">
                       <UserPlus size={18} />
+                      {t('combat.add.short')}
                     </span>
                   </UnstyledButton>
                 </li>
@@ -405,6 +407,7 @@ function CreatureForm({
               </Text>
               <SegmentedControl
                 fullWidth
+                className="ink-seg"
                 aria-labelledby="creature-hp-mode"
                 value={hpMode}
                 onChange={(value) => setHpMode(value as 'average' | 'roll')}
@@ -421,6 +424,7 @@ function CreatureForm({
             </Text>
             <SegmentedControl
               fullWidth
+              className="ink-seg"
               aria-labelledby="creature-side"
               value={side}
               onChange={(value) => setSide(value as 'enemy' | 'ally')}
@@ -447,7 +451,7 @@ function CreatureForm({
             />
           )}
           <Group justify="flex-end">
-            <Button type="submit" disabled={!valid || pending} loading={pending}>
+            <Button type="submit" variant="outline" disabled={!valid || pending} loading={pending}>
               {t('combat.add.submit')}
             </Button>
           </Group>

@@ -904,3 +904,57 @@ test('RYT-104 the merge confirmation says it cannot be undone', async ({ page })
     drawer.getByText('No se puede deshacer: Cuerda de cáñamo sale del almacén para siempre.'),
   ).toBeVisible()
 })
+
+/** Names of the visible controls in `main` painted with the filled accent (RYT-151). */
+const filledControls = (page: Page) =>
+  page.evaluate(() => {
+    const probe = document.createElement('i')
+    probe.style.color = 'var(--app-accent)'
+    document.body.append(probe)
+    const accent = getComputedStyle(probe).color
+    probe.remove()
+    return (
+      [...document.querySelectorAll<HTMLElement>('main *')]
+        // Text-bearing elements only: slider tracks and marks are value displays, not actions.
+        .filter(
+          (el) =>
+            el.offsetParent &&
+            el.textContent?.trim() &&
+            getComputedStyle(el).backgroundColor === accent,
+        )
+        .map((el) => el.textContent?.trim())
+    )
+  })
+
+test('RYT-151 the storeroom and shops fill only the table action and mark selection in ink', async ({
+  page,
+}) => {
+  const fixture = await identityFixture(page, { inventory: true, party: true })
+  await shopsFixture(page, fixture)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(url)
+  await expect(page.getByRole('button', { name: 'Repartir botín', exact: true })).toBeVisible()
+  expect(await filledControls(page)).toEqual(['Repartir botín'])
+  await expect(page.getByRole('button', { name: 'Nuevo objeto', exact: true })).toHaveAttribute(
+    'data-variant',
+    'outline',
+  )
+  // The open panel and the pressed filter carry accent ink and a rail or outline, never the fill.
+  const tab = page.getByRole('tab', { name: 'Almacén de objetos' })
+  await expect(tab).toHaveAttribute('aria-selected', 'true')
+  expect(await tab.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/inset/)
+  const all = page.getByRole('button', { name: /^Todo/ })
+  await expect(all).toHaveAttribute('aria-pressed', 'true')
+  expect(await all.evaluate((el) => getComputedStyle(el, '::before').content)).not.toBe('none')
+
+  await page.goto(`./#/campaign/${campaignId}/shops`)
+  await expect(page.getByRole('button', { name: 'Añadir objeto' })).toBeVisible()
+  expect(await filledControls(page)).toEqual(['Añadir objeto'])
+  const views = page.getByRole('navigation', { name: 'Existencias y pedidos' })
+  await expect(views.getByRole('button', { name: 'Existencias' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  )
+  await views.getByRole('button', { name: 'Pedidos pendientes' }).click()
+  await expect(page.getByRole('tab', { name: /Bitácora/ })).toHaveAttribute('aria-selected', 'true')
+})

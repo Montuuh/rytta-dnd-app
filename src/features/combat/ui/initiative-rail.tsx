@@ -235,6 +235,9 @@ function RowBody({
   return (
     <>
       <span className="combat-init" title={t('combat.initiative.label')}>
+        {combatant.initiative !== null && combatant.initiative !== undefined && (
+          <span className="visually-hidden">{t('combat.initiative.label')} </span>
+        )}
         {combatant.initiative ?? (
           <Hourglass size={16} aria-label={t('combat.initiative.missing')} />
         )}

@@ -143,6 +143,27 @@ How it works:
 - Never hardcode a theme color in components. Use the tokens. Resource and status colors
   (gold, water, rations, danger, success, rarity) keep their meaning across themes.
 
+## Primary action and selection (RYT-151)
+
+The filled accent marks one action per screen: the one the DM uses at the table. Item
+storeroom: Distribute loot (New item outlined, Manage catalogue a quiet link). Members: Invite
+player; Set level N is outlined and enabled only when the stepper differs from the campaign's
+level. Shops: Add item (New shop outlined). Combat: the fight-flow button (Start, Next turn);
+adding party members or creatures uses the light variant. Bestiary: Add to encounter in the
+stat block (New creature light). Dialogs and drawers are their own screen with their own fill.
+
+Selection is never the fill. The selected command-centre tab, shop, segment or pressed toggle
+uses accent ink on `--app-select-tint` with a 3px rail (`--select-rail`, vertical lists) or
+underline (`--select-underline`, tabs, tiles and segments). A pressed `.category-chip` adds
+an accent outline and a check in place of its glyph. Shared pieces in `src/app/styles.css`:
+`.ink-segments` for a row of views (current one with `aria-current`), `.select-toggle` for
+an `aria-pressed` button and `.tabular` for figures. States such as the acting combatant's
+initiative or a spent use follow the same ink-and-outline treatment.
+
+An icon-only control that gives, shows to the group, cancels or deletes carries a visible verb
+(Add, Remove) or sits in a named ⋯ menu; the cross only closes. Hit points, gold and initiative
+use tabular figures with their unit (PG/HP, po/gp, a visible or visually hidden "Initiative").
+
 ## Page heads, phone overlays and destructive actions (RYT-035)
 
 Every page starts with `PageHead`: the h1, one short lede, primary actions and the

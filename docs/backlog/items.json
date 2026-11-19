@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18",
+  "updatedAt": "2026-11-19",
   "items": [
     {
       "id": "RYT-000",
@@ -4612,6 +4612,32 @@
         "Project checks, browser workflows at 390px and 820px, accessibility, independent UI review, SQL and hosted migration verification."
       ],
       "evidence": ["docs/evidence/RYT-144/validation.md"]
+    },
+    {
+      "id": "RYT-152",
+      "title": "Landing shows play at a table: scene pilot with real captures",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Reduced from the generated-art section to one pilot. Item, creature and environment batches wait for this result and for the pilot tables; no paid generation without an owner decision.",
+        "Owner decision on the options page, 19 November 2026: A, real Rytta captures on a phone and a tablet composed over the current hero illustration, with no cost and no generated art; A, the owner validates the comparison now and the pilot tables confirm it later.",
+        "Owner verdict on the comparison sheet, 19 November 2026: \"no termina de integrarse bien lo del movil y la tablet. Si no se integra bien, prefiero que ni salga nada.\" The current hero and its compass stay; improving backgrounds with generated art is parked until the end of the backlog."
+      ],
+      "scope": "One table scene in portrait and landscape framings: real Rytta captures on a phone and a tablet composed over the current hero illustration, compared against the current hero. No generated or commissioned art; the pilot tables of RYT-146 confirm the result when they run. Non-goals: regenerating existing art, generated icons or interface mock-ups, catalogue batches, any paid service. Parked after the owner rejected the composed scene on 19 November 2026: the landing keeps the current hero, and improving backgrounds and illustrations with generated art waits until the end of the backlog, with no paid or API generation.",
+      "acceptance": [
+        "The owner approves the brief and the way the image is produced, including its cost, before any asset is made. Approved on 19 November 2026: composed real captures, no cost.",
+        "At 390px and 820px, with the headline covered, the owner recognises in-person play and the main action, and the pilot DMs confirm it when RYT-146 runs; the comparison with the current hero is recorded.",
+        "The composition records the captures used, their date and source screens, the device frames and the approved crop; it ships as WebP at display size with reserved space and an accessible fallback.",
+        "The second emblem inside the illustration is removed only if the comparison favours the new scene.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Comparison sheet in both themes and on a slow connection; asset weight against the current hero; independent UI review."
+      ],
+      "evidence": ["docs/evidence/RYT-152/verdict.md", "docs/evidence/RYT-152/composition.md"]
     }
   ]
 }

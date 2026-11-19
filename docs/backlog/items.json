@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-18",
+  "updatedAt": "2026-11-19",
   "items": [
     {
       "id": "RYT-000",
@@ -4612,6 +4612,30 @@
         "Project checks, browser workflows at 390px and 820px, accessibility, independent UI review, SQL and hosted migration verification."
       ],
       "evidence": ["docs/evidence/RYT-144/validation.md"]
+    },
+    {
+      "id": "RYT-145",
+      "title": "Creatures, encounters and live sessions",
+      "priority": "P1",
+      "owner": "producer",
+      "status": "review",
+      "dependsOn": ["RYT-144"],
+      "sources": [
+        "19 November 2026: implement the creatures, encounters and live session section of the product audit. The session close uses one optional step per screen."
+      ],
+      "scope": "Contextual bestiary selection, creature variants and instance adjustments, encounter plans, live targeting, public table preview and session continuity.",
+      "acceptance": [
+        "Add three creatures and one different creature to the intended encounter without losing filters; distinguish template and single-instance changes.",
+        "Duplicate a draft, link its scene and rewards, adjust attendees and see difficulty and outstanding initiative.",
+        "Target the correct identical enemy, retain the turn bar and review before ending combat.",
+        "Preview the public display, identify stale connections and see the selected map tool.",
+        "Close a session with three optional screens and retrieve the encounter, reward status, next scene and private note later. Players can read only explicitly shared recap text.",
+        "Validate role denials, replay, stale writes and PRE copying. Preserve a stale draft, keep player preview on the public projection, record the single current handoff and refresh the public DM console example."
+      ],
+      "validation": [
+        "Focused unit, SQL denial and mobile/tablet browser tests; project checks; independent UI and security reviews; hosted staging and PRE rehearsal."
+      ],
+      "evidence": ["docs/evidence/RYT-145/validation.md"]
     }
   ]
 }

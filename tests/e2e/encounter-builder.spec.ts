@@ -419,7 +419,7 @@ test('RYT-145 links a draft, previews attendance, and opens an independent copy'
   )
 })
 
-test('RYT-145 preparation targets and focus remain usable at 150% text', async ({ page }) => {
+test('RYT-145 preparation targets and focus remain usable at 150% text', async ({ page }, info) => {
   await prepare(page)
   await page.addStyleTag({ content: 'html {font-size:150%}' })
   const prep = page.getByRole('region', { name: 'Preparación de la sesión' })
@@ -438,6 +438,10 @@ test('RYT-145 preparation targets and focus remain usable at 150% text', async (
       expect(bounds?.width).toBeGreaterThanOrEqual(44)
       expect(bounds?.height).toBeGreaterThanOrEqual(44)
     }
+    if (process.env.RYT_EVIDENCE && name === 'Preparar encuentro')
+      await page.screenshot({
+        path: `docs/evidence/RYT-145/preparation-150-${info.project.name}.png`,
+      })
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
     await expect(trigger).toBeFocused()

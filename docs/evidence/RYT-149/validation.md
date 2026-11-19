@@ -31,3 +31,7 @@ The owner approved the options page on 19 November 2026: discard folds under the
 - Declined or expired invitations while an offer waits. The waiting request is dropped when the invitation ends, but no browser case covers it.
 - Real phones and real screen readers.
 - The offer is placed by the giver's open app when the partner accepts. If the giver closes the app first, the trade opens empty and items can be added in the trade window as before.
+
+## Final review
+
+The independent UI review ran three rounds. In round one, a failed use left the seal unusable and choosing Discard from the menu left focus on the menu button. Round one also flagged focus after the share panel, status announcements, English copy, a single-item menu, and an unexplained dimmed partner. In round two, a double activation while an error was shown sent two requests. Round three passed on the current source at 390 and 820 px with touch, 150% text, both themes and both languages. The review found an unnamed close button on app notifications, which predates this ticket and is tracked separately.

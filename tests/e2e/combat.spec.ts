@@ -833,9 +833,18 @@ test('RYT-041 dialog actions share a row or stack full width, also with 150% tex
   /** Either one row (same top) or stacked full width with the action above Cancel. */
   const expectDeliberate = async (dialog: Locator, action: string) => {
     const actions = dialog.locator('.combat-dialog-actions')
-    const cancel = (await actions.getByRole('button', { name: 'Cancelar' }).boundingBox())!
-    const primary = (await actions.getByRole('button', { name: action }).boundingBox())!
-    const row = (await actions.boundingBox())!
+    const buttons = actions.getByRole('button')
+    await expect(buttons.nth(0)).toHaveAccessibleName('Cancelar')
+    await expect(buttons.nth(1)).toHaveAccessibleName(action)
+    // The dialog can shift as it opens. Measure both controls in the same layout frame.
+    const { cancel, primary, row } = await actions.evaluate((node) => {
+      const [cancelButton, primaryButton] = node.querySelectorAll('button')
+      return {
+        cancel: cancelButton!.getBoundingClientRect().toJSON() as { y: number; width: number },
+        primary: primaryButton!.getBoundingClientRect().toJSON() as { y: number; width: number },
+        row: { width: node.getBoundingClientRect().width },
+      }
+    })
     if (Math.abs(cancel.y - primary.y) > 1) {
       expect(primary.y).toBeLessThan(cancel.y)
       for (const box of [cancel, primary]) expect(Math.abs(box.width - row.width)).toBeLessThan(2)

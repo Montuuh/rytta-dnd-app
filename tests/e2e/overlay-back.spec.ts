@@ -107,7 +107,10 @@ test('RYT-125 Back closes the table setup dialog and stays in the tabletop', asy
   await combat.install(page)
   await server.install(page)
   await page.goto(`${base}/tabletop`)
-  const setupButton = page.getByRole('button', { name: 'Configurar la mesa' })
+  const launch = page.getByRole('button', { name: 'Abrir pantalla para jugadores' })
+  await launch.click()
+  const projection = page.getByRole('dialog', { name: 'Pantalla para jugadores' })
+  const setupButton = projection.getByRole('button', { name: 'Configurar la mesa' })
   await expect(setupButton).toBeVisible({ timeout: 15_000 })
   const url = page.url()
   await setupButton.click()
@@ -116,7 +119,9 @@ test('RYT-125 Back closes the table setup dialog and stays in the tabletop', asy
     page.getByRole('dialog', { name: 'Configuración de la pantalla de mesa' }),
     url,
   )
-  await expect(setupButton).toBeVisible()
+  await expect(setupButton).toBeFocused()
+  await backCloses(page, projection, url)
+  await expect(launch).toBeFocused()
 })
 
 test('RYT-125 Back closes the trade item picker first and keeps the trade window', async ({

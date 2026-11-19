@@ -21,3 +21,9 @@ The browser sessions used deterministic fixtures. Physical projection and two li
 ## Review corrections
 
 The first independent review identified ambiguous account/game wording, draft loss on skip, a missing retry action, focus loss and intermittent accessibility and loading failures. The final implementation distinguishes game closure from sign-out, keeps typed notes, offers a safe retry after transient failure and focuses the step heading. Mobile confirmation actions stack, and the public preview makes stale data visible. The end-menu, attendee selection and journal regression tests exercise these cases. The complete unit and database suite passed 1,109 tests.
+
+## Final local verification
+
+The independent interface re-review passed for the submitted UI fingerprint. It ran 16 focused browser scenarios and 18 repetitions at 390 and 820 pixels. Two minor observations remain: Skip and Next coincide when no encounter is selected, and the earlier variant-footer density observation was not reassessed in that final pass.
+
+GitHub Actions declined to start all five jobs because of account billing or spending limits. The complete local browser run recorded 1,405 passing scenarios, 142 device-matrix skips and three failures across two tests. The table setup regression now navigates through the public preview and checks that Back restores focus twice. The layout regression measures the two dialog buttons in the same browser frame: an initial measurement had compared coordinates from different moments as the dialog moved. All three initially failing scenarios then passed without retries, for 1,408 verified scenarios. An earlier local browser run was interrupted when a concurrent build replaced its test bundle; the complete run used a dedicated build.

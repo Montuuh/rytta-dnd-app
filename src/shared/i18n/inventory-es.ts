@@ -454,4 +454,18 @@ export const inventoryEs = {
   'inventory.portrait.chooseOther': 'Elegir otra imagen',
   'inventory.portrait.quotaPlayer':
     'El almacenamiento de la campaña está lleno y no se guardó la imagen. Avísale a tu DM.',
+  'inventory.card.spends': 'Gasta 1 de {{count}}',
+  'inventory.card.usedLeft_one': 'Usaste 1. Te queda {{count}}',
+  'inventory.card.usedLeft_other': 'Usaste 1. Te quedan {{count}}',
+  'inventory.card.discardOpen': 'Descartar…',
+  'inventory.card.more': 'Más acciones',
+  'inventory.card.offerTo': 'Ofrecer en trueque a…',
+  'inventory.card.giveTo': 'Dar a…',
+  'inventory.share.offerTitle': 'Ofrecer {{name}} en trueque',
+  'inventory.share.giveTitle': 'Dar {{name}}',
+  'inventory.share.giveNote': 'No pides nada a cambio. Será suyo cuando acepte el trueque.',
+  'inventory.share.count': 'Cuántos',
+  'inventory.share.to': 'A quién',
+  'inventory.share.nobody': 'No hay más Jugadores activos en la campaña.',
+  'inventory.share.waiting': 'Esperando a que {{name}} acepte el trueque.',
 } satisfies Record<keyof typeof inventoryEn, string>

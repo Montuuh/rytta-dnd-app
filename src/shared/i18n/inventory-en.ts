@@ -451,4 +451,19 @@ export const inventoryEn = {
   'inventory.portrait.chooseOther': 'Choose another image',
   'inventory.portrait.quotaPlayer':
     'The campaign storage is full, so the picture was not saved. Let your DM know.',
+  'inventory.card.spends': 'Uses 1 of {{count}}',
+  'inventory.card.usedLeft_one': 'Used 1. {{count}} left',
+  'inventory.card.usedLeft_other': 'Used 1. {{count}} left',
+  'inventory.card.discardOpen': 'Discard…',
+  'inventory.card.more': 'More actions',
+  'inventory.card.offerTo': 'Offer in trade to…',
+  'inventory.card.giveTo': 'Give to…',
+  'inventory.share.offerTitle': 'Offer {{name}} in trade',
+  'inventory.share.giveTitle': 'Give {{name}}',
+  'inventory.share.giveNote':
+    'Nothing is asked in return. It is theirs once they accept the trade.',
+  'inventory.share.count': 'How many',
+  'inventory.share.to': 'To whom',
+  'inventory.share.nobody': 'No other active Players in this campaign.',
+  'inventory.share.waiting': 'Waiting for {{name}} to accept the trade.',
 }

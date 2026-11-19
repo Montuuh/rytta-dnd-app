@@ -278,3 +278,73 @@ test('RYT-097 trading starts from the portrait icon, also with an unshared teamm
   ).toEqual([])
   await expectTouchTargets(page, 'main button:visible')
 })
+
+test('RYT-149 Give from the item card puts the item on the table and Bea only accepts', async ({
+  browser,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = tradeServer()
+  const options = { viewport: info.project.use.viewport, hasTouch: info.project.use.hasTouch }
+  const arinContext = await browser.newContext(options)
+  const beaContext = await browser.newContext(options)
+  const arin = await arinContext.newPage()
+  const bea = await beaContext.newPage()
+  for (const page of [arin, bea]) await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(arin, { player: true, party: true, sheet: 'complete', inventory: true })
+  await identityFixture(bea, { player: true, party: true, sheet: 'complete', as: peerId })
+  await server.install(arin, characterId)
+  await server.install(bea, beaId)
+  const stacks = arin.waitForResponse((r) => r.url().includes('/rest/v1/inventory_items'))
+  await arin.goto(`./#/campaign/${campaignId}/inventory`)
+  await bea.goto(`./#/campaign/${campaignId}/party`)
+  const potionStack = ((await (await stacks).json()) as { id: string; quantity: number }[]).find(
+    (row) => row.quantity === 3,
+  )!
+  // The trade fixture knows the satchel's potion stack, as the SQL join would.
+  server.inventories[characterId]!.push({
+    item_id: potionStack.id,
+    definition_id: '60000000-0000-4000-8000-0000000000f1',
+    name: 'Poción de curación',
+    icon: 'flask-conical',
+    rarity: 'uncommon',
+    category: 'consumable',
+    quantity: 3,
+  })
+
+  await arin.getByRole('button', { name: /Poción de curación, cantidad 3/ }).click()
+  const card = arin.locator('.item-card-drawer')
+  await card.getByRole('button', { name: 'Más acciones' }).click()
+  await arin.getByRole('menuitem', { name: 'Dar a…' }).click()
+  const share = card.getByRole('region', { name: 'Dar Poción de curación' })
+  await expect(share.getByRole('heading', { name: 'Dar Poción de curación' })).toBeFocused()
+  await share.getByRole('button', { name: 'Cuántos: uno más' }).click()
+  const people = share.getByRole('group', { name: 'A quién' })
+  await expect(people.getByRole('button')).toHaveText(['Bea', 'Cato'])
+  await audit(arin)
+  await people.getByRole('button', { name: 'Bea' }).click()
+  await expect(arin.getByText('Invitación enviada a Bea.')).toBeVisible()
+  await expect(card.getByRole('status').filter({ hasText: 'Esperando a que Bea' })).toBeVisible()
+
+  const invite = bea.getByRole('dialog', { name: 'Arin quiere comerciar contigo' })
+  await invite.getByRole('button', { name: 'Abrir el trueque' }).click({ timeout: 15_000 })
+  const beaWindow = bea.getByRole('dialog', { name: 'Trueque con Arin' })
+  await expect(beaWindow.getByRole('img', { name: 'Poción de curación, ×2' })).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(beaWindow.getByText('Arin ha aceptado esta oferta')).toBeVisible({
+    timeout: 10_000,
+  })
+  const offer = server.calls.find((c) => c.method === 'set_trade_offer' && c.actor === characterId)
+  expect(offer?.body.offer_items).toEqual([{ item_id: potionStack.id, quantity: 2 }])
+  expect(offer?.body.offer_gold).toBe(0)
+  await beaWindow.getByRole('button', { name: 'Aceptar el trato' }).click()
+  await expect(bea.getByRole('dialog', { name: 'Trato cerrado' })).toBeVisible({
+    timeout: 10_000,
+  })
+  expect(server.calls.filter((c) => c.method === 'confirm_trade').map((c) => c.actor)).toEqual([
+    characterId,
+    beaId,
+  ])
+  await arinContext.close()
+  await beaContext.close()
+})

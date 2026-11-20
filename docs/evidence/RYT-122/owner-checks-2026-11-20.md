@@ -9,8 +9,8 @@ production project afterwards. Times are UTC.
   individual smoke items of RYT-122 (combat realtime for a Player, image upload, account export,
   party level, table screen, phone map, dice, concentration) stay unrecorded one by one.
 - Sign-in on a real iPhone with Safari works, including the return from Google sign-in.
-  Not done yet: accepting an invitation with a second Google account and losing access after
-  revocation (RYT-002).
+  Later the same day, on the iPhone, a second Google account accepted a DM invitation and lost
+  access to the campaign when the DM revoked it (RYT-002).
 - Google brand verification is still not approved. The reason shown by Google has not been
   recorded yet.
 
@@ -23,7 +23,14 @@ The owner signed in with a second Google account and deleted it from the app.
 - The Auth user and its identity no longer exist.
 - Auth users and profiles both count 8; no profile, storage object or user reference in the
   `public` and `private` schemas points to a missing Auth user.
-- Not done: the capture of the privacy URL on the Google consent screen.
+- The Google consent screen, captured on 20 November 2026 with the signed-in account blurred
+  ([capture](../RYT-115/google-consent-privacy-2026-11-20.png)), links the privacy policy to
+  `https://rytta.pages.dev/#/privacy` and the terms to `https://rytta.pages.dev/#/terms`. It still
+  names the Supabase project domain instead of Rytta, which brand verification should change.
+- Likely cause of the failed brand verification: both links are hash routes. A crawler ignores the
+  fragment, fetches the home page and finds no privacy policy without JavaScript. Serving the legal
+  pages at real paths with static HTML (RYT-122) should fix it; the reason Google gives is still
+  to be read.
 
 ## Official SRD pack (RYT-093)
 

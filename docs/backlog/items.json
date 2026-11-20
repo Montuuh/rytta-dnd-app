@@ -73,7 +73,8 @@
       "dependsOn": ["RYT-001"],
       "sources": [
         "Drive: DM/player roles",
-        "User: multi-campaign hub, in-app invitations and multiple DMs"
+        "User: multi-campaign hub, in-app invitations and multiple DMs",
+        "Owner check, 20 November 2026: on a real iPhone, a second Google account accepted the DM invitation and lost access to the campaign when the DM revoked it."
       ],
       "scope": "Campaign hub, creation/selection, seven-day in-app email invitations, multiple DMs, handover and non-destructive removal; no email notifications. Character-targeted invitations and assignment extend this flow in RYT-003 (ADR 004).",
       "acceptance": [
@@ -93,7 +94,8 @@
         "docs/evidence/RYT-001-002/supabase-connection.md",
         "docs/evidence/RYT-001-002/release-readiness.md",
         "docs/evidence/RYT-001-002/production-configuration.md",
-        "docs/evidence/RYT-001-002/pages-deployment.md"
+        "docs/evidence/RYT-001-002/pages-deployment.md",
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
       ]
     },
     {
@@ -3768,7 +3770,8 @@
         "Security audit finding M-3 and operations gaps 1 and 2: foreign keys to auth users block erasure, no account deletion or export exists, and there is no privacy policy, terms or attribution page.",
         "Delivered 2026-11-17: migrations applied to production (hosted 20261117063453 and 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply for each; hosted PRE actor checks passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 1 CHANGES_REQUIRED (8 findings, all resolved), round 2 PASS. Remaining: production Auth-user removal unverified, legal text review and draft flag, VITE_CONTACT_EMAIL, frontend release and the privacy URL for the consent screen (RYT-122). Follow-ups RYT-120 and RYT-121.",
         "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, and the owner approved the legal texts; not Done because criterion 5 still lacks a record of the privacy policy URL on the Google consent screen and criterion 2 lacks evidence that the Auth user is removed in production.",
-        "Verified on 20 November 2026: the owner deleted a second Google account from the app in production; the Auth user is gone and no profile, storage object or user reference is left behind. The privacy URL capture on the Google consent screen is still pending."
+        "Verified on 20 November 2026: the owner deleted a second Google account from the app in production; the Auth user is gone and no profile, storage object or user reference is left behind. The privacy URL capture on the Google consent screen is still pending.",
+        "20 November 2026: the Google consent screen links the privacy policy to the hash route /#/privacy; capture in docs/evidence/RYT-115/google-consent-privacy-2026-11-20.png."
       ],
       "scope": "A signed-in user can export their data and delete their account. Deletion leaves or hands over campaigns (sole-DM campaigns are transferred or deleted after an explicit confirmation), nulls actor and author references, removes memberships, invitations, profile and the user's storage objects, and then removes the Auth user server-side without shipping a server secret to the browser. Foreign keys to Auth users get explicit delete actions. Public privacy policy, terms and SRD and art attribution pages are reachable signed out and linked from the landing page and settings. Backend and frontend work; reviewed migrations tested in PRE first. Non-goals: legal text authorship (owner supplies or approves the text), erasure of PRE copies and retained backups (covered by RYT-116), autonomous release.",
       "acceptance": [
@@ -3805,7 +3808,8 @@
         "Observation 2026-11-18 from RYT-134: hosted migrations are delivered through a path that decodes backslash-u escapes in transit, so migrations must not contain them; build such characters server-side instead. The staging apply caught it before production (docs/evidence/RYT-134/validation.md).",
         "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done.",
         "Progress 2026-11-18: the daily backup workflow ran on main for the first time (run 44362679087: roles, schema and data as a 14-day artifact, checksums verified, row counts equal to production at the time), recorded in docs/evidence/RYT-116/staging-bootstrap.md. Criterion 6 stays open: the restore rehearsal into staging has not been done and needs a staging database connection secret, which the owner has to provide. Staging still has no sign-in (its own OAuth client) and no frontend, and PRE still lives in the production project.",
-        "20 November 2026: with the repository public again, the two daily backup artifacts were downloadable by anyone and were deleted; the backup workflow is disabled until the dump is encrypted before upload."
+        "20 November 2026: with the repository public again, the two daily backup artifacts were downloadable by anyone and were deleted; the backup workflow is disabled until the dump is encrypted before upload.",
+        "20 November 2026: the owner added the repository secret STAGING_DB_URL for the restore rehearsal, and a separate Google OAuth web client named Rytta staging was created in the Google Auth Platform project with the staging Supabase callback as its only redirect URI. Enabling the Google provider in the staging project with that client is the owner's step; JavaScript origins wait for the staging site."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -3977,7 +3981,9 @@
       "sources": [
         "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published.",
         "Release update 2026-11-18: PR 13 merged to main on 2026-11-18 and the frontend is live at https://rytta.pages.dev on Cloudflare Pages (the GitHub Pages site and the first Worker are gone; the repository is private); the owner verified sign-in there and approved the legal texts. Not closed: still without evidence are the Quality workflow result of PR 13, where the contact and site variables are set now that the build runs on Cloudflare Pages, the hosted Auth settings with their date, the published build matching the merged commit, and the smoke test of Player combat realtime, an image upload and an account export.",
-        "Owner check, 20 November 2026: real sessions on the production site work; the individual smoke items were not recorded one by one. Google brand verification is still not approved."
+        "Owner check, 20 November 2026: real sessions on the production site work; the individual smoke items were not recorded one by one. Google brand verification is still not approved.",
+        "20 November 2026: the consent screen links privacy and terms as hash routes (/#/privacy, /#/terms), which a crawler cannot read; serving the legal pages at real paths with static HTML is the likely fix for brand verification.",
+        "20 November 2026: the branding page lists the production Supabase project domain as an authorized domain. A supabase.co subdomain cannot be verified in Search Console, so brand verification may also need a custom auth domain or the owner's decision to stay unbranded."
       ],
       "scope": "Owner-run release of the launch delivery: commit and review the working tree, set the VITE_CONTACT_EMAIL and VITE_SITE_URL repository variables, apply the hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA), publish the frontend, then smoke-test production. Non-goals: new features, destructive migrations, paid services without an owner decision, autonomous release.",
       "acceptance": [
@@ -4658,30 +4664,6 @@
       "evidence": ["docs/evidence/RYT-145/validation.md"]
     },
     {
-      "id": "RYT-146",
-      "title": "Pilot with real tables: from the public link to the first shared turn",
-      "priority": "P1",
-      "owner": "producer",
-      "status": "planned",
-      "dependsOn": ["RYT-122", "RYT-144", "RYT-145"],
-      "sources": [
-        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
-        "The audit measured nothing and observed no user; its priorities are proposals. This pilot decides which remaining audit items are built."
-      ],
-      "scope": "Owner-run observation of three to five DMs outside the project, each with one Player, on their own devices. Task: prepare an ambush, invite the Player, hand out a potion and show the first turn on a shared screen. Start with three tables; add two only if the first blocks disagree. Non-goals: paid recruiting, tracking scripts, recording real campaign content, new features during the pilot.",
-      "acceptance": [
-        "A one-page protocol fixes the task, what is recorded per table (first choice, backtracks, help requests, time, first block) and the consent wording.",
-        "Each table is run once on a physical phone and once with a tablet or screen as the shared display; who acts and a closed door are checked from two metres with a miniature on the map.",
-        "Results are recorded per table without personal data, with the step where each table stopped.",
-        "Pass mark: at least four in five (or all three) complete the sequence without spoken help. Every first block becomes a ticket or a recorded decision not to act.",
-        "The deferred audit items (order results by merchant, rest summary for the DM, rules sheet in combat, list and detail on tablet, catalogue art) are each confirmed or dropped with the pilot evidence."
-      ],
-      "validation": [
-        "Protocol and per-table records in docs/evidence/RYT-146; the producer links every resulting ticket."
-      ],
-      "evidence": []
-    },
-    {
       "id": "RYT-147",
       "title": "Activation and return figures from the database, without tracking scripts",
       "priority": "P1",
@@ -4740,12 +4722,13 @@
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
         "Reduced from the generated-art section to one pilot. Item, creature and environment batches wait for this result and for the pilot tables; no paid generation without an owner decision.",
         "Owner decision on the options page, 19 November 2026: A, real Rytta captures on a phone and a tablet composed over the current hero illustration, with no cost and no generated art; A, the owner validates the comparison now and the pilot tables confirm it later.",
-        "Owner verdict on the comparison sheet, 19 November 2026: \"no termina de integrarse bien lo del movil y la tablet. Si no se integra bien, prefiero que ni salga nada.\" The current hero and its compass stay; improving backgrounds with generated art is parked until the end of the backlog."
+        "Owner verdict on the comparison sheet, 19 November 2026: \"no termina de integrarse bien lo del movil y la tablet. Si no se integra bien, prefiero que ni salga nada.\" The current hero and its compass stay; improving backgrounds with generated art is parked until the end of the backlog.",
+        "20 November 2026: the owner dropped RYT-146 (pilot with real tables) from the backlog; they will run their own pilot outside it."
       ],
-      "scope": "One table scene in portrait and landscape framings: real Rytta captures on a phone and a tablet composed over the current hero illustration, compared against the current hero. No generated or commissioned art; the pilot tables of RYT-146 confirm the result when they run. Non-goals: regenerating existing art, generated icons or interface mock-ups, catalogue batches, any paid service. Parked after the owner rejected the composed scene on 19 November 2026: the landing keeps the current hero, and improving backgrounds and illustrations with generated art waits until the end of the backlog, with no paid or API generation.",
+      "scope": "One table scene in portrait and landscape framings: real Rytta captures on a phone and a tablet composed over the current hero illustration, compared against the current hero. No generated or commissioned art; the owner's own pilot confirms the result. Non-goals: regenerating existing art, generated icons or interface mock-ups, catalogue batches, any paid service. Parked after the owner rejected the composed scene on 19 November 2026: the landing keeps the current hero, and improving backgrounds and illustrations with generated art waits until the end of the backlog, with no paid or API generation.",
       "acceptance": [
         "The owner approves the brief and the way the image is produced, including its cost, before any asset is made. Approved on 19 November 2026: composed real captures, no cost.",
-        "At 390px and 820px, with the headline covered, the owner recognises in-person play and the main action, and the pilot DMs confirm it when RYT-146 runs; the comparison with the current hero is recorded.",
+        "At 390px and 820px, with the headline covered, the owner recognises in-person play and the main action, and the owner's own pilot confirms it; the comparison with the current hero is recorded.",
         "The composition records the captures used, their date and source screens, the device frames and the approved crop; it ships as WebP at display size with reserved space and an accessible fallback.",
         "The second emblem inside the illustration is removed only if the comparison favours the new scene.",
         "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
@@ -4829,6 +4812,55 @@
         "Before and after captures per screen; design critique of the rendered result; independent UI review."
       ],
       "evidence": ["docs/evidence/RYT-151/validation.md"]
+    },
+    {
+      "id": "RYT-153",
+      "title": "Super admin: platform role, campaign directory and an admin panel",
+      "priority": "P2",
+      "owner": "producer",
+      "status": "planned",
+      "dependsOn": ["RYT-093"],
+      "sources": [
+        "Owner request, 20 November 2026: \"Haz que haya super admins, mete a [the owner's admin Google account]. Este super admin va a poder buscar todas las campañas para suscribirse o guardar como favoritos, y va a poder acceder con herramientas de superadmin / DM (valorar si es lo mismo o no). Super admin será también el encargado de manejar la biblioteca de contenido. Yo haría un panel de superadmin con múltiples y útiles herramientas. Este super admin, los DM y jugadores no deben poder verlo en el apartado jugadores de la campaña.\"",
+        "The account address is kept out of the repository: the grant is made in each environment, as for content editors."
+      ],
+      "scope": "A platform super admin role held in a private table and granted outside the repository, starting with the account the owner named. Super admins hold every content editor right (RYT-093) and get an admin panel opened from the account menu, hidden for everyone else: a searchable directory of every campaign with save-as-favourite (subscribe), opening any campaign, and other tools chosen on an options page (for example usage counts, content library, account lookup, audit). Decide on the options page whether opening a campaign gives read-only oversight, the DM tools, or read-only with an explicit, audited switch to DM tools. A super admin never appears in the campaign members, party or player lists, presence or player-facing logs, and is never counted as a member. Non-goals: impersonating a Player, reading private notes outside what the chosen mode grants, a service-role key in the browser, deleting campaigns or accounts from the panel.",
+      "acceptance": [
+        "An options page with the panel, the campaign directory and the access mode is approved by the owner before implementation.",
+        "The role lives in a private table with no browser write path; RLS and security-definer RPCs check it server side, and every super admin action that opens or changes a campaign is written to an audit log.",
+        "A super admin can search all campaigns, save and remove favourites and open any campaign in the approved mode; a DM, Player, outsider and anon get Forbidden on every admin RPC.",
+        "Members, party, player lists, presence and player-visible history never show a super admin, verified by tests for a DM and a Player of a campaign the super admin opened.",
+        "Super admins manage the content library with the same rights as content editors.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite denial tests for anon, outsider, Player, DM and cross-campaign DM; hosted check of the grant in production; browser tests for the panel and the hidden presence; independent UI review."
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-154",
+      "title": "Art prompts that follow the project art direction for every image picker",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Owner request, 20 November 2026: \"Cuando se quiere crear una criatura, un objeto, o un personaje, me gustaría que la imagen siguiera las doctrinas de arte de todo el proyecto en general. Yo añadiría, para ahorrar tokens, en vez de regenerar la imagen, generar un prompt para cada generación/selector de imagen de Rytta, que dependiendo del item se modificará el prompt para que siga la convención del resto de items (criaturas, personajes, objetos, etc.).\"",
+        "Generated art with paid or API image generation stays parked (RYT-152, 19 November 2026); this ticket only writes prompts."
+      ],
+      "scope": "Every place where an image is chosen or uploaded (creature, item, character portrait and the other image pickers) offers a copyable prompt built from one shared art direction (docs/interface-art.md, docs/sprite-art.md and the bestiary art conventions) plus a template per kind that fills in the entity data (name, type, size, rarity, category, class, key features) and the framing and format the app expects. The user pastes the prompt into any image tool and uploads the result as today. Non-goals: calling an image generation API, storing generated images automatically, changing existing art.",
+      "acceptance": [
+        "The art direction and one template per kind (creature, item, character, and any other picker) live in a single documented module with unit tests for the filled prompts.",
+        "Each image picker shows Copy art prompt; the copied text matches the entity on screen and the kind template, in the interface language with a fixed English art direction block.",
+        "The prompt states the size, aspect ratio and background the picker crops to, so an uploaded result fits without manual cropping.",
+        "No network call is made to an image service.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Unit tests for the templates; browser tests for copying on each picker; independent UI review."
+      ],
+      "evidence": []
     }
   ]
 }

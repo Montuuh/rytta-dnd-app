@@ -164,6 +164,7 @@ export const shopsEs = {
   'admin.effective.hidden': 'Oculta para todos los personajes.',
   'admin.effective.configure': 'Gestionar módulos de jugadores',
   'admin.shop.pending': 'Pedidos pendientes',
+  'admin.shop.views': 'Existencias y pedidos',
   'admin.shop.settings': 'Ajustes de tienda',
   'admin.title': 'Tiendas',
   'admin.tab.shops': 'Tiendas',

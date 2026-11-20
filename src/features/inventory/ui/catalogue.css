@@ -172,8 +172,9 @@
 .store-desk-count {
   padding: 1px 8px;
   border-radius: 6px;
-  background: var(--app-accent);
-  color: var(--app-on-accent);
+  background: var(--app-select-tint);
+  color: var(--app-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
   font-size: var(--fs-tag);
   font-variant-numeric: tabular-nums;
 }

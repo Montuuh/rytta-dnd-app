@@ -288,7 +288,8 @@ export function DmConsole({
         {status === 'active' || status === 'initiative' ? (
           <Button
             size="sm"
-            variant={multi ? 'filled' : 'default'}
+            variant="default"
+            className="select-toggle"
             leftSection={<ListChecks size={16} aria-hidden="true" />}
             onClick={() => setMulti(multi ? null : new Set())}
             aria-pressed={multi !== null}
@@ -445,9 +446,7 @@ export function DmConsole({
               {encounter.name}
             </Title>
             <Group gap={8} mt={4}>
-              <Badge variant={status === 'active' ? 'filled' : 'light'}>
-                {t(`combat.status.${status}`)}
-              </Badge>
+              <Badge variant="light">{t(`combat.status.${status}`)}</Badge>
               {status === 'active' && (
                 <Text fw={700} className="combat-round">
                   {t('combat.round', { round: encounter.round })}

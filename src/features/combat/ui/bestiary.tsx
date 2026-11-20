@@ -328,8 +328,6 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   // RYT-089: the campaign's official bestiary and its versions of official creatures.
   const official = catalog.official
   const versions = [...catalog.templateById.values()].filter((tp) => tp.srd_override).length
-  // Neither creatures nor the official bestiary yet: the download is the page's one primary action.
-  const empty = !catalog.pending && catalog.items.length === 0 && official?.downloaded === false
   const ask = (next: OfficialAsk, target: HTMLElement) => {
     opener.current = target
     setAsking(next)
@@ -505,8 +503,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           </Text>
         </div>
         <div className="bst-head-actions">
+          {/* RYT-151: "Add to encounter" in the stat block is the filled action beside the list. */}
           <Button
-            variant={empty ? 'light' : 'filled'}
+            variant="outline"
             leftSection={<Plus size={16} aria-hidden="true" />}
             onClick={(event) => {
               opener.current = event.currentTarget
@@ -1037,7 +1036,7 @@ function Toolbar({
       <div className="bst-toolbar">
         <div className="bst-toolbar-row">
           <SegmentedControl
-            className="bst-source"
+            className="bst-source ink-seg"
             aria-label={t('bestiary.source.label')}
             value={filters.source}
             onChange={(v) => set({ source: v as CreatureFilters['source'] })}

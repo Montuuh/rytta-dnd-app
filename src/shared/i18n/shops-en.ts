@@ -160,6 +160,7 @@ export const shopsEn = {
   'admin.effective.hidden': 'Hidden from all characters.',
   'admin.effective.configure': 'Manage player modules',
   'admin.shop.pending': 'Pending orders',
+  'admin.shop.views': 'Stock and orders',
   'admin.shop.settings': 'Shop settings',
   'admin.title': 'Shops',
   'admin.tab.shops': 'Shops',

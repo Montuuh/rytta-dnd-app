@@ -10,7 +10,7 @@ import {
   Title,
   VisuallyHidden,
 } from '@mantine/core'
-import { BatteryCharging, BatteryLow, Eye, Tag } from 'lucide-react'
+import { BatteryCharging, BatteryLow, Check, Eye, Tag } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { StatBlockView } from '@/features/bestiary'
 import { useCampaign } from '@/features/campaigns'
@@ -230,7 +230,7 @@ function TrackerControl({
               // Tapping a use spends up to it; tapping the last spent one gives it back.
               onClick={() => set(spent && i === tracker.used - 1 ? i : i + 1)}
             >
-              {spent ? '✕' : i + 1}
+              {spent ? <Check size={16} aria-hidden="true" /> : i + 1}
             </button>
           )
         })}

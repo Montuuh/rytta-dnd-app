@@ -48,6 +48,64 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
+/* RYT-151 selection: accent ink, a very light accent tint and a 3px rail (vertical lists) or
+   underline (tabs, segments). Never the filled accent, which marks the one primary action. */
+:root {
+  --app-select-tint: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  --select-rail: inset 3px 0 0 var(--app-accent);
+  --select-underline: inset 0 -3px 0 var(--app-accent);
+  --select-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+/* A Mantine segmented control marked like every selection: ink, tint and underline. */
+.ink-seg .mantine-SegmentedControl-indicator {
+  background: var(--app-select-tint);
+  box-shadow: var(--select-underline);
+}
+.ink-seg .mantine-SegmentedControl-label[data-active],
+.ink-seg .mantine-SegmentedControl-label[data-active]:hover {
+  color: var(--app-accent);
+}
+/* A pressed toggle button reads like a selection, not like the primary action. */
+.select-toggle[aria-pressed='true'],
+.select-toggle[aria-pressed='true']:hover {
+  background: var(--app-select-tint);
+  border-color: var(--app-accent);
+  color: var(--app-accent);
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+/* A row of views or destinations read as one segment: the current one carries the underline. */
+.ink-segments {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--app-border);
+}
+.ink-segments > * {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  background: none;
+  color: var(--app-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ink-segments > *:hover {
+  color: var(--app-text);
+}
+.ink-segments > [aria-current='true'],
+.ink-segments > [aria-current='page'] {
+  background: var(--app-select-tint);
+  color: var(--app-accent);
+  box-shadow: var(--select-underline);
+}
 html[data-mantine-color-scheme='light'] {
   --app-bg: #f7efe2;
   --app-surface: #fffdf9;
@@ -1316,10 +1374,26 @@ html[data-mantine-color-scheme='light'] {
   flex-shrink: 0;
   font-size: var(--fs-meta);
 }
+/* RYT-151: a pressed filter is marked like every selection (accent ink, light tint), plus an
+   accent outline and a check in place of its glyph, so the state never rests on colour alone. */
 .category-chip[aria-pressed='true'] {
-  background: var(--app-accent);
+  background: var(--app-select-tint);
   border-color: var(--app-accent);
-  color: var(--app-on-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
+  color: var(--app-accent);
+  font-weight: 600;
+}
+.category-chip[aria-pressed='true'] > svg:first-child {
+  display: none;
+}
+.category-chip[aria-pressed='true']::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--select-check) center / contain no-repeat;
+  mask: var(--select-check) center / contain no-repeat;
 }
 /* Satchel: leather-stitched tiles with wax-seal quantities. */
 .satchel-grid {
@@ -2104,10 +2178,14 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
   background: var(--app-surface);
   color: var(--app-text);
 }
-.dm-tabs .mantine-Tabs-tab[data-active] {
-  background: var(--app-accent);
-  border-color: var(--app-accent);
-  color: var(--app-on-accent);
+/* RYT-151: the open panel is accent ink on a light tint with a 3px rail (lists) or underline
+   (tiles); the filled accent stays for the panel's one primary action. */
+.dm-tabs .mantine-Tabs-tab[data-active],
+.dm-tabs .mantine-Tabs-tab[data-active]:hover {
+  background: var(--app-select-tint);
+  border-color: var(--app-border);
+  color: var(--app-accent);
+  box-shadow: var(--select-rail);
 }
 .dm-tabs-refresh {
   margin-left: auto;
@@ -3014,8 +3092,11 @@ html[data-mantine-color-scheme='light'] .order-counter {
   cursor: pointer;
 }
 .admin-shop-item.is-active {
-  border-color: var(--app-accent);
-  background: var(--app-raised);
+  background: var(--app-select-tint);
+  box-shadow: var(--select-rail);
+}
+.admin-shop-item.is-active .admin-shop-name {
+  color: var(--app-accent);
 }
 .admin-shop-name {
   font-weight: 600;
@@ -3359,8 +3440,7 @@ html[data-mantine-color-scheme='light'] .order-counter {
   text-align: center;
 }
 .category-chip[aria-pressed='true'] .chip-count {
-  background: color-mix(in srgb, var(--app-on-accent) 18%, transparent);
-  color: var(--app-on-accent);
+  color: var(--app-accent);
 }
 .store-glyph {
   display: grid;

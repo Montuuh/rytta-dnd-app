@@ -329,8 +329,10 @@ test('RYT-149 Give from the item card puts the item on the table and Bea only ac
     'aria-expanded',
     'true',
   )
-  // Escape closes the menu first and leaves the card open.
+  // Escape closes the menu first and leaves the card open. Pressing it before the menu is open
+  // would rightly close the card, so wait for the menu.
   await more.click()
+  await expect(menu).toBeVisible()
   await arin.keyboard.press('Escape')
   await expect(menu).toBeHidden()
   await expect(card).toBeVisible()

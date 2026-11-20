@@ -662,6 +662,38 @@ describe('RYT-034 player trades', () => {
     }
   })
 
+  it('RYT-156 gives item values to the campaign DM only', async () => {
+    for (const schema of ['public', 'pre']) {
+      const s = await setup(schema)
+      const values = async (c: string) =>
+        (await res(`select ${schema}.get_item_values($1) result`, [c])) as Record<string, number>
+      await asUser(dm)
+      expect(await values(s.c)).toEqual({ [s.potionDef]: 50 })
+      // Any other member gets nothing, without an error.
+      for (const user of [player, peer, third]) {
+        await asUser(user)
+        expect(await values(s.c)).toEqual({})
+      }
+      // Outsiders and a DM of another campaign are refused; their own campaign has no such value.
+      await asUser(outsider)
+      await expect(values(s.c)).rejects.toThrow(/Forbidden/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      expect(await values(other)).toEqual({})
+      // Now a DM elsewhere, still refused here.
+      await expect(values(s.c)).rejects.toThrow(/Forbidden/)
+      // A Player whose membership is no longer active is refused too.
+      await db.exec(
+        `reset role; update ${schema}.campaign_members set active = false where campaign_id = '${s.c}' and user_id = '${third}'`,
+      )
+      await asUser(third)
+      await expect(values(s.c)).rejects.toThrow(/Forbidden/)
+      await db.exec('reset role; set role anon')
+      await expect(values(s.c)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
+    }
+  })
+
   it('mirrors tables, policies and RPCs into a PRE copied before the migration', async () => {
     await db.exec('reset role')
     expect((await db.query("select to_regclass('pre.trades') t")).rows[0]).toEqual({

@@ -31,7 +31,7 @@ async function client() {
 }
 
 const definitionColumns =
-  'id, campaign_id, name, category, icon, rarity, weight_tenths, weight_lb, value_gp, description, translations, slot_kind, properties, origin, basic_key, is_template, archived, created_by, revision, image_path'
+  'id, campaign_id, name, category, icon, rarity, weight_tenths, weight_lb, description, translations, slot_kind, properties, origin, basic_key, is_template, archived, created_by, revision, image_path'
 const stackColumns =
   'id, campaign_id, character_id, definition_id, quantity, equipped_slot, source, notes, revision'
 const eventColumns =
@@ -61,6 +61,25 @@ const goldSchema = z.object({ gold: z.coerce.number().min(0) })
 const gold = (row: unknown) => {
   const parsed = goldSchema.safeParse(row)
   return parsed.success ? parsed.data.gold : null
+}
+
+/**
+ * RYT-156: item values come from a DM-only read (an empty object for anyone else), never from the
+ * table select, so the column can be closed to Players. Each definition row gets its value here.
+ */
+const valuesSchema = z.record(z.string(), z.coerce.number().pipe(gpAmount))
+async function withValues(
+  db: Awaited<ReturnType<typeof client>>,
+  campaign: string,
+  rows: unknown[],
+  signal?: AbortSignal,
+) {
+  let call = db.rpc('get_item_values', { target_campaign: campaign })
+  if (signal) call = call.abortSignal(signal)
+  const result = await call
+  if (result.error) throw result.error
+  const values = valuesSchema.parse(result.data ?? {})
+  return (rows as { id: string }[]).map((row) => ({ ...row, value_gp: values[row.id] ?? null }))
 }
 
 export async function loadInventory(campaignId: string, characterId: string, signal: AbortSignal) {
@@ -113,7 +132,9 @@ export async function loadInventory(campaignId: string, characterId: string, sig
   const h = holderSchema.parse(holder.data)
   return {
     stacks: stackSchema.array().parse(stacks.data),
-    definitions: definitionSchema.array().parse(definitions.data),
+    definitions: definitionSchema
+      .array()
+      .parse(await withValues(db, campaign, definitions.data ?? [], signal)),
     events: eventSchema.array().parse(events.data),
     gold: gold(resources.data),
     holder: {
@@ -354,7 +375,7 @@ export async function loadCatalogue(campaignId: string, signal?: AbortSignal) {
     rows.push(...result.data)
     if (result.data.length < cataloguePageSize) break
   }
-  return definitionSchema.array().parse(rows)
+  return definitionSchema.array().parse(await withValues(db, campaign, rows, signal))
 }
 
 /** Signed item pictures stay valid this long; the cache re-signs them well before expiry. */

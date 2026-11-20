@@ -2600,6 +2600,15 @@ function inventoryState(
           open_trades: 0,
         }
       }
+      // RYT-156: item values, read apart from the table select; only the DM gets any.
+      if (method === 'get_item_values')
+        return dm
+          ? Object.fromEntries(
+              definitions
+                .filter((d) => d.value_gp !== null && d.value_gp !== undefined)
+                .map((d) => [d.id, d.value_gp]),
+            )
+          : {}
       // RYT-104/105 catalogue RPCs (the shops fixture layers its own import on top).
       if (method === 'search_campaign_items') {
         const needle = String(body.search_query ?? '')

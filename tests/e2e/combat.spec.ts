@@ -109,7 +109,7 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   await audit(arin)
   await entry.getByRole('button', { name: 'Guardar iniciativa' }).click()
   await expect(entry).toBeHidden()
-  await expect(row(arin, 'Arin').locator('.combat-init')).toHaveText('18')
+  await expect(row(arin, 'Arin').locator('.combat-init')).toHaveText('Iniciativa 18')
 
   // 3. The DM rolls for creatures, types the remaining totals and starts the fight.
   await expect(dm.getByText('Faltan 4 iniciativas')).toBeVisible({ timeout: 15_000 })
@@ -967,7 +967,7 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   await expect(entry).toHaveCount(0)
   const edit = page.getByRole('button', { name: 'Editar la iniciativa de Arin' })
   await expect(edit).toBeFocused()
-  await expect(row(page, 'Arin').locator('.combat-init')).toHaveText('17')
+  await expect(row(page, 'Arin').locator('.combat-init')).toHaveText('Iniciativa 17')
   await expect(page.getByText('Arin: iniciativa 17 guardada.')).toBeAttached()
   await expect(banner).toContainText('1 de 4 listos')
   await evidence(page, info.project.name, 'player-saved', 'RYT-042')
@@ -980,7 +980,7 @@ test('RYT-042 Players only have the table view: own initiative, nobody else, the
   await page.keyboard.press('Escape')
   await expect(entry).toHaveCount(0)
   await expect(edit).toBeFocused()
-  await expect(row(page, 'Arin').locator('.combat-init')).toHaveText('17')
+  await expect(row(page, 'Arin').locator('.combat-init')).toHaveText('Iniciativa 17')
 
   // Another character's total is refused (the SQL tests cover the real RPC).
   const request = (target: string, key: string) =>

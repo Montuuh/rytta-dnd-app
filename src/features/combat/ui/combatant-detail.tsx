@@ -31,7 +31,7 @@ import {
   Sparkles,
   Swords,
   UserMinus,
-  X,
+  Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useCampaign } from '@/features/campaigns'
@@ -117,6 +117,7 @@ export function CombatantDetail(props: Props) {
             <Button
               size="sm"
               variant="default"
+              className="tabular"
               leftSection={<Dice5 size={16} aria-hidden="true" />}
               onClick={props.onInitiative}
               aria-label={t('combat.initiative.edit', { name: combatant.name })}
@@ -320,6 +321,7 @@ export function ConditionPicker({
         <Chip
           key={condition}
           size="sm"
+          variant="light"
           checked={combatant.conditions?.includes(condition) ?? false}
           disabled={pending}
           onChange={(enabled) =>
@@ -440,15 +442,16 @@ function Effects({
                 </Text>
               </div>
               {effect.can_remove && (
-                <ActionIcon
+                <Button
                   variant="subtle"
-                  size={44}
+                  color="red"
                   disabled={pending}
+                  leftSection={<Trash2 size={16} aria-hidden="true" />}
                   aria-label={t('combat.effects.remove', { label: effect.label })}
                   onClick={() => void run({ kind: 'removeEffect', effectId: effect.id })}
                 >
-                  <X size={18} aria-hidden="true" />
-                </ActionIcon>
+                  {t('combat.effects.removeShort')}
+                </Button>
               )}
             </li>
           ))}

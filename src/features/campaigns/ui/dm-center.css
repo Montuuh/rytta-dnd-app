@@ -2,6 +2,12 @@
   white-space: normal;
   text-align: start;
 }
+/* Tiles between phone and laptop: the open panel is underlined instead of railed (RYT-151). */
+@media (min-width: 48em) and (max-width: 61.99em) {
+  .dm-tabs.dm-tabs-seg .mantine-Tabs-tab[data-active] {
+    box-shadow: var(--select-underline);
+  }
+}
 .dm-nav-count {
   display: block;
   font-weight: 400;

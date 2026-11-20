@@ -228,10 +228,12 @@ button.combat-row-main:focus-visible {
   font-size: 1.1rem;
   font-variant-numeric: tabular-nums;
 }
+/* The acting combatant is a state, not an action: accent ink and outline on a light tint (RYT-151). */
 .combat-row.is-active .combat-init {
-  background: var(--app-accent);
-  color: var(--app-on-accent);
+  background: var(--app-select-tint);
+  color: var(--app-accent);
   border-color: var(--app-accent);
+  box-shadow: inset 0 0 0 1px var(--app-accent);
 }
 .combat-row-text {
   display: flex;
@@ -498,6 +500,7 @@ button.combat-row-main:focus-visible {
 }
 /* Meta pairs ("Iniciativa 16", "CA 10") wrap as whole pairs, never label from value (RYT-043 F4). */
 .combat-meta {
+  font-variant-numeric: tabular-nums;
   display: flex;
   flex-wrap: wrap;
   column-gap: 0.4em;
@@ -787,15 +790,18 @@ button.combat-row-main:focus-visible {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+/* The verb is visible beside the glyph: adding a character changes the fight (RYT-151). */
 .combat-bench-add {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
   border: 1px solid var(--app-accent);
   color: var(--app-accent);
+  font-weight: 600;
 }
 
 /* Where a joining character lands: its neighbours in the order, the new slot marked like the
@@ -892,12 +898,20 @@ button.combat-row-main:focus-visible {
   font-weight: 700;
   font-size: var(--fs-body);
 }
-/* The current view is a filled accent segment (shape and fill), the other one stays quiet. */
-.combat-view-switch .mantine-SegmentedControl-indicator {
-  background: var(--app-accent);
+/* The console's panels sit in one row: the open one is underlined, not railed (RYT-151). */
+.combat-tabs .mantine-Tabs-tab[data-active],
+.combat-tabs .mantine-Tabs-tab[data-active]:hover {
+  box-shadow: var(--select-underline);
 }
-.combat-view-switch .mantine-SegmentedControl-label[data-active] {
-  color: var(--app-on-accent);
+/* The current view is marked like every selection (RYT-151): accent ink, a light tint and an
+   underline; the filled accent stays for the screen's primary action. */
+.combat-view-switch .mantine-SegmentedControl-indicator {
+  background: var(--app-select-tint);
+  box-shadow: var(--select-underline);
+}
+.combat-view-switch .mantine-SegmentedControl-label[data-active],
+.combat-view-switch .mantine-SegmentedControl-label[data-active]:hover {
+  color: var(--app-accent);
 }
 .combat-view-switch
   .mantine-SegmentedControl-input:focus-visible

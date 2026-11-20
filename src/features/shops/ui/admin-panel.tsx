@@ -179,6 +179,7 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
                 data.pending_orders > 0 ? (
                   <Badge
                     size="sm"
+                    variant="light"
                     circle
                     aria-label={t('admin.pendingCount', { count: data.pending_orders })}
                   >
@@ -462,7 +463,7 @@ function ShopsTab({
           </button>
         ))}
         <Button
-          variant="light"
+          variant="outline"
           leftSection={<Plus size={16} aria-hidden="true" />}
           onClick={onCreate}
         >
@@ -500,17 +501,19 @@ function ShopsTab({
               {t('admin.effective.configure')}
             </Button>
           )}
-          <Group gap="xs">
-            <Button
-              variant="light"
+          {/* RYT-151: stock (shown here) and the shop's orders (in the ledger) read as one segment. */}
+          <nav className="ink-segments" aria-label={t('admin.shop.views')}>
+            <button
+              type="button"
+              aria-current="true"
               onClick={() => document.getElementById(`stock-${shop.id}`)?.focus()}
             >
               {t('admin.listing.title')}
-            </Button>
-            <Button variant="subtle" onClick={() => onOrders(shop.id)}>
+            </button>
+            <button type="button" onClick={() => onOrders(shop.id)}>
               {t('admin.shop.pending')}
-            </Button>
-          </Group>
+            </button>
+          </nav>
         </Stack>
         <details key={shop.id} className="merchant-settings">
           <summary>{t('admin.shop.settings')}</summary>

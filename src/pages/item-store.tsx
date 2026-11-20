@@ -12,7 +12,6 @@ import {
   Text,
   TextInput,
   Title,
-  Tooltip,
   UnstyledButton,
   VisuallyHidden,
 } from '@mantine/core'
@@ -272,6 +271,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         </div>
         <Button
           ref={newButton}
+          variant="outline"
           leftSection={<Plus size={18} aria-hidden="true" />}
           onClick={(event) => {
             remember(event.currentTarget)
@@ -309,8 +309,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
         />
         {all.length > 0 && (
           <Button
-            variant="light"
-            leftSection={<Gift size={18} />}
+            leftSection={<Gift size={18} aria-hidden="true" />}
             onClick={(event) => {
               remember(event.currentTarget)
               setGive(true)
@@ -756,36 +755,8 @@ function ItemActions({
   }
   return (
     <div className="store-row-actions">
-      {!compact && (
-        <Tooltip label={t('catalogue.give')} openDelay={300} withinPortal>
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            aria-label={t('store.giveItem', { name })}
-            onClick={(event) => {
-              onTrigger(event.currentTarget)
-              onGive()
-            }}
-          >
-            <Gift size={19} aria-hidden="true" />
-          </ActionIcon>
-        </Tooltip>
-      )}
-      {!compact && shopable && (
-        <Tooltip label={t('catalogue.addToShop')} openDelay={300} withinPortal>
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            aria-label={t('store.shopItem', { name })}
-            onClick={(event) => {
-              onTrigger(event.currentTarget)
-              onShop()
-            }}
-          >
-            <Store size={19} aria-hidden="true" />
-          </ActionIcon>
-        </Tooltip>
-      )}
+      {/* RYT-151: giving and stocking a shop have consequences, so they sit in the named ⋯ menu
+          with their verbs at every width instead of as bare icons. */}
       <Menu
         position="bottom-end"
         withinPortal
@@ -810,29 +781,26 @@ function ItemActions({
         </Menu.Target>
         <Menu.Dropdown>
           {compact && (
-            <>
-              <Menu.Item
-                leftSection={<Pencil size={18} aria-hidden="true" />}
-                onClick={choose(onEdit)}
-              >
-                {t('catalogue.edit')}
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<Gift size={18} aria-hidden="true" />}
-                onClick={choose(onGive)}
-              >
-                {t('catalogue.give')}
-              </Menu.Item>
-              {shopable && (
-                <Menu.Item
-                  leftSection={<Store size={18} aria-hidden="true" />}
-                  onClick={choose(onShop)}
-                >
-                  {t('catalogue.addToShop')}
-                </Menu.Item>
-              )}
-            </>
+            <Menu.Item
+              leftSection={<Pencil size={18} aria-hidden="true" />}
+              onClick={choose(onEdit)}
+            >
+              {t('catalogue.edit')}
+            </Menu.Item>
           )}
+          <>
+            <Menu.Item leftSection={<Gift size={18} aria-hidden="true" />} onClick={choose(onGive)}>
+              {t('catalogue.give')}
+            </Menu.Item>
+            {shopable && (
+              <Menu.Item
+                leftSection={<Store size={18} aria-hidden="true" />}
+                onClick={choose(onShop)}
+              >
+                {t('catalogue.addToShop')}
+              </Menu.Item>
+            )}
+          </>
           <Menu.Item
             leftSection={
               item.is_template ? (

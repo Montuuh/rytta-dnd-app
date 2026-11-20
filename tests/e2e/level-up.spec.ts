@@ -124,6 +124,12 @@ test('RYT-130 the DM sets the party level: confirmation, retry with the same req
     section.getByText('3 personajes están por debajo del nivel del grupo.'),
   ).toBeVisible()
   await audit(page, info.outputPath('party-level-set.png'))
+  // RYT-151: "Invite player" is the filled action; setting the level is outlined and waits for a
+  // number other than the one the campaign holds.
+  const setLevel = section.getByRole('button', { name: 'Fijar nivel 6' })
+  await expect(setLevel).toBeDisabled()
+  await expect(setLevel).toHaveAttribute('data-variant', 'outline')
+  await expect(section.getByRole('heading', { name: /Nivel del grupo/ })).toBeFocused()
   await evidence(page, 'dm-party-level-set')
 
   // The notice goes as soon as the value is edited again.

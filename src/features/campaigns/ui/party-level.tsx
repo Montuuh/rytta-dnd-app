@@ -144,11 +144,11 @@ export function PartyLevelControl({
               <Plus size={18} aria-hidden="true" />
             </button>
           </div>
-          {changed && (
-            <Button ref={apply} onClick={() => open(shown)}>
-              {t('partyLevel.set', { level: shown })}
-            </Button>
-          )}
+          {/* RYT-151: "Invite player" is the panel's filled action; setting the level is outlined
+              and only answers once the stepper differs from the level the campaign holds. */}
+          <Button ref={apply} variant="outline" disabled={!changed} onClick={() => open(shown)}>
+            {t('partyLevel.set', { level: shown })}
+          </Button>
           {current !== null && !changed && (
             <Button variant="subtle" onClick={() => open(null)}>
               {t('partyLevel.clear')}
@@ -171,7 +171,9 @@ export function PartyLevelControl({
         closeOnClickOutside={!pending}
         returnFocus={false}
         onExitTransitionEnd={() => {
-          const target = apply.current?.isConnected ? apply.current : heading.current
+          // After a save the button is disabled again, so focus goes to the heading instead.
+          const target =
+            apply.current?.isConnected && !apply.current.disabled ? apply.current : heading.current
           target?.focus()
         }}
         closeButtonProps={{ 'aria-label': t('panel.close'), size: 44, disabled: pending }}

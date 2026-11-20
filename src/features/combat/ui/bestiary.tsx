@@ -573,9 +573,10 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
               {t(targetEncounter ? 'bestiary.context.back' : 'bestiary.context.backList')}
             </Button>
           )}
+          {/* RYT-151: "Add to encounter" in the stat block is the filled action beside the list. */}
           {(!encounterId || empty) && (
             <Button
-              variant={empty ? 'light' : 'filled'}
+              variant="outline"
               leftSection={<Plus size={16} aria-hidden="true" />}
               onClick={(event) => {
                 opener.current = event.currentTarget
@@ -1138,7 +1139,7 @@ function Toolbar({
       <div className="bst-toolbar">
         <div className="bst-toolbar-row">
           <SegmentedControl
-            className="bst-source"
+            className="bst-source ink-seg"
             aria-label={t('bestiary.source.label')}
             value={filters.source}
             onChange={(v) => set({ source: v as CreatureFilters['source'] })}

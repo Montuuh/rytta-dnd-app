@@ -124,7 +124,7 @@ export function EncounterGroup({
                   {item.name}
                 </Text>
                 <Group component="span" gap={6}>
-                  <Badge variant={highlight ? 'filled' : 'light'} size="sm">
+                  <Badge variant="light" size="sm">
                     {t(`combat.status.${item.status}`)}
                   </Badge>
                   {item.status === 'active' && (

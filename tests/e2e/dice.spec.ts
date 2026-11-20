@@ -2572,6 +2572,24 @@ for (const theme of ['default', 'parchment'])
     await dmRest.close()
   })
 
+/**
+ * The menu's own keys: ArrowDown until the item has focus. The menu may still be settling its
+ * first focus when the keys arrive, so a fixed number of presses lands on different items.
+ */
+async function arrowTo(page: Page, item: Locator) {
+  await expect(item).toBeVisible()
+  await expect
+    .poll(
+      async () => {
+        if (await item.evaluate((el) => el === document.activeElement)) return true
+        await page.keyboard.press('ArrowDown')
+        return item.evaluate((el) => el === document.activeElement)
+      },
+      { timeout: 10_000, intervals: [100] },
+    )
+    .toBe(true)
+}
+
 /** Focus holds the control it was given for many frames: one label, never the page. */
 async function expectFocusStays(page: Page, label: string) {
   const seen = await focusAcrossFrames(page, 60)
@@ -2611,8 +2629,7 @@ test('RYT-137 initiative: after a keyboard clear or re-roll from the row menu, f
   const reroll = dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' })
   await expect(reroll).toBeVisible()
   // The menu's own keys: arrows to the item, Enter to choose it.
-  for (const _ of [1, 2, 3]) await dm.keyboard.press('ArrowDown')
-  await expect(reroll).toBeFocused()
+  await arrowTo(dm, reroll)
   await dm.keyboard.press('Enter')
   await expect(arinRow(dm)).toContainText('10')
   await expect(menuButton).toBeFocused()
@@ -2622,8 +2639,7 @@ test('RYT-137 initiative: after a keyboard clear or re-roll from the row menu, f
   await dm.keyboard.press('Enter')
   const clear = dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })
   await expect(clear).toBeVisible()
-  for (const _ of [1, 2]) await dm.keyboard.press('ArrowDown')
-  await expect(clear).toBeFocused()
+  await arrowTo(dm, clear)
   await dm.keyboard.press('Enter')
   await expect(arinRow(dm)).not.toContainText('10')
   await expect(menuButton).toBeFocused()
@@ -2783,6 +2799,7 @@ test('RYT-137 initiative: after Escape, reopening the menu and choosing with Ent
   const clear = dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })
   await expect(clear).toBeVisible()
   await clear.focus()
+  await expect(clear).toBeFocused()
   await dm.keyboard.press('Enter')
   await expect(arinRow(dm)).not.toContainText('13')
   // A second of frames: the menu has closed and unmounted by then.

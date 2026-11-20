@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { planCast, slotChoices } from './casting'
 import { actionsFor, spendAction } from './resources'
-import { emptyBuild } from './rules'
+import { applyRest, emptyBuild } from './rules'
 import type { Build, Vitals } from './sheet'
 import {
   convertSlot,
@@ -96,5 +96,16 @@ describe('Font of Magic (RYT-110)', () => {
     // No slot of that level at all.
     expect(slotChoices(build, 3, play(), 3)).toEqual([])
     expect(convertSlot(build, 3, play({ sp: 5 }), 3)).toBeNull()
+  })
+})
+
+describe('created slots and rests (RYT-110)', () => {
+  it('keeps created slots through a short rest and clears them on a long rest', () => {
+    const vitals = play({ sp: 2, [createdSlotKey(1)]: 1 })
+    expect(applyRest(vitals, sorcerer(), 20, 'short').tracker_uses).toEqual({
+      sp: 2,
+      [createdSlotKey(1)]: 1,
+    })
+    expect(applyRest(vitals, sorcerer(), 20, 'long').tracker_uses).toEqual({})
   })
 })

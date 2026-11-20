@@ -454,6 +454,36 @@ describe('RYT-080 group rest', () => {
     await expect(pub.vote(s.c, fourth.id, s.arin, 'yes')).rejects.toThrow(/Rest closed/)
   })
 
+  it('RYT-110 keeps Font of Magic slots through a short rest and clears them on a long rest', async () => {
+    for (const schema of ['public', 'pre'] as const) {
+      const a = api(schema)
+      const s = await setup(schema)
+      await asUser(player)
+      await a.vitals(s.c, s.arin, { hp: 10, uses: { 'font-slot-1': 2, luck: 1, stale: 3 } })
+      await asUser(dm)
+      // A short rest keeps created slots and long-rest uses; unknown uses still go.
+      const short = await a.request(s.c, 'short')
+      expect((await a.now(s.c, short.id)).status).toBe('done')
+      expect((await a.row(s.arin)).tracker_uses).toEqual({ 'font-slot-1': 2, luck: 1 })
+      const long = await a.request(s.c, 'long')
+      expect((await a.now(s.c, long.id)).status).toBe('done')
+      expect((await a.row(s.arin)).tracker_uses).toEqual({})
+      // The patched helper stays private to every client role.
+      const helper = schema === 'pre' ? 'pre_private' : 'private'
+      for (const user of [player, outsider, dm]) {
+        await asUser(user)
+        await expect(
+          db.query(`select ${helper}.rest_effect($1,$2,'short',0,0)`, [s.c, s.arin]),
+        ).rejects.toThrow(/permission denied/)
+      }
+      await asAnon()
+      await expect(
+        db.query(`select ${helper}.rest_effect($1,$2,'short',0,0)`, [s.c, s.arin]),
+      ).rejects.toThrow(/permission denied/)
+      await asSystem()
+    }
+  })
+
   it('keeps fighters and absent characters out and hides what a private teammate recovers', async () => {
     const s = await setup()
     await asUser(dm)

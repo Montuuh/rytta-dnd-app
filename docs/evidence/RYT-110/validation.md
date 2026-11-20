@@ -35,10 +35,25 @@ P5 A (a created slot above the maximum, marked), P6 A (Metamagic in the sheet's 
   slots (one refills, one is extra: "4/4 +1"); spend Subtle; turn the created slot back into a
   point.
 
-## Known limit
+## Created slots and rests (owner request, 2026-11-20)
 
-- Any rest clears created slots, not only a long rest: the server's rest keeps only uses of the
-  sheet's trackers. Fixing it needs a migration to `private.rest_effect`; left for the owner.
+Before, any rest cleared created slots: the server's rest kept only uses of the sheet's
+trackers. Migration `supabase/migrations/20261209120000_created_slots_survive_short_rest.sql`
+patches the body of `private.rest_effect` (and `pre_private.rest_effect`) in place: a short rest
+keeps `font-slot-` uses, a long rest clears them, and other unknown uses are still dropped. The
+patch applies only when the exact expected text is found. The client's test mirror `applyRest`
+follows the same rule.
+
+- SQL: `tests/database/group-rest.test.ts` "RYT-110 keeps Font of Magic slots through a short rest
+  and clears them on a long rest" on `public` and on PRE, with the helper denied to a Player, an
+  outsider, the DM and anon. All database and character tests: 612 passed.
+- Hosted: applied to `rytta-staging` (stored md5 `d62368071ac1c756b5d40ef73af9e5e6`, 2134
+  characters, equal to the committed LF file; still security definer with an empty search_path;
+  no execute for `authenticated`). A security review before production found no critical, high or
+  medium issues; production was then patched: `private` and `pre_private` both carry the new
+  filter, stored md5 equal, and `prosecdef`, `proconfig` (empty search_path), owner, ACL and
+  volatility unchanged from the values read just before the apply.
+- Not covered: a browser run of Font of Magic followed by a group short rest.
 
 ## UI review
 

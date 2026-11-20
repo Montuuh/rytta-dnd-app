@@ -28,7 +28,10 @@ import { levelupEs } from './levelup-es'
 import { castEs } from './cast-es'
 import { activationEs } from './activation-es'
 
+import { sessionEs } from './session-es'
+
 export const es = {
+  ...sessionEs,
   ...activationEs,
   ...legalEs,
   ...diceEs,

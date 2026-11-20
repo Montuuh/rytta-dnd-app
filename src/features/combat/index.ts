@@ -12,3 +12,11 @@ export type { TemplateInput } from './domain/combat'
 export { Elapsed } from './ui/parts'
 export { useFreshness } from './ui/helpers'
 export { isHiddenTurn, isLive, nextUp, turnOrder } from './domain/combat'
+export {
+  encounterPlanQuery,
+  sessionContinuityQuery,
+  sharedRecapQuery,
+  useSaveSessionContinuity,
+} from './session-api'
+export type { SessionContinuity, SessionContinuityInput } from './domain/session'
+export { CombatSummary } from './ui/combat-summary'

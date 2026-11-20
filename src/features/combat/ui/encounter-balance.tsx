@@ -31,14 +31,23 @@ import type { Run } from './helpers'
 import { bandGlyphs, formatXp, listOf, type SuggestPrefs } from './builder-parts'
 import { SuggestDialog } from './encounter-suggest'
 import { Token } from './token'
+import { EncounterPreparation } from './encounter-preparation'
+import { encounterPlanQuery } from '../session-api'
 import './builder.css'
 
 type Catalog = ReturnType<typeof useCreatureCatalog>
 
 /** The draft's party and creatures as the SRD method sees them (RYT-054). */
-function useBalance(campaignId: string, combatants: Combatant[], catalog: Catalog) {
+function useBalance(
+  campaignId: string,
+  encounterId: string,
+  combatants: Combatant[],
+  catalog: Catalog,
+) {
   const { t } = useTranslation()
   const { state } = useAuth()
+  const plan = useQuery(encounterPlanQuery(state.user!.id, campaignId, encounterId))
+  const attendanceSet = plan.data?.attendanceSet ?? false
   const overview = useQuery(partyOverviewQuery(state.user!.id, campaignId))
   const hasLair = combatants.some((c) => c.kind === 'lair')
   const inDraft = combatants.filter((c) => c.kind === 'character' && c.character_id)
@@ -47,14 +56,15 @@ function useBalance(campaignId: string, combatants: Combatant[], catalog: Catalo
     row?.class_key && isClassKey(row.class_key)
       ? t(`srd.class.${row.class_key}`)
       : (row?.class_label ?? null)
-  const party: BalanceMember[] = inDraft.length
-    ? inDraft.map((c) => {
-        const row = rows.find((r) => r.id === c.character_id)
-        return { id: c.id, name: c.name, level: row?.level ?? null, classLabel: classOf(row) }
-      })
-    : rows
-        .filter((r) => r.is_assigned)
-        .map((r) => ({ id: r.id, name: r.name, level: r.level, classLabel: classOf(r) }))
+  const party: BalanceMember[] =
+    inDraft.length || attendanceSet
+      ? inDraft.map((c) => {
+          const row = rows.find((r) => r.id === c.character_id)
+          return { id: c.id, name: c.name, level: row?.level ?? null, classLabel: classOf(row) }
+        })
+      : rows
+          .filter((r) => r.is_assigned)
+          .map((r) => ({ id: r.id, name: r.name, level: r.level, classLabel: classOf(r) }))
   const creatures: BalanceCreature[] = combatants
     .filter((c) => c.kind === 'npc')
     .map((c) => {
@@ -111,14 +121,26 @@ function useBalance(campaignId: string, combatants: Combatant[], catalog: Catalo
   return {
     balance,
     party,
+    available: rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      level: row.level,
+      assigned: row.is_assigned,
+    })),
+    creatures,
+    plan,
     pool,
     usesLairXp: hasLair && creatures.some((c) => c.key.startsWith('srd:')),
-    fromCampaign: inDraft.length === 0,
-    pending: overview.isPending || catalog.pending,
+    fromCampaign: inDraft.length === 0 && !attendanceSet,
+    pending: overview.isPending || catalog.pending || (!inDraft.length && plan.isPending),
     // A failed refetch keeps the last reading; only missing data replaces the card.
-    error: (overview.isError && !overview.data) || catalog.dataError,
+    error:
+      (overview.isError && !overview.data) ||
+      catalog.dataError ||
+      (!inDraft.length && plan.isError && !plan.data),
     retry: () => {
       void overview.refetch()
+      void plan.refetch()
       catalog.retry()
     },
   }
@@ -129,24 +151,50 @@ function useBalance(campaignId: string, combatants: Combatant[], catalog: Catalo
  * combatants and the party's sheets), so every creature added from the bestiary, the Add tab or a
  * suggestion moves it. One action: suggest creatures to reach a difficulty.
  */
-export function EncounterBalance({
-  campaignId,
-  encounterId,
-  encounterName,
-  combatants,
-  run,
-  pending,
-}: {
+type BalanceProps = {
+  draftRevision?: number
   campaignId: string
   encounterId: string
   encounterName: string
   combatants: Combatant[]
   run: Run
   pending: boolean
-}) {
-  const { t } = useTranslation()
+}
+export function EncounterBalance(props: BalanceProps) {
+  const { campaignId, encounterId, combatants, draftRevision } = props
   const catalog = useCreatureCatalog(campaignId)
-  const measured = useBalance(campaignId, combatants, catalog)
+  const measured = useBalance(campaignId, encounterId, combatants, catalog)
+  return (
+    <>
+      <BalanceReading {...props} catalog={catalog} measured={measured} />
+      {draftRevision !== undefined && (
+        <EncounterPreparation
+          key={encounterId}
+          campaignId={campaignId}
+          encounterId={encounterId}
+          encounterName={props.encounterName}
+          revision={draftRevision}
+          plan={measured.plan}
+          combatants={combatants}
+          available={measured.available}
+          creatures={measured.creatures}
+          pending={measured.pending || measured.error || props.pending}
+        />
+      )}
+    </>
+  )
+}
+function BalanceReading({
+  campaignId,
+  encounterId,
+  encounterName,
+  combatants,
+  run,
+  pending,
+  catalog,
+  measured,
+}: BalanceProps & { catalog: Catalog; measured: ReturnType<typeof useBalance> }) {
+  const { t } = useTranslation()
   const { balance } = measured
   const [open, setOpen] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
@@ -234,12 +282,16 @@ export function EncounterBalance({
     )
   if (balance.party === 0)
     return region(
-      <>
-        <Text>{t('builder.noParty')}</Text>
-        <Anchor component={Link} to={`/campaign/${campaignId}/party`} className="bld-link">
-          {t('builder.noPartyLink')}
-        </Anchor>
-      </>,
+      measured.plan.data?.attendanceSet ? (
+        <Text>{t('builder.plan.noAttendees')}</Text>
+      ) : (
+        <>
+          <Text>{t('builder.noParty')}</Text>
+          <Anchor component={Link} to={`/campaign/${campaignId}/party`} className="bld-link">
+            {t('builder.noPartyLink')}
+          </Anchor>
+        </>
+      ),
     )
   const Glyph = bandGlyphs[balance.band]
   const full = balance.xp >= balance.budget.high

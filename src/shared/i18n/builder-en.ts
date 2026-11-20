@@ -1,6 +1,21 @@
 // RYT-054 encounter builder: SRD 5.2.1 Combat Encounters (CC-BY-4.0). Numbers and their unit are
 // joined by a no-break space so "1,500 XP" never splits across lines.
 export const builderEn = {
+  'combat.error.copyLimit': 'This draft has too many combatants to duplicate.',
+  'builder.plan.title': 'Session preparation',
+  'builder.plan.edit': 'Prepare encounter',
+  'builder.plan.scene': 'Tabletop scene',
+  'builder.plan.noScene': 'No linked scene',
+  'builder.plan.reward': 'Planned reward',
+  'builder.plan.duplicate': 'Duplicate draft',
+  'builder.plan.copyName': 'Copy of {{name}}',
+  'builder.plan.bestiary': 'Add from the bestiary',
+  'builder.plan.loadError': 'Could not load encounter preparation.',
+  'builder.plan.saved': 'Preparation saved.',
+  'builder.plan.attendees': 'Attending characters',
+  'builder.plan.noCharacters': 'No characters are available yet.',
+  'builder.plan.noAttendees': 'Choose attendees to calculate difficulty.',
+  'builder.plan.preview': '{{band}} · {{xp}} enemy XP · {{high}} XP high budget',
   'builder.region': 'Encounter difficulty',
   'builder.title.none': 'No enemies yet',
   'builder.title.low': 'Low difficulty',

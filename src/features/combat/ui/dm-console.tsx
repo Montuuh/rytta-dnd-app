@@ -24,6 +24,7 @@ import {
   Flag,
   Heart,
   ListChecks,
+  NotebookPen,
   Pencil,
   Play,
   Swords,
@@ -31,7 +32,7 @@ import {
   Undo2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   isLive,
   missingInitiative,
@@ -44,7 +45,7 @@ import { AddCombatants } from './add-combatants'
 import { AmountDialog, InitiativeDialog } from './amount-dialog'
 import { CombatLog } from './combat-log'
 import { CombatSummary } from './combat-summary'
-import { CombatantDetail } from './combatant-detail'
+import { CombatantDetail, ConditionPicker } from './combatant-detail'
 import { EncounterBalance } from './encounter-balance'
 import { InitiativeRail } from './initiative-rail'
 import { onlyTopDialog, useRunner } from './helpers'
@@ -151,9 +152,11 @@ export function DmConsole({
     open()
   }
   const [multi, setMulti] = useState<ReadonlySet<string> | null>(null)
-  const [multiMode, setMultiMode] = useState<HpMode | null>(null)
+  const [amount, setAmount] = useState<{ mode: HpMode; targets: Combatant[] } | null>(null)
+  const [conditionTarget, setConditionTarget] = useState<Combatant | null>(null)
   const [initiativeFor, setInitiativeFor] = useState<Combatant | null>(null)
   const [panel, setPanel] = useState<Panel>(encounter.status === 'draft' ? 'add' : 'detail')
+  const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
   // Leaving preparation hands the side panel to the fight (render-phase adjustment).
   const [seenStatus, setSeenStatus] = useState(encounter.status)
   const [recapFocus, setRecapFocus] = useState(0)
@@ -164,7 +167,9 @@ export function DmConsole({
     // selection, its bar and any open damage/heal dialog (RYT-042 F1).
     if (!isLive(encounter.status)) {
       setMulti(null)
-      setMultiMode(null)
+      setAmount(null)
+      setConditionTarget(null)
+      if (confirm === 'end') setConfirm(null)
     }
     // The fight ended (here or on another device) while the DM was inside it: a dialog that closes
     // with it would drop focus to the page, so the recap heading takes it (RYT-042 R2-2).
@@ -183,7 +188,6 @@ export function DmConsole({
     })
     return () => cancelAnimationFrame(frame)
   }, [recapFocus])
-  const [confirm, setConfirm] = useState<'end' | 'delete' | 'rename' | null>(null)
   const [rename, setRename] = useState(encounter.name)
   const combatants = state.combatants
   const active = combatants.find((c) => c.is_active) ?? null
@@ -192,6 +196,15 @@ export function DmConsole({
   const upNext = nextUp(combatants)
   const missing = missingInitiative(combatants)
   const status = encounter.status
+  const conditionCombatant = combatants.find((c) => c.id === conditionTarget?.id)
+  const multiTargets = multi ? combatants.filter((c) => multi.has(c.id) && c.can_act) : []
+  const canApplyAmount = amount?.targets.every((target) =>
+    combatants.some((c) => c.id === target.id && c.can_act),
+  )
+  const closeEnd = () => {
+    setConfirm(null)
+    restoreFocus()
+  }
   // Keep the acting row in view when the turn moves (without moving keyboard focus).
   useEffect(() => {
     if (!activeId || !followsTurn) return
@@ -207,7 +220,7 @@ export function DmConsole({
     }
     setPicked({ id: combatant.id, turn: activeId })
     if (wide) setPanel('detail')
-    else {
+    else if (status !== 'active') {
       setSheetOpener(`combatant-${combatant.id}`)
       setSheetOpen(true)
     }
@@ -261,6 +274,7 @@ export function DmConsole({
       activeId={activeId}
       run={run}
       pending={pending}
+      onAmount={(mode) => setAmount({ mode, targets: [selected] })}
       onInitiative={status !== 'ended' ? () => setInitiativeFor(selected) : undefined}
       onClearRoll={
         initiativeRoll.canReset(selected)
@@ -313,6 +327,61 @@ export function DmConsole({
                 },
               }
             : { kind: 'pick', selectedId: selected?.id ?? null, onPick: pick }
+        }
+        rowExtra={(combatant) =>
+          status === 'active' &&
+          !multi &&
+          selected?.id === combatant.id &&
+          (!wide || (combatant.can_act && combatant.kind !== 'lair')) ? (
+            <Group gap={4} className="combat-target-actions">
+              {combatant.can_act && combatant.kind !== 'lair' && (
+                <>
+                  <Button
+                    variant="subtle"
+                    className="combat-btn-damage"
+                    disabled={pending}
+                    aria-label={t('combat.target.damage', { name: combatant.name })}
+                    onClick={() => setAmount({ mode: 'damage', targets: [combatant] })}
+                  >
+                    {t('sheet.damage')}
+                  </Button>
+                  <Button
+                    variant="subtle"
+                    className="combat-btn-heal"
+                    disabled={pending}
+                    aria-label={t('combat.target.heal', { name: combatant.name })}
+                    onClick={() => setAmount({ mode: 'heal', targets: [combatant] })}
+                  >
+                    {t('sheet.heal')}
+                  </Button>
+                  {combatant.conditions !== undefined && (
+                    <Button
+                      variant="subtle"
+                      disabled={pending}
+                      aria-label={t('combat.target.condition', { name: combatant.name })}
+                      onClick={() => setConditionTarget(combatant)}
+                    >
+                      {t('combat.target.conditionLabel')}
+                    </Button>
+                  )}
+                </>
+              )}
+              {!wide && (
+                <Button
+                  variant="subtle"
+                  aria-label={t('combat.target.detail', { name: combatant.name })}
+                  id={`combatant-detail-${combatant.id}`}
+                  onClick={() => {
+                    setPicked({ id: combatant.id, turn: activeId })
+                    setSheetOpener(`combatant-detail-${combatant.id}`)
+                    setSheetOpen(true)
+                  }}
+                >
+                  {t('combat.detail.title')}
+                </Button>
+              )}
+            </Group>
+          ) : null
         }
         rowMenu={
           status !== 'ended'
@@ -370,7 +439,8 @@ export function DmConsole({
               variant="default"
               className="combat-btn-damage"
               leftSection={<Swords size={16} aria-hidden="true" />}
-              onClick={() => setMultiMode('damage')}
+              disabled={pending || multiTargets.length !== multi.size}
+              onClick={() => setAmount({ mode: 'damage', targets: multiTargets })}
             >
               {t('combat.select.damage')}
             </Button>
@@ -378,7 +448,8 @@ export function DmConsole({
               variant="default"
               className="combat-btn-heal"
               leftSection={<Heart size={16} aria-hidden="true" />}
-              onClick={() => setMultiMode('heal')}
+              disabled={pending || multiTargets.length !== multi.size}
+              onClick={() => setAmount({ mode: 'heal', targets: multiTargets })}
             >
               {t('combat.select.heal')}
             </Button>
@@ -458,14 +529,20 @@ export function DmConsole({
             </Group>
           </div>
           <Group gap="xs" wrap="nowrap">
-            <Menu position="bottom-end">
+            <Menu position="bottom-end" withInitialFocusPlaceholder={false}>
               <Menu.Target>
-                <ActionIcon variant="default" size={44} aria-label={t('combat.menu')}>
+                <ActionIcon
+                  variant="default"
+                  size={44}
+                  aria-label={t('combat.menu')}
+                  data-return-focus="encounter-menu"
+                >
                   <Ellipsis size={18} aria-hidden="true" />
                 </ActionIcon>
               </Menu.Target>
-              <Menu.Dropdown>
+              <Menu.Dropdown className="combat-menu">
                 <Menu.Item
+                  data-autofocus
                   leftSection={<Pencil size={16} aria-hidden="true" />}
                   onClick={() => {
                     setRename(encounter.name)
@@ -482,6 +559,25 @@ export function DmConsole({
                     }
                   >
                     {t('combat.flow.backToDraft')}
+                  </Menu.Item>
+                )}
+                {status !== 'draft' && (
+                  <Menu.Item
+                    component={Link}
+                    to={`/campaign/${campaignId}/session?encounter=${encounter.id}`}
+                    leftSection={<NotebookPen size={16} aria-hidden="true" />}
+                  >
+                    {t('combat.session.close')}
+                  </Menu.Item>
+                )}
+                {status === 'active' && (
+                  <Menu.Item
+                    className="combat-menu-danger"
+                    disabled={pending}
+                    leftSection={<Flag size={16} aria-hidden="true" />}
+                    onClick={() => fromMenu('encounter-menu', () => setConfirm('end'))}
+                  >
+                    {t('combat.flow.end')}
                   </Menu.Item>
                 )}
                 {(status === 'draft' || status === 'ended') && (
@@ -504,6 +600,13 @@ export function DmConsole({
       {status === 'draft' && (
         <div className="combat-flow">
           <Text size="sm">{t('combat.flow.draftHint')}</Text>
+          {combatants.length > 0 && (
+            <Text fw={700} role="status">
+              {missing.length > 0
+                ? t('combat.flow.missing', { count: missing.length })
+                : t('combat.flow.ready')}
+            </Text>
+          )}
           <Group gap="xs">
             <Button
               leftSection={<Dice5 size={16} aria-hidden="true" />}
@@ -558,6 +661,7 @@ export function DmConsole({
       )}
       {(status === 'draft' || status === 'initiative') && (
         <EncounterBalance
+          draftRevision={status === 'draft' ? encounter.revision : undefined}
           campaignId={campaignId}
           encounterId={encounter.id}
           encounterName={encounter.name}
@@ -565,18 +669,6 @@ export function DmConsole({
           run={run}
           pending={pending}
         />
-      )}
-      {status === 'active' && (
-        <Group justify="flex-end">
-          <Button
-            variant="default"
-            color="red"
-            leftSection={<Flag size={16} aria-hidden="true" />}
-            onClick={() => setConfirm('end')}
-          >
-            {t('combat.flow.end')}
-          </Button>
-        </Group>
       )}
       {status === 'ended' && <CombatSummary encounter={encounter} combatants={state.combatants} />}
 
@@ -710,42 +802,67 @@ export function DmConsole({
           }}
         />
       )}
-      {multi && multiMode && (
+      {amount && isLive(status) && (
         <AmountDialog
-          targets={combatants.filter((c) => multi.has(c.id))}
-          initialMode={multiMode}
+          targets={amount.targets}
+          initialMode={amount.mode}
           pending={pending}
-          close={() => setMultiMode(null)}
+          targetUnavailable={!canApplyAmount}
+          close={() => setAmount(null)}
           apply={async (mode, hits) => {
             if (await run({ kind: 'hp', encounterId: encounter.id, mode, hits })) {
-              setMultiMode(null)
-              setMulti(new Set())
+              setAmount(null)
+              if (multi) setMulti(new Set())
             }
           }}
         />
       )}
+      {conditionTarget && isLive(status) && (
+        <Modal
+          opened
+          onClose={() => setConditionTarget(null)}
+          title={t('combat.target.condition', { name: conditionTarget.name })}
+          closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
+        >
+          {conditionCombatant?.can_act ? (
+            <ConditionPicker combatant={conditionCombatant} run={run} pending={pending} />
+          ) : (
+            <Text role="status">{t('combat.target.unavailable')}</Text>
+          )}
+        </Modal>
+      )}
       <Modal
-        opened={confirm === 'end'}
-        onClose={() => setConfirm(null)}
+        opened={confirm === 'end' && status === 'active'}
+        onClose={closeEnd}
+        returnFocus={false}
         title={t('combat.flow.endTitle')}
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
       >
-        <Text>{t('combat.flow.endBody')}</Text>
-        <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={() => setConfirm(null)}>
+        <Stack gap="xs">
+          <Text fw={700}>{encounter.name}</Text>
+          <Text>{t('combat.round', { round: encounter.round })}</Text>
+          {active && <Text>{t('combat.flow.endActing', { name: active.name })}</Text>}
+          <Text>{t('combat.flow.endBody')}</Text>
+        </Stack>
+        <div className="combat-dialog-actions">
+          <Button variant="subtle" data-autofocus onClick={closeEnd}>
             {t('action.cancel')}
           </Button>
           <Button
-            color="red"
+            variant="default"
+            className="combat-btn-damage"
+            leftSection={<Flag size={16} aria-hidden="true" />}
             loading={pending}
             onClick={async () => {
-              if (await run({ kind: 'status', encounterId: encounter.id, status: 'ended' }))
+              if (await run({ kind: 'status', encounterId: encounter.id, status: 'ended' })) {
+                returnTo.current = null
                 setConfirm(null)
+              }
             }}
           >
             {t('combat.flow.end')}
           </Button>
-        </Group>
+        </div>
       </Modal>
       <Modal
         opened={confirm === 'delete'}

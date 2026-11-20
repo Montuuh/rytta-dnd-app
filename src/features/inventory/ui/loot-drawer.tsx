@@ -151,11 +151,13 @@ export function LootDrawer({
   campaignId,
   items,
   initial,
+  onDelivered,
   onClose,
 }: {
   campaignId: string
   items: ItemDefinition[]
   initial?: ItemDefinition
+  onDelivered?: () => void
   onClose: () => void
 }) {
   const { state } = useAuth()
@@ -220,6 +222,7 @@ export function LootDrawer({
     try {
       const result = await grant.mutateAsync(review.request)
       setReceipt(result.allocations)
+      onDelivered?.()
       requestAnimationFrame(() => titleRef.current?.focus())
     } catch {
       /* The review keeps the exact payload and request ID for a retry. */

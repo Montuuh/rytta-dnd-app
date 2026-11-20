@@ -7,6 +7,7 @@ import { useCampaign, useCampaignView } from '@/features/campaigns'
 import { useAuth } from '@/features/auth'
 import { encountersQuery, isLive } from '@/features/combat'
 import { PageHead } from '@/shared/ui/page-head'
+import { SessionJournalLink } from './session-links'
 import './campaign-landing.css'
 
 export function CampaignLanding() {
@@ -48,6 +49,7 @@ export function CampaignLanding() {
           </Link>
         ))}
       </nav>
+      <SessionJournalLink />
     </Stack>
   )
 }

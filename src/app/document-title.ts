@@ -9,6 +9,7 @@ type TitleInput = {
 
 /** Routes whose title is not their module's name. Order matters: first match wins. */
 const routeTitles = [
+  { pattern: '/session', key: 'session.journal' },
   { pattern: '/members', key: 'campaign.manage' },
   { pattern: '/party/roster', key: 'roster.title' },
   { pattern: '/party/:characterId/create', key: 'wizard.editorTitle' },

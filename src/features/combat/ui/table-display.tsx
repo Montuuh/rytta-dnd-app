@@ -141,7 +141,7 @@ export function TableDisplay({
         {(status === 'active' || status === 'initiative') &&
           // RYT-131: every member opens the same chrome-less table screen from here.
           // (the DM has it in the bar above both views).
-          !isDm && <TableScreenLink campaignId={campaignId} newTab={false} />}
+          !isDm && <TableScreenLink campaignId={campaignId} />}
       </header>
       <RunnerError error={error} trigger={trigger} onClose={clear} />
 

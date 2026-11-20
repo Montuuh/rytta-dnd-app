@@ -17,7 +17,7 @@ import {
 } from './data/repository'
 import { combatPollInterval, type CombatAction } from './domain/combat'
 
-const combatScope = (userId: string, campaignId: string) =>
+export const combatScope = (userId: string, campaignId: string) =>
   ['private', userId, 'campaign', campaignId, 'combat'] as const
 
 /** Subscribed realtime channels per campaign; the live-fight poll backs off while any is up. */

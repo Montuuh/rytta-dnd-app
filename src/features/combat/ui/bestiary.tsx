@@ -29,11 +29,14 @@ import {
   VisuallyHidden,
   Drawer as CreatureDrawer,
 } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
+import { useQuery } from '@tanstack/react-query'
 import { Drawer, Modal } from '@/shared/ui/overlays'
 import { afterOverlayEntriesSettle } from '@/shared/ui/use-back-to-close'
 import {
   ArrowDown01,
   ArrowDownAZ,
+  ArrowLeft,
   BookMinus,
   Bookmark,
   Check,
@@ -55,7 +58,8 @@ import {
   X,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import { useAuth } from '@/features/auth'
 import {
   challengeRatings,
   emptyFilters,
@@ -75,9 +79,16 @@ import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
 import { showTopOf } from '@/shared/ui/scroll-parent'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { Windowed } from '@/shared/ui/windowed'
-import type { CombatantTemplate, TemplateInput } from '../domain/combat'
+import { encountersQuery } from '../api'
+import type { CombatantTemplate, EncounterSummary, TemplateInput } from '../domain/combat'
 import { AddToEncounterDialog } from './add-to-encounter'
+import {
+  BestiaryComparison,
+  BestiaryComparisonToggle,
+  EncounterCreatureAdd,
+} from './bestiary-encounter'
 import { CreatureEditor } from './creature-editor'
+import { CreatureChanges } from './creature-changes'
 import { blankDraft, draftFromBlock, type CreatureDraft } from './creature-draft'
 import { CreatureArtControl, type ArtNotice } from './creature-art'
 import { itemArt, templateBlock, useCreatureCatalog } from './creatures'
@@ -163,6 +174,7 @@ type EditorState = {
   basedOn?: string
   /** RYT-089: a new campaign version of that official creature (edited in place). */
   version?: boolean
+  reference?: CreatureListItem
 }
 
 /**
@@ -173,21 +185,55 @@ type EditorState = {
  */
 export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
+  const { state } = useAuth()
   const { ref: panelRef, split: wide } = useSplit(useWide())
   const catalog = useCreatureCatalog(campaignId)
   const { favorites, toggle } = useFavorites(campaignId)
   const [params, setParams] = useSearchParams()
   const selectedKey = params.get('creature')
+  const encounterId = params.get('encounter')
+  const encounters = useQuery({
+    ...encountersQuery(state.user!.id, campaignId),
+    enabled: Boolean(encounterId),
+  })
+  const targetEncounter = encounters.data?.find((encounter) => encounter.id === encounterId)
+  const encounter = targetEncounter?.status === 'ended' ? undefined : targetEncounter
+  const encounterPath = targetEncounter
+    ? `/campaign/${campaignId}/combat/${targetEncounter.id}?view=console`
+    : `/campaign/${campaignId}/combat`
+  const [comparisonKeys, setComparisonKeys] = useState<string[]>([])
+  const comparison = comparisonKeys.flatMap((key) => {
+    const item = catalog.items.find((candidate) => candidate.key === key)
+    return item ? [item] : []
+  })
+  const compared = comparison.map((item) => item.key)
+  const toggleComparison = (key: string) =>
+    setComparisonKeys((current) =>
+      current.includes(key) ? current.filter((item) => item !== key) : [...compared, key],
+    )
+  const favoriteNotice = useRef<string | null>(null)
+  const toggleFavorite = (item: CreatureListItem) => {
+    const saved = !favorites.has(item.key)
+    toggle(item.key)
+    if (favoriteNotice.current) notifications.hide(favoriteNotice.current)
+    favoriteNotice.current = notifications.show({
+      message: t(saved ? 'bestiary.favorite.saved' : 'bestiary.favorite.unsaved', {
+        name: item.name,
+      }),
+    })
+  }
   const [filters, setFilters] = useState<CreatureFilters>(emptyFilters)
   const [adding, setAdding] = useState<CreatureListItem | null>(null)
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [creating, setCreating] = useState(false)
-  const [quick, setQuick] = useState<CombatantTemplate | 'new' | null>(null)
+  const [quick, setQuick] = useState<{
+    template: CombatantTemplate | null
+    variantOf?: CombatantTemplate
+  } | null>(null)
   const [deleting, setDeleting] = useState<CombatantTemplate | null>(null)
   const [asking, setAsking] = useState<OfficialAsk | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const opener = useRef<HTMLElement | null>(null)
-  const pendingSelect = useRef<string | null>(null)
   // After going back to the official creature, focus waits for its stat block's Edit button.
   const focusEdit = useRef<string | null>(null)
   const { run, pending, error, trigger, clear } = useRunner(campaignId)
@@ -291,17 +337,6 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     // Back, Escape and "Volver a la lista" all end on the row that was open.
     focusWhenReady(() => rowOf(key))
   }, [selectedKey, overlayOpen])
-  // A newly saved creature is selected once the list knows it.
-  useEffect(() => {
-    if (!pendingSelect.current) return
-    const latest = [...catalog.templateById.values()]
-      .filter((tp) => tp.name === pendingSelect.current)
-      .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))[0]
-    if (latest) {
-      pendingSelect.current = null
-      select(`hb:${latest.id}`)
-    }
-  })
   useEffect(() => {
     if (!focusEdit.current || selected?.key !== focusEdit.current) return
     focusEdit.current = null
@@ -328,6 +363,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   // RYT-089: the campaign's official bestiary and its versions of official creatures.
   const official = catalog.official
   const versions = [...catalog.templateById.values()].filter((tp) => tp.srd_override).length
+  // Neither creatures nor the official bestiary yet: the download is the page's one primary action.
+  const empty = !catalog.pending && catalog.items.length === 0 && official?.downloaded === false
   const ask = (next: OfficialAsk, target: HTMLElement) => {
     opener.current = target
     setAsking(next)
@@ -415,7 +452,11 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       item={selected}
       catalog={catalog}
       favorite={favorites.has(selected.key)}
-      toggleFavorite={() => toggle(selected.key)}
+      toggleFavorite={() => toggleFavorite(selected)}
+      encounterId={encounterId}
+      encounter={encounter}
+      comparisonKeys={compared}
+      toggleComparison={toggleComparison}
       inSheet={!wide}
       onViewArt={setViewingArt}
       onAdd={(target) => {
@@ -431,6 +472,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           template: null,
           basedOn: selected.name,
           version: true,
+          reference: selected,
           draft: draftFromBlock(t, catalog.language, block, {
             size: row.size[0],
             type: row.type,
@@ -445,28 +487,39 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         const template = templateOf(selected)
         if (!template) return
         const block = templateBlock(template)
-        if (!block) setQuick(template)
-        else setEditor({ template, draft: draftFromTemplate(template) })
+        if (!block) setQuick({ template })
+        else setEditor({ template, draft: draftFromTemplate(template), reference: selected })
       }}
       onComplete={(target) => {
         opener.current = target
         const template = templateOf(selected)
         if (!template) return
-        setEditor({ template, draft: draftFromTemplate(template) })
+        setEditor({ template, draft: draftFromTemplate(template), reference: selected })
       }}
       onDuplicate={(target) => {
         opener.current = target
         const template = templateOf(selected)
         const block = selected.source === 'srd' ? blockOf(selected) : templateBlock(template)
-        if (!block) return
+        if (!block) {
+          if (template) setQuick({ template: null, variantOf: template })
+          return
+        }
         const base = template
           ? draftFromTemplate(template)
-          : draftFromBlock(t, catalog.language, block)
+          : draftFromBlock(t, catalog.language, block, {
+              size: selected.size[0],
+              type: selected.type,
+              cr: selected.cr,
+              legendary: selected.legendary,
+              srdId: selected.id,
+            })
         setEditor({
           template: null,
+          basedOn: selected.name,
+          reference: selected,
           draft: {
             ...base,
-            name: t('bestiary.duplicateName', { name: selected.name }).slice(0, 80),
+            name: t('bestiary.variantName', { name: selected.name }).slice(0, 80),
           },
         })
       }}
@@ -494,29 +547,60 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         <div className="bst-head-title">
           <Group gap="xs" wrap="nowrap">
             <PawPrint size={20} className="feature-icon" aria-hidden="true" />
-            <Title order={2} id="bestiary-heading">
+            <Title order={encounterId ? 1 : 2} id="bestiary-heading">
               {t('bestiary.title')}
             </Title>
           </Group>
-          <Text size="sm" c="dimmed" mt={4} maw="62ch" className="bst-intro">
-            {t('bestiary.intro')}
-          </Text>
+          {targetEncounter && (
+            <Text fw={650} className="bst-context-name">
+              {targetEncounter.name}
+            </Text>
+          )}
+          {!encounterId && (
+            <Text size="sm" c="dimmed" mt={4} maw="62ch" className="bst-intro">
+              {t('bestiary.intro')}
+            </Text>
+          )}
         </div>
         <div className="bst-head-actions">
+          {encounterId && (
+            <Button
+              component={Link}
+              to={encounterPath}
+              variant="subtle"
+              leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+            >
+              {t(targetEncounter ? 'bestiary.context.back' : 'bestiary.context.backList')}
+            </Button>
+          )}
           {/* RYT-151: "Add to encounter" in the stat block is the filled action beside the list. */}
-          <Button
-            variant="outline"
-            leftSection={<Plus size={16} aria-hidden="true" />}
-            onClick={(event) => {
-              opener.current = event.currentTarget
-              setCreating(true)
-            }}
-          >
-            {t('bestiary.new')}
-          </Button>
-          {official?.downloaded && <OfficialMenu state={official} onAsk={ask} />}
+          {(!encounterId || empty) && (
+            <Button
+              variant="outline"
+              leftSection={<Plus size={16} aria-hidden="true" />}
+              onClick={(event) => {
+                opener.current = event.currentTarget
+                setCreating(true)
+              }}
+            >
+              {t('bestiary.new')}
+            </Button>
+          )}
+          {!encounterId && official?.downloaded && <OfficialMenu state={official} onAsk={ask} />}
         </div>
       </div>
+      {encounterId && (
+        <>
+          <QueryFeedback
+            pending={encounters.isPending}
+            error={encounters.isError && !encounters.data}
+            retry={() => void encounters.refetch()}
+          />
+          {encounters.isSuccess && !encounter && (
+            <Alert role="status">{t('bestiary.context.unavailable')}</Alert>
+          )}
+        </>
+      )}
       <RunnerError error={error} trigger={trigger} onClose={clear} />
       {/* On phones and tablets an open sheet covers the page: the notice shows inside it. */}
       {notice && (wide || !selected) && noticeAlert}
@@ -540,6 +624,16 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           onDownload={(target) => ask({ kind: 'download' }, target)}
         />
       )}
+      {encounter && comparison.length > 0 && (
+        <BestiaryComparison
+          items={comparison}
+          onRead={(key, target) => {
+            opener.current = target
+            select(key)
+          }}
+          onRemove={toggleComparison}
+        />
+      )}
       {!catalog.pending && (catalog.items.length > 0 || official?.downloaded) && (
         <div className={wide ? 'bst-split' : undefined}>
           <CreatureList
@@ -549,7 +643,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
             artCredit={catalog.artCredit}
             selectedKey={selectedKey}
             favorites={favorites}
-            toggleFavorite={toggle}
+            toggleFavorite={toggleFavorite}
+            comparisonKeys={encounter ? compared : undefined}
+            toggleComparison={toggleComparison}
             select={(key, target) => {
               opener.current = target
               select(key)
@@ -595,7 +691,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           size="100%"
           title={
             <>
-              <span aria-hidden="true">{t('bestiary.title')}</span>
+              <span aria-hidden="true" className="bst-context-name">
+                {targetEncounter?.name ?? t('bestiary.title')}
+              </span>
               <VisuallyHidden>{selected?.name}</VisuallyHidden>
             </>
           }
@@ -623,7 +721,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           srdBlock={(id) => catalog.blockFor(catalog.items.find((i) => i.key === `srd:${id}`))}
           onQuick={() => {
             setCreating(false)
-            setQuick('new')
+            setQuick({ template: null })
           }}
           onDraft={(draft, unplaced) => {
             setCreating(false)
@@ -646,6 +744,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           unplaced={editor.unplaced}
           basedOn={editor.basedOn}
           version={editor.version}
+          reference={editor.reference}
+          campaignScope
           onClose={() => {
             setEditor(null)
             restore()
@@ -656,32 +756,34 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
               t(editor.version ? 'bestiary.official.versionSaved' : 'bestiary.saved', { name }),
             )
             if (id) select(`hb:${id}`)
-            else pendingSelect.current = name.trim()
             restore()
           }}
         />
       )}
       {quick && (
         <QuickDialog
-          template={quick === 'new' ? null : quick}
+          template={quick.template}
+          variantOf={quick.variantOf}
           pending={pending}
           close={() => {
             setQuick(null)
             restore()
           }}
           save={async (data) => {
-            const ok = await run({
-              kind: 'saveTemplate',
-              templateId: quick === 'new' ? null : quick.id,
-              revision: quick === 'new' ? null : quick.revision,
-              data,
-            })
-            if (ok) {
-              setQuick(null)
-              setNotice(t('bestiary.saved', { name: data.name }))
-              if (quick === 'new') pendingSelect.current = data.name
-              restore()
-            }
+            await run(
+              {
+                kind: 'saveTemplate',
+                templateId: quick.template?.id ?? null,
+                revision: quick.template?.revision ?? null,
+                data,
+              },
+              ({ id }) => {
+                setQuick(null)
+                setNotice(t('bestiary.saved', { name: data.name }))
+                if (id && !quick.template) select(`hb:${id}`)
+                restore()
+              },
+            )
           }}
         />
       )}
@@ -692,6 +794,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           block={blockOf(adding)}
           row={adding.source === 'srd' ? catalog.rows.get(adding.id) : undefined}
           template={templateOf(adding) ?? undefined}
+          targetEncounter={encounter}
           onClose={() => {
             setAdding(null)
             restore()
@@ -1122,6 +1225,8 @@ function CreatureList({
   selectedKey,
   favorites,
   toggleFavorite,
+  comparisonKeys,
+  toggleComparison,
   select,
   emptyText,
   clear,
@@ -1135,7 +1240,9 @@ function CreatureList({
   grouping: Grouping
   selectedKey: string | null
   favorites: ReadonlySet<string>
-  toggleFavorite: (key: string) => void
+  toggleFavorite: (item: CreatureListItem) => void
+  comparisonKeys?: readonly string[]
+  toggleComparison: (key: string) => void
   select: (key: string, target: HTMLElement) => void
   emptyText: string
   clear: () => void
@@ -1313,18 +1420,22 @@ function CreatureList({
             )}
           </span>
         </button>
-        <ActionIcon
-          variant="subtle"
-          size={44}
-          className="bst-fav"
-          aria-pressed={favorite}
-          aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
-            name: item.name,
-          })}
-          onClick={() => toggleFavorite(item.key)}
-        >
-          <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
-        </ActionIcon>
+        {comparisonKeys ? (
+          <BestiaryComparisonToggle item={item} keys={comparisonKeys} onToggle={toggleComparison} />
+        ) : (
+          <ActionIcon
+            variant="subtle"
+            size={44}
+            className="bst-fav"
+            aria-pressed={favorite}
+            aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
+              name: item.name,
+            })}
+            onClick={() => toggleFavorite(item)}
+          >
+            <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+          </ActionIcon>
+        )}
       </li>
     )
   }
@@ -1437,6 +1548,10 @@ function CreatureDetail({
   catalog,
   favorite,
   toggleFavorite,
+  encounterId,
+  encounter,
+  comparisonKeys,
+  toggleComparison,
   inSheet,
   onViewArt,
   onAdd,
@@ -1454,6 +1569,10 @@ function CreatureDetail({
   catalog: ReturnType<typeof useCreatureCatalog>
   favorite: boolean
   toggleFavorite: () => void
+  encounterId: string | null
+  encounter?: EncounterSummary
+  comparisonKeys: readonly string[]
+  toggleComparison: (key: string) => void
   inSheet: boolean
   /** The image viewer is open (it owns Escape over the phone sheet). */
   onViewArt: (open: boolean) => void
@@ -1529,49 +1648,76 @@ function CreatureDetail({
     />
   )
   const actions = (
-    <div className={inSheet ? 'bst-actions is-sticky' : 'bst-actions is-pinned'}>
-      <Button
-        className="bst-action-primary"
-        leftSection={<Swords size={16} aria-hidden="true" />}
-        onClick={(e) => onAdd(e.currentTarget)}
-      >
-        {t('bestiary.addToEncounter')}
-      </Button>
+    <div
+      className={inSheet ? 'bst-actions is-sticky' : 'bst-actions is-pinned'}
+      data-encounter={encounterId ? true : undefined}
+    >
+      {encounter ? (
+        <EncounterCreatureAdd
+          key={`${encounter.id}:${item.key}`}
+          campaignId={campaignId}
+          encounter={encounter}
+          item={item}
+          block={block}
+        />
+      ) : (
+        !encounterId && (
+          <Button
+            className="bst-action-primary"
+            leftSection={<Swords size={16} aria-hidden="true" />}
+            onClick={(e) => onAdd(e.currentTarget)}
+          >
+            {t('bestiary.addToEncounter')}
+          </Button>
+        )
+      )}
       <div className="bst-actions-secondary">
-        {item.source === 'srd' ? (
-          // RYT-089: editing an official creature keeps the change in this campaign.
-          <Button
-            variant="light"
-            leftSection={<Pencil size={16} aria-hidden="true" />}
-            disabled={!block}
-            data-bst-edit
-            onClick={(e) => onCustomise(e.currentTarget)}
-          >
-            {t('bestiary.edit')}
-          </Button>
-        ) : (
-          <Button
-            variant="light"
-            leftSection={<Pencil size={16} aria-hidden="true" />}
-            data-bst-edit
-            onClick={(e) => onEdit(e.currentTarget)}
-          >
-            {t('bestiary.edit')}
-          </Button>
-        )}
+        {!encounterId &&
+          (item.source === 'srd' ? (
+            // RYT-089: editing an official creature keeps the change in this campaign.
+            <Button
+              variant="light"
+              leftSection={<Pencil size={16} aria-hidden="true" />}
+              disabled={!block}
+              data-bst-edit
+              onClick={(e) => onCustomise(e.currentTarget)}
+            >
+              {t('bestiary.edit')}
+            </Button>
+          ) : (
+            <Button
+              variant="light"
+              leftSection={<Pencil size={16} aria-hidden="true" />}
+              data-bst-edit
+              onClick={(e) => onEdit(e.currentTarget)}
+            >
+              {t('bestiary.edit')}
+            </Button>
+          ))}
         {/* The bookmark and the menu wrap together, so the text action keeps its word. */}
         <div className="bst-actions-icons">
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            aria-pressed={favorite}
-            aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
-              name: item.name,
-            })}
-            onClick={toggleFavorite}
-          >
-            <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
-          </ActionIcon>
+          {encounter ? (
+            <BestiaryComparisonToggle
+              item={item}
+              keys={comparisonKeys}
+              onToggle={toggleComparison}
+              labeled
+            />
+          ) : (
+            !encounterId && (
+              <ActionIcon
+                variant="subtle"
+                size={44}
+                aria-pressed={favorite}
+                aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
+                  name: item.name,
+                })}
+                onClick={toggleFavorite}
+              >
+                <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+              </ActionIcon>
+            )
+          )}
           <Menu position="bottom-end" withinPortal zIndex={420}>
             <Menu.Target>
               <ActionIcon
@@ -1584,6 +1730,14 @@ function CreatureDetail({
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
+              {encounter && (
+                <Menu.Item
+                  leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
+                  onClick={() => onAdd(fromMenu())}
+                >
+                  {t('bestiary.context.addOptions')}
+                </Menu.Item>
+              )}
               {item.source === 'homebrew' && !block && (
                 <Menu.Item
                   leftSection={<FilePenLine size={16} aria-hidden="true" />}
@@ -1592,12 +1746,12 @@ function CreatureDetail({
                   {t('bestiary.complete')}
                 </Menu.Item>
               )}
-              {block && item.source === 'homebrew' && (
+              {(block || template) && (
                 <Menu.Item
                   leftSection={<CopyPlus size={16} aria-hidden="true" />}
                   onClick={() => onDuplicate(fromMenu())}
                 >
-                  {t('bestiary.duplicate')}
+                  {t('bestiary.variant')}
                 </Menu.Item>
               )}
               {block && (
@@ -1612,7 +1766,7 @@ function CreatureDetail({
                   {t('bestiary.copyText')}
                 </Menu.Item>
               )}
-              {(item.source === 'srd' || item.version) && (
+              {!encounterId && (item.source === 'srd' || item.version) && (
                 <Menu.Item
                   className="bst-menu-danger"
                   leftSection={<BookMinus size={16} aria-hidden="true" />}
@@ -1621,7 +1775,7 @@ function CreatureDetail({
                   {t('bestiary.official.removeOne')}
                 </Menu.Item>
               )}
-              {item.source === 'homebrew' && !item.version && (
+              {!encounterId && item.source === 'homebrew' && !item.version && (
                 <Menu.Item
                   className="bst-menu-danger"
                   leftSection={<Trash2 size={16} aria-hidden="true" />}
@@ -1724,24 +1878,31 @@ function CreatureDetail({
 /** Quick creature: the numbers combat needs, nothing more (the RYT-036 dialog). */
 function QuickDialog({
   template,
+  variantOf,
   pending,
   close,
   save,
 }: {
   template: CombatantTemplate | null
+  variantOf?: CombatantTemplate
   pending: boolean
   close: () => void
   save: (data: TemplateInput) => void
 }) {
   const { t } = useTranslation()
   const phone = usePhone()
-  const [name, setName] = useState(template?.name ?? '')
-  const [side, setSide] = useState<'enemy' | 'ally'>(template?.side ?? 'enemy')
-  const [maxHp, setMaxHp] = useState<number | string>(template?.max_hp ?? 7)
-  const [ac, setAc] = useState<number | string>(template?.armor_class ?? 12)
-  const [bonus, setBonus] = useState<number | string>(template?.initiative_bonus ?? 0)
-  const [legendary, setLegendary] = useState<number | string>(template?.legendary_max ?? 0)
-  const [notes, setNotes] = useState(template?.notes ?? '')
+  const source = template ?? variantOf
+  const [name, setName] = useState(
+    variantOf
+      ? t('bestiary.variantName', { name: variantOf.name }).slice(0, 80)
+      : (template?.name ?? ''),
+  )
+  const [side, setSide] = useState<'enemy' | 'ally'>(source?.side ?? 'enemy')
+  const [maxHp, setMaxHp] = useState<number | string>(source?.max_hp ?? 7)
+  const [ac, setAc] = useState<number | string>(source?.armor_class ?? 12)
+  const [bonus, setBonus] = useState<number | string>(source?.initiative_bonus ?? 0)
+  const [legendary, setLegendary] = useState<number | string>(source?.legendary_max ?? 0)
+  const [notes, setNotes] = useState(source?.notes ?? '')
   const valid =
     name.trim().length > 0 && [maxHp, ac, bonus, legendary].every((n) => typeof n === 'number')
   return (
@@ -1751,7 +1912,11 @@ function QuickDialog({
       fullScreen={phone}
       zIndex={400}
       title={
-        template ? t('combat.bestiary.edit', { name: template.name }) : t('bestiary.quick.title')
+        variantOf
+          ? t('bestiary.editor.variantTitle', { name: variantOf.name })
+          : template
+            ? t('combat.bestiary.edit', { name: template.name })
+            : t('bestiary.quick.title')
       }
       closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
     >
@@ -1767,10 +1932,19 @@ function QuickDialog({
             initiative_bonus: bonus as number,
             legendary_max: legendary as number,
             notes,
+            ...(variantOf && {
+              srd_id: variantOf.srd_id,
+              hp_formula: variantOf.hp_formula,
+              challenge: variantOf.challenge,
+              creature_type: variantOf.creature_type,
+            }),
           })
         }}
       >
         <Stack gap="sm">
+          <Text size="sm" c="dimmed">
+            {t(variantOf ? 'bestiary.scope.variant' : 'bestiary.scope.template')}
+          </Text>
           <TextInput
             data-autofocus
             required
@@ -1822,6 +1996,29 @@ function QuickDialog({
             minRows={3}
             onChange={(event) => setNotes(event.currentTarget.value)}
           />
+          {source && valid && (
+            <CreatureChanges
+              reference={source.name}
+              changes={[
+                { field: t('combat.add.name'), before: source.name, after: name.trim() },
+                { field: t('bestiary.hp'), before: source.max_hp, after: maxHp },
+                { field: t('bestiary.ac'), before: source.armor_class, after: ac },
+                { field: t('bestiary.initiative'), before: source.initiative_bonus, after: bonus },
+                {
+                  field: t('combat.add.legendary'),
+                  before: source.legendary_max,
+                  after: legendary,
+                },
+                {
+                  field: t('combat.add.side'),
+                  before: t(`combat.side.${source.side}`),
+                  after: t(`combat.side.${side}`),
+                },
+              ]}
+              sections={source.notes === notes ? [] : [t('combat.bestiary.notes')]}
+              collapsible
+            />
+          )}
           <Group justify="flex-end" className="bst-dialog-actions">
             <Button variant="subtle" onClick={close}>
               {t('action.cancel')}

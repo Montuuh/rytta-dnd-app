@@ -7,6 +7,7 @@ import { takeReturnTo, useAuth } from '@/features/auth'
 import { LibraryPage } from '@/features/content-library'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
+import { PartyRecapLink } from '@/pages/session-links'
 import { CampaignLanding } from '@/pages/campaign-landing'
 import { LegalPage } from '@/pages/legal-page'
 
@@ -51,6 +52,9 @@ const ShopsPage = lazy(() =>
   import('@/features/shops').then((module) => ({ default: module.ShopsPage })),
 )
 
+const SessionPage = lazy(() =>
+  import('@/pages/session-page').then((module) => ({ default: module.SessionPage })),
+)
 const CombatPage = lazy(() =>
   import('@/features/combat').then((module) => ({ default: module.CombatPage })),
 )
@@ -64,6 +68,9 @@ const CombatTablePage = lazy(() =>
 // ADR 032: the tabletop editor, the Player view and the chrome-less table screen.
 const TabletopPage = lazy(() =>
   import('@/features/tabletop').then((module) => ({ default: module.TabletopPage })),
+)
+const TableProjectionButton = lazy(() =>
+  import('@/features/tabletop').then((module) => ({ default: module.TableProjectionButton })),
 )
 const TabletopScenePage = lazy(() =>
   import('@/features/tabletop').then((module) => ({ default: module.TabletopScenePage })),
@@ -137,7 +144,15 @@ export function AppRouter() {
                     <Route element={<TradeLayer />}>
                       <Route element={<CampaignGlossaryLayer />}>
                         <Route index element={<CampaignLanding />} />
-                        <Route path="party" element={<CharacterParty />} />
+                        <Route
+                          path="party"
+                          element={
+                            <>
+                              <CharacterParty />
+                              <PartyRecapLink />
+                            </>
+                          }
+                        />
                         <Route path="party/roster" element={<CharacterRosterPage />} />
                         <Route path="party/:characterId" element={<CharacterSheetPage />} />
                         <Route
@@ -145,12 +160,16 @@ export function AppRouter() {
                           element={<CharacterCreationPage />}
                         />
                         <Route path="members" element={<DmCenterPage />} />
+                        <Route path="session" element={<SessionPage />} />
                         {/* RYT-027: the storeroom moved into the DM Command Center. */}
                         <Route path="items" element={<ItemsRedirect />} />
                         <Route path="inventory" element={<InventoryPage />} />
                         <Route path="shops" element={<ShopsPage />} />
                         <Route path="combat" element={<CombatPage />} />
-                        <Route path="combat/:encounterId" element={<CombatEncounterPage />} />
+                        <Route
+                          path="combat/:encounterId"
+                          element={<CombatEncounterPage projection={TableProjectionButton} />}
+                        />
                         <Route path="combat/:encounterId/table" element={<CombatTablePage />} />
                         <Route path="glossary" element={<GlossaryPage />} />
                         <Route path="glossary/:entryId" element={<GlossaryPage />} />

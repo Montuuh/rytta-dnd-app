@@ -18,7 +18,7 @@ import {
   peerId,
   playerId,
 } from './fixtures/identity.ts'
-import { expectTouchTargets } from './fixtures/audit.ts'
+import { capture, expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
 const size = (project: string) =>
@@ -39,6 +39,11 @@ async function audit(page: Page) {
 // The DM keeps both views mounted: only the visible one counts.
 const row = (page: Page, name: string) =>
   page.locator('.combat-rail:visible .combat-row', { hasText: name }).first()
+async function openLiveDetail(page: Page, name: string, info: TestInfo) {
+  await row(page, name).getByRole('button').first().click()
+  if (info.project.name !== 'identity-desktop')
+    await page.getByRole('button', { name: `Detalle de ${name}`, exact: true }).click()
+}
 /** RYT-042: the DM's view switch, tapped like a person would (its radios are visually hidden). */
 async function view(page: Page, name: 'Orden' | 'Consola del DM' | 'Order' | 'DM console') {
   await page.locator('.combat-view-switch label', { hasText: name }).click()
@@ -194,7 +199,8 @@ test('RYT-007 DM and Player run a shared encounter', async ({ browser }, info) =
   // chosen when it ends leave with the fight (RYT-042 F1).
   await dm.getByRole('button', { name: 'Elegir objetivos' }).click()
   await dm.getByRole('checkbox', { name: 'Elegir a Goblin 1' }).check()
-  await dm.getByRole('button', { name: 'Terminar combate' }).click()
+  await dm.getByRole('button', { name: 'Acciones del encuentro' }).click()
+  await dm.getByRole('menuitem', { name: 'Terminar combate' }).click()
   const end = dm.getByRole('dialog', { name: '¿Terminar este combate?' })
   await end.getByRole('button', { name: 'Terminar combate' }).click()
   await expect(dm.getByRole('heading', { name: 'Resumen del combate' })).toBeVisible()
@@ -285,7 +291,7 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
   await expect(next).toBeFocused()
 
   // 2. A failed change in the detail keeps its error in view, inside the drawer on phones.
-  await row(page, 'Goblin 1').getByRole('button').first().click()
+  await openLiveDetail(page, 'Goblin 1', info)
   await page.getByRole('button', { name: 'Cambiar' }).click()
   await page.getByText('Derribado', { exact: true }).click()
   const inline =
@@ -369,7 +375,7 @@ test('RYT-039 combat conditions open their glossary definition in place', async 
   await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
 
   // The DM marks Goblin 1 as prone and closes the picker: the condition becomes a reference.
-  await row(page, 'Goblin 1').getByRole('button').first().click()
+  await openLiveDetail(page, 'Goblin 1', info)
   await page.getByRole('button', { name: 'Cambiar' }).click()
   await page.getByText('Derribado', { exact: true }).click()
   await expect(page.getByRole('checkbox', { name: 'Derribado' })).toBeChecked()
@@ -408,7 +414,7 @@ test('RYT-039 combat conditions open their glossary definition in place', async 
 
 test("RYT-039 an effect's condition opens its definition and removing the effect clears it", async ({
   page,
-}) => {
+}, info) => {
   const server = combatServer()
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -424,7 +430,7 @@ test("RYT-039 an effect's condition opens its definition and removing the effect
   await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
 
   // The DM adds a web that restrains Goblin 1.
-  await row(page, 'Goblin 1').getByRole('button').first().click()
+  await openLiveDetail(page, 'Goblin 1', info)
   await page.getByRole('button', { name: 'Añadir efecto' }).click()
   const dialog = page.getByRole('dialog', { name: 'Añadir efecto: Goblin 1' })
   await dialog.getByRole('textbox', { name: 'Efecto' }).fill('Telaraña')
@@ -509,7 +515,7 @@ test('RYT-041 the DM changes the roster mid-combat and the detail follows the tu
   await evidence(page, info.project.name, 'turn-focus', 'RYT-041')
   await expectDetail('Bea')
   // 3. Picking another row still works between turns; the next turn takes the detail back.
-  await row(page, 'Goblin 2').getByRole('button').first().click()
+  await openLiveDetail(page, 'Goblin 2', info)
   await expect(detailName).toHaveText('Goblin 2')
   if (!wide) {
     await page.keyboard.press('Escape')
@@ -737,12 +743,77 @@ test('RYT-041 a real touch long press keeps the row menu open after lifting the 
   await expect(page.getByRole('menuitem', { name: 'Quitar del combate' })).toBeVisible()
   // The long press did not also open the detail sheet.
   await expect(page.locator('.combat-drawer .mantine-Drawer-content')).toHaveCount(0)
-  // A short tap still opens the detail.
+  // A short tap selects the row and exposes its actions.
   await page.keyboard.press('Escape')
   await expect(page.getByRole('menu')).toHaveCount(0)
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] })
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await page.getByRole('button', { name: 'Detalle de Bea', exact: true }).click()
   await expect(page.locator('.combat-detail-name')).toHaveText('Bea')
+})
+
+test('RYT-145 DM row actions keep their named target through a remote turn change', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  const encounter = server.encounters[0]!
+  await page.goto(`./#/campaign/${campaignId}/combat/${encounter.id}?view=console`)
+
+  await openLiveDetail(page, 'Goblin 1', info)
+  if (info.project.name !== 'identity-desktop') await page.keyboard.press('Escape')
+  await row(page, 'Goblin 2').getByRole('button').first().click()
+  const target = row(page, 'Goblin 2')
+  await expect(target.getByRole('button', { name: 'Curar a Goblin 2' })).toBeVisible()
+  await expectTouchTargets(page, '.combat-target-actions button:visible')
+  await target.scrollIntoViewIfNeeded()
+  await capture(page, info.outputPath('ryt-145-combat-target.png'), { fullPage: false })
+  await target.getByRole('button', { name: 'Estados de Goblin 2' }).click()
+  const conditions = page.getByRole('dialog', { name: 'Estados de Goblin 2' })
+  await conditions.getByText('Derribado', { exact: true }).click()
+  await expect(conditions.getByRole('checkbox', { name: 'Derribado' })).toBeChecked()
+  await page.keyboard.press('Escape')
+  await target.getByRole('button', { name: 'Daño a Goblin 2' }).click()
+  const damage = page.getByRole('dialog', { name: 'Aplicar daño: Goblin 2' })
+  await damage.getByRole('button', { name: '+5', exact: true }).click()
+  await expect(damage.getByText('Goblin 2: 5')).toBeVisible()
+  server.act('advance_turn', {
+    target_encounter: encounter.id,
+    direction: 1,
+    expected_active: encounter.active,
+    request_id: crypto.randomUUID(),
+  })
+  await expect(page.locator('.combat-turn-name')).toHaveText('Bea', {
+    timeout: 15_000,
+  })
+  await damage.getByRole('button', { name: 'Aplicar', exact: true }).click()
+  await expect(damage).toBeHidden()
+  await expect(target).toContainText('2/7 PG')
+  await expect(row(page, 'Goblin 1')).toContainText('7/7 PG')
+  await page.getByRole('button', { name: 'Siguiente turno' }).click()
+  await expect(page.locator('.combat-turn-name')).toHaveText('Goblin 1')
+
+  const menu = page.getByRole('button', { name: 'Acciones del encuentro' })
+  await expect(page.getByRole('button', { name: 'Terminar combate' })).toHaveCount(0)
+  await menu.click()
+  await page.getByRole('menuitem', { name: 'Terminar combate' }).click()
+  const end = page.getByRole('dialog', { name: '¿Terminar este combate?' })
+  await expect(end).toContainText('Bridge ambush')
+  await expect(end).toContainText('Ronda 1')
+  await expect(end).toContainText('Actúa ahora: Goblin 1')
+  await audit(page)
+  await capture(page, info.outputPath('ryt-145-end-combat.png'), { fullPage: false })
+  await page.keyboard.press('Escape')
+  await expect(menu).toBeFocused()
+  await expect(page.getByRole('region', { name: 'Controles de turno' })).toBeVisible()
 })
 
 test('RYT-041 dialog actions share a row or stack full width, also with 150% text', async ({
@@ -762,9 +833,18 @@ test('RYT-041 dialog actions share a row or stack full width, also with 150% tex
   /** Either one row (same top) or stacked full width with the action above Cancel. */
   const expectDeliberate = async (dialog: Locator, action: string) => {
     const actions = dialog.locator('.combat-dialog-actions')
-    const cancel = (await actions.getByRole('button', { name: 'Cancelar' }).boundingBox())!
-    const primary = (await actions.getByRole('button', { name: action }).boundingBox())!
-    const row = (await actions.boundingBox())!
+    const buttons = actions.getByRole('button')
+    await expect(buttons.nth(0)).toHaveAccessibleName('Cancelar')
+    await expect(buttons.nth(1)).toHaveAccessibleName(action)
+    // The dialog can shift as it opens. Measure both controls in the same layout frame.
+    const { cancel, primary, row } = await actions.evaluate((node) => {
+      const [cancelButton, primaryButton] = node.querySelectorAll('button')
+      return {
+        cancel: cancelButton!.getBoundingClientRect().toJSON() as { y: number; width: number },
+        primary: primaryButton!.getBoundingClientRect().toJSON() as { y: number; width: number },
+        row: { width: node.getBoundingClientRect().width },
+      }
+    })
     if (Math.abs(cancel.y - primary.y) > 1) {
       expect(primary.y).toBeLessThan(cancel.y)
       for (const box of [cancel, primary]) expect(Math.abs(box.width - row.width)).toBeLessThan(2)
@@ -793,6 +873,14 @@ test('RYT-041 dialog actions share a row or stack full width, also with 150% tex
     await evidence(page, info.project.name, `join-dialog${suffix}`, 'RYT-041')
     await page.keyboard.press('Escape')
     await expect(join).toBeHidden()
+    await page.getByRole('button', { name: 'Acciones del encuentro' }).click()
+    await page.getByRole('menuitem', { name: 'Terminar combate' }).click()
+    const end = page.getByRole('dialog', { name: '¿Terminar este combate?' })
+    await expectDeliberate(end, 'Terminar combate')
+    await audit(page)
+    await capture(page, info.outputPath(`ryt-145-end-actions${suffix}.png`), { fullPage: false })
+    await page.keyboard.press('Escape')
+    await expect(end).toBeHidden()
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
@@ -1204,7 +1292,7 @@ function seedArt(server: ReturnType<typeof combatServer>) {
 
 test('RYT-098 portraits open the viewer from the table banner and the detail, not from the order rows', async ({
   page,
-}) => {
+}, info) => {
   test.setTimeout(90_000)
   const server = combatServer()
   const errors: string[] = []
@@ -1236,11 +1324,10 @@ test('RYT-098 portraits open the viewer from the table banner and the detail, no
   await expect(viewer).toHaveCount(0)
   await expect(now).toBeFocused()
 
-  // The console's order rows are dense controls: their tokens stay inside and the row opens the
-  // detail, whose larger portrait opens the viewer.
+  // The console's list keeps portrait viewing in the selected combatant's detail.
   await view(page, 'Consola del DM')
   await expect(row(page, 'Arin').getByRole('button', { name: /Ver el retrato/ })).toHaveCount(0)
-  await row(page, 'Arin').click()
+  await openLiveDetail(page, 'Arin', info)
   const detail = page.locator('.combat-detail:visible')
   const portrait = detail.getByRole('button', { name: 'Ver el retrato de Arin' })
   await expectTouchTargets(page, '.combat-detail:visible .combat-token-open')
@@ -1256,7 +1343,7 @@ test('RYT-098 portraits open the viewer from the table banner and the detail, no
     await page.keyboard.press('Escape')
     await expect(page.locator('.combat-detail:visible')).toHaveCount(0)
   }
-  await row(page, 'Bea').click()
+  await openLiveDetail(page, 'Bea', info)
   // RYT-112: a character without a picture wears its class emblem instead of initials.
   await expect(page.locator('.combat-detail:visible .combat-token img')).toHaveAttribute(
     'src',
@@ -1545,7 +1632,7 @@ test('RYT-043 the DM keeps exact hit points and sees hidden creatures on a broke
   await audit(page)
   await evidence(page, info.project.name, 'dm-console-order', 'RYT-043')
   // The DM's detail opens on the creature's portrait (RYT-088), named for what it opens.
-  await row(page, 'Goblin 2').locator('.combat-row-main').click()
+  await openLiveDetail(page, 'Goblin 2', info)
   const detail = page.locator('.combat-detail:visible')
   await expect(detail.getByRole('button', { name: 'Ver la imagen de Goblin 2' })).toBeVisible()
   // UI review F4: "CA 10" and "Iniciativa 16" never split from their value.
@@ -2135,7 +2222,7 @@ test('RYT-088 the DM opens a creature in a fight on its portrait, which opens th
   const owlbear = encounter.combatants.find((c) => c.name === 'Goblin 1')!
   Object.assign(owlbear, { name: 'Oso lechuza', srd_id: 'owlbear' })
   await page.goto(`./#/campaign/${campaignId}/combat/${encounter.id}?view=console`)
-  await row(page, 'Oso lechuza').click()
+  await openLiveDetail(page, 'Oso lechuza', info)
   const detail = page.locator('.combat-detail:visible')
   const portrait = detail.getByRole('button', { name: 'Ver la imagen de Oso lechuza' })
   await expect(portrait.locator('img')).toHaveAttribute('src', /bestiary\/art\/owlbear\.webp$/, {
@@ -2161,7 +2248,7 @@ test('RYT-088 the DM opens a creature in a fight on its portrait, which opens th
     await page.keyboard.press('Escape')
     await expect(page.locator('.combat-detail:visible')).toHaveCount(0)
   }
-  await row(page, 'Goblin 2').click()
+  await openLiveDetail(page, 'Goblin 2', info)
   await expect(page.locator('.combat-detail:visible .combat-token')).toBeVisible()
   await expect(page.locator('.combat-detail:visible .bst-plate')).toHaveCount(0)
   expect(errors).toEqual([])

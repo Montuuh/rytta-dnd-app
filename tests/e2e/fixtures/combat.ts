@@ -66,6 +66,7 @@ type Fx = {
   visible: boolean
 }
 type Encounter = {
+  plan?: { sceneId: string | null; reward: string; attendanceSet: boolean }
   id: string
   name: string
   status: 'draft' | 'initiative' | 'active' | 'ended'
@@ -356,6 +357,17 @@ export function combatServer() {
   function handle(actor: string, method: string, body: Record<string, unknown>): unknown {
     const dm = actor === dmId
     const fail = (message: string) => ({ error: message })
+    if (method === 'get_encounter_plan') {
+      const e = find(body.target_encounter)
+      if (!dm || !e) return fail('Forbidden')
+      return {
+        sceneId: null,
+        reward: '',
+        attendanceSet: false,
+        ...e.plan,
+        scenes: [{ id: 'eb000000-0000-4000-8000-000000000001', name: 'Atalaya' }],
+      }
+    }
     if (method === 'list_encounters')
       return encounters
         .filter((e) => dm || e.status !== 'draft')
@@ -405,6 +417,8 @@ export function combatServer() {
   function mutate(actor: string, dm: boolean, method: string, body: Record<string, unknown>) {
     const fail = (message: string) => ({ error: message })
     const dmOnly = new Set([
+      'save_encounter_plan',
+      'duplicate_encounter_plan',
       'create_encounter',
       'rename_encounter',
       'delete_encounter',
@@ -623,6 +637,47 @@ export function combatServer() {
         e.status = next
         log(e, actor, 'status', undefined, { detail: { status: next } })
         break
+      }
+      case 'save_encounter_plan': {
+        if (e.status !== 'draft') return fail('Encounter closed')
+        if (body.expected_revision !== e.revision) return fail('Stale revision')
+        const attendees = body.attendees as string[] | null
+        e.plan = {
+          sceneId: body.target_scene as string | null,
+          reward: String(body.planned_reward),
+          attendanceSet: attendees !== null || Boolean(e.plan?.attendanceSet),
+        }
+        if (attendees) {
+          e.combatants = e.combatants.filter(
+            (c) => !c.character_id || attendees.includes(c.character_id),
+          )
+          const missing = attendees.filter((id) => !e.combatants.some((c) => c.character_id === id))
+          if (missing.length)
+            mutate(actor, dm, 'add_combatants', {
+              target_encounter: e.id,
+              entries: missing.map((character_id) => ({ kind: 'character', character_id })),
+            })
+        }
+        bump(e)
+        return result(e)
+      }
+      case 'duplicate_encounter_plan': {
+        if (e.status !== 'draft') return fail('Encounter closed')
+        const copy: Encounter = {
+          ...structuredClone(e),
+          id: uuid('e1000000'),
+          name: String(body.encounter_name),
+          revision: 0,
+          events: [],
+          effects: [],
+          updated: Date.now(),
+        }
+        for (const c of copy.combatants) {
+          c.id = uuid('c1000000')
+          c.initiative = c.kind === 'lair' ? 20 : undefined
+        }
+        encounters.push(copy)
+        return result(copy)
       }
       case 'add_combatants':
         for (const entry of body.entries as Record<string, unknown>[]) {
@@ -1140,7 +1195,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_srd_bestiary|set_srd_bestiary)$/,
+        /\/rest\/v1\/rpc\/(get_encounter_plan|save_encounter_plan|duplicate_encounter_plan|list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_srd_bestiary|set_srd_bestiary)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

@@ -34,6 +34,7 @@ export function AmountDialog({
   initialMode,
   allowTemp = true,
   pending,
+  targetUnavailable = false,
   close,
   apply,
 }: {
@@ -41,6 +42,7 @@ export function AmountDialog({
   initialMode: HpMode
   allowTemp?: boolean
   pending: boolean
+  targetUnavailable?: boolean
   close: () => void
   apply: (mode: HpMode, hits: { combatant_id: string; amount: number }[]) => void
 }) {
@@ -81,7 +83,7 @@ export function AmountDialog({
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          if (!valid || pending) return
+          if (!valid || pending || targetUnavailable) return
           apply(
             mode,
             targets.map((target) => ({ combatant_id: target.id, amount: amountFor(target) })),
@@ -89,6 +91,7 @@ export function AmountDialog({
         }}
       >
         <Stack gap="sm">
+          {targetUnavailable && <Text role="status">{t('combat.target.unavailable')}</Text>}
           <SegmentedControl
             fullWidth
             value={mode}
@@ -204,7 +207,11 @@ export function AmountDialog({
             <Button variant="subtle" onClick={close}>
               {t('action.cancel')}
             </Button>
-            <Button type="submit" disabled={!valid || pending} loading={pending}>
+            <Button
+              type="submit"
+              disabled={!valid || pending || targetUnavailable}
+              loading={pending}
+            >
               {t('combat.amount.apply')}
             </Button>
           </Group>

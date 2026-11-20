@@ -824,6 +824,16 @@ export async function identityFixture(
     calls.push({ method, body })
     const respond = (data: unknown, status = 200) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) })
+    if (method === 'get_session_continuity')
+      return respond({
+        lastEncounter: null,
+        privateNote: '',
+        nextScene: '',
+        pendingReward: '',
+        sharedRecap: '',
+        revision: 0,
+      })
+    if (method === 'get_shared_session_recap') return respond('')
     if (url.pathname.includes('/auth/v1/')) {
       if (method === 'logout') return route.fulfill({ status: 204 })
       if (method === 'user') return respond(session(currentId).user)

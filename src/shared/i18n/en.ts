@@ -26,7 +26,10 @@ import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
 import { castEn } from './cast-en'
 import { activationEn } from './activation-en'
+import { sessionEn } from './session-en'
+
 export const en = {
+  ...sessionEn,
   ...activationEn,
   ...legalEn,
   ...diceEn,

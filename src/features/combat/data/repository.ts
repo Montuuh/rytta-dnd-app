@@ -18,6 +18,7 @@ async function client() {
   const { getSupabase } = await import('@/shared/api/supabase')
   return getSupabase(config.VITE_SUPABASE_URL!, config.VITE_SUPABASE_PUBLISHABLE_KEY!)
 }
+export { client as combatClient }
 const uuid = (value: string) => z.uuid().parse(value)
 const int = (value: number, min: number, max: number) =>
   z.number().int().min(min).max(max).parse(value)
@@ -146,7 +147,8 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
   const db = await client()
   const target_campaign = uuid(campaignId)
   // A reset names its own request id: a retry of the same intent repeats it (idempotent).
-  const request_id = action.kind === 'resetRoll' ? uuid(action.requestId) : crypto.randomUUID()
+  const request_id =
+    'requestId' in action && action.requestId ? uuid(action.requestId) : crypto.randomUUID()
   let result
   switch (action.kind) {
     case 'create':

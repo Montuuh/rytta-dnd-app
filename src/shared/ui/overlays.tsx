@@ -2,6 +2,7 @@ import {
   Drawer as MantineDrawer,
   Modal as MantineModal,
   type DrawerProps,
+  type DrawerRootProps,
   type ModalProps,
 } from '@mantine/core'
 import { useBackToClose } from './use-back-to-close'
@@ -20,4 +21,10 @@ export function Modal(props: ModalProps) {
 export function Drawer(props: DrawerProps) {
   useBackToClose(props.opened, props.onClose)
   return <MantineDrawer {...props} />
+}
+
+/** `Drawer.Root` with Back wired in, for a drawer that composes its own header (Drawer.Header). */
+export function DrawerRoot(props: DrawerRootProps) {
+  useBackToClose(props.opened, props.onClose)
+  return <MantineDrawer.Root {...props} />
 }

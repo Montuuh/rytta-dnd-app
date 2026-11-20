@@ -1961,23 +1961,13 @@ html[data-mantine-color-scheme='light'] {
 }
 @media (prefers-reduced-motion: reduce) {
   .balance-token,
-  .undo-fuse-line {
+  .undo-fuse-line,
+  .card-result-fuse > span {
     transition: none;
   }
   .item-tile:active {
     transform: none;
   }
-}
-.card-undo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 8px 8px 8px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--app-accent);
-  background: var(--app-bg);
 }
 .seal-confirm {
   font-weight: 700;

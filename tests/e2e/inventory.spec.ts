@@ -45,8 +45,8 @@ for (const [language, scheme] of [
     const seal = page.getByRole('button', { name: es ? /Usar 1 × Poción/ : /Use 1 × Poción/ })
     await seal.focus()
     await page.keyboard.press('Enter')
-    await expect(page.getByRole('dialog').locator('.card-undo')).toContainText(
-      es ? 'Has usado' : 'You used',
+    await expect(page.getByRole('dialog').locator('.card-result')).toContainText(
+      es ? 'Usaste 1. Te quedan 2' : 'Used one, 2 left',
     )
     await expect(page.locator('.undo-fuse')).toHaveCount(0)
     await expect(page.getByText('×2')).toBeVisible()
@@ -316,6 +316,12 @@ test('J3-05 the purse shows in the header, and J3-11 a discard amount stops at t
   await page.getByRole('button', { name: /Poción de curación, cantidad 3/ }).click()
   const card = page.locator('.item-card-drawer')
   const amount = card.getByRole('textbox', { name: 'Cuántos descartar' })
+  // RYT-149: the discard controls stay folded under the seal until asked for.
+  await expect(amount).toBeHidden()
+  const fold = card.getByRole('button', { name: 'Descartar…' })
+  await expect(fold).toHaveAttribute('aria-expanded', 'false')
+  await fold.click()
+  await expect(fold).toHaveAttribute('aria-expanded', 'true')
   await amount.fill('9')
   await expect(amount).toHaveValue('3')
   await expect(card.getByText('Solo tienes 3')).toBeVisible()
@@ -325,4 +331,68 @@ test('J3-05 the purse shows in the header, and J3-11 a discard amount stops at t
   await amount.fill('0')
   await expect(amount).toHaveValue('1')
   await expect(card.getByText('Descartar 1')).toBeVisible()
+})
+
+test('RYT-149 tap, hold, keyboard and a double tap each spend exactly one unit', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const uses: number[] = []
+  page.on('request', (request) => {
+    if (request.url().endsWith('/rpc/use_item')) uses.push(Date.now())
+  })
+  await page.goto(url)
+  await page.getByRole('button', { name: /Poción de curación, cantidad 3/ }).click()
+  const card = page.locator('.item-card-drawer')
+  // The effect leads; discarding is folded away and the menu names its actions.
+  await expect(card.locator('.item-card-effect')).toHaveText('Gasta 1 de 3')
+  await expect(card.getByRole('textbox', { name: 'Cuántos descartar' })).toBeHidden()
+  // Without anyone to trade with the menu would only repeat the Discard row, so it is left out.
+  await expect(card.getByRole('button', { name: 'Más acciones' })).toHaveCount(0)
+  const seal = card.getByRole('button', { name: /Usar 1 × Poción/ })
+  // Two activations in a row, as a screen reader's double tap sends them: one unit.
+  await seal.evaluate((element: HTMLElement) => {
+    element.click()
+    element.click()
+  })
+  await expect(card.locator('.card-result')).toContainText('Usaste 1. Te quedan 2')
+  await expect(card.getByText('×2')).toBeVisible()
+  await expect(card.getByRole('alert')).toHaveCount(0)
+  expect(uses).toHaveLength(1)
+  await expect(card.getByRole('textbox', { name: 'Cuántos descartar' })).toBeHidden()
+  await audit(page, info.outputPath('card-result.png'))
+  // Hold: one more.
+  const box = (await seal.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(800)
+  await page.mouse.up()
+  await expect(card.locator('.card-result')).toContainText('Usaste 1. Te queda 1')
+  expect(uses).toHaveLength(2)
+  // The result line's undo puts it back.
+  await card
+    .locator('.card-result')
+    .getByRole('button', { name: /Deshacer/ })
+    .click()
+  await expect(card.getByText('×2')).toBeVisible()
+  // A failed use can be tried again; the earlier result line does not claim it worked.
+  let failOnce = true
+  await page.route('**/rpc/use_item', (route) => {
+    if (!failOnce) return route.fallback()
+    failOnce = false
+    return route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
+  })
+  await seal.focus()
+  await page.keyboard.press('Enter')
+  await expect(card.getByRole('alert')).toBeVisible()
+  await expect(card.locator('.card-result')).toHaveCount(0)
+  // The retry is a double activation too: still one request.
+  await seal.evaluate((element: HTMLElement) => {
+    element.click()
+    element.click()
+  })
+  await expect(card.getByRole('alert')).toHaveCount(0)
+  await expect(card.locator('.card-result')).toContainText('Usaste 1. Te queda 1')
+  expect(uses).toHaveLength(4)
 })

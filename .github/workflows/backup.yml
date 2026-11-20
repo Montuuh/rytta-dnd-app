@@ -3,7 +3,7 @@ name: Backup
 # and keeps it as a workflow artifact. It does nothing until the repository secret BACKUP_DB_URL
 # exists (docs/deployment.md, "Backups"). The dump holds personal data and the repository is
 # public, so artifacts are downloadable by anyone: the workflow stays disabled until the dump is
-# encrypted before upload (docs/evidence/launch-audit/owner-checks-2026-11-20.md).
+# encrypted before upload (docs/evidence/RYT-122/owner-checks-2026-11-20.md).
 on:
   schedule:
     - cron: '17 3 * * *'

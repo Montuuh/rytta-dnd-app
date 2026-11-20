@@ -184,7 +184,7 @@ until the repository secret `BACKUP_DB_URL` exists.
 
 The repository is public since 19 November 2026, so workflow artifacts are downloadable by anyone.
 The workflow is disabled until the dump is encrypted before upload; two earlier artifacts were
-exposed and deleted (docs/evidence/launch-audit/owner-checks-2026-11-20.md).
+exposed and deleted (docs/evidence/RYT-122/owner-checks-2026-11-20.md).
 
 Owner steps, once:
 

@@ -61,7 +61,7 @@
         "docs/evidence/RYT-001-002/release-readiness.md",
         "docs/evidence/RYT-001-002/production-configuration.md",
         "docs/evidence/RYT-001-002/pages-deployment.md",
-        "docs/evidence/launch-audit/owner-checks-2026-11-20.md"
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
       ]
     },
     {
@@ -3116,7 +3116,7 @@
       ],
       "evidence": [
         "docs/evidence/RYT-093/validation.md",
-        "docs/evidence/launch-audit/owner-checks-2026-11-20.md"
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
       ]
     },
     {
@@ -3788,7 +3788,7 @@
       ],
       "evidence": [
         "docs/evidence/RYT-115/validation.md",
-        "docs/evidence/launch-audit/owner-checks-2026-11-20.md"
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
       ]
     },
     {
@@ -3827,7 +3827,7 @@
       ],
       "evidence": [
         "docs/evidence/RYT-116/staging-bootstrap.md",
-        "docs/evidence/launch-audit/owner-checks-2026-11-20.md"
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
       ]
     },
     {
@@ -3992,7 +3992,7 @@
         "repository variable and hosted Auth settings check",
         "production smoke test record"
       ],
-      "evidence": ["docs/evidence/launch-audit/owner-checks-2026-11-20.md"]
+      "evidence": ["docs/evidence/RYT-122/owner-checks-2026-11-20.md"]
     },
     {
       "id": "RYT-123",

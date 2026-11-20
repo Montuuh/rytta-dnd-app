@@ -272,3 +272,29 @@ concurrency at the seat cap, a recorded decision or accepted risk for the per-re
 invitation flood trade-off, and scheduling or a first run of `private.prune_stale_rows`
 (`pg_cron` is absent; the first run needs owner approval). Production Auth-user removal by
 `delete_my_account` is also unverified (see RYT-115 and the launch checklist RYT-122).
+
+## Owner decisions and a concurrency attempt (2026-11-21)
+
+- Per-recipient invitation flood: **accepted risk** (owner, 2026-11-21). An email holds at most 20
+  pending invitations; a flood from many campaigns can fill that until the recipient declines (each
+  decline also blocks that campaign for 7 days) or the invitations expire. It is bounded per DM
+  (20 an hour, 100 pending) and can no longer push legitimate invitations out of
+  `list_my_invitations`. Revisit if abuse appears.
+- `private.prune_stale_rows`: **left unscheduled and not run** (owner, 2026-11-21). The tables are
+  small; nothing is deleted. Recorded as an open decision to revisit when they grow (scheduling
+  would need pg_cron).
+- Seat cap concurrency: two blocks on hosted PRE, each rolled back, took the campaign's seat lock
+  (`pre_private.quota_lock('members_per_campaign', campaign)`, the lock the invitation trigger takes
+  before counting seats). The database connector ran them one after the other, not at the same
+  time (A held the lock 23:26:45-23:26:53 UTC, B asked at 23:26:56), so the overlap was not
+  reproduced. Recorded: the lock is scoped per campaign (a lock on another campaign did not wait)
+  and is free again once a transaction ends. True concurrency needs two clients at once.
+
+## Still open (needs real accounts)
+
+1. Realtime: a signed-in Player subscribed to `encounter_signals` receives only status and
+   revision (needs a Player session on the app or a client with a real Player token).
+2. Storage: an upload over the byte quota is refused with the documented text (needs a signed-in
+   DM uploading to a campaign at its budget).
+3. Seat cap under real concurrency: two signed-in DMs or clients inviting at the same time.
+4. Production `delete_my_account` removing the Auth user, with a disposable test account.

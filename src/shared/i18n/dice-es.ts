@@ -144,6 +144,10 @@ export const diceEs = {
   'roll.error.roll-required':
     'Esto necesita una tirada hecha en Rytta. No se ha guardado nada: tira primero.',
   'combat.initiative.refusedAlready': 'Rytta ya tiene tu tirada de iniciativa de este combate.',
+  'combat.initiative.bonusUpdated':
+    'Tu ficha se ha actualizado y no se guardó ninguna tirada. Vuelve a tirar.',
+  'combat.initiative.refusedBonus':
+    'Rytta no acepta el bonificador de tu ficha y no guardó ninguna tirada. Pide al DM que fije tu total.',
   'combat.initiative.refusedInvalid':
     'El servidor no aceptó esta tirada de iniciativa. No se ha tirado nada.',
   'combat.initiative.rolledHidden':

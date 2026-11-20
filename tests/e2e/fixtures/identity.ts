@@ -2112,6 +2112,13 @@ export async function identityFixture(
     staleSheet: (id = characterId) => {
       sheets.get(id)!.revision += 1
     },
+    /** RYT-142: the sheet's Dexterity changed on another device (the next read returns it). */
+    setSheetDex: (dex: number, id = characterId) => {
+      const sheet = sheets.get(id)!
+      const build = sheet.build as { baseAbilities?: Record<string, number> }
+      sheet.build = { ...sheet.build, baseAbilities: { ...build.baseAbilities, dex } }
+      sheet.revision += 1
+    },
     revokeAccess: () => {
       campaigns = []
     },

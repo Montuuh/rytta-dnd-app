@@ -1659,6 +1659,67 @@ test('RYT-137 initiative: a second roll is refused with its reason and no number
   await context.close()
 })
 
+test('RYT-142 initiative: a refused modifier re-reads the sheet; the same bonus sends the Player to the DM', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { page, f, entry, context } = await initiativePage(browser, info)
+  let refusals = 0
+  await page.route(/\/rest\/v1\/rpc\/log_roll$/, (route) => {
+    refusals++
+    return route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: '22023', message: 'Initiative bonus' }),
+    })
+  })
+  const reread = page.waitForRequest(
+    (request) => request.url().includes('/rest/v1/character_sheets') && request.method() === 'GET',
+  )
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await reread
+  const line = entry.locator('.combat-entry-formula')
+  await expect(line).toContainText('Pide al DM que fije tu total')
+  await expect(line).toHaveClass(/is-invalid/)
+  await expect(entry).not.toContainText('Salió')
+  // No retry that would fail again: the button stays, says why it waits and sends nothing.
+  const button = entry.getByRole('button', { name: 'Tirar por mí' })
+  await expect(button).toHaveAttribute('aria-disabled', 'true')
+  await button.click({ force: true })
+  expect(refusals).toBe(1)
+  expect(f.dice.rolls).toHaveLength(0)
+  await audit(page)
+  await context.close()
+})
+
+test('RYT-142 initiative: after a refusal a changed sheet lets the Player roll again', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { page, f, entry, context } = await initiativePage(browser, info)
+  await page.route(/\/rest\/v1\/rpc\/log_roll$/, (route) =>
+    route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: '22023', message: 'Initiative bonus' }),
+    }),
+  )
+  // Edited elsewhere: the next read of the sheet carries a lower Dexterity.
+  f.setSheetDex(8)
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry.locator('.combat-entry-formula')).toContainText(
+    'Tu ficha se ha actualizado y no se guardó ninguna tirada',
+  )
+  await page.unroute(/\/rest\/v1\/rpc\/log_roll$/)
+  const button = entry.getByRole('button', { name: 'Tirar por mí' })
+  await expect(button).not.toHaveAttribute('aria-disabled', 'true')
+  await button.click()
+  await expect(entry).toContainText('Salió')
+  expect(f.dice.rolls).toHaveLength(1)
+  expect(f.dice.rolls[0]!.expression).toBe('d20-1')
+  await context.close()
+})
+
 test('RYT-137 initiative: a retry reuses the request id and returns the first roll, not a new one', async ({
   browser,
 }, info) => {

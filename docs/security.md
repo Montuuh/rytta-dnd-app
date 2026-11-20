@@ -175,11 +175,16 @@ the character's roll in force (`Roll required`); the DM is never restricted.
   `reset_hit_dice_roll(target_campaign, target_character, request_id)` are DM only, campaign
   locked and idempotent (`Request mismatch` on another payload); the second removes the vote made
   with the roll. SQL tests deny anon, outsiders, Players and a DM of another campaign.
-- Known and accepted: the flat modifier of an expression (initiative bonus, Constitution bonus)
-  is declared by the client, since the server knows neither (the d20 and the hit dice are the
-  server's); the DM can read the expression. A DM re-roll sent straight to the RPC for a hidden
-  combatant is stored with the campaign's visibility, not specially hidden. The frontend only
-  offers the resets where `get_roll_context` shows a roll in force.
+- RYT-142 (migration `20261210120000`): a Player's app initiative roll may not declare a flat
+  modifier above what the sheet allows (`private.initiative_cap`: the Dexterity modifier plus the
+  proficiency bonus with the Alert feat, never below +0); a higher one is refused with
+  `Initiative bonus` and nothing is written. The DM and recorded rolls are not capped. A DM
+  re-roll of a hidden combatant at a campaign that shows rolls to the table is stored as
+  `roller_dm`; a narrower setting is kept. No such earlier row existed in production.
+- Known and accepted: the cap is a consistency guard, not an anti-cheat: a Player edits their own
+  sheet's abilities and features. The Constitution modifier of hit dice is still declared by the
+  client (the dice are the server's); the DM can read the expression. The frontend only offers
+  the resets where `get_roll_context` shows a roll in force.
 
 ## Constraints and planned operations
 

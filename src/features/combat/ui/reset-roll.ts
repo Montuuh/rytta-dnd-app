@@ -76,7 +76,9 @@ export function useResetInitiative(
             const sheet = await cache.fetchQuery(
               sheetQuery(state.user!.id, campaignId, characterId),
             )
-            sheetBonus = sheet?.sheet.build ? initiativeBonus(sheet.sheet.build) : null
+            sheetBonus = sheet?.sheet.build
+              ? initiativeBonus(sheet.sheet.build, sheet.sheet.level)
+              : null
           } catch {
             sheetBonus = null
           }

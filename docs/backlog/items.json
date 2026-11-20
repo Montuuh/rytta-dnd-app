@@ -4576,7 +4576,7 @@
       "title": "Initiative modifier derived by the server, and hidden re-rolls kept hidden",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-137"],
       "sources": [
         "Security review residuals on RYT-137, 2026-11-18 (docs/evidence/RYT-137/validation.md): in app mode the server rolls the d20 but the initiative modifier is declared by the client, so a Player calling the RPC by hand can declare d20+30; and a DM re-roll sent straight to reset_initiative_roll for a hidden combatant is stored with the campaign roll visibility instead of roller-and-DM."
@@ -4598,7 +4598,7 @@
         "security review",
         "independent UI review PASS when the interface changes"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-142/validation.md"]
     },
     {
       "id": "RYT-143",

@@ -1766,6 +1766,27 @@ span.sheet-inspiration {
 .cast-option[data-checked] .cast-option-check {
   opacity: 1;
 }
+/* RYT-110: a level that cannot be paid reads as unavailable and keeps its reason readable. */
+.cast-option[data-disabled] {
+  cursor: not-allowed;
+  border-style: dashed;
+  background: transparent;
+}
+.cast-option[data-disabled] .cast-option-label {
+  color: var(--app-muted);
+}
+.cast-option[data-disabled]:hover {
+  border-color: var(--app-border);
+}
+/* Mantine marks the disabled label itself; it keeps the muted colour of its description. */
+.metamagic-option .mantine-Checkbox-label[data-disabled] {
+  color: var(--app-muted);
+}
+/* RYT-110 F8: at large text the mode labels wrap instead of being cut. */
+.font-of-magic-mode .mantine-SegmentedControl-label {
+  white-space: normal;
+  line-height: 1.25;
+}
 .cast-concentrates {
   margin: 0;
 }

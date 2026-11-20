@@ -71,6 +71,7 @@ import { useResourceNames, useTrackerLabel } from '../resource-names'
 import { LibraryPicker, type LibraryTab } from '../sheet/library'
 import { Stepper } from '../sheet/widgets'
 import { BuildSummary } from './build-summary'
+import { SpeciesOptions } from './species-options'
 import { ClassPicker } from './class-picker'
 import { newRequestId } from '@/shared/lib/request-id'
 
@@ -315,6 +316,15 @@ function OriginStep(props: StepProps) {
           })}
         </Text>
       )}
+      <SpeciesOptions
+        build={build}
+        onChoose={(key, value) =>
+          update((current) => ({
+            ...current,
+            choices: { ...current.choices, [key]: value },
+          }))
+        }
+      />
       {build.speciesKey === 'custom' && (
         <TextInput
           required

@@ -37,6 +37,20 @@ async function audit(page: Page) {
   await expectTouchTargets(page, '[role="dialog"] button:visible')
 }
 // The DM keeps both views mounted: only the visible one counts.
+/**
+ * Response bodies of one RPC, read without racing the page (RYT-143): every body promise is kept
+ * and awaited before the assertions, and a body the browser already discarded is skipped.
+ */
+function collectBodies(page: Page, path: string) {
+  const reads: Promise<string | null>[] = []
+  page.on('response', (response) => {
+    if (response.url().includes(path)) reads.push(response.text().catch(() => null))
+  })
+  return {
+    settle: async () => (await Promise.all(reads)).filter((body): body is string => body !== null),
+  }
+}
+
 const row = (page: Page, name: string) =>
   page.locator('.combat-rail:visible .combat-row', { hasText: name }).first()
 async function openLiveDetail(page: Page, name: string, info: TestInfo) {
@@ -276,6 +290,11 @@ test('RYT-007 action errors stay in view next to the action and floating ones le
   await page.getByRole('button', { name: 'Siguiente turno' }).click()
   const toast = page.locator('.combat-toast').getByRole('alert')
   await expect(toast).toHaveText(message)
+  // RYT-140: the toast surface is opaque, so the list never shows through its text.
+  const base = await page
+    .locator('.combat-toast')
+    .evaluate((node) => getComputedStyle(node).backgroundColor)
+  expect(base).toMatch(/^rgb\(/)
   const bar = await page.getByRole('region', { name: 'Controles de turno' }).boundingBox()
   const box = await toast.boundingBox()
   expect(box!.y + box!.height <= bar!.y || box!.y >= bar!.y + bar!.height).toBe(true)
@@ -798,8 +817,15 @@ test('RYT-145 DM row actions keep their named target through a remote turn chang
   await expect(damage).toBeHidden()
   await expect(target).toContainText('2/7 PG')
   await expect(row(page, 'Goblin 1')).toContainText('7/7 PG')
+  // RYT-150: the confirmed change shows signed beside that row's figure only, and is said once.
+  await expect(target.locator('.combat-hp-delta')).toHaveText('−5')
+  await expect(row(page, 'Goblin 1').locator('.combat-hp-delta')).toHaveCount(0)
+  await expect(page.getByText('Daño aplicado: Goblin 2: 5.')).toHaveCount(1)
+  await capture(page, info.outputPath('ryt-150-hp-delta.png'), { fullPage: false })
   await page.getByRole('button', { name: 'Siguiente turno' }).click()
   await expect(page.locator('.combat-turn-name')).toHaveText('Goblin 1')
+  // A new turn clears it; the event stays in the log.
+  await expect(page.locator('.combat-hp-delta')).toHaveCount(0)
 
   const menu = page.getByRole('button', { name: 'Acciones del encuentro' })
   await expect(page.getByRole('button', { name: 'Terminar combate' })).toHaveCount(0)
@@ -1360,10 +1386,7 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   const server = combatServer()
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
-  const projections: string[] = []
-  page.on('response', async (response) => {
-    if (response.url().includes('/rpc/get_combat_state')) projections.push(await response.text())
-  })
+  const projections = collectBodies(page, '/rpc/get_combat_state')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, {
     player: true,
@@ -1433,8 +1456,9 @@ test('RYT-043 Players read enemy health as named bands and see tokens, never num
   )
 
   // The hidden ogre's image never reaches the Player: not in any projection, never signed.
-  expect(projections.length).toBeGreaterThan(0)
-  for (const body of projections) {
+  const bodies = await projections.settle()
+  expect(bodies.length).toBeGreaterThan(0)
+  for (const body of bodies) {
     expect(body).not.toContain(art.paths.ogre)
     expect(body).not.toContain('Ogre')
   }
@@ -1485,10 +1509,7 @@ test('RYT-118 Players see teammates’ class emblems on the Table view, never be
   const server = combatServer()
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
-  const projections: string[] = []
-  page.on('response', async (response) => {
-    if (response.url().includes('/rpc/get_combat_state')) projections.push(await response.text())
-  })
+  const projections = collectBodies(page, '/rpc/get_combat_state')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   // The Player's party cache knows no class for Bea: the emblem comes from the projection.
   await identityFixture(page, {
@@ -1519,8 +1540,9 @@ test('RYT-118 Players see teammates’ class emblems on the Table view, never be
   await expect(row(page, 'Encapuchado').locator('.combat-token-monogram')).toHaveText('E')
   await expect(page.getByText('Cato')).toHaveCount(0)
   await expect(row(page, 'Encapuchado')).not.toContainText('PG')
-  expect(projections.length).toBeGreaterThan(0)
-  for (const body of projections) {
+  const bodies = await projections.settle()
+  expect(bodies.length).toBeGreaterThan(0)
+  for (const body of bodies) {
     expect(body).not.toContain('wizard')
     expect(body).not.toContain('Ogre')
   }
@@ -2377,4 +2399,36 @@ test('RYT-126 initiative entry rolls for the Player, warns on odd totals and mar
   // 25 and 25: both rows say so while initiative is being collected.
   await expect(arin.locator('.combat-tie')).toHaveCount(2, { timeout: 15_000 })
   expect(errors).toEqual([])
+})
+
+test('RYT-141 reopening a menu with Enter after Escape moves focus inside every time', async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  const server = combatServer()
+  await identityFixture(page, {
+    party: true,
+    linkedPlayer: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  server.seedActive()
+  await page.goto(`./#/campaign/${campaignId}/combat/${server.encounters[0]!.id}?view=console`)
+  const trigger = page.getByRole('button', { name: 'Opciones de Bea' })
+  await trigger.focus()
+  for (let run = 0; run < 25; run++) {
+    await page.keyboard.press('Enter')
+    // Focus lands inside every time, also when Enter follows Escape at once (a fast user).
+    // Focus enters the menu every time (Mantine's initial focus point), never the page, also when
+    // Enter follows Escape at once; ArrowDown then reaches the first item.
+    await expect(page.getByRole('menu')).toBeVisible()
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.closest('[role="menu"]') !== null))
+      .toBe(true)
+    await page.keyboard.press('ArrowDown')
+    await expect(page.getByRole('menuitem').first()).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(trigger).toBeFocused()
+  }
 })

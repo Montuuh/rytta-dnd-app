@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   ActionIcon,
@@ -517,6 +517,14 @@ export function AddItemsDrawer({
   const [creating, setCreating] = useState<string | null>(null)
   const [picked, setPicked] = useState<string[]>([])
   const [search, setSearch] = useState('')
+  // RYT-108: "show all" unmounts itself; focus moves to the first tile of the expanded list.
+  const grid = useRef<HTMLDivElement>(null)
+  const focusGrid = useRef(false)
+  useEffect(() => {
+    if (!focusGrid.current) return
+    focusGrid.current = false
+    grid.current?.querySelector<HTMLElement>('.pick-tile')?.focus()
+  })
   const [category, setCategory] = useState<ItemCategory | 'all'>('all')
   const taken = new Set(shop.listings.map((l) => l.definition_id))
   const available = items.filter((i) => !taken.has(i.id))
@@ -614,7 +622,12 @@ export function AddItemsDrawer({
                     ))}
                 </div>
                 {visible.length > 0 ? (
-                  <div className="pick-grid" role="group" aria-label={t('admin.listing.pickGroup')}>
+                  <div
+                    ref={grid}
+                    className="pick-grid"
+                    role="group"
+                    aria-label={t('admin.listing.pickGroup')}
+                  >
                     {visible.map((item) => {
                       const on = picked.includes(item.id)
                       return (
@@ -695,6 +708,7 @@ export function AddItemsDrawer({
                     onClick={() => {
                       setSearch('')
                       setCategory('all')
+                      focusGrid.current = true
                     }}
                   >
                     {t('admin.listing.pickShowAll')}

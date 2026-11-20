@@ -6,7 +6,10 @@ import {
   species as speciesTable,
   type Ability,
   type ChoiceKey,
+  metamagicCost,
+  metamagicKeys,
   type ClassKey,
+  type MetamagicKey,
   type SpeciesKey,
 } from './srd'
 
@@ -669,6 +672,8 @@ export type ResourceAction = {
   uses?: string
   /** A resource that gets one use back (Intimidating Presence for a use of Rage). */
   restores?: string
+  /** RYT-110: a Metamagic option, listed only when the Sorcerer knows it. */
+  metamagic?: MetamagicKey
 }
 
 export const resourceActions: readonly ResourceAction[] = [
@@ -852,11 +857,20 @@ export const resourceActions: readonly ResourceAction[] = [
     subclass: 'draconic',
     restores: 'sorcerer-dragon-wings',
   },
+  ...metamagicKeys.map((key): ResourceAction => ({
+    key: `sorcerer-metamagic-${key}`,
+    parent: 'sorcerer-sorcery-points',
+    feature: 'feature.sorcerer-metamagic',
+    cost: metamagicCost[key],
+    from: 2,
+    metamagic: key,
+  })),
 ]
 
-/** Options of a resource the build can use at its level (its class and SRD subclass). */
+/** Options of a resource the build can use at its level (its class, SRD subclass and known
+ * Metamagic). */
 export function actionsFor(
-  build: Pick<Build, 'subclassKey'>,
+  build: Pick<Build, 'subclassKey' | 'metamagic'>,
   level: number,
   parent: string | undefined,
 ): ResourceAction[] {
@@ -865,7 +879,8 @@ export function actionsFor(
     (action) =>
       action.parent === parent &&
       level >= action.from &&
-      (!action.subclass || action.subclass === build.subclassKey),
+      (!action.subclass || action.subclass === build.subclassKey) &&
+      (!action.metamagic || (build.metamagic ?? []).includes(action.metamagic)),
   )
 }
 

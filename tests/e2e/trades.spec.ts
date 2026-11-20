@@ -252,6 +252,12 @@ test('RYT-097 trading starts from the portrait icon, also with an unshared teamm
   await expect(cato).toContainText('Estado no compartido')
   await cato.getByRole('button', { name: 'Comerciar con Cato' }).click()
   await expect(page.getByText('Invitación enviada a Cato.')).toBeVisible()
+  // RYT-108: the notification close button has a translated name.
+  await expect(
+    page
+      .locator('.mantine-Notification-root', { hasText: 'Invitación enviada a Cato.' })
+      .getByRole('button'),
+  ).toHaveAccessibleName('Cerrar')
   expect(server.calls.find((c) => c.method === 'invite_trade')?.body).toMatchObject({
     to_character: catoId,
   })
@@ -267,14 +273,10 @@ test('RYT-097 trading starts from the portrait icon, also with an unshared teamm
   // The icon on Cato's portrait brings the open invitation back.
   await expect(cato.getByRole('button', { name: 'Volver al trueque con Cato' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  // Party only: the toast's close button is the trade layer's (reported separately).
+  // The whole page, notifications included (they were left out before RYT-108).
   expect(
-    (
-      await new AxeBuilder({ page })
-        .include('main')
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
-        .analyze()
-    ).violations,
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+      .violations,
   ).toEqual([])
   await expectTouchTargets(page, 'main button:visible')
 })

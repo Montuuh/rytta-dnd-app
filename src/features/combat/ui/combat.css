@@ -355,6 +355,24 @@ button.combat-row-main:focus-visible {
   color: var(--app-muted);
   font-weight: 500;
 }
+/* RYT-150: the last confirmed change, signed, beside the figure; colour plus sign, never colour
+   alone. No transition, so reduced motion needs nothing more. */
+.combat-hp-delta {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.combat-hp-delta.is-damage {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.combat-hp-delta.is-heal {
+  color: var(--success);
+  background: var(--success-soft);
+}
 .combat-hp-icon {
   vertical-align: -2px;
   margin-right: 4px;
@@ -491,6 +509,10 @@ button.combat-row-main:focus-visible {
   z-index: 1000;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   border-radius: 12px;
+  /* The alert's tint is translucent; an opaque body-colour base keeps the list from showing
+     through its text in every theme (RYT-140). */
+  background: var(--mantine-color-body);
+  overflow: hidden;
 }
 
 /* Detail panels */

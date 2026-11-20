@@ -1,3 +1,4 @@
+import { slotsLeft } from '../../domain/sorcery'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   ActionIcon,
@@ -293,6 +294,8 @@ function SheetPanel({
   const [notice, setNotice] = useState<PanelNotice | null>(null)
   const [open, setOpen] = useState<TileKey | null>(null)
   const [personalise, setPersonalise] = useState(false)
+  // RYT-110: Mantine closes every open overlay on Escape; the sheet stays while Font of Magic is up.
+  const [fontOpen, setFontOpen] = useState(false)
   const [libraryTab, setLibraryTab] = useState<LibraryTab | null>(null)
   const [lastLibraryTab, setLastLibraryTab] = useState<LibraryTab>('spells')
   const [rest, setRest] = useState<'short' | 'long' | null>(null)
@@ -547,9 +550,7 @@ function SheetPanel({
     if (!cast) return
     const { spell, name } = cast.target
     const noteOf = (plan: CastPlan) => {
-      const left = (level: number) =>
-        slotsFor(build.casterKind, shown.level)[level - 1]! -
-        (plan.vitals.slots_used[level - 1] ?? 0)
+      const left = (level: number) => slotsLeft(build, shown.level, plan.vitals)[level - 1]!
       return [
         plan.spent !== null
           ? t('cast.done.slot', {
@@ -707,7 +708,13 @@ function SheetPanel({
         : t(`panel.block.${key}`)
   const glance = useGlance(props, exhaustion)
   const detail: Record<TileKey, ReactNode> = {
-    resources: <ResourcesBlock {...props} onPersonalise={() => setPersonalise(true)} />,
+    resources: (
+      <ResourcesBlock
+        {...props}
+        onPersonalise={() => setPersonalise(true)}
+        onFontOfMagic={setFontOpen}
+      />
+    ),
     skills: <SkillsBlock {...props} />,
     attacks: (
       <>
@@ -999,7 +1006,7 @@ function SheetPanel({
         )}
         <BlockSheet
           opened={open !== null}
-          closeOnEscape={libraryTab === null && !personalise && !cast?.opened}
+          closeOnEscape={libraryTab === null && !personalise && !cast?.opened && !fontOpen}
           onClose={() => {
             setOpen(null)
             setCastNote(null)
@@ -1148,10 +1155,7 @@ function useGlance(props: PanelProps, exhaustion: number | undefined): Record<Ti
   )
   const slots = slotsFor(build.casterKind, level)
   const slotMax = slots.reduce((sum, count) => sum + count, 0)
-  const slotLeft = slots.reduce(
-    (sum, count, index) => sum + Math.max(0, count - (vitals.slots_used[index] ?? 0)),
-    0,
-  )
+  const slotLeft = slotsLeft(build, level, vitals).reduce((sum, count) => sum + count, 0)
   const resourceLines = [
     // Once-per-turn marks stay inside the sheet; the glance shows pools.
     ...build.trackers

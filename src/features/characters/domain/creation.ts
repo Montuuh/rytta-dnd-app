@@ -17,10 +17,12 @@ import {
 import {
   abilityKeys,
   backgrounds,
+  choiceKeys,
   classes,
   pointBuyBudget,
   pointBuyCost,
   species,
+  traitChoices,
   type Ability,
   type Skill,
 } from './srd'
@@ -39,6 +41,7 @@ export type StepIssue =
   | 'chooseClass'
   | 'nameClass'
   | 'chooseSpecies'
+  | 'chooseSpeciesOption'
   | 'chooseBackground'
   | 'bonuses'
   | 'standardArray'
@@ -186,6 +189,13 @@ export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[]
   if (step === 'origin') {
     if (!build.speciesKey || (build.speciesKey === 'custom' && !build.speciesLabel.trim()))
       issues.push('chooseSpecies')
+    // RYT-111: a species option the SRD requires (lineage, ancestry, legacy) is asked here.
+    if (
+      choiceKeys.some(
+        (key) => traitChoices[key].species === build.speciesKey && !build.choices?.[key],
+      )
+    )
+      issues.push('chooseSpeciesOption')
     if (!build.backgroundKey || (build.backgroundKey === 'custom' && !build.backgroundLabel.trim()))
       issues.push('chooseBackground')
     if (!bonusesValid(build)) issues.push('bonuses')

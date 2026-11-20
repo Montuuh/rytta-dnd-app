@@ -12,7 +12,9 @@ const classPalettes = Object.fromEntries(
   classThemeIds.map((id) => [paletteName(id), [...classThemes[id].palette] as MantineColorsTuple]),
 )
 
-export function createAppTheme(classTheme: ClassThemeId = 'default') {
+/** `closeLabel` names every alert and notification close button (RYT-108); the provider passes
+ * the translated word so the theme follows the language. */
+export function createAppTheme(classTheme: ClassThemeId = 'default', closeLabel = 'Close') {
   return createTheme({
     primaryColor: paletteName(classTheme),
     colors: {
@@ -54,6 +56,8 @@ export function createAppTheme(classTheme: ClassThemeId = 'default') {
     defaultRadius: 'md',
     cursorType: 'pointer',
     components: {
+      Alert: { defaultProps: { closeButtonLabel: closeLabel } },
+      Notification: { defaultProps: { closeButtonProps: { 'aria-label': closeLabel } } },
       Button: { defaultProps: { size: 'md' }, styles: { root: { minHeight: 44 } } },
       NativeSelect: { styles: { input: { minHeight: 44 } } },
       SegmentedControl: {

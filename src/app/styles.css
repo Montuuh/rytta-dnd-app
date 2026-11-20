@@ -998,6 +998,11 @@ main h3 {
   background: var(--app-accent);
   border-color: var(--app-accent);
 }
+/* RYT-110: a created spell slot is available but temporary, so it is ringed, not filled. */
+.pip[data-created] .pip-mark {
+  background: color-mix(in srgb, var(--app-accent) 35%, transparent);
+  border-style: dashed;
+}
 .pip-count {
   font-variant-numeric: tabular-nums;
 }
@@ -1557,6 +1562,9 @@ html[data-mantine-color-scheme='light'] {
   padding: 8px 10px;
   border-radius: 10px;
   background: var(--app-bg);
+}
+.item-card-facts .is-wide {
+  grid-column: 1 / -1;
 }
 .item-card-facts dt {
   font-size: var(--fs-tag);

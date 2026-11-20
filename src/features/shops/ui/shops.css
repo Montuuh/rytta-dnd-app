@@ -304,6 +304,19 @@
   }
 }
 
+/* RYT-108: on a short landscape phone the height cap would clip the kind label under large text;
+   there the banner grows with its text instead (the picture still covers it). */
+@media (max-height: 30em) {
+  .shop-banner {
+    aspect-ratio: auto;
+    max-height: none;
+    min-height: 8rem;
+  }
+  .shop-banner-overlay {
+    padding-top: 24px;
+  }
+}
+
 /* The DM's image field: a drop zone around the native input, then the preview. */
 .shop-file {
   position: absolute;

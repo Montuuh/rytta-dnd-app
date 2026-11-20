@@ -11,6 +11,7 @@ import {
 } from '@mantine/core'
 import { ChevronsRight, EyeOff, Hourglass, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { TurnKey, turnKey } from './turn-key'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import {
   canEndTurn,
@@ -47,7 +48,7 @@ import { useOwnNews } from './use-own-news'
  * the own turn the death save at 0 hit points and ending the turn (RYT-045). The server enforces
  * all three; the DM's table view never has them (the table projection has no own character).
  */
-export function TableDisplay({
+function TableDisplayBody({
   campaignId,
   state,
   stale,
@@ -415,4 +416,14 @@ function useTurnAnnouncement(state: CombatState) {
     if (message.yours && 'vibrate' in navigator) navigator.vibrate?.([120, 60, 120])
   }, [message])
   return message
+}
+
+/** RYT-150: the turn key that clears confirmed health changes when the turn moves on. */
+export function TableDisplay(props: Parameters<typeof TableDisplayBody>[0]) {
+  const encounter = props.state.encounter
+  return (
+    <TurnKey.Provider value={encounter ? turnKey(encounter.round, encounter.active_combatant) : ''}>
+      <TableDisplayBody {...props} />
+    </TurnKey.Provider>
+  )
 }

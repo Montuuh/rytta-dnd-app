@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Group, Select, Stack, Text, UnstyledButton } from '@mantine/core'
+import { Button, Checkbox, Group, Select, Stack, Text, UnstyledButton } from '@mantine/core'
 import { Check, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm, useSrdLibrary } from '@/features/glossary'
@@ -8,7 +8,17 @@ import { actionsFor, resourceSpec, spendAction, type ResourceAction } from '../.
 import { slotsFor } from '../../domain/rules'
 import type { Build, Tracker, Vitals } from '../../domain/sheet'
 import { choiceKeys, traitChoices, type ChoiceKey } from '../../domain/srd'
+import {
+  createdSlots,
+  metamagicCost,
+  metamagicKeys,
+  metamagicKnown,
+  sorceryPointsKey,
+  spendSlot,
+  type MetamagicKey,
+} from '../../domain/sorcery'
 import { useTrackerLabel } from '../resource-names'
+import { FontOfMagic } from './font-of-magic'
 import { Pips } from './pips'
 import type { PanelProps } from './panel-types'
 import { Counter } from './widgets'
@@ -25,7 +35,9 @@ const trackerChoice: Record<string, ChoiceKey> = {
 
 /** Class, species and feat resources with the options they pay for, once-per-turn marks, the
  * player's own resources, spell slots and hit point dice (RYT-071, RYT-102). */
-export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }) {
+export function ResourcesBlock(
+  props: PanelProps & { onPersonalise: () => void; onFontOfMagic?: (open: boolean) => void },
+) {
   const { t } = useTranslation()
   const trackerLabel = useTrackerLabel()
   const { build, level, vitals, canEdit, editing, locked, commit, change, onPersonalise } = props
@@ -130,6 +142,14 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
           ))}
         </section>
       )}
+      {build.classKey === 'sorcerer' && metamagicKnown(level) > 0 && (
+        <Metamagic
+          build={build}
+          level={level}
+          canEdit={canEdit && !props.pending}
+          change={change}
+        />
+      )}
       {build.trackers.length === 0 && missing === 0 && (
         <Text size="sm" c="dimmed">
           {t('sheet.noTrackers')}
@@ -144,6 +164,8 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
           vitals={vitals}
           canEdit={canEdit}
           setUses={setUses}
+          commit={commit}
+          onFontOfMagic={props.onFontOfMagic}
         />
       ))}
       {marks.length > 0 && (
@@ -224,6 +246,7 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
               if (max === 0) return null
               const slotLevel = index + 1
               const used = Math.min(max, vitals.slots_used[index] ?? 0)
+              const created = createdSlots(vitals.tracker_uses)[index]!
               return (
                 <Group key={slotLevel} gap="xs" wrap="nowrap">
                   <Text size="sm" w={64}>
@@ -235,7 +258,17 @@ export function ResourcesBlock(props: PanelProps & { onPersonalise: () => void }
                     disabled={!canEdit}
                     spendLabel={t('sheet.useSlot', { level: slotLevel })}
                     restoreLabel={t('sheet.restoreSlot', { level: slotLevel })}
-                    countLabel={`${max - used}/${max}`}
+                    countLabel={
+                      created > 0
+                        ? t('font.slotCount', { left: max - used, max, created })
+                        : `${max - used}/${max}`
+                    }
+                    extra={created}
+                    extraLabel={t('font.useCreated', { level: slotLevel })}
+                    onSpendExtra={() => {
+                      const next = spendSlot(build, level, vitals, slotLevel)
+                      if (next) commit(next)
+                    }}
                     onChange={(next) => {
                       const slots_used = [...vitals.slots_used]
                       slots_used[index] = next
@@ -289,6 +322,8 @@ function TrackerRow({
   vitals,
   canEdit,
   setUses,
+  commit,
+  onFontOfMagic,
 }: {
   tracker: Tracker
   build: Build
@@ -296,6 +331,8 @@ function TrackerRow({
   vitals: Vitals
   canEdit: boolean
   setUses: (uses: Vitals['tracker_uses']) => void
+  commit: (values: Vitals) => void
+  onFontOfMagic?: (open: boolean) => void
 }) {
   const { t } = useTranslation()
   const trackerLabel = useTrackerLabel()
@@ -390,6 +427,16 @@ function TrackerRow({
           ))}
         </ul>
       )}
+      {tracker.key === sorceryPointsKey && (
+        <FontOfMagic
+          build={build}
+          level={level}
+          vitals={vitals}
+          canEdit={canEdit}
+          commit={commit}
+          onOpenChange={onFontOfMagic}
+        />
+      )}
       <Text size="sm" role="status" className="resource-refused">
         {refused
           ? t('panel.optionShort', {
@@ -448,5 +495,78 @@ function OptionRow({
         <span aria-hidden="true">−{option.cost}</span>
       </UnstyledButton>
     </li>
+  )
+}
+
+/** RYT-110: the Metamagic options the Sorcerer knows; each becomes an option paid from Sorcery
+ * Points. The count follows the level; changing one is allowed at any time. */
+function Metamagic({
+  build,
+  level,
+  canEdit,
+  change,
+}: Pick<PanelProps, 'build' | 'level' | 'change'> & { canEdit: boolean }) {
+  const { t } = useTranslation()
+  const known = metamagicKnown(level)
+  const picked = (build.metamagic ?? []).filter((key): key is MetamagicKey =>
+    (metamagicKeys as readonly string[]).includes(key),
+  )
+  const full = picked.length >= known
+  // Once every known option is chosen, only those are listed; "Change" opens the full list.
+  const [changing, setChanging] = useState(false)
+  const shown =
+    full && !changing ? metamagicKeys.filter((key) => picked.includes(key)) : metamagicKeys
+  const toggle = (key: MetamagicKey, on: boolean) =>
+    change(
+      (draft) => ({
+        ...draft,
+        build: {
+          ...draft.build,
+          metamagic: on
+            ? [...(draft.build.metamagic ?? []), key]
+            : (draft.build.metamagic ?? []).filter((item) => item !== key),
+        },
+      }),
+      'sheet.saved',
+    )
+  return (
+    <section aria-labelledby="panel-metamagic" className="resource-choices metamagic">
+      <Text size="sm" c="dimmed" fw={600} id="panel-metamagic">
+        <GlossaryTerm id="feature.sorcerer-metamagic">{t('metamagic.title')}</GlossaryTerm>
+        {' · '}
+        {t('metamagic.count', { picked: picked.length, known })}
+      </Text>
+      <Stack gap={4}>
+        {shown.map((key) => {
+          const on = picked.includes(key)
+          return (
+            <Checkbox
+              key={key}
+              className="metamagic-option"
+              checked={on}
+              disabled={!canEdit || (!on && full)}
+              onChange={(event) => toggle(key, event.currentTarget.checked)}
+              label={t('metamagic.option', {
+                name: t(actionName(`sorcerer-metamagic-${key}`)),
+                cost: metamagicCost[key],
+              })}
+              description={t(`metamagic.hint.${key}`)}
+            />
+          )
+        })}
+      </Stack>
+      {full && canEdit && (
+        <Button
+          variant="subtle"
+          size="compact-md"
+          mih={44}
+          className="panel-link"
+          aria-expanded={changing}
+          onClick={() => setChanging((open) => !open)}
+        >
+          {t(changing ? 'metamagic.done' : 'metamagic.change')}
+        </Button>
+      )}
+    </section>
   )
 }

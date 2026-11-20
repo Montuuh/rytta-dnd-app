@@ -54,6 +54,7 @@ export const lifecycleEs = {
   'addItem.taken': 'Añadido a tu mochila: {{item}} ×{{amount}}.',
   'addItem.takeError': 'No se pudo añadir a tu mochila. Puedes reintentarlo.',
   'addItem.pickFirst': 'Elige primero un objeto',
+  'addItem.giving': 'Entregando a {{name}}…',
   'addItem.given': 'Entregado a {{name}}: {{item}} ×{{amount}}.',
   'addItem.error': 'No se pudo dar el objeto. Puedes reintentarlo.',
 } satisfies Record<keyof typeof lifecycleEn, string>

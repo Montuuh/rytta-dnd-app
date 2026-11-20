@@ -866,6 +866,58 @@ describe('RYT-007 shared combat', () => {
       ).rejects.toThrow(/Invalid request/)
   })
 
+  it('RYT-129 credits damage dealt only between opposing sides', async () => {
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const x = await prepared(s, schema)
+      await asUser(dm)
+      const { active_combatant: first } = (await a.status(s.c, x.e, 'active')) as {
+        active_combatant: string
+      }
+      // On Cato's turn the DM downs Arin (same side), Cato hurts himself and hits a goblin.
+      await a.jump(s.c, x.e, x.cato, first)
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.arin, amount: 20 }])
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.cato, amount: 2 }])
+      await a.hp(s.c, x.e, 'heal', [{ combatant_id: x.arin, amount: 4 }])
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.gob1, amount: 3 }])
+      // On a goblin's turn: one hit on Bea counts, one on the other goblin does not.
+      await a.jump(s.c, x.e, x.gob2, x.cato)
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.bea, amount: 5 }])
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.gob1, amount: 1 }])
+      await a.status(s.c, x.e, 'ended')
+      const summary = (await a.state(s.c, x.e)).encounter!.summary!
+      const by = (name: string) => summary.combatants.find((c) => c.name === name)!
+      expect(by('Cato')).toMatchObject({ damage_dealt: 3 })
+      expect(by('Arin')).toMatchObject({ damage_dealt: 0, damage_taken: 20, healing: 4 })
+      expect(by('Goblin 2')).toMatchObject({ damage_dealt: 5 })
+      expect(by('Goblin 1')).toMatchObject({ damage_taken: 4 })
+      // The Player recap still hides the never-revealed ogre.
+      await asUser(player)
+      const seen = (await a.state(s.c, x.e)).encounter!.summary!
+      expect(seen.combatants.map((c) => c.name)).not.toContain('Ogre')
+      // Nobody calls the summary helper directly; outsiders and other DMs never read it.
+      const helper = schema === 'pre' ? 'pre_private' : 'private'
+      for (const user of [player, outsider, dm]) {
+        await asUser(user)
+        await expect(db.query(`select ${helper}.combat_summary($1)`, [x.e])).rejects.toThrow(
+          /permission denied/,
+        )
+      }
+      await asUser(outsider)
+      await expect(a.state(s.c, x.e)).rejects.toThrow(/Forbidden|unavailable/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      await expect(a.state(other, x.e)).rejects.toThrow(/unavailable/)
+      await db.exec('reset role; set role anon')
+      await expect(db.query(`select ${helper}.combat_summary($1)`, [x.e])).rejects.toThrow(
+        /permission denied/,
+      )
+      await expect(a.state(s.c, x.e)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
+    }
+  })
+
   it('RYT-041 denies roster changes to anon, outsiders, Players and other DMs', async () => {
     const s = await setup()
     const x = await prepared(s)

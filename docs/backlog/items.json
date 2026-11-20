@@ -4915,6 +4915,61 @@
         "staging and PRE then production migration verification per phase"
       ],
       "evidence": ["docs/evidence/RYT-156/validation.md"]
+    },
+    {
+      "id": "RYT-157",
+      "title": "Sign in with email and password beside Google: sign-up, email confirmation and password reset",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": [],
+      "sources": [
+        "Owner request 2026-11-21: offer the usual email and password sign-in next to Google (chosen over a one-time email code as the more familiar option). Today only people with a Google account can enter, and Google brand verification (RYT-122) is still pending."
+      ],
+      "scope": "Visitors can create an account with an email and a password, confirm the email through a link, sign in, ask for a password reset link and set a new password; signed-in users can change their password in the account section. Google sign-in stays. An email already used with Google resolves to the same user once verified, and invitations keep matching by email. Supabase Auth email provider with confirmation required, a password policy (length and character classes) and secure password change, Cloudflare Turnstile CAPTCHA on sign-up, sign-in and reset, and a custom SMTP sender so confirmation and reset emails reach any address. Translated, generic error messages that never reveal whether an account exists. Owner actions, recorded in the evidence: the SMTP provider account and its sending domain, the Turnstile site, and the hosted Auth settings (email provider, confirmation, password policy, CAPTCHA, rate limits, redirect URLs, email templates in Spanish and English). Non-goals: magic links or one-time codes, other OAuth providers, multi-factor authentication, leaked-password checks (a paid Supabase plan), autonomous release.",
+      "acceptance": [
+        "The sign-in screen offers Google and email with password; sign-up asks for an email and a password that meets the policy, shows the rules before submit and sends a confirmation email; an unconfirmed account cannot sign in and can ask for the email again.",
+        "Forgot password sends a reset link to any address without revealing whether an account exists; the link opens a set-new-password screen that signs the user in; expired or reused links show a translated way to ask again.",
+        "A signed-in user changes the password in the account section; Google-only users can add a password.",
+        "Signing in with email and password for an address already used with Google reaches the same user and campaigns once the email is confirmed; invitations sent to that address are found.",
+        "Errors are translated and generic (wrong email or password, too many attempts, CAPTCHA failed); no message, timing or response tells whether an email is registered.",
+        "CAPTCHA protects sign-up, sign-in and reset; Auth rate limits are set; emails come from the custom sender in Spanish or English by the user language.",
+        "Account deletion and data export keep working for email and password users.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, password managers fill the fields (autocomplete attributes), show-password toggle, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "unit tests for the auth adapter, error mapping and password rules",
+        "npm run check",
+        "npm run test:e2e (sign-up, confirmation pending, sign-in, reset and change password with fixtures at 390px and 820px)",
+        "hosted check with a test account on PRE (localhost) and production: confirmation and reset emails delivered, Google and password reach the same user",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-157/validation.md"]
+    },
+    {
+      "id": "RYT-158",
+      "title": "Own domain for Rytta: app address, email sender and every system that names rytta.pages.dev",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-157"],
+      "sources": [
+        "Owner decision 2026-11-21 (RYT-157): send Auth email from a free sender without an own domain for now, and keep in the backlog the move to an own domain later, covering every system, the email sender included."
+      ],
+      "scope": "Move Rytta to an own domain once the owner buys one. Inventory and update every system that names rytta.pages.dev or the free sender: Cloudflare Pages custom domain and redirect from rytta.pages.dev, the Auth email sender (SMTP provider with the domain verified through SPF, DKIM and DMARC, replacing the free single-sender setup of RYT-157), Supabase Site URL and redirect URLs, Google OAuth authorized domains, branding links and consent screen, Cloudflare Turnstile allowed hostnames, Google Search Console verification, legal pages, the manifest, social and canonical URLs, security headers, CI and deployment docs, the update notice and any link in emails. Keep old links working. Non-goals: buying the domain or paid plans (owner action), a new hosting provider, autonomous release.",
+      "acceptance": [
+        "An inventory in the evidence lists every place that named rytta.pages.dev or the old sender, with its new value and who changed it.",
+        "The app answers on the own domain with HTTPS and the same security headers; rytta.pages.dev redirects there keeping path and query.",
+        "Google and email sign-in, confirmation, password reset and invitations work on the own domain; old confirmation and reset links either work or show a translated way to ask again.",
+        "Auth emails come from an address on the own domain and pass SPF, DKIM and DMARC.",
+        "Search Console, legal pages and the manifest point to the own domain."
+      ],
+      "validation": [
+        "npm run check",
+        "hosted check on the own domain with a test account",
+        "email authentication results (SPF, DKIM, DMARC) recorded"
+      ],
+      "evidence": ["docs/evidence/RYT-158/validation.md"]
     }
   ]
 }

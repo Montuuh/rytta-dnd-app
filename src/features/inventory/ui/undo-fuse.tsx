@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
 import { CloseButton, Text, UnstyledButton } from '@mantine/core'
 import { Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { UNDO_WINDOW_MS } from '../domain/item'
+import { useFuseLeft } from './use-fuse-left'
 
 export type FuseEntry = { eventId: string; message: string; startedAt: number }
 
@@ -19,15 +19,7 @@ export function UndoFuse({
   onDismiss: () => void
 }) {
   const { t } = useTranslation()
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
-  const left = Math.max(0, entry.startedAt + UNDO_WINDOW_MS - now)
-  useEffect(() => {
-    if (left === 0) onDismiss()
-  }, [left, onDismiss])
+  const left = useFuseLeft(entry.startedAt, onDismiss)
   const minutes = Math.ceil(left / 60_000)
   return (
     <div className="undo-fuse" role="status">

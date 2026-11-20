@@ -73,7 +73,11 @@ export function tradeServer() {
       .flat()
       .map((i) => [i.item_id, { ...i }]),
   )
-  const lookup = (_character: string, itemId: string) => catalog.get(itemId)
+  const lookup = (_character: string, itemId: string) =>
+    catalog.get(itemId) ??
+    Object.values(inventories)
+      .flat()
+      .find((i) => i.item_id === itemId)
   const sideJson = (side: Side) => ({
     character_id: side.character,
     name: names[side.character],

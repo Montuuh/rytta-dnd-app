@@ -41,3 +41,156 @@
 .item-card-amount .amount-row {
   max-width: 11rem;
 }
+
+/* RYT-149: the card leads with what using does; discarding and sharing open under the seal. */
+.item-card-drawer .mantine-Drawer-header {
+  gap: 8px;
+}
+.item-card-tools {
+  margin-inline-start: auto;
+}
+.item-card-effect {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  font-weight: 600;
+}
+.item-card-effect small {
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--app-muted);
+}
+.card-result {
+  padding: 8px 8px 0 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--success) 55%, var(--app-border));
+  background: var(--app-bg);
+  overflow: hidden;
+}
+.card-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-result-text {
+  flex: 1;
+  min-width: 0;
+}
+.card-result-fuse {
+  display: block;
+  height: 3px;
+  margin: 8px -8px 0 -12px;
+  background: var(--app-raised);
+}
+.card-result-fuse > span {
+  display: block;
+  height: 100%;
+  transform-origin: left;
+  background: var(--success);
+  transition: transform 1s linear;
+}
+.item-card-discard {
+  border-top: 1px solid var(--app-border);
+}
+.item-card-disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  font-weight: 600;
+  color: var(--app-muted);
+}
+.item-card-disclosure:focus-visible,
+.item-card-partner:focus-visible,
+.item-card-discard-button:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 2px;
+}
+.item-card-disclosure[aria-expanded='true'] .item-card-chevron {
+  transform: rotate(180deg);
+}
+.item-card-discard-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+.item-card-discard-body[hidden] {
+  display: none;
+}
+.item-card-discard-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-weight: 700;
+}
+.item-card-discard-button[aria-disabled='true'],
+.item-card-partner[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.item-card-share {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: var(--app-bg);
+}
+.item-card-share .quiet-link {
+  justify-self: start;
+}
+.item-card-share-title {
+  margin: 0;
+  font-family: Georgia, Cambria, serif;
+  font-weight: 500;
+  font-size: var(--fs-h3, 1.1rem);
+}
+.item-card-share-title:focus {
+  outline: none;
+}
+.item-card-partners {
+  display: grid;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.item-card-partner {
+  display: grid;
+  align-content: center;
+  min-height: 48px;
+  padding: 6px 14px;
+  font-weight: 600;
+  background: var(--app-surface);
+}
+.item-card-partner + .item-card-partner {
+  border-top: 1px solid var(--app-border);
+}
+.item-card-partner small {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+.item-card-waiting {
+  color: var(--app-muted);
+  text-align: center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .item-card-chevron {
+    transition: transform 0.2s;
+  }
+}
+/* The menu surface is too dark for the danger red as text; the icon carries it. */
+.item-card-menu .item-card-menu-danger .mantine-Menu-itemSection {
+  color: var(--danger);
+}

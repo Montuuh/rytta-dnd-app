@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { ActionIcon, UnstyledButton } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,11 +8,15 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView } from '@/features/campaigns'
 import { config } from '@/shared/lib/config'
+import { ItemOfferContext, type ItemOfferRequest } from '@/shared/lib/item-offer'
 import { tradeStateQuery, useTradeAction, useTradeRealtime } from '../api'
 import {
   formatCountdown,
+  offerLines,
   remainingMs,
+  withLine,
   type RecentTrade,
+  type Trade,
   type TradeErrorCode,
 } from '../domain/trade'
 import { TradeContext } from './context'
@@ -103,23 +107,94 @@ function TradeCenter({ actingUser }: { actingUser: string | null }) {
   // A second tap before the first answer would send a second invitation: ignore it, and never
   // report "busy" for the trade this very tap just opened.
   const inviteInFlight = useRef(false)
-  const invite = (partnerId: string, partnerName: string) => {
+  const invite = (
+    partnerId: string,
+    partnerName: string,
+    after?: { sent: () => void; failed: () => void },
+  ) => {
     if (!state?.character || inviteInFlight.current) return
     inviteInFlight.current = true
     action.mutate(
       { kind: 'invite', from: state.character.id, to: partnerId },
       {
-        onSuccess: () => notifications.show({ message: t('trade.sent', { name: partnerName }) }),
-        onError: (failure) =>
+        onSuccess: () => {
+          notifications.show({ message: t('trade.sent', { name: partnerName }) })
+          after?.sent()
+        },
+        onError: (failure) => {
           notifications.show({
             color: 'red',
             message: t(`trade.error.${failure.message as TradeErrorCode}`),
-          }),
+          })
+          after?.failed()
+        },
         onSettled: () => {
           inviteInFlight.current = false
         },
       },
     )
+  }
+
+  // RYT-149: an item card asked to put one stack on the table with a chosen Player. The offer can
+  // only be placed once the trade is open, so it waits here until the partner accepts.
+  const [planned, setPlanned] = useState<(ItemOfferRequest & { invited: boolean }) | null>(null)
+  const placing = useRef(false)
+  const place = async (request: ItemOfferRequest, target: Trade) => {
+    if (placing.current) return
+    placing.current = true
+    try {
+      const placed = await action.mutateAsync({
+        kind: 'offer',
+        tradeId: target.id,
+        acting: target.you.character_id,
+        revision: target.revision,
+        items: withLine(offerLines(target.you), request.itemId, request.quantity),
+        gold: target.you.gold,
+      })
+      if (request.give)
+        await action.mutateAsync({
+          kind: 'confirm',
+          tradeId: target.id,
+          acting: target.you.character_id,
+          revision: placed.revision,
+        })
+    } catch (failure) {
+      notifications.show({
+        color: 'red',
+        message: t(`trade.error.${(failure as Error).message as TradeErrorCode}`),
+      })
+    } finally {
+      placing.current = false
+      setPlanned(null)
+      reopen()
+    }
+  }
+  // The invitation was declined, cancelled or ran out: nothing is left to place.
+  if (planned?.invited && !raw) setPlanned(null)
+  const ready =
+    planned && trade?.status === 'open' && trade.partner.character_id === planned.partnerId
+      ? trade
+      : null
+  const placeReady = useEffectEvent(() => {
+    if (planned && ready) void place(planned, ready)
+  })
+  useEffect(() => {
+    if (ready) placeReady()
+  }, [ready])
+  const offerItem = (request: ItemOfferRequest) => {
+    if (!state?.character) return
+    if (trade) {
+      if (trade.partner.character_id !== request.partnerId) return
+      if (trade.status === 'open') void place(request, trade)
+      else setPlanned({ ...request, invited: true })
+      reopen()
+      return
+    }
+    setPlanned({ ...request, invited: false })
+    invite(request.partnerId, request.partnerName, {
+      sent: () => setPlanned((current) => current && { ...current, invited: true }),
+      failed: () => setPlanned(null),
+    })
   }
   const focusDock = () => requestAnimationFrame(() => dock.current?.focus())
 
@@ -133,7 +208,21 @@ function TradeCenter({ actingUser }: { actingUser: string | null }) {
         reopen,
       }}
     >
-      <Outlet />
+      <ItemOfferContext.Provider
+        value={
+          state?.character
+            ? {
+                characterId: state.character.id,
+                partners: state.partners,
+                tradingWith: trade?.partner.character_id ?? null,
+                waiting: planned,
+                offer: offerItem,
+              }
+            : null
+        }
+      >
+        <Outlet />
+      </ItemOfferContext.Provider>
       {showInvite && (
         <InvitePopup
           trade={trade}

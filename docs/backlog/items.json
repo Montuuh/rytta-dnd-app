@@ -37,7 +37,11 @@
       "owner": "frontend",
       "status": "review",
       "dependsOn": ["RYT-000"],
-      "sources": ["Drive: roles", "User: Google-only open registration and campaign hub"],
+      "sources": [
+        "Drive: roles",
+        "User: Google-only open registration and campaign hub",
+        "Owner check, 20 November 2026: sign-in and the return from Google work in Safari on a real iPhone."
+      ],
       "scope": "Google sign-in/out, identity-scoped session/cache lifecycle and PKCE callback; no email allowlist or gameplay.",
       "acceptance": [
         "Use Google with open registration, no email allowlist and no password screen.",
@@ -56,7 +60,8 @@
         "docs/evidence/RYT-001-002/supabase-connection.md",
         "docs/evidence/RYT-001-002/release-readiness.md",
         "docs/evidence/RYT-001-002/production-configuration.md",
-        "docs/evidence/RYT-001-002/pages-deployment.md"
+        "docs/evidence/RYT-001-002/pages-deployment.md",
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
       ]
     },
     {
@@ -3091,7 +3096,8 @@
       "dependsOn": ["RYT-092"],
       "sources": [
         "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
-        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first."
+        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first.",
+        "Verified on 20 November 2026: the official SRD pack in production was uploaded and published from the owner's editor account on 14 November 2026, with 1,161 entries."
       ],
       "scope": "An editor-only Content library page opened from the account menu (hidden for everyone else): three columns on a laptop (packs, entries of the chosen kind with search, editor), two on a tablet and stacked screens on a phone. Editors create packs and set their visibility, license and attribution; create, edit, revert and delete entries with a form per kind and a JSON tab, English and Spanish side by side (one language is enough; missing ones are flagged); changes stay as drafts until \"Publish version\" sends them together with a summary; bulk import from a Rytta JSON file shows what it adds, updates and refuses before writing; a one-time action uploads the bundled SRD 5.2.1 (creatures and every glossary entry). Non-goals: libraries of other users, image upload, the app reading from the library (RYT-094).",
       "acceptance": [
@@ -3108,7 +3114,10 @@
         "design critique and audit",
         "independent UI review PASS"
       ],
-      "evidence": ["docs/evidence/RYT-093/validation.md"]
+      "evidence": [
+        "docs/evidence/RYT-093/validation.md",
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
+      ]
     },
     {
       "id": "RYT-094",
@@ -3758,7 +3767,8 @@
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit finding M-3 and operations gaps 1 and 2: foreign keys to auth users block erasure, no account deletion or export exists, and there is no privacy policy, terms or attribution page.",
         "Delivered 2026-11-17: migrations applied to production (hosted 20261117063453 and 20261117063840) and mirrored to PRE with baseline row counts unchanged; independent security review safe to apply for each; hosted PRE actor checks passed (RYT-119). Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. UI review round 1 CHANGES_REQUIRED (8 findings, all resolved), round 2 PASS. Remaining: production Auth-user removal unverified, legal text review and draft flag, VITE_CONTACT_EMAIL, frontend release and the privacy URL for the consent screen (RYT-122). Follow-ups RYT-120 and RYT-121.",
-        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, and the owner approved the legal texts; not Done because criterion 5 still lacks a record of the privacy policy URL on the Google consent screen and criterion 2 lacks evidence that the Auth user is removed in production."
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev, and the owner approved the legal texts; not Done because criterion 5 still lacks a record of the privacy policy URL on the Google consent screen and criterion 2 lacks evidence that the Auth user is removed in production.",
+        "Verified on 20 November 2026: the owner deleted a second Google account from the app in production; the Auth user is gone and no profile, storage object or user reference is left behind. The privacy URL capture on the Google consent screen is still pending."
       ],
       "scope": "A signed-in user can export their data and delete their account. Deletion leaves or hands over campaigns (sole-DM campaigns are transferred or deleted after an explicit confirmation), nulls actor and author references, removes memberships, invitations, profile and the user's storage objects, and then removes the Auth user server-side without shipping a server secret to the browser. Foreign keys to Auth users get explicit delete actions. Public privacy policy, terms and SRD and art attribution pages are reachable signed out and linked from the landing page and settings. Backend and frontend work; reviewed migrations tested in PRE first. Non-goals: legal text authorship (owner supplies or approves the text), erasure of PRE copies and retained backups (covered by RYT-116), autonomous release.",
       "acceptance": [
@@ -3776,7 +3786,10 @@
         "PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": ["docs/evidence/RYT-115/validation.md"]
+      "evidence": [
+        "docs/evidence/RYT-115/validation.md",
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
+      ]
     },
     {
       "id": "RYT-116",
@@ -3791,7 +3804,8 @@
         "Hosting update 2026-11-18: ADR 047 (updated 2026-11-18) moved the site to the Cloudflare Pages project rytta at https://rytta.pages.dev; the repository is private and the old GitHub Pages site and the first Worker are removed; the staging project bootstrap is recorded in docs/evidence/RYT-116/staging-bootstrap.md. Not closed: no criterion is fully evidenced yet; criterion 5 still needs a recorded header check and CSP-clean browser run on the live site.",
         "Observation 2026-11-18 from RYT-134: hosted migrations are delivered through a path that decodes backslash-u escapes in transit, so migrations must not contain them; build such characters server-side instead. The staging apply caught it before production (docs/evidence/RYT-134/validation.md).",
         "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done.",
-        "Progress 2026-11-18: the daily backup workflow ran on main for the first time (run 44362679087: roles, schema and data as a 14-day artifact, checksums verified, row counts equal to production at the time), recorded in docs/evidence/RYT-116/staging-bootstrap.md. Criterion 6 stays open: the restore rehearsal into staging has not been done and needs a staging database connection secret, which the owner has to provide. Staging still has no sign-in (its own OAuth client) and no frontend, and PRE still lives in the production project."
+        "Progress 2026-11-18: the daily backup workflow ran on main for the first time (run 44362679087: roles, schema and data as a 14-day artifact, checksums verified, row counts equal to production at the time), recorded in docs/evidence/RYT-116/staging-bootstrap.md. Criterion 6 stays open: the restore rehearsal into staging has not been done and needs a staging database connection secret, which the owner has to provide. Staging still has no sign-in (its own OAuth client) and no frontend, and PRE still lives in the production project.",
+        "20 November 2026: with the repository public again, the two daily backup artifacts were downloadable by anyone and were deleted; the backup workflow is disabled until the dump is encrypted before upload."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -3800,7 +3814,8 @@
         "CI applies migrations to staging on merge and to production only after a manual approval, using environment-scoped secrets; no routine development task needs a production write token.",
         "The production API exposes only public and graphql_public; pre, pre_private and their backup schemas, PRE realtime entries, pre/ storage objects and localhost redirect URLs are gone, verified on the hosted project.",
         "Production responses carry a Content-Security-Policy with frame-ancestors none, nosniff, a Referrer-Policy and immutable caching for hashed assets, verified with a header check and a browser run with no CSP violations.",
-        "A scheduled backup runs and a restore into staging is rehearsed and documented with its date and duration."
+        "A scheduled backup runs and a restore into staging is rehearsed and documented with its date and duration.",
+        "The backup is encrypted before it leaves the runner (or stored outside the public repository), and no unencrypted dump is ever uploaded as an artifact."
       ],
       "validation": [
         "ADR review",
@@ -3810,7 +3825,10 @@
         "npm run test:e2e against the staging site",
         "documented backup restore rehearsal"
       ],
-      "evidence": ["docs/evidence/RYT-116/staging-bootstrap.md"]
+      "evidence": [
+        "docs/evidence/RYT-116/staging-bootstrap.md",
+        "docs/evidence/RYT-122/owner-checks-2026-11-20.md"
+      ]
     },
     {
       "id": "RYT-117",
@@ -3958,7 +3976,8 @@
       "dependsOn": ["RYT-112", "RYT-113", "RYT-115", "RYT-118"],
       "sources": [
         "Producer upkeep 2026-11-17: RYT-112, RYT-113, RYT-115 and RYT-118 are in review with implementation, checks, reviews and hosted migrations complete; the working tree is uncommitted and the new frontend is not deployed, so Players follow combat by polling until it is published.",
-        "Release update 2026-11-18: PR 13 merged to main on 2026-11-18 and the frontend is live at https://rytta.pages.dev on Cloudflare Pages (the GitHub Pages site and the first Worker are gone; the repository is private); the owner verified sign-in there and approved the legal texts. Not closed: still without evidence are the Quality workflow result of PR 13, where the contact and site variables are set now that the build runs on Cloudflare Pages, the hosted Auth settings with their date, the published build matching the merged commit, and the smoke test of Player combat realtime, an image upload and an account export."
+        "Release update 2026-11-18: PR 13 merged to main on 2026-11-18 and the frontend is live at https://rytta.pages.dev on Cloudflare Pages (the GitHub Pages site and the first Worker are gone; the repository is private); the owner verified sign-in there and approved the legal texts. Not closed: still without evidence are the Quality workflow result of PR 13, where the contact and site variables are set now that the build runs on Cloudflare Pages, the hosted Auth settings with their date, the published build matching the merged commit, and the smoke test of Player combat realtime, an image upload and an account export.",
+        "Owner check, 20 November 2026: real sessions on the production site work; the individual smoke items were not recorded one by one. Google brand verification is still not approved."
       ],
       "scope": "Owner-run release of the launch delivery: commit and review the working tree, set the VITE_CONTACT_EMAIL and VITE_SITE_URL repository variables, apply the hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA), publish the frontend, then smoke-test production. Non-goals: new features, destructive migrations, paid services without an owner decision, autonomous release.",
       "acceptance": [
@@ -3973,7 +3992,7 @@
         "repository variable and hosted Auth settings check",
         "production smoke test record"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-122/owner-checks-2026-11-20.md"]
     },
     {
       "id": "RYT-123",

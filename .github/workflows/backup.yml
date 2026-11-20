@@ -1,8 +1,9 @@
 name: Backup
 # The free database plan keeps no backups, so this takes a logical dump of production once a day
-# and keeps it as a workflow artifact of this private repository. It does nothing until the
-# repository secret BACKUP_DB_URL exists (docs/deployment.md, "Backups"). The dump holds personal
-# data: keep the repository private and the artifact retention short.
+# and keeps it as a workflow artifact. It does nothing until the repository secret BACKUP_DB_URL
+# exists (docs/deployment.md, "Backups"). The dump holds personal data and the repository is
+# public, so artifacts are downloadable by anyone: the workflow stays disabled until the dump is
+# encrypted before upload (docs/evidence/RYT-122/owner-checks-2026-11-20.md).
 on:
   schedule:
     - cron: '17 3 * * *'

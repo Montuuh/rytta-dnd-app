@@ -92,6 +92,21 @@
       html[data-mantine-color-scheme='light'] .boot-screen {
         background: var(--boot-bg, #f7efe2);
       }
+      .boot-legal {
+        position: fixed;
+        inset: auto 0 max(16px, env(safe-area-inset-bottom)) 0;
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        font-size: 0.875rem;
+      }
+      .boot-legal a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        color: inherit;
+        opacity: 0.75;
+      }
     </style>
   </head>
   <body>
@@ -106,6 +121,11 @@
           height="72"
         />
       </div>
+      <!-- Plain links for crawlers and the first paint; React replaces them with the app. -->
+      <nav class="boot-legal" aria-label="Privacidad y condiciones">
+        <a href="%BASE_URL%privacy/">Política de privacidad</a>
+        <a href="%BASE_URL%terms/">Condiciones de uso</a>
+      </nav>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

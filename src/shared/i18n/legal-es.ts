@@ -3,6 +3,8 @@ import type { legalEn } from './legal-en'
 /** RYT-115: política de privacidad y condiciones de uso. */
 export const legalEs: Record<keyof typeof legalEn, string> = {
   'legal.back': 'Volver',
+  'legal.goToApp': 'Ir a Rytta',
+  'legal.otherLanguage': 'Read in English',
   'legal.draft': 'Borrador pendiente de revisión del titular',
   'legal.draftHelp':
     'Este texto es un borrador y no tiene efecto legal hasta que el titular lo apruebe.',

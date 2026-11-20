@@ -1,6 +1,8 @@
 /** RYT-115: the privacy policy and the terms of use. Every statement mirrors what the app does. */
 export const legalEn = {
   'legal.back': 'Back',
+  'legal.goToApp': 'Go to Rytta',
+  'legal.otherLanguage': 'Leer en español',
   'legal.draft': 'Draft pending owner review',
   'legal.draftHelp': 'This text is a draft and has no legal effect until the owner approves it.',
   'legal.effective': 'In force since {{date}}',

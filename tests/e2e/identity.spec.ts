@@ -1465,3 +1465,36 @@ test('RYT-136 the profile menu returns focus on Escape and after a choice that o
   await expect(other).toBeFocused()
   await expect(trigger).not.toBeFocused()
 })
+
+test('RYT-123 the landing keeps its sign-in button above the fold in phone landscape', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'identity-mobile', 'landscape sizes are set here')
+  await identityFixture(page, { signedIn: false })
+  for (const size of [
+    { width: 844, height: 390 },
+    { width: 667, height: 375 },
+  ]) {
+    await page.setViewportSize(size)
+    await page.goto('./')
+    const button = page.getByRole('button', { name: 'Continuar con Google' })
+    await expect(button).toBeVisible()
+    const box = (await button.boundingBox())!
+    expect(box.y + box.height).toBeLessThanOrEqual(size.height)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await capture(page, info.outputPath(`landing-landscape-${size.width}.png`), { fullPage: false })
+  }
+})
+
+test('RYT-123 the campaign hub uses two columns on a tablet and one on a phone', async ({
+  page,
+}, info) => {
+  await identityFixture(page)
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
+  const columns = await page
+    .locator('.hub-card')
+    .first()
+    .evaluate((card) => getComputedStyle(card.parentElement!).gridTemplateColumns.split(' ').length)
+  expect(columns).toBe(info.project.name === 'identity-mobile' ? 1 : 2)
+})

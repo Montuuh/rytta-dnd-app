@@ -57,7 +57,9 @@ export function InitiativeEntry({
     enabled: Boolean(combatant.character_id),
   })
   const build = sheet.data?.sheet.build
-  const bonus = build ? initiativeBonus(build) : null
+  // The sheet's level counts (Alert adds the proficiency bonus of the level): the server caps a
+  // Player's modifier at the same value (RYT-142).
+  const bonus = build ? initiativeBonus(build, sheet.data?.sheet.level ?? 1) : null
   const [typed, setAmount] = useState<number | string>(combatant.initiative ?? '')
   const [rolling, setRolling] = useState(false)
   const [rolled, setRolled] = useState('')
@@ -134,7 +136,17 @@ export function InitiativeEntry({
         })}. ${t('roll.source.app')}.`,
       )
     } catch (error) {
-      setRollFailure(failureReason(error))
+      const reason = failureReason(error)
+      if (reason === 'bonus-too-high') {
+        // RYT-142: the server's cap comes from the saved sheet; read it again before another
+        // try. A changed bonus means a fresh roll can pass; the same one means only the DM can
+        // set this total, so no retry is offered that would fail again.
+        attempt.current = null
+        const fresh = await sheet.refetch()
+        const build = fresh.data?.sheet.build
+        const next = build ? initiativeBonus(build, fresh.data?.sheet.level ?? 1) : null
+        setRollFailure(next !== null && next !== bonus ? 'bonus-updated' : 'bonus-too-high')
+      } else setRollFailure(reason)
     } finally {
       setRolling(false)
     }
@@ -207,7 +219,7 @@ export function InitiativeEntry({
           </div>
           <Text
             id={hintId}
-            className={`combat-entry-formula${outOfRange ? ' is-invalid' : unusual ? ' is-unusual' : ''}`}
+            className={`combat-entry-formula${outOfRange || rollFailure ? ' is-invalid' : unusual ? ' is-unusual' : ''}`}
             aria-live="polite"
           >
             {rollFailure
@@ -215,9 +227,13 @@ export function InitiativeEntry({
                 ? t('roll.error.dice-mode')
                 : rollFailure === 'already-rolled'
                   ? t('combat.initiative.refusedAlready')
-                  : rollFailure === 'invalid'
-                    ? t('combat.initiative.refusedInvalid')
-                    : t('combat.initiative.rollFailed')
+                  : rollFailure === 'bonus-too-high'
+                    ? t('combat.initiative.refusedBonus')
+                    : rollFailure === 'bonus-updated'
+                      ? t('combat.initiative.bonusUpdated')
+                      : rollFailure === 'invalid'
+                        ? t('combat.initiative.refusedInvalid')
+                        : t('combat.initiative.rollFailed')
               : badBonus
                 ? t('combat.initiative.bonusRange', {
                     bonus: bonus! > 0 ? `+${bonus}` : `${bonus}`,
@@ -272,10 +288,17 @@ export function InitiativeEntry({
               size="lg"
               className="combat-entry-roll"
               leftSection={<Dices size={20} aria-hidden="true" />}
-              aria-disabled={rolling || needsSheet || badBonus || logLoading || undefined}
+              aria-disabled={
+                rolling ||
+                needsSheet ||
+                badBonus ||
+                logLoading ||
+                rollFailure === 'bonus-too-high' ||
+                undefined
+              }
               aria-busy={rolling || logLoading || undefined}
               onClick={() => {
-                if (badBonus) return
+                if (badBonus || rollFailure === 'bonus-too-high') return
                 if (needsSheet) {
                   if (sheet.isError) void sheet.refetch()
                   return
@@ -285,7 +308,10 @@ export function InitiativeEntry({
             >
               {logLoading
                 ? t('combat.initiative.checking')
-                : rollFailure || (needsSheet && sheet.isError)
+                : (rollFailure &&
+                      rollFailure !== 'bonus-updated' &&
+                      rollFailure !== 'bonus-too-high') ||
+                    (needsSheet && sheet.isError)
                   ? t('common.retry')
                   : t('combat.initiative.rollForMe')}
             </Button>

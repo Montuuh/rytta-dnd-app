@@ -1,3 +1,4 @@
+import { slotsLeft } from '../../domain/sorcery'
 import { useEffect, useRef, useState } from 'react'
 import {
   ActionIcon,
@@ -483,9 +484,9 @@ export function SpellsBlock(props: PanelProps & { onLibrary: () => void }) {
       notice,
     )
   const slotMax = slotsFor(build.casterKind, level)
-  const slotLeft = (slotLevel: number) =>
-    slotMax[slotLevel - 1]! -
-    Math.min(slotMax[slotLevel - 1]!, vitals.slots_used[slotLevel - 1] ?? 0)
+  // RYT-110: slots created with Font of Magic count as slots of their level.
+  const lefts = slotsLeft(build, level, vitals)
+  const slotLeft = (slotLevel: number) => lefts[slotLevel - 1]!
   return (
     <Stack gap="md">
       {casting ? (

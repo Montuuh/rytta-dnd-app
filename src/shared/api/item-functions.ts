@@ -19,6 +19,8 @@ export type ItemFunctions = {
   >
   import_basic_items: Call<Keyed & { items: Json; update_existing?: boolean }>
   search_campaign_items: Call<{ search_query: string; max_results?: number }>
+  // RYT-156 (20261214120000): definition id to value_gp for the campaign DM, {} for other members.
+  get_item_values: Call<Record<never, never>>
   propose_item: Call<Keyed & { target_character: string; draft: Json; quantity: number }>
   // include_closed defaults to false: pending first, then the 50 latest closed ones.
   list_item_proposals: Call<{ target_character?: string | null; include_closed?: boolean }>

@@ -1,4 +1,5 @@
 import { slotsFor } from './rules'
+import { slotsLeft, spendSlot } from './sorcery'
 import {
   concentrationMaxLength,
   markerFor,
@@ -25,13 +26,15 @@ export type SlotChoice = {
 export function slotChoices(
   build: Pick<Build, 'casterKind'>,
   level: number,
-  vitals: Pick<Vitals, 'slots_used'>,
+  vitals: Pick<Vitals, 'slots_used' | 'tracker_uses'>,
   spellLevel: number,
 ): SlotChoice[] {
   if (spellLevel < 1) return []
+  // RYT-110: slots created with Font of Magic count as slots of their level.
+  const lefts = slotsLeft(build, level, vitals)
   return slotsFor(build.casterKind, level).flatMap((max, index) => {
     const slotLevel = index + 1
-    const left = Math.max(0, max - (vitals.slots_used[index] ?? 0))
+    const left = lefts[index]!
     return slotLevel >= spellLevel && left > 0
       ? [{ level: slotLevel, left, max, pact: build.casterKind === 'pact' }]
       : []
@@ -46,7 +49,7 @@ export function castAvailability(
   spell: Pick<Spell, 'level' | 'ritual'>,
   build: Pick<Build, 'casterKind'>,
   level: number,
-  vitals: Pick<Vitals, 'slots_used'>,
+  vitals: Pick<Vitals, 'slots_used' | 'tracker_uses'>,
 ): CastAvailability {
   if (spell.level === 0) return 'cantrip'
   if (slotChoices(build, level, vitals, spell.level).length > 0) return 'slot'
@@ -94,9 +97,9 @@ export function planCast(
   } else {
     if (!slotChoices(build, level, vitals, spell.level).some((slot) => slot.level === mode.level))
       return null
-    const slots_used = [...vitals.slots_used]
-    slots_used[mode.level - 1] = (slots_used[mode.level - 1] ?? 0) + 1
-    next = { ...vitals, slots_used }
+    const after = spendSlot(build, level, vitals, mode.level)
+    if (!after) return null
+    next = after
     spent = mode.level
   }
   if (!spell.concentration) return { vitals: next, concentration: null, spent }

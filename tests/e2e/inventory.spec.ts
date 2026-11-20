@@ -80,6 +80,27 @@ for (const [language, scheme] of [
     await audit(page, info.outputPath(`ledger-${language}-${scheme}-150.png`))
   })
 
+test('RYT-156 no item definition read asks the table for value_gp; values come from the DM read', async ({
+  page,
+}) => {
+  const selects: string[] = []
+  let valueReads = 0
+  page.on('request', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('/rest/v1/item_definitions'))
+      selects.push(url.searchParams.get('select') ?? '')
+    if (url.pathname.endsWith('/rpc/get_item_values')) valueReads++
+  })
+  await identityFixture(page, { player: true, sheet: 'complete', inventory: true })
+  await page.goto(url)
+  await expect(
+    page.getByRole('button', { name: /Espada larga, (cantidad|quantity) 1/ }),
+  ).toBeVisible()
+  expect(selects.length).toBeGreaterThan(0)
+  expect(selects.filter((select) => select.includes('value_gp'))).toEqual([])
+  expect(valueReads).toBeGreaterThan(0)
+})
+
 test('equipping through the card and the paper doll updates AC and attacks', async ({
   page,
 }, info) => {

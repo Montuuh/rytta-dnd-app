@@ -91,7 +91,9 @@ Quality workflow no longer has a `deploy` job, the Supabase Site URL points at t
 origin, and the old address is no longer updated. The workflow keeps `checks` on every push and pull
 request and runs the four `e2e` shards on pull requests and manual dispatch. Cloudflare builds
 main as soon as it is pushed and does not wait for the workflow, so changes reach main only
-through a pull request whose checks and browser tests passed. A production build with
+through a pull request whose checks and browser tests passed. Work collects on the integration branch
+`next` in large commits, with one open pull request to main that runs the full checks on every
+push; merging it is the release. Only an urgent production fix gets its own small pull request. A production build with
 `VITE_DATA_MODE=supabase` fails while `VITE_CONTACT_EMAIL` or `VITE_OWNER_NAME` is empty; the CI
 `checks` job builds in demo mode and the `e2e` builds pin both empty with
 `RYTTA_ALLOW_UNPUBLISHED_OWNER=1` (set in `playwright.config.ts`, not a `VITE_` variable, so it

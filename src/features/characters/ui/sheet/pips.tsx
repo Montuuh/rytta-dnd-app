@@ -11,6 +11,9 @@ export function Pips({
   onChange,
   countLabel,
   glyph,
+  extra = 0,
+  extraLabel,
+  onSpendExtra,
 }: {
   max: number
   used: number
@@ -21,6 +24,11 @@ export function Pips({
   countLabel: string
   /** Optional short text drawn inside each pip, such as the hit die size. */
   glyph?: string
+  /** RYT-110: temporary uses beyond the maximum (created spell slots), drawn dashed after the
+   * others; tapping one spends it. */
+  extra?: number
+  extraLabel?: string
+  onSpendExtra?: () => void
 }) {
   const left = Math.max(0, max - used)
   return (
@@ -46,6 +54,19 @@ export function Pips({
           </UnstyledButton>
         )
       })}
+      {Array.from({ length: extra }, (_, index) => (
+        <UnstyledButton
+          key={`extra-${index}`}
+          className="pip"
+          data-available
+          data-created
+          disabled={disabled}
+          aria-label={`${extraLabel ?? spendLabel} (${index + 1}/${extra})`}
+          onClick={() => onSpendExtra?.()}
+        >
+          <span className="pip-mark" aria-hidden="true" />
+        </UnstyledButton>
+      ))}
       <Text size="sm" c="dimmed" ml="xs" className="pip-count">
         {countLabel}
       </Text>

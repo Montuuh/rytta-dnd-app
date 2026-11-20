@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { etlCommand, withExposureSql } from '../../scripts/lib/pre-etl.mts'
+import { relaxQuotasSql } from './quota-fixture.ts'
 
 const migration = '20261103150000_player_trades.sql'
 const db = new PGlite()
@@ -211,6 +212,8 @@ beforeAll(async () => {
   )
   for (const file of files.filter((f) => f >= migration))
     await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
+  // Every case creates a campaign and invites its Players: lift the per-user quotas.
+  await db.exec(relaxQuotasSql)
 }, 60000)
 afterAll(() => db.close())
 
@@ -547,6 +550,147 @@ describe('RYT-034 player trades', () => {
       expect(await a.confirm(s.c, id, s.Bea, 4)).toMatchObject({ status: 'open' })
       await asUser(player)
       expect(await a.confirm(s.c, id, s.Arin, 4)).toMatchObject({ status: 'completed' })
+    }
+  })
+
+  it('RYT-109 shows both trade members the pictures and descriptions on the table, and nobody else', async () => {
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const env = schema === 'pre' ? 'pre' : 'public'
+      const helper = schema === 'pre' ? 'pre_private' : 'private'
+      // The rope Bea will offer has a picture and a description.
+      await db.exec('reset role')
+      const rope = (
+        await one<{ id: string }>(
+          `select definition_id id from ${schema}.inventory_items where id=$1`,
+          [s.rope],
+        )
+      ).id
+      const path = `${env}/${s.c}/${rope}/${randomUUID()}.webp`
+      await db.query(
+        `update ${schema}.item_definitions set image_path=$2, description='Fifty feet of hemp.' where id=$1`,
+        [rope, path],
+      )
+      const canRead = async (user: string) => {
+        await db.exec('reset role')
+        await db.query("select set_config('request.jwt.claim.sub', $1, false)", [user])
+        return (
+          await one<{ ok: boolean }>(`select ${helper}.can_read_item_image($1,$2,$3) ok`, [
+            s.c,
+            rope,
+            path,
+          ])
+        ).ok
+      }
+      expect(await canRead(player)).toBe(false)
+      await asUser(player)
+      const { trade_id: id } = (await a.invite(s.c, s.Arin, s.Bea)) as { trade_id: string }
+      await asUser(peer)
+      await a.respond(s.c, id, true)
+      await a.offer(s.c, id, s.Bea, 1, [{ item_id: s.rope, quantity: 1 }], 0)
+      // Arin reads the partner's rope with its picture and description, and may sign the picture.
+      await asUser(player)
+      expect((await a.state(s.c)).trade!.partner.items).toEqual([
+        expect.objectContaining({
+          name: 'Rope',
+          image_path: path,
+          description: 'Fifty feet of hemp.',
+        }),
+      ])
+      expect(await canRead(player)).toBe(true)
+      // A member of no such trade, and an outsider, may not.
+      expect(await canRead(third)).toBe(false)
+      expect(await canRead(outsider)).toBe(false)
+      await asUser(third)
+      expect((await a.state(s.c)).trade).toBeNull()
+      // A definition of the same campaign that is not on the table stays closed.
+      await db.exec('reset role')
+      const potionPath = `${env}/${s.c}/${s.potionDef}/${randomUUID()}.webp`
+      await db.query(`update ${schema}.item_definitions set image_path=$2 where id=$1`, [
+        s.potionDef,
+        potionPath,
+      ])
+      await db.query("select set_config('request.jwt.claim.sub', $1, false)", [third])
+      expect(
+        (
+          await one<{ ok: boolean }>(`select ${helper}.can_read_item_image($1,$2,$3) ok`, [
+            s.c,
+            s.potionDef,
+            potionPath,
+          ])
+        ).ok,
+      ).toBe(false)
+      // A DM of another campaign may not sign it through their own campaign either.
+      await asUser(outsider)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      await db.exec('reset role')
+      await db.query("select set_config('request.jwt.claim.sub', $1, false)", [outsider])
+      expect(
+        (
+          await one<{ ok: boolean }>(`select ${helper}.can_read_item_image($1,$2,$3) ok`, [
+            other,
+            rope,
+            path,
+          ])
+        ).ok,
+      ).toBe(false)
+      // An expired trade, not yet swept, is closed too.
+      await db.query(
+        `update ${schema}.trades set expires_at = now() - interval '1 second' where id=$1`,
+        [id],
+      )
+      expect(await canRead(player)).toBe(false)
+      await db.query(
+        `update ${schema}.trades set expires_at = now() + interval '5 minutes' where id=$1`,
+        [id],
+      )
+      expect(await canRead(player)).toBe(true)
+      // Once the trade ends, Arin no longer may.
+      await asUser(peer)
+      await a.cancel(s.c, id, s.Bea)
+      expect(await canRead(player)).toBe(false)
+      // The helper is not callable by clients; the storage helper is the only door.
+      await asUser(player)
+      await expect(
+        db.query(`select ${helper}.can_read_item_image($1,$2,$3)`, [s.c, rope, path]),
+      ).rejects.toThrow(/permission denied/)
+      await db.exec('reset role; set role anon')
+      await expect(a.state(s.c)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
+    }
+  })
+
+  it('RYT-156 gives item values to the campaign DM only', async () => {
+    for (const schema of ['public', 'pre']) {
+      const s = await setup(schema)
+      const values = async (c: string) =>
+        (await res(`select ${schema}.get_item_values($1) result`, [c])) as Record<string, number>
+      await asUser(dm)
+      expect(await values(s.c)).toEqual({ [s.potionDef]: 50 })
+      // Any other member gets nothing, without an error.
+      for (const user of [player, peer, third]) {
+        await asUser(user)
+        expect(await values(s.c)).toEqual({})
+      }
+      // Outsiders and a DM of another campaign are refused; their own campaign has no such value.
+      await asUser(outsider)
+      await expect(values(s.c)).rejects.toThrow(/Forbidden/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      expect(await values(other)).toEqual({})
+      // Now a DM elsewhere, still refused here.
+      await expect(values(s.c)).rejects.toThrow(/Forbidden/)
+      // A Player whose membership is no longer active is refused too.
+      await db.exec(
+        `reset role; update ${schema}.campaign_members set active = false where campaign_id = '${s.c}' and user_id = '${third}'`,
+      )
+      await asUser(third)
+      await expect(values(s.c)).rejects.toThrow(/Forbidden/)
+      await db.exec('reset role; set role anon')
+      await expect(values(s.c)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
     }
   })
 

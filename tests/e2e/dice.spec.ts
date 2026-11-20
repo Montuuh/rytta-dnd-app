@@ -1659,6 +1659,67 @@ test('RYT-137 initiative: a second roll is refused with its reason and no number
   await context.close()
 })
 
+test('RYT-142 initiative: a refused modifier re-reads the sheet; the same bonus sends the Player to the DM', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { page, f, entry, context } = await initiativePage(browser, info)
+  let refusals = 0
+  await page.route(/\/rest\/v1\/rpc\/log_roll$/, (route) => {
+    refusals++
+    return route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: '22023', message: 'Initiative bonus' }),
+    })
+  })
+  const reread = page.waitForRequest(
+    (request) => request.url().includes('/rest/v1/character_sheets') && request.method() === 'GET',
+  )
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await reread
+  const line = entry.locator('.combat-entry-formula')
+  await expect(line).toContainText('Pide al DM que fije tu total')
+  await expect(line).toHaveClass(/is-invalid/)
+  await expect(entry).not.toContainText('Salió')
+  // No retry that would fail again: the button stays, says why it waits and sends nothing.
+  const button = entry.getByRole('button', { name: 'Tirar por mí' })
+  await expect(button).toHaveAttribute('aria-disabled', 'true')
+  await button.click({ force: true })
+  expect(refusals).toBe(1)
+  expect(f.dice.rolls).toHaveLength(0)
+  await audit(page)
+  await context.close()
+})
+
+test('RYT-142 initiative: after a refusal a changed sheet lets the Player roll again', async ({
+  browser,
+}, info) => {
+  test.setTimeout(120_000)
+  const { page, f, entry, context } = await initiativePage(browser, info)
+  await page.route(/\/rest\/v1\/rpc\/log_roll$/, (route) =>
+    route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: '22023', message: 'Initiative bonus' }),
+    }),
+  )
+  // Edited elsewhere: the next read of the sheet carries a lower Dexterity.
+  f.setSheetDex(8)
+  await entry.getByRole('button', { name: 'Tirar por mí' }).click()
+  await expect(entry.locator('.combat-entry-formula')).toContainText(
+    'Tu ficha se ha actualizado y no se guardó ninguna tirada',
+  )
+  await page.unroute(/\/rest\/v1\/rpc\/log_roll$/)
+  const button = entry.getByRole('button', { name: 'Tirar por mí' })
+  await expect(button).not.toHaveAttribute('aria-disabled', 'true')
+  await button.click()
+  await expect(entry).toContainText('Salió')
+  expect(f.dice.rolls).toHaveLength(1)
+  expect(f.dice.rolls[0]!.expression).toBe('d20-1')
+  await context.close()
+})
+
 test('RYT-137 initiative: a retry reuses the request id and returns the first roll, not a new one', async ({
   browser,
 }, info) => {
@@ -2572,6 +2633,24 @@ for (const theme of ['default', 'parchment'])
     await dmRest.close()
   })
 
+/**
+ * The menu's own keys: ArrowDown until the item has focus. The menu may still be settling its
+ * first focus when the keys arrive, so a fixed number of presses lands on different items.
+ */
+async function arrowTo(page: Page, item: Locator) {
+  await expect(item).toBeVisible()
+  await expect
+    .poll(
+      async () => {
+        if (await item.evaluate((el) => el === document.activeElement)) return true
+        await page.keyboard.press('ArrowDown')
+        return item.evaluate((el) => el === document.activeElement)
+      },
+      { timeout: 10_000, intervals: [100] },
+    )
+    .toBe(true)
+}
+
 /** Focus holds the control it was given for many frames: one label, never the page. */
 async function expectFocusStays(page: Page, label: string) {
   const seen = await focusAcrossFrames(page, 60)
@@ -2611,8 +2690,7 @@ test('RYT-137 initiative: after a keyboard clear or re-roll from the row menu, f
   const reroll = dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' })
   await expect(reroll).toBeVisible()
   // The menu's own keys: arrows to the item, Enter to choose it.
-  for (const _ of [1, 2, 3]) await dm.keyboard.press('ArrowDown')
-  await expect(reroll).toBeFocused()
+  await arrowTo(dm, reroll)
   await dm.keyboard.press('Enter')
   await expect(arinRow(dm)).toContainText('10')
   await expect(menuButton).toBeFocused()
@@ -2622,8 +2700,7 @@ test('RYT-137 initiative: after a keyboard clear or re-roll from the row menu, f
   await dm.keyboard.press('Enter')
   const clear = dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })
   await expect(clear).toBeVisible()
-  for (const _ of [1, 2]) await dm.keyboard.press('ArrowDown')
-  await expect(clear).toBeFocused()
+  await arrowTo(dm, clear)
   await dm.keyboard.press('Enter')
   await expect(arinRow(dm)).not.toContainText('10')
   await expect(menuButton).toBeFocused()
@@ -2783,6 +2860,7 @@ test('RYT-137 initiative: after Escape, reopening the menu and choosing with Ent
   const clear = dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })
   await expect(clear).toBeVisible()
   await clear.focus()
+  await expect(clear).toBeFocused()
   await dm.keyboard.press('Enter')
   await expect(arinRow(dm)).not.toContainText('13')
   // A second of frames: the menu has closed and unmounted by then.

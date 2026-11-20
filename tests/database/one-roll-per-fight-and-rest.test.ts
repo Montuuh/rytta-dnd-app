@@ -70,7 +70,8 @@ async function user(label: string) {
   ])
   return id
 }
-const build = { classKey: 'fighter', classLabel: 'Fighter', hitDie: 10 }
+// DEX 14: the +2 initiative modifier the rolls below use is what the sheet allows (RYT-142).
+const build = { classKey: 'fighter', classLabel: 'Fighter', hitDie: 10, baseAbilities: { dex: 14 } }
 
 function api(schema: Schema) {
   return {
@@ -284,7 +285,7 @@ describe('linking a server roll to its fight or rest', () => {
     })
     // Another expression does not open a second slot either.
     await asUser(player)
-    await expect(s.app(c, arin, 'initiative', 'd20+9')).rejects.toThrow(/Already rolled/)
+    await expect(s.app(c, arin, 'initiative', 'd20+1')).rejects.toThrow(/Already rolled/)
     // The DM rolling the same character's initiative through log_roll is bound by the same rule.
     await asUser(dm)
     await expect(s.app(c, arin, 'initiative', 'd20+2')).rejects.toThrow(/Already rolled/)
@@ -1226,6 +1227,18 @@ describe('saved totals come from the server roll', () => {
       await asUser(dm)
       const reroll = await s.reset(c, arin, 'd20+1')
       expect(reroll.roll).toMatchObject({ encounter_id: null, character_id: arin })
+      // RYT-142: even at a table that shows rolls to everyone, that re-roll is the DM's only.
+      expect(reroll.roll).toMatchObject({ visibility: 'roller_dm' })
+      for (const who of [peer, player]) {
+        await asUser(who)
+        expect(
+          await rows(`select id from ${schema}.campaign_rolls where id=$1`, [reroll.roll!.id]),
+        ).toEqual([])
+      }
+      await asUser(dm)
+      expect(
+        await rows(`select id from ${schema}.campaign_rolls where id=$1`, [reroll.roll!.id]),
+      ).toEqual([{ id: reroll.roll!.id }])
       expect((await s.combatant(e, arin)).initiative).toBe(reroll.roll!.total)
       await asUser(peer)
       expect((await s.context(c)).rolls).toEqual([])
@@ -1378,8 +1391,10 @@ describe('saved totals come from the server roll', () => {
       // A DM roll without a character keeps any valid expression (an NPC's advantage).
       await asUser(dm)
       expect(await s.app(c, null, 'initiative', '2d20kh1')).toMatchObject({ encounter_id: null })
+      // RYT-142: a Player's modifier above the sheet's (+2 here) is refused before anything is written.
       await asUser(player)
-      expect(await s.app(c, arin, 'initiative', 'd20+30')).toMatchObject({ encounter_id: e })
+      await expect(s.app(c, arin, 'initiative', 'd20+30')).rejects.toThrow(/Initiative bonus/)
+      expect(await s.app(c, arin, 'initiative', 'd20+2')).toMatchObject({ encounter_id: e })
       // A linked roll of another shape (written directly) is not accepted by set_initiative.
       await asUser(dm)
       await s.reset(c, arin, null)
@@ -1456,6 +1471,110 @@ describe('saved totals come from the server roll', () => {
       }
     },
   )
+})
+
+describe('RYT-142 the initiative modifier comes from the sheet', () => {
+  it.each(schemas)(
+    '%s: Alert adds the proficiency bonus of the level; the DM is not capped',
+    async (schema) => {
+      const { s, c, dm, player, peer, outsider, otherDm, other, arin, bea } = await table(schema)
+      // Arin: DEX 15 (+2) and Alert at level 5 (+3): +5 at most. Bea: DEX 14, +2. Written
+      // directly: levels change through level-up, which is not what this test is about.
+      await asSystem()
+      await db.query(
+        `update ${schema}.character_sheets set level = 5, build = build || $3::jsonb
+           where campaign_id = $1 and character_id = $2`,
+        [
+          c,
+          arin,
+          JSON.stringify({
+            bonuses: { dex: 1 },
+            features: [{ id: 'f1', name: ' Alerta ', source: 'feat', description: '' }],
+          }),
+        ],
+      )
+      const e = await s.fight(c, dm, [arin, bea])
+      await asUser(player)
+      await expect(s.app(c, arin, 'initiative', 'd20+6')).rejects.toThrow(/Initiative bonus/)
+      expect(await s.stored(c)).toEqual([])
+      await asUser(player)
+      expect(await s.app(c, arin, 'initiative', 'd20+5')).toMatchObject({ encounter_id: e })
+      // A penalty is the Player's own business.
+      await asUser(peer)
+      expect(await s.app(c, bea, 'initiative', 'd20-1')).toMatchObject({ encounter_id: e })
+      // The DM rolling for a character is not capped (the console may know better).
+      await asUser(dm)
+      await s.reset(c, bea, null)
+      expect(await s.app(c, bea, 'initiative', 'd20+9')).toMatchObject({ encounter_id: e })
+      // The helper is private to every client role.
+      for (const who of [player, outsider, otherDm, dm]) {
+        await asUser(who)
+        await expect(
+          db.query(`select ${priv(schema)}.initiative_cap($1,$2)`, [c, arin]),
+        ).rejects.toThrow(/permission denied/)
+      }
+      await asAnon()
+      await expect(
+        db.query(`select ${priv(schema)}.initiative_cap($1,$2)`, [c, arin]),
+      ).rejects.toThrow(/permission denied/)
+      // Outsiders and another campaign's DM still cannot roll for Arin.
+      await asUser(outsider)
+      await expect(s.app(c, arin, 'initiative', 'd20+1')).rejects.toThrow(/Forbidden/)
+      await asUser(otherDm)
+      await expect(s.app(other, arin, 'initiative', 'd20+1')).rejects.toThrow(
+        /Character unavailable/,
+      )
+      await asSystem()
+      expect(
+        await scalar<number>(`select ${priv(schema)}.initiative_cap($1,$2) result`, [c, arin]),
+      ).toBe(5)
+      expect(
+        await scalar<number>(`select ${priv(schema)}.initiative_cap($1,$2) result`, [c, bea]),
+      ).toBe(2)
+      // No sheet for that id: 0. The helper keeps definer, an empty search_path and no client grant.
+      expect(
+        await scalar<number>(`select ${priv(schema)}.initiative_cap($1,$2) result`, [
+          c,
+          randomUUID(),
+        ]),
+      ).toBe(0)
+      expect(
+        await rows(
+          `select p.prosecdef, p.proconfig, has_function_privilege('authenticated', p.oid, 'execute') auth,
+             has_function_privilege('anon', p.oid, 'execute') anon
+           from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = $1 and p.proname = 'initiative_cap'`,
+          [priv(schema)],
+        ),
+      ).toEqual([{ prosecdef: true, proconfig: ['search_path=""'], auth: false, anon: false }])
+      // A negative cap still lets a plain d20 roll (DEX 8: -1).
+      await db.query(
+        `update ${schema}.character_sheets set build = build || '{"baseAbilities":{"dex":8}}'::jsonb
+           where campaign_id = $1 and character_id = $2`,
+        [c, bea],
+      )
+      await asUser(dm)
+      await s.reset(c, bea, null)
+      await asUser(peer)
+      expect(await s.app(c, bea, 'initiative', 'd20')).toMatchObject({ encounter_id: e })
+    },
+  )
+})
+
+describe('RYT-142 a hidden re-roll never widens a narrower setting', () => {
+  it.each(schemas)('%s: roller stays roller', async (schema) => {
+    const { s, c, dm, arin } = await table(schema)
+    await asUser(dm)
+    await s.dice(c, 'app', 'roller')
+    const e = await s.fight(c, dm, [arin])
+    await asSystem()
+    await db.query(
+      `update ${schema}.encounter_combatants set hidden = true where encounter_id=$1 and character_id=$2`,
+      [e, arin],
+    )
+    await asUser(dm)
+    expect((await s.reset(c, arin, 'd20+1')).roll).toMatchObject({ visibility: 'roller' })
+  })
 })
 
 describe('grants and the PRE mirror', () => {

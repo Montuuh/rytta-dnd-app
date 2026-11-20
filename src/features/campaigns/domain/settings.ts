@@ -130,6 +130,7 @@ export type CampaignSettingsReason =
   | 'roll-limit'
   | 'already-rolled'
   | 'roll-required'
+  | 'bonus-too-high'
   | 'unavailable'
 export class CampaignSettingsError extends Error {
   readonly reason: CampaignSettingsReason
@@ -151,6 +152,8 @@ const settingsMessages: [string, CampaignSettingsReason][] = [
   ['Roll limit', 'roll-limit'],
   ['Already rolled', 'already-rolled'],
   ['Roll required', 'roll-required'],
+  // RYT-142: the declared initiative modifier is above what the sheet allows.
+  ['Initiative bonus', 'bonus-too-high'],
   ['Invalid level', 'invalid'],
   ['Invalid settings', 'invalid'],
   ['Invalid roll', 'invalid'],

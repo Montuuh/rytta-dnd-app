@@ -138,6 +138,9 @@ export const diceEn = {
     'You already have a roll for this. No other roll was made and no number was saved. The DM can reset it.',
   'roll.error.roll-required': 'This needs a roll made in Rytta. Nothing was saved: roll first.',
   'combat.initiative.refusedAlready': 'Rytta already has your initiative roll for this fight.',
+  'combat.initiative.bonusUpdated': 'Your sheet was updated and no roll was saved. Roll again.',
+  'combat.initiative.refusedBonus':
+    "Rytta does not accept your sheet's bonus and saved no roll. Ask the DM to set your total.",
   'combat.initiative.refusedInvalid':
     'The server did not accept this initiative roll. Nothing was rolled.',
   'combat.initiative.rolledHidden':

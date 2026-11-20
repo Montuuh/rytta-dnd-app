@@ -1,3 +1,4 @@
+import { createBatchSigner } from '@/shared/api/batch-sign'
 import { z } from 'zod'
 import { ownsStoragePath } from '@/shared/api/storage-paths'
 import { config } from '@/shared/lib/config'
@@ -210,15 +211,14 @@ export async function addListings(
 }
 
 const bucket = 'shop-images'
+/** RYT-114: the shop list's banners are signed together. */
+const signShopImage = createBatchSigner(client, bucket, 300)
 
 /** A five-minute address; a path from the other environment (a PRE copy) is never read. */
 export async function shopImageUrl(path: string) {
   const { activeSchema } = await import('@/shared/api/supabase')
   if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
-  const db = await client()
-  const result = await db.storage.from(bucket).createSignedUrl(path, 300)
-  if (result.error) throw result.error
-  return z.url().parse(result.data.signedUrl)
+  return signShopImage(path)
 }
 
 export async function uploadShopImage(campaignId: string, shopId: string, image: Blob) {

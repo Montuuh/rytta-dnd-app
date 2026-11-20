@@ -202,6 +202,8 @@ function useHistoryText(build: Build) {
           return t('panel.history.tracker', {
             name: (() => {
               const tracker = build.trackers.find((item) => item.id === line.id)
+              const created = /^font-slot-(\d)$/.exec(line.id)
+              if (created) return t('font.created', { level: Number(created[1]) })
               return tracker ? trackerLabel(tracker) : t('panel.history.resource')
             })(),
             before: line.before,

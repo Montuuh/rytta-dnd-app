@@ -2,6 +2,7 @@ import { MantineProvider, type MantineColorSchemeManager } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect, useMemo, type PropsWithChildren } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createAppTheme } from './theme'
 import { classThemes, getClassTheme, themeScheme, useClassTheme } from '@/shared/theme'
 import { AuthProvider } from '@/features/auth'
@@ -47,7 +48,9 @@ function ThemeColorMeta() {
 
 export function Providers({ children }: PropsWithChildren) {
   const classTheme = useClassTheme()
-  const theme = useMemo(() => createAppTheme(classTheme), [classTheme])
+  const { t } = useTranslation()
+  const closeLabel = t('common.close')
+  const theme = useMemo(() => createAppTheme(classTheme, closeLabel), [classTheme, closeLabel])
   return (
     <MantineProvider
       theme={theme}

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { beaId, characterId, catoId } from './identity.ts'
+import { beaId, campaignId, characterId, catoId } from './identity.ts'
 
 // RYT-034 SDK contract fixture: one in-memory trade table shared by two browser contexts.
 // It mirrors the RPC rules the UI relies on (revisions, confirmation resets, completion);
@@ -12,6 +12,8 @@ type Item = {
   rarity: string
   category: string
   quantity: number
+  image_path?: string
+  description?: string
 }
 type Side = {
   character: string
@@ -49,7 +51,14 @@ export function tradeServer() {
       item('a2', 'Cuerda de seda', 'backpack', 'common', 1),
       item('a3', 'Gema de luna', 'gem', 'rare', 1),
     ],
-    [beaId]: [item('b1', 'Daga élfica', 'sword', 'rare', 1)],
+    // RYT-109: a picture and a description both members of a trade may see.
+    [beaId]: [
+      {
+        ...item('b1', 'Daga élfica', 'sword', 'rare', 1),
+        image_path: `pre/${campaignId}/60000000-0000-4000-8000-0000000000b1/70000000-0000-4000-8000-0000000000b1.webp`,
+        description: 'Hoja fina de acero lunar.',
+      },
+    ],
     [catoId]: [],
   }
   const gold: Record<string, number> = { [characterId]: 120, [beaId]: 45, [catoId]: 0 }

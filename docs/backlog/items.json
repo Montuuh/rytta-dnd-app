@@ -3565,7 +3565,7 @@
       "title": "Accessible notification close buttons and focus after \"show all\" in the shop add-items dock",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-107"],
       "sources": [
         "Independent UI review of RYT-102..RYT-107, round 2 on 2026-11-16 (RYT-104 record): two non-blocking notes. Notification close buttons have no accessible name across the app (pre-existing); \"show all\" in the shop add-items dock leaves focus on the document body.",
@@ -3585,42 +3585,42 @@
         "npm run test:e2e (shops, trades and one notification surface at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-108/validation.md"]
     },
     {
       "id": "RYT-109",
-      "title": "Players read only the item fields they need: partner pictures in trades and protected value_gp",
+      "title": "Trade members see the pictures and descriptions on the table",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-105", "RYT-106"],
       "sources": [
-        "Close-out 2026-11-16 of RYT-105 and RYT-106: the trade state carries no image_path or description, so the partner side of a trade shows only the category icon (amendment recorded in RYT-106); Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record)."
+        "Close-out 2026-11-16 of RYT-105 and RYT-106: the trade state carries no image_path or description, so the partner side of a trade shows only the category icon (amendment recorded in RYT-106); Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record).",
+        "Split on 2026-11-20 during delivery: the value_gp protection moves to RYT-156, because revoking the column breaks the deployed frontend and needs a release in between; this ticket keeps the trade part."
       ],
-      "scope": "The trade state exposes, for each item on the partner side, the picture reference and description a member of that trade may see, and the trades UI shows them with the category icon fallback and the shared image viewer. value_gp of item definitions is no longer readable by a Player through the table API for items they carry (column-level grants or a restricted view or RPC), while basic-item prices, shop prices and DM access keep working. Reviewed backward-compatible migration tested in PRE first. Non-goals: new upload flows, shop pricing changes, autonomous release.",
+      "scope": "The trade state exposes, for each item on either side, the picture reference and description a member of that trade may see, and the trades UI shows them: the partner's item opens a read-only sheet with its picture (shared image viewer, category icon fallback), name, amount and description (owner choice 2026-11-20). Reviewed backward-compatible migration tested in staging and PRE first. Non-goals: value_gp protection (RYT-156), new upload flows, shop pricing changes, autonomous release.",
       "acceptance": [
         "Both sides of a trade show the item picture and description to the trade members; a member of another trade or an outsider gets neither, nor a signed URL.",
-        "A Player selecting value_gp of a non-basic definition they carry through the table API gets no value; basic-item prices, storefront prices and the DM storeroom still show their values.",
-        "The deployed frontend keeps working between the migration and the release, or the migration ships with the release (documented in the evidence).",
-        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every changed column, RPC and storage path; RLS stays authoritative.",
-        "PRE migration and tests pass before the reviewed production migration; production verified afterwards.",
+        "The deployed frontend keeps working between the migration and the release.",
+        "Database denial tests cover anon, outsider, a Player outside the trade and the storage path; RLS stays authoritative.",
+        "Staging and PRE migration and tests pass before the reviewed production migration; production verified afterwards.",
         "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
-        "SQL tests for trade item visibility, value_gp column access and denial cases",
+        "SQL tests for trade item visibility and the storage read rule",
         "npm run check",
-        "npm run test:e2e (trades, inventory and shops at 390px and 820px)",
-        "PRE then production migration verification",
+        "npm run test:e2e (trades at 390px and 820px)",
+        "staging and PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-109/validation.md"]
     },
     {
       "id": "RYT-110",
       "title": "Sheet: Metamagic options and Font of Magic conversions",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-102"],
       "sources": [
         "Close-out 2026-11-16 of RYT-102: recorded limit, Metamagic options and Font of Magic conversions are not implemented."
@@ -3638,14 +3638,14 @@
         "npm run test:e2e (character-sheet at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-110/validation.md"]
     },
     {
       "id": "RYT-111",
       "title": "Creation wizard: species options such as Giant Ancestry",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-102"],
       "sources": [
         "Close-out 2026-11-16 of RYT-102: species options (for example the Goliath Giant Ancestry) are chosen on the sheet, not in the creation wizard."
@@ -3663,7 +3663,7 @@
         "npm run test:e2e (characters and character-sheet at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-111/validation.md"]
     },
     {
       "id": "RYT-112",
@@ -3732,7 +3732,7 @@
       "title": "Scalability: indexes, policy cost, retention, batched signed URLs and polling back-off",
       "priority": "P1",
       "owner": "backend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
@@ -4009,7 +4009,7 @@
       "title": "Player journey fixes: arrival, account and shell",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 1 (arrival and account), findings J1-01..J1-03, J1-05..J1-09 and J1-11..J1-29.",
@@ -4032,14 +4032,14 @@
         "npm run test:e2e (hub, invitations, settings, account deletion and Back closing overlays at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-123/validation.md"]
     },
     {
       "id": "RYT-124",
       "title": "Player journey fixes: character creation and sheet",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 2 (character creation and sheet), findings J2-01..J2-05, J2-07..J2-23, J2-25 and J2-27..J2-42.",
@@ -4060,14 +4060,14 @@
         "npm run test:e2e (roster, the three creation paths and the sheet at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-124/validation.md"]
     },
     {
       "id": "RYT-125",
       "title": "Player journey fixes: inventory, shops and trades",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 3 (inventory, shops and trades), findings J3-01..J3-37.",
@@ -4088,14 +4088,14 @@
         "npm run test:e2e (inventory, storefront, cart, orders and trade window at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-125/validation.md"]
     },
     {
       "id": "RYT-126",
       "title": "Player journey fixes: combat, table display, map and rest",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 4 (combat, table display, map, rest and reference), findings J4-03, J4-04, J4-06..J4-13, J4-15..J4-20 and J4-22..J4-34.",
@@ -4116,7 +4116,7 @@
         "npm run test:e2e (Player combat, map and rest at 390px and 820px; table screen at 1280px and 1920px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-126/validation.md"]
     },
     {
       "id": "RYT-127",
@@ -4175,7 +4175,7 @@
       "title": "Combat recap credits damage correctly",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, finding J4-14: the combat summary attributes damage to whoever held the turn, so damage the DM applies to a Player is credited to another Player (most damage dealt: Cato, 40, for the DM downing Arin on the turn of Cato)."
@@ -4194,7 +4194,7 @@
         "npm run check",
         "hosted migration result in PRE and production"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-129/validation.md"]
     },
     {
       "id": "RYT-130",
@@ -4498,7 +4498,7 @@
       "title": "One concentration for sheet and fight",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-134"],
       "sources": [
         "RYT-134 decision 2026-11-18: the sheet's concentration marker and the fight's (kept by the DM console, driving the concentration reminder on damage) are separate; during a fight the sheet says the DM keeps a separate record and asks the Player to tell the DM (docs/evidence/RYT-134/validation.md).",
@@ -4521,14 +4521,14 @@
         "PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-139/validation.md"]
     },
     {
       "id": "RYT-140",
       "title": "Combat error toast readable over the list",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Observed 2026-11-18 during the RYT-137 delivery (docs/evidence/RYT-137/validation.md, known out of scope): the combat error toast (.combat-toast, src/features/combat/ui/combat.css line 483) is nearly transparent; its red background is about 14% opaque, so at 390px the text overlaps the combat list and is hard to read."
@@ -4545,14 +4545,14 @@
         "npm run test:e2e (a refused combat action showing the toast over the list at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-140/validation.md"]
     },
     {
       "id": "RYT-141",
       "title": "Menus: Enter after Escape moves focus into the reopened menu",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Observed 2026-11-18 during the RYT-137 delivery (docs/evidence/RYT-137/validation.md, known out of scope): after Escape closes a menu, pressing Enter on the menu button sometimes reopens it without moving focus into it; on the DM row menu 12 of 23 keyboard runs lost focus to the page. Behaviour of the menu library, seen before RYT-137; the focus specs that reopen the menu wait for the items before choosing one."
@@ -4569,14 +4569,14 @@
         "npm run test:e2e (repeated Escape then Enter on the DM row menu at 390px and 820px)",
         "independent UI review PASS when the interface changes"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-141/validation.md"]
     },
     {
       "id": "RYT-142",
       "title": "Initiative modifier derived by the server, and hidden re-rolls kept hidden",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-137"],
       "sources": [
         "Security review residuals on RYT-137, 2026-11-18 (docs/evidence/RYT-137/validation.md): in app mode the server rolls the d20 but the initiative modifier is declared by the client, so a Player calling the RPC by hand can declare d20+30; and a DM re-roll sent straight to reset_initiative_roll for a hidden combatant is stored with the campaign roll visibility instead of roller-and-DM."
@@ -4598,14 +4598,14 @@
         "security review",
         "independent UI review PASS when the interface changes"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-142/validation.md"]
     },
     {
       "id": "RYT-143",
       "title": "Flaky browser test: Players read enemy health",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Observed 2026-11-18: the browser test \"RYT-043 Players read enemy health as named bands and see tokens, never numbers or secrets\" (tests/e2e/combat.spec.ts) failed 3 times across full runs, unrelated to the changes under test; the cause is a response-body race in the test's own response listener."
@@ -4619,7 +4619,7 @@
         "npm run test:e2e (the RYT-043 enemy health test repeated 30 times, then the full suite)",
         "npm run check"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-143/validation.md"]
     },
     {
       "id": "RYT-144",
@@ -4648,7 +4648,7 @@
       "title": "Creatures, encounters and live sessions",
       "priority": "P1",
       "owner": "producer",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-144"],
       "sources": [
         "19 November 2026: implement the creatures, encounters and live session section of the product audit. The session close uses one optional step per screen."
@@ -4747,7 +4747,7 @@
       "title": "Item card: using comes first, discarding moves out of the way",
       "priority": "P2",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-125"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
@@ -4773,7 +4773,7 @@
       "title": "Confirmed results shown where the action happened: health changes and deliveries",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-145"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
@@ -4790,14 +4790,14 @@
       "validation": [
         "Browser tests with throttled network and reduced motion; project checks; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-150/validation.md"]
     },
     {
       "id": "RYT-151",
       "title": "One primary action per screen: filled colour, labelled controls and DM destinations",
       "priority": "P2",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-144"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
@@ -4865,6 +4865,56 @@
         "Unit tests for the templates; browser tests for copying on each picker; independent UI review."
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-155",
+      "title": "Combat log keeps a teammate's concentration private",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "done",
+      "dependsOn": ["RYT-139"],
+      "sources": [
+        "Security review of RYT-139 on 2026-11-20 (finding M1, pre-existing part): set_concentration and apply_combat_hp log the spell name (detail.spell, detail.concentration, detail.concentration_dc) with the fight's own visibility, and get_combat_state returns event details to every member, although the projection hides the concentration of a character that does not share live state or plays under an alias."
+      ],
+      "scope": "Make every combat log event about concentration follow the projection's rule: for a Player who may not see that character's concentration (not their own, live sharing off, or an alias), get_combat_state drops spell, concentration and concentration_dc from the event detail, or those events are logged DM-only. Reviewed migration tested in staging and PRE first, then production. Non-goals: other event kinds, the projection itself, UI redesign, autonomous release.",
+      "acceptance": [
+        "A teammate who does not share live state, or plays under an alias, has no spell name in any concentration-related event a Player reads (set_concentration, apply_combat_hp concentration DC and loss), covered by SQL tests in public and PRE.",
+        "The DM and the character's own Player still read the spell; the table display shows only what the projection allows.",
+        "SQL denial tests cover anon, outsider, Player of another character and cross-campaign DM for the changed reads.",
+        "The migration is applied in staging and PRE, then production, with the catalog checks recorded."
+      ],
+      "validation": [
+        "SQL tests for event detail masking in public and PRE",
+        "npm run check",
+        "hosted migration result in staging and production"
+      ],
+      "evidence": ["docs/evidence/RYT-155/validation.md"]
+    },
+    {
+      "id": "RYT-156",
+      "title": "Players cannot read value_gp of the items they carry",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "in_progress",
+      "dependsOn": ["RYT-109"],
+      "sources": [
+        "Split from RYT-109 on 2026-11-20: Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record). Column grants are per role, so the DM cannot keep a plain table read once the column is revoked."
+      ],
+      "scope": "Two phases. Phase 1 (additive, released first): a DM-only read path for item values (an RPC or a security-definer view filtered to the campaign DM, plus basic-item prices for everyone), and a frontend that stops selecting value_gp from the table and reads values through it. Phase 2 (after phase 1 is deployed to production): revoke select on item_definitions.value_gp from authenticated, so a Player selecting it through the table API gets a permission error. Shop prices, basic-item prices and the DM storeroom keep working. Reviewed migrations tested in staging and PRE first. Non-goals: shop pricing changes, autonomous release.",
+      "acceptance": [
+        "Phase 1 ships without breaking the deployed frontend; the new frontend shows the same values to the DM and the same basic-item and shop prices to Players.",
+        "After phase 2, a Player selecting value_gp of a definition they carry through the table API gets no value; the DM storeroom, basic-item prices and storefront prices still show.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every changed column, RPC and view.",
+        "Each phase is applied in staging and PRE, then production, with the release order recorded in the evidence.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source if the interface changes."
+      ],
+      "validation": [
+        "SQL tests for value_gp column access and the DM read path",
+        "npm run check",
+        "npm run test:e2e (inventory, shops and the item store at 390px and 820px)",
+        "staging and PRE then production migration verification per phase"
+      ],
+      "evidence": ["docs/evidence/RYT-156/validation.md"]
     }
   ]
 }

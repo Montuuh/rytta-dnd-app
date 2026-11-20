@@ -112,6 +112,9 @@ export const buildSchema = z.object({
   /** RYT-102: options picked for species traits (`giantAncestry: 'fire'`); unknown values are
    * kept but grant nothing. */
   choices: z.partialRecord(z.enum(choiceKeys as [ChoiceKey, ...ChoiceKey[]]), text(40)).optional(),
+  /** RYT-110: the Metamagic options a Sorcerer knows; unknown values are kept but grant nothing
+   * (see `metamagicKeys`). */
+  metamagic: z.array(text(20)).max(10).optional(),
 })
 export type Build = z.infer<typeof buildSchema>
 export type Feature = z.infer<typeof featureSchema>

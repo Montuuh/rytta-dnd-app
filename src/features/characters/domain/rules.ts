@@ -603,6 +603,8 @@ export function restRecovery(
 export function applyRest(vitals: Vitals, build: Build, maxHp: number, kind: 'short' | 'long') {
   const tracker_uses = Object.fromEntries(
     Object.entries(vitals.tracker_uses).filter(([trackerId]) => {
+      // RYT-110: Font of Magic slots last until a long rest.
+      if (trackerId.startsWith('font-slot-')) return kind === 'short'
       const tracker = build.trackers.find((item) => item.id === trackerId)
       if (!tracker) return false
       return !(tracker.reset === 'short' || (kind === 'long' && tracker.reset === 'long'))

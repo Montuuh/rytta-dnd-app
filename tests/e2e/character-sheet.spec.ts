@@ -62,6 +62,15 @@ test('the assigned Player creates a 5.5e character through the full wizard', asy
   await expect(page.getByText('Dote: Iniciado en la magia (mago).', { exact: false })).toBeVisible()
   await page.getByLabel('Aumento de Inteligencia').selectOption('2')
   await page.getByLabel('Aumento de Sabiduría').selectOption('1')
+  // RYT-111: the elven lineage is asked here and the step cannot be left without it.
+  await page.getByRole('button', { name: 'Siguiente' }).click()
+  await expect(page.getByText('Elige una opción de tu especie.')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Origen')
+  const lineage = page.getByRole('radiogroup', { name: 'Linaje élfico' })
+  await expect(lineage.getByRole('radio')).toHaveCount(3)
+  await expect(lineage).toContainText('prestidigitación')
+  await lineage.getByRole('radio', { name: 'Alto elfo' }).check()
+  await expect(page.getByText('Elige una opción de tu especie.')).toHaveCount(0)
   await audit(page, info.outputPath('wizard-origin.png'))
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Características')
@@ -890,6 +899,138 @@ async function monkSheet(page: Page) {
     return route.fallback()
   })
 }
+/** A level 5 Sorcerer with its Sorcery Points tracker (RYT-110). */
+async function sorcererSheet(page: Page) {
+  const base = sampleSheet()
+  const row = {
+    ...base,
+    level: 5,
+    build: {
+      ...base.build,
+      classKey: 'sorcerer',
+      classLabel: 'Hechicero',
+      subclass: '',
+      subclassKey: '',
+      casterKind: 'full',
+      spellAbility: 'cha',
+      spells: [],
+      hitDie: 6,
+      trackers: [
+        {
+          id: 'tracker-sorcerer-sorcery-points',
+          key: 'sorcerer-sorcery-points',
+          name: 'Puntos de hechicería',
+          max: 5,
+          reset: 'long',
+          display: 'counter',
+        },
+      ],
+    } as Record<string, unknown>,
+  }
+  await page.route('https://rytta-test.supabase.co/rest/v1/**', async (route) => {
+    const url = new URL(route.request().url())
+    const method = url.pathname.split('/').pop()
+    const select = url.searchParams.get('select') ?? ''
+    if (
+      method === 'character_sheets' &&
+      route.request().method() === 'GET' &&
+      select.includes('build')
+    )
+      return route.fulfill({
+        json: [{ character_id: characterId, campaign_id: campaignId, ...row, portrait_path: null }],
+      })
+    if (method === 'save_character_sheet') {
+      const body = route.request().postDataJSON()
+      Object.assign(row, { build: body.new_build, revision: row.revision + 1 })
+      return route.fulfill({ json: row.revision })
+    }
+    return route.fallback()
+  })
+}
+
+test('RYT-110 Sorcerer: known Metamagic spends points and Font of Magic converts both ways', async ({
+  page,
+}, info) => {
+  await identityFixture(page, { sheet: 'complete' })
+  await sorcererSheet(page)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await page
+    .getByRole('button', { name: /^Recursos/ })
+    .first()
+    .click()
+  const sheet = page.getByRole('dialog')
+  // Metamagic: two known at level 5; a third cannot be ticked.
+  const metamagic = sheet.getByRole('region', { name: /Metamagia/ })
+  await expect(metamagic).toContainText('0 de 2')
+  // Saved at once: each tick waits for the save before the next.
+  for (const name of [/Conjuro sutil/, /Conjuro acelerado/]) {
+    await metamagic.getByRole('checkbox', { name }).click()
+    await expect(metamagic.getByRole('checkbox', { name })).toBeChecked()
+  }
+  await expect(metamagic).toContainText('2 de 2')
+  // All known: only the chosen ones stay listed; Change shows the rest, which cannot be ticked.
+  await expect(metamagic.getByRole('checkbox', { name: /Conjuro gemelo/ })).toHaveCount(0)
+  await metamagic.getByRole('button', { name: 'Cambiar Metamagia' }).click()
+  await expect(metamagic.getByRole('checkbox', { name: /Conjuro gemelo/ })).toBeDisabled()
+  await metamagic.getByRole('button', { name: 'Listo' }).click()
+  const points = sheet.getByRole('region', { name: 'Puntos de hechicería' })
+  const options = points.getByRole('list', { name: 'Opciones que gastan Puntos de hechicería' })
+  await expect(options).toContainText('Conjuro sutil')
+  await expect(options).toContainText('Conjuro acelerado')
+  await expect(options).not.toContainText('Conjuro gemelo')
+  await audit(page, info.outputPath('sorcerer-metamagic.png'))
+
+  // Font of Magic: the sample has a spent level 1 slot, so the first slot refills it and the
+  // second is an extra one; each costs 2 points.
+  const font = page.getByRole('dialog', { name: 'Fuente de Magia' })
+  const level = (n: number) => font.locator('label.cast-option', { hasText: `Nivel ${n}` })
+  for (const left of ['3/5', '1/5']) {
+    await points.getByRole('button', { name: 'Convertir' }).click()
+    // Level 4 needs Sorcerer level 7, and an unaffordable level says why.
+    await expect(level(4).locator('input')).toBeDisabled()
+    await expect(level(4)).toContainText('Desde hechicero de nivel 7')
+    await level(1).click()
+    await audit(page, info.outputPath('sorcerer-font-of-magic.png'))
+    await font.getByRole('button', { name: 'Crear un espacio de nivel 1' }).click()
+    await expect(font).toBeHidden()
+    await expect(points).toContainText(left)
+  }
+  // With 1 point left a level 1 slot cannot be paid; Escape closes only the dialog.
+  await points.getByRole('button', { name: 'Convertir' }).click()
+  await expect(level(1)).toContainText('Cuesta 2; te quedan 1')
+  await page.keyboard.press('Escape')
+  await expect(font).toBeHidden()
+  await expect(sheet).toBeVisible()
+  await expect(points.getByRole('button', { name: 'Convertir' })).toBeVisible()
+  const created = sheet.getByRole('button', { name: /Usar un espacio creado de nivel 1/ })
+  await expect(created).toHaveCount(1)
+  await expect(sheet).toContainText('4/4 +1')
+  await audit(page, info.outputPath('sorcerer-created-slot.png'))
+  // Quickened needs 2 points and is refused with 1 left; Subtle spends the last one.
+  await options.getByRole('button', { name: /^Usar Conjuro sutil/ }).click()
+  await expect(points).toContainText('0/5')
+  // The created slot back into 1 point: it goes first, the table's slots stay.
+  await points.getByRole('button', { name: 'Convertir' }).click()
+  await font.getByText('A puntos').click()
+  // F8: at 150 % text neither mode label is cut.
+  await page.evaluate(() => (document.documentElement.style.fontSize = '150%'))
+  const cut = await font
+    .locator('.mantine-SegmentedControl-label')
+    .evaluateAll((labels) => labels.filter((l) => l.scrollWidth > l.clientWidth + 1).length)
+  expect(cut).toBe(0)
+  await page.evaluate(() => (document.documentElement.style.fontSize = ''))
+  // Only the slot levels the sheet has (1st to 3rd at level 5).
+  await expect(font.locator('label.cast-option')).toHaveCount(3)
+  await level(1).click()
+  await font.getByRole('button', { name: 'Convertir un espacio de nivel 1 en puntos' }).click()
+  await expect(font).toBeHidden()
+  await expect(points).toContainText('1/5')
+  await expect(created).toHaveCount(0)
+  await expect(sheet).toContainText('4/4')
+  await expect(page.getByRole('dialog', { name: 'Fuente de Magia' })).toHaveCount(0)
+})
+
 const focusOnBody = (page: Page) => page.evaluate(() => document.activeElement === document.body)
 
 test('RYT-102 resources: add the missing ones, refused options, once-per-turn marks and focus', async ({
@@ -1046,6 +1187,7 @@ test('RYT-124 the full wizard names open choices, keeps scores per method and le
   await pickClass(page, /Mago/)
   await next(page)
   await page.getByLabel('Especie').selectOption('elf')
+  await page.getByRole('radio', { name: 'Alto elfo' }).check()
   await page.getByLabel('Trasfondo').selectOption('sage')
   // Ability increases left at "—" are named and need a deliberate "continue".
   await next(page)
@@ -1127,6 +1269,7 @@ test('RYT-124 changing class clears the subclass and class skills, re-suggests H
   await page.getByLabel('Subclase').fill('Evocador')
   await next(page)
   await page.getByLabel('Especie').selectOption('elf')
+  await page.getByRole('radio', { name: 'Alto elfo' }).check()
   await page.getByLabel('Trasfondo').selectOption('sage')
   await page.getByLabel('Aumento de Inteligencia').selectOption('2')
   await page.getByLabel('Aumento de Sabiduría').selectOption('1')
@@ -1256,4 +1399,23 @@ test('RYT-124 a save that brings class resources up to date says so inside the o
   const note = drawer.getByRole('status').filter({ hasText: 'puesto al día' })
   await expect(note).toBeVisible()
   await expect(note).toContainText('Inspiración bárdica')
+})
+
+test('RYT-124 the creation wizard reads in a class theme', async ({ page }, info) => {
+  await page.addInitScript(() => localStorage.setItem('rytta-theme', 'warlock'))
+  await identityFixture(page, { player: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Terminar ficha' }).click()
+  const doors = page.getByRole('dialog', { name: 'Nueva ficha para Arin' })
+  await doors.getByText('Completa', { exact: true }).click()
+  await doors.getByRole('button', { name: 'Empezar' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clase y nivel')
+  await expect(page.locator('html')).toHaveAttribute('data-rytta-theme', 'warlock')
+  await page.locator('label.class-pick').filter({ hasText: /Brujo/ }).click()
+  await audit(page, info.outputPath('wizard-class-warlock.png'))
+  await page.getByRole('button', { name: 'Siguiente' }).click()
+  await page.getByLabel('Especie').selectOption('tiefling')
+  await page.getByRole('radio', { name: 'Infernal' }).check()
+  await audit(page, info.outputPath('wizard-origin-warlock.png'))
 })

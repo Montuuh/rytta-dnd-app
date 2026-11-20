@@ -254,9 +254,11 @@ export function AddItemChooser({
               onClick={() => void give()}
             >
               {item
-                ? failed
-                  ? t('common.retry')
-                  : t('addItem.give', { amount: amount ?? 1, name: character.name })
+                ? action.isPending
+                  ? t('addItem.giving', { name: character.name })
+                  : failed
+                    ? t('common.retry')
+                    : t('addItem.give', { amount: amount ?? 1, name: character.name })
                 : t('addItem.pickFirst')}
             </Button>
           </div>

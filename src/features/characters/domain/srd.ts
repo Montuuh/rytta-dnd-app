@@ -343,3 +343,30 @@ export const fullCasterSlots: readonly (readonly number[])[] = [
   [4, 3, 3, 3, 3, 2, 1, 1, 1],
   [4, 3, 3, 3, 3, 2, 2, 1, 1],
 ]
+
+/** RYT-110 Metamagic options (SRD 5.2.1) and their Sorcery Point cost. */
+export const metamagicKeys = [
+  'careful',
+  'distant',
+  'empowered',
+  'extended',
+  'heightened',
+  'quickened',
+  'seeking',
+  'subtle',
+  'transmuted',
+  'twinned',
+] as const
+export type MetamagicKey = (typeof metamagicKeys)[number]
+export const metamagicCost: Record<MetamagicKey, number> = {
+  careful: 1,
+  distant: 1,
+  empowered: 1,
+  extended: 1,
+  heightened: 2,
+  quickened: 2,
+  seeking: 1,
+  subtle: 1,
+  transmuted: 1,
+  twinned: 1,
+}

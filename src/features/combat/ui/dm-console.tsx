@@ -32,6 +32,8 @@ import {
   Undo2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { TurnKey, turnKey } from './turn-key'
+import { appliedText } from './applied-text'
 import { Link, useNavigate } from 'react-router'
 import {
   isLive,
@@ -57,7 +59,7 @@ import { CombatantToken } from './token'
 
 type Panel = 'detail' | 'log' | 'add'
 
-export function DmConsole({
+function DmConsoleBody({
   campaignId,
   state,
   stale,
@@ -811,6 +813,10 @@ export function DmConsole({
           close={() => setAmount(null)}
           apply={async (mode, hits) => {
             if (await run({ kind: 'hp', encounterId: encounter.id, mode, hits })) {
+              // Cleared first, so the same sentence twice in a row is announced again.
+              const said = appliedText(t, mode, hits, amount.targets)
+              setAnnouncement('')
+              window.setTimeout(() => setAnnouncement(said), 60)
               setAmount(null)
               if (multi) setMulti(new Set())
             }
@@ -919,5 +925,15 @@ export function DmConsole({
         </form>
       </Modal>
     </Stack>
+  )
+}
+
+/** RYT-150: the turn key that clears confirmed health changes when the turn moves on. */
+export function DmConsole(props: Parameters<typeof DmConsoleBody>[0]) {
+  const encounter = props.state.encounter
+  return (
+    <TurnKey.Provider value={encounter ? turnKey(encounter.round, encounter.active_combatant) : ''}>
+      <DmConsoleBody {...props} />
+    </TurnKey.Provider>
   )
 }

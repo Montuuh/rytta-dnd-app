@@ -6,6 +6,8 @@ const pages: unknown[][] = []
 const ranges: [number, number][] = []
 const referenced: unknown[] = []
 const removed: string[][] = []
+// RYT-156: the DM's values, read apart from the table select.
+let values: Record<string, number> = {}
 
 function definitionsQuery() {
   const filters: Record<string, unknown> = {}
@@ -34,6 +36,10 @@ vi.mock('@/shared/api/supabase', () => ({
   activeSchema: () => 'pre',
   getSupabase: () => ({
     from: () => definitionsQuery(),
+    rpc: () => {
+      const call = Promise.resolve({ data: values, error: null })
+      return Object.assign(call, { abortSignal: () => call })
+    },
     storage: {
       from: () => ({
         createSignedUrls,
@@ -71,6 +77,7 @@ const definition = (n: number) => ({
 beforeEach(() => {
   createSignedUrls.mockReset()
   pages.length = ranges.length = referenced.length = removed.length = 0
+  values = {}
 })
 
 describe('item picture signing', () => {
@@ -112,8 +119,12 @@ describe('catalogue paging', () => {
       Array.from({ length: 1000 }, (_, i) => definition(i + 1)),
       Array.from({ length: 5 }, (_, i) => definition(i + 1001)),
     )
+    values = { [definition(3).id]: 12.5 }
     const catalogue = await repository.loadCatalogue(campaign)
     expect(catalogue).toHaveLength(1005)
+    // RYT-156: a value comes from the DM read; the rest have none.
+    expect(catalogue[2]!.value_gp).toBe(12.5)
+    expect(catalogue[0]!.value_gp).toBeNull()
     expect(ranges).toEqual([
       [0, 999],
       [1000, 1999],

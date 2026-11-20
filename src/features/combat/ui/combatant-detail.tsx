@@ -15,6 +15,7 @@ import {
   TextInput,
   Textarea,
   Title,
+  VisuallyHidden,
 } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import {
@@ -46,6 +47,7 @@ import {
   type HpMode,
 } from '../domain/combat'
 import { AmountDialog } from './amount-dialog'
+import { appliedText } from './applied-text'
 import { CreaturePortrait } from './creature-art'
 import { CreatureChanges } from './creature-changes'
 import { CreatureConsole } from './creature-console'
@@ -80,6 +82,7 @@ export function CombatantDetail(props: Props) {
   const { combatant, dm, status } = props
   const { t } = useTranslation()
   const [hpMode, setHpMode] = useState<HpMode | null>(null)
+  const [applied, setApplied] = useState('')
   const openAmount = props.onAmount ?? setHpMode
   const live = isLive(status)
   const canAct = combatant.can_act && live && combatant.kind !== 'lair'
@@ -131,6 +134,7 @@ export function CombatantDetail(props: Props) {
       {combatant.kind !== 'lair' && (
         <section aria-label={t('combat.hp.label')}>
           <HpMeter combatant={combatant} />
+          <VisuallyHidden aria-live="polite">{applied}</VisuallyHidden>
           {canAct && (
             <Group gap="xs" mt="sm" grow>
               <Button
@@ -197,8 +201,12 @@ export function CombatantDetail(props: Props) {
           pending={props.pending}
           close={() => setHpMode(null)}
           apply={async (mode, hits) => {
-            if (await props.run({ kind: 'hp', encounterId: props.encounterId, mode, hits }))
+            if (await props.run({ kind: 'hp', encounterId: props.encounterId, mode, hits })) {
+              const said = appliedText(t, mode, hits, [combatant])
+              setApplied('')
+              window.setTimeout(() => setApplied(said), 60)
               setHpMode(null)
+            }
           }}
         />
       )}

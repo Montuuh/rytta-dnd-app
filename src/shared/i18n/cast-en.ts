@@ -54,12 +54,9 @@ export const castEn = {
   'cast.howHeading': 'How to cast',
   'cast.unnamed': 'a spell',
   'cast.willMark': 'It will be marked on your sheet.',
-  'cast.combatNote':
-    'A fight is on: the DM keeps a separate concentration tracker. Tell the DM so it is noted in the fight.',
   'cast.done.noSlot': 'You cast {{name}}. It spends no slot.',
   'cast.manual.open': 'Concentration by hand',
   'cast.manual.clean': 'Clean the name',
-  'cast.marker.combat': 'In a fight the DM keeps a separate concentration record.',
   'cast.pactLeft': 'Pact slots, level {{level}}: {{left}} of {{max}} left',
   'cast.marker.endedUndo': 'Concentration on {{name}} ended. You can undo it.',
   'cast.marker.undoGone': 'It can no longer be undone.',

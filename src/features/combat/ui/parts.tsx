@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { Alert, Badge, Button, Group, Loader, Portal, Text } from '@mantine/core'
 import { Check, HeartPulse, Radio, Skull, Sparkles, WifiOff, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -6,6 +14,7 @@ import { GlossaryTerm, glossaryIds } from '@/features/glossary'
 import { deathState, healthBand, type Combatant, type CombatErrorCode } from '../domain/combat'
 import { useOnline } from './helpers'
 import { BandMark } from './token'
+import { TurnKey } from './turn-key'
 
 /** The body of the topmost open dialog or drawer, if any (nested ones portal last). */
 function topDialogBody() {
@@ -255,6 +264,16 @@ export function HpMeter({
 }) {
   const { t } = useTranslation()
   const band = healthBand(combatant)
+  // RYT-150: the signed change of the last confirmed update (hit points and temporary ones
+  // together), kept until the next change on this row or the next turn. Derived from server
+  // state, so it never claims a change the server did not confirm; no animation.
+  const turn = useContext(TurnKey)
+  const total = combatant.hp ? combatant.hp.current + combatant.hp.temp : null
+  const [seen, setSeen] = useState({ total, turn, delta: 0 })
+  if (seen.total !== total || seen.turn !== turn) {
+    const changed = seen.turn === turn && seen.total !== null && total !== null
+    setSeen({ total, turn, delta: changed ? total - seen.total! : 0 })
+  }
   if (band === null) return null
   // A defeated creature or a dead character says so in the status word itself (one word, icon +
   // text, full contrast) instead of "Down" plus a separate pill (RYT-042 F2).
@@ -276,6 +295,14 @@ export function HpMeter({
       </div>
       <Text component="span" className="combat-hp-text">
         {combatant.defeated && <Skull size={14} aria-hidden="true" className="combat-hp-icon" />}
+        {seen.delta !== 0 && (
+          <span
+            className={`combat-hp-delta ${seen.delta < 0 ? 'is-damage' : 'is-heal'}`}
+            aria-hidden="true"
+          >
+            {seen.delta > 0 ? `+${seen.delta}` : `−${-seen.delta}`}
+          </span>
+        )}
         <span className="combat-hp-value">{label}</span>{' '}
         {/* The band phrase never splits; a narrow row wraps before the dot instead. */}
         <Text component="span" className="combat-hp-status">

@@ -51,6 +51,7 @@ export const lifecycleEn = {
   'addItem.taken': 'Added to your satchel: {{item}} ×{{amount}}.',
   'addItem.takeError': 'Could not add it to your satchel. You can retry.',
   'addItem.pickFirst': 'Choose an item first',
+  'addItem.giving': 'Giving to {{name}}…',
   'addItem.given': 'Given to {{name}}: {{item}} ×{{amount}}.',
   'addItem.error': 'Could not give the item. You can retry.',
 } as const

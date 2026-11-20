@@ -377,7 +377,12 @@ export function ItemCard({
             </header>
             <dl className="item-card-facts">
               {facts.map(([label, value]) => (
-                <div key={label}>
+                // A sentence-long value takes the whole row instead of wrapping to six lines in a
+                // half-width tile at large text (RYT-108).
+                <div
+                  key={label}
+                  className={typeof value === 'string' && value.length > 28 ? 'is-wide' : undefined}
+                >
                   <dt>{label}</dt>
                   <dd>{value}</dd>
                 </div>

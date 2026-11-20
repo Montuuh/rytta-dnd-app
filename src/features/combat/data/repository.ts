@@ -1,3 +1,4 @@
+import { createBatchSigner } from '@/shared/api/batch-sign'
 import { z } from 'zod'
 import type { Json } from '@/shared/api/database.generated'
 import { config } from '@/shared/lib/config'
@@ -388,14 +389,20 @@ export const imageBuckets = {
 } as const
 export type ImageKind = keyof typeof imageBuckets
 
+/** RYT-114: a fight's portraits and creature images are signed in one request per bucket. */
+const signers = {
+  character: createBatchSigner(
+    client,
+    imageBuckets.character.bucket,
+    imageBuckets.character.seconds,
+  ),
+  creature: createBatchSigner(client, imageBuckets.creature.bucket, imageBuckets.creature.seconds),
+}
+
 export async function combatImageUrl(kind: ImageKind, path: string) {
   const { activeSchema } = await import('@/shared/api/supabase')
   if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
-  const db = await client()
-  const { bucket, seconds } = imageBuckets[kind]
-  const signed = await db.storage.from(bucket).createSignedUrl(path, seconds)
-  if (signed.error) throw new Error('unavailable')
-  return z.url().parse(signed.data.signedUrl)
+  return signers[kind](path)
 }
 
 /**

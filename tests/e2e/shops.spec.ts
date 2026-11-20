@@ -539,8 +539,11 @@ test('RYT-107 an empty shop is stocked from its type; the add-items header keeps
   const named = picker.getByRole('button', { name: 'Crear «Martillo lunar»' })
   await expect(named).toBeVisible()
   await audit(page, info.outputPath('picker-no-match.png'))
-  await picker.getByRole('button', { name: 'Ver todos' }).click()
+  await picker.getByRole('button', { name: 'Ver todos' }).focus()
+  await page.keyboard.press('Enter')
   await expect(picker.getByLabel('Buscar objetos')).toHaveValue('')
+  // RYT-108: focus lands on the first tile of the expanded list, never on the document body.
+  await expect(picker.locator('.pick-tile').first()).toBeFocused()
   await expect(picker.getByText(/no se ve con esta búsqueda/)).toHaveCount(0)
   await picker.getByLabel('Buscar objetos').fill('Martillo lunar')
   // It opens the forge with the searched name.

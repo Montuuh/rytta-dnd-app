@@ -132,3 +132,23 @@ describe('resource names (RYT-124)', () => {
     expect(changes.added).toEqual([])
   })
 })
+
+describe('wizard species options (RYT-111)', () => {
+  it('blocks the origin step until a required species option is chosen', async () => {
+    const { chooseSpecies, validateStep } = await import('./creation')
+    const { grantedResources } = await import('./resources')
+    const draft = initialDraft()
+    const gnome = { ...draft, build: chooseSpecies(draft.build, 'gnome', 'Gnomo', name) }
+    expect(validateStep('origin', gnome)).toContain('chooseSpeciesOption')
+    const chosen = { ...gnome, build: { ...gnome.build, choices: { gnomishLineage: 'forest' } } }
+    expect(validateStep('origin', chosen)).not.toContain('chooseSpeciesOption')
+    // The same build.choices the sheet writes, so the lineage tracker is granted alike.
+    expect(grantedResources(chosen.build, 1).map((spec) => spec.key)).toContain(
+      'gnome-speak-with-animals',
+    )
+    // A species without options never asks; a new species drops the old choice.
+    const human = { ...draft, build: chooseSpecies(chosen.build, 'human', 'Humano', name) }
+    expect(validateStep('origin', human)).not.toContain('chooseSpeciesOption')
+    expect(human.build.choices).toBeUndefined()
+  })
+})

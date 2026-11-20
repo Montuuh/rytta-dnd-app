@@ -21,8 +21,10 @@ import {
  * glossary text explains the partial recovery.
  */
 export type ResourceSource = 'class' | 'species' | 'feat'
-/** Origin feats Rytta tracks; both Magic Initiate backgrounds grant the same feat. */
-export type TrackedFeat = 'magicInitiate' | 'savageAttacker'
+/** Feats Rytta tracks: origin feats (both Magic Initiate backgrounds grant the same one) and, once
+ * added from the glossary, general and epic boon feats with a limited benefit. */
+export type TrackedFeat =
+  'magicInitiate' | 'savageAttacker' | 'grappler' | 'boonOfCombatProwess' | 'boonOfFate'
 export type ResourceSpec = {
   key: string
   source: ResourceSource
@@ -470,6 +472,45 @@ export const classResources: readonly (ResourceSpec & { classKey: ClassKey })[] 
     max: once,
     reset: always('long'),
   }),
+  // Once-per-turn options found by the SRD coverage audit (RYT-102). Blessed Strikes and Elemental
+  // Fury offer a choice; the mark serves the striking option and the player removes it otherwise.
+  {
+    ...turnSpec({
+      key: 'barbarian-brutal-strike',
+      source: 'class',
+      feature: 'feature.barbarian-brutal-strike',
+      from: 9,
+    }),
+    classKey: 'barbarian',
+  },
+  {
+    ...turnSpec({
+      key: 'cleric-divine-strike',
+      source: 'class',
+      feature: 'feature.cleric-blessed-strikes',
+      from: 7,
+    }),
+    classKey: 'cleric',
+  },
+  {
+    ...turnSpec({
+      key: 'druid-primal-strike',
+      source: 'class',
+      feature: 'feature.druid-elemental-fury',
+      from: 7,
+    }),
+    classKey: 'druid',
+  },
+  {
+    ...turnSpec({
+      key: 'ranger-superior-hunters-prey',
+      source: 'class',
+      subclass: 'hunter',
+      feature: 'feature.ranger-hunter-superior-hunters-prey',
+      from: 11,
+    }),
+    classKey: 'ranger',
+  },
 ]
 
 const speciesSpec = (
@@ -591,6 +632,32 @@ export const originResources: readonly ResourceSpec[] = [
     feature: 'feature.feat-savage-attacker',
     from: 1,
   }),
+  turnSpec({
+    key: 'feat-grappler',
+    source: 'feat',
+    feat: 'grappler',
+    feature: 'feature.feat-grappler',
+    from: 1,
+  }),
+  // Peerless Aim: once until the start of the next turn.
+  turnSpec({
+    key: 'feat-boon-of-combat-prowess',
+    source: 'feat',
+    feat: 'boonOfCombatProwess',
+    feature: 'feature.feat-boon-of-combat-prowess',
+    from: 1,
+  }),
+  // Improve Fate: once until Initiative is rolled or a Short or Long Rest ends.
+  {
+    key: 'feat-boon-of-fate',
+    source: 'feat',
+    feat: 'boonOfFate',
+    feature: 'feature.feat-boon-of-fate',
+    from: 1,
+    max: once,
+    reset: always('short'),
+    display: 'pips',
+  },
 ]
 
 /** Every resource Rytta manages; keys are unique across sources. */
@@ -613,6 +680,9 @@ export const featRefs: Record<string, string> = {
 const trackedFeats: Record<string, TrackedFeat> = {
   'feature.feat-magic-initiate': 'magicInitiate',
   'feature.feat-savage-attacker': 'savageAttacker',
+  'feature.feat-grappler': 'grappler',
+  'feature.feat-boon-of-combat-prowess': 'boonOfCombatProwess',
+  'feature.feat-boon-of-fate': 'boonOfFate',
 }
 /** Glossary entry of a species trait (`feature.species-goliath-giant-ancestry`). */
 export const traitRef = (speciesKey: string, trait: string) =>

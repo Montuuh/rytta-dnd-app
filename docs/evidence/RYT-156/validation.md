@@ -28,7 +28,8 @@ closed to Players once no deployed frontend selects it from the table.
 
 - Security review before production: go, no high or critical finding. Applied from it: the
   cross-campaign DM and inactive-member denial tests. Recorded: Players keep seeing basic-item
-  prices through `search_campaign_items`, as the ticket intends, including a price the DM edits.
+  prices through `search_campaign_items`, as the ticket intends, including a price the DM edits (owner confirmed 2026-11-20: Players see
+  the DM's price).
   The RPC returns every valued definition of the campaign in one call (not measured at scale).
 - Hosted (2026-11-20), before any frontend deploy (the client fails without the RPC): applied to
   `rytta-staging`, then production. Stored md5 `585a9ab4b3fce0c918e42136377f0c13`, 2313

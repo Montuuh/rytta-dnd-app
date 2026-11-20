@@ -3394,7 +3394,7 @@
       "title": "Sheet: default trackers for limited-use features and resource-spending abilities",
       "priority": "P1",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-071"],
       "sources": [
         "User 2026-11-15: list of shop, item and sheet improvements. Default trackers for every limited-use class, subclass, species and feat feature (Savage Attacker, Goliath Giant Ancestry, Large Form, Breath Weapon...), once-per-turn features, and abilities that spend a resource (Monk Flurry of Blows, Patient Defense, Step of the Wind, Channel Divinity options...) as separate entries.",
@@ -3510,7 +3510,7 @@
       "title": "Item pictures show for DM and Players on every item surface",
       "priority": "P2",
       "owner": "frontend",
-      "status": "review",
+      "status": "done",
       "dependsOn": ["RYT-104", "RYT-026", "RYT-098"],
       "sources": [
         "User 2026-11-15: list of shop, item and sheet improvements. Check that item pictures show for the DM and the Players.",
@@ -3518,8 +3518,8 @@
       ],
       "scope": "Verify that uploaded item pictures (RYT-026) show for the DM and for Players allowed to see the item in the storeroom, satchel, storefront and trades, with the category icon fallback when there is no picture or it fails to load, and that they open in the shared image viewer. Fix the gaps found. Non-goals: a new upload flow, new storage buckets, autonomous release.",
       "acceptance": [
-        "A matrix in the evidence lists storeroom, satchel, storefront and trades for DM and Player with the result before and after fixes.",
-        "An item with a picture shows it on every listed surface for the DM and for a Player who can see the item, except the partner side of a trade, which shows the category icon because the trade state carries no picture (decision 2026-11-16, ADR 043); a Player who cannot see the item gets no signed URL.",
+        "A matrix in the evidence lists storeroom, satchel, storefront and trades for DM and Player with the result before and after fixes. (owner decision 2026-11-20: the \"after\" matrix is accepted)",
+        "An item with a picture shows it on every listed surface, the cart and both sides of a trade included (RYT-109), for the DM and for a Player who can see the item; a Player who cannot see the item gets no signed URL.",
         "An item without a picture, or with a broken one, shows the category icon fallback without layout shift.",
         "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],

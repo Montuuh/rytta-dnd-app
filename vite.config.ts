@@ -1,8 +1,8 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { defineConfig, loadEnv, runnerImport, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
-import { readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { parseConfig } from './src/shared/lib/env-schema.ts'
 import { headersFile } from './scripts/lib/security-headers.mts'
 
@@ -71,6 +71,40 @@ function securityHeaders(backendUrl: string | undefined): Plugin {
   }
 }
 
+/**
+ * The privacy policy and the terms as static pages at /privacy and /terms (English under /en/), so
+ * crawlers that never run JavaScript or read the hash route, such as Google's brand verification,
+ * find them. Same texts as the in-app page.
+ */
+type StaticLegalOptions = { base: string; owner?: string; contact?: string; siteUrl?: string }
+type StaticLegalModule = {
+  staticLegalPages: (options: StaticLegalOptions) => { path: string; html: string }[]
+}
+
+function staticLegal(options: StaticLegalOptions): Plugin {
+  let outDir = 'dist'
+  return {
+    name: 'rytta-static-legal',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
+    async closeBundle() {
+      // Loaded through Vite so the app's '@/' imports resolve; the texts are the app's own.
+      const { module } = await runnerImport<StaticLegalModule>('/src/pages/static-legal.ts', {
+        configFile: false,
+        logLevel: 'silent',
+        resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+      })
+      for (const page of module.staticLegalPages(options)) {
+        const file = resolve(outDir, page.path)
+        mkdirSync(dirname(file), { recursive: true })
+        writeFileSync(file, page.html)
+      }
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const buildId = `${(process.env.GITHUB_SHA ?? process.env.CF_PAGES_COMMIT_SHA ?? '').slice(0, 12) || 'local'}-${Date.now().toString(36)}`
@@ -100,6 +134,12 @@ export default defineConfig(({ mode, command }) => {
       buildVersion(buildId),
       securityHeaders(env.VITE_SUPABASE_URL),
       absoluteShareUrls(env.VITE_SITE_URL, env.VITE_BASE_PATH || '/'),
+      staticLegal({
+        base: env.VITE_BASE_PATH || '/',
+        owner: env.VITE_OWNER_NAME,
+        contact: env.VITE_CONTACT_EMAIL,
+        siteUrl: env.VITE_SITE_URL,
+      }),
     ],
     define: { __APP_BUILD__: JSON.stringify(command === 'build' ? buildId : 'dev') },
     base: env.VITE_BASE_PATH || '/',

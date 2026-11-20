@@ -388,12 +388,20 @@ export async function shopsFixture(
   await page.route('https://rytta-test.supabase.co/storage/v1/object/**', async (route) => {
     const url = new URL(route.request().url())
     const path = decodeURIComponent(url.pathname)
-    if (path.includes('/object/sign/shop-images/'))
+    if (path.includes('/object/sign/shop-images')) {
+      const signedURL = '/object/public-test/shop-banner.svg?token=fixture'
+      // RYT-114: shop banners are signed in batches; the body lists the paths.
+      const paths = (route.request().postDataJSON() as { paths?: string[] } | null)?.paths
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ signedURL: '/object/public-test/shop-banner.svg?token=fixture' }),
+        body: JSON.stringify(
+          Array.isArray(paths)
+            ? paths.map((p) => ({ path: p, signedURL, error: null }))
+            : { signedURL },
+        ),
       })
+    }
     if (path.includes('/object/public-test/shop-banner.svg'))
       return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: bannerSvg })
     if (path.includes('/object/shop-images')) {

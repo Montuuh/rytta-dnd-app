@@ -1,8 +1,6 @@
 # Delivery RYT-114: scalability, indexes, policy cost, retention and request volume
 
-Status: in progress (2026-11-17; was review). The migration is applied, but part of the
-implementation is missing: polling back-off for trades, rest and campaigns, and the browser
-spec counting Storage requests. Not Done.
+Status: done (2026-11-20). The 2026-11-17 gaps were closed afterwards; see "Close-out" below.
 
 ## Outcome
 
@@ -40,3 +38,19 @@ build), format check clean, `npm run test:e2e` 680 passed, 59 skipped, 0 failed.
 
 Back-off for trades, rest and campaign polling; a browser spec counting Storage requests; the
 first run of `private.prune_stale_rows`, which needs owner approval.
+
+## Close-out (2026-11-20)
+
+- Scheduled prune: `cron.job` `rytta-prune-stale-rows` runs daily at 04:23 UTC in production over
+  `private` and `pre_private`; the last run (2026-11-20 04:23) succeeded.
+- Back-off: trades and rest use `livePollInterval` with their realtime channels (safety-net poll
+  while subscribed, short poll when the channel drops), covered by `live-poll.test.ts` and
+  `network-budget.spec.ts` "trades and rest return to the fast poll as soon as realtime goes
+  down". Campaigns, members and invitations have no realtime channel; they poll once a minute
+  while the tab is visible, which `network-budget.spec.ts` checks for an idle DM tab.
+- Batched signing everywhere: the item batcher became `src/shared/api/batch-sign.ts` and now also
+  signs character portraits, creature images and shop banners (one Storage request per bucket
+  and per 100 paths for calls made in the same moment). Unit test `batch-sign.test.ts`; browser
+  checks: `network-budget.spec.ts` (one satchel batch, none again within the hour) and
+  `combat.spec.ts` RYT-098 (no per-picture sign request in a fight with portraits and creature
+  art). Combat, shops, bestiary and network specs at 390 and 820 px: 145 passed.

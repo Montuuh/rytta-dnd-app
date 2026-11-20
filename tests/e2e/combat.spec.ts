@@ -1331,6 +1331,12 @@ test('RYT-098 portraits open the viewer from the table banner and the detail, no
     modules: ['party', 'combat'],
   })
   await server.install(page)
+  // RYT-114: pictures are signed in batches per bucket, never one request per picture.
+  const signs: string[] = []
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname
+    if (path.includes('/storage/v1/object/sign/')) signs.push(path.split('/object/sign/')[1]!)
+  })
   const art = seedArt(server)
   await page.goto(`./#/campaign/${campaignId}/combat/${art.id}`)
   await expect(page.locator('.combat-table-active')).toHaveText('Arin', { timeout: 15_000 })
@@ -1377,6 +1383,8 @@ test('RYT-098 portraits open the viewer from the table banner and the detail, no
   )
   await expect(page.locator('.combat-detail:visible .combat-token-open')).toHaveCount(0)
   expect(errors).toEqual([])
+  expect(signs.length).toBeGreaterThan(0)
+  expect(signs.filter((target) => target.includes('/'))).toEqual([])
 })
 
 test('RYT-043 Players read enemy health as named bands and see tokens, never numbers or secrets', async ({

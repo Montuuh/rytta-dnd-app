@@ -1156,19 +1156,30 @@ export function combatServer() {
     art,
     async install(page: Page) {
       await page.route(
-        /\/storage\/v1\/object\/sign\/(character-portraits|creature-images)\/(.+)$/,
+        /\/storage\/v1\/object\/sign\/(character-portraits|creature-images)(\/.+)?$/,
         async (route) => {
-          const path = decodeURIComponent(
+          const target = decodeURIComponent(
             new URL(route.request().url()).pathname.split('/sign/')[1]!,
           )
-          signed.push(path)
-          const name = Object.entries(art).find(([part]) => path.includes(part))?.[1] ?? 'default'
+          const urlFor = (path: string) => {
+            signed.push(path)
+            const name = Object.entries(art).find(([part]) => path.includes(part))?.[1] ?? 'default'
+            return `/object/public-test/art/${name}.svg?token=fixture`
+          }
+          // RYT-114: a batch names the bucket and lists the paths in the body.
+          const paths = (route.request().postDataJSON() as { paths?: string[] } | null)?.paths
           return route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify({
-              signedURL: `/object/public-test/art/${name}.svg?token=fixture`,
-            }),
+            body: JSON.stringify(
+              Array.isArray(paths)
+                ? paths.map((path) => ({
+                    path,
+                    signedURL: urlFor(`${target}/${path}`),
+                    error: null,
+                  }))
+                : { signedURL: urlFor(target) },
+            ),
           })
         },
       )

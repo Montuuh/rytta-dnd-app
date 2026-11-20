@@ -1,3 +1,4 @@
+import { createBatchSigner } from '@/shared/api/batch-sign'
 import { z } from 'zod'
 import { ownsStoragePath } from '@/shared/api/storage-paths'
 import { config } from '@/shared/lib/config'
@@ -358,51 +359,7 @@ export async function loadCatalogue(campaignId: string, signal?: AbortSignal) {
 
 /** Signed item pictures stay valid this long; the cache re-signs them well before expiry. */
 export const itemImageTtlSeconds = 3600
-const signBatchLimit = 100
-let pendingSigns = new Map<
-  string,
-  { resolve: (url: string) => void; reject: (e: unknown) => void }[]
->()
-let signTimer: ReturnType<typeof setTimeout> | null = null
-
-async function flushSigns() {
-  const batch = pendingSigns
-  pendingSigns = new Map()
-  signTimer = null
-  const paths = [...batch.keys()]
-  const fail = (chunk: string[], error: unknown) => {
-    for (const path of chunk) for (const waiter of batch.get(path) ?? []) waiter.reject(error)
-  }
-  let db: Awaited<ReturnType<typeof client>>
-  try {
-    db = await client()
-  } catch (error) {
-    fail(paths, error)
-    return
-  }
-  for (let i = 0; i < paths.length; i += signBatchLimit) {
-    const chunk = paths.slice(i, i + signBatchLimit)
-    try {
-      const result = await db.storage
-        .from('item-images')
-        .createSignedUrls(chunk, itemImageTtlSeconds)
-      if (result.error) throw result.error
-      const urls = new Map(
-        result.data
-          .filter((row) => !row.error && row.path)
-          .map((row) => [row.path!, row.signedUrl]),
-      )
-      for (const path of chunk) {
-        const url = z.url().safeParse(urls.get(path))
-        for (const waiter of batch.get(path) ?? [])
-          if (url.success) waiter.resolve(url.data)
-          else waiter.reject(new Error('unavailable'))
-      }
-    } catch (error) {
-      fail(chunk, error)
-    }
-  }
-}
+const signItemImage = createBatchSigner(client, 'item-images', itemImageTtlSeconds)
 
 /**
  * Signs one item picture. Calls made in the same moment (a satchel, a shop shelf) are collected
@@ -412,12 +369,7 @@ let supabaseModule: Promise<typeof import('@/shared/api/supabase')> | undefined
 export async function itemImageUrl(path: string) {
   const { activeSchema } = await (supabaseModule ??= import('@/shared/api/supabase'))
   if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
-  return new Promise<string>((resolve, reject) => {
-    const waiters = pendingSigns.get(path) ?? []
-    waiters.push({ resolve, reject })
-    pendingSigns.set(path, waiters)
-    signTimer ??= setTimeout(() => void flushSigns(), 15)
-  })
+  return signItemImage(path)
 }
 export async function uploadItemImage(campaignId: string, definitionId: string, image: Blob) {
   if (!(uploadTypes as readonly string[]).includes(image.type) || image.size > uploadBytes)

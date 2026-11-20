@@ -4865,6 +4865,30 @@
         "Unit tests for the templates; browser tests for copying on each picker; independent UI review."
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-155",
+      "title": "Combat log keeps a teammate's concentration private",
+      "priority": "P2",
+      "owner": "backend",
+      "status": "planned",
+      "dependsOn": ["RYT-139"],
+      "sources": [
+        "Security review of RYT-139 on 2026-11-20 (finding M1, pre-existing part): set_concentration and apply_combat_hp log the spell name (detail.spell, detail.concentration, detail.concentration_dc) with the fight's own visibility, and get_combat_state returns event details to every member, although the projection hides the concentration of a character that does not share live state or plays under an alias."
+      ],
+      "scope": "Make every combat log event about concentration follow the projection's rule: for a Player who may not see that character's concentration (not their own, live sharing off, or an alias), get_combat_state drops spell, concentration and concentration_dc from the event detail, or those events are logged DM-only. Reviewed migration tested in staging and PRE first, then production. Non-goals: other event kinds, the projection itself, UI redesign, autonomous release.",
+      "acceptance": [
+        "A teammate who does not share live state, or plays under an alias, has no spell name in any concentration-related event a Player reads (set_concentration, apply_combat_hp concentration DC and loss), covered by SQL tests in public and PRE.",
+        "The DM and the character's own Player still read the spell; the table display shows only what the projection allows.",
+        "SQL denial tests cover anon, outsider, Player of another character and cross-campaign DM for the changed reads.",
+        "The migration is applied in staging and PRE, then production, with the catalog checks recorded."
+      ],
+      "validation": [
+        "SQL tests for event detail masking in public and PRE",
+        "npm run check",
+        "hosted migration result in staging and production"
+      ],
+      "evidence": []
     }
   ]
 }

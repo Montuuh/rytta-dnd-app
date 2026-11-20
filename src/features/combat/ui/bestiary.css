@@ -83,6 +83,9 @@ html:has(.bst:not([data-split])) {
   .bst-source .mantine-SegmentedControl-label {
     min-height: 44px;
     padding-inline: clamp(4px, 1.3vw, 10px);
+    /* Where the browser has no hyphenation dictionary, a long label still breaks inside its
+       segment at large text instead of overflowing the control. */
+    overflow-wrap: anywhere;
   }
 }
 .bst-filter-button {

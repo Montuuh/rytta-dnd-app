@@ -30,6 +30,7 @@ export const tradesEs = {
   'trade.window.emptySlot': 'Hueco libre',
   'trade.window.addItem': 'Añadir un objeto',
   'trade.window.slotItem': '{{name}}, ×{{quantity}}. Cambiar la cantidad o retirarlo',
+  'trade.window.partnerItemAmount': '×{{quantity}} · {{rarity}}',
   'trade.window.slotPartner': '{{name}}, ×{{quantity}}',
   'trade.window.goldInput': 'Oro que das',
   'trade.window.goldOf': 'Oro que da {{name}}',

@@ -3589,31 +3589,31 @@
     },
     {
       "id": "RYT-109",
-      "title": "Players read only the item fields they need: partner pictures in trades and protected value_gp",
+      "title": "Trade members see the pictures and descriptions on the table",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-105", "RYT-106"],
       "sources": [
-        "Close-out 2026-11-16 of RYT-105 and RYT-106: the trade state carries no image_path or description, so the partner side of a trade shows only the category icon (amendment recorded in RYT-106); Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record)."
+        "Close-out 2026-11-16 of RYT-105 and RYT-106: the trade state carries no image_path or description, so the partner side of a trade shows only the category icon (amendment recorded in RYT-106); Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record).",
+        "Split on 2026-11-20 during delivery: the value_gp protection moves to RYT-156, because revoking the column breaks the deployed frontend and needs a release in between; this ticket keeps the trade part."
       ],
-      "scope": "The trade state exposes, for each item on the partner side, the picture reference and description a member of that trade may see, and the trades UI shows them with the category icon fallback and the shared image viewer. value_gp of item definitions is no longer readable by a Player through the table API for items they carry (column-level grants or a restricted view or RPC), while basic-item prices, shop prices and DM access keep working. Reviewed backward-compatible migration tested in PRE first. Non-goals: new upload flows, shop pricing changes, autonomous release.",
+      "scope": "The trade state exposes, for each item on either side, the picture reference and description a member of that trade may see, and the trades UI shows them: the partner's item opens a read-only sheet with its picture (shared image viewer, category icon fallback), name, amount and description (owner choice 2026-11-20). Reviewed backward-compatible migration tested in staging and PRE first. Non-goals: value_gp protection (RYT-156), new upload flows, shop pricing changes, autonomous release.",
       "acceptance": [
         "Both sides of a trade show the item picture and description to the trade members; a member of another trade or an outsider gets neither, nor a signed URL.",
-        "A Player selecting value_gp of a non-basic definition they carry through the table API gets no value; basic-item prices, storefront prices and the DM storeroom still show their values.",
-        "The deployed frontend keeps working between the migration and the release, or the migration ships with the release (documented in the evidence).",
-        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every changed column, RPC and storage path; RLS stays authoritative.",
-        "PRE migration and tests pass before the reviewed production migration; production verified afterwards.",
+        "The deployed frontend keeps working between the migration and the release.",
+        "Database denial tests cover anon, outsider, a Player outside the trade and the storage path; RLS stays authoritative.",
+        "Staging and PRE migration and tests pass before the reviewed production migration; production verified afterwards.",
         "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
       ],
       "validation": [
-        "SQL tests for trade item visibility, value_gp column access and denial cases",
+        "SQL tests for trade item visibility and the storage read rule",
         "npm run check",
-        "npm run test:e2e (trades, inventory and shops at 390px and 820px)",
-        "PRE then production migration verification",
+        "npm run test:e2e (trades at 390px and 820px)",
+        "staging and PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-109/validation.md"]
     },
     {
       "id": "RYT-110",
@@ -4889,6 +4889,32 @@
         "hosted migration result in staging and production"
       ],
       "evidence": ["docs/evidence/RYT-155/validation.md"]
+    },
+    {
+      "id": "RYT-156",
+      "title": "Players cannot read value_gp of the items they carry",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-109"],
+      "sources": [
+        "Split from RYT-109 on 2026-11-20: Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record). Column grants are per role, so the DM cannot keep a plain table read once the column is revoked."
+      ],
+      "scope": "Two phases. Phase 1 (additive, released first): a DM-only read path for item values (an RPC or a security-definer view filtered to the campaign DM, plus basic-item prices for everyone), and a frontend that stops selecting value_gp from the table and reads values through it. Phase 2 (after phase 1 is deployed to production): revoke select on item_definitions.value_gp from authenticated, so a Player selecting it through the table API gets a permission error. Shop prices, basic-item prices and the DM storeroom keep working. Reviewed migrations tested in staging and PRE first. Non-goals: shop pricing changes, autonomous release.",
+      "acceptance": [
+        "Phase 1 ships without breaking the deployed frontend; the new frontend shows the same values to the DM and the same basic-item and shop prices to Players.",
+        "After phase 2, a Player selecting value_gp of a definition they carry through the table API gets no value; the DM storeroom, basic-item prices and storefront prices still show.",
+        "Database denial tests cover anon, outsider, Player and cross-campaign DM for every changed column, RPC and view.",
+        "Each phase is applied in staging and PRE, then production, with the release order recorded in the evidence.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source if the interface changes."
+      ],
+      "validation": [
+        "SQL tests for value_gp column access and the DM read path",
+        "npm run check",
+        "npm run test:e2e (inventory, shops and the item store at 390px and 820px)",
+        "staging and PRE then production migration verification per phase"
+      ],
+      "evidence": []
     }
   ]
 }

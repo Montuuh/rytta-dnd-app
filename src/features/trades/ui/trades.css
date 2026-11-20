@@ -726,3 +726,17 @@ html:has(.trade-dock) body {
     min-width: 0;
   }
 }
+
+/* RYT-109: the partner's item sheet. */
+.partner-item-close {
+  align-self: flex-end;
+  min-height: 44px;
+}
+.partner-item-picture {
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+}

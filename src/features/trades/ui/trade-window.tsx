@@ -3,6 +3,7 @@ import { localizedName } from '@/shared/lib/translations'
 import { useEffect, useRef, useState, type Ref } from 'react'
 import { Alert, Button, Group, Text, UnstyledButton, VisuallyHidden } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useReducedMotion } from '@mantine/hooks'
 import {
@@ -43,6 +44,7 @@ import {
 } from '../domain/trade'
 import { useItemDetails } from './item-details'
 import { ItemPicker } from './item-picker'
+import { PartnerItemSheet } from './partner-item-sheet'
 
 type Draft = { lines: OfferLine[]; gold: number }
 
@@ -75,6 +77,8 @@ export function TradeWindow({
   const [draft, setDraft] = useState<Draft | null>(null)
   const [error, setError] = useState<TradeErrorCode | null>(null)
   const [picker, setPicker] = useState<{ item: string | null } | null>(null)
+  // RYT-109: Mantine closes every open modal on Escape; the window stays while the sheet is up.
+  const [itemSheet, setItemSheet] = useState<{ item: TradeItem; quantity: number } | null>(null)
   const reduceMotion = useReducedMotion()
   const partnerSide = useRef<HTMLElement>(null)
   const slots = useRef<HTMLDivElement>(null)
@@ -262,7 +266,7 @@ export function TradeWindow({
       opened
       onClose={onMinimize}
       // Mantine closes every open modal on Escape; while the picker is open only it closes.
-      closeOnEscape={!picker}
+      closeOnEscape={!picker && !itemSheet}
       centered
       fullScreen={phone}
       size={1040}
@@ -318,6 +322,7 @@ export function TradeWindow({
         </div>
         <OfferColumn
           ref={partnerSide}
+          onShowItem={setItemSheet}
           side={trade.partner}
           label={theirLabel}
           confirmed={trade.partner.confirmed}
@@ -433,6 +438,17 @@ export function TradeWindow({
           </Button>
         </div>
       </footer>
+      {itemSheet && (
+        <PartnerItemSheet
+          item={itemSheet.item}
+          quantity={itemSheet.quantity}
+          onClose={() => {
+            const id = itemSheet.item.item_id
+            setItemSheet(null)
+            focusWhenReady(`[data-partner-item="${id}"]`)
+          }}
+        />
+      )}
       {picker && (
         <ItemPicker
           details={details}
@@ -464,6 +480,7 @@ function OfferColumn({
   onSlot,
   problemItem,
   onGold,
+  onShowItem,
 }: {
   ref?: Ref<HTMLElement>
   side: TradeSide
@@ -479,6 +496,8 @@ function OfferColumn({
   /** An offered stack the server refused for its amount. */
   problemItem?: string
   onGold?: (gold: number) => void
+  /** RYT-109: opens the read-only sheet of a partner's item. */
+  onShowItem?: (shown: { item: TradeItem; quantity: number }) => void
 }) {
   const { t, i18n } = useTranslation()
   const headingId = `trade-side-${own ? 'you' : 'partner'}`
@@ -519,7 +538,7 @@ function OfferColumn({
                   <span className="trade-slot-icon">
                     <ItemIcon
                       icon={item.icon}
-                      imagePath={details?.get(item.definition_id)?.image_path}
+                      imagePath={item.image_path ?? details?.get(item.definition_id)?.image_path}
                       size={26}
                     />
                   </span>
@@ -546,16 +565,19 @@ function OfferColumn({
                     {content}
                   </UnstyledButton>
                 ) : (
-                  <div
+                  // RYT-109: the partner's item opens a read-only sheet with its picture and text.
+                  <UnstyledButton
                     className={`trade-slot filled rarity-${item.rarity}`}
-                    role="img"
+                    aria-haspopup="dialog"
+                    data-partner-item={line.item_id}
                     aria-label={t('trade.window.slotPartner', {
                       name: localizedName(item, i18n.language),
                       quantity: line.quantity,
                     })}
+                    onClick={() => onShowItem?.({ item, quantity: line.quantity })}
                   >
                     {content}
-                  </div>
+                  </UnstyledButton>
                 )}
               </li>
             )

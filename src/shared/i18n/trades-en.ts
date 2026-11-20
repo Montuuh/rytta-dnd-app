@@ -28,6 +28,7 @@ export const tradesEn = {
   'trade.window.emptySlot': 'Empty slot',
   'trade.window.addItem': 'Add an item',
   'trade.window.slotItem': '{{name}}, ×{{quantity}}. Change the amount or remove it',
+  'trade.window.partnerItemAmount': '×{{quantity}} · {{rarity}}',
   'trade.window.slotPartner': '{{name}}, ×{{quantity}}',
   'trade.window.goldInput': 'Gold you give',
   'trade.window.goldOf': 'Gold {{name}} gives',

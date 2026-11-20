@@ -4871,7 +4871,7 @@
       "title": "Combat log keeps a teammate's concentration private",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-139"],
       "sources": [
         "Security review of RYT-139 on 2026-11-20 (finding M1, pre-existing part): set_concentration and apply_combat_hp log the spell name (detail.spell, detail.concentration, detail.concentration_dc) with the fight's own visibility, and get_combat_state returns event details to every member, although the projection hides the concentration of a character that does not share live state or plays under an alias."
@@ -4888,7 +4888,7 @@
         "npm run check",
         "hosted migration result in staging and production"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-155/validation.md"]
     }
   ]
 }

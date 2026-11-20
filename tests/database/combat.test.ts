@@ -61,6 +61,7 @@ type State = {
     kind: string
     amount?: number
     target_name?: string
+    target_combatant?: string
     undone: boolean
     undoable: boolean
     detail: Json
@@ -1223,8 +1224,9 @@ describe('RYT-007 shared combat', () => {
       await db.exec('reset role')
       await db.query(`update ${schema}.characters set shares_live = false where id=$1`, [s.Arin])
       await mark('Fly')
+      // RYT-155: the rule is applied when the log is read, so the earlier event goes too.
       await asUser(peer)
-      expect(await seen()).toBe(1)
+      expect(await seen()).toBe(0)
       await asUser(dm)
       expect(
         (await a.state(s.c, x.e)).events.filter(
@@ -1297,6 +1299,84 @@ describe('RYT-007 shared combat', () => {
             ).ok,
           ).toBe(false)
       expect(await sheet()).toBe('Bless')
+    }
+  })
+
+  it('RYT-155 keeps a teammate concentration out of the combat log where the projection hides it', async () => {
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const x = await prepared(s, schema)
+      await asUser(dm)
+      await a.status(s.c, x.e, 'active')
+      // Cato does not share live state (setup); Arin does.
+      await a.concentrate(s.c, x.cato, 'Hold Person')
+      await a.concentrate(s.c, x.arin, 'Bless')
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.cato, amount: 4 }])
+      const about = (st: State, id: string) =>
+        st.events.filter((ev) => ev.target_combatant === id && ev.kind !== 'status')
+      const keys = (st: State, id: string) =>
+        about(st, id).flatMap((ev) =>
+          Object.keys(ev.detail).filter((k) => k.startsWith('concentration') || k === 'spell'),
+        )
+      // The DM, and Cato's own Player, read the spell and the DC.
+      await asUser(dm)
+      expect(keys(await a.state(s.c, x.e), x.cato).sort()).toEqual(
+        ['concentration', 'concentration_dc', 'spell'].sort(),
+      )
+      await asUser(third)
+      expect(keys(await a.state(s.c, x.e), x.cato).length).toBeGreaterThan(0)
+      // A teammate and the table screen see the damage, without the DC, and no concentration
+      // event at all (without its spell it would read as an end of concentration).
+      await asUser(peer)
+      const peerView = await a.state(s.c, x.e)
+      const kinds = about(peerView, x.cato).map((ev) => ev.kind)
+      expect(kinds).toContain('damage')
+      expect(kinds).not.toContain('concentration')
+      expect(keys(peerView, x.cato)).toEqual([])
+      expect(keys(peerView, x.arin)).toEqual(['spell'])
+      await asUser(dm)
+      expect(keys(await a.state(s.c, x.e, true), x.cato)).toEqual([])
+      // Under an alias, a shared character keeps it to the DM too.
+      await db.exec('reset role')
+      await db.query(
+        `update ${schema}.encounter_combatants set public_name = 'Hooded' where id=$1`,
+        [x.arin],
+      )
+      await asUser(peer)
+      expect(keys(await a.state(s.c, x.e), x.arin)).toEqual([])
+      // An undo of Cato's concentration is left out too.
+      await asUser(dm)
+      await a.concentrate(s.c, x.cato, 'Fly')
+      const conc = (await a.state(s.c, x.e)).events.find(
+        (ev) => ev.kind === 'concentration' && ev.target_combatant === x.cato,
+      )!
+      await a.undo(s.c, conc.id)
+      await asUser(peer)
+      expect(
+        (await a.state(s.c, x.e)).events.filter(
+          (ev) => ev.kind === 'undo' && ev.target_combatant === x.cato,
+        ),
+      ).toEqual([])
+      // A character no Player owns keeps it to the DM (an unknown hides, never shows).
+      await db.exec('reset role')
+      await db.query(`update ${schema}.encounter_combatants set public_name = null where id=$1`, [
+        x.arin,
+      ])
+      await db.query(`update ${schema}.characters set user_id = null where id=$1`, [s.Arin])
+      await asUser(dm)
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.arin, amount: 2 }])
+      await asUser(peer)
+      expect(keys(await a.state(s.c, x.e), x.arin)).toEqual([])
+      // Denials are unchanged: outsiders, another campaign's DM and anon read nothing.
+      await asUser(outsider)
+      await expect(a.state(s.c, x.e)).rejects.toThrow(/Forbidden|unavailable/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      await expect(a.state(other, x.e)).rejects.toThrow(/unavailable/)
+      await db.exec('reset role; set role anon')
+      await expect(a.state(s.c, x.e)).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
     }
   })
 

@@ -925,12 +925,14 @@ test('RYT-134 announcements come after the save succeeds, and a repeat is announ
   await expect(said).toHaveCount(1)
 })
 
-test('RYT-134 during a live encounter the hero and the dialog say the DM keeps a separate record', async ({
+test('RYT-139 during a live encounter the sheet keeps one concentration: no separate-record note', async ({
   page,
 }) => {
   await open(page, { concentration: 'Bendición', inEncounter: true, player: true })
   const marker = page.locator('.sheet-concentration')
-  await expect(marker).toContainText('En combate el DM lleva su propio registro de concentración.')
+  // RYT-139: the sheet and the fight share the mark, so the old note is gone.
+  await expect(marker).toContainText('Bendición')
+  await expect(marker).not.toContainText('registro')
   await expect(page.locator('.panel-lock')).toBeVisible()
   await audit(page, 'combat hero')
   await evidence(page, 'combat-hero')
@@ -939,7 +941,7 @@ test('RYT-134 during a live encounter the hero and the dialog say the DM keeps a
     .getByRole('button', { name: /Lanzar/ })
     .click()
   const dialog = castDialog(page, 'Lanzar Inmovilizar persona')
-  await expect(dialog).toContainText('Avisa al DM para que la anote en el combate')
+  await expect(dialog).not.toContainText('Avisa al DM')
   await audit(page, 'combat dialog')
   await evidence(page, 'combat-dialog')
   await dialog.getByRole('button', { name: 'Cancelar' }).click()

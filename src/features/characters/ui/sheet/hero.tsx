@@ -354,9 +354,6 @@ export function SheetHero(props: HeroProps) {
           <p className="sheet-concentration-text">
             <span className="sheet-concentration-label">{t('cast.marker.label')}</span>
             <span className="sheet-concentration-name user-copy">{vitals.concentration}</span>
-            {props.inEncounter && (
-              <span className="sheet-concentration-combat">{t('cast.marker.combat')}</span>
-            )}
           </p>
           {canEdit && !editing && (
             <Button

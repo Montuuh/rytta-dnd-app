@@ -1068,7 +1068,6 @@ function SheetPanel({
           <CastDialog
             key={cast.token}
             opened={cast.opened}
-            inEncounter={inEncounter}
             target={cast.target}
             build={build}
             level={shown.level}

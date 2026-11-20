@@ -4498,7 +4498,7 @@
       "title": "One concentration for sheet and fight",
       "priority": "P2",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-134"],
       "sources": [
         "RYT-134 decision 2026-11-18: the sheet's concentration marker and the fight's (kept by the DM console, driving the concentration reminder on damage) are separate; during a fight the sheet says the DM keeps a separate record and asks the Player to tell the DM (docs/evidence/RYT-134/validation.md).",
@@ -4521,7 +4521,7 @@
         "PRE then production migration verification",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-139/validation.md"]
     },
     {
       "id": "RYT-140",

@@ -1145,6 +1145,161 @@ describe('RYT-007 shared combat', () => {
     for (const { src } of bodies) expect(src).not.toMatch(/\bpublic\.|\bprivate\./)
   })
 
+  it('RYT-139 keeps one concentration for the sheet and the fight while the encounter is live', async () => {
+    for (const schema of ['public', 'pre']) {
+      const a = api(schema)
+      const s = await setup(schema)
+      const x = await prepared(s, schema)
+      const revision = async () => {
+        await db.exec('reset role')
+        return (
+          await one<{ revision: number }>(
+            `select revision from ${schema}.character_vitals where character_id=$1`,
+            [s.Arin],
+          )
+        ).revision
+      }
+      const mark = async (spell: string | null, id = randomUUID(), at?: number) => {
+        const rev = at ?? (await revision())
+        await asUser(player)
+        return db.query(
+          `select ${schema}.set_character_vitals(target_campaign => $1, target_character => $2,
+             expected_revision => $3, new_current_hp => 20, new_temp_hp => 0, new_hit_dice_spent => 0,
+             new_death_successes => 0, new_death_failures => 0, new_heroic_inspiration => false,
+             new_conditions => '{}', new_slots_used => '{0,0,0,0,0,0,0,0,0}', new_tracker_uses => '{}',
+             request_id => $4, change_concentration => true, new_concentration => $5)`,
+          [s.c, s.Arin, rev, id, spell],
+        )
+      }
+      const sheet = async () => {
+        await db.exec('reset role')
+        return (
+          await one<{ concentration: string | null }>(
+            `select concentration from ${schema}.character_vitals where character_id=$1`,
+            [s.Arin],
+          )
+        ).concentration
+      }
+      const fight = async () => {
+        await asUser(dm)
+        return (
+          (await a.state(s.c, x.e)).combatants.find((c) => c.id === x.arin)!.concentration ?? null
+        )
+      }
+      // Cast before the fight: the draft fight does not follow; going live takes the mark.
+      await mark('Bless')
+      expect(await fight()).toBeNull()
+      await asUser(dm)
+      await a.status(s.c, x.e, 'initiative')
+      expect(await fight()).toBe('Bless')
+      // Cast from the sheet during the fight: the DM's combatant follows, with one log event.
+      const id = randomUUID()
+      const at = await revision()
+      await mark('Haste', id, at)
+      expect(await fight()).toBe('Haste')
+      await asUser(dm)
+      const fromSheet = (await a.state(s.c, x.e)).events.filter(
+        (ev) => ev.kind === 'concentration' && ev.detail.from === 'sheet',
+      )
+      expect(fromSheet).toHaveLength(1)
+      // A replay of the same request changes nothing twice.
+      const after = await revision()
+      await expect(mark('Haste', id, at)).resolves.toBeDefined()
+      expect(await revision()).toBe(after)
+      await asUser(dm)
+      expect(
+        (await a.state(s.c, x.e)).events.filter(
+          (ev) => ev.kind === 'concentration' && ev.detail.from === 'sheet',
+        ),
+      ).toHaveLength(1)
+      // The table sees the sheet's event only where it sees Arin's concentration: Bea does while
+      // Arin shares live state, not once Arin stops sharing.
+      await asUser(peer)
+      const seen = async () =>
+        (await a.state(s.c, x.e)).events.filter(
+          (ev) => ev.kind === 'concentration' && ev.detail.from === 'sheet',
+        ).length
+      expect(await seen()).toBe(1)
+      await db.exec('reset role')
+      await db.query(`update ${schema}.characters set shares_live = false where id=$1`, [s.Arin])
+      await mark('Fly')
+      await asUser(peer)
+      expect(await seen()).toBe(1)
+      await asUser(dm)
+      expect(
+        (await a.state(s.c, x.e)).events.filter(
+          (ev) => ev.kind === 'concentration' && ev.detail.from === 'sheet',
+        ),
+      ).toHaveLength(2)
+      await db.exec('reset role')
+      await db.query(`update ${schema}.characters set shares_live = true where id=$1`, [s.Arin])
+      // The DM ends it in the console: the sheet ends too; and sets another one.
+      await asUser(dm)
+      await a.concentrate(s.c, x.arin, null)
+      expect(await sheet()).toBeNull()
+      await asUser(dm)
+      await a.concentrate(s.c, x.arin, 'Hold Person')
+      expect(await sheet()).toBe('Hold Person')
+      // The Player ends it on the sheet: the fight ends too.
+      await mark(null)
+      expect(await fight()).toBeNull()
+      // Dropping to 0 hit points in the fight ends both.
+      await mark('Bless')
+      await asUser(dm)
+      await a.status(s.c, x.e, 'active')
+      await a.hp(s.c, x.e, 'damage', [{ combatant_id: x.arin, amount: 30 }])
+      expect(await fight()).toBeNull()
+      expect(await sheet()).toBeNull()
+      // A hidden combatant's mark stays out of the sheet.
+      await db.exec('reset role')
+      await db.query(`update ${schema}.encounter_combatants set hidden = true where id=$1`, [
+        x.arin,
+      ])
+      await asUser(dm)
+      await a.concentrate(s.c, x.arin, 'Invisibility')
+      expect(await sheet()).toBeNull()
+      await db.exec('reset role')
+      await db.query(`update ${schema}.encounter_combatants set hidden = false where id=$1`, [
+        x.arin,
+      ])
+      // Ending the fight clears the fight's marks but not the sheet's.
+      await asUser(dm)
+      await a.hp(s.c, x.e, 'heal', [{ combatant_id: x.arin, amount: 10 }])
+      await a.concentrate(s.c, x.arin, 'Bless')
+      await a.status(s.c, x.e, 'ended')
+      expect(await sheet()).toBe('Bless')
+      // Denials: another Player, an outsider, another campaign's DM and anon cannot set it.
+      await asUser(peer)
+      await expect(a.concentrate(s.c, x.arin, 'Fly')).rejects.toThrow(
+        /Forbidden|unavailable|Encounter/,
+      )
+      await asUser(outsider)
+      await expect(a.concentrate(s.c, x.arin, 'Fly')).rejects.toThrow(/Forbidden|unavailable/)
+      const other = (await one<{ id: string }>(`select ${schema}.create_campaign('Elsewhere') id`))
+        .id
+      await expect(a.concentrate(other, x.arin, 'Fly')).rejects.toThrow(/unavailable/)
+      await db.exec('reset role; set role anon')
+      await expect(a.concentrate(s.c, x.arin, 'Fly')).rejects.toThrow(/permission denied/)
+      await db.exec('reset role')
+      const helper = schema === 'pre' ? 'pre_private' : 'private'
+      for (const fn of [
+        'concentration_sheet_to_fight',
+        'concentration_fight_to_sheet',
+        'concentration_join_fight',
+      ])
+        for (const role of ['anon', 'authenticated'])
+          expect(
+            (
+              await one<{ ok: boolean }>(
+                `select has_function_privilege($1, $2::regprocedure, 'execute') ok`,
+                [role, `${helper}.${fn}()`],
+              )
+            ).ok,
+          ).toBe(false)
+      expect(await sheet()).toBe('Bless')
+    }
+  })
+
   it('RYT-041 runs the roster RPCs in a PRE copied before the migration', async () => {
     const pre = api('pre')
     const s = await setup('pre')

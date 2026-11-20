@@ -60,7 +60,6 @@ export function CastDialog({
   build,
   level,
   vitals,
-  inEncounter,
   onClose,
   apply,
   returnTo,
@@ -70,8 +69,6 @@ export function CastDialog({
   build: Build
   level: number
   vitals: Vitals
-  /** The character fights a live encounter: the DM's own concentration tracker is separate. */
-  inEncounter: boolean
   onClose: () => void
   /** Writes the cast; rejects with an Error whose message names the failure. */
   apply: (
@@ -263,11 +260,6 @@ export function CastDialog({
             {replaced
               ? `${t('cast.replaces', { next: name, current: replaced })} ${t('cast.willMark')}`
               : t('cast.concentrates')}
-          </Text>
-        )}
-        {spell.concentration && inEncounter && (
-          <Text size="sm" c="dimmed" className="cast-combat">
-            {t('cast.combatNote')}
           </Text>
         )}
         {failure && (

@@ -1595,10 +1595,6 @@ span.sheet-inspiration {
   line-clamp: 2;
   overflow: hidden;
 }
-.sheet-concentration-combat {
-  font-size: var(--fs-meta);
-  color: var(--app-muted);
-}
 .sheet-concentration-end.mantine-Button-root {
   flex: none;
   margin-inline-start: auto;

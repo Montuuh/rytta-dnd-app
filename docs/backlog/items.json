@@ -4638,6 +4638,32 @@
         "Comparison sheet in both themes and on a slow connection; asset weight against the current hero; independent UI review."
       ],
       "evidence": ["docs/evidence/RYT-152/verdict.md", "docs/evidence/RYT-152/composition.md"]
+    },
+    {
+      "id": "RYT-149",
+      "title": "Item card: using comes first, discarding moves out of the way",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "review",
+      "dependsOn": ["RYT-125"],
+      "sources": [
+        "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
+        "Changed from the audit: the hold-to-use seal is an approved design and already has tap and keyboard paths, so it is not replaced without an owner decision. Only the order of actions and the result line are in scope.",
+        "Owner decision on the options page, 19 November 2026: B, discard folds under the seal; A, a result line under the seal with the undo fuse. The owner added: \"Añadiría los tres botones de MAS ACCIONES tambien. Dentro de más opciones, añadiría dar como trueque, o dar directamente a X jugador activo.\" Clarified the same day: the menu holds Discard, Offer in trade and Give, and Give is a one-sided trade the receiver accepts."
+      ],
+      "scope": "On the phone item card, the use control and its effect lead; quantity-to-discard, All and Discard fold into a Discard row under the seal. A More actions menu in the card header holds Discard, Offer in trade to a chosen active Player and Give to a chosen active Player. Offer in trade opens the existing trade with this item offered; Give opens the same trade with only this item offered and nothing asked, and the receiver accepts as in any trade. After use a result line under the seal states how many remain, with undo and its fuse. Non-goals: removing the seal, backend changes, a direct transfer without the receiver accepting, new item art.",
+      "acceptance": [
+        "An options page with the current card and at most two alternatives is approved by the owner before implementation. Approved on 19 November 2026.",
+        "The More actions menu is a named menu with Discard, Offer in trade and Give; Offer and Give list only active Players of the campaign other than the owner, open the existing trade with this item and the chosen quantity offered, and Give asks for nothing in return.",
+        "A Player uses one unit and reads the remaining count without the discard controls on screen.",
+        "Short tap, hold and keyboard each consume exactly one unit; a double tap consumes one.",
+        "Discard keeps its confirmation and the stack cap from RYT-125.",
+        "390px and 820px, Hearth and Parchment, English and Spanish, keyboard and Escape, axe clean; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "Browser tests for the three activation paths; captures at 390px and 820px; independent UI review."
+      ],
+      "evidence": ["docs/evidence/RYT-149/validation.md"]
     }
   ]
 }

@@ -81,7 +81,9 @@ export function InventoryPage() {
   const [proposing, setProposing] = useState<{ name: string } | null>(null)
   const propose = useProposeItem(campaign.id)
   const proposalRequest = useRef({ payload: '', id: newRequestId() })
-  const [fuse, setFuse] = useState<(FuseEntry & { characterId: string }) | null>(null)
+  const [fuse, setFuse] = useState<
+    (FuseEntry & { characterId: string; usedStack?: string }) | null
+  >(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const opener = useRef<HTMLElement | null>(null)
@@ -173,13 +175,15 @@ export function InventoryPage() {
     })
   }
   const withFuse =
-    (message: string) => (result: { event_id?: string } | { definitionId: string }) => {
+    (message: string, usedStack?: string) =>
+    (result: { event_id?: string } | { definitionId: string }) => {
       if ('event_id' in result && result.event_id)
         setFuse({
           eventId: result.event_id,
           message,
           startedAt: Date.now(),
           characterId: character.id,
+          usedStack,
         })
     }
   const openForge = (definition: ItemDefinition | null) => {
@@ -437,6 +441,9 @@ export function InventoryPage() {
             fuse && fuse.characterId === character.id && canEdit
               ? {
                   message: fuse.message,
+                  used: fuse.usedStack === openStack.id,
+                  startedAt: fuse.startedAt,
+                  onExpire: dismissFuse,
                   onUndo: () =>
                     run({ kind: 'undo', eventId: fuse.eventId }, () => {
                       setFuse(null)
@@ -465,6 +472,7 @@ export function InventoryPage() {
                     [t('inventory.fuse.used', { name: nameOf(openStack) }), gained]
                       .filter(Boolean)
                       .join(' '),
+                    openStack.id,
                   )(result)
                   if (gained) setNotice(gained)
                   // The last unit leaves the satchel with its card; keep focus on the page.

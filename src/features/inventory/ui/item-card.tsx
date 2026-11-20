@@ -235,6 +235,8 @@ export function ItemCard({
   }, [panel])
   // A chosen menu item hands focus to its panel instead of back to the menu button.
   const [handOff, setHandOff] = useState(false)
+  // Escape inside the menu closes only the menu, never the card under it.
+  const [menuOpen, setMenuOpen] = useState(false)
   const open = (next: typeof panel) => {
     setHandOff(true)
     focusTarget.current = next === 'discard' ? 'discard' : next ? 'share' : null
@@ -288,6 +290,7 @@ export function ItemCard({
     <DrawerRoot
       opened
       onClose={onClose}
+      closeOnEscape={!menuOpen}
       position={phone ? 'bottom' : 'right'}
       size={phone ? 'auto' : 420}
       classNames={{ content: 'item-card-drawer' }}
@@ -306,6 +309,8 @@ export function ItemCard({
                 shadow="md"
                 withInitialFocusPlaceholder={false}
                 returnFocus={!handOff}
+                opened={menuOpen}
+                onChange={setMenuOpen}
                 onOpen={() => setHandOff(false)}
               >
                 <Menu.Target>

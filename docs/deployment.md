@@ -179,8 +179,12 @@ marker untouched. Rolling the frontend back after the migration is safe for the 
 The free database plan keeps no backups (checked in the project console on 2026-11-18), so the
 repository takes its own. The `Backup` workflow (`.github/workflows/backup.yml`) runs once a day
 and on manual dispatch: it dumps roles, schema and data of production with the Supabase CLI and
-keeps them for 14 days as a workflow artifact of this private repository, with a manifest of
-SHA-256 sums. It does nothing until the repository secret `BACKUP_DB_URL` exists.
+keeps them for 14 days as a workflow artifact, with a manifest of SHA-256 sums. It does nothing
+until the repository secret `BACKUP_DB_URL` exists.
+
+The repository is public since 19 November 2026, so workflow artifacts are downloadable by anyone.
+The workflow is disabled until the dump is encrypted before upload; two earlier artifacts were
+exposed and deleted (docs/evidence/launch-audit/owner-checks-2026-11-20.md).
 
 Owner steps, once:
 
@@ -192,8 +196,9 @@ Owner steps, once:
 3. Run the workflow once by hand and check that the artifact holds `roles.sql`, `schema.sql`,
    `data.sql` and `MANIFEST.txt`.
 
-The dump contains personal data (account e-mail addresses and campaign content). The artifact is
-only as private as the repository; download it only when needed and delete local copies.
+The dump contains personal data (account e-mail addresses and campaign content). An artifact is
+only as private as the repository, which is public: never upload an unencrypted dump. Download it
+only when needed and delete local copies.
 
 Not covered: files in Storage (portraits, maps, item pictures) are not in the dump. Restore is
 not rehearsed yet: the plan is to load a dump into the staging project and record the date, the

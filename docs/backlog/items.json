@@ -4009,7 +4009,7 @@
       "title": "Player journey fixes: arrival, account and shell",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 1 (arrival and account), findings J1-01..J1-03, J1-05..J1-09 and J1-11..J1-29.",
@@ -4032,14 +4032,14 @@
         "npm run test:e2e (hub, invitations, settings, account deletion and Back closing overlays at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-123/validation.md"]
     },
     {
       "id": "RYT-124",
       "title": "Player journey fixes: character creation and sheet",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 2 (character creation and sheet), findings J2-01..J2-05, J2-07..J2-23, J2-25 and J2-27..J2-42.",
@@ -4060,14 +4060,14 @@
         "npm run test:e2e (roster, the three creation paths and the sheet at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-124/validation.md"]
     },
     {
       "id": "RYT-125",
       "title": "Player journey fixes: inventory, shops and trades",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 3 (inventory, shops and trades), findings J3-01..J3-37.",
@@ -4088,14 +4088,14 @@
         "npm run test:e2e (inventory, storefront, cart, orders and trade window at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-125/validation.md"]
     },
     {
       "id": "RYT-126",
       "title": "Player journey fixes: combat, table display, map and rest",
       "priority": "P1",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Player journey audit 2026-11-17, journey 4 (combat, table display, map, rest and reference), findings J4-03, J4-04, J4-06..J4-13, J4-15..J4-20 and J4-22..J4-34.",
@@ -4116,7 +4116,7 @@
         "npm run test:e2e (Player combat, map and rest at 390px and 820px; table screen at 1280px and 1920px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-126/validation.md"]
     },
     {
       "id": "RYT-127",

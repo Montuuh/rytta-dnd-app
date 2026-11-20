@@ -1,8 +1,8 @@
 # Delivery RYT-117: long lists, lazy second language and update notice
 
-Status: in progress (2026-11-18). Implemented, merged to `main` through PR 13 and live at
-https://rytta.pages.dev; findings 20 and 22 passed the focused UI re-review. Open: the update
-notice has not been checked against a real deployed build. Also records RYT-121 (account dialog),
+Status: done (2026-11-21). Implemented, merged to `main` through PR 13 and live at
+https://rytta.pages.dev; findings 20 and 22 passed the focused UI re-review; the update notice was
+checked against the deployed build (see "Hosted check"). Also records RYT-121 (account dialog),
 which was reviewed in the same rounds and is done.
 
 ## Outcome
@@ -50,5 +50,25 @@ is done.
 ## Untested
 
 - Real iOS Safari, Android Chrome, touch gestures and screen readers.
-- A real `version.json` check against a deployed build (the notice was forced in review).
+- An open tab watched across a real deploy end to end (the two halves were checked separately,
+  see "Hosted check").
 - axe was not rerun by the reviewer; the implementer reported `npm run test:e2e` results.
+
+## Hosted check (2026-11-21)
+
+Against https://rytta.pages.dev after the release deploy of merge commit `73a367f`:
+
+- A real deploy publishes a new id: `version.json` serves
+  `{"id":"73a367f5c238-mwpf3f31","builtAt":"2026-11-20T20:14:14.313Z"}` with
+  `Cache-Control: no-cache`, the id of that release, and the same id is baked into the deployed
+  entry chunk (`assets/index-xfLrSFWK.js`).
+- The deployed client, unmodified, reads it: with the real `version.json` no notice shows.
+- The same deployed client when the published id differs (the response replaced in Chromium, as a
+  later deploy would): at 390 and 820 px the notice "Hay una versión nueva." shows with "Ahora no"
+  and "Recargar", both 44 px high. No navigation happens while it shows, also after focus and
+  visibility checks; "Ahora no" hides it for the session with no navigation; "Recargar" reloads
+  once. Captures: `hosted/update-notice-m390.png`, `hosted/update-notice-t820.png`.
+
+Together these cover the acceptance: a real deploy changes the published id, and the deployed
+client offers a reload on a changed id without reloading by itself. Not observed: one tab kept open
+across a real deploy.

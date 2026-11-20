@@ -3842,7 +3842,7 @@
       "title": "Long lists and first load: paged bestiary and glossary, lazy second language and update notice",
       "priority": "P2",
       "owner": "frontend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",

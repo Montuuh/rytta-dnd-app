@@ -69,7 +69,14 @@ export function InitiativeEntry({
   const appDice = behaviour === 'app'
   const appRoll = useAppRoll(campaignId)
   const attempt = useRef<Attempt | null>(null)
-  const [rollFailure, setRollFailure] = useState<string | null>(null)
+  const [failure, setRollFailure] = useState<string | null>(null)
+  // The bonus the server refused, as read again from the sheet. Once the sheet's bonus changes
+  // (the DM or the Player edits it) the refusal no longer applies and a fresh roll is offered.
+  const [refusedBonus, setRefusedBonus] = useState<number | null>(null)
+  const rollFailure =
+    (failure === 'bonus-too-high' || failure === 'bonus-updated') && bonus !== refusedBonus
+      ? null
+      : failure
   const [rolledTotal, setRolledTotal] = useState<number | null>(null)
   // One roll per fight, and the server decides: its one-roll state says whether this character
   // has rolled (also after a reload or on another device). Once it has, the Player cannot roll
@@ -145,6 +152,7 @@ export function InitiativeEntry({
         const fresh = await sheet.refetch()
         const build = fresh.data?.sheet.build
         const next = build ? initiativeBonus(build, fresh.data?.sheet.level ?? 1) : null
+        setRefusedBonus(next)
         setRollFailure(next !== null && next !== bonus ? 'bonus-updated' : 'bonus-too-high')
       } else setRollFailure(reason)
     } finally {

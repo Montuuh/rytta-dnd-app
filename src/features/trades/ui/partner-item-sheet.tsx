@@ -1,4 +1,4 @@
-import { Button, Group, Stack, Text } from '@mantine/core'
+import { Group, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { ItemIcon, type ItemCategory } from '@/features/inventory'
 import { localizedName } from '@/shared/lib/translations'
@@ -21,6 +21,7 @@ export function PartnerItemSheet({
   return (
     <Modal
       opened
+      centered
       onClose={onClose}
       title={<span className="user-copy">{name}</span>}
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
@@ -36,7 +37,7 @@ export function PartnerItemSheet({
             name={name}
             frame={`partner-item-picture rarity-${item.rarity}`}
           />
-          <Text fw={600}>
+          <Text size="sm" c="dimmed">
             {t('trade.window.partnerItemAmount', {
               quantity,
               rarity: t(`inventory.rarity.${item.rarity}`),
@@ -48,9 +49,6 @@ export function PartnerItemSheet({
             {item.description}
           </Text>
         )}
-        <Button variant="default" onClick={onClose} className="partner-item-close">
-          {t('common.close')}
-        </Button>
       </Stack>
     </Modal>
   )

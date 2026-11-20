@@ -316,6 +316,10 @@ export function ItemCard({
                 <Menu.Target>
                   <ActionIcon
                     ref={menuTrigger}
+                    // Focus can still be on the button while the menu is open.
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape' && menuOpen) setMenuOpen(false)
+                    }}
                     variant="subtle"
                     color="gray"
                     size={44}

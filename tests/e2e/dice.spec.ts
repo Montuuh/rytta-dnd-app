@@ -1689,6 +1689,19 @@ test('RYT-142 initiative: a refused modifier re-reads the sheet; the same bonus 
   expect(refusals).toBe(1)
   expect(f.dice.rolls).toHaveLength(0)
   await audit(page)
+  // Once the sheet's bonus changes, the refusal no longer applies: the roll is offered again.
+  await page.unroute(/\/rest\/v1\/rpc\/log_roll$/)
+  f.setSheetDex(8)
+  const again = page.waitForRequest(
+    (request) => request.url().includes('/rest/v1/character_sheets') && request.method() === 'GET',
+  )
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+  await again
+  await expect(line).not.toContainText('Pide al DM que fije tu total')
+  await expect(button).not.toHaveAttribute('aria-disabled', 'true')
+  await button.click()
+  await expect(entry).toContainText('Salió')
+  expect(f.dice.rolls).toHaveLength(1)
   await context.close()
 })
 
@@ -1837,9 +1850,11 @@ test('RYT-137 initiative: the DM clears a Player roll from the row menu and the 
   const clear = dm.getByRole('menuitem', { name: 'Borrar su tirada de iniciativa' })
   await expect(clear).toBeVisible()
   await expect(dm.getByRole('menuitem', { name: 'Tirar su iniciativa de nuevo' })).toBeVisible()
-  // Measured once the menu has settled (it grows into place as it opens).
-  await expect.poll(async () => (await clear.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
-  await expectTouchTargets(dm, '.combat-menu [role="menuitem"]:visible', { height: 44 })
+  // Measured once the menus have settled: this one grows into place as it opens, and Bea's may
+  // still be shrinking away while it does.
+  await expect(async () =>
+    expectTouchTargets(dm, '.combat-menu [role="menuitem"]:visible', { height: 44 }),
+  ).toPass()
   await clear.focus()
   readsBeforeClear = contextReads()
   await dm.keyboard.press('Enter')

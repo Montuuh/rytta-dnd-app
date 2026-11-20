@@ -724,4 +724,62 @@ describe('RYT-034 player trades', () => {
     expect(sources.length).toBeGreaterThanOrEqual(12)
     for (const { src } of sources) expect(src).not.toMatch(/\bpublic\.|\bprivate\./)
   })
+  it('RYT-156 closes value_gp to clients on the table, also in a PRE refreshed afterwards', async () => {
+    const check = async (schema: string) => {
+      await db.exec('reset role')
+      const columns = (
+        await db.query<{ name: string; ok: boolean }>(
+          `select attname name, has_column_privilege('authenticated', attrelid, attname, 'select') ok
+             from pg_attribute where attrelid = '${schema}.item_definitions'::regclass and attnum > 0 and not attisdropped`,
+        )
+      ).rows
+      expect(columns.length).toBeGreaterThan(10)
+      for (const { name, ok } of columns) expect([name, ok]).toEqual([name, name !== 'value_gp'])
+      expect(
+        (
+          await one<{ t: boolean }>(
+            `select has_table_privilege('anon', '${schema}.item_definitions', 'select') t`,
+          )
+        ).t,
+      ).toBe(false)
+      const s = await setup(schema)
+      // Everyone signed in is refused the column, the DM included (the DM reads it through the RPC).
+      for (const user of [dm, player, outsider]) {
+        await asUser(user)
+        await expect(db.query(`select value_gp from ${schema}.item_definitions`)).rejects.toThrow(
+          /permission denied/,
+        )
+      }
+      await db.exec('reset role; set role anon')
+      await expect(db.query(`select id from ${schema}.item_definitions`)).rejects.toThrow(
+        /permission denied/,
+      )
+      // A Player still reads the definitions they carry, without the value.
+      await asUser(player)
+      const rows = (
+        await db.query<{ id: string; name: string }>(
+          `select id, name from ${schema}.item_definitions where campaign_id = $1 order by name`,
+          [s.c],
+        )
+      ).rows
+      expect(rows.map((r) => r.name)).toEqual(['Potion', 'Ring'])
+      expect(await res(`select ${schema}.get_item_values($1) result`, [s.c])).toEqual({})
+      await asUser(dm)
+      expect(await res(`select ${schema}.get_item_values($1) result`, [s.c])).toEqual({
+        [s.potionDef]: 50,
+      })
+      await db.exec('reset role')
+    }
+    await check('public')
+    await check('pre')
+    // A PRE refresh copies the column grants and does not bring back the table grant.
+    await db.exec('reset role')
+    await db.exec(
+      withExposureSql(
+        etlCommand(['--apply', '--replace-pre']).query,
+        readFileSync('supabase/maintenance/expose-pre.sql', 'utf8'),
+      ),
+    )
+    await check('pre')
+  })
 })

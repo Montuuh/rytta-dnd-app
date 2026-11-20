@@ -4895,7 +4895,7 @@
       "title": "Players cannot read value_gp of the items they carry",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-109"],
       "sources": [
         "Split from RYT-109 on 2026-11-20: Players can read value_gp of definitions they carry directly from the table (known and accepted in the RYT-104 record). Column grants are per role, so the DM cannot keep a plain table read once the column is revoked."

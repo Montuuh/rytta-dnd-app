@@ -36,21 +36,39 @@ closed to Players once no deployed frontend selects it from the table.
   `pre.get_item_values`, security definer, execute for authenticated and not for anon; staging has
   no PRE.
 
-## Phase 2 (after phase 1 is deployed to production)
+## Phase 2 (2026-11-20): the column is closed to clients
 
-Not started. Checklist from the review:
+- Release: the owner asked to merge the release pull request (#35, merge commit `73a367f`, CI
+  green). The deployed bundle at rytta.pages.dev selects `item_definitions` only with an explicit
+  column list without `value_gp`, plus `image_path` and `id`, and reads values through
+  `get_item_values`.
+- Migration `supabase/migrations/20261215120000_item_values_column_closed.sql`: in `public`, `pre`
+  and any `pre_backup_*` schema with the table, the table-level select is revoked from
+  `authenticated` and select is granted on every other column (listed per schema from
+  `pg_attribute`). `docs/security.md` records that a new column needs its own column grant.
+- Checked hosted before writing it: no view, realtime publication, `pg_graphql`, invoker function
+  or policy on another table reads `item_definitions`; its only trigger is unaffected.
 
-1. Confirm the deployed bundle (or PostgREST logs) no longer selects `value_gp` from the table.
-2. In `public` and, when it exists, `pre`: revoke table select from `authenticated` and grant
-   select on every other column, listed from `pg_attribute` per schema (a column-only revoke has no
-   effect while the table grant exists). `anon` keeps no privilege.
-3. Check that a PRE refresh (`pre:sync --replace-pre`) copies the column grants and does not restore
-   the table grant; add a PGlite test for a PRE copied after the migration.
-4. Contract tests: `has_column_privilege` false for `value_gp`, true for the rest; Player, outsider,
-   anon and another campaign's DM get permission denied on `value_gp`; Players still read their
-   definitions; the DM still gets values via `get_item_values` and `get_shop_admin`; basic-item and
-   listing prices unchanged.
-5. Document in `docs/security.md` that a new `item_definitions` column needs an explicit column grant
-   in both schemas. Re-check no views or realtime publication cover the table; run the security
-   advisors. Browser: the DM storeroom and shops still show values.
-6. Apply staging, then production, recording the order.
+### Verification
+
+- SQL (`tests/database/trades.test.ts` "RYT-156 closes value_gp to clients on the table, also in a
+  PRE refreshed afterwards"): `authenticated` may select every column but `value_gp`; `anon` has
+  nothing; the DM, a Player and an outsider are refused `value_gp` from the table and anon is
+  refused the table; the Player still reads the definitions they carry; `get_item_values` still
+  gives the DM the value and the Player nothing; the same holds in PRE and again after a
+  `--replace-pre` refresh. `inventory.test.ts` and `scalability.test.ts` now read only granted
+  columns (they asserted the old open read). All database tests: 496 passed.
+- `npm run check`: 1132 tests passed. Inventory and shops browser specs at 390 px: 27 passed.
+- Security review before production: go, no medium or higher finding. Applied from it: PRE backup
+  schemas get the same shape, so a later restore does not reopen the column, and the migration
+  notes that re-running it grants every column present at that time except `value_gp`. Known: a
+  tab still running a frontend from before phase 1 gets a permission error on the inventory until
+  it reloads.
+- Hosted (2026-11-20): applied to `rytta-staging`, then production. Stored md5
+  `7ab4eaf738444afcdf035aa0a5118d2a`, 2059 characters (the committed LF file without its final
+  newline). Production `public` and `pre`: no table select for `authenticated` or `anon`, no
+  `value_gp` select, every other column selectable; staging has no PRE and no backups. A check run
+  as `authenticated` on production read the granted columns and was refused `value_gp` and `*`.
+  Security advisors show no notice on these objects.
+- Not tested: a signed-in session on rytta.pages.dev after the change (the bundle was checked, not
+  driven) and PostgREST's HTTP status for a refused column.

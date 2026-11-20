@@ -152,9 +152,12 @@ creation and editing of definitions in part 2. Neither switch is executable by c
   (1 MB, WebP/PNG/JPEG, immutable). The campaign DM uploads, deletes and reads (also unattached
   uploads); a member reads only the current image of a shop one of their non-archived characters
   sees. The global router dispatches `pre/` objects to `pre_private` helpers.
-- Known and accepted: Players can read `value_gp` of definitions they carry directly from
-  `item_definitions` (a pre-existing RLS read); the client never shows it. Partner items in a
-  trade show the icon only because the trade state carries no picture.
+- `item_definitions.value_gp` is closed to clients on the table (RYT-156): `authenticated` has
+  column-level select on every other column, in `public` and `pre`. The DM reads values through
+  `get_item_values` (other members get an empty object) and `get_shop_admin`; Players see
+  basic-item prices through `search_campaign_items` and listing prices in the storefront. A new
+  `item_definitions` column needs its own column grant in both schemas; the SQL contract test fails
+  otherwise. Trade members see the picture and description of every item on the table (RYT-109).
 - SQL tests on PGlite deny anon, outsider, Player and cross-campaign DM and run the PRE mirror.
   Not tested: real Storage uploads and signed URLs for shop images, PostgREST numeric
   serialisation and real concurrency.

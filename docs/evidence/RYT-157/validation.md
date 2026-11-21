@@ -80,3 +80,17 @@ real Turnstile widget, password managers on real devices, iOS Safari, a reset li
 another device (PKCE needs the same browser; the expired-link message covers it), and whether
 hosted Supabase adds `email` to `app_metadata.providers` after a Google account sets a password
 (if not, the settings button says "Añadir" after a reload).
+
+## Hosted setup (2026-11-21, in progress)
+
+- Cloudflare Turnstile: widget "Rytta" (managed mode) in the Rytta Cloudflare account, hostnames
+  `rytta.pages.dev` and `localhost`. Its public site key is the Pages build variable
+  `VITE_TURNSTILE_SITE_KEY` (production, takes effect on the next deploy) and in the local
+  `.env.local`; the secret key goes only into Supabase Auth, entered by the owner.
+- Supabase Auth (production project): email provider settings saved with minimum password length
+  10 and magic links / email OTP off; the email provider stays disabled until the custom SMTP and
+  the CAPTCHA are in place. Redirect URLs added: `https://rytta.pages.dev/?auth=*`,
+  `http://localhost:5173/?auth=*`, `http://localhost:5174/?auth=*`. Email templates can only be
+  edited once custom SMTP is set.
+- Brevo: free account created with Google sign-in as rytta.dnd@gmail.com (marketing opt-out);
+  onboarding stops at the organization postal address, which the owner provides.

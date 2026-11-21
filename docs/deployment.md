@@ -19,15 +19,16 @@ Build settings (the project, Settings, Build):
 - The `VITE_` values are build variables of the project (Settings, Variables and secrets), not runtime bindings:
   Vite inlines them while building.
 
-| Variable                        | Production and previews                                              |
-| ------------------------------- | -------------------------------------------------------------------- |
-| `VITE_DATA_MODE`                | `supabase`                                                           |
-| `VITE_SUPABASE_URL`             | the project URL (staging project for previews)                       |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | its publishable key (`sb_publishable_...`), never a secret key       |
-| `VITE_CONTACT_EMAIL`            | the public contact address (required: a live build fails without it) |
-| `VITE_OWNER_NAME`               | the person responsible for the service (required, same)              |
-| `VITE_SITE_URL`                 | the site's own https origin, no path; makes the share image absolute |
-| `VITE_BASE_PATH`                | leave unset: the site is at the root                                 |
+| Variable                        | Production and previews                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `VITE_DATA_MODE`                | `supabase`                                                                                                         |
+| `VITE_SUPABASE_URL`             | the project URL (staging project for previews)                                                                     |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | its publishable key (`sb_publishable_...`), never a secret key                                                     |
+| `VITE_CONTACT_EMAIL`            | the public contact address (required: a live build fails without it)                                               |
+| `VITE_OWNER_NAME`               | the person responsible for the service (required, same)                                                            |
+| `VITE_SITE_URL`                 | the site's own https origin, no path; makes the share image absolute                                               |
+| `VITE_BASE_PATH`                | leave unset: the site is at the root                                                                               |
+| `VITE_TURNSTILE_SITE_KEY`       | the public Turnstile site key of the email sign-in bot check (RYT-157); its secret key lives only in Supabase Auth |
 
 Nothing in the app assumes a subpath: asset URLs, the manifest (`start_url` and `scope` are
 relative), the version check and the sign-in return address follow the base, and an unset base

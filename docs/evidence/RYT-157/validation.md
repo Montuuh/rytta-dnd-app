@@ -92,5 +92,11 @@ hosted Supabase adds `email` to `app_metadata.providers` after a Google account 
   the CAPTCHA are in place. Redirect URLs added: `https://rytta.pages.dev/?auth=*`,
   `http://localhost:5173/?auth=*`, `http://localhost:5174/?auth=*`. Email templates can only be
   edited once custom SMTP is set.
-- Brevo: free account created with Google sign-in as rytta.dnd@gmail.com (marketing opt-out);
-  onboarding stops at the organization postal address, which the owner provides.
+- Brevo: free account created with Google sign-in as rytta.dnd@gmail.com (marketing opt-out); the
+  owner completed the organization address and created the SMTP key. Sender "Rytta
+  <rytta.dnd@gmail.com>" is verified (Brevo warns that a freemail domain is not recommended; the
+  own domain is RYT-158).
+- Supabase custom SMTP form prepared (host `smtp-relay.brevo.com`, port 587, the Brevo SMTP login,
+  sender Rytta <rytta.dnd@gmail.com>) and CAPTCHA protection set to Turnstile; both wait for the
+  owner to paste their secret and save. Email templates (Spanish first, English below) are kept in
+  `supabase/templates/confirmation.html` and `recovery.html` for the dashboard once SMTP is saved.

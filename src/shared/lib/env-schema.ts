@@ -9,6 +9,11 @@ const schema = z
     VITE_CONTACT_EMAIL: z.email().optional(),
     /** Name of the natural person responsible for the service, shown in the privacy policy. */
     VITE_OWNER_NAME: z.string().trim().max(120).optional(),
+    /** RYT-157: public Cloudflare Turnstile site key; without it no bot check is shown. */
+    VITE_TURNSTILE_SITE_KEY: z
+      .string()
+      .regex(/^[0-9A-Za-z_-]{8,80}$/)
+      .optional(),
   })
   .superRefine((value, context) => {
     if (

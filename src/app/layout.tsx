@@ -48,7 +48,7 @@ import { closeOnEscapeWhileOpening } from '@/shared/ui/escape-while-opening'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { artUrl } from '@/shared/ui/art-url'
-import { UsernameDialog, useAuth, useUsername } from '@/features/auth'
+import { RecoveryDialog, UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
 import { SettingsPanel } from '@/pages/settings-panel'
@@ -744,7 +744,13 @@ export function Layout() {
             />
           )}
           {/* RYT-078: asks for a missing username after every sign-in, on any page. */}
+          {/* RYT-157: signed in from a password reset link: choose the new password first. */}
           {live && state.user && (
+            <RecoveryDialog
+              onClosed={() => focusWhenReady(() => mainRef.current, { leaving: null })}
+            />
+          )}
+          {live && state.user && !state.recovery && (
             <UsernameDialog
               suspended={settingsOpened || settingsShown}
               onClosed={() => mainRef.current?.focus()}

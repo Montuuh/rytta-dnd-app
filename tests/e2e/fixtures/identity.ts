@@ -36,6 +36,8 @@ export const freeIds = [
   '40000000-0000-4000-8000-000000000a04',
 ]
 export const storageKey = 'sb-rytta-test-auth-token'
+/** RYT-157: the one password the auth fixture accepts. */
+export const passwordFixture = 'correct horse battery'
 export function session(id = dmId) {
   const email = id === dmId ? 'dm@example.com' : 'player@example.com'
   const exp = Math.floor(Date.now() / 1000) + 3600
@@ -836,7 +838,31 @@ export async function identityFixture(
     if (method === 'get_shared_session_recap') return respond('')
     if (url.pathname.includes('/auth/v1/')) {
       if (method === 'logout') return route.fulfill({ status: 204 })
+      if (method === 'user' && request.method() === 'PUT')
+        return body.password === 'same-as-before-1'
+          ? respond({ error_code: 'same_password', msg: 'same_password' }, 422)
+          : respond(session(currentId).user)
       if (method === 'user') return respond(session(currentId).user)
+      // RYT-157: email and password. The fixture password is `passwordFixture`; an address
+      // starting with "unconfirmed" has not confirmed its email yet.
+      const authError = (code: string, status = 400) =>
+        respond({ error_code: code, msg: code }, status)
+      if (method === 'token' && url.searchParams.get('grant_type') === 'password') {
+        if (String(body.email).startsWith('unconfirmed')) return authError('email_not_confirmed')
+        if (body.password === 'too-many') return authError('over_request_rate_limit', 429)
+        return body.password === passwordFixture
+          ? respond(session(currentId))
+          : authError('invalid_credentials')
+      }
+      if (method === 'signup')
+        return respond({
+          id: '30000000-0000-4000-8000-000000000099',
+          aud: 'authenticated',
+          email: body.email,
+          identities: [],
+          created_at: '2026-11-21T00:00:00Z',
+        })
+      if (method === 'recover' || method === 'resend') return respond({})
       if (method === 'token')
         return options.callbackError
           ? respond({ error: 'invalid_grant', error_description: 'Invalid code' }, 400)

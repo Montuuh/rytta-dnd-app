@@ -1,6 +1,7 @@
 # RYT-157 — Sign in with email and password
 
-Status: planned (2026-11-21).
+Status: in progress (2026-11-21). Frontend built and reviewed; hosted setup and checks wait for the
+owner actions below.
 
 ## Owner decisions (2026-11-21)
 
@@ -27,3 +28,55 @@ except the sender.
 - Supabase Auth settings: enable the email provider with confirmation, minimum password length
   10, CAPTCHA with Turnstile, redirect URLs for the reset and confirmation links, email templates
   in Spanish and English.
+
+## Frontend (2026-11-21)
+
+- Domain (`src/features/auth/domain/auth.ts`): the adapter gains password sign-in, sign-up,
+  confirmation resend, reset request and password update; `PasswordFailure` carries one of a few
+  issues (wrong credentials, unconfirmed, weak, same, rate, captcha, reauthentication,
+  connection). The snapshot gains `recovery` after a reset link; `Identity.hasPassword` comes from
+  `app_metadata.providers`. The one rule: 10 characters or more, counted as characters.
+- Adapter (`data/supabase-auth.ts`): Supabase Auth calls with the Turnstile token when one is set,
+  return links marked `?auth=confirmed` or `?auth=recovery` (removed from the address with the
+  code), an existing address on sign-up answered like a new one, error codes mapped to the issues.
+- UI (`features/auth/ui/`): "Continuar con email" under Google opens a bottom sheet on the phone
+  and a centred dialog on the tablet (sign in, create account, check your email with a 60 s resend
+  cooldown, forgot password, link sent); a new-password dialog after a reset link, mounted before
+  the username prompt; "Añadir contraseña" / "Cambiar contraseña" in the account settings. Shared
+  password field with a 44 px show/hide control in the tab order and the rule as its description.
+- Bot check: Cloudflare Turnstile renders only with `VITE_TURNSTILE_SITE_KEY`; the CSP allows
+  `https://challenges.cloudflare.com` for scripts, frames and connections.
+- Copy: the landing note now says the account is created on first sign-in with Google; the
+  expired-link message no longer names Google only.
+
+### Verification
+
+- Unit (`auth.test.ts`): the rule, the error mapping, trimming and captcha pass-through, offline
+  refusal, recovery kept across a token refresh and dropped for another user, the link marker
+  removed. `npm run check`: 1141 tests passed. `tests/unit/security-headers.test.ts` covers the
+  Turnstile sources.
+- Browser (`tests/e2e/email-auth.spec.ts`, 390 and 820 px, fixtures): sign in (wrong password,
+  show/hide, Escape back to the opener, success), create account (rule refused then met, check
+  your email, cooldown, change email), unconfirmed account resend, reset request with an invalid
+  then a valid email and the same answer for any address, rate limit message, reset link to the
+  new-password dialog (same-password refusal, saved, Continue), settings add/change with focus
+  returns; axe, overflow and touch targets: 14 passed. Identity, account and username specs pass at
+  390 and 820. Locally, `identity.spec.ts` at 1440 px and one `legal.spec.ts` test at 820 px fail
+  with and without this work (pre-existing; CI is the gate).
+- Design critique on the captures: the reset dialog actions stacked full width on the phone and the
+  required asterisks removed.
+- Independent UI review: changes required in round 1 (focus lost on every step change and in the
+  settings, rule refusal shown by colour only, no saved confirmation after a reset, copy), PASS in
+  round 2; its two minor findings (a failed bot-check script could leave the form waiting, the
+  settings label after adding a password) were fixed and passed the round 3 re-review. Left as
+  minor notes: the "wait for the bot check" line stays until the next submit once the token
+  arrives; the settings remember a just-added password only while they stay open (after that the
+  label follows `app_metadata.providers`, see below).
+
+### Not tested yet
+
+Real Supabase Auth with email confirmation, the free sender's delivery and spam placement, the
+real Turnstile widget, password managers on real devices, iOS Safari, a reset link opened on
+another device (PKCE needs the same browser; the expired-link message covers it), and whether
+hosted Supabase adds `email` to `app_metadata.providers` after a Google account sets a password
+(if not, the settings button says "Añadir" after a reload).

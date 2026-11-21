@@ -1,0 +1,80 @@
+/* RYT-157: email sign-in. The landing button sits on the painted hero (fixed cream ink); the
+ * sheet and dialog use the theme tokens. */
+.landing-copy .landing-email {
+  --button-bg: transparent;
+  --button-hover: rgb(245 235 214 / 0.14);
+  --button-color: #f5ebd6;
+  --button-bd: 1px solid rgb(245 235 214 / 0.6);
+  min-height: 48px;
+}
+
+.landing-copy .landing-email.mantine-Button-root,
+.landing-copy .landing-email .mantine-Button-label {
+  color: #f5ebd6;
+}
+
+.email-auth-sheet {
+  border-radius: var(--mantine-radius-lg) var(--mantine-radius-lg) 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.email-auth-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+}
+
+.email-auth {
+  display: grid;
+  gap: 14px;
+}
+
+.email-auth-note {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.email-auth-note span {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+
+.email-auth-status {
+  color: var(--app-muted);
+}
+
+/* Text links that still give a 44px target. */
+.email-auth-link {
+  min-height: 44px;
+  padding-inline: 4px;
+  font-size: var(--fs-meta);
+}
+
+.email-auth-forgot {
+  justify-self: end;
+  margin-top: -8px;
+}
+
+.email-auth-switch {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 4px;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+
+/* The resend waits out its cooldown but stays focusable: show it as unavailable. */
+.email-auth-resend[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.email-auth-captcha {
+  min-height: 65px;
+}

@@ -47,7 +47,16 @@ export function contentSecurityPolicy({
     ['default-src', ["'self'"]],
     // The inline boot script (theme before first paint) is hashed; module scripts are 'self'.
     // 'wasm-unsafe-eval' is only for the 3D dice physics engine (WebAssembly), not for eval().
-    ['script-src', ["'self'", ...inlineScripts(html).map(scriptHash), "'wasm-unsafe-eval'"]],
+    // RYT-157: Cloudflare Turnstile (the bot check on email sign-in) loads its script and frame.
+    [
+      'script-src',
+      [
+        "'self'",
+        ...inlineScripts(html).map(scriptHash),
+        "'wasm-unsafe-eval'",
+        'https://challenges.cloudflare.com',
+      ],
+    ],
     // Mantine injects its theme variables in <style> elements at runtime, which a static host
     // cannot nonce or hash. Styles cannot run code, so this is the one inline allowance.
     ['style-src', ["'self'", "'unsafe-inline'"]],
@@ -56,9 +65,10 @@ export function contentSecurityPolicy({
     // Tabletop ambience tracks are signed Storage URLs played by an audio element.
     ['media-src', ["'self'", ...backend.http]],
     ['font-src', ["'self'"]],
-    ['connect-src', ["'self'", ...backend.http, ...backend.socket]],
+    ['connect-src', ["'self'", ...backend.http, ...backend.socket, 'https://challenges.cloudflare.com']],
     // The dice engine runs its physics in a worker it creates from a blob.
     ['worker-src', ["'self'", 'blob:']],
+    ['frame-src', ['https://challenges.cloudflare.com']],
     ['manifest-src', ["'self'"]],
     ['object-src', ["'none'"]],
     ['base-uri', ["'self'"]],

@@ -15,5 +15,7 @@ export {
 } from './domain/account'
 export { useAccountNotice } from './account-notice'
 export { AccountDeletedNotice, AccountSection } from './ui/account-section'
+export { EmailSignIn } from './ui/email-sign-in'
+export { RecoveryDialog } from './ui/password-forms'
 export { UsernameDialog, UsernameSettings } from './ui/username-prompt'
 export { takeReturnTo } from './domain/return-to'

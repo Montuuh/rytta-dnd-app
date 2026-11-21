@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-20",
+  "updatedAt": "2026-11-21",
   "items": [
     {
       "id": "RYT-000",
@@ -3700,14 +3700,15 @@
       "title": "Security hardening for open sign-up: hidden combat data, cross-campaign modifiers, quotas and invitation limits",
       "priority": "P0",
       "owner": "backend",
-      "status": "review",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit findings: H-1 (encounters summary and active_combatant readable by Players through table reads and realtime), H-3 (no quotas on campaigns, scenes or uploaded media), M-1 (set_shop_modifier delete not scoped to its campaign), M-2 (unthrottled invitations and unbounded list_my_invitations).",
         "Progress 2026-11-17: migrations applied to production (hosted 20261117012750 and 20261117013004) and mirrored to PRE with baseline row counts unchanged; npm run test:db 250 passed; two independent security reviews returned safe to apply, one blocking client finding fixed. Hosted actor-level verification moved to RYT-119; hosted Auth settings and the frontend release remain owner actions.",
         "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Hosted PRE actor-level verification passed (RYT-119). Remaining: hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA) and the frontend release, tracked in RYT-122.",
-        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused."
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused.",
+        "Closed 2026-11-21: translated cap errors rendered in the UI for campaigns, seats, scenes and the media byte budget, and realtime filtering seen by a subscribed Player (RYT-119). The frontend is published and the hosted Auth settings were handled in RYT-157."
       ],
       "scope": "Players can no longer read hidden combatants, true creature names, their damage or a hidden active turn through direct reads or realtime of encounters: the realtime signal row carries no secrets and the summary and active combatant live where only the DM can read them, while get_combat_state keeps its masked projection. set_shop_modifier verifies the shop belongs to the target campaign and deletes only within that campaign. Per-account and per-campaign quotas for campaigns, pending invitations, tabletop scenes and uploaded media bytes, enforced server-side. Invitations are rate-limited per inviting DM and per recipient, and list_my_invitations is bounded. Reviewed backward-compatible migrations, tested in PRE first and mirrored there. Non-goals: auth provider, CAPTCHA and rate-limit configuration in the hosted dashboard (owner action, recorded in the evidence), destructive migrations, autonomous release.",
       "acceptance": [
@@ -3899,12 +3900,13 @@
       "title": "Hosted verification of open sign-up hardening",
       "priority": "P1",
       "owner": "backend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-113", "RYT-114"],
       "sources": [
         "RYT-113 and RYT-114 evidence 2026-11-17: actor-level, realtime, storage quota and concurrency behaviour were tested only on PGlite; pg_cron is not installed, so private.prune_stale_rows is not scheduled.",
         "Progress 2026-11-17: hosted PRE actor checks and production catalog checks done for both rollouts (seven migrations). Open: realtime delivery filtering, real Storage rejection text, true concurrency, the per-recipient flood trade-off record, production Auth-user deletion and scheduling private.prune_stale_rows (pg_cron absent; first run needs owner approval).",
-        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status."
+        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status.",
+        "Closed 2026-11-21 with real sessions of PRE test accounts: realtime delivery, a real Storage rejection with the translated message, seat-cap concurrency (one of 5 and one of 8 parallel invitations admitted) and production Auth-user removal by delete_my_account with a disposable account. Owner decisions of 2026-11-21 cover the flood trade-off (accepted risk) and pruning (left unscheduled)."
       ],
       "scope": "Verify the RYT-113 and RYT-114 migrations against the hosted PRE schema: actor-level denial and quota tests (anon, outsider, Player, cross-campaign DM), realtime filtering of encounter_signals, the storage quota rejection text, concurrency of the seat cap, the per-recipient invitation flood trade-off and the byte-quota query plan on storage.objects. Schedule or run private.prune_stale_rows only with owner approval. Also covers the second rollout (RYT-115 and RYT-118 migrations), including production removal of the Auth user by delete_my_account once a safe test account exists. Non-goals: new features, destructive data changes, promoting PRE data into production, autonomous release.",
       "acceptance": [
@@ -4970,6 +4972,30 @@
         "email authentication results (SPF, DKIM, DMARC) recorded"
       ],
       "evidence": ["docs/evidence/RYT-158/validation.md"]
+    },
+    {
+      "id": "RYT-159",
+      "title": "Test accounts for hosted checks: email accounts, a PRE test table and a disposable account for deletion",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-157"],
+      "sources": [
+        "Owner request 2026-11-21 during RYT-119: a way to create test accounts in PRE now that sign-in is not only Google; production checks may use the owner's own accounts, plus test accounts where needed."
+      ],
+      "scope": "A script writes idempotent SQL that creates confirmed email accounts in the shared Auth project from settings kept in .env.local (inbox and password; the password is generated when missing and never printed), seeds a PRE campaign with a test DM and a test Player, and can add a disposable account for a deletion check. Accounts are marked as test accounts and the SQL refuses to change any other account. Non-goals: automated sign-in, service-role keys, committing credentials.",
+      "acceptance": [
+        "node scripts/test-accounts.mjs writes SQL with only a bcrypt hash and keeps the password in .env.local without printing it.",
+        "Applying it creates confirmed email accounts marked as test accounts, and a re-run only refreshes their password hash.",
+        "--seed-pre creates the PRE campaign with the test DM and Player through the PRE application functions.",
+        "The owner can sign in with them on the local dev servers, and docs/test-accounts.md explains creation, use and removal."
+      ],
+      "validation": [
+        "three PRE test accounts and the test campaign created on the hosted project",
+        "owner sign-in on localhost:5173 and localhost:5174",
+        "RYT-119 real-session checks run with them"
+      ],
+      "evidence": ["docs/test-accounts.md", "docs/evidence/RYT-119/validation.md"]
     }
   ]
 }

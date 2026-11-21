@@ -65,7 +65,10 @@ export function contentSecurityPolicy({
     // Tabletop ambience tracks are signed Storage URLs played by an audio element.
     ['media-src', ["'self'", ...backend.http]],
     ['font-src', ["'self'"]],
-    ['connect-src', ["'self'", ...backend.http, ...backend.socket, 'https://challenges.cloudflare.com']],
+    [
+      'connect-src',
+      ["'self'", ...backend.http, ...backend.socket, 'https://challenges.cloudflare.com'],
+    ],
     // The dice engine runs its physics in a worker it creates from a blob.
     ['worker-src', ["'self'", 'blob:']],
     ['frame-src', ['https://challenges.cloudflare.com']],

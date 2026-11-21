@@ -97,6 +97,17 @@ hosted Supabase adds `email` to `app_metadata.providers` after a Google account 
   <rytta.dnd@gmail.com>" is verified (Brevo warns that a freemail domain is not recommended; the
   own domain is RYT-158).
 - Supabase custom SMTP form prepared (host `smtp-relay.brevo.com`, port 587, the Brevo SMTP login,
-  sender Rytta <rytta.dnd@gmail.com>) and CAPTCHA protection set to Turnstile; both wait for the
-  owner to paste their secret and save. Email templates (Spanish first, English below) are kept in
-  `supabase/templates/confirmation.html` and `recovery.html` for the dashboard once SMTP is saved.
+  sender Rytta <rytta.dnd@gmail.com>) and CAPTCHA protection set to Turnstile; the owner pasted both
+  secrets and saved (checked: custom SMTP on with a stored password, CAPTCHA on with Turnstile and a
+  stored secret).
+- Email templates "Confirm signup" and "Reset password" replaced with the Spanish-first, English
+  below versions in `supabase/templates/confirmation.html` and `recovery.html`, with subjects
+  "Confirma tu cuenta de Rytta · Confirm your Rytta account" and "Nueva contraseña para Rytta · New
+  password for Rytta" (read back from the dashboard).
+- Email provider enabled (2026-11-21). The deployed frontend shows no email sign-in until RYT-157 is
+  released; the Auth API now accepts password sign-up with confirmation and the Turnstile check.
+- First hosted check: on `http://localhost:5174` (this project's Auth) the real Turnstile widget
+  renders in the sheet with the app theme. The sign-up stopped at its "verify you are human" box,
+  which a person must tick; the confirmation and reset emails, the confirmed sign-in and the
+  `app_metadata.providers` check remain to be done by the owner (test address
+  rytta.dnd+prueba157@gmail.com, password kept only in the local `.env.local`).

@@ -111,3 +111,13 @@ hosted Supabase adds `email` to `app_metadata.providers` after a Google account 
   which a person must tick; the confirmation and reset emails, the confirmed sign-in and the
   `app_metadata.providers` check remain to be done by the owner (test address
   rytta.dnd+prueba157@gmail.com, password kept only in the local `.env.local`).
+
+## Release (2026-11-21)
+
+The owner asked to publish: release pull request #36 merged (merge commit `be59238`, CI green) and
+deployed to rytta.pages.dev (`version.json` id `be59238a25ef-mwqbp5q7`). The deployed entry chunk
+carries the Turnstile site key and the CSP has `frame-src https://challenges.cloudflare.com`. In a
+clean browser the landing shows "Continuar con email" and the sheet loads the real Turnstile
+widget (console errors seen come from inside Cloudflare's iframe). Still open before Done: one
+person-driven run on production (tick the bot check, receive and open the confirmation email,
+sign in, request and use a reset link, reload Settings to see whether the password is recognised).

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-20",
+  "updatedAt": "2026-11-21",
   "items": [
     {
       "id": "RYT-000",
@@ -425,12 +425,13 @@
       "title": "Realtime and recovery",
       "priority": "P0",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-003"],
       "sources": [
         "User: multi-device companion",
         "D&D Sync: live sync",
-        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests."
+        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests.",
+        "Delivered 2026-11-21 with RYT-128 (block B): app-wide connection line, refetch on reconnect with a backend health check, stale data kept, channels removed on identity change; two-client realtime verified with real sessions in RYT-119. No new two-account identity-switch browser test."
       ],
       "scope": "Scoped subscriptions, reconnect/refetch and truthful network state.",
       "acceptance": [
@@ -440,7 +441,7 @@
         "Refetch on reconnect and foreground without private-data leakage."
       ],
       "validation": ["Two-client Supabase Realtime tests", "Network loss and identity-switch e2e"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-013/validation.md", "docs/offline-shell.md"]
     },
     {
       "id": "RYT-014",
@@ -3700,14 +3701,15 @@
       "title": "Security hardening for open sign-up: hidden combat data, cross-campaign modifiers, quotas and invitation limits",
       "priority": "P0",
       "owner": "backend",
-      "status": "review",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit findings: H-1 (encounters summary and active_combatant readable by Players through table reads and realtime), H-3 (no quotas on campaigns, scenes or uploaded media), M-1 (set_shop_modifier delete not scoped to its campaign), M-2 (unthrottled invitations and unbounded list_my_invitations).",
         "Progress 2026-11-17: migrations applied to production (hosted 20261117012750 and 20261117013004) and mirrored to PRE with baseline row counts unchanged; npm run test:db 250 passed; two independent security reviews returned safe to apply, one blocking client finding fixed. Hosted actor-level verification moved to RYT-119; hosted Auth settings and the frontend release remain owner actions.",
         "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Hosted PRE actor-level verification passed (RYT-119). Remaining: hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA) and the frontend release, tracked in RYT-122.",
-        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused."
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused.",
+        "Closed 2026-11-21: translated cap errors rendered in the UI for campaigns, seats, scenes and the media byte budget, and realtime filtering seen by a subscribed Player (RYT-119). The frontend is published and the hosted Auth settings were handled in RYT-157."
       ],
       "scope": "Players can no longer read hidden combatants, true creature names, their damage or a hidden active turn through direct reads or realtime of encounters: the realtime signal row carries no secrets and the summary and active combatant live where only the DM can read them, while get_combat_state keeps its masked projection. set_shop_modifier verifies the shop belongs to the target campaign and deletes only within that campaign. Per-account and per-campaign quotas for campaigns, pending invitations, tabletop scenes and uploaded media bytes, enforced server-side. Invitations are rate-limited per inviting DM and per recipient, and list_my_invitations is bounded. Reviewed backward-compatible migrations, tested in PRE first and mirrored there. Non-goals: auth provider, CAPTCHA and rate-limit configuration in the hosted dashboard (owner action, recorded in the evidence), destructive migrations, autonomous release.",
       "acceptance": [
@@ -3899,12 +3901,13 @@
       "title": "Hosted verification of open sign-up hardening",
       "priority": "P1",
       "owner": "backend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-113", "RYT-114"],
       "sources": [
         "RYT-113 and RYT-114 evidence 2026-11-17: actor-level, realtime, storage quota and concurrency behaviour were tested only on PGlite; pg_cron is not installed, so private.prune_stale_rows is not scheduled.",
         "Progress 2026-11-17: hosted PRE actor checks and production catalog checks done for both rollouts (seven migrations). Open: realtime delivery filtering, real Storage rejection text, true concurrency, the per-recipient flood trade-off record, production Auth-user deletion and scheduling private.prune_stale_rows (pg_cron absent; first run needs owner approval).",
-        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status."
+        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status.",
+        "Closed 2026-11-21 with real sessions of PRE test accounts: realtime delivery, a real Storage rejection with the translated message, seat-cap concurrency (one of 5 and one of 8 parallel invitations admitted) and production Auth-user removal by delete_my_account with a disposable account. Owner decisions of 2026-11-21 cover the flood trade-off (accepted risk) and pruning (left unscheduled)."
       ],
       "scope": "Verify the RYT-113 and RYT-114 migrations against the hosted PRE schema: actor-level denial and quota tests (anon, outsider, Player, cross-campaign DM), realtime filtering of encounter_signals, the storage quota rejection text, concurrency of the seat cap, the per-recipient invitation flood trade-off and the byte-quota query plan on storage.objects. Schedule or run private.prune_stale_rows only with owner approval. Also covers the second rollout (RYT-115 and RYT-118 migrations), including production removal of the Auth user by delete_my_account once a safe test account exists. Non-goals: new features, destructive data changes, promoting PRE data into production, autonomous release.",
       "acceptance": [
@@ -4149,10 +4152,11 @@
       "title": "Offline shell: a reload without signal opens the app",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-117"],
       "sources": [
-        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker."
+        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker.",
+        "Delivered 2026-11-21 with RYT-013 (block B) after the owner chose the options P1 A, P2 A, P3 A; independent UI review PASS."
       ],
       "scope": "Add a minimal service worker that caches the app shell so a reload without signal opens the app with its offline banner, with an update path that works with the version notice from RYT-117. Non-goals: offline data or mutations, caching private campaign data or authenticated responses, background sync, push notifications, autonomous release.",
       "acceptance": [
@@ -4168,7 +4172,7 @@
         "npm run test:e2e (offline reload and update notice on the production subpath at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-128/validation.md", "docs/offline-shell.md"]
     },
     {
       "id": "RYT-129",
@@ -4970,6 +4974,69 @@
         "email authentication results (SPF, DKIM, DMARC) recorded"
       ],
       "evidence": ["docs/evidence/RYT-158/validation.md"]
+    },
+    {
+      "id": "RYT-159",
+      "title": "Test accounts for hosted checks: email accounts, a PRE test table and a disposable account for deletion",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-157"],
+      "sources": [
+        "Owner request 2026-11-21 during RYT-119: a way to create test accounts in PRE now that sign-in is not only Google; production checks may use the owner's own accounts, plus test accounts where needed."
+      ],
+      "scope": "A script writes idempotent SQL that creates confirmed email accounts in the shared Auth project from settings kept in .env.local (inbox and password; the password is generated when missing and never printed), seeds a PRE campaign with a test DM and a test Player, and can add a disposable account for a deletion check. Accounts are marked as test accounts and the SQL refuses to change any other account. Non-goals: automated sign-in, service-role keys, committing credentials.",
+      "acceptance": [
+        "node scripts/test-accounts.mjs writes SQL with only a bcrypt hash and keeps the password in .env.local without printing it.",
+        "Applying it creates confirmed email accounts marked as test accounts, and a re-run only refreshes their password hash.",
+        "--seed-pre creates the PRE campaign with the test DM and Player through the PRE application functions.",
+        "The owner can sign in with them on the local dev servers, and docs/test-accounts.md explains creation, use and removal."
+      ],
+      "validation": [
+        "three PRE test accounts and the test campaign created on the hosted project",
+        "owner sign-in on localhost:5173 and localhost:5174",
+        "RYT-119 real-session checks run with them"
+      ],
+      "evidence": ["docs/test-accounts.md", "docs/evidence/RYT-119/validation.md"]
+    },
+    {
+      "id": "RYT-160",
+      "title": "Offline reload inside a campaign keeps the campaign name and navigation",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-128"],
+      "sources": [
+        "Independent UI review of RYT-128 and RYT-013, 2026-11-21 (M1): a cold reload without signal inside a campaign shows the offline placeholder without the campaign name, its navigation or the screen title, because no campaign data is stored on the device."
+      ],
+      "scope": "Decide with the owner whether the device may keep the minimum needed to draw a campaign shell offline (campaign id, name, role and enabled modules), and if so keep only that, cleared on sign-out and identity change. Non-goals: offline campaign data, offline mutations.",
+      "acceptance": [
+        "The owner decides whether the campaign name, role and modules may be kept on the device.",
+        "If yes: a cold offline reload inside a campaign shows its name and navigation with the offline line, and nothing else from the campaign is stored.",
+        "If no: the decision is recorded and the placeholder offers a way back to My campaigns."
+      ],
+      "validation": [
+        "owner decision record",
+        "browser test of the cold offline reload inside a campaign at 390 and 820 px"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-161",
+      "title": "Keep data after a failed refresh on every screen, and an exact recovery message",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-013"],
+      "sources": ["Independent UI review of RYT-013, 2026-11-21 (non-blocking notes)."],
+      "scope": "Apply the RYT-013 rule (keep what is on screen after a refetch fails for a connection or server reason; show the error above it otherwise) to the remaining screens: party, sheet, inventory, shops, glossary, journal and combat. When the 6 s limit ends the refresh before every screen has loaded, the line says connection back without claiming the data is up to date.",
+      "acceptance": [
+        "Each listed screen keeps its data after a failed refetch and shows one error with Retry, or none when the connection line already says it.",
+        "The recovery line says up to date only when every query on screen has refreshed.",
+        "Browser tests at 390 and 820 px for at least the party, inventory and combat screens."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review"],
+      "evidence": []
     }
   ]
 }

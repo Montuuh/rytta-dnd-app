@@ -8,6 +8,7 @@ import { campaignsQuery } from '../api'
 import { CampaignContext } from '../campaign-context'
 import { recordCampaignVisit } from '../domain/recent-campaign'
 import { QueryFeedback } from './feedback'
+import { keepsStaleData } from './load-cause'
 
 export function CampaignBoundary() {
   const { campaignId } = useParams()
@@ -16,7 +17,8 @@ export function CampaignBoundary() {
   const { t } = useTranslation()
   const client = useQueryClient()
   const query = useQuery(campaignsQuery(userId))
-  const campaign = !query.isError ? query.data?.find((item) => item.id === campaignId) : undefined
+  const usable = !query.isError || keepsStaleData(query.data, query.error)
+  const campaign = usable ? query.data?.find((item) => item.id === campaignId) : undefined
   const visitedId = campaign?.id
   useEffect(() => {
     if (visitedId) recordCampaignVisit(userId, visitedId)
@@ -37,7 +39,7 @@ export function CampaignBoundary() {
     },
     [client, userId, campaignId],
   )
-  if (query.isPending || query.isError)
+  if (query.isPending || !usable)
     return (
       <QueryFeedback
         pending={query.isPending}

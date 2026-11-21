@@ -49,3 +49,28 @@ seat-cap concurrency (still open in RYT-119).
 - Release of the new frontend. Until then Players follow combat by polling.
 
 Both are tracked in the launch checklist RYT-122.
+
+## Hosted checks with real sessions (2026-11-21)
+
+Run with the PRE test accounts (RYT-119 evidence, "Real sessions"):
+
+- Realtime: a subscribed Player receives only status and revision from `encounter_signals` and no
+  `encounters` events.
+- Translated errors rendered in the UI with PRE limits lowered for the run and restored afterwards:
+  - campaign cap (Create campaign): "Ya tienes el número máximo de campañas para una cuenta.
+    Abandona una para crear otra."
+  - seat cap (Invite player): "Esta campaña no tiene plazas libres: cuentan los miembros y las
+    invitaciones pendientes. Cancela una invitación o retira a un miembro antes."
+  - scene cap (New scene): "Esta campaña ya tiene todas las escenas que admite. Borra antes una
+    escena que ya no uses."
+  - byte budget (shop image upload): "El almacenamiento rechazó la subida. Puede que esta campaña
+    haya llenado su espacio: …"
+- Seat-cap concurrency: 5 and 8 parallel invitations with one free seat each admitted exactly one.
+
+The new frontend is published (rytta.pages.dev) and the hosted Auth settings were handled in
+RYT-157 (email provider with confirmation, CAPTCHA). Leaked-password protection needs a paid plan
+and stays out of scope (RYT-157 non-goals).
+
+## Status
+
+Done (2026-11-21).

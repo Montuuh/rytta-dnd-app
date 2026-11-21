@@ -9,6 +9,7 @@ import {
   forcedBuildKey,
   isNewerBuild,
 } from '@/shared/lib/app-version'
+import { activateNewerShell } from '@/shared/lib/offline-shell'
 
 const dismissedKey = 'rytta-update-dismissed'
 
@@ -104,7 +105,7 @@ export function UpdateNotice() {
           size="compact-md"
           className="update-notice-action"
           leftSection={<RefreshCw size={16} aria-hidden="true" />}
-          onClick={() => window.location.reload()}
+          onClick={() => void activateNewerShell().then(() => window.location.reload())}
         >
           {t('update.reload')}
         </Button>

@@ -390,7 +390,7 @@ export const combatEs = {
   'combat.death.undo': 'Deshacer',
   'combat.death.undoLabel': 'Deshacer mi última salvación: {{outcome}}',
   'combat.death.undoneNow': 'Salvación deshecha. Puedes volver a tirar.',
-  'combat.network.offline': 'Sin conexión · hace {{seconds}} s',
+  'combat.network.offline': 'Actualizado hace {{seconds}} s',
   'combat.network.offlineNow': 'Sin conexión',
   'combat.network.retrying': 'Reintentando…',
   'combat.network.stillOffline': 'Sigue sin conexión. Prueba otra vez en unos segundos.',

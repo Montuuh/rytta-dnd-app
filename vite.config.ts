@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { parseConfig } from './src/shared/lib/env-schema.ts'
 import { headersFile } from './scripts/lib/security-headers.mts'
+import { serviceWorkerSource, shellUrls } from './scripts/lib/service-worker.mts'
 
 /**
  * Link previews need absolute image URLs. With VITE_SITE_URL (the public origin, no path) the
@@ -46,6 +47,27 @@ function buildVersion(buildId: string): Plugin {
       writeFileSync(
         resolve(outDir, 'version.json'),
         JSON.stringify({ id: buildId, builtAt: new Date().toISOString() }),
+      )
+    },
+  }
+}
+
+/** RYT-128: the offline shell worker, with the shell files of this build's index.html. */
+function offlineShell(buildId: string): Plugin {
+  let outDir = 'dist'
+  let base = '/'
+  return {
+    name: 'rytta-offline-shell',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+      base = config.base
+    },
+    closeBundle() {
+      const html = readFileSync(resolve(outDir, 'index.html'), 'utf8')
+      writeFileSync(
+        resolve(outDir, 'sw.js'),
+        serviceWorkerSource({ buildId, base, shell: shellUrls(html, base) }),
       )
     },
   }
@@ -132,6 +154,7 @@ export default defineConfig(({ mode, command }) => {
     plugins: [
       react(),
       buildVersion(buildId),
+      offlineShell(buildId),
       securityHeaders(env.VITE_SUPABASE_URL),
       absoluteShareUrls(env.VITE_SITE_URL, env.VITE_BASE_PATH || '/'),
       staticLegal({

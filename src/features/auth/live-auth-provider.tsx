@@ -11,19 +11,16 @@ import { forgetUsernameLater } from './domain/username-later'
 
 export function LiveAuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient()
-  const controller = useMemo(
-    () =>
-      new AuthController(
-        createAuthAdapter(
-          getSupabase(config.VITE_SUPABASE_URL!, config.VITE_SUPABASE_PUBLISHABLE_KEY!),
-        ),
-        () => {
-          void queryClient.cancelQueries()
-          queryClient.clear()
-        },
-      ),
-    [queryClient],
-  )
+  const controller = useMemo(() => {
+    const client = getSupabase(config.VITE_SUPABASE_URL!, config.VITE_SUPABASE_PUBLISHABLE_KEY!)
+    return new AuthController(createAuthAdapter(client), () => {
+      void queryClient.cancelQueries()
+      queryClient.clear()
+      // RYT-013: no realtime channel of the previous identity outlives it (the screens that
+      // opened them also unmount, keyed by user).
+      void client.removeAllChannels()
+    })
+  }, [queryClient])
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot)
   useEffect(() => {
     void controller.start()

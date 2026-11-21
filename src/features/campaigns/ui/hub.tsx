@@ -40,6 +40,8 @@ import {
 } from '../domain/campaign'
 import { readCampaignVisit } from '../domain/recent-campaign'
 import { ActionFeedback, QueryFeedback } from './feedback'
+import { keepsStaleData, showsLoadError } from './load-cause'
+import { useConnectionPhase } from '@/shared/lib/connection-context'
 import { LeaveCampaignDialog, LeaveCampaignItem } from './leave'
 import './hub.css'
 
@@ -140,6 +142,8 @@ export function CampaignHub() {
   const { state } = useAuth()
   const user = state.user!
   const campaigns = useQuery(campaignsQuery(user.id))
+  const phase = useConnectionPhase()
+  const lost = phase === 'offline' || phase === 'failed'
   const invitations = useQuery(invitationsQuery(user.id))
   const respond = useCampaignAction()
   const create = useCampaignAction()
@@ -227,7 +231,10 @@ export function CampaignHub() {
     const last = lastAnswer.current
     if (last) answer(last.invite, last.accept)
   }
-  const pendingInvites = !invitations.isError ? (invitations.data ?? []) : []
+  const pendingInvites =
+    !invitations.isError || keepsStaleData(invitations.data, invitations.error)
+      ? (invitations.data ?? [])
+      : []
   const invitesPending = pendingInvites.length > 0
   // With no campaign and no invitation the empty state owns the one instruction and the create action.
   const showEmpty =
@@ -268,11 +275,13 @@ export function CampaignHub() {
         {!decline && <RespondError error={respond.error} retry={retryAnswer} />}
         <QueryFeedback
           pending={invitations.isPending}
-          error={invitations.isError}
+          error={showsLoadError(invitations.isError, invitations.data, invitations.error, lost)}
           retry={() => void invitations.refetch()}
           cause={invitations.error}
+          secondary
         />
-        {invitations.isSuccess &&
+        {invitations.data !== undefined &&
+          (!invitations.isError || keepsStaleData(invitations.data, invitations.error)) &&
           (invitesPending ? (
             pendingInvites.map((invite) => {
               const answering =
@@ -383,23 +392,25 @@ export function CampaignHub() {
       {invitesPending && invitationsPanel}
       <QueryFeedback
         pending={campaigns.isPending}
-        error={campaigns.isError}
+        error={showsLoadError(campaigns.isError, campaigns.data, campaigns.error, lost)}
         retry={refresh}
         cause={campaigns.error}
       />
-      {!campaigns.isError && campaigns.data && campaigns.data.length > 0 && (
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          {campaigns.data.map((campaign, position) => (
-            <CampaignCard
-              key={campaign.id}
-              campaign={campaign}
-              cover={coverList[position]!}
-              userId={user.id}
-              onLeave={(trigger) => setLeaving({ campaign, trigger })}
-            />
-          ))}
-        </SimpleGrid>
-      )}
+      {(!campaigns.isError || keepsStaleData(campaigns.data, campaigns.error)) &&
+        campaigns.data &&
+        campaigns.data.length > 0 && (
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            {campaigns.data.map((campaign, position) => (
+              <CampaignCard
+                key={campaign.id}
+                campaign={campaign}
+                cover={coverList[position]!}
+                userId={user.id}
+                onLeave={(trigger) => setLeaving({ campaign, trigger })}
+              />
+            ))}
+          </SimpleGrid>
+        )}
       {showEmpty && (
         <Paper p={{ base: 'lg', sm: 'xl' }} className="hub-empty">
           <ArtPlate name="empty/campaigns" size={144} />

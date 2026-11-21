@@ -118,7 +118,7 @@ export const es = {
   'settings.demoDescription':
     'El contenido de ejemplo es local y de solo lectura. No representa una cuenta, conexión ni progreso guardado.',
   'settings.backendDescription':
-    'El acceso con Google y los miembros de campaña usan tu proyecto Supabase configurado. Los módulos de juego siguen previstos.',
+    'El inicio de sesión y los miembros de campaña usan tu proyecto Supabase configurado. Los módulos de juego siguen previstos.',
   'settings.connection': 'Configuración del backend: {{status}}.',
   'settings.provided': 'disponible (conexión no verificada)',
   'settings.missing': 'no disponible',

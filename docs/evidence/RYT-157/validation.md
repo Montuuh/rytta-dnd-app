@@ -1,7 +1,7 @@
 # RYT-157 — Sign in with email and password
 
-Status: in progress (2026-11-21). Frontend built and reviewed; hosted setup and checks wait for the
-owner actions below.
+Status: done (2026-11-21). Built, reviewed, released, configured and checked end to end on the
+hosted Auth project.
 
 ## Owner decisions (2026-11-21)
 
@@ -121,3 +121,34 @@ clean browser the landing shows "Continuar con email" and the sheet loads the re
 widget (console errors seen come from inside Cloudflare's iframe). Still open before Done: one
 person-driven run on production (tick the bot check, receive and open the confirmation email,
 sign in, request and use a reset link, reload Settings to see whether the password is recognised).
+
+## Hosted end-to-end test (2026-11-21)
+
+Run in Chrome on `http://localhost:5174` (local build, production Auth project, a hostname the
+Turnstile widget and the redirect list allow), with the test address
+`rytta.dnd+prueba157@gmail.com` (inbox of rytta.dnd@gmail.com). All steps passed:
+
+1. Create account: the real Turnstile widget passed by itself in a normal browser (no puzzle);
+   "Revisa tu correo" with the resend cooldown.
+2. Confirmation email from Rytta via Brevo, subject "Confirma tu cuenta de Rytta · Confirm your
+   Rytta account", Spanish first. Gmail filed it as spam (freemail sender, see RYT-158). Its link
+   (wrapped by Brevo's click tracking) opened the app signed in as the new account.
+3. Settings showed "Cambiar contraseña": the account's providers are `["email"]`.
+4. Sign out, then sign in with email and password: signed in.
+5. Forgot password: "Nueva contraseña para Rytta" arrived; its link opened the app on the
+   new-password dialog; "Contraseña guardada." then Continue; sign in with the new password worked.
+6. Google account plus password: signed in with Google as rytta.dnd@gmail.com (campaign "test",
+   DM), set a password in Settings, signed out, signed in with that email and password: the same
+   user with the same campaign. Database check: that user has a password but `providers` stays
+   `["google"]` and no `email` identity is added, so after a reload the app cannot tell a password
+   exists; the button now reads "Elegir contraseña" / "Set a password" for such accounts.
+
+Fixes from the test: copy that assumed Google (the invite dialog label and the copied instructions,
+the DM's first-session invite step, the hub and settings hints) and the privacy policy, which now covers email accounts, Brevo and Cloudflare
+Turnstile (effective date 2026-11-21). Test builds ignore a local Turnstile key. Brevo's free plan
+cannot turn off click tracking on transactional emails; tracking was set to anonymous. Test
+passwords live only in the local `.env.local`; the rytta.dnd@gmail.com account now also has a
+password.
+
+UI review of the copy fixes: changes required in round 4 (the invite dialog still told players to
+use Google), PASS in round 5. These copy and privacy fixes reach production with the next release.

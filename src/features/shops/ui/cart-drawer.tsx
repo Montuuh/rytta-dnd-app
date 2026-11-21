@@ -3,7 +3,7 @@ import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { ArrowRight, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { encumbrance, Stepper, useWeightFormat } from '@/features/inventory'
+import { encumbrance, Stepper, useItemPicture, useWeightFormat } from '@/features/inventory'
 import { localizedName } from '@/shared/lib/translations'
 import {
   cartPounds,
@@ -12,10 +12,11 @@ import {
   maxPurchasable,
   sumGp,
   type CartLine,
+  type Listing,
   type StorefrontShop,
 } from '../domain/shops'
 import { useGp } from './use-gp'
-import { GoldAmount } from './visuals'
+import { GoldAmount, ItemGlyph } from './visuals'
 
 /** An offer is a price per unit; this is only a sanity bound for the field. */
 const MAX_OFFER = 100_000_000
@@ -119,9 +120,13 @@ export function CartDrawer(props: Props) {
                 return (
                   <div className="cart-line" key={line.listingId}>
                     <Group justify="space-between" wrap="nowrap" gap="xs">
-                      <Text fw={600} className="user-copy">
-                        {name}
-                      </Text>
+                      {/* RYT-106: the picture the storefront shows, or the category painting. */}
+                      <Group gap="sm" wrap="nowrap" className="cart-line-item">
+                        <CartPicture item={listing.item} name={name} />
+                        <Text fw={600} className="user-copy">
+                          {name}
+                        </Text>
+                      </Group>
                       <ActionIcon
                         variant="subtle"
                         color="red"
@@ -285,5 +290,27 @@ export function CartDrawer(props: Props) {
         </Button>
       </Stack>
     </Drawer>
+  )
+}
+
+/** As on the shelf: a picture sits inside the rarity frame and opens the viewer; without one the
+ * category painting fills the frame. */
+function CartPicture({ item, name }: { item: Listing['item']; name: string }) {
+  const pictured = useItemPicture(item.image_path)
+  return pictured ? (
+    <ItemGlyph
+      imagePath={item.image_path}
+      icon={item.icon}
+      rarity={item.rarity}
+      viewable
+      name={name}
+    />
+  ) : (
+    <ItemGlyph
+      imagePath={item.image_path}
+      icon={item.icon}
+      category={item.category}
+      rarity={item.rarity}
+    />
   )
 }

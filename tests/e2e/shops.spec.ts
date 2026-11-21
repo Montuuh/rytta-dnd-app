@@ -698,3 +698,36 @@ test('J3-06 the cart survives a reload and is checked against the shelf', async 
   await page.reload()
   await expect(cartButton(page, '1', '40')).toBeVisible()
 })
+
+test('RYT-106 the cart shows each item picture, which opens the viewer over the cart', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, {
+    player: true,
+    sheet: 'complete',
+    inventory: true,
+    modules,
+  })
+  fixture.inventory.definitions.find((d) => d.name === 'Flecha')!.image_path =
+    `pre/${campaignId}/items/arrow.webp`
+  await shopsFixture(page, fixture)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(shops)
+  await page.getByRole('button', { name: 'Añadir Flecha al carrito' }).click()
+  await page.getByRole('button', { name: 'Añadir Poción de curación al carrito' }).click()
+  await cartButton(page, '2').click()
+  const line = page.locator('.cart-line', { hasText: 'Flecha' })
+  const picture = line.getByRole('button', { name: 'Ver la imagen de Flecha' })
+  await expect(picture).toBeVisible()
+  // The picture sits inside the rarity frame; without one, the category painting stands in.
+  const potion = page.locator('.cart-line', { hasText: 'Poción de curación' })
+  await expect(potion.locator('.shop-glyph')).toHaveCount(1)
+  await expect(potion.getByRole('button', { name: /Ver la imagen/ })).toHaveCount(0)
+  await audit(page, info.outputPath('cart-pictures.png'))
+  await picture.click()
+  await expect(page.locator('.image-viewer-content')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.image-viewer-content')).toHaveCount(0)
+  await expect(line).toBeVisible()
+  await expect(picture).toBeFocused()
+})

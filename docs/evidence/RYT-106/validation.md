@@ -1,7 +1,6 @@
 # Delivery RYT-106: item pictures for DM and Players on every item surface
 
-Status: review (2026-11-16; the "before" column of the surface matrix is missing, see the end
-of this record). Decision record: ADR 043 (point 11). Shared checks and untested
+Status: done (2026-11-20; the owner accepted the "after" matrix, see the end of this record). Decision record: ADR 043 (point 11). Shared checks and untested
 layers are in [RYT-104 validation](../RYT-104/validation.md).
 
 ## Outcome
@@ -26,11 +25,11 @@ Surface matrix after the fixes (the state before the fixes was not recorded per 
 | Storeroom | Picture, viewer | Not a Player surface |
 | Satchel | Picture, viewer | Picture, viewer |
 | Storefront listings, DM stock list | Picture | Picture (listing visible to the character) |
-| Cart drawer | Icon | Icon (not changed in this delivery) |
+| Cart drawer | Picture, viewer (2026-11-20) | Picture, viewer (2026-11-20) |
 | DM proposal review, Player add-item search | Picture | Picture of basic items, own creations and carried items |
 | Player proposal shelf | Not a DM surface | Icon (a proposal has no picture yet) |
 | Trades, own side | Picture | Picture |
-| Trades, partner side | Icon only | Icon only (trade state carries no picture or description; recorded decision, acceptance amended) |
+| Trades, partner side | Picture, viewer (RYT-109) | Picture, viewer (RYT-109) |
 
 | Criterion | Result |
 | --- | --- |
@@ -50,8 +49,19 @@ rerun of those specs (126 passed) is kept in the same record.
 Untested: real signed URLs from hosted Storage. The partner side of trades showing the picture
 and description is planned as RYT-109.
 
-Remaining before Done: the first acceptance criterion asks for a matrix with the result before
+Open on 2026-11-16 (closed at the end of this record): the first acceptance criterion asks for a matrix with the result before
 and after the fixes, and only the "after" state was recorded. Either record a decision that
 accepts the "after" matrix, or reconstruct the "before" column from the pre-delivery source.
 The cart drawer also shows the icon only; confirm it is outside the listed storefront surfaces
 or treat it as a gap.
+
+## Owner decision and close (2026-11-20)
+
+The owner accepted the "after" matrix (the "before" column is not reconstructed) and asked for the
+picture in the cart. Each cart line now shows the item's picture with the rarity frame, which opens
+the shared image viewer, or the category painting without one (`cart-drawer.tsx`). Browser spec
+`shops.spec.ts` "RYT-106 the cart shows each item picture, which opens the viewer over the cart"
+at 390 and 820 px: the picture button, the painting for an item without a picture, axe and no
+overflow, and Escape closes only the viewer with focus back on the picture. RYT-109 has since
+given the partner side of a trade its picture and description, so every listed surface shows the
+picture.

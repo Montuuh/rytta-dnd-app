@@ -728,15 +728,16 @@ html:has(.trade-dock) body {
 }
 
 /* RYT-109: the partner's item sheet. */
-.partner-item-close {
-  align-self: flex-end;
-  min-height: 44px;
-}
 .partner-item-picture {
   display: inline-grid;
   place-items: center;
+  flex-shrink: 0;
   min-width: 44px;
   min-height: 44px;
   border-radius: 12px;
   overflow: hidden;
+  background: var(--app-raised);
+  color: var(--app-accent);
+  /* The rarity frame of the store and the loot drawer. */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rarity, var(--rarity-common)) 60%, transparent);
 }

@@ -1,0 +1,37 @@
+<!-- RYT-157: Supabase Auth "Reset password" template. Subject: Nueva contraseña para Rytta · New password for Rytta -->
+<div
+  style="
+    font-family: Georgia, 'Times New Roman', serif;
+    max-width: 480px;
+    margin: 0 auto;
+    color: #2a1c11;
+  "
+>
+  <h1 style="font-size: 24px; margin: 0 0 16px">Rytta</h1>
+  <p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5">
+    Abre este enlace en el mismo dispositivo para elegir una contraseña nueva.
+  </p>
+  <p style="margin: 24px 0">
+    <a
+      href="{{ .ConfirmationURL }}"
+      style="
+        font-family: Arial, sans-serif;
+        background: #6e3410;
+        color: #fffdf9;
+        padding: 12px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+      "
+      >Elegir contraseña nueva</a
+    >
+  </p>
+  <p style="font-family: Arial, sans-serif; font-size: 14px; color: #664f3a; line-height: 1.5">
+    Open this link on the same device to choose a new password:
+    <a href="{{ .ConfirmationURL }}" style="color: #6e3410">choose a new password</a>.
+  </p>
+  <p style="font-family: Arial, sans-serif; font-size: 13px; color: #664f3a">
+    Si no lo has pedido tú, ignora este correo: tu contraseña no cambia. If you did not ask for it,
+    ignore this email: your password stays the same.
+  </p>
+</div>

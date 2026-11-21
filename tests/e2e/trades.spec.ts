@@ -350,6 +350,13 @@ test('RYT-149 Give from the item card puts the item on the table and Bea only ac
   await expect(menu).toBeHidden()
   await expect(card).toBeVisible()
   await expect(more).toBeFocused()
+  // With the menu open and focus still on its button, Escape closes the menu, not the card.
+  await more.click()
+  await expect(menu).toBeVisible()
+  await more.focus()
+  await arin.keyboard.press('Escape')
+  await expect(menu).toBeHidden()
+  await expect(card).toBeVisible()
   await more.click()
   await arin.getByRole('menuitem', { name: 'Dar a…' }).click()
   const share = card.getByRole('region', { name: 'Dar Poción de curación' })

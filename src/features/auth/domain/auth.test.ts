@@ -4,23 +4,30 @@ import {
   AuthController,
   AuthFailure,
   initializeTimeoutMs,
+  PasswordFailure,
+  passwordMeetsPolicy,
   type AuthAdapter,
   type Identity,
 } from './auth'
-import { consumeCallback } from '../data/supabase-auth'
+import { consumeCallback, passwordIssue } from '../data/supabase-auth'
 
 const a = { id: '10000000-0000-4000-8000-000000000001', email: 'a@example.com' }
 const b = { id: '10000000-0000-4000-8000-000000000002', email: 'b@example.com' }
-function fixture(initialize: () => Promise<Identity | null> = async () => a) {
+function fixture(initialize: () => Promise<Identity | null> = async () => a, recovery = false) {
   let event: (user: Identity | null) => void = () => {}
   const adapter: AuthAdapter = {
-    initialize: vi.fn(initialize),
+    initialize: vi.fn(async () => ({ user: await initialize(), recovery })),
     subscribe: (listener) => {
       event = listener
       return () => {}
     },
     signIn: vi.fn(async () => {}),
     signOut: vi.fn(async () => {}),
+    signInWithPassword: vi.fn(async () => {}),
+    signUp: vi.fn(async () => {}),
+    resendConfirmation: vi.fn(async () => {}),
+    requestPasswordReset: vi.fn(async () => {}),
+    updatePassword: vi.fn(async () => {}),
   }
   const cache = new QueryClient()
   const clear = vi.fn(() => {
@@ -101,7 +108,7 @@ describe('identity lifecycle', () => {
     expect(f.controller.getSnapshot().issue).toBe('callback')
     f.event(null)
     expect(f.controller.getSnapshot().issue).toBe('callback')
-    f.adapter.initialize = async () => null
+    f.adapter.initialize = async () => ({ user: null, recovery: false })
     await f.controller.retry()
     expect(f.controller.getSnapshot()).toMatchObject({ status: 'signed-out', issue: null })
   })
@@ -137,7 +144,7 @@ describe('PKCE URL cleanup', () => {
         new URL('https://example.com/rytta-dnd-app/?code=once&other=ok#/party'),
         replace,
       ),
-    ).toEqual({ code: 'once', failed: false })
+    ).toEqual({ code: 'once', failed: false, recovery: false })
     expect(replace).toHaveBeenCalledWith('/rytta-dnd-app/?other=ok')
   })
   it('scrubs rejected and implicit callbacks without rendering provider error strings', () => {
@@ -151,5 +158,86 @@ describe('PKCE URL cleanup', () => {
       ).toBe(true)
       expect(replace).toHaveBeenCalledWith('/rytta-dnd-app/')
     }
+  })
+})
+
+describe('RYT-157 email and password', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+  it('keeps the rule to a length of ten characters, counting letters not bytes', () => {
+    expect(passwordMeetsPolicy('123456789')).toBe(false)
+    expect(passwordMeetsPolicy('1234567890')).toBe(true)
+    expect(passwordMeetsPolicy('ñandú-ñandú')).toBe(true)
+    expect(passwordMeetsPolicy('🐉🐉🐉🐉🐉🐉🐉🐉🐉')).toBe(false)
+  })
+  it('maps Auth errors to what the screen explains, and anything else to a retry', () => {
+    expect(passwordIssue({ code: 'invalid_credentials', status: 400 })).toBe('credentials')
+    expect(passwordIssue({ code: 'email_not_confirmed' })).toBe('unconfirmed')
+    expect(passwordIssue({ code: 'weak_password' })).toBe('weak')
+    expect(passwordIssue({ code: 'same_password' })).toBe('same')
+    expect(passwordIssue({ code: 'captcha_failed' })).toBe('captcha')
+    expect(passwordIssue({ code: 'over_email_send_rate_limit' })).toBe('rate')
+    expect(passwordIssue({ status: 429 })).toBe('rate')
+    expect(passwordIssue({ code: 'reauthentication_needed' })).toBe('reauth')
+    expect(passwordIssue({ code: 'unexpected_failure', status: 500 })).toBe('connection')
+  })
+  it('trims the email, passes the captcha and turns adapter errors into password failures', async () => {
+    const f = fixture(async () => null)
+    await f.controller.start()
+    await f.controller.signInWithPassword('  ana@example.com ', 'secret-pass', 'token')
+    expect(f.adapter.signInWithPassword).toHaveBeenCalledWith(
+      'ana@example.com',
+      'secret-pass',
+      'token',
+    )
+    f.adapter.signUp = vi.fn(async () => {
+      throw new PasswordFailure('weak')
+    })
+    await expect(f.controller.signUp('ana@example.com', 'x')).rejects.toMatchObject({
+      issue: 'weak',
+    })
+    f.adapter.requestPasswordReset = vi.fn(async () => {
+      throw new Error('network down')
+    })
+    await expect(f.controller.requestPasswordReset('ana@example.com')).rejects.toMatchObject({
+      issue: 'connection',
+    })
+  })
+  it('refuses at once without a network', async () => {
+    const f = fixture(async () => null)
+    await f.controller.start()
+    vi.stubGlobal('navigator', { onLine: false })
+    await expect(f.controller.signInWithPassword('a@example.com', 'p')).rejects.toMatchObject({
+      issue: 'connection',
+    })
+    expect(f.adapter.signInWithPassword).not.toHaveBeenCalled()
+  })
+  it('asks for a new password after a reset link, until it is saved', async () => {
+    const f = fixture(async () => a, true)
+    await f.controller.start()
+    expect(f.controller.getSnapshot()).toMatchObject({ status: 'signed-in', recovery: true })
+    // A token refresh for the same user keeps the request; another user drops it.
+    f.event(a)
+    expect(f.controller.getSnapshot().recovery).toBe(true)
+    await f.controller.updatePassword('a-new-long-password')
+    expect(f.adapter.updatePassword).toHaveBeenCalledWith('a-new-long-password')
+    // The dialog says it is saved; closing it ends the request.
+    expect(f.controller.getSnapshot().recovery).toBe(true)
+    f.controller.finishRecovery()
+    expect(f.controller.getSnapshot().recovery).toBe(false)
+    const g = fixture(async () => a, true)
+    await g.controller.start()
+    g.event(b)
+    expect(g.controller.getSnapshot().recovery).toBeUndefined()
+  })
+  it('removes its own marker from the address with the code', () => {
+    let clean = ''
+    const result = consumeCallback(
+      new URL('https://app.test/rytta/?code=abc&auth=recovery#/'),
+      (url) => (clean = url),
+    )
+    expect(result).toMatchObject({ code: 'abc', recovery: true, failed: false })
+    expect(clean).toBe('/rytta/')
   })
 })

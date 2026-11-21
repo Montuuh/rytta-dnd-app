@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Alert, Button, Modal, Text, TextInput } from '@mantine/core'
+import { PasswordSettings } from './password-forms'
 import { useMediaQuery } from '@mantine/hooks'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Download, LoaderCircle, TriangleAlert, X } from 'lucide-react'
@@ -475,6 +476,7 @@ export function AccountSection({
   const [opened, setOpened] = useState(false)
   return (
     <div className="account-section">
+      <PasswordSettings />
       <div className="account-block">
         <h4>{t('account.export.heading')}</h4>
         <p className="account-copy">{t('account.export.copy')}</p>

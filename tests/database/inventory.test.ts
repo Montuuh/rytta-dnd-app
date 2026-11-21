@@ -95,13 +95,12 @@ describe('RYT-004 inventory', () => {
     const granted = await grant(c, ch, def, 3)
     await asUser(player)
     expect(
-      (
-        await db.query(
-          'select name, value_gp::float8 value_gp from public.item_definitions where id=$1',
-          [def],
-        )
-      ).rows,
-    ).toEqual([{ name: 'Poción de curación', value_gp: 50 }])
+      (await db.query('select name from public.item_definitions where id=$1', [def])).rows,
+    ).toEqual([{ name: 'Poción de curación' }])
+    // RYT-156: the value is the DM's; the Player cannot read it from the table.
+    await expect(
+      db.query('select value_gp from public.item_definitions where id=$1', [def]),
+    ).rejects.toThrow(/permission denied/)
     const key = randomUUID()
     const used = await use(c, granted.item_id, granted.revision, 1, key)
     expect(await use(c, granted.item_id, granted.revision, 1, key)).toEqual(used)
@@ -178,7 +177,7 @@ describe('RYT-004 inventory', () => {
           (await db.query(`select * from public.${table} where character_id=$1`, [ch])).rows,
         ).toHaveLength(0)
       expect(
-        (await db.query('select * from public.item_definitions where id=$1', [def])).rows,
+        (await db.query('select id from public.item_definitions where id=$1', [def])).rows,
       ).toHaveLength(0)
     }
     await asUser(dm)

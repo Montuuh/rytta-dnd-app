@@ -274,12 +274,19 @@ async function visibility(): Promise<Snapshot> {
       await asUser(id)
       // Rows are compared without columns added by later migrations (20261130120000,
       // 20261203120000).
-      for (const table of readTables)
+      for (const table of readTables) {
+        // Only the columns the actor may read (RYT-156 closes item_definitions.value_gp).
+        const columns = await scalar(
+          `select string_agg(quote_ident(attname), ', ' order by attnum) result from pg_attribute
+            where attrelid = '${schema}.${table}'::regclass and attnum > 0 and not attisdropped
+              and has_column_privilege(attrelid, attnum, 'select')`,
+        )
         result[`${schema}.${table}:${name}`] = await scalar(
           `select coalesce(string_agg(r, '|' order by r), '') result from (select
-            (to_jsonb(t) - array['party_level', 'dice_mode', 'roll_visibility', 'concentration'])::text r
-            from ${schema}.${table} t) x`,
+            (to_jsonb(t) - array['party_level', 'dice_mode', 'roll_visibility', 'concentration', 'value_gp'])::text r
+            from (select ${columns} from ${schema}.${table}) t) x`,
         )
+      }
     }
     await asAnon()
     for (const table of readTables)
@@ -295,7 +302,9 @@ async function visibility(): Promise<Snapshot> {
 const playerPlan = async (schema: string) => {
   await asUser(player)
   const plan = (
-    await db.query<{ 'QUERY PLAN': string }>(`explain select * from ${schema}.item_definitions`)
+    await db.query<{ 'QUERY PLAN': string }>(
+      `explain select id, name from ${schema}.item_definitions`,
+    )
   ).rows
     .map((row) => row['QUERY PLAN'])
     .join('\n')

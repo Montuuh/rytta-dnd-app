@@ -34,10 +34,15 @@ describe('security headers', () => {
       socket: ['wss://abc.supabase.co'],
     })
     const csp = contentSecurityPolicy({ html, backendUrl: 'https://abc.supabase.co' })
-    expect(csp).toContain("connect-src 'self' https://abc.supabase.co wss://abc.supabase.co")
+    expect(csp).toContain(
+      "connect-src 'self' https://abc.supabase.co wss://abc.supabase.co https://challenges.cloudflare.com",
+    )
+    // RYT-157: the Turnstile bot check is the only other script and frame origin.
+    expect(csp).toContain('frame-src https://challenges.cloudflare.com')
+    expect(csp).toMatch(/script-src [^;]*https:\/\/challenges\.cloudflare\.com/)
     expect(csp).toContain("img-src 'self' data: blob: https://abc.supabase.co")
     const demo = contentSecurityPolicy({ html, backendUrl: '' })
-    expect(demo).toContain("connect-src 'self';")
+    expect(demo).toContain("connect-src 'self' https://challenges.cloudflare.com;")
     expect(demo).not.toContain('supabase')
   })
 

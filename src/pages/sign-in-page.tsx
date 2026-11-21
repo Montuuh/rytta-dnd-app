@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Alert, Button, Text } from '@mantine/core'
 import { Backpack, Eye, Map as MapIcon, Store, Swords, UserPlus, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { AccountDeletedNotice, useAccountNotice, useAuth } from '@/features/auth'
+import { AccountDeletedNotice, EmailSignIn, useAccountNotice, useAuth } from '@/features/auth'
 import { ArtPlate } from '@/shared/ui/art'
 import { artUrl } from '@/shared/ui/art-url'
 import { ExampleTurn } from '@/shared/ui/example-turn'
@@ -94,6 +94,7 @@ export function SignInPage() {
             >
               {t('auth.google')}
             </Button>
+            <EmailSignIn />
             <Button
               className="landing-example"
               variant="outline"

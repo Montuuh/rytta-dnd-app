@@ -1,18 +1,46 @@
 export interface Identity {
   id: string
   email: string
+  /** RYT-157: the account can sign in with email and password (not only with Google). */
+  hasPassword?: boolean
 }
 export type AuthIssue = 'callback' | 'connection' | 'expired' | 'sign-out'
 export interface AuthSnapshot {
   status: 'loading' | 'signed-in' | 'signed-out'
   user: Identity | null
   issue: AuthIssue | null
+  /** RYT-157: signed in from a password reset link; the app asks for a new password. */
+  recovery?: boolean
+}
+/** RYT-157: what a password action can report. Never says whether an email has an account. */
+export type PasswordIssue =
+  'credentials' | 'unconfirmed' | 'weak' | 'same' | 'rate' | 'captcha' | 'reauth' | 'connection'
+export class PasswordFailure extends Error {
+  readonly issue: PasswordIssue
+  constructor(issue: PasswordIssue) {
+    super(issue)
+    this.issue = issue
+  }
+}
+/** RYT-157: the one password rule, also set in the hosted Auth settings. */
+export const passwordMinLength = 10
+export const passwordMeetsPolicy = (password: string) => [...password].length >= passwordMinLength
+export interface InitialSession {
+  user: Identity | null
+  recovery: boolean
 }
 export interface AuthAdapter {
-  initialize(): Promise<Identity | null>
+  initialize(): Promise<InitialSession>
   subscribe(listener: (user: Identity | null) => void): () => void
   signIn(): Promise<void>
   signOut(): Promise<void>
+  /** RYT-157 email and password. `captcha` is the Turnstile token when one is configured. */
+  signInWithPassword(email: string, password: string, captcha?: string): Promise<void>
+  /** Resolves when the confirmation email is on its way (or would be, for a known address). */
+  signUp(email: string, password: string, captcha?: string): Promise<void>
+  resendConfirmation(email: string, captcha?: string): Promise<void>
+  requestPasswordReset(email: string, captcha?: string): Promise<void>
+  updatePassword(password: string): Promise<void>
 }
 
 export class AuthFailure extends Error {
@@ -46,9 +74,14 @@ export class AuthController {
       this.listeners.delete(listener)
     }
   }
-  private publish(user: Identity | null, issue: AuthIssue | null = null) {
+  private publish(user: Identity | null, issue: AuthIssue | null = null, recovery = false) {
     if (this.snapshot.user?.id !== user?.id || !user) this.clearPrivate()
-    this.snapshot = { status: user ? 'signed-in' : 'signed-out', user, issue }
+    this.snapshot = {
+      status: user ? 'signed-in' : 'signed-out',
+      user,
+      issue,
+      ...(user && recovery ? { recovery: true } : {}),
+    }
     this.listeners.forEach((listener) => listener())
   }
   start = () => {
@@ -61,17 +94,22 @@ export class AuthController {
           return
         }
         if (!this.loggingOut)
-          this.publish(user, !user ? (this.snapshot.user ? 'expired' : this.snapshot.issue) : null)
+          this.publish(
+            user,
+            !user ? (this.snapshot.user ? 'expired' : this.snapshot.issue) : null,
+            Boolean(user && this.snapshot.recovery && this.snapshot.user?.id === user.id),
+          )
       })
       let timer: ReturnType<typeof setTimeout> | undefined
       try {
-        const user = await Promise.race([
+        const initial = await Promise.race([
           this.adapter.initialize(),
           new Promise<never>((_, reject) => {
             timer = setTimeout(() => reject(new AuthFailure('connection')), initializeTimeoutMs)
           }),
         ])
-        this.publish(latest === undefined ? user : latest)
+        const user = latest === undefined ? initial.user : latest
+        this.publish(user, null, initial.recovery && user?.id === initial.user?.id)
       } catch (error) {
         this.publish(null, error instanceof AuthFailure ? error.issue : 'connection')
       } finally {
@@ -111,4 +149,28 @@ export class AuthController {
       this.loggingOut = false
     }
   }
+  /** RYT-157: the new password is saved (or the user chose to keep the old one). */
+  finishRecovery = () => {
+    if (!this.snapshot.recovery) return
+    this.snapshot = { ...this.snapshot, recovery: false }
+    this.listeners.forEach((listener) => listener())
+  }
+  private password = async (action: () => Promise<void>) => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false)
+      throw new PasswordFailure('connection')
+    try {
+      await action()
+    } catch (error) {
+      throw error instanceof PasswordFailure ? error : new PasswordFailure('connection')
+    }
+  }
+  signInWithPassword = (email: string, password: string, captcha?: string) =>
+    this.password(() => this.adapter.signInWithPassword(email.trim(), password, captcha))
+  signUp = (email: string, password: string, captcha?: string) =>
+    this.password(() => this.adapter.signUp(email.trim(), password, captcha))
+  resendConfirmation = (email: string, captcha?: string) =>
+    this.password(() => this.adapter.resendConfirmation(email.trim(), captcha))
+  requestPasswordReset = (email: string, captcha?: string) =>
+    this.password(() => this.adapter.requestPasswordReset(email.trim(), captcha))
+  updatePassword = (password: string) => this.password(() => this.adapter.updatePassword(password))
 }

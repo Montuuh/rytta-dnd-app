@@ -322,3 +322,117 @@ describe('RYT-102 options paid from a resource and once-per-turn marks', () => {
     ).toBe('2d6')
   })
 })
+
+/** English glossary text of an entry, summary and blocks. */
+type Entry = { summary?: string; blocks?: unknown }
+const [english] = Object.values(
+  import.meta.glob<Record<string, Entry>>('../../glossary/content/en.json', {
+    eager: true,
+    import: 'default',
+  }),
+)
+const words = (value: unknown): string[] =>
+  typeof value === 'string'
+    ? [value]
+    : Array.isArray(value)
+      ? value.flatMap(words)
+      : value && typeof value === 'object'
+        ? Object.values(value).flatMap(words)
+        : []
+/** SRD wording of a limited use: uses, recharges, once per turn. */
+const limited =
+  /once you use|can.t use (it|this feature|this trait) again|regain (all )?expended uses|number of times equal|expend a use|once per turn|once on each of your turns|short or long rest|finish a (short|long) rest|start of your next turn|until you roll initiative|(short|long) rest/i
+/**
+ * SRD 5.2.1 features whose text reads like a limited use but that need no tracker of their own,
+ * with the reason. A new limited-use feature fails the audit until it gets a tracker, an option or
+ * an entry here.
+ */
+const untracked: Record<string, string> = {
+  'feature.barbarian-improved-brutal-strike':
+    'more Brutal Strike effects; the mark is Brutal Strike',
+  'feature.barbarian-reckless-attack': 'a choice each turn that lasts until the next one, no use',
+  'feature.barbarian-relentless-rage': 'no limit: the DC rises by 5 per use and resets on a rest',
+  'feature.barbarian-weapon-mastery': 'mastery swap on a Long Rest, not a use',
+  'feature.bard-font-of-inspiration': 'changes the Bardic Inspiration recharge, tracked there',
+  'feature.bard-spellcasting': 'spell slots',
+  'feature.bard-superior-inspiration': 'refills Bardic Inspiration on Initiative, tracked there',
+  'feature.cleric-greater-divine-intervention':
+    'lengthens the Divine Intervention recharge (2d4 Long Rests, by hand); tracked there',
+  'feature.cleric-spellcasting': 'spell slots',
+  'feature.druid-land-circle-of-the-land-spells': 'prepared spells chosen on a Long Rest',
+  'feature.druid-spellcasting': 'spell slots',
+  'feature.fighter-weapon-mastery': 'mastery swap on a Long Rest, not a use',
+  'feature.paladin-devotion-smite-of-protection': 'a lasting effect, no use',
+  'feature.paladin-spellcasting': 'spell slots',
+  'feature.paladin-weapon-mastery': 'mastery swap on a Long Rest, not a use',
+  'feature.ranger-hunter-defensive-tactics': 'option swapped on a rest, no use',
+  'feature.ranger-spellcasting': 'spell slots',
+  'feature.ranger-weapon-mastery': 'mastery swap on a Long Rest, not a use',
+  'feature.rogue-weapon-mastery': 'mastery swap on a Long Rest, not a use',
+  'feature.sorcerer-spellcasting': 'spell slots',
+  'feature.species-elf-elven-lineage': 'tracked per lineage spell',
+  'feature.species-elf-trance': 'a shorter Long Rest, no use',
+  'feature.species-gnome-gnomish-lineage': 'tracked per lineage spell',
+  'feature.species-human-resourceful': 'Heroic Inspiration on the sheet',
+  'feature.species-tiefling-fiendish-legacy': 'tracked per lineage spell',
+  'feature.warlock-fiend-fiendish-resilience': 'resistance chosen on a rest, no use',
+  'feature.warlock-pact-magic': 'Pact Magic slots',
+  'feature.wizard-memorize-spell': 'a spell swap on a Short Rest, no use',
+  'feature.wizard-spell-mastery': 'spells cast at will, no use',
+  'feature.wizard-spellcasting': 'spell slots',
+}
+
+describe('RYT-102 SRD coverage of limited-use features', () => {
+  const features = index!.filter((row) => row.cat === 'feature')
+  const text = (id: string) => words([english![id]?.summary, english![id]?.blocks]).join(' ')
+  const covered = new Set([
+    ...managedResources.map((spec) => spec.feature),
+    ...resourceActions.map((action) => action.feature),
+  ])
+
+  it('gives every limited-use class, subclass, species and feat feature a tracker or a reason', () => {
+    const found = features.filter((row) => limited.test(text(row.id)))
+    // The audit reads the whole SRD feature list, not a sample.
+    expect(found.length).toBeGreaterThan(80)
+    const missing = found
+      .map((row) => row.id)
+      .filter((id) => !covered.has(id) && !(id in untracked))
+    expect(missing).toEqual([])
+  })
+
+  it('keeps the reasons current: each names a limited-looking feature that has no tracker', () => {
+    for (const id of Object.keys(untracked)) {
+      expect(rows.has(id), id).toBe(true)
+      expect(limited.test(text(id)), id).toBe(true)
+      expect(covered.has(id), id).toBe(false)
+    }
+  })
+
+  it('marks the once-per-turn options and limited feats the audit found', () => {
+    const cleric = sync({ ...emptyBuild(), classKey: 'cleric' }, 7)
+    expect(keys(cleric)).toContain('cleric-divine-strike')
+    expect(keys(sync({ ...emptyBuild(), classKey: 'cleric' }, 6))).not.toContain(
+      'cleric-divine-strike',
+    )
+    const hunter = sync({ ...emptyBuild(), classKey: 'ranger', subclassKey: 'hunter' }, 11)
+    expect(keys(hunter)).toContain('ranger-superior-hunters-prey')
+    expect(resourceSpec('ranger-superior-hunters-prey')?.per).toBe('turn')
+    const feat = (ref: string) => ({
+      id: `lib-${ref}`,
+      name: ref,
+      source: 'feat' as const,
+      description: '',
+      ref,
+    })
+    const boons = sync(
+      {
+        ...emptyBuild(),
+        classKey: 'fighter',
+        features: [feat('feature.feat-boon-of-fate'), feat('feature.feat-grappler')],
+      },
+      19,
+    )
+    expect(keys(boons)).toEqual(expect.arrayContaining(['feat-boon-of-fate', 'feat-grappler']))
+    expect(resourceSpec('feat-boon-of-fate')?.reset(19)).toBe('short')
+  })
+})

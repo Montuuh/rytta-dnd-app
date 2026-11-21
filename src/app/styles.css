@@ -2678,6 +2678,13 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
   padding: 10px 0;
   border-bottom: 1px solid var(--app-border);
 }
+.cart-line-item {
+  min-width: 0;
+}
+.cart-line-item > .user-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .sell-row,
 .admin-listing {
   display: flex;

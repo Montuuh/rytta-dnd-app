@@ -7,17 +7,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from 'react'
-import {
-  Alert,
-  Button,
-  Drawer,
-  Menu,
-  Popover,
-  Stack,
-  Switch,
-  Text,
-  UnstyledButton,
-} from '@mantine/core'
+import { Button, Drawer, Menu, Popover, Stack, Switch, Text, UnstyledButton } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
   Eye,
@@ -38,6 +28,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   CampaignViewContext,
   campaignsQuery,
+  keepsStaleData,
   leaveBlock,
   LeaveCampaignDialog,
   LeaveCampaignItem,
@@ -51,6 +42,9 @@ import { artUrl } from '@/shared/ui/art-url'
 import { RecoveryDialog, UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
+import { ConnectionStatus, ConnectionStrip } from './connection'
+import { useConnection } from './use-connection'
+import { ConnectionContext } from '@/shared/lib/connection-context'
 import { SettingsPanel } from '@/pages/settings-panel'
 
 /** Settings links into a campaign Members page leave the drawer behind them. */
@@ -289,16 +283,7 @@ export function Layout() {
   const username = useUsername().data
   const contentEditor = useContentEditor()
   const live = config.VITE_DATA_MODE === 'supabase'
-  const [online, setOnline] = useState(navigator.onLine)
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine)
-    window.addEventListener('online', update)
-    window.addEventListener('offline', update)
-    return () => {
-      window.removeEventListener('online', update)
-      window.removeEventListener('offline', update)
-    }
-  }, [])
+  const connection = useConnection()
   const [previewScope, setPreviewScope] = useState<string | null>(null)
   const [previewUserId, setPreviewUserId] = useState<string | null>(null)
   const [previewLabel, setPreviewLabel] = useState<string | null>(null)
@@ -342,7 +327,11 @@ export function Layout() {
     ...campaignsQuery(state.user?.id ?? ''),
     enabled: live && !!state.user && !!campaignId,
   })
-  const campaign = !campaigns.isError ? campaigns.data?.find((c) => c.id === campaignId) : undefined
+  // RYT-013: a failed refresh keeps the campaign's header and navigation, as the screen keeps its data.
+  const campaign =
+    !campaigns.isError || keepsStaleData(campaigns.data, campaigns.error)
+      ? campaigns.data?.find((c) => c.id === campaignId)
+      : undefined
   const scope = `${state.user?.id}:${campaignId}`
   const playerPreview = campaign?.role === 'dm' && previewScope === scope
   const members = useQuery({
@@ -678,6 +667,7 @@ export function Layout() {
             </header>
             {/* The preview and group-rest notices stick together under the header (RYT-080). */}
             <div className="top-notices">
+              {live && <ConnectionStrip phase={connection.phase} retry={connection.retry} />}
               {playerPreview && (
                 <div className="preview-banner" role="status">
                   <Eye size={18} aria-hidden="true" />
@@ -693,15 +683,13 @@ export function Layout() {
               )}
               {live && campaign && <RestBanner />}
             </div>
+            {live && <ConnectionStatus phase={connection.phase} />}
             <main id="main-content" ref={mainRef} tabIndex={-1}>
-              {live && !online && (
-                <Alert role="status" mb="lg">
-                  {t('campaign.offline')}
-                </Alert>
-              )}
-              <SettingsDrawerContext.Provider value={settings.open}>
-                <Outlet key={state.user?.id ?? 'guest'} />
-              </SettingsDrawerContext.Provider>
+              <ConnectionContext.Provider value={connection.phase}>
+                <SettingsDrawerContext.Provider value={settings.open}>
+                  <Outlet key={state.user?.id ?? 'guest'} />
+                </SettingsDrawerContext.Provider>
+              </ConnectionContext.Provider>
             </main>
           </div>
           {showNav && <BottomNavigation entries={entries} />}

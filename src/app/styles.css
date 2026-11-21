@@ -301,6 +301,74 @@ a.brand-bar {
 .top-notices:empty {
   display: none;
 }
+
+/* RYT-013: connection line under the header. Opaque, so content scrolling under it never shows. */
+.connection-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  min-height: 44px;
+  padding: 6px max(16px, calc((100% - var(--content-max)) / 2 + 24px));
+  background: color-mix(in srgb, var(--warn) 16%, var(--app-surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 45%, var(--app-border));
+  color: var(--app-text);
+  font-size: 0.95rem;
+}
+.connection-strip > svg,
+.connection-strip > .mantine-Loader-root {
+  color: var(--warn);
+  flex-shrink: 0;
+}
+.connection-strip[data-phase='recovered'] {
+  background: color-mix(in srgb, var(--success) 16%, var(--app-surface));
+  border-bottom-color: color-mix(in srgb, var(--success) 45%, var(--app-border));
+}
+.connection-strip[data-phase='recovered'] > svg {
+  color: var(--success);
+}
+.connection-strip[data-phase='failed'] {
+  background: color-mix(in srgb, var(--danger) 14%, var(--app-surface));
+  border-bottom-color: color-mix(in srgb, var(--danger) 45%, var(--app-border));
+}
+.connection-strip[data-phase='failed'] > svg {
+  color: var(--danger);
+}
+.connection-strip-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-weight: 600;
+}
+.connection-retry {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+/* RYT-128: a screen that could not load because the device is offline. */
+.offline-placeholder {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 28px 20px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+}
+.offline-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.offline-inline > svg {
+  color: var(--warn);
+  flex-shrink: 0;
+}
+.offline-placeholder-icon {
+  color: var(--warn);
+}
+.offline-placeholder-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.15rem;
+}
 .preview-banner {
   display: flex;
   align-items: center;

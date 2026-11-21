@@ -425,12 +425,13 @@
       "title": "Realtime and recovery",
       "priority": "P0",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-003"],
       "sources": [
         "User: multi-device companion",
         "D&D Sync: live sync",
-        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests."
+        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests.",
+        "Delivered 2026-11-21 with RYT-128 (block B): app-wide connection line, refetch on reconnect with a backend health check, stale data kept, channels removed on identity change; two-client realtime verified with real sessions in RYT-119. No new two-account identity-switch browser test."
       ],
       "scope": "Scoped subscriptions, reconnect/refetch and truthful network state.",
       "acceptance": [
@@ -440,7 +441,7 @@
         "Refetch on reconnect and foreground without private-data leakage."
       ],
       "validation": ["Two-client Supabase Realtime tests", "Network loss and identity-switch e2e"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-013/validation.md", "docs/offline-shell.md"]
     },
     {
       "id": "RYT-014",
@@ -4151,10 +4152,11 @@
       "title": "Offline shell: a reload without signal opens the app",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-117"],
       "sources": [
-        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker."
+        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker.",
+        "Delivered 2026-11-21 with RYT-013 (block B) after the owner chose the options P1 A, P2 A, P3 A; independent UI review PASS."
       ],
       "scope": "Add a minimal service worker that caches the app shell so a reload without signal opens the app with its offline banner, with an update path that works with the version notice from RYT-117. Non-goals: offline data or mutations, caching private campaign data or authenticated responses, background sync, push notifications, autonomous release.",
       "acceptance": [
@@ -4170,7 +4172,7 @@
         "npm run test:e2e (offline reload and update notice on the production subpath at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-128/validation.md", "docs/offline-shell.md"]
     },
     {
       "id": "RYT-129",
@@ -4996,6 +4998,45 @@
         "RYT-119 real-session checks run with them"
       ],
       "evidence": ["docs/test-accounts.md", "docs/evidence/RYT-119/validation.md"]
+    },
+    {
+      "id": "RYT-160",
+      "title": "Offline reload inside a campaign keeps the campaign name and navigation",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-128"],
+      "sources": [
+        "Independent UI review of RYT-128 and RYT-013, 2026-11-21 (M1): a cold reload without signal inside a campaign shows the offline placeholder without the campaign name, its navigation or the screen title, because no campaign data is stored on the device."
+      ],
+      "scope": "Decide with the owner whether the device may keep the minimum needed to draw a campaign shell offline (campaign id, name, role and enabled modules), and if so keep only that, cleared on sign-out and identity change. Non-goals: offline campaign data, offline mutations.",
+      "acceptance": [
+        "The owner decides whether the campaign name, role and modules may be kept on the device.",
+        "If yes: a cold offline reload inside a campaign shows its name and navigation with the offline line, and nothing else from the campaign is stored.",
+        "If no: the decision is recorded and the placeholder offers a way back to My campaigns."
+      ],
+      "validation": [
+        "owner decision record",
+        "browser test of the cold offline reload inside a campaign at 390 and 820 px"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-161",
+      "title": "Keep data after a failed refresh on every screen, and an exact recovery message",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-013"],
+      "sources": ["Independent UI review of RYT-013, 2026-11-21 (non-blocking notes)."],
+      "scope": "Apply the RYT-013 rule (keep what is on screen after a refetch fails for a connection or server reason; show the error above it otherwise) to the remaining screens: party, sheet, inventory, shops, glossary, journal and combat. When the 6 s limit ends the refresh before every screen has loaded, the line says connection back without claiming the data is up to date.",
+      "acceptance": [
+        "Each listed screen keeps its data after a failed refetch and shows one error with Retry, or none when the connection line already says it.",
+        "The recovery line says up to date only when every query on screen has refreshed.",
+        "Browser tests at 390 and 820 px for at least the party, inventory and combat screens."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review"],
+      "evidence": []
     }
   ]
 }

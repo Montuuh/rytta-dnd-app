@@ -8,6 +8,7 @@ import '@mantine/notifications/styles.css'
 import './app/styles.css'
 import './app/class-themes.css'
 import { App } from './app/app'
+import { registerOfflineShell } from './shared/lib/offline-shell'
 
 // The saved language's catalogue is one lazy chunk: render only once it is in, so no key shows
 // raw. When it cannot be fetched a fixed bilingual screen offers a retry instead.
@@ -24,3 +25,4 @@ function show(ready: boolean) {
   )
 }
 void startI18n().then(show)
+registerOfflineShell(import.meta.env.BASE_URL, import.meta.env.PROD)

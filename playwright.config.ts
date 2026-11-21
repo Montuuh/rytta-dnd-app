@@ -35,7 +35,13 @@ export default defineConfig({
   // weakens an assertion.
   expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
-  use: { baseURL: 'http://127.0.0.1:4173/rytta-dnd-app/', trace: 'retain-on-failure' },
+  // RYT-128: the offline shell worker is off for every spec except the one that tests it, so caching
+  // never changes what another spec sees.
+  use: {
+    baseURL: 'http://127.0.0.1:4173/rytta-dnd-app/',
+    trace: 'retain-on-failure',
+    serviceWorkers: 'block',
+  },
   // Bundles only: type checking is part of npm run check, not of every e2e start.
   webServer: [
     {
@@ -85,19 +91,19 @@ export default defineConfig({
     {
       name: 'desktop',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     // Rytta targets phones and tablets. Signed-in journeys run at 820px and 390px; the desktop
@@ -114,13 +120,13 @@ export default defineConfig({
         name: 'identity-tablet',
         viewport: { width: 820, height: 1180 },
         specs:
-          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth',
+          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell',
       },
       {
         name: 'identity-mobile',
         viewport: { width: 390, height: 844 },
         specs:
-          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth',
+          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell',
       },
     ].map(({ name, viewport, specs }) => ({
       name,

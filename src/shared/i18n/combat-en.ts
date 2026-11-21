@@ -388,7 +388,7 @@ export const combatEn = {
   'combat.death.undo': 'Undo',
   'combat.death.undoLabel': 'Undo my last save: {{outcome}}',
   'combat.death.undoneNow': 'Save undone. You can roll again.',
-  'combat.network.offline': 'Offline · {{seconds}} s ago',
+  'combat.network.offline': 'Last updated {{seconds}} s ago',
   'combat.network.offlineNow': 'Offline',
   'combat.network.retrying': 'Retrying…',
   'combat.network.stillOffline': 'Still offline. Try again in a few seconds.',

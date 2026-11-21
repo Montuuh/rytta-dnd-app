@@ -109,7 +109,7 @@ export function headersFile(options: { html: string; backendUrl: string | undefi
     ...['/art/*', '/bestiary/*', '/tabletop/*', '/icons/*', '/vendor/*'].map(
       (path): [string, string[]] => [path, [artCache]],
     ),
-    ...['/', '/index.html', '/version.json', '/manifest.webmanifest'].map(
+    ...['/', '/index.html', '/version.json', '/manifest.webmanifest', '/sw.js'].map(
       (path): [string, string[]] => [path, [noCache]],
     ),
   ]

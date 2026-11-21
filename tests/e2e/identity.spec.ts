@@ -694,14 +694,15 @@ test('self-demotion clears management views and offline actions are not queued',
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
 })
 
-test('failed refresh hides cached campaign content and offers recovery', async ({ page }) => {
+// RYT-013: a failed refresh keeps what was on screen and says so above it, with Retry.
+test('failed refresh keeps cached campaign content and offers recovery', async ({ page }) => {
   const f = await identityFixture(page)
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
   f.failCampaigns()
   await page.getByRole('button', { name: 'Actualizar', exact: true }).click()
   await expect(page.getByRole('alert').first()).toContainText('No se pudo cargar')
-  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeEnabled()
 })
 
@@ -782,7 +783,8 @@ test('invitation panel distinguishes loading, empty and failed refresh with reco
   fail = true
   await panel.getByRole('button', { name: 'Actualizar', exact: true }).click()
   await expect(panel.getByRole('alert')).toBeVisible()
-  await expect(panel.getByText('No tienes invitaciones pendientes.')).toHaveCount(0)
+  // RYT-013: the last good answer stays under the error.
+  await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
   fail = false
   await panel.getByRole('button', { name: 'Reintentar', exact: true }).click()
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()

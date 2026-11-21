@@ -838,6 +838,7 @@ export async function identityFixture(
     if (method === 'get_shared_session_recap') return respond('')
     if (url.pathname.includes('/auth/v1/')) {
       if (method === 'logout') return route.fulfill({ status: 204 })
+      if (method === 'health') return respond({ name: 'GoTrue' })
       if (method === 'user' && request.method() === 'PUT')
         return body.password === 'same-as-before-1'
           ? respond({ error_code: 'same_password', msg: 'same_password' }, 422)

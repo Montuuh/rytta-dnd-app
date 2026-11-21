@@ -31,7 +31,7 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
   'legal.privacy.collect.p1':
     'Solo lo que la aplicación necesita para iniciar tu sesión y llevar tus partidas:',
   'legal.privacy.collect.l1':
-    'El correo y el nombre de tu cuenta de Google, que recibimos cuando inicias sesión con Google mediante Supabase Auth. Rytta nunca ve tu contraseña de Google.',
+    'Tu correo y, si entras con Google, el nombre de tu cuenta de Google, que recibimos mediante Supabase Auth. Si creas la cuenta con email y contraseña, Supabase Auth guarda solo un resumen irreversible (hash) de la contraseña. Rytta nunca ve tus contraseñas.',
   'legal.privacy.collect.l2':
     'Tu nombre de usuario, que eliges tú y que ven los miembros de tus campañas.',
   'legal.privacy.collect.l3':
@@ -43,7 +43,7 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
 
   'legal.privacy.where.title': 'Dónde se guardan',
   'legal.privacy.where.p1':
-    'Los datos de la cuenta y de las partidas y los archivos subidos se guardan en un proyecto de Supabase en la UE (región eu-west-1). Supabase Auth gestiona el inicio de sesión junto con Google.',
+    'Los datos de la cuenta y de las partidas y los archivos subidos se guardan en un proyecto de Supabase en la UE (región eu-west-1). Supabase Auth gestiona el inicio de sesión con Google o con email y contraseña. Los correos de confirmación de cuenta y de recuperación de contraseña se envían a través de Brevo, que recibe tu correo para entregarlos. Al entrar o crear la cuenta con email, Cloudflare Turnstile comprueba que no eres un programa automático; para ello ve datos técnicos de tu navegador y tu dirección IP.',
   'legal.privacy.where.p2':
     'Los archivos subidos están en almacenamiento privado y cada campaña tiene una cuota de espacio para sus imágenes. Cuando reemplazas una imagen, el archivo anterior se borra. Las páginas de la aplicación son archivos estáticos servidos desde Cloudflare y, durante la transición, también desde GitHub Pages; como cualquier alojamiento web, ven datos técnicos de la petición, como tu dirección IP, cuando tu navegador las carga. Para ofrecerte actualizaciones, la aplicación también descarga de ese mismo sitio un pequeño archivo con el número de versión; no envía datos tuyos.',
 
@@ -78,7 +78,7 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
 
   'legal.privacy.third.title': 'Terceros',
   'legal.privacy.third.p1':
-    'Google (inicio de sesión), Supabase (base de datos, inicio de sesión y archivos) y Cloudflare y GitHub (alojamiento de las páginas, este último durante la transición) tratan datos como se describe arriba. Los dados 3D, las ilustraciones y el texto de reglas forman parte de la aplicación y se cargan desde el mismo sitio; no envían tus datos a nadie.',
+    'Google (inicio de sesión con Google), Supabase (base de datos, inicio de sesión y archivos), Brevo (envío de los correos de cuenta), Cloudflare (alojamiento de las páginas y comprobación anti-bots Turnstile) y GitHub (alojamiento de las páginas durante la transición) tratan datos como se describe arriba. Los dados 3D, las ilustraciones y el texto de reglas forman parte de la aplicación y se cargan desde el mismo sitio; no envían tus datos a nadie.',
 
   'legal.privacy.changes.title': 'Cambios en esta política',
   'legal.privacy.changes.p1':

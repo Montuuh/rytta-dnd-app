@@ -18,6 +18,8 @@ const unconfigured = {
   VITE_CONTACT_EMAIL: '',
   VITE_OWNER_NAME: '',
   VITE_SITE_URL: '',
+  // RYT-157: no real bot check in test builds, even when a local .env sets the site key.
+  VITE_TURNSTILE_SITE_KEY: '',
   // Live-mode builds fail without an owner and contact; the test builds opt out explicitly.
   RYTTA_ALLOW_UNPUBLISHED_OWNER: '1',
 }

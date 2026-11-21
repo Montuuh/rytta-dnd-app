@@ -64,9 +64,9 @@ describe('legal content', () => {
     expect(legalEs['legal.terms.law.p1']).not.toContain('pendiente')
   })
 
-  it('is published: the owner approved both texts, effective 2026-11-17', () => {
+  it('is published, effective 2026-11-21 after the RYT-157 privacy update', () => {
     expect(LEGAL_DRAFT).toBe(false)
-    expect(LEGAL_EFFECTIVE_DATE).toBe('2026-11-17')
+    expect(LEGAL_EFFECTIVE_DATE).toBe('2026-11-21')
     expect(fill(legalEs['legal.effective'], { date: '17 de noviembre de 2026' })).toBe(
       'En vigor desde el 17 de noviembre de 2026',
     )
@@ -87,5 +87,13 @@ describe('legal content', () => {
 
   it('keeps both languages complete', () => {
     expect(Object.keys(legalEs).sort()).toEqual(Object.keys(legalEn).sort())
+  })
+  it('names every service that handles sign-in data (RYT-157)', () => {
+    for (const name of ['Google', 'Supabase', 'Brevo', 'Cloudflare', 'Turnstile']) {
+      expect(legalEs['legal.privacy.third.p1']).toContain(name)
+      expect(legalEn['legal.privacy.third.p1']).toContain(name)
+    }
+    expect(legalEs['legal.privacy.collect.l1']).toContain('contraseña')
+    expect(legalEn['legal.privacy.collect.l1']).toContain('password')
   })
 })

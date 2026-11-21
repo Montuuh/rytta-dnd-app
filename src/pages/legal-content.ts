@@ -4,11 +4,12 @@ export type LegalKey = keyof typeof legalEn
 
 /**
  * RYT-115: true shows the draft notice and "Borrador del …"; false (the owner approved both texts
- * on 2026-11-17) shows the effective date. This is the only switch.
+ * on 2026-11-17) shows the effective date. This is the only switch. The privacy policy changed on
+ * 2026-11-21 (RYT-157: email sign-in, Brevo and Cloudflare Turnstile), so its date moved with it.
  */
 export const LEGAL_DRAFT = false
 /** The day both documents take effect (ISO date, shown in the visitor's language). */
-export const LEGAL_EFFECTIVE_DATE = '2026-11-17'
+export const LEGAL_EFFECTIVE_DATE = '2026-11-21'
 
 export type LegalKind = 'privacy' | 'terms'
 export type LegalBlock =

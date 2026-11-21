@@ -194,7 +194,7 @@ test('RYT-157 a signed-in user adds or changes the password in the settings', as
   const settings = page.getByRole('dialog', { name: 'Ajustes' })
   await expect(settings).toHaveCSS('opacity', '1')
   // A Google-only account adds a password; the field takes focus, Cancel returns it.
-  const add = settings.getByRole('button', { name: 'Añadir contraseña' })
+  const add = settings.getByRole('button', { name: 'Elegir contraseña' })
   await add.click()
   const field = settings.getByRole('textbox', { name: 'Nueva contraseña', exact: true })
   await expect(field).toBeFocused()

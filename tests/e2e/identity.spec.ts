@@ -111,7 +111,7 @@ test('a DM copies invitation instructions and a player accepts from a separate b
     await dm.goto(`./#/campaign/${campaignId}/members`)
     await dm.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
     const dialog = dm.getByRole('dialog', { name: 'Invitar jugador' })
-    await dialog.getByRole('textbox', { name: 'Correo de la cuenta de Google' }).fill(accountEmail)
+    await dialog.getByRole('textbox', { name: 'Correo del jugador' }).fill(accountEmail)
     await dialog.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
     await dialog.getByRole('button', { name: 'Copiar instrucciones' }).click()
     await expect(dialog.getByRole('status')).toHaveText('Instrucciones copiadas')
@@ -343,7 +343,7 @@ test('DM invites, cancels and hands over before leaving; campaign routes stay sc
   await expect(page.getByRole('heading', { name: 'Centro de mando DM', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Abandonar campaña', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
-  await page.getByLabel('Correo de la cuenta de Google').fill('new@example.com')
+  await page.getByLabel('Correo del jugador').fill('new@example.com')
   await page
     .getByRole('dialog')
     .getByRole('button', { name: 'Invitar jugador', exact: true })
@@ -675,7 +675,7 @@ test('self-demotion clears management views and offline actions are not queued',
   await expect(page.getByRole('heading', { name: 'Centro de mando DM', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Invitar jugador', exact: true }).click()
   await context.setOffline(true)
-  await page.getByLabel('Correo de la cuenta de Google').fill('offline@example.com')
+  await page.getByLabel('Correo del jugador').fill('offline@example.com')
   await page
     .getByRole('dialog')
     .getByRole('button', { name: 'Invitar jugador', exact: true })

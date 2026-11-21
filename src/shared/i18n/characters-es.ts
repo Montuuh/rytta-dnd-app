@@ -26,7 +26,7 @@ export const charactersEs = {
   'characters.you': 'Tu personaje',
   'characters.invite': 'Invitar jugador',
   'characters.inviteHint':
-    'Invita un correo de Google a este personaje. Se acepta desde Mi cuenta. No se envía un email. Una nueva invitación cancela la anterior.',
+    'Invita un correo a este personaje. Se acepta desde Mi cuenta. No se envía un email. Una nueva invitación cancela la anterior.',
   'characters.invited': 'Invitación creada. Puedes gestionarla en Miembros e invitaciones.',
   'characters.edit': 'Editar recursos',
   'characters.gold': 'Oro',

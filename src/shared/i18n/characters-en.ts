@@ -25,7 +25,7 @@ export const charactersEn = {
   'characters.you': 'Your character',
   'characters.invite': 'Invite Player',
   'characters.inviteHint':
-    'Invite a Google email to this character. They accept from My account. No email is sent. Reissuing cancels the previous invitation.',
+    'Invite an email to this character. They accept from My account. No email is sent. Reissuing cancels the previous invitation.',
   'characters.invited': 'Invitation created. Manage pending invitations in Members & invitations.',
   'characters.edit': 'Edit resources',
   'characters.gold': 'Gold',

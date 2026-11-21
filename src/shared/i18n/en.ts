@@ -115,7 +115,7 @@ export const en = {
   'settings.demoDescription':
     'Sample content is local and read-only. No account, connection or saved progress is implied.',
   'settings.backendDescription':
-    'Google sign-in and campaign membership use your configured Supabase project. Gameplay modules are still planned.',
+    'Sign-in and campaign membership use your configured Supabase project. Gameplay modules are still planned.',
   'settings.connection': 'Backend configuration: {{status}}.',
   'settings.provided': 'provided (connection not verified)',
   'settings.missing': 'not provided',

@@ -4921,7 +4921,7 @@
       "title": "Sign in with email and password beside Google: sign-up, email confirmation and password reset",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Owner request 2026-11-21: offer the usual email and password sign-in next to Google (chosen over a one-time email code as the more familiar option). Today only people with a Google account can enter, and Google brand verification (RYT-122) is still pending."

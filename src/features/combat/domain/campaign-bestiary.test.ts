@@ -59,7 +59,10 @@ describe('RYT-094 campaign bestiary from packs', () => {
       'srd:goblin',
       'srd:abcdef12--mammoth',
     ])
-    expect(list.find((i) => i.key === 'hb:my-yeti')).toMatchObject({ packId: north.id, pack: 'Norte' })
+    expect(list.find((i) => i.key === 'hb:my-yeti')).toMatchObject({
+      packId: north.id,
+      pack: 'Norte',
+    })
   })
 
   it('leaves out hidden creatures with their versions, and turned-off packs', () => {

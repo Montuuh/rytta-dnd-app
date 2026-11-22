@@ -109,7 +109,8 @@ export function useCreatureCatalog(campaignId: string) {
     [indexKey, packList],
   )
   const blocks = useMemo(
-    () => Object.assign({}, ...bodiesData.map((d) => d?.monsters ?? {})) as Record<string, StatBlock>,
+    () =>
+      Object.assign({}, ...bodiesData.map((d) => d?.monsters ?? {})) as Record<string, StatBlock>,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [bodiesKey, packList, language],
   )
@@ -173,7 +174,10 @@ export function useCreatureCatalog(campaignId: string) {
     /** Pack creatures this campaign lists. */
     officialCount: items.filter((item) => item.source === 'srd').length,
     /** Pack creatures the app could not read (a custom pack with incomplete entries). */
-    unreadable: indexData.reduce((sum, d, at) => sum + (packList[at]?.enabled ? (d?.unreadable ?? 0) : 0), 0),
+    unreadable: indexData.reduce(
+      (sum, d, at) => sum + (packList[at]?.enabled ? (d?.unreadable ?? 0) : 0),
+      0,
+    ),
     pending: packs.isPending || templates.isPending || indexes.some((q) => q.isPending),
     bodiesPending: bodies.some((q) => q.isPending),
     error:
@@ -182,7 +186,8 @@ export function useCreatureCatalog(campaignId: string) {
       indexes.some((q) => q.isError) ||
       bodies.some((q) => q.isError),
     /** RYT-054: the packs, a pack's creatures or the campaign creatures failed with nothing cached. */
-    dataError: (packs.isError && !packs.data) || (templates.isError && !templates.data) || indexFailed,
+    dataError:
+      (packs.isError && !packs.data) || (templates.isError && !templates.data) || indexFailed,
     retry: () => {
       void packs.refetch()
       void templates.refetch()

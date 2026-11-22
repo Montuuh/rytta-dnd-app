@@ -341,9 +341,7 @@ function CreatureForm({
               },
             ].filter((g) => g.items.length > 0)}
           />
-          {noOfficial && (
-            <OfficialElsewhere campaignId={campaignId} />
-          )}
+          {noOfficial && <OfficialElsewhere campaignId={campaignId} />}
           <TextInput
             required
             label={t('combat.add.name')}

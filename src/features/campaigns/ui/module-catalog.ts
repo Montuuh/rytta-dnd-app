@@ -1,4 +1,12 @@
-import { Backpack, BookMarked, Map as TableMap, ScrollText, Store, Swords, Users } from 'lucide-react'
+import {
+  Backpack,
+  BookMarked,
+  Map as TableMap,
+  ScrollText,
+  Store,
+  Swords,
+  Users,
+} from 'lucide-react'
 import type { CampaignModuleKey } from '../domain/campaign'
 
 /** The one module catalogue for navigation, module pages and the DM module switches.

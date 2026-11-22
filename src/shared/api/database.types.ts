@@ -8,6 +8,7 @@ import type { CombatFunctions } from './combat-functions'
 import type { TabletopFunctions } from './tabletop-functions'
 import type { ProfileFunctions } from './profile-functions'
 import type { AdminFunctions } from './admin-functions'
+import type { QuestFunctions } from './quest-functions'
 import type { GlossaryEntriesTable, GlossaryFunctions } from './glossary-functions'
 import type { ContentFunctions } from './content-functions'
 import type {
@@ -178,6 +179,7 @@ type PublicDatabase = Omit<GeneratedDatabase, 'public'> & {
       TabletopFunctions &
       ProfileFunctions &
       AdminFunctions &
+      QuestFunctions &
       GlossaryFunctions &
       ContentFunctions &
       CampaignSettingsFunctions & {

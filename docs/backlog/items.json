@@ -241,9 +241,12 @@
       "title": "Quest journal",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-002"],
-      "sources": ["Drive: quest register"],
+      "sources": [
+        "Drive: quest register",
+        "Delivered 2026-11-22 (block G): owner chose the recommended options (objectives revealed one by one with a DM note, four statuses, journal by status, bottom sheet on phones, quiet change marks, in-place DM editor, Players read only); migration applied to staging, production and PRE; independent UI review PASS."
+      ],
       "scope": "Visible campaign quests and DM status transitions.",
       "acceptance": [
         "Hidden quest text never reaches player payload/cache.",
@@ -251,7 +254,7 @@
         "Statuses and journal navigation work with keyboard and touch."
       ],
       "validation": ["RLS hidden content tests", "Mobile journal e2e"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-006/validation.md", "docs/decisions/050-quest-journal.md"]
     },
     {
       "id": "RYT-007",

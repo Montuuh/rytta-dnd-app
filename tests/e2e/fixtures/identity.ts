@@ -2038,6 +2038,8 @@ export async function identityFixture(
     if (method === 'get_content_library') return respond({ editor: false, packs: [] })
     // RYT-153: the account menu asks whether the account is a super admin.
     if (method === 'admin_status') return respond({ super_admin: false, access: [] })
+    // RYT-006: the navigation asks a Player's journal for news.
+    if (method === 'list_quests') return respond({ dm: false, quests: [] })
     return respond({ message: 'Unhandled test route' }, 500)
   })
   return {

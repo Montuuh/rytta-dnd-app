@@ -64,7 +64,8 @@ describe('public to pre bulk refresh', () => {
     // campaign_roll_signals and private.campaign_requests; RYT-144 added private.loot_batches.
     // RYT-145 adds private encounter plans, handoffs and separately published session recaps.
     // RYT-153 adds private.super_admins, admin_campaign_access, admin_favourites and admin_audit.
-    expect(report.rows[0]!.result.tables).toHaveLength(63)
+    // RYT-006 adds quests, quest_objectives, quest_signals, private.quest_notes and quest_reads.
+    expect(report.rows[0]!.result.tables).toHaveLength(68)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

@@ -134,8 +134,9 @@ describe('foreign keys to auth.users', () => {
       where c.contype = 'f' and c.confrelid = 'auth.users'::regclass order by 1, 2`)
     expect(keys.filter((k) => k.action === 'a')).toEqual([])
     const bySchema = (s: string) => keys.filter((k) => k.schema === s).length
-    expect(bySchema('public')).toBe(22)
-    expect(bySchema('pre')).toBe(22)
+    // RYT-006 adds quests.created_by (set null) and private.quest_reads (cascade).
+    expect(bySchema('public')).toBe(23)
+    expect(bySchema('pre')).toBe(23)
     expect(
       keys
         .filter((k) => k.action === 'c')
@@ -151,11 +152,13 @@ describe('foreign keys to auth.users', () => {
       'pre_private.admin_favourites',
       'pre_private.campaign_requests',
       'pre_private.content_editors',
+      'pre_private.quest_reads',
       'pre_private.super_admins',
       'private.admin_campaign_access',
       'private.admin_favourites',
       'private.campaign_requests',
       'private.content_editors',
+      'private.quest_reads',
       'private.super_admins',
       'profiles',
     ])

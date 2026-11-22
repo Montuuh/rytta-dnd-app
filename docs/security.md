@@ -373,3 +373,18 @@ cross-campaign DM, plus the guarded PRE mirror.
   notified of an admin's visit; the admin audit log is the record.
 - Audited: enter (with expiry), exit (with seconds), favourites, account lookups (with the found
   id) and directory searches by a DM's email.
+
+## Quest journal (RYT-006)
+
+- Quests, objectives, the DM's note (`private.quest_notes`) and read times (`private.quest_reads`)
+  have no client grant; `list_quests`, `save_quest`, `delete_quest` and `mark_quest_seen` are
+  the only paths. Only the campaign's DM (or admin access) writes.
+- A Player reads published quests and visible objectives only while `quests` is in the
+  campaign's player modules. The Player payload has no update time and is ordered by the last
+  Player-visible change, so hidden edits leave no trace.
+- `quest_signals` is the only readable table: a revision per campaign that moves on
+  Player-visible changes only, followed by realtime.
+- `delete_my_account` removes the account's read times and clears it as a quest's author (patched
+  by the quest migration; a future redefinition of that function must keep those lines).
+- Known limit: a concurrent delete and save of the same quest can deadlock and fail one call; no
+  data is lost.

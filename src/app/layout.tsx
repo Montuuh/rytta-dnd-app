@@ -7,7 +7,17 @@ import {
   type ComponentType,
   type ReactNode,
 } from 'react'
-import { Button, Drawer, Menu, Popover, Stack, Switch, Text, UnstyledButton } from '@mantine/core'
+import {
+  Button,
+  Drawer,
+  Menu,
+  Popover,
+  Stack,
+  Switch,
+  Text,
+  UnstyledButton,
+  VisuallyHidden,
+} from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
   Eye,
@@ -44,6 +54,7 @@ import { RecoveryDialog, UsernameDialog, useAuth, useUsername } from '@/features
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
 import { AdminBanner, useAdminStatus } from '@/features/admin'
+import { useQuestsUnseen } from '@/features/quests'
 import { ConnectionStatus, ConnectionStrip } from './connection'
 import { useConnection } from './use-connection'
 import { ConnectionContext } from '@/shared/lib/connection-context'
@@ -78,6 +89,8 @@ type NavEntry = {
   icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' }>
   dm?: boolean
   key?: string
+  /** RYT-006: something new waits there (a quiet dot, named for screen readers). */
+  news?: boolean
 }
 
 const sessionModules = ['combat', 'tabletop']
@@ -93,6 +106,13 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const live = config.VITE_DATA_MODE === 'supabase'
+  const questNews = useQuestsUnseen(
+    campaign?.id,
+    live &&
+      campaign?.role === 'player' &&
+      !playerPreview &&
+      (campaign.player_modules ?? []).includes('quests'),
+  )
   if (!live)
     return modules
       .filter(({ path }) => defaultActivePaths.has(path))
@@ -110,6 +130,7 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
     label: t(label),
     icon,
     key,
+    news: key === 'quests' && questNews,
   }))
   // Running a session: the DM reaches Combat and the Table in one tap, ahead of the rest.
   if (effectiveDm) entries.sort((a, b) => sessionRank(a.key) - sessionRank(b.key))
@@ -125,6 +146,17 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   return entries
 }
 
+/** A quiet mark on a destination with something new; its name is read with the label. */
+function NewsDot({ news }: { news?: boolean }) {
+  const { t } = useTranslation()
+  if (!news) return null
+  return (
+    <span className="nav-news">
+      <VisuallyHidden>{` · ${t('quests.changed')}`}</VisuallyHidden>
+    </span>
+  )
+}
+
 function TopNavigation({ entries }: { entries: NavEntry[] }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
@@ -135,7 +167,7 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
   }, [pathname])
   return (
     <nav ref={nav} aria-label={t('nav.main')} className="nav-tabs">
-      {entries.map(({ to, label, icon: Icon, dm }) => (
+      {entries.map(({ to, label, icon: Icon, dm, news }) => (
         <NavLink
           key={to}
           to={to}
@@ -146,6 +178,7 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
         >
           <Icon size={18} aria-hidden="true" />
           {label}
+          <NewsDot news={news} />
         </NavLink>
       ))}
     </nav>
@@ -167,7 +200,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
   return (
     <>
       <nav aria-label={t('nav.main')} className="bottom-nav">
-        {primary.map(({ to, label, short, icon: Icon, dm }) => (
+        {primary.map(({ to, label, short, icon: Icon, dm, news }) => (
           <NavLink
             key={to}
             to={to}
@@ -179,6 +212,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
           >
             <Icon size={22} aria-hidden="true" />
             <span className="bottom-nav-label">{short ?? label}</span>
+            <NewsDot news={news} />
           </NavLink>
         ))}
         {overflow && (
@@ -192,6 +226,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
           >
             <MenuIcon size={22} aria-hidden="true" />
             <span className="bottom-nav-label">{t('nav.more')}</span>
+            <NewsDot news={rest.some((entry) => entry.news)} />
           </UnstyledButton>
         )}
       </nav>
@@ -210,7 +245,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
         returnFocus={false}
       >
         <Stack gap={6} pb="md">
-          {rest.map(({ to, label, icon: Icon, dm }) => (
+          {rest.map(({ to, label, icon: Icon, dm, news }) => (
             <NavLink
               key={to}
               to={to}
@@ -225,6 +260,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
             >
               <Icon size={20} aria-hidden="true" />
               {label}
+              <NewsDot news={news} />
             </NavLink>
           ))}
         </Stack>

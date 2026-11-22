@@ -39,7 +39,7 @@ import { isCreationMode } from './modes'
 import { QuickBuild } from './quick-build'
 import { CreationStepView, type Session } from './steps'
 import { LeaveDialog } from '../leave-guard'
-import { useLeaveGuard } from '../use-leave-guard'
+import { useLeaveGuard } from '@/shared/ui/use-leave-guard'
 import { useResourceNames } from '../resource-names'
 import { useSubmitGuard } from '../use-submit-guard'
 

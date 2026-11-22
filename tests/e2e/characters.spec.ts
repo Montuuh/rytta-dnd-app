@@ -472,7 +472,7 @@ test('RYT-025 navigation and exhaustion track adapt to phones and laptops', asyn
     const row = await page.locator('.nav-tabs').boundingBox()
     expect(row!.height).toBeLessThan(80)
   }
-  await expect(nav.getByText('Misiones', { exact: false })).toHaveCount(0)
+  await expect(nav.getByText('Atlas', { exact: false })).toHaveCount(0)
   await expect(nav.getByRole('link', { name: 'Grupo', exact: true })).toHaveAttribute(
     'aria-current',
     'page',
@@ -535,12 +535,13 @@ test('RYT-025 keyboard focus stays on steppers, preview switch and More drawer c
   await page.goto(`./#/campaign/${campaignId}/members`)
   await page.getByRole('tab', { name: 'Módulos activos', exact: true }).click()
   // RYT-007: combat is implemented, so the DM can enable it like shops.
-  for (const module of ['Tiendas', 'Combate'])
+  // RYT-006: quests shipped too.
+  for (const module of ['Tiendas', 'Combate', 'Misiones'])
     await expect(
       page.getByRole('switch', { name: `${module}: visible para jugadores` }),
     ).toBeEnabled()
   // RYT-112: modules that have not shipped are not listed at all, so they cannot be switched on.
-  for (const module of ['Misiones', 'Atlas'])
+  for (const module of ['Atlas', 'Bastión'])
     await expect(
       page.getByRole('switch', { name: `${module}: visible para jugadores` }),
     ).toHaveCount(0)
@@ -553,8 +554,9 @@ test('RYT-035 a planned module enabled by an old campaign row is not a destinati
   await page.goto(`./#/campaign/${campaignId}/party`)
   const nav = page.getByRole('navigation', { name: /principal|Main/i }).first()
   await expect(nav.getByRole('link', { name: 'Grupo' })).toHaveCount(1)
-  await expect(page.getByRole('link', { name: 'Misiones' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Atlas' })).toHaveCount(0)
+  // RYT-006: quests shipped, so an enabled quests module is a destination.
+  await expect(nav.getByRole('link', { name: 'Misiones' })).toHaveCount(1)
   // RYT-007: an enabled, implemented module is a destination.
   await expect(nav.getByRole('link', { name: 'Combate' })).toHaveCount(1)
 })

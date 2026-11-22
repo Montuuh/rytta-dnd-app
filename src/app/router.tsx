@@ -6,6 +6,7 @@ import { CampaignBoundary, CampaignHub, useCampaign } from '@/features/campaigns
 import { takeReturnTo, useAuth } from '@/features/auth'
 import { LibraryPage } from '@/features/content-library'
 import { AdminPage } from '@/features/admin'
+import { QuestsPage } from '@/features/quests'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
 import { PartyRecapLink } from '@/pages/session-links'
@@ -166,6 +167,7 @@ export function AppRouter() {
                         <Route path="items" element={<ItemsRedirect />} />
                         <Route path="inventory" element={<InventoryPage />} />
                         <Route path="shops" element={<ShopsPage />} />
+                        <Route path="quests" element={<QuestsPage />} />
                         <Route path="combat" element={<CombatPage />} />
                         <Route
                           path="combat/:encounterId"

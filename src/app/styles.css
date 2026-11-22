@@ -4601,3 +4601,21 @@ body:has(.mantine-Modal-content, .mantine-Drawer-content) .update-notice {
     bottom: calc(var(--bottom-nav-h) + 10px + env(safe-area-inset-bottom));
   }
 }
+
+/* RYT-006: a destination with something new (quests a Player has not opened since they changed). */
+.nav-news {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  box-shadow: 0 0 0 2px var(--app-surface);
+}
+.bottom-nav-item .nav-news {
+  position: absolute;
+  top: 8px;
+  left: calc(50% + 8px);
+  margin: 0;
+}

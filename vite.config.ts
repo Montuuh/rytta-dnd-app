@@ -179,6 +179,11 @@ export default defineConfig(({ mode, command }) => {
             /\/shared\/i18n\/(en|es)\.ts$/.test(chunk.facadeModuleId ?? '')
               ? 'assets/catalogue-[name]-[hash].js'
               : 'assets/[name]-[hash].js',
+          // RYT-116: Zod and the module that turns its compiler off share one chunk, so the
+          // setting runs before any other chunk builds a schema (see src/shared/lib/zod-jitless.ts).
+          codeSplitting: {
+            groups: [{ name: 'schemas', test: /node_modules[\\/]zod[\\/]|zod-jitless\.ts$/ }],
+          },
         },
       },
     },

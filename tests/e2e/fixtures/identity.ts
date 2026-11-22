@@ -2036,6 +2036,8 @@ export async function identityFixture(
     }
     // RYT-093: the account menu asks whether the account edits the content library.
     if (method === 'get_content_library') return respond({ editor: false, packs: [] })
+    // RYT-153: the account menu asks whether the account is a super admin.
+    if (method === 'admin_status') return respond({ super_admin: false, access: [] })
     return respond({ message: 'Unhandled test route' }, 500)
   })
   return {

@@ -91,19 +91,19 @@ export default defineConfig({
     {
       name: 'desktop',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     // Rytta targets phones and tablets. Signed-in journeys run at 820px and 390px; the desktop
@@ -120,13 +120,13 @@ export default defineConfig({
         name: 'identity-tablet',
         viewport: { width: 820, height: 1180 },
         specs:
-          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help',
+          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help,admin',
       },
       {
         name: 'identity-mobile',
         viewport: { width: 390, height: 844 },
         specs:
-          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help',
+          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help,admin',
       },
     ].map(({ name, viewport, specs }) => ({
       name,

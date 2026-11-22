@@ -23,6 +23,7 @@ import { accountEs } from './account-es'
 import { libraryEs } from './library-es'
 import { viewerEs } from './viewer-es'
 import { legalEs } from './legal-es'
+import { adminEs } from './admin-es'
 import { diceEs } from './dice-es'
 import { levelupEs } from './levelup-es'
 import { castEs } from './cast-es'
@@ -34,6 +35,7 @@ export const es = {
   ...sessionEs,
   ...activationEs,
   ...legalEs,
+  ...adminEs,
   ...diceEs,
   ...levelupEs,
   ...castEs,

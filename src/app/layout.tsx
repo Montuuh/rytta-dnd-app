@@ -17,6 +17,7 @@ import {
   Menu as MenuIcon,
   Settings,
   Shield,
+  ShieldCheck,
   UserRound,
 } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
@@ -42,6 +43,7 @@ import { artUrl } from '@/shared/ui/art-url'
 import { RecoveryDialog, UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
+import { AdminBanner, useAdminStatus } from '@/features/admin'
 import { ConnectionStatus, ConnectionStrip } from './connection'
 import { useConnection } from './use-connection'
 import { ConnectionContext } from '@/shared/lib/connection-context'
@@ -282,6 +284,7 @@ export function Layout() {
   const { state, controller } = useAuth()
   const username = useUsername().data
   const contentEditor = useContentEditor()
+  const adminStatus = useAdminStatus().data
   const live = config.VITE_DATA_MODE === 'supabase'
   const connection = useConnection()
   const [previewScope, setPreviewScope] = useState<string | null>(null)
@@ -332,6 +335,10 @@ export function Layout() {
     !campaigns.isError || keepsStaleData(campaigns.data, campaigns.error)
       ? campaigns.data?.find((c) => c.id === campaignId)
       : undefined
+  // RYT-153: inside through the admin panel, not as a member: nothing to leave.
+  const adminInside = Boolean(
+    campaign && adminStatus?.access.some((a) => a.campaign_id === campaign.id),
+  )
   const scope = `${state.user?.id}:${campaignId}`
   const playerPreview = campaign?.role === 'dm' && previewScope === scope
   const members = useQuery({
@@ -603,7 +610,16 @@ export function Layout() {
                             >
                               {t('hub.title')}
                             </Menu.Item>
-                            {contentEditor && (
+                            {adminStatus?.super_admin && (
+                              <Menu.Item
+                                component={NavLink}
+                                to="/admin"
+                                leftSection={<ShieldCheck size={18} aria-hidden="true" />}
+                              >
+                                {t('superAdmin.title')}
+                              </Menu.Item>
+                            )}
+                            {contentEditor && !adminStatus?.super_admin && (
                               <Menu.Item
                                 component={NavLink}
                                 to="/library"
@@ -617,7 +633,7 @@ export function Layout() {
                         )}
                         {/* RYT-095: leaving belongs to the open campaign, in its own group above the
                           account items; never from the DM's Player view. */}
-                        {live && state.user && campaign && !playerPreview && (
+                        {live && state.user && campaign && !playerPreview && !adminInside && (
                           <>
                             <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
                             <LeaveCampaignItem
@@ -681,6 +697,7 @@ export function Layout() {
                   </Button>
                 </div>
               )}
+              {live && campaign && <AdminBanner campaignId={campaign.id} />}
               {live && campaign && <RestBanner />}
             </div>
             {live && <ConnectionStatus phase={connection.phase} />}

@@ -145,8 +145,18 @@ describe('foreign keys to auth.users', () => {
       'campaign_members',
       'pre.campaign_members',
       'pre.profiles',
+      // RYT-153: the role, admin accesses and favourites go with the account; campaign requests
+      // now reference the account instead of the membership.
+      'pre_private.admin_campaign_access',
+      'pre_private.admin_favourites',
+      'pre_private.campaign_requests',
       'pre_private.content_editors',
+      'pre_private.super_admins',
+      'private.admin_campaign_access',
+      'private.admin_favourites',
+      'private.campaign_requests',
       'private.content_editors',
+      'private.super_admins',
       'profiles',
     ])
   })

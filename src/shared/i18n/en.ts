@@ -22,6 +22,7 @@ import { accountEn } from './account-en'
 import { libraryEn } from './library-en'
 import { viewerEn } from './viewer-en'
 import { legalEn } from './legal-en'
+import { adminEn } from './admin-en'
 import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
 import { castEn } from './cast-en'
@@ -32,6 +33,7 @@ export const en = {
   ...sessionEn,
   ...activationEn,
   ...legalEn,
+  ...adminEn,
   ...diceEn,
   ...levelupEn,
   ...castEn,

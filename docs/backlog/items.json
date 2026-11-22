@@ -4829,11 +4829,12 @@
       "title": "Super admin: platform role, campaign directory and an admin panel",
       "priority": "P2",
       "owner": "producer",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-093"],
       "sources": [
         "Owner request, 20 November 2026: \"Haz que haya super admins, mete a [the owner's admin Google account]. Este super admin va a poder buscar todas las campañas para suscribirse o guardar como favoritos, y va a poder acceder con herramientas de superadmin / DM (valorar si es lo mismo o no). Super admin será también el encargado de manejar la biblioteca de contenido. Yo haría un panel de superadmin con múltiples y útiles herramientas. Este super admin, los DM y jugadores no deben poder verlo en el apartado jugadores de la campaña.\"",
-        "The account address is kept out of the repository: the grant is made in each environment, as for content editors."
+        "The account address is kept out of the repository: the grant is made in each environment, as for content editors.",
+        "Delivered 2026-11-22 (block E): owner choices P1 B (summary plus Enter as DM, audited), P2 A (two hours), P3 A (account menu), P4 (Campaigns, Library, Usage, Audit, Accounts) and P5 A (favourites as Supervised); migration applied to staging, production and PRE; the owner's admin account granted in production and PRE; independent UI review PASS."
       ],
       "scope": "A platform super admin role held in a private table and granted outside the repository, starting with the account the owner named. Super admins hold every content editor right (RYT-093) and get an admin panel opened from the account menu, hidden for everyone else: a searchable directory of every campaign with save-as-favourite (subscribe), opening any campaign, and other tools chosen on an options page (for example usage counts, content library, account lookup, audit). Decide on the options page whether opening a campaign gives read-only oversight, the DM tools, or read-only with an explicit, audited switch to DM tools. A super admin never appears in the campaign members, party or player lists, presence or player-facing logs, and is never counted as a member. Non-goals: impersonating a Player, reading private notes outside what the chosen mode grants, a service-role key in the browser, deleting campaigns or accounts from the panel.",
       "acceptance": [
@@ -4847,7 +4848,7 @@
       "validation": [
         "PGlite denial tests for anon, outsider, Player, DM and cross-campaign DM; hosted check of the grant in production; browser tests for the panel and the hidden presence; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-153/validation.md"]
     },
     {
       "id": "RYT-154",

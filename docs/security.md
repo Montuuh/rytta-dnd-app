@@ -352,3 +352,24 @@ every field, check the revision and never move entries between campaigns. Client
 text as plain React text (no HTML). Bundled SRD content is public and carries no private data.
 SQL tests cover anon, outsider, inactive member, Player with the module on and off, DM and a
 cross-campaign DM, plus the guarded PRE mirror.
+
+## Super admin (RYT-153)
+
+- The role lives in `private.super_admins` and is granted per environment by the project owner
+  with SQL; nothing in the repository or the browser grants it. A PRE refresh copies it with the
+  rest of `private`, so PRE has the production super admins.
+- A super admin reads the campaign directory, summaries (including DM emails), the usage report
+  and the admin audit log, and looks up accounts by exact email or username. Auth is shared, so
+  the PRE lookup reads the same accounts as production.
+- `admin_enter_campaign` opens two hours of DM access to one campaign. While open, the access
+  helpers treat the caller as that campaign's DM for play and preparation; the super admin is
+  never written to `campaign_members` and the table never sees them. Expiry, `admin_exit_campaign`
+  or withdrawing the role ends it; withdrawal closes open rows, so a new grant does not revive them.
+- Admin access never manages membership: a trigger refuses inserts, updates and deletes of
+  `campaign_members`, and new invitations, from a caller with admin access who is not an active DM
+  member. A super admin who already belongs to a campaign cannot open admin access to it.
+- Character history shows an admin's change as the DM's without a name; campaign events taken
+  through admin access carry no actor. Dice rolls stay members' only. Table members are not
+  notified of an admin's visit; the admin audit log is the record.
+- Audited: enter (with expiry), exit (with seconds), favourites, account lookups (with the found
+  id) and directory searches by a DM's email.

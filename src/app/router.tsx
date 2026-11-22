@@ -5,6 +5,7 @@ import { Layout, SettingsRoute } from './layout'
 import { CampaignBoundary, CampaignHub, useCampaign } from '@/features/campaigns'
 import { takeReturnTo, useAuth } from '@/features/auth'
 import { LibraryPage } from '@/features/content-library'
+import { AdminPage } from '@/features/admin'
 import { config } from '@/shared/lib/config'
 import { SignInPage } from '@/pages/sign-in-page'
 import { PartyRecapLink } from '@/pages/session-links'
@@ -183,6 +184,7 @@ export function AppRouter() {
                 {/* RYT-093: the content library, for editor accounts (the database decides). */}
                 {live && (
                   <>
+                    <Route path="admin" element={<AdminPage />} />
                     <Route path="library" element={<LibraryPage />} />
                     <Route path="library/:packId" element={<LibraryPage />} />
                     <Route path="library/:packId/:kind" element={<LibraryPage />} />

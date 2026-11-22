@@ -29,6 +29,7 @@ import { artUrl, pickByKey } from '@/shared/ui/art-url'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useAuth } from '@/features/auth'
+import { SupervisedCampaigns, useAdminStatus } from '@/features/admin'
 import { config } from '@/shared/lib/config'
 import { campaignsQuery, invitationsQuery, membersQuery, useCampaignAction } from '../api'
 import {
@@ -198,7 +199,14 @@ export function CampaignHub() {
   const { t, i18n } = useTranslation()
   const { state, controller } = useAuth()
   const user = state.user!
-  const campaigns = useQuery(campaignsQuery(user.id))
+  const campaignsQueryResult = useQuery(campaignsQuery(user.id))
+  // RYT-153: a campaign entered from Administration is supervised, not one of mine.
+  const adminAccess = useAdminStatus().data?.access
+  const adminIds = new Set((adminAccess ?? []).map((access) => access.campaign_id))
+  const campaigns = {
+    ...campaignsQueryResult,
+    data: campaignsQueryResult.data?.filter((campaign) => !adminIds.has(campaign.id)),
+  }
   const phase = useConnectionPhase()
   const lost = phase === 'offline' || phase === 'failed'
   const invitations = useQuery(invitationsQuery(user.id))
@@ -468,6 +476,7 @@ export function CampaignHub() {
             ))}
           </SimpleGrid>
         )}
+      <SupervisedCampaigns />
       {showEmpty && (
         <Paper p={{ base: 'lg', sm: 'xl' }} className="hub-empty">
           <ArtPlate name="empty/campaigns" size={144} />

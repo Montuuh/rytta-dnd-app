@@ -63,7 +63,8 @@ describe('public to pre bulk refresh', () => {
     // private.account_deletion_requests; RYT-130/133 added campaign_events, campaign_rolls,
     // campaign_roll_signals and private.campaign_requests; RYT-144 added private.loot_batches.
     // RYT-145 adds private encounter plans, handoffs and separately published session recaps.
-    expect(report.rows[0]!.result.tables).toHaveLength(59)
+    // RYT-153 adds private.super_admins, admin_campaign_access, admin_favourites and admin_audit.
+    expect(report.rows[0]!.result.tables).toHaveLength(63)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

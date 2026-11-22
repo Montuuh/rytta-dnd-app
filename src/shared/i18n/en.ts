@@ -90,6 +90,10 @@ export const en = {
   'common.back': 'Back',
   'common.loading': 'Loading…',
   'common.loadingSlow': 'This is taking longer than expected. Reload or go back to the start.',
+  'art.prompt.copy': 'Copy art prompt',
+  'art.prompt.copied': 'Prompt copied. Paste it into your image generator.',
+  'art.prompt.failed': 'Could not copy the prompt.',
+  'art.prompt.manual': 'Could not copy. Select it and copy it by hand:',
   'common.retry': 'Try again',
   'common.storageQuota':
     'Storage refused the upload. This campaign may have used its storage space: remove pictures or media it no longer needs, then try again.',

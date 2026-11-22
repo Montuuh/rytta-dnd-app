@@ -1,0 +1,21 @@
+/* RYT-154: a secondary text action beside an image picker, with its confirmation underneath. */
+.art-prompt {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+}
+.art-prompt-button {
+  min-height: 44px;
+  padding-inline: 0;
+  color: var(--app-accent);
+}
+/* Empty, the polite region takes no room but stays in the accessibility tree, so the first
+   confirmation is announced. */
+.art-prompt-status {
+  font-size: 0.875rem;
+  color: var(--app-muted);
+}
+.art-prompt-manual {
+  width: min(100%, 32rem);
+}

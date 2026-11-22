@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId } from './fixtures/identity.ts'
-import { expectTouchTargets, capture } from './fixtures/audit.ts'
+import { expectTouchTargets, capture, expectArtPrompt } from './fixtures/audit.ts'
 import { shopsFixture, shopIds } from './fixtures/shops.ts'
 
 const shops = `./#/campaign/${campaignId}/shops`
@@ -584,6 +584,8 @@ test('RYT-107 the DM uploads, keeps and removes the shop image', async ({ page }
   await page.goto(shops)
   await page.getByText('Ajustes de tienda', { exact: true }).click()
   const field = page.getByRole('group', { name: 'Imagen de la tienda' })
+  // RYT-154: a prompt for the banner, in the house style, before uploading.
+  await expectArtPrompt(field, page, /^Shop interior banner .*"Mercado del puerto"[^]*16:9/)
   await field.locator('input[type="file"]').setInputFiles({
     name: 'stall.png',
     mimeType: 'image/png',

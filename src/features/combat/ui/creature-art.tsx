@@ -1,10 +1,21 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react'
-import { ActionIcon, Button, Loader, Menu, Group, Text, UnstyledButton } from '@mantine/core'
+import {
+  ActionIcon,
+  Button,
+  Loader,
+  Menu,
+  Group,
+  Text,
+  Textarea,
+  UnstyledButton,
+} from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import { ImagePlus, Pencil, RotateCcw, Trash2, type LucideIcon } from 'lucide-react'
+import { ImagePlus, Pencil, RotateCcw, Sparkles, Trash2, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { artPrompt, copyArtPrompt, type ArtSubject } from '@/shared/lib/art-prompt'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import {
   creatureArtQuery,
   creatureArtUrl,
@@ -160,6 +171,8 @@ export function CreatureArtControl({
   onViewing?: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  const promptSubject: ArtSubject = { kind: 'creature', name, traits: [type] }
+  const [manualPrompt, setManualPrompt] = useState(false)
   const inputId = useId()
   const errorId = useId()
   const input = useRef<HTMLInputElement>(null)
@@ -317,6 +330,19 @@ export function CreatureArtControl({
                 >
                   {t('bestiary.art.change')}
                 </Menu.Item>
+                <Menu.Item
+                  leftSection={<Sparkles size={16} aria-hidden="true" />}
+                  onClick={async () => {
+                    const copied = await copyArtPrompt(promptSubject)
+                    setManualPrompt(!copied)
+                    onNotice({
+                      text: t(copied ? 'art.prompt.copied' : 'art.prompt.failed'),
+                      refocus: false,
+                    })
+                  }}
+                >
+                  {t('art.prompt.copy')}
+                </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
                   // The theme's own danger colour: Mantine's red fails AA on the light menu.
@@ -371,6 +397,21 @@ export function CreatureArtControl({
             </span>
           </Token>
         </label>
+      )}
+      {!hasImage && <CopyArtPrompt subject={promptSubject} />}
+      {manualPrompt && (
+        <Textarea
+          className="combat-prompt-manual"
+          label={t('art.prompt.manual')}
+          value={artPrompt(promptSubject)}
+          readOnly
+          autosize
+          minRows={3}
+          maxRows={8}
+          onFocus={(event) => event.currentTarget.select()}
+          data-autofocus
+          ref={(node) => node?.select()}
+        />
       )}
       <Text role="status" size="sm" className="combat-image-status">
         {pending ? t('combat.image.saving') : (notice?.text ?? '')}

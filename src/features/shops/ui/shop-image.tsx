@@ -3,6 +3,7 @@ import { Button, Group, Text, UnstyledButton } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { ImagePlus, Maximize2, RefreshCw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import { useAuth } from '@/features/auth'
 import { newRequestId } from '@/shared/lib/request-id'
 import { artUrl } from '@/shared/ui/art-url'
@@ -319,6 +320,7 @@ export function ShopImageField({ campaignId, shop }: { campaignId: string; shop:
           </span>
         )}
       </div>
+      <CopyArtPrompt subject={{ kind: 'shop', name: shop.name, traits: [shop.kind] }} />
       <Text size="sm" role="status" aria-live="polite" mt={4} className="shop-drop-status">
         {status ? t(`admin.image.status.${status}`) : ''}
       </Text>

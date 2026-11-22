@@ -11,6 +11,7 @@ import {
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import { useNavigate } from 'react-router'
 import { EllipsisVertical, Grid3x3, ImageUp, Monitor, Plus, Trash2, Wand2 } from 'lucide-react'
 import { useAuth } from '@/features/auth'
@@ -600,6 +601,7 @@ function UploadScene({
           )}
         </FileButton>
         <p className="tt-note">{t('tabletop.upload.help')}</p>
+        <CopyArtPrompt subject={{ kind: 'map', name }} />
         {picked && preview && (
           <>
             <div

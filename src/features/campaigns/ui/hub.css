@@ -97,6 +97,28 @@
   max-width: 100%;
 }
 
+.hub-account {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hub-account-actions .mantine-Button-root {
+  min-height: 44px;
+}
+
+.hub-contact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--app-muted);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.hub-contact:hover {
+  color: var(--app-text);
+}
+
 .hub-email-address {
   min-width: 0;
   overflow-wrap: anywhere;

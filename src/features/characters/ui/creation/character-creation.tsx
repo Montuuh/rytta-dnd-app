@@ -10,6 +10,7 @@ import { Alert, Button, Group, Paper, Progress, Stack, Text, Title } from '@mant
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
@@ -388,6 +389,21 @@ function Wizard({
           />
         </div>
       </div>
+      {/* RYT-154: the portrait prompt, once the class and origin are known (last step). */}
+      {index === steps.length - 1 && (
+        <CopyArtPrompt
+          subject={{
+            kind: 'character',
+            name: displayName || name,
+            traits: [
+              draft.build.speciesKey === 'custom'
+                ? draft.build.speciesLabel
+                : draft.build.speciesKey,
+              draft.build.classKey,
+            ],
+          }}
+        />
+      )}
       {editing && (
         <nav aria-label={t('wizard.progress', { current: index + 1, total: steps.length })}>
           <Group gap="xs" className="wizard-steps">

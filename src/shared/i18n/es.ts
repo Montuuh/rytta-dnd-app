@@ -92,6 +92,10 @@ export const es = {
   'common.back': 'Volver',
   'common.loading': 'Cargando…',
   'common.loadingSlow': 'Está tardando más de lo normal. Recarga o vuelve al inicio.',
+  'art.prompt.copy': 'Copiar prompt de arte',
+  'art.prompt.copied': 'Prompt copiado. Pégalo en tu generador de imágenes.',
+  'art.prompt.failed': 'No se pudo copiar el prompt.',
+  'art.prompt.manual': 'No se pudo copiar. Selecciónalo y cópialo a mano:',
   'common.retry': 'Reintentar',
   'common.storageQuota':
     'El almacenamiento rechazó la subida. Puede que esta campaña haya llenado su espacio: quita imágenes o archivos que ya no necesite y vuelve a intentarlo.',

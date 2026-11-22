@@ -4702,11 +4702,12 @@
       "title": "Help when joining goes wrong: published contact and the wrong Google account",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-122"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
-        "Producer review: the legal copy still reads that the contact address is pending and will be published before launch, and the service has been open since 18 November 2026."
+        "Producer review: the legal copy still reads that the contact address is pending and will be published before launch, and the service has been open since 18 November 2026.",
+        "Delivered 2026-11-22 (block D) after the owner chose the options P1 A and P2 A: Switch account and a contact link in the empty My campaigns, Contact in the sign-in footer; independent UI review PASS. The configured contact link is checked on the live site after release."
       ],
       "scope": "A person who signs in with an account that has no invitation learns which account is signed in and how to switch, and can reach the contact address from that screen and from the legal pages. Non-goals: a support inbox, email delivery of invitations, the reconnect action summary proposed by the audit (existing stale notices cover it).",
       "acceptance": [
@@ -4719,7 +4720,7 @@
       "validation": [
         "Browser tests for the uninvited account and the missing variable; project checks; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-148/validation.md"]
     },
     {
       "id": "RYT-152",
@@ -4853,11 +4854,12 @@
       "title": "Art prompts that follow the project art direction for every image picker",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Owner request, 20 November 2026: \"Cuando se quiere crear una criatura, un objeto, o un personaje, me gustaría que la imagen siguiera las doctrinas de arte de todo el proyecto en general. Yo añadiría, para ahorrar tokens, en vez de regenerar la imagen, generar un prompt para cada generación/selector de imagen de Rytta, que dependiendo del item se modificará el prompt para que siga la convención del resto de items (criaturas, personajes, objetos, etc.).\"",
-        "Generated art with paid or API image generation stays parked (RYT-152, 19 November 2026); this ticket only writes prompts."
+        "Generated art with paid or API image generation stays parked (RYT-152, 19 November 2026); this ticket only writes prompts.",
+        "Delivered 2026-11-22 (block D): owner choices P3 A (text button), P4 B (the whole prompt in English, replacing the interface-language criterion) and P5 A (only data on screen); independent UI review PASS."
       ],
       "scope": "Every place where an image is chosen or uploaded (creature, item, character portrait and the other image pickers) offers a copyable prompt built from one shared art direction (docs/interface-art.md, docs/sprite-art.md and the bestiary art conventions) plus a template per kind that fills in the entity data (name, type, size, rarity, category, class, key features) and the framing and format the app expects. The user pastes the prompt into any image tool and uploads the result as today. Non-goals: calling an image generation API, storing generated images automatically, changing existing art.",
       "acceptance": [
@@ -4870,7 +4872,7 @@
       "validation": [
         "Unit tests for the templates; browser tests for copying on each picker; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-154/validation.md"]
     },
     {
       "id": "RYT-155",

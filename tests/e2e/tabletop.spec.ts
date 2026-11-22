@@ -1,7 +1,7 @@
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { beaId, campaignId, characterId, identityFixture, playerId } from './fixtures/identity.ts'
-import { capture, expectTouchTargets } from './fixtures/audit.ts'
+import { capture, expectTouchTargets, expectArtPrompt } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 import { tabletopServer } from './fixtures/tabletop.ts'
 
@@ -631,6 +631,7 @@ test('RYT-065 a Dungeon Alchemist export arrives with its grid, doors and fog ar
   await page.getByRole('button', { name: 'Nueva escena' }).click()
   await page.getByRole('button', { name: /Subir un mapa/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Subir un mapa' })
+  await expectArtPrompt(dialog, page, /^Battle map [^]*top-down/)
   await dialog.locator('input[type="file"]').setInputFiles({
     name: 'Taberna del Cruce.dd2vtt',
     mimeType: 'application/octet-stream',
@@ -913,6 +914,7 @@ test('RYT-056–062 story cards, audio, props, areas, fog and events from the ed
   let panel = await openPanel(page, info, 'Historia')
   await panel.getByRole('button', { name: 'Nueva carta de historia' }).click()
   await panel.getByLabel('Título').fill('Llegada al vado')
+  await expectArtPrompt(panel, page, /^Story card illustration .*"Llegada al vado"/)
   await panel.getByLabel('Texto para leer en voz alta').fill('Las ranas callan de golpe.')
   await panel.getByRole('button', { name: 'Guardar la carta' }).click()
   await panel.getByRole('button', { name: 'Mostrar en la mesa' }).click()

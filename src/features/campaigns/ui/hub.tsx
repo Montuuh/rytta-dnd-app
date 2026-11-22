@@ -18,7 +18,7 @@ import {
 import { useForm } from '@mantine/form'
 import { useClipboard } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Check, Copy, Ellipsis, Plus, X } from 'lucide-react'
+import { ArrowRight, Check, Copy, Ellipsis, LogOut, Plus, X } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -29,6 +29,7 @@ import { artUrl, pickByKey } from '@/shared/ui/art-url'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useAuth } from '@/features/auth'
+import { config } from '@/shared/lib/config'
 import { campaignsQuery, invitationsQuery, membersQuery, useCampaignAction } from '../api'
 import {
   createCampaignSchema,
@@ -114,6 +115,62 @@ function EmailCopy({ email }: { email: string }) {
   )
 }
 
+/**
+ * RYT-148: with no campaign and no invitation, the account in use is the likely problem. Say which
+ * one it is, copy it for the DM, switch to another in one action, and reach the contact.
+ */
+function SignedInAccount({
+  email,
+  switchAccount,
+}: {
+  email: string
+  switchAccount: () => unknown
+}) {
+  const { t } = useTranslation()
+  const clipboard = useClipboard({ timeout: 2000 })
+  const contact = config.VITE_CONTACT_EMAIL
+  return (
+    <Stack gap={6} className="hub-account">
+      <Text size="sm" c="dimmed">
+        {t('hub.signedInAs')}
+      </Text>
+      <Text className="hub-email-address user-copy" fw={600}>
+        {email}
+      </Text>
+      <Group gap="xs" className="hub-account-actions">
+        <Button
+          variant="default"
+          leftSection={
+            clipboard.copied ? (
+              <Check size={18} aria-hidden="true" />
+            ) : (
+              <Copy size={18} aria-hidden="true" />
+            )
+          }
+          onClick={() => clipboard.copy(email)}
+        >
+          {clipboard.copied ? t('hub.copiedEmail') : t('hub.copyEmail')}
+        </Button>
+        <Button
+          variant="subtle"
+          leftSection={<LogOut size={18} aria-hidden="true" />}
+          onClick={() => void switchAccount()}
+        >
+          {t('hub.switchAccount')}
+        </Button>
+      </Group>
+      <span className="visually-hidden" role="status">
+        {clipboard.copied ? t('hub.copiedEmail') : ''}
+      </span>
+      {contact && (
+        <a className="hub-contact" href={`mailto:${contact}`}>
+          {t('hub.contact')}
+        </a>
+      )}
+    </Stack>
+  )
+}
+
 /** Why answering an invitation failed, in one short line; a retry unless the invitation is gone. */
 function RespondError({ error, retry }: { error: Error | null; retry: () => void }) {
   const { t } = useTranslation()
@@ -139,7 +196,7 @@ function RespondError({ error, retry }: { error: Error | null; retry: () => void
 
 export function CampaignHub() {
   const { t, i18n } = useTranslation()
-  const { state } = useAuth()
+  const { state, controller } = useAuth()
   const user = state.user!
   const campaigns = useQuery(campaignsQuery(user.id))
   const phase = useConnectionPhase()
@@ -417,7 +474,7 @@ export function CampaignHub() {
           <Stack gap="xs" align="flex-start">
             <Title order={2}>{t('hub.empty')}</Title>
             <Text c="dimmed">{t('hub.emptyHint')}</Text>
-            <EmailCopy email={user.email} />
+            <SignedInAccount email={user.email} switchAccount={() => controller?.signOut()} />
             <Button
               mt="xs"
               variant="default"

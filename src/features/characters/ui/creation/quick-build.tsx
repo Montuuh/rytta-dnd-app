@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Group, Progress, Stack, Text, TextInput, Title } from '@mantine/core'
 import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import '../sheet/panel.css'
 import { Link } from 'react-router'
 import { useCampaign } from '@/features/campaigns'
@@ -138,6 +139,13 @@ export function QuickBuild({
               error={name.trim() ? undefined : t('creation.nameRequired')}
             />
           </Group>
+          <CopyArtPrompt
+            subject={{
+              kind: 'character',
+              name: name || characterName,
+              traits: [speciesKey, classKey],
+            }}
+          />
           {draft && (
             <BuildSummary
               draft={draft}

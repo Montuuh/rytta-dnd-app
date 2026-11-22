@@ -11,8 +11,10 @@ export const legalEn = {
   'legal.other.privacy': 'Read the privacy policy',
   'legal.other.terms': 'Read the terms of use',
   'legal.privacy': 'Privacy policy',
+  'legal.contact': 'Contact',
   'legal.terms': 'Terms of use',
   'legal.links': 'Privacy and terms',
+  'legal.footer': 'Legal information and contact',
   'legal.linksHelp': 'What Rytta stores about you and the rules for using it.',
 
   'legal.privacy.intro':

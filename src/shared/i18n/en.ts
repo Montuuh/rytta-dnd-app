@@ -24,6 +24,7 @@ import { viewerEn } from './viewer-en'
 import { legalEn } from './legal-en'
 import { adminEn } from './admin-en'
 import { questsEn } from './quests-en'
+import { campaignContentEn } from './campaign-content-en'
 import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
 import { castEn } from './cast-en'
@@ -36,6 +37,7 @@ export const en = {
   ...legalEn,
   ...adminEn,
   ...questsEn,
+  ...campaignContentEn,
   ...diceEn,
   ...levelupEn,
   ...castEn,

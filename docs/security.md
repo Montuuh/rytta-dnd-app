@@ -388,3 +388,19 @@ cross-campaign DM, plus the guarded PRE mirror.
   by the quest migration; a future redefinition of that function must keep those lines).
 - Known limit: a concurrent delete and save of the same quest can deadlock and fail one call; no
   data is lost.
+
+## Campaign content (RYT-162)
+
+- `content_entry_versions`, `campaign_content` and `campaign_content_hidden` have no client grant;
+  only the campaign's DM (or admin access) reads and changes them through RPCs. Players get pack
+  content only through the modules that read it (RYT-094, RYT-164 to RYT-166).
+- Only public, published packs are offered. A pack made private stays listed for a campaign that
+  uses it so its DM can turn it off; its newer versions, changes and entries are refused. Module
+  readers must apply the same rule.
+- Every published version of every entry is kept. Withdrawing content for legal reasons means
+  deleting its rows in `content_entry_versions` too.
+- Until RYT-094, the campaign bestiary tables stay the record for the SRD creatures and drive
+  `campaign_content` through triggers; changes to the `srd-5-2-1` pack are refused while it is not
+  the published public SRD.
+- `delete_my_account` clears the account as `campaign_content.updated_by` (patched by the
+  migration; a future redefinition of that function must keep the line).

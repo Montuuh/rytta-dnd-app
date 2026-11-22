@@ -25,6 +25,7 @@ import { viewerEs } from './viewer-es'
 import { legalEs } from './legal-es'
 import { adminEs } from './admin-es'
 import { questsEs } from './quests-es'
+import { campaignContentEs } from './campaign-content-es'
 import { diceEs } from './dice-es'
 import { levelupEs } from './levelup-es'
 import { castEs } from './cast-es'
@@ -38,6 +39,7 @@ export const es = {
   ...legalEs,
   ...adminEs,
   ...questsEs,
+  ...campaignContentEs,
   ...diceEs,
   ...levelupEs,
   ...castEs,

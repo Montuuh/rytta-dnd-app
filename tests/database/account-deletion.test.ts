@@ -135,8 +135,9 @@ describe('foreign keys to auth.users', () => {
     expect(keys.filter((k) => k.action === 'a')).toEqual([])
     const bySchema = (s: string) => keys.filter((k) => k.schema === s).length
     // RYT-006 adds quests.created_by (set null) and private.quest_reads (cascade).
-    expect(bySchema('public')).toBe(23)
-    expect(bySchema('pre')).toBe(23)
+    // RYT-162 adds campaign_content.updated_by (set null).
+    expect(bySchema('public')).toBe(24)
+    expect(bySchema('pre')).toBe(24)
     expect(
       keys
         .filter((k) => k.action === 'c')

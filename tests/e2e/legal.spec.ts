@@ -122,8 +122,11 @@ test('the signed-out landing links to both pages', async ({ page }, testInfo) =>
   await page.goto('./')
   const links = page.getByRole('navigation', { name: 'Privacidad y condiciones' })
   await expect(links.getByRole('link')).toHaveCount(2)
-  const box = await links.getByRole('link').first().boundingBox()
-  expect(box!.height).toBeGreaterThanOrEqual(44)
+  // Polled: the landing lays the links out after its styles load.
+  const first = links.getByRole('link').first()
+  await expect
+    .poll(() => first.evaluate((el) => el.getBoundingClientRect().height))
+    .toBeGreaterThanOrEqual(44)
   await links.getByRole('link', { name: 'Condiciones de uso' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Condiciones de uso' })).toBeVisible()
   // The visitor came from the landing, so Back returns there.

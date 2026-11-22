@@ -5052,10 +5052,11 @@
       "title": "Campaign content: the DM chooses packs per kind, at pinned versions",
       "priority": "P1",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-093", "RYT-153"],
       "sources": [
-        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051).",
+        "Delivered 2026-11-22 (block H): owner chose the recommended options (Content tab by category with a switch per pack, five categories, a review with collapsible New / Changed / Withdrawn lists, hiding in Content and later in modules, new campaigns start with the SRD, Players do not see Content); only creatures are offered until their modules read the other categories; campaign versions stay in the bestiary until RYT-094; migration applied to staging, production and PRE; independent UI review PASS."
       ],
       "scope": "A Content section in the DM Command Center lists the packs a campaign can use by kind (creatures, spells, class content, rules, items) and lets the DM enable a pack for a kind at its current version, hide single entries, and review and accept a newer version (new, changed and withdrawn entries, and entries the campaign changed). Editing an entry from a pack stores a campaign version that can return to the pack's. The data model and RPCs are generic per kind; existing campaign bestiary downloads, removals and creature versions (ADR 039) become the SRD creatures pack with the same result. Modules start reading it in RYT-094 and RYT-164 to RYT-166.",
       "acceptance": [
@@ -5071,7 +5072,10 @@
         "campaign content e2e at 390px and 820px",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-162/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
     },
     {
       "id": "RYT-163",

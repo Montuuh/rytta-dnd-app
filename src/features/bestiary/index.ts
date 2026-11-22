@@ -25,6 +25,20 @@ export {
   xpForCr,
   type Dice,
 } from './domain/stats'
+export {
+  creaturePackSchema,
+  creaturePacksSchema,
+  creatureReference,
+  creatureReferencePattern,
+  packTitle,
+  parsePackBodies,
+  parsePackIndex,
+  referenceKey,
+  referencePack,
+  type CreaturePack,
+  type PackBodies,
+  type PackIndex,
+} from './domain/packs'
 export { trackersOf, usageFromName, type TrackerDefinition } from './domain/trackers'
 export { archetypeDraft, archetypes, damagePerRound, type Archetype } from './domain/archetypes'
 export { parseStatBlockText, statBlockToText, type ParsedCreature } from './domain/parser'

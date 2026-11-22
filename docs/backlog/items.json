@@ -3132,12 +3132,13 @@
       "title": "Creatures come from the campaign's content packs",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-093", "RYT-162"],
       "sources": [
         "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
         "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first.",
-        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051). RYT-094 narrows to creatures; spells and class content, rules and items move in RYT-164 to RYT-166 and the bundled catalogues leave in RYT-167."
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051). RYT-094 narrows to creatures; spells and class content, rules and items move in RYT-164 to RYT-166 and the bundled catalogues leave in RYT-167.",
+        "Delivered 2026-11-23 (block F): owner chose the recommended options (every creature pack works like the SRD with <ref>--<key> references, the bestiary leads to Content and hides instead of removing, a source per pack and the pack on rows when several are enabled, a retryable error and no bundled fallback); migration applied to staging, production and PRE; independent UI review PASS."
       ],
       "scope": "The bestiary, combat and the encounter builder read creatures from the packs the campaign enabled for creatures (RYT-162), at the campaign's pinned version, with its hidden entries and campaign versions applied, instead of the bundled SRD catalogue. Pack content is cached by version. Creature art stays bundled until a separate decision.",
       "acceptance": [
@@ -3151,7 +3152,10 @@
         "bestiary, combat and encounter-builder e2e at 390px and 820px",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-094/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
     },
     {
       "id": "RYT-095",

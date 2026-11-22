@@ -46,4 +46,10 @@ export type CampaignContentFunctions = {
     }
     Returns: Json
   }
+  // RYT-094 (20261219120000_pack_creatures)
+  get_campaign_creature_packs: { Args: { target_campaign: string }; Returns: Json }
+  get_campaign_creature_pack: {
+    Args: { target_campaign: string; target_pack: string; at_version: number; part: string }
+    Returns: Json
+  }
 }

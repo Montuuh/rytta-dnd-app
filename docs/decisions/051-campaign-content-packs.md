@@ -46,6 +46,21 @@ campaign's and is not part of any pack.
 - RYT-166: items as a pack kind (editor form, the basic items as a pack, storeroom and shops).
 - RYT-167: the bundled catalogues leave the repository once every reader has moved.
 
+## Creatures from packs (RYT-094, 2026-11-22)
+
+Owner choices from the block F options page, all the recommended ones:
+
+- P1 A: every creature pack works like the SRD (bestiary, fights, board, own image, campaign
+  version). Stored references name the pack: `<ref>--<key>`, the SRD keeping its bare key.
+- P2 A: the bestiary sends the DM to Content to choose packs. "Remove" becomes "Hide in this
+  campaign" (undone from Content), and "remove all" is the pack's switch.
+- P3 A: the source filter lists each enabled pack (a list once there are several), and list rows
+  name their pack when more than one is enabled.
+- P4 A: an unreachable library shows a retryable error and never falls back to the bundled SRD.
+  Pack versions are cached for the session; offline copies are a later decision.
+
+The CR baselines (a rules table) stay bundled until rules come from packs (RYT-165).
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

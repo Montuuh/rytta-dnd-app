@@ -21,6 +21,7 @@ import {
   Popover,
   RangeSlider,
   SegmentedControl,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -37,7 +38,6 @@ import {
   ArrowDown01,
   ArrowDownAZ,
   ArrowLeft,
-  BookMinus,
   Bookmark,
   Check,
   Crown,
@@ -47,6 +47,7 @@ import {
   Copy,
   CopyPlus,
   EllipsisVertical,
+  EyeOff,
   FilePenLine,
   PawPrint,
   Pencil,
@@ -64,6 +65,8 @@ import {
   challengeRatings,
   emptyFilters,
   filterCreatures,
+  packTitle,
+  referenceKey,
   searchKey,
   signed,
   statBlockToText,
@@ -96,8 +99,8 @@ import { useRunner } from './helpers'
 import { NewCreatureDialog } from './new-creature'
 import {
   OfficialDialog,
-  OfficialMenu,
-  OfficialMissing,
+  PacksLink,
+  PacksMissing,
   VersionNote,
   type OfficialAsk,
 } from './official-bestiary'
@@ -360,56 +363,45 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     </Alert>
   )
   const blockOf = catalog.blockFor
-  // RYT-089: the campaign's official bestiary and its versions of official creatures.
-  const official = catalog.official
-  const versions = [...catalog.templateById.values()].filter((tp) => tp.srd_override).length
-  // Neither creatures nor the official bestiary yet: the download is the page's one primary action.
-  const empty = !catalog.pending && catalog.items.length === 0 && official?.downloaded === false
+  // RYT-094: the campaign uses no creature pack: Content is where it chooses them.
+  const noPacks = catalog.noPacks
+  // Neither creatures nor a creature pack yet: choosing packs is the page's one primary action.
+  const empty = !catalog.pending && catalog.items.length === 0 && noPacks
+  // The source filter: one segment per enabled pack ("SRD" for the SRD, its title in a list).
+  const sourcePacks = catalog.packs
+    .filter((pack) => pack.enabled)
+    .map((pack) => ({
+      id: pack.id,
+      title: packTitle(pack, catalog.language),
+      short: pack.srd ? t('bestiary.source.srd') : t('bestiary.source.pack'),
+    }))
   const ask = (next: OfficialAsk, target: HTMLElement) => {
     opener.current = target
     setAsking(next)
   }
   const confirmOfficial = async (next: OfficialAsk) => {
-    const srdOf = (item: CreatureListItem) => (item.source === 'srd' ? item.id : item.srdId!)
-    // Going back to the official creature: its key already shows the version, so the open stat
-    // block never closes in between (and keeps its focus) when the version is deleted.
-    const officialKey =
-      next.kind === 'restore' && next.template.srd_id ? `srd:${next.template.srd_id}` : null
+    // Going back to the pack creature: its key already shows the version, so the open stat block
+    // never closes in between (and keeps its focus) when the version is deleted.
+    const officialKey = next.template.srd_id ? `srd:${next.template.srd_id}` : null
     if (officialKey) select(officialKey)
-    const ok =
-      next.kind === 'restore'
-        ? await run({ kind: 'deleteTemplate', templateId: next.template.id })
-        : next.kind === 'remove'
-          ? await run({ kind: 'srdBestiary', action: 'remove', srdId: srdOf(next.item) })
-          : await run({
-              kind: 'srdBestiary',
-              action: next.kind === 'download' ? 'download' : 'removeAll',
-            })
-    if (!ok) return
+    if (!(await run({ kind: 'deleteTemplate', templateId: next.template.id }))) return
     setAsking(null)
-    if (next.kind === 'download')
-      setNotice(
-        official && official.removed.length > 0
-          ? t('bestiary.official.broughtBack', { count: official.removed.length })
-          : t('bestiary.official.downloaded', { count: catalog.officialCount }),
-      )
-    else if (next.kind === 'removeAll') {
-      if (selected?.source === 'srd' || selected?.version) select(null)
-      setNotice(t('bestiary.official.removedAll'))
-      // The empty state appears after the refetch: retry until it exists.
-      focusWhenReady('.bst-official-empty button, .bst-official-line button')
+    setNotice(t('bestiary.official.restored', { name: next.template.name }))
+    if (officialKey) {
+      focusEdit.current = officialKey
       return
-    } else if (next.kind === 'remove') {
-      select(null)
-      setNotice(t('bestiary.official.removed', { name: next.item.name }))
-    } else {
-      setNotice(t('bestiary.official.restored', { name: next.template.name }))
-      if (officialKey) {
-        focusEdit.current = officialKey
-        return
-      }
-      select(null)
     }
+    select(null)
+    restore()
+  }
+  // RYT-094: hiding is undone from Content, so it needs no question.
+  const hide = async (item: CreatureListItem) => {
+    const reference = item.source === 'srd' ? item.id : item.srdId
+    if (!item.packId || !reference) return
+    if (!(await run({ kind: 'hideCreature', packId: item.packId, key: referenceKey(reference) })))
+      return
+    select(null)
+    setNotice(t('bestiary.packs.hidden', { name: item.name }))
     restore()
   }
   const templateOf = (item: CreatureListItem | null) =>
@@ -527,7 +519,10 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         opener.current = target
         setDeleting(templateOf(selected))
       }}
-      onRemove={(target) => ask({ kind: 'remove', item: selected }, target)}
+      onHide={(target) => {
+        opener.current = target
+        void hide(selected)
+      }}
       onRestore={(target) => {
         const template = templateOf(selected)
         if (template) ask({ kind: 'restore', template }, target)
@@ -586,7 +581,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
               {t('bestiary.new')}
             </Button>
           )}
-          {!encounterId && official?.downloaded && <OfficialMenu state={official} onAsk={ask} />}
+          {!encounterId && !catalog.pending && !noPacks && <PacksLink campaignId={campaignId} />}
         </div>
       </div>
       {encounterId && (
@@ -604,10 +599,10 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       <RunnerError error={error} trigger={trigger} onClose={clear} />
       {/* On phones and tablets an open sheet covers the page: the notice shows inside it. */}
       {notice && (wide || !selected) && noticeAlert}
-      {/* RYT-089: nothing to search before the campaign has a creature or the official bestiary. */}
-      {(catalog.pending || catalog.items.length > 0 || official?.downloaded) && (
+      {/* RYT-094: nothing to search before the campaign has a creature or a creature pack. */}
+      {!catalog.dataError && (catalog.pending || catalog.items.length > 0 || !noPacks) && (
         <Toolbar
-          official={Boolean(official?.downloaded)}
+          packs={sourcePacks}
           filters={filters}
           setFilters={setFilters}
           activeFilters={activeFilters}
@@ -617,12 +612,13 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         />
       )}
       <QueryFeedback pending={catalog.pending} error={catalog.error} retry={catalog.retry} />
-      {!catalog.pending && official && !official.downloaded && (
-        <OfficialMissing
-          count={catalog.officialCount}
-          compact={catalog.items.length > 0}
-          onDownload={(target) => ask({ kind: 'download' }, target)}
-        />
+      {!catalog.pending && noPacks && (
+        <PacksMissing campaignId={campaignId} compact={catalog.items.length > 0} />
+      )}
+      {!catalog.pending && catalog.unreadable > 0 && (
+        <Text size="sm" c="dimmed" role="note">
+          {t('bestiary.packs.unreadable', { count: catalog.unreadable })}
+        </Text>
       )}
       {encounter && comparison.length > 0 && (
         <BestiaryComparison
@@ -634,11 +630,13 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           onRemove={toggleComparison}
         />
       )}
-      {!catalog.pending && (catalog.items.length > 0 || official?.downloaded) && (
+      {/* RYT-094: a library that cannot be reached shows only its error, never an empty list. */}
+      {!catalog.pending && !catalog.dataError && (catalog.items.length > 0 || !noPacks) && (
         <div className={wide ? 'bst-split' : undefined}>
           <CreatureList
             grouping={deferredQuery.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
             altLang={catalog.language === 'es' ? 'en' : 'es'}
+            showPack={catalog.severalPacks}
             items={results}
             artCredit={catalog.artCredit}
             selectedKey={selectedKey}
@@ -803,9 +801,6 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       )}
       <OfficialDialog
         ask={asking}
-        count={catalog.officialCount}
-        removed={official?.removed.length ?? 0}
-        versions={versions}
         pending={pending}
         onConfirm={(next) => void confirmOfficial(next)}
         onClose={() => {
@@ -858,7 +853,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
 }
 
 function Toolbar({
-  official,
+  packs,
   filters,
   setFilters,
   activeFilters,
@@ -866,8 +861,8 @@ function Toolbar({
   onFirst,
   onEnter,
 }: {
-  /** RYT-089: the campaign has the official bestiary (its tab is shown). */
-  official: boolean
+  /** RYT-094: the enabled creature packs, each a source to filter by. */
+  packs: { id: string; title: string; short: string }[]
   filters: CreatureFilters
   setFilters: (next: CreatureFilters) => void
   activeFilters: number
@@ -1138,15 +1133,36 @@ function Toolbar({
       </div>
       <div className="bst-toolbar">
         <div className="bst-toolbar-row">
-          <SegmentedControl
-            className="bst-source ink-seg"
-            aria-label={t('bestiary.source.label')}
-            value={filters.source}
-            onChange={(v) => set({ source: v as CreatureFilters['source'] })}
-            data={(['all', 'srd', 'homebrew', 'favorites'] as const)
-              .filter((value) => official || value !== 'srd')
-              .map((value) => ({ value, label: t(`bestiary.source.${value}`) }))}
-          />
+          {packs.length > 1 ? (
+            // Several packs do not fit as segments on a phone: one list names each of them.
+            <Select
+              className="bst-source-select"
+              aria-label={t('bestiary.source.label')}
+              value={filters.source}
+              onChange={(v) => v && set({ source: v as CreatureFilters['source'] })}
+              allowDeselect={false}
+              comboboxProps={{ zIndex: 420 }}
+              data={[
+                { value: 'all', label: t('bestiary.source.all') },
+                ...packs.map((pack) => ({ value: `pack:${pack.id}`, label: pack.title })),
+                { value: 'homebrew', label: t('bestiary.source.homebrew') },
+                { value: 'favorites', label: t('bestiary.source.favorites') },
+              ]}
+            />
+          ) : (
+            <SegmentedControl
+              className="bst-source ink-seg"
+              aria-label={t('bestiary.source.label')}
+              value={filters.source}
+              onChange={(v) => set({ source: v as CreatureFilters['source'] })}
+              data={[
+                { value: 'all', label: t('bestiary.source.all') },
+                ...packs.map((pack) => ({ value: `pack:${pack.id}`, label: pack.short })),
+                { value: 'homebrew', label: t('bestiary.source.homebrew') },
+                { value: 'favorites', label: t('bestiary.source.favorites') },
+              ]}
+            />
+          )}
           <p className="bst-count-line" role="status" aria-live="polite">
             {t('bestiary.count', { count })}
           </p>
@@ -1232,8 +1248,11 @@ function CreatureList({
   clear,
   altLang,
   artCredit,
+  showPack,
 }: {
   altLang: string
+  /** RYT-094: several creature packs are enabled: each pack creature names its pack. */
+  showPack: boolean
   items: CreatureListItem[]
   /** The credit of an SRD creature's bundled art, for the viewer. */
   artCredit: (id: string | null | undefined) => CreatureArt | null
@@ -1399,6 +1418,7 @@ function CreatureList({
             )}
             <span className="bst-row-meta">
               {[
+                showPack ? item.pack : null,
                 item.type ? t(`bestiary.type.${item.type}`) : null,
                 item.size[0] ? t(`bestiary.size.${item.size[0]}`) : null,
                 t('bestiary.rowNumbers', { ac: item.ac, hp: item.hp }),
@@ -1560,7 +1580,7 @@ function CreatureDetail({
   onComplete,
   onDuplicate,
   onDelete,
-  onRemove,
+  onHide,
   onRestore,
   onCopied,
 }: {
@@ -1582,8 +1602,8 @@ function CreatureDetail({
   onComplete: (target: HTMLElement) => void
   onDuplicate: (target: HTMLElement) => void
   onDelete: (target: HTMLElement) => void
-  /** RYT-089: removes an official creature (or its campaign version) from the campaign. */
-  onRemove: (target: HTMLElement) => void
+  /** RYT-094: hides a pack creature (and its campaign version) in this campaign. */
+  onHide: (target: HTMLElement) => void
   /** RYT-089: deletes the campaign version, the official creature is listed again. */
   onRestore: (target: HTMLElement) => void
   onCopied: () => void
@@ -1766,13 +1786,12 @@ function CreatureDetail({
                   {t('bestiary.copyText')}
                 </Menu.Item>
               )}
-              {!encounterId && (item.source === 'srd' || item.version) && (
+              {!encounterId && item.packId && (item.source === 'srd' || item.version) && (
                 <Menu.Item
-                  className="bst-menu-danger"
-                  leftSection={<BookMinus size={16} aria-hidden="true" />}
-                  onClick={() => onRemove(fromMenu())}
+                  leftSection={<EyeOff size={16} aria-hidden="true" />}
+                  onClick={() => onHide(fromMenu())}
                 >
-                  {t('bestiary.official.removeOne')}
+                  {t('bestiary.packs.hide')}
                 </Menu.Item>
               )}
               {!encounterId && item.source === 'homebrew' && !item.version && (

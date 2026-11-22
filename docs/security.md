@@ -399,8 +399,30 @@ cross-campaign DM, plus the guarded PRE mirror.
   readers must apply the same rule.
 - Every published version of every entry is kept. Withdrawing content for legal reasons means
   deleting its rows in `content_entry_versions` too.
-- Until RYT-094, the campaign bestiary tables stay the record for the SRD creatures and drive
-  `campaign_content` through triggers; changes to the `srd-5-2-1` pack are refused while it is not
-  the published public SRD.
+- The campaign bestiary tables stay the record for the SRD creatures and drive `campaign_content`
+  through triggers; changes to the `srd-5-2-1` pack are refused while it is not the published
+  public SRD.
 - `delete_my_account` clears the account as `campaign_content.updated_by` (patched by the
   migration; a future redefinition of that function must keep the line).
+
+## Pack creatures (RYT-094)
+
+- `get_campaign_creature_packs` and `get_campaign_creature_pack` are read only, for the campaign's
+  DM (or admin access). They serve only packs still offered that the campaign has a row for, and
+  only at its pinned version; another version is refused as stale.
+- A creature from a pack other than the SRD is stored as `<ref>--<key>` in the `srd_id` columns,
+  board tokens and image paths. `ref` is the first 8 hex digits of the pack id, unique by index.
+  Keys never contain `--`, so an SRD key cannot pass for a pack reference. The checks of the three
+  tables, `tabletop_data_ok`, `add_combatants`, `save_combatant_template`, `set_creature_srd_image`
+  and the storage rule `creature_image_access` accept both forms. They were patched in place by the
+  migration, and a future redefinition of those functions must keep the pattern.
+- Creature keys are limited to 70 characters so a reference fits in 80.
+- `add_combatants`, `save_combatant_template` and `set_creature_srd_image` also require a
+  `<ref>--<key>` reference to name a non-SRD pack the campaign has for creatures
+  (`creature_reference_ok`), so the same creature is never stored two ways. Board tokens check the
+  form only.
+- One pack read is capped at 8 MB (`Too large`). Pack size at publish time is not capped yet.
+- Players see a token's `srd_id` when it has no alias, so the pack ref (8 hex digits of its id)
+  shows which pack a creature comes from; it gives no access to the pack.
+- When private packs reach chosen campaigns (RYT-163), these reads and the browser cache of pack
+  versions (kept for the session, not keyed by campaign) must follow the per-campaign offer.

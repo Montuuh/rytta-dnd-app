@@ -23,7 +23,7 @@ export const contentPackSchema = z.object({
   title_es: z.string(),
   /** False for a pack made private: the campaign can only turn it off. */
   offered: z.boolean().default(true),
-  /** The SRD pack: its creatures are the campaign bestiary until RYT-094. */
+  /** The SRD pack: turning its creatures off also deletes the campaign's versions of them. */
   srd: z.boolean().default(false),
   /** Null when the pack is no longer offered: its newer versions stay out of reach. */
   version: z.number().int().nullable(),

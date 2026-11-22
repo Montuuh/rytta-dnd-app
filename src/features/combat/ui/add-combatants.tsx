@@ -226,7 +226,7 @@ function CreatureForm({
 }) {
   const { t } = useTranslation()
   const catalog = useCreatureCatalog(campaignId)
-  const noOfficial = catalog.official?.downloaded === false
+  const noOfficial = catalog.noPacks
   const spellLabel = useSpellLabel()
   const [picked, setPicked] = useState<CreatureListItem | null>(null)
   const [alias, setAlias] = useState('')
@@ -342,7 +342,7 @@ function CreatureForm({
             ].filter((g) => g.items.length > 0)}
           />
           {noOfficial && (
-            <OfficialElsewhere campaignId={campaignId} total={catalog.officialCount} />
+            <OfficialElsewhere campaignId={campaignId} />
           )}
           <TextInput
             required

@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 import type { ComboboxItem, ComboboxParsedItem, OptionsFilter } from '@mantine/core'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
   bestiaryLanguage,
   creatureArtQuery,
   creatureArtUrl,
-  monsterBodiesQuery,
   monsterIndexQuery,
+  packTitle,
   parseDice,
   searchKey,
   srdItems,
@@ -22,7 +22,13 @@ import {
   type StatBlock,
 } from '@/features/bestiary'
 import { useGlossaryName } from '@/features/glossary'
-import { srdBestiaryQuery, srdImagesQuery, templatesQuery } from '../api'
+import {
+  creaturePacksQuery,
+  packBodiesQuery,
+  packIndexQuery,
+  srdImagesQuery,
+  templatesQuery,
+} from '../api'
 import { campaignBestiary } from '../domain/campaign-bestiary'
 import type { CombatantTemplate, NpcEntry } from '../domain/combat'
 
@@ -69,52 +75,78 @@ export function templateItem(template: CombatantTemplate): CreatureListItem {
 }
 
 /**
- * Everything the DM can put in a fight: the bundled SRD catalogue (lazy chunks) and the campaign's
- * own creatures. Stat blocks of SRD creatures load in the interface language.
+ * Everything the DM can put in a fight (RYT-094): the creatures of the packs the campaign enabled in
+ * Content, at its pinned versions and without its hidden ones, and the campaign's own creatures.
+ * Each pack version loads once (index, then stat blocks in the interface language). Packs turned
+ * off still load, so fights and recaps that used their creatures keep their names and stat blocks.
  */
 export function useCreatureCatalog(campaignId: string) {
   const { i18n } = useTranslation()
   const { state } = useAuth()
+  const userId = state.user!.id
   const language = bestiaryLanguage(i18n.resolvedLanguage)
-  const index = useQuery(monsterIndexQuery())
-  const bodies = useQuery(monsterBodiesQuery(language))
-  const templates = useQuery(templatesQuery(state.user!.id, campaignId))
+  const packs = useQuery(creaturePacksQuery(userId, campaignId))
+  const packList = useMemo(() => packs.data ?? [], [packs.data])
+  const indexes = useQueries({
+    queries: packList.map((pack) => packIndexQuery(userId, campaignId, pack)),
+  })
+  const bodies = useQueries({
+    queries: packList.map((pack) => packBodiesQuery(userId, campaignId, pack, language)),
+  })
+  // The CR baselines (a rules table) stay bundled until rules come from packs (RYT-165).
+  const baselines = useQuery(monsterIndexQuery())
+  const templates = useQuery(templatesQuery(userId, campaignId))
   const art = useQuery(creatureArtQuery())
-  const srdImages = useQuery(srdImagesQuery(state.user!.id, campaignId))
-  const official = useQuery(srdBestiaryQuery(state.user!.id, campaignId))
+  const srdImages = useQuery(srdImagesQuery(userId, campaignId))
+  const indexData = indexes.map((q) => q.data)
+  const bodiesData = bodies.map((q) => q.data)
+  // useQueries returns new arrays each render: memoize on their contents.
+  const indexKey = indexData.map((d) => d?.version ?? '-').join()
+  const bodiesKey = bodiesData.map((d) => d?.version ?? '-').join()
+  const rows = useMemo(
+    () => new Map(indexData.flatMap((d) => d?.rows ?? []).map((row) => [row.id, row])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [indexKey, packList],
+  )
+  const blocks = useMemo(
+    () => Object.assign({}, ...bodiesData.map((d) => d?.monsters ?? {})) as Record<string, StatBlock>,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bodiesKey, packList, language],
+  )
   const items = useMemo(() => {
     const own = new Map((srdImages.data ?? []).map((i) => [i.srd_id, i.image_path]))
     const artOf = (id: string | null | undefined) => (id && art.data?.[id] ? id : null)
-    const srd = (index.data ? srdItems(index.data.monsters, language) : []).map((item) => ({
-      ...item,
-      imagePath: own.get(item.id) ?? null,
-      artId: artOf(item.id),
-    }))
-    const srdById = new Map(srd.map((item) => [item.id, item]))
+    const fromPacks = packList.map((pack, at) => {
+      // List rows name their pack in a few words: the SRD's full title would fill a phone row.
+      const title = pack.srd ? 'SRD' : packTitle(pack, language)
+      const list = srdItems(indexData[at]?.rows ?? [], language, { id: pack.id, title }).map(
+        (item) => ({ ...item, imagePath: own.get(item.id) ?? null, artId: artOf(item.id) }),
+      )
+      return { pack, title, items: list }
+    })
+    const byId = new Map(fromPacks.flatMap((p) => p.items).map((item) => [item.id, item]))
     return campaignBestiary(
       (templates.data ?? []).map((tp) => {
         const item = { ...templateItem(tp), artId: artOf(tp.srd_id) }
         // RYT-089: a version keeps its official creature's other-language name (search, gloss).
-        const source = item.version && tp.srd_id ? srdById.get(tp.srd_id) : undefined
+        const source = item.version && tp.srd_id ? byId.get(tp.srd_id) : undefined
         return source ? { ...item, altName: source.altName } : item
       }),
-      srd,
-      official.data,
+      fromPacks,
     )
-  }, [index.data, templates.data, language, art.data, srdImages.data, official.data])
-  const rows = useMemo(
-    () => new Map((index.data?.monsters ?? []).map((row) => [row.id, row])),
-    [index.data],
-  )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [indexKey, packList, templates.data, language, art.data, srdImages.data])
   const templateById = useMemo(
     () => new Map((templates.data ?? []).map((tp) => [tp.id, tp])),
     [templates.data],
   )
   const blockFor = (item: CreatureListItem | null | undefined): StatBlock | null => {
     if (!item) return null
-    if (item.source === 'srd') return bodies.data?.monsters[item.id] ?? null
+    if (item.source === 'srd') return blocks[item.id] ?? null
     return templateBlock(templateById.get(item.id))
   }
+  const enabled = packList.filter((pack) => pack.enabled)
+  const indexFailed = indexes.some((q) => q.isError && !q.data)
   return {
     language,
     items,
@@ -123,32 +155,38 @@ export function useCreatureCatalog(campaignId: string) {
       (id && art.data?.[id]) || null,
     rows,
     templateById,
-    /** An official creature's stat block, whether or not this campaign lists it (fights, recaps). */
-    officialBlock: (id: string): StatBlock | null => bodies.data?.monsters[id] ?? null,
-    baselines: index.data?.baselines ?? [],
-    traits: bodies.data?.traits ?? [],
+    /** A pack creature's stat block, whether or not this campaign lists it (fights, recaps). */
+    officialBlock: (id: string): StatBlock | null => blocks[id] ?? null,
+    baselines: baselines.data?.baselines ?? [],
+    traits: bodiesData.flatMap((d, at) => (packList[at]?.enabled ? (d?.traits ?? []) : [])),
     blockFor,
     srdName: (id: string) => {
       const row = rows.get(id)
       return row ? row[language] : null
     },
-    /** RYT-089: the campaign's official bestiary (downloaded, removed creatures). */
-    official: official.data,
-    /** Every official creature in the catalogue, downloaded or not (counts, the download dialog). */
-    officialCount: index.data?.monsters.length ?? 0,
-    pending: index.isPending || templates.isPending || official.isPending,
-    bodiesPending: bodies.isPending,
-    error: index.isError || templates.isError || bodies.isError || official.isError,
-    /** RYT-054: the index or the campaign creatures failed with nothing cached to show. */
-    dataError:
-      (index.isError && !index.data) ||
-      (templates.isError && !templates.data) ||
-      (official.isError && !official.data),
+    /** RYT-094: the creature packs the campaign has, enabled or turned off. */
+    packs: packList,
+    /** The campaign uses no creature pack: the way to choose one is Content. */
+    noPacks: packs.isSuccess && enabled.length === 0,
+    /** More than one creature pack is enabled: list rows name their pack. */
+    severalPacks: enabled.length > 1,
+    /** Pack creatures this campaign lists. */
+    officialCount: items.filter((item) => item.source === 'srd').length,
+    /** Pack creatures the app could not read (a custom pack with incomplete entries). */
+    unreadable: indexData.reduce((sum, d, at) => sum + (packList[at]?.enabled ? (d?.unreadable ?? 0) : 0), 0),
+    pending: packs.isPending || templates.isPending || indexes.some((q) => q.isPending),
+    bodiesPending: bodies.some((q) => q.isPending),
+    error:
+      packs.isError ||
+      templates.isError ||
+      indexes.some((q) => q.isError) ||
+      bodies.some((q) => q.isError),
+    /** RYT-054: the packs, a pack's creatures or the campaign creatures failed with nothing cached. */
+    dataError: (packs.isError && !packs.data) || (templates.isError && !templates.data) || indexFailed,
     retry: () => {
-      void index.refetch()
-      void bodies.refetch()
+      void packs.refetch()
       void templates.refetch()
-      void official.refetch()
+      for (const q of [...indexes, ...bodies]) if (q.isError) void q.refetch()
     },
   }
 }

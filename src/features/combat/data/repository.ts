@@ -1,6 +1,14 @@
 import { createBatchSigner } from '@/shared/api/batch-sign'
 import { z } from 'zod'
 import type { Json } from '@/shared/api/database.generated'
+import {
+  creaturePacksSchema,
+  creatureReferencePattern,
+  parsePackBodies,
+  parsePackIndex,
+  type BestiaryLanguage,
+  type CreaturePack,
+} from '@/features/bestiary'
 import { config } from '@/shared/lib/config'
 import { uploadBytes, uploadExtension, uploadTypes } from '@/shared/lib/image-encode'
 import {
@@ -8,7 +16,6 @@ import {
   combatStateSchema,
   encounterListSchema,
   mutationResultSchema,
-  srdBestiarySchema,
   srdImageListSchema,
   templateListSchema,
   type CombatAction,
@@ -70,22 +77,48 @@ export async function loadSrdImages(campaignId: string, signal: AbortSignal) {
   return srdImageListSchema.parse(result.data)
 }
 
-/** RYT-089: the campaign's official bestiary: downloaded or not, and the creatures removed. */
-export async function loadSrdBestiary(campaignId: string, signal: AbortSignal) {
+/** RYT-094: the creature packs the campaign has, with their pinned version and hidden keys. */
+export async function loadCreaturePacks(campaignId: string, signal: AbortSignal) {
   const db = await client()
   const result = await db
-    .rpc('get_srd_bestiary', { target_campaign: uuid(campaignId) })
+    .rpc('get_campaign_creature_packs', { target_campaign: uuid(campaignId) })
     .abortSignal(signal)
   if (result.error) throw new Error(combatErrorCode(result.error.message))
-  return srdBestiarySchema.parse(result.data)
+  return creaturePacksSchema.parse(result.data)
 }
 
-const srdId = (value: string) =>
-  z
-    .string()
-    .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-    .parse(value)
+async function loadCreaturePack(
+  campaignId: string,
+  pack: CreaturePack,
+  part: 'index' | BestiaryLanguage,
+  signal: AbortSignal,
+) {
+  const db = await client()
+  const result = await db
+    .rpc('get_campaign_creature_pack', {
+      target_campaign: uuid(campaignId),
+      target_pack: uuid(pack.id),
+      at_version: int(pack.version, 1, 2_000_000_000),
+      part,
+    })
+    .abortSignal(signal)
+  if (result.error) throw new Error(combatErrorCode(result.error.message))
+  return result.data
+}
+
+/** One pack's creatures at the campaign's version, for lists, fights and the encounter builder. */
+export const loadPackIndex = async (campaignId: string, pack: CreaturePack, signal: AbortSignal) =>
+  parsePackIndex(await loadCreaturePack(campaignId, pack, 'index', signal), pack)
+
+/** One pack's stat blocks and trait library in a language (the other one when it has none). */
+export const loadPackBodies = async (
+  campaignId: string,
+  pack: CreaturePack,
+  language: BestiaryLanguage,
+  signal: AbortSignal,
+) => parsePackBodies(await loadCreaturePack(campaignId, pack, language, signal), pack)
+
+const srdId = (value: string) => z.string().max(80).regex(creatureReferencePattern).parse(value)
 
 const entrySchema = z.discriminatedUnion('kind', [
   z.object({
@@ -112,11 +145,7 @@ const entrySchema = z.discriminatedUnion('kind', [
     legendary_max: z.number().int().min(0).max(9).optional(),
     dm_notes: z.string().max(2000).optional(),
     public_name: z.string().trim().min(1).max(70).optional(),
-    srd_id: z
-      .string()
-      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
-      .max(80)
-      .optional(),
+    srd_id: z.string().regex(creatureReferencePattern).max(80).optional(),
     hp_mode: z.enum(['average', 'roll']).optional(),
     hp_formula: z
       .string()
@@ -365,12 +394,13 @@ export async function changeCombat(campaignId: string, action: CombatAction) {
         request_id,
       })
       break
-    case 'srdBestiary':
-      result = await db.rpc('set_srd_bestiary', {
+    case 'hideCreature':
+      result = await db.rpc('set_campaign_content_hidden', {
         target_campaign,
-        action: action.action === 'removeAll' ? 'remove_all' : action.action,
-        target_srd: action.action === 'remove' ? srdId(action.srdId) : null,
-        request_id,
+        target_pack: uuid(action.packId),
+        target_kind: 'creature',
+        target_key: z.string().max(80).regex(creatureReferencePattern).parse(action.key),
+        hidden: true,
       })
       break
   }

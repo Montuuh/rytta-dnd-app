@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-21",
+  "updatedAt": "2026-11-22",
   "items": [
     {
       "id": "RYT-000",
@@ -3814,7 +3814,8 @@
         "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done.",
         "Progress 2026-11-18: the daily backup workflow ran on main for the first time (run 44362679087: roles, schema and data as a 14-day artifact, checksums verified, row counts equal to production at the time), recorded in docs/evidence/RYT-116/staging-bootstrap.md. Criterion 6 stays open: the restore rehearsal into staging has not been done and needs a staging database connection secret, which the owner has to provide. Staging still has no sign-in (its own OAuth client) and no frontend, and PRE still lives in the production project.",
         "20 November 2026: with the repository public again, the two daily backup artifacts were downloadable by anyone and were deleted; the backup workflow is disabled until the dump is encrypted before upload.",
-        "20 November 2026: the owner added the repository secret STAGING_DB_URL for the restore rehearsal, and a separate Google OAuth web client named Rytta staging was created in the Google Auth Platform project with the staging Supabase callback as its only redirect URI. Enabling the Google provider in the staging project with that client is the owner's step; JavaScript origins wait for the staging site."
+        "20 November 2026: the owner added the repository secret STAGING_DB_URL for the restore rehearsal, and a separate Google OAuth web client named Rytta staging was created in the Google Auth Platform project with the staging Supabase callback as its only redirect URI. Enabling the Google provider in the staging project with that client is the owner's step; JavaScript origins wait for the staging site.",
+        "Progress 2026-11-22: live header check and a signed-out browser run without CSP violations recorded (criterion 5, signed-in screens not covered); the backup workflow now encrypts with age before upload and refuses plain files (criterion 7 code), waiting for the owner key and variable. See docs/evidence/RYT-116/staging-bootstrap.md."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -4676,11 +4677,12 @@
       "title": "Activation and return figures from the database, without tracking scripts",
       "priority": "P1",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
-        "Changed from the audit: hosting analytics would add a script, and the privacy page states that Rytta has no analytics. The figures come from aggregate, read-only queries run by the owner."
+        "Changed from the audit: hosting analytics would add a script, and the privacy page states that Rytta has no analytics. The figures come from aggregate, read-only queries run by the owner.",
+        "Delivered 2026-11-22: read-only report scripts/reports/activation-return.sql, tested with known counts on PGlite and run on staging and production; privacy wording change proposed to the owner."
       ],
       "scope": "A documented, read-only aggregate report over campaigns created since launch. Activation: first encounter started with a second accepted member within 14 days. Solo preparation counted apart. Return: an activated campaign with DM activity on another day within 28 days. Non-goals: browser instrumentation, per-user rows, new tables, dashboards, any change to the privacy statement beyond what the owner approves.",
       "acceptance": [
@@ -4693,7 +4695,7 @@
       "validation": [
         "Query tested on staging data with known counts; first production run recorded; no migration unless reviewed."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-147/validation.md", "docs/metrics.md"]
     },
     {
       "id": "RYT-148",

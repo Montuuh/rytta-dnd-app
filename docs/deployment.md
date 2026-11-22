@@ -181,13 +181,15 @@ marker untouched. Rolling the frontend back after the migration is safe for the 
 
 The free database plan keeps no backups (checked in the project console on 2026-11-18), so the
 repository takes its own. The `Backup` workflow (`.github/workflows/backup.yml`) runs once a day
-and on manual dispatch: it dumps roles, schema and data of production with the Supabase CLI and
-keeps them for 14 days as a workflow artifact, with a manifest of SHA-256 sums. It does nothing
-until the repository secret `BACKUP_DB_URL` exists.
+and on manual dispatch: it dumps roles, schema and data of production with the Supabase CLI,
+encrypts them with [age](https://age-encryption.org) to the owner's public key inside the runner,
+deletes the plain files and keeps only `backup.tar.age` (and its SHA-256) for 14 days as a workflow
+artifact. It does nothing until both the secret `BACKUP_DB_URL` and the variable
+`BACKUP_AGE_RECIPIENT` exist, and it fails rather than upload anything that is not encrypted.
 
-The repository is public since 19 November 2026, so workflow artifacts are downloadable by anyone.
-The workflow is disabled until the dump is encrypted before upload; two earlier artifacts were
-exposed and deleted (docs/evidence/RYT-122/owner-checks-2026-11-20.md).
+The repository is public since 19 November 2026, so artifacts are downloadable by anyone; only the
+holder of the private key can read them. The workflow was disabled on 2026-11-20 after two
+unencrypted artifacts were exposed and deleted (docs/evidence/RYT-122/owner-checks-2026-11-20.md).
 
 Owner steps, once:
 
@@ -196,16 +198,21 @@ Owner steps, once:
    password in it. Reset the password there first if it is not known.
 2. In the repository, Settings, Secrets and variables, Actions: add the secret `BACKUP_DB_URL`
    with that string. It is a secret: never commit it, paste it in an issue or type it in a chat.
-3. Run the workflow once by hand and check that the artifact holds `roles.sql`, `schema.sql`,
-   `data.sql` and `MANIFEST.txt`.
+3. On your own computer, install age and run `age-keygen -o rytta-backup.key`. Keep that file in
+   your password manager (it is the only way to read a backup; losing it loses every backup). It
+   prints the public key, `age1…`.
+4. Add the repository variable (not a secret) `BACKUP_AGE_RECIPIENT` with that public key.
+5. Enable the workflow (`gh workflow enable Backup` or the Actions tab), run it once by hand and
+   check that the artifact holds only `backup.tar.age` and `backup.tar.age.sha256`.
 
-The dump contains personal data (account e-mail addresses and campaign content). An artifact is
-only as private as the repository, which is public: never upload an unencrypted dump. Download it
-only when needed and delete local copies.
+To read a backup: download the artifact, check the SHA-256, then
+`age -d -i rytta-backup.key backup.tar.age | tar -x` gives `roles.sql`, `schema.sql`, `data.sql`
+and `MANIFEST.txt`. Delete the plain files when done.
 
 Not covered: files in Storage (portraits, maps, item pictures) are not in the dump. Restore is
-not rehearsed yet: the plan is to load a dump into the staging project and record the date, the
-steps and how long it took (RYT-116). Until that rehearsal exists, treat the backup as unproven.
+not rehearsed yet. Staging holds synthetic data only (ADR 048), so loading a production dump into
+it is the owner's decision; the alternative is a rehearsal into a throwaway local database with
+the same steps (RYT-116). Until a rehearsal exists, treat the backup as unproven.
 
 ## Vercel fallback
 

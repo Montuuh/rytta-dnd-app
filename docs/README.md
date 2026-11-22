@@ -124,3 +124,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 60. [ADR 049: campaign session continuity](decisions/049-session-continuity.md) records how the DM handoff, the published recap and item receipts persist.
 61. [ADR 050: quest journal](decisions/050-quest-journal.md) records how quests, hidden objectives,
     the DM's note and the Players' change marks are stored and shown (RYT-006).
+62. [ADR 051: campaigns choose content packs](decisions/051-campaign-content-packs.md): pinned pack
+    versions per campaign, hidden entries, campaign versions and the first kinds (RYT-162 to RYT-167).

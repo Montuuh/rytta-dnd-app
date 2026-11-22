@@ -3129,25 +3129,26 @@
     },
     {
       "id": "RYT-094",
-      "title": "The app downloads the SRD from the content library",
+      "title": "Creatures come from the campaign's content packs",
       "priority": "P2",
       "owner": "fullstack",
       "status": "planned",
-      "dependsOn": ["RYT-093"],
+      "dependsOn": ["RYT-093", "RYT-162"],
       "sources": [
         "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
-        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first."
+        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first.",
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051). RYT-094 narrows to creatures; spells and class content, rules and items move in RYT-164 to RYT-166 and the bundled catalogues leave in RYT-167."
       ],
-      "scope": "The bestiary, combat, encounter builder, glossary, automatic term links and class features read the official SRD pack from the content library through queries keyed by pack version (public pack content may be cached on the device), instead of bundled JSON. The bundled catalogues leave the repository; demo mode keeps a small explicit sample. Creature art stays as it is until a separate decision.",
+      "scope": "The bestiary, combat and the encounter builder read creatures from the packs the campaign enabled for creatures (RYT-162), at the campaign's pinned version, with its hidden entries and campaign versions applied, instead of the bundled SRD catalogue. Pack content is cached by version. Creature art stays bundled until a separate decision.",
       "acceptance": [
-        "Bestiary, combat, encounter builder, glossary and character sheet show the same SRD content as before, loaded from the library.",
-        "A new pack version refreshes the cached content; an unreachable library shows a retryable error and never falls back silently.",
-        "src/features/bestiary/content and src/features/glossary/content no longer exist in the repository.",
-        "390px and 820px plus a laptop width, both themes and languages, keyboard and Escape, axe clean; options page answered before UI; independent UI review PASS."
+        "A campaign with the SRD creatures pack shows the same creatures as before in the bestiary, combat and encounter builder, loaded from the library.",
+        "Hidden creatures and campaign versions apply everywhere a creature is listed, added or suggested.",
+        "An unreachable library shows a retryable error and never falls back silently to bundled data.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
       ],
       "validation": [
         "npm run check",
-        "bestiary, combat, encounter-builder, glossary and characters e2e at 390px and 820px",
+        "bestiary, combat and encounter-builder e2e at 390px and 820px",
         "independent UI review PASS"
       ],
       "evidence": []
@@ -5044,6 +5045,142 @@
         "Browser tests at 390 and 820 px for at least the party, inventory and combat screens."
       ],
       "validation": ["npm run check", "npm run test:e2e", "independent UI review"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-162",
+      "title": "Campaign content: the DM chooses packs per kind, at pinned versions",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-093", "RYT-153"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "A Content section in the DM Command Center lists the packs a campaign can use by kind (creatures, spells, class content, rules, items) and lets the DM enable a pack for a kind at its current version, hide single entries, and review and accept a newer version (new, changed and withdrawn entries, and entries the campaign changed). Editing an entry from a pack stores a campaign version that can return to the pack's. The data model and RPCs are generic per kind; existing campaign bestiary downloads, removals and creature versions (ADR 039) become the SRD creatures pack with the same result. Modules start reading it in RYT-094 and RYT-164 to RYT-166.",
+      "acceptance": [
+        "Enabling, hiding, updating and campaign versions go through campaign-scoped RPCs with revision checks and idempotent request ids; only the campaign's DM (or admin access) writes; Players read only what the campaign enabled.",
+        "A newly published pack version changes nothing in a campaign until its DM accepts the update, and the review lists what changes.",
+        "Every existing campaign that downloaded the official bestiary keeps the same creatures, removals and creature versions after the migration.",
+        "Denial tests for anon, outsider, Player and other-campaign DM; hosted apply to staging, PRE and production.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite denial and migration tests",
+        "npm run check",
+        "campaign content e2e at 390px and 820px",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-163",
+      "title": "Private packs offered only to the campaigns their owner adds",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "A private pack lists the campaigns it is offered to; its owner (or a super admin) adds and removes campaigns from the library. Only those campaigns see the pack in their Content section; public packs stay offered to every DM. Removing a campaign keeps what it already enabled until its DM removes it, or removes it at once (decided on an options page).",
+      "acceptance": [
+        "A private pack never appears to a DM of a campaign it is not offered to, in lists, searches or entry payloads.",
+        "Denial tests for anon, outsider, Player, other-campaign DM and a DM of a campaign not offered the pack.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite denial tests",
+        "npm run check",
+        "library and campaign content e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-164",
+      "title": "Spells and class content come from the campaign's packs",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "Character creation, level up, the sheet's spells and casting read classes, subclasses, class features and spells from the packs the campaign enabled, with hidden entries and campaign versions applied, instead of the bundled catalogues. The library editor gains the forms these kinds need.",
+      "acceptance": [
+        "A campaign with the SRD packs offers the same classes, subclasses, features and spells as before.",
+        "Hidden entries are not offered when creating or levelling up; existing characters keep what they already chose.",
+        "An unreachable library shows a retryable error and never falls back silently.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "characters, level-up and casting e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-165",
+      "title": "Rules and conditions come from the campaign's packs",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "The glossary and the automatic term links read rules and conditions from the packs the campaign enabled, next to the campaign's own homebrew entries, instead of the bundled glossary. The standalone glossary outside a campaign reads the public SRD pack.",
+      "acceptance": [
+        "The glossary and term links show the same SRD rules and conditions as before, plus the campaign's homebrew.",
+        "Hidden entries leave the glossary and stop linking.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": ["npm run check", "glossary e2e", "independent UI review PASS"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-166",
+      "title": "Items as a pack kind: the basic items in a pack, storeroom and shops read packs",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "The library gains an item kind with an editor form and the bundled basic items become a pack. The storeroom's import and the shops offer the items of the packs the campaign enabled; items already in a campaign keep their data and gain a link to their pack entry where they came from one.",
+      "acceptance": [
+        "The basic items import offers the same items as before, from the pack.",
+        "Items already in campaigns, inventories and shops are unchanged by the migration.",
+        "Economy writes keep their transactional RPCs and idempotency.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite migration tests",
+        "npm run check",
+        "campaign-items, shops and inventory e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-167",
+      "title": "The bundled game data catalogues leave the repository",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-094", "RYT-164", "RYT-165", "RYT-166"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "Once every reader uses the packs, the bundled SRD catalogues (bestiary, glossary, spells, classes, basic items) are removed; demo mode keeps a small explicit sample.",
+      "acceptance": [
+        "No bundled SRD catalogue remains in src/ except the demo sample; the build no longer ships them.",
+        "Every module still works in a campaign with the SRD packs, and demo mode says it is a sample."
+      ],
+      "validation": ["npm run check", "full e2e"],
       "evidence": []
     }
   ]

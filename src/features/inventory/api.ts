@@ -32,7 +32,6 @@ import {
   loadItemPacks,
 } from './data/repository'
 import { buildItemCatalogue } from './domain/pack-items'
-import { loadBasicItemDescriptions, loadBasicItems } from './domain/basic-items'
 import type { ImportItem } from './domain/catalogue'
 import type { InventoryAction } from './domain/item'
 
@@ -295,21 +294,6 @@ export function useCampaignItemCatalogue(campaignId: string) {
   return useQuery(campaignItemCatalogueQuery(state.user?.id ?? '', campaignId))
 }
 
-/** The bundled catalogue: the library's SRD and Rytta basics uploads (RYT-167 retires it). */
-export const basicCatalogueQuery = () =>
-  queryOptions({
-    queryKey: ['static', 'basic-items'],
-    queryFn: async () => {
-      const [items, en, es] = await Promise.all([
-        loadBasicItems(),
-        loadBasicItemDescriptions('en'),
-        loadBasicItemDescriptions('es'),
-      ])
-      return { items, descriptions: { en, es } }
-    },
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
 export function useProposeItem(campaignId: string) {
   return useCatalogueMutation(campaignId, (input: ProposalInput) => proposeItem(campaignId, input))
 }

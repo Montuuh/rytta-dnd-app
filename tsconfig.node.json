@@ -20,5 +20,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests"]
+  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests"],
+  // Unit-test helpers over src/ (bundler resolution): checked with tsconfig.app.json.
+  "exclude": ["tests/fixtures/srd/*.ts"]
 }

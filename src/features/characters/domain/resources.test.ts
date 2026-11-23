@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { subclassOf } from '../../../../tests/fixtures/srd/classes'
 import { removeTracker, syncProgression, type LibraryFeature } from './progression'
 import {
   actionsFor,
@@ -13,11 +14,14 @@ import {
 import { applyRest, emptyBuild, restRecovery } from './rules'
 import { chooseBackground, chooseSpecies } from './creation'
 import { buildSchema, type Build, type Vitals } from './sheet'
-import { backgroundKeys, classKeys, speciesKeys, subclassOf, traitChoices } from './srd'
+import { backgroundKeys, classKeys, speciesKeys, traitChoices } from './srd'
 
 type Row = { id: string; cat: string; es: string; lv?: number; fc?: string; sb?: string }
 const [index] = Object.values(
-  import.meta.glob<Row[]>('../../glossary/content/index.json', { eager: true, import: 'default' }),
+  import.meta.glob<Row[]>('../../../../tests/fixtures/srd/glossary/index.json', {
+    eager: true,
+    import: 'default',
+  }),
 )
 const rows = new Map(index!.map((row) => [row.id, row]))
 const library: LibraryFeature[] = index!
@@ -326,7 +330,7 @@ describe('RYT-102 options paid from a resource and once-per-turn marks', () => {
 /** English glossary text of an entry, summary and blocks. */
 type Entry = { summary?: string; blocks?: unknown }
 const [english] = Object.values(
-  import.meta.glob<Record<string, Entry>>('../../glossary/content/en.json', {
+  import.meta.glob<Record<string, Entry>>('../../../../tests/fixtures/srd/glossary/en.json', {
     eager: true,
     import: 'default',
   }),

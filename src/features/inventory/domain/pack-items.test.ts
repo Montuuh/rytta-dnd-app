@@ -1,17 +1,49 @@
 import { describe, expect, it } from 'vitest'
-import catalogue from '../content/basic-items.json'
-import en from '../content/basic-items.en.json'
-import es from '../content/basic-items.es.json'
-import { basicItemCatalogueSchema } from './basic-items'
+import catalogue from '../../../../tests/fixtures/srd/items/basic-items.json'
+import en from '../../../../tests/fixtures/srd/items/basic-items.en.json'
+import es from '../../../../tests/fixtures/srd/items/basic-items.es.json'
+import { basicItemCatalogueSchema, type BasicItem, type BasicItemDescriptions } from './basic-items'
 import { toImportItem } from './catalogue'
 import {
   buildItemCatalogue,
-  bundledItemEntry,
   entryKeyOf,
   itemDifferences,
   itemReference,
   type ItemPack,
 } from './pack-items'
+
+/** A test catalogue item as the published SRD and Rytta basics packs hold it. */
+function bundledItemEntry(
+  item: BasicItem,
+  descriptions: Record<'en' | 'es', BasicItemDescriptions>,
+) {
+  const description = (language: 'en' | 'es') => {
+    const text = descriptions[language][item.key]
+    return text ? { description: text } : undefined
+  }
+  const en = description('en')
+  const es = description('es')
+  return {
+    kind: 'item',
+    key: entryKeyOf(item.key),
+    name_en: item.name.en,
+    name_es: item.name.es,
+    data: {
+      index: {
+        key: item.key,
+        category: item.category,
+        icon: item.icon,
+        slot_kind: item.slot_kind,
+        weightLb: item.weightLb,
+        costCp: item.costCp,
+        properties: item.properties,
+        ...(item.pack ? { pack: item.pack } : {}),
+      },
+      ...(en ? { en } : {}),
+      ...(es ? { es } : {}),
+    },
+  }
+}
 
 const items = basicItemCatalogueSchema.parse(catalogue).items
 const descriptions = { en, es } as Record<'en' | 'es', Record<string, string>>

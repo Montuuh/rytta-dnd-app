@@ -89,17 +89,8 @@ for (const [language, theme] of [
     await page.emulateMedia({ reducedMotion: 'reduce' })
     {
       // The library item form.
-      const server = libraryServer({ srdWithoutItems: true, sample: true })
+      const server = libraryServer({ srd: true, sample: true })
       await server.install(page)
-      await page.goto('./#/library')
-      await page.getByRole('button', { name: es ? 'Completar el SRD' : 'Complete the SRD' }).click()
-      const upload = page.getByRole('dialog', {
-        name: es ? 'Completar el SRD' : 'Complete the SRD',
-      })
-      await upload
-        .getByRole('button', { name: es ? 'Subir 221 entradas' : 'Upload 221 entries' })
-        .click()
-      await expect(upload).toHaveCount(0, { timeout: 30_000 })
       await page.goto(`./#/library/${srdLibraryPackId}/item`)
       await page.getByRole('searchbox').fill(es ? 'espada larga' : 'longsword')
       await page.getByRole('link', { name: es ? /^Espada larga/ : /^Longsword/ }).click()

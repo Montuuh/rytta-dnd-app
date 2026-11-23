@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { srdClass, srdClassRows, srdClasses } from '../../../../tests/fixtures/srd/classes'
 import {
   buildClassCatalog,
   classDefFor,
-  classIndexOf,
-  classIndexSchema,
   offeredClasses,
-  srdClassDefs,
-  srdSubclassDefs,
   subclassesFor,
   type ClassRowLike,
 } from './class-catalog'
@@ -40,25 +37,24 @@ const giant: ClassRowLike = {
   data: { class: 'fighter' },
 }
 
-describe('class catalog (RYT-168)', () => {
-  it('every SRD class round-trips through its library index', () => {
-    for (const def of srdClassDefs) {
-      const parsed = classIndexSchema.parse(classIndexOf(def))
-      expect(parsed).toMatchObject({
-        hitDie: def.hitDie,
-        caster: def.caster,
-        subclassLevel: 3,
-        cantrips: def.cantrips,
-      })
-    }
+describe('class catalog (RYT-168, RYT-167)', () => {
+  it('reads the 12 SRD classes and their subclasses as the library publishes them', () => {
+    expect(srdClasses.classes.map((item) => item.key)).toHaveLength(12)
+    expect(srdClass('fighter')).toMatchObject({
+      srd: true,
+      name: null,
+      hitDie: 10,
+      improvementLevels: [4, 6, 8, 12, 14, 16, 19],
+      cantrips: false,
+    })
+    expect(subclassesFor(srdClasses, 'fighter').map((item) => item.key)).toEqual(['champion'])
   })
 
-  it('keeps the app SRD classes while the packs have none, and adds pack classes beside them', () => {
-    const catalog = buildClassCatalog([rune, giant])
-    expect(catalog.classes.map((item) => item.key)).toEqual([
-      ...srdClassDefs.map((item) => item.key),
-      'b00c5000--rune-knight',
-    ])
+  it('has no class without packs, and adds pack classes and subclasses beside the SRD ones', () => {
+    expect(buildClassCatalog([]).classes).toEqual([])
+    expect(classDefFor(null, 'wizard')).toBeNull()
+    const catalog = buildClassCatalog([...srdClassRows, rune, giant])
+    expect(catalog.classes.at(-1)!.key).toBe('b00c5000--rune-knight')
     expect(subclassesFor(catalog, 'fighter').map((item) => item.key)).toEqual([
       'champion',
       'b00c5000--giant-blood',
@@ -71,28 +67,11 @@ describe('class catalog (RYT-168)', () => {
     })
   })
 
-  it('reads SRD class rows from the pack, leaving hidden ones out of new choices', () => {
-    const rows: ClassRowLike[] = srdClassDefs.map((def) => ({
-      cat: 'class',
-      key: def.key,
-      en: def.key,
-      es: def.key,
-      data: classIndexOf(def),
-      ...(def.key === 'monk' ? { hidden: true } : {}),
-    }))
-    const catalog = buildClassCatalog([
-      ...rows,
-      ...srdSubclassDefs.map((def) => ({
-        cat: 'subclass' as const,
-        key: def.key,
-        en: def.key,
-        es: def.key,
-        data: { class: def.classKey },
-      })),
-    ])
-    expect(catalog.classes).toHaveLength(12)
+  it('leaves hidden classes out of new choices and keeps them readable', () => {
+    const catalog = buildClassCatalog(
+      srdClassRows.map((row) => (row.key === 'monk' ? { ...row, hidden: true } : row)),
+    )
     expect(offeredClasses(catalog).map((item) => item.key)).not.toContain('monk')
-    // A character that already is a Monk keeps its class's data.
     expect(classDefFor(catalog, 'monk')).toMatchObject({ hitDie: 8, hidden: true })
   })
 
@@ -118,15 +97,21 @@ describe('class catalog (RYT-168)', () => {
     })
     expect(levelUpRequirements(build, 4, def)).toMatchObject({ improvement: true })
     expect(levelUpRequirements(build, 6, def)).toMatchObject({ improvement: false })
-    // Without its definition, a pack class behaves as one typed by hand.
+    // Without its definition, a class behaves as one typed by hand.
     expect(chooseClass(emptyBuild(), def.key, 'Caballero rúnico', null).classKey).toBe('custom')
   })
 
-  it('keeps the SRD tables for SRD classes', () => {
-    const build = chooseClass(emptyBuild(), 'fighter', 'Guerrero')
-    expect(levelUpRequirements(build, 6)).toMatchObject({ improvement: true })
-    const wizard = chooseClass(emptyBuild(), 'wizard', 'Mago')
-    expect(levelUpRequirements(wizard, 4)).toMatchObject({ cantrips: 1, spells: 1, spellbook: 2 })
-    expect(levelUpRequirements(wizard, 3)).toMatchObject({ subclass: true })
+  it('applies the SRD tables of SRD classes', () => {
+    const fighter = srdClass('fighter')
+    const build = chooseClass(emptyBuild(), 'fighter', 'Guerrero', fighter)
+    expect(levelUpRequirements(build, 6, fighter)).toMatchObject({ improvement: true })
+    const wizard = srdClass('wizard')
+    const mage = chooseClass(emptyBuild(), 'wizard', 'Mago', wizard)
+    expect(levelUpRequirements(mage, 4, wizard)).toMatchObject({
+      cantrips: 1,
+      spells: 1,
+      spellbook: 2,
+    })
+    expect(levelUpRequirements(mage, 3, wizard)).toMatchObject({ subclass: true })
   })
 })

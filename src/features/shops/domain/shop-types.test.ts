@@ -4,10 +4,13 @@ import { findShopType, shopTypes } from './shop-types'
 // Globbed rather than imported: the catalogue and the icon set belong to the inventory feature
 // and are not on its public entrypoint.
 const [catalogue] = Object.values(
-  import.meta.glob<{ items: { key: string }[] }>('../../inventory/content/basic-items.json', {
-    eager: true,
-    import: 'default',
-  }),
+  import.meta.glob<{ items: { key: string }[] }>(
+    '../../../../tests/fixtures/srd/items/basic-items.json',
+    {
+      eager: true,
+      import: 'default',
+    },
+  ),
 )
 const [iconSource = ''] = Object.values(
   import.meta.glob<string>('../../inventory/ui/icons.ts', {

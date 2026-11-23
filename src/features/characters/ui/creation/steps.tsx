@@ -1,5 +1,7 @@
-import { classDefFor, offeredClasses, srdClassDefs } from '../../domain/class-catalog'
+import { classDefFor, offeredClasses } from '../../domain/class-catalog'
+import { isClassKey } from '../../domain/rules'
 import { useClassCatalog, useClassDefName } from '../class-catalog'
+import { ClassesState } from './classes-state'
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   ActionIcon,
@@ -55,7 +57,6 @@ import {
   backgroundKeys,
   backgrounds,
   casterKinds,
-  classes,
   hitDice,
   pointBuyBudget,
   pointBuyCost,
@@ -163,7 +164,7 @@ function ClassStep(props: StepProps) {
   const loss = session.classLoss
   const catalog = useClassCatalog()
   const nameOf = useClassDefName()
-  const classOptions = catalog ? offeredClasses(catalog) : srdClassDefs
+  const classOptions = catalog ? offeredClasses(catalog) : []
   return (
     <Stack gap="md">
       <ClassPicker
@@ -188,6 +189,7 @@ function ClassStep(props: StepProps) {
           }))
         }}
       />
+      <ClassesState loaded={catalog !== null} offered={classOptions.length} />
       {loss && <ClassLossNotice loss={loss} maxHp={draft.maxHp} />}
       {build.classKey === 'custom' && (
         <Paper p="md" className="sheet-block">
@@ -521,7 +523,7 @@ function AbilitiesStep(props: StepProps) {
     </Stack>
   )
 }
-const isClassKeyValue = (key: string) => key in classes
+const isClassKeyValue = (key: string) => isClassKey(key)
 
 function SkillsStep(props: StepProps) {
   const { t } = useTranslation()

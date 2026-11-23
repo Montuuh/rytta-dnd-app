@@ -3,6 +3,7 @@ import { config } from '@/shared/lib/config'
 import {
   campaignContentSchema,
   contentChangesSchema,
+  contentChoicesSchema,
   contentEntriesSchema,
   contentError,
   type ContentCategory,
@@ -121,4 +122,11 @@ export async function setContentHidden(
     hidden,
   })
   if (error) throw new Error(contentError(error.message))
+}
+
+/** RYT-167: the packs a new campaign can use (public ones and the caller's own private ones). */
+export async function getContentChoices(signal: AbortSignal) {
+  const { data, error } = await (await client()).rpc('get_content_choices').abortSignal(signal)
+  if (error) throw new Error(contentError(error.message))
+  return contentChoicesSchema.parse(data)
 }

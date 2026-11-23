@@ -11,11 +11,8 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  Textarea,
-  TextInput,
   Title,
 } from '@mantine/core'
-import { useForm } from '@mantine/form'
 import { useClipboard } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, Check, Copy, Ellipsis, LogOut, Plus, X } from 'lucide-react'
@@ -33,7 +30,6 @@ import { SupervisedCampaigns, useAdminStatus } from '@/features/admin'
 import { config } from '@/shared/lib/config'
 import { campaignsQuery, invitationsQuery, membersQuery, useCampaignAction } from '../api'
 import {
-  createCampaignSchema,
   leaveBlock,
   leftCampaignState,
   MembershipError,
@@ -41,10 +37,11 @@ import {
   type Invitation,
 } from '../domain/campaign'
 import { readCampaignVisit } from '../domain/recent-campaign'
-import { ActionFeedback, QueryFeedback } from './feedback'
+import { QueryFeedback } from './feedback'
 import { keepsStaleData, showsLoadError } from './load-cause'
 import { useConnectionPhase } from '@/shared/lib/connection-context'
 import { LeaveCampaignDialog, LeaveCampaignItem } from './leave'
+import { CreateCampaignDialog } from './create-campaign'
 import './hub.css'
 
 const covers = [
@@ -211,7 +208,6 @@ export function CampaignHub() {
   const lost = phase === 'offline' || phase === 'failed'
   const invitations = useQuery(invitationsQuery(user.id))
   const respond = useCampaignAction()
-  const create = useCampaignAction()
   const [opened, setOpened] = useState(false)
   const [decline, setDecline] = useState<Invitation | null>(null)
   // RYT-095: the dialog lives here, not in the card, which leaves the list on success.
@@ -241,31 +237,16 @@ export function CampaignHub() {
     const frame = requestAnimationFrame(() => noticeRef.current?.focus())
     return () => cancelAnimationFrame(frame)
   }, [notice, location.key])
-  const form = useForm({
-    initialValues: { name: '', description: '' },
-    validate: {
-      name: (value) =>
-        createCampaignSchema.shape.name.safeParse(value).success ? null : t('hub.invalidName'),
-      description: (value) => (value.length <= 2000 ? null : t('hub.invalidDescription')),
-    },
-  })
   const refresh = () => {
     void campaigns.refetch()
     void invitations.refetch()
   }
-  const startCreate = () => {
-    create.reset()
-    setOpened(true)
-  }
-  const closeCreate = () => {
-    if (!create.isPending) setOpened(false)
-  }
+  const startCreate = () => setOpened(true)
   const closeDecline = () => {
     if (respond.isPending) return
     respond.reset()
     setDecline(null)
   }
-  useBackToClose(opened, closeCreate)
   useBackToClose(!!decline, closeDecline)
   // The retry repeats the last answer with the same outcome handling.
   const lastAnswer = useRef<{ invite: Invitation; accept: boolean } | null>(null)
@@ -496,58 +477,7 @@ export function CampaignHub() {
         </Paper>
       )}
       {!invitesPending && !showEmpty && invitationsPanel}
-      <Modal
-        opened={opened}
-        onClose={closeCreate}
-        title={t('hub.create')}
-        returnFocus
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-      >
-        <form
-          noValidate
-          onSubmit={form.onSubmit((values) =>
-            create.mutate(
-              { kind: 'create', ...values },
-              {
-                onSuccess: () => {
-                  setOpened(false)
-                  form.reset()
-                },
-              },
-            ),
-          )}
-        >
-          <Stack>
-            <Text size="sm" c="dimmed">
-              {t('hub.createHint')}
-            </Text>
-            <TextInput
-              label={t('hub.name')}
-              required
-              maxLength={100}
-              enterKeyHint="next"
-              data-autofocus
-              {...form.getInputProps('name')}
-            />
-            <Textarea
-              label={t('hub.description')}
-              maxLength={2000}
-              autosize
-              minRows={3}
-              {...form.getInputProps('description')}
-            />
-            <ActionFeedback error={create.error} />
-            <Group justify="flex-end">
-              <Button variant="subtle" disabled={create.isPending} onClick={closeCreate}>
-                {t('action.cancel')}
-              </Button>
-              <Button type="submit" loading={create.isPending}>
-                {t('hub.create')}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
+      <CreateCampaignDialog opened={opened} onClose={() => setOpened(false)} />
       <Modal
         opened={!!decline}
         onClose={closeDecline}

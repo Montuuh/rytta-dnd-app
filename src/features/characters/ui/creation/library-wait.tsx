@@ -14,8 +14,10 @@ export const LibraryWait = forwardRef<
     ready: boolean
     /** Where focus goes when a retry brings the library back (the button that finishes). */
     onReady?: () => void
+    /** What is waiting for the library: finishing the character, or its class (RYT-167). */
+    subject?: 'finish' | 'classes'
   }
->(function LibraryWait({ ready, onReady }, ref) {
+>(function LibraryWait({ ready, onReady, subject = 'finish' }, ref) {
   const { t } = useTranslation()
   const glossary = useGlossary()
   const box = useRef<HTMLDivElement>(null)
@@ -38,7 +40,9 @@ export const LibraryWait = forwardRef<
     >
       {failed ? (
         <Stack gap="xs" align="flex-start">
-          <Text size="sm">{t('creation.library.error')}</Text>
+          <Text size="sm">
+            {t(subject === 'classes' ? 'creation.classes.error' : 'creation.library.error')}
+          </Text>
           <Button
             variant="light"
             onClick={() => {
@@ -54,7 +58,9 @@ export const LibraryWait = forwardRef<
       ) : (
         <Group gap="xs">
           <Loader size="xs" />
-          <Text size="sm">{t('creation.library.loading')}</Text>
+          <Text size="sm">
+            {t(subject === 'classes' ? 'creation.classes.loading' : 'creation.library.loading')}
+          </Text>
         </Group>
       )}
     </Alert>

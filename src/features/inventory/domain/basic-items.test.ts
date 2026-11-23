@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import catalogue from '../content/basic-items.json'
-import en from '../content/basic-items.en.json'
-import es from '../content/basic-items.es.json'
+import catalogue from '../../../../tests/fixtures/srd/items/basic-items.json'
+import en from '../../../../tests/fixtures/srd/items/basic-items.en.json'
+import es from '../../../../tests/fixtures/srd/items/basic-items.es.json'
 import { iconKeys } from '../ui/icons'
 import {
   basicItemCatalogueSchema,
   basicItemDescriptionsSchema,
   basicItemsByKey,
   findBasicItem,
-  loadBasicItemDescriptions,
-  loadBasicItems,
   searchBasicItems,
   toDefinitionDraft,
 } from './basic-items'
@@ -134,11 +132,5 @@ describe('basic items helpers', () => {
       weight_lb: 0.05,
       value_gp: 0.05,
     })
-  })
-
-  it('loads the catalogue and descriptions lazily', async () => {
-    expect(await loadBasicItems()).toHaveLength(items.length)
-    expect((await loadBasicItemDescriptions('es')).potionOfHealing).toContain('2d4 + 2')
-    expect((await loadBasicItemDescriptions('en')).potionOfHealing).toContain('2d4 + 2')
   })
 })

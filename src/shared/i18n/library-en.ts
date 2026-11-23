@@ -4,9 +4,6 @@ export const libraryEn = {
   'library.lede': 'Changes reach the DMs when you publish a version.',
   'library.newPack': 'New pack',
   'library.import': 'Import',
-  'library.uploadSrd': 'Upload the SRD 5.2.1',
-  'library.uploadSrdMissing': 'Complete the SRD',
-  'library.uploadRytta': 'Upload Rytta · Basic items',
   'library.packs': 'Packs',
   'library.public': 'Public',
   'library.private': 'Private',
@@ -212,7 +209,6 @@ export const libraryEn = {
   'library.dismiss': 'Close',
   'library.forbiddenTitle': 'Only for editor accounts',
   'library.emptyTitle': 'No packs yet',
-  'library.emptyBody': 'Upload the SRD 5.2.1 bundled in the app or start a pack of your own.',
 
   'library.packNew': 'New pack',
   'library.packEdit': 'Edit {{title}}',
@@ -253,19 +249,6 @@ export const libraryEn = {
   'library.file.notJson': 'This file is not JSON.',
   'library.file.notContent':
     'This is not a Rytta content file (format “rytta-content”, version 1).',
-
-  'library.srdTitle': 'Upload the SRD 5.2.1',
-  'library.srdBody':
-    'Creates the public pack “{{title}}” with {{count}} entries: creatures, their traits, the whole rules glossary, the equipment and the classes with their subclasses, in Spanish and English. They stay as drafts until you publish.',
-  'library.srdRunWaiting': 'Upload',
-  'library.srdRun': 'Upload {{count}} entries',
-  'library.srdDone': 'Uploaded as drafts.',
-  'library.srdMissingTitle': 'Complete the SRD',
-  'library.srdMissingBody':
-    'Adds to the pack “{{title}}” {{count}} SRD entries it does not have yet ({{kinds}}), in Spanish and English, as drafts. Once you publish the version, items reach every campaign and classes reach those that accept the version.',
-  'library.ryttaTitle': 'Upload Rytta · Basic items',
-  'library.ryttaBody':
-    'Creates the public pack “{{title}}” with {{count}} Rytta items as drafts. Once you publish it, they reach the storeroom and shops of every campaign.',
 
   'library.publishTitle': 'Publish version {{version}} of {{pack}}',
   'library.publishSummary': 'New: {{added}} · Changed: {{changed}} · Deleted: {{removed}}',

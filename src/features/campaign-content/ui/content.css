@@ -135,3 +135,37 @@
   gap: 4px 10px;
   padding: 6px 0;
 }
+
+.content-choice-group {
+  display: grid;
+  gap: 4px;
+}
+.content-choice-legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 700;
+}
+.content-choice-group .content-choice-pack {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.25rem 0;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.content-choice-text {
+  display: grid;
+  gap: 2px;
+}
+.content-choice-meta {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+}
+/* RYT-167: the step heading stays below the dialog title in weight and size. */
+.hub-create-step {
+  margin: 0;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+}

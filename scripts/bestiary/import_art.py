@@ -6,7 +6,7 @@ Usage:
 
 Every `art/bestiary/source/<creature id>.png` (the file name and path the catalogue gives) replaces the
 creature's bundled art: public/bestiary/art/<id>.webp (720px) and public/bestiary/thumbs/<id>.webp (128px
-square), its credit in src/features/bestiary/content/art.json and docs/bestiary-art-credits.md. The
+square), its credit in tests/fixtures/srd/bestiary/art.json and docs/bestiary-art-credits.md. The
 selection (art-selection.json) keeps the replaced source under "replaced", so build_images.py rebuilds
 the same art. art-generated.json logs each imported source: its checksum, size and the C2PA provenance
 ChatGPT writes into the PNG (software agent, model, date). The catalogue is then rewritten, which marks
@@ -38,7 +38,7 @@ ROOT = HERE.parents[1]
 SOURCE = ROOT / build_images.GENERATED_SOURCE
 SELECTION = HERE / "art-selection.json"
 LOG = HERE / "art-generated.json"
-CREDITS = ROOT / "src/features/bestiary/content/art.json"
+CREDITS = ROOT / "tests/fixtures/srd/bestiary/art.json"
 MIN_SIDE = 512
 MAX_RATIO = 1.1
 
@@ -102,7 +102,7 @@ def write_json(path: Path, value: dict) -> None:
 
 def main() -> None:
     check = "--check" in sys.argv[1:]
-    monsters = json.loads((ROOT / "src/features/bestiary/content/index.json").read_text(encoding="utf-8"))
+    monsters = json.loads((ROOT / "tests/fixtures/srd/bestiary/index.json").read_text(encoding="utf-8"))
     ids = {m["id"] for m in monsters["monsters"]}
     selection = json.loads(SELECTION.read_text(encoding="utf-8"))
     credits = json.loads(CREDITS.read_text(encoding="utf-8"))

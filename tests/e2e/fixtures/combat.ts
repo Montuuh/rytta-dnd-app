@@ -8,7 +8,7 @@ import type { DiceStore } from './dice-store.ts'
  * rows, then stat blocks and the trait library per language).
  */
 const bundled = (file: string) =>
-  JSON.parse(readFileSync(`src/features/bestiary/content/${file}.json`, 'utf8')) as {
+  JSON.parse(readFileSync(`tests/fixtures/srd/bestiary/${file}.json`, 'utf8')) as {
     monsters: unknown
     traits?: unknown[]
   }

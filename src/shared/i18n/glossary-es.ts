@@ -121,6 +121,8 @@ export const glossaryEs = {
   'glossary.backToIndex': 'Todas las entradas',
   'glossary.termHint': '{{name}}: ver definición',
   'glossary.loading': 'Abriendo el glosario…',
+  'glossary.noLibrary':
+    'Esta vista previa no tiene servidor: el glosario necesita la biblioteca de contenido.',
   'glossary.loadError': 'No se pudo cargar el glosario. Revisa la conexión e inténtalo de nuevo.',
   'glossary.retry': 'Reintentar',
   'glossary.notFound': 'Esta entrada no existe o no está disponible para ti.',

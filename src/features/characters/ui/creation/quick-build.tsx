@@ -1,4 +1,4 @@
-import { offeredClasses, srdClassDefs } from '../../domain/class-catalog'
+import { classDefFor, offeredClasses } from '../../domain/class-catalog'
 import { isClassKey } from '../../domain/rules'
 import { useClassCatalog } from '../class-catalog'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -19,6 +19,7 @@ import { useResourceNames } from '../resource-names'
 import { BuildSummary } from './build-summary'
 import { classEmblem } from '../class-emblem'
 import { ClassPicker } from './class-picker'
+import { ClassesState } from './classes-state'
 import { LibraryWait } from './library-wait'
 
 const steps = ['class', 'species', 'name'] as const
@@ -42,7 +43,7 @@ export function QuickBuild({
   // RYT-168: the quick path builds SRD archetypes; pack classes go through the full wizard.
   const catalog = useClassCatalog()
   const quickClasses = useMemo(
-    () => (catalog ? offeredClasses(catalog) : srdClassDefs).filter((item) => item.srd),
+    () => (catalog ? offeredClasses(catalog) : []).filter((item) => item.srd),
     [catalog],
   )
   const [speciesKey, setSpeciesKey] = useState<SpeciesKey | null>(null)
@@ -55,10 +56,11 @@ export function QuickBuild({
   useEffect(() => heading.current?.focus(), [step])
   const draft = useMemo(
     () =>
-      library && classKey && speciesKey
+      library && classKey && speciesKey && classDefFor(catalog, classKey)
         ? quickDraft({
             classKey,
             classLabel: t(`srd.class.${classKey}`),
+            classDef: classDefFor(catalog, classKey)!,
             speciesKey,
             speciesLabel: t(`srd.species.${speciesKey}`),
             backgroundLabel: (key) => t(`srd.background.${key}`),
@@ -67,7 +69,7 @@ export function QuickBuild({
             names,
           })
         : null,
-    [library, classKey, speciesKey, t, names],
+    [library, catalog, classKey, speciesKey, t, names],
   )
   const current = steps[step]!
   const last = step === steps.length - 1
@@ -106,6 +108,9 @@ export function QuickBuild({
           label={t('wizard.class')}
           hideLabel
         />
+      )}
+      {current === 'class' && (
+        <ClassesState loaded={catalog !== null} offered={quickClasses.length} quick />
       )}
       {current === 'species' && (
         <div role="radiogroup" aria-label={t('wizard.species')} className="choice-grid">

@@ -65,6 +65,13 @@ export type CampaignContentFunctions = {
     Returns: Json
   }
   get_srd_rule_pack: { Args: { target_category: string; part: string }; Returns: Json }
+  // 20261222120000_campaign_content_choice (RYT-167).
+  get_content_choices: { Args: Record<string, never>; Returns: Json }
+  create_campaign_with_content: {
+    Args: { campaign_name: string; campaign_description: string; chosen: Json }
+    Returns: string
+  }
+  get_srd_creature_pack: { Args: { part: string }; Returns: Json }
   // 20261221120000_pack_items_private_packs (RYT-166, RYT-163).
   get_campaign_item_packs: { Args: { target_campaign: string }; Returns: Json }
   get_campaign_item_pack: {

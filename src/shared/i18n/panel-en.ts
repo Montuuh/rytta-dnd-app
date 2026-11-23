@@ -197,6 +197,11 @@ export const panelEn = {
   'creation.library.loading': 'Loading the campaign’s rules to finish the character…',
   'creation.library.error':
     'The campaign’s rules, needed to finish the character, could not be loaded.',
+  'creation.classes.loading': 'Loading the campaign’s classes…',
+  'creation.classes.error': 'The campaign’s classes could not be loaded.',
+  'creation.classes.none': 'This campaign has no classes. The DM turns them on in Content.',
+  'creation.classes.noneQuick':
+    'The quick sheet uses the SRD classes and this campaign has none. Go back and choose the full sheet.',
   'creation.create': 'Create sheet',
   'creation.blankFor': 'Blank sheet for {{name}}',
   'creation.blankTitle': 'Blank sheet',

@@ -1,0 +1,368 @@
+{
+  "classes": [
+    {
+      "key": "barbarian",
+      "name_en": "Barbarian",
+      "name_es": "Bárbaro",
+      "data": {
+        "index": {
+          "hitDie": 12,
+          "saves": ["str", "con"],
+          "skillCount": 2,
+          "skills": [
+            "animalHandling",
+            "athletics",
+            "intimidation",
+            "nature",
+            "perception",
+            "survival"
+          ],
+          "caster": "none",
+          "spellAbility": null,
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": null,
+          "cantrips": false
+        }
+      }
+    },
+    {
+      "key": "bard",
+      "name_en": "Bard",
+      "name_es": "Bardo",
+      "data": {
+        "index": {
+          "hitDie": 8,
+          "saves": ["dex", "cha"],
+          "skillCount": 3,
+          "skills": "any",
+          "caster": "full",
+          "spellAbility": "cha",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
+          "cantrips": true
+        }
+      }
+    },
+    {
+      "key": "cleric",
+      "name_en": "Cleric",
+      "name_es": "Clérigo",
+      "data": {
+        "index": {
+          "hitDie": 8,
+          "saves": ["wis", "cha"],
+          "skillCount": 2,
+          "skills": ["history", "insight", "medicine", "persuasion", "religion"],
+          "caster": "full",
+          "spellAbility": "wis",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
+          "cantrips": true
+        }
+      }
+    },
+    {
+      "key": "druid",
+      "name_en": "Druid",
+      "name_es": "Druida",
+      "data": {
+        "index": {
+          "hitDie": 8,
+          "saves": ["int", "wis"],
+          "skillCount": 2,
+          "skills": [
+            "arcana",
+            "animalHandling",
+            "insight",
+            "medicine",
+            "nature",
+            "perception",
+            "religion",
+            "survival"
+          ],
+          "caster": "full",
+          "spellAbility": "wis",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
+          "cantrips": true
+        }
+      }
+    },
+    {
+      "key": "fighter",
+      "name_en": "Fighter",
+      "name_es": "Guerrero",
+      "data": {
+        "index": {
+          "hitDie": 10,
+          "saves": ["str", "con"],
+          "skillCount": 2,
+          "skills": [
+            "acrobatics",
+            "animalHandling",
+            "athletics",
+            "history",
+            "insight",
+            "intimidation",
+            "persuasion",
+            "perception",
+            "survival"
+          ],
+          "caster": "none",
+          "spellAbility": null,
+          "subclassLevel": 3,
+          "improvementLevels": [4, 6, 8, 12, 14, 16, 19],
+          "prepared": null,
+          "cantrips": false
+        }
+      }
+    },
+    {
+      "key": "monk",
+      "name_en": "Monk",
+      "name_es": "Monje",
+      "data": {
+        "index": {
+          "hitDie": 8,
+          "saves": ["str", "dex"],
+          "skillCount": 2,
+          "skills": ["acrobatics", "athletics", "history", "insight", "religion", "stealth"],
+          "caster": "none",
+          "spellAbility": null,
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": null,
+          "cantrips": false
+        }
+      }
+    },
+    {
+      "key": "paladin",
+      "name_en": "Paladin",
+      "name_es": "Paladín",
+      "data": {
+        "index": {
+          "hitDie": 10,
+          "saves": ["wis", "cha"],
+          "skillCount": 2,
+          "skills": ["athletics", "insight", "intimidation", "medicine", "persuasion", "religion"],
+          "caster": "half",
+          "spellAbility": "cha",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
+          "cantrips": false
+        }
+      }
+    },
+    {
+      "key": "ranger",
+      "name_en": "Ranger",
+      "name_es": "Explorador",
+      "data": {
+        "index": {
+          "hitDie": 10,
+          "saves": ["str", "dex"],
+          "skillCount": 3,
+          "skills": [
+            "animalHandling",
+            "athletics",
+            "insight",
+            "investigation",
+            "nature",
+            "perception",
+            "stealth",
+            "survival"
+          ],
+          "caster": "half",
+          "spellAbility": "wis",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
+          "cantrips": false
+        }
+      }
+    },
+    {
+      "key": "rogue",
+      "name_en": "Rogue",
+      "name_es": "Pícaro",
+      "data": {
+        "index": {
+          "hitDie": 8,
+          "saves": ["dex", "int"],
+          "skillCount": 4,
+          "skills": [
+            "acrobatics",
+            "athletics",
+            "deception",
+            "insight",
+            "intimidation",
+            "investigation",
+            "perception",
+            "persuasion",
+            "sleightOfHand",
+            "stealth"
+          ],
+          "caster": "none",
+          "spellAbility": null,
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 10, 12, 16, 19],
+          "prepared": null,
+          "cantrips": false
+        }
+      }
+    },
+    {
+      "key": "sorcerer",
+      "name_en": "Sorcerer",
+      "name_es": "Hechicero",
+      "data": {
+        "index": {
+          "hitDie": 6,
+          "saves": ["con", "cha"],
+          "skillCount": 2,
+          "skills": ["arcana", "deception", "insight", "intimidation", "persuasion", "religion"],
+          "caster": "full",
+          "spellAbility": "cha",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [2, 4, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
+          "cantrips": true
+        }
+      }
+    },
+    {
+      "key": "warlock",
+      "name_en": "Warlock",
+      "name_es": "Brujo",
+      "data": {
+        "index": {
+          "hitDie": 8,
+          "saves": ["wis", "cha"],
+          "skillCount": 2,
+          "skills": [
+            "arcana",
+            "deception",
+            "history",
+            "intimidation",
+            "investigation",
+            "nature",
+            "religion"
+          ],
+          "caster": "pact",
+          "spellAbility": "cha",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15],
+          "cantrips": true
+        }
+      }
+    },
+    {
+      "key": "wizard",
+      "name_en": "Wizard",
+      "name_es": "Mago",
+      "data": {
+        "index": {
+          "hitDie": 6,
+          "saves": ["int", "wis"],
+          "skillCount": 2,
+          "skills": [
+            "arcana",
+            "history",
+            "insight",
+            "investigation",
+            "medicine",
+            "nature",
+            "religion"
+          ],
+          "caster": "full",
+          "spellAbility": "int",
+          "subclassLevel": 3,
+          "improvementLevels": [4, 8, 12, 16, 19],
+          "prepared": [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 18, 19, 21, 22, 23, 24, 25],
+          "cantrips": true
+        }
+      }
+    }
+  ],
+  "subclasses": [
+    {
+      "key": "berserker",
+      "name_en": "Path of the Berserker",
+      "name_es": "Senda del berserker",
+      "data": { "index": { "class": "barbarian" } }
+    },
+    {
+      "key": "lore",
+      "name_en": "College of Lore",
+      "name_es": "Colegio del conocimiento",
+      "data": { "index": { "class": "bard" } }
+    },
+    {
+      "key": "life",
+      "name_en": "Life Domain",
+      "name_es": "Dominio de la vida",
+      "data": { "index": { "class": "cleric" } }
+    },
+    {
+      "key": "land",
+      "name_en": "Circle of the Land",
+      "name_es": "Círculo de la tierra",
+      "data": { "index": { "class": "druid" } }
+    },
+    {
+      "key": "champion",
+      "name_en": "Champion",
+      "name_es": "Campeón",
+      "data": { "index": { "class": "fighter" } }
+    },
+    {
+      "key": "open-hand",
+      "name_en": "Warrior of the Open Hand",
+      "name_es": "Guerrero de la mano abierta",
+      "data": { "index": { "class": "monk" } }
+    },
+    {
+      "key": "devotion",
+      "name_en": "Oath of Devotion",
+      "name_es": "Juramento de entrega",
+      "data": { "index": { "class": "paladin" } }
+    },
+    {
+      "key": "hunter",
+      "name_en": "Hunter",
+      "name_es": "Cazador",
+      "data": { "index": { "class": "ranger" } }
+    },
+    {
+      "key": "thief",
+      "name_en": "Thief",
+      "name_es": "Ladrón",
+      "data": { "index": { "class": "rogue" } }
+    },
+    {
+      "key": "draconic",
+      "name_en": "Draconic Sorcery",
+      "name_es": "Hechicería dracónica",
+      "data": { "index": { "class": "sorcerer" } }
+    },
+    {
+      "key": "fiend",
+      "name_en": "Fiend Patron",
+      "name_es": "Patrón infernal",
+      "data": { "index": { "class": "warlock" } }
+    },
+    {
+      "key": "evoker",
+      "name_en": "Evoker",
+      "name_es": "Evocador",
+      "data": { "index": { "class": "wizard" } }
+    }
+  ]
+}

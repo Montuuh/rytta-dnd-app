@@ -1,8 +1,8 @@
+import { isClassKey } from './rules'
 import type { Build } from './sheet'
 import type { RestKind } from './progression'
 import {
   backgrounds,
-  classes,
   species as speciesTable,
   type Ability,
   type ChoiceKey,
@@ -705,7 +705,7 @@ export function buildFeats(build: Pick<Build, 'backgroundKey' | 'features'>): Se
  * level, before the player's removals. */
 export function grantedResources(build: Build, level: number): ResourceSpec[] {
   const feats = buildFeats(build)
-  const isClass = build.classKey in classes
+  const isClass = isClassKey(build.classKey)
   const isSpecies = build.speciesKey in speciesTable
   return managedResources.filter((spec) => {
     if (level < spec.from) return false

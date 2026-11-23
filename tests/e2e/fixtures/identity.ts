@@ -71,7 +71,7 @@ export function session(id = dmId) {
  */
 export const srdRulesPackId = '80000000-0000-4000-8000-000000000001'
 const glossaryFile = (file: string) =>
-  JSON.parse(readFileSync(`src/features/glossary/content/${file}.json`, 'utf8')) as unknown
+  JSON.parse(readFileSync(`tests/fixtures/srd/glossary/${file}.json`, 'utf8')) as unknown
 const glossaryRows = glossaryFile('index') as { id: string; cat: string }[]
 const glossaryBodies = { en: glossaryFile('en'), es: glossaryFile('es') } as Record<
   string,
@@ -80,6 +80,46 @@ const glossaryBodies = { en: glossaryFile('en'), es: glossaryFile('es') } as Rec
 const ruleCategoryOf = (cat: string) =>
   cat === 'spell' ? 'spells' : cat === 'feature' ? 'classes' : 'rules'
 /** Test switches for the rule packs: hidden glossary ids, or a library that cannot be reached. */
+/** RYT-167: the SRD bestiary test copy, served as the published SRD pack. */
+const srdBestiaryFile = (file: string) =>
+  JSON.parse(readFileSync(`tests/fixtures/srd/bestiary/${file}.json`, 'utf8')) as Record<
+    string,
+    unknown
+  >
+const srdBestiary = {
+  index: srdBestiaryFile('index') as { monsters: unknown[]; baselines: unknown[] },
+  en: srdBestiaryFile('en') as { monsters: unknown; traits: unknown[] },
+  es: srdBestiaryFile('es') as { monsters: unknown; traits: unknown[] },
+}
+/** RYT-167: what get_content_choices answers: the SRD and the Rytta basic items. */
+export const contentChoices = [
+  {
+    id: srdRulesPackId,
+    slug: 'srd-5-2-1',
+    title_en: 'System Reference Document 5.2.1',
+    title_es: 'Documento de referencia del sistema 5.2.1',
+    srd: true,
+    private: false,
+    version: 2,
+    categories: [
+      { category: 'creatures', entries: 330, default: true },
+      { category: 'spells', entries: 339, default: true },
+      { category: 'classes', entries: 256, default: true },
+      { category: 'rules', entries: 194, default: true },
+      { category: 'items', entries: 197, default: true },
+    ],
+  },
+  {
+    id: '80000000-0000-4000-8000-000000000002',
+    slug: 'rytta-basics',
+    title_en: 'Rytta · Basic items',
+    title_es: 'Rytta · Objetos básicos',
+    srd: false,
+    private: false,
+    version: 1,
+    categories: [{ category: 'items', entries: 3, default: true }],
+  },
+]
 export const rulePackState = { hidden: [] as string[], unreachable: false, books: false }
 /** RYT-168: a pack with its own class, and a subclass for the SRD Bard. */
 export const bookRulesPackId = '80000000-0000-4000-8000-000000000009'
@@ -173,11 +213,33 @@ function rulePackList() {
     ),
   }))
 }
+/** RYT-168, RYT-167: the SRD classes and subclasses, as index rows of the classes category. */
+const srdClassData = JSON.parse(readFileSync('tests/fixtures/srd/classes.json', 'utf8')) as Record<
+  'classes' | 'subclasses',
+  { key: string; name_en: string; name_es: string; data: { index: Record<string, unknown> } }[]
+>
+const srdClassRows = [
+  ...srdClassData.classes.map((row) => ({
+    ...row.data.index,
+    id: `class.${row.key}`,
+    cat: 'class',
+    en: row.name_en,
+    es: row.name_es,
+  })),
+  ...srdClassData.subclasses.map((row) => ({
+    ...row.data.index,
+    id: `subclass.${row.key}`,
+    cat: 'subclass',
+    en: row.name_en,
+    es: row.name_es,
+  })),
+]
 function rulePart(body: Record<string, unknown>) {
   const category = String(body.target_category)
   const rows = glossaryRows.filter((row) => ruleCategoryOf(row.cat) === category)
   const part = String(body.part)
-  if (part === 'index') return { version: 1, rows }
+  if (part === 'index')
+    return { version: 1, rows: category === 'classes' ? [...rows, ...srdClassRows] : rows }
   const bodies = glossaryBodies[part]!
   return { version: 1, bodies: Object.fromEntries(rows.map((row) => [row.id, bodies[row.id]])) }
 }
@@ -1024,6 +1086,43 @@ export async function identityFixture(
         recent: null,
         history: [],
       })
+    // RYT-167: the published SRD's creatures (signed-in accounts), served from the test copy.
+    if (method === 'get_srd_creature_pack') {
+      if (!currentId) return respond({ message: 'Forbidden' }, 401)
+      const part = String(body.part)
+      if (part === 'index')
+        return respond({
+          pack: srdRulesPackId,
+          version: 2,
+          rows: srdBestiary.index.monsters,
+          baselines: srdBestiary.index.baselines,
+        })
+      const bodies = srdBestiary[part as 'en' | 'es']
+      return respond({
+        pack: srdRulesPackId,
+        version: 2,
+        monsters: bodies.monsters,
+        traits: bodies.traits,
+      })
+    }
+    // RYT-167: the packs a new campaign can use, and the campaign created with them.
+    if (method === 'get_content_choices') return respond(contentChoices)
+    if (method === 'create_campaign_with_content') {
+      const id = '20000000-0000-4000-8000-000000000004'
+      campaigns = [
+        ...campaigns,
+        {
+          id,
+          name: String(body.campaign_name),
+          description: String(body.campaign_description),
+          created_at: '2026-10-27T00:00:00Z',
+          role: 'dm',
+          player_modules: ['party'],
+          party_level: null,
+        },
+      ]
+      return respond(id)
+    }
     if (method === 'create_campaign') {
       const id = '20000000-0000-4000-8000-000000000004'
       campaigns = [

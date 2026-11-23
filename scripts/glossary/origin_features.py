@@ -1,7 +1,7 @@
 """SRD 5.2.1 species traits and feats → glossary `feature` entries (RYT-102).
 
 Usage (manual, like class_features.py; PDFs are never committed):
-  python3 -I scripts/glossary/origin_features.py <pdf-dir> src/features/glossary/content [--report]
+  python3 -I scripts/glossary/origin_features.py <pdf-dir> tests/fixtures/srd/glossary [--report]
 
 Reads the "Character Species" and "Feats" sections of the English and official Spanish SRD 5.2.1
 (Wizards of the Coast LLC, CC-BY-4.0). Every species trait (a bold-italic lead inside a species)

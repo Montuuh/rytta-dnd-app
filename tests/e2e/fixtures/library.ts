@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { srdLibraryEntries } from './srd-library.ts'
 
 // RYT-093 SDK contract fixture: an in-memory content library mirroring the RPC rules the manager
 // relies on (drafts, revisions, publish, import reports). Authorization and limits are verified
@@ -61,8 +62,8 @@ export function libraryServer(
   options: {
     editor?: boolean
     sample?: boolean
-    /** RYT-166: a published SRD pack that has no items yet (one creature). */
-    srdWithoutItems?: boolean
+    /** RYT-167: the SRD pack as production publishes it (creatures, items and classes). */
+    srd?: boolean
   } = {},
 ) {
   const editor = options.editor ?? true
@@ -70,7 +71,7 @@ export function libraryServer(
   const packs: Pack[] = []
   let entries: Entry[] = []
   const offers = new Map<string, { id: string; name: string; added_at: string }[]>()
-  if (options.srdWithoutItems) {
+  if (options.srd) {
     packs.push({
       id: srdLibraryPackId,
       slug: 'srd-5-2-1',
@@ -82,23 +83,19 @@ export function libraryServer(
       license: 'CC-BY-4.0',
       attribution: 'SRD 5.2.1',
       visibility: 'public',
-      version: 1,
+      version: 2,
       revision: 2,
     })
-    const data = { index: { cr: '1/4' } }
-    entries.push({
-      id: id('71'),
-      pack_id: srdLibraryPackId,
-      kind: 'creature',
-      key: 'wolf',
-      name_en: 'Wolf',
-      name_es: 'Lobo',
-      data,
-      deleted: false,
-      published: { name_en: 'Wolf', name_es: 'Lobo', data, version: 1 },
-      revision: 1,
-      updated_at: '2026-11-13T10:00:00Z',
-    })
+    for (const entry of srdLibraryEntries())
+      entries.push({
+        id: id('71'),
+        pack_id: srdLibraryPackId,
+        ...entry,
+        deleted: false,
+        published: { name_en: entry.name_en, name_es: entry.name_es, data: entry.data, version: 2 },
+        revision: 1,
+        updated_at: '2026-11-22T10:00:00Z',
+      })
   }
   if (options.sample) {
     packs.push({

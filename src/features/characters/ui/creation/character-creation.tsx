@@ -196,7 +196,10 @@ function Wizard({
     if (sheet.status === 'complete' || !sheet.build) return 0
     const initial = fromRow(sheet)
     const steps = creationSteps.filter((step) => stepApplies(step, initial.build))
-    const pending = steps.findIndex((step) => validateStep(step, initial).length > 0)
+    const pending = steps.findIndex(
+      (step) =>
+        validateStep(step, initial, classDefFor(catalog, initial.build.classKey)).length > 0,
+    )
     return pending === -1 ? steps.length - 1 : pending
   })
   const [attempt, setAttempt] = useState<{ complete: boolean; exiting: boolean } | null>(null)

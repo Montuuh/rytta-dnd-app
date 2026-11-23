@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  glossaryBodiesQuery,
-  glossaryIndexQuery,
   ruleBodiesQuery,
   ruleIndexQuery,
   rulePacksQuery,
@@ -30,11 +28,11 @@ const merge = (parts: (EntryBodies | undefined)[]) =>
   parts.every(Boolean) ? (Object.assign({}, ...parts) as EntryBodies) : undefined
 
 /**
- * Where the glossary reads its SRD-side entries (RYT-164, RYT-165, ADR 051):
- * - demo: the bundled sample (explicit demo content);
+ * Where the glossary reads its SRD-side entries (RYT-164, RYT-165, RYT-167, ADR 051):
  * - a campaign: the spells, classes and rules packs it has, at its pinned versions;
- * - signed in, outside a campaign: the published SRD pack.
- * The library is never replaced by the bundled glossary when it cannot be reached.
+ * - outside a campaign, with or without an account: the published SRD pack.
+ * The SRD is not bundled any more: without the library (or without a backend) the glossary says so
+ * and offers a retry.
  */
 export function useGlossarySource(options: {
   live: boolean
@@ -45,14 +43,11 @@ export function useGlossarySource(options: {
 }): GlossarySource {
   const { live, userId, campaignId, language, wantBodies } = options
   const cache = useQueryClient()
-  const demo = !live || !userId
-  const inCampaign = !demo && Boolean(campaignId)
-  const standalone = !demo && !campaignId
+  const inCampaign = live && Boolean(userId) && Boolean(campaignId)
+  // Without a backend (the offline preview build) there is no library to read.
+  const standalone = live && !inCampaign
   const user = userId ?? ''
   const campaign = campaignId ?? ''
-
-  const bundled = useQuery({ ...glossaryIndexQuery(), enabled: demo })
-  const bundledBodies = useQuery({ ...glossaryBodiesQuery(language), enabled: demo && wantBodies })
 
   const packs = useQuery({ ...rulePacksQuery(user, campaign), enabled: inCampaign })
   const packList = useMemo(() => packs.data ?? [], [packs.data])
@@ -95,7 +90,6 @@ export function useGlossarySource(options: {
     [inCampaign, packList, indexKey],
   )
   const rows = useMemo(() => {
-    if (demo) return bundled.data
     if (inCampaign) {
       if (!packs.data || localized.some((d) => !d)) return undefined
       return localized.flatMap((d) => d!.rows)
@@ -103,9 +97,8 @@ export function useGlossarySource(options: {
     if (srdIndexes.some((q) => !q.data)) return undefined
     return srdIndexes.flatMap((q) => q.data!.rows)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demo, inCampaign, bundled.data, packs.data, localized, srdKey])
+  }, [inCampaign, packs.data, localized, srdKey])
   const classRows = useMemo(() => {
-    if (demo) return []
     if (inCampaign) {
       if (!packs.data || localized.some((d) => !d)) return undefined
       const hidden = unlistedIds(packList, indexData)
@@ -121,27 +114,22 @@ export function useGlossarySource(options: {
     if (srdIndexes.some((q) => !q.data)) return undefined
     return srdIndexes.flatMap((q) => q.data!.classRows)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demo, inCampaign, packs.data, packList, localized, srdKey])
+  }, [inCampaign, packs.data, packList, localized, srdKey])
   const unlisted = useMemo(
     () => (inCampaign && packs.data ? unlistedIds(packList, indexData) : none),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [inCampaign, packList, indexKey],
   )
   const bodies = useMemo(() => {
-    if (demo) return bundledBodies.data
     if (inCampaign) return packList.length ? merge(packBodies.map((q) => q.data)) : {}
     return merge(srdBodies.map((q) => q.data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demo, inCampaign, bundledBodies.data, packList, bodiesKey, srdBodiesKey])
+  }, [inCampaign, packList, bodiesKey, srdBodiesKey])
 
-  const indexError = demo
-    ? bundled.isError
-    : inCampaign
-      ? packs.isError || indexes.some((q) => q.isError)
-      : srdIndexes.some((q) => q.isError)
-  const bodiesError = demo
-    ? bundledBodies.isError
-    : (inCampaign ? packBodies : srdBodies).some((q) => q.isError)
+  const indexError = inCampaign
+    ? packs.isError || indexes.some((q) => q.isError)
+    : srdIndexes.some((q) => q.isError)
+  const bodiesError = (inCampaign ? packBodies : srdBodies).some((q) => q.isError)
   return {
     rows,
     unlisted,

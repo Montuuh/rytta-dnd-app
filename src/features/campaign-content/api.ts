@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth'
 import {
   getCampaignContent,
   getContentChanges,
+  getContentChoices,
   listContentEntries,
   setCampaignContent,
   setContentHidden,
@@ -77,3 +78,11 @@ export function useContentAction(campaignId: string) {
     },
   })
 }
+
+/** RYT-167: the packs offered when creating a campaign. */
+export const contentChoicesQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'content-choices'],
+    queryFn: ({ signal }) => getContentChoices(signal),
+    retry: 1,
+  })

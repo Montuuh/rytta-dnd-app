@@ -1,4 +1,4 @@
-import { classDefFor, type ClassDef } from './class-catalog'
+import type { ClassDef } from './class-catalog'
 import { chooseBackground, chooseClass, chooseSpecies, type Namer } from './creation'
 import { syncProgression, type LibraryFeature, type ProgressionNames } from './progression'
 import {
@@ -12,7 +12,6 @@ import {
 import type { Build, SheetDraft } from './sheet'
 import {
   backgrounds,
-  classes,
   abilityKeys,
   standardArray,
   type Ability,
@@ -113,6 +112,8 @@ export function reseedStandard(prev: Build, next: Build): Build {
 export type QuickChoice = {
   classKey: ClassKey
   classLabel: string
+  /** RYT-167: the SRD class's table, from the campaign's packs. */
+  classDef: ClassDef
   speciesKey: SpeciesKey
   speciesLabel: string
   backgroundLabel: (key: BackgroundKey) => string
@@ -132,7 +133,7 @@ export function quickDraft(choice: QuickChoice): SheetDraft {
     baseAbilities: base,
     origin: 'quick',
   }
-  build = chooseClass(build, choice.classKey, choice.classLabel)
+  build = chooseClass(build, choice.classKey, choice.classLabel, choice.classDef)
   build = chooseSpecies(build, choice.speciesKey, choice.speciesLabel, choice.name)
   const backgroundKey = quickBackground[choice.classKey]
   build = chooseBackground(build, backgroundKey, choice.backgroundLabel(backgroundKey), choice.name)
@@ -142,7 +143,7 @@ export function quickDraft(choice: QuickChoice): SheetDraft {
     ...build,
     bonuses: { ...build.bonuses, [first!]: 2, [second!]: 1 },
   }
-  const entry = classes[choice.classKey]
+  const entry = choice.classDef
   const options = entry.skills === 'any' ? null : (entry.skills as readonly Skill[])
   const skills = { ...build.skills }
   const picks = quickSkills[choice.classKey].filter(
@@ -180,7 +181,7 @@ export type BlankChoice = {
 export function blankDraft(choice: BlankChoice): SheetDraft {
   const level = Math.min(20, Math.max(1, Math.trunc(choice.level)))
   let build: Build = { ...emptyBuild(), abilityMethod: 'manual', origin: 'blank' }
-  const def = choice.classDef === undefined ? classDefFor(null, choice.classKey) : choice.classDef
+  const def = choice.classDef ?? null
   build = chooseClass(build, choice.classKey, choice.classLabel, def)
   const namer: Namer = choice.name ?? ((_, key) => key)
   if (choice.speciesKey || choice.speciesLabel?.trim()) {

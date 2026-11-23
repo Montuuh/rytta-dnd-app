@@ -200,6 +200,11 @@ export const panelEs = {
   'creation.library.loading': 'Cargando las reglas de la campaña para terminar el personaje…',
   'creation.library.error':
     'No se pudieron cargar las reglas de la campaña, que hacen falta para terminar el personaje.',
+  'creation.classes.loading': 'Cargando las clases de la campaña…',
+  'creation.classes.error': 'No se pudieron cargar las clases de la campaña.',
+  'creation.classes.none': 'Esta campaña no tiene clases. El DM las activa en Contenido.',
+  'creation.classes.noneQuick':
+    'La ficha rápida usa las clases del SRD y esta campaña no las tiene. Vuelve y elige la ficha completa.',
   'creation.create': 'Crear ficha',
   'creation.blankFor': 'Ficha en blanco para {{name}}',
   'creation.blankTitle': 'Ficha en blanco',

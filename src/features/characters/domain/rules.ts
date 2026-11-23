@@ -3,7 +3,7 @@ import type { Abilities, Build, Vitals } from './sheet'
 import {
   abilityKeys,
   backgrounds,
-  classes,
+  classKeys,
   fullCasterSlots,
   pointBuyBudget,
   pointBuyCost,
@@ -489,7 +489,8 @@ export function bonusesValid(build: Pick<Build, 'backgroundKey' | 'bonuses'>) {
   return abilityKeys.every((key) => build.bonuses[key] === 0 || allowed.includes(key))
 }
 
-export const isClassKey = (key: string): key is ClassKey => key in classes
+export const isClassKey = (key: string): key is ClassKey =>
+  (classKeys as readonly string[]).includes(key)
 export const isSpeciesKey = (key: string): key is SpeciesKey => key in species
 export const isBackgroundKey = (key: string): key is BackgroundKey => key in backgrounds
 

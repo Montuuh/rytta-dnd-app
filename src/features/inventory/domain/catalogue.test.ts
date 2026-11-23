@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import catalogue from '../content/basic-items.json'
-import en from '../content/basic-items.en.json'
-import es from '../content/basic-items.es.json'
+import catalogue from '../../../../tests/fixtures/srd/items/basic-items.json'
+import en from '../../../../tests/fixtures/srd/items/basic-items.en.json'
+import es from '../../../../tests/fixtures/srd/items/basic-items.es.json'
 import { basicItemCatalogueSchema, basicItemDescriptionsSchema } from './basic-items'
 import {
   importBatches,

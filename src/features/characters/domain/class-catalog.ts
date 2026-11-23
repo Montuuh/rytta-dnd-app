@@ -2,14 +2,10 @@ import { z } from 'zod'
 import {
   abilityKeys,
   casterKinds,
-  classes,
-  classKeys,
   hitDice,
   skillKeys,
-  subclassOf,
   type Ability,
   type CasterKind,
-  type ClassKey,
   type HitDie,
   type Skill,
 } from './srd'
@@ -20,8 +16,8 @@ import {
  * its improvement levels, its prepared spells by level and whether it learns cantrips. Class
  * resources with uses stay in the app for the SRD classes (owner choice P1 A).
  *
- * SRD classes keep their bare key (`wizard`); pack classes are `<ref>--<key>`. An SRD pinned at a
- * version without classes keeps the app's SRD classes, which hold the same data.
+ * SRD classes keep their bare key (`wizard`); pack classes are `<ref>--<key>`. Since RYT-167 the
+ * code holds no class table: a campaign has the classes of its packs.
  */
 export type ClassDef = {
   key: string
@@ -54,56 +50,6 @@ export type SubclassDef = {
 export type ClassCatalog = { classes: ClassDef[]; subclasses: SubclassDef[] }
 
 export const defaultImprovementLevels = [4, 8, 12, 16, 19] as const
-const improvementLevels: Partial<Record<ClassKey, readonly number[]>> = {
-  fighter: [4, 6, 8, 12, 14, 16, 19],
-  rogue: [4, 8, 10, 12, 16, 19],
-}
-/** Spells a class prepares or knows at each level (index 0 = level 1), from its class table. */
-const spellsAtLevel: Partial<Record<ClassKey, readonly number[]>> = {
-  bard: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  cleric: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  druid: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  sorcerer: [2, 4, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  warlock: [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15],
-  wizard: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 18, 19, 21, 22, 23, 24, 25],
-  paladin: [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
-  ranger: [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
-}
-const cantripClasses: readonly ClassKey[] = [
-  'bard',
-  'cleric',
-  'druid',
-  'sorcerer',
-  'warlock',
-  'wizard',
-]
-
-/** The SRD classes as the app has always defined them; the SRD pack's entries hold the same. */
-export const srdClassDefs: readonly ClassDef[] = classKeys.map((key) => {
-  const entry = classes[key]
-  return {
-    key,
-    srd: true,
-    name: null,
-    hitDie: entry.hitDie,
-    saves: entry.saves,
-    skillCount: entry.skillCount,
-    skills: entry.skills,
-    caster: entry.caster,
-    spellAbility: entry.spellAbility,
-    subclassLevel: 3,
-    improvementLevels: improvementLevels[key] ?? defaultImprovementLevels,
-    prepared: spellsAtLevel[key] ?? null,
-    cantrips: cantripClasses.includes(key),
-  }
-})
-export const srdSubclassDefs: readonly SubclassDef[] = classKeys.map((key) => ({
-  key: subclassOf[key],
-  classKey: key,
-  srd: true,
-  name: null,
-}))
-
 const reference = z
   .string()
   .max(60)
@@ -153,10 +99,7 @@ export type ClassRowLike = {
   pack?: { title_en: string; title_es: string }
 }
 
-/**
- * The classes and subclasses a campaign has. SRD rows (bare keys) carry their SRD data; when the
- * packs have no SRD class at all, the app's SRD classes stand in for them.
- */
+/** The classes and subclasses a campaign has, from its packs. */
 export function buildClassCatalog(rows: readonly ClassRowLike[]): ClassCatalog {
   const catalog: ClassCatalog = { classes: [], subclasses: [] }
   for (const row of rows) {
@@ -187,18 +130,12 @@ export function buildClassCatalog(rows: readonly ClassRowLike[]): ClassCatalog {
       catalog.subclasses.push({ key: row.key, classKey: parsed.data.class, srd, name, ...extra })
     }
   }
-  if (!catalog.classes.some((item) => item.srd)) catalog.classes.unshift(...srdClassDefs)
-  if (!catalog.subclasses.some((item) => item.srd)) catalog.subclasses.unshift(...srdSubclassDefs)
   return catalog
 }
 
-/** A class's definition: from the campaign's packs, or the app's SRD class of that key. */
+/** A class's definition in the campaign's packs. */
 export function classDefFor(catalog: ClassCatalog | null | undefined, key: string) {
-  return (
-    catalog?.classes.find((item) => item.key === key) ??
-    srdClassDefs.find((item) => item.key === key) ??
-    null
-  )
+  return catalog?.classes.find((item) => item.key === key) ?? null
 }
 
 /** Classes a new character can take: the ones the campaign offers, SRD first. */
@@ -207,7 +144,7 @@ export const offeredClasses = (catalog: ClassCatalog) =>
 
 /** Subclasses offered for a class (from the SRD or any enabled pack). */
 export function subclassesFor(catalog: ClassCatalog | null | undefined, classKey: string) {
-  const list = catalog?.subclasses ?? srdSubclassDefs
+  const list = catalog?.subclasses ?? []
   return list.filter((item) => item.classKey === classKey && !item.hidden)
 }
 
@@ -220,20 +157,4 @@ export function classDefName(
 ) {
   if (def.name) return language.startsWith('en') ? def.name.en : def.name.es
   return t(`srd.${cat}.${def.key}`)
-}
-
-/** A class entry's index as the library stores it, from a definition (the SRD upload). */
-export function classIndexOf(def: ClassDef): Required<ClassIndex> {
-  return {
-    hitDie: def.hitDie,
-    saves: [...def.saves] as [Ability, Ability],
-    skillCount: def.skillCount,
-    skills: def.skills === 'any' ? 'any' : [...def.skills],
-    caster: def.caster,
-    spellAbility: def.spellAbility,
-    subclassLevel: def.subclassLevel,
-    improvementLevels: [...def.improvementLevels],
-    prepared: def.prepared ? [...def.prepared] : null,
-    cantrips: def.cantrips,
-  }
 }

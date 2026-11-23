@@ -117,6 +117,23 @@ Classes and subclasses travel in the classes category with the class features, a
 kinds `class` and `subclass`. An SRD pinned at a version without classes keeps offering the app's
 SRD classes, which hold the same data, until its DM accepts the version that adds them.
 
+## The SRD leaves the code (RYT-167, 2026-11-23)
+
+Owner choices from the block L options page, all the recommended ones:
+
+- P1 A: the bundled creatures, glossary (spells, class features and rules), basic items and class
+  tables leave the code once the rest of the SRD (items, classes and subclasses) and the Rytta
+  basic items are loaded into the library and published. Species, backgrounds and feats move to
+  packs next (RYT-171).
+- P2 A: creating a campaign has a Content step that lists the packs per category, with the SRD and
+  the Rytta basics ticked; the campaign pins the versions chosen, and Content changes them later.
+- P3 A: existing campaigns move to the SRD version with classes, which holds the data the code
+  lent them until now.
+- P4 A: the demo reads the published SRD instead of a bundled copy. In practice no anonymous
+  surface shows SRD data: a visitor without an account sees the landing page, and the offline
+  preview build (no backend) says the glossary needs the library. Anonymous reads were therefore
+  not opened, which also avoids unbounded anonymous egress (security review of RYT-167).
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

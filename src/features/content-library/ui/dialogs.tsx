@@ -14,16 +14,11 @@ import {
   TextInput,
 } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { FileJson } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { monsterBodiesQuery, monsterIndexQuery } from '@/features/bestiary'
-import { glossaryBodiesQuery, glossaryIndexQuery } from '@/features/glossary'
-import { basicCatalogueQuery, bundledItemEntry } from '@/features/inventory'
-import { classIndexOf, srdClassDefs, srdSubclassDefs } from '@/features/characters'
-import { i18n, loadCatalogue } from '@/shared/i18n'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { changesQuery, useImportEntries, useLibraryAction, type ImportProgress } from '../api'
 import { parseContentFile, type ParsedFile } from '../domain/import-file'
@@ -35,11 +30,9 @@ import {
   sortRows,
   type ContentLanguage,
   type ContentPack,
-  type EntryInput,
   type ImportReport,
   type PackInput,
 } from '../domain/library'
-import { newerKinds, ryttaBasicsPack, srdEntries, srdPack, type BundledSrd } from '../domain/srd'
 import { kindLabel } from './labels'
 
 const errorText = (t: TFunction, error: unknown) =>
@@ -502,173 +495,6 @@ export function ImportDialog({
               {t('library.importRun', { count: writes })}
             </Button>
           )}
-        </Group>
-      </Stack>
-    </Dialog>
-  )
-}
-
-export type Bundle = 'srd' | 'rytta'
-
-/**
- * Uploads content bundled in the app as drafts: the SRD 5.2.1 (creatures, glossary and, since
- * RYT-166 and RYT-168, its equipment, classes and subclasses) or the Rytta basic items. An existing
- * SRD only receives those newer kinds it does not have yet, never its creatures and rules again.
- */
-export function BundledDialog({
-  bundle,
-  language,
-  existing,
-  onClose,
-  onDone,
-}: {
-  bundle: Bundle
-  language: ContentLanguage
-  existing: ContentPack | null
-  onClose: () => void
-  onDone: (packId: string, kind: string, message: string) => void
-}) {
-  const { t } = useTranslation()
-  const action = useLibraryAction()
-  const run = useImportEntries()
-  const srd = bundle === 'srd'
-  const sources = useQueries({
-    queries: [
-      { ...monsterIndexQuery(), enabled: srd },
-      { ...monsterBodiesQuery('en'), enabled: srd },
-      { ...monsterBodiesQuery('es'), enabled: srd },
-      { ...glossaryIndexQuery(), enabled: srd },
-      { ...glossaryBodiesQuery('en'), enabled: srd },
-      { ...glossaryBodiesQuery('es'), enabled: srd },
-    ],
-  })
-  const items = useQuery(basicCatalogueQuery())
-  // Class and subclass names in both languages, from the interface catalogues.
-  const names = useQuery({
-    queryKey: ['static', 'i18n-both'],
-    queryFn: async () => {
-      await Promise.all([loadCatalogue(i18n, 'es'), loadCatalogue(i18n, 'en')])
-      return { es: i18n.getFixedT('es'), en: i18n.getFixedT('en') }
-    },
-    enabled: srd,
-    staleTime: Infinity,
-  })
-  const [progress, setProgress] = useState<ImportProgress | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const loaded =
-    Boolean(items.data) && (!srd || (Boolean(names.data) && sources.every((source) => source.data)))
-  // Packed on each render (a few while uploading); the bundled sources never change.
-  const data = sources.map((source) => source.data)
-  const itemEntries = items.data
-    ? items.data.items
-        .filter((item) => item.source === (srd ? 'srd' : 'rytta'))
-        .map((item) => bundledItemEntry(item, items.data.descriptions))
-    : []
-  const all = loaded
-    ? [
-        ...(srd
-          ? srdEntries({
-              monsters: data[0],
-              bodies: { en: data[1], es: data[2] },
-              glossary: data[3],
-              glossaryBodies: { en: data[4], es: data[5] },
-            } as unknown as BundledSrd)
-          : []),
-        { kind: 'item', entries: itemEntries },
-        ...(srd && names.data
-          ? [
-              {
-                kind: 'class',
-                entries: srdClassDefs.map((def) => ({
-                  kind: 'class',
-                  key: def.key,
-                  name_en: names.data.en(`srd.class.${def.key}` as 'srd.class.wizard'),
-                  name_es: names.data.es(`srd.class.${def.key}` as 'srd.class.wizard'),
-                  data: { index: classIndexOf(def) } as EntryInput['data'],
-                })),
-              },
-              {
-                kind: 'subclass',
-                entries: srdSubclassDefs.map((def) => ({
-                  kind: 'subclass',
-                  key: def.key,
-                  name_en: names.data.en(`srd.subclass.${def.key}` as 'srd.subclass.lore'),
-                  name_es: names.data.es(`srd.subclass.${def.key}` as 'srd.subclass.lore'),
-                  data: { index: { class: def.classKey } } as EntryInput['data'],
-                })),
-              },
-            ]
-          : []),
-      ]
-    : null
-  const present = (kind: string) =>
-    Boolean(existing && ((existing.kinds[kind] ?? 0) > 0 || (existing.drafts?.[kind] ?? 0) > 0))
-  // An existing SRD only gains its items (RYT-166); a new pack receives everything.
-  const groups =
-    all?.filter(
-      (group) =>
-        group.entries.length > 0 &&
-        !present(group.kind) &&
-        (!existing || !srd || newerKinds.includes(group.kind)),
-    ) ?? null
-  const count = groups?.reduce((sum, group) => sum + group.entries.length, 0) ?? 0
-  const pack = srd ? srdPack : ryttaBasicsPack
-  const title = packTitle(existing ?? pack, language)
-  const landing = groups?.[0]?.kind ?? 'creature'
-  const kinds = (groups ?? []).map((group) => kindLabel(t, group.kind).toLowerCase()).join(', ')
-  const dialogTitle = !srd
-    ? t('library.ryttaTitle')
-    : existing
-      ? t('library.srdMissingTitle')
-      : t('library.srdTitle')
-  const body = !srd
-    ? t('library.ryttaBody', { title, count })
-    : existing
-      ? t('library.srdMissingBody', { title, count, kinds })
-      : t('library.srdBody', { title, count })
-  const upload = async () => {
-    if (!groups || count === 0) return
-    setError(null)
-    try {
-      const packId =
-        existing?.id ??
-        (
-          await action.mutateAsync({
-            kind: 'savePack',
-            packId: null,
-            revision: null,
-            input: pack,
-          })
-        ).id
-      await run(packId, groups, false, setProgress)
-      onDone(
-        packId,
-        existing ? landing : 'creature',
-        t('library.srdDone', { version: (existing?.version ?? 0) + 1 }),
-      )
-    } catch (caught) {
-      setProgress(null)
-      setError(errorText(t, caught))
-    }
-  }
-  const busy = progress !== null || action.isPending
-  return (
-    <Dialog title={dialogTitle} onClose={onClose} busy={busy}>
-      <Stack gap="md">
-        {!loaded ? <Loader size="sm" aria-label={dialogTitle} /> : <Text>{body}</Text>}
-        {progress && <ProgressLine label={t('library.importing', progress)} progress={progress} />}
-        {error && <FailureAlert>{error}</FailureAlert>}
-        <Group justify="flex-end">
-          <Button variant="subtle" data-autofocus onClick={onClose} disabled={busy}>
-            {t('library.cancel')}
-          </Button>
-          <Button
-            disabled={!loaded || busy || count === 0}
-            loading={busy}
-            onClick={() => void upload()}
-          >
-            {loaded ? t('library.srdRun', { count }) : t('library.srdRunWaiting')}
-          </Button>
         </Group>
       </Stack>
     </Dialog>

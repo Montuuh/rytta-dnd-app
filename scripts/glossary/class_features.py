@@ -1,7 +1,7 @@
 """SRD 5.2.1 class and subclass features → glossary `feature` entries (RYT-071).
 
 Usage (manual, like extract_srd.py; PDFs are never committed):
-  python3 -I scripts/glossary/class_features.py <pdf-dir> src/features/glossary/content [--report]
+  python3 -I scripts/glossary/class_features.py <pdf-dir> tests/fixtures/srd/glossary [--report]
 
 Reads the class chapters of the English and official Spanish SRD 5.2.1 (Wizards of the Coast
 LLC, CC-BY-4.0), splits every "Level N: Feature" heading of each class and of its SRD subclass,

@@ -52,176 +52,26 @@ export type CasterKind = (typeof casterKinds)[number]
 export const hitDice = [6, 8, 10, 12] as const
 export type HitDie = (typeof hitDice)[number]
 
-export type ClassEntry = {
-  hitDie: HitDie
-  saves: readonly [Ability, Ability]
-  skillCount: number
-  skills: readonly Skill[] | 'any'
-  caster: CasterKind
-  spellAbility: Ability | null
-}
-export const classes = {
-  barbarian: {
-    hitDie: 12,
-    saves: ['str', 'con'],
-    skillCount: 2,
-    skills: ['animalHandling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'],
-    caster: 'none',
-    spellAbility: null,
-  },
-  bard: {
-    hitDie: 8,
-    saves: ['dex', 'cha'],
-    skillCount: 3,
-    skills: 'any',
-    caster: 'full',
-    spellAbility: 'cha',
-  },
-  cleric: {
-    hitDie: 8,
-    saves: ['wis', 'cha'],
-    skillCount: 2,
-    skills: ['history', 'insight', 'medicine', 'persuasion', 'religion'],
-    caster: 'full',
-    spellAbility: 'wis',
-  },
-  druid: {
-    hitDie: 8,
-    saves: ['int', 'wis'],
-    skillCount: 2,
-    skills: [
-      'arcana',
-      'animalHandling',
-      'insight',
-      'medicine',
-      'nature',
-      'perception',
-      'religion',
-      'survival',
-    ],
-    caster: 'full',
-    spellAbility: 'wis',
-  },
-  fighter: {
-    hitDie: 10,
-    saves: ['str', 'con'],
-    skillCount: 2,
-    skills: [
-      'acrobatics',
-      'animalHandling',
-      'athletics',
-      'history',
-      'insight',
-      'intimidation',
-      'persuasion',
-      'perception',
-      'survival',
-    ],
-    caster: 'none',
-    spellAbility: null,
-  },
-  monk: {
-    hitDie: 8,
-    saves: ['str', 'dex'],
-    skillCount: 2,
-    skills: ['acrobatics', 'athletics', 'history', 'insight', 'religion', 'stealth'],
-    caster: 'none',
-    spellAbility: null,
-  },
-  paladin: {
-    hitDie: 10,
-    saves: ['wis', 'cha'],
-    skillCount: 2,
-    skills: ['athletics', 'insight', 'intimidation', 'medicine', 'persuasion', 'religion'],
-    caster: 'half',
-    spellAbility: 'cha',
-  },
-  ranger: {
-    hitDie: 10,
-    saves: ['str', 'dex'],
-    skillCount: 3,
-    skills: [
-      'animalHandling',
-      'athletics',
-      'insight',
-      'investigation',
-      'nature',
-      'perception',
-      'stealth',
-      'survival',
-    ],
-    caster: 'half',
-    spellAbility: 'wis',
-  },
-  rogue: {
-    hitDie: 8,
-    saves: ['dex', 'int'],
-    skillCount: 4,
-    skills: [
-      'acrobatics',
-      'athletics',
-      'deception',
-      'insight',
-      'intimidation',
-      'investigation',
-      'perception',
-      'persuasion',
-      'sleightOfHand',
-      'stealth',
-    ],
-    caster: 'none',
-    spellAbility: null,
-  },
-  sorcerer: {
-    hitDie: 6,
-    saves: ['con', 'cha'],
-    skillCount: 2,
-    skills: ['arcana', 'deception', 'insight', 'intimidation', 'persuasion', 'religion'],
-    caster: 'full',
-    spellAbility: 'cha',
-  },
-  warlock: {
-    hitDie: 8,
-    saves: ['wis', 'cha'],
-    skillCount: 2,
-    skills: [
-      'arcana',
-      'deception',
-      'history',
-      'intimidation',
-      'investigation',
-      'nature',
-      'religion',
-    ],
-    caster: 'pact',
-    spellAbility: 'cha',
-  },
-  wizard: {
-    hitDie: 6,
-    saves: ['int', 'wis'],
-    skillCount: 2,
-    skills: ['arcana', 'history', 'insight', 'investigation', 'medicine', 'nature', 'religion'],
-    caster: 'full',
-    spellAbility: 'int',
-  },
-} as const satisfies Record<string, ClassEntry>
-export type ClassKey = keyof typeof classes
-export const classKeys = Object.keys(classes) as ClassKey[]
-
-export const subclassOf: Record<ClassKey, string> = {
-  barbarian: 'berserker',
-  bard: 'lore',
-  cleric: 'life',
-  druid: 'land',
-  fighter: 'champion',
-  monk: 'open-hand',
-  paladin: 'devotion',
-  ranger: 'hunter',
-  rogue: 'thief',
-  sorcerer: 'draconic',
-  warlock: 'fiend',
-  wizard: 'evoker',
-}
+/**
+ * The 12 SRD classes by key. Their tables (hit die, saves, skills, spellcasting, subclass and
+ * improvement levels) are pack data since RYT-168 and left the code with RYT-167; the keys stay for
+ * the class resources, emblems and quick-build presets the app keeps for the SRD classes.
+ */
+export const classKeys = [
+  'barbarian',
+  'bard',
+  'cleric',
+  'druid',
+  'fighter',
+  'monk',
+  'paladin',
+  'ranger',
+  'rogue',
+  'sorcerer',
+  'warlock',
+  'wizard',
+] as const
+export type ClassKey = (typeof classKeys)[number]
 
 export const species = {
   dragonborn: {

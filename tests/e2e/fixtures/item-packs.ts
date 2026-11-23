@@ -13,7 +13,7 @@ type Item = Record<string, unknown> & {
   name: { en: string; es: string }
 }
 const file = (name: string) =>
-  JSON.parse(readFileSync(`src/features/inventory/content/${name}.json`, 'utf8')) as unknown
+  JSON.parse(readFileSync(`tests/fixtures/srd/items/${name}.json`, 'utf8')) as unknown
 const items = (file('basic-items') as { items: Item[] }).items
 const descriptions = { en: file('basic-items.en'), es: file('basic-items.es') } as Record<
   'en' | 'es',
@@ -35,6 +35,9 @@ const entry = (item: Item) => {
     data: { index: { key, ...mechanics }, en: body('en'), es: body('es') },
   }
 }
+
+/** RYT-167: the SRD items as the published SRD pack of the library holds them. */
+export const srdItemEntries = () => items.filter((item) => item.source === 'srd').map(entry)
 
 /** Test switches: hidden entry keys per pack, an extra private pack, or an unreachable library. */
 export const itemPackState = {

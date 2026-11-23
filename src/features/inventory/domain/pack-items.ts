@@ -190,39 +190,6 @@ export const entryKeyOf = (key: string) =>
     .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
     .toLowerCase()
 
-/** A bundled catalogue item as a pack entry (the SRD and Rytta basics uploads of the library). */
-export function bundledItemEntry(
-  item: BasicItem,
-  descriptions: Record<'en' | 'es', BasicItemDescriptions>,
-) {
-  const description = (language: 'en' | 'es') => {
-    const text = descriptions[language][item.key]
-    return text ? { description: text } : undefined
-  }
-  const en = description('en')
-  const es = description('es')
-  return {
-    kind: 'item',
-    key: entryKeyOf(item.key),
-    name_en: item.name.en,
-    name_es: item.name.es,
-    data: {
-      index: {
-        key: item.key,
-        category: item.category,
-        icon: item.icon,
-        slot_kind: item.slot_kind,
-        weightLb: item.weightLb,
-        costCp: item.costCp,
-        properties: item.properties,
-        ...(item.pack ? { pack: item.pack } : {}),
-      },
-      ...(en ? { en } : {}),
-      ...(es ? { es } : {}),
-    },
-  }
-}
-
 export type ItemDifference = 'name' | 'description' | 'weight' | 'details'
 type Comparable = {
   name: string

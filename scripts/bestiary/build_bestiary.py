@@ -1,7 +1,7 @@
-"""Builds src/features/bestiary/content/*.json from the SRD 5.2.1 monster chapters (bestiary ADR 028).
+"""Builds tests/fixtures/srd/bestiary/*.json from the SRD 5.2.1 monster chapters (bestiary ADR 028).
 
 Usage (manual, not CI; PDFs are downloaded outside the repository and never committed):
-  python3 -I scripts/bestiary/build_bestiary.py <pdf-dir> src/features/bestiary/content
+  python3 -I scripts/bestiary/build_bestiary.py <pdf-dir> tests/fixtures/srd/bestiary
 
 Outputs
   index.json   language-neutral catalogue: ids, names in both languages, CR, XP, size, type,

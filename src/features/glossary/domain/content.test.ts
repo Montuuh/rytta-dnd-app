@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import index from '../content/index.json'
-import en from '../content/en.json'
-import es from '../content/es.json'
+import index from '../../../../tests/fixtures/srd/glossary/index.json'
+import en from '../../../../tests/fixtures/srd/glossary/en.json'
+import es from '../../../../tests/fixtures/srd/glossary/es.json'
 import { entryBodySchema, indexRowSchema, type Block, type EntryBody } from './types'
 
 const rows = indexRowSchema.array().parse(index)

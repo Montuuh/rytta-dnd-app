@@ -14,6 +14,7 @@ export {
 export { initiative as initiativeBonus } from './domain/rules'
 // RYT-054: the encounter builder measures a fight against the party's levels and classes.
 export { isClassKey } from './domain/rules'
+export { classKeys } from './domain/srd'
 export type { PartyMember } from './domain/party'
 // RYT-112: characters without a portrait wear their class emblem.
 export { classEmblem, useClassEmblems, type ClassEmblem } from './ui/class-emblem'
@@ -23,11 +24,5 @@ export {
   MemberCharacterDialog,
   type MemberCharacterChoice,
 } from './ui/member-characters'
-// RYT-168: the library edits classes and subclasses and uploads the SRD ones.
-export {
-  classIndexOf,
-  classIndexSchema,
-  srdClassDefs,
-  srdSubclassDefs,
-  subclassIndexSchema,
-} from './domain/class-catalog'
+// RYT-168: the library edits classes and subclasses.
+export { classIndexSchema, subclassIndexSchema } from './domain/class-catalog'

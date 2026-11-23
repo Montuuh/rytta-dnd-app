@@ -6,9 +6,6 @@ export const libraryEs = {
   'library.lede': 'Los cambios llegan a los DMs cuando publicas una versión.',
   'library.newPack': 'Nuevo paquete',
   'library.import': 'Importar',
-  'library.uploadSrd': 'Subir el SRD 5.2.1',
-  'library.uploadSrdMissing': 'Completar el SRD',
-  'library.uploadRytta': 'Subir Rytta · Objetos básicos',
   'library.packs': 'Paquetes',
   'library.public': 'Público',
   'library.private': 'Privado',
@@ -215,7 +212,6 @@ export const libraryEs = {
   'library.dismiss': 'Cerrar',
   'library.forbiddenTitle': 'Solo para cuentas editoras',
   'library.emptyTitle': 'Aún no hay paquetes',
-  'library.emptyBody': 'Sube el SRD 5.2.1 incluido en la app o empieza un paquete propio.',
 
   'library.packNew': 'Nuevo paquete',
   'library.packEdit': 'Editar {{title}}',
@@ -257,19 +253,6 @@ export const libraryEs = {
   'library.file.notJson': 'Este archivo no es JSON.',
   'library.file.notContent':
     'No es un archivo de contenido de Rytta (formato «rytta-content», versión 1).',
-
-  'library.srdTitle': 'Subir el SRD 5.2.1',
-  'library.srdBody':
-    'Crea el paquete público «{{title}}» con {{count}} entradas: criaturas, sus rasgos, todo el glosario de reglas, el equipo y las clases con sus subclases, en español e inglés. Quedan como borrador hasta que publiques.',
-  'library.srdRunWaiting': 'Subir',
-  'library.srdRun': 'Subir {{count}} entradas',
-  'library.srdDone': 'Subido como borrador.',
-  'library.srdMissingTitle': 'Completar el SRD',
-  'library.srdMissingBody':
-    'Añade al paquete «{{title}}» {{count}} entradas del SRD que aún no tiene ({{kinds}}), en español e inglés y como borrador. Al publicar la versión, los objetos llegan a todas las campañas y las clases, a las que acepten la versión.',
-  'library.ryttaTitle': 'Subir Rytta · Objetos básicos',
-  'library.ryttaBody':
-    'Crea el paquete público «{{title}}» con {{count}} objetos propios de Rytta, como borrador. Al publicarlo, llegan al almacén y a las tiendas de todas las campañas.',
 
   'library.publishTitle': 'Publicar la versión {{version}} de {{pack}}',
   'library.publishSummary': 'Nuevas: {{added}} · Cambiadas: {{changed}} · Se borran: {{removed}}',

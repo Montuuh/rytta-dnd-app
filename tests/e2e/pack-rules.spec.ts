@@ -109,8 +109,7 @@ test('RYT-164 a blank sheet waits for the library with a retry, then creates the
   await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ficha en blanco')
-  await page.getByRole('combobox', { name: 'Clase' }).click()
-  await page.getByRole('option', { name: 'Paladín' }).click()
+  // RYT-167: the classes come from the library too, so none is offered until it answers.
   const wait = page.getByRole('alert').filter({ hasText: 'No se pudieron cargar las reglas' })
   await expect(wait).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Crear ficha' })).toBeDisabled()
@@ -122,8 +121,38 @@ test('RYT-164 a blank sheet waits for the library with a retry, then creates the
   rulePackState.unreachable = false
   await wait.getByRole('button', { name: 'Reintentar' }).click()
   await expect(wait).toHaveCount(0)
-  // Focus moves to the way forward once the rules are back.
-  await expect(page.getByRole('button', { name: 'Crear ficha' })).toBeFocused()
+  await page.getByRole('combobox', { name: 'Clase' }).click()
+  await page.getByRole('option', { name: 'Paladín' }).click()
   await page.getByRole('button', { name: 'Crear ficha' }).click()
   await expect(page.getByText('Paladín de nivel 1', { exact: false })).toBeVisible()
+})
+
+test('RYT-167 the class step says the classes are loading and retries when the library fails', async ({
+  page,
+}, info) => {
+  rulePackState.unreachable = true
+  try {
+    await identityFixture(page, { player: true })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(`./#/campaign/${campaignId}/party`)
+    await page.getByRole('button', { name: 'Terminar ficha' }).click()
+    await page.getByRole('dialog').getByText('Completa', { exact: true }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
+    const wait = page
+      .getByRole('alert')
+      .filter({ hasText: 'No se pudieron cargar las clases de la campaña.' })
+    await expect(wait).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('radio', { name: /Guerrero/ })).toHaveCount(0)
+    await audit(page)
+    if (process.env.RYT_CAPTURE)
+      await page.screenshot({
+        path: `docs/evidence/ui-review/ryt-167/classes-wait-${info.project.name}.png`,
+      })
+    rulePackState.unreachable = false
+    await wait.getByRole('button', { name: 'Reintentar' }).click()
+    await expect(wait).toHaveCount(0)
+    await expect(page.getByRole('radio', { name: /Guerrero/ })).toBeAttached()
+  } finally {
+    rulePackState.unreachable = false
+  }
 })

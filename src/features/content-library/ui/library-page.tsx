@@ -2,16 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEv
 import { Alert, Button, Group, Loader, Select, Stack, Text, TextInput, Title } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import {
-  ArrowLeft,
-  FileUp,
-  Library,
-  PencilLine,
-  Plus,
-  Search,
-  UploadCloud,
-  Users,
-} from 'lucide-react'
+import { ArrowLeft, FileUp, Library, PencilLine, Plus, Search, Users } from 'lucide-react'
 import { useAdminStatus } from '@/features/admin'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router'
@@ -29,8 +20,7 @@ import {
   type ContentLanguage,
   type ContentPack,
 } from '../domain/library'
-import { newerKinds, ryttaBasicsSlug, srdSlug } from '../domain/srd'
-import { BundledDialog, ImportDialog, PackDialog, PublishDialog, type Bundle } from './dialogs'
+import { ImportDialog, PackDialog, PublishDialog } from './dialogs'
 import { OffersDialog } from './offers-dialog'
 import { EntryEditor } from './entry-editor'
 import { entryMeta, kindLabel, packLine } from './labels'
@@ -40,7 +30,6 @@ import './library.css'
 type Dialog =
   | { kind: 'pack'; pack: ContentPack | null }
   | { kind: 'import'; pack: ContentPack }
-  | { kind: 'bundled'; bundle: Bundle }
   | { kind: 'offers'; pack: ContentPack }
   | { kind: 'publish'; pack: ContentPack }
   | null
@@ -227,34 +216,6 @@ export function LibraryPage() {
     )
 
   const kind = pack ? (params.kind ?? defaultKind(pack)) : null
-  const srdPack = packs.find((p) => p.slug === srdSlug) ?? null
-  const hasRytta = packs.some((p) => p.slug === ryttaBasicsSlug)
-  // RYT-166, RYT-168: the SRD gains its items, classes and subclasses; the Rytta basic items get
-  // their own pack.
-  const srdMissing =
-    srdPack && newerKinds.some((kind) => !(srdPack.kinds[kind] || srdPack.drafts?.[kind]))
-  const uploadButtons = (
-    <>
-      {(!srdPack || srdMissing) && (
-        <Button
-          variant="light"
-          leftSection={<UploadCloud size={18} aria-hidden="true" />}
-          onClick={() => openDialog({ kind: 'bundled', bundle: 'srd' })}
-        >
-          {t(srdPack ? 'library.uploadSrdMissing' : 'library.uploadSrd')}
-        </Button>
-      )}
-      {!hasRytta && (
-        <Button
-          variant="light"
-          leftSection={<UploadCloud size={18} aria-hidden="true" />}
-          onClick={() => openDialog({ kind: 'bundled', bundle: 'rytta' })}
-        >
-          {t('library.uploadRytta')}
-        </Button>
-      )}
-    </>
-  )
   const newPackButton = (
     <Button
       variant="light"
@@ -278,7 +239,6 @@ export function LibraryPage() {
         actions={
           compact || packs.length === 0 ? undefined : (
             <Group gap="xs" wrap="wrap">
-              {uploadButtons}
               {newPackButton}
             </Group>
           )
@@ -304,9 +264,7 @@ export function LibraryPage() {
         <div className="lib-empty">
           <Library size={32} aria-hidden="true" />
           <Title order={2}>{t('library.emptyTitle')}</Title>
-          <Text>{t('library.emptyBody')}</Text>
           <Group gap="xs" justify="center">
-            {uploadButtons}
             {newPackButton}
           </Group>
         </div>
@@ -445,23 +403,6 @@ export function LibraryPage() {
           onDone={(message) => {
             closeDialog()
             setNotice({ text: message, at: location.pathname, seen: true })
-          }}
-        />
-      )}
-      {dialog?.kind === 'bundled' && (
-        <BundledDialog
-          bundle={dialog.bundle}
-          language={language}
-          existing={
-            packs.find((p) => p.slug === (dialog.bundle === 'srd' ? srdSlug : ryttaBasicsSlug)) ??
-            null
-          }
-          onClose={closeDialog}
-          onDone={(id, kind, message) => {
-            setDialog(null)
-            setNotice({ text: message, at: `/library/${id}/${kind}`, seen: false })
-            go(`/library/${id}/${kind}`)
-            focusEntries()
           }}
         />
       )}

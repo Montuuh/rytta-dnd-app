@@ -2,21 +2,21 @@ import { queryOptions } from '@tanstack/react-query'
 import { loadCreatureArt, loadMonsterBodies, loadMonsterIndex } from './data/content'
 import type { BestiaryLanguage } from './domain/types'
 
-// Bundled public SRD content: never part of a private query key.
+// RYT-167: the published SRD's creatures (public content, read by signed-in accounts).
 export const monsterIndexQuery = () =>
   queryOptions({
-    queryKey: ['bestiary', 'index'],
+    queryKey: ['bestiary', 'srd', 'index'],
     queryFn: loadMonsterIndex,
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 30 * 60_000,
+    retry: 1,
   })
 
 export const monsterBodiesQuery = (language: BestiaryLanguage) =>
   queryOptions({
-    queryKey: ['bestiary', 'bodies', language],
+    queryKey: ['bestiary', 'srd', 'bodies', language],
     queryFn: () => loadMonsterBodies(language),
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 30 * 60_000,
+    retry: 1,
   })
 
 /** Credits of the bundled creature art (public content, like the index). */

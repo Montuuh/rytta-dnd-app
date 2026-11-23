@@ -6,7 +6,7 @@ import {
   type ProgressionNames,
   type SyncChanges,
 } from './progression'
-import { classDefFor, type ClassDef } from './class-catalog'
+import type { ClassDef } from './class-catalog'
 import { finalAbilities, modifier, proficiencyBonus, slotsFor } from './rules'
 import { abilityKeys, type Ability, type HitDie } from './srd'
 
@@ -84,7 +84,7 @@ export type LevelUpRequirements = {
 export function levelUpRequirements(
   build: Build,
   toLevel: number,
-  def: ClassDef | null = classDefFor(null, build.classKey),
+  def: ClassDef | null,
 ): LevelUpRequirements {
   const slots = slotsFor(build.casterKind, toLevel)
   const maxSpellLevel = slots.reduce((top, count, index) => (count > 0 ? index + 1 : top), 0)
@@ -329,7 +329,7 @@ export function planLevelUp(
   input: LevelUpInputs,
   library: LibraryFeature[],
   names: ProgressionNames,
-  def: ClassDef | null = classDefFor(null, input.build.classKey),
+  def: ClassDef | null,
 ): LevelUpPlan | null {
   const toLevel = input.level + 1
   const requirements = levelUpRequirements(input.build, toLevel, def)

@@ -86,3 +86,43 @@ export function contentError(message: string): ContentErrorCode {
   if (/Invalid/i.test(message)) return 'invalid'
   return 'unavailable'
 }
+
+/** RYT-167: a pack a new campaign can use, with the categories it has. */
+export const contentChoiceSchema = z.object({
+  id: z.uuid(),
+  slug: z.string(),
+  title_en: z.string(),
+  title_es: z.string(),
+  srd: z.boolean(),
+  private: z.boolean(),
+  version: z.number().int().positive(),
+  categories: z.array(
+    z.object({
+      category: z.enum(contentCategories),
+      entries: z.number().int().min(0),
+      /** A new campaign starts with it (the SRD, and the items of the Rytta basics). */
+      default: z.boolean(),
+    }),
+  ),
+})
+export type ContentChoice = z.infer<typeof contentChoiceSchema>
+export const contentChoicesSchema = z.array(contentChoiceSchema)
+export type ChosenContent = { pack: string; category: ContentCategory }
+export const choiceKey = (pack: string, category: string) => `${pack}:${category}`
+
+/** What a new campaign starts with: the SRD, and the items of the Rytta basics. */
+export const defaultChoice = (choices: readonly ContentChoice[]) =>
+  new Set(
+    choices.flatMap((pack) =>
+      pack.categories
+        .filter((item) => item.default)
+        .map((item) => choiceKey(pack.id, item.category)),
+    ),
+  )
+export function chosenContent(choices: readonly ContentChoice[], picked: ReadonlySet<string>) {
+  return choices.flatMap((pack) =>
+    pack.categories
+      .filter((item) => picked.has(choiceKey(pack.id, item.category)))
+      .map((item): ChosenContent => ({ pack: pack.id, category: item.category })),
+  )
+}

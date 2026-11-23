@@ -69,12 +69,22 @@ export function createSupabaseCampaignRepository(client: AppSupabaseClient): Cam
       check(error)
       return auditEventSchema.array().parse(data)
     },
-    async create(name, description) {
+    async create(name, description, chosen) {
       const values = createCampaignSchema.parse({ name, description })
-      const { data, error } = await client.rpc('create_campaign', {
-        campaign_name: values.name,
-        campaign_description: values.description,
-      })
+      // RYT-167: with the chosen pack categories, the campaign starts with exactly those.
+      const { data, error } = chosen
+        ? await client.rpc('create_campaign_with_content', {
+            campaign_name: values.name,
+            campaign_description: values.description,
+            chosen: z
+              .array(z.object({ pack: z.uuid(), category: z.string().max(20) }))
+              .max(200)
+              .parse(chosen),
+          })
+        : await client.rpc('create_campaign', {
+            campaign_name: values.name,
+            campaign_description: values.description,
+          })
       check(error)
       return z.uuid().parse(data)
     },

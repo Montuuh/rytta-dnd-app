@@ -1,7 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useAuth } from '@/features/auth'
-import { loadGlossaryBodies, loadGlossaryIndex } from './data/content'
 import {
   deleteHomebrew,
   listHomebrew,
@@ -14,21 +13,6 @@ import { parseRuleBodies, parseRuleIndex, type RuleCategory, type RulePack } fro
 import { GlossaryError, type HomebrewDraft, type HomebrewEntry } from './domain/homebrew'
 import type { GlossaryLanguage } from './domain/types'
 
-/** Bundled, public SRD data: never refetched and not tied to an identity. */
-export const glossaryIndexQuery = () =>
-  queryOptions({
-    queryKey: ['glossary', 'index'],
-    queryFn: loadGlossaryIndex,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
-export const glossaryBodiesQuery = (language: GlossaryLanguage) =>
-  queryOptions({
-    queryKey: ['glossary', 'bodies', language],
-    queryFn: () => loadGlossaryBodies(language),
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
 /** RYT-164, RYT-165: the campaign's spells, classes and rules packs and their hidden entries. */
 export const rulePacksQuery = (userId: string, campaignId: string) =>
   queryOptions({

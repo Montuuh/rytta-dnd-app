@@ -1,3 +1,4 @@
+import { config } from '@/shared/lib/config'
 import {
   Anchor,
   Button,
@@ -261,6 +262,14 @@ export function GlossaryPage() {
     setParams(next, { replace: true })
   }
 
+  // RYT-167: the SRD lives in the library; the offline preview build has none to read.
+  if (config.VITE_DATA_MODE !== 'supabase')
+    return (
+      <Stack className="gl-page">
+        <Title order={1}>{t('module.glossary')}</Title>
+        <p className="gl-quiet-note">{t('glossary.noLibrary')}</p>
+      </Stack>
+    )
   if (glossary.indexError)
     return (
       <Stack className="gl-page">

@@ -1,4 +1,4 @@
-"""Builds src/features/glossary/content/*.json from the reviewed raw SRD extraction (RYT-008).
+"""Builds tests/fixtures/srd/glossary/*.json from the reviewed raw SRD extraction (RYT-008).
 
 Usage: python3 -I scripts/glossary/build_content.py <raw-dir> <out-dir>
 

@@ -28,12 +28,7 @@ import {
   type StatBreakdown,
 } from '../../domain/rules'
 import { backgroundKeys, speciesKeys } from '../../domain/srd'
-import {
-  classDefFor,
-  offeredClasses,
-  srdClassDefs,
-  subclassesFor,
-} from '../../domain/class-catalog'
+import { classDefFor, offeredClasses, subclassesFor } from '../../domain/class-catalog'
 import { useClassCatalog, useClassDefName } from '../class-catalog'
 import { SubclassFields } from './subclass-fields'
 import { classEmblem } from '../class-emblem'
@@ -43,6 +38,7 @@ import { Pips } from './pips'
 import { HpDialog, type HpMode } from './vitals-panel'
 import { Stepper } from './widgets'
 import { LockedLevel } from '../level-up/locked-level'
+import { ClassesState } from '../creation/classes-state'
 import type { PanelProps } from './panel-types'
 import type { Vitals } from '../../domain/sheet'
 
@@ -605,7 +601,7 @@ function EditIdentity({ build, name, change }: HeroProps) {
   const nameOf = useClassDefName()
   // RYT-168: the classes the campaign offers, and the sheet's own even when no longer offered.
   const current = classDefFor(catalog, build.classKey)
-  const offered = catalog ? offeredClasses(catalog) : srdClassDefs
+  const offered = catalog ? offeredClasses(catalog) : []
   const classOptions =
     current && !offered.some((item) => item.key === current.key) ? [...offered, current] : offered
   const classSelect = current ? build.classKey : 'custom'
@@ -646,6 +642,8 @@ function EditIdentity({ build, name, change }: HeroProps) {
           ]}
           value={classSelect}
           allowDeselect={false}
+          // RYT-167: the classes come from the campaign's packs; none is changed before they load.
+          disabled={catalog === null}
           comboboxProps={{ withinPortal: true }}
           onChange={(value) => {
             if (!value) return
@@ -669,7 +667,8 @@ function EditIdentity({ build, name, change }: HeroProps) {
             })
           }}
         />
-        {classSelect === 'custom' && (
+        {catalog === null && <ClassesState loaded={false} offered={0} />}
+        {catalog !== null && classSelect === 'custom' && (
           <TextInput
             label={t('wizard.customName')}
             maxLength={60}

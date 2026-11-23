@@ -62,7 +62,13 @@ export const auditEventsQuery = (userId: string, campaignId: string, characterId
     ...campaignPoll,
   })
 export type CampaignAction =
-  | { kind: 'create'; name: string; description: string }
+  | {
+      kind: 'create'
+      name: string
+      description: string
+      /** RYT-167: the pack categories the campaign uses. */
+      chosen?: { pack: string; category: string }[]
+    }
   | { kind: 'invite'; campaignId: string; email: string }
   | { kind: 'respond'; invitationId: string; accept: boolean }
   | { kind: 'revoke'; invitationId: string }
@@ -84,7 +90,7 @@ export function useCampaignAction() {
       if (controller?.getSnapshot().user?.id !== userId) throw new Error('Identity changed')
       switch (action.kind) {
         case 'create':
-          return repo.create(action.name, action.description)
+          return repo.create(action.name, action.description, action.chosen)
         case 'invite':
           return repo.invite(action.campaignId, action.email)
         case 'respond':

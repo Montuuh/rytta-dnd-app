@@ -5188,18 +5188,30 @@
       "title": "The bundled game data catalogues leave the repository",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-094", "RYT-164", "RYT-165", "RYT-166", "RYT-168"],
       "sources": [
-        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051).",
+        "Owner, 23 November 2026, block L options page: every recommendation accepted (P1 A creatures, glossary, items and class tables leave the code, species, backgrounds and feats move to packs in RYT-171; P2 A a Content step when creating a campaign with the SRD and Rytta basics ticked; P3 A existing campaigns move to the SRD version with classes; P4 A the demo reads the published SRD without an account)."
       ],
-      "scope": "Once every reader uses the packs, the bundled SRD catalogues (bestiary, glossary, spells, classes, basic items) are removed; demo mode keeps a small explicit sample.",
+      "scope": "The rest of the SRD (items, classes, subclasses) and the Rytta basic items are loaded into the library and published. The bundled SRD catalogues (creatures, glossary with spells, class features and rules, basic items, class tables) leave src/; every reader uses the campaign's packs, the standalone glossary and the demo read the published SRD. Creating a campaign has a Content step where the DM chooses its packs, with the SRD and the Rytta basics ticked; existing campaigns move to the SRD version with classes.",
       "acceptance": [
-        "No bundled SRD catalogue remains in src/ except the demo sample; the build no longer ships them.",
-        "Every module still works in a campaign with the SRD packs, and demo mode says it is a sample."
+        "No bundled SRD catalogue of creatures, glossary, items or class tables remains in src/; the build no longer ships them.",
+        "Creating a campaign lets the DM choose its packs per category, with the SRD and the Rytta basics ticked; the campaign pins the versions chosen.",
+        "Existing campaigns keep working: their classes come from the SRD pack version with classes.",
+        "The glossary outside a campaign reads the published SRD for signed-in accounts; anonymous SRD reads stay closed (security review: no anonymous surface shows SRD data), and the no-backend preview says its glossary needs the library.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
       ],
-      "validation": ["npm run check", "full e2e"],
-      "evidence": []
+      "validation": [
+        "npm run check",
+        "full e2e",
+        "hosted counts of the SRD pack",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-167/validation.md",
+        "docs/evidence/ui-review/ryt-167/review.md"
+      ]
     },
     {
       "id": "RYT-168",
@@ -5267,6 +5279,26 @@
         "Captures at 390px and tablet of inventory and shop tiles",
         "Independent UI review"
       ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-171",
+      "title": "Species, backgrounds and feats as pack data",
+      "priority": "P3",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-167"],
+      "sources": [
+        "Owner, 23 November 2026, block L options page: every recommendation accepted (P1 A creatures, glossary, items and class tables leave the code, species, backgrounds and feats move to packs in RYT-171; P2 A a Content step when creating a campaign with the SRD and Rytta basics ticked; P3 A existing campaigns move to the SRD version with classes; P4 A the demo reads the published SRD without an account)."
+      ],
+      "scope": "Species with their traits and choices, backgrounds with their skills, ability options and feat, and the origin feats become pack entries with library forms; the SRD ones are loaded into the SRD pack and character creation reads them from the campaign's packs. The last SRD tables leave the code.",
+      "acceptance": [
+        "A campaign with the SRD packs offers the same species, backgrounds and feats, with the same effects, as before.",
+        "A custom pack can add a species, a background or a feat that creation offers.",
+        "Existing characters keep their species, background and feats.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
+      ],
+      "validation": ["npm run check", "creation e2e", "independent UI review PASS"],
       "evidence": []
     }
   ]

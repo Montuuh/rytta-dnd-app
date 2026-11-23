@@ -1,4 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import {
+  blankDraft,
+  chooseClass,
+  classSkillChoices,
+  quickDraft,
+  validateStep,
+} from '../../../../tests/fixtures/srd/with-classes'
 import type { EquipmentSlot, Equipped, ItemDefinition, ItemStack } from '@/features/inventory'
 import {
   acBreakdown,
@@ -20,15 +27,7 @@ import {
   standardArrayValid,
   suggestedMaxHp,
 } from './rules'
-import {
-  chooseBackground,
-  chooseClass,
-  chooseSpecies,
-  classSkillChoices,
-  initialDraft,
-  validateStep,
-} from './creation'
-import { blankDraft, quickDraft } from './quick'
+import { chooseBackground, chooseSpecies, initialDraft } from './creation'
 import { buildSchema, sheetRowSchema, vitalsSchema, type Vitals } from './sheet'
 
 const name = (kind: string, key: string) => `${kind}:${key}`

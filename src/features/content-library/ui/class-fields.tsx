@@ -1,7 +1,7 @@
 import { Checkbox, NumberInput, Select, Textarea, TextInput } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { classIndexSchema, srdClassDefs } from '@/features/characters'
+import { classIndexSchema, classKeys } from '@/features/characters'
 import { indexOf } from '../domain/forms'
 import type { EntryInput } from '../domain/library'
 
@@ -60,7 +60,7 @@ export function ClassReferenceField({
   onChange: (value: string | undefined) => void
 }) {
   const { t } = useTranslation()
-  const srd = srdClassDefs.some((item) => item.key === value)
+  const srd = (classKeys as readonly string[]).includes(value ?? '')
   const [typing, setTyping] = useState(Boolean(value) && !srd)
   const choice = srd ? value! : typing ? other : null
   return (
@@ -68,9 +68,9 @@ export function ClassReferenceField({
       <Select
         label={label}
         data={[
-          ...srdClassDefs.map((item) => ({
-            value: item.key,
-            label: t(`srd.class.${item.key}` as 'srd.class.wizard'),
+          ...classKeys.map((key) => ({
+            value: key,
+            label: t(`srd.class.${key}` as 'srd.class.wizard'),
           })),
           { value: other, label: t('library.classes.other') },
         ]}

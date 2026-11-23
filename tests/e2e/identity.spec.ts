@@ -260,7 +260,7 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
 }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await identityFixture(page, { empty: true })
+  const f = await identityFixture(page, { empty: true })
   await page.goto('./')
   // An invitation is waiting: it leads the page and creating a campaign steps back.
   await expect(page.getByRole('region', { name: 'Unirse a una campaña' })).toBeVisible()
@@ -273,8 +273,40 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(create).toBeFocused()
   await create.click()
   await page.getByLabel('Nombre de la campaña').fill('Our new table')
-  await page.getByRole('dialog').getByRole('button', { name: 'Crear campaña', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'Siguiente', exact: true }).click()
+  // RYT-167: the campaign's content, with the SRD and the Rytta basics ticked.
+  await expect(dialog.getByRole('heading', { name: 'Contenido de la campaña' })).toBeFocused()
+  const creatures = dialog.getByRole('group', { name: 'Criaturas' })
+  await expect(creatures.getByRole('checkbox', { name: /Documento de referencia/ })).toBeChecked()
+  const basics = dialog
+    .getByRole('group', { name: 'Objetos' })
+    .getByRole('checkbox', { name: /Rytta · Objetos básicos/ })
+  await expect(basics).toBeChecked()
+  await basics.uncheck()
+  await expectTouchTargets(dialog, 'button:visible, .content-choice-pack:visible')
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include('[role="dialog"]')
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+        .analyze()
+    ).violations,
+  ).toEqual([])
+  if (process.env.RYT_CAPTURE)
+    await page.screenshot({
+      path: `docs/evidence/ui-review/ryt-167/create-content-${test.info().project.name}.png`,
+    })
+  await dialog.getByRole('button', { name: 'Crear campaña', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Our new table' })).toBeVisible()
+  const sent = f.calls.find((call) => call.method === 'create_campaign_with_content')!.body
+  expect(sent.chosen).toEqual([
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'creatures' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'spells' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'classes' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'rules' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'items' },
+  ])
   await page.getByRole('button', { name: 'Aceptar invitación' }).click()
   await expect(page.getByRole('button', { name: 'Aceptar invitación' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'The Amber Road', level: 2 })).toBeVisible()

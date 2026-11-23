@@ -30,12 +30,12 @@ async function audit(page: Page, scope = '#main-content') {
   expect(axe.violations).toEqual([])
 }
 
-test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a creature', async ({
+test('an editor opens the published SRD 5.2.1, keeps its place and edits a creature', async ({
   page,
 }, info) => {
   test.setTimeout(90_000)
   await identityFixture(page)
-  const server = libraryServer()
+  const server = libraryServer({ srd: true })
   await server.install(page)
   await page.goto('./')
   await page.getByRole('button', { name: /Perfil/ }).click()
@@ -44,32 +44,10 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
     page.getByRole('heading', { level: 1, name: 'Biblioteca de contenido' }),
   ).toBeVisible()
   await expect(page).toHaveTitle('Biblioteca de contenido · Rytta')
-  await expect(page.getByText('Aún no hay paquetes')).toBeVisible()
+  // RYT-167: the SRD is already in the library; nothing offers to upload it.
+  await expect(page.getByRole('button', { name: /Subir el SRD|Completar el SRD/ })).toHaveCount(0)
   await audit(page)
-
-  // The empty state offers both ways to start; the dialog opens on Cancel.
-  await page.getByRole('button', { name: 'Subir el SRD 5.2.1' }).click()
-  const upload = page.getByRole('dialog', { name: 'Subir el SRD 5.2.1' })
-  await expect(upload.locator('button', { hasText: 'Cancelar' })).toBeFocused()
-  await expect(
-    upload.getByText(
-      /con 1438 entradas: criaturas, sus rasgos, todo el glosario de reglas, el equipo y las clases/,
-    ),
-  ).toBeVisible()
-  await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 1438 entradas' }).click()
-  await expect(upload).toHaveCount(0, { timeout: 30_000 })
-  await expect(page.getByRole('status').filter({ hasText: 'Subido como borrador.' })).toBeVisible()
-  expect(server.packs).toHaveLength(1)
-  expect(server.packs[0]).toMatchObject({
-    slug: 'srd-5-2-1',
-    visibility: 'public',
-    license: 'CC-BY-4.0',
-  })
-  expect(server.entries()).toHaveLength(1438)
-  expect(server.entries().filter((e) => e.kind === 'class')).toHaveLength(12)
-  expect(server.entries().filter((e) => e.kind === 'item')).toHaveLength(197)
-  await expect(page.locator('#lib-entries-title')).toBeFocused()
+  await page.locator('[data-pack]').first().click()
 
   // The SRD opens on its creatures, sorted by their Spanish names.
   await expect(
@@ -78,22 +56,7 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   const names = await page.locator('.lib-entry-list .lib-row-name').allTextContents()
   expect(names.length).toBeGreaterThan(300)
   expect(names).toEqual([...names].sort(new Intl.Collator('es').compare))
-
-  // Publishing sends every draft as version 1.
-  await expect(page.locator('.lib-banner')).toContainText('1438 cambios sin publicar')
-  await page.getByRole('button', { name: 'Publicar versión 1' }).click()
-  const publish = page.getByRole('dialog', { name: /Publicar la versión 1/ })
-  await expect(publish.locator('button', { hasText: 'Cancelar' })).toBeFocused()
-  // The fixture lists every change; the hosted list stops at 1000 (the pack count is shown then).
-  await expect(publish.getByText('1438 cambios sin publicar')).toBeVisible()
-  await expect(publish.getByText('y 1426 más')).toBeVisible()
-  await audit(page, '[role="dialog"]')
-  await publish.getByRole('button', { name: 'Publicar', exact: true }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Versión 1 publicada.' })).toBeVisible()
-  expect(server.packs[0]!.version).toBe(1)
   await expect(page.getByText(/cambios sin publicar/)).toHaveCount(0)
-  // The banner that opened the dialog is gone: focus lands on the pack.
-  await expect(page.locator('#lib-entries-title')).toBeFocused()
 
   if (phone(info.project.name)) {
     // Coming back from an entry keeps the list position and focuses the entry just left.
@@ -115,11 +78,9 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   await page.getByRole('searchbox').fill('lobo')
   await expect(firstRow).toHaveText('Lobo')
 
-  // The wolf's numbers and stat blocks come from the bundled bestiary.
+  // The wolf's numbers and stat blocks come from the published SRD.
   await page.getByRole('link', { name: /^Lobo VD 1\/4 · Bestia/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Lobo' })).toBeFocused()
-  // The notice belonged to the pack screen.
-  await expect(page.getByText('Versión 1 publicada.')).toHaveCount(0)
   await expect(page.getByRole('textbox', { name: 'Nombre (inglés)' })).toHaveValue('Wolf')
   await expect(page.getByText(/^VD 1\/4 · Bestia · CA \d+ · PG \d+$/)).toBeVisible()
   await expect(page.getByText(/^Lobo · Bestia Mediana/)).toBeVisible()
@@ -217,43 +178,13 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   await capture(page, `docs/evidence/RYT-093/creature-${info.project.name}.png`)
 })
 
-test('RYT-166 the SRD gains its items, the Rytta basics get their pack and items edit in a form', async ({
-  page,
-}, info) => {
+test('RYT-166 the SRD items and classes edit in their own forms', async ({ page }, info) => {
   test.setTimeout(90_000)
   await identityFixture(page)
-  const server = libraryServer({ srdWithoutItems: true })
+  const server = libraryServer({ srd: true })
   await server.install(page)
-  await page.goto('./#/library')
-  // The first load can be slow while the SRD upload of another test runs beside it.
-  await expect(
-    page.getByRole('heading', { level: 1, name: 'Biblioteca de contenido' }),
-  ).toBeVisible({ timeout: 30_000 })
-
-  // Only the missing kinds go up: the SRD keeps its creature as it was.
-  await page.getByRole('button', { name: 'Completar el SRD' }).click()
-  const upload = page.getByRole('dialog', { name: 'Completar el SRD' })
-  await expect(
-    upload.getByText(/221 entradas del SRD que aún no tiene \(objetos, clases, subclases\)/i),
-  ).toBeVisible()
-  await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 221 entradas' }).click()
-  await expect(upload).toHaveCount(0, { timeout: 30_000 })
   const items = () => server.entries().filter((e) => e.kind === 'item')
   expect(items()).toHaveLength(197)
-  expect(server.entries().filter((e) => e.kind === 'creature')).toHaveLength(1)
-  expect(server.entries().filter((e) => e.kind === 'subclass')).toHaveLength(12)
-  await page.goto('./#/library')
-  await expect(page.getByRole('button', { name: 'Completar el SRD' })).toHaveCount(0)
-
-  await page.getByRole('button', { name: 'Subir Rytta · Objetos básicos' }).click()
-  const rytta = page.getByRole('dialog', { name: 'Subir Rytta · Objetos básicos' })
-  await expect(rytta.getByText(/con 3 objetos propios de Rytta/)).toBeVisible()
-  await rytta.getByRole('button', { name: 'Subir 3 entradas' }).click()
-  await expect(rytta).toHaveCount(0, { timeout: 30_000 })
-  expect(server.packs.find((p) => p.slug === 'rytta-basics')).toMatchObject({
-    visibility: 'public',
-  })
 
   // An item opens in its own form; the price is saved in copper.
   await page.goto(`./#/library/${srdLibraryPackId}/item`)

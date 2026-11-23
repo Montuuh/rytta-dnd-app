@@ -437,7 +437,8 @@ cross-campaign DM, plus the guarded PRE mirror.
   Packs turned off are served too, for the same reason. Players can see which ids the DM hid and
   which packs are turned off.
 - `get_srd_rule_pack` serves the published public SRD to any signed-in account (public content) for
-  the glossary outside a campaign. The demo keeps the bundled sample.
+  the glossary outside a campaign. Since RYT-167 nothing of the SRD is bundled: the offline
+  preview build (no backend) shows that the glossary needs the library.
 - Glossary ids are `<kind>.<key>` for the SRD and `<kind>.<ref>--<key>` for other packs. The server
   does not validate the glossary ids stored in character builds (format only, as before).
 - One read is capped at 8 MB (`Too large`), checked on the entries' size before the answer is
@@ -482,3 +483,20 @@ cross-campaign DM, plus the guarded PRE mirror.
   Player can still type any class by hand, so pack data grants nothing the sheet could not hold.
 - References inside a pack (`rune-knight` in a feature or spell of that pack) become
   `<ref>--rune-knight` in the browser; bare names of another pack's classes cannot be reached.
+
+## Campaign content choice and the SRD out of the code (RYT-167)
+
+- `get_content_choices` lists, to any signed-in account, the published public packs and the
+  caller's own published private packs (content editors only), with their categories and counts.
+- `create_campaign_with_content` creates the campaign and enables exactly the chosen pack
+  categories with the same checks as `set_campaign_content`: a pack that is not offered to the new
+  campaign (unpublished, private and not the caller's) or a category it lacks refuses the request
+  and rolls the campaign back. The caller's own private pack is offered to the campaign first.
+  The input is a bounded list (200 picks, 16 KB, canonical UUIDs, known categories only). There is
+  no idempotency key, as with `create_campaign`; the per-owner campaign cap limits a retry.
+- `get_srd_creature_pack` serves the published public SRD's creatures, traits and CR baselines to
+  signed-in accounts, capped at 8 MB and checked before the answer is built.
+- Nothing is readable without an account: a visitor sees the landing page. The SRD data the code
+  used to bundle (creatures, glossary, basic items, class tables) was loaded into the library and
+  published on 2026-11-23, fetched server side from the public repository at a fixed commit; the
+  temporary `http` extension and loading table were dropped afterwards.

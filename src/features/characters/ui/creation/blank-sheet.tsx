@@ -8,11 +8,12 @@ import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
 import { backgroundKeys, speciesKeys } from '../../domain/srd'
-import { classDefFor, offeredClasses, srdClassDefs } from '../../domain/class-catalog'
+import { classDefFor, offeredClasses } from '../../domain/class-catalog'
 import { useClassCatalog, useClassDefName } from '../class-catalog'
 import { useResourceNames } from '../resource-names'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
+import { ClassesState } from './classes-state'
 import { LibraryWait } from './library-wait'
 
 /** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
@@ -120,7 +121,7 @@ export function BlankSheet({
           <Select
             label={t('wizard.class')}
             data={[
-              ...(catalog ? offeredClasses(catalog) : srdClassDefs).map((item) => ({
+              ...(catalog ? offeredClasses(catalog) : []).map((item) => ({
                 value: item.key,
                 label: nameOf(item),
               })),
@@ -130,6 +131,11 @@ export function BlankSheet({
             allowDeselect={false}
             onChange={(value) => setClassKey(value ?? 'fighter')}
             comboboxProps={{ withinPortal: true }}
+          />
+          <ClassesState
+            loaded={catalog !== null}
+            offered={catalog ? offeredClasses(catalog).length : 0}
+            wait={false}
           />
           {isCustom && (
             <TextInput

@@ -1,28 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { monsterBodiesQuery, monsterIndexQuery } from '@/features/bestiary'
-import { glossaryBodiesQuery, glossaryIndexQuery } from '@/features/glossary'
-import { basicCatalogueQuery, bundledItemEntry } from '@/features/inventory'
+import glossaryEn from '../../../../tests/fixtures/srd/glossary/en.json'
+import glossaryEs from '../../../../tests/fixtures/srd/glossary/es.json'
 import { batches, contentFile, parseContentFile } from './import-file'
 import { entryName, entryProblem, formFamily, keyFromName, libraryErrorCode } from './library'
-import { srdEntries, type BundledSrd } from './srd'
 import { blocksToText, textToBlocks } from './text'
 
-// The bundled SRD, loaded through the other features' public queries.
-const load = <T>(query: { queryFn?: unknown }) => (query.queryFn as () => Promise<T>)()
-const monsterIndex = await load(monsterIndexQuery())
-const monstersEn = await load(monsterBodiesQuery('en'))
-const monstersEs = await load(monsterBodiesQuery('es'))
-const glossaryIndex = await load(glossaryIndexQuery())
-const glossaryEn = await load<Record<string, { blocks: unknown[] }>>(glossaryBodiesQuery('en'))
-const glossaryEs = await load<Record<string, { blocks: unknown[] }>>(glossaryBodiesQuery('es'))
-
-const srd = {
-  monsters: monsterIndex,
-  bodies: { en: monstersEn, es: monstersEs },
-  glossary: glossaryIndex,
-  glossaryBodies: { en: glossaryEn, es: glossaryEs },
-} as unknown as BundledSrd
-
+// RYT-167: the SRD lives in the library; its glossary bodies are test fixtures here.
 describe('RYT-093 content library domain', () => {
   it('checks entries like the server does', () => {
     const ok = { kind: 'spell', key: 'fireball', name_en: 'Fireball', name_es: '', data: {} }
@@ -94,27 +77,6 @@ describe('RYT-093 content library domain', () => {
     expect(batches(heavy).map((b) => b.length)).toEqual([2, 2, 1])
   })
 
-  it('turns the bundled SRD 5.2.1 into valid entries of every kind', () => {
-    const groups = srdEntries(srd)
-    const count = (kind: string) => groups.find((g) => g.kind === kind)?.entries.length ?? 0
-    expect(count('creature')).toBe(330)
-    expect(count('creature-trait')).toBe(48)
-    expect(count('table')).toBe(1)
-    expect(groups.reduce((sum, g) => sum + g.entries.length, 0)).toBe(330 + 48 + 1 + 838)
-    for (const group of groups)
-      for (const entry of group.entries) {
-        expect(entryProblem(entry), `${entry.kind}:${entry.key}`).toBeNull()
-        expect(entry.kind).toBe(group.kind)
-      }
-    const wolf = groups[0]!.entries.find((e) => e.key === 'wolf')!
-    expect(wolf).toMatchObject({ name_en: 'Wolf', name_es: 'Lobo' })
-    expect(Object.keys(wolf.data)).toEqual(['index', 'en', 'es'])
-    const grappled = groups
-      .find((g) => g.kind === 'condition')!
-      .entries.find((e) => e.key === 'grappled')!
-    expect(grappled.data.en).toBe((glossaryEn as Record<string, unknown>)['condition.grappled'])
-  })
-
   it('edits glossary text without losing a block of the SRD', () => {
     const bodies = { ...glossaryEn, ...glossaryEs } as Record<string, { blocks: unknown[] }>
     for (const [language, all] of [
@@ -144,15 +106,16 @@ describe('RYT-093 content library domain', () => {
   })
 })
 
-describe('bundled items as library entries (RYT-166)', () => {
-  it('uploads every basic item as a valid entry, and refuses an item without its mechanics', async () => {
-    const { items, descriptions } = await load<{
-      items: Parameters<typeof bundledItemEntry>[0][]
-      descriptions: Parameters<typeof bundledItemEntry>[1]
-    }>(basicCatalogueQuery())
-    const entries = items.map((item) => bundledItemEntry(item, descriptions))
-    expect(entries).toHaveLength(200)
-    for (const entry of entries) expect(entryProblem(entry), entry.key).toBeNull()
-    expect(entryProblem({ ...entries[0]!, data: { index: { weightLb: 3 } } })).toBe('item')
+describe('items as library entries (RYT-166)', () => {
+  it('refuses an item without its mechanics', () => {
+    const entry = {
+      kind: 'item',
+      key: 'longsword',
+      name_en: 'Longsword',
+      name_es: 'Espada larga',
+      data: { index: { category: 'weapon', slot_kind: 'one_hand', weightLb: 3, costCp: 1500 } },
+    }
+    expect(entryProblem(entry)).toBeNull()
+    expect(entryProblem({ ...entry, data: { index: { weightLb: 3 } } })).toBe('item')
   })
 })

@@ -133,7 +133,8 @@ test('the update notice is quiet, accessible, clear of the bottom bar and return
     route.fulfill({ json: { id: 'older-build', builtAt: '2026-01-01T00:00:00Z' } }),
   )
   await page.goto('./')
-  const search = page.getByRole('searchbox', { name: 'Search the glossary' })
+  // The glossary of the preview has no library to read (RYT-167): the settings button holds focus.
+  const search = page.getByRole('button', { name: 'Settings' })
   await search.focus()
   const notice = page.getByRole('status').filter({ hasText: 'A new version is available' })
   await expect(notice).toBeVisible()
@@ -164,4 +165,20 @@ test('the update notice is quiet, accessible, clear of the bottom bar and return
   await page.keyboard.press('Enter')
   await expect(notice).toBeHidden()
   await expect(search).toBeFocused()
+})
+
+test('RYT-167 the preview without a backend says its glossary needs the content library', async ({
+  page,
+}, testInfo) => {
+  await page.goto('./#/glossary')
+  await expect(page.getByRole('heading', { level: 1, name: 'Glossary' })).toBeVisible()
+  await expect(page.getByText(/the glossary needs the content library/)).toBeVisible()
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze())
+      .violations,
+  ).toEqual([])
+  await capture(
+    page,
+    `docs/evidence/ui-review/ryt-167/glossary-preview-${testInfo.project.name}.png`,
+  )
 })

@@ -71,6 +71,8 @@ export const identityEn = {
   'auth.password.saved': 'Password saved.',
   'hub.title': 'My campaigns',
   'hub.create': 'Create campaign',
+  'hub.createNext': 'Next',
+  'hub.createBack': 'Back',
   'hub.name': 'Campaign name',
   'hub.description': 'Description (optional)',
   'hub.createHint': 'You will be the first DM. You can invite players and add other DMs later.',

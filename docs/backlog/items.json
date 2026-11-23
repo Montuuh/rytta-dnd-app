@@ -5298,6 +5298,32 @@
       ],
       "validation": ["npm run check", "creation e2e", "independent UI review PASS"],
       "evidence": ["docs/evidence/RYT-171/validation.md"]
+    },
+    {
+      "id": "RYT-172",
+      "title": "Library entries carry their own picture, published with the pack",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-167", "RYT-170"],
+      "sources": [
+        "Owner, 23 November 2026: from the super admin's data library it should be possible to view and edit the images of the records. Block P options page, all recommended options chosen the same day."
+      ],
+      "scope": "Creature, item and class entries name a picture in data.index.image, an object of a new private pack-images bucket uploaded by content editors (P1 A, P4 A). The picture is part of the entry's data, published with the pack version (P2 A). The library editor shows the picture the app will show and where it comes from, with Change (square crop, PNG/JPEG/WebP) and Remove; the entry list shows a thumbnail (P3 A). The app shows a pack picture below the campaign's own upload and above the app's painting (P5 A): bestiary, stat block, combat portraits and tokens, the tabletop, inventory, storeroom and shop tiles, and class emblems.",
+      "acceptance": [
+        "Only content editors upload into an existing pack; readers are editors, any signed-in account for published public packs, the owner, and members of campaigns a private pack is offered to; anon never.",
+        "A campaign sees a picture only at the pack version it pins; members read the pictures of their campaign, outsiders and anon are refused.",
+        "The library editor shows the picture and its origin, changes it through the square editor and removes it; the list shows thumbnails; 390 and 820 px, both themes and languages, axe.",
+        "Inventory, shop, bestiary, combat, tabletop and class screens prefer the campaign's upload, then the pack picture, then the app painting."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "denial tests for anon, outsider, player and other-campaign DM",
+        "independent UI review",
+        "hosted apply"
+      ],
+      "evidence": ["docs/evidence/RYT-172/validation.md"]
     }
   ]
 }

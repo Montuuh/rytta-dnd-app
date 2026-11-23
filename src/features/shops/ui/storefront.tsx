@@ -818,6 +818,7 @@ function SellPanel({
               imagePath={definition.image_path}
               icon={definition.icon}
               category={definition.category}
+              basicKey={definition.basic_key}
               rarity={definition.rarity}
               viewable
               name={nameOf(definition)}

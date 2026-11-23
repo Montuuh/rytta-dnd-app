@@ -61,7 +61,7 @@ import {
   type RosterEntry,
 } from '../domain/roster'
 import type { SheetSummary } from '../domain/sheet'
-import { classEmblem } from './class-emblem'
+import { useClassEmblemOf } from './class-emblem'
 import './roster.css'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 
@@ -611,6 +611,7 @@ function RosterCard({
     onSelect: () => void
   }
 } & Partial<NoticeProps>) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const campaign = useCampaign()
   const id = useId()
@@ -726,6 +727,7 @@ function RosterRow({
   note?: string
   actions: ReactNode
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const campaign = useCampaign()
   const id = useId()
@@ -1279,6 +1281,7 @@ function ClaimCards({
   onClaimed: (character: ClaimableCharacter, id: string) => void
   onLost: (character: ClaimableCharacter) => void
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const campaign = useCampaign()
   const metaOf = useClaimMeta()
@@ -1383,6 +1386,7 @@ function ClaimDialog({
   onClaimed: (id: string) => void
   onLost: () => void
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const campaign = useCampaign()
   const claim = useClaimCharacter(campaign.id)

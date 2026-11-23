@@ -368,6 +368,7 @@ export function ItemCard({
                 icon={definition.icon}
                 imagePath={definition.image_path}
                 category={definition.category}
+                basicKey={definition.basic_key}
                 size={40}
                 viewable
                 name={name}

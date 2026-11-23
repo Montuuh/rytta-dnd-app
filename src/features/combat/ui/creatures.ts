@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useContext, useMemo } from 'react'
 import type { ComboboxItem, ComboboxParsedItem, OptionsFilter } from '@mantine/core'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { PackImagesContext } from '@/shared/ui/pack-images-context'
 import {
   bestiaryLanguage,
   creatureArtQuery,
@@ -98,6 +99,8 @@ export function useCreatureCatalog(campaignId: string) {
   const templates = useQuery(templatesQuery(userId, campaignId))
   const art = useQuery(creatureArtQuery())
   const srdImages = useQuery(srdImagesQuery(userId, campaignId))
+  // RYT-172: pack pictures sit below the campaign's own image and above the bundled art.
+  const packImages = useContext(PackImagesContext)
   const indexData = indexes.map((q) => q.data)
   const bodiesData = bodies.map((q) => q.data)
   // useQueries returns new arrays each render: memoize on their contents.
@@ -121,7 +124,12 @@ export function useCreatureCatalog(campaignId: string) {
       // List rows name their pack in a few words: the SRD's full title would fill a phone row.
       const title = pack.srd ? 'SRD' : packTitle(pack, language)
       const list = srdItems(indexData[at]?.rows ?? [], language, { id: pack.id, title }).map(
-        (item) => ({ ...item, imagePath: own.get(item.id) ?? null, artId: artOf(item.id) }),
+        (item) => ({
+          ...item,
+          imagePath: own.get(item.id) ?? null,
+          packPath: packImages.creature.get(item.id) ?? null,
+          artId: artOf(item.id),
+        }),
       )
       return { pack, title, items: list }
     })
@@ -136,7 +144,7 @@ export function useCreatureCatalog(campaignId: string) {
       fromPacks,
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [indexKey, packList, templates.data, language, art.data, srdImages.data])
+  }, [indexKey, packList, templates.data, language, art.data, srdImages.data, packImages])
   const templateById = useMemo(
     () => new Map((templates.data ?? []).map((tp) => [tp.id, tp])),
     [templates.data],

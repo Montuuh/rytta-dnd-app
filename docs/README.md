@@ -129,5 +129,8 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 63. [ADR 052: the campaign shell kept on the device](decisions/052-campaign-shell-on-device.md):
     name, role and modules of opened campaigns for an offline reload, and when they are removed
     (RYT-160).
-64. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
+64. [ADR 053: library entries carry their own picture](decisions/053-pack-entry-pictures.md):
+    the pack-images bucket, versioned with the pack, who uploads and reads, and which picture wins
+    (RYT-172).
+65. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
     panel, the automatic checks, review, import and the status of each request (RYT-169).

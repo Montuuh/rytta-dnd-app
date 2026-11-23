@@ -20,6 +20,8 @@ import {
   type ContentLanguage,
   type ContentPack,
 } from '../domain/library'
+import { EntryThumb } from './entry-image'
+import { hasPicture } from './entry-picture'
 import { ImportDialog, PackDialog, PublishDialog } from './dialogs'
 import { OffersDialog } from './offers-dialog'
 import { EntryEditor } from './entry-editor'
@@ -581,9 +583,10 @@ function EntryPane({
                   to={to}
                   onClick={guard.link}
                   data-entry={row.id}
-                  className={`lib-row${row.id === entryId ? ' is-current' : ''}${row.state === 'deleted' ? ' is-deleted' : ''}`}
+                  className={`lib-row${row.id === entryId ? ' is-current' : ''}${row.state === 'deleted' ? ' is-deleted' : ''}${hasPicture(kind) ? ' has-thumb' : ''}`}
                   aria-current={row.id === entryId ? 'page' : undefined}
                 >
+                  {hasPicture(kind) && <EntryThumb row={row} userId={userId} />}
                   <span className="lib-row-name">{entryName(row, language)}</span>
                   <span className="lib-row-meta">
                     {[

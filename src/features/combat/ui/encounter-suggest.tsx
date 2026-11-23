@@ -344,7 +344,7 @@ function IdeaList({
                     name={g.creature.name}
                     side="enemy"
                     imageKind="creature"
-                    path={item?.imagePath}
+                    path={item?.imagePath ?? item?.packPath}
                     art={item ? itemArt(item)?.thumb : null}
                     size={44}
                   />

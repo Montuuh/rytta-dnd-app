@@ -79,3 +79,4 @@ export {
 } from './domain/pack-items'
 
 export { LootDrawer } from './ui/loot-drawer'
+export { SquareImageEditor } from './ui/portrait-editor'

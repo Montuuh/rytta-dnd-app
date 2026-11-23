@@ -346,6 +346,7 @@ export function LootDrawer({
                       icon={item.icon}
                       imagePath={item.image_path}
                       category={item.category}
+                      basicKey={item.basic_key}
                       viewable
                       name={names.get(item.id)}
                       size={24}

@@ -1,5 +1,6 @@
 import { createBatchSigner } from '@/shared/api/batch-sign'
 import { z } from 'zod'
+import { isPackImagePath, packImageUrl } from '@/shared/api/pack-images'
 import type { Json } from '@/shared/api/database.generated'
 import {
   creaturePacksSchema,
@@ -430,6 +431,8 @@ const signers = {
 }
 
 export async function combatImageUrl(kind: ImageKind, path: string) {
+  // RYT-172: a creature's pack picture lives in the pack-images bucket.
+  if (kind === 'creature' && isPackImagePath(path)) return packImageUrl(path)
   const { activeSchema } = await import('@/shared/api/supabase')
   if (!path.startsWith(`${activeSchema()}/`)) throw new Error('unavailable')
   return signers[kind](path)

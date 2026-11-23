@@ -17,7 +17,7 @@ export { isClassKey } from './domain/rules'
 export { classKeys } from './domain/srd'
 export type { PartyMember } from './domain/party'
 // RYT-112: characters without a portrait wear their class emblem.
-export { classEmblem, useClassEmblems, type ClassEmblem } from './ui/class-emblem'
+export { classEmblem, useClassEmblemOf, useClassEmblems, type ClassEmblem } from './ui/class-emblem'
 
 export {
   MemberCharacters,

@@ -39,6 +39,8 @@ export type CreatureListItem = {
   srdId?: string | null
   /** A private image: the campaign creature's own, or the DM's image for an SRD creature. */
   imagePath?: string | null
+  /** RYT-172: the picture its pack entry carries, below the campaign's own image. */
+  packPath?: string | null
   /** The SRD creature whose bundled art stands in when there is no private image (RYT-053). */
   artId?: string | null
   /** The side a campaign creature joins fights on (its token's shape). */

@@ -67,6 +67,7 @@ export function ListingCard({
               imagePath={listing.item.image_path}
               icon={listing.item.icon}
               category={listing.item.category}
+              basicKey={listing.item.basic_key}
               rarity={listing.item.rarity}
             />
           )}
@@ -187,6 +188,7 @@ export function ListingDrawer({
               imagePath={listing.item.image_path}
               icon={listing.item.icon}
               category={listing.item.category}
+              basicKey={listing.item.basic_key}
               rarity={listing.item.rarity}
               size={44}
               viewable

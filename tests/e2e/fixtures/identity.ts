@@ -346,6 +346,8 @@ export async function identityFixture(
     /** RYT-133: a dice store shared with other pages, to see one table from several accounts. */
     dice?: DiceStore
     inventory?: boolean
+    /** RYT-172: pack pictures of the campaign; the longsword then comes from the pack. */
+    packImages?: { kind: string; id: string; path: string }[]
     modules?: string[]
     party?: boolean
     /** RYT-034: sign in as another Player of the party fixture (for example peerId). */
@@ -667,6 +669,10 @@ export async function identityFixture(
     },
     (id) => characters.find((c) => c.id === id)?.name ?? null,
   )
+  // RYT-172: with pack pictures, the longsword came from the pack.
+  if (options.packImages)
+    for (const definition of inventory.definitions)
+      if (definition.name === 'Espada larga') definition.basic_key = 'longsword'
   // RYT-080 group rest state (one request at a time) and the rest maths of the SQL.
   type Rest = {
     id: string
@@ -1237,9 +1243,11 @@ export async function identityFixture(
       return route.fulfill({ status: 200, contentType: 'image/png', body: tinyPng })
     if (
       url.pathname.includes('/storage/v1/object/character-portraits/') ||
-      url.pathname.includes('/storage/v1/object/item-images/')
+      url.pathname.includes('/storage/v1/object/item-images/') ||
+      url.pathname.includes('/storage/v1/object/pack-images/')
     )
       return respond({ Key: url.pathname.split('/object/')[1] })
+    if (method === 'get_campaign_pack_images') return respond(options.packImages ?? [])
     if (method === 'set_character_portrait') {
       portraitPath = (body.new_path as string | null) ?? null
       return respond(null)

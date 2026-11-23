@@ -165,7 +165,7 @@ export function AddToEncounterDialog({
                   name={item.name}
                   side={done.side}
                   imageKind="creature"
-                  path={item.imagePath ?? null}
+                  path={item.imagePath ?? item.packPath ?? null}
                   size={40}
                   glyph={item.type ? typeGlyphs[item.type] : undefined}
                 />
@@ -280,7 +280,7 @@ export function AddToEncounterDialog({
                     name={item.name}
                     side={side}
                     imageKind="creature"
-                    path={item.imagePath ?? null}
+                    path={item.imagePath ?? item.packPath ?? null}
                     size={36}
                     glyph={item.type ? typeGlyphs[item.type] : undefined}
                   />

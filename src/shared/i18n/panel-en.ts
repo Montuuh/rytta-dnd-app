@@ -248,6 +248,7 @@ export const panelEn = {
     'Drag the image or use the arrow keys to choose the square. Pinch, the wheel or + and − zoom.',
   'portrait.fitHint': 'The whole image, with black bars filling the square.',
   'portrait.zoom': 'Zoom',
+  'portrait.areaSquare': 'Picture framing. Arrow keys move the image; + and − change the zoom.',
   'portrait.area': 'Portrait framing. Arrow keys move the image; + and − zoom.',
   'portrait.preview': 'Preview at the sizes Rytta uses',
   'portrait.save': 'Save portrait',

@@ -271,6 +271,7 @@ export function PaperDoll({
                     icon={current.definition.icon}
                     imagePath={current.definition.image_path}
                     category={current.definition.category}
+                    basicKey={current.definition.basic_key}
                     size={40}
                     viewable
                     name={localizedName(current.definition, i18n.language)}

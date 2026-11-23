@@ -4,6 +4,8 @@ import type { Json } from './database.generated'
 // regenerate from local Supabase when the stack is available.
 export type CampaignContentFunctions = {
   get_campaign_content: { Args: { target_campaign: string }; Returns: Json }
+  /** RYT-172: pictures of the campaign's creatures, items and classes at their pinned versions. */
+  get_campaign_pack_images: { Args: { target_campaign: string }; Returns: Json }
   set_campaign_content: {
     Args: {
       target_campaign: string

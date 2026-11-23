@@ -2,6 +2,22 @@ import type { libraryEn } from './library-en'
 
 /** RYT-093: el gestor de la biblioteca de contenido (solo editores). */
 export const libraryEs = {
+  'library.image.title': 'Imagen',
+  'library.image.alt': 'Imagen de {{name}}',
+  'library.image.origin.pack': 'Imagen del paquete.',
+  'library.image.origin.app': 'Pintura de la app.',
+  'library.image.origin.category': 'Pintura de su categoría.',
+  'library.image.origin.none': 'Sin imagen: la app muestra un icono.',
+  'library.image.add': 'Subir',
+  'library.image.change': 'Cambiar',
+  'library.image.remove': 'Quitar',
+  'library.image.use': 'Usar esta imagen',
+  'library.image.editorTitle': 'Imagen de {{name}}',
+  'library.image.failed': 'No se pudo subir la imagen. Vuelve a intentarlo.',
+  'library.image.unreadable': 'No se puede mostrar la imagen subida.',
+  'library.image.fallback.app': 'Si la quitas, se usa la pintura de la app.',
+  'library.image.fallback.category': 'Si la quitas, se usa la pintura de su categoría.',
+  'library.image.fallback.none': 'Si la quitas, la app muestra un icono.',
   'library.title': 'Biblioteca de contenido',
   'library.lede': 'Los cambios llegan a los DMs cuando publicas una versión.',
   'library.newPack': 'Nuevo paquete',

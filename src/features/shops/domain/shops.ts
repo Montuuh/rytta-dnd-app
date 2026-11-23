@@ -37,6 +37,8 @@ export const shopItemSchema = z.object({
   translations: translationsSchema.optional(),
   slot_kind: z.enum(slotKinds),
   properties: itemPropertiesSchema.catch({}),
+  /** RYT-172: the pack item it came from, for its pack picture. */
+  basic_key: z.string().max(80).nullable().optional(),
 })
 export type ShopItem = z.infer<typeof shopItemSchema>
 
@@ -75,7 +77,6 @@ export const adminItemSchema = shopItemSchema.extend({
   value_gp: amount.nullable(),
   // A Player-made item enters the economy once the DM priced it (RYT-105).
   origin: z.enum(['dm', 'srd', 'player']),
-  basic_key: z.string().max(80).nullable().optional(),
   is_template: z.boolean().optional(),
 })
 export type AdminItem = z.infer<typeof adminItemSchema>

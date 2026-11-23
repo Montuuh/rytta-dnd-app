@@ -129,12 +129,14 @@ describe('stored-byte quotas', () => {
   const media = (c: string, kind = 'map', env = 'public') =>
     `${env}/${c}/${kind}/${randomUUID()}.webp`
 
-  it('keeps a size limit on all five app buckets', async () => {
+  it('keeps a size limit on every app bucket', async () => {
     await asSystem()
     expect(await rows('select id, file_size_limit from storage.buckets order by id')).toEqual([
       { id: 'character-portraits', file_size_limit: 1048576 },
       { id: 'creature-images', file_size_limit: 1048576 },
       { id: 'item-images', file_size_limit: 1048576 },
+      // RYT-172: pack pictures, uploaded by content editors only.
+      { id: 'pack-images', file_size_limit: 2097152 },
       { id: 'shop-images', file_size_limit: 1048576 },
       { id: 'tabletop-media', file_size_limit: 20971520 },
     ])

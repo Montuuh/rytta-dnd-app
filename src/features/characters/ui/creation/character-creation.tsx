@@ -34,7 +34,7 @@ import {
   type CreationStep,
 } from '../../domain/creation'
 import type { SheetDraft, SheetRow } from '../../domain/sheet'
-import { classEmblem } from '../class-emblem'
+import { useClassEmblemOf } from '../class-emblem'
 import { syncProgression } from '../../domain/progression'
 import { BlankSheet } from './blank-sheet'
 import { CreationChooserPanel } from './chooser'
@@ -175,6 +175,7 @@ function Wizard({
   sheetPath: string
   reload: () => Promise<SheetRow | undefined>
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const campaign = useCampaign()

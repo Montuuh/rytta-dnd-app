@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { campaignPackImagesOptions, noPackImages } from '@/shared/api/pack-images'
+import { PackImagesContext } from '@/shared/ui/pack-images-context'
 import { campaignsQuery } from '../api'
 import { CampaignContext } from '../campaign-context'
 import { recordCampaignVisit } from '../domain/recent-campaign'
@@ -31,6 +33,10 @@ export function CampaignBoundary({
     if (visitedId) recordCampaignVisit(userId, visitedId)
   }, [userId, visitedId])
   const shell = useCampaignShell(userId, campaignId, query)
+  // RYT-172: the pictures of the campaign's packs, for every screen inside it.
+  const packImages = useQuery(
+    campaignPackImagesOptions(campaign ? userId : undefined, campaign?.id),
+  )
   // Players still need characters; only drop DM-only campaign caches when the role is not DM.
   useEffect(() => {
     if (campaign?.role === 'dm') return
@@ -76,7 +82,9 @@ export function CampaignBoundary({
     )
   return (
     <CampaignContext.Provider value={campaign}>
-      <Outlet key={`${userId}:${campaign.id}:${campaign.role}`} />
+      <PackImagesContext.Provider value={packImages.data ?? noPackImages}>
+        <Outlet key={`${userId}:${campaign.id}:${campaign.role}`} />
+      </PackImagesContext.Provider>
     </CampaignContext.Provider>
   )
 }

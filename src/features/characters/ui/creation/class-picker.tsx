@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { ClassDef } from '../../domain/class-catalog'
 import type { Ability } from '../../domain/srd'
 import { useClassDefName } from '../class-catalog'
-import { classEmblem } from '../class-emblem'
+import { useClassEmblemOf } from '../class-emblem'
 import './class-picker.css'
 
 /**
@@ -35,6 +35,7 @@ export function ClassPicker({
   /** The step's own heading already names the choice. */
   hideLabel?: boolean
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t, i18n } = useTranslation()
   const id = useId()
   const nameOf = useClassDefName()
@@ -58,7 +59,7 @@ export function ClassPicker({
       >
         {options.map((entry) => {
           const key = entry.key
-          const emblem = entry.srd ? classEmblem(key) : null
+          const emblem = classEmblem(key)
           const pack = entry.pack
             ? i18n.language.startsWith('en')
               ? entry.pack.title_en || entry.pack.title_es

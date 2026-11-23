@@ -1374,13 +1374,13 @@ function CreatureList({
     const art = itemArt(item)
     // RYT-098: a creature with a picture shows it as its own button beside the row, which keeps
     // opening the stat block; a type glyph stays inside the row.
-    const pictured = Boolean(item.imagePath) || Boolean(art)
+    const pictured = Boolean(item.imagePath ?? item.packPath) || Boolean(art)
     const token = (
       <Token
         name={item.name}
         side={item.side ?? 'enemy'}
         imageKind="creature"
-        path={item.imagePath ?? null}
+        path={item.imagePath ?? item.packPath ?? null}
         art={art?.thumb}
         size={44}
         glyph={item.type ? typeGlyphs[item.type] : undefined}
@@ -1636,7 +1636,7 @@ function CreatureDetail({
   const fromMenu = () => more.current ?? document.body
   // RYT-088: a creature with an image leads with its plate (above the name, or in its own column on
   // wide panes); without one the token stays the file picker beside the name.
-  const pictured = Boolean(item.imagePath) || Boolean(itemArt(item))
+  const pictured = Boolean(item.imagePath ?? item.packPath) || Boolean(itemArt(item))
   // The stat column appears with the first image too (RYT-091): the check follows it.
   const frame = useRef<HTMLDivElement>(null)
   useColumnFit(frame, `${item.key}:${block ? 'block' : 'quick'}:${pictured ? 'plate' : 'token'}`)
@@ -1660,6 +1660,7 @@ function CreatureDetail({
         template ? { templateId: template.id, revision: template.revision } : { srdId: item.id }
       }
       imagePath={item.imagePath ?? null}
+      packPath={item.packPath ?? null}
       art={itemArt(item)}
       credit={catalog.artCredit(item.artId)}
       notice={artNotice?.key === item.key ? artNotice : null}

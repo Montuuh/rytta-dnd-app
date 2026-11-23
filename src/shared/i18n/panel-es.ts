@@ -251,6 +251,8 @@ export const panelEs = {
     'Arrastra la imagen o usa las flechas para elegir el recuadro. Pellizca, usa la rueda o + y − para el zoom.',
   'portrait.fitHint': 'La imagen entera, con bandas negras para completar el cuadrado.',
   'portrait.zoom': 'Zoom',
+  'portrait.areaSquare':
+    'Encuadre de la imagen. Las flechas mueven la imagen; + y − cambian el zoom.',
   'portrait.area': 'Encuadre del retrato. Las flechas mueven la imagen; + y − cambian el zoom.',
   'portrait.preview': 'Así se verá en los tamaños que usa Rytta',
   'portrait.save': 'Guardar retrato',

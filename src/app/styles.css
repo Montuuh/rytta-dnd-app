@@ -1311,6 +1311,11 @@ html[data-mantine-color-scheme='light'] {
   border: 2px solid var(--app-accent);
   background: #000;
 }
+/* RYT-172: library pictures are shown square in the app; the guide and previews say so. */
+.portrait-stage[data-shape='square'] .portrait-ring,
+[data-shape='square'] > .portrait-preview {
+  border-radius: 8px;
+}
 /* Icon buttons kept focusable while unavailable (aria-disabled) look unavailable. */
 .mantine-ActionIcon-root[aria-disabled='true'] {
   opacity: 0.45;

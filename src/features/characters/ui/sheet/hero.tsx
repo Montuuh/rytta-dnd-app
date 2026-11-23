@@ -46,7 +46,7 @@ import {
   useOriginNames,
 } from '../class-catalog'
 import { SubclassFields } from './subclass-fields'
-import { classEmblem } from '../class-emblem'
+import { useClassEmblemOf } from '../class-emblem'
 import { HpField } from '../hp-field'
 import { deathState, toneOf } from './hp-tone'
 import { Pips } from './pips'
@@ -165,6 +165,7 @@ function StatPopover({
 /** RYT-090 hero: the portrait plate leads, with the name on it and the HP ring on its lower
  * edge; AC and initiative are featured and the other stats sit on one quiet line. */
 export function SheetHero(props: HeroProps) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const { build, vitals, maxHp, level, canEdit, editing, pending, locked, commit, speed } = props
   const [mode, setMode] = useState<HpMode | null>(null)

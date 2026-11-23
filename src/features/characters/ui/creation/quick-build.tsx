@@ -18,7 +18,7 @@ import { useCreateSheet } from './use-create-sheet'
 import type { ClassKey } from '../../domain/srd'
 import { useResourceNames } from '../resource-names'
 import { BuildSummary } from './build-summary'
-import { classEmblem } from '../class-emblem'
+import { useClassEmblemOf } from '../class-emblem'
 import { ClassPicker } from './class-picker'
 import { ClassesState } from './classes-state'
 import { LibraryWait } from './library-wait'
@@ -35,6 +35,7 @@ export function QuickBuild({
   name: string
   sheetPath: string
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const campaign = useCampaign()
   const library = useSrdLibrary()

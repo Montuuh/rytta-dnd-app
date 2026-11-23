@@ -52,6 +52,8 @@ import {
   type EntryInput,
 } from '../domain/library'
 import { tableCount } from '../domain/text'
+import { EntryImageField } from './entry-image'
+import { hasPicture } from './entry-picture'
 import { ClassFields, ClassReferenceField, SubclassFields } from './class-fields'
 import { BackgroundFields, FeatFields, SpeciesFields } from './origin-fields'
 import { ItemFields } from './item-fields'
@@ -510,6 +512,15 @@ function EntryForm({
                 update({ ...entry, key })
               }}
             />
+            {hasPicture(entry.kind) && (
+              <EntryImageField
+                entry={entry}
+                packId={pack.id}
+                userId={userId}
+                readOnly={deleted}
+                onChange={update}
+              />
+            )}
             {family === 'creature' ? (
               <CreatureFields entry={entry} revision={baseRevision} onStore={storeBlock} />
             ) : entry.kind === 'item' ? (

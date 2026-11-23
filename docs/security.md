@@ -532,3 +532,24 @@ cross-campaign DM, plus the guarded PRE mirror.
   made with it (members, rest requests, the admin banner, leaving are off). The server still
   authorizes every read and write. Stored content is validated on read and discarded if invalid,
   and a record filed under another campaign's id is ignored.
+
+## Pack entry pictures (RYT-172)
+
+- [ADR 053](decisions/053-pack-entry-pictures.md): private bucket `pack-images` (2 MB, WebP, PNG,
+  JPEG), path `<env>/<pack id>/<uuid>.<ext>`, routed by the global `private.pack_image_access`.
+- Insert: content editors only, into an existing pack of the path's environment. No update or
+  delete policy: earlier pack versions may still name an object.
+- Select (which also governs listing and signing): content editors and the pack owner read the
+  whole pack, drafts included. Anyone else reads only an object a published version of that pack
+  names, and only for a public pack (signed-in accounts) or one offered to a campaign they are an
+  active member of. Anon never. An entry naming another pack's object gains nothing: the pack in
+  the path decides.
+- `private.content_entry_problem` refuses an `index.image` that is not such a path.
+- `get_campaign_pack_images`: active campaign members (and super admins inside through the admin
+  panel); paths of the campaign's enabled packs at their pinned versions only. The DM receives
+  every picture; other members only classes and subclasses, items the campaign's storeroom holds
+  (by `basic_key`) and creatures of public packs, never an entry the DM hid.
+- Uploaded objects are never deleted through the API (earlier versions may name them). Taking a
+  picture down for legal reasons means deleting the object as the project owner, as for other
+  storage. Account deletion leaves pack pictures with the pack.
+- `private.shop_item_json` now includes `basic_key` (an entry id, no secret).

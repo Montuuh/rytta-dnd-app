@@ -62,3 +62,6 @@ in `art-generated.json` and rewrites the credits page and the catalogue. Unchang
 The PNG sources stay out of git (about 2 MB each); without them `build_images.py` keeps the imported
 renditions. To bring back the replaced art, restore its selection entry from `replaced` and rebuild, or
 restore its two WebP files and `art.json` entry from git.
+
+New creature pictures painted in ChatGPT are requested through the image queue (`docs/art-queue.md`,
+set `bestiary`); its import runs `import_art.py`.

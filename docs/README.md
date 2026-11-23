@@ -126,3 +126,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     the DM's note and the Players' change marks are stored and shown (RYT-006).
 62. [ADR 051: campaigns choose content packs](decisions/051-campaign-content-packs.md): pinned pack
     versions per campaign, hidden entries, campaign versions and the first kinds (RYT-162 to RYT-167).
+63. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
+    panel, the automatic checks, review, import and the status of each request (RYT-169).

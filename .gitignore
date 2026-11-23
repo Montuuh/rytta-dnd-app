@@ -57,3 +57,6 @@ art/sprites/source/*/
 
 .pw-dev/
 dist-headers
+
+# Sources of the image queue (docs/art-queue.md), painted in ChatGPT; the shipped files are committed.
+art/queue/source/

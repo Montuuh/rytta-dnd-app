@@ -38,6 +38,9 @@ decorative (`alt=""`) unless a caller passes text. An uploaded image always wins
 
 ## Regenerating
 
+New interface pictures are requested through the [image queue](art-queue.md) and painted by hand in
+ChatGPT (set `interface`); the steps below only render the existing first delivery again.
+
 The scripts in `scripts/art-gen/` are local tools and are never imported by the application:
 
 1. `node scripts/art-gen/build-batch.mjs` writes the prompt list (`batch.json`).

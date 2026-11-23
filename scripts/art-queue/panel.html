@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cola de imágenes · Rytta</title>
+    <style>
+      /* Local tool for docs/art-queue.md. Rytta's Hearth palette, system fonts (no network). */
+      :root {
+        --bg: #f6efe4;
+        --surface: #fffaf2;
+        --ink: #2a1f17;
+        --muted: #6e5e50;
+        --line: #e2d5c2;
+        --chip: #efe3d1;
+        --accent: #a8611c;
+        --accent-ink: #fff;
+        --ok: #3f7a46;
+        --warn: #96560f;
+        --bad: #a33a2c;
+        --display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+        --body: system-ui, 'Segoe UI', sans-serif;
+        --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #140f0b;
+          --surface: #1f1712;
+          --ink: #f1e6d6;
+          --muted: #b4a28f;
+          --line: #3a2d23;
+          --chip: #2c221a;
+          --accent: #e09a4b;
+          --accent-ink: #1a120c;
+          --ok: #7fbf86;
+          --warn: #e6a65c;
+          --bad: #e2786a;
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.5 var(--body);
+      }
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        margin: 0;
+        text-wrap: balance;
+      }
+      h1 {
+        font-size: 1.7rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+      }
+      h3 {
+        font-size: 1.02rem;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid var(--line);
+      }
+      nav button {
+        font: inherit;
+        background: none;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        color: var(--muted);
+        padding: 10px 12px;
+        min-height: 44px;
+        cursor: pointer;
+      }
+      nav button[aria-selected='true'] {
+        color: var(--ink);
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+      nav .n {
+        font-variant-numeric: tabular-nums;
+        margin-left: 6px;
+        font-size: 0.82rem;
+      }
+      .batch {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .batch-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        background: var(--chip);
+        border-radius: 8px;
+      }
+      .batch-head p {
+        margin: 2px 0 0;
+        font-size: 0.86rem;
+      }
+      .card {
+        display: grid;
+        grid-template-columns: 168px minmax(0, 1fr);
+        gap: 16px;
+        padding: 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .card.over {
+        outline: 2px dashed var(--accent);
+        outline-offset: 2px;
+      }
+      @media (max-width: 620px) {
+        .card {
+          grid-template-columns: 1fr;
+        }
+        .pic {
+          max-width: 240px;
+        }
+      }
+      .pic {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 6px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 10px;
+        font-size: 0.82rem;
+        color: var(--muted);
+        border: 1px dashed var(--muted);
+        background: repeating-conic-gradient(var(--chip) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+        cursor: pointer;
+      }
+      .pic img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .pic:focus-within {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .pic input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+      .body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+        align-items: baseline;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.78rem;
+      }
+      .chip {
+        background: var(--chip);
+        border-radius: 4px;
+        padding: 1px 7px;
+      }
+      .status {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        padding: 0 6px;
+        border: 1px solid currentColor;
+        border-radius: 4px;
+      }
+      .s-pending,
+      .s-held {
+        color: var(--warn);
+      }
+      .s-generated {
+        color: var(--accent);
+      }
+      .s-approved,
+      .s-imported {
+        color: var(--ok);
+      }
+      .s-cancelled {
+        color: var(--muted);
+      }
+      .path {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        word-break: break-all;
+      }
+      details {
+        border-top: 1px solid var(--line);
+        padding-top: 6px;
+      }
+      summary {
+        cursor: pointer;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        margin: 6px 0 0;
+        padding: 10px;
+        background: var(--bg);
+        border-radius: 6px;
+        max-height: 320px;
+        overflow: auto;
+      }
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 0.88rem;
+      }
+      .checks {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .checks li::before {
+        display: inline-block;
+        width: 1.2em;
+        font-weight: 700;
+      }
+      .checks .ok::before {
+        content: '✓';
+        color: var(--ok);
+      }
+      .checks .warn::before {
+        content: '!';
+        color: var(--warn);
+      }
+      .checks .fail::before {
+        content: '✕';
+        color: var(--bad);
+      }
+      .review {
+        font-size: 0.88rem;
+        padding: 6px 10px;
+        border-left: 3px solid var(--bad);
+        background: var(--bg);
+      }
+      .review.ok {
+        border-color: var(--ok);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button.b {
+        font: inherit;
+        font-size: 0.88rem;
+        min-height: 40px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--ink);
+        cursor: pointer;
+      }
+      button.b.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 600;
+      }
+      button.b:focus-visible,
+      nav button:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .empty {
+        padding: 40px 16px;
+        text-align: center;
+        color: var(--muted);
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: var(--bg);
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        max-width: calc(100% - 32px);
+      }
+      #toast.error {
+        background: var(--bad);
+        color: #fff;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .card {
+          transition: outline-color 0.15s;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Cola de imágenes</h1>
+        <span class="muted" id="updated"></span>
+      </header>
+      <nav role="tablist" aria-label="Estado" id="tabs"></nav>
+      <main id="list" aria-live="polite"></main>
+    </div>
+    <div id="toast" role="status" hidden></div>
+
+    <script>
+      const TABS = [
+        { key: 'todo', label: 'Por generar', statuses: ['pending', 'held'] },
+        { key: 'review', label: 'Por revisar', statuses: ['generated'] },
+        { key: 'import', label: 'Por importar', statuses: ['approved'] },
+        { key: 'done', label: 'Hechas', statuses: ['imported', 'cancelled'] },
+      ]
+      const STATUS = {
+        pending: 'por generar',
+        held: 'en espera',
+        generated: 'generada',
+        approved: 'aprobada',
+        imported: 'importada',
+        cancelled: 'cancelada',
+      }
+      let tab = 'todo'
+      let picked = false
+      let data = null
+      let busy = false
+      let signature = ''
+
+      function h(tag, attrs, children) {
+        const node = document.createElement(tag)
+        for (const [key, value] of Object.entries(attrs ?? {})) {
+          if (value === null || value === undefined || value === false) continue
+          if (key === 'text') node.textContent = value
+          else if (key.startsWith('on')) node.addEventListener(key.slice(2), value)
+          else node.setAttribute(key, value === true ? '' : value)
+        }
+        for (const child of [].concat(children ?? [])) if (child) node.append(child)
+        return node
+      }
+
+      function toast(text, error) {
+        const node = document.getElementById('toast')
+        node.textContent = text
+        node.className = error ? 'error' : ''
+        node.hidden = false
+        clearTimeout(toast.timer)
+        toast.timer = setTimeout(() => (node.hidden = true), error ? 6000 : 2500)
+      }
+
+      async function copy(text, what) {
+        try {
+          await navigator.clipboard.writeText(text)
+          toast(`${what} copiado.`)
+        } catch {
+          toast('No se pudo copiar; selecciona el texto.', true)
+        }
+      }
+
+      async function call(path, options) {
+        const response = await fetch(path, options)
+        const body = await response.json()
+        if (!response.ok) throw new Error(body.error || response.statusText)
+        return body
+      }
+
+      async function refresh() {
+        if (busy) return
+        try {
+          const next = await call('/api/queue')
+          const sig = JSON.stringify(
+            next.requests.map((r) => [r.id, r.status, r.updatedAt, r.hasFile]),
+          )
+          data = next
+          if (sig !== signature) {
+            signature = sig
+            render()
+          }
+        } catch (error) {
+          document.getElementById('updated').textContent =
+            'Sin conexión con el panel: ¿sigue corriendo npm run art:queue?'
+        }
+      }
+
+      async function upload(request, file) {
+        if (!file) return
+        if (file.type && file.type !== 'image/png')
+          return toast('Tiene que ser el PNG descargado de ChatGPT.', true)
+        busy = true
+        try {
+          data = await call(`/api/requests/${request.id}/upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'image/png' },
+            body: file,
+          })
+          const saved = data.requests.find((r) => r.id === request.id)
+          const fails = saved.attempts.at(-1).checks.filter((c) => c.level === 'fail')
+          toast(
+            fails.length
+              ? `Guardada, pero no pasa: ${fails[0].message}`
+              : `Guardada en ${request.path}.`,
+            fails.length > 0,
+          )
+        } catch (error) {
+          toast(error.message, true)
+        } finally {
+          busy = false
+          signature = ''
+          render()
+        }
+      }
+
+      async function post(request, action, message) {
+        busy = true
+        try {
+          data = await call(`/api/requests/${request.id}/${action}`, { method: 'POST' })
+          toast(message)
+        } catch (error) {
+          toast(error.message, true)
+        } finally {
+          busy = false
+          signature = ''
+          render()
+        }
+      }
+
+      function checks(attempt) {
+        if (!attempt?.checks) return null
+        return h(
+          'ul',
+          { class: 'checks' },
+          attempt.checks.map((c) => h('li', { class: c.level, text: c.message })),
+        )
+      }
+
+      function card(request) {
+        const attempt = request.attempts.at(-1)
+        const canUpload = ['pending', 'held', 'generated'].includes(request.status)
+        const input = canUpload
+          ? h('input', {
+              type: 'file',
+              accept: 'image/png',
+              'aria-label': `Elegir el PNG de ${request.title}`,
+              onchange: (e) => upload(request, e.target.files[0]),
+            })
+          : null
+        const pic = h('label', { class: 'pic' }, [
+          request.hasFile
+            ? h('img', {
+                src: `/api/image/${request.id}?v=${encodeURIComponent(attempt?.sha256 ?? request.updatedAt)}`,
+                alt: '',
+              })
+            : null,
+          request.hasFile
+            ? null
+            : h('span', {
+                text: canUpload
+                  ? 'Suelta aquí el PNG descargado o pulsa para elegirlo'
+                  : 'Sin imagen',
+              }),
+          input,
+        ])
+        const lastReview = [...request.attempts].reverse().find((a) => a.review)
+        const node = h('article', { class: 'card' }, [
+          pic,
+          h('div', { class: 'body' }, [
+            h('div', { class: 'top' }, [
+              h('span', { class: 'muted', text: request.id }),
+              h('h3', { text: request.title }),
+              h('span', { class: `status s-${request.status}`, text: STATUS[request.status] }),
+            ]),
+            h('div', { class: 'chips' }, [
+              h('span', { class: 'chip', text: request.set }),
+              request.ticket ? h('span', { class: 'chip', text: request.ticket }) : null,
+              h('span', {
+                class: 'chip',
+                text: `${request.aspect}${request.crop ? ' (se recorta)' : ''}`,
+              }),
+              h('span', {
+                class: 'chip',
+                text: request.background === 'transparent' ? 'fondo transparente' : 'fondo opaco',
+              }),
+              h('span', { class: 'chip', text: `mín. ${request.minSide} px` }),
+              request.attempts.length
+                ? h('span', {
+                    class: 'chip',
+                    text: `intento ${request.attempts.length} de ${data.maxAttempts}`,
+                  })
+                : null,
+            ]),
+            h('div', { class: 'muted', text: request.purpose }),
+            h('div', { class: 'path', text: request.path }),
+            lastReview && request.status !== 'imported'
+              ? h('div', {
+                  class: `review ${lastReview.review.verdict === 'approved' ? 'ok' : ''}`,
+                  text: `Intento ${lastReview.n} ${lastReview.review.verdict === 'approved' ? 'aprobado' : 'rechazado'}: ${lastReview.review.reason || 'sin comentario'}`,
+                })
+              : null,
+            request.status === 'held'
+              ? h('div', {
+                  class: 'review',
+                  text: `Rechazada ${data.maxAttempts} veces: decide en el chat si se cambia el encargo, se acepta o se cancela.`,
+                })
+              : null,
+            request.status === 'generated' ? checks(attempt) : null,
+            h('div', { class: 'actions' }, [
+              canUpload
+                ? h(
+                    'button',
+                    {
+                      class: 'b primary',
+                      type: 'button',
+                      onclick: () => copy(request.prompt, 'Prompt'),
+                    },
+                    'Copiar prompt',
+                  )
+                : null,
+              h(
+                'button',
+                { class: 'b', type: 'button', onclick: () => copy(request.path, 'Ruta') },
+                'Copiar ruta',
+              ),
+              ['pending', 'held'].includes(request.status) && request.hasFile
+                ? h(
+                    'button',
+                    {
+                      class: 'b',
+                      type: 'button',
+                      onclick: () => post(request, 'generated', 'Marcada como generada.'),
+                    },
+                    'Ya la guardé en la ruta',
+                  )
+                : null,
+              request.status === 'generated'
+                ? h(
+                    'button',
+                    {
+                      class: 'b',
+                      type: 'button',
+                      onclick: () => post(request, 'pending', 'Vuelve a por generar.'),
+                    },
+                    'Volver a por generar',
+                  )
+                : null,
+            ]),
+            h('details', null, [
+              h('summary', { text: 'Prompt y criterios' }),
+              h('pre', { text: request.prompt }),
+              h(
+                'ul',
+                null,
+                request.acceptance.map((a) => h('li', { text: a })),
+              ),
+            ]),
+          ]),
+        ])
+        if (canUpload) {
+          node.addEventListener('dragover', (e) => {
+            e.preventDefault()
+            node.classList.add('over')
+          })
+          node.addEventListener('dragleave', () => node.classList.remove('over'))
+          node.addEventListener('drop', (e) => {
+            e.preventDefault()
+            node.classList.remove('over')
+            upload(request, e.dataTransfer.files[0])
+          })
+        }
+        return node
+      }
+
+      function render() {
+        if (!data) return
+        const counts = Object.fromEntries(
+          TABS.map((t) => [
+            t.key,
+            data.requests.filter((r) => t.statuses.includes(r.status)).length,
+          ]),
+        )
+        // Until the owner picks a tab, open the first one with work in it.
+        if (!picked && !counts[tab]) tab = (TABS.find((t) => counts[t.key]) ?? TABS[0]).key
+        const tabs = document.getElementById('tabs')
+        tabs.replaceChildren(
+          ...TABS.map((t) =>
+            h(
+              'button',
+              {
+                role: 'tab',
+                type: 'button',
+                'aria-selected': String(t.key === tab),
+                onclick: () => {
+                  tab = t.key
+                  picked = true
+                  render()
+                },
+              },
+              [t.label, h('span', { class: 'n', text: String(counts[t.key]) })],
+            ),
+          ),
+        )
+        document.getElementById('updated').textContent = data.updatedAt
+          ? `Actualizada ${new Date(data.updatedAt).toLocaleString('es-ES')}`
+          : 'Cola vacía'
+        const current = TABS.find((t) => t.key === tab)
+        const rows = data.requests.filter((r) => current.statuses.includes(r.status))
+        const list = document.getElementById('list')
+        if (!rows.length) {
+          list.replaceChildren(
+            h('p', {
+              class: 'empty',
+              text: tab === 'todo' ? 'No hay imágenes por generar.' : 'Nada en esta pestaña.',
+            }),
+          )
+          return
+        }
+        const groups = new Map()
+        for (const row of rows) groups.set(row.batch, [...(groups.get(row.batch) ?? []), row])
+        list.replaceChildren(
+          ...[...groups].map(([batchId, items]) => {
+            const batch = data.batches.find((b) => b.id === batchId)
+            return h('section', { class: 'batch', 'aria-label': batch ? batch.title : 'Sueltas' }, [
+              batch
+                ? h('div', { class: 'batch-head' }, [
+                    h('div', null, [
+                      h('h2', { text: batch.title }),
+                      h('p', {
+                        class: 'muted',
+                        text:
+                          `${items.length} ${items.length === 1 ? 'imagen' : 'imágenes'}` +
+                          (tab === 'todo'
+                            ? ' · en una conversación nueva de ChatGPT, pega primero el estilo y después cada prompt.'
+                            : ''),
+                      }),
+                    ]),
+                    tab === 'todo'
+                      ? h(
+                          'button',
+                          {
+                            class: 'b primary',
+                            type: 'button',
+                            onclick: () => copy(batch.style, 'Estilo del lote'),
+                          },
+                          'Copiar estilo del lote',
+                        )
+                      : null,
+                  ])
+                : null,
+              ...items.map(card),
+            ])
+          }),
+        )
+      }
+
+      document.addEventListener('dragover', (e) => e.preventDefault())
+      document.addEventListener('drop', (e) => e.preventDefault())
+      refresh()
+      setInterval(refresh, 4000)
+    </script>
+  </body>
+</html>

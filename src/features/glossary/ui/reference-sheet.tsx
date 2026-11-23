@@ -1,4 +1,4 @@
-import { Anchor, Loader, Text } from '@mantine/core'
+import { Anchor, Button, Loader, Stack, Text } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { ArrowUpRight, ChevronLeft } from 'lucide-react'
@@ -29,12 +29,20 @@ export function ReferenceSheet({
   const glossary = useGlossary()
   const wide = !usePhone()
   const heading = useRef<HTMLSpanElement>(null)
+  const statusRef = useRef<HTMLDivElement>(null)
   const depth = useRef(0)
   const id = stack.at(-1)
   const entry = id ? glossary?.catalog?.byId.get(id) : undefined
   const previous = stack.length > 1 ? glossary?.catalog?.byId.get(stack.at(-2)!) : undefined
   const body = id && glossary?.bodies ? glossary.bodies[id] : undefined
   const ready = Boolean(entry && (entry.homebrew || body))
+  // After Retry, the definition that loads takes focus (its headword).
+  const retried = useRef(false)
+  useEffect(() => {
+    if (!ready || !retried.current) return
+    retried.current = false
+    heading.current?.focus()
+  }, [ready])
 
   useEffect(() => {
     // Opening is handled by the drawer's focus trap; moving forward or back in the history
@@ -92,14 +100,30 @@ export function ReferenceSheet({
       {!entry && glossary?.catalog ? (
         <Text>{t('glossary.notFound')}</Text>
       ) : !ready ? (
-        glossary?.bodiesError || glossary?.indexError ? (
-          <Text>{t('glossary.loadError')}</Text>
-        ) : (
-          <div className="gl-loading" role="status">
-            <Loader size="sm" />
-            <Text>{t('glossary.loading')}</Text>
-          </div>
-        )
+        // RYT-164 (P4 A): the library can come back during play. Loading and its error share one
+        // focusable live region, so Retry keeps focus in the sheet and a new failure is announced.
+        <div ref={statusRef} tabIndex={-1} aria-live="polite" className="gl-load-state">
+          {glossary?.bodiesError || glossary?.indexError ? (
+            <Stack gap="xs" align="flex-start">
+              <Text>{t('glossary.loadError')}</Text>
+              <Button
+                variant="light"
+                onClick={() => {
+                  retried.current = true
+                  statusRef.current?.focus()
+                  glossary.retry()
+                }}
+              >
+                {t('common.retry')}
+              </Button>
+            </Stack>
+          ) : (
+            <div className="gl-loading">
+              <Loader size="sm" />
+              <Text>{t('glossary.loading')}</Text>
+            </div>
+          )}
+        </div>
       ) : (
         entry && (
           <>

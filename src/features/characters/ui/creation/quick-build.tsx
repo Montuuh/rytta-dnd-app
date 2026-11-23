@@ -16,6 +16,7 @@ import { useResourceNames } from '../resource-names'
 import { BuildSummary } from './build-summary'
 import { classEmblem } from '../class-emblem'
 import { ClassPicker } from './class-picker'
+import { LibraryWait } from './library-wait'
 
 const steps = ['class', 'species', 'name'] as const
 
@@ -39,6 +40,7 @@ export function QuickBuild({
   const [name, setName] = useState(characterName)
   const [asked, setAsked] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
+  const finishRef = useRef<HTMLButtonElement>(null)
   const { create, action } = useCreateSheet(sheet, characterName, sheetPath)
   const groupId = useId()
   useEffect(() => heading.current?.focus(), [step])
@@ -171,6 +173,7 @@ export function QuickBuild({
           )}
         </Alert>
       )}
+      {last && <LibraryWait ready={library !== null} onReady={() => finishRef.current?.focus()} />}
       <Group justify="space-between" wrap="nowrap" className="wizard-actions">
         <Button
           variant="default"
@@ -180,6 +183,7 @@ export function QuickBuild({
           {t('wizard.back')}
         </Button>
         <Button
+          ref={finishRef}
           loading={action.isPending}
           disabled={last && (!draft || !name.trim())}
           onClick={() => {

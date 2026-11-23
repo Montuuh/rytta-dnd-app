@@ -12,6 +12,8 @@ export type LibraryFeature = {
   classKey: string
   level: number
   subclass: string | null
+  /** No longer offered by the campaign (RYT-164): kept where a character has it. */
+  hidden?: boolean
 }
 
 /**
@@ -82,11 +84,20 @@ function linkOriginFeatures(build: Build): Feature[] {
   })
 }
 
-/** SRD features of the build's class (and SRD subclass) up to a level, in level order. */
-export function classFeaturesFor(build: Build, level: number, library: LibraryFeature[]) {
+/**
+ * SRD features of the build's class (and SRD subclass) up to a level, in level order. Features the
+ * campaign no longer offers are left out unless `withHidden` (to keep what characters have).
+ */
+export function classFeaturesFor(
+  build: Build,
+  level: number,
+  library: LibraryFeature[],
+  withHidden = false,
+) {
   return library
     .filter(
       (row) =>
+        (withHidden || !row.hidden) &&
         row.classKey === build.classKey &&
         row.level <= level &&
         (!row.subclass || row.subclass === build.subclassKey),
@@ -169,10 +180,12 @@ export function syncProgressionReport(
       ),
     )
   }
-  const rows = classFeaturesFor(build, level, library).filter(
+  const all = classFeaturesFor(build, level, library, true).filter(
     (row) => !removed.has(removedFeature(row.id)),
   )
-  const refs = new Set(rows.map((row) => row.id))
+  // RYT-164: a hidden feature stays where a character has it, and is added to nobody.
+  const rows = all.filter((row) => !row.hidden)
+  const refs = new Set(all.map((row) => row.id))
   const byName = new Map(rows.map((row) => [plain(row.name), row]))
   const kept = build.features
     .filter((feature) => !isManaged(feature) || refs.has(feature.ref!))

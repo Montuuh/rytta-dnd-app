@@ -42,6 +42,7 @@ import { LeaveDialog } from '../leave-guard'
 import { useLeaveGuard } from '@/shared/ui/use-leave-guard'
 import { useResourceNames } from '../resource-names'
 import { useSubmitGuard } from '../use-submit-guard'
+import { LibraryWait } from './library-wait'
 
 const fromRow = (sheet: SheetRow): SheetDraft =>
   sheet.build
@@ -177,6 +178,10 @@ function Wizard({
   const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
   const library = useSrdLibrary()
+  // RYT-164 (P4 A): finishing adds class features from the campaign's packs, so it waits for
+  // them, and finishes by itself once they arrive.
+  const [libraryWait, setLibraryWait] = useState<null | (() => void)>(null)
+  const waitRef = useRef<HTMLDivElement>(null)
   const names = useResourceNames()
   const submit = useSubmitGuard()
   const [draft, setDraft] = useState(() => fromRow(sheet))
@@ -255,6 +260,12 @@ function Wizard({
     if (issuesFor(mode).length > 0) return
     const trimmed = displayName.trim()
     if (complete && !trimmed) return
+    if (complete && !library) {
+      setLibraryWait(() => then)
+      requestAnimationFrame(() => waitRef.current?.focus())
+      return
+    }
+    setLibraryWait(null)
     void submit
       .run(async () => {
         // RYT-071: finishing adds the class resources and features of the class and level.
@@ -298,6 +309,14 @@ function Wizard({
       })
       .catch(() => undefined)
   }
+  // The library arrived while finishing waited for it: finish now, as the player asked.
+  useEffect(() => {
+    if (!libraryWait || !library) return
+    const then = libraryWait
+    setLibraryWait(null)
+    save(true, then)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [library, libraryWait])
   const advance = (skipGaps = false) => {
     if (!skipGaps && openGaps.length > 0) {
       setGapRound((round) => round + 1)
@@ -453,6 +472,7 @@ function Wizard({
           </Stack>
         </GapAlert>
       )}
+      {libraryWait && <LibraryWait ref={waitRef} ready={library !== null} />}
       {action.isError && (
         <Alert color="red" role="alert">
           <Stack gap="xs" align="flex-start">

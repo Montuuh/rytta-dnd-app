@@ -197,6 +197,9 @@ export const panelEs = {
   'creation.basics':
     'Iniciativa {{init}}, velocidad {{speed}} pies, competencia {{prof}}, Percepción pasiva {{pp}}',
   'creation.noResourcesYet': 'Ninguno por ahora',
+  'creation.library.loading': 'Cargando las reglas de la campaña para terminar el personaje…',
+  'creation.library.error':
+    'No se pudieron cargar las reglas de la campaña, que hacen falta para terminar el personaje.',
   'creation.create': 'Crear ficha',
   'creation.blankFor': 'Ficha en blanco para {{name}}',
   'creation.blankTitle': 'Ficha en blanco',

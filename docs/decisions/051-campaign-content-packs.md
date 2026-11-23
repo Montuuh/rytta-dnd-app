@@ -61,6 +61,20 @@ Owner choices from the block F options page, all the recommended ones:
 
 The CR baselines (a rules table) stay bundled until rules come from packs (RYT-165).
 
+## Spells, class features and rules from packs (RYT-164, RYT-165, 2026-11-23)
+
+Owner choices from the block I options page, all the recommended ones:
+
+- P1 A: spells, class features and rules (the glossary-shaped kinds the SRD pack has) come from
+  the campaign's packs now. The mechanics of the classes and subclasses stay in the app until
+  RYT-168 models them as pack data.
+- P2 A: a hidden entry is no longer offered (choices, glossary, term links). Characters that
+  already have it keep it on their sheet.
+- P3 A: the glossary outside a campaign reads the published SRD pack. The demo keeps the bundled
+  sample.
+- P4 A: without the library the sheet keeps working from the character's stored data, and rule
+  texts offer a retry. Character creation and level up wait for the library.
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

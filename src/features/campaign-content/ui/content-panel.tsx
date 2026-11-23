@@ -250,6 +250,7 @@ function PackRow({
   const { t } = useTranslation()
   const { pack, category } = target
   const title = titleOf(pack, language)
+  const categoryName = t(`campaignContent.category.${category.category}`).toLowerCase()
   const update = hasUpdate(pack, category)
   const meta = !category.enabled
     ? t('campaignContent.metaOff', { count: category.entries })
@@ -273,10 +274,7 @@ function PackRow({
         onChange={(event) => onToggle(event.currentTarget.checked)}
         label={<span className="user-copy content-pack-title">{title}</span>}
         description={meta}
-        aria-label={t('campaignContent.use', {
-          pack: title,
-          category: t(`campaignContent.category.${category.category}`).toLowerCase(),
-        })}
+        aria-label={t('campaignContent.use', { pack: title, category: categoryName })}
       />
       {category.enabled && (
         <div className="content-pack-actions">
@@ -290,7 +288,7 @@ function PackRow({
               variant="default"
               size="sm"
               onClick={onReview}
-              aria-label={t('campaignContent.reviewPack', { pack: title })}
+              aria-label={t('campaignContent.reviewPack', { pack: title, category: categoryName })}
             >
               {t('campaignContent.review')}
             </Button>
@@ -300,7 +298,7 @@ function PackRow({
               variant="subtle"
               size="sm"
               onClick={onBrowse}
-              aria-label={t('campaignContent.browsePack', { pack: title })}
+              aria-label={t('campaignContent.browsePack', { pack: title, category: categoryName })}
             >
               {t('campaignContent.browse')}
             </Button>

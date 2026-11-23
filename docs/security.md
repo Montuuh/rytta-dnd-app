@@ -426,3 +426,19 @@ cross-campaign DM, plus the guarded PRE mirror.
   shows which pack a creature comes from; it gives no access to the pack.
 - When private packs reach chosen campaigns (RYT-163), these reads and the browser cache of pack
   versions (kept for the session, not keyed by campaign) must follow the per-campaign offer.
+
+## Pack spells, class features and rules (RYT-164, RYT-165)
+
+- `get_campaign_rule_packs` and `get_campaign_rule_pack` are read only, for every active member of
+  the campaign (Players use spells, class features and rules on their sheets). They serve only packs
+  still offered that the campaign has a row for, and only at its pinned version.
+- Hidden entries are served with the pack and listed by id, so characters that already have them
+  keep their texts (owner choice P2 A); hiding is about what the campaign offers, not secrecy.
+  Packs turned off are served too, for the same reason. Players can see which ids the DM hid and
+  which packs are turned off.
+- `get_srd_rule_pack` serves the published public SRD to any signed-in account (public content) for
+  the glossary outside a campaign. The demo keeps the bundled sample.
+- Glossary ids are `<kind>.<key>` for the SRD and `<kind>.<ref>--<key>` for other packs. The server
+  does not validate the glossary ids stored in character builds (format only, as before).
+- One read is capped at 8 MB (`Too large`), checked on the entries' size before the answer is
+  built. Reads are not paginated; pack size at publish time is not capped yet.

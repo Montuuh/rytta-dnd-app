@@ -34,7 +34,7 @@ export function contentServer(options: { stale?: boolean } = {}) {
           entries: creatures.length,
           hidden: state.srd.enabled ? creatures.filter((c) => c.hidden).length : 0,
         },
-        { category: 'spells', enabled: true, pinned_version: 1, entries: 339, hidden: 0 },
+        { category: 'spells', enabled: true, pinned_version: 2, entries: 339, hidden: 0 },
       ],
     },
     {

@@ -194,6 +194,9 @@ export const panelEn = {
   'creation.basics':
     'Initiative {{init}}, speed {{speed}} ft, proficiency {{prof}}, passive Perception {{pp}}',
   'creation.noResourcesYet': 'None yet',
+  'creation.library.loading': 'Loading the campaign’s rules to finish the character…',
+  'creation.library.error':
+    'The campaign’s rules, needed to finish the character, could not be loaded.',
   'creation.create': 'Create sheet',
   'creation.blankFor': 'Blank sheet for {{name}}',
   'creation.blankTitle': 'Blank sheet',

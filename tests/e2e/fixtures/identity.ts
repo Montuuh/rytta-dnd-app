@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { basicImportMock } from './basic-import.ts'
 import {
   createDiceStore,
@@ -63,6 +64,45 @@ export function session(id = dmId) {
 
 // Public SDK HTTP contract fixture only, never selected by production app configuration.
 // Authorization itself is exercised independently against PostgreSQL in tests/database.
+/**
+ * RYT-164, RYT-165: the SRD's spells, class features and rules, served from the bundled glossary as
+ * the library would: one pack with three categories at version 1.
+ */
+export const srdRulesPackId = '80000000-0000-4000-8000-000000000001'
+const glossaryFile = (file: string) =>
+  JSON.parse(readFileSync(`src/features/glossary/content/${file}.json`, 'utf8')) as unknown
+const glossaryRows = glossaryFile('index') as { id: string; cat: string }[]
+const glossaryBodies = { en: glossaryFile('en'), es: glossaryFile('es') } as Record<
+  string,
+  Record<string, unknown>
+>
+const ruleCategoryOf = (cat: string) =>
+  cat === 'spell' ? 'spells' : cat === 'feature' ? 'classes' : 'rules'
+/** Test switches for the rule packs: hidden glossary ids, or a library that cannot be reached. */
+export const rulePackState = { hidden: [] as string[], unreachable: false }
+function rulePackRpc(method: string, body: Record<string, unknown>) {
+  if (method === 'get_campaign_rule_packs')
+    return (['spells', 'classes', 'rules'] as const).map((category) => ({
+      id: srdRulesPackId,
+      ref: '80000000',
+      title_en: 'System Reference Document 5.2.1',
+      title_es: 'Documento de referencia del sistema 5.2.1',
+      srd: true,
+      category,
+      version: 1,
+      enabled: true,
+      hidden: rulePackState.hidden.filter(
+        (id) => ruleCategoryOf(id.slice(0, id.indexOf('.'))) === category,
+      ),
+    }))
+  const category = String(body.target_category)
+  const rows = glossaryRows.filter((row) => ruleCategoryOf(row.cat) === category)
+  const part = String(body.part)
+  if (part === 'index') return { version: 1, rows }
+  const bodies = glossaryBodies[part]!
+  return { version: 1, bodies: Object.fromEntries(rows.map((row) => [row.id, bodies[row.id]])) }
+}
+
 export async function identityFixture(
   page: Page,
   options: {
@@ -836,6 +876,14 @@ export async function identityFixture(
         revision: 0,
       })
     if (method === 'get_shared_session_recap') return respond('')
+    if (
+      method === 'get_campaign_rule_packs' ||
+      method === 'get_campaign_rule_pack' ||
+      method === 'get_srd_rule_pack'
+    )
+      return rulePackState.unreachable
+        ? respond({ message: 'Library unavailable' }, 503)
+        : respond(rulePackRpc(method, body))
     if (url.pathname.includes('/auth/v1/')) {
       if (method === 'logout') return route.fulfill({ status: 204 })
       if (method === 'health') return respond({ name: 'GoTrue' })

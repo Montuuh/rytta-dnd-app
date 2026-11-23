@@ -3,9 +3,14 @@ import { z } from 'zod'
 export const contentCategories = ['creatures', 'spells', 'classes', 'rules', 'items'] as const
 export type ContentCategory = (typeof contentCategories)[number]
 
-/** Categories a module already reads from the campaign's packs (RYT-094, RYT-164 to RYT-166 add
- * the rest). The others are stored but not offered yet, so a switch never promises an effect. */
-export const liveCategories: readonly ContentCategory[] = ['creatures']
+/** Categories a module reads from the campaign's packs (RYT-094, RYT-164, RYT-165; items come with
+ * RYT-166). The others are stored but not offered yet, so a switch never promises an effect. */
+export const liveCategories: readonly ContentCategory[] = [
+  'creatures',
+  'spells',
+  'classes',
+  'rules',
+]
 
 export const packCategorySchema = z.object({
   category: z.enum(contentCategories),

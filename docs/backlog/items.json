@@ -5107,19 +5107,21 @@
     },
     {
       "id": "RYT-164",
-      "title": "Spells and class content come from the campaign's packs",
+      "title": "Spells and class features come from the campaign's packs",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-162"],
       "sources": [
+        "Delivered 2026-11-23 (block I) with RYT-164 and RYT-165: spells, class features and rules read from the campaign's packs for every member, hidden entries kept where characters have them and no longer offered, the glossary outside a campaign reads the published SRD, the sheet keeps working without the library; migration applied to staging, production and PRE; independent UI review PASS.",
+        "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it).",
         "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
       ],
-      "scope": "Character creation, level up, the sheet's spells and casting read classes, subclasses, class features and spells from the packs the campaign enabled, with hidden entries and campaign versions applied, instead of the bundled catalogues. The library editor gains the forms these kinds need.",
+      "scope": "Character creation, level up, the sheet's spells and casting read spells and class features from the packs the campaign enabled (spells and classes categories), at its pinned versions and without hidden entries, instead of the bundled glossary. Class and subclass mechanics stay in the app until RYT-168.",
       "acceptance": [
-        "A campaign with the SRD packs offers the same classes, subclasses, features and spells as before.",
+        "A campaign with the SRD packs offers the same class features and spells as before.",
         "Hidden entries are not offered when creating or levelling up; existing characters keep what they already chose.",
-        "An unreachable library shows a retryable error and never falls back silently.",
+        "An unreachable library never falls back silently: the sheet keeps working from the character's stored data with a retry for rule texts, while creation and level up show a retryable error.",
         "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
       ],
       "validation": [
@@ -5127,16 +5129,21 @@
         "characters, level-up and casting e2e",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-164/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
     },
     {
       "id": "RYT-165",
       "title": "Rules and conditions come from the campaign's packs",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-162"],
       "sources": [
+        "Delivered 2026-11-23 (block I) with RYT-164 and RYT-165: spells, class features and rules read from the campaign's packs for every member, hidden entries kept where characters have them and no longer offered, the glossary outside a campaign reads the published SRD, the sheet keeps working without the library; migration applied to staging, production and PRE; independent UI review PASS.",
+        "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it).",
         "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
       ],
       "scope": "The glossary and the automatic term links read rules and conditions from the packs the campaign enabled, next to the campaign's own homebrew entries, instead of the bundled glossary. The standalone glossary outside a campaign reads the public SRD pack.",
@@ -5146,7 +5153,10 @@
         "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
       ],
       "validation": ["npm run check", "glossary e2e", "independent UI review PASS"],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-164/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
     },
     {
       "id": "RYT-166",
@@ -5179,7 +5189,7 @@
       "priority": "P3",
       "owner": "frontend",
       "status": "planned",
-      "dependsOn": ["RYT-094", "RYT-164", "RYT-165", "RYT-166"],
+      "dependsOn": ["RYT-094", "RYT-164", "RYT-165", "RYT-166", "RYT-168"],
       "sources": [
         "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
       ],
@@ -5189,6 +5199,26 @@
         "Every module still works in a campaign with the SRD packs, and demo mode says it is a sample."
       ],
       "validation": ["npm run check", "full e2e"],
+      "evidence": []
+    },
+    {
+      "id": "RYT-168",
+      "title": "Classes and subclasses as pack data",
+      "priority": "P3",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-164"],
+      "sources": [
+        "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it)."
+      ],
+      "scope": "Classes and subclasses become pack entries with their mechanics (hit die, proficiencies, saving throws, spellcasting progression and slots, the level a subclass is chosen, the features gained by level), edited with library forms. The SRD classes move to that shape and character creation and level up read them from the campaign's packs.",
+      "acceptance": [
+        "A campaign with the SRD packs offers the same classes and subclasses, with the same mechanics, as before.",
+        "A custom pack can add a class or a subclass that creation and level up offer.",
+        "Existing characters keep their class, subclass and features.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
+      ],
+      "validation": ["npm run check", "creation and level-up e2e", "independent UI review PASS"],
       "evidence": []
     },
     {

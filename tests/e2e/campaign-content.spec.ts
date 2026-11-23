@@ -49,8 +49,8 @@ for (const [language, theme] of [
     await page.goto(panel)
     const section = page.getByRole('region', { name: es ? 'Criaturas' : 'Creatures' })
     await expect(section).toBeVisible()
-    // Spells are stored but no module reads them from packs yet: not offered.
-    await expect(page.getByRole('region', { name: es ? 'Conjuros' : 'Spells' })).toHaveCount(0)
+    // RYT-164: spells come from packs too, so they are offered.
+    await expect(page.getByRole('region', { name: es ? 'Conjuros' : 'Spells' })).toBeVisible()
     const srd = section.getByRole('switch', {
       name: es ? 'Usar SRD 5.2.1 en criaturas' : 'Use SRD 5.2.1 for creatures',
     })
@@ -72,7 +72,7 @@ test('RYT-162 the DM reviews a new version and accepts it', async ({ page }, inf
   const server = contentServer()
   await server.install(page)
   await page.goto(panel)
-  const review = page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1' })
+  const review = page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1 en criaturas' })
   await review.click()
   const dialog = page.getByRole('dialog', { name: 'SRD 5.2.1 · versión 2' })
   await expect(dialog).toContainText(
@@ -120,7 +120,7 @@ test('RYT-162 a stale update says the pack changed', async ({ page }) => {
   await identityFixture(page)
   await contentServer({ stale: true }).install(page)
   await page.goto(panel)
-  await page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1' }).click()
+  await page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1 en criaturas' }).click()
   const dialog = page.getByRole('dialog', { name: 'SRD 5.2.1 · versión 2' })
   await dialog.getByRole('button', { name: 'Actualizar a la versión 2' }).click()
   await expect(dialog.getByRole('alert')).toContainText('El paquete cambió mientras revisabas')
@@ -131,7 +131,9 @@ test('RYT-162 the DM finds, hides and shows entries', async ({ page }, info) => 
   const server = contentServer()
   await server.install(page)
   await page.goto(panel)
-  const browse = page.getByRole('button', { name: 'Ver y ocultar registros de SRD 5.2.1' })
+  const browse = page.getByRole('button', {
+    name: 'Ver y ocultar registros de SRD 5.2.1 en criaturas',
+  })
   await browse.click()
   const dialog = page.getByRole('dialog', { name: 'Criaturas de SRD 5.2.1' })
   await expect(dialog.getByText('3 registros')).toBeVisible()
@@ -187,8 +189,10 @@ test('RYT-162 one dialog after another opens and closes, with a fresh search', a
   await identityFixture(page)
   await contentServer().install(page)
   await page.goto(panel)
-  const review = page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1' })
-  const browse = page.getByRole('button', { name: 'Ver y ocultar registros de SRD 5.2.1' })
+  const review = page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1 en criaturas' })
+  const browse = page.getByRole('button', {
+    name: 'Ver y ocultar registros de SRD 5.2.1 en criaturas',
+  })
   await review.click()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)

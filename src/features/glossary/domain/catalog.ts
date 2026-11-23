@@ -42,6 +42,12 @@ export type Catalog = {
   byId: Map<string, GlossaryEntry>
   /** Homebrew house rules attached to an SRD entry (srd_ref). */
   houseRules: Map<string, HomebrewEntry[]>
+  /**
+   * RYT-164, RYT-165: entries the campaign no longer offers (hidden, or of a pack turned off).
+   * They stay in `byId` so what characters already have keeps its name and text, but they are not
+   * in `entries`: lists, search, term links and choices leave them out.
+   */
+  unlisted: GlossaryEntry[]
 }
 
 const collator = (language: GlossaryLanguage) =>
@@ -51,6 +57,7 @@ export function buildCatalog(
   index: IndexRow[],
   language: GlossaryLanguage,
   homebrew: HomebrewEntry[] = [],
+  unlistedIds: ReadonlySet<string> = new Set(),
 ): Catalog {
   const entries: GlossaryEntry[] = index.map((row) => {
     const es = language === 'es'
@@ -96,7 +103,10 @@ export function buildCatalog(
   }
   const compare = collator(language)
   entries.sort((a, b) => compare.compare(a.name, b.name) || a.id.localeCompare(b.id))
-  return { language, entries, byId: new Map(entries.map((e) => [e.id, e])), houseRules }
+  const byId = new Map(entries.map((e) => [e.id, e]))
+  const unlisted = entries.filter((e) => unlistedIds.has(e.id))
+  const listed = unlisted.length ? entries.filter((e) => !unlistedIds.has(e.id)) : entries
+  return { language, entries: listed, byId, houseRules, unlisted }
 }
 
 /** First letter used to group the alphabetical index (accent-insensitive, "#" for others). */

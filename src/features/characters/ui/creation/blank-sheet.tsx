@@ -11,6 +11,7 @@ import { backgroundKeys, classKeys, speciesKeys } from '../../domain/srd'
 import { useResourceNames } from '../resource-names'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
+import { LibraryWait } from './library-wait'
 
 /** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
 export function BlankSheet({
@@ -36,6 +37,7 @@ export function BlankSheet({
   const { create, action } = useCreateSheet(sheet, characterName, sheetPath)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus(), [])
+  const submitRef = useRef<HTMLButtonElement>(null)
   const isCustom = classKey === 'custom'
   const isCustomSpecies = speciesKey === 'custom'
   const isCustomBackground = backgroundKey === 'custom'
@@ -195,8 +197,9 @@ export function BlankSheet({
               )}
             </Alert>
           )}
+          <LibraryWait ready={library !== null} onReady={() => submitRef.current?.focus()} />
           <Group>
-            <Button type="submit" loading={action.isPending} disabled={!valid}>
+            <Button ref={submitRef} type="submit" loading={action.isPending} disabled={!valid}>
               {t('creation.create')}
             </Button>
           </Group>

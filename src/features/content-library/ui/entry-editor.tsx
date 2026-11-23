@@ -53,6 +53,7 @@ import {
 } from '../domain/library'
 import { tableCount } from '../domain/text'
 import { ClassFields, ClassReferenceField, SubclassFields } from './class-fields'
+import { BackgroundFields, FeatFields, SpeciesFields } from './origin-fields'
 import { ItemFields } from './item-fields'
 import type { Guard } from './library-page'
 import { keepEdits, keptEdits } from './unsaved'
@@ -513,6 +514,21 @@ function EntryForm({
               <CreatureFields entry={entry} revision={baseRevision} onStore={storeBlock} />
             ) : entry.kind === 'item' ? (
               <ItemFields entry={entry} onChange={update} />
+            ) : entry.kind === 'species' || entry.kind === 'background' || entry.kind === 'feat' ? (
+              // RYT-171: their texts are the pack's features, so no text fields here.
+              entry.kind === 'species' ? (
+                <SpeciesFields entry={entry} onChange={update} revealed={attempted} />
+              ) : entry.kind === 'background' ? (
+                <BackgroundFields
+                  entry={entry}
+                  onChange={update}
+                  revealed={attempted}
+                  packId={pack.id}
+                  userId={userId}
+                />
+              ) : (
+                <FeatFields entry={entry} onChange={update} revealed={attempted} />
+              )
             ) : entry.kind === 'class' || entry.kind === 'subclass' ? (
               <>
                 {entry.kind === 'class' ? (

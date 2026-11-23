@@ -1,0 +1,691 @@
+{
+  "species": [
+    {
+      "key": "dragonborn",
+      "name_en": "Dragonborn",
+      "name_es": "Dracónido",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "medium",
+          "traits": [
+            {
+              "key": "draconicAncestry",
+              "en": "Draconic Ancestry",
+              "es": "Linaje dracónico"
+            },
+            {
+              "key": "breathWeapon",
+              "en": "Breath Weapon",
+              "es": "Ataque de aliento"
+            },
+            {
+              "key": "damageResistance",
+              "en": "Damage Resistance",
+              "es": "Resistencia al daño"
+            },
+            {
+              "key": "darkvision",
+              "en": "Darkvision",
+              "es": "Visión en la oscuridad"
+            },
+            {
+              "key": "draconicFlight",
+              "en": "Draconic Flight",
+              "es": "Vuelo dracónico"
+            }
+          ],
+          "choices": [
+            {
+              "trait": "draconicAncestry",
+              "options": [
+                {
+                  "key": "black",
+                  "en": "Black (Acid)",
+                  "es": "Negro (ácido)"
+                },
+                {
+                  "key": "blue",
+                  "en": "Blue (Lightning)",
+                  "es": "Azul (relámpago)"
+                },
+                {
+                  "key": "brass",
+                  "en": "Brass (Fire)",
+                  "es": "Oropel (fuego)"
+                },
+                {
+                  "key": "bronze",
+                  "en": "Bronze (Lightning)",
+                  "es": "Bronce (relámpago)"
+                },
+                {
+                  "key": "copper",
+                  "en": "Copper (Acid)",
+                  "es": "Cobre (ácido)"
+                },
+                {
+                  "key": "gold",
+                  "en": "Gold (Fire)",
+                  "es": "Oro (fuego)"
+                },
+                {
+                  "key": "green",
+                  "en": "Green (Poison)",
+                  "es": "Verde (veneno)"
+                },
+                {
+                  "key": "red",
+                  "en": "Red (Fire)",
+                  "es": "Rojo (fuego)"
+                },
+                {
+                  "key": "silver",
+                  "en": "Silver (Cold)",
+                  "es": "Plata (frío)"
+                },
+                {
+                  "key": "white",
+                  "en": "White (Cold)",
+                  "es": "Blanco (frío)"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "dwarf",
+      "name_en": "Dwarf",
+      "name_es": "Enano",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "medium",
+          "traits": [
+            {
+              "key": "darkvision",
+              "en": "Darkvision",
+              "es": "Visión en la oscuridad"
+            },
+            {
+              "key": "dwarvenResilience",
+              "en": "Dwarven Resilience",
+              "es": "Resiliencia enana"
+            },
+            {
+              "key": "dwarvenToughness",
+              "en": "Dwarven Toughness",
+              "es": "Aguante enano"
+            },
+            {
+              "key": "stonecunning",
+              "en": "Stonecunning",
+              "es": "Afinidad con la piedra"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "elf",
+      "name_en": "Elf",
+      "name_es": "Elfo",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "medium",
+          "traits": [
+            {
+              "key": "darkvision",
+              "en": "Darkvision",
+              "es": "Visión en la oscuridad"
+            },
+            {
+              "key": "elvenLineage",
+              "en": "Elven Lineage",
+              "es": "Linaje élfico"
+            },
+            {
+              "key": "feyAncestry",
+              "en": "Fey Ancestry",
+              "es": "Linaje feérico"
+            },
+            {
+              "key": "keenSenses",
+              "en": "Keen Senses",
+              "es": "Sentidos agudos"
+            },
+            {
+              "key": "trance",
+              "en": "Trance",
+              "es": "Trance"
+            }
+          ],
+          "choices": [
+            {
+              "trait": "elvenLineage",
+              "options": [
+                {
+                  "key": "drow",
+                  "en": "Drow",
+                  "es": "Drow"
+                },
+                {
+                  "key": "high",
+                  "en": "High Elf",
+                  "es": "Alto elfo"
+                },
+                {
+                  "key": "wood",
+                  "en": "Wood Elf",
+                  "es": "Elfo de los bosques"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "gnome",
+      "name_en": "Gnome",
+      "name_es": "Gnomo",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "small",
+          "traits": [
+            {
+              "key": "darkvision",
+              "en": "Darkvision",
+              "es": "Visión en la oscuridad"
+            },
+            {
+              "key": "gnomishCunning",
+              "en": "Gnomish Cunning",
+              "es": "Astucia gnoma"
+            },
+            {
+              "key": "gnomishLineage",
+              "en": "Gnomish Lineage",
+              "es": "Linaje gnomo"
+            }
+          ],
+          "choices": [
+            {
+              "trait": "gnomishLineage",
+              "options": [
+                {
+                  "key": "forest",
+                  "en": "Forest Gnome",
+                  "es": "Gnomo de los bosques"
+                },
+                {
+                  "key": "rock",
+                  "en": "Rock Gnome",
+                  "es": "Gnomo de las rocas"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "goliath",
+      "name_en": "Goliath",
+      "name_es": "Goliat",
+      "data": {
+        "index": {
+          "speed": 35,
+          "size": "medium",
+          "traits": [
+            {
+              "key": "giantAncestry",
+              "en": "Giant Ancestry",
+              "es": "Linaje gigante"
+            },
+            {
+              "key": "largeForm",
+              "en": "Large Form",
+              "es": "Forma grande"
+            },
+            {
+              "key": "powerfulBuild",
+              "en": "Powerful Build",
+              "es": "Constitución poderosa"
+            }
+          ],
+          "choices": [
+            {
+              "trait": "giantAncestry",
+              "options": [
+                {
+                  "key": "cloud",
+                  "en": "Cloud’s Jaunt",
+                  "es": "Excursión de las nubes"
+                },
+                {
+                  "key": "fire",
+                  "en": "Fire’s Burn",
+                  "es": "Abrasión del fuego"
+                },
+                {
+                  "key": "frost",
+                  "en": "Frost’s Chill",
+                  "es": "Frío de la escarcha"
+                },
+                {
+                  "key": "hill",
+                  "en": "Hill’s Tumble",
+                  "es": "Caída de las colinas"
+                },
+                {
+                  "key": "stone",
+                  "en": "Stone’s Endurance",
+                  "es": "Resistencia de la piedra"
+                },
+                {
+                  "key": "storm",
+                  "en": "Storm’s Thunder",
+                  "es": "Trueno de la tormenta"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "halfling",
+      "name_en": "Halfling",
+      "name_es": "Mediano",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "small",
+          "traits": [
+            {
+              "key": "brave",
+              "en": "Brave",
+              "es": "Valiente"
+            },
+            {
+              "key": "halflingNimbleness",
+              "en": "Halfling Nimbleness",
+              "es": "Agilidad de mediano"
+            },
+            {
+              "key": "luck",
+              "en": "Luck",
+              "es": "Fortuna"
+            },
+            {
+              "key": "naturallyStealthy",
+              "en": "Naturally Stealthy",
+              "es": "Sigiloso por naturaleza"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "human",
+      "name_en": "Human",
+      "name_es": "Humano",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "smallOrMedium",
+          "traits": [
+            {
+              "key": "resourceful",
+              "en": "Resourceful",
+              "es": "Ingenioso"
+            },
+            {
+              "key": "skillful",
+              "en": "Skillful",
+              "es": "Diestro"
+            },
+            {
+              "key": "versatile",
+              "en": "Versatile",
+              "es": "Versátil"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "orc",
+      "name_en": "Orc",
+      "name_es": "Orco",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "medium",
+          "traits": [
+            {
+              "key": "adrenalineRush",
+              "en": "Adrenaline Rush",
+              "es": "Descarga de adrenalina"
+            },
+            {
+              "key": "darkvision",
+              "en": "Darkvision",
+              "es": "Visión en la oscuridad"
+            },
+            {
+              "key": "relentlessEndurance",
+              "en": "Relentless Endurance",
+              "es": "Aguante incansable"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "tiefling",
+      "name_en": "Tiefling",
+      "name_es": "Tiflin",
+      "data": {
+        "index": {
+          "speed": 30,
+          "size": "smallOrMedium",
+          "traits": [
+            {
+              "key": "darkvision",
+              "en": "Darkvision",
+              "es": "Visión en la oscuridad"
+            },
+            {
+              "key": "fiendishLegacy",
+              "en": "Fiendish Legacy",
+              "es": "Legado infernal"
+            },
+            {
+              "key": "otherworldlyPresence",
+              "en": "Otherworldly Presence",
+              "es": "Presencia sobrenatural"
+            }
+          ],
+          "choices": [
+            {
+              "trait": "fiendishLegacy",
+              "options": [
+                {
+                  "key": "abyssal",
+                  "en": "Abyssal",
+                  "es": "Abisal"
+                },
+                {
+                  "key": "chthonic",
+                  "en": "Chthonic",
+                  "es": "Ctónico"
+                },
+                {
+                  "key": "infernal",
+                  "en": "Infernal",
+                  "es": "Infernal"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "backgrounds": [
+    {
+      "key": "acolyte",
+      "name_en": "Acolyte",
+      "name_es": "Acólito",
+      "data": {
+        "index": {
+          "abilities": ["int", "wis", "cha"],
+          "skills": ["insight", "religion"],
+          "feat": "magic-initiate",
+          "featList": "cleric"
+        }
+      }
+    },
+    {
+      "key": "criminal",
+      "name_en": "Criminal",
+      "name_es": "Criminal",
+      "data": {
+        "index": {
+          "abilities": ["dex", "con", "int"],
+          "skills": ["sleightOfHand", "stealth"],
+          "feat": "alert"
+        }
+      }
+    },
+    {
+      "key": "sage",
+      "name_en": "Sage",
+      "name_es": "Sabio",
+      "data": {
+        "index": {
+          "abilities": ["con", "int", "wis"],
+          "skills": ["arcana", "history"],
+          "feat": "magic-initiate",
+          "featList": "wizard"
+        }
+      }
+    },
+    {
+      "key": "soldier",
+      "name_en": "Soldier",
+      "name_es": "Soldado",
+      "data": {
+        "index": {
+          "abilities": ["str", "dex", "con"],
+          "skills": ["athletics", "intimidation"],
+          "feat": "savage-attacker"
+        }
+      }
+    }
+  ],
+  "feats": [
+    {
+      "key": "ability-score-improvement",
+      "name_en": "Ability Score Improvement",
+      "name_es": "Mejora de característica",
+      "data": {
+        "index": {
+          "category": "general",
+          "repeatable": true,
+          "level": 4
+        }
+      }
+    },
+    {
+      "key": "alert",
+      "name_en": "Alert",
+      "name_es": "Alerta",
+      "data": {
+        "index": {
+          "category": "origin",
+          "repeatable": false
+        }
+      }
+    },
+    {
+      "key": "archery",
+      "name_en": "Archery",
+      "name_es": "Tiro con arco",
+      "data": {
+        "index": {
+          "category": "fightingStyle",
+          "repeatable": false
+        }
+      }
+    },
+    {
+      "key": "boon-of-combat-prowess",
+      "name_en": "Boon of Combat Prowess",
+      "name_es": "Don de la pericia en combate",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "boon-of-dimensional-travel",
+      "name_en": "Boon of Dimensional Travel",
+      "name_es": "Don del viaje dimensional",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "boon-of-fate",
+      "name_en": "Boon of Fate",
+      "name_es": "Don del destino",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "boon-of-irresistible-offense",
+      "name_en": "Boon of Irresistible Offense",
+      "name_es": "Don del ataque imparable",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "boon-of-spell-recall",
+      "name_en": "Boon of Spell Recall",
+      "name_es": "Don del recuerdo de conjuros",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "boon-of-the-night-spirit",
+      "name_en": "Boon of the Night Spirit",
+      "name_es": "Don del espíritu de la noche",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "boon-of-truesight",
+      "name_en": "Boon of Truesight",
+      "name_es": "Don de la visión verdadera",
+      "data": {
+        "index": {
+          "category": "epicBoon",
+          "repeatable": false,
+          "level": 19
+        }
+      }
+    },
+    {
+      "key": "defense",
+      "name_en": "Defense",
+      "name_es": "Defensa",
+      "data": {
+        "index": {
+          "category": "fightingStyle",
+          "repeatable": false
+        }
+      }
+    },
+    {
+      "key": "grappler",
+      "name_en": "Grappler",
+      "name_es": "Apresador",
+      "data": {
+        "index": {
+          "category": "general",
+          "repeatable": false,
+          "level": 4
+        }
+      }
+    },
+    {
+      "key": "great-weapon-fighting",
+      "name_en": "Great Weapon Fighting",
+      "name_es": "Combate con armas a dos manos",
+      "data": {
+        "index": {
+          "category": "fightingStyle",
+          "repeatable": false
+        }
+      }
+    },
+    {
+      "key": "magic-initiate",
+      "name_en": "Magic Initiate",
+      "name_es": "Iniciado en la magia",
+      "data": {
+        "index": {
+          "category": "origin",
+          "repeatable": true
+        }
+      }
+    },
+    {
+      "key": "savage-attacker",
+      "name_en": "Savage Attacker",
+      "name_es": "Atacante salvaje",
+      "data": {
+        "index": {
+          "category": "origin",
+          "repeatable": false
+        }
+      }
+    },
+    {
+      "key": "skilled",
+      "name_en": "Skilled",
+      "name_es": "Habilidoso",
+      "data": {
+        "index": {
+          "category": "origin",
+          "repeatable": true
+        }
+      }
+    },
+    {
+      "key": "two-weapon-fighting",
+      "name_en": "Two-Weapon Fighting",
+      "name_es": "Combate con dos armas",
+      "data": {
+        "index": {
+          "category": "fightingStyle",
+          "repeatable": false
+        }
+      }
+    }
+  ]
+}

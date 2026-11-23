@@ -24,14 +24,17 @@ export const rulePackSchema = z.object({
 export type RulePack = z.infer<typeof rulePackSchema>
 export const rulePacksSchema = z.array(rulePackSchema)
 
+/** RYT-168, RYT-171: pack kinds read by the characters feature, not shown as glossary entries. */
+export const characterKinds = ['class', 'subclass', 'species', 'background', 'feat'] as const
+export type CharacterKind = (typeof characterKinds)[number]
 /**
- * RYT-168: a class or subclass of a pack, kept apart from the glossary: `key` is its reference
- * (`wizard`, `<ref>--rune-knight`) and `data` its other index fields, read by the characters
- * feature.
+ * RYT-168: a class or subclass of a pack (RYT-171: or a species, background or feat), kept apart
+ * from the glossary: `key` is its reference (`wizard`, `<ref>--rune-knight`) and `data` its other
+ * index fields, read by the characters feature.
  */
 export type ClassRow = {
   id: string
-  cat: 'class' | 'subclass'
+  cat: CharacterKind
   key: string
   en: string
   es: string
@@ -76,14 +79,18 @@ export function parseRuleIndex(data: unknown): RuleIndex {
 }
 
 const classRowSchema = z.object({
-  id: z.string().regex(/^(class|subclass)\.(?:[0-9a-f]{8}--)?[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  cat: z.enum(['class', 'subclass']),
+  id: z
+    .string()
+    .regex(
+      /^(class|subclass|species|background|feat)\.(?:[0-9a-f]{8}--)?[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    ),
+  cat: z.enum(characterKinds),
   en: z.string().min(1).max(80),
   es: z.string().min(1).max(80),
 })
 function classRow(raw: unknown): ClassRow | null {
   const parsed = classRowSchema.safeParse(raw)
-  if (!parsed.success) return null
+  if (!parsed.success || !parsed.data.id.startsWith(`${parsed.data.cat}.`)) return null
   const { id, cat, en, es, ...data } = raw as Record<string, unknown>
   void en
   void es
@@ -101,18 +108,26 @@ function classRow(raw: unknown): ClassRow | null {
  * RYT-168: inside a pack other than the SRD, a class or subclass named by its bare key is one of
  * that pack's own: spells (`cl`), features (`fc`, `sb`) and subclasses (`class`) refer to it by its
  * reference, `<ref>--<key>`. Names that are not the pack's own stay as they are (SRD classes).
+ * RYT-171: the same holds for a background's origin feat.
  */
 export function localizeIndexes(
   packs: readonly RulePack[],
   indexes: readonly (RuleIndex | undefined)[],
 ): (RuleIndex | undefined)[] {
-  const own = new Map<string, { classes: Set<string>; subclasses: Set<string> }>()
+  type Own = { classes: Set<string>; subclasses: Set<string>; feats: Set<string> }
+  const own = new Map<string, Own>()
   packs.forEach((pack, at) => {
     if (pack.srd) return
-    const sets = own.get(pack.id) ?? { classes: new Set<string>(), subclasses: new Set<string>() }
+    const sets = own.get(pack.id) ?? {
+      classes: new Set<string>(),
+      subclasses: new Set<string>(),
+      feats: new Set<string>(),
+    }
     for (const row of indexes[at]?.classRows ?? []) {
       const bare = row.key.startsWith(`${pack.ref}--`) ? row.key.slice(10) : row.key
-      ;(row.cat === 'class' ? sets.classes : sets.subclasses).add(bare)
+      if (row.cat === 'class') sets.classes.add(bare)
+      else if (row.cat === 'subclass') sets.subclasses.add(bare)
+      else if (row.cat === 'feat') sets.feats.add(bare)
     }
     own.set(pack.id, sets)
   })
@@ -124,6 +139,7 @@ export function localizeIndexes(
       set.has(value) ? `${pack.ref}--${value}` : value
     const cls = local(sets.classes)
     const sub = local(sets.subclasses)
+    const feat = local(sets.feats)
     return {
       ...index,
       rows: index.rows.map((row) => ({
@@ -135,7 +151,9 @@ export function localizeIndexes(
       classRows: index.classRows.map((row) =>
         row.cat === 'subclass' && typeof row.data.class === 'string'
           ? { ...row, data: { ...row.data, class: cls(row.data.class) } }
-          : row,
+          : row.cat === 'background' && typeof row.data.feat === 'string'
+            ? { ...row, data: { ...row.data, feat: feat(row.data.feat) } }
+            : row,
       ),
     }
   })
@@ -163,7 +181,10 @@ export function unlistedIds(
   const ids = new Set<string>()
   packs.forEach((pack, at) => {
     for (const id of pack.hidden) ids.add(id)
-    if (!pack.enabled) for (const row of indexes[at]?.rows ?? []) ids.add(row.id)
+    if (!pack.enabled) {
+      for (const row of indexes[at]?.rows ?? []) ids.add(row.id)
+      for (const row of indexes[at]?.classRows ?? []) ids.add(row.id)
+    }
   })
   return ids
 }

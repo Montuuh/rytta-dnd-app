@@ -253,6 +253,111 @@ test('RYT-166 the SRD items and classes edit in their own forms', async ({ page 
   })
 })
 
+test('RYT-171 species, backgrounds and feats edit in their own forms', async ({ page }, info) => {
+  test.setTimeout(90_000)
+  await identityFixture(page)
+  const server = libraryServer({ srd: true, sample: true })
+  await server.install(page)
+
+  // An SRD species opens with its table.
+  await page.goto(`./#/library/${srdLibraryPackId}/species`)
+  await page.getByRole('link', { name: /^Goliat/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Goliat' })).toBeFocused()
+  await expect(page.getByRole('textbox', { name: 'Velocidad (pies)' })).toHaveValue('35')
+  await expect(page.getByRole('textbox', { name: 'Rasgo (español)' }).first()).toHaveValue(
+    'Linaje gigante',
+  )
+  await audit(page)
+
+  // A new species with a trait whose option the player picks.
+  await page.goto(`./#/library/${homebrewPackId}/species`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Tritón')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Triton')
+  await page.getByRole('textbox', { name: 'Velocidad (pies)' }).fill('30')
+  await page.getByRole('button', { name: 'Añadir rasgo' }).click()
+  await page.getByRole('textbox', { name: 'Rasgo (español)' }).fill('Emisario del mar')
+  await page.getByRole('textbox', { name: 'Rasgo (inglés)' }).fill('Emissary of the Sea')
+  await expect(
+    page.getByText('Su texto es el rasgo «species-triton-emissary-of-the-sea» de este paquete.'),
+  ).toBeVisible()
+  await page.getByRole('checkbox', { name: 'El jugador elige una opción' }).check()
+  await page.getByRole('textbox', { name: 'Opciones' }).fill('Tormenta | Storm\nMarea | Tide')
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-171/species-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Tritón' })).toBeFocused()
+  const triton = server.entries().find((e) => e.kind === 'species' && e.key === 'triton')!
+  expect(triton.data).toMatchObject({
+    index: {
+      speed: 30,
+      traits: [{ key: 'emissary-of-the-sea', es: 'Emisario del mar', en: 'Emissary of the Sea' }],
+      choices: [
+        {
+          trait: 'emissary-of-the-sea',
+          options: [
+            { key: 'storm', es: 'Tormenta', en: 'Storm' },
+            { key: 'tide', es: 'Marea', en: 'Tide' },
+          ],
+        },
+      ],
+    },
+  })
+
+  // A feat names its category; a save without one is refused on its field.
+  await page.goto(`./#/library/${homebrewPackId}/feat`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Pendenciero')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Brawler')
+  // The save button stays focusable while blocked; pressing it names the problem on its field.
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click({ force: true })
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Revisa los campos marcados' }),
+  ).toBeVisible()
+  await expect(page.getByText('Elige uno')).toBeVisible()
+  await page.getByRole('combobox', { name: 'Categoría' }).click()
+  await page.getByRole('option', { name: 'De origen' }).click()
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-171/feat-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Pendenciero' })).toBeFocused()
+  expect(
+    server.entries().find((e) => e.kind === 'feat' && e.key === 'brawler')!.data,
+  ).toMatchObject({
+    index: { category: 'origin' },
+  })
+
+  // A background names its three abilities, its skills and an origin feat from the list.
+  await page.goto(`./#/library/${homebrewPackId}/background`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Marinero')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Sailor')
+  const abilities = page.getByRole('group', { name: /^Características/ })
+  for (const name of ['Fuerza', 'Destreza', 'Sabiduría'])
+    await abilities.getByRole('checkbox', { name }).check()
+  // A fourth is not taken silently: the others wait until one is unticked.
+  await expect(abilities.getByRole('checkbox', { name: 'Carisma' })).toBeDisabled()
+  for (const name of ['Atletismo', 'Percepción'])
+    await page
+      .getByRole('group', { name: /^Habilidades/ })
+      .getByRole('checkbox', { name })
+      .check()
+  await page.getByRole('combobox', { name: 'Dote de origen' }).click()
+  await expect(page.getByRole('option', { name: 'Alerta · SRD' })).toBeVisible()
+  await page.getByRole('option', { name: 'Pendenciero', exact: true }).click()
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-171/background-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Marinero' })).toBeFocused()
+  expect(server.entries().find((e) => e.key === 'sailor')!.data).toMatchObject({
+    index: {
+      abilities: ['str', 'dex', 'wis'],
+      skills: ['athletics', 'perception'],
+      feat: 'brawler',
+    },
+  })
+})
+
 test('RYT-163 the owner of a private pack chooses the campaigns that see it', async ({ page }) => {
   await identityFixture(page)
   const server = libraryServer({ sample: true })

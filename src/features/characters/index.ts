@@ -26,3 +26,10 @@ export {
 } from './ui/member-characters'
 // RYT-168: the library edits classes and subclasses.
 export { classIndexSchema, subclassIndexSchema } from './domain/class-catalog'
+export {
+  backgroundIndexSchema,
+  featCategories,
+  featIndexSchema,
+  speciesIndexSchema,
+  speciesSizes,
+} from './domain/origin-catalog'

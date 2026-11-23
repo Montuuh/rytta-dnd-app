@@ -205,6 +205,10 @@ export const panelEs = {
   'creation.classes.none': 'Esta campaña no tiene clases. El DM las activa en Contenido.',
   'creation.classes.noneQuick':
     'La ficha rápida usa las clases del SRD y esta campaña no las tiene. Vuelve y elige la ficha completa.',
+  'creation.origins.loading': 'Cargando las especies y los trasfondos de la campaña…',
+  'creation.origins.error': 'No se pudieron cargar las especies y los trasfondos de la campaña.',
+  'creation.origins.none':
+    'Esta campaña no tiene especies ni trasfondos. El DM los activa en Contenido.',
   'creation.create': 'Crear ficha',
   'creation.blankFor': 'Ficha en blanco para {{name}}',
   'creation.blankTitle': 'Ficha en blanco',

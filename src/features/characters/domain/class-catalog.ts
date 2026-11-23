@@ -90,7 +90,7 @@ export const subclassIndexSchema = z.object({ class: reference })
 
 /** A class or subclass row of the campaign's packs (the glossary's `ClassRow`). */
 export type ClassRowLike = {
-  cat: 'class' | 'subclass'
+  cat: string
   key: string
   en: string
   es: string
@@ -123,7 +123,7 @@ export function buildClassCatalog(rows: readonly ClassRowLike[]): ClassCatalog {
         improvementLevels: [...new Set(data.improvementLevels)].sort((a, b) => a - b),
         ...extra,
       })
-    } else {
+    } else if (row.cat === 'subclass') {
       if (catalog.subclasses.some((item) => item.key === row.key)) continue
       const parsed = subclassIndexSchema.safeParse(row.data)
       if (!parsed.success) continue

@@ -1,7 +1,8 @@
 import type { Build, Feature, Tracker } from './sheet'
-import { featRefs, grantedResources, resourceId, traitRef, type ResourceSpec } from './resources'
+import { featRef, traitRef } from './origin-catalog'
+import { grantedResources, resourceId, type ResourceSpec } from './resources'
 import { finalAbilities, isSpeciesKey, modifier } from './rules'
-import { abilityKeys, species, type Ability } from './srd'
+import { abilityKeys, type Ability } from './srd'
 
 export type RestKind = 'short' | 'long' | 'none'
 
@@ -62,23 +63,27 @@ function withSpec(
   }
 }
 
-/** Seeded species traits (`species-<trait>`) and background feats (`background-<feat>`) get the
- * glossary entry of their trait or feat; the player's own entries are untouched. */
+/** Background feats seeded before RYT-171 named the SRD feat with its spell list. */
+const seededFeats: Record<string, string> = {
+  alert: 'alert',
+  magicInitiateCleric: 'magic-initiate',
+  magicInitiateWizard: 'magic-initiate',
+  savageAttacker: 'savage-attacker',
+}
+/** Seeded SRD species traits (`species-<trait>`) and background feats (`background-<feat>`) of
+ * sheets made before seeds carried their glossary entry get it; other entries are untouched. */
 function linkOriginFeatures(build: Build): Feature[] {
-  const traits: readonly string[] = isSpeciesKey(build.speciesKey)
-    ? species[build.speciesKey].traits
-    : []
   return build.features.map((feature) => {
     if (feature.ref) return feature
-    if (feature.source === 'species' && feature.id.startsWith('species-')) {
-      const trait = feature.id.slice('species-'.length)
-      return traits.includes(trait)
-        ? { ...feature, ref: traitRef(build.speciesKey, trait) }
-        : feature
-    }
+    if (
+      feature.source === 'species' &&
+      feature.id.startsWith('species-') &&
+      isSpeciesKey(build.speciesKey)
+    )
+      return { ...feature, ref: traitRef(build.speciesKey, feature.id.slice('species-'.length)) }
     if (feature.source === 'feat' && feature.id.startsWith('background-')) {
-      const ref = featRefs[feature.id.slice('background-'.length)]
-      return ref ? { ...feature, ref } : feature
+      const feat = seededFeats[feature.id.slice('background-'.length)]
+      return feat ? { ...feature, ref: featRef(feat) } : feature
     }
     return feature
   })

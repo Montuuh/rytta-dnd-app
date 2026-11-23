@@ -27,7 +27,8 @@ import {
   standardArrayValid,
   suggestedMaxHp,
 } from './rules'
-import { chooseBackground, chooseSpecies, initialDraft } from './creation'
+import { initialDraft } from './creation'
+import { chooseBackground, chooseSpecies } from '../../../../tests/fixtures/srd/with-classes'
 import { buildSchema, sheetRowSchema, vitalsSchema, type Vitals } from './sheet'
 
 const name = (kind: string, key: string) => `${kind}:${key}`
@@ -96,10 +97,15 @@ describe('5.5e derived values', () => {
     expect(standardArrayValid({ str: 8, dex: 15, con: 14, int: 13, wis: 12, cha: 10 })).toBe(true)
     expect(standardArrayValid({ str: 15, dex: 15, con: 14, int: 13, wis: 12, cha: 10 })).toBe(false)
     const bonuses = { str: 0, dex: 0, con: 0, int: 0, wis: 2, cha: 1 }
-    expect(bonusesValid({ backgroundKey: 'acolyte', bonuses })).toBe(true)
-    expect(bonusesValid({ backgroundKey: 'soldier', bonuses })).toBe(false)
-    expect(bonusesValid({ backgroundKey: 'custom', bonuses })).toBe(true)
-    expect(bonusesValid({ backgroundKey: 'acolyte', bonuses: { ...bonuses, int: 1 } })).toBe(false)
+    // RYT-171: the abilities the chosen background named (an older build allows any).
+    const acolyte = ['int', 'wis', 'cha'] as const
+    const soldier = ['str', 'dex', 'con'] as const
+    expect(bonusesValid({ backgroundAbilities: [...acolyte], bonuses })).toBe(true)
+    expect(bonusesValid({ backgroundAbilities: [...soldier], bonuses })).toBe(false)
+    expect(bonusesValid({ bonuses })).toBe(true)
+    expect(
+      bonusesValid({ backgroundAbilities: [...acolyte], bonuses: { ...bonuses, int: 1 } }),
+    ).toBe(false)
   })
 })
 
@@ -178,14 +184,24 @@ describe('creation wizard', () => {
     build = chooseSpecies(build, 'goliath', 'Goliat', name)
     build = chooseSpecies(build, 'elf', 'Elfo', name)
     expect(build.speed).toBe(30)
+    // RYT-171: trait and feat names come from the pack, in the language asked for.
     expect(build.features.filter((f) => f.source === 'species').map((f) => f.name)).toEqual([
-      'trait:darkvision',
-      'trait:elvenLineage',
-      'trait:feyAncestry',
-      'trait:keenSenses',
-      'trait:trance',
+      'Visión en la oscuridad',
+      'Linaje élfico',
+      'Linaje feérico',
+      'Sentidos agudos',
+      'Trance',
     ])
-    expect(build.features.find((f) => f.source === 'feat')?.name).toBe('feat:magicInitiateCleric')
+    expect(build.features.filter((f) => f.source === 'species').map((f) => f.ref)).toContain(
+      'feature.species-elf-elven-lineage',
+    )
+    expect(build.features.find((f) => f.source === 'feat')).toMatchObject({
+      id: 'background-magic-initiate-cleric',
+      name: 'Iniciado en la magia (clérigo)',
+      ref: 'feature.feat-magic-initiate',
+    })
+    expect(build.backgroundSkills).toEqual(['insight', 'religion'])
+    expect(build.backgroundAbilities).toEqual(['int', 'wis', 'cha'])
     expect(classSkillChoices(build)).toMatchObject({ fixed: ['insight', 'religion'], count: 2 })
   })
   it('reports blocking issues per step', () => {
@@ -516,7 +532,7 @@ describe('stat breakdowns and origin drafts', () => {
         classLabel: classKey,
         speciesKey: 'human',
         speciesLabel: 'Human',
-        backgroundLabel: (key) => key,
+        backgroundLabel: (key: string) => key,
         name,
         library: [],
         names,

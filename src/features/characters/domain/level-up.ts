@@ -130,7 +130,9 @@ export type SpellPick = {
   ritual: boolean
 }
 export type Improvement =
-  { kind: 'abilities'; split: boolean; picks: Ability[] } | { kind: 'feat'; name: string }
+  | { kind: 'abilities'; split: boolean; picks: Ability[] }
+  /** RYT-171: a feat of the campaign's packs carries its glossary entry (`ref`). */
+  | { kind: 'feat'; name: string; ref?: string }
 export type LevelUpChoices = {
   /** `key` is a subclass of the class (SRD or pack), or empty with a typed `name`. */
   subclass: { key: string; name: string } | null
@@ -223,6 +225,7 @@ export function applyChoices(
       source: 'feat',
       description: '',
       level: toLevel,
+      ...(improvement.ref ? { ref: improvement.ref } : {}),
     }
     next = { ...next, features: [...next.features.filter((item) => item.id !== feat.id), feat] }
   }

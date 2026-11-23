@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { buildGaps, chooseClass, stepGaps } from '../../../../tests/fixtures/srd/with-classes'
+import {
+  buildGaps,
+  chooseBackground,
+  chooseClass,
+  stepGaps,
+} from '../../../../tests/fixtures/srd/with-classes'
 import {
   assignStandard,
-  chooseBackground,
   classChangeLoss,
   initialDraft,
   pointBuyCeiling,
@@ -133,8 +137,8 @@ describe('resource names (RYT-124)', () => {
 
 describe('wizard species options (RYT-111)', () => {
   it('blocks the origin step until a required species option is chosen', async () => {
-    const { chooseSpecies } = await import('./creation')
-    const { validateStep } = await import('../../../../tests/fixtures/srd/with-classes')
+    const { chooseSpecies, validateStep } =
+      await import('../../../../tests/fixtures/srd/with-classes')
     const { grantedResources } = await import('./resources')
     const draft = initialDraft()
     const gnome = { ...draft, build: chooseSpecies(draft.build, 'gnome', 'Gnomo', name) }

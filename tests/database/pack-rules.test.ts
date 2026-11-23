@@ -315,4 +315,72 @@ describe('pack rules (RYT-164, RYT-165)', () => {
         await scalar<boolean>(`select has_function_privilege('anon', '${fn}', 'execute') result`),
       ).toBe(false)
   })
+
+  it('RYT-171 serves species, backgrounds and feats with the classes category', async () => {
+    const origins = await pack('table-origins', [
+      {
+        kind: 'species',
+        key: 'triton',
+        name_en: 'Triton',
+        name_es: 'Tritón',
+        data: {
+          index: {
+            speed: 30,
+            size: 'medium',
+            traits: [{ key: 'amphibious', en: 'Amphibious', es: 'Anfibio' }],
+          },
+        },
+      },
+      {
+        kind: 'background',
+        key: 'sailor',
+        name_en: 'Sailor',
+        name_es: 'Marinero',
+        data: {
+          index: {
+            abilities: ['str', 'dex', 'wis'],
+            skills: ['athletics', 'perception'],
+            feat: 'brawler',
+          },
+        },
+      },
+      {
+        kind: 'feat',
+        key: 'brawler',
+        name_en: 'Brawler',
+        name_es: 'Pendenciero',
+        data: { index: { category: 'origin', repeatable: false } },
+      },
+    ])
+    await asUser(dm)
+    await db.query('select public.set_campaign_content($1, $2, $3, true)', [c, origins, 'classes'])
+    await asUser(player)
+    expect((await packs()).filter((p) => p.id === origins).map((p) => p.category)).toEqual([
+      'classes',
+    ])
+    const ref = origins.replace(/-/g, '').slice(0, 8)
+    const index = (await part(origins, 'classes', 1, 'index')) as { rows: Json[] }
+    expect(index.rows.map((r) => [r.id, r.cat])).toEqual([
+      [`background.${ref}--sailor`, 'background'],
+      [`feat.${ref}--brawler`, 'feat'],
+      [`species.${ref}--triton`, 'species'],
+    ])
+    expect(index.rows.find((r) => r.cat === 'species')).toMatchObject({ speed: 30, en: 'Triton' })
+    for (const who of [outsider, otherDm]) {
+      await asUser(who)
+      await refused('select public.get_campaign_rule_pack($1, $2, $3, 1, $4)', [
+        c,
+        origins,
+        'classes',
+        'index',
+      ])
+    }
+    await asAnon()
+    await refused('select public.get_campaign_rule_pack($1, $2, $3, 1, $4)', [
+      c,
+      origins,
+      'classes',
+      'index',
+    ])
+  })
 })

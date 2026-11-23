@@ -7,9 +7,21 @@ import { Link } from 'react-router'
 import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
-import { backgroundKeys, speciesKeys } from '../../domain/srd'
+import {
+  backgroundDefFor,
+  offeredBackgrounds,
+  offeredSpecies,
+  speciesDefFor,
+  type BackgroundDef,
+  type SpeciesDef,
+} from '../../domain/origin-catalog'
 import { classDefFor, offeredClasses } from '../../domain/class-catalog'
-import { useClassCatalog, useClassDefName } from '../class-catalog'
+import {
+  useClassCatalog,
+  useClassDefName,
+  useOriginCatalog,
+  useOriginNames,
+} from '../class-catalog'
 import { useResourceNames } from '../resource-names'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
@@ -43,6 +55,17 @@ export function BlankSheet({
   const [backgroundKey, setBackgroundKey] = useState<string>('')
   const [customBackground, setCustomBackground] = useState('')
   const [level, setLevel] = useState(1)
+  // RYT-171: species and backgrounds come from the campaign's packs.
+  const origins = useOriginCatalog()
+  const originNames = useOriginNames()
+  const speciesDef = speciesDefFor(origins, speciesKey)
+  const backgroundDef = backgroundDefFor(origins, backgroundKey)
+  const option = (def: SpeciesDef | BackgroundDef) => ({
+    value: def.key,
+    label: def.pack
+      ? `${originNames.name(def)} · ${originNames.language.startsWith('en') ? def.pack.title_en : def.pack.title_es}`
+      : originNames.name(def),
+  })
   const { create, action } = useCreateSheet(sheet, characterName, sheetPath)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus(), [])
@@ -91,16 +114,19 @@ export function BlankSheet({
               speciesKey: speciesKey || undefined,
               speciesLabel: isCustomSpecies
                 ? customSpecies.trim()
-                : speciesKey
-                  ? t(`srd.species.${speciesKey as 'human'}`)
+                : speciesDef
+                  ? originNames.name(speciesDef)
                   : undefined,
+              speciesDef,
               backgroundKey: backgroundKey || undefined,
               backgroundLabel: isCustomBackground
                 ? customBackground.trim()
-                : backgroundKey
-                  ? t(`srd.background.${backgroundKey as 'acolyte'}`)
+                : backgroundDef
+                  ? originNames.name(backgroundDef)
                   : undefined,
-              name: (kind, key) => t(`srd.${kind}.${key}` as 'srd.trait.darkvision'),
+              backgroundDef,
+              feat: backgroundDef ? originNames.feat(origins, backgroundDef) : null,
+              language: originNames.language,
               level,
               library: library.features,
               names,
@@ -150,11 +176,12 @@ export function BlankSheet({
             label={t('wizard.species')}
             data={[
               { value: '', label: t('creation.originLater') },
-              ...speciesKeys.map((key) => ({ value: key, label: t(`srd.species.${key}`) })),
+              ...(origins ? offeredSpecies(origins) : []).map(option),
               { value: 'custom', label: t('wizard.customSpecies') },
             ]}
             value={speciesKey}
             allowDeselect={false}
+            disabled={origins === null}
             onChange={(value) => setSpeciesKey(value ?? '')}
             comboboxProps={{ withinPortal: true }}
           />
@@ -171,14 +198,12 @@ export function BlankSheet({
             label={t('wizard.background')}
             data={[
               { value: '', label: t('creation.originLater') },
-              ...backgroundKeys.map((key) => ({
-                value: key,
-                label: t(`srd.background.${key}`),
-              })),
+              ...(origins ? offeredBackgrounds(origins) : []).map(option),
               { value: 'custom', label: t('wizard.customBackground') },
             ]}
             value={backgroundKey}
             allowDeselect={false}
+            disabled={origins === null}
             onChange={(value) => setBackgroundKey(value ?? '')}
             comboboxProps={{ withinPortal: true }}
           />

@@ -356,10 +356,72 @@
   margin-top: 6px;
 }
 .lib-class-grid .mantine-Checkbox-root,
-.lib-checks .mantine-Checkbox-root {
+.lib-checks .mantine-Checkbox-root,
+.lib-check-row.mantine-Checkbox-root {
   display: flex;
   align-items: center;
   min-height: 44px;
+}
+/* The whole row answers a tap, not only the 20px box (RYT-171 UI review). */
+.lib-class-grid .mantine-Checkbox-body,
+.lib-checks .mantine-Checkbox-body,
+.lib-check-row .mantine-Checkbox-body {
+  flex: 1;
+  align-items: center;
+}
+.lib-class-grid .mantine-Checkbox-labelWrapper,
+.lib-checks .mantine-Checkbox-labelWrapper,
+.lib-check-row .mantine-Checkbox-labelWrapper {
+  flex: 1;
+  justify-content: center;
+}
+.lib-class-grid .mantine-Checkbox-label,
+.lib-checks .mantine-Checkbox-label,
+.lib-check-row .mantine-Checkbox-label {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+/* A background's origin feat and its spell list, one under the other. */
+.lib-origin-feat {
+  display: grid;
+  gap: 12px;
+  max-width: 32rem;
+}
+/* A species trait: its two names side by side on a tablet, stacked on a phone. */
+.lib-origin-trait {
+  display: grid;
+  gap: 4px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--app-border);
+}
+.lib-origin-trait-names {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+.lib-origin-trait-names > :nth-child(2) {
+  grid-column: 1;
+}
+.lib-origin-remove {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+@media (min-width: 48em) {
+  .lib-origin-trait-names {
+    grid-template-columns: 1fr 1fr auto;
+  }
+  .lib-origin-trait-names > :nth-child(2) {
+    grid-column: 2;
+  }
+  .lib-origin-remove {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: end;
+  }
 }
 
 /* The notice's one line sits level with its close button. */

@@ -134,6 +134,33 @@ Owner choices from the block L options page, all the recommended ones:
   preview build (no backend) says the glossary needs the library. Anonymous reads were therefore
   not opened, which also avoids unbounded anonymous egress (security review of RYT-167).
 
+## Species, backgrounds and feats from packs (RYT-171, 2026-11-23)
+
+Owner choices from the block M options page, all the recommended ones:
+
+- P1 A: species, backgrounds and feats are pack entries; the effects the app already applies
+  (Dwarven Toughness, Alert, Breath Weapon and Luck uses, the Magic Initiate and Savage Attacker
+  trackers) stay for the SRD ones. A pack species or feat shows its traits and texts, and its
+  effects are noted by hand, as for pack classes.
+- P2 A: they travel in the classes category, which the app now calls "Characters" ("Personajes"),
+  as index rows of kinds `species`, `background` and `feat`. No category is added and no campaign
+  changes what it pins; a single species is hidden like any entry.
+- P3 A: the library has forms for them. A species holds its speed, size, traits and the traits
+  whose option the player picks (with the options' names); a background its three abilities, one to
+  four skills, its origin feat and that feat's spell list; a feat its category (origin, general,
+  fighting style, epic boon), minimum level and whether it repeats. Trait and feat texts are the
+  pack's features `species-<species>-<trait>` and `feat-<feat>`.
+- P4 A: the quick sheet offers the species of every pack; its classes and backgrounds stay the SRD
+  archetypes.
+- P5 A: an improvement at level up offers the campaign's general feats (and epic boons from their
+  level), linked to their text; another feat can still be typed.
+
+A character keeps the skills and abilities its background gave (`backgroundSkills`,
+`backgroundAbilities`), so the sheet needs no background table; builds saved before take them from
+the campaign's packs when they are edited. The SRD species and background keys stay in the code to
+translate their names and select the SRD effects. The published SRD gains them as version 3, and
+existing campaigns move to it as with RYT-167.
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

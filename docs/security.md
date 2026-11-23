@@ -500,3 +500,21 @@ cross-campaign DM, plus the guarded PRE mirror.
   used to bundle (creatures, glossary, basic items, class tables) was loaded into the library and
   published on 2026-11-23, fetched server side from the public repository at a fixed commit; the
   temporary `http` extension and loading table were dropped afterwards.
+
+## Species, backgrounds and feats from packs (RYT-171)
+
+- Entries of kind `species`, `background` and `feat` join the classes category
+  (`private.content_category`). They are read through the same campaign readers
+  (`get_campaign_rule_packs`, `get_campaign_rule_pack`: active members, packs offered to the
+  campaign) and `get_srd_rule_pack` (signed-in accounts), and written only by content editors.
+  No grant changes. Hiding one in Content is not secret: it only stops offering it.
+- The migration rebuilds the expression index on `content_category` after replacing it, public
+  first and PRE after, so a PRE index copied by a refresh is rebuilt with the new definition.
+  Before the hosted apply, no published or draft entry of these kinds existed.
+- An SRD entry is told apart by its key having no `--` (the server builds pack ids). The effects
+  the app applies (Dwarven Toughness, Alert, species and feat trackers) only follow SRD keys, so a
+  pack entry cannot grant them by naming itself like one.
+- `backgroundSkills`, `backgroundAbilities` and `choices` are part of the client-declared build, as
+  the rest of it: the server does not validate them and they grant nothing the player could not
+  type by hand. `choices` is bounded (8 keys of 40 characters) and read only through own keys
+  (`pickedOption`), so names such as `constructor` never read inherited values.

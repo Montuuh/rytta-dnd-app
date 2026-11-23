@@ -73,89 +73,25 @@ export const classKeys = [
 ] as const
 export type ClassKey = (typeof classKeys)[number]
 
-export const species = {
-  dragonborn: {
-    speed: 30,
-    traits: [
-      'draconicAncestry',
-      'breathWeapon',
-      'damageResistance',
-      'darkvision',
-      'draconicFlight',
-    ],
-  },
-  dwarf: {
-    speed: 30,
-    traits: ['darkvision', 'dwarvenResilience', 'dwarvenToughness', 'stonecunning'],
-  },
-  elf: { speed: 30, traits: ['darkvision', 'elvenLineage', 'feyAncestry', 'keenSenses', 'trance'] },
-  gnome: { speed: 30, traits: ['darkvision', 'gnomishCunning', 'gnomishLineage'] },
-  goliath: { speed: 35, traits: ['giantAncestry', 'largeForm', 'powerfulBuild'] },
-  halfling: { speed: 30, traits: ['brave', 'halflingNimbleness', 'luck', 'naturallyStealthy'] },
-  human: { speed: 30, traits: ['resourceful', 'skillful', 'versatile'] },
-  orc: { speed: 30, traits: ['adrenalineRush', 'darkvision', 'relentlessEndurance'] },
-  tiefling: { speed: 30, traits: ['darkvision', 'fiendishLegacy', 'otherworldlyPresence'] },
-} as const
-export type SpeciesKey = keyof typeof species
-export const speciesKeys = Object.keys(species) as SpeciesKey[]
-export type TraitKey = (typeof species)[SpeciesKey]['traits'][number]
-
-/** RYT-102 traits with options the player picks; the choice lives in `build.choices`. */
-export const traitChoices = {
-  draconicAncestry: {
-    species: 'dragonborn',
-    options: [
-      'black',
-      'blue',
-      'brass',
-      'bronze',
-      'copper',
-      'gold',
-      'green',
-      'red',
-      'silver',
-      'white',
-    ],
-  },
-  elvenLineage: { species: 'elf', options: ['drow', 'high', 'wood'] },
-  gnomishLineage: { species: 'gnome', options: ['forest', 'rock'] },
-  giantAncestry: {
-    species: 'goliath',
-    options: ['cloud', 'fire', 'frost', 'hill', 'stone', 'storm'],
-  },
-  fiendishLegacy: { species: 'tiefling', options: ['abyssal', 'chthonic', 'infernal'] },
-} as const satisfies Record<string, { species: SpeciesKey; options: readonly string[] }>
-export type ChoiceKey = keyof typeof traitChoices
-export const choiceKeys = Object.keys(traitChoices) as ChoiceKey[]
-
-export const backgrounds = {
-  acolyte: {
-    abilities: ['int', 'wis', 'cha'],
-    skills: ['insight', 'religion'],
-    feat: 'magicInitiateCleric',
-  },
-  criminal: {
-    abilities: ['dex', 'con', 'int'],
-    skills: ['sleightOfHand', 'stealth'],
-    feat: 'alert',
-  },
-  sage: {
-    abilities: ['con', 'int', 'wis'],
-    skills: ['arcana', 'history'],
-    feat: 'magicInitiateWizard',
-  },
-  soldier: {
-    abilities: ['str', 'dex', 'con'],
-    skills: ['athletics', 'intimidation'],
-    feat: 'savageAttacker',
-  },
-} as const satisfies Record<
-  string,
-  { abilities: readonly [Ability, Ability, Ability]; skills: readonly Skill[]; feat: string }
->
-export type BackgroundKey = keyof typeof backgrounds
-export const backgroundKeys = Object.keys(backgrounds) as BackgroundKey[]
-export type FeatKey = (typeof backgrounds)[BackgroundKey]['feat']
+/**
+ * RYT-171: the SRD species and backgrounds by key. Their tables (speed, traits, options,
+ * abilities, skills and feat) come from the campaign's packs; these keys name the SRD ones in the
+ * interface language and select the effects the app applies to them (owner choice P1 A).
+ */
+export const speciesKeys = [
+  'dragonborn',
+  'dwarf',
+  'elf',
+  'gnome',
+  'goliath',
+  'halfling',
+  'human',
+  'orc',
+  'tiefling',
+] as const
+export type SpeciesKey = (typeof speciesKeys)[number]
+export const backgroundKeys = ['acolyte', 'criminal', 'sage', 'soldier'] as const
+export type BackgroundKey = (typeof backgroundKeys)[number]
 
 export const standardArray = [15, 14, 13, 12, 10, 8] as const
 export const pointBuyBudget = 27

@@ -1,11 +1,11 @@
-import { isClassKey } from './rules'
+import { pickedOption } from './origin-catalog'
+import { isClassKey, isSpeciesKey } from './rules'
 import type { Build } from './sheet'
 import type { RestKind } from './progression'
+/** A species trait with options (`giantAncestry`); RYT-171: the options come from the packs. */
+type ChoiceKey = string
 import {
-  backgrounds,
-  species as speciesTable,
   type Ability,
-  type ChoiceKey,
   metamagicCost,
   metamagicKeys,
   type ClassKey,
@@ -670,13 +670,6 @@ export const classResourceId = (key: string) => `class-${key}`
 export const resourceId = (spec: Pick<ResourceSpec, 'key' | 'source'>) =>
   spec.source === 'class' ? classResourceId(spec.key) : `origin-${spec.key}`
 
-/** Glossary entries of the feats a background grants (seeded as `background-<feat>`). */
-export const featRefs: Record<string, string> = {
-  alert: 'feature.feat-alert',
-  magicInitiateCleric: 'feature.feat-magic-initiate',
-  magicInitiateWizard: 'feature.feat-magic-initiate',
-  savageAttacker: 'feature.feat-savage-attacker',
-}
 const trackedFeats: Record<string, TrackedFeat> = {
   'feature.feat-magic-initiate': 'magicInitiate',
   'feature.feat-savage-attacker': 'savageAttacker',
@@ -684,15 +677,16 @@ const trackedFeats: Record<string, TrackedFeat> = {
   'feature.feat-boon-of-combat-prowess': 'boonOfCombatProwess',
   'feature.feat-boon-of-fate': 'boonOfFate',
 }
-/** Glossary entry of a species trait (`feature.species-goliath-giant-ancestry`). */
-export const traitRef = (speciesKey: string, trait: string) =>
-  `feature.species-${speciesKey}-${trait.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`
-
-/** Feats the build has: its background feat and any feature linked to a tracked feat. */
+/** The tracked feat each SRD background grants, kept with the other SRD effects (RYT-171 P1 A). */
+const srdBackgroundFeats: Record<string, TrackedFeat> = {
+  acolyte: 'magicInitiate',
+  sage: 'magicInitiate',
+  soldier: 'savageAttacker',
+}
+/** Feats the build has: its SRD background's and any feature linked to a tracked feat. */
 export function buildFeats(build: Pick<Build, 'backgroundKey' | 'features'>): Set<TrackedFeat> {
   const feats = new Set<TrackedFeat>()
-  const background = backgrounds[build.backgroundKey as keyof typeof backgrounds]
-  const fromBackground = background ? trackedFeats[featRefs[background.feat] ?? ''] : undefined
+  const fromBackground = srdBackgroundFeats[build.backgroundKey]
   if (fromBackground) feats.add(fromBackground)
   for (const feature of build.features) {
     const feat = feature.ref ? trackedFeats[feature.ref] : undefined
@@ -706,7 +700,7 @@ export function buildFeats(build: Pick<Build, 'backgroundKey' | 'features'>): Se
 export function grantedResources(build: Build, level: number): ResourceSpec[] {
   const feats = buildFeats(build)
   const isClass = isClassKey(build.classKey)
-  const isSpecies = build.speciesKey in speciesTable
+  const isSpecies = isSpeciesKey(build.speciesKey)
   return managedResources.filter((spec) => {
     if (level < spec.from) return false
     if (spec.source === 'class')
@@ -719,7 +713,7 @@ export function grantedResources(build: Build, level: number): ResourceSpec[] {
       return (
         isSpecies &&
         spec.species === build.speciesKey &&
-        (!spec.choice || build.choices?.[spec.choice[0]] === spec.choice[1])
+        (!spec.choice || pickedOption(build, spec.choice[0]) === spec.choice[1])
       )
     return Boolean(spec.feat && feats.has(spec.feat))
   })

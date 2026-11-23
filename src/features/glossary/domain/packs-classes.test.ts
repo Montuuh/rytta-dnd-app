@@ -91,4 +91,40 @@ describe('pack classes in the glossary index (RYT-168)', () => {
     const [srd] = localizeIndexes([pack({ srd: true })], [classes])
     expect(srd).toBe(classes)
   })
+
+  it('RYT-171 keeps species, backgrounds and feats apart and gives a background its pack feat', () => {
+    const index = parseRuleIndex({
+      version: 1,
+      rows: [
+        { id: 'species.b00c5000--triton', cat: 'species', en: 'Triton', es: 'Tritón', speed: 30 },
+        { id: 'feat.b00c5000--brawler', cat: 'feat', en: 'Brawler', es: 'Pendenciero' },
+        {
+          id: 'background.b00c5000--sailor',
+          cat: 'background',
+          en: 'Sailor',
+          es: 'Marinero',
+          feat: 'brawler',
+        },
+        {
+          id: 'background.b00c5000--guard',
+          cat: 'background',
+          en: 'Guard',
+          es: 'Guardia',
+          feat: 'alert',
+        },
+        // A row whose id names another kind is not read as one.
+        { id: 'class.b00c5000--odd', cat: 'feat', en: 'Odd', es: 'Raro' },
+      ],
+    })
+    expect(index.classRows.map((row) => row.cat)).toEqual([
+      'species',
+      'feat',
+      'background',
+      'background',
+    ])
+    const [own] = localizeIndexes([pack({})], [index])
+    expect(
+      own!.classRows.filter((row) => row.cat === 'background').map((row) => row.data.feat),
+    ).toEqual(['b00c5000--brawler', 'alert'])
+  })
 })

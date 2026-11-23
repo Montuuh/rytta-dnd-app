@@ -1125,6 +1125,15 @@ span.sheet-inspiration {
   font-size: var(--fs-meta);
   color: var(--app-muted);
 }
+/* RYT-171: the pack a species comes from, set apart from its traits. */
+.choice-tile-pack {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--app-border);
+  font-size: var(--fs-meta);
+  font-style: italic;
+  color: var(--app-muted);
+}
 .quick-summary {
   display: grid;
   gap: 12px;

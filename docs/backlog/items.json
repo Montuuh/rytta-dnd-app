@@ -5283,10 +5283,11 @@
       "title": "Species, backgrounds and feats as pack data",
       "priority": "P3",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-167"],
       "sources": [
-        "Owner, 23 November 2026, block L options page: every recommendation accepted (P1 A creatures, glossary, items and class tables leave the code, species, backgrounds and feats move to packs in RYT-171; P2 A a Content step when creating a campaign with the SRD and Rytta basics ticked; P3 A existing campaigns move to the SRD version with classes; P4 A the demo reads the published SRD without an account)."
+        "Owner, 23 November 2026, block L options page: every recommendation accepted (P1 A creatures, glossary, items and class tables leave the code, species, backgrounds and feats move to packs in RYT-171; P2 A a Content step when creating a campaign with the SRD and Rytta basics ticked; P3 A existing campaigns move to the SRD version with classes; P4 A the demo reads the published SRD without an account).",
+        "Owner, 23 November 2026, block M options page: every recommendation accepted (P1 A tables in packs, automatic effects for the SRD only; P2 A the classes category, renamed \"Characters\"; P3 A library forms; P4 A the quick sheet offers species of every pack; P5 A level up offers the campaign's feats)."
       ],
       "scope": "Species with their traits and choices, backgrounds with their skills, ability options and feat, and the origin feats become pack entries with library forms; the SRD ones are loaded into the SRD pack and character creation reads them from the campaign's packs. The last SRD tables leave the code.",
       "acceptance": [
@@ -5296,7 +5297,7 @@
         "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
       ],
       "validation": ["npm run check", "creation e2e", "independent UI review PASS"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-171/validation.md"]
     }
   ]
 }

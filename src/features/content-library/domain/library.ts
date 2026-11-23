@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { srdCategories } from '@/features/glossary'
-import { classIndexSchema, subclassIndexSchema } from '@/features/characters'
+import {
+  backgroundIndexSchema,
+  classIndexSchema,
+  featIndexSchema,
+  speciesIndexSchema,
+  subclassIndexSchema,
+} from '@/features/characters'
 import { packItemIndexSchema } from '@/features/inventory'
 
 /**
@@ -149,7 +155,7 @@ export const entryDataLimit = 131072
 export const entryIndexLimit = 4096
 const byteLength = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
 export type EntryProblem =
-  'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'item' | 'class' | 'duplicate'
+  'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'item' | 'class' | 'origin' | 'duplicate'
 export function entryProblem(entry: EntryInput): EntryProblem | null {
   if (!kindPattern.test(entry.kind)) return 'kind'
   if (!keyPattern.test(entry.key) || entry.key.length > 80) return 'key'
@@ -173,6 +179,13 @@ export function entryProblem(entry: EntryInput): EntryProblem | null {
   if (entry.kind === 'class' && !classIndexSchema.safeParse(index ?? {}).success) return 'class'
   if (entry.kind === 'subclass' && !subclassIndexSchema.safeParse(index ?? {}).success)
     return 'class'
+  // RYT-171: creation reads a species', background's and feat's table as they are.
+  const origin = {
+    species: speciesIndexSchema,
+    background: backgroundIndexSchema,
+    feat: featIndexSchema,
+  }[entry.kind]
+  if (origin && !origin.safeParse(index ?? {}).success) return 'origin'
   return null
 }
 

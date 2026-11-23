@@ -732,18 +732,31 @@ test('RYT-130 a wizard copies two spells into the spellbook; a feat takes the pl
   await expect(dialog.getByRole('group', { name: /^Conjuros nuevos/ })).toHaveCount(0)
   await expect(dialog.getByRole('group', { name: /^Truco nuevo/ })).toHaveCount(0)
   await dialog.getByRole('radio', { name: 'Una dote' }).locator('xpath=..').click()
-  await dialog.getByRole('textbox', { name: 'Nombre de la dote' }).fill('Alerta')
+  // RYT-171: the campaign's general feats are offered; another can still be typed.
+  const featPick = dialog.getByRole('combobox', { name: 'Dote' })
+  await expect(featPick.locator('option', { hasText: 'Alerta' })).toHaveCount(0)
+  await featPick.selectOption({ label: 'Otra dote (escribe su nombre)' })
+  await dialog.getByRole('textbox', { name: 'Nombre de la dote' }).fill('Alerta casera')
+  await featPick.selectOption({ label: 'Apresador' })
+  await expect(dialog.getByRole('textbox', { name: 'Nombre de la dote' })).toHaveCount(0)
+  await expect(dialog.getByRole('button', { name: 'Reglas de Apresador' })).toBeVisible()
+  if (process.env.RYT_CAPTURE)
+    await page.screenshot({
+      path: `docs/evidence/ui-review/ryt-171/levelup-feat-${test.info().project.name}.png`,
+    })
   await pickSpells(dialog, 2, 'es', 'spellbook')
   await expect(dialog.getByText('2 de 2 elegidos')).toBeVisible()
   await next.click()
   await dialog.getByRole('button', { name: 'Confirmar nivel 12' }).click()
   await expect(dialog.getByRole('heading', { name: 'Ahora eres de nivel 12' })).toBeVisible()
-  await expect(dialog).toContainText('Dote: Alerta')
+  await expect(dialog).toContainText('Dote: Apresador')
   const build = levelUpCalls(fixture.calls)[0]!.body.new_build as {
-    features: { name: string; source: string }[]
+    features: { name: string; source: string; ref?: string }[]
     spells: { prepared: boolean; level: number }[]
   }
-  expect(build.features).toContainEqual(expect.objectContaining({ name: 'Alerta', source: 'feat' }))
+  expect(build.features).toContainEqual(
+    expect.objectContaining({ name: 'Apresador', source: 'feat', ref: 'feature.feat-grappler' }),
+  )
   // The sample sheet holds two spells; the two new ones are not prepared (the spellbook).
   expect(build.spells).toHaveLength(4)
   expect(build.spells.filter((spell) => !spell.prepared)).toHaveLength(2)

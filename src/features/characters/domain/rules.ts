@@ -2,13 +2,13 @@ import { encumbrance, type EquipmentSlot, type Equipped } from '@/features/inven
 import type { Abilities, Build, Vitals } from './sheet'
 import {
   abilityKeys,
-  backgrounds,
+  backgroundKeys,
   classKeys,
   fullCasterSlots,
   pointBuyBudget,
   pointBuyCost,
   skillAbilities,
-  species,
+  speciesKeys,
   type Ability,
   type BackgroundKey,
   type CasterKind,
@@ -477,22 +477,24 @@ export function standardArrayValid(scores: Abilities) {
   return sorted.join() === '15,14,13,12,10,8'
 }
 /** 2024 backgrounds: +2/+1 or +1/+1/+1 among the background's three abilities. */
-export function bonusesValid(build: Pick<Build, 'backgroundKey' | 'bonuses'>) {
+export function bonusesValid(build: Pick<Build, 'backgroundAbilities' | 'bonuses'>) {
   const values = abilityKeys.map((key) => build.bonuses[key])
   const total = values.reduce((sum, value) => sum + value, 0)
   if (total === 0) return true
   if (total !== 3) return false
-  const allowed =
-    build.backgroundKey in backgrounds
-      ? (backgrounds[build.backgroundKey as BackgroundKey].abilities as readonly Ability[])
-      : abilityKeys
+  // RYT-171: the abilities the chosen background named; builds from before allow any.
+  const allowed: readonly Ability[] = build.backgroundAbilities?.length
+    ? build.backgroundAbilities
+    : abilityKeys
   return abilityKeys.every((key) => build.bonuses[key] === 0 || allowed.includes(key))
 }
 
 export const isClassKey = (key: string): key is ClassKey =>
   (classKeys as readonly string[]).includes(key)
-export const isSpeciesKey = (key: string): key is SpeciesKey => key in species
-export const isBackgroundKey = (key: string): key is BackgroundKey => key in backgrounds
+export const isSpeciesKey = (key: string): key is SpeciesKey =>
+  (speciesKeys as readonly string[]).includes(key)
+export const isBackgroundKey = (key: string): key is BackgroundKey =>
+  (backgroundKeys as readonly string[]).includes(key)
 
 export function emptyBuild(): Build {
   const base = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }

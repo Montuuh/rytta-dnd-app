@@ -163,6 +163,51 @@ const bookClassRows = [
     fc: 'bard',
     sb: 'giant-blood',
   },
+  // RYT-171: a species with an option, a background with its own origin feat, and that feat.
+  {
+    id: 'species.b00c5000--triton',
+    cat: 'species',
+    en: 'Triton',
+    es: 'Tritón',
+    speed: 30,
+    size: 'medium',
+    traits: [
+      { key: 'amphibious', en: 'Amphibious', es: 'Anfibio' },
+      { key: 'emissary', en: 'Emissary of the Sea', es: 'Emisario del mar' },
+    ],
+    choices: [
+      {
+        trait: 'emissary',
+        options: [
+          { key: 'storm', en: 'Storm', es: 'Tormenta' },
+          { key: 'tide', en: 'Tide', es: 'Marea' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'background.b00c5000--sailor',
+    cat: 'background',
+    en: 'Sailor',
+    es: 'Marinero',
+    abilities: ['str', 'dex', 'wis'],
+    skills: ['athletics', 'perception'],
+    feat: 'b00c5000--brawler',
+  },
+  {
+    id: 'feat.b00c5000--brawler',
+    cat: 'feat',
+    en: 'Brawler',
+    es: 'Pendenciero',
+    category: 'origin',
+  },
+  {
+    id: 'feature.b00c5000--feat-brawler',
+    cat: 'feature',
+    en: 'Brawler',
+    es: 'Pendenciero',
+    nl: 1,
+  },
 ]
 function rulePackRpc(method: string, body: Record<string, unknown>) {
   if (method === 'get_campaign_rule_packs')
@@ -234,6 +279,29 @@ const srdClassRows = [
     es: row.name_es,
   })),
 ]
+/** RYT-171: the SRD species, backgrounds and feats, as index rows of the classes category. */
+type OriginRow = {
+  key: string
+  name_en: string
+  name_es: string
+  data: { index: Record<string, unknown> }
+}
+const srdOriginData = JSON.parse(readFileSync('tests/fixtures/srd/origins.json', 'utf8')) as Record<
+  'species' | 'backgrounds' | 'feats',
+  OriginRow[]
+>
+const originRow = (cat: string) => (row: OriginRow) => ({
+  ...row.data.index,
+  id: `${cat}.${row.key}`,
+  cat,
+  en: row.name_en,
+  es: row.name_es,
+})
+srdClassRows.push(
+  ...srdOriginData.species.map(originRow('species')),
+  ...srdOriginData.backgrounds.map(originRow('background')),
+  ...srdOriginData.feats.map(originRow('feat')),
+)
 function rulePart(body: Record<string, unknown>) {
   const category = String(body.target_category)
   const rows = glossaryRows.filter((row) => ruleCategoryOf(row.cat) === category)

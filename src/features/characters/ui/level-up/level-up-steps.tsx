@@ -1,10 +1,16 @@
 import { subclassesFor } from '../../domain/class-catalog'
-import { useClassCatalog, useClassDefName } from '../class-catalog'
+import {
+  useClassCatalog,
+  useClassDefName,
+  useOriginCatalog,
+  useOriginNames,
+} from '../class-catalog'
+import { featRef, improvementFeats } from '../../domain/origin-catalog'
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ActionIcon, Button, NativeSelect, Text, TextInput } from '@mantine/core'
-import { Check, Plus, Search, TriangleAlert, X } from 'lucide-react'
+import { BookOpen, Check, Plus, Search, TriangleAlert, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { GlossaryTerm, useSrdLibrary } from '@/features/glossary'
+import { GlossaryTerm, useGlossary, useSrdLibrary } from '@/features/glossary'
 import { Stepper } from '@/features/inventory'
 import {
   canRaise,
@@ -339,6 +345,7 @@ export function ChoicesStep({
       {requirements.improvement && (
         <ImprovementChoice
           build={build}
+          toLevel={toLevel}
           missing={missing.includes('improvement')}
           value={choices.improvement}
           onChange={(improvement) => onChange({ ...choices, improvement })}
@@ -452,17 +459,35 @@ function SubclassChoice({
 
 function ImprovementChoice({
   build,
+  toLevel,
   missing,
   value,
   onChange,
 }: {
   build: Build
+  toLevel: number
   missing: boolean
   value: LevelUpChoices['improvement']
   onChange: (value: LevelUpChoices['improvement']) => void
 }) {
   const { t } = useTranslation()
   const scores = finalAbilities(build)
+  // RYT-171 (owner choice P5 A): the campaign's general feats (and epic boons from their level);
+  // a feat the character has is offered again only when it repeats. Another can be typed.
+  const origins = useOriginCatalog()
+  const originNames = useOriginNames()
+  const glossary = useGlossary()
+  const owned = new Set(build.features.map((item) => item.ref).filter(Boolean))
+  const feats = origins
+    ? improvementFeats(origins, toLevel).filter(
+        (item) => item.repeatable || !owned.has(featRef(item.key)),
+      )
+    : []
+  const featPick =
+    value?.kind === 'feat' && value.ref
+      ? (feats.find((item) => featRef(item.key) === value.ref)?.key ?? '')
+      : ''
+  const [typing, setTyping] = useState(value?.kind === 'feat' && !value.ref && value.name !== '')
   const mode =
     value === null ? null : value.kind === 'feat' ? 'feat' : value.split ? 'split' : 'double'
   const abilities = value?.kind === 'abilities' ? value : null
@@ -546,11 +571,49 @@ function ImprovementChoice({
           </div>
         )}
         {value?.kind === 'feat' && (
+          <NativeSelect
+            label={t('levelUp.feat.pick')}
+            value={typing ? 'custom' : featPick}
+            data-autofocus
+            data={[
+              { value: '', label: '—' },
+              ...feats.map((item) => ({
+                value: item.key,
+                label: item.pack
+                  ? `${originNames.name(item)} · ${originNames.language.startsWith('en') ? item.pack.title_en : item.pack.title_es}`
+                  : originNames.name(item),
+              })),
+              { value: 'custom', label: t('levelUp.feat.other') },
+            ]}
+            onChange={(event) => {
+              const key = event.currentTarget.value
+              const item = feats.find((entry) => entry.key === key)
+              setTyping(key === 'custom')
+              onChange(
+                item
+                  ? { kind: 'feat', name: originNames.name(item), ref: featRef(item.key) }
+                  : { kind: 'feat', name: '' },
+              )
+            }}
+          />
+        )}
+        {value?.kind === 'feat' && value.ref && glossary?.open && (
+          <Button
+            variant="subtle"
+            size="compact-md"
+            mih={44}
+            w="fit-content"
+            leftSection={<BookOpen size={16} aria-hidden="true" />}
+            onClick={() => glossary.open(value.ref!)}
+          >
+            {t('levelUp.feat.rules', { feat: value.name })}
+          </Button>
+        )}
+        {value?.kind === 'feat' && typing && (
           <TextInput
             label={t('levelUp.feat.name')}
             maxLength={100}
             value={value.name}
-            data-autofocus
             onChange={(event) => onChange({ kind: 'feat', name: event.currentTarget.value })}
           />
         )}

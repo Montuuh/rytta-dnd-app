@@ -14,7 +14,7 @@ export const campaignContentEn = {
   'campaignContent.choice.error': 'The packs could not be loaded.',
   'campaignContent.category.creatures': 'Creatures',
   'campaignContent.category.spells': 'Spells',
-  'campaignContent.category.classes': 'Classes and features',
+  'campaignContent.category.classes': 'Characters',
   'campaignContent.category.rules': 'Rules',
   'campaignContent.category.items': 'Items',
   'campaignContent.none': 'No pack has been published for this category yet.',

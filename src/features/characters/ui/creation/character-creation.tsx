@@ -16,7 +16,8 @@ import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
 import { classDefFor } from '../../domain/class-catalog'
-import { useClassCatalog } from '../class-catalog'
+import { useClassCatalog, useOriginCatalog } from '../class-catalog'
+import { speciesDefFor } from '../../domain/origin-catalog'
 import { CharacterPortrait } from '@/features/inventory'
 import { sheetQuery, useSheetAction } from '../../api'
 import {
@@ -181,6 +182,7 @@ function Wizard({
   const action = useSheetAction(campaign.id)
   const library = useSrdLibrary()
   const catalog = useClassCatalog()
+  const origins = useOriginCatalog()
   // RYT-164 (P4 A): finishing adds class features from the campaign's packs, so it waits for
   // them, and finishes by itself once they arrive.
   const [libraryWait, setLibraryWait] = useState<null | (() => void)>(null)
@@ -198,7 +200,12 @@ function Wizard({
     const steps = creationSteps.filter((step) => stepApplies(step, initial.build))
     const pending = steps.findIndex(
       (step) =>
-        validateStep(step, initial, classDefFor(catalog, initial.build.classKey)).length > 0,
+        validateStep(
+          step,
+          initial,
+          classDefFor(catalog, initial.build.classKey),
+          speciesDefFor(origins, initial.build.speciesKey),
+        ).length > 0,
     )
     return pending === -1 ? steps.length - 1 : pending
   })
@@ -236,10 +243,17 @@ function Wizard({
   // Blocking problems are derived from the draft, so a fixed problem disappears at once.
   const issuesFor = (mode: { complete: boolean; exiting: boolean }) =>
     mode.complete
-      ? validateAll(draft, classDefFor(catalog, draft.build.classKey))
-      : validateStep(current, draft, classDefFor(catalog, draft.build.classKey)).filter(
-          (issue) => !mode.exiting || issue === 'emptyName' || issue === 'tooLarge',
+      ? validateAll(
+          draft,
+          classDefFor(catalog, draft.build.classKey),
+          speciesDefFor(origins, draft.build.speciesKey),
         )
+      : validateStep(
+          current,
+          draft,
+          classDefFor(catalog, draft.build.classKey),
+          speciesDefFor(origins, draft.build.speciesKey),
+        ).filter((issue) => !mode.exiting || issue === 'emptyName' || issue === 'tooLarge')
   const issues = attempt ? issuesFor(attempt) : []
   useEffect(() => {
     if (issues.length > 0) issuesRef.current?.scrollIntoView({ block: 'nearest' })

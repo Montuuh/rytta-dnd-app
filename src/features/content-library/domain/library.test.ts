@@ -118,4 +118,37 @@ describe('items as library entries (RYT-166)', () => {
     expect(entryProblem(entry)).toBeNull()
     expect(entryProblem({ ...entry, data: { index: { weightLb: 3 } } })).toBe('item')
   })
+
+  it('RYT-171 refuses a species, background or feat creation cannot read', () => {
+    const entry = (kind: string, index: Record<string, unknown>) => ({
+      kind,
+      key: 'test',
+      name_en: 'Test',
+      name_es: 'Prueba',
+      data: { index },
+    })
+    expect(entryProblem(entry('species', { speed: 30 }))).toBeNull()
+    expect(entryProblem(entry('species', { speed: 'fast' }))).toBe('origin')
+    expect(
+      entryProblem(
+        entry('species', {
+          speed: 30,
+          traits: [{ key: 'gift', en: 'Gift', es: 'Don' }],
+          choices: [{ trait: 'other', options: [] }],
+        }),
+      ),
+    ).toBe('origin')
+    expect(
+      entryProblem(
+        entry('background', { abilities: ['str', 'dex', 'wis'], skills: ['athletics'] }),
+      ),
+    ).toBeNull()
+    expect(
+      entryProblem(
+        entry('background', { abilities: ['str', 'str', 'wis'], skills: ['athletics'] }),
+      ),
+    ).toBe('origin')
+    expect(entryProblem(entry('feat', { category: 'general', level: 4 }))).toBeNull()
+    expect(entryProblem(entry('feat', {}))).toBe('origin')
+  })
 })

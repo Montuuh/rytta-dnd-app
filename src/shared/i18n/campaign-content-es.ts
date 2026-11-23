@@ -14,7 +14,7 @@ export const campaignContentEs = {
   'campaignContent.choice.error': 'No se pudieron cargar los paquetes.',
   'campaignContent.category.creatures': 'Criaturas',
   'campaignContent.category.spells': 'Conjuros',
-  'campaignContent.category.classes': 'Clases y rasgos',
+  'campaignContent.category.classes': 'Personajes',
   'campaignContent.category.rules': 'Reglas',
   'campaignContent.category.items': 'Objetos',
   'campaignContent.none': 'Aún no hay paquetes publicados para esta categoría.',

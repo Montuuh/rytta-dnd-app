@@ -12,9 +12,10 @@ import {
   spendAction,
 } from './resources'
 import { applyRest, emptyBuild, restRecovery } from './rules'
-import { chooseBackground, chooseSpecies } from './creation'
+import { chooseBackground, chooseSpecies } from '../../../../tests/fixtures/srd/with-classes'
 import { buildSchema, type Build, type Vitals } from './sheet'
-import { backgroundKeys, classKeys, speciesKeys, traitChoices } from './srd'
+import { backgroundKeys, classKeys, speciesKeys } from './srd'
+import { srdSpecies } from '../../../../tests/fixtures/srd/origins'
 
 type Row = { id: string; cat: string; es: string; lv?: number; fc?: string; sb?: string }
 const [index] = Object.values(
@@ -79,8 +80,12 @@ describe('RYT-102 resource catalogue', () => {
       if (spec.subclass) expect(subclassOf[spec.classKey!], spec.key).toBe(spec.subclass)
       if (spec.choice) {
         const [key, option] = spec.choice
-        expect(traitChoices[key].species, spec.key).toBe(spec.species)
-        expect(traitChoices[key].options as readonly string[], spec.key).toContain(option)
+        const choice = srdSpecies(spec.species!).choices.find((item) => item.trait === key)
+        expect(choice, spec.key).toBeDefined()
+        expect(
+          choice!.options.map((item) => item.key),
+          spec.key,
+        ).toContain(option)
       }
     }
     for (const action of resourceActions)
@@ -93,9 +98,7 @@ describe('RYT-102 resource catalogue', () => {
       for (const speciesKey of speciesKeys)
         for (const backgroundKey of backgroundKeys) {
           const choices = Object.fromEntries(
-            Object.entries(traitChoices)
-              .filter(([, entry]) => entry.species === speciesKey)
-              .map(([key, entry]) => [key, entry.options[0]]),
+            srdSpecies(speciesKey).choices.map((entry) => [entry.trait, entry.options[0]!.key]),
           )
           const build = sync(
             {

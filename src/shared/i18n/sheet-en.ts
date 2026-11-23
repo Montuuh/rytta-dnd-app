@@ -243,7 +243,7 @@ export const sheetEn = {
   'wizard.draftSaved': 'Draft saved. You can continue later.',
   'wizard.finished': 'Character ready.',
   'wizard.class': 'Class',
-  'wizard.classHint': 'Choose a class from the SRD or define a homebrew one.',
+  'wizard.classHint': 'Choose one of the campaign’s classes or define your own.',
   'wizard.classCard': 'Hit die d{{die}}, saves {{saves}}',
   'wizard.classRole.barbarian': 'Rage and heavy blows',
   'wizard.classRole.bard': 'Music, spells and charm',

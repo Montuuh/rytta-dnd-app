@@ -8,6 +8,8 @@ import type { EntryInput, PackInput } from './library'
  */
 export const srdSlug = 'srd-5-2-1'
 export const ryttaBasicsSlug = 'rytta-basics'
+/** Kinds the SRD pack gained after its first upload (RYT-166, RYT-168). */
+export const newerKinds = ['item', 'class', 'subclass']
 
 /** RYT-166: the Rytta homebrew items of the old bundled catalogue, as their own public pack. */
 export const ryttaBasicsPack: PackInput = {

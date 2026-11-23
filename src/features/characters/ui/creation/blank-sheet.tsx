@@ -7,13 +7,17 @@ import { Link } from 'react-router'
 import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
-import { backgroundKeys, classKeys, speciesKeys } from '../../domain/srd'
+import { backgroundKeys, speciesKeys } from '../../domain/srd'
+import { classDefFor, offeredClasses, srdClassDefs } from '../../domain/class-catalog'
+import { useClassCatalog, useClassDefName } from '../class-catalog'
 import { useResourceNames } from '../resource-names'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
 import { LibraryWait } from './library-wait'
 
 /** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
+const isCustomKey = (key: string) => key === 'custom'
+
 export function BlankSheet({
   sheet,
   name: characterName,
@@ -28,6 +32,10 @@ export function BlankSheet({
   const names = useResourceNames()
   const [name, setName] = useState(characterName)
   const [classKey, setClassKey] = useState<string>('fighter')
+  // RYT-168: the classes the campaign offers (SRD and packs).
+  const catalog = useClassCatalog()
+  const nameOf = useClassDefName()
+  const classDef = isCustomKey(classKey) ? null : classDefFor(catalog, classKey)
   const [custom, setCustom] = useState('')
   const [speciesKey, setSpeciesKey] = useState<string>('')
   const [customSpecies, setCustomSpecies] = useState('')
@@ -77,7 +85,8 @@ export function BlankSheet({
           void create(
             blankDraft({
               classKey,
-              classLabel: isCustom ? custom.trim() : t(`srd.class.${classKey as 'monk'}`),
+              classLabel: isCustom || !classDef ? custom.trim() : nameOf(classDef),
+              classDef,
               speciesKey: speciesKey || undefined,
               speciesLabel: isCustomSpecies
                 ? customSpecies.trim()
@@ -111,7 +120,10 @@ export function BlankSheet({
           <Select
             label={t('wizard.class')}
             data={[
-              ...classKeys.map((key) => ({ value: key, label: t(`srd.class.${key}`) })),
+              ...(catalog ? offeredClasses(catalog) : srdClassDefs).map((item) => ({
+                value: item.key,
+                label: nameOf(item),
+              })),
               { value: 'custom', label: t('creation.customClass') },
             ]}
             value={classKey}

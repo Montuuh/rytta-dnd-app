@@ -23,3 +23,11 @@ export {
   MemberCharacterDialog,
   type MemberCharacterChoice,
 } from './ui/member-characters'
+// RYT-168: the library edits classes and subclasses and uploads the SRD ones.
+export {
+  classIndexOf,
+  classIndexSchema,
+  srdClassDefs,
+  srdSubclassDefs,
+  subclassIndexSchema,
+} from './domain/class-catalog'

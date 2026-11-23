@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { srdCategories } from '@/features/glossary'
+import { classIndexSchema, subclassIndexSchema } from '@/features/characters'
 import { packItemIndexSchema } from '@/features/inventory'
 
 /**
@@ -21,6 +22,7 @@ export type GlossaryKind = (typeof glossaryKinds)[number]
 export const knownKinds = [
   'creature',
   ...glossaryKinds,
+  'class',
   'subclass',
   'species',
   'background',
@@ -147,7 +149,7 @@ export const entryDataLimit = 131072
 export const entryIndexLimit = 4096
 const byteLength = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
 export type EntryProblem =
-  'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'item' | 'duplicate'
+  'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'item' | 'class' | 'duplicate'
 export function entryProblem(entry: EntryInput): EntryProblem | null {
   if (!kindPattern.test(entry.kind)) return 'kind'
   if (!keyPattern.test(entry.key) || entry.key.length > 80) return 'key'
@@ -167,6 +169,10 @@ export function entryProblem(entry: EntryInput): EntryProblem | null {
     return 'index'
   // RYT-166: the storeroom and shops read an item's mechanics as they are.
   if (entry.kind === 'item' && !packItemIndexSchema.safeParse(index ?? {}).success) return 'item'
+  // RYT-168: creation and level up read a class's table and a subclass's class as they are.
+  if (entry.kind === 'class' && !classIndexSchema.safeParse(index ?? {}).success) return 'class'
+  if (entry.kind === 'subclass' && !subclassIndexSchema.safeParse(index ?? {}).success)
+    return 'class'
   return null
 }
 

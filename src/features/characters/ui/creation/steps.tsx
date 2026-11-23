@@ -1,3 +1,5 @@
+import { classDefFor, offeredClasses, srdClassDefs } from '../../domain/class-catalog'
+import { useClassCatalog, useClassDefName } from '../class-catalog'
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   ActionIcon,
@@ -159,9 +161,13 @@ function ClassStep(props: StepProps) {
   const update = useBuild(props)
   const { build } = draft
   const loss = session.classLoss
+  const catalog = useClassCatalog()
+  const nameOf = useClassDefName()
+  const classOptions = catalog ? offeredClasses(catalog) : srdClassDefs
   return (
     <Stack gap="md">
       <ClassPicker
+        options={classOptions}
         value={build.classKey}
         label={t('wizard.class')}
         description={t('wizard.classHint')}
@@ -169,10 +175,11 @@ function ClassStep(props: StepProps) {
         showSaves
         onChange={(key) => {
           if (key === build.classKey) return
-          const label = key === 'custom' ? build.classLabel : t(`srd.class.${key}`)
+          const def = classDefFor(catalog, key)
+          const label = key === 'custom' || !def ? build.classLabel : nameOf(def)
           // A new class re-places the standard array it seeded and re-suggests the HP; what it
           // removes is named once below the picker.
-          const next = reseedStandard(build, chooseClass(build, key, label))
+          const next = reseedStandard(build, chooseClass(build, key, label, def))
           session.setClassLoss(classChangeLoss(build, next))
           setDraft((current) => ({
             ...current,
@@ -520,7 +527,11 @@ function SkillsStep(props: StepProps) {
   const { t } = useTranslation()
   const update = useBuild(props)
   const { build } = props.draft
-  const { fixed, picked, count, options } = classSkillChoices(build)
+  const catalog = useClassCatalog()
+  const { fixed, picked, count, options } = classSkillChoices(
+    build,
+    classDefFor(catalog, build.classKey),
+  )
   const full = count !== null && picked.length >= count
   const toggle = (skill: Skill, on: boolean) =>
     update((current) => {

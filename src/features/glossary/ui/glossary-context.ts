@@ -1,3 +1,4 @@
+import type { ClassRow } from '../domain/packs'
 import { createContext, useContext } from 'react'
 import type { Catalog } from '../domain/catalog'
 import type { HomebrewEntry } from '../domain/homebrew'
@@ -20,6 +21,8 @@ export type HomebrewManage = {
 export type GlossaryContextValue = {
   language: GlossaryLanguage
   catalog: Catalog | null
+  /** RYT-168: classes and subclasses of the packs, null until they load (none in the demo). */
+  classRows: ClassRow[] | null
   linker: Linker | null
   /** Entry bodies of the current language; null until first needed (lazy chunk). */
   bodies: EntryBodies | null

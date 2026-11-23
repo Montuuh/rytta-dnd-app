@@ -26,7 +26,7 @@ import {
   type CreatureSize,
 } from '@/features/bestiary'
 import { blankDraft, CreatureEditor, draftFromBlock } from '@/features/combat'
-import { featureClasses, spellClasses, spellSchools } from '@/features/glossary'
+import { spellClasses, spellSchools } from '@/features/glossary'
 import { draftQuery, useLibraryAction } from '../api'
 import {
   bodyOf,
@@ -52,6 +52,7 @@ import {
   type EntryInput,
 } from '../domain/library'
 import { tableCount } from '../domain/text'
+import { ClassFields, ClassReferenceField, SubclassFields } from './class-fields'
 import { ItemFields } from './item-fields'
 import type { Guard } from './library-page'
 import { keepEdits, keptEdits } from './unsaved'
@@ -195,6 +196,8 @@ function EntryForm({
   // Fields that keep their own text (paragraph breaks) start again when the data changes elsewhere.
   const [generation, setGeneration] = useState(0)
   const [status, setStatus] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+  // A refused save marks every field that blocks it, the empty ones too.
+  const [attempted, setAttempted] = useState(false)
   const [confirm, setConfirm] = useState<'deleteEntry' | 'revertEntry' | null>(null)
   // Where focus goes once a delete or a discard reaches the form (the button pressed is gone).
   const focusNext = useRef<'heading' | 'restore' | 'conflict' | null>(null)
@@ -290,6 +293,7 @@ function EntryForm({
     if (pending) return t('library.saving')
     const reason = entryProblem(next)
     if (reason) {
+      setAttempted(true)
       const text = t(`library.problem.${reason}`)
       setStatus({ tone: 'error', text })
       return text
@@ -509,6 +513,15 @@ function EntryForm({
               <CreatureFields entry={entry} revision={baseRevision} onStore={storeBlock} />
             ) : entry.kind === 'item' ? (
               <ItemFields entry={entry} onChange={update} />
+            ) : entry.kind === 'class' || entry.kind === 'subclass' ? (
+              <>
+                {entry.kind === 'class' ? (
+                  <ClassFields entry={entry} onChange={update} revealed={attempted} />
+                ) : (
+                  <SubclassFields entry={entry} onChange={update} />
+                )}
+                <TextFields entry={entry} generation={generation} onChange={update} />
+              </>
             ) : (
               <TextFields entry={entry} generation={generation} onChange={update} />
             )}
@@ -631,6 +644,9 @@ function TextFields({
     onChange({ ...entry, data: withIndex(entry.data, patch) })
   const label = (prefix: string, value: string) =>
     t(`${prefix}.${value}` as 'srd.class.druid', { defaultValue: value })
+  // RYT-168: a spell names SRD classes and, by key, classes of packs.
+  const spellClassList = Array.isArray(index.cl) ? (index.cl as string[]) : []
+  const srdSpellClass = (value: string) => (spellClasses as readonly string[]).includes(value)
   return (
     <>
       {entry.kind === 'spell' && (
@@ -655,8 +671,10 @@ function TextFields({
           <Checkbox.Group
             label={t('library.classes')}
             className="lib-classes"
-            value={Array.isArray(index.cl) ? (index.cl as string[]) : []}
-            onChange={(value) => setIndex({ cl: value })}
+            value={spellClassList.filter((value) => srdSpellClass(value))}
+            onChange={(value) =>
+              setIndex({ cl: [...value, ...spellClassList.filter((item) => !srdSpellClass(item))] })
+            }
           >
             <div className="lib-class-grid">
               {spellClasses.map((value) => (
@@ -664,6 +682,22 @@ function TextFields({
               ))}
             </div>
           </Checkbox.Group>
+          <TextInput
+            label={t('library.classes.otherSpellClasses')}
+            description={t('library.classes.otherSpellClassesHint')}
+            defaultValue={spellClassList.filter((item) => !srdSpellClass(item)).join(', ')}
+            onChange={(event) =>
+              setIndex({
+                cl: [
+                  ...spellClassList.filter((item) => srdSpellClass(item)),
+                  ...event.currentTarget.value
+                    .split(/[\s,]+/)
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                ],
+              })
+            }
+          />
           <div className="lib-checks">
             <Checkbox
               label={t('library.concentration')}
@@ -680,11 +714,10 @@ function TextFields({
       )}
       {entry.kind === 'feature' && (
         <div className="lib-grid-fields">
-          <Select
+          <ClassReferenceField
             label={t('library.class')}
-            data={featureClasses.map((value) => ({ value, label: label('srd.class', value) }))}
-            value={typeof index.fc === 'string' ? index.fc : null}
-            onChange={(value) => setIndex({ fc: value ?? undefined })}
+            value={typeof index.fc === 'string' ? index.fc : undefined}
+            onChange={(value) => setIndex({ fc: value })}
           />
           <TextInput
             label={t('library.subclass')}

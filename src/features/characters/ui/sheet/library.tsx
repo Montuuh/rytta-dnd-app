@@ -2,10 +2,10 @@ import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ActionIcon, Button, Select, Stack, Switch, Tabs, Text, TextInput } from '@mantine/core'
 import { Check, Plus, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { GlossaryTerm, useSrdLibrary } from '@/features/glossary'
+import { GlossaryTerm, useClassName, useSrdLibrary } from '@/features/glossary'
 import { addLibraryFeature } from '../../domain/progression'
-import { isClassKey, slotsFor } from '../../domain/rules'
-import { classKeys } from '../../domain/srd'
+import { slotsFor } from '../../domain/rules'
+import { useClassCatalog, useClassDefName } from '../class-catalog'
 import type { PanelProps } from './panel-types'
 import { BlockSheet } from './widgets'
 
@@ -30,8 +30,14 @@ export function LibraryPicker({
 }) {
   const { t } = useTranslation()
   const library = useSrdLibrary()
+  const catalog = useClassCatalog()
+  const className = useClassName()
+  const defName = useClassDefName()
   const { build, level, change } = props
-  const ownClass = isClassKey(build.classKey) ? build.classKey : null
+  // RYT-168: any class the campaign has (SRD or pack) filters by default.
+  const ownClass = catalog?.classes.some((item) => item.key === build.classKey)
+    ? build.classKey
+    : null
   const [classFilter, setClassFilter] = useState<string>(ownClass ?? '')
   const [anyLevel, setAnyLevel] = useState(false)
   const [query, setQuery] = useState('')
@@ -55,7 +61,7 @@ export function LibraryPicker({
         .filter(
           (spell) =>
             matches(spell.name) &&
-            (!classFilter || spell.classes.includes(classFilter as never)) &&
+            (!classFilter || spell.classes.includes(classFilter)) &&
             (anyLevel || spell.level <= Math.max(maxSpellLevel, 0)),
         )
         .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
@@ -102,7 +108,7 @@ export function LibraryPicker({
         id: feature.id,
         name: feature.name,
         meta: feature.subclass
-          ? `${t('panel.levelShort', { level: feature.level })}, ${t(`srd.subclass.${feature.subclass}`)}`
+          ? `${t('panel.levelShort', { level: feature.level })}, ${className('subclass', feature.subclass)}`
           : t('panel.levelShort', { level: feature.level }),
         add: () =>
           change(
@@ -110,7 +116,7 @@ export function LibraryPicker({
             'panel.added',
           ),
       }))
-  }, [library, deferred, tab, classFilter, anyLevel, maxSpellLevel, level, change, t])
+  }, [library, deferred, tab, classFilter, anyLevel, maxSpellLevel, level, change, t, className])
   const shown = rows.slice(0, 80)
   return (
     <BlockSheet opened={opened} onClose={onClose} title={t('panel.library')} alert={alert}>
@@ -135,7 +141,7 @@ export function LibraryPicker({
           label={t('glossary.filter.class')}
           data={[
             { value: '', label: t('glossary.feature.allClasses') },
-            ...classKeys.map((key) => ({ value: key, label: t(`srd.class.${key}`) })),
+            ...(catalog?.classes ?? []).map((item) => ({ value: item.key, label: defName(item) })),
           ]}
           value={classFilter}
           allowDeselect={false}

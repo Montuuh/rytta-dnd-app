@@ -5206,12 +5206,12 @@
       "title": "Classes and subclasses as pack data",
       "priority": "P3",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-164"],
       "sources": [
         "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it)."
       ],
-      "scope": "Classes and subclasses become pack entries with their mechanics (hit die, proficiencies, saving throws, spellcasting progression and slots, the level a subclass is chosen, the features gained by level), edited with library forms. The SRD classes move to that shape and character creation and level up read them from the campaign's packs.",
+      "scope": "Classes and subclasses become pack entries with their table (hit die, saving throws, skill choices, slot progression and spellcasting ability, the level a subclass is chosen, improvement levels, prepared spells by level, cantrips), edited with library forms; features gained by level stay feature entries. The SRD classes are uploaded to the SRD pack and character creation and level up read them from the campaign's packs. Class resources with uses stay in the app for the SRD classes.",
       "acceptance": [
         "A campaign with the SRD packs offers the same classes and subclasses, with the same mechanics, as before.",
         "A custom pack can add a class or a subclass that creation and level up offer.",
@@ -5219,7 +5219,7 @@
         "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
       ],
       "validation": ["npm run check", "creation and level-up e2e", "independent UI review PASS"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-168/validation.md"]
     },
     {
       "id": "RYT-169",

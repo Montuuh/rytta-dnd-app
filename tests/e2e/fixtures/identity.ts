@@ -80,22 +80,100 @@ const glossaryBodies = { en: glossaryFile('en'), es: glossaryFile('es') } as Rec
 const ruleCategoryOf = (cat: string) =>
   cat === 'spell' ? 'spells' : cat === 'feature' ? 'classes' : 'rules'
 /** Test switches for the rule packs: hidden glossary ids, or a library that cannot be reached. */
-export const rulePackState = { hidden: [] as string[], unreachable: false }
+export const rulePackState = { hidden: [] as string[], unreachable: false, books: false }
+/** RYT-168: a pack with its own class, and a subclass for the SRD Bard. */
+export const bookRulesPackId = '80000000-0000-4000-8000-000000000009'
+const bookClassRows = [
+  {
+    id: 'class.b00c5000--rune-knight',
+    cat: 'class',
+    en: 'Rune Knight',
+    es: 'Caballero rúnico',
+    hitDie: 10,
+    saves: ['str', 'con'],
+    skillCount: 2,
+    skills: ['athletics', 'arcana', 'history'],
+    caster: 'none',
+    subclassLevel: 3,
+    improvementLevels: [4, 8, 12, 16, 19],
+  },
+  {
+    id: 'subclass.b00c5000--giant-blood',
+    cat: 'subclass',
+    en: 'College of Giants',
+    es: 'Colegio de los gigantes',
+    class: 'bard',
+  },
+  {
+    id: 'feature.b00c5000--rune-carver',
+    cat: 'feature',
+    en: 'Rune Carver',
+    es: 'Tallador de runas',
+    nl: 1,
+    lv: 1,
+    fc: 'rune-knight',
+  },
+  {
+    id: 'feature.b00c5000--giant-might',
+    cat: 'feature',
+    en: 'Giant Might',
+    es: 'Poder del gigante',
+    nl: 1,
+    lv: 3,
+    fc: 'bard',
+    sb: 'giant-blood',
+  },
+]
 function rulePackRpc(method: string, body: Record<string, unknown>) {
   if (method === 'get_campaign_rule_packs')
-    return (['spells', 'classes', 'rules'] as const).map((category) => ({
-      id: srdRulesPackId,
-      ref: '80000000',
-      title_en: 'System Reference Document 5.2.1',
-      title_es: 'Documento de referencia del sistema 5.2.1',
-      srd: true,
-      category,
+    return [
+      ...rulePackList(),
+      ...(rulePackState.books
+        ? [
+            {
+              id: bookRulesPackId,
+              ref: 'b00c5000',
+              title_en: 'Owner books',
+              title_es: 'Libros del dueño',
+              srd: false,
+              category: 'classes',
+              version: 1,
+              enabled: true,
+              hidden: [],
+            },
+          ]
+        : []),
+    ]
+  if (body.target_pack === bookRulesPackId) {
+    const part = String(body.part)
+    if (part === 'index') return { version: 1, rows: bookClassRows }
+    return {
       version: 1,
-      enabled: true,
-      hidden: rulePackState.hidden.filter(
-        (id) => ruleCategoryOf(id.slice(0, id.indexOf('.'))) === category,
+      bodies: Object.fromEntries(
+        bookClassRows
+          .filter((row) => row.cat === 'feature')
+          .map((row) => [row.id, { summary: `${row.en}.`, blocks: [{ t: 'p', x: `${row.en}.` }] }]),
       ),
-    }))
+    }
+  }
+  return rulePart(body)
+}
+function rulePackList() {
+  return (['spells', 'classes', 'rules'] as const).map((category) => ({
+    id: srdRulesPackId,
+    ref: '80000000',
+    title_en: 'System Reference Document 5.2.1',
+    title_es: 'Documento de referencia del sistema 5.2.1',
+    srd: true,
+    category,
+    version: 1,
+    enabled: true,
+    hidden: rulePackState.hidden.filter(
+      (id) => ruleCategoryOf(id.slice(0, id.indexOf('.'))) === category,
+    ),
+  }))
+}
+function rulePart(body: Record<string, unknown>) {
   const category = String(body.target_category)
   const rows = glossaryRows.filter((row) => ruleCategoryOf(row.cat) === category)
   const part = String(body.part)

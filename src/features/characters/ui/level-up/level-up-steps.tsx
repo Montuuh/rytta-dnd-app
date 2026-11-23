@@ -1,3 +1,5 @@
+import { subclassesFor } from '../../domain/class-catalog'
+import { useClassCatalog, useClassDefName } from '../class-catalog'
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ActionIcon, Button, NativeSelect, Text, TextInput } from '@mantine/core'
 import { Check, Plus, Search, TriangleAlert, X } from 'lucide-react'
@@ -18,7 +20,6 @@ import {
   type LevelUpSummary,
   type SpellPick,
   improvementAmount,
-  srdSubclassOf,
 } from '../../domain/level-up'
 import { finalAbilities, isClassKey, modifier, signed } from '../../domain/rules'
 import type { Build, Feature } from '../../domain/sheet'
@@ -404,9 +405,10 @@ function SubclassChoice({
   onChange: (value: LevelUpChoices['subclass']) => void
 }) {
   const { t } = useTranslation()
-  const srd = srdSubclassOf(build)
-  const srdName = srd ? t(`srd.subclass.${srd}` as 'srd.subclass.lore') : ''
-  const mode = value === null ? null : value.key ? 'srd' : 'custom'
+  const catalog = useClassCatalog()
+  const nameOf = useClassDefName()
+  const options = subclassesFor(catalog, build.classKey)
+  const mode = value === null ? null : value.key ? 'pack' : 'custom'
   return (
     <div className="levelup-card">
       <fieldset className="levelup-fieldset">
@@ -415,14 +417,18 @@ function SubclassChoice({
           <ChoiceStatus missing={missing} />
         </legend>
         <div className="levelup-choices">
-          {srd && (
-            <ChoiceCard
-              name="levelup-subclass"
-              checked={mode === 'srd'}
-              onChange={() => onChange({ key: srd, name: srdName })}
-              label={srdName}
-            />
-          )}
+          {options.map((option) => {
+            const name = nameOf(option, 'subclass')
+            return (
+              <ChoiceCard
+                key={option.key}
+                name="levelup-subclass"
+                checked={value?.key === option.key}
+                onChange={() => onChange({ key: option.key, name })}
+                label={name}
+              />
+            )
+          })}
           <ChoiceCard
             name="levelup-subclass"
             checked={mode === 'custom'}

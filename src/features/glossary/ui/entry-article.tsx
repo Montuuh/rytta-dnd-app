@@ -5,6 +5,7 @@ import type { GlossaryEntry } from '../domain/catalog'
 import { homebrewParagraphs, type HomebrewEntry } from '../domain/homebrew'
 import { factKeys, type Block, type EntryBody, type FactKey } from '../domain/types'
 import { EntryActions } from './entry-actions'
+import { useClassName } from './class-names'
 import { useGlossary } from './glossary-context'
 import { customFactIcon, factIcons } from './icon-maps'
 import { CategoryIcon } from './icons'
@@ -105,6 +106,7 @@ function Facts({
 
 function SpellBlock({ entry, body }: { entry: GlossaryEntry; body: EntryBody }) {
   const { t } = useTranslation()
+  const className = useClassName()
   const glossary = useGlossary()
   const meta = entry.spell
   const stats = body.spell
@@ -176,7 +178,7 @@ function SpellBlock({ entry, body }: { entry: GlossaryEntry; body: EntryBody }) 
       </ul>
       <p className="gl-spell-classes">
         <span>{t('glossary.spell.classes')}: </span>
-        {meta.classes.map((c) => t(`srd.class.${c}`)).join(', ')}
+        {meta.classes.map((c) => className('class', c)).join(', ')}
       </p>
     </section>
   )
@@ -230,6 +232,7 @@ export function EntryArticle({
   hideHeadword,
 }: EntryArticleProps) {
   const { t, i18n } = useTranslation()
+  const className = useClassName()
   const glossary = useGlossary()
   const homebrew = entry.homebrew
   const facts = homebrew
@@ -289,12 +292,12 @@ export function EntryArticle({
         <p className="gl-spell-line">
           {entry.feature.subclass
             ? t('glossary.feature.subclassLine', {
-                subclass: t(`srd.subclass.${entry.feature.subclass}`),
-                className: t(`srd.class.${entry.feature.classKey}`),
+                subclass: className('subclass', entry.feature.subclass),
+                className: className('class', entry.feature.classKey),
                 level: entry.feature.level,
               })
             : t('glossary.feature.line', {
-                className: t(`srd.class.${entry.feature.classKey}`),
+                className: className('class', entry.feature.classKey),
                 level: entry.feature.level,
               })}
         </p>

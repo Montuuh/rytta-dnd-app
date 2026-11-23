@@ -245,7 +245,7 @@ export const sheetEs = {
   'wizard.draftSaved': 'Borrador guardado. Puedes continuar más tarde.',
   'wizard.finished': 'Personaje listo.',
   'wizard.class': 'Clase',
-  'wizard.classHint': 'Elige una clase del SRD o define una homebrew.',
+  'wizard.classHint': 'Elige una clase de la campaña o define una propia.',
   'wizard.classCard': 'Dado d{{die}}, salvaciones {{saves}}',
   'wizard.classRole.barbarian': 'Furia y golpes brutales',
   'wizard.classRole.bard': 'Música, conjuros y labia',

@@ -1,3 +1,4 @@
+import { classDefFor, type ClassDef } from './class-catalog'
 import { chooseBackground, chooseClass, chooseSpecies, type Namer } from './creation'
 import { syncProgression, type LibraryFeature, type ProgressionNames } from './progression'
 import {
@@ -163,6 +164,8 @@ export function quickDraft(choice: QuickChoice): SheetDraft {
 export type BlankChoice = {
   classKey: string
   classLabel: string
+  /** RYT-168: the chosen class's definition (null for a class typed by hand). */
+  classDef?: ClassDef | null
   level: number
   speciesKey?: string
   speciesLabel?: string
@@ -177,7 +180,8 @@ export type BlankChoice = {
 export function blankDraft(choice: BlankChoice): SheetDraft {
   const level = Math.min(20, Math.max(1, Math.trunc(choice.level)))
   let build: Build = { ...emptyBuild(), abilityMethod: 'manual', origin: 'blank' }
-  build = chooseClass(build, choice.classKey, choice.classLabel)
+  const def = choice.classDef === undefined ? classDefFor(null, choice.classKey) : choice.classDef
+  build = chooseClass(build, choice.classKey, choice.classLabel, def)
   const namer: Namer = choice.name ?? ((_, key) => key)
   if (choice.speciesKey || choice.speciesLabel?.trim()) {
     build = chooseSpecies(
@@ -195,8 +199,7 @@ export function blankDraft(choice: BlankChoice): SheetDraft {
       namer,
     )
   }
-  if (isClassKey(build.classKey))
-    build = syncProgression(build, level, choice.library, choice.names)
+  if (def) build = syncProgression(build, level, choice.library, choice.names)
   return {
     build,
     level,

@@ -471,3 +471,14 @@ cross-campaign DM, plus the guarded PRE mirror.
 - Super admin offers to campaigns they do not run are not written to the admin audit log.
 - A pack owner who loses the editor role can no longer manage its offers; super admins still can.
   A pack whose owner deleted their account has no owner and only super admins manage it.
+
+## Pack classes (RYT-168)
+
+- Classes and subclasses travel with the class features through `get_campaign_rule_packs` and
+  `get_campaign_rule_pack`, already open to every active member: no new RPC or grant. Their index
+  is parsed with a schema in the browser; a row that does not read is left out.
+- A pack class's table only drives choices on the character's own sheet (hit die, saves, skill
+  count, slot progression, prepared spells). The server keeps validating sheets as before: a
+  Player can still type any class by hand, so pack data grants nothing the sheet could not hold.
+- References inside a pack (`rune-knight` in a feature or spell of that pack) become
+  `<ref>--rune-knight` in the browser; bare names of another pack's classes cannot be reached.

@@ -9,7 +9,7 @@ import {
   srdRuleBodiesQuery,
   srdRuleIndexQuery,
 } from '../api'
-import { ruleCategories, unlistedIds } from '../domain/packs'
+import { localizeIndexes, ruleCategories, unlistedIds, type ClassRow } from '../domain/packs'
 import type { EntryBodies, GlossaryLanguage, IndexRow } from '../domain/types'
 
 export type GlossarySource = {
@@ -17,6 +17,8 @@ export type GlossarySource = {
   rows: IndexRow[] | undefined
   /** Ids the campaign no longer offers: readable, but left out of lists, search and links. */
   unlisted: ReadonlySet<string>
+  /** RYT-168: the classes and subclasses of the packs; undefined until the index loads. */
+  classRows: ClassRow[] | undefined
   bodies: EntryBodies | undefined
   indexError: boolean
   bodiesError: boolean
@@ -86,16 +88,40 @@ export function useGlossarySource(options: {
   const bodiesKey = packBodies.map((q) => q.dataUpdatedAt).join()
   const srdBodiesKey = srdBodies.map((q) => q.dataUpdatedAt).join()
 
+  // Pack rows with each pack's own classes referenced as `<ref>--<key>` (RYT-168).
+  const localized = useMemo(
+    () => (inCampaign && packs.data ? localizeIndexes(packList, indexData) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inCampaign, packList, indexKey],
+  )
   const rows = useMemo(() => {
     if (demo) return bundled.data
     if (inCampaign) {
-      if (!packs.data || indexData.some((d) => !d)) return undefined
-      return indexData.flatMap((d) => d!.rows)
+      if (!packs.data || localized.some((d) => !d)) return undefined
+      return localized.flatMap((d) => d!.rows)
     }
     if (srdIndexes.some((q) => !q.data)) return undefined
     return srdIndexes.flatMap((q) => q.data!.rows)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demo, inCampaign, bundled.data, packs.data, indexKey, srdKey])
+  }, [demo, inCampaign, bundled.data, packs.data, localized, srdKey])
+  const classRows = useMemo(() => {
+    if (demo) return []
+    if (inCampaign) {
+      if (!packs.data || localized.some((d) => !d)) return undefined
+      const hidden = unlistedIds(packList, indexData)
+      return localized.flatMap((d, at) => {
+        const pack = packList[at]!
+        return d!.classRows.map((row) => ({
+          ...row,
+          ...(hidden.has(row.id) ? { hidden: true } : {}),
+          ...(pack.srd ? {} : { pack: { title_en: pack.title_en, title_es: pack.title_es } }),
+        }))
+      })
+    }
+    if (srdIndexes.some((q) => !q.data)) return undefined
+    return srdIndexes.flatMap((q) => q.data!.classRows)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo, inCampaign, packs.data, packList, localized, srdKey])
   const unlisted = useMemo(
     () => (inCampaign && packs.data ? unlistedIds(packList, indexData) : none),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,6 +145,7 @@ export function useGlossarySource(options: {
   return {
     rows,
     unlisted,
+    classRows,
     bodies,
     indexError,
     bodiesError,

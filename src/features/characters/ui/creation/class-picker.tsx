@@ -1,7 +1,9 @@
 import { useId, type ReactNode } from 'react'
-import { Check, PenTool } from 'lucide-react'
+import { BookMarked, Check, PenTool } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { classes, classKeys, type Ability, type ClassKey } from '../../domain/srd'
+import type { ClassDef } from '../../domain/class-catalog'
+import type { Ability } from '../../domain/srd'
+import { useClassDefName } from '../class-catalog'
 import { classEmblem } from '../class-emblem'
 import './class-picker.css'
 
@@ -9,8 +11,10 @@ import './class-picker.css'
  * RYT-112: the class chooser of both creation paths. One native radio per painted emblem card
  * (arrow keys move the choice, Tab leaves the group). The chosen card is marked by a check and a
  * heavier frame as well as by colour. `withCustom` adds the homebrew class of the full wizard.
+ * RYT-168: the classes come from the campaign's packs; a pack class names its pack.
  */
 export function ClassPicker({
+  options,
   value,
   onChange,
   label,
@@ -19,8 +23,10 @@ export function ClassPicker({
   showSaves = false,
   hideLabel = false,
 }: {
+  /** The classes the campaign offers. */
+  options: readonly ClassDef[]
   value: string
-  onChange: (key: ClassKey | 'custom') => void
+  onChange: (key: string) => void
   label: string
   description?: string
   withCustom?: boolean
@@ -29,8 +35,9 @@ export function ClassPicker({
   /** The step's own heading already names the choice. */
   hideLabel?: boolean
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const id = useId()
+  const nameOf = useClassDefName()
   const saves = (list: readonly Ability[]) =>
     list.map((key) => t(`srd.abilityShort.${key}`)).join(', ')
   return (
@@ -49,33 +56,42 @@ export function ClassPicker({
         aria-describedby={description && !hideLabel ? `${id}-hint` : undefined}
         className="class-picker-grid"
       >
-        {classKeys.map((key) => {
-          const emblem = classEmblem(key)
-          const entry = classes[key]
+        {options.map((entry) => {
+          const key = entry.key
+          const emblem = entry.srd ? classEmblem(key) : null
+          const pack = entry.pack
+            ? i18n.language.startsWith('en')
+              ? entry.pack.title_en || entry.pack.title_es
+              : entry.pack.title_es || entry.pack.title_en
+            : ''
           return (
             <Card
               key={key}
               name={`${id}-class`}
               checked={value === key}
               onSelect={() => onChange(key)}
-              title={t(`srd.class.${key}`)}
-              role={t(`wizard.classRole.${key}`)}
+              title={nameOf(entry)}
+              role={entry.srd ? t(`wizard.classRole.${key}` as 'wizard.classRole.wizard') : pack}
               meta={
                 showSaves
                   ? t('wizard.classCard', { die: entry.hitDie, saves: saves(entry.saves) })
                   : t('creation.hitDie', { die: entry.hitDie })
               }
               art={
-                <img
-                  src={emblem?.thumb}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  draggable={false}
-                  width={72}
-                  height={72}
-                />
+                emblem ? (
+                  <img
+                    src={emblem.thumb}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                    width={72}
+                    height={72}
+                  />
+                ) : (
+                  <BookMarked size={28} aria-hidden="true" />
+                )
               }
             />
           )

@@ -21,14 +21,21 @@ import {
   applyHp,
   defaultArmorClass,
   isBackgroundKey,
-  isClassKey,
   isSpeciesKey,
   passivePerception,
   proficiencyBonus,
   signed,
   type StatBreakdown,
 } from '../../domain/rules'
-import { backgroundKeys, classKeys, speciesKeys, subclassOf } from '../../domain/srd'
+import { backgroundKeys, speciesKeys } from '../../domain/srd'
+import {
+  classDefFor,
+  offeredClasses,
+  srdClassDefs,
+  subclassesFor,
+} from '../../domain/class-catalog'
+import { useClassCatalog, useClassDefName } from '../class-catalog'
+import { SubclassFields } from './subclass-fields'
 import { classEmblem } from '../class-emblem'
 import { HpField } from '../hp-field'
 import { deathState, toneOf } from './hp-tone'
@@ -594,8 +601,14 @@ function EditIdentity({ build, name, change }: HeroProps) {
   const { t } = useTranslation()
   const originNamer = (kind: 'trait' | 'feat', key: string) =>
     t(`srd.${kind}.${key}` as 'srd.trait.darkvision')
-  const srdSubclass = isClassKey(build.classKey) ? subclassOf[build.classKey] : undefined
-  const classSelect = isClassKey(build.classKey) ? build.classKey : 'custom'
+  const catalog = useClassCatalog()
+  const nameOf = useClassDefName()
+  // RYT-168: the classes the campaign offers, and the sheet's own even when no longer offered.
+  const current = classDefFor(catalog, build.classKey)
+  const offered = catalog ? offeredClasses(catalog) : srdClassDefs
+  const classOptions =
+    current && !offered.some((item) => item.key === current.key) ? [...offered, current] : offered
+  const classSelect = current ? build.classKey : 'custom'
   const speciesSelect = isSpeciesKey(build.speciesKey)
     ? build.speciesKey
     : build.speciesKey === 'custom' || build.speciesLabel.trim()
@@ -628,7 +641,7 @@ function EditIdentity({ build, name, change }: HeroProps) {
         <Select
           label={t('wizard.class')}
           data={[
-            ...classKeys.map((key) => ({ value: key, label: t(`srd.class.${key}`) })),
+            ...classOptions.map((item) => ({ value: item.key, label: nameOf(item) })),
             { value: 'custom', label: t('creation.customClass') },
           ]}
           value={classSelect}
@@ -637,14 +650,18 @@ function EditIdentity({ build, name, change }: HeroProps) {
           onChange={(value) => {
             if (!value) return
             change((draft) => {
-              const label = isClassKey(value)
-                ? t(`srd.class.${value}`)
-                : isClassKey(draft.build.classKey)
+              const def = value === 'custom' ? null : classDefFor(catalog, value)
+              const label = def
+                ? nameOf(def)
+                : classDefFor(catalog, draft.build.classKey)
                   ? ''
                   : draft.build.classLabel
-              const next = chooseClass(draft.build, value, label)
+              const next = chooseClass(draft.build, value, label, def)
+              // A subclass of another class does not follow the new one.
               const keepSubclass =
-                !isClassKey(value) || !next.subclassKey || next.subclassKey === subclassOf[value]
+                !def ||
+                !next.subclassKey ||
+                subclassesFor(catalog, value).some((item) => item.key === next.subclassKey)
               return {
                 ...draft,
                 build: keepSubclass ? next : { ...next, subclassKey: '', subclass: '' },
@@ -666,48 +683,7 @@ function EditIdentity({ build, name, change }: HeroProps) {
             }}
           />
         )}
-        {srdSubclass && (
-          <Select
-            label={t('wizard.subclass')}
-            data={[
-              { value: '', label: t('panel.noSubclass') },
-              {
-                value: srdSubclass,
-                label: t(`srd.subclass.${srdSubclass}` as 'srd.subclass.lore'),
-              },
-              { value: 'custom', label: t('panel.otherSubclass') },
-            ]}
-            value={build.subclassKey ? build.subclassKey : build.subclass ? 'custom' : ''}
-            allowDeselect={false}
-            comboboxProps={{ withinPortal: true }}
-            onChange={(value) =>
-              change((draft) => ({
-                ...draft,
-                build: {
-                  ...draft.build,
-                  subclassKey: value === srdSubclass ? value : '',
-                  subclass:
-                    value === srdSubclass
-                      ? t(`srd.subclass.${srdSubclass}` as 'srd.subclass.lore')
-                      : value === 'custom'
-                        ? draft.build.subclass
-                        : '',
-                },
-              }))
-            }
-          />
-        )}
-        {!build.subclassKey && (srdSubclass === undefined || build.subclass) && (
-          <TextInput
-            label={t('panel.subclassName')}
-            maxLength={60}
-            value={build.subclass}
-            onChange={(event) => {
-              const value = event.currentTarget.value
-              change((draft) => ({ ...draft, build: { ...draft.build, subclass: value } }))
-            }}
-          />
-        )}
+        <SubclassFields build={build} change={change} />
         <Select
           label={t('wizard.species')}
           data={[

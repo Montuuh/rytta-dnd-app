@@ -92,14 +92,12 @@ for (const [language, theme] of [
       const server = libraryServer({ srdWithoutItems: true, sample: true })
       await server.install(page)
       await page.goto('./#/library')
-      await page
-        .getByRole('button', { name: es ? 'Subir los objetos del SRD' : 'Upload the SRD items' })
-        .click()
+      await page.getByRole('button', { name: es ? 'Completar el SRD' : 'Complete the SRD' }).click()
       const upload = page.getByRole('dialog', {
-        name: es ? 'Subir los objetos del SRD' : 'Upload the SRD items',
+        name: es ? 'Completar el SRD' : 'Complete the SRD',
       })
       await upload
-        .getByRole('button', { name: es ? 'Subir 197 entradas' : 'Upload 197 entries' })
+        .getByRole('button', { name: es ? 'Subir 221 entradas' : 'Upload 221 entries' })
         .click()
       await expect(upload).toHaveCount(0, { timeout: 30_000 })
       await page.goto(`./#/library/${srdLibraryPackId}/item`)

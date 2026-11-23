@@ -153,6 +153,9 @@ export type EntryBody = z.infer<typeof entryBodySchema>
 export type EntryBodies = Record<string, EntryBody>
 
 const name = z.string().min(1).max(80)
+/** RYT-168: a class or subclass, of the SRD (`wizard`) or of a pack (`<ref>--<key>`). */
+export const classReferencePattern = /^(?:[0-9a-f]{8}--)?[a-z0-9]+(?:-[a-z0-9]+)*$/
+const classReference = z.string().max(60).regex(classReferencePattern)
 export const indexRowSchema = z
   .object({
     id: z.string().regex(/^[a-z]+\.[a-z0-9-]+$/),
@@ -164,12 +167,12 @@ export const indexRowSchema = z
     nl: z.literal(1).optional(),
     lv: z.number().int().min(0).max(20).optional(),
     sc: z.enum(spellSchools).optional(),
-    cl: z.array(z.enum(spellClasses)).min(1).optional(),
+    cl: z.array(classReference).min(1).optional(),
     co: z.literal(1).optional(),
     ri: z.literal(1).optional(),
     ab: z.enum(abilityIds).optional(),
-    fc: z.enum(featureClasses).optional(),
-    sb: z.enum(featureSubclasses).optional(),
+    fc: classReference.optional(),
+    sb: classReference.optional(),
     ed: z.literal('2014').optional(),
   })
   .strict()

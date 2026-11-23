@@ -98,6 +98,25 @@ Storeroom items keep their link to the pack in `basic_key`: the SRD and the Rytt
 keys of the old bundled catalogue (so existing items and shop presets stay linked), and other packs
 use `<ref>--<key>`.
 
+## Classes and subclasses from packs (RYT-168, 2026-11-23)
+
+Owner choices from the block K options page, all the recommended ones:
+
+- P1 A: a class's table is pack data: hit die, saving throws, skill choices, spellcasting kind and
+  ability, the level its subclass is chosen, its ability score improvement levels, its prepared
+  spells by level and whether it learns cantrips. Class resources with uses (Rage, Bardic
+  Inspiration, Sorcery Points and the rest) stay in the app for the 12 SRD classes; a class from
+  another pack shows its features and its uses are tracked by hand.
+- P2 A: a pack class picks one of the four slot progressions (full, half, pact, none).
+- P3 A: a subclass names its class: any SRD class or a class of its own pack. Level up offers
+  every enabled subclass of the character's class.
+- P4 A: the wizard's typed "other class" stays for single characters; pack classes are listed
+  with their pack.
+
+Classes and subclasses travel in the classes category with the class features, as index rows of
+kinds `class` and `subclass`. An SRD pinned at a version without classes keeps offering the app's
+SRD classes, which hold the same data, until its DM accepts the version that adds them.
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

@@ -29,7 +29,7 @@ import {
   type ContentLanguage,
   type ContentPack,
 } from '../domain/library'
-import { ryttaBasicsSlug, srdSlug } from '../domain/srd'
+import { newerKinds, ryttaBasicsSlug, srdSlug } from '../domain/srd'
 import { BundledDialog, ImportDialog, PackDialog, PublishDialog, type Bundle } from './dialogs'
 import { OffersDialog } from './offers-dialog'
 import { EntryEditor } from './entry-editor'
@@ -229,17 +229,19 @@ export function LibraryPage() {
   const kind = pack ? (params.kind ?? defaultKind(pack)) : null
   const srdPack = packs.find((p) => p.slug === srdSlug) ?? null
   const hasRytta = packs.some((p) => p.slug === ryttaBasicsSlug)
-  // RYT-166: the SRD gains its items; the Rytta basic items get their own pack.
-  const srdItems = srdPack && !(srdPack.kinds.item || srdPack.drafts?.item)
+  // RYT-166, RYT-168: the SRD gains its items, classes and subclasses; the Rytta basic items get
+  // their own pack.
+  const srdMissing =
+    srdPack && newerKinds.some((kind) => !(srdPack.kinds[kind] || srdPack.drafts?.[kind]))
   const uploadButtons = (
     <>
-      {(!srdPack || srdItems) && (
+      {(!srdPack || srdMissing) && (
         <Button
           variant="light"
           leftSection={<UploadCloud size={18} aria-hidden="true" />}
           onClick={() => openDialog({ kind: 'bundled', bundle: 'srd' })}
         >
-          {t(srdPack ? 'library.uploadSrdItems' : 'library.uploadSrd')}
+          {t(srdPack ? 'library.uploadSrdMissing' : 'library.uploadSrd')}
         </Button>
       )}
       {!hasRytta && (

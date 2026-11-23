@@ -123,6 +123,7 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     () => ({
       language,
       catalog,
+      classRows: source.classRows ?? null,
       linker,
       bodies: source.bodies ?? null,
       bodiesError: source.bodiesError,
@@ -140,6 +141,7 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     [
       language,
       catalog,
+      source.classRows,
       linker,
       source.bodies,
       source.bodiesError,

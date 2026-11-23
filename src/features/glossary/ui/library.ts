@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
-import type { FeatureClass, FeatureSubclass, SpellClass, SpellSchool } from '../domain/types'
+import type { SpellSchool } from '../domain/types'
 import { useGlossary } from './glossary-context'
 
 /** RYT-071: SRD class features and spells for the character sheet's library picker. */
 export type LibraryFeatureEntry = {
   id: string
   name: string
-  classKey: FeatureClass
+  classKey: string
   level: number
-  subclass: FeatureSubclass | null
+  subclass: string | null
   /** RYT-164: no longer offered by the campaign; characters that have it keep it. */
   hidden?: boolean
 }
@@ -17,7 +17,7 @@ export type LibrarySpellEntry = {
   name: string
   level: number
   school: SpellSchool
-  classes: SpellClass[]
+  classes: string[]
   concentration: boolean
   ritual: boolean
 }
@@ -26,8 +26,9 @@ export type LibrarySpellEntry = {
 export function useSrdLibrary() {
   const glossary = useGlossary()
   const catalog = glossary?.catalog ?? null
+  const classRows = glossary?.classRows ?? null
   return useMemo(() => {
-    if (!catalog) return null
+    if (!catalog || !classRows) return null
     const features: LibraryFeatureEntry[] = []
     const spells: LibrarySpellEntry[] = []
     for (const entry of catalog.entries) {
@@ -54,6 +55,6 @@ export function useSrdLibrary() {
           subclass: entry.feature.subclass,
           hidden: true,
         })
-    return { features, spells }
-  }, [catalog])
+    return { features, spells, classes: classRows }
+  }, [catalog, classRows])
 }

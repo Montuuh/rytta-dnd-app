@@ -15,6 +15,8 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
+import { classDefFor } from '../../domain/class-catalog'
+import { useClassCatalog } from '../class-catalog'
 import { CharacterPortrait } from '@/features/inventory'
 import { sheetQuery, useSheetAction } from '../../api'
 import {
@@ -178,6 +180,7 @@ function Wizard({
   const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
   const library = useSrdLibrary()
+  const catalog = useClassCatalog()
   // RYT-164 (P4 A): finishing adds class features from the campaign's packs, so it waits for
   // them, and finishes by itself once they arrive.
   const [libraryWait, setLibraryWait] = useState<null | (() => void)>(null)
@@ -230,8 +233,8 @@ function Wizard({
   // Blocking problems are derived from the draft, so a fixed problem disappears at once.
   const issuesFor = (mode: { complete: boolean; exiting: boolean }) =>
     mode.complete
-      ? validateAll(draft)
-      : validateStep(current, draft).filter(
+      ? validateAll(draft, classDefFor(catalog, draft.build.classKey))
+      : validateStep(current, draft, classDefFor(catalog, draft.build.classKey)).filter(
           (issue) => !mode.exiting || issue === 'emptyName' || issue === 'tooLarge',
         )
   const issues = attempt ? issuesFor(attempt) : []
@@ -244,10 +247,15 @@ function Wizard({
   const gapKey = (step: CreationStep, kind: string) => `${step}:${kind}`
   const reviewGaps = editing
     ? []
-    : buildGaps(draft.build).filter(({ step }) => stepApplies(step, draft.build))
+    : buildGaps(draft.build, classDefFor(catalog, draft.build.classKey)).filter(({ step }) =>
+        stepApplies(step, draft.build),
+      )
   const stepOpen = editing
     ? []
-    : stepGaps(current, draft.build).map((gap) => ({ step: current, gap }))
+    : stepGaps(current, draft.build, classDefFor(catalog, draft.build.classKey)).map((gap) => ({
+        step: current,
+        gap,
+      }))
   // A step asks once; finishing asks again for whatever is still open, whatever was said before.
   const openGaps = last
     ? reviewGaps

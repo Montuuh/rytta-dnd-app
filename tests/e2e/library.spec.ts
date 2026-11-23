@@ -53,11 +53,11 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   await expect(upload.locator('button', { hasText: 'Cancelar' })).toBeFocused()
   await expect(
     upload.getByText(
-      /con 1414 entradas: criaturas, sus rasgos, todo el glosario de reglas y el equipo/,
+      /con 1438 entradas: criaturas, sus rasgos, todo el glosario de reglas, el equipo y las clases/,
     ),
   ).toBeVisible()
   await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 1414 entradas' }).click()
+  await upload.getByRole('button', { name: 'Subir 1438 entradas' }).click()
   await expect(upload).toHaveCount(0, { timeout: 30_000 })
   await expect(page.getByRole('status').filter({ hasText: 'Subido como borrador.' })).toBeVisible()
   expect(server.packs).toHaveLength(1)
@@ -66,7 +66,8 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
     visibility: 'public',
     license: 'CC-BY-4.0',
   })
-  expect(server.entries()).toHaveLength(1414)
+  expect(server.entries()).toHaveLength(1438)
+  expect(server.entries().filter((e) => e.kind === 'class')).toHaveLength(12)
   expect(server.entries().filter((e) => e.kind === 'item')).toHaveLength(197)
   await expect(page.locator('#lib-entries-title')).toBeFocused()
 
@@ -79,13 +80,13 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   expect(names).toEqual([...names].sort(new Intl.Collator('es').compare))
 
   // Publishing sends every draft as version 1.
-  await expect(page.locator('.lib-banner')).toContainText('1414 cambios sin publicar')
+  await expect(page.locator('.lib-banner')).toContainText('1438 cambios sin publicar')
   await page.getByRole('button', { name: 'Publicar versión 1' }).click()
   const publish = page.getByRole('dialog', { name: /Publicar la versión 1/ })
   await expect(publish.locator('button', { hasText: 'Cancelar' })).toBeFocused()
   // The fixture lists every change; the hosted list stops at 1000 (the pack count is shown then).
-  await expect(publish.getByText('1414 cambios sin publicar')).toBeVisible()
-  await expect(publish.getByText('y 1402 más')).toBeVisible()
+  await expect(publish.getByText('1438 cambios sin publicar')).toBeVisible()
+  await expect(publish.getByText('y 1426 más')).toBeVisible()
   await audit(page, '[role="dialog"]')
   await publish.getByRole('button', { name: 'Publicar', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Versión 1 publicada.' })).toBeVisible()
@@ -218,28 +219,32 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
 
 test('RYT-166 the SRD gains its items, the Rytta basics get their pack and items edit in a form', async ({
   page,
-}) => {
+}, info) => {
   test.setTimeout(90_000)
   await identityFixture(page)
   const server = libraryServer({ srdWithoutItems: true })
   await server.install(page)
   await page.goto('./#/library')
+  // The first load can be slow while the SRD upload of another test runs beside it.
   await expect(
     page.getByRole('heading', { level: 1, name: 'Biblioteca de contenido' }),
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 30_000 })
 
-  // Only the missing kind goes up: the SRD keeps its creature as it was.
-  await page.getByRole('button', { name: 'Subir los objetos del SRD' }).click()
-  const upload = page.getByRole('dialog', { name: 'Subir los objetos del SRD' })
-  await expect(upload.getByText(/197 objetos del SRD/)).toBeVisible()
+  // Only the missing kinds go up: the SRD keeps its creature as it was.
+  await page.getByRole('button', { name: 'Completar el SRD' }).click()
+  const upload = page.getByRole('dialog', { name: 'Completar el SRD' })
+  await expect(
+    upload.getByText(/221 entradas del SRD que aún no tiene \(objetos, clases, subclases\)/i),
+  ).toBeVisible()
   await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 197 entradas' }).click()
+  await upload.getByRole('button', { name: 'Subir 221 entradas' }).click()
   await expect(upload).toHaveCount(0, { timeout: 30_000 })
   const items = () => server.entries().filter((e) => e.kind === 'item')
   expect(items()).toHaveLength(197)
   expect(server.entries().filter((e) => e.kind === 'creature')).toHaveLength(1)
+  expect(server.entries().filter((e) => e.kind === 'subclass')).toHaveLength(12)
   await page.goto('./#/library')
-  await expect(page.getByRole('button', { name: 'Subir los objetos del SRD' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Completar el SRD' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Subir Rytta · Objetos básicos' }).click()
   const rytta = page.getByRole('dialog', { name: 'Subir Rytta · Objetos básicos' })
@@ -267,6 +272,51 @@ test('RYT-166 the SRD gains its items, the Rytta basics get their pack and items
   const longsword = items().find((e) => e.key === 'longsword')!
   expect(longsword.data).toMatchObject({
     index: { key: 'longsword', costCp: 2000, properties: { thrown: true, dice: '1d8' } },
+  })
+
+  // RYT-168: a class opens in its own form with its table.
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.getByRole('link', { name: /^Guerrero/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Guerrero' })).toBeFocused()
+  await expect(page.getByRole('combobox', { name: 'Dado de golpe' })).toHaveValue('d10')
+  await expect(page.getByRole('combobox', { name: 'Primera salvación' })).toHaveValue('Fuerza')
+  await expect(page.getByRole('textbox', { name: 'Niveles de mejora' })).toHaveValue(
+    '4, 6, 8, 12, 14, 16, 19',
+  )
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-168/class-form-${info.project.name}.png`)
+  // A value the class cannot use is named on its own field.
+  await page.getByRole('textbox', { name: 'Niveles de mejora' }).fill('4, ocho')
+  await expect(page.getByText('Solo niveles de 1 a 20, separados por comas')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Niveles de mejora' })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  )
+  await page.getByRole('textbox', { name: 'Niveles de mejora' }).fill('4, 8')
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: /Guardado/ })).toBeVisible()
+  const fighter = server.entries().find((e) => e.kind === 'class' && e.key === 'fighter')!
+  expect(fighter.data).toMatchObject({ index: { hitDie: 10, improvementLevels: [4, 8] } })
+
+  // A new class without spells saves with what its form asks for; nothing is marked before.
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await expect(page.getByText('Elige uno')).toHaveCount(0)
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Caballero rúnico')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Rune Knight')
+  await page.getByRole('combobox', { name: 'Dado de golpe' }).click()
+  await page.getByRole('option', { name: 'd10' }).click()
+  await page.getByRole('combobox', { name: 'Primera salvación' }).click()
+  await page.getByRole('option', { name: 'Fuerza' }).click()
+  await page.getByRole('combobox', { name: 'Segunda salvación' }).click()
+  await page.getByRole('option', { name: 'Constitución' }).click()
+  await page.getByRole('textbox', { name: 'Habilidades a elegir' }).fill('2')
+  await page.getByRole('checkbox', { name: 'Cualquier habilidad' }).check()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Caballero rúnico' })).toBeFocused()
+  const rune = server.entries().find((e) => e.kind === 'class' && e.key === 'rune-knight')!
+  expect(rune.data).toMatchObject({
+    index: { hitDie: 10, saves: ['str', 'con'], skillCount: 2, skills: 'any' },
   })
 })
 
@@ -474,6 +524,13 @@ test('a new subclass and a content file land as drafts after a report', async ({
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Círculo de las Mareas')
   await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Circle of Tides')
   await expect(page.getByRole('textbox', { name: 'Clave' })).toHaveValue('circle-of-tides')
+  // RYT-168: a subclass names its class before it can be saved.
+  await expect(page.getByRole('button', { name: 'Guardar', exact: true })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await page.getByRole('combobox', { name: 'Clase' }).click()
+  await page.getByRole('option', { name: 'Druida' }).click()
   await page
     .getByRole('textbox', { name: 'Texto (español)' })
     .fill('Primer párrafo.\n\n- Rasgo uno\n- Rasgo dos')
@@ -481,6 +538,7 @@ test('a new subclass and a content file land as drafts after a report', async ({
   await expect(page.getByRole('heading', { level: 2, name: 'Círculo de las Mareas' })).toBeFocused()
   const created = server.entries().find((e) => e.key === 'circle-of-tides')!
   expect(created.data).toEqual({
+    index: { class: 'druid' },
     es: {
       blocks: [
         { t: 'p', x: 'Primer párrafo.' },
@@ -506,7 +564,11 @@ test('a new subclass and a content file land as drafts after a report', async ({
         version: 1,
         kind: 'subclass',
         entries: [
-          { key: 'circle-of-ash', name_es: 'Círculo de la Ceniza', data: {} },
+          {
+            key: 'circle-of-ash',
+            name_es: 'Círculo de la Ceniza',
+            data: { index: { class: 'druid' } },
+          },
           {
             key: 'circle-of-embers',
             name_es: 'Círculo de las Brasas',

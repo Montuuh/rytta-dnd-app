@@ -1,3 +1,6 @@
+import { offeredClasses, srdClassDefs } from '../../domain/class-catalog'
+import { isClassKey } from '../../domain/rules'
+import { useClassCatalog } from '../class-catalog'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Group, Progress, Stack, Text, TextInput, Title } from '@mantine/core'
 import { ArrowLeft } from 'lucide-react'
@@ -36,6 +39,12 @@ export function QuickBuild({
   const names = useResourceNames()
   const [step, setStep] = useState(0)
   const [classKey, setClassKey] = useState<ClassKey | null>(null)
+  // RYT-168: the quick path builds SRD archetypes; pack classes go through the full wizard.
+  const catalog = useClassCatalog()
+  const quickClasses = useMemo(
+    () => (catalog ? offeredClasses(catalog) : srdClassDefs).filter((item) => item.srd),
+    [catalog],
+  )
   const [speciesKey, setSpeciesKey] = useState<SpeciesKey | null>(null)
   const [name, setName] = useState(characterName)
   const [asked, setAsked] = useState(false)
@@ -91,8 +100,9 @@ export function QuickBuild({
       </div>
       {current === 'class' && (
         <ClassPicker
+          options={quickClasses}
           value={classKey ?? ''}
-          onChange={(key) => key !== 'custom' && setClassKey(key)}
+          onChange={(key) => isClassKey(key) && setClassKey(key)}
           label={t('wizard.class')}
           hideLabel
         />

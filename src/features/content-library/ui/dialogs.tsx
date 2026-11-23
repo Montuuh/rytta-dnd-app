@@ -22,6 +22,8 @@ import { useAuth } from '@/features/auth'
 import { monsterBodiesQuery, monsterIndexQuery } from '@/features/bestiary'
 import { glossaryBodiesQuery, glossaryIndexQuery } from '@/features/glossary'
 import { basicCatalogueQuery, bundledItemEntry } from '@/features/inventory'
+import { classIndexOf, srdClassDefs, srdSubclassDefs } from '@/features/characters'
+import { i18n, loadCatalogue } from '@/shared/i18n'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { changesQuery, useImportEntries, useLibraryAction, type ImportProgress } from '../api'
 import { parseContentFile, type ParsedFile } from '../domain/import-file'
@@ -33,10 +35,11 @@ import {
   sortRows,
   type ContentLanguage,
   type ContentPack,
+  type EntryInput,
   type ImportReport,
   type PackInput,
 } from '../domain/library'
-import { ryttaBasicsPack, srdEntries, srdPack, type BundledSrd } from '../domain/srd'
+import { newerKinds, ryttaBasicsPack, srdEntries, srdPack, type BundledSrd } from '../domain/srd'
 import { kindLabel } from './labels'
 
 const errorText = (t: TFunction, error: unknown) =>
@@ -509,8 +512,8 @@ export type Bundle = 'srd' | 'rytta'
 
 /**
  * Uploads content bundled in the app as drafts: the SRD 5.2.1 (creatures, glossary and, since
- * RYT-166, its equipment) or the Rytta basic items. An existing pack only receives the kinds it
- * does not have yet, so the SRD gains its items without touching its creatures and rules.
+ * RYT-166 and RYT-168, its equipment, classes and subclasses) or the Rytta basic items. An existing
+ * SRD only receives those newer kinds it does not have yet, never its creatures and rules again.
  */
 export function BundledDialog({
   bundle,
@@ -540,9 +543,20 @@ export function BundledDialog({
     ],
   })
   const items = useQuery(basicCatalogueQuery())
+  // Class and subclass names in both languages, from the interface catalogues.
+  const names = useQuery({
+    queryKey: ['static', 'i18n-both'],
+    queryFn: async () => {
+      await Promise.all([loadCatalogue(i18n, 'es'), loadCatalogue(i18n, 'en')])
+      return { es: i18n.getFixedT('es'), en: i18n.getFixedT('en') }
+    },
+    enabled: srd,
+    staleTime: Infinity,
+  })
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const loaded = Boolean(items.data) && (!srd || sources.every((source) => source.data))
+  const loaded =
+    Boolean(items.data) && (!srd || (Boolean(names.data) && sources.every((source) => source.data)))
   // Packed on each render (a few while uploading); the bundled sources never change.
   const data = sources.map((source) => source.data)
   const itemEntries = items.data
@@ -561,6 +575,30 @@ export function BundledDialog({
             } as unknown as BundledSrd)
           : []),
         { kind: 'item', entries: itemEntries },
+        ...(srd && names.data
+          ? [
+              {
+                kind: 'class',
+                entries: srdClassDefs.map((def) => ({
+                  kind: 'class',
+                  key: def.key,
+                  name_en: names.data.en(`srd.class.${def.key}` as 'srd.class.wizard'),
+                  name_es: names.data.es(`srd.class.${def.key}` as 'srd.class.wizard'),
+                  data: { index: classIndexOf(def) } as EntryInput['data'],
+                })),
+              },
+              {
+                kind: 'subclass',
+                entries: srdSubclassDefs.map((def) => ({
+                  kind: 'subclass',
+                  key: def.key,
+                  name_en: names.data.en(`srd.subclass.${def.key}` as 'srd.subclass.lore'),
+                  name_es: names.data.es(`srd.subclass.${def.key}` as 'srd.subclass.lore'),
+                  data: { index: { class: def.classKey } } as EntryInput['data'],
+                })),
+              },
+            ]
+          : []),
       ]
     : null
   const present = (kind: string) =>
@@ -571,21 +609,22 @@ export function BundledDialog({
       (group) =>
         group.entries.length > 0 &&
         !present(group.kind) &&
-        (!existing || !srd || group.kind === 'item'),
+        (!existing || !srd || newerKinds.includes(group.kind)),
     ) ?? null
   const count = groups?.reduce((sum, group) => sum + group.entries.length, 0) ?? 0
   const pack = srd ? srdPack : ryttaBasicsPack
   const title = packTitle(existing ?? pack, language)
-  const itemsOnly = Boolean(groups && groups.every((group) => group.kind === 'item'))
+  const landing = groups?.[0]?.kind ?? 'creature'
+  const kinds = (groups ?? []).map((group) => kindLabel(t, group.kind).toLowerCase()).join(', ')
   const dialogTitle = !srd
     ? t('library.ryttaTitle')
     : existing
-      ? t('library.srdItemsTitle')
+      ? t('library.srdMissingTitle')
       : t('library.srdTitle')
   const body = !srd
     ? t('library.ryttaBody', { title, count })
     : existing
-      ? t('library.srdItemsBody', { title, count })
+      ? t('library.srdMissingBody', { title, count, kinds })
       : t('library.srdBody', { title, count })
   const upload = async () => {
     if (!groups || count === 0) return
@@ -604,7 +643,7 @@ export function BundledDialog({
       await run(packId, groups, false, setProgress)
       onDone(
         packId,
-        itemsOnly ? 'item' : 'creature',
+        existing ? landing : 'creature',
         t('library.srdDone', { version: (existing?.version ?? 0) + 1 }),
       )
     } catch (caught) {
@@ -628,7 +667,7 @@ export function BundledDialog({
             loading={busy}
             onClick={() => void upload()}
           >
-            {t('library.srdRun', { count })}
+            {loaded ? t('library.srdRun', { count }) : t('library.srdRunWaiting')}
           </Button>
         </Group>
       </Stack>

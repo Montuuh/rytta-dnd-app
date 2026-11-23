@@ -1,14 +1,5 @@
 import { homebrewEntryId, type HomebrewEntry } from './homebrew'
-import type {
-  GlossaryLanguage,
-  IndexRow,
-  FeatureClass,
-  FeatureSubclass,
-  SpellClass,
-  SpellSchool,
-  SrdCategory,
-  AbilityId,
-} from './types'
+import type { GlossaryLanguage, IndexRow, SpellSchool, SrdCategory, AbilityId } from './types'
 
 export type GlossaryCategory = SrdCategory | 'lore' | 'other'
 
@@ -27,12 +18,12 @@ export type GlossaryEntry = {
   spell?: {
     level: number
     school: SpellSchool
-    classes: SpellClass[]
+    classes: string[]
     concentration: boolean
     ritual: boolean
   }
   ability?: AbilityId
-  feature?: { classKey: FeatureClass; level: number; subclass: FeatureSubclass | null }
+  feature?: { classKey: string; level: number; subclass: string | null }
   homebrew?: HomebrewEntry
 }
 

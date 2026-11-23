@@ -1,13 +1,13 @@
 import type { Build, Feature, SheetDraft } from './sheet'
 import { buildFits } from './sheet'
 import { featRefs, traitRef } from './resources'
+import { classDefFor, type ClassDef } from './class-catalog'
 import {
   bonusesValid,
   defaultArmorClass,
   emptyBuild,
   finalAbilities,
   isBackgroundKey,
-  isClassKey,
   isSpeciesKey,
   pointBuySpent,
   pointBuyValid,
@@ -18,7 +18,6 @@ import {
   abilityKeys,
   backgrounds,
   choiceKeys,
-  classes,
   pointBuyBudget,
   pointBuyCost,
   species,
@@ -57,9 +56,18 @@ const seedId = (prefix: string, key: string) => `${prefix}-${key}`
 const withoutSeeds = (features: Feature[], prefix: string) =>
   features.filter((feature) => !feature.id.startsWith(`${prefix}-`))
 
-export function chooseClass(build: Build, key: string, label: string): Build {
-  if (!isClassKey(key)) return { ...build, classKey: 'custom', classLabel: label }
-  const entry = classes[key]
+/**
+ * A class from the campaign's packs or the SRD (RYT-168: its definition, `def`), or one typed by
+ * hand (`custom`), which keeps its own hit die and spellcasting.
+ */
+export function chooseClass(
+  build: Build,
+  key: string,
+  label: string,
+  def: ClassDef | null = classDefFor(null, key),
+): Build {
+  if (!def || def.key !== key) return { ...build, classKey: 'custom', classLabel: label }
+  const entry = def
   // A different class starts without the old class's subclass and skill picks; background
   // skills stay. Choosing the same class again changes nothing but its label.
   const changed = key !== build.classKey
@@ -167,10 +175,13 @@ export function chooseBackground(build: Build, key: string, label: string, name:
   }
 }
 
-export function classSkillChoices(build: Build) {
+export function classSkillChoices(
+  build: Build,
+  def: ClassDef | null = classDefFor(null, build.classKey),
+) {
   const fixed = backgroundSkills(build)
   const picked = (Object.keys(build.skills) as Skill[]).filter((skill) => !fixed.includes(skill))
-  const entry = isClassKey(build.classKey) ? classes[build.classKey] : null
+  const entry = def && def.key === build.classKey ? def : null
   return {
     fixed,
     picked,
@@ -179,7 +190,11 @@ export function classSkillChoices(build: Build) {
   }
 }
 
-export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[] {
+export function validateStep(
+  step: CreationStep,
+  draft: SheetDraft,
+  def: ClassDef | null = classDefFor(null, draft.build.classKey),
+): StepIssue[] {
   const { build } = draft
   const issues: StepIssue[] = []
   if (step === 'class') {
@@ -207,7 +222,7 @@ export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[]
       issues.push('pointBuy')
   }
   if (step === 'skills') {
-    const { picked, count } = classSkillChoices(build)
+    const { picked, count } = classSkillChoices(build, def)
     if (count !== null && picked.length > count) issues.push('skillCount')
   }
   const blank = (items: { name: string }[]) => items.some((item) => !item.name.trim())
@@ -218,11 +233,14 @@ export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[]
   return issues
 }
 /** Every applicable step must pass before a sheet is completed. */
-export const validateAll = (draft: SheetDraft) => [
+export const validateAll = (
+  draft: SheetDraft,
+  def: ClassDef | null = classDefFor(null, draft.build.classKey),
+) => [
   ...new Set(
     creationSteps
       .filter((step) => stepApplies(step, draft.build))
-      .flatMap((step) => validateStep(step, draft)),
+      .flatMap((step) => validateStep(step, draft, def)),
   ),
 ]
 /** Derived columns follow the build so the server receives one consistent snapshot. */
@@ -259,21 +277,25 @@ export const pointBuyStart = () =>
  * wizard names them on Next and on the review step and lets the player continue anyway.
  */
 export type StepGap = { kind: 'bonuses' } | { kind: 'skills'; missing: number }
-export function stepGaps(step: CreationStep, build: Build): StepGap[] {
+export function stepGaps(
+  step: CreationStep,
+  build: Build,
+  def: ClassDef | null = classDefFor(null, build.classKey),
+): StepGap[] {
   if (step === 'origin') {
     const total = abilityKeys.reduce((sum, key) => sum + build.bonuses[key], 0)
     return build.backgroundKey && total === 0 ? [{ kind: 'bonuses' }] : []
   }
   if (step === 'skills') {
-    const { picked, count } = classSkillChoices(build)
+    const { picked, count } = classSkillChoices(build, def)
     return count !== null && picked.length < count
       ? [{ kind: 'skills', missing: count - picked.length }]
       : []
   }
   return []
 }
-export const buildGaps = (build: Build) =>
-  creationSteps.flatMap((step) => stepGaps(step, build).map((gap) => ({ step, gap })))
+export const buildGaps = (build: Build, def: ClassDef | null = classDefFor(null, build.classKey)) =>
+  creationSteps.flatMap((step) => stepGaps(step, build, def).map((gap) => ({ step, gap })))
 
 /** Standard array: picking a score another ability holds swaps the two, so no value repeats. */
 export function assignStandard(

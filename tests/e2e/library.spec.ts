@@ -53,6 +53,8 @@ test('an editor opens the published SRD 5.2.1, keeps its place and edits a creat
   await expect(
     page.getByRole('heading', { level: 2, name: 'Documento de referencia del sistema 5.2.1' }),
   ).toBeVisible()
+  // The list renders after the pack's entries arrive.
+  await expect(page.locator('.lib-entry-list .lib-row-name').nth(300)).toBeAttached()
   const names = await page.locator('.lib-entry-list .lib-row-name').allTextContents()
   expect(names.length).toBeGreaterThan(300)
   expect(names).toEqual([...names].sort(new Intl.Collator('es').compare))

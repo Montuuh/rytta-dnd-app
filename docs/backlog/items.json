@@ -5208,10 +5208,7 @@
         "hosted counts of the SRD pack",
         "independent UI review PASS"
       ],
-      "evidence": [
-        "docs/evidence/RYT-167/validation.md",
-        "docs/evidence/ui-review/ryt-167/review.md"
-      ]
+      "evidence": ["docs/evidence/RYT-167/validation.md"]
     },
     {
       "id": "RYT-168",

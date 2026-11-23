@@ -28,6 +28,10 @@ export type GlossaryContextValue = {
   bodies: EntryBodies | null
   bodiesError: boolean
   indexError: boolean
+  /** RYT-161: why the last refresh of the glossary failed (null when it did not). */
+  loadError: unknown
+  /** RYT-161: why the campaign's homebrew could not load at all (null when it did). */
+  homebrewError: unknown
   requestBodies: () => void
   retry: () => void
   /** Opens the in-place reference sheet for an entry. */

@@ -83,6 +83,7 @@ export const sheetEs = {
   'sheet.continueCta': 'Continuar ficha',
   'sheet.draftHint': '{{name}} todavía no tiene la ficha terminada.',
   'sheet.draftWaiting': 'El jugador asignado todavía está creando esta ficha.',
+  'sheet.inventoryMissing': 'No se cargó el inventario: el equipo y la CA pueden faltar.',
   'sheet.notFound': 'Este personaje no existe o no tienes acceso.',
   'sheet.editBuild': 'Editar ficha',
   'sheet.classLevel': '{{class}} de nivel {{level}}',

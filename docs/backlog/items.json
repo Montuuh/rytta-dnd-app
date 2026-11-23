@@ -5039,7 +5039,7 @@
       "title": "Keep data after a failed refresh on every screen, and an exact recovery message",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-013"],
       "sources": ["Independent UI review of RYT-013, 2026-11-21 (non-blocking notes)."],
       "scope": "Apply the RYT-013 rule (keep what is on screen after a refetch fails for a connection or server reason; show the error above it otherwise) to the remaining screens: party, sheet, inventory, shops, glossary, journal and combat. When the 6 s limit ends the refresh before every screen has loaded, the line says connection back without claiming the data is up to date.",
@@ -5049,7 +5049,7 @@
         "Browser tests at 390 and 820 px for at least the party, inventory and combat screens."
       ],
       "validation": ["npm run check", "npm run test:e2e", "independent UI review"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-161/validation.md"]
     },
     {
       "id": "RYT-162",

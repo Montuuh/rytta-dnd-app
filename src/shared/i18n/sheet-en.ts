@@ -82,6 +82,7 @@ export const sheetEn = {
   'sheet.continueCta': 'Continue sheet',
   'sheet.draftHint': '{{name}} does not have a finished sheet yet.',
   'sheet.draftWaiting': 'The assigned player is still creating this sheet.',
+  'sheet.inventoryMissing': 'The inventory did not load: equipment and AC may be missing.',
   'sheet.notFound': 'This character does not exist or you cannot see it.',
   'sheet.editBuild': 'Edit sheet',
   'sheet.classLevel': 'Level {{level}} {{class}}',

@@ -6,7 +6,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { PageHead } from '@/shared/ui/page-head'
-import { QueryFeedback, useCampaign, useCampaignView } from '@/features/campaigns'
+import {
+  QueryFeedback,
+  showsData,
+  StaleLine,
+  useCampaign,
+  useCampaignView,
+} from '@/features/campaigns'
 import { charactersQuery } from '@/features/characters'
 import { combatStateQuery, encountersQuery, useCombatRealtime } from '../api'
 import { isLive, previewAsPlayer, type CombatState, type EncounterStatus } from '../domain/combat'
@@ -113,7 +119,13 @@ function PlayerCombat() {
   return (
     <Stack gap="lg" className="combat-page">
       <PageHead title={t('combat.title')} description={t('combat.intro.player')} />
-      <QueryFeedback pending={query.isPending} error={query.isError} retry={retry} />
+      <StaleLine queries={[query, history]} />
+      <QueryFeedback
+        pending={query.isPending}
+        error={!showsData(query)}
+        cause={query.error}
+        retry={retry}
+      />
       {query.data && (
         <Paper className="combat-empty-state" p="lg">
           <Swords size={28} aria-hidden="true" />
@@ -124,6 +136,7 @@ function PlayerCombat() {
         </Paper>
       )}
       {ended.length > 0 && <EncounterGroup title={t('combat.list.history')} items={ended} />}
+      <StaleLine queries={[history]} missing text={t('combat.list.historyMissing')} />
     </Stack>
   )
 }

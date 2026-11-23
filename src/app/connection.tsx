@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Loader } from '@mantine/core'
-import { Check, RefreshCw, WifiOff } from 'lucide-react'
+import { Check, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ConnectionPhase } from '@/shared/lib/connection'
 
-const icons = { offline: WifiOff, reconnecting: RefreshCw, recovered: Check, failed: WifiOff }
+const icons = {
+  offline: WifiOff,
+  reconnecting: RefreshCw,
+  back: Wifi,
+  recovered: Check,
+  failed: WifiOff,
+}
 
 /**
  * The line under the header. It is not a live region itself: `ConnectionStatus` announces each

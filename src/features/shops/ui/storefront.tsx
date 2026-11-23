@@ -36,7 +36,13 @@ import { PageHead } from '@/shared/ui/page-head'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { QueryFeedback, useCampaign, useCampaignView } from '@/features/campaigns'
+import {
+  QueryFeedback,
+  showsData,
+  StaleLine,
+  useCampaign,
+  useCampaignView,
+} from '@/features/campaigns'
 import {
   EmptyPanel,
   itemCategories,
@@ -253,9 +259,11 @@ export function Storefront() {
           </Text>
         )}
       </PageHead>
+      <StaleLine queries={[acting.characters, front, orders]} />
       <QueryFeedback
         pending={acting.characters.isPending || (!!character && front.isPending)}
-        error={acting.characters.isError || front.isError}
+        error={!showsData(acting.characters) || !showsData(front)}
+        cause={!showsData(acting.characters) ? acting.characters.error : front.error}
         retry={() =>
           void (acting.characters.isError ? acting.characters.refetch() : front.refetch())
         }
@@ -479,7 +487,8 @@ export function Storefront() {
               </Text>
               <QueryFeedback
                 pending={orders.isPending}
-                error={orders.isError}
+                error={!showsData(orders)}
+                cause={orders.error}
                 retry={() => void orders.refetch()}
               />
               {orders.data?.length === 0 && (

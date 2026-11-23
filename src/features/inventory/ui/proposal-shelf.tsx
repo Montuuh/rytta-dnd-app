@@ -3,6 +3,7 @@ import { Alert, Button, Text, Title, UnstyledButton } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { showsData } from '@/features/campaigns'
 import { newRequestId } from '@/shared/lib/request-id'
 import { localizedName } from '@/shared/lib/translations'
 import { proposalsQuery, useCancelProposal } from '../api'
@@ -35,7 +36,8 @@ export function ProposalShelf({
   const requests = useRef(new Map<string, string>())
   const heading = useRef<HTMLHeadingElement>(null)
   if (query.isPending) return null
-  if (query.isError)
+  // RYT-161: a failed refresh keeps the shelf; the inventory page's line says it.
+  if (!showsData(query) || !query.data)
     return (
       <Alert color="red" role="alert">
         {t('items.proposals.loadError')}{' '}

@@ -342,6 +342,29 @@ a.brand-bar {
   min-height: 44px;
   flex-shrink: 0;
 }
+/* RYT-161: a refresh that failed with data on screen: one quiet line, not a red card. */
+.stale-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding-block: 6px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--warn) 50%, var(--app-border));
+}
+.stale-line > svg {
+  color: var(--warn);
+  flex-shrink: 0;
+}
+.stale-line-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 60ch;
+}
+.stale-line-retry {
+  min-height: 44px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
 /* RYT-128: a screen that could not load because the device is offline. */
 .offline-placeholder {
   display: grid;

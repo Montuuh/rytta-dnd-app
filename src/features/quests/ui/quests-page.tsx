@@ -15,7 +15,7 @@ import { ChevronDown, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { useCampaign } from '@/features/campaigns'
+import { StaleLine, useCampaign } from '@/features/campaigns'
 import { PageHead } from '@/shared/ui/page-head'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { Modal } from '@/shared/ui/overlays'
@@ -162,6 +162,7 @@ function Journal({ dmView }: { dmView: boolean }) {
           />
         }
       />
+      <StaleLine queries={[query]} />
       {query.isPending ? (
         <Loader aria-label={t('common.loading')} />
       ) : !list ? (

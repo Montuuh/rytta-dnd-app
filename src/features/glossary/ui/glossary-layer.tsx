@@ -115,8 +115,14 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
   // below (open menus, drawers) do not re-render on every library query update.
   const retrySource = useRef(source.retry)
   useEffect(() => {
-    retrySource.current = source.retry
+    retrySource.current = () => {
+      source.retry()
+      if (homebrew.isError) void homebrew.refetch()
+    }
   })
+  const loadError =
+    source.error ?? (homebrew.isError && homebrew.data !== undefined ? homebrew.error : null)
+  const homebrewError = homebrew.isError && homebrew.data === undefined ? homebrew.error : null
   const retry = useCallback(() => retrySource.current(), [])
 
   const value = useMemo<GlossaryContextValue>(
@@ -128,6 +134,8 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
       bodies: source.bodies ?? null,
       bodiesError: source.bodiesError,
       indexError: source.indexError,
+      loadError,
+      homebrewError,
       requestBodies,
       retry,
       open,
@@ -146,6 +154,8 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
       source.bodies,
       source.bodiesError,
       source.indexError,
+      loadError,
+      homebrewError,
       requestBodies,
       retry,
       open,

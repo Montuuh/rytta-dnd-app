@@ -21,7 +21,7 @@ import { PageHead } from '@/shared/ui/page-head'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { catalogueQuery, DefinitionEditor } from '@/features/inventory'
-import { QueryFeedback, useCampaign } from '@/features/campaigns'
+import { QueryFeedback, showsData, StaleLine, useCampaign } from '@/features/campaigns'
 import { shopAdminQuery, useShopAction } from '../api'
 import {
   ShopError,
@@ -158,9 +158,11 @@ export function ShopAdminPanel({ playersSeeShops }: { playersSeeShops: boolean }
   return (
     <Stack gap="lg" className="shop-admin">
       <PageHead title={t('admin.title')} headingRef={heading} />
+      <StaleLine queries={[admin]} />
       <QueryFeedback
         pending={admin.isPending}
-        error={admin.isError}
+        error={!showsData(admin)}
+        cause={admin.error}
         retry={() => void admin.refetch()}
       />
       <SavePill status={status} onClose={() => report(null)} />
@@ -593,10 +595,13 @@ function ShopItemEditor({
   const { state } = useAuth()
   const catalogue = useQuery(catalogueQuery(state.user!.id, campaignId))
   const definition = catalogue.data?.find((item) => item.id === definitionId)
-  if (catalogue.isError)
+  if (!showsData(catalogue))
     return (
       <Alert color="red" role="alert" withCloseButton onClose={onClose}>
-        {t('query.error')}
+        {t('query.error')}{' '}
+        <Button variant="subtle" onClick={() => void catalogue.refetch()}>
+          {t('common.retry')}
+        </Button>
       </Alert>
     )
   if (!definition) return null

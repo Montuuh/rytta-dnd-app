@@ -121,6 +121,7 @@ export const glossaryEn = {
   'glossary.loading': 'Opening the glossary…',
   'glossary.noLibrary': 'This preview has no server: the glossary needs the content library.',
   'glossary.loadError': 'The glossary could not load. Check your connection and try again.',
+  'glossary.homebrewMissing': 'The campaign’s homebrew could not load.',
   'glossary.retry': 'Try again',
   'glossary.notFound': 'This entry doesn’t exist or isn’t available to you.',
   'glossary.hiddenModule':

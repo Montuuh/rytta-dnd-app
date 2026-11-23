@@ -27,16 +27,9 @@ export function keepsStaleData(data: unknown, error: unknown) {
 }
 
 /**
- * Whether a failed load shows its error. Offline or with the backend unreachable, and with data on
- * screen, it does not: the connection line already says so. Any other failure is shown, above the data the screen keeps.
+ * RYT-161: whether a screen draws its data. True unless its last load failed for a reason that
+ * takes the data away (access lost, the thing gone) or there is nothing loaded yet to keep.
  */
-export function showsLoadError(
-  isError: boolean,
-  data: unknown,
-  error: unknown,
-  connectionLost = false,
-) {
-  if (!isError) return false
-  if (data === undefined || data === null) return true
-  return !connectionLost && causeOf(error) !== 'offline'
+export function showsData(query: { isError: boolean; data: unknown; error: unknown }) {
+  return !query.isError || keepsStaleData(query.data, query.error)
 }

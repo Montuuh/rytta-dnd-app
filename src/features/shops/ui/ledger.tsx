@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ScrollText } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { QueryFeedback, useCampaign } from '@/features/campaigns'
+import { QueryFeedback, showsData, StaleLine, useCampaign } from '@/features/campaigns'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import { liveOrders, ordersQuery } from '../api'
 import { isOpenOrder, type ShopAction, type ShopAdmin } from '../domain/shops'
@@ -116,9 +116,11 @@ export function Ledger({
           </Group>
         </Chip.Group>
       )}
+      <StaleLine queries={[orders]} />
       <QueryFeedback
         pending={orders.isPending}
-        error={orders.isError}
+        error={!showsData(orders)}
+        cause={orders.error}
         retry={() => void orders.refetch()}
       />
       {orders.data && list.length === 0 && (

@@ -19,6 +19,8 @@ export type GlossarySource = {
   classRows: ClassRow[] | undefined
   bodies: EntryBodies | undefined
   indexError: boolean
+  /** RYT-161: the first failed index load, kept for its cause; null when none failed. */
+  error: unknown
   bodiesError: boolean
   retry: () => void
 }
@@ -130,12 +132,15 @@ export function useGlossarySource(options: {
     ? packs.isError || indexes.some((q) => q.isError)
     : srdIndexes.some((q) => q.isError)
   const bodiesError = (inCampaign ? packBodies : srdBodies).some((q) => q.isError)
+  const failed = inCampaign ? [packs, ...indexes] : srdIndexes
+  const error = failed.find((q) => q.isError)?.error ?? null
   return {
     rows,
     unlisted,
     classRows,
     bodies,
     indexError,
+    error,
     bodiesError,
     retry: () => {
       void cache.invalidateQueries({ queryKey: ['glossary'] })

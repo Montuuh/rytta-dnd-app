@@ -18,6 +18,7 @@ export const combatEn = {
   'combat.list.drafts': 'Prepared',
   'combat.list.ended': 'Finished',
   'combat.list.empty': 'No encounters yet. Create one to start preparing.',
+  'combat.list.historyMissing': 'The combat history could not load.',
   'combat.list.history': 'Past fights',
   'combat.status.draft': 'Preparing',
   'combat.status.initiative': 'Initiative',

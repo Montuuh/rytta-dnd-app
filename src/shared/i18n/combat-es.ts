@@ -19,6 +19,7 @@ export const combatEs = {
   'combat.list.drafts': 'Preparados',
   'combat.list.ended': 'Terminados',
   'combat.list.empty': 'Aún no hay encuentros. Crea uno para empezar a prepararlo.',
+  'combat.list.historyMissing': 'No se pudo cargar el historial de combates.',
   'combat.list.history': 'Combates anteriores',
   'combat.status.draft': 'En preparación',
   'combat.status.initiative': 'Iniciativa',

@@ -38,12 +38,21 @@ returns (P3 A).
 - `src/app/use-connection.ts` follows the browser's online and offline events. The line under the
   header (`ConnectionStrip`) says offline, reconnecting, "connection back · up to date" (3 s) or
   "could not update" with Retry. A polite live region announces each change once.
+- "Up to date" only when every query on screen refreshed without error (RYT-161). When the 6 s wait
+  ends with something still loading, the line says "connection back" and turns into "up to date"
+  once everything has loaded (at most 30 s, then it goes away). When a screen failed on its own,
+  the line says "connection back" for 3 s and the screen says the rest.
 - "Could not update" means the backend does not answer: after reconnecting, if a query on screen
   failed or the refetch has not settled within 6 s, a request to `/auth/v1/health` decides. A
   screen's own error (no access, one failing call) is shown by that screen, not by the line.
-- After a failed refetch, the campaign list, the invitations and the campaign shell (name and
-  navigation) keep what they had. Offline, or with the backend unreachable, the line is the only
-  message; any other failure shows its error above the kept data.
+- After a failed refetch, every screen keeps what it had (RYT-161): the campaign list and
+  invitations, the campaign shell, party, sheet, inventory, shops, glossary, journal and combat.
+  Offline, reconnecting or with the backend unreachable, the line is the only message. Otherwise
+  the screen shows one quiet line above its data, "could not update; what you see may be out of
+  date", with Retry (`StaleLine`, `src/features/campaigns/ui/stale-line.tsx`), however many of
+  its queries failed. Losing access or the thing itself still replaces the data with its error.
+- A secondary section that never loaded says so in place (the inventory inside the sheet, the
+  glossary's homebrew, the Player's combat history). Combat keeps its own "updated N s ago".
 - When the network returns, every query on screen is fetched again. Realtime channels re-subscribe
   by themselves and refetch on `SUBSCRIBED`. Coming back to a hidden tab refetches stale queries
   (TanStack Query focus refetch, 30 s stale time).

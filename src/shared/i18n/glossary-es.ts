@@ -124,6 +124,7 @@ export const glossaryEs = {
   'glossary.noLibrary':
     'Esta vista previa no tiene servidor: el glosario necesita la biblioteca de contenido.',
   'glossary.loadError': 'No se pudo cargar el glosario. Revisa la conexión e inténtalo de nuevo.',
+  'glossary.homebrewMissing': 'No se pudo cargar el homebrew de la campaña.',
   'glossary.retry': 'Reintentar',
   'glossary.notFound': 'Esta entrada no existe o no está disponible para ti.',
   'glossary.hiddenModule':

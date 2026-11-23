@@ -29,6 +29,9 @@ import { useAuth } from '@/features/auth'
 import {
   campaignsQuery,
   isBelowPartyLevel,
+  type LoadedQuery,
+  showsData,
+  StaleLine,
   useCampaign,
   useCampaignView,
   useIsRealDm,
@@ -136,7 +139,7 @@ export function CharacterSheetPage() {
         <Text role="status">{t('common.loading')}</Text>
       </Stack>
     )
-  if (query.isError)
+  if (!showsData(query))
     return (
       <Stack>
         {back}
@@ -212,6 +215,7 @@ export function CharacterSheetPage() {
       inEncounter={Boolean(lock.data?.in_encounter)}
       exhaustion={exhaustion}
       characterPath={characterPath}
+      loaded={[query, lock, resources]}
       refresh={{
         // The party level may have moved too: the level-up prompt follows it.
         run: () => {
@@ -246,6 +250,7 @@ function SheetPanel({
   inEncounter,
   exhaustion,
   characterPath,
+  loaded,
   refresh,
 }: {
   back: ReactNode
@@ -262,6 +267,8 @@ function SheetPanel({
   inEncounter: boolean
   exhaustion: number | undefined
   characterPath: string
+  /** RYT-161: the page's own queries, for the line that says a refresh failed. */
+  loaded: LoadedQuery[]
   refresh: { run: () => void; fetching: boolean; updatedAt: number }
 }) {
   const { t } = useTranslation()
@@ -873,6 +880,8 @@ function SheetPanel({
             />
           </div>
         )}
+        <StaleLine queries={[...loaded, inventory, partyList]} />
+        <StaleLine queries={[inventory]} missing text={t('sheet.inventoryMissing')} />
         {/* With a sheet open the error shows inside it instead (never behind, never twice). */}
         {action.isError && open === null && !personalise && libraryTab === null && (
           <Alert color="red" role="alert">

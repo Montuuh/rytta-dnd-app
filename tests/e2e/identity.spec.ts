@@ -733,9 +733,12 @@ test('failed refresh keeps cached campaign content and offers recovery', async (
   await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
   f.failCampaigns()
   await page.getByRole('button', { name: 'Actualizar', exact: true }).click()
-  await expect(page.getByRole('alert').first()).toContainText('No se pudo cargar')
+  // RYT-161: one quiet line with Retry over the kept list, not a red alert.
+  const line = page.locator('.stale-line')
+  await expect(line).toContainText('No se pudo actualizar')
+  await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Reintentar' })).toBeEnabled()
+  await expect(line.getByRole('button', { name: 'Reintentar' })).toBeEnabled()
 })
 
 test('home uses a compact settings menu and accessible theme icons', async ({ page }, info) => {
@@ -814,13 +817,15 @@ test('invitation panel distinguishes loading, empty and failed refresh with reco
   await capture(page, info.outputPath('invitations-empty.png'))
   fail = true
   await panel.getByRole('button', { name: 'Actualizar', exact: true }).click()
-  await expect(panel.getByRole('alert')).toBeVisible()
-  // RYT-013: the last good answer stays under the error.
+  // RYT-013, RYT-161: the last good answer stays; the screen's one line says it is not updated.
+  const line = page.locator('.stale-line')
+  await expect(line).toContainText('No se pudo actualizar')
+  await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
   fail = false
-  await panel.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  await line.getByRole('button', { name: 'Reintentar', exact: true }).click()
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
-  await expect(panel.getByRole('alert')).toHaveCount(0)
+  await expect(line).toHaveCount(0)
 })
 
 for (const language of ['es', 'en'] as const)

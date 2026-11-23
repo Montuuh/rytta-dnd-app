@@ -111,8 +111,13 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
   }, [])
-  const retrySource = source.retry
-  const retry = useCallback(() => retrySource(), [retrySource])
+  // Stable across renders: the context value only changes when the glossary itself does, so pages
+  // below (open menus, drawers) do not re-render on every library query update.
+  const retrySource = useRef(source.retry)
+  useEffect(() => {
+    retrySource.current = source.retry
+  })
+  const retry = useCallback(() => retrySource.current(), [])
 
   const value = useMemo<GlossaryContextValue>(
     () => ({

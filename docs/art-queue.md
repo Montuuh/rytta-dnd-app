@@ -32,7 +32,8 @@ All of them are local tools; the application never imports them.
 | `cancelled` | either   | No longer needed; the reason is kept in the notes.                                                                                                                                                     |
 
 Requests of one set that share a style form a **batch**: the author opens a new ChatGPT
-conversation, pastes the batch style once and then each request prompt, as with the tavern pilot.
+conversation per batch. In the panel each request has one **Copy prompt** button that copies the
+full prompt, the request's own description followed by its batch style, so one paste is enough.
 
 ## Automatic checks
 

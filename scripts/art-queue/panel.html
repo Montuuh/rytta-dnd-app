@@ -400,6 +400,17 @@
         toast.timer = setTimeout(() => (node.hidden = true), error ? 6000 : 2500)
       }
 
+      // The whole prompt of a request: its own description followed by its batch's style, so one
+      // paste in ChatGPT is enough.
+      function fullPrompt(request) {
+        const batch = data.batches.find((b) => b.id === request.batch)
+        return batch && batch.style
+          ? `${request.prompt}
+
+${batch.style}`
+          : request.prompt
+      }
+
       async function copy(text, what) {
         try {
           await navigator.clipboard.writeText(text)
@@ -562,7 +573,7 @@
                     {
                       class: 'b primary',
                       type: 'button',
-                      onclick: () => copy(request.prompt, 'Prompt'),
+                      onclick: () => copy(fullPrompt(request), 'Prompt completo'),
                     },
                     'Copiar prompt',
                   )
@@ -597,7 +608,7 @@
             ]),
             h('details', null, [
               h('summary', { text: 'Prompt y criterios' }),
-              h('pre', { text: request.prompt }),
+              h('pre', { text: fullPrompt(request) }),
               h(
                 'ul',
                 null,
@@ -680,21 +691,10 @@
                         text:
                           `${items.length} ${items.length === 1 ? 'imagen' : 'imágenes'}` +
                           (tab === 'todo'
-                            ? ' · en una conversación nueva de ChatGPT, pega primero el estilo y después cada prompt.'
+                            ? ' · cada «Copiar prompt» ya incluye el estilo del lote.'
                             : ''),
                       }),
                     ]),
-                    tab === 'todo'
-                      ? h(
-                          'button',
-                          {
-                            class: 'b primary',
-                            type: 'button',
-                            onclick: () => copy(batch.style, 'Estilo del lote'),
-                          },
-                          'Copiar estilo del lote',
-                        )
-                      : null,
                   ])
                 : null,
               ...items.map(card),

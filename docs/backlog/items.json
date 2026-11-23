@@ -5263,13 +5263,13 @@
       "status": "planned",
       "dependsOn": ["RYT-169"],
       "sources": [
-        "Owner, 23 November 2026: create the first image queue requests to test it, after checking which packs, creatures, items or other data should have a picture and do not. Inventory: the 330 SRD creatures, 12 classes, 12 shop types, 9 item categories, 8 covers and 6 empty states already have paintings; the 200 basic items share their 9 category paintings; spells, rules, conditions and class features use icons by design. Pilot batch IMG-001 to IMG-006 (potion of healing, longsword, dagger, healer's kit, torch, spell scroll level 1)."
+        "Owner, 23 November 2026: create the first image queue requests to test it, after checking which packs, creatures, items or other data should have a picture and do not. Inventory: the 330 SRD creatures, 12 classes, 12 shop types, 9 item categories, 8 covers and 6 empty states already have paintings; the 200 basic items share their 9 category paintings; spells, rules, conditions and class features use icons by design. Pilot batch IMG-001 to IMG-006 (potion of healing, longsword, dagger, healer's kit, torch, spell scroll level 1).",
+        "Owner, 23 November 2026: queue the prompts for every item's own picture; one full Copy prompt button per request in the queue panel."
       ],
-      "scope": "Basic items get their own painting, requested through the image queue (set interface, art/generated/items/basic/<basic key>.png, imported by scripts/art-gen/build.py into public/art/items/basic and its thumbs). An item with a basic_key and a shipped painting shows it in tiles of 40px or more; an uploaded picture still wins and the category painting stays the fallback. The pilot covers six items; the rest of the 200 are requested in batches once the pilot passes.",
+      "scope": "Basic items get their own painting, requested through the image queue (set interface, art/generated/items/basic/<basic key>.png, imported by scripts/art-gen/build.py into public/art/items/basic and its thumbs). An item with a basic_key and a shipped painting shows it in tiles of 40px or more; an uploaded picture still wins and the category painting stays the fallback. The owner asked on 2026-11-23 for every basic item at once: the six pilot requests plus 194 more in six batches (IMG-001 to IMG-200), each copied from the queue panel as one full prompt.",
       "acceptance": [
-        "The six pilot pictures are approved in the image queue and imported into public/art/items/basic with thumbnails.",
-        "An inventory, storeroom or shop tile of 40px or more of an item with one of those basic keys shows its painting; an uploaded picture still wins and other items keep their category painting.",
-        "No request is made for the remaining basic items until the owner accepts the pilot's look."
+        "The approved pictures are imported into public/art/items/basic with thumbnails; items still waiting keep their category painting.",
+        "An inventory, storeroom or shop tile of 40px or more of an item with one of those basic keys shows its painting; an uploaded picture still wins and other items keep their category painting."
       ],
       "validation": [
         "npm run check",

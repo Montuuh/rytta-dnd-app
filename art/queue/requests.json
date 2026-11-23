@@ -1,6 +1,159 @@
 {
   "schemaVersion": 1,
-  "updatedAt": null,
-  "batches": [],
-  "requests": []
+  "updatedAt": "2026-11-23T00:35:20.928Z",
+  "batches": [
+    {
+      "id": "basic-items-pilot",
+      "title": "Objetos básicos: piloto (6)",
+      "style": "Style: original painterly dark-fantasy still life, rich oil-paint brushwork, a single subject centred with generous margin on a very dark warm umber background (#140F0B) that fades to near-black at every edge, soft warm amber rim light from the upper left, restrained palette of oak brown, iron grey, cream, muted red, ochre and moss. No text, no letters, no numbers, no logos, no watermark, no frame, no border, no people, no faces, no hands.",
+      "notes": "First real run of the image queue (RYT-169). Same style as the nine item category plates of RYT-112.",
+      "createdAt": "2026-11-23T00:35:20.926Z"
+    }
+  ],
+  "requests": [
+    {
+      "id": "IMG-001",
+      "title": "Objeto básico: Potion of Healing",
+      "set": "interface",
+      "ticket": "RYT-170",
+      "batch": "basic-items-pilot",
+      "purpose": "Picture of the basic item \"Potion of Healing\" (key potionOfHealing) in inventory, storeroom and shop tiles of 40px or more, instead of its category painting.",
+      "status": "pending",
+      "prompt": "Create a square (1:1) image. Item icon: a small round glass flask of glowing ruby-red liquid, stoppered with cork and tied with twine. Bold simple silhouette that reads clearly at thumbnail size.",
+      "aspect": "1:1",
+      "minSide": 1024,
+      "background": "opaque",
+      "crop": false,
+      "path": "art/generated/items/basic/potionOfHealing.png",
+      "acceptance": [
+        "Shows only a small round glass flask of glowing ruby-red liquid, recognisable at 40px.",
+        "Same look as the category plates in public/art/items: one centred subject, dark umber ground fading to near-black, warm amber rim light from the upper left.",
+        "No text, letters, runes, frame, border, hands or people."
+      ],
+      "notes": "",
+      "createdAt": "2026-11-23T00:35:20.928Z",
+      "updatedAt": "2026-11-23T00:35:20.928Z",
+      "attempts": []
+    },
+    {
+      "id": "IMG-002",
+      "title": "Objeto básico: Longsword",
+      "set": "interface",
+      "ticket": "RYT-170",
+      "batch": "basic-items-pilot",
+      "purpose": "Picture of the basic item \"Longsword\" (key longsword) in inventory, storeroom and shop tiles of 40px or more, instead of its category painting.",
+      "status": "pending",
+      "prompt": "Create a square (1:1) image. Item icon: a plain steel longsword with a leather-wrapped grip and a simple cross-guard, lying diagonally. Bold simple silhouette that reads clearly at thumbnail size.",
+      "aspect": "1:1",
+      "minSide": 1024,
+      "background": "opaque",
+      "crop": false,
+      "path": "art/generated/items/basic/longsword.png",
+      "acceptance": [
+        "Shows only a plain steel longsword with a leather-wrapped grip and a simple cross-guard, recognisable at 40px.",
+        "Same look as the category plates in public/art/items: one centred subject, dark umber ground fading to near-black, warm amber rim light from the upper left.",
+        "No text, letters, runes, frame, border, hands or people."
+      ],
+      "notes": "",
+      "createdAt": "2026-11-23T00:35:20.928Z",
+      "updatedAt": "2026-11-23T00:35:20.928Z",
+      "attempts": []
+    },
+    {
+      "id": "IMG-003",
+      "title": "Objeto básico: Dagger",
+      "set": "interface",
+      "ticket": "RYT-170",
+      "batch": "basic-items-pilot",
+      "purpose": "Picture of the basic item \"Dagger\" (key dagger) in inventory, storeroom and shop tiles of 40px or more, instead of its category painting.",
+      "status": "pending",
+      "prompt": "Create a square (1:1) image. Item icon: a short double-edged dagger with a worn wooden handle, lying diagonally. Bold simple silhouette that reads clearly at thumbnail size.",
+      "aspect": "1:1",
+      "minSide": 1024,
+      "background": "opaque",
+      "crop": false,
+      "path": "art/generated/items/basic/dagger.png",
+      "acceptance": [
+        "Shows only a short double-edged dagger with a worn wooden handle, recognisable at 40px.",
+        "Same look as the category plates in public/art/items: one centred subject, dark umber ground fading to near-black, warm amber rim light from the upper left.",
+        "No text, letters, runes, frame, border, hands or people."
+      ],
+      "notes": "",
+      "createdAt": "2026-11-23T00:35:20.928Z",
+      "updatedAt": "2026-11-23T00:35:20.928Z",
+      "attempts": []
+    },
+    {
+      "id": "IMG-004",
+      "title": "Objeto básico: Healer's Kit",
+      "set": "interface",
+      "ticket": "RYT-170",
+      "batch": "basic-items-pilot",
+      "purpose": "Picture of the basic item \"Healer's Kit\" (key healersKit) in inventory, storeroom and shop tiles of 40px or more, instead of its category painting.",
+      "status": "pending",
+      "prompt": "Create a square (1:1) image. Item icon: a small open leather satchel showing rolled linen bandages, a few herb bundles and small stoppered vials. Bold simple silhouette that reads clearly at thumbnail size.",
+      "aspect": "1:1",
+      "minSide": 1024,
+      "background": "opaque",
+      "crop": false,
+      "path": "art/generated/items/basic/healersKit.png",
+      "acceptance": [
+        "Shows only a small open leather satchel showing rolled linen bandages, recognisable at 40px.",
+        "Same look as the category plates in public/art/items: one centred subject, dark umber ground fading to near-black, warm amber rim light from the upper left.",
+        "No text, letters, runes, frame, border, hands or people."
+      ],
+      "notes": "",
+      "createdAt": "2026-11-23T00:35:20.928Z",
+      "updatedAt": "2026-11-23T00:35:20.928Z",
+      "attempts": []
+    },
+    {
+      "id": "IMG-005",
+      "title": "Objeto básico: Torch",
+      "set": "interface",
+      "ticket": "RYT-170",
+      "batch": "basic-items-pilot",
+      "purpose": "Picture of the basic item \"Torch\" (key torch) in inventory, storeroom and shop tiles of 40px or more, instead of its category painting.",
+      "status": "pending",
+      "prompt": "Create a square (1:1) image. Item icon: a wooden torch wrapped in oiled cloth at the top, with a modest flame and a few embers. Bold simple silhouette that reads clearly at thumbnail size.",
+      "aspect": "1:1",
+      "minSide": 1024,
+      "background": "opaque",
+      "crop": false,
+      "path": "art/generated/items/basic/torch.png",
+      "acceptance": [
+        "Shows only a wooden torch wrapped in oiled cloth at the top, recognisable at 40px.",
+        "Same look as the category plates in public/art/items: one centred subject, dark umber ground fading to near-black, warm amber rim light from the upper left.",
+        "No text, letters, runes, frame, border, hands or people."
+      ],
+      "notes": "",
+      "createdAt": "2026-11-23T00:35:20.928Z",
+      "updatedAt": "2026-11-23T00:35:20.928Z",
+      "attempts": []
+    },
+    {
+      "id": "IMG-006",
+      "title": "Objeto básico: Spell Scroll (Level 1)",
+      "set": "interface",
+      "ticket": "RYT-170",
+      "batch": "basic-items-pilot",
+      "purpose": "Picture of the basic item \"Spell Scroll (Level 1)\" (key spellScrollLevel1) in inventory, storeroom and shop tiles of 40px or more, instead of its category painting.",
+      "status": "pending",
+      "prompt": "Create a square (1:1) image. Item icon: a rolled parchment scroll, partly open, sealed with a red wax seal and a ribbon; the visible parchment shows only faint abstract swirls, no writing. Bold simple silhouette that reads clearly at thumbnail size.",
+      "aspect": "1:1",
+      "minSide": 1024,
+      "background": "opaque",
+      "crop": false,
+      "path": "art/generated/items/basic/spellScrollLevel1.png",
+      "acceptance": [
+        "Shows only a rolled parchment scroll, recognisable at 40px.",
+        "Same look as the category plates in public/art/items: one centred subject, dark umber ground fading to near-black, warm amber rim light from the upper left.",
+        "No text, letters, runes, frame, border, hands or people."
+      ],
+      "notes": "",
+      "createdAt": "2026-11-23T00:35:20.928Z",
+      "updatedAt": "2026-11-23T00:35:20.928Z",
+      "attempts": []
+    }
+  ]
 }

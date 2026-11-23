@@ -66,7 +66,7 @@ describe('public to pre bulk refresh', () => {
     // RYT-153 adds private.super_admins, admin_campaign_access, admin_favourites and admin_audit.
     // RYT-006 adds quests, quest_objectives, quest_signals, private.quest_notes and quest_reads.
     // RYT-162 adds content_entry_versions, campaign_content and campaign_content_hidden.
-    expect(report.rows[0]!.result.tables).toHaveLength(71)
+    expect(report.rows[0]!.result.tables).toHaveLength(72)
     expect((await db.query("select to_regnamespace('pre') ns")).rows).toEqual([{ ns: null }])
     await db.exec('commit')
   })

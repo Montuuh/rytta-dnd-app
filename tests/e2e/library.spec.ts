@@ -2,7 +2,12 @@ import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture } from './fixtures/identity.ts'
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
-import { homebrewPackId, libraryServer } from './fixtures/library.ts'
+import {
+  homebrewPackId,
+  libraryServer,
+  offerCampaigns,
+  srdLibraryPackId,
+} from './fixtures/library.ts'
 
 // RYT-093: the content library manager. Editors upload the bundled SRD, edit entries as drafts
 // and publish versions; everyone else never sees it.
@@ -47,10 +52,12 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   const upload = page.getByRole('dialog', { name: 'Subir el SRD 5.2.1' })
   await expect(upload.locator('button', { hasText: 'Cancelar' })).toBeFocused()
   await expect(
-    upload.getByText(/con 1217 entradas: criaturas, sus rasgos y todo el glosario/),
+    upload.getByText(
+      /con 1414 entradas: criaturas, sus rasgos, todo el glosario de reglas y el equipo/,
+    ),
   ).toBeVisible()
   await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 1217 entradas' }).click()
+  await upload.getByRole('button', { name: 'Subir 1414 entradas' }).click()
   await expect(upload).toHaveCount(0, { timeout: 30_000 })
   await expect(page.getByRole('status').filter({ hasText: 'Subido como borrador.' })).toBeVisible()
   expect(server.packs).toHaveLength(1)
@@ -59,7 +66,8 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
     visibility: 'public',
     license: 'CC-BY-4.0',
   })
-  expect(server.entries()).toHaveLength(1217)
+  expect(server.entries()).toHaveLength(1414)
+  expect(server.entries().filter((e) => e.kind === 'item')).toHaveLength(197)
   await expect(page.locator('#lib-entries-title')).toBeFocused()
 
   // The SRD opens on its creatures, sorted by their Spanish names.
@@ -71,13 +79,13 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   expect(names).toEqual([...names].sort(new Intl.Collator('es').compare))
 
   // Publishing sends every draft as version 1.
-  await expect(page.locator('.lib-banner')).toContainText('1217 cambios sin publicar')
+  await expect(page.locator('.lib-banner')).toContainText('1414 cambios sin publicar')
   await page.getByRole('button', { name: 'Publicar versión 1' }).click()
   const publish = page.getByRole('dialog', { name: /Publicar la versión 1/ })
   await expect(publish.locator('button', { hasText: 'Cancelar' })).toBeFocused()
   // The fixture lists every change; the hosted list stops at 1000 (the pack count is shown then).
-  await expect(publish.getByText('1217 cambios sin publicar')).toBeVisible()
-  await expect(publish.getByText('y 1205 más')).toBeVisible()
+  await expect(publish.getByText('1414 cambios sin publicar')).toBeVisible()
+  await expect(publish.getByText('y 1402 más')).toBeVisible()
   await audit(page, '[role="dialog"]')
   await publish.getByRole('button', { name: 'Publicar', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Versión 1 publicada.' })).toBeVisible()
@@ -206,6 +214,84 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   } else await expect(page.getByRole('searchbox')).toBeVisible()
   await audit(page)
   await capture(page, `docs/evidence/RYT-093/creature-${info.project.name}.png`)
+})
+
+test('RYT-166 the SRD gains its items, the Rytta basics get their pack and items edit in a form', async ({
+  page,
+}) => {
+  test.setTimeout(90_000)
+  await identityFixture(page)
+  const server = libraryServer({ srdWithoutItems: true })
+  await server.install(page)
+  await page.goto('./#/library')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Biblioteca de contenido' }),
+  ).toBeVisible()
+
+  // Only the missing kind goes up: the SRD keeps its creature as it was.
+  await page.getByRole('button', { name: 'Subir los objetos del SRD' }).click()
+  const upload = page.getByRole('dialog', { name: 'Subir los objetos del SRD' })
+  await expect(upload.getByText(/197 objetos del SRD/)).toBeVisible()
+  await audit(page, '[role="dialog"]')
+  await upload.getByRole('button', { name: 'Subir 197 entradas' }).click()
+  await expect(upload).toHaveCount(0, { timeout: 30_000 })
+  const items = () => server.entries().filter((e) => e.kind === 'item')
+  expect(items()).toHaveLength(197)
+  expect(server.entries().filter((e) => e.kind === 'creature')).toHaveLength(1)
+  await page.goto('./#/library')
+  await expect(page.getByRole('button', { name: 'Subir los objetos del SRD' })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Subir Rytta · Objetos básicos' }).click()
+  const rytta = page.getByRole('dialog', { name: 'Subir Rytta · Objetos básicos' })
+  await expect(rytta.getByText(/con 3 objetos propios de Rytta/)).toBeVisible()
+  await rytta.getByRole('button', { name: 'Subir 3 entradas' }).click()
+  await expect(rytta).toHaveCount(0, { timeout: 30_000 })
+  expect(server.packs.find((p) => p.slug === 'rytta-basics')).toMatchObject({
+    visibility: 'public',
+  })
+
+  // An item opens in its own form; the price is saved in copper.
+  await page.goto(`./#/library/${srdLibraryPackId}/item`)
+  await page.getByRole('searchbox').fill('espada larga')
+  await page.getByRole('link', { name: /^Espada larga/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Espada larga' })).toBeFocused()
+  await expect(page.getByRole('combobox', { name: 'Categoría' })).toHaveValue('Armas')
+  await expect(page.getByRole('textbox', { name: 'Dados de daño' })).toHaveValue('1d8')
+  const price = page.getByRole('textbox', { name: 'Precio (po)' })
+  await expect(price).toHaveValue('15')
+  await audit(page)
+  await price.fill('20')
+  await page.getByRole('checkbox', { name: 'Arrojadiza' }).check()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: /Guardado/ })).toBeVisible()
+  const longsword = items().find((e) => e.key === 'longsword')!
+  expect(longsword.data).toMatchObject({
+    index: { key: 'longsword', costCp: 2000, properties: { thrown: true, dice: '1d8' } },
+  })
+})
+
+test('RYT-163 the owner of a private pack chooses the campaigns that see it', async ({ page }) => {
+  await identityFixture(page)
+  const server = libraryServer({ sample: true })
+  await server.install(page)
+  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  await page.getByRole('button', { name: 'Campañas' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Campañas de «Homebrew de la mesa»' })
+  await expect(dialog.getByText('Ninguna campaña lo ve todavía.')).toBeVisible()
+  await audit(page, '[role="dialog"]')
+  await dialog.getByRole('combobox', { name: 'Añadir una campaña tuya' }).click()
+  await page.getByRole('option', { name: offerCampaigns[1]!.name }).click()
+  await dialog.getByRole('button', { name: 'Añadir', exact: true }).click()
+  await expect(dialog.getByText('«Bosque de Ceniza» ya ve el paquete.')).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Con acceso: 1 campaña' })).toBeFocused()
+  expect(server.offers.get(homebrewPackId)?.map((c) => c.id)).toEqual([offerCampaigns[1]!.id])
+  await audit(page, '[role="dialog"]')
+  await dialog.getByRole('button', { name: 'Quitar Bosque de Ceniza' }).click()
+  await expect(dialog.getByText(/ya no ve el paquete/)).toBeVisible()
+  expect(server.offers.get(homebrewPackId)).toEqual([])
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Campañas' })).toBeFocused()
 })
 
 test('glossary entries change as drafts: text, JSON, leave guard, discard, delete and undo', async ({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { monsterBodiesQuery, monsterIndexQuery } from '@/features/bestiary'
 import { glossaryBodiesQuery, glossaryIndexQuery } from '@/features/glossary'
+import { basicCatalogueQuery, bundledItemEntry } from '@/features/inventory'
 import { batches, contentFile, parseContentFile } from './import-file'
 import { entryName, entryProblem, formFamily, keyFromName, libraryErrorCode } from './library'
 import { srdEntries, type BundledSrd } from './srd'
@@ -140,5 +141,18 @@ describe('RYT-093 content library domain', () => {
       { t: 'ul', items: ['one', 'two'] },
       { t: 'table', rows: [['a', 'b']] },
     ])
+  })
+})
+
+describe('bundled items as library entries (RYT-166)', () => {
+  it('uploads every basic item as a valid entry, and refuses an item without its mechanics', async () => {
+    const { items, descriptions } = await load<{
+      items: Parameters<typeof bundledItemEntry>[0][]
+      descriptions: Parameters<typeof bundledItemEntry>[1]
+    }>(basicCatalogueQuery())
+    const entries = items.map((item) => bundledItemEntry(item, descriptions))
+    expect(entries).toHaveLength(200)
+    for (const entry of entries) expect(entryProblem(entry), entry.key).toBeNull()
+    expect(entryProblem({ ...entries[0]!, data: { index: { weightLb: 3 } } })).toBe('item')
   })
 })

@@ -50,11 +50,56 @@ const keyPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 export const homebrewPackId = '70000000-0000-4000-8000-000000000001'
 
-export function libraryServer(options: { editor?: boolean; sample?: boolean } = {}) {
+/** RYT-163: campaigns the signed-in DM runs, to offer a private pack to. */
+export const offerCampaigns = [
+  { id: '72000000-0000-4000-8000-000000000001', name: 'La Costa Hundida' },
+  { id: '72000000-0000-4000-8000-000000000002', name: 'Bosque de Ceniza' },
+]
+export const srdLibraryPackId = '70000000-0000-4000-8000-000000000002'
+
+export function libraryServer(
+  options: {
+    editor?: boolean
+    sample?: boolean
+    /** RYT-166: a published SRD pack that has no items yet (one creature). */
+    srdWithoutItems?: boolean
+  } = {},
+) {
   const editor = options.editor ?? true
   const calls: { method: string; body: Json }[] = []
   const packs: Pack[] = []
   let entries: Entry[] = []
+  const offers = new Map<string, { id: string; name: string; added_at: string }[]>()
+  if (options.srdWithoutItems) {
+    packs.push({
+      id: srdLibraryPackId,
+      slug: 'srd-5-2-1',
+      title_en: 'System Reference Document 5.2.1',
+      title_es: 'Documento de referencia del sistema 5.2.1',
+      description_en: '',
+      description_es: '',
+      edition: '2024',
+      license: 'CC-BY-4.0',
+      attribution: 'SRD 5.2.1',
+      visibility: 'public',
+      version: 1,
+      revision: 2,
+    })
+    const data = { index: { cr: '1/4' } }
+    entries.push({
+      id: id('71'),
+      pack_id: srdLibraryPackId,
+      kind: 'creature',
+      key: 'wolf',
+      name_en: 'Wolf',
+      name_es: 'Lobo',
+      data,
+      deleted: false,
+      published: { name_en: 'Wolf', name_es: 'Lobo', data, version: 1 },
+      revision: 1,
+      updated_at: '2026-11-13T10:00:00Z',
+    })
+  }
   if (options.sample) {
     packs.push({
       id: homebrewPackId,
@@ -158,6 +203,28 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
           .sort((a, b) => a.slug.localeCompare(b.slug)),
       }
     if (!editor) return { error: 'Forbidden' }
+    if (method === 'get_content_pack_offers' || method === 'set_content_pack_offer') {
+      const pack = packs.find((p) => p.id === body.target_pack)
+      if (!pack) return { error: 'Forbidden' }
+      const list = offers.get(pack.id) ?? []
+      if (method === 'set_content_pack_offer') {
+        if (pack.visibility !== 'private') return { error: 'Invalid request' }
+        const campaign = offerCampaigns.find((c) => c.id === body.target_campaign)
+        if (!campaign) return { error: 'Forbidden' }
+        const rest = list.filter((c) => c.id !== campaign.id)
+        offers.set(
+          pack.id,
+          body.offered ? [...rest, { ...campaign, added_at: '2026-11-23T10:00:00Z' }] : rest,
+        )
+      }
+      return {
+        pack: pack.id,
+        visibility: pack.visibility,
+        super_admin: false,
+        offered: offers.get(pack.id) ?? [],
+        mine: offerCampaigns,
+      }
+    }
     if (method === 'list_content_drafts')
       return entries
         .filter((e) => e.pack_id === body.target_pack && e.kind === body.entry_kind)
@@ -371,6 +438,7 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
   return {
     calls,
     packs,
+    offers,
     entries: () => entries,
     /** Registers the content library RPCs for a page (after identityFixture). */
     async install(page: Page) {

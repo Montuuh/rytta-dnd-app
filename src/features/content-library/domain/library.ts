@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { srdCategories } from '@/features/glossary'
+import { packItemIndexSchema } from '@/features/inventory'
 
 /**
  * RYT-092 content library (ADR 040): packs of downloadable game data and their entries. Entries
@@ -145,7 +146,15 @@ export type EntryInput = {
 export const entryDataLimit = 131072
 export const entryIndexLimit = 4096
 const byteLength = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
-export type EntryProblem = 'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'duplicate'
+export type EntryProblem =
+  | 'kind'
+  | 'key'
+  | 'name'
+  | 'data'
+  | 'size'
+  | 'index'
+  | 'item'
+  | 'duplicate'
 export function entryProblem(entry: EntryInput): EntryProblem | null {
   if (!kindPattern.test(entry.kind)) return 'kind'
   if (!keyPattern.test(entry.key) || entry.key.length > 80) return 'key'
@@ -163,6 +172,8 @@ export function entryProblem(entry: EntryInput): EntryProblem | null {
       byteLength(index) > entryIndexLimit)
   )
     return 'index'
+  // RYT-166: the storeroom and shops read an item's mechanics as they are.
+  if (entry.kind === 'item' && !packItemIndexSchema.safeParse(index ?? {}).success) return 'item'
   return null
 }
 
@@ -248,3 +259,14 @@ export function sortRows<T extends { name_en: string; name_es: string; key: stri
     )
     .map((item) => item.row)
 }
+
+/** RYT-163: the campaigns a private pack is offered to, and the manager's own campaigns. */
+const offerCampaignSchema = z.object({ id: z.uuid(), name: z.string() })
+export const packOffersSchema = z.object({
+  pack: z.uuid(),
+  visibility: z.enum(['public', 'private']),
+  super_admin: z.boolean(),
+  offered: z.array(offerCampaignSchema.extend({ added_at: z.string() })),
+  mine: z.array(offerCampaignSchema),
+})
+export type PackOffers = z.infer<typeof packOffersSchema>

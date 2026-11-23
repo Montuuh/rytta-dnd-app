@@ -9,6 +9,7 @@ import {
   importReportSchema,
   librarySchema,
   libraryErrorCode,
+  packOffersSchema,
   publishResultSchema,
   saveResultSchema,
   type EntryInput,
@@ -168,4 +169,25 @@ export async function publishPack(packId: string, version: number) {
   })
   if (result.error) fail(result.error)
   return publishResultSchema.parse(result.data)
+}
+
+/** RYT-163: who sees a private pack (its owner or a super admin). */
+export async function loadOffers(packId: string, signal: AbortSignal) {
+  const db = await client()
+  const result = await db
+    .rpc('get_content_pack_offers', { target_pack: uuid(packId) })
+    .abortSignal(signal)
+  if (result.error) fail(result.error)
+  return packOffersSchema.parse(result.data)
+}
+
+export async function setOffer(packId: string, campaignId: string, offered: boolean) {
+  const db = await client()
+  const result = await db.rpc('set_content_pack_offer', {
+    target_pack: uuid(packId),
+    target_campaign: uuid(campaignId),
+    offered,
+  })
+  if (result.error) fail(result.error)
+  return packOffersSchema.parse(result.data)
 }

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
+import { itemPackRpc } from './item-packs.ts'
 import { basicImportMock } from './basic-import.ts'
 import {
   createDiceStore,
@@ -1022,6 +1023,11 @@ export async function identityFixture(
             })),
         )
     }
+    const packReply = itemPackRpc(method, body, actor === dmId)
+    if (packReply)
+      return 'error' in packReply
+        ? respond({ message: packReply.error }, packReply.status ?? 400)
+        : respond(packReply.data)
     const inventoryResult = inventory.handle(method, body, eq, actor === dmId)
     if (inventoryResult !== undefined)
       return inventoryResult instanceof Error

@@ -138,11 +138,6 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     }
   }
   const all = useMemo(() => (query.data ?? []).filter((item) => !item.archived), [query.data])
-  // Catalogue keys already in the campaign, archived ones too: the import skips them.
-  const importedKeys = useMemo(
-    () => new Set((query.data ?? []).flatMap((item) => (item.basic_key ? [item.basic_key] : []))),
-    [query.data],
-  )
   const toggleTemplate = (item: ItemDefinition) => {
     const next = !item.is_template
     const key = `${item.id}:${item.revision}:${next}`
@@ -664,7 +659,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
       {importing && (
         <BasicImport
           campaignId={campaignId}
-          imported={importedKeys}
+          definitions={query.data ?? []}
           onClose={() => {
             setImporting(false)
             returnFocus()

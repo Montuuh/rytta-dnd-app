@@ -75,6 +75,29 @@ Owner choices from the block I options page, all the recommended ones:
 - P4 A: without the library the sheet keeps working from the character's stored data, and rule
   texts offer a retry. Character creation and level up wait for the library.
 
+## Items and private packs (RYT-166, RYT-163, 2026-11-23)
+
+Owner choices from the block J options page, all the recommended ones:
+
+- P1 A: the 197 SRD items join the SRD pack as its version 2, and the 3 Rytta items get their own
+  public pack, "Rytta · Basic items". Both reach every campaign when first published. A version
+  now advances, without review, the categories it does not change.
+- P2 A: the storeroom import shows the items of every enabled pack with a source filter, and shop
+  presets stock from the same items. Hidden items are not offered.
+- P3 A: an imported item is the campaign's copy. Accepting a pack version does not touch the
+  storeroom; "Update" in the import lists the items that differ from their pack and changes only
+  the ticked ones (never prices, images or templates).
+- P4 A: the library has a full item form: category, weight, price, where it is worn, weapon and
+  armour values and the common properties. Rarer fields stay in the JSON tab.
+- P5 A: a private pack's owner offers it to campaigns they run as DM; a super admin can offer it to
+  any campaign.
+- P6 A: removing a campaign from a private pack stops its reads at once. The pack stays listed in
+  Content only so its DM can turn it off; what the campaign already copied stays.
+
+Storeroom items keep their link to the pack in `basic_key`: the SRD and the Rytta basics keep the
+keys of the old bundled catalogue (so existing items and shop presets stay linked), and other packs
+use `<ref>--<key>`.
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

@@ -10,6 +10,8 @@ import {
   loadDraft,
   loadDrafts,
   loadLibrary,
+  loadOffers,
+  setOffer,
   publishPack,
   savePack,
   saveEntry,
@@ -151,4 +153,32 @@ export function useImportEntries() {
     }
     return report
   }
+}
+
+/** RYT-163: the campaigns a private pack is offered to. */
+export const offersQuery = (userId: string, packId: string) =>
+  queryOptions({
+    queryKey: [...root(userId), packId, 'offers'],
+    queryFn: ({ signal }) => loadOffers(packId, signal),
+  })
+export function useOfferAction(packId: string) {
+  const { state, controller } = useAuth()
+  const userId = state.user?.id
+  const cache = useQueryClient()
+  return useMutation({
+    retry: false,
+    networkMode: 'always',
+    mutationFn: async (input: { campaignId: string; offered: boolean }) => {
+      if (!navigator.onLine || !userId || controller?.getSnapshot().user?.id !== userId)
+        throw new Error('network')
+      return setOffer(packId, input.campaignId, input.offered)
+    },
+    onSuccess: (offers) => {
+      if (userId) cache.setQueryData(offersQuery(userId, packId).queryKey, offers)
+    },
+    // Campaign content readers of this account (a DM who is also the owner) see the change.
+    onSettled: () => {
+      if (userId) void cache.invalidateQueries({ queryKey: ['private', userId, 'campaign'] })
+    },
+  })
 }

@@ -7,13 +7,29 @@ import type { EntryInput, PackInput } from './library'
  * row and `en`/`es` the bundled bodies.
  */
 export const srdSlug = 'srd-5-2-1'
+export const ryttaBasicsSlug = 'rytta-basics'
+
+/** RYT-166: the Rytta homebrew items of the old bundled catalogue, as their own public pack. */
+export const ryttaBasicsPack: PackInput = {
+  slug: ryttaBasicsSlug,
+  title_en: 'Rytta · Basic items',
+  title_es: 'Rytta · Objetos básicos',
+  description_en: 'Backpacks and expedition packs made for Rytta.',
+  description_es: 'Mochilas y equipos de expedición propios de Rytta.',
+  edition: '',
+  license: 'Rytta',
+  attribution: 'Rytta homebrew.',
+  visibility: 'public',
+}
 
 export const srdPack: PackInput = {
   slug: srdSlug,
   title_en: 'System Reference Document 5.2.1',
   title_es: 'Documento de referencia del sistema 5.2.1',
-  description_en: 'Creatures, their trait library and the rules glossary of the SRD 5.2.1.',
-  description_es: 'Criaturas, su biblioteca de rasgos y el glosario de reglas del SRD 5.2.1.',
+  description_en:
+    'Creatures, their trait library, the rules glossary and the equipment of the SRD 5.2.1.',
+  description_es:
+    'Criaturas, su biblioteca de rasgos, el glosario de reglas y el equipo del SRD 5.2.1.',
   edition: '2024',
   license: 'CC-BY-4.0',
   attribution:

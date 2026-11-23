@@ -2,7 +2,17 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEv
 import { Alert, Button, Group, Loader, Select, Stack, Text, TextInput, Title } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, FileUp, Library, PencilLine, Plus, Search, UploadCloud } from 'lucide-react'
+import {
+  ArrowLeft,
+  FileUp,
+  Library,
+  PencilLine,
+  Plus,
+  Search,
+  UploadCloud,
+  Users,
+} from 'lucide-react'
+import { useAdminStatus } from '@/features/admin'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -19,8 +29,9 @@ import {
   type ContentLanguage,
   type ContentPack,
 } from '../domain/library'
-import { srdSlug } from '../domain/srd'
-import { ImportDialog, PackDialog, PublishDialog, SrdDialog } from './dialogs'
+import { ryttaBasicsSlug, srdSlug } from '../domain/srd'
+import { BundledDialog, ImportDialog, PackDialog, PublishDialog, type Bundle } from './dialogs'
+import { OffersDialog } from './offers-dialog'
 import { EntryEditor } from './entry-editor'
 import { entryMeta, kindLabel, packLine } from './labels'
 import { hasKeptEdits, keepEdits, useKeptEditsVersion } from './unsaved'
@@ -29,7 +40,8 @@ import './library.css'
 type Dialog =
   | { kind: 'pack'; pack: ContentPack | null }
   | { kind: 'import'; pack: ContentPack }
-  | { kind: 'srd' }
+  | { kind: 'bundled'; bundle: Bundle }
+  | { kind: 'offers'; pack: ContentPack }
   | { kind: 'publish'; pack: ContentPack }
   | null
 
@@ -214,16 +226,32 @@ export function LibraryPage() {
       </div>
     )
 
-  const hasSrd = packs.some((p) => p.slug === srdSlug)
   const kind = pack ? (params.kind ?? defaultKind(pack)) : null
-  const uploadButton = !hasSrd && (
-    <Button
-      variant="light"
-      leftSection={<UploadCloud size={18} aria-hidden="true" />}
-      onClick={() => openDialog({ kind: 'srd' })}
-    >
-      {t('library.uploadSrd')}
-    </Button>
+  const srdPack = packs.find((p) => p.slug === srdSlug) ?? null
+  const hasRytta = packs.some((p) => p.slug === ryttaBasicsSlug)
+  // RYT-166: the SRD gains its items; the Rytta basic items get their own pack.
+  const srdItems = srdPack && !(srdPack.kinds.item || srdPack.drafts?.item)
+  const uploadButtons = (
+    <>
+      {(!srdPack || srdItems) && (
+        <Button
+          variant="light"
+          leftSection={<UploadCloud size={18} aria-hidden="true" />}
+          onClick={() => openDialog({ kind: 'bundled', bundle: 'srd' })}
+        >
+          {t(srdPack ? 'library.uploadSrdItems' : 'library.uploadSrd')}
+        </Button>
+      )}
+      {!hasRytta && (
+        <Button
+          variant="light"
+          leftSection={<UploadCloud size={18} aria-hidden="true" />}
+          onClick={() => openDialog({ kind: 'bundled', bundle: 'rytta' })}
+        >
+          {t('library.uploadRytta')}
+        </Button>
+      )}
+    </>
   )
   const newPackButton = (
     <Button
@@ -248,7 +276,7 @@ export function LibraryPage() {
         actions={
           compact || packs.length === 0 ? undefined : (
             <Group gap="xs" wrap="wrap">
-              {uploadButton}
+              {uploadButtons}
               {newPackButton}
             </Group>
           )
@@ -276,7 +304,7 @@ export function LibraryPage() {
           <Title order={2}>{t('library.emptyTitle')}</Title>
           <Text>{t('library.emptyBody')}</Text>
           <Group gap="xs" justify="center">
-            {uploadButton}
+            {uploadButtons}
             {newPackButton}
           </Group>
         </div>
@@ -324,6 +352,7 @@ export function LibraryPage() {
                 onEdit={() => openDialog({ kind: 'pack', pack })}
                 onImport={() => openDialog({ kind: 'import', pack })}
                 onPublish={() => openDialog({ kind: 'publish', pack })}
+                onOffers={() => openDialog({ kind: 'offers', pack })}
                 titleRef={entriesTitle}
               />
             ) : (
@@ -417,18 +446,25 @@ export function LibraryPage() {
           }}
         />
       )}
-      {dialog?.kind === 'srd' && (
-        <SrdDialog
+      {dialog?.kind === 'bundled' && (
+        <BundledDialog
+          bundle={dialog.bundle}
           language={language}
-          existing={packs.find((p) => p.slug === srdSlug) ?? null}
+          existing={
+            packs.find((p) => p.slug === (dialog.bundle === 'srd' ? srdSlug : ryttaBasicsSlug)) ??
+            null
+          }
           onClose={closeDialog}
-          onDone={(id, message) => {
+          onDone={(id, kind, message) => {
             setDialog(null)
-            setNotice({ text: message, at: `/library/${id}/creature`, seen: false })
-            go(`/library/${id}/creature`)
+            setNotice({ text: message, at: `/library/${id}/${kind}`, seen: false })
+            go(`/library/${id}/${kind}`)
             focusEntries()
           }}
         />
+      )}
+      {dialog?.kind === 'offers' && (
+        <OffersDialog pack={dialog.pack} language={language} onClose={closeDialog} />
       )}
       {dialog?.kind === 'publish' && (
         <PublishDialog
@@ -465,6 +501,7 @@ function EntryPane({
   onEdit,
   onImport,
   onPublish,
+  onOffers,
   titleRef,
 }: {
   pack: ContentPack
@@ -476,6 +513,7 @@ function EntryPane({
   onEdit: () => void
   onImport: () => void
   onPublish: () => void
+  onOffers: () => void
   titleRef: (node: HTMLHeadingElement | null) => void
 }) {
   const { t } = useTranslation()
@@ -496,6 +534,9 @@ function EntryPane({
   useKeptEditsVersion()
   const rows = sortRows(drafts.data ?? [], query, language)
   const title = packTitle(pack, language)
+  // RYT-163: a private pack's owner, or a super admin, chooses the campaigns that see it.
+  const admin = useAdminStatus()
+  const manages = pack.visibility === 'private' && (pack.mine || admin.data?.super_admin === true)
   return (
     <Stack gap="sm" className="lib-entries-inner">
       <Link to="/library" onClick={guard.link} className="lib-back">
@@ -526,6 +567,15 @@ function EntryPane({
           >
             {t('library.import')}
           </Button>
+          {manages && (
+            <Button
+              variant="subtle"
+              leftSection={<Users size={18} aria-hidden="true" />}
+              onClick={onOffers}
+            >
+              {t('library.offers.open')}
+            </Button>
+          )}
         </Group>
       </div>
       {!!pack.pending && (

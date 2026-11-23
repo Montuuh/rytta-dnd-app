@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Alert, Button, Loader, SegmentedControl, Stack, Text, TextInput } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { usePhone } from '@/shared/ui/use-viewport'
-import { basicCatalogueQuery } from '@/features/inventory'
+import { useCampaignItemCatalogue } from '@/features/inventory'
 import { findShopType } from '../domain/shop-types'
 import type { AdminShop, ShopVisibility } from '../domain/shops'
 import { stockLanguage, typeItems } from '../domain/stocking'
@@ -14,8 +13,8 @@ import './shops.css'
 
 const stepKey = (step: StockStep) => `admin.type.step.${step}` as const
 
-function useChoice(initial: string) {
-  const catalogue = useQuery(basicCatalogueQuery())
+function useChoice(campaignId: string, initial: string) {
+  const catalogue = useCampaignItemCatalogue(campaignId)
   const [key, setKey] = useState(initial)
   const [excluded, setExcluded] = useState<string[]>([])
   const type = key ? findShopType(key) : undefined
@@ -87,7 +86,7 @@ export function CreateShopDrawer({
   const phone = usePhone()
   const lang = stockLanguage(i18n.language)
   const stocking = useShopStocking(campaignId)
-  const choice = useChoice('')
+  const choice = useChoice(campaignId, '')
   const [name, setName] = useState('')
   const [autoName, setAutoName] = useState('')
   const [visibility, setVisibility] = useState<ShopVisibility>('hidden')
@@ -233,7 +232,7 @@ export function StockFromTypeDrawer({
   const phone = usePhone()
   const lang = stockLanguage(i18n.language)
   const stocking = useShopStocking(campaignId)
-  const choice = useChoice(shop.kind && findShopType(shop.kind) ? shop.kind : '')
+  const choice = useChoice(campaignId, shop.kind && findShopType(shop.kind) ? shop.kind : '')
   const ready = Boolean(choice.type) && choice.items.length > 0
   const submit = async () => {
     if (!ready) return

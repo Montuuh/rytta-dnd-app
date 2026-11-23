@@ -1,3 +1,4 @@
+import { itemPackState, resetItemPacks, srdItemsPackId } from './fixtures/item-packs.ts'
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId, characterId } from './fixtures/identity.ts'
@@ -800,7 +801,7 @@ test('RYT-098 the chosen picture opens the viewer from the forge and the give dr
   await expect(page.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Moonstone')
 })
 
-test('RYT-104 the DM updates imported basic items from the catalogue and imports the rest', async ({
+test('RYT-104 and RYT-166 the DM updates imported items from their packs and imports the rest', async ({
   page,
 }, info) => {
   const f = await identityFixture(page, { inventory: true, catalogue: true })
@@ -816,30 +817,30 @@ test('RYT-104 the DM updates imported basic items from the catalogue and imports
   })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
-  const open = page.getByRole('button', { name: 'Importar objetos básicos' })
+  const open = page.getByRole('button', { name: 'Importar objetos' })
   await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
   await open.click()
-  const drawer = page.getByRole('dialog', { name: 'Importar objetos básicos' })
-  const update = drawer.getByRole('button', { name: 'Actualizar 3 objetos' })
-  await expect(update).toBeVisible()
+  const drawer = page.getByRole('dialog', { name: 'Importar objetos' })
+  // Only the items that differ from their pack are listed, each ticked, with what changes.
+  const changes = drawer.getByRole('checkbox', { name: /Cuerda|Raciones|Mochila/ })
+  await expect(changes).toHaveCount(3)
+  await expect(drawer.getByRole('button', { name: 'Actualizar 3 objetos' })).toBeVisible()
+  await expect(drawer.getByLabel('Fuente')).toBeVisible()
   await audit(page, info.outputPath('import-update.png'))
-  await update.click()
-  // The rope's name and weight follow the catalogue; its price stays the DM's.
+  // Unticking one keeps it as it is.
+  await drawer.getByRole('checkbox', { name: /Raciones/ }).uncheck()
+  await drawer.getByRole('button', { name: 'Actualizar 2 objetos' }).click()
+  // The rope's name and weight follow the pack; its price stays the DM's.
   await expect(page.getByRole('status').filter({ hasText: /objetos? actualizados?/ })).toBeVisible()
   expect(bodies.at(-1)).toMatchObject({ update: true })
-  expect(bodies.at(-1)!.keys.sort()).toEqual(['rations', 'reinforcedBackpack', 'rope'])
+  expect(bodies.at(-1)!.keys.sort()).toEqual(['reinforcedBackpack', 'rope'])
   const rope = f.inventory.definitions.find((d) => d.basic_key === 'rope')!
   expect(rope).toMatchObject({ name: 'Cuerda', weight_lb: 5, value_gp: 1 })
-  // Nothing changed since: a second update reports that everything matches.
+  // Only the unticked item still differs.
   await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
   await open.click()
-  await drawer.getByRole('button', { name: 'Actualizar 3 objetos' }).click()
-  await expect(
-    page.getByRole('status').filter({ hasText: 'Todo lo importado ya coincide con el catálogo.' }),
-  ).toBeVisible()
+  await expect(drawer.getByRole('button', { name: 'Actualizar 1 objeto' })).toBeVisible()
   // The import itself only sends what is missing and creates it.
-  await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
-  await open.click()
   const submit = drawer.getByRole('button', { name: /^Importar \d+ objetos$/ })
   const count = Number((await submit.textContent())!.match(/(\d+)/)![1])
   await submit.click()
@@ -849,6 +850,61 @@ test('RYT-104 the DM updates imported basic items from the catalogue and imports
   const sent = bodies.filter((body) => !body.update).flatMap((body) => body.keys)
   expect(sent).toHaveLength(count)
   expect(sent).not.toContain('rope')
+})
+
+test('RYT-166 the import filters by pack, leaves hidden items out and sends the DM to Content without packs', async ({
+  page,
+}, info) => {
+  itemPackState.books = true
+  itemPackState.hidden = { [srdItemsPackId]: ['longsword'] }
+  try {
+    await identityFixture(page, { inventory: true, catalogue: true })
+    const keys: string[] = []
+    await page.route('**/rpc/import_basic_items', (route) => {
+      keys.push(
+        ...route
+          .request()
+          .postDataJSON()
+          .items.map((item: { key: string }) => item.key),
+      )
+      return route.fallback()
+    })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+    await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
+    await page.getByRole('button', { name: 'Importar objetos' }).click()
+    const drawer = page.getByRole('dialog', { name: 'Importar objetos' })
+    const source = drawer.getByLabel('Fuente')
+    await source.selectOption({ label: 'Libros del dueño' })
+    await expect(drawer.getByRole('button', { name: 'Importar 1 objeto' })).toBeVisible()
+    await audit(page, info.outputPath('import-source.png'))
+    await drawer.getByRole('button', { name: 'Importar 1 objeto' }).click()
+    await expect(
+      page.getByRole('status').filter({ hasText: '1 objeto añadido al almacén.' }),
+    ).toBeVisible()
+    expect(keys).toEqual(['b00c5000--moon-blade'])
+    // The hidden SRD longsword is never offered.
+    await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
+    await page.getByRole('button', { name: 'Importar objetos' }).click()
+    await drawer.getByRole('button', { name: /^Importar \d+ objetos$/ }).click()
+    await expect(page.getByRole('status').filter({ hasText: /añadidos al almacén/ })).toBeVisible()
+    expect(keys).not.toContain('longsword')
+
+    itemPackState.books = false
+    itemPackState.hidden = {}
+    itemPackState.none = true
+    await page.reload()
+    await page.getByRole('button', { name: 'Gestionar catálogo' }).click()
+    await page.getByRole('button', { name: 'Importar objetos' }).click()
+    await expect(drawer.getByText('La campaña no tiene paquetes de objetos activos.')).toBeVisible()
+    await expect(drawer.getByRole('link', { name: 'Elegir en Contenido' })).toHaveAttribute(
+      'href',
+      new RegExp(`/campaign/${campaignId}/members\\?panel=content$`),
+    )
+    await audit(page, info.outputPath('import-no-packs.png'))
+  } finally {
+    resetItemPacks()
+  }
 })
 
 test('RYT-105 the DM review keeps focus through its steps; Escape steps back and keeps the reason', async ({

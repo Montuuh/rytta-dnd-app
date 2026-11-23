@@ -641,8 +641,8 @@ describe('RYT-092 content library', () => {
             and c.relname like 'content_%'`,
       )
     ).rows
-    // RYT-162 adds content_entry_versions in both environments.
-    expect(rls).toHaveLength(10)
+    // RYT-162 adds content_entry_versions and RYT-163 content_pack_offers in both environments.
+    expect(rls).toHaveLength(12)
     for (const table of rls) expect(table, table.name).toMatchObject({ rls: true })
   })
 })

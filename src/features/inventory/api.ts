@@ -28,7 +28,10 @@ import {
   setItemTemplate,
   type ProposalInput,
   type Resolution,
+  loadItemPack,
+  loadItemPacks,
 } from './data/repository'
+import { buildItemCatalogue } from './domain/pack-items'
 import { loadBasicItemDescriptions, loadBasicItems } from './domain/basic-items'
 import type { ImportItem } from './domain/catalogue'
 import type { InventoryAction } from './domain/item'
@@ -268,7 +271,31 @@ export function useBasicImport(campaignId: string) {
   )
 }
 
-/** The bundled basic catalogue and both description files: application content, loaded once. */
+/**
+ * RYT-166: the items of the packs the campaign enabled, without hidden ones, shaped as the bundled
+ * catalogue (DM only). Content changes refresh it with the rest of the campaign.
+ */
+export const campaignItemCatalogueQuery = (userId: string, campaignId: string) =>
+  queryOptions({
+    queryKey: ['private', userId, 'campaign', campaignId, 'item-packs'],
+    queryFn: async ({ signal }) => {
+      const packs = (await loadItemPacks(campaignId, signal)).filter((pack) => pack.enabled)
+      const parts = await Promise.all(
+        packs.map(async (pack) => ({
+          pack,
+          entries: (await loadItemPack(campaignId, pack, signal)).entries,
+        })),
+      )
+      return buildItemCatalogue(parts)
+    },
+    staleTime: 5 * 60_000,
+  })
+export function useCampaignItemCatalogue(campaignId: string) {
+  const { state } = useAuth()
+  return useQuery(campaignItemCatalogueQuery(state.user?.id ?? '', campaignId))
+}
+
+/** The bundled catalogue: the library's SRD and Rytta basics uploads (RYT-167 retires it). */
 export const basicCatalogueQuery = () =>
   queryOptions({
     queryKey: ['static', 'basic-items'],

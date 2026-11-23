@@ -442,3 +442,33 @@ cross-campaign DM, plus the guarded PRE mirror.
   does not validate the glossary ids stored in character builds (format only, as before).
 - One read is capped at 8 MB (`Too large`), checked on the entries' size before the answer is
   built. Reads are not paginated; pack size at publish time is not capped yet.
+
+## Pack items and private packs (RYT-166, RYT-163)
+
+- `get_campaign_item_packs` and `get_campaign_item_pack` are read only, for the campaign's active
+  DM (and admin access): the storeroom import and shop stocking are DM tools. They serve the
+  campaign's item packs at its pinned version, with the keys of its hidden items, capped at 8 MB.
+- The import still goes through `import_basic_items`: the DM sends the item data, as before, and
+  the server does not check it against a pack (a DM can forge any item anyway).
+- `public.content_pack_offers` lists the campaigns a private pack is offered to. It has no client
+  grant; `get_content_pack_offers` and `set_content_pack_offer` are open to the pack's owner, who
+  must be a content editor, and to super admins. The owner adds only campaigns where they are an
+  active DM (not through admin access); a super admin adds any campaign. The list names the
+  offered campaigns to whoever manages the pack.
+- Every campaign content reader checks `private.content_offered(pack, campaign)`: public and
+  published, or private, published and offered to that campaign. The readers that took the pack
+  alone were rewritten in place by the migration, which fails if any reader is left without its
+  campaign. A campaign removed from the offers keeps its rows (it can turn the pack off and gets
+  it back if offered again) but reads nothing from it.
+- Content editors are a trusted platform role: any editor can edit, publish or change the
+  visibility of any pack (RYT-092), so a private pack is private from DMs and Players, not from
+  other editors. The packs whose first items reach every campaign are the SRD (whose slug
+  is taken once uploaded) and `rytta-basics` only when the SRD's owner or a super admin owns it, so
+  another editor cannot claim a default slug.
+- A private pack offered to a campaign is read by its members as any other pack: its spells and
+  rules reach that campaign's Players. Removing the offer stops server reads at once; copies
+  already in a browser stay until it refreshes.
+- Super admin offers to campaigns they do not run are not written to the admin audit log.
+- A pack owner who loses the editor role can no longer manage its offers; super admins still can.
+  A pack whose owner deleted their account has no owner and only super admins manage it.
+

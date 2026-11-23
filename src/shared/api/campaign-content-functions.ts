@@ -65,4 +65,15 @@ export type CampaignContentFunctions = {
     Returns: Json
   }
   get_srd_rule_pack: { Args: { target_category: string; part: string }; Returns: Json }
+  // 20261221120000_pack_items_private_packs (RYT-166, RYT-163).
+  get_campaign_item_packs: { Args: { target_campaign: string }; Returns: Json }
+  get_campaign_item_pack: {
+    Args: { target_campaign: string; target_pack: string; at_version: number }
+    Returns: Json
+  }
+  get_content_pack_offers: { Args: { target_pack: string }; Returns: Json }
+  set_content_pack_offer: {
+    Args: { target_pack: string; target_campaign: string; offered: boolean }
+    Returns: Json
+  }
 }

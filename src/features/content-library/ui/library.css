@@ -172,6 +172,15 @@
   gap: 12px;
   align-items: end;
 }
+.lib-item-group {
+  display: grid;
+  gap: 12px;
+}
+.lib-item-legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 700;
+}
 .lib-lang {
   display: flex;
   flex-direction: column;
@@ -360,4 +369,39 @@
 .lib-pack-title:focus-visible {
   outline: 2px solid var(--app-focus);
   outline-offset: 2px;
+}
+
+.lib-offers {
+  display: grid;
+  gap: 8px;
+}
+.lib-offers-title {
+  margin: 0;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 700;
+}
+.lib-offer-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lib-offer-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--app-border);
+}
+.lib-offer-list li:last-child {
+  border-bottom: 0;
+}
+.lib-offer-list .mantine-Button-root {
+  min-height: 44px;
+  flex: none;
+}
+.lib-offer-pick {
+  flex: 1;
+  min-width: 12rem;
 }

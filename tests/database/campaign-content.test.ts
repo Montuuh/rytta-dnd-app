@@ -393,9 +393,10 @@ describe('campaign content (RYT-162)', () => {
       srd,
       'spells',
     ])
+    // Version 2 did not change spells, so the campaign followed it on publish (RYT-166).
     expect(await category(oldCampaign, 'spells')).toMatchObject({
       enabled: true,
-      pinned_version: 1,
+      pinned_version: 2,
       hidden: 1,
     })
     await asUser(dmA)

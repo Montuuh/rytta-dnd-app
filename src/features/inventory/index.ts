@@ -43,6 +43,8 @@ export { HoldSeal } from './ui/hold-seal'
 
 export {
   basicCatalogueQuery,
+  campaignItemCatalogueQuery,
+  useCampaignItemCatalogue,
   catalogueQuery,
   catalogueSearchQuery,
   rosterQuery,
@@ -66,5 +68,16 @@ export { DefinitionEditor, type GiveOutcome } from './ui/definition-editor'
 export { DeleteItemDialog } from './ui/delete-item'
 export { categoryIcons, rarityPips } from './ui/item-visuals'
 export { loadBasicItemDescriptions, loadBasicItems, type BasicItem } from './domain/basic-items'
+export {
+  bundledItemEntry,
+  categoryIconDefaults,
+  itemPackTitle,
+  packItemIndexSchema,
+  packItemPropertiesSchema,
+  ryttaBasicsSlug,
+  type CampaignItemCatalogue,
+  type ItemSource,
+  type PackItemIndex,
+} from './domain/pack-items'
 
 export { LootDrawer } from './ui/loot-drawer'

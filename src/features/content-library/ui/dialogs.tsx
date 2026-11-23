@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { monsterBodiesQuery, monsterIndexQuery } from '@/features/bestiary'
 import { glossaryBodiesQuery, glossaryIndexQuery } from '@/features/glossary'
+import { basicCatalogueQuery, bundledItemEntry } from '@/features/inventory'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { changesQuery, useImportEntries, useLibraryAction, type ImportProgress } from '../api'
 import { parseContentFile, type ParsedFile } from '../domain/import-file'
@@ -35,7 +36,7 @@ import {
   type ImportReport,
   type PackInput,
 } from '../domain/library'
-import { srdEntries, srdPack, type BundledSrd } from '../domain/srd'
+import { ryttaBasicsPack, srdEntries, srdPack, type BundledSrd } from '../domain/srd'
 import { kindLabel } from './labels'
 
 const errorText = (t: TFunction, error: unknown) =>
@@ -504,47 +505,90 @@ export function ImportDialog({
   )
 }
 
-export function SrdDialog({
+export type Bundle = 'srd' | 'rytta'
+
+/**
+ * Uploads content bundled in the app as drafts: the SRD 5.2.1 (creatures, glossary and, since
+ * RYT-166, its equipment) or the Rytta basic items. An existing pack only receives the kinds it
+ * does not have yet, so the SRD gains its items without touching its creatures and rules.
+ */
+export function BundledDialog({
+  bundle,
   language,
   existing,
   onClose,
   onDone,
 }: {
+  bundle: Bundle
   language: ContentLanguage
   existing: ContentPack | null
   onClose: () => void
-  onDone: (packId: string, message: string) => void
+  onDone: (packId: string, kind: string, message: string) => void
 }) {
   const { t } = useTranslation()
   const action = useLibraryAction()
   const run = useImportEntries()
+  const srd = bundle === 'srd'
   const sources = useQueries({
     queries: [
-      monsterIndexQuery(),
-      monsterBodiesQuery('en'),
-      monsterBodiesQuery('es'),
-      glossaryIndexQuery(),
-      glossaryBodiesQuery('en'),
-      glossaryBodiesQuery('es'),
+      { ...monsterIndexQuery(), enabled: srd },
+      { ...monsterBodiesQuery('en'), enabled: srd },
+      { ...monsterBodiesQuery('es'), enabled: srd },
+      { ...glossaryIndexQuery(), enabled: srd },
+      { ...glossaryBodiesQuery('en'), enabled: srd },
+      { ...glossaryBodiesQuery('es'), enabled: srd },
     ],
   })
+  const items = useQuery(basicCatalogueQuery())
   const [progress, setProgress] = useState<ImportProgress | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const loaded = sources.every((source) => source.data)
+  const loaded = Boolean(items.data) && (!srd || sources.every((source) => source.data))
   // Packed on each render (a few while uploading); the bundled sources never change.
   const data = sources.map((source) => source.data)
-  const groups = loaded
-    ? srdEntries({
-        monsters: data[0],
-        bodies: { en: data[1], es: data[2] },
-        glossary: data[3],
-        glossaryBodies: { en: data[4], es: data[5] },
-      } as unknown as BundledSrd)
+  const itemEntries = items.data
+    ? items.data.items
+        .filter((item) => item.source === (srd ? 'srd' : 'rytta'))
+        .map((item) => bundledItemEntry(item, items.data.descriptions))
+    : []
+  const all = loaded
+    ? [
+        ...(srd
+          ? srdEntries({
+              monsters: data[0],
+              bodies: { en: data[1], es: data[2] },
+              glossary: data[3],
+              glossaryBodies: { en: data[4], es: data[5] },
+            } as unknown as BundledSrd)
+          : []),
+        { kind: 'item', entries: itemEntries },
+      ]
     : null
+  const present = (kind: string) =>
+    Boolean(existing && ((existing.kinds[kind] ?? 0) > 0 || (existing.drafts?.[kind] ?? 0) > 0))
+  // An existing SRD only gains its items (RYT-166); a new pack receives everything.
+  const groups =
+    all?.filter(
+      (group) =>
+        group.entries.length > 0 &&
+        !present(group.kind) &&
+        (!existing || !srd || group.kind === 'item'),
+    ) ?? null
   const count = groups?.reduce((sum, group) => sum + group.entries.length, 0) ?? 0
-  const title = packTitle(srdPack, language)
+  const pack = srd ? srdPack : ryttaBasicsPack
+  const title = packTitle(existing ?? pack, language)
+  const itemsOnly = Boolean(groups && groups.every((group) => group.kind === 'item'))
+  const dialogTitle = !srd
+    ? t('library.ryttaTitle')
+    : existing
+      ? t('library.srdItemsTitle')
+      : t('library.srdTitle')
+  const body = !srd
+    ? t('library.ryttaBody', { title, count })
+    : existing
+      ? t('library.srdItemsBody', { title, count })
+      : t('library.srdBody', { title, count })
   const upload = async () => {
-    if (!groups) return
+    if (!groups || count === 0) return
     setError(null)
     try {
       const packId =
@@ -554,11 +598,15 @@ export function SrdDialog({
             kind: 'savePack',
             packId: null,
             revision: null,
-            input: srdPack,
+            input: pack,
           })
         ).id
       await run(packId, groups, false, setProgress)
-      onDone(packId, t('library.srdDone', { version: (existing?.version ?? 0) + 1 }))
+      onDone(
+        packId,
+        itemsOnly ? 'item' : 'creature',
+        t('library.srdDone', { version: (existing?.version ?? 0) + 1 }),
+      )
     } catch (caught) {
       setProgress(null)
       setError(errorText(t, caught))
@@ -566,20 +614,20 @@ export function SrdDialog({
   }
   const busy = progress !== null || action.isPending
   return (
-    <Dialog title={t('library.srdTitle')} onClose={onClose} busy={busy}>
+    <Dialog title={dialogTitle} onClose={onClose} busy={busy}>
       <Stack gap="md">
-        {!loaded ? (
-          <Loader size="sm" aria-label={t('library.srdTitle')} />
-        ) : (
-          <Text>{t('library.srdBody', { title, count })}</Text>
-        )}
+        {!loaded ? <Loader size="sm" aria-label={dialogTitle} /> : <Text>{body}</Text>}
         {progress && <ProgressLine label={t('library.importing', progress)} progress={progress} />}
         {error && <FailureAlert>{error}</FailureAlert>}
         <Group justify="flex-end">
           <Button variant="subtle" data-autofocus onClick={onClose} disabled={busy}>
             {t('library.cancel')}
           </Button>
-          <Button disabled={!loaded || busy} loading={busy} onClick={() => void upload()}>
+          <Button
+            disabled={!loaded || busy || count === 0}
+            loading={busy}
+            onClick={() => void upload()}
+          >
             {t('library.srdRun', { count })}
           </Button>
         </Group>

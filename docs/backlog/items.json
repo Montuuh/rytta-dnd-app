@@ -5086,12 +5086,12 @@
       "title": "Private packs offered only to the campaigns their owner adds",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-162"],
       "sources": [
         "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
       ],
-      "scope": "A private pack lists the campaigns it is offered to; its owner (or a super admin) adds and removes campaigns from the library. Only those campaigns see the pack in their Content section; public packs stay offered to every DM. Removing a campaign keeps what it already enabled until its DM removes it, or removes it at once (decided on an options page).",
+      "scope": "A private pack lists the campaigns it is offered to; its owner adds campaigns they run as DM and a super admin adds any campaign, from the library. Only those campaigns see the pack in their Content section; public packs stay offered to every DM. Removing a campaign stops its reads at once; the pack stays listed only so its DM can turn it off.",
       "acceptance": [
         "A private pack never appears to a DM of a campaign it is not offered to, in lists, searches or entry payloads.",
         "Denial tests for anon, outsider, Player, other-campaign DM and a DM of a campaign not offered the pack.",
@@ -5103,7 +5103,7 @@
         "library and campaign content e2e",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-166/validation.md"]
     },
     {
       "id": "RYT-164",
@@ -5163,12 +5163,12 @@
       "title": "Items as a pack kind: the basic items in a pack, storeroom and shops read packs",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-162"],
       "sources": [
         "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
       ],
-      "scope": "The library gains an item kind with an editor form and the bundled basic items become a pack. The storeroom's import and the shops offer the items of the packs the campaign enabled; items already in a campaign keep their data and gain a link to their pack entry where they came from one.",
+      "scope": "The library gains an item kind with an editor form. The SRD items join the SRD pack as a new version and the Rytta homebrew items get their own public pack. The storeroom's import and the shops offer the items of the packs the campaign enabled; items already in a campaign keep their data and their link to the pack entry they came from.",
       "acceptance": [
         "The basic items import offers the same items as before, from the pack.",
         "Items already in campaigns, inventories and shops are unchanged by the migration.",
@@ -5181,7 +5181,7 @@
         "campaign-items, shops and inventory e2e",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-166/validation.md"]
     },
     {
       "id": "RYT-167",

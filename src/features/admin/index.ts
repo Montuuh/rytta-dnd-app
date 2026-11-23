@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 
-export { useAdminStatus } from './api'
+export { adminCampaignsQuery, useAdminStatus } from './api'
 export { AdminBanner } from './ui/admin-banner'
 export { SupervisedCampaigns } from './ui/supervised'
 // The panel loads on demand: only super admins ever open it.

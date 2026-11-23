@@ -52,6 +52,7 @@ import {
   type EntryInput,
 } from '../domain/library'
 import { tableCount } from '../domain/text'
+import { ItemFields } from './item-fields'
 import type { Guard } from './library-page'
 import { keepEdits, keptEdits } from './unsaved'
 
@@ -506,6 +507,8 @@ function EntryForm({
             />
             {family === 'creature' ? (
               <CreatureFields entry={entry} revision={baseRevision} onStore={storeBlock} />
+            ) : entry.kind === 'item' ? (
+              <ItemFields entry={entry} onChange={update} />
             ) : (
               <TextFields entry={entry} generation={generation} onChange={update} />
             )}

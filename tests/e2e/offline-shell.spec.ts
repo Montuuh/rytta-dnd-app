@@ -397,3 +397,137 @@ test('RYT-161 a sheet whose inventory never loaded says so in place', async ({ p
   await axeClean(page)
   await capture(page, `test-results/ryt-161-sheet-missing-${info.project.name}.png`)
 })
+
+const shellKeys = (page: Page) =>
+  page.evaluate(() =>
+    Object.keys(localStorage).filter((key) => key.startsWith('rytta-campaign-shell:')),
+  )
+
+for (const [language, scheme] of [
+  ['es', 'dark'],
+  ['en', 'light'],
+] as const)
+  test(`RYT-160 a reload without signal inside a campaign keeps its name and navigation (${language}, ${scheme})`, async ({
+    page,
+    context,
+  }, info) => {
+    limitMatrix(info, language === 'es')
+    await page.addInitScript(
+      ({ language, scheme }) => {
+        localStorage.setItem('rytta-language', language)
+        localStorage.setItem('rytta-color-scheme', scheme)
+      },
+      { language, scheme },
+    )
+    const es = language === 'es'
+    await identityFixture(page)
+    await page.goto(`./#/campaign/${campaignId}/party`)
+    await expect(page.getByText('Arin').first()).toBeVisible()
+    await shellReady(page)
+    // Only the header and navigation's needs are kept: nothing of the campaign's data.
+    const kept = await page.evaluate(() =>
+      Object.entries(localStorage)
+        .filter(([key]) => key.startsWith('rytta-campaign-shell:'))
+        .map(([, value]) => value)
+        .join(),
+    )
+    expect(kept).toContain('The Sunken Coast')
+    expect(kept).not.toContain('Arin')
+    expect(Object.keys(JSON.parse(kept)[campaignId]).sort()).toEqual([
+      'id',
+      'name',
+      'player_modules',
+      'role',
+    ])
+
+    const unreachable = (route: Route) => route.abort('internetdisconnected')
+    await page.route(backend, unreachable)
+    await context.setOffline(true)
+    await page.reload()
+    const header = page.locator('.app-header')
+    await expect(header).toContainText('The Sunken Coast')
+    await expect(page.locator('.connection-strip')).toContainText(es ? 'Sin conexión' : 'Offline')
+    await expect(
+      page.getByRole('heading', { level: 1, name: es ? 'Grupo' : 'Party' }),
+    ).toBeVisible()
+    await expect(page.locator('.offline-placeholder')).toContainText(
+      es ? 'Esta pantalla necesita conexión' : 'This screen needs a connection',
+    )
+    const nav = page.locator('nav.bottom-nav, nav.nav-tabs').filter({ visible: true }).first()
+    await expect(nav).toBeVisible()
+    await expectTouchTargets(page, '.offline-placeholder button')
+    await axeClean(page)
+    await capture(
+      page,
+      `test-results/ryt-160-offline-${language}-${scheme}-${info.project.name}.png`,
+    )
+    // The navigation works without signal: each section names itself and waits for the network.
+    await nav.getByRole('link', { name: es ? 'Combate' : 'Combat' }).click()
+    await expect(
+      page.getByRole('heading', { level: 1, name: es ? 'Combate' : 'Combat' }),
+    ).toBeVisible()
+    await expect(page.locator('.offline-placeholder')).toBeVisible()
+    await nav.getByRole('link', { name: es ? 'Grupo' : 'Party' }).click()
+
+    // The network returns: the section loads by itself.
+    await page.unroute(backend, unreachable)
+    await context.setOffline(false)
+    await expect(page.getByText('Arin').first()).toBeVisible()
+    await expect(page.locator('.offline-placeholder')).toHaveCount(0)
+  })
+
+test('RYT-160 a campaign never opened on this device has no shell offline', async ({
+  page,
+  context,
+}) => {
+  await identityFixture(page)
+  await page.goto('./')
+  await expect(page.getByText('The Sunken Coast').first()).toBeVisible()
+  await shellReady(page)
+  expect(await shellKeys(page)).toEqual([])
+  await page.route(backend, (route) => route.abort('internetdisconnected'))
+  await context.setOffline(true)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.reload()
+  await expect(page.locator('.offline-placeholder')).toBeVisible()
+  await expect(page.locator('.app-header')).not.toContainText('The Sunken Coast')
+})
+
+test('RYT-160 signing out removes the kept campaigns', async ({ page }) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(page.getByText('Arin').first()).toBeVisible()
+  await expect.poll(() => shellKeys(page)).toHaveLength(1)
+  await page.getByRole('button', { name: /Sesión de dm@example.com/ }).click()
+  await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Continuar con Google' })).toBeVisible()
+  expect(await shellKeys(page)).toEqual([])
+})
+
+test('RYT-160 sections that are not modules keep their own title offline', async ({
+  page,
+  context,
+}) => {
+  await identityFixture(page)
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await expect(page.getByText('Arin').first()).toBeVisible()
+  await shellReady(page)
+  await page.route(backend, (route) => route.abort('internetdisconnected'))
+  await context.setOffline(true)
+  for (const [path, title] of [
+    ['members', 'Centro de mando DM'],
+    [`party/${characterId}`, 'Ficha'],
+    ['', 'Centro de mando DM'],
+    ['tabletop-table', 'Mesa'],
+  ] as const) {
+    await page.goto(`./#/campaign/${campaignId}/${path}`)
+    await page.reload()
+    // The table screen lies under the miniatures without the app's header.
+    if (path !== 'tabletop-table')
+      await expect(page.locator('.app-header')).toContainText('The Sunken Coast')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(new RegExp(`^${title}`))
+    await expect(page.locator('.offline-placeholder')).toBeVisible()
+    // Nothing is offered with the kept campaign: no Player view without the members.
+    await expect(page.getByRole('switch', { name: /Vista jugador/ })).toHaveCount(0)
+  }
+})

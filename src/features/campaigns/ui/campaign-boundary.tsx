@@ -7,10 +7,17 @@ import { useAuth } from '@/features/auth'
 import { campaignsQuery } from '../api'
 import { CampaignContext } from '../campaign-context'
 import { recordCampaignVisit } from '../domain/recent-campaign'
+import { CampaignShellSection } from './campaign-shell'
+import { useCampaignShell } from './use-campaign-shell'
 import { QueryFeedback } from './feedback'
 import { keepsStaleData } from './load-cause'
 
-export function CampaignBoundary() {
+export function CampaignBoundary({
+  shellTitle,
+}: {
+  /** RYT-160: the translation key of a section's title by path (null for the campaign home). */
+  shellTitle?: (pathname: string) => string | null
+} = {}) {
   const { campaignId } = useParams()
   const { state } = useAuth()
   const userId = state.user!.id
@@ -23,6 +30,7 @@ export function CampaignBoundary() {
   useEffect(() => {
     if (visitedId) recordCampaignVisit(userId, visitedId)
   }, [userId, visitedId])
+  const shell = useCampaignShell(userId, campaignId, query)
   // Players still need characters; only drop DM-only campaign caches when the role is not DM.
   useEffect(() => {
     if (campaign?.role === 'dm') return
@@ -39,6 +47,15 @@ export function CampaignBoundary() {
     },
     [client, userId, campaignId],
   )
+  if (shell)
+    return (
+      <CampaignShellSection
+        campaign={shell}
+        titleFor={shellTitle}
+        error={query.error}
+        retry={() => void query.refetch()}
+      />
+    )
   if (query.isPending || !usable)
     return (
       <QueryFeedback

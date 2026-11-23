@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
 import { slowPollMs } from '@/shared/lib/live-poll'
 import type { CampaignRepository } from './domain/campaign'
+import { syncCampaignShells } from './domain/campaign-shell'
 import { setDiceSettings, setPartyLevel } from './data/settings-repository'
 import { CampaignSettingsError, type DiceSettings } from './domain/settings'
 
@@ -33,7 +34,12 @@ const campaignPoll = {
 export const campaignsQuery = (userId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaigns'],
-    queryFn: async ({ signal }) => (await repository()).list(signal),
+    queryFn: async ({ signal }) => {
+      const list = await (await repository()).list(signal)
+      // RYT-160: the shells kept for offline follow the list (renamed, left, removed).
+      if (config.VITE_DATA_MODE === 'supabase') syncCampaignShells(userId, list)
+      return list
+    },
     ...campaignPoll,
   })
 export const invitationsQuery = (userId: string) =>

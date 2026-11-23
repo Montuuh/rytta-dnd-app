@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { LoadingScreen } from '@/shared/ui/loading-screen'
 import { Layout, SettingsRoute } from './layout'
 import { CampaignBoundary, CampaignHub, useCampaign } from '@/features/campaigns'
+import { documentTitleKey } from './document-title'
 import { takeReturnTo, useAuth } from '@/features/auth'
 import { LibraryPage } from '@/features/content-library'
 import { AdminPage } from '@/features/admin'
@@ -109,6 +110,9 @@ function RestoreReturnTo() {
   return null
 }
 
+/** RYT-160: the title of an offline section of a kept campaign, as its document title. */
+const shellTitle = (pathname: string) => documentTitleKey({ pathname, live: true, signedIn: true })
+
 export function AppRouter() {
   const { state } = useAuth()
   const live = config.VITE_DATA_MODE === 'supabase'
@@ -119,7 +123,10 @@ export function AppRouter() {
         <Routes>
           {/* The table screen lies under the miniatures: no app chrome around the map. */}
           {live && state.status === 'signed-in' && (
-            <Route path="campaign/:campaignId/tabletop-table" element={<CampaignBoundary />}>
+            <Route
+              path="campaign/:campaignId/tabletop-table"
+              element={<CampaignBoundary shellTitle={shellTitle} />}
+            >
               <Route index element={<TabletopTablePage />} />
             </Route>
           )}
@@ -142,7 +149,10 @@ export function AppRouter() {
                 />
 
                 {live && (
-                  <Route path="campaign/:campaignId" element={<CampaignBoundary />}>
+                  <Route
+                    path="campaign/:campaignId"
+                    element={<CampaignBoundary shellTitle={shellTitle} />}
+                  >
                     <Route element={<TradeLayer />}>
                       <Route element={<CampaignGlossaryLayer />}>
                         <Route index element={<CampaignLanding />} />

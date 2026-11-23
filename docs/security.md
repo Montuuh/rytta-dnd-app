@@ -518,3 +518,17 @@ cross-campaign DM, plus the guarded PRE mirror.
   the rest of it: the server does not validate them and they grant nothing the player could not
   type by hand. `choices` is bounded (8 keys of 40 characters) and read only through own keys
   (`pickedOption`), so names such as `constructor` never read inherited values.
+
+## Campaign shell on the device (RYT-160)
+
+- [ADR 052](decisions/052-campaign-shell-on-device.md): `localStorage` keeps, per account, the id,
+  name, role and enabled modules of the campaigns opened on the device, to draw the header and
+  navigation after a reload without signal. Nothing else of the campaign or its members.
+- It is cleared on sign-out (and when the app opens signed out, except after a start without
+  signal, when the session itself is still stored), other accounts' entries are cleared on
+  sign-in, and campaigns no longer listed are dropped on the next successful list. Campaigns
+  entered through the admin panel (RYT-153) are never kept.
+- The kept role and modules only draw navigation; no screen reads kept data and no request is
+  made with it (members, rest requests, the admin banner, leaving are off). The server still
+  authorizes every read and write. Stored content is validated on read and discarded if invalid,
+  and a record filed under another campaign's id is ignored.

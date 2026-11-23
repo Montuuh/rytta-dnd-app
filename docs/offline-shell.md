@@ -16,6 +16,10 @@ returns (P3 A).
 - What it never keeps: anything from another origin (Supabase data, Auth, Storage, Realtime),
   `version.json`, legal pages, art and any request with a query string. No private campaign data
   is stored by the worker; the app's own session storage is unchanged.
+- The app (not the worker) keeps the shell of the campaigns opened on the device: id, name, role
+  and modules ([ADR 052](decisions/052-campaign-shell-on-device.md), RYT-160). After a reload
+  without signal inside a campaign, the header names it, the navigation works and each section
+  shows its title and the offline notice; the screens load when the campaign list does.
 - Navigations to the app go to the network first; without signal the cached `index.html` opens
   and the screens show the offline line and placeholders.
 - One cache per build (`rytta-shell-<build id>`). A new deploy installs a new worker that waits;

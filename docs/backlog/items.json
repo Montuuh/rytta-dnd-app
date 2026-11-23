@@ -5017,7 +5017,7 @@
       "title": "Offline reload inside a campaign keeps the campaign name and navigation",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-128"],
       "sources": [
         "Independent UI review of RYT-128 and RYT-013, 2026-11-21 (M1): a cold reload without signal inside a campaign shows the offline placeholder without the campaign name, its navigation or the screen title, because no campaign data is stored on the device."
@@ -5032,7 +5032,7 @@
         "owner decision record",
         "browser test of the cold offline reload inside a campaign at 390 and 820 px"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-160/validation.md"]
     },
     {
       "id": "RYT-161",

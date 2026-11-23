@@ -39,7 +39,10 @@ import { useQuery } from '@tanstack/react-query'
 import {
   CampaignViewContext,
   campaignsQuery,
+  forgetCampaignShells,
+  rememberCampaignShell,
   keepsStaleData,
+  useCampaignShell,
   leaveBlock,
   LeaveCampaignDialog,
   LeaveCampaignItem,
@@ -102,7 +105,11 @@ const sessionRank = (key?: string) => {
 
 /** Only reachable destinations appear in navigation. Planned modules live in the DM module
  * controls (DM Command Center) instead of crowding the bar. */
-function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): NavEntry[] {
+function useNavEntries(
+  campaign: Campaign | undefined,
+  playerPreview: boolean,
+  fromShell = false,
+): NavEntry[] {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const live = config.VITE_DATA_MODE === 'supabase'
@@ -111,6 +118,7 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
     live &&
       campaign?.role === 'player' &&
       !playerPreview &&
+      !fromShell &&
       (campaign.player_modules ?? []).includes('quests'),
   )
   if (!live)
@@ -367,25 +375,39 @@ export function Layout() {
     enabled: live && !!state.user && !!campaignId,
   })
   // RYT-013: a failed refresh keeps the campaign's header and navigation, as the screen keeps its data.
-  const campaign =
+  const listed =
     !campaigns.isError || keepsStaleData(campaigns.data, campaigns.error)
       ? campaigns.data?.find((c) => c.id === campaignId)
       : undefined
+  // RYT-160: after a reload without signal, the campaign kept on the device names the header and
+  // draws the navigation; its screens wait for the network.
+  const shell = useCampaignShell(state.user?.id, campaignId, campaigns)
+  const campaign = listed ?? shell
+  // A kept campaign only draws: nothing is requested or offered with it.
+  const fromShell = !listed && Boolean(shell)
   // RYT-153: inside through the admin panel, not as a member: nothing to leave.
   const adminInside = Boolean(
     campaign && adminStatus?.access.some((a) => a.campaign_id === campaign.id),
   )
+  // RYT-160: an opened campaign is kept for an offline reload, unless entered through the admin
+  // panel (temporary, audited access: RYT-153).
+  const keepUser = state.user?.id
+  useEffect(() => {
+    if (!keepUser || !listed || !adminStatus) return
+    if (adminStatus.access.some((access) => access.campaign_id === listed.id)) return
+    rememberCampaignShell(keepUser, listed)
+  }, [keepUser, listed, adminStatus])
   const scope = `${state.user?.id}:${campaignId}`
   const playerPreview = campaign?.role === 'dm' && previewScope === scope
   const members = useQuery({
     ...membersQuery(state.user?.id ?? '', campaignId ?? ''),
-    enabled: live && !!state.user && !!campaignId && campaign?.role === 'dm',
+    enabled: live && !!state.user && !!campaignId && campaign?.role === 'dm' && !fromShell,
   })
   const previewPlayers =
     !members.isError && members.data
       ? members.data.filter((member) => member.role === 'player')
       : []
-  const entries = useNavEntries(campaign, playerPreview)
+  const entries = useNavEntries(campaign, playerPreview, fromShell)
   // One destination needs no bar: the header already names the page and links home.
   const showNav = (!live || !!campaign) && entries.length > 1
   const mainRef = useRef<HTMLElement>(null)
@@ -404,6 +426,15 @@ export function Layout() {
       closeSettings()
     }
   }, [pathname, closeSettings])
+  // RYT-160: signed out (also a session that expired while the app was closed), no campaign shell
+  // stays on the device; signed in, only this account's.
+  const signedInId = state.user?.id
+  useEffect(() => {
+    // A start without signal can end signed out (`connection`): the session is still on the device,
+    // so its campaigns stay too.
+    if (state.status === 'signed-out' && state.issue !== 'connection') forgetCampaignShells()
+    else if (signedInId) forgetCampaignShells(signedInId)
+  }, [state.status, state.issue, signedInId])
   // Signing out (account deletion) leaves nothing to set up behind the landing.
   const wasSignedIn = useRef(false)
   useEffect(() => {
@@ -470,7 +501,7 @@ export function Layout() {
         exitPreview,
       }}
     >
-      <RestProvider campaignId={live && campaign ? campaign.id : null}>
+      <RestProvider campaignId={live && campaign && !fromShell ? campaign.id : null}>
         <div
           className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${pathname.startsWith('/library') ? 'library-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
         >
@@ -517,7 +548,7 @@ export function Layout() {
                   }
                 />
                 <div className="header-actions">
-                  {campaign?.role === 'dm' && (
+                  {campaign?.role === 'dm' && !fromShell && (
                     <Popover
                       opened={pickerOpened}
                       onDismiss={() => setPickerOpened(false)}
@@ -669,20 +700,25 @@ export function Layout() {
                         )}
                         {/* RYT-095: leaving belongs to the open campaign, in its own group above the
                           account items; never from the DM's Player view. */}
-                        {live && state.user && campaign && !playerPreview && !adminInside && (
-                          <>
-                            <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
-                            <LeaveCampaignItem
-                              block={leaveBlock(campaign.role, members.data, members.isError)}
-                              onSelect={() => {
-                                // The dialog takes focus; it hands it back to the trigger on cancel.
-                                restoreMenuFocus.current = false
-                                setLeaving({ id: campaign.id, name: campaign.name })
-                              }}
-                            />
-                            <Menu.Divider />
-                          </>
-                        )}
+                        {live &&
+                          state.user &&
+                          campaign &&
+                          !fromShell &&
+                          !playerPreview &&
+                          !adminInside && (
+                            <>
+                              <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
+                              <LeaveCampaignItem
+                                block={leaveBlock(campaign.role, members.data, members.isError)}
+                                onSelect={() => {
+                                  // The dialog takes focus; it hands it back to the trigger on cancel.
+                                  restoreMenuFocus.current = false
+                                  setLeaving({ id: campaign.id, name: campaign.name })
+                                }}
+                              />
+                              <Menu.Divider />
+                            </>
+                          )}
                         {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
                         <Menu.Item
                           leftSection={<Settings size={18} aria-hidden="true" />}
@@ -733,7 +769,7 @@ export function Layout() {
                   </Button>
                 </div>
               )}
-              {live && campaign && <AdminBanner campaignId={campaign.id} />}
+              {live && campaign && !fromShell && <AdminBanner campaignId={campaign.id} />}
               {live && campaign && <RestBanner />}
             </div>
             {live && <ConnectionStatus phase={connection.phase} />}

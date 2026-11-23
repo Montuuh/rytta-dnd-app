@@ -227,7 +227,10 @@ export type ItemDifference = 'name' | 'description' | 'weight' | 'details'
 type Comparable = {
   name: string
   description: string
-  translations?: { en?: { name?: string; description?: string } | null; es?: { name?: string; description?: string } | null } | null
+  translations?: {
+    en?: { name?: string; description?: string } | null
+    es?: { name?: string; description?: string } | null
+  } | null
   category: string
   icon: string
   slot_kind: string

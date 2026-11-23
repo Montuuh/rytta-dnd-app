@@ -391,7 +391,8 @@ export const inventoryEn = {
   'items.import.updated_other': '{{count}} items updated; {{unchanged}} unchanged.',
   'items.import.upToDate': 'What you imported already matches its packs.',
   'items.import.error': 'The import stopped. Retry; items already added are not duplicated.',
-  'items.import.empty': 'The storeroom is empty. Import items from the campaign packs or forge your own.',
+  'items.import.empty':
+    'The storeroom is empty. Import items from the campaign packs or forge your own.',
   'items.import.source': 'Source',
   'items.import.allSources': 'All packs',
   'items.import.noPacks': 'The campaign has no item packs turned on.',

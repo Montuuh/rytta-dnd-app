@@ -146,7 +146,8 @@ export const libraryEs = {
   'library.item.descriptionEn': 'Descripción en inglés',
   'library.offers.open': 'Campañas',
   'library.offers.title': 'Campañas de «{{pack}}»',
-  'library.offers.lede': 'Solo estas campañas ven el paquete en Contenido. Si quitas una, pierde el acceso al momento.',
+  'library.offers.lede':
+    'Solo estas campañas ven el paquete en Contenido. Si quitas una, pierde el acceso al momento.',
   'library.offers.loading': 'Cargando campañas',
   'library.offers.loadError': 'No se pudieron cargar las campañas.',
   'library.offers.list_one': 'Con acceso: {{count}} campaña',

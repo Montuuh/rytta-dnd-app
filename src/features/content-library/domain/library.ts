@@ -147,14 +147,7 @@ export const entryDataLimit = 131072
 export const entryIndexLimit = 4096
 const byteLength = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
 export type EntryProblem =
-  | 'kind'
-  | 'key'
-  | 'name'
-  | 'data'
-  | 'size'
-  | 'index'
-  | 'item'
-  | 'duplicate'
+  'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'item' | 'duplicate'
 export function entryProblem(entry: EntryInput): EntryProblem | null {
   if (!kindPattern.test(entry.kind)) return 'kind'
   if (!keyPattern.test(entry.key) || entry.key.length > 80) return 'key'

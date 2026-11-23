@@ -471,4 +471,3 @@ cross-campaign DM, plus the guarded PRE mirror.
 - Super admin offers to campaigns they do not run are not written to the admin audit log.
 - A pack owner who loses the editor role can no longer manage its offers; super admins still can.
   A pack whose owner deleted their account has no owner and only super admins manage it.
-

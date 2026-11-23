@@ -18,11 +18,7 @@ import {
   templateResultSchema,
   type ImportItem,
 } from '../domain/catalogue'
-import {
-  itemPackEntriesSchema,
-  itemPacksSchema,
-  type ItemPack,
-} from '../domain/pack-items'
+import { itemPackEntriesSchema, itemPacksSchema, type ItemPack } from '../domain/pack-items'
 import type { Json } from '@/shared/api/database.generated'
 import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'

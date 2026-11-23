@@ -393,7 +393,8 @@ export const inventoryEs = {
   'items.import.updated_other': '{{count}} objetos actualizados; {{unchanged}} sin cambios.',
   'items.import.upToDate': 'Lo importado ya coincide con sus paquetes.',
   'items.import.error': 'La importación se detuvo. Reintenta; lo ya añadido no se duplica.',
-  'items.import.empty': 'El almacén está vacío. Importa objetos de los paquetes de la campaña o forja los tuyos.',
+  'items.import.empty':
+    'El almacén está vacío. Importa objetos de los paquetes de la campaña o forja los tuyos.',
   'items.import.source': 'Fuente',
   'items.import.allSources': 'Todos los paquetes',
   'items.import.noPacks': 'La campaña no tiene paquetes de objetos activos.',

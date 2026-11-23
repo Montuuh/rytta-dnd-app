@@ -144,7 +144,8 @@ export const libraryEn = {
   'library.item.descriptionEn': 'Description in English',
   'library.offers.open': 'Campaigns',
   'library.offers.title': 'Campaigns of “{{pack}}”',
-  'library.offers.lede': 'Only these campaigns see the pack in Content. Removing one takes its access away at once.',
+  'library.offers.lede':
+    'Only these campaigns see the pack in Content. Removing one takes its access away at once.',
   'library.offers.loading': 'Loading campaigns',
   'library.offers.loadError': 'The campaigns could not be loaded.',
   'library.offers.list_one': 'With access: {{count}} campaign',

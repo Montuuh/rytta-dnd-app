@@ -64,7 +64,7 @@ const spell = (key: string) => ({
   name_es: key,
   data: { index: { id: `spell.${key}`, cat: 'spell', en: key, es: key } },
 })
-async function pack(slug: string, entries: Json[], by = editor, open = true) {
+async function pack(slug: string, entries: Json[], by = admin, open = true) {
   await asUser(by)
   const id = (
     await scalar<{ id: string }>('select public.save_content_pack(null, null, $1, $2) result', [
@@ -77,7 +77,7 @@ async function pack(slug: string, entries: Json[], by = editor, open = true) {
   if (open) await visibility(id, 'public', by)
   return id
 }
-async function add(id: string, entries: Json[], by = editor) {
+async function add(id: string, entries: Json[], by = admin) {
   await asUser(by)
   for (const e of entries) {
     await asSystem()
@@ -97,11 +97,11 @@ async function add(id: string, entries: Json[], by = editor) {
     ])
   }
 }
-async function publish(id: string, version: number, by = editor) {
+async function publish(id: string, version: number, by = admin) {
   await asUser(by)
   await db.query('select public.publish_content_pack($1, $2, $3)', [id, version, randomUUID()])
 }
-async function visibility(id: string, value: 'public' | 'private', by = editor) {
+async function visibility(id: string, value: 'public' | 'private', by = admin) {
   await asSystem()
   const revision = await scalar<number>(
     'select revision result from public.content_packs where id = $1',
@@ -149,12 +149,9 @@ beforeAll(async () => {
   player = await user('player')
   outsider = await user('outsider')
   await asSystem()
-  await db.query('insert into private.content_editors (user_id) values ($1), ($2), ($3)', [
-    editor,
-    owner,
-    admin,
-  ])
-  await db.query('insert into private.super_admins (user_id) values ($1)', [admin])
+  // RYT-173: only super admins write the library; a content editor grant alone gives nothing.
+  await db.query('insert into private.content_editors (user_id) values ($1)', [editor])
+  await db.query('insert into private.super_admins (user_id) values ($1), ($2)', [owner, admin])
   srd = await pack('srd-5-2-1', [spell('fireball')], admin)
   // A campaign that exists before the SRD has items.
   c = await campaign(dm, 'Sunken Coast')

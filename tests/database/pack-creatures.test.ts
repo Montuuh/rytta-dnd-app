@@ -130,7 +130,7 @@ beforeAll(async () => {
   otherDm = await user('otherdm')
   outsider = await user('outsider')
   await asSystem()
-  await db.query('insert into private.content_editors (user_id) values ($1)', [editor])
+  await db.query('insert into private.super_admins (user_id) values ($1)', [editor])
   srd = await pack('srd-5-2-1', [
     creature('wolf', 'Wolf', ['en', 'es']),
     creature('kobold', 'Kobold', ['en', 'es']),

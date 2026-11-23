@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-22",
+  "updatedAt": "2026-11-24",
   "items": [
     {
       "id": "RYT-000",
@@ -5324,6 +5324,65 @@
         "hosted apply"
       ],
       "evidence": ["docs/evidence/RYT-172/validation.md"]
+    },
+    {
+      "id": "RYT-173",
+      "title": "Only super admins write the content library",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "done",
+      "dependsOn": ["RYT-153", "RYT-163", "RYT-172"],
+      "sources": [
+        "Owner, 23 November 2026: \"Estos datos base los setean los superadmins de momento solamente\" (the admin account named in RYT-153; the address stays out of the repository).",
+        "Library audit of 23 November 2026: writes are open to content editors and to super admins, and any editor can edit, publish or change the visibility of any pack, the SRD included (docs/security.md). Production holds one super admin and two content editor grants, and the SRD and the Rytta basics are owned by an editor account that is not a super admin.",
+        "Delivered 2026-11-24: migration applied to staging, production and PRE after an independent security review; the two public packs moved to the super admin account in production and PRE; the content editor rows stay and grant nothing."
+      ],
+      "scope": "private.is_content_editor() answers only for super admins, in public and PRE, so every library write (packs, entries, import, publish, visibility, pictures and private pack offers) and every draft read is refused to anyone else. The content editor grants stop having any effect; the table and its rows stay until a later cleanup (migrations are append-only and nothing is deleted). The two public packs move to the super admin account as their owner in production and PRE, so ownership, offers and the default item packs follow one account (assumption, reversible with one update). Readers do not change: signed-in accounts read published public packs and campaigns read what they pin. docs/security.md and a decision record state that the library has a single writing role. Non-goals: a per-pack editor role, packs authored by DMs, interface changes (the library already opens from Administration).",
+      "acceptance": [
+        "An account that holds only a content editor grant is refused (Forbidden) on every library write, draft read, pack picture upload and offer change; a super admin still creates, edits, imports, publishes and offers.",
+        "The database tests grant the super admin role where they granted the editor role, and the denial tests for anon, outsider, Player and other-campaign DM still pass.",
+        "Applied to staging, PRE and production: the library answers as editor only for the super admin, and the two public packs are owned by that account; campaigns keep the versions they pin.",
+        "docs/security.md and the decision record describe the single writing role."
+      ],
+      "validation": [
+        "npm run check",
+        "denial tests for anon, outsider, player, other-campaign DM and a former content editor",
+        "security review of the migration",
+        "hosted apply (staging, PRE, production) with the role and ownership verified"
+      ],
+      "evidence": ["docs/evidence/RYT-173/validation.md"]
+    },
+    {
+      "id": "RYT-174",
+      "title": "The base pack becomes Rytta: its name, the origin of each entry and protected entries",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-173", "RYT-171"],
+      "sources": [
+        "Owner, 23 November 2026: \"Mi plan es que los datos de origen base, descargables, de momento sean SRD solo, pero con superadmin iremos añadiendo, modificando y eliminando datos de este SRD, para hacerlo de 'Rytta' basado en el SRD. Así asentamos la base para poder añadir mas features, subclases, hechizos, monstruos, etc.. que no están en el SRD, sino en el origen de datos de 'Rytta'.\"",
+        "Library audit of 23 November 2026: the base pack is recognised by its slug srd-5-2-1, which cannot change once published; its title, description and attribution can. The app names it \"SRD\" in fixed interface text (source filters and licence lines; 26 Spanish strings mention it). Entries carry no origin and the pack one licence, CC-BY-4.0, which asks that changes be indicated and would label Rytta's own entries. Nothing stops the withdrawal of entries the code relies on: the 14 conditions the sheet tracks, the 12 SRD classes, the SRD species and backgrounds whose effects the app applies, and the creature-baselines table.",
+        "Changing or withdrawing SRD entries has to happen in the base pack itself: a second pack cannot change or withdraw another pack's entries, so the plan keeps one pack."
+      ],
+      "scope": "Starts with an options page, then three parts. Name: the pack with slug srd-5-2-1 stays the base pack (slug and bare keys unchanged, so stored references keep working) and the app shows the pack's own title and attribution wherever it prints a fixed \"SRD\" for it: Content, campaign creation, the source filters and rows of the bestiary, glossary, spells and items, and the licence lines; the super admin renames the pack from the library. Origin: each entry of the base pack carries its origin (from the SRD unchanged, from the SRD and changed by Rytta, or Rytta's own); the SRD entries are marked from the SRD 5.2.1 as uploaded, editing one marks it changed and a new entry is Rytta's own; the library lists and filters by origin and the attribution states that Rytta changed SRD material and which entries are not SRD. Protected entries: the server refuses to withdraw, or to publish without, the entries the code relies on, and the library says why; their texts stay editable. Options page: the pack's new title in both languages, the origin labels and whether DMs and Players see them, refusing or warning on protected entries, and whether origin applies to other public packs. Non-goals: changing the slug or stored keys, automating the mechanics of new classes, species or feats, a version history or rollback screen, a second default pack.",
+      "acceptance": [
+        "Renaming the base pack in the library changes its name everywhere the app showed a fixed \"SRD\" for it, in both languages; stored creature, item, class and spell references still resolve.",
+        "Every entry of the base pack has an origin; an edited SRD entry shows as changed and a new entry as Rytta's own once published; the library filters by origin and the attribution names the changes.",
+        "Marking the origin does not ask campaigns to review entries whose content did not change, and no campaign leaves the version it pins without its DM accepting an update.",
+        "Withdrawing a protected entry is refused by the server with a reason the library shows; anon, outsider, Player and DM stay refused on every write.",
+        "390px and 820px plus a laptop width, both themes and languages, keyboard and Escape, axe clean; options page answered before UI; independent UI review PASS."
+      ],
+      "validation": [
+        "unit tests for origin and the protected keys",
+        "denial tests for anon, outsider, player and other-campaign DM",
+        "content manager e2e at 390px, 820px and 1440px",
+        "npm run check",
+        "npm run test:e2e",
+        "design critique and audit",
+        "independent UI review PASS",
+        "hosted apply"
+      ],
+      "evidence": []
     }
   ]
 }

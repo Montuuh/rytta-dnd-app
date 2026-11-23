@@ -139,7 +139,7 @@ const wolf = (hp = 11) => ({
 })
 const grant = async (id: string, schema = 'private') => {
   await db.exec('reset role')
-  await db.query(`insert into ${schema}.content_editors (user_id) values ($1)`, [id])
+  await db.query(`insert into ${schema}.super_admins (user_id) values ($1)`, [id])
 }
 const findPack = async (slug: string) => (await pub.library()).packs.find((p) => p.slug === slug)!
 // Every RPC with arguments that pass the type checks, to probe who may execute it.
@@ -579,7 +579,7 @@ describe('RYT-092 content library', () => {
     const bulk = await findPack('bulk')
     const [entry] = await pub.drafts(bulk.id, 'creature')
     await db.exec('reset role')
-    await db.query('delete from private.content_editors where user_id = $1', [editor])
+    await db.query('delete from private.super_admins where user_id = $1', [editor])
     await asUser(editor)
     const former = await pub.library()
     expect(former.editor).toBe(false)
@@ -599,6 +599,40 @@ describe('RYT-092 content library', () => {
       pub.savePack({ slug: 'notes', title_en: 'Notes' }, null, null, replayKey),
     ).rejects.toThrow(/Request mismatch/)
     await grant(editor)
+  })
+
+  it('gives a content editor grant no rights: only super admins write (RYT-173)', async () => {
+    const pre = api('pre')
+    await db.exec('reset role')
+    for (const schema of ['private', 'pre_private'])
+      await db.query(`insert into ${schema}.content_editors (user_id) values ($1)`, [reader])
+    await asUser(editor)
+    const srdPack = await findPack('srd-5-2-1')
+    const [entry] = await pub.drafts(srdPack.id, 'creature')
+    await asUser(reader)
+    expect((await pub.library()).editor).toBe(false)
+    expect((await pre.library()).editor).toBe(false)
+    for (const call of [
+      () => pub.savePack({ slug: 'granted', title_en: 'Granted' }),
+      () => pre.savePack({ slug: 'granted', title_en: 'Granted' }),
+      () => pub.visibility(srdPack.id, srdPack.revision!, 'private'),
+      () => pub.save(srdPack.id, wolf(20), entry!.id, entry!.revision),
+      () => pub.remove(entry!.id, entry!.revision),
+      () => pub.revert(entry!.id, entry!.revision),
+      () => pub.importEntries(srdPack.id, 'creature', [wolf(20)], true),
+      () => pub.importEntries(srdPack.id, 'creature', [wolf(20)], false),
+      () => pub.publish(srdPack.id, srdPack.version),
+      () => pub.deletePack(srdPack.id, srdPack.revision!),
+      () => pub.drafts(srdPack.id, 'creature'),
+      () => pub.changes(srdPack.id),
+      () => pub.draft(entry!.id),
+    ])
+      await expect(call()).rejects.toThrow(/Forbidden/)
+    // The published pack stays readable, as for any signed-in account.
+    expect((await pub.entries(srdPack.id, 'creature')).entries.length).toBeGreaterThan(0)
+    await db.exec('reset role')
+    for (const schema of ['private', 'pre_private'])
+      await db.query(`delete from ${schema}.content_editors where user_id = $1`, [reader])
   })
 
   it('mirrors the change into a PRE copied before the migration, with its own editors', async () => {

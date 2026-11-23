@@ -116,7 +116,7 @@ beforeAll(async () => {
   dmB = await user('dmb')
   outsider = await user('outsider')
   await asSystem()
-  await db.query('insert into private.content_editors (user_id) values ($1)', [editor])
+  await db.query('insert into private.super_admins (user_id) values ($1)', [editor])
   // Before this migration: a campaign downloaded the official bestiary and removed the kobold.
   oldCampaign = await campaign(dmA, 'Sunken Coast')
   await join(oldCampaign, dmA, playerA)

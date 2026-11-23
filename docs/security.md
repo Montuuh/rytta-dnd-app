@@ -90,9 +90,9 @@ and scan the PRE copy for production references. Known limit: a deleted version'
 private bucket (the storage router needs the template to delete it), as for deleted templates.
 
 Content library (ADR 040, RYT-092): `content_packs` and `content_entries` have RLS on and no grants;
-every read and write goes through security definer RPCs. Writers are the rows of
-`private.content_editors` (RLS on, no grants), granted with owner SQL outside the repository and
-separately in PRE. Signed-in users read published public packs and their own published private
+every read and write goes through security definer RPCs. Writers are super admins only (RYT-173,
+ADR 054): `private.is_content_editor()` answers for `private.super_admins`, and the rows of
+`private.content_editors` (RLS on, no grants) are retired and grant nothing. Signed-in users read published public packs and their own published private
 packs, one kind at a time in pages of 500 (`get_content_entries`); unknown and unreadable packs
 both raise `Forbidden`, and readers never receive drafts, revisions, owners or editors. Editor RPCs
 check revisions or versions, serialise each pack on its row lock and each request id on an advisory
@@ -101,8 +101,8 @@ every field; `save_content_pack` refuses to change the slug or visibility of a p
 `set_content_pack_visibility` is the only (immediate) way to change who reads it. Limits: pack
 payload 16 KB with known keys, entry data 128 KB, index 4 KB, 500 entries per import call, 5000 per
 pack and kind. A retried request id replays the caller's earlier result before the editor check (ids
-and counts only), as in RYT-089. Known limits: a PRE refresh copies the editors, the packs (private
-ones too) and the replies from production, so editors are granted again after `pre:sync`; published
+and counts only), as in RYT-089. Known limits: a PRE refresh copies the super admins, the packs
+(private ones too) and the replies from production; published
 packs cannot be deleted through the API, so a takedown is an owner SQL operation (delete the pack
 row, which cascades to its entries).
 
@@ -452,25 +452,26 @@ cross-campaign DM, plus the guarded PRE mirror.
 - The import still goes through `import_basic_items`: the DM sends the item data, as before, and
   the server does not check it against a pack (a DM can forge any item anyway).
 - `public.content_pack_offers` lists the campaigns a private pack is offered to. It has no client
-  grant; `get_content_pack_offers` and `set_content_pack_offer` are open to the pack's owner, who
-  must be a content editor, and to super admins. The owner adds only campaigns where they are an
-  active DM (not through admin access); a super admin adds any campaign. The list names the
-  offered campaigns to whoever manages the pack.
+  grant; `get_content_pack_offers` and `set_content_pack_offer` are open to super admins only
+  (RYT-173): the owner branch needs the writing role, which only super admins hold, so owning a
+  pack manages nothing by itself. A super admin adds any campaign. The list names the offered
+  campaigns to whoever manages the pack.
 - Every campaign content reader checks `private.content_offered(pack, campaign)`: public and
   published, or private, published and offered to that campaign. The readers that took the pack
   alone were rewritten in place by the migration, which fails if any reader is left without its
   campaign. A campaign removed from the offers keeps its rows (it can turn the pack off and gets
   it back if offered again) but reads nothing from it.
-- Content editors are a trusted platform role: any editor can edit, publish or change the
-  visibility of any pack (RYT-092), so a private pack is private from DMs and Players, not from
-  other editors. The packs whose first items reach every campaign are the SRD (whose slug
+- The library has one writing role, the super admin (RYT-173): any super admin can edit, publish
+  or change the visibility of any pack, so a private pack is private from DMs and Players, not
+  from other super admins. A content editor grant alone is refused on every write, draft read,
+  offer change and picture upload. The packs whose first items reach every campaign are the SRD (whose slug
   is taken once uploaded) and `rytta-basics` only when the SRD's owner or a super admin owns it, so
   another editor cannot claim a default slug.
 - A private pack offered to a campaign is read by its members as any other pack: its spells and
   rules reach that campaign's Players. Removing the offer stops server reads at once; copies
   already in a browser stay until it refreshes.
 - Super admin offers to campaigns they do not run are not written to the admin audit log.
-- A pack owner who loses the editor role can no longer manage its offers; super admins still can.
+- A pack owner who is not a super admin cannot manage its offers; super admins can.
   A pack whose owner deleted their account has no owner and only super admins manage it.
 
 ## Pack classes (RYT-168)
@@ -487,7 +488,7 @@ cross-campaign DM, plus the guarded PRE mirror.
 ## Campaign content choice and the SRD out of the code (RYT-167)
 
 - `get_content_choices` lists, to any signed-in account, the published public packs and the
-  caller's own published private packs (content editors only), with their categories and counts.
+  caller's own published private packs (super admins only), with their categories and counts.
 - `create_campaign_with_content` creates the campaign and enables exactly the chosen pack
   categories with the same checks as `set_campaign_content`: a pack that is not offered to the new
   campaign (unpublished, private and not the caller's) or a category it lacks refuses the request
@@ -506,7 +507,7 @@ cross-campaign DM, plus the guarded PRE mirror.
 - Entries of kind `species`, `background` and `feat` join the classes category
   (`private.content_category`). They are read through the same campaign readers
   (`get_campaign_rule_packs`, `get_campaign_rule_pack`: active members, packs offered to the
-  campaign) and `get_srd_rule_pack` (signed-in accounts), and written only by content editors.
+  campaign) and `get_srd_rule_pack` (signed-in accounts), and written only by super admins.
   No grant changes. Hiding one in Content is not secret: it only stops offering it.
 - The migration rebuilds the expression index on `content_category` after replacing it, public
   first and PRE after, so a PRE index copied by a refresh is rebuilt with the new definition.
@@ -537,9 +538,9 @@ cross-campaign DM, plus the guarded PRE mirror.
 
 - [ADR 053](decisions/053-pack-entry-pictures.md): private bucket `pack-images` (2 MB, WebP, PNG,
   JPEG), path `<env>/<pack id>/<uuid>.<ext>`, routed by the global `private.pack_image_access`.
-- Insert: content editors only, into an existing pack of the path's environment. No update or
+- Insert: super admins only (RYT-173), into an existing pack of the path's environment. No update or
   delete policy: earlier pack versions may still name an object.
-- Select (which also governs listing and signing): content editors and the pack owner read the
+- Select (which also governs listing and signing): super admins and the pack owner read the
   whole pack, drafts included. Anyone else reads only an object a published version of that pack
   names, and only for a public pack (signed-in accounts) or one offered to a campaign they are an
   active member of. Anon never. An entry naming another pack's object gains nothing: the pack in

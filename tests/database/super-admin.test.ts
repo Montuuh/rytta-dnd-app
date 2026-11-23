@@ -349,11 +349,15 @@ describe('super admin role (RYT-153)', () => {
     }
   })
 
-  it('makes super admins content editors', async () => {
+  it('makes super admins the only content editors', async () => {
+    // RYT-173: a row in the retired content_editors table grants nothing.
+    await asSystem()
+    await db.query('insert into private.content_editors (user_id) values ($1)', [dmB])
     // The helper is internal: evaluate it as the owner with each caller's identity.
     for (const [who, expected] of [
       [admin, true],
       [dmA, false],
+      [dmB, false],
     ] as const) {
       await asSystem()
       await db.query("select set_config('request.jwt.claim.sub', $1, false)", [who])

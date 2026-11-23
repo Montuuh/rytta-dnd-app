@@ -132,5 +132,7 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 64. [ADR 053: library entries carry their own picture](decisions/053-pack-entry-pictures.md):
     the pack-images bucket, versioned with the pack, who uploads and reads, and which picture wins
     (RYT-172).
-65. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
+65. [ADR 054: only super admins write the content library](decisions/054-library-single-writing-role.md):
+    one writing role, the retired editor grant and who owns the public packs (RYT-173).
+66. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
     panel, the automatic checks, review, import and the status of each request (RYT-169).

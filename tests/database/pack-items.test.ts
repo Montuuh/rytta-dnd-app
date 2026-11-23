@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // RYT-166: items come from the campaign's packs (DM readers). RYT-163: private packs are offered
-// only to the campaigns their owner or a super admin adds.
+// only to the campaigns a super admin adds (RYT-173: super admins alone write the library).
 const db = new PGlite()
 type Json = Record<string, unknown>
 
@@ -91,7 +91,7 @@ const offer = async (target: string, campaign: string, offered: boolean) =>
     [target, campaign, offered],
   )
 
-async function pack(slug: string, entries: Json[], by = editor, open = true) {
+async function pack(slug: string, entries: Json[], by = admin, open = true) {
   await asUser(by)
   const id = (
     await scalar<{ id: string }>('select public.save_content_pack(null, null, $1, $2) result', [
@@ -104,7 +104,7 @@ async function pack(slug: string, entries: Json[], by = editor, open = true) {
   if (open) await visibility(id, 'public', by)
   return id
 }
-async function add(id: string, entries: Json[], by = editor) {
+async function add(id: string, entries: Json[], by = admin) {
   await asUser(by)
   for (const e of entries) {
     await asSystem()
@@ -124,11 +124,11 @@ async function add(id: string, entries: Json[], by = editor) {
     ])
   }
 }
-async function publish(id: string, version: number, by = editor) {
+async function publish(id: string, version: number, by = admin) {
   await asUser(by)
   await db.query('select public.publish_content_pack($1, $2, $3)', [id, version, randomUUID()])
 }
-async function visibility(id: string, value: 'public' | 'private', by = editor) {
+async function visibility(id: string, value: 'public' | 'private', by = admin) {
   await asSystem()
   const revision = await scalar<number>(
     'select revision result from public.content_packs where id = $1',
@@ -177,12 +177,9 @@ beforeAll(async () => {
   otherDm = await user('otherdm')
   outsider = await user('outsider')
   await asSystem()
-  await db.query('insert into private.content_editors (user_id) values ($1), ($2), ($3)', [
-    editor,
-    owner,
-    admin,
-  ])
-  await db.query('insert into private.super_admins (user_id) values ($1)', [admin])
+  // RYT-173: only super admins write the library; a content editor grant alone gives nothing.
+  await db.query('insert into private.content_editors (user_id) values ($1)', [editor])
+  await db.query('insert into private.super_admins (user_id) values ($1), ($2)', [owner, admin])
   srd = await pack('srd-5-2-1', [spell('fireball')], admin)
   // A campaign that exists before the SRD has items.
   c = await campaign(dm, 'Sunken Coast')
@@ -201,10 +198,17 @@ beforeAll(async () => {
     admin,
   )
   await publish(srd, 1, admin)
-  // A default slug owned by an editor who neither owns the SRD nor is a super admin reaches no one.
-  impostor = await pack('rytta-basics', [
-    item('travel-rations', 'Rations', { key: 'travelRations' }),
-  ])
+  // A default slug owned by an account that neither owns the SRD nor is a super admin reaches no
+  // one: the pack is published private, handed to that account and only then made public.
+  impostor = await pack(
+    'rytta-basics',
+    [item('travel-rations', 'Rations', { key: 'travelRations' })],
+    admin,
+    false,
+  )
+  await asSystem()
+  await db.query('update public.content_packs set owner_id = $1 where id = $2', [editor, impostor])
+  await visibility(impostor, 'public')
   books = await pack(
     'owner-books',
     [item('moon-blade', 'Moon Blade'), spell('moon-ray')],
@@ -301,28 +305,35 @@ describe('private packs (RYT-163)', () => {
     )
   })
 
-  it('lets only the owner or a super admin manage offers', async () => {
+  it('lets only a super admin manage offers', async () => {
     const sql = 'select public.get_content_pack_offers($1)'
     await asAnon()
     await refused(sql, [books])
+    // RYT-173: a content editor grant alone manages nothing.
     for (const who of [outsider, dm, player, editor]) {
       await asUser(who)
       await refused(sql, [books])
       await refused('select public.set_content_pack_offer($1, $2, true)', [books, c])
     }
+    // Owning the pack is not enough either.
+    await asSystem()
+    await db.query('update public.content_packs set owner_id = $1 where id = $2', [editor, books])
+    await asUser(editor)
+    await refused(sql, [books])
+    await refused('select public.set_content_pack_offer($1, $2, true)', [books, c])
+    await asSystem()
+    await db.query('update public.content_packs set owner_id = $1 where id = $2', [owner, books])
     await asUser(owner)
     expect(await scalar<Json>(`${sql} result`, [books])).toMatchObject({
       pack: books,
       offered: [],
-      super_admin: false,
+      super_admin: true,
     })
   })
 
-  it('offers to campaigns the owner runs; a super admin offers to any campaign', async () => {
+  it('lets a super admin offer a private pack to any campaign', async () => {
     const own = await campaign(owner, 'Owner Table')
     await asUser(owner)
-    // The owner does not run Sunken Coast.
-    await refused('select public.set_content_pack_offer($1, $2, true)', [books, c])
     const mine = await offer(books, own, true)
     expect(mine.offered.map((x) => x.id)).toEqual([own])
     expect(mine.mine.map((x) => x.id)).toEqual([own])
@@ -332,9 +343,13 @@ describe('private packs (RYT-163)', () => {
     // Public packs take no offers, but an old offer can always be removed.
     await refused('select public.set_content_pack_offer($1, $2, true)', [srd, c], /Invalid request/)
     await db.query('select public.set_content_pack_offer($1, $2, false)', [srd, c])
-    // A missing campaign looks the same as one the owner does not run.
+    // A missing campaign is refused.
     await asUser(owner)
-    await refused('select public.set_content_pack_offer($1, $2, true)', [books, randomUUID()])
+    await refused(
+      'select public.set_content_pack_offer($1, $2, true)',
+      [books, randomUUID()],
+      /Invalid request/,
+    )
   })
 
   it('lets an offered campaign use the pack, and stops reading it once removed', async () => {

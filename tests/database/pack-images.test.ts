@@ -58,7 +58,7 @@ const item = (key: string, name: string, extra: Json = {}) => ({
     es: { description: `${name} texto` },
   },
 })
-async function pack(slug: string, entries: Json[], by = editor, open = true) {
+async function pack(slug: string, entries: Json[], by = admin, open = true) {
   await asUser(by)
   const id = (
     await scalar<{ id: string }>('select public.save_content_pack(null, null, $1, $2) result', [
@@ -71,7 +71,7 @@ async function pack(slug: string, entries: Json[], by = editor, open = true) {
   if (open) await visibility(id, 'public', by)
   return id
 }
-async function add(id: string, entries: Json[], by = editor) {
+async function add(id: string, entries: Json[], by = admin) {
   await asUser(by)
   for (const e of entries) {
     await asSystem()
@@ -91,11 +91,11 @@ async function add(id: string, entries: Json[], by = editor) {
     ])
   }
 }
-async function publish(id: string, version: number, by = editor) {
+async function publish(id: string, version: number, by = admin) {
   await asUser(by)
   await db.query('select public.publish_content_pack($1, $2, $3)', [id, version, randomUUID()])
 }
-async function visibility(id: string, value: 'public' | 'private', by = editor) {
+async function visibility(id: string, value: 'public' | 'private', by = admin) {
   await asSystem()
   const revision = await scalar<number>(
     'select revision result from public.content_packs where id = $1',
@@ -144,12 +144,9 @@ beforeAll(async () => {
   otherDm = await user('otherdm')
   outsider = await user('outsider')
   await asSystem()
-  await db.query('insert into private.content_editors (user_id) values ($1), ($2), ($3)', [
-    editor,
-    owner,
-    admin,
-  ])
-  await db.query('insert into private.super_admins (user_id) values ($1)', [admin])
+  // RYT-173: only super admins write the library; a content editor grant alone gives nothing.
+  await db.query('insert into private.content_editors (user_id) values ($1)', [editor])
+  await db.query('insert into private.super_admins (user_id) values ($1), ($2)', [owner, admin])
   srd = await pack('srd-5-2-1', [item('rope', 'Rope')], admin)
   c = await campaign(dm, 'Sunken Coast')
   await asUser(dm)
@@ -185,19 +182,20 @@ const pinned = async () => {
 }
 
 describe('pack images (RYT-172)', () => {
-  it('lets only content editors upload, into an existing pack', async () => {
+  it('lets only super admins upload, into an existing pack', async () => {
     const path = picture(srd)
-    for (const who of [editor, owner, admin]) {
+    for (const who of [owner, admin]) {
       await asUser(who)
       expect(await access(path, true)).toBe(true)
     }
-    for (const who of [dm, player, otherDm, outsider]) {
+    // RYT-173: a content editor grant alone uploads nothing.
+    for (const who of [editor, dm, player, otherDm, outsider]) {
       await asUser(who)
       expect(await access(path, true)).toBe(false)
     }
     await asAnon()
     await expect(access(path, true)).rejects.toThrow(/permission denied/)
-    await asUser(editor)
+    await asUser(admin)
     expect(await access(picture(randomUUID()), true)).toBe(false)
     expect(await access(`public/${srd}/x.webp`, true)).toBe(false)
     expect(await access(`public/${srd}/${randomUUID()}.gif`, true)).toBe(false)
@@ -205,7 +203,7 @@ describe('pack images (RYT-172)', () => {
   })
 
   it('accepts only a pack-images path as an entry picture', async () => {
-    await asUser(editor)
+    await asUser(admin)
     const id = (
       await scalar<{ id: string }>('select public.save_content_pack(null, null, $1, $2) result', [
         JSON.stringify({ slug: 'bad-pictures', title_en: 'Bad', title_es: 'Bad' }),
@@ -288,7 +286,7 @@ describe('pack images (RYT-172)', () => {
     await expect(access(first, false)).rejects.toThrow(/permission denied/)
   })
 
-  it('keeps private pack pictures to its editors, owner and offered campaigns, published only', async () => {
+  it('keeps private pack pictures to super admins, its owner and offered campaigns, published only', async () => {
     const named = picture(books)
     const draft = picture(books)
     await add(books, [item('moon-blade', 'Moon Blade', { image: named })], owner)
@@ -302,13 +300,21 @@ describe('pack images (RYT-172)', () => {
     for (const path of [named, draft]) {
       await asUser(owner)
       expect(await access(path, false)).toBe(true)
-      await asUser(editor)
+      await asUser(admin)
       expect(await access(path, false)).toBe(true)
     }
-    for (const who of [dm, player, otherDm, outsider]) {
+    for (const who of [editor, dm, player, otherDm, outsider]) {
       await asUser(who)
       expect(await access(named, false)).toBe(false)
     }
+    // An owner without the role still reads the pack, drafts included, and uploads nothing.
+    await asSystem()
+    await db.query('update public.content_packs set owner_id = $1 where id = $2', [editor, books])
+    await asUser(editor)
+    expect(await access(draft, false)).toBe(true)
+    expect(await access(picture(books), true)).toBe(false)
+    await asSystem()
+    await db.query('update public.content_packs set owner_id = $1 where id = $2', [owner, books])
     // A super admin offers the private pack to the campaign.
     await asUser(admin)
     await db.query('select public.set_content_pack_offer($1, $2, $3)', [books, c, true])

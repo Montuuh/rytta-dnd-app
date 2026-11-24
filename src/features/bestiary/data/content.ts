@@ -1,24 +1,39 @@
-import type {
-  BestiaryLanguage,
-  CreatureArtCatalog,
-  MonsterBodies,
-  MonsterIndex,
+import { config } from '@/shared/lib/config'
+import { parsePackBodies, parsePackIndex } from '../domain/packs'
+import {
+  baselineSchema,
+  type BestiaryLanguage,
+  type CreatureArtCatalog,
+  type MonsterBodies,
+  type MonsterIndex,
 } from '../domain/types'
 
+async function client() {
+  if (config.VITE_DATA_MODE !== 'supabase') throw new Error('unavailable')
+  const { getSupabase } = await import('@/shared/api/supabase')
+  return getSupabase(config.VITE_SUPABASE_URL!, config.VITE_SUPABASE_PUBLISHABLE_KEY!)
+}
+const srd = { srd: true, ref: '00000000' } as const
+
 /**
- * Bundled SRD 5.2.1 monsters are lazy chunks loaded only on DM bestiary and combat screens: a
- * bilingual index (search, filters, combat numbers, CR medians) and one stat block file per
- * language. Content contract tests validate every file (domain/content.test.ts).
+ * RYT-167: the SRD's creatures, their traits and the CR baselines come from the published SRD pack
+ * of the library (the bundled copy left the code). Signed-in accounts only.
  */
 export async function loadMonsterIndex(): Promise<MonsterIndex> {
-  const module = await import('../content/index.json')
-  return module.default as unknown as MonsterIndex
+  const { data, error } = await (await client()).rpc('get_srd_creature_pack', { part: 'index' })
+  if (error) throw new Error('unavailable')
+  const baselines = baselineSchema
+    .array()
+    .catch([])
+    .parse((data as { baselines?: unknown } | null)?.baselines)
+  return { monsters: parsePackIndex(data, srd).rows, baselines }
 }
 
 export async function loadMonsterBodies(language: BestiaryLanguage): Promise<MonsterBodies> {
-  const module =
-    language === 'es' ? await import('../content/es.json') : await import('../content/en.json')
-  return module.default as unknown as MonsterBodies
+  const { data, error } = await (await client()).rpc('get_srd_creature_pack', { part: language })
+  if (error) throw new Error('unavailable')
+  const { monsters, traits } = parsePackBodies(data, srd)
+  return { monsters, traits }
 }
 
 /** Credits of the bundled creature art (RYT-053); the images are static files under `bestiary/`. */

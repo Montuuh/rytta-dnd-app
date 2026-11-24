@@ -1,3 +1,20 @@
+import { classDefFor, offeredClasses } from '../../domain/class-catalog'
+import { isClassKey } from '../../domain/rules'
+import {
+  useClassCatalog,
+  useClassDefName,
+  useOriginCatalog,
+  useOriginNames,
+} from '../class-catalog'
+import {
+  backgroundDefFor,
+  offeredBackgrounds,
+  offeredSpecies,
+  speciesDefFor,
+  type BackgroundDef,
+  type SpeciesDef,
+} from '../../domain/origin-catalog'
+import { ClassesState } from './classes-state'
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   ActionIcon,
@@ -40,8 +57,6 @@ import { reseedStandard, standardAbilitiesFor } from '../../domain/quick'
 import {
   defaultArmorClass,
   finalAbilities,
-  isBackgroundKey,
-  isSpeciesKey,
   modifier,
   pointBuySpent,
   signed,
@@ -50,16 +65,11 @@ import {
 import { featureSources, restKinds, type Build, type SheetDraft } from '../../domain/sheet'
 import {
   abilityKeys,
-  backgroundKeys,
-  backgrounds,
   casterKinds,
-  classes,
   hitDice,
   pointBuyBudget,
   pointBuyCost,
   skillKeys,
-  species,
-  speciesKeys,
   standardArray,
   type Ability,
   type Skill,
@@ -159,9 +169,13 @@ function ClassStep(props: StepProps) {
   const update = useBuild(props)
   const { build } = draft
   const loss = session.classLoss
+  const catalog = useClassCatalog()
+  const nameOf = useClassDefName()
+  const classOptions = catalog ? offeredClasses(catalog) : []
   return (
     <Stack gap="md">
       <ClassPicker
+        options={classOptions}
         value={build.classKey}
         label={t('wizard.class')}
         description={t('wizard.classHint')}
@@ -169,10 +183,11 @@ function ClassStep(props: StepProps) {
         showSaves
         onChange={(key) => {
           if (key === build.classKey) return
-          const label = key === 'custom' ? build.classLabel : t(`srd.class.${key}`)
+          const def = classDefFor(catalog, key)
+          const label = key === 'custom' || !def ? build.classLabel : nameOf(def)
           // A new class re-places the standard array it seeded and re-suggests the HP; what it
           // removes is named once below the picker.
-          const next = reseedStandard(build, chooseClass(build, key, label))
+          const next = reseedStandard(build, chooseClass(build, key, label, def))
           session.setClassLoss(classChangeLoss(build, next))
           setDraft((current) => ({
             ...current,
@@ -181,6 +196,7 @@ function ClassStep(props: StepProps) {
           }))
         }}
       />
+      <ClassesState loaded={catalog !== null} offered={classOptions.length} />
       {loss && <ClassLossNotice loss={loss} maxHp={draft.maxHp} />}
       {build.classKey === 'custom' && (
         <Paper p="md" className="sheet-block">
@@ -278,46 +294,65 @@ function OriginStep(props: StepProps) {
   const { t } = useTranslation()
   const update = useBuild(props)
   const { build } = props.draft
-  const name = (kind: 'trait' | 'feat', key: string) => t(`srd.${kind}.${key}` as 'srd.trait.luck')
-  const allowed: readonly Ability[] = isBackgroundKey(build.backgroundKey)
-    ? backgrounds[build.backgroundKey].abilities
+  // RYT-171: species and backgrounds come from the campaign's packs.
+  const origins = useOriginCatalog()
+  const names = useOriginNames()
+  const speciesDef = speciesDefFor(origins, build.speciesKey)
+  const backgroundDef = backgroundDefFor(origins, build.backgroundKey)
+  const allowed: readonly Ability[] = build.backgroundAbilities?.length
+    ? build.backgroundAbilities
     : abilityKeys
+  const option = (def: SpeciesDef | BackgroundDef) => ({
+    value: def.key,
+    label: def.pack
+      ? `${names.name(def)} · ${names.language.startsWith('en') ? def.pack.title_en : def.pack.title_es}`
+      : names.name(def),
+  })
+  const withCurrent = <T extends SpeciesDef | BackgroundDef>(list: T[], current: T | null) =>
+    current && !list.includes(current) ? [...list, current] : list
+  const speciesList = origins ? withCurrent(offeredSpecies(origins), speciesDef) : []
+  const backgroundList = origins ? withCurrent(offeredBackgrounds(origins), backgroundDef) : []
   return (
     <Stack gap="md">
       <NativeSelect
         label={t('wizard.species')}
         value={build.speciesKey}
+        disabled={origins === null}
         data={[
           { value: '', label: '—' },
-          ...speciesKeys.map((key) => ({ value: key, label: t(`srd.species.${key}`) })),
+          ...speciesList.map(option),
           { value: 'custom', label: t('srd.custom') },
         ]}
         onChange={(event) => {
           const key = event.currentTarget.value
+          const def = speciesDefFor(origins, key)
           update((current) =>
             chooseSpecies(
               current,
               key,
-              key === 'custom' || !key
-                ? current.speciesLabel
-                : t(`srd.species.${key}` as 'srd.species.elf'),
-              name,
+              def ? names.name(def) : current.speciesLabel,
+              def,
+              names.language,
             ),
           )
         }}
       />
-      {isSpeciesKey(build.speciesKey) && (
+      <ClassesState
+        loaded={origins !== null}
+        offered={speciesList.length + backgroundList.length}
+        kind="origins"
+      />
+      {speciesDef && (
         <Text size="sm" c="dimmed">
           {t('wizard.speciesGrants', {
-            speed: species[build.speciesKey].speed,
-            traits: species[build.speciesKey].traits
-              .map((trait) => name('trait', trait))
-              .join(', '),
+            speed: speciesDef.speed,
+            traits: speciesDef.traits.map((trait) => names.name(trait)).join(', '),
           })}
         </Text>
       )}
       <SpeciesOptions
         build={build}
+        species={speciesDef}
         onChoose={(key, value) =>
           update((current) => ({
             ...current,
@@ -340,32 +375,31 @@ function OriginStep(props: StepProps) {
       <NativeSelect
         label={t('wizard.background')}
         value={build.backgroundKey}
+        disabled={origins === null}
         data={[
           { value: '', label: '—' },
-          ...backgroundKeys.map((key) => ({ value: key, label: t(`srd.background.${key}`) })),
+          ...backgroundList.map(option),
           { value: 'custom', label: t('srd.custom') },
         ]}
         onChange={(event) => {
           const key = event.currentTarget.value
+          const def = backgroundDefFor(origins, key)
           update((current) =>
             chooseBackground(
               current,
               key,
-              key === 'custom' || !key
-                ? current.backgroundLabel
-                : t(`srd.background.${key}` as 'srd.background.sage'),
-              name,
+              def ? names.name(def) : current.backgroundLabel,
+              def,
+              def ? names.feat(origins, def) : null,
             ),
           )
         }}
       />
-      {isBackgroundKey(build.backgroundKey) && (
+      {backgroundDef && (
         <Text size="sm" c="dimmed">
-          {t('wizard.backgroundGrants', {
-            skills: backgrounds[build.backgroundKey].skills
-              .map((skill) => t(`srd.skill.${skill}`))
-              .join(', '),
-            feat: name('feat', backgrounds[build.backgroundKey].feat),
+          {t(backgroundDef.feat ? 'wizard.backgroundGrants' : 'wizard.backgroundGrantsSkills', {
+            skills: backgroundDef.skills.map((skill) => t(`srd.skill.${skill}`)).join(', '),
+            feat: names.feat(origins, backgroundDef)?.name ?? '',
           })}
         </Text>
       )}
@@ -514,13 +548,17 @@ function AbilitiesStep(props: StepProps) {
     </Stack>
   )
 }
-const isClassKeyValue = (key: string) => key in classes
+const isClassKeyValue = (key: string) => isClassKey(key)
 
 function SkillsStep(props: StepProps) {
   const { t } = useTranslation()
   const update = useBuild(props)
   const { build } = props.draft
-  const { fixed, picked, count, options } = classSkillChoices(build)
+  const catalog = useClassCatalog()
+  const { fixed, picked, count, options } = classSkillChoices(
+    build,
+    classDefFor(catalog, build.classKey),
+  )
   const full = count !== null && picked.length >= count
   const toggle = (skill: Skill, on: boolean) =>
     update((current) => {

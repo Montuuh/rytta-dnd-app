@@ -843,8 +843,17 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   await pencil.click()
   await expect(page.getByRole('menuitem')).toHaveText([
     'Cambiar la imagen…',
+    'Copiar prompt de arte',
     'Recuperar la ilustración original',
   ])
+  // RYT-154: the same menu copies a prompt for the DM's own image, in the house style.
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.getByRole('menuitem', { name: 'Copiar prompt de arte' }).click()
+  await expect(pane.getByRole('status').filter({ hasText: 'Prompt copiado' })).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+    /^Creature portrait .*"Lobo", beast\./,
+  )
+  await pencil.click()
   await page.getByRole('menuitem', { name: 'Recuperar la ilustración original' }).click()
   await expect(
     pane.getByRole('status').filter({ hasText: 'Lobo vuelve a tener su ilustración original' }),

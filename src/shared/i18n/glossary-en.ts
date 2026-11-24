@@ -103,6 +103,7 @@ export const glossaryEn = {
   'glossary.houseRule': 'House rule',
   'glossary.houseRuleFor': 'House rule for',
   'glossary.source': 'SRD 5.2.1, page {{page}}',
+  'glossary.sourceChanged': 'SRD 5.2.1, page {{page}} · changed by {{pack}}',
   'glossary.legacySource': 'SRD 5.1, page {{page}}',
   'glossary.license':
     'This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.',
@@ -119,7 +120,9 @@ export const glossaryEn = {
   'glossary.backToIndex': 'All entries',
   'glossary.termHint': '{{name}}: show definition',
   'glossary.loading': 'Opening the glossary…',
+  'glossary.noLibrary': 'This preview has no server: the glossary needs the content library.',
   'glossary.loadError': 'The glossary could not load. Check your connection and try again.',
+  'glossary.homebrewMissing': 'The campaign’s homebrew could not load.',
   'glossary.retry': 'Try again',
   'glossary.notFound': 'This entry doesn’t exist or isn’t available to you.',
   'glossary.hiddenModule':

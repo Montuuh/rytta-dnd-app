@@ -65,7 +65,7 @@ describe('security headers', () => {
     expect(blocks.find((block) => block.startsWith('/assets/*'))).toContain('immutable')
     for (const path of ['/art/*', '/bestiary/*', '/tabletop/*', '/icons/*', '/vendor/*'])
       expect(blocks.find((block) => block.startsWith(`${path}\n`))).not.toContain('immutable')
-    for (const path of ['/', '/index.html', '/version.json', '/manifest.webmanifest'])
+    for (const path of ['/', '/index.html', '/version.json', '/manifest.webmanifest', '/sw.js'])
       expect(blocks.find((block) => block.startsWith(`${path}\n`))).toContain('no-cache')
   })
 })

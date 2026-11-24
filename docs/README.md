@@ -122,3 +122,17 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 59. [ADR 048: three environments, a staging project and the hosted migration procedure](decisions/048-environments-staging.md):
     production, staging and PRE as they are, costs, the SQL delivery rules and what remains open.
 60. [ADR 049: campaign session continuity](decisions/049-session-continuity.md) records how the DM handoff, the published recap and item receipts persist.
+61. [ADR 050: quest journal](decisions/050-quest-journal.md) records how quests, hidden objectives,
+    the DM's note and the Players' change marks are stored and shown (RYT-006).
+62. [ADR 051: campaigns choose content packs](decisions/051-campaign-content-packs.md): pinned pack
+    versions per campaign, hidden entries, campaign versions and the first kinds (RYT-162 to RYT-167).
+63. [ADR 052: the campaign shell kept on the device](decisions/052-campaign-shell-on-device.md):
+    name, role and modules of opened campaigns for an offline reload, and when they are removed
+    (RYT-160).
+64. [ADR 053: library entries carry their own picture](decisions/053-pack-entry-pictures.md):
+    the pack-images bucket, versioned with the pack, who uploads and reads, and which picture wins
+    (RYT-172).
+65. [ADR 054: only super admins write the content library](decisions/054-library-single-writing-role.md):
+    one writing role, the retired editor grant and who owns the public packs (RYT-173).
+66. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
+    panel, the automatic checks, review, import and the status of each request (RYT-169).

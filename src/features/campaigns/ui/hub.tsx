@@ -11,14 +11,11 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  Textarea,
-  TextInput,
   Title,
 } from '@mantine/core'
-import { useForm } from '@mantine/form'
 import { useClipboard } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Check, Copy, Ellipsis, Plus, X } from 'lucide-react'
+import { ArrowRight, Check, Copy, Ellipsis, LogOut, Plus, X } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -29,9 +26,10 @@ import { artUrl, pickByKey } from '@/shared/ui/art-url'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
 import { useAuth } from '@/features/auth'
+import { SupervisedCampaigns, useAdminStatus } from '@/features/admin'
+import { config } from '@/shared/lib/config'
 import { campaignsQuery, invitationsQuery, membersQuery, useCampaignAction } from '../api'
 import {
-  createCampaignSchema,
   leaveBlock,
   leftCampaignState,
   MembershipError,
@@ -39,8 +37,11 @@ import {
   type Invitation,
 } from '../domain/campaign'
 import { readCampaignVisit } from '../domain/recent-campaign'
-import { ActionFeedback, QueryFeedback } from './feedback'
+import { QueryFeedback } from './feedback'
+import { showsData } from './load-cause'
+import { StaleLine } from './stale-line'
 import { LeaveCampaignDialog, LeaveCampaignItem } from './leave'
+import { CreateCampaignDialog } from './create-campaign'
 import './hub.css'
 
 const covers = [
@@ -112,6 +113,62 @@ function EmailCopy({ email }: { email: string }) {
   )
 }
 
+/**
+ * RYT-148: with no campaign and no invitation, the account in use is the likely problem. Say which
+ * one it is, copy it for the DM, switch to another in one action, and reach the contact.
+ */
+function SignedInAccount({
+  email,
+  switchAccount,
+}: {
+  email: string
+  switchAccount: () => unknown
+}) {
+  const { t } = useTranslation()
+  const clipboard = useClipboard({ timeout: 2000 })
+  const contact = config.VITE_CONTACT_EMAIL
+  return (
+    <Stack gap={6} className="hub-account">
+      <Text size="sm" c="dimmed">
+        {t('hub.signedInAs')}
+      </Text>
+      <Text className="hub-email-address user-copy" fw={600}>
+        {email}
+      </Text>
+      <Group gap="xs" className="hub-account-actions">
+        <Button
+          variant="default"
+          leftSection={
+            clipboard.copied ? (
+              <Check size={18} aria-hidden="true" />
+            ) : (
+              <Copy size={18} aria-hidden="true" />
+            )
+          }
+          onClick={() => clipboard.copy(email)}
+        >
+          {clipboard.copied ? t('hub.copiedEmail') : t('hub.copyEmail')}
+        </Button>
+        <Button
+          variant="subtle"
+          leftSection={<LogOut size={18} aria-hidden="true" />}
+          onClick={() => void switchAccount()}
+        >
+          {t('hub.switchAccount')}
+        </Button>
+      </Group>
+      <span className="visually-hidden" role="status">
+        {clipboard.copied ? t('hub.copiedEmail') : ''}
+      </span>
+      {contact && (
+        <a className="hub-contact" href={`mailto:${contact}`}>
+          {t('hub.contact')}
+        </a>
+      )}
+    </Stack>
+  )
+}
+
 /** Why answering an invitation failed, in one short line; a retry unless the invitation is gone. */
 function RespondError({ error, retry }: { error: Error | null; retry: () => void }) {
   const { t } = useTranslation()
@@ -137,12 +194,18 @@ function RespondError({ error, retry }: { error: Error | null; retry: () => void
 
 export function CampaignHub() {
   const { t, i18n } = useTranslation()
-  const { state } = useAuth()
+  const { state, controller } = useAuth()
   const user = state.user!
-  const campaigns = useQuery(campaignsQuery(user.id))
+  const campaignsQueryResult = useQuery(campaignsQuery(user.id))
+  // RYT-153: a campaign entered from Administration is supervised, not one of mine.
+  const adminAccess = useAdminStatus().data?.access
+  const adminIds = new Set((adminAccess ?? []).map((access) => access.campaign_id))
+  const campaigns = {
+    ...campaignsQueryResult,
+    data: campaignsQueryResult.data?.filter((campaign) => !adminIds.has(campaign.id)),
+  }
   const invitations = useQuery(invitationsQuery(user.id))
   const respond = useCampaignAction()
-  const create = useCampaignAction()
   const [opened, setOpened] = useState(false)
   const [decline, setDecline] = useState<Invitation | null>(null)
   // RYT-095: the dialog lives here, not in the card, which leaves the list on success.
@@ -172,31 +235,16 @@ export function CampaignHub() {
     const frame = requestAnimationFrame(() => noticeRef.current?.focus())
     return () => cancelAnimationFrame(frame)
   }, [notice, location.key])
-  const form = useForm({
-    initialValues: { name: '', description: '' },
-    validate: {
-      name: (value) =>
-        createCampaignSchema.shape.name.safeParse(value).success ? null : t('hub.invalidName'),
-      description: (value) => (value.length <= 2000 ? null : t('hub.invalidDescription')),
-    },
-  })
   const refresh = () => {
     void campaigns.refetch()
     void invitations.refetch()
   }
-  const startCreate = () => {
-    create.reset()
-    setOpened(true)
-  }
-  const closeCreate = () => {
-    if (!create.isPending) setOpened(false)
-  }
+  const startCreate = () => setOpened(true)
   const closeDecline = () => {
     if (respond.isPending) return
     respond.reset()
     setDecline(null)
   }
-  useBackToClose(opened, closeCreate)
   useBackToClose(!!decline, closeDecline)
   // The retry repeats the last answer with the same outcome handling.
   const lastAnswer = useRef<{ invite: Invitation; accept: boolean } | null>(null)
@@ -227,7 +275,7 @@ export function CampaignHub() {
     const last = lastAnswer.current
     if (last) answer(last.invite, last.accept)
   }
-  const pendingInvites = !invitations.isError ? (invitations.data ?? []) : []
+  const pendingInvites = showsData(invitations) ? (invitations.data ?? []) : []
   const invitesPending = pendingInvites.length > 0
   // With no campaign and no invitation the empty state owns the one instruction and the create action.
   const showEmpty =
@@ -268,11 +316,13 @@ export function CampaignHub() {
         {!decline && <RespondError error={respond.error} retry={retryAnswer} />}
         <QueryFeedback
           pending={invitations.isPending}
-          error={invitations.isError}
+          error={!showsData(invitations)}
           retry={() => void invitations.refetch()}
           cause={invitations.error}
+          secondary
         />
-        {invitations.isSuccess &&
+        {invitations.data !== undefined &&
+          showsData(invitations) &&
           (invitesPending ? (
             pendingInvites.map((invite) => {
               const answering =
@@ -380,14 +430,15 @@ export function CampaignHub() {
           </div>
         </Alert>
       )}
+      <StaleLine queries={[campaigns, invitations]} />
       {invitesPending && invitationsPanel}
       <QueryFeedback
         pending={campaigns.isPending}
-        error={campaigns.isError}
+        error={!showsData(campaigns)}
         retry={refresh}
         cause={campaigns.error}
       />
-      {!campaigns.isError && campaigns.data && campaigns.data.length > 0 && (
+      {showsData(campaigns) && campaigns.data && campaigns.data.length > 0 && (
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           {campaigns.data.map((campaign, position) => (
             <CampaignCard
@@ -400,13 +451,14 @@ export function CampaignHub() {
           ))}
         </SimpleGrid>
       )}
+      <SupervisedCampaigns />
       {showEmpty && (
         <Paper p={{ base: 'lg', sm: 'xl' }} className="hub-empty">
           <ArtPlate name="empty/campaigns" size={144} />
           <Stack gap="xs" align="flex-start">
             <Title order={2}>{t('hub.empty')}</Title>
             <Text c="dimmed">{t('hub.emptyHint')}</Text>
-            <EmailCopy email={user.email} />
+            <SignedInAccount email={user.email} switchAccount={() => controller?.signOut()} />
             <Button
               mt="xs"
               variant="default"
@@ -419,58 +471,7 @@ export function CampaignHub() {
         </Paper>
       )}
       {!invitesPending && !showEmpty && invitationsPanel}
-      <Modal
-        opened={opened}
-        onClose={closeCreate}
-        title={t('hub.create')}
-        returnFocus
-        closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-      >
-        <form
-          noValidate
-          onSubmit={form.onSubmit((values) =>
-            create.mutate(
-              { kind: 'create', ...values },
-              {
-                onSuccess: () => {
-                  setOpened(false)
-                  form.reset()
-                },
-              },
-            ),
-          )}
-        >
-          <Stack>
-            <Text size="sm" c="dimmed">
-              {t('hub.createHint')}
-            </Text>
-            <TextInput
-              label={t('hub.name')}
-              required
-              maxLength={100}
-              enterKeyHint="next"
-              data-autofocus
-              {...form.getInputProps('name')}
-            />
-            <Textarea
-              label={t('hub.description')}
-              maxLength={2000}
-              autosize
-              minRows={3}
-              {...form.getInputProps('description')}
-            />
-            <ActionFeedback error={create.error} />
-            <Group justify="flex-end">
-              <Button variant="subtle" disabled={create.isPending} onClick={closeCreate}>
-                {t('action.cancel')}
-              </Button>
-              <Button type="submit" loading={create.isPending}>
-                {t('hub.create')}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
+      <CreateCampaignDialog opened={opened} onClose={() => setOpened(false)} />
       <Modal
         opened={!!decline}
         onClose={closeDecline}

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  chooseClass,
+  levelUpRequirements,
+  planLevelUp,
+} from '../../../../tests/fixtures/srd/with-classes'
+import {
   applyChoices,
   canRaise,
   capReason,
@@ -7,16 +12,13 @@ import {
   hitDieAverage,
   hitPointGain,
   levelUpGrants,
-  levelUpRequirements,
   missingChoices,
   noChoices,
-  planLevelUp,
   retroactiveHitPoints,
   summarizeLevelUp,
   validRoll,
   type LevelUpChoices,
 } from './level-up'
-import { chooseClass } from './creation'
 import { syncProgression, type LibraryFeature } from './progression'
 import { emptyBuild } from './rules'
 import { buildSchema, type Build } from './sheet'
@@ -24,7 +26,10 @@ import { classKeys, type ClassKey } from './srd'
 
 type Row = { id: string; cat: string; es: string; lv?: number; fc?: string; sb?: string }
 const [index] = Object.values(
-  import.meta.glob<Row[]>('../../glossary/content/index.json', { eager: true, import: 'default' }),
+  import.meta.glob<Row[]>('../../../../tests/fixtures/srd/glossary/index.json', {
+    eager: true,
+    import: 'default',
+  }),
 )
 const library: LibraryFeature[] = index!
   .filter((row) => row.cat === 'feature' && row.fc)

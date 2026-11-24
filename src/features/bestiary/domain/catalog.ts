@@ -39,16 +39,27 @@ export type CreatureListItem = {
   srdId?: string | null
   /** A private image: the campaign creature's own, or the DM's image for an SRD creature. */
   imagePath?: string | null
+  /** RYT-172: the picture its pack entry carries, below the campaign's own image. */
+  packPath?: string | null
   /** The SRD creature whose bundled art stands in when there is no private image (RYT-053). */
   artId?: string | null
   /** The side a campaign creature joins fights on (its token's shape). */
   side?: 'enemy' | 'ally'
   /** RYT-089: the campaign's version of the official creature `srdId`, listed in its place. */
   version?: boolean
+  /** RYT-094: the content pack an official creature (or a campaign version of one) comes from. */
+  packId?: string
+  /** That pack's title in the interface language. */
+  pack?: string
 }
 
-export function srdItems(rows: MonsterRow[], language: BestiaryLanguage): CreatureListItem[] {
+export function srdItems(
+  rows: MonsterRow[],
+  language: BestiaryLanguage,
+  pack?: { id: string; title: string },
+): CreatureListItem[] {
   return rows.map((row) => ({
+    ...(pack ? { packId: pack.id, pack: pack.title } : {}),
     key: `srd:${row.id}`,
     source: 'srd',
     id: row.id,
@@ -67,7 +78,8 @@ export function srdItems(rows: MonsterRow[], language: BestiaryLanguage): Creatu
 export type CreatureSort = 'name' | 'cr'
 export type CreatureFilters = {
   query: string
-  source: 'all' | 'srd' | 'homebrew' | 'favorites'
+  /** RYT-094: `pack:<id>` lists one content pack's creatures (and campaign versions of them). */
+  source: 'all' | 'homebrew' | 'favorites' | `pack:${string}`
   types: CreatureType[]
   sizes: CreatureSize[]
   /** Inclusive CR range by index in `challengeRatings`. */
@@ -97,8 +109,8 @@ export function filterCreatures(
   const words = query ? query.split(' ') : []
   const scored: { item: CreatureListItem; score: number }[] = []
   for (const item of items) {
-    // RYT-089: a campaign version of an official creature still belongs to the official catalogue.
-    if (filters.source === 'srd' && item.source !== 'srd' && !item.version) continue
+    // RYT-089: a campaign version of an official creature still belongs to its pack.
+    if (filters.source.startsWith('pack:') && item.packId !== filters.source.slice(5)) continue
     if (filters.source === 'homebrew' && item.source !== 'homebrew') continue
     if (filters.source === 'favorites' && !favorites.has(item.key)) continue
     if (filters.types.length && (!item.type || !filters.types.includes(item.type))) continue

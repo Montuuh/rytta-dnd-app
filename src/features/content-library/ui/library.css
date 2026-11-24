@@ -172,6 +172,15 @@
   gap: 12px;
   align-items: end;
 }
+.lib-item-group {
+  display: grid;
+  gap: 12px;
+}
+.lib-item-legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 700;
+}
 .lib-lang {
   display: flex;
   flex-direction: column;
@@ -347,10 +356,72 @@
   margin-top: 6px;
 }
 .lib-class-grid .mantine-Checkbox-root,
-.lib-checks .mantine-Checkbox-root {
+.lib-checks .mantine-Checkbox-root,
+.lib-check-row.mantine-Checkbox-root {
   display: flex;
   align-items: center;
   min-height: 44px;
+}
+/* The whole row answers a tap, not only the 20px box (RYT-171 UI review). */
+.lib-class-grid .mantine-Checkbox-body,
+.lib-checks .mantine-Checkbox-body,
+.lib-check-row .mantine-Checkbox-body {
+  flex: 1;
+  align-items: center;
+}
+.lib-class-grid .mantine-Checkbox-labelWrapper,
+.lib-checks .mantine-Checkbox-labelWrapper,
+.lib-check-row .mantine-Checkbox-labelWrapper {
+  flex: 1;
+  justify-content: center;
+}
+.lib-class-grid .mantine-Checkbox-label,
+.lib-checks .mantine-Checkbox-label,
+.lib-check-row .mantine-Checkbox-label {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+/* A background's origin feat and its spell list, one under the other. */
+.lib-origin-feat {
+  display: grid;
+  gap: 12px;
+  max-width: 32rem;
+}
+/* A species trait: its two names side by side on a tablet, stacked on a phone. */
+.lib-origin-trait {
+  display: grid;
+  gap: 4px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--app-border);
+}
+.lib-origin-trait-names {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+.lib-origin-trait-names > :nth-child(2) {
+  grid-column: 1;
+}
+.lib-origin-remove {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+@media (min-width: 48em) {
+  .lib-origin-trait-names {
+    grid-template-columns: 1fr 1fr auto;
+  }
+  .lib-origin-trait-names > :nth-child(2) {
+    grid-column: 2;
+  }
+  .lib-origin-remove {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: end;
+  }
 }
 
 /* The notice's one line sits level with its close button. */
@@ -360,4 +431,197 @@
 .lib-pack-title:focus-visible {
   outline: 2px solid var(--app-focus);
   outline-offset: 2px;
+}
+
+.lib-offers {
+  display: grid;
+  gap: 8px;
+}
+.lib-offers-title {
+  margin: 0;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 700;
+}
+.lib-offer-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lib-offer-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--app-border);
+}
+.lib-offer-list li:last-child {
+  border-bottom: 0;
+}
+.lib-offer-list .mantine-Button-root {
+  min-height: 44px;
+  flex: none;
+}
+.lib-offer-pick {
+  flex: 1;
+  min-width: 12rem;
+}
+
+/* RYT-172: entries with a picture show it beside their name, and in the editor above the form. */
+.lib-row.has-thumb {
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+}
+.lib-row.has-thumb > .lib-row-thumb {
+  grid-row: 1 / span 2;
+}
+.lib-row-thumb {
+  display: grid;
+  place-items: center;
+  color: var(--app-muted);
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--app-raised);
+}
+.lib-row-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lib-image {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: center;
+  padding-block: 4px 16px;
+  border-bottom: 1px solid var(--app-border);
+}
+.lib-image-frame {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--app-raised);
+  color: var(--app-muted);
+}
+.lib-image-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lib-image-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+@media (max-width: 26em) {
+  .lib-image-frame {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+/* RYT-174: origin filter, the protected note and the SRD original of a changed entry. */
+.lib-origin .mantine-SegmentedControl-label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+.lib-protected {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.lib-protected svg {
+  flex: none;
+  margin-top: 2px;
+}
+.lib-original {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.lib-original section {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+.lib-original-names {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+}
+.lib-original-names dt {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.lib-original-names dd {
+  margin: 0;
+}
+.lib-original pre {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--app-raised);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: var(--fs-meta);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.lib-origin-seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+.lib-origin-n {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.lib-origin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.lib-origin .mantine-SegmentedControl-control {
+  min-width: 0;
+  border: 0;
+}
+.lib-origin .mantine-SegmentedControl-control::before {
+  display: none;
+}
+.lib-origin-seg {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.lib-original [aria-expanded='true'] .lib-original-chevron {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lib-original-chevron {
+    transition: transform 120ms ease;
+  }
 }

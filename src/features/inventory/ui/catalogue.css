@@ -273,6 +273,26 @@
   border-radius: 12px;
   background: var(--app-surface);
 }
+.import-changes {
+  justify-self: stretch;
+  display: grid;
+  gap: 2px;
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+}
+.import-changes li {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+.import-changes li:last-child {
+  border-bottom: 0;
+}
 .import-update .mantine-Alert-root {
   justify-self: stretch;
 }

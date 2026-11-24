@@ -1,14 +1,5 @@
 import { z } from 'zod'
-import {
-  abilityKeys,
-  casterKinds,
-  choiceKeys,
-  conditionKeys,
-  skillKeys,
-  type Ability,
-  type ChoiceKey,
-  type Skill,
-} from './srd'
+import { abilityKeys, casterKinds, conditionKeys, skillKeys, type Ability, type Skill } from './srd'
 
 const id = z.string().min(1).max(40)
 const text = (max: number) => z.string().max(max)
@@ -81,6 +72,13 @@ export const buildSchema = z.object({
   speciesLabel: text(60),
   backgroundKey: text(40),
   backgroundLabel: text(60),
+  /** RYT-171: what the background gave when chosen (its skills and the abilities its bonuses
+   * go to), so the sheet needs no background table. Builds from before keep them absent. */
+  backgroundSkills: z
+    .array(z.enum(skillKeys as [Skill, ...Skill[]]))
+    .max(6)
+    .optional(),
+  backgroundAbilities: z.array(z.enum(abilityKeys)).max(6).optional(),
   alignment: text(40),
   abilityMethod: z.enum(['standard', 'pointBuy', 'manual']),
   baseAbilities: abilitiesSchema,
@@ -111,7 +109,10 @@ export const buildSchema = z.object({
   origin: z.enum(creationOrigins).optional(),
   /** RYT-102: options picked for species traits (`giantAncestry: 'fire'`); unknown values are
    * kept but grant nothing. */
-  choices: z.partialRecord(z.enum(choiceKeys as [ChoiceKey, ...ChoiceKey[]]), text(40)).optional(),
+  choices: z
+    .record(z.string().regex(/^[a-z][a-zA-Z0-9-]{0,39}$/), text(40))
+    .refine((value) => Object.keys(value).length <= 8)
+    .optional(),
   /** RYT-110: the Metamagic options a Sorcerer knows; unknown values are kept but grant nothing
    * (see `metamagicKeys`). */
   metamagic: z.array(text(20)).max(10).optional(),

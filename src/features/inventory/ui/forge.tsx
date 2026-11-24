@@ -21,6 +21,7 @@ import { useDebouncedValue } from '@mantine/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, Languages, SlidersHorizontal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import { useAuth } from '@/features/auth'
 import { formatGp } from '@/shared/lib/money'
 import { localizedDescription, localizedName, type Translations } from '@/shared/lib/translations'
@@ -558,6 +559,15 @@ export function Forge({
                 </div>
               </fieldset>
               {media}
+              {media && (
+                <CopyArtPrompt
+                  subject={{
+                    kind: 'item',
+                    name: texts.name,
+                    traits: [draft.category, draft.rarity],
+                  }}
+                />
+              )}
               <fieldset className="plain-fieldset">
                 <legend>
                   <Text fw={600} size="sm" mb={6}>

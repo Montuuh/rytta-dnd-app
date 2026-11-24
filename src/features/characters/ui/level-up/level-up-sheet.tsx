@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight, Check, TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CampaignSettingsError, type CampaignSettingsReason } from '@/features/campaigns'
 import { useGlossary, useSrdLibrary } from '@/features/glossary'
+import { classDefFor } from '../../domain/class-catalog'
+import { useClassCatalog } from '../class-catalog'
 import { Modal } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { useApplyLevelUp } from '../../api'
@@ -18,7 +20,6 @@ import {
   type LevelUpChoices,
   type LevelUpSummary,
 } from '../../domain/level-up'
-import { isClassKey } from '../../domain/rules'
 import type { Build } from '../../domain/sheet'
 import { useResourceNames } from '../resource-names'
 import { useSubmitGuard } from '../use-submit-guard'
@@ -89,22 +90,33 @@ export function LevelUpSheet({
   const observer = useRef<ResizeObserver | null>(null)
   const { level, build } = snapshot
   const toLevel = level + 1
-  const custom = !isClassKey(build.classKey)
+  // A class typed by hand needs no library; SRD and pack classes do (RYT-168).
+  const custom = !build.classKey || build.classKey === 'custom'
+  const catalog = useClassCatalog()
+  const classDef = useMemo(() => classDefFor(catalog, build.classKey), [catalog, build.classKey])
   const libraryState = custom || library ? 'ready' : glossary?.indexError ? 'error' : 'loading'
   const features = useMemo(() => library?.features ?? [], [library])
   const plan = useMemo(
     () =>
       libraryState === 'ready'
-        ? planLevelUp({ build, level, maxHp: snapshot.maxHp, hitPoints, choices }, features, names)
+        ? planLevelUp(
+            { build, level, maxHp: snapshot.maxHp, hitPoints, choices },
+            features,
+            names,
+            classDef,
+          )
         : null,
-    [libraryState, build, level, snapshot.maxHp, hitPoints, choices, features, names],
+    [libraryState, build, level, snapshot.maxHp, hitPoints, choices, features, names, classDef],
   )
   const grants = useMemo(
     () => (libraryState === 'ready' ? levelUpGrants(build, level, toLevel, features, names) : null),
     [libraryState, build, level, toLevel, features, names],
   )
   // The steps follow the build and the level, never the hit points typed so far.
-  const requirements = useMemo(() => levelUpRequirements(build, toLevel), [build, toLevel])
+  const requirements = useMemo(
+    () => levelUpRequirements(build, toLevel, classDef),
+    [build, toLevel, classDef],
+  )
   const steps: StepKey[] = [
     'hp',
     'grants',

@@ -14,8 +14,10 @@ export const legalEs: Record<keyof typeof legalEn, string> = {
   'legal.other.privacy': 'Leer la política de privacidad',
   'legal.other.terms': 'Leer las condiciones de uso',
   'legal.privacy': 'Política de privacidad',
+  'legal.contact': 'Contacto',
   'legal.terms': 'Condiciones de uso',
   'legal.links': 'Privacidad y condiciones',
+  'legal.footer': 'Información legal y contacto',
   'legal.linksHelp': 'Qué guarda Rytta sobre ti y las reglas para usarla.',
 
   'legal.privacy.intro':

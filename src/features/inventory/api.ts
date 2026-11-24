@@ -28,8 +28,10 @@ import {
   setItemTemplate,
   type ProposalInput,
   type Resolution,
+  loadItemPack,
+  loadItemPacks,
 } from './data/repository'
-import { loadBasicItemDescriptions, loadBasicItems } from './domain/basic-items'
+import { buildItemCatalogue } from './domain/pack-items'
 import type { ImportItem } from './domain/catalogue'
 import type { InventoryAction } from './domain/item'
 
@@ -268,21 +270,30 @@ export function useBasicImport(campaignId: string) {
   )
 }
 
-/** The bundled basic catalogue and both description files: application content, loaded once. */
-export const basicCatalogueQuery = () =>
+/**
+ * RYT-166: the items of the packs the campaign enabled, without hidden ones, shaped as the bundled
+ * catalogue (DM only). Content changes refresh it with the rest of the campaign.
+ */
+export const campaignItemCatalogueQuery = (userId: string, campaignId: string) =>
   queryOptions({
-    queryKey: ['static', 'basic-items'],
-    queryFn: async () => {
-      const [items, en, es] = await Promise.all([
-        loadBasicItems(),
-        loadBasicItemDescriptions('en'),
-        loadBasicItemDescriptions('es'),
-      ])
-      return { items, descriptions: { en, es } }
+    queryKey: ['private', userId, 'campaign', campaignId, 'item-packs'],
+    queryFn: async ({ signal }) => {
+      const packs = (await loadItemPacks(campaignId, signal)).filter((pack) => pack.enabled)
+      const parts = await Promise.all(
+        packs.map(async (pack) => ({
+          pack,
+          entries: (await loadItemPack(campaignId, pack, signal)).entries,
+        })),
+      )
+      return buildItemCatalogue(parts)
     },
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 5 * 60_000,
   })
+export function useCampaignItemCatalogue(campaignId: string) {
+  const { state } = useAuth()
+  return useQuery(campaignItemCatalogueQuery(state.user?.id ?? '', campaignId))
+}
+
 export function useProposeItem(campaignId: string) {
   return useCatalogueMutation(campaignId, (input: ProposalInput) => proposeItem(campaignId, input))
 }

@@ -39,6 +39,15 @@ export const bestiaryEs = {
   'bestiary.source.srd': 'SRD',
   'bestiary.source.homebrew': 'Campaña',
   'bestiary.source.favorites': 'Favoritas',
+  'bestiary.source.pack': 'Paquete',
+  'bestiary.packs.none': 'Esta campaña no usa paquetes de criaturas.',
+  'bestiary.packs.choose': 'Elegir en Contenido',
+  'bestiary.packs.link': 'Paquetes de criaturas',
+  'bestiary.packs.hide': 'Ocultar en esta campaña',
+  'bestiary.packs.hidden':
+    '{{name}} ya no aparece en esta campaña. Puedes mostrarla de nuevo en Contenido.',
+  'bestiary.packs.unreadable_one': '{{count}} criatura de los paquetes no se pudo leer.',
+  'bestiary.packs.unreadable_other': '{{count}} criaturas de los paquetes no se pudieron leer.',
   'bestiary.filter.button': 'Filtros',
   'bestiary.filter.title': 'Filtrar y ordenar',
   'bestiary.filter.active_one': '{{count}} filtro activo',
@@ -109,57 +118,14 @@ export const bestiaryEs = {
   'bestiary.badge.homebrew': 'Campaña',
   'bestiary.badge.version': 'Modificada',
   // RYT-089: the campaign's official bestiary.
-  'bestiary.official.download': 'Descargar bestiario oficial',
-  'bestiary.official.missing': 'El bestiario oficial no está en esta campaña.',
   'bestiary.official.emptyTitle': 'Esta campaña aún no tiene criaturas',
-  'bestiary.official.source_one': '{{count}} criatura del SRD 5.2.1',
-  'bestiary.official.source_other': '{{count}} criaturas del SRD 5.2.1',
-  'bestiary.official.menu': 'Bestiario oficial',
-  'bestiary.official.bringBack_one': 'Recuperar {{count}} criatura quitada',
-  'bestiary.official.bringBack_other': 'Recuperar {{count}} criaturas quitadas',
-  'bestiary.official.removeAll': 'Quitar el bestiario oficial',
-  'bestiary.official.bringBackTitle': '¿Recuperar las criaturas quitadas?',
-  'bestiary.official.bringBackBody_one': 'Vuelve {{count}} criatura oficial a esta campaña.',
-  'bestiary.official.bringBackBody_other': 'Vuelven {{count}} criaturas oficiales a esta campaña.',
-  'bestiary.official.bringBackAction_one': 'Recuperar {{count}} criatura',
-  'bestiary.official.bringBackAction_other': 'Recuperar {{count}} criaturas',
-  'bestiary.official.downloadTitle': '¿Descargar el bestiario oficial?',
-  'bestiary.official.downloadBody_one':
-    'Se añade {{count}} criatura del SRD 5.2.1 a esta campaña. Lo que cambies se queda en la campaña; el bestiario oficial no cambia.',
-  'bestiary.official.downloadBody_other':
-    'Se añaden {{count}} criaturas del SRD 5.2.1 a esta campaña. Lo que cambies en ellas se queda en la campaña; el bestiario oficial no cambia.',
-  'bestiary.official.downloadAction_one': 'Descargar {{count}} criatura',
-  'bestiary.official.downloadAction_other': 'Descargar {{count}} criaturas',
-  'bestiary.official.removeTitle': '¿Quitar {{name}} de esta campaña?',
-  'bestiary.official.removeBody': 'Podrás volver a añadirla desde «Bestiario oficial».',
-  'bestiary.official.removeVersion':
-    'Los cambios hechos en esta campaña se borran y no se pueden recuperar.',
-  'bestiary.official.removeAction': 'Quitar {{name}}',
-  'bestiary.official.removeAllTitle': '¿Quitar el bestiario oficial de esta campaña?',
-  'bestiary.official.removeAllVersions_one':
-    'Se borra {{count}} criatura modificada en esta campaña; sus cambios no se pueden recuperar.',
-  'bestiary.official.removeAllVersions_other':
-    'Se borran {{count}} criaturas modificadas en esta campaña; sus cambios no se pueden recuperar.',
-  'bestiary.official.restoreTitle': '¿Volver a la versión oficial de {{name}}?',
+  'bestiary.official.restoreTitle': '¿Volver a la versión del paquete de {{name}}?',
   'bestiary.official.restoreBody':
     'Los cambios hechos en esta campaña se borran y no se pueden recuperar.',
-  'bestiary.official.restore': 'Volver a la versión oficial',
-  'bestiary.official.removeOne': 'Quitar de esta campaña',
-  'bestiary.official.broughtBack_one': 'Recuperada {{count}} criatura oficial.',
-  'bestiary.official.broughtBack_other': 'Recuperadas {{count}} criaturas oficiales.',
-  'bestiary.official.downloaded_one': 'Bestiario oficial descargado: {{count}} criatura.',
-  'bestiary.official.downloaded_other': 'Bestiario oficial descargado: {{count}} criaturas.',
-  'bestiary.official.removedAll': 'Bestiario oficial quitado de la campaña.',
-  'bestiary.official.removed': '{{name}} ya no está en el bestiario de la campaña.',
-  'bestiary.official.restored': '{{name}} vuelve a ser la versión oficial.',
-  'bestiary.official.elsewhere':
-    'Esta campaña no tiene el bestiario oficial. Descárgalo en el bestiario para usar sus {{total}} criaturas.',
+  'bestiary.official.restore': 'Volver a la versión del paquete',
+  'bestiary.official.restored': '{{name}} vuelve a ser la versión del paquete.',
   'bestiary.official.versionSaved': 'Guardado solo en esta campaña: {{name}}.',
   'bestiary.official.versionNote': 'Modificada en esta campaña',
-  'bestiary.official.removeAllBody_other':
-    'Se quitan las {{count}} criaturas oficiales. Las criaturas propias de la campaña y los combates se quedan, y puedes volver a descargarlo.',
-  'bestiary.official.removeAllBody_one':
-    'Se quita {{count}} criatura oficial. Las criaturas propias de la campaña y los combates se quedan, y puedes volver a descargarlo.',
   'bestiary.basedOn': 'Basada en {{name}}',
   'bestiary.legendaryBadge_one': '{{count}} acción legendaria',
   'bestiary.legendaryBadge_other': '{{count}} acciones legendarias',
@@ -177,6 +143,8 @@ export const bestiaryEs = {
   'bestiary.quickHint':
     'Esta criatura solo tiene los números de combate. Completa su ficha para tener sus acciones a mano.',
   'bestiary.srdPage': 'SRD 5.2.1, p. {{page}} · Wizards of the Coast LLC, CC-BY-4.0',
+  'bestiary.srdPageChanged':
+    'SRD 5.2.1, p. {{page}} · Wizards of the Coast LLC, CC-BY-4.0 · modificado por {{pack}}',
   'bestiary.notesLine': 'Notas del DM: {{notes}}',
   'bestiary.adaptation':
     'Rytta separa el texto oficial en campos, restaura un signo omitido (salvación de Inteligencia del dragón blanco joven) y en los rasgos reutilizables cambia el nombre de la criatura por «la criatura».',

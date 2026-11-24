@@ -795,3 +795,8 @@
   position: absolute;
   inset: -8px;
 }
+
+/* RYT-164: the definition load state takes focus on Retry; it is not a control. */
+.gl-load-state:focus {
+  outline: none;
+}

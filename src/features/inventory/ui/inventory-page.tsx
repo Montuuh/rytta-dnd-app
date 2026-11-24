@@ -14,10 +14,23 @@ import { Backpack, BookOpen, Shirt } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { membersQuery, useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
+import {
+  membersQuery,
+  showsData,
+  StaleLine,
+  useCampaign,
+  useCampaignView,
+  useIsRealDm,
+} from '@/features/campaigns'
 import { newRequestId } from '@/shared/lib/request-id'
 import { localizedName } from '@/shared/lib/translations'
-import { inventoryQuery, rosterQuery, useInventoryAction, useProposeItem } from '../api'
+import {
+  inventoryQuery,
+  proposalsQuery,
+  rosterQuery,
+  useInventoryAction,
+  useProposeItem,
+} from '../api'
 import { canEquip, equippedBySlot, slotsFor } from '../domain/equipment'
 import type {
   DefinitionDraft,
@@ -74,6 +87,11 @@ export function InventoryPage() {
   const [view, setView] = useState<View>(
     params.get('view') === 'equipment' ? 'equipment' : 'satchel',
   )
+  // RYT-161: the shelf's own query, read here (same cache entry) so one line covers the screen.
+  const proposals = useQuery({
+    ...proposalsQuery(userId, campaign.id, characterId),
+    enabled: Boolean(characterId && inventory.data) && view === 'satchel',
+  })
   const [card, setCard] = useState<string | null>(null)
   const [forge, setForge] = useState<{ definition: ItemDefinition | null } | null>(null)
   const [adding, setAdding] = useState(false)
@@ -114,7 +132,7 @@ export function InventoryPage() {
       </Stack>
     )
   if (roster.isPending) return <Text role="status">{t('common.loading')}</Text>
-  if (roster.isError)
+  if (!showsData(roster))
     return (
       <Alert color="red" role="alert">
         {t('query.error')}{' '}
@@ -348,13 +366,14 @@ export function InventoryPage() {
           {notice}
         </Text>
       )}
+      <StaleLine queries={[roster, members, inventory, proposals]} />
       {error && !openStack && !forge && !proposing && (
         <Alert color="red" role="alert">
           {error}
         </Alert>
       )}
       {inventory.isPending && <Text role="status">{t('common.loading')}</Text>}
-      {inventory.isError && (
+      {!showsData(inventory) && (
         <Alert color="red" role="alert">
           {t('query.error')}{' '}
           <Button variant="subtle" onClick={() => void inventory.refetch()}>

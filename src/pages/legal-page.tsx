@@ -19,9 +19,15 @@ import './legal-page.css'
 export function LegalLinks({ className = '' }: { className?: string }) {
   const { t } = useTranslation()
   return (
-    <nav aria-label={t('legal.links')} className={`legal-links ${className}`}>
+    <nav
+      aria-label={t(config.VITE_CONTACT_EMAIL ? 'legal.footer' : 'legal.links')}
+      className={`legal-links ${className}`}
+    >
       <Link to="/privacy">{t('legal.privacy')}</Link>
       <Link to="/terms">{t('legal.terms')}</Link>
+      {config.VITE_CONTACT_EMAIL && (
+        <a href={`mailto:${config.VITE_CONTACT_EMAIL}`}>{t('legal.contact')}</a>
+      )}
     </nav>
   )
 }

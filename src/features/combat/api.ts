@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
+import type { BestiaryLanguage, CreaturePack } from '@/features/bestiary'
 import { rollContextScope } from '@/features/dice'
 import {
   changeCombat,
   combatImageUrl,
   imageBuckets,
   loadCombatState,
+  loadCreaturePacks,
   loadEncounters,
-  loadSrdBestiary,
+  loadPackBodies,
+  loadPackIndex,
   loadSrdImages,
   loadTemplates,
   subscribeEncounters,
@@ -81,12 +84,37 @@ export const srdImagesQuery = (userId: string, campaignId: string) =>
     retry: 1,
   })
 
-/** RYT-089: whether this campaign downloaded the official bestiary, and what its DM removed. */
-export const srdBestiaryQuery = (userId: string, campaignId: string) =>
+/** RYT-094: the creature packs this campaign has (enabled or turned off) and its hidden creatures. */
+export const creaturePacksQuery = (userId: string, campaignId: string) =>
   queryOptions({
-    queryKey: [...combatScope(userId, campaignId), 'srd-bestiary'],
-    queryFn: ({ signal }) => loadSrdBestiary(campaignId, signal),
+    queryKey: [...combatScope(userId, campaignId), 'creature-packs'],
+    queryFn: ({ signal }) => loadCreaturePacks(campaignId, signal),
     staleTime: 30_000,
+    retry: 1,
+  })
+
+/** A pack's creatures never change within a version: cached by pack and version for the session. */
+const packScope = (userId: string, pack: CreaturePack) =>
+  ['private', userId, 'creature-pack', pack.id, pack.version] as const
+
+export const packIndexQuery = (userId: string, campaignId: string, pack: CreaturePack) =>
+  queryOptions({
+    queryKey: [...packScope(userId, pack), 'index'],
+    queryFn: ({ signal }) => loadPackIndex(campaignId, pack, signal),
+    staleTime: Infinity,
+    retry: 1,
+  })
+
+export const packBodiesQuery = (
+  userId: string,
+  campaignId: string,
+  pack: CreaturePack,
+  language: BestiaryLanguage,
+) =>
+  queryOptions({
+    queryKey: [...packScope(userId, pack), language],
+    queryFn: ({ signal }) => loadPackBodies(campaignId, pack, language, signal),
+    staleTime: Infinity,
     retry: 1,
   })
 

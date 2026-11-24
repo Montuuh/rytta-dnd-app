@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId } from './fixtures/identity.ts'
-import { expectTouchTargets, capture, limitMatrix } from './fixtures/audit.ts'
+import { expectTouchTargets, capture, limitMatrix, expectArtPrompt } from './fixtures/audit.ts'
 
 const url = `./#/campaign/${campaignId}/inventory`
 async function audit(page: Page, path: string) {
@@ -170,6 +170,8 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
   // RYT-104: the static SRD list is gone; the helper searches the campaign, templates first.
   const picker = page.getByRole('combobox', { name: 'Partir de un objeto existente' })
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Custom')
+  // RYT-154: the prompt follows the name typed so far.
+  await expectArtPrompt(page.getByRole('dialog'), page, /^Item illustration .*"Custom"/)
   await picker.click()
   expect(
     await picker.evaluate((field) => parseFloat(getComputedStyle(field).fontSize)),

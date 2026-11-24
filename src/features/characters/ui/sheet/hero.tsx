@@ -16,26 +16,44 @@ import { Focus, Heart, Pencil, Shield, Sparkles, Swords, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { GlossaryTerm } from '@/features/glossary'
 import { PortraitPlate } from '@/features/inventory'
-import { chooseBackground, chooseClass, chooseSpecies } from '../../domain/creation'
+import {
+  chooseBackground,
+  chooseClass,
+  chooseSpecies,
+  withBackgroundFacts,
+} from '../../domain/creation'
+import {
+  backgroundDefFor,
+  offeredBackgrounds,
+  offeredSpecies,
+  speciesDefFor,
+  type BackgroundDef,
+  type SpeciesDef,
+} from '../../domain/origin-catalog'
 import {
   applyHp,
   defaultArmorClass,
-  isBackgroundKey,
-  isClassKey,
-  isSpeciesKey,
   passivePerception,
   proficiencyBonus,
   signed,
   type StatBreakdown,
 } from '../../domain/rules'
-import { backgroundKeys, classKeys, speciesKeys, subclassOf } from '../../domain/srd'
-import { classEmblem } from '../class-emblem'
+import { classDefFor, offeredClasses, subclassesFor } from '../../domain/class-catalog'
+import {
+  useClassCatalog,
+  useClassDefName,
+  useOriginCatalog,
+  useOriginNames,
+} from '../class-catalog'
+import { SubclassFields } from './subclass-fields'
+import { useClassEmblemOf } from '../class-emblem'
 import { HpField } from '../hp-field'
 import { deathState, toneOf } from './hp-tone'
 import { Pips } from './pips'
 import { HpDialog, type HpMode } from './vitals-panel'
 import { Stepper } from './widgets'
 import { LockedLevel } from '../level-up/locked-level'
+import { ClassesState } from '../creation/classes-state'
 import type { PanelProps } from './panel-types'
 import type { Vitals } from '../../domain/sheet'
 
@@ -147,6 +165,7 @@ function StatPopover({
 /** RYT-090 hero: the portrait plate leads, with the name on it and the HP ring on its lower
  * edge; AC and initiative are featured and the other stats sit on one quiet line. */
 export function SheetHero(props: HeroProps) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const { build, vitals, maxHp, level, canEdit, editing, pending, locked, commit, speed } = props
   const [mode, setMode] = useState<HpMode | null>(null)
@@ -592,16 +611,36 @@ function FeaturedStats({ armorClass, ac, init }: HeroProps) {
 
 function EditIdentity({ build, name, change }: HeroProps) {
   const { t } = useTranslation()
-  const originNamer = (kind: 'trait' | 'feat', key: string) =>
-    t(`srd.${kind}.${key}` as 'srd.trait.darkvision')
-  const srdSubclass = isClassKey(build.classKey) ? subclassOf[build.classKey] : undefined
-  const classSelect = isClassKey(build.classKey) ? build.classKey : 'custom'
-  const speciesSelect = isSpeciesKey(build.speciesKey)
+  const catalog = useClassCatalog()
+  // RYT-171: species and backgrounds come from the campaign's packs; the sheet's own stay listed
+  // when the campaign no longer offers them.
+  const origins = useOriginCatalog()
+  const originNames = useOriginNames()
+  const speciesDef = speciesDefFor(origins, build.speciesKey)
+  const backgroundDef = backgroundDefFor(origins, build.backgroundKey)
+  const option = (def: SpeciesDef | BackgroundDef) => ({
+    value: def.key,
+    label: def.pack
+      ? `${originNames.name(def)} · ${originNames.language.startsWith('en') ? def.pack.title_en : def.pack.title_es}`
+      : originNames.name(def),
+  })
+  const withCurrent = <T extends SpeciesDef | BackgroundDef>(list: T[], current: T | null) =>
+    current && !list.includes(current) ? [...list, current] : list
+  const speciesList = origins ? withCurrent(offeredSpecies(origins), speciesDef) : []
+  const backgroundList = origins ? withCurrent(offeredBackgrounds(origins), backgroundDef) : []
+  const nameOf = useClassDefName()
+  // RYT-168: the classes the campaign offers, and the sheet's own even when no longer offered.
+  const current = classDefFor(catalog, build.classKey)
+  const offered = catalog ? offeredClasses(catalog) : []
+  const classOptions =
+    current && !offered.some((item) => item.key === current.key) ? [...offered, current] : offered
+  const classSelect = current ? build.classKey : 'custom'
+  const speciesSelect = speciesDef
     ? build.speciesKey
     : build.speciesKey === 'custom' || build.speciesLabel.trim()
       ? 'custom'
       : ''
-  const backgroundSelect = isBackgroundKey(build.backgroundKey)
+  const backgroundSelect = backgroundDef
     ? build.backgroundKey
     : build.backgroundKey === 'custom' || build.backgroundLabel.trim()
       ? 'custom'
@@ -628,23 +667,29 @@ function EditIdentity({ build, name, change }: HeroProps) {
         <Select
           label={t('wizard.class')}
           data={[
-            ...classKeys.map((key) => ({ value: key, label: t(`srd.class.${key}`) })),
+            ...classOptions.map((item) => ({ value: item.key, label: nameOf(item) })),
             { value: 'custom', label: t('creation.customClass') },
           ]}
           value={classSelect}
           allowDeselect={false}
+          // RYT-167: the classes come from the campaign's packs; none is changed before they load.
+          disabled={catalog === null}
           comboboxProps={{ withinPortal: true }}
           onChange={(value) => {
             if (!value) return
             change((draft) => {
-              const label = isClassKey(value)
-                ? t(`srd.class.${value}`)
-                : isClassKey(draft.build.classKey)
+              const def = value === 'custom' ? null : classDefFor(catalog, value)
+              const label = def
+                ? nameOf(def)
+                : classDefFor(catalog, draft.build.classKey)
                   ? ''
                   : draft.build.classLabel
-              const next = chooseClass(draft.build, value, label)
+              const next = chooseClass(withBackgroundFacts(draft.build, origins), value, label, def)
+              // A subclass of another class does not follow the new one.
               const keepSubclass =
-                !isClassKey(value) || !next.subclassKey || next.subclassKey === subclassOf[value]
+                !def ||
+                !next.subclassKey ||
+                subclassesFor(catalog, value).some((item) => item.key === next.subclassKey)
               return {
                 ...draft,
                 build: keepSubclass ? next : { ...next, subclassKey: '', subclass: '' },
@@ -652,7 +697,8 @@ function EditIdentity({ build, name, change }: HeroProps) {
             })
           }}
         />
-        {classSelect === 'custom' && (
+        {catalog === null && <ClassesState loaded={false} offered={0} />}
+        {catalog !== null && classSelect === 'custom' && (
           <TextInput
             label={t('wizard.customName')}
             maxLength={60}
@@ -666,69 +712,33 @@ function EditIdentity({ build, name, change }: HeroProps) {
             }}
           />
         )}
-        {srdSubclass && (
-          <Select
-            label={t('wizard.subclass')}
-            data={[
-              { value: '', label: t('panel.noSubclass') },
-              {
-                value: srdSubclass,
-                label: t(`srd.subclass.${srdSubclass}` as 'srd.subclass.lore'),
-              },
-              { value: 'custom', label: t('panel.otherSubclass') },
-            ]}
-            value={build.subclassKey ? build.subclassKey : build.subclass ? 'custom' : ''}
-            allowDeselect={false}
-            comboboxProps={{ withinPortal: true }}
-            onChange={(value) =>
-              change((draft) => ({
-                ...draft,
-                build: {
-                  ...draft.build,
-                  subclassKey: value === srdSubclass ? value : '',
-                  subclass:
-                    value === srdSubclass
-                      ? t(`srd.subclass.${srdSubclass}` as 'srd.subclass.lore')
-                      : value === 'custom'
-                        ? draft.build.subclass
-                        : '',
-                },
-              }))
-            }
-          />
-        )}
-        {!build.subclassKey && (srdSubclass === undefined || build.subclass) && (
-          <TextInput
-            label={t('panel.subclassName')}
-            maxLength={60}
-            value={build.subclass}
-            onChange={(event) => {
-              const value = event.currentTarget.value
-              change((draft) => ({ ...draft, build: { ...draft.build, subclass: value } }))
-            }}
-          />
-        )}
+        <SubclassFields build={build} change={change} />
         <Select
           label={t('wizard.species')}
           data={[
             { value: '', label: t('sheet.unset') },
-            ...speciesKeys.map((key) => ({ value: key, label: t(`srd.species.${key}`) })),
+            ...speciesList.map(option),
             { value: 'custom', label: t('wizard.customSpecies') },
           ]}
           value={speciesSelect}
           allowDeselect={false}
+          disabled={origins === null}
           comboboxProps={{ withinPortal: true }}
           onChange={(value) => {
             const nextKey = value ?? ''
             change((draft) => {
-              const label = isSpeciesKey(nextKey)
-                ? t(`srd.species.${nextKey}`)
+              const def = speciesDefFor(origins, nextKey)
+              const label = def
+                ? originNames.name(def)
                 : nextKey === 'custom'
-                  ? isSpeciesKey(draft.build.speciesKey)
+                  ? speciesDefFor(origins, draft.build.speciesKey)
                     ? ''
                     : draft.build.speciesLabel
                   : ''
-              return { ...draft, build: chooseSpecies(draft.build, nextKey, label, originNamer) }
+              return {
+                ...draft,
+                build: chooseSpecies(draft.build, nextKey, label, def, originNames.language),
+              }
             })
           }}
         />
@@ -750,19 +760,21 @@ function EditIdentity({ build, name, change }: HeroProps) {
           label={t('wizard.background')}
           data={[
             { value: '', label: t('sheet.unset') },
-            ...backgroundKeys.map((key) => ({ value: key, label: t(`srd.background.${key}`) })),
+            ...backgroundList.map(option),
             { value: 'custom', label: t('wizard.customBackground') },
           ]}
           value={backgroundSelect}
           allowDeselect={false}
+          disabled={origins === null}
           comboboxProps={{ withinPortal: true }}
           onChange={(value) => {
             const nextKey = value ?? ''
             change((draft) => {
-              const label = isBackgroundKey(nextKey)
-                ? t(`srd.background.${nextKey}`)
+              const def = backgroundDefFor(origins, nextKey)
+              const label = def
+                ? originNames.name(def)
                 : nextKey === 'custom'
-                  ? isBackgroundKey(draft.build.backgroundKey)
+                  ? backgroundDefFor(origins, draft.build.backgroundKey)
                     ? ''
                     : draft.build.backgroundLabel
                   : ''
@@ -770,7 +782,13 @@ function EditIdentity({ build, name, change }: HeroProps) {
               return {
                 ...draft,
                 build: {
-                  ...chooseBackground(draft.build, nextKey, label, originNamer),
+                  ...chooseBackground(
+                    withBackgroundFacts(draft.build, origins),
+                    nextKey,
+                    label,
+                    def,
+                    def ? originNames.feat(origins, def) : null,
+                  ),
                   bonuses: prevBonuses,
                 },
               }

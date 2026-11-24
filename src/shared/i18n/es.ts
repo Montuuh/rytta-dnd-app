@@ -23,6 +23,9 @@ import { accountEs } from './account-es'
 import { libraryEs } from './library-es'
 import { viewerEs } from './viewer-es'
 import { legalEs } from './legal-es'
+import { adminEs } from './admin-es'
+import { questsEs } from './quests-es'
+import { campaignContentEs } from './campaign-content-es'
 import { diceEs } from './dice-es'
 import { levelupEs } from './levelup-es'
 import { castEs } from './cast-es'
@@ -34,6 +37,9 @@ export const es = {
   ...sessionEs,
   ...activationEs,
   ...legalEs,
+  ...adminEs,
+  ...questsEs,
+  ...campaignContentEs,
   ...diceEs,
   ...levelupEs,
   ...castEs,
@@ -92,6 +98,10 @@ export const es = {
   'common.back': 'Volver',
   'common.loading': 'Cargando…',
   'common.loadingSlow': 'Está tardando más de lo normal. Recarga o vuelve al inicio.',
+  'art.prompt.copy': 'Copiar prompt de arte',
+  'art.prompt.copied': 'Prompt copiado. Pégalo en tu generador de imágenes.',
+  'art.prompt.failed': 'No se pudo copiar el prompt.',
+  'art.prompt.manual': 'No se pudo copiar. Selecciónalo y cópialo a mano:',
   'common.retry': 'Reintentar',
   'common.storageQuota':
     'El almacenamiento rechazó la subida. Puede que esta campaña haya llenado su espacio: quita imágenes o archivos que ya no necesite y vuelve a intentarlo.',

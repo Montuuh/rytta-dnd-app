@@ -1,20 +1,27 @@
+import { classDefFor, offeredClasses } from '../../domain/class-catalog'
+import { isClassKey } from '../../domain/rules'
+import { useClassCatalog, useOriginCatalog, useOriginNames } from '../class-catalog'
+import { backgroundDefFor, offeredSpecies, speciesDefFor } from '../../domain/origin-catalog'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Group, Progress, Stack, Text, TextInput, Title } from '@mantine/core'
 import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import '../sheet/panel.css'
 import { Link } from 'react-router'
 import { useCampaign } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
 import { CharacterPortrait } from '@/features/inventory'
-import { quickDraft } from '../../domain/quick'
+import { quickBackground, quickDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
 import { useCreateSheet } from './use-create-sheet'
-import { speciesKeys, species, type ClassKey, type SpeciesKey } from '../../domain/srd'
+import type { ClassKey } from '../../domain/srd'
 import { useResourceNames } from '../resource-names'
 import { BuildSummary } from './build-summary'
-import { classEmblem } from '../class-emblem'
+import { useClassEmblemOf } from '../class-emblem'
 import { ClassPicker } from './class-picker'
+import { ClassesState } from './classes-state'
+import { LibraryWait } from './library-wait'
 
 const steps = ['class', 'species', 'name'] as const
 
@@ -28,40 +35,62 @@ export function QuickBuild({
   name: string
   sheetPath: string
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const campaign = useCampaign()
   const library = useSrdLibrary()
   const names = useResourceNames()
   const [step, setStep] = useState(0)
   const [classKey, setClassKey] = useState<ClassKey | null>(null)
-  const [speciesKey, setSpeciesKey] = useState<SpeciesKey | null>(null)
+  // RYT-168: the quick path builds SRD archetypes; pack classes go through the full wizard.
+  // RYT-171: an archetype needs its SRD background in the campaign's packs; species come from
+  // every pack (owner choice P4 A).
+  const catalog = useClassCatalog()
+  const origins = useOriginCatalog()
+  const originNames = useOriginNames()
+  const quickClasses = useMemo(
+    () =>
+      (catalog ? offeredClasses(catalog) : []).filter(
+        (item) =>
+          item.srd &&
+          isClassKey(item.key) &&
+          backgroundDefFor(origins, quickBackground[item.key]) !== null,
+      ),
+    [catalog, origins],
+  )
+  const speciesList = useMemo(() => (origins ? offeredSpecies(origins) : []), [origins])
+  const [speciesKey, setSpeciesKey] = useState<string | null>(null)
   const [name, setName] = useState(characterName)
   const [asked, setAsked] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
+  const finishRef = useRef<HTMLButtonElement>(null)
   const { create, action } = useCreateSheet(sheet, characterName, sheetPath)
   const groupId = useId()
   useEffect(() => heading.current?.focus(), [step])
-  const draft = useMemo(
-    () =>
-      library && classKey && speciesKey
-        ? quickDraft({
-            classKey,
-            classLabel: t(`srd.class.${classKey}`),
-            speciesKey,
-            speciesLabel: t(`srd.species.${speciesKey}`),
-            backgroundLabel: (key) => t(`srd.background.${key}`),
-            name: (kind, key) => t(`srd.${kind}.${key}` as 'srd.trait.luck'),
-            library: library.features,
-            names,
-          })
-        : null,
-    [library, classKey, speciesKey, t, names],
-  )
+  const draft = useMemo(() => {
+    const classDef = classKey ? classDefFor(catalog, classKey) : null
+    const speciesDef = speciesKey ? speciesDefFor(origins, speciesKey) : null
+    const backgroundDef = classKey ? backgroundDefFor(origins, quickBackground[classKey]) : null
+    if (!library || !classKey || !classDef || !speciesDef || !backgroundDef) return null
+    return quickDraft({
+      classKey,
+      classLabel: t(`srd.class.${classKey}`),
+      classDef,
+      speciesDef,
+      speciesLabel: originNames.name(speciesDef),
+      backgroundDef,
+      backgroundLabel: originNames.name(backgroundDef),
+      feat: originNames.feat(origins, backgroundDef),
+      language: originNames.language,
+      library: library.features,
+      names,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [library, catalog, origins, classKey, speciesKey, t, names, originNames.language])
   const current = steps[step]!
   const last = step === steps.length - 1
   // Nothing is pre-chosen: the class and the species are the player's own decision.
   const missing = (current === 'class' && !classKey) || (current === 'species' && !speciesKey)
-  const trait = (key: string) => t(`srd.trait.${key}` as 'srd.trait.luck')
   return (
     <Stack gap="md" className="creation-wizard quick-build">
       <Button
@@ -88,33 +117,52 @@ export function QuickBuild({
       </div>
       {current === 'class' && (
         <ClassPicker
+          options={quickClasses}
           value={classKey ?? ''}
-          onChange={(key) => key !== 'custom' && setClassKey(key)}
+          onChange={(key) => isClassKey(key) && setClassKey(key)}
           label={t('wizard.class')}
           hideLabel
         />
       )}
+      {current === 'class' && (
+        <ClassesState loaded={catalog !== null} offered={quickClasses.length} quick />
+      )}
       {current === 'species' && (
         <div role="radiogroup" aria-label={t('wizard.species')} className="choice-grid">
-          {speciesKeys.map((key) => (
-            <label key={key} className="choice-tile" data-checked={speciesKey === key || undefined}>
+          {speciesList.map((def) => (
+            <label
+              key={def.key}
+              className="choice-tile"
+              data-checked={speciesKey === def.key || undefined}
+            >
               <input
                 type="radio"
                 name={`${groupId}-species`}
                 className="creation-door-input"
-                checked={speciesKey === key}
-                onChange={() => setSpeciesKey(key)}
+                checked={speciesKey === def.key}
+                onChange={() => setSpeciesKey(def.key)}
               />
-              <span className="choice-tile-name">{t(`srd.species.${key}`)}</span>
+              <span className="choice-tile-name user-copy">{originNames.name(def)}</span>
               <span className="choice-tile-meta">
                 {t('creation.speciesLine', {
-                  speed: species[key].speed,
-                  traits: species[key].traits.slice(0, 2).map(trait).join(', '),
+                  speed: def.speed,
+                  traits: def.traits
+                    .slice(0, 2)
+                    .map((trait) => originNames.name(trait))
+                    .join(', '),
                 })}
               </span>
+              {def.pack && (
+                <span className="choice-tile-pack user-copy">
+                  {originNames.language.startsWith('en') ? def.pack.title_en : def.pack.title_es}
+                </span>
+              )}
             </label>
           ))}
         </div>
+      )}
+      {current === 'species' && (
+        <ClassesState loaded={origins !== null} offered={speciesList.length} kind="origins" />
       )}
       {current === 'name' && (
         <Stack gap="md">
@@ -138,6 +186,13 @@ export function QuickBuild({
               error={name.trim() ? undefined : t('creation.nameRequired')}
             />
           </Group>
+          <CopyArtPrompt
+            subject={{
+              kind: 'character',
+              name: name || characterName,
+              traits: [speciesKey, classKey],
+            }}
+          />
           {draft && (
             <BuildSummary
               draft={draft}
@@ -163,6 +218,7 @@ export function QuickBuild({
           )}
         </Alert>
       )}
+      {last && <LibraryWait ready={library !== null} onReady={() => finishRef.current?.focus()} />}
       <Group justify="space-between" wrap="nowrap" className="wizard-actions">
         <Button
           variant="default"
@@ -172,6 +228,7 @@ export function QuickBuild({
           {t('wizard.back')}
         </Button>
         <Button
+          ref={finishRef}
           loading={action.isPending}
           disabled={last && (!draft || !name.trim())}
           onClick={() => {

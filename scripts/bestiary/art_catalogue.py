@@ -4,7 +4,7 @@ Usage:
   python3 -I scripts/bestiary/art_catalogue.py
 
 Reads scripts/bestiary/art-review.json (fit score 1-10, kind and review of the bundled art of each SRD
-creature, and the subject of the replacement picture), src/features/bestiary/content/index.json (names,
+creature, and the subject of the replacement picture), tests/fixtures/srd/bestiary/index.json (names,
 type, CR) and art.json (current source), and writes art/bestiary/bestiary-art-catalogue.xlsx and the
 same rows in art/bestiary/catalogue.csv. One row per creature: the prompt to paste, the file name and the
 path to save the picture at. Edit the review file or this script, not the outputs.
@@ -29,6 +29,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 REVIEW = ROOT / "scripts/bestiary/art-review.json"
 CONTENT = ROOT / "src/features/bestiary/content"
+SRD = ROOT / "tests/fixtures/srd/bestiary"
 THUMBS = ROOT / "public/bestiary/thumbs"
 OUT = ROOT / "art/bestiary"
 SOURCE = OUT / "source"
@@ -131,7 +132,7 @@ def previous_edits() -> dict[str, dict]:
 
 def build_rows() -> list[dict]:
     review = json.loads(REVIEW.read_text(encoding="utf-8"))["creatures"]
-    monsters = json.loads((CONTENT / "index.json").read_text(encoding="utf-8"))["monsters"]
+    monsters = json.loads((SRD / "index.json").read_text(encoding="utf-8"))["monsters"]
     art = json.loads((CONTENT / "art.json").read_text(encoding="utf-8"))
     ids = {m["id"] for m in monsters}
     if set(review) != ids:

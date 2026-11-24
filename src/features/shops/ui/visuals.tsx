@@ -40,6 +40,7 @@ export function ItemGlyph({
   size = category ? 44 : 22,
   viewable = false,
   name,
+  basicKey,
 }: {
   icon: string
   imagePath?: string | null
@@ -50,12 +51,15 @@ export function ItemGlyph({
   /** Only outside another control. */
   viewable?: boolean
   name?: string
+  /** RYT-172: the pack item it came from, for its pack picture. */
+  basicKey?: string | null
 }) {
   return (
     <ItemIcon
       imagePath={imagePath}
       icon={icon}
       category={category}
+      basicKey={basicKey}
       size={size}
       viewable={viewable}
       name={name}

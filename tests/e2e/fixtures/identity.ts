@@ -1,4 +1,6 @@
 import type { Page } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+import { itemPackRpc } from './item-packs.ts'
 import { basicImportMock } from './basic-import.ts'
 import {
   createDiceStore,
@@ -63,6 +65,253 @@ export function session(id = dmId) {
 
 // Public SDK HTTP contract fixture only, never selected by production app configuration.
 // Authorization itself is exercised independently against PostgreSQL in tests/database.
+/**
+ * RYT-164, RYT-165: the SRD's spells, class features and rules, served from the bundled glossary as
+ * the library would: one pack with three categories at version 1.
+ */
+export const srdRulesPackId = '80000000-0000-4000-8000-000000000001'
+const glossaryFile = (file: string) =>
+  JSON.parse(readFileSync(`tests/fixtures/srd/glossary/${file}.json`, 'utf8')) as unknown
+const glossaryRows = glossaryFile('index') as { id: string; cat: string }[]
+const glossaryBodies = { en: glossaryFile('en'), es: glossaryFile('es') } as Record<
+  string,
+  Record<string, unknown>
+>
+const ruleCategoryOf = (cat: string) =>
+  cat === 'spell' ? 'spells' : cat === 'feature' ? 'classes' : 'rules'
+/** Test switches for the rule packs: hidden glossary ids, or a library that cannot be reached. */
+/** RYT-167: the SRD bestiary test copy, served as the published SRD pack. */
+const srdBestiaryFile = (file: string) =>
+  JSON.parse(readFileSync(`tests/fixtures/srd/bestiary/${file}.json`, 'utf8')) as Record<
+    string,
+    unknown
+  >
+const srdBestiary = {
+  index: srdBestiaryFile('index') as { monsters: unknown[]; baselines: unknown[] },
+  en: srdBestiaryFile('en') as { monsters: unknown; traits: unknown[] },
+  es: srdBestiaryFile('es') as { monsters: unknown; traits: unknown[] },
+}
+/** RYT-167: what get_content_choices answers: the SRD and the Rytta basic items. */
+export const contentChoices = [
+  {
+    id: srdRulesPackId,
+    slug: 'srd-5-2-1',
+    title_en: 'System Reference Document 5.2.1',
+    title_es: 'Documento de referencia del sistema 5.2.1',
+    srd: true,
+    private: false,
+    version: 2,
+    categories: [
+      { category: 'creatures', entries: 330, default: true },
+      { category: 'spells', entries: 339, default: true },
+      { category: 'classes', entries: 256, default: true },
+      { category: 'rules', entries: 194, default: true },
+      { category: 'items', entries: 197, default: true },
+    ],
+  },
+  {
+    id: '80000000-0000-4000-8000-000000000002',
+    slug: 'rytta-basics',
+    title_en: 'Rytta · Basic items',
+    title_es: 'Rytta · Objetos básicos',
+    srd: false,
+    private: false,
+    version: 1,
+    categories: [{ category: 'items', entries: 3, default: true }],
+  },
+]
+export const rulePackState = { hidden: [] as string[], unreachable: false, books: false }
+/** RYT-168: a pack with its own class, and a subclass for the SRD Bard. */
+export const bookRulesPackId = '80000000-0000-4000-8000-000000000009'
+const bookClassRows = [
+  {
+    id: 'class.b00c5000--rune-knight',
+    cat: 'class',
+    en: 'Rune Knight',
+    es: 'Caballero rúnico',
+    hitDie: 10,
+    saves: ['str', 'con'],
+    skillCount: 2,
+    skills: ['athletics', 'arcana', 'history'],
+    caster: 'none',
+    subclassLevel: 3,
+    improvementLevels: [4, 8, 12, 16, 19],
+  },
+  {
+    id: 'subclass.b00c5000--giant-blood',
+    cat: 'subclass',
+    en: 'College of Giants',
+    es: 'Colegio de los gigantes',
+    class: 'bard',
+  },
+  {
+    id: 'feature.b00c5000--rune-carver',
+    cat: 'feature',
+    en: 'Rune Carver',
+    es: 'Tallador de runas',
+    nl: 1,
+    lv: 1,
+    fc: 'rune-knight',
+  },
+  {
+    id: 'feature.b00c5000--giant-might',
+    cat: 'feature',
+    en: 'Giant Might',
+    es: 'Poder del gigante',
+    nl: 1,
+    lv: 3,
+    fc: 'bard',
+    sb: 'giant-blood',
+  },
+  // RYT-171: a species with an option, a background with its own origin feat, and that feat.
+  {
+    id: 'species.b00c5000--triton',
+    cat: 'species',
+    en: 'Triton',
+    es: 'Tritón',
+    speed: 30,
+    size: 'medium',
+    traits: [
+      { key: 'amphibious', en: 'Amphibious', es: 'Anfibio' },
+      { key: 'emissary', en: 'Emissary of the Sea', es: 'Emisario del mar' },
+    ],
+    choices: [
+      {
+        trait: 'emissary',
+        options: [
+          { key: 'storm', en: 'Storm', es: 'Tormenta' },
+          { key: 'tide', en: 'Tide', es: 'Marea' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'background.b00c5000--sailor',
+    cat: 'background',
+    en: 'Sailor',
+    es: 'Marinero',
+    abilities: ['str', 'dex', 'wis'],
+    skills: ['athletics', 'perception'],
+    feat: 'b00c5000--brawler',
+  },
+  {
+    id: 'feat.b00c5000--brawler',
+    cat: 'feat',
+    en: 'Brawler',
+    es: 'Pendenciero',
+    category: 'origin',
+  },
+  {
+    id: 'feature.b00c5000--feat-brawler',
+    cat: 'feature',
+    en: 'Brawler',
+    es: 'Pendenciero',
+    nl: 1,
+  },
+]
+function rulePackRpc(method: string, body: Record<string, unknown>) {
+  if (method === 'get_campaign_rule_packs')
+    return [
+      ...rulePackList(),
+      ...(rulePackState.books
+        ? [
+            {
+              id: bookRulesPackId,
+              ref: 'b00c5000',
+              title_en: 'Owner books',
+              title_es: 'Libros del dueño',
+              srd: false,
+              category: 'classes',
+              version: 1,
+              enabled: true,
+              hidden: [],
+            },
+          ]
+        : []),
+    ]
+  if (body.target_pack === bookRulesPackId) {
+    const part = String(body.part)
+    if (part === 'index') return { version: 1, rows: bookClassRows }
+    return {
+      version: 1,
+      bodies: Object.fromEntries(
+        bookClassRows
+          .filter((row) => row.cat === 'feature')
+          .map((row) => [row.id, { summary: `${row.en}.`, blocks: [{ t: 'p', x: `${row.en}.` }] }]),
+      ),
+    }
+  }
+  return rulePart(body)
+}
+function rulePackList() {
+  return (['spells', 'classes', 'rules'] as const).map((category) => ({
+    id: srdRulesPackId,
+    ref: '80000000',
+    title_en: 'System Reference Document 5.2.1',
+    title_es: 'Documento de referencia del sistema 5.2.1',
+    srd: true,
+    category,
+    version: 1,
+    enabled: true,
+    hidden: rulePackState.hidden.filter(
+      (id) => ruleCategoryOf(id.slice(0, id.indexOf('.'))) === category,
+    ),
+  }))
+}
+/** RYT-168, RYT-167: the SRD classes and subclasses, as index rows of the classes category. */
+const srdClassData = JSON.parse(readFileSync('tests/fixtures/srd/classes.json', 'utf8')) as Record<
+  'classes' | 'subclasses',
+  { key: string; name_en: string; name_es: string; data: { index: Record<string, unknown> } }[]
+>
+const srdClassRows = [
+  ...srdClassData.classes.map((row) => ({
+    ...row.data.index,
+    id: `class.${row.key}`,
+    cat: 'class',
+    en: row.name_en,
+    es: row.name_es,
+  })),
+  ...srdClassData.subclasses.map((row) => ({
+    ...row.data.index,
+    id: `subclass.${row.key}`,
+    cat: 'subclass',
+    en: row.name_en,
+    es: row.name_es,
+  })),
+]
+/** RYT-171: the SRD species, backgrounds and feats, as index rows of the classes category. */
+type OriginRow = {
+  key: string
+  name_en: string
+  name_es: string
+  data: { index: Record<string, unknown> }
+}
+const srdOriginData = JSON.parse(readFileSync('tests/fixtures/srd/origins.json', 'utf8')) as Record<
+  'species' | 'backgrounds' | 'feats',
+  OriginRow[]
+>
+const originRow = (cat: string) => (row: OriginRow) => ({
+  ...row.data.index,
+  id: `${cat}.${row.key}`,
+  cat,
+  en: row.name_en,
+  es: row.name_es,
+})
+srdClassRows.push(
+  ...srdOriginData.species.map(originRow('species')),
+  ...srdOriginData.backgrounds.map(originRow('background')),
+  ...srdOriginData.feats.map(originRow('feat')),
+)
+function rulePart(body: Record<string, unknown>) {
+  const category = String(body.target_category)
+  const rows = glossaryRows.filter((row) => ruleCategoryOf(row.cat) === category)
+  const part = String(body.part)
+  if (part === 'index')
+    return { version: 1, rows: category === 'classes' ? [...rows, ...srdClassRows] : rows }
+  const bodies = glossaryBodies[part]!
+  return { version: 1, bodies: Object.fromEntries(rows.map((row) => [row.id, bodies[row.id]])) }
+}
+
 export async function identityFixture(
   page: Page,
   options: {
@@ -97,6 +346,15 @@ export async function identityFixture(
     /** RYT-133: a dice store shared with other pages, to see one table from several accounts. */
     dice?: DiceStore
     inventory?: boolean
+    /** RYT-172: pack pictures of the campaign; the longsword then comes from the pack. */
+    packImages?: { kind: string; id: string; path: string }[]
+    /** RYT-174: what get_campaign_content_origins and get_content_origins answer. */
+    packOrigins?: {
+      id: string
+      title_en: string
+      title_es: string
+      entries: { kind: string; key: string; origin: 'changed' | 'own' }[]
+    }[]
     modules?: string[]
     party?: boolean
     /** RYT-034: sign in as another Player of the party fixture (for example peerId). */
@@ -418,6 +676,10 @@ export async function identityFixture(
     },
     (id) => characters.find((c) => c.id === id)?.name ?? null,
   )
+  // RYT-172: with pack pictures, the longsword came from the pack.
+  if (options.packImages)
+    for (const definition of inventory.definitions)
+      if (definition.name === 'Espada larga') definition.basic_key = 'longsword'
   // RYT-080 group rest state (one request at a time) and the rest maths of the SQL.
   type Rest = {
     id: string
@@ -836,8 +1098,17 @@ export async function identityFixture(
         revision: 0,
       })
     if (method === 'get_shared_session_recap') return respond('')
+    if (
+      method === 'get_campaign_rule_packs' ||
+      method === 'get_campaign_rule_pack' ||
+      method === 'get_srd_rule_pack'
+    )
+      return rulePackState.unreachable
+        ? respond({ message: 'Library unavailable' }, 503)
+        : respond(rulePackRpc(method, body))
     if (url.pathname.includes('/auth/v1/')) {
       if (method === 'logout') return route.fulfill({ status: 204 })
+      if (method === 'health') return respond({ name: 'GoTrue' })
       if (method === 'user' && request.method() === 'PUT')
         return body.password === 'same-as-before-1'
           ? respond({ error_code: 'same_password', msg: 'same_password' }, 422)
@@ -896,6 +1167,43 @@ export async function identityFixture(
         recent: null,
         history: [],
       })
+    // RYT-167: the published SRD's creatures (signed-in accounts), served from the test copy.
+    if (method === 'get_srd_creature_pack') {
+      if (!currentId) return respond({ message: 'Forbidden' }, 401)
+      const part = String(body.part)
+      if (part === 'index')
+        return respond({
+          pack: srdRulesPackId,
+          version: 2,
+          rows: srdBestiary.index.monsters,
+          baselines: srdBestiary.index.baselines,
+        })
+      const bodies = srdBestiary[part as 'en' | 'es']
+      return respond({
+        pack: srdRulesPackId,
+        version: 2,
+        monsters: bodies.monsters,
+        traits: bodies.traits,
+      })
+    }
+    // RYT-167: the packs a new campaign can use, and the campaign created with them.
+    if (method === 'get_content_choices') return respond(contentChoices)
+    if (method === 'create_campaign_with_content') {
+      const id = '20000000-0000-4000-8000-000000000004'
+      campaigns = [
+        ...campaigns,
+        {
+          id,
+          name: String(body.campaign_name),
+          description: String(body.campaign_description),
+          created_at: '2026-10-27T00:00:00Z',
+          role: 'dm',
+          player_modules: ['party'],
+          party_level: null,
+        },
+      ]
+      return respond(id)
+    }
     if (method === 'create_campaign') {
       const id = '20000000-0000-4000-8000-000000000004'
       campaigns = [
@@ -942,9 +1250,14 @@ export async function identityFixture(
       return route.fulfill({ status: 200, contentType: 'image/png', body: tinyPng })
     if (
       url.pathname.includes('/storage/v1/object/character-portraits/') ||
-      url.pathname.includes('/storage/v1/object/item-images/')
+      url.pathname.includes('/storage/v1/object/item-images/') ||
+      url.pathname.includes('/storage/v1/object/pack-images/')
     )
       return respond({ Key: url.pathname.split('/object/')[1] })
+    if (method === 'get_campaign_pack_images') return respond(options.packImages ?? [])
+    // RYT-174: entries of the base pack that are changed or its own (none unless a test sets them).
+    if (method === 'get_campaign_content_origins' || method === 'get_content_origins')
+      return respond(options.packOrigins ?? [])
     if (method === 'set_character_portrait') {
       portraitPath = (body.new_path as string | null) ?? null
       return respond(null)
@@ -973,6 +1286,11 @@ export async function identityFixture(
             })),
         )
     }
+    const packReply = itemPackRpc(method, body, actor === dmId)
+    if (packReply)
+      return 'error' in packReply
+        ? respond({ message: packReply.error }, packReply.status ?? 400)
+        : respond(packReply.data)
     const inventoryResult = inventory.handle(method, body, eq, actor === dmId)
     if (inventoryResult !== undefined)
       return inventoryResult instanceof Error
@@ -2035,6 +2353,10 @@ export async function identityFixture(
     }
     // RYT-093: the account menu asks whether the account edits the content library.
     if (method === 'get_content_library') return respond({ editor: false, packs: [] })
+    // RYT-153: the account menu asks whether the account is a super admin.
+    if (method === 'admin_status') return respond({ super_admin: false, access: [] })
+    // RYT-006: the navigation asks a Player's journal for news.
+    if (method === 'list_quests') return respond({ dm: false, quests: [] })
     return respond({ message: 'Unhandled test route' }, 500)
   })
   return {

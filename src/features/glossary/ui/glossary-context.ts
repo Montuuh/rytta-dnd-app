@@ -1,3 +1,4 @@
+import type { ClassRow } from '../domain/packs'
 import { createContext, useContext } from 'react'
 import type { Catalog } from '../domain/catalog'
 import type { HomebrewEntry } from '../domain/homebrew'
@@ -20,11 +21,17 @@ export type HomebrewManage = {
 export type GlossaryContextValue = {
   language: GlossaryLanguage
   catalog: Catalog | null
+  /** RYT-168: classes and subclasses of the packs, null until they load (none in the demo). */
+  classRows: ClassRow[] | null
   linker: Linker | null
   /** Entry bodies of the current language; null until first needed (lazy chunk). */
   bodies: EntryBodies | null
   bodiesError: boolean
   indexError: boolean
+  /** RYT-161: why the last refresh of the glossary failed (null when it did not). */
+  loadError: unknown
+  /** RYT-161: why the campaign's homebrew could not load at all (null when it did). */
+  homebrewError: unknown
   requestBodies: () => void
   retry: () => void
   /** Opens the in-place reference sheet for an entry. */

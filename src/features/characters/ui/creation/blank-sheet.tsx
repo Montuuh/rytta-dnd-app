@@ -7,12 +7,30 @@ import { Link } from 'react-router'
 import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
 import type { SheetRow } from '../../domain/sheet'
-import { backgroundKeys, classKeys, speciesKeys } from '../../domain/srd'
+import {
+  backgroundDefFor,
+  offeredBackgrounds,
+  offeredSpecies,
+  speciesDefFor,
+  type BackgroundDef,
+  type SpeciesDef,
+} from '../../domain/origin-catalog'
+import { classDefFor, offeredClasses } from '../../domain/class-catalog'
+import {
+  useClassCatalog,
+  useClassDefName,
+  useOriginCatalog,
+  useOriginNames,
+} from '../class-catalog'
 import { useResourceNames } from '../resource-names'
 import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
+import { ClassesState } from './classes-state'
+import { LibraryWait } from './library-wait'
 
 /** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
+const isCustomKey = (key: string) => key === 'custom'
+
 export function BlankSheet({
   sheet,
   name: characterName,
@@ -27,15 +45,31 @@ export function BlankSheet({
   const names = useResourceNames()
   const [name, setName] = useState(characterName)
   const [classKey, setClassKey] = useState<string>('fighter')
+  // RYT-168: the classes the campaign offers (SRD and packs).
+  const catalog = useClassCatalog()
+  const nameOf = useClassDefName()
+  const classDef = isCustomKey(classKey) ? null : classDefFor(catalog, classKey)
   const [custom, setCustom] = useState('')
   const [speciesKey, setSpeciesKey] = useState<string>('')
   const [customSpecies, setCustomSpecies] = useState('')
   const [backgroundKey, setBackgroundKey] = useState<string>('')
   const [customBackground, setCustomBackground] = useState('')
   const [level, setLevel] = useState(1)
+  // RYT-171: species and backgrounds come from the campaign's packs.
+  const origins = useOriginCatalog()
+  const originNames = useOriginNames()
+  const speciesDef = speciesDefFor(origins, speciesKey)
+  const backgroundDef = backgroundDefFor(origins, backgroundKey)
+  const option = (def: SpeciesDef | BackgroundDef) => ({
+    value: def.key,
+    label: def.pack
+      ? `${originNames.name(def)} · ${originNames.language.startsWith('en') ? def.pack.title_en : def.pack.title_es}`
+      : originNames.name(def),
+  })
   const { create, action } = useCreateSheet(sheet, characterName, sheetPath)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus(), [])
+  const submitRef = useRef<HTMLButtonElement>(null)
   const isCustom = classKey === 'custom'
   const isCustomSpecies = speciesKey === 'custom'
   const isCustomBackground = backgroundKey === 'custom'
@@ -75,20 +109,24 @@ export function BlankSheet({
           void create(
             blankDraft({
               classKey,
-              classLabel: isCustom ? custom.trim() : t(`srd.class.${classKey as 'monk'}`),
+              classLabel: isCustom || !classDef ? custom.trim() : nameOf(classDef),
+              classDef,
               speciesKey: speciesKey || undefined,
               speciesLabel: isCustomSpecies
                 ? customSpecies.trim()
-                : speciesKey
-                  ? t(`srd.species.${speciesKey as 'human'}`)
+                : speciesDef
+                  ? originNames.name(speciesDef)
                   : undefined,
+              speciesDef,
               backgroundKey: backgroundKey || undefined,
               backgroundLabel: isCustomBackground
                 ? customBackground.trim()
-                : backgroundKey
-                  ? t(`srd.background.${backgroundKey as 'acolyte'}`)
+                : backgroundDef
+                  ? originNames.name(backgroundDef)
                   : undefined,
-              name: (kind, key) => t(`srd.${kind}.${key}` as 'srd.trait.darkvision'),
+              backgroundDef,
+              feat: backgroundDef ? originNames.feat(origins, backgroundDef) : null,
+              language: originNames.language,
               level,
               library: library.features,
               names,
@@ -109,13 +147,21 @@ export function BlankSheet({
           <Select
             label={t('wizard.class')}
             data={[
-              ...classKeys.map((key) => ({ value: key, label: t(`srd.class.${key}`) })),
+              ...(catalog ? offeredClasses(catalog) : []).map((item) => ({
+                value: item.key,
+                label: nameOf(item),
+              })),
               { value: 'custom', label: t('creation.customClass') },
             ]}
             value={classKey}
             allowDeselect={false}
             onChange={(value) => setClassKey(value ?? 'fighter')}
             comboboxProps={{ withinPortal: true }}
+          />
+          <ClassesState
+            loaded={catalog !== null}
+            offered={catalog ? offeredClasses(catalog).length : 0}
+            wait={false}
           />
           {isCustom && (
             <TextInput
@@ -130,11 +176,12 @@ export function BlankSheet({
             label={t('wizard.species')}
             data={[
               { value: '', label: t('creation.originLater') },
-              ...speciesKeys.map((key) => ({ value: key, label: t(`srd.species.${key}`) })),
+              ...(origins ? offeredSpecies(origins) : []).map(option),
               { value: 'custom', label: t('wizard.customSpecies') },
             ]}
             value={speciesKey}
             allowDeselect={false}
+            disabled={origins === null}
             onChange={(value) => setSpeciesKey(value ?? '')}
             comboboxProps={{ withinPortal: true }}
           />
@@ -151,14 +198,12 @@ export function BlankSheet({
             label={t('wizard.background')}
             data={[
               { value: '', label: t('creation.originLater') },
-              ...backgroundKeys.map((key) => ({
-                value: key,
-                label: t(`srd.background.${key}`),
-              })),
+              ...(origins ? offeredBackgrounds(origins) : []).map(option),
               { value: 'custom', label: t('wizard.customBackground') },
             ]}
             value={backgroundKey}
             allowDeselect={false}
+            disabled={origins === null}
             onChange={(value) => setBackgroundKey(value ?? '')}
             comboboxProps={{ withinPortal: true }}
           />
@@ -195,8 +240,9 @@ export function BlankSheet({
               )}
             </Alert>
           )}
+          <LibraryWait ready={library !== null} onReady={() => submitRef.current?.focus()} />
           <Group>
-            <Button type="submit" loading={action.isPending} disabled={!valid}>
+            <Button ref={submitRef} type="submit" loading={action.isPending} disabled={!valid}>
               {t('creation.create')}
             </Button>
           </Group>

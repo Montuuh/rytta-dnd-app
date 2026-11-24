@@ -6,45 +6,20 @@ import {
   type ProgressionNames,
   type SyncChanges,
 } from './progression'
-import { finalAbilities, isClassKey, modifier, proficiencyBonus, slotsFor } from './rules'
-import { abilityKeys, subclassOf, type Ability, type ClassKey, type HitDie } from './srd'
+import type { ClassDef } from './class-catalog'
+import { finalAbilities, modifier, proficiencyBonus, slotsFor } from './rules'
+import { abilityKeys, type Ability, type HitDie } from './srd'
 
-// Level-up rules of the SRD 5.2 classes (D&D 2024). Only numbers and levels are encoded. A
-// class outside the SRD (a homebrew class) gets the hit points and the SRD-independent maths
-// only: its features, subclass, increases and spells stay on the sheet, by hand.
+// Level-up rules of the D&D 2024 classes. Only numbers and levels are encoded, from the class's
+// definition (RYT-168: the campaign's packs, or the app's SRD classes). A class typed by hand gets
+// the hit points and the class-independent maths only: its features, subclass, increases and
+// spells stay on the sheet, by hand.
 
-/** The level at which every SRD class chooses a subclass. */
-export const subclassLevel = 3
-/** Levels with an Ability Score Improvement (or a feat); 19 is the Epic Boon level. */
-const defaultImprovementLevels = [4, 8, 12, 16, 19]
-const improvementLevels: Partial<Record<ClassKey, readonly number[]>> = {
-  fighter: [4, 6, 8, 12, 14, 16, 19],
-  rogue: [4, 8, 10, 12, 16, 19],
-}
 /** An ability score never goes above this by an improvement. */
 export const abilityCap = 20
-/** Spells a class prepares or knows at each level (index 0 = level 1), from its class table. */
-const spellsAtLevel: Partial<Record<ClassKey, readonly number[]>> = {
-  bard: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  cleric: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  druid: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  sorcerer: [2, 4, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
-  warlock: [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15],
-  wizard: [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 18, 19, 21, 22, 23, 24, 25],
-  paladin: [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
-  ranger: [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
-}
 
 /** Levels at which a spellcasting class learns one more cantrip (SRD 5.2 class tables). */
 export const cantripLevels = [4, 10]
-const cantripClasses: readonly ClassKey[] = [
-  'bard',
-  'cleric',
-  'druid',
-  'sorcerer',
-  'warlock',
-  'wizard',
-]
 /** Spells a Wizard copies into the spellbook with every level after the first. */
 export const spellbookPerLevel = 2
 
@@ -106,10 +81,14 @@ export type LevelUpRequirements = {
   maxSpellLevel: number
 }
 
-export function levelUpRequirements(build: Build, toLevel: number): LevelUpRequirements {
+export function levelUpRequirements(
+  build: Build,
+  toLevel: number,
+  def: ClassDef | null,
+): LevelUpRequirements {
   const slots = slotsFor(build.casterKind, toLevel)
   const maxSpellLevel = slots.reduce((top, count, index) => (count > 0 ? index + 1 : top), 0)
-  if (!isClassKey(build.classKey))
+  if (!def)
     return {
       subclass: false,
       improvement: false,
@@ -118,21 +97,17 @@ export function levelUpRequirements(build: Build, toLevel: number): LevelUpRequi
       spellbook: 0,
       maxSpellLevel,
     }
-  const table = spellsAtLevel[build.classKey]
+  const table = def.prepared
   const spells =
     table && build.casterKind !== 'none' && toLevel >= 2
       ? Math.max(0, (table[toLevel - 1] ?? 0) - (table[toLevel - 2] ?? 0))
       : 0
   return {
-    subclass: toLevel >= subclassLevel && !build.subclassKey && !build.subclass.trim(),
-    improvement: (improvementLevels[build.classKey] ?? defaultImprovementLevels).includes(toLevel),
+    subclass: toLevel >= def.subclassLevel && !build.subclassKey && !build.subclass.trim(),
+    improvement: def.improvementLevels.includes(toLevel),
     spells,
     cantrips:
-      cantripClasses.includes(build.classKey) &&
-      build.casterKind !== 'none' &&
-      cantripLevels.includes(toLevel)
-        ? 1
-        : 0,
+      def.cantrips && build.casterKind !== 'none' && cantripLevels.includes(toLevel) ? 1 : 0,
     spellbook: build.classKey === 'wizard' && toLevel >= 2 ? spellbookPerLevel : 0,
     maxSpellLevel,
   }
@@ -155,9 +130,11 @@ export type SpellPick = {
   ritual: boolean
 }
 export type Improvement =
-  { kind: 'abilities'; split: boolean; picks: Ability[] } | { kind: 'feat'; name: string }
+  | { kind: 'abilities'; split: boolean; picks: Ability[] }
+  /** RYT-171: a feat of the campaign's packs carries its glossary entry (`ref`). */
+  | { kind: 'feat'; name: string; ref?: string }
 export type LevelUpChoices = {
-  /** `key` is the SRD subclass of the class, or empty with a typed `name`. */
+  /** `key` is a subclass of the class (SRD or pack), or empty with a typed `name`. */
   subclass: { key: string; name: string } | null
   improvement: Improvement | null
   spells: SpellPick[]
@@ -172,10 +149,6 @@ export const noChoices: LevelUpChoices = {
   spellbook: [],
 }
 export type ChoiceKind = 'subclass' | 'improvement' | 'spells' | 'cantrips' | 'spellbook'
-
-/** The SRD subclass of a class, when the class is an SRD one. */
-export const srdSubclassOf = (build: Pick<Build, 'classKey'>) =>
-  isClassKey(build.classKey) ? subclassOf[build.classKey] : null
 
 export const improvementAmount = (improvement: Extract<Improvement, { kind: 'abilities' }>) =>
   improvement.split ? 1 : 2
@@ -252,6 +225,7 @@ export function applyChoices(
       source: 'feat',
       description: '',
       level: toLevel,
+      ...(improvement.ref ? { ref: improvement.ref } : {}),
     }
     next = { ...next, features: [...next.features.filter((item) => item.id !== feat.id), feat] }
   }
@@ -358,9 +332,10 @@ export function planLevelUp(
   input: LevelUpInputs,
   library: LibraryFeature[],
   names: ProgressionNames,
+  def: ClassDef | null,
 ): LevelUpPlan | null {
   const toLevel = input.level + 1
-  const requirements = levelUpRequirements(input.build, toLevel)
+  const requirements = levelUpRequirements(input.build, toLevel, def)
   const gain = hitPointGain(
     input.build.hitDie,
     modifier(finalAbilities(input.build).con),

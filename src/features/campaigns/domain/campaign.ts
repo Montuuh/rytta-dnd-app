@@ -49,7 +49,11 @@ export interface CampaignRepository {
   members(campaignId: string, signal?: AbortSignal): Promise<Member[]>
   sentInvitations(campaignId: string, signal?: AbortSignal): Promise<SentInvitation[]>
   auditEvents(campaignId: string, signal?: AbortSignal, characterId?: string): Promise<AuditEvent[]>
-  create(name: string, description: string): Promise<string>
+  create(
+    name: string,
+    description: string,
+    chosen?: { pack: string; category: string }[],
+  ): Promise<string>
   invite(campaignId: string, email: string): Promise<string>
   respond(invitationId: string, accept: boolean): Promise<string>
   revoke(invitationId: string): Promise<void>

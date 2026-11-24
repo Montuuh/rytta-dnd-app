@@ -1,4 +1,6 @@
-import { chooseBackground, chooseClass, chooseSpecies, type Namer } from './creation'
+import type { ClassDef } from './class-catalog'
+import { chooseBackground, chooseClass, chooseSpecies, type OriginFeat } from './creation'
+import type { BackgroundDef, SpeciesDef } from './origin-catalog'
 import { syncProgression, type LibraryFeature, type ProgressionNames } from './progression'
 import {
   defaultArmorClass,
@@ -10,15 +12,12 @@ import {
 } from './rules'
 import type { Build, SheetDraft } from './sheet'
 import {
-  backgrounds,
-  classes,
   abilityKeys,
   standardArray,
   type Ability,
   type BackgroundKey,
   type ClassKey,
   type Skill,
-  type SpeciesKey,
 } from './srd'
 
 /**
@@ -112,10 +111,15 @@ export function reseedStandard(prev: Build, next: Build): Build {
 export type QuickChoice = {
   classKey: ClassKey
   classLabel: string
-  speciesKey: SpeciesKey
+  /** RYT-167: the SRD class's table, from the campaign's packs. */
+  classDef: ClassDef
+  /** RYT-171: the species and the class's SRD background, from the campaign's packs. */
+  speciesDef: SpeciesDef
   speciesLabel: string
-  backgroundLabel: (key: BackgroundKey) => string
-  name: Namer
+  backgroundDef: BackgroundDef
+  backgroundLabel: string
+  feat: OriginFeat | null
+  language: string
   library: LibraryFeature[]
   names: ProgressionNames
 }
@@ -131,17 +135,23 @@ export function quickDraft(choice: QuickChoice): SheetDraft {
     baseAbilities: base,
     origin: 'quick',
   }
-  build = chooseClass(build, choice.classKey, choice.classLabel)
-  build = chooseSpecies(build, choice.speciesKey, choice.speciesLabel, choice.name)
-  const backgroundKey = quickBackground[choice.classKey]
-  build = chooseBackground(build, backgroundKey, choice.backgroundLabel(backgroundKey), choice.name)
-  const allowed = backgrounds[backgroundKey].abilities as readonly Ability[]
+  build = chooseClass(build, choice.classKey, choice.classLabel, choice.classDef)
+  build = chooseSpecies(
+    build,
+    choice.speciesDef.key,
+    choice.speciesLabel,
+    choice.speciesDef,
+    choice.language,
+  )
+  const background = choice.backgroundDef
+  build = chooseBackground(build, background.key, choice.backgroundLabel, background, choice.feat)
+  const allowed = background.abilities as readonly Ability[]
   const [first, second] = order.filter((key) => allowed.includes(key))
   build = {
     ...build,
     bonuses: { ...build.bonuses, [first!]: 2, [second!]: 1 },
   }
-  const entry = classes[choice.classKey]
+  const entry = choice.classDef
   const options = entry.skills === 'any' ? null : (entry.skills as readonly Skill[])
   const skills = { ...build.skills }
   const picks = quickSkills[choice.classKey].filter(
@@ -163,12 +173,18 @@ export function quickDraft(choice: QuickChoice): SheetDraft {
 export type BlankChoice = {
   classKey: string
   classLabel: string
+  /** RYT-168: the chosen class's definition (null for a class typed by hand). */
+  classDef?: ClassDef | null
   level: number
   speciesKey?: string
   speciesLabel?: string
+  /** RYT-171: the chosen species and background from the campaign's packs (null: by hand). */
+  speciesDef?: SpeciesDef | null
   backgroundKey?: string
   backgroundLabel?: string
-  name?: Namer
+  backgroundDef?: BackgroundDef | null
+  feat?: OriginFeat | null
+  language?: string
   library: LibraryFeature[]
   names: ProgressionNames
 }
@@ -177,14 +193,16 @@ export type BlankChoice = {
 export function blankDraft(choice: BlankChoice): SheetDraft {
   const level = Math.min(20, Math.max(1, Math.trunc(choice.level)))
   let build: Build = { ...emptyBuild(), abilityMethod: 'manual', origin: 'blank' }
-  build = chooseClass(build, choice.classKey, choice.classLabel)
-  const namer: Namer = choice.name ?? ((_, key) => key)
+  const def = choice.classDef ?? null
+  build = chooseClass(build, choice.classKey, choice.classLabel, def)
+  const language = choice.language ?? 'es'
   if (choice.speciesKey || choice.speciesLabel?.trim()) {
     build = chooseSpecies(
       build,
       choice.speciesKey ?? '',
       choice.speciesLabel ?? choice.speciesKey ?? '',
-      namer,
+      choice.speciesDef ?? null,
+      language,
     )
   }
   if (choice.backgroundKey || choice.backgroundLabel?.trim()) {
@@ -192,11 +210,11 @@ export function blankDraft(choice: BlankChoice): SheetDraft {
       build,
       choice.backgroundKey ?? '',
       choice.backgroundLabel ?? choice.backgroundKey ?? '',
-      namer,
+      choice.backgroundDef ?? null,
+      choice.feat ?? null,
     )
   }
-  if (isClassKey(build.classKey))
-    build = syncProgression(build, level, choice.library, choice.names)
+  if (def) build = syncProgression(build, level, choice.library, choice.names)
   return {
     build,
     level,

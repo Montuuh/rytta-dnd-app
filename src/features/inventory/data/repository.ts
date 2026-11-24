@@ -18,6 +18,7 @@ import {
   templateResultSchema,
   type ImportItem,
 } from '../domain/catalogue'
+import { itemPackEntriesSchema, itemPacksSchema, type ItemPack } from '../domain/pack-items'
 import type { Json } from '@/shared/api/database.generated'
 import { gpAmount } from '@/shared/lib/money'
 import { newRequestId } from '@/shared/lib/request-id'
@@ -773,4 +774,28 @@ export async function deleteLootBatch(campaignId: string, id: string, requestId:
   })
   if (result.error) throw failure(result.error)
   return z.object({ id: z.uuid() }).parse(result.data)
+}
+
+/** RYT-166: the item packs a campaign has, at their pinned versions (DM only). */
+export async function loadItemPacks(campaignId: string, signal?: AbortSignal) {
+  const db = await client()
+  let call = db.rpc('get_campaign_item_packs', { target_campaign: z.uuid().parse(campaignId) })
+  if (signal) call = call.abortSignal(signal)
+  const result = await call
+  if (result.error) throw failure(result.error)
+  return itemPacksSchema.parse(result.data)
+}
+
+/** One pack's items at the campaign's pinned version. */
+export async function loadItemPack(campaignId: string, pack: ItemPack, signal?: AbortSignal) {
+  const db = await client()
+  let call = db.rpc('get_campaign_item_pack', {
+    target_campaign: z.uuid().parse(campaignId),
+    target_pack: z.uuid().parse(pack.id),
+    at_version: pack.version,
+  })
+  if (signal) call = call.abortSignal(signal)
+  const result = await call
+  if (result.error) throw failure(result.error)
+  return itemPackEntriesSchema.parse(result.data)
 }

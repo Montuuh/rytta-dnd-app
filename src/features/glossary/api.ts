@@ -1,26 +1,75 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useAuth } from '@/features/auth'
-import { loadGlossaryBodies, loadGlossaryIndex } from './data/content'
-import { deleteHomebrew, listHomebrew, saveHomebrew } from './data/repository'
+import {
+  deleteHomebrew,
+  listHomebrew,
+  loadRulePack,
+  loadRulePacks,
+  loadSrdRules,
+  saveHomebrew,
+} from './data/repository'
+import { parseRuleBodies, parseRuleIndex, type RuleCategory, type RulePack } from './domain/packs'
 import { GlossaryError, type HomebrewDraft, type HomebrewEntry } from './domain/homebrew'
 import type { GlossaryLanguage } from './domain/types'
 
-/** Bundled, public SRD data: never refetched and not tied to an identity. */
-export const glossaryIndexQuery = () =>
+/** RYT-164, RYT-165: the campaign's spells, classes and rules packs and their hidden entries. */
+export const rulePacksQuery = (userId: string, campaignId: string) =>
   queryOptions({
-    queryKey: ['glossary', 'index'],
-    queryFn: loadGlossaryIndex,
-    staleTime: Infinity,
-    gcTime: Infinity,
+    queryKey: ['private', userId, 'campaign', campaignId, 'rule-packs'],
+    queryFn: ({ signal }) => loadRulePacks(campaignId, signal),
+    staleTime: 30_000,
+    retry: 1,
   })
-export const glossaryBodiesQuery = (language: GlossaryLanguage) =>
+
+/** A pack category never changes within a version: cached by pack, category and version. */
+const ruleScope = (userId: string, pack: RulePack) =>
+  ['private', userId, 'rule-pack', pack.id, pack.category, pack.version] as const
+
+export const ruleIndexQuery = (userId: string, campaignId: string, pack: RulePack) =>
   queryOptions({
-    queryKey: ['glossary', 'bodies', language],
-    queryFn: () => loadGlossaryBodies(language),
+    queryKey: [...ruleScope(userId, pack), 'index'],
+    queryFn: async ({ signal }) =>
+      parseRuleIndex(await loadRulePack(campaignId, pack, 'index', signal)),
     staleTime: Infinity,
-    gcTime: Infinity,
+    retry: 1,
   })
+
+export const ruleBodiesQuery = (
+  userId: string,
+  campaignId: string,
+  pack: RulePack,
+  language: GlossaryLanguage,
+) =>
+  queryOptions({
+    queryKey: [...ruleScope(userId, pack), language],
+    queryFn: async ({ signal }) =>
+      parseRuleBodies(await loadRulePack(campaignId, pack, language, signal)),
+    staleTime: Infinity,
+    retry: 1,
+  })
+
+/** The published SRD outside a campaign (P3 A): it can gain a version while the app is open. */
+export const srdRuleIndexQuery = (userId: string, category: RuleCategory) =>
+  queryOptions({
+    queryKey: ['private', userId, 'srd-rules', category, 'index'],
+    queryFn: async ({ signal }) => parseRuleIndex(await loadSrdRules(category, 'index', signal)),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  })
+
+export const srdRuleBodiesQuery = (
+  userId: string,
+  category: RuleCategory,
+  language: GlossaryLanguage,
+) =>
+  queryOptions({
+    queryKey: ['private', userId, 'srd-rules', category, language],
+    queryFn: async ({ signal }) => parseRuleBodies(await loadSrdRules(category, language, signal)),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  })
+
 export const homebrewQuery = (userId: string, campaignId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaign', campaignId, 'glossary'],

@@ -10,6 +10,7 @@ import {
   useCampaignView,
 } from '@/features/campaigns'
 import { BestiaryPanel } from '@/features/combat'
+import { CampaignContentPanel } from '@/features/campaign-content'
 import {
   characterRosterQuery,
   MemberCharacterDialog,
@@ -40,6 +41,7 @@ export function DmCenterPage() {
       <CampaignMembers
         itemsPanel={dm ? <ItemStore campaignId={campaign.id} /> : undefined}
         bestiaryPanel={dm ? <BestiaryPanel campaignId={campaign.id} /> : undefined}
+        contentPanel={dm ? <CampaignContentPanel campaignId={campaign.id} /> : undefined}
         roster={roster.isSuccess ? roster.data : undefined}
         rosterFeedback={
           <QueryFeedback

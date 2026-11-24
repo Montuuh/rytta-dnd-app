@@ -12,6 +12,9 @@ post and market stall sheets and the shards decals arrived.
 
 ## Catalogue
 
+Every row below is imported. New sheets are requested through the [image queue](art-queue.md) (set
+`sprites`), with their row added to `scripts/sprites/catalogue.py` for the import.
+
 [`art/sprites/sprite-catalogue.xlsx`](../art/sprites/sprite-catalogue.xlsx) (and the same rows in
 [`art/sprites/catalogue.csv`](../art/sprites/catalogue.csv)) has one row per picture: the prompt to
 paste, the file name and the path to save it at, in the order to generate them. Both are written by

@@ -18,7 +18,7 @@ import {
   peerId,
   playerId,
 } from './fixtures/identity.ts'
-import { capture, expectTouchTargets } from './fixtures/audit.ts'
+import { capture, expectTouchTargets, expectArtPrompt } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
 const size = (project: string) =>
@@ -1737,6 +1737,8 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   await expect(card.locator('.combat-image-picker')).toHaveCSS('outline-style', 'solid')
   await audit(page)
   await evidence(page, info.project.name, 'bestiary-empty', 'RYT-043')
+  // RYT-154: without any image, a prompt in the house style sits under the token.
+  await expectArtPrompt(card, page, /^Creature portrait for a tabletop role-playing game/)
 
   // An unreadable file is explained next to the token.
   await picker.setInputFiles({ name: 'notes.png', mimeType: 'image/png', buffer: Buffer.from('x') })

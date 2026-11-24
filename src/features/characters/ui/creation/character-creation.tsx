@@ -10,10 +10,14 @@ import { Alert, Button, Group, Paper, Progress, Stack, Text, Title } from '@mant
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign, useCampaignView, useIsRealDm } from '@/features/campaigns'
 import { useSrdLibrary } from '@/features/glossary'
+import { classDefFor } from '../../domain/class-catalog'
+import { useClassCatalog, useOriginCatalog } from '../class-catalog'
+import { speciesDefFor } from '../../domain/origin-catalog'
 import { CharacterPortrait } from '@/features/inventory'
 import { sheetQuery, useSheetAction } from '../../api'
 import {
@@ -30,7 +34,7 @@ import {
   type CreationStep,
 } from '../../domain/creation'
 import type { SheetDraft, SheetRow } from '../../domain/sheet'
-import { classEmblem } from '../class-emblem'
+import { useClassEmblemOf } from '../class-emblem'
 import { syncProgression } from '../../domain/progression'
 import { BlankSheet } from './blank-sheet'
 import { CreationChooserPanel } from './chooser'
@@ -38,9 +42,10 @@ import { isCreationMode } from './modes'
 import { QuickBuild } from './quick-build'
 import { CreationStepView, type Session } from './steps'
 import { LeaveDialog } from '../leave-guard'
-import { useLeaveGuard } from '../use-leave-guard'
+import { useLeaveGuard } from '@/shared/ui/use-leave-guard'
 import { useResourceNames } from '../resource-names'
 import { useSubmitGuard } from '../use-submit-guard'
+import { LibraryWait } from './library-wait'
 
 const fromRow = (sheet: SheetRow): SheetDraft =>
   sheet.build
@@ -170,12 +175,19 @@ function Wizard({
   sheetPath: string
   reload: () => Promise<SheetRow | undefined>
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const campaign = useCampaign()
   const realDm = useIsRealDm()
   const action = useSheetAction(campaign.id)
   const library = useSrdLibrary()
+  const catalog = useClassCatalog()
+  const origins = useOriginCatalog()
+  // RYT-164 (P4 A): finishing adds class features from the campaign's packs, so it waits for
+  // them, and finishes by itself once they arrive.
+  const [libraryWait, setLibraryWait] = useState<null | (() => void)>(null)
+  const waitRef = useRef<HTMLDivElement>(null)
   const names = useResourceNames()
   const submit = useSubmitGuard()
   const [draft, setDraft] = useState(() => fromRow(sheet))
@@ -187,7 +199,15 @@ function Wizard({
     if (sheet.status === 'complete' || !sheet.build) return 0
     const initial = fromRow(sheet)
     const steps = creationSteps.filter((step) => stepApplies(step, initial.build))
-    const pending = steps.findIndex((step) => validateStep(step, initial).length > 0)
+    const pending = steps.findIndex(
+      (step) =>
+        validateStep(
+          step,
+          initial,
+          classDefFor(catalog, initial.build.classKey),
+          speciesDefFor(origins, initial.build.speciesKey),
+        ).length > 0,
+    )
     return pending === -1 ? steps.length - 1 : pending
   })
   const [attempt, setAttempt] = useState<{ complete: boolean; exiting: boolean } | null>(null)
@@ -224,10 +244,17 @@ function Wizard({
   // Blocking problems are derived from the draft, so a fixed problem disappears at once.
   const issuesFor = (mode: { complete: boolean; exiting: boolean }) =>
     mode.complete
-      ? validateAll(draft)
-      : validateStep(current, draft).filter(
-          (issue) => !mode.exiting || issue === 'emptyName' || issue === 'tooLarge',
+      ? validateAll(
+          draft,
+          classDefFor(catalog, draft.build.classKey),
+          speciesDefFor(origins, draft.build.speciesKey),
         )
+      : validateStep(
+          current,
+          draft,
+          classDefFor(catalog, draft.build.classKey),
+          speciesDefFor(origins, draft.build.speciesKey),
+        ).filter((issue) => !mode.exiting || issue === 'emptyName' || issue === 'tooLarge')
   const issues = attempt ? issuesFor(attempt) : []
   useEffect(() => {
     if (issues.length > 0) issuesRef.current?.scrollIntoView({ block: 'nearest' })
@@ -238,10 +265,15 @@ function Wizard({
   const gapKey = (step: CreationStep, kind: string) => `${step}:${kind}`
   const reviewGaps = editing
     ? []
-    : buildGaps(draft.build).filter(({ step }) => stepApplies(step, draft.build))
+    : buildGaps(draft.build, classDefFor(catalog, draft.build.classKey)).filter(({ step }) =>
+        stepApplies(step, draft.build),
+      )
   const stepOpen = editing
     ? []
-    : stepGaps(current, draft.build).map((gap) => ({ step: current, gap }))
+    : stepGaps(current, draft.build, classDefFor(catalog, draft.build.classKey)).map((gap) => ({
+        step: current,
+        gap,
+      }))
   // A step asks once; finishing asks again for whatever is still open, whatever was said before.
   const openGaps = last
     ? reviewGaps
@@ -254,6 +286,12 @@ function Wizard({
     if (issuesFor(mode).length > 0) return
     const trimmed = displayName.trim()
     if (complete && !trimmed) return
+    if (complete && !library) {
+      setLibraryWait(() => then)
+      requestAnimationFrame(() => waitRef.current?.focus())
+      return
+    }
+    setLibraryWait(null)
     void submit
       .run(async () => {
         // RYT-071: finishing adds the class resources and features of the class and level.
@@ -297,6 +335,14 @@ function Wizard({
       })
       .catch(() => undefined)
   }
+  // The library arrived while finishing waited for it: finish now, as the player asked.
+  useEffect(() => {
+    if (!libraryWait || !library) return
+    const then = libraryWait
+    setLibraryWait(null)
+    save(true, then)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [library, libraryWait])
   const advance = (skipGaps = false) => {
     if (!skipGaps && openGaps.length > 0) {
       setGapRound((round) => round + 1)
@@ -388,6 +434,21 @@ function Wizard({
           />
         </div>
       </div>
+      {/* RYT-154: the portrait prompt, once the class and origin are known (last step). */}
+      {index === steps.length - 1 && (
+        <CopyArtPrompt
+          subject={{
+            kind: 'character',
+            name: displayName || name,
+            traits: [
+              draft.build.speciesKey === 'custom'
+                ? draft.build.speciesLabel
+                : draft.build.speciesKey,
+              draft.build.classKey,
+            ],
+          }}
+        />
+      )}
       {editing && (
         <nav aria-label={t('wizard.progress', { current: index + 1, total: steps.length })}>
           <Group gap="xs" className="wizard-steps">
@@ -437,6 +498,7 @@ function Wizard({
           </Stack>
         </GapAlert>
       )}
+      {libraryWait && <LibraryWait ref={waitRef} ready={library !== null} />}
       {action.isError && (
         <Alert color="red" role="alert">
           <Stack gap="xs" align="flex-start">

@@ -32,6 +32,7 @@ import { InitiativeDialog } from './amount-dialog'
 import type { Run } from './helpers'
 import { OfficialElsewhere } from './official-bestiary'
 import { JoinPreview } from './roster'
+import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 
 /** DM panel: the party in one tap, creatures in batches (custom or from the bestiary), a lair.
  * Once the fight runs, a character joins with its initiative total and a preview of its place. */
@@ -225,8 +226,9 @@ function CreatureForm({
   submit: (entry: NpcEntry) => Promise<boolean>
 }) {
   const { t } = useTranslation()
+  const baseLabel = useBasePackLabel(t('bestiary.source.srd'))
   const catalog = useCreatureCatalog(campaignId)
-  const noOfficial = catalog.official?.downloaded === false
+  const noOfficial = catalog.noPacks
   const spellLabel = useSpellLabel()
   const [picked, setPicked] = useState<CreatureListItem | null>(null)
   const [alias, setAlias] = useState('')
@@ -324,7 +326,7 @@ function CreatureForm({
                   .map((i) => ({ value: i.key, label: i.name })),
               },
               {
-                group: t('bestiary.source.srd'),
+                group: baseLabel,
                 // RYT-089: a campaign version stays among the official creatures, marked.
                 items: catalog.items
                   .filter((i) => i.source === 'srd' || i.version)
@@ -341,9 +343,7 @@ function CreatureForm({
               },
             ].filter((g) => g.items.length > 0)}
           />
-          {noOfficial && (
-            <OfficialElsewhere campaignId={campaignId} total={catalog.officialCount} />
-          )}
+          {noOfficial && <OfficialElsewhere campaignId={campaignId} />}
           <TextInput
             required
             label={t('combat.add.name')}

@@ -1,7 +1,8 @@
 import type { Build, Feature, Tracker } from './sheet'
-import { featRefs, grantedResources, resourceId, traitRef, type ResourceSpec } from './resources'
+import { featRef, traitRef } from './origin-catalog'
+import { grantedResources, resourceId, type ResourceSpec } from './resources'
 import { finalAbilities, isSpeciesKey, modifier } from './rules'
-import { abilityKeys, species, type Ability } from './srd'
+import { abilityKeys, type Ability } from './srd'
 
 export type RestKind = 'short' | 'long' | 'none'
 
@@ -12,6 +13,8 @@ export type LibraryFeature = {
   classKey: string
   level: number
   subclass: string | null
+  /** No longer offered by the campaign (RYT-164): kept where a character has it. */
+  hidden?: boolean
 }
 
 /**
@@ -60,33 +63,46 @@ function withSpec(
   }
 }
 
-/** Seeded species traits (`species-<trait>`) and background feats (`background-<feat>`) get the
- * glossary entry of their trait or feat; the player's own entries are untouched. */
+/** Background feats seeded before RYT-171 named the SRD feat with its spell list. */
+const seededFeats: Record<string, string> = {
+  alert: 'alert',
+  magicInitiateCleric: 'magic-initiate',
+  magicInitiateWizard: 'magic-initiate',
+  savageAttacker: 'savage-attacker',
+}
+/** Seeded SRD species traits (`species-<trait>`) and background feats (`background-<feat>`) of
+ * sheets made before seeds carried their glossary entry get it; other entries are untouched. */
 function linkOriginFeatures(build: Build): Feature[] {
-  const traits: readonly string[] = isSpeciesKey(build.speciesKey)
-    ? species[build.speciesKey].traits
-    : []
   return build.features.map((feature) => {
     if (feature.ref) return feature
-    if (feature.source === 'species' && feature.id.startsWith('species-')) {
-      const trait = feature.id.slice('species-'.length)
-      return traits.includes(trait)
-        ? { ...feature, ref: traitRef(build.speciesKey, trait) }
-        : feature
-    }
+    if (
+      feature.source === 'species' &&
+      feature.id.startsWith('species-') &&
+      isSpeciesKey(build.speciesKey)
+    )
+      return { ...feature, ref: traitRef(build.speciesKey, feature.id.slice('species-'.length)) }
     if (feature.source === 'feat' && feature.id.startsWith('background-')) {
-      const ref = featRefs[feature.id.slice('background-'.length)]
-      return ref ? { ...feature, ref } : feature
+      const feat = seededFeats[feature.id.slice('background-'.length)]
+      return feat ? { ...feature, ref: featRef(feat) } : feature
     }
     return feature
   })
 }
 
-/** SRD features of the build's class (and SRD subclass) up to a level, in level order. */
-export function classFeaturesFor(build: Build, level: number, library: LibraryFeature[]) {
+/**
+ * SRD features of the build's class (and SRD subclass) up to a level, in level order. Features the
+ * campaign no longer offers are left out unless `withHidden` (to keep what characters have).
+ */
+export function classFeaturesFor(
+  build: Build,
+  level: number,
+  library: LibraryFeature[],
+  withHidden = false,
+) {
   return library
     .filter(
       (row) =>
+        (withHidden || !row.hidden) &&
         row.classKey === build.classKey &&
         row.level <= level &&
         (!row.subclass || row.subclass === build.subclassKey),
@@ -169,10 +185,12 @@ export function syncProgressionReport(
       ),
     )
   }
-  const rows = classFeaturesFor(build, level, library).filter(
+  const all = classFeaturesFor(build, level, library, true).filter(
     (row) => !removed.has(removedFeature(row.id)),
   )
-  const refs = new Set(rows.map((row) => row.id))
+  // RYT-164: a hidden feature stays where a character has it, and is added to nobody.
+  const rows = all.filter((row) => !row.hidden)
+  const refs = new Set(all.map((row) => row.id))
   const byName = new Map(rows.map((row) => [plain(row.name), row]))
   const kept = build.features
     .filter((feature) => !isManaged(feature) || refs.has(feature.ref!))

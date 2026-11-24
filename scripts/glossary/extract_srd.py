@@ -4,7 +4,7 @@ Usage (outside CI; PDFs are not committed):
   python3 -I scripts/glossary/extract_srd.py <pdf-dir> <out-dir>
 
 Reads SRD 5.2.1 (EN, ES) and writes raw extraction JSON for review. build_content.py turns
-the reviewed raw files into src/features/glossary/content/*.json.
+the reviewed raw files into tests/fixtures/srd/glossary/*.json.
 """
 
 from __future__ import annotations

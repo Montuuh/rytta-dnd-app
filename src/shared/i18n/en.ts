@@ -22,6 +22,9 @@ import { accountEn } from './account-en'
 import { libraryEn } from './library-en'
 import { viewerEn } from './viewer-en'
 import { legalEn } from './legal-en'
+import { adminEn } from './admin-en'
+import { questsEn } from './quests-en'
+import { campaignContentEn } from './campaign-content-en'
 import { diceEn } from './dice-en'
 import { levelupEn } from './levelup-en'
 import { castEn } from './cast-en'
@@ -32,6 +35,9 @@ export const en = {
   ...sessionEn,
   ...activationEn,
   ...legalEn,
+  ...adminEn,
+  ...questsEn,
+  ...campaignContentEn,
   ...diceEn,
   ...levelupEn,
   ...castEn,
@@ -90,6 +96,10 @@ export const en = {
   'common.back': 'Back',
   'common.loading': 'Loading…',
   'common.loadingSlow': 'This is taking longer than expected. Reload or go back to the start.',
+  'art.prompt.copy': 'Copy art prompt',
+  'art.prompt.copied': 'Prompt copied. Paste it into your image generator.',
+  'art.prompt.failed': 'Could not copy the prompt.',
+  'art.prompt.manual': 'Could not copy. Select it and copy it by hand:',
   'common.retry': 'Try again',
   'common.storageQuota':
     'Storage refused the upload. This campaign may have used its storage space: remove pictures or media it no longer needs, then try again.',

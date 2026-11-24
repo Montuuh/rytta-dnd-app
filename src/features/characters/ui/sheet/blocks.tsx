@@ -1,3 +1,4 @@
+import { SubclassFields } from './subclass-fields'
 import { slotsLeft } from '../../domain/sorcery'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -48,7 +49,7 @@ import {
 } from '@/features/glossary'
 import { castAvailability, type CastAvailability } from '../../domain/casting'
 import { removeFeature } from '../../domain/progression'
-import { isClassKey, signed, skillBonus, slotsFor, spellcasting } from '../../domain/rules'
+import { signed, skillBonus, slotsFor, spellcasting } from '../../domain/rules'
 import {
   featureSources,
   hasForbiddenMarkerCharacters,
@@ -62,7 +63,6 @@ import {
   conditionKeys,
   skillAbilities,
   skillKeys,
-  subclassOf,
   type Condition,
   type Skill,
 } from '../../domain/srd'
@@ -216,7 +216,6 @@ export function FeaturesBlock(props: PanelProps & { onLibrary: () => void }) {
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const srdSubclass = isClassKey(build.classKey) ? subclassOf[build.classKey] : undefined
   const add = () => {
     if (!name.trim()) return
     change(
@@ -243,44 +242,7 @@ export function FeaturesBlock(props: PanelProps & { onLibrary: () => void }) {
   }
   return (
     <Stack gap="md">
-      {editing && srdSubclass && (
-        <Select
-          label={t('wizard.subclass')}
-          data={[
-            { value: '', label: t('panel.noSubclass') },
-            { value: srdSubclass, label: t(`srd.subclass.${srdSubclass}` as 'srd.subclass.lore') },
-            { value: 'custom', label: t('panel.otherSubclass') },
-          ]}
-          value={build.subclassKey ? build.subclassKey : build.subclass ? 'custom' : ''}
-          allowDeselect={false}
-          onChange={(value) =>
-            change((draft) => ({
-              ...draft,
-              build: {
-                ...draft.build,
-                subclassKey: value === srdSubclass ? value : '',
-                subclass:
-                  value === srdSubclass
-                    ? t(`srd.subclass.${srdSubclass}` as 'srd.subclass.lore')
-                    : value === 'custom'
-                      ? draft.build.subclass
-                      : '',
-              },
-            }))
-          }
-        />
-      )}
-      {editing && !build.subclassKey && (srdSubclass === undefined || build.subclass) && (
-        <TextInput
-          label={t('panel.subclassName')}
-          maxLength={60}
-          value={build.subclass}
-          onChange={(event) => {
-            const value = event.currentTarget.value
-            change((draft) => ({ ...draft, build: { ...draft.build, subclass: value } }))
-          }}
-        />
-      )}
+      {editing && <SubclassFields build={build} change={change} />}
       {build.features.length === 0 && (
         <Text size="sm" c="dimmed">
           {t('sheet.noFeatures')}

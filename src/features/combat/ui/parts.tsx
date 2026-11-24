@@ -156,7 +156,7 @@ export function Elapsed({ since, format }: { since: number; format: (seconds: nu
 
 /**
  * Connection state of a combat screen. Stale data is said once: offline, the app shell already
- * shows its alert, so this is a quiet line with "last updated" and the retry (RYT-126 J4-13);
+ * shows its connection line (RYT-013), so this is a quiet "updated N s ago" and the retry (RYT-126 J4-13);
  * online but failing, it is the alert. Retry shows a busy state and, if it fails, a visible result.
  */
 export function NetworkState({
@@ -201,7 +201,7 @@ export function NetworkState({
     )
     if (!online)
       return (
-        <div className="combat-stale is-inline" role="status">
+        <div className="combat-stale is-inline">
           <WifiOff size={18} aria-hidden="true" />
           <Text size="sm" fw={600}>
             {updatedAt > 0 ? (

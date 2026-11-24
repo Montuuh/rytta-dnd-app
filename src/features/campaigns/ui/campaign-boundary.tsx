@@ -4,23 +4,39 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, Outlet, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { campaignPackImagesOptions, noPackImages } from '@/shared/api/pack-images'
+import { PackImagesContext } from '@/shared/ui/pack-images-context'
 import { campaignsQuery } from '../api'
 import { CampaignContext } from '../campaign-context'
 import { recordCampaignVisit } from '../domain/recent-campaign'
+import { CampaignShellSection } from './campaign-shell'
+import { useCampaignShell } from './use-campaign-shell'
 import { QueryFeedback } from './feedback'
+import { keepsStaleData } from './load-cause'
 
-export function CampaignBoundary() {
+export function CampaignBoundary({
+  shellTitle,
+}: {
+  /** RYT-160: the translation key of a section's title by path (null for the campaign home). */
+  shellTitle?: (pathname: string) => string | null
+} = {}) {
   const { campaignId } = useParams()
   const { state } = useAuth()
   const userId = state.user!.id
   const { t } = useTranslation()
   const client = useQueryClient()
   const query = useQuery(campaignsQuery(userId))
-  const campaign = !query.isError ? query.data?.find((item) => item.id === campaignId) : undefined
+  const usable = !query.isError || keepsStaleData(query.data, query.error)
+  const campaign = usable ? query.data?.find((item) => item.id === campaignId) : undefined
   const visitedId = campaign?.id
   useEffect(() => {
     if (visitedId) recordCampaignVisit(userId, visitedId)
   }, [userId, visitedId])
+  const shell = useCampaignShell(userId, campaignId, query)
+  // RYT-172: the pictures of the campaign's packs, for every screen inside it.
+  const packImages = useQuery(
+    campaignPackImagesOptions(campaign ? userId : undefined, campaign?.id),
+  )
   // Players still need characters; only drop DM-only campaign caches when the role is not DM.
   useEffect(() => {
     if (campaign?.role === 'dm') return
@@ -37,7 +53,16 @@ export function CampaignBoundary() {
     },
     [client, userId, campaignId],
   )
-  if (query.isPending || query.isError)
+  if (shell)
+    return (
+      <CampaignShellSection
+        campaign={shell}
+        titleFor={shellTitle}
+        error={query.error}
+        retry={() => void query.refetch()}
+      />
+    )
+  if (query.isPending || !usable)
     return (
       <QueryFeedback
         pending={query.isPending}
@@ -57,7 +82,9 @@ export function CampaignBoundary() {
     )
   return (
     <CampaignContext.Provider value={campaign}>
-      <Outlet key={`${userId}:${campaign.id}:${campaign.role}`} />
+      <PackImagesContext.Provider value={packImages.data ?? noPackImages}>
+        <Outlet key={`${userId}:${campaign.id}:${campaign.role}`} />
+      </PackImagesContext.Provider>
     </CampaignContext.Provider>
   )
 }

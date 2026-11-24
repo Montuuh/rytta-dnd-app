@@ -1,6 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useContext } from 'react'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth'
 import { artUrl } from '@/shared/ui/art-url'
+import { packImageOptions } from '@/shared/api/pack-images'
+import { PackImagesContext } from '@/shared/ui/pack-images-context'
 import { partyOverviewQuery } from '../api'
 import { isClassKey } from '../domain/rules'
 
@@ -11,6 +14,25 @@ export type ClassEmblem = { thumb: string; full: string }
 export function classEmblem(key: string | null | undefined): ClassEmblem | null {
   if (!key || !isClassKey(key)) return null
   return { thumb: artUrl(`classes/thumbs/${key}`), full: artUrl(`classes/${key}`) }
+}
+
+/**
+ * RYT-172: the emblem of a class key in the open campaign: its pack picture when the pack entry
+ * carries one (signed once for every class of the campaign), otherwise the SRD painting.
+ */
+export function useClassEmblemOf() {
+  const { state } = useAuth()
+  const images = useContext(PackImagesContext).class
+  const paths = [...new Set(images.values())]
+  const signed = useQueries({
+    queries: paths.map((path) => packImageOptions(state.user?.id, path)),
+  })
+  const urls = new Map(paths.map((path, at) => [path, signed[at]?.data]))
+  return (key: string | null | undefined): ClassEmblem | null => {
+    const path = key ? images.get(key) : undefined
+    const url = path ? urls.get(path) : undefined
+    return url ? { thumb: url, full: url } : classEmblem(key)
+  }
 }
 
 /**

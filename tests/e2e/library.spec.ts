@@ -2,7 +2,12 @@ import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture } from './fixtures/identity.ts'
 import { capture, expectTouchTargets } from './fixtures/audit.ts'
-import { homebrewPackId, libraryServer } from './fixtures/library.ts'
+import {
+  homebrewPackId,
+  libraryServer,
+  offerCampaigns,
+  srdLibraryPackId,
+} from './fixtures/library.ts'
 
 // RYT-093: the content library manager. Editors upload the bundled SRD, edit entries as drafts
 // and publish versions; everyone else never sees it.
@@ -25,12 +30,12 @@ async function audit(page: Page, scope = '#main-content') {
   expect(axe.violations).toEqual([])
 }
 
-test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a creature', async ({
+test('an editor opens the published SRD 5.2.1, keeps its place and edits a creature', async ({
   page,
 }, info) => {
   test.setTimeout(90_000)
   await identityFixture(page)
-  const server = libraryServer()
+  const server = libraryServer({ srd: true })
   await server.install(page)
   await page.goto('./')
   await page.getByRole('button', { name: /Perfil/ }).click()
@@ -39,52 +44,21 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
     page.getByRole('heading', { level: 1, name: 'Biblioteca de contenido' }),
   ).toBeVisible()
   await expect(page).toHaveTitle('Biblioteca de contenido · Rytta')
-  await expect(page.getByText('Aún no hay paquetes')).toBeVisible()
+  // RYT-167: the SRD is already in the library; nothing offers to upload it.
+  await expect(page.getByRole('button', { name: /Subir el SRD|Completar el SRD/ })).toHaveCount(0)
   await audit(page)
-
-  // The empty state offers both ways to start; the dialog opens on Cancel.
-  await page.getByRole('button', { name: 'Subir el SRD 5.2.1' }).click()
-  const upload = page.getByRole('dialog', { name: 'Subir el SRD 5.2.1' })
-  await expect(upload.locator('button', { hasText: 'Cancelar' })).toBeFocused()
-  await expect(
-    upload.getByText(/con 1217 entradas: criaturas, sus rasgos y todo el glosario/),
-  ).toBeVisible()
-  await audit(page, '[role="dialog"]')
-  await upload.getByRole('button', { name: 'Subir 1217 entradas' }).click()
-  await expect(upload).toHaveCount(0, { timeout: 30_000 })
-  await expect(page.getByRole('status').filter({ hasText: 'Subido como borrador.' })).toBeVisible()
-  expect(server.packs).toHaveLength(1)
-  expect(server.packs[0]).toMatchObject({
-    slug: 'srd-5-2-1',
-    visibility: 'public',
-    license: 'CC-BY-4.0',
-  })
-  expect(server.entries()).toHaveLength(1217)
-  await expect(page.locator('#lib-entries-title')).toBeFocused()
+  await page.locator('[data-pack]').first().click()
 
   // The SRD opens on its creatures, sorted by their Spanish names.
   await expect(
     page.getByRole('heading', { level: 2, name: 'Documento de referencia del sistema 5.2.1' }),
   ).toBeVisible()
+  // The list renders after the pack's entries arrive.
+  await expect(page.locator('.lib-entry-list .lib-row-name').nth(300)).toBeAttached()
   const names = await page.locator('.lib-entry-list .lib-row-name').allTextContents()
   expect(names.length).toBeGreaterThan(300)
   expect(names).toEqual([...names].sort(new Intl.Collator('es').compare))
-
-  // Publishing sends every draft as version 1.
-  await expect(page.locator('.lib-banner')).toContainText('1217 cambios sin publicar')
-  await page.getByRole('button', { name: 'Publicar versión 1' }).click()
-  const publish = page.getByRole('dialog', { name: /Publicar la versión 1/ })
-  await expect(publish.locator('button', { hasText: 'Cancelar' })).toBeFocused()
-  // The fixture lists every change; the hosted list stops at 1000 (the pack count is shown then).
-  await expect(publish.getByText('1217 cambios sin publicar')).toBeVisible()
-  await expect(publish.getByText('y 1205 más')).toBeVisible()
-  await audit(page, '[role="dialog"]')
-  await publish.getByRole('button', { name: 'Publicar', exact: true }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Versión 1 publicada.' })).toBeVisible()
-  expect(server.packs[0]!.version).toBe(1)
   await expect(page.getByText(/cambios sin publicar/)).toHaveCount(0)
-  // The banner that opened the dialog is gone: focus lands on the pack.
-  await expect(page.locator('#lib-entries-title')).toBeFocused()
 
   if (phone(info.project.name)) {
     // Coming back from an entry keeps the list position and focuses the entry just left.
@@ -106,11 +80,9 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   await page.getByRole('searchbox').fill('lobo')
   await expect(firstRow).toHaveText('Lobo')
 
-  // The wolf's numbers and stat blocks come from the bundled bestiary.
+  // The wolf's numbers and stat blocks come from the published SRD.
   await page.getByRole('link', { name: /^Lobo VD 1\/4 · Bestia/ }).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Lobo' })).toBeFocused()
-  // The notice belonged to the pack screen.
-  await expect(page.getByText('Versión 1 publicada.')).toHaveCount(0)
   await expect(page.getByRole('textbox', { name: 'Nombre (inglés)' })).toHaveValue('Wolf')
   await expect(page.getByText(/^VD 1\/4 · Bestia · CA \d+ · PG \d+$/)).toBeVisible()
   await expect(page.getByText(/^Lobo · Bestia Mediana/)).toBeVisible()
@@ -206,6 +178,208 @@ test('an editor uploads the bundled SRD 5.2.1, publishes version 1 and opens a c
   } else await expect(page.getByRole('searchbox')).toBeVisible()
   await audit(page)
   await capture(page, `docs/evidence/RYT-093/creature-${info.project.name}.png`)
+})
+
+test('RYT-166 the SRD items and classes edit in their own forms', async ({ page }, info) => {
+  test.setTimeout(90_000)
+  await identityFixture(page)
+  const server = libraryServer({ srd: true })
+  await server.install(page)
+  const items = () => server.entries().filter((e) => e.kind === 'item')
+  expect(items()).toHaveLength(197)
+
+  // An item opens in its own form; the price is saved in copper.
+  await page.goto(`./#/library/${srdLibraryPackId}/item`)
+  await page.getByRole('searchbox').fill('espada larga')
+  await page.getByRole('link', { name: /^Espada larga/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Espada larga' })).toBeFocused()
+  await expect(page.getByRole('combobox', { name: 'Categoría' })).toHaveValue('Armas')
+  await expect(page.getByRole('textbox', { name: 'Dados de daño' })).toHaveValue('1d8')
+  const price = page.getByRole('textbox', { name: 'Precio (po)' })
+  await expect(price).toHaveValue('15')
+  await audit(page)
+  await price.fill('20')
+  await page.getByRole('checkbox', { name: 'Arrojadiza' }).check()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: /Guardado/ })).toBeVisible()
+  const longsword = items().find((e) => e.key === 'longsword')!
+  expect(longsword.data).toMatchObject({
+    index: { key: 'longsword', costCp: 2000, properties: { thrown: true, dice: '1d8' } },
+  })
+
+  // RYT-168: a class opens in its own form with its table.
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.getByRole('link', { name: /^Guerrero/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Guerrero' })).toBeFocused()
+  await expect(page.getByRole('combobox', { name: 'Dado de golpe' })).toHaveValue('d10')
+  await expect(page.getByRole('combobox', { name: 'Primera salvación' })).toHaveValue('Fuerza')
+  await expect(page.getByRole('textbox', { name: 'Niveles de mejora' })).toHaveValue(
+    '4, 6, 8, 12, 14, 16, 19',
+  )
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-168/class-form-${info.project.name}.png`)
+  // A value the class cannot use is named on its own field.
+  await page.getByRole('textbox', { name: 'Niveles de mejora' }).fill('4, ocho')
+  await expect(page.getByText('Solo niveles de 1 a 20, separados por comas')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Niveles de mejora' })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  )
+  await page.getByRole('textbox', { name: 'Niveles de mejora' }).fill('4, 8')
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: /Guardado/ })).toBeVisible()
+  const fighter = server.entries().find((e) => e.kind === 'class' && e.key === 'fighter')!
+  expect(fighter.data).toMatchObject({ index: { hitDie: 10, improvementLevels: [4, 8] } })
+
+  // A new class without spells saves with what its form asks for; nothing is marked before.
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await expect(page.getByText('Elige uno')).toHaveCount(0)
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Caballero rúnico')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Rune Knight')
+  await page.getByRole('combobox', { name: 'Dado de golpe' }).click()
+  await page.getByRole('option', { name: 'd10' }).click()
+  await page.getByRole('combobox', { name: 'Primera salvación' }).click()
+  await page.getByRole('option', { name: 'Fuerza' }).click()
+  await page.getByRole('combobox', { name: 'Segunda salvación' }).click()
+  await page.getByRole('option', { name: 'Constitución' }).click()
+  await page.getByRole('textbox', { name: 'Habilidades a elegir' }).fill('2')
+  await page.getByRole('checkbox', { name: 'Cualquier habilidad' }).check()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Caballero rúnico' })).toBeFocused()
+  const rune = server.entries().find((e) => e.kind === 'class' && e.key === 'rune-knight')!
+  expect(rune.data).toMatchObject({
+    index: { hitDie: 10, saves: ['str', 'con'], skillCount: 2, skills: 'any' },
+  })
+})
+
+test('RYT-171 species, backgrounds and feats edit in their own forms', async ({ page }, info) => {
+  test.setTimeout(90_000)
+  await identityFixture(page)
+  const server = libraryServer({ srd: true, sample: true })
+  await server.install(page)
+
+  // An SRD species opens with its table.
+  await page.goto(`./#/library/${srdLibraryPackId}/species`)
+  await page.getByRole('link', { name: /^Goliat/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Goliat' })).toBeFocused()
+  await expect(page.getByRole('textbox', { name: 'Velocidad (pies)' })).toHaveValue('35')
+  await expect(page.getByRole('textbox', { name: 'Rasgo (español)' }).first()).toHaveValue(
+    'Linaje gigante',
+  )
+  await audit(page)
+
+  // A new species with a trait whose option the player picks.
+  await page.goto(`./#/library/${homebrewPackId}/species`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Tritón')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Triton')
+  await page.getByRole('textbox', { name: 'Velocidad (pies)' }).fill('30')
+  await page.getByRole('button', { name: 'Añadir rasgo' }).click()
+  await page.getByRole('textbox', { name: 'Rasgo (español)' }).fill('Emisario del mar')
+  await page.getByRole('textbox', { name: 'Rasgo (inglés)' }).fill('Emissary of the Sea')
+  await expect(
+    page.getByText('Su texto es el rasgo «species-triton-emissary-of-the-sea» de este paquete.'),
+  ).toBeVisible()
+  await page.getByRole('checkbox', { name: 'El jugador elige una opción' }).check()
+  await page.getByRole('textbox', { name: 'Opciones' }).fill('Tormenta | Storm\nMarea | Tide')
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-171/species-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Tritón' })).toBeFocused()
+  const triton = server.entries().find((e) => e.kind === 'species' && e.key === 'triton')!
+  expect(triton.data).toMatchObject({
+    index: {
+      speed: 30,
+      traits: [{ key: 'emissary-of-the-sea', es: 'Emisario del mar', en: 'Emissary of the Sea' }],
+      choices: [
+        {
+          trait: 'emissary-of-the-sea',
+          options: [
+            { key: 'storm', es: 'Tormenta', en: 'Storm' },
+            { key: 'tide', es: 'Marea', en: 'Tide' },
+          ],
+        },
+      ],
+    },
+  })
+
+  // A feat names its category; a save without one is refused on its field.
+  await page.goto(`./#/library/${homebrewPackId}/feat`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Pendenciero')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Brawler')
+  // The save button stays focusable while blocked; pressing it names the problem on its field.
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click({ force: true })
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Revisa los campos marcados' }),
+  ).toBeVisible()
+  await expect(page.getByText('Elige uno')).toBeVisible()
+  await page.getByRole('combobox', { name: 'Categoría' }).click()
+  await page.getByRole('option', { name: 'De origen' }).click()
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-171/feat-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Pendenciero' })).toBeFocused()
+  expect(
+    server.entries().find((e) => e.kind === 'feat' && e.key === 'brawler')!.data,
+  ).toMatchObject({
+    index: { category: 'origin' },
+  })
+
+  // A background names its three abilities, its skills and an origin feat from the list.
+  await page.goto(`./#/library/${homebrewPackId}/background`)
+  await page.getByRole('button', { name: 'Nueva entrada' }).click()
+  await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Marinero')
+  await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Sailor')
+  const abilities = page.getByRole('group', { name: /^Características/ })
+  for (const name of ['Fuerza', 'Destreza', 'Sabiduría'])
+    await abilities.getByRole('checkbox', { name }).check()
+  // A fourth is not taken silently: the others wait until one is unticked.
+  await expect(abilities.getByRole('checkbox', { name: 'Carisma' })).toBeDisabled()
+  for (const name of ['Atletismo', 'Percepción'])
+    await page
+      .getByRole('group', { name: /^Habilidades/ })
+      .getByRole('checkbox', { name })
+      .check()
+  await page.getByRole('combobox', { name: 'Dote de origen' }).click()
+  await expect(page.getByRole('option', { name: 'Alerta · SRD' })).toBeVisible()
+  await page.getByRole('option', { name: 'Pendenciero', exact: true }).click()
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-171/background-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Marinero' })).toBeFocused()
+  expect(server.entries().find((e) => e.key === 'sailor')!.data).toMatchObject({
+    index: {
+      abilities: ['str', 'dex', 'wis'],
+      skills: ['athletics', 'perception'],
+      feat: 'brawler',
+    },
+  })
+})
+
+test('RYT-163 the owner of a private pack chooses the campaigns that see it', async ({ page }) => {
+  await identityFixture(page)
+  const server = libraryServer({ sample: true })
+  await server.install(page)
+  await page.goto(`./#/library/${homebrewPackId}/spell`)
+  await page.getByRole('button', { name: 'Campañas' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Campañas de «Homebrew de la mesa»' })
+  await expect(dialog.getByText('Ninguna campaña lo ve todavía.')).toBeVisible()
+  await audit(page, '[role="dialog"]')
+  await dialog.getByRole('combobox', { name: 'Añadir una campaña tuya' }).click()
+  await page.getByRole('option', { name: offerCampaigns[1]!.name }).click()
+  await dialog.getByRole('button', { name: 'Añadir', exact: true }).click()
+  await expect(dialog.getByText('«Bosque de Ceniza» ya ve el paquete.')).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Con acceso: 1 campaña' })).toBeFocused()
+  expect(server.offers.get(homebrewPackId)?.map((c) => c.id)).toEqual([offerCampaigns[1]!.id])
+  await audit(page, '[role="dialog"]')
+  await dialog.getByRole('button', { name: 'Quitar Bosque de Ceniza' }).click()
+  await expect(dialog.getByText(/ya no ve el paquete/)).toBeVisible()
+  expect(server.offers.get(homebrewPackId)).toEqual([])
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Campañas' })).toBeFocused()
 })
 
 test('glossary entries change as drafts: text, JSON, leave guard, discard, delete and undo', async ({
@@ -388,6 +562,13 @@ test('a new subclass and a content file land as drafts after a report', async ({
   await page.getByRole('textbox', { name: 'Nombre (español)' }).fill('Círculo de las Mareas')
   await page.getByRole('textbox', { name: 'Nombre (inglés)' }).fill('Circle of Tides')
   await expect(page.getByRole('textbox', { name: 'Clave' })).toHaveValue('circle-of-tides')
+  // RYT-168: a subclass names its class before it can be saved.
+  await expect(page.getByRole('button', { name: 'Guardar', exact: true })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await page.getByRole('combobox', { name: 'Clase' }).click()
+  await page.getByRole('option', { name: 'Druida' }).click()
   await page
     .getByRole('textbox', { name: 'Texto (español)' })
     .fill('Primer párrafo.\n\n- Rasgo uno\n- Rasgo dos')
@@ -395,6 +576,7 @@ test('a new subclass and a content file land as drafts after a report', async ({
   await expect(page.getByRole('heading', { level: 2, name: 'Círculo de las Mareas' })).toBeFocused()
   const created = server.entries().find((e) => e.key === 'circle-of-tides')!
   expect(created.data).toEqual({
+    index: { class: 'druid' },
     es: {
       blocks: [
         { t: 'p', x: 'Primer párrafo.' },
@@ -420,7 +602,11 @@ test('a new subclass and a content file land as drafts after a report', async ({
         version: 1,
         kind: 'subclass',
         entries: [
-          { key: 'circle-of-ash', name_es: 'Círculo de la Ceniza', data: {} },
+          {
+            key: 'circle-of-ash',
+            name_es: 'Círculo de la Ceniza',
+            data: { index: { class: 'druid' } },
+          },
           {
             key: 'circle-of-embers',
             name_es: 'Círculo de las Brasas',
@@ -528,5 +714,120 @@ test('accounts that are not editors see neither the menu item nor the library', 
   await expect(page.getByRole('heading', { name: 'Solo para cuentas editoras' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Nuevo paquete' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Volver a mis campañas' })).toBeVisible()
+  await audit(page)
+})
+
+test('RYT-174 the base pack tells where each entry comes from and keeps what the app needs', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  await identityFixture(page)
+  const server = libraryServer({ srd: true, origins: true })
+  await server.install(page)
+
+  // The origin filter counts the SRD entries, the changed one and the pack's own.
+  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await expect(page.getByRole('heading', { level: 2, name: 'Rytta' })).toBeVisible()
+  const filter = page.getByRole('radiogroup', { name: 'Origen' })
+  await expect(filter.getByRole('radio', { name: 'Todas 331' })).toBeChecked()
+  await expect(filter.getByRole('radio', { name: 'SRD 329' })).toBeAttached()
+  await expect(filter.getByRole('radio', { name: 'Modificadas 1' })).toBeAttached()
+  await filter.getByText('Rytta 1').click()
+  const rows = page.locator('.lib-entry-list .lib-row')
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first()).toContainText('Lobo de ceniza')
+  await expect(rows.first().locator('.lib-row-meta')).toContainText('Rytta')
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-174/origin-list-${info.project.name}.png`)
+
+  // A changed entry says so and shows the SRD original on request.
+  await filter.getByText('Modificadas 1').click()
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first().locator('.lib-row-meta')).toContainText('SRD, modificada por Rytta')
+  await rows.first().click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Lobo de las cumbres' })).toBeFocused()
+  await expect(page.locator('.lib-entry-head')).toContainText('SRD, modificada por Rytta')
+  const original = page.getByRole('button', { name: 'Ver el original del SRD' })
+  await expect(original).toHaveAttribute('aria-expanded', 'false')
+  await original.press('Enter')
+  const panel = page.getByRole('region', { name: 'Original del SRD' })
+  await expect(panel).toContainText('Lobo')
+  await expect(panel).not.toContainText('Lobo de las cumbres')
+  await expect(page.getByRole('button', { name: 'Ocultar el original' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-174/origin-original-${info.project.name}.png`)
+
+  // An entry the app's code relies on keeps its form and has no Delete. A kind that is all
+  // SRD has no origin filter.
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await expect(page.getByRole('link', { name: /^Guerrero/ })).toBeVisible()
+  await expect(page.getByRole('radiogroup', { name: 'Origen' })).toHaveCount(0)
+  await page.getByRole('link', { name: /^Guerrero/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Guerrero' })).toBeFocused()
+  await expect(page.getByText('La app usa esta entrada.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Borrar', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Guardar', exact: true })).toBeVisible()
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-174/protected-${info.project.name}.png`)
+  // An unprotected entry of the same pack still offers it.
+  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await page.getByRole('searchbox').fill('lobo de ceniza')
+  await page.getByRole('link', { name: /^Lobo de ceniza/ }).click()
+  await expect(page.getByRole('button', { name: 'Borrar', exact: true })).toBeVisible()
+})
+
+test('RYT-174 the origin filter and the original read in English and the light theme', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  await page.addInitScript(() => {
+    localStorage.setItem('rytta-language', 'en')
+    localStorage.setItem('rytta-theme', 'parchment')
+  })
+  await identityFixture(page)
+  const server = libraryServer({ srd: true, origins: true })
+  await server.install(page)
+  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  const filter = page.getByRole('radiogroup', { name: 'Origin' })
+  await expect(filter.getByRole('radio', { name: 'All 331' })).toBeChecked()
+  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
+  // With text at 150% no segment is clipped (UI review round 1).
+  await page.addStyleTag({ content: 'html { font-size: 150% }' })
+  const clipped = await filter.evaluate(
+    (root) =>
+      [...root.querySelectorAll<HTMLElement>('.lib-origin-seg')].filter((label) => {
+        const box = label.getBoundingClientRect()
+        const frame = label.closest('.mantine-SegmentedControl-control')!.getBoundingClientRect()
+        return box.left < frame.left - 1 || box.right > frame.right + 1
+      }).length + (root.scrollWidth > root.clientWidth + 1 ? 1 : 0),
+  )
+  expect(clipped).toBe(0)
+  await capture(page, `docs/evidence/ui-review/ryt-174/origin-list-150-${info.project.name}.png`, {
+    fullPage: false,
+  })
+  await page.addStyleTag({ content: 'html { font-size: 100% }' })
+  await filter.getByText('Changed 1').click()
+  const rows = page.locator('.lib-entry-list .lib-row')
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first().locator('.lib-row-meta')).toContainText('SRD, changed by Rytta')
+  await audit(page)
+  await capture(
+    page,
+    `docs/evidence/ui-review/ryt-174/origin-list-en-light-${info.project.name}.png`,
+  )
+  await rows.first().click()
+  await page.getByRole('button', { name: 'See the SRD original' }).click()
+  await expect(page.getByRole('region', { name: 'SRD original' })).toContainText('Wolf')
+  await audit(page)
+  await capture(
+    page,
+    `docs/evidence/ui-review/ryt-174/origin-original-en-light-${info.project.name}.png`,
+  )
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.getByRole('link', { name: /^Fighter/ }).click()
+  await expect(page.getByText('The app uses this entry.')).toBeVisible()
   await audit(page)
 })

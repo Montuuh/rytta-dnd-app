@@ -5,7 +5,7 @@ import { ChevronRight, PawPrint, Plus, Swords } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { QueryFeedback } from '@/features/campaigns'
+import { QueryFeedback, showsData, StaleLine } from '@/features/campaigns'
 import { encountersQuery } from '../api'
 import type { EncounterSummary } from '../domain/combat'
 import { useRunner } from './helpers'
@@ -55,6 +55,8 @@ function Encounters({ campaignId }: { campaignId: string }) {
   const ended = all.filter((e) => e.status === 'ended')
   return (
     <Stack gap="lg">
+      {/* Above the create form, so it is not read as that form's failure. */}
+      <StaleLine queries={[query]} />
       <form
         className="combat-create"
         onSubmit={async (event) => {
@@ -82,7 +84,8 @@ function Encounters({ campaignId }: { campaignId: string }) {
       <RunnerError error={error} trigger={trigger} onClose={clear} />
       <QueryFeedback
         pending={query.isPending}
-        error={query.isError}
+        error={!showsData(query)}
+        cause={query.error}
         retry={() => void query.refetch()}
       />
       {query.data && all.length === 0 && <Text c="dimmed">{t('combat.list.empty')}</Text>}

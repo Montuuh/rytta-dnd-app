@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { srdLibraryEntries } from './srd-library.ts'
 
 // RYT-093 SDK contract fixture: an in-memory content library mirroring the RPC rules the manager
 // relies on (drafts, revisions, publish, import reports). Authorization and limits are verified
@@ -50,11 +51,87 @@ const keyPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 export const homebrewPackId = '70000000-0000-4000-8000-000000000001'
 
-export function libraryServer(options: { editor?: boolean; sample?: boolean } = {}) {
+/** RYT-163: campaigns the signed-in DM runs, to offer a private pack to. */
+export const offerCampaigns = [
+  { id: '72000000-0000-4000-8000-000000000001', name: 'La Costa Hundida' },
+  { id: '72000000-0000-4000-8000-000000000002', name: 'Bosque de Ceniza' },
+]
+export const srdLibraryPackId = '70000000-0000-4000-8000-000000000002'
+
+export function libraryServer(
+  options: {
+    editor?: boolean
+    sample?: boolean
+    /** RYT-167: the SRD pack as production publishes it (creatures, items and classes). */
+    srd?: boolean
+    /** RYT-174: the SRD pack has a baseline: one creature changed, one of the pack's own. */
+    origins?: boolean
+  } = {},
+) {
   const editor = options.editor ?? true
   const calls: { method: string; body: Json }[] = []
   const packs: Pack[] = []
   let entries: Entry[] = []
+  const offers = new Map<string, { id: string; name: string; added_at: string }[]>()
+  if (options.srd) {
+    packs.push({
+      id: srdLibraryPackId,
+      slug: 'srd-5-2-1',
+      title_en: options.origins ? 'Rytta' : 'System Reference Document 5.2.1',
+      title_es: options.origins ? 'Rytta' : 'Documento de referencia del sistema 5.2.1',
+      description_en: '',
+      description_es: '',
+      edition: '2024',
+      license: 'CC-BY-4.0',
+      attribution: 'SRD 5.2.1',
+      visibility: 'public',
+      version: 2,
+      revision: 2,
+    })
+    for (const entry of srdLibraryEntries())
+      entries.push({
+        id: id('71'),
+        pack_id: srdLibraryPackId,
+        ...entry,
+        deleted: false,
+        published: { name_en: entry.name_en, name_es: entry.name_es, data: entry.data, version: 2 },
+        revision: 1,
+        updated_at: '2026-11-22T10:00:00Z',
+      })
+  }
+  // RYT-174: the SRD as uploaded, to tell where each entry of the base pack comes from.
+  const baselines = new Map<string, { name_en: string; name_es: string; data: Json }>()
+  if (options.srd && options.origins) {
+    for (const e of entries)
+      baselines.set(e.id, { name_en: e.name_en, name_es: e.name_es, data: e.data })
+    const wolf = entries.find((e) => e.kind === 'creature' && e.key === 'wolf')!
+    wolf.name_es = 'Lobo de las cumbres'
+    wolf.published = { ...wolf.published!, name_es: wolf.name_es }
+    entries.push({
+      ...wolf,
+      id: id('71'),
+      key: 'ash-wolf',
+      name_en: 'Ash Wolf',
+      name_es: 'Lobo de ceniza',
+      published: { ...wolf.published, name_en: 'Ash Wolf', name_es: 'Lobo de ceniza' },
+    })
+  }
+  const origin = (e: Entry) => {
+    if (!options.origins || e.pack_id !== srdLibraryPackId) return undefined
+    const base = baselines.get(e.id)
+    if (!base) return 'own'
+    return same(base.data, e.data) && base.name_en === e.name_en && base.name_es === e.name_es
+      ? 'srd'
+      : 'changed'
+  }
+  /** Entries the app's code relies on, as private.content_entry_protected lists them. */
+  const guarded = (e: Entry) =>
+    !!options.origins &&
+    e.pack_id === srdLibraryPackId &&
+    !!e.published &&
+    (['class', 'species', 'background'].includes(e.kind) ||
+      (e.kind === 'condition' && e.key !== 'exhaustion') ||
+      (e.kind === 'table' && e.key === 'creature-baselines'))
   if (options.sample) {
     packs.push({
       id: homebrewPackId,
@@ -135,6 +212,8 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
     state: state(e),
     revision: e.revision,
     updated_at: e.updated_at,
+    ...(origin(e) ? { origin: origin(e) } : {}),
+    ...(guarded(e) ? { protected: true } : {}),
   })
   const problem = (kind: string, item: Json) => {
     const key = typeof item.key === 'string' ? item.key : ''
@@ -157,7 +236,41 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
           .map(packRow)
           .sort((a, b) => a.slug.localeCompare(b.slug)),
       }
+    // RYT-174: readers get the published entries that are no longer the plain SRD.
+    if (method === 'get_content_origins' || method === 'get_campaign_content_origins')
+      return packs
+        .filter((p) => options.origins && p.id === srdLibraryPackId)
+        .map((p) => ({
+          id: p.id,
+          title_en: p.title_en,
+          title_es: p.title_es,
+          entries: entries
+            .filter((e) => e.pack_id === p.id && e.published && origin(e) !== 'srd')
+            .map((e) => ({ kind: e.kind, key: e.key, origin: origin(e) })),
+        }))
     if (!editor) return { error: 'Forbidden' }
+    if (method === 'get_content_pack_offers' || method === 'set_content_pack_offer') {
+      const pack = packs.find((p) => p.id === body.target_pack)
+      if (!pack) return { error: 'Forbidden' }
+      const list = offers.get(pack.id) ?? []
+      if (method === 'set_content_pack_offer') {
+        if (pack.visibility !== 'private') return { error: 'Invalid request' }
+        const campaign = offerCampaigns.find((c) => c.id === body.target_campaign)
+        if (!campaign) return { error: 'Forbidden' }
+        const rest = list.filter((c) => c.id !== campaign.id)
+        offers.set(
+          pack.id,
+          body.offered ? [...rest, { ...campaign, added_at: '2026-11-23T10:00:00Z' }] : rest,
+        )
+      }
+      return {
+        pack: pack.id,
+        visibility: pack.visibility,
+        super_admin: false,
+        offered: offers.get(pack.id) ?? [],
+        mine: offerCampaigns,
+      }
+    }
     if (method === 'list_content_drafts')
       return entries
         .filter((e) => e.pack_id === body.target_pack && e.kind === body.entry_kind)
@@ -175,6 +288,7 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
         pack_id: e.pack_id,
         data: e.data,
         published: e.published ?? undefined,
+        baseline: origin(e) === 'changed' ? baselines.get(e.id) : null,
       }
     }
     if (method === 'save_content_pack') {
@@ -264,6 +378,7 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
       const entry = entries.find((e) => e.id === body.target_entry)
       if (!entry) return { error: 'Entry unavailable' }
       if (entry.revision !== body.expected_revision) return { error: 'Stale revision' }
+      if (method === 'delete_content_entry' && guarded(entry)) return { error: 'Entry protected' }
       if (!entry.published) {
         entries = entries.filter((e) => e !== entry)
         return { id: entry.id, deleted: true }
@@ -371,6 +486,7 @@ export function libraryServer(options: { editor?: boolean; sample?: boolean } = 
   return {
     calls,
     packs,
+    offers,
     entries: () => entries,
     /** Registers the content library RPCs for a page (after identityFixture). */
     async install(page: Page) {

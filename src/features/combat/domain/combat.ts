@@ -237,26 +237,18 @@ export const templateSchema = z.object({
 export type CombatantTemplate = z.infer<typeof templateSchema>
 export const templateListSchema = z.array(templateSchema)
 
-/** RYT-053: the DM's own image for an SRD creature in this campaign (replaces the bundled art). */
+/** RYT-094: a pack creature reference (the SRD's bare key, or `<pack ref>--<key>`), as in bestiary. */
+const creatureReferencePattern = /^(?:[0-9a-f]{8}--)?[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/** RYT-053: the DM's own image for a pack creature in this campaign (replaces the bundled art). */
 export const srdImageListSchema = z.array(
   z.object({
-    srd_id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    srd_id: z.string().regex(creatureReferencePattern),
     image_path: z.string().min(1),
     updated_at: z.string(),
   }),
 )
 export type SrdImage = z.infer<typeof srdImageListSchema>[number]
-
-/**
- * RYT-089: whether the campaign downloaded the official (SRD) bestiary, and the official creatures
- * its DM removed afterwards. Without the download the campaign lists only its own creatures.
- */
-export const srdBestiarySchema = z.object({
-  downloaded: z.boolean(),
-  downloaded_at: z.string().nullable().optional(),
-  removed: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
-})
-export type SrdBestiary = z.infer<typeof srdBestiarySchema>
 
 export const mutationResultSchema = z
   .object({
@@ -381,8 +373,8 @@ export type CombatAction =
   | { kind: 'deleteTemplate'; templateId: string }
   | { kind: 'templateImage'; templateId: string; revision: number; path: string | null }
   | { kind: 'srdImage'; srdId: string; path: string | null }
-  | { kind: 'srdBestiary'; action: 'download' | 'removeAll' }
-  | { kind: 'srdBestiary'; action: 'remove'; srdId: string }
+  /** RYT-094: hides a pack creature in this campaign (shown again from Content). */
+  | { kind: 'hideCreature'; packId: string; key: string }
   | { kind: 'tracker'; combatantId: string; key: string; value: number }
 
 export const combatErrorCodes = [

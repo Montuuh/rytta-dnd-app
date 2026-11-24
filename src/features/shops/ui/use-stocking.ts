@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import {
-  basicCatalogueQuery,
+  campaignItemCatalogueQuery,
   toImportItem,
   useBasicImport,
   type BasicItem,
@@ -109,7 +109,9 @@ export function useShopStocking(campaignId: string) {
         setStep('items')
         guard()
         const language = stockLanguage(i18n.language)
-        const { descriptions } = await cache.fetchQuery(basicCatalogueQuery())
+        const { descriptions } = await cache.fetchQuery(
+          campaignItemCatalogueQuery(userId!, campaignId),
+        )
         const results: ImportResult[] = []
         for (const batch of chunks(items, importBatch)) {
           const payload = batch.map((item) => toImportItem(item, language, descriptions))

@@ -16,6 +16,10 @@ async function openSheet(page: Page) {
   await open.click()
   const sheet = page.getByRole('dialog', { name: 'Entrar con email' })
   await expect(sheet).toBeVisible()
+  // Measure the sheet once its opening transition has finished, not halfway through it.
+  await sheet.evaluate((element) =>
+    Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+  )
   return { open, sheet }
 }
 

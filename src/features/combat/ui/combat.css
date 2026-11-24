@@ -1749,6 +1749,13 @@ button.combat-image-picker:focus-visible {
 .combat-image-status:empty {
   display: none;
 }
+/* RYT-154: the art prompt and its manual fallback sit under the token, never between the token
+   and the name of the header row this control's display: contents joins. */
+.combat-creature-image > .art-prompt,
+.combat-creature-image > .combat-prompt-manual {
+  order: 10;
+  flex: 1 1 100%;
+}
 
 /* RYT-045: the Player's own turn. "Up next" turns into the hand-off tile: the side column on
    tablets, the foot of the banner on phones. At 0 hit points the death save comes first: the tile

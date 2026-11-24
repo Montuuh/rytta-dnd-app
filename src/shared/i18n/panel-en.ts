@@ -194,6 +194,18 @@ export const panelEn = {
   'creation.basics':
     'Initiative {{init}}, speed {{speed}} ft, proficiency {{prof}}, passive Perception {{pp}}',
   'creation.noResourcesYet': 'None yet',
+  'creation.library.loading': 'Loading the campaign’s rules to finish the character…',
+  'creation.library.error':
+    'The campaign’s rules, needed to finish the character, could not be loaded.',
+  'creation.classes.loading': 'Loading the campaign’s classes…',
+  'creation.classes.error': 'The campaign’s classes could not be loaded.',
+  'creation.classes.none': 'This campaign has no classes. The DM turns them on in Content.',
+  'creation.classes.noneQuick':
+    'The quick sheet uses the SRD classes and this campaign has none. Go back and choose the full sheet.',
+  'creation.origins.loading': 'Loading the campaign’s species and backgrounds…',
+  'creation.origins.error': 'The campaign’s species and backgrounds could not be loaded.',
+  'creation.origins.none':
+    'This campaign has no species or backgrounds. The DM turns them on in Content.',
   'creation.create': 'Create sheet',
   'creation.blankFor': 'Blank sheet for {{name}}',
   'creation.blankTitle': 'Blank sheet',
@@ -236,6 +248,7 @@ export const panelEn = {
     'Drag the image or use the arrow keys to choose the square. Pinch, the wheel or + and − zoom.',
   'portrait.fitHint': 'The whole image, with black bars filling the square.',
   'portrait.zoom': 'Zoom',
+  'portrait.areaSquare': 'Picture framing. Arrow keys move the image; + and − change the zoom.',
   'portrait.area': 'Portrait framing. Arrow keys move the image; + and − zoom.',
   'portrait.preview': 'Preview at the sizes Rytta uses',
   'portrait.save': 'Save portrait',

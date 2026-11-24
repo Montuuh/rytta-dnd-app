@@ -13,8 +13,9 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { usePackImagePath } from '@/shared/ui/pack-images-context'
 import { useCampaign } from '@/features/campaigns'
-import { classEmblem, useClassEmblems } from '@/features/characters'
+import { useClassEmblemOf, useClassEmblems } from '@/features/characters'
 import { creatureArtQuery, creatureArtUrl, type CreatureArt } from '@/features/bestiary'
 import { combatImageQuery } from '../api'
 import { monogram, type Combatant, type HpBand } from '../domain/combat'
@@ -189,6 +190,7 @@ export function CombatantToken({
   /** RYT-098: a picture opens the viewer (only outside another control). */
   viewable?: boolean
 }) {
+  const classEmblem = useClassEmblemOf()
   // The DM's projection names the SRD creature an NPC came from: its bundled art stands in for a
   // missing image (RYT-053). Players and the table never receive srd_id, so they keep the monogram.
   const srdId = combatant.kind === 'npc' ? combatant.srd_id : undefined
@@ -203,12 +205,14 @@ export function CombatantToken({
       ? (classEmblem(combatant.class_key) ?? emblems(combatant.character_id))
       : null
   const art = srdId && credit ? creatureArtUrl(srdId, 'thumb') : null
+  // RYT-172: an NPC from a pack shows its pack picture below the campaign's own (DM view only).
+  const packPath = usePackImagePath('creature', srdId)
   return (
     <Token
       name={combatant.name}
       side={combatant.kind === 'lair' ? 'lair' : combatant.side}
       imageKind={combatant.kind === 'character' ? 'character' : 'creature'}
-      path={combatant.kind === 'lair' ? null : combatant.image_path}
+      path={combatant.kind === 'lair' ? null : (combatant.image_path ?? packPath)}
       art={art}
       size={size}
       active={showActive && combatant.is_active}

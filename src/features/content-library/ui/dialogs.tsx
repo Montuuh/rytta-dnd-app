@@ -14,13 +14,11 @@ import {
   TextInput,
 } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { FileJson } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
-import { monsterBodiesQuery, monsterIndexQuery } from '@/features/bestiary'
-import { glossaryBodiesQuery, glossaryIndexQuery } from '@/features/glossary'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { changesQuery, useImportEntries, useLibraryAction, type ImportProgress } from '../api'
 import { parseContentFile, type ParsedFile } from '../domain/import-file'
@@ -35,7 +33,6 @@ import {
   type ImportReport,
   type PackInput,
 } from '../domain/library'
-import { srdEntries, srdPack, type BundledSrd } from '../domain/srd'
 import { kindLabel } from './labels'
 
 const errorText = (t: TFunction, error: unknown) =>
@@ -498,90 +495,6 @@ export function ImportDialog({
               {t('library.importRun', { count: writes })}
             </Button>
           )}
-        </Group>
-      </Stack>
-    </Dialog>
-  )
-}
-
-export function SrdDialog({
-  language,
-  existing,
-  onClose,
-  onDone,
-}: {
-  language: ContentLanguage
-  existing: ContentPack | null
-  onClose: () => void
-  onDone: (packId: string, message: string) => void
-}) {
-  const { t } = useTranslation()
-  const action = useLibraryAction()
-  const run = useImportEntries()
-  const sources = useQueries({
-    queries: [
-      monsterIndexQuery(),
-      monsterBodiesQuery('en'),
-      monsterBodiesQuery('es'),
-      glossaryIndexQuery(),
-      glossaryBodiesQuery('en'),
-      glossaryBodiesQuery('es'),
-    ],
-  })
-  const [progress, setProgress] = useState<ImportProgress | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const loaded = sources.every((source) => source.data)
-  // Packed on each render (a few while uploading); the bundled sources never change.
-  const data = sources.map((source) => source.data)
-  const groups = loaded
-    ? srdEntries({
-        monsters: data[0],
-        bodies: { en: data[1], es: data[2] },
-        glossary: data[3],
-        glossaryBodies: { en: data[4], es: data[5] },
-      } as unknown as BundledSrd)
-    : null
-  const count = groups?.reduce((sum, group) => sum + group.entries.length, 0) ?? 0
-  const title = packTitle(srdPack, language)
-  const upload = async () => {
-    if (!groups) return
-    setError(null)
-    try {
-      const packId =
-        existing?.id ??
-        (
-          await action.mutateAsync({
-            kind: 'savePack',
-            packId: null,
-            revision: null,
-            input: srdPack,
-          })
-        ).id
-      await run(packId, groups, false, setProgress)
-      onDone(packId, t('library.srdDone', { version: (existing?.version ?? 0) + 1 }))
-    } catch (caught) {
-      setProgress(null)
-      setError(errorText(t, caught))
-    }
-  }
-  const busy = progress !== null || action.isPending
-  return (
-    <Dialog title={t('library.srdTitle')} onClose={onClose} busy={busy}>
-      <Stack gap="md">
-        {!loaded ? (
-          <Loader size="sm" aria-label={t('library.srdTitle')} />
-        ) : (
-          <Text>{t('library.srdBody', { title, count })}</Text>
-        )}
-        {progress && <ProgressLine label={t('library.importing', progress)} progress={progress} />}
-        {error && <FailureAlert>{error}</FailureAlert>}
-        <Group justify="flex-end">
-          <Button variant="subtle" data-autofocus onClick={onClose} disabled={busy}>
-            {t('library.cancel')}
-          </Button>
-          <Button disabled={!loaded || busy} loading={busy} onClick={() => void upload()}>
-            {t('library.srdRun', { count })}
-          </Button>
         </Group>
       </Stack>
     </Dialog>

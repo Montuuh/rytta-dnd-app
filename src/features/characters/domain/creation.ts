@@ -1,31 +1,27 @@
 import type { Build, Feature, SheetDraft } from './sheet'
 import { buildFits } from './sheet'
-import { featRefs, traitRef } from './resources'
+import type { ClassDef } from './class-catalog'
+import {
+  featRef,
+  localName,
+  traitRef,
+  type BackgroundDef,
+  pickedOption,
+  type FeatDef,
+  type OriginCatalog,
+  type SpeciesDef,
+} from './origin-catalog'
 import {
   bonusesValid,
   defaultArmorClass,
   emptyBuild,
   finalAbilities,
-  isBackgroundKey,
-  isClassKey,
-  isSpeciesKey,
   pointBuySpent,
   pointBuyValid,
   standardArrayValid,
   suggestedMaxHp,
 } from './rules'
-import {
-  abilityKeys,
-  backgrounds,
-  choiceKeys,
-  classes,
-  pointBuyBudget,
-  pointBuyCost,
-  species,
-  traitChoices,
-  type Ability,
-  type Skill,
-} from './srd'
+import { abilityKeys, pointBuyBudget, pointBuyCost, type Ability, type Skill } from './srd'
 
 export const creationSteps = [
   'class',
@@ -50,16 +46,20 @@ export type StepIssue =
   | 'tooLarge'
   | 'emptyName'
 
-/** Names for seeded features come from the caller so seeds follow the interface language. */
-export type Namer = (kind: 'trait' | 'feat', key: string) => string
+/** RYT-171: what the chosen background grants as its feat: its name and glossary entry. */
+export type OriginFeat = { key: string; name: string; ref: string }
 
 const seedId = (prefix: string, key: string) => `${prefix}-${key}`
 const withoutSeeds = (features: Feature[], prefix: string) =>
   features.filter((feature) => !feature.id.startsWith(`${prefix}-`))
 
-export function chooseClass(build: Build, key: string, label: string): Build {
-  if (!isClassKey(key)) return { ...build, classKey: 'custom', classLabel: label }
-  const entry = classes[key]
+/**
+ * A class from the campaign's packs or the SRD (RYT-168: its definition, `def`), or one typed by
+ * hand (`custom`), which keeps its own hit die and spellcasting.
+ */
+export function chooseClass(build: Build, key: string, label: string, def: ClassDef | null): Build {
+  if (!def || def.key !== key) return { ...build, classKey: 'custom', classLabel: label }
+  const entry = def
   // A different class starts without the old class's subclass and skill picks; background
   // skills stay. Choosing the same class again changes nothing but its label.
   const changed = key !== build.classKey
@@ -94,9 +94,19 @@ export function classChangeLoss(prev: Build, next: Build): ClassLoss | null {
   const spells = next.casterKind === 'none' ? prev.spells.length : 0
   return subclass || skills || spells ? { subclass, skills, spells } : null
 }
-export function chooseSpecies(build: Build, key: string, label: string, name: Namer): Build {
+/**
+ * A species from the campaign's packs (RYT-171: its definition, `def`, whose trait names are in
+ * `language`), or one typed by hand (`custom`).
+ */
+export function chooseSpecies(
+  build: Build,
+  key: string,
+  label: string,
+  def: SpeciesDef | null,
+  language: string,
+): Build {
   const features = withoutSeeds(build.features, 'species')
-  if (!isSpeciesKey(key)) {
+  if (!def || def.key !== key) {
     const clean = label.trim()
     return {
       ...build,
@@ -105,29 +115,55 @@ export function chooseSpecies(build: Build, key: string, label: string, name: Na
       features,
     }
   }
-  const entry = species[key]
   return {
     ...build,
     // Trait options belong to a species: a new species starts without them.
     choices: key === build.speciesKey ? build.choices : undefined,
     speciesKey: key,
     speciesLabel: label,
-    speed: entry.speed,
+    speed: def.speed,
     features: [
-      ...entry.traits.map((trait): Feature => ({
-        id: seedId('species', trait),
-        name: name('trait', trait),
+      ...def.traits.map((trait): Feature => ({
+        id: seedId('species', trait.key),
+        name: localName(trait.name, language),
         source: 'species',
         description: '',
-        ref: traitRef(key, trait),
+        ref: traitRef(key, trait.key),
       })),
       ...features,
     ],
   }
 }
-export const backgroundSkills = (build: Pick<Build, 'backgroundKey'>): Skill[] =>
-  isBackgroundKey(build.backgroundKey) ? [...backgrounds[build.backgroundKey].skills] : []
-export function chooseBackground(build: Build, key: string, label: string, name: Namer): Build {
+/** Skills the chosen background made proficient. */
+export const backgroundSkills = (build: Pick<Build, 'backgroundSkills'>): Skill[] => [
+  ...(build.backgroundSkills ?? []),
+]
+/** The feat a background grants, named in `language` (with its spell list, if any). */
+export function originFeat(
+  def: BackgroundDef,
+  feat: FeatDef | null,
+  language: string,
+  listName: (list: string) => string,
+): OriginFeat | null {
+  if (!def.feat) return null
+  const base = feat ? localName(feat.name, language) : def.feat
+  return {
+    key: def.featList ? `${def.feat}-${def.featList}` : def.feat,
+    name: def.featList ? `${base} (${listName(def.featList)})` : base,
+    ref: featRef(def.feat),
+  }
+}
+/**
+ * A background from the campaign's packs (RYT-171: its definition, `def`, and the feat it grants),
+ * or one typed by hand (`custom`). The build keeps the skills and abilities it gave.
+ */
+export function chooseBackground(
+  build: Build,
+  key: string,
+  label: string,
+  def: BackgroundDef | null,
+  feat: OriginFeat | null,
+): Build {
   const features = withoutSeeds(build.features, 'background')
   const bonuses = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }
   const skills = Object.fromEntries(
@@ -135,10 +171,11 @@ export function chooseBackground(build: Build, key: string, label: string, name:
       ([skill]) => !backgroundSkills(build).includes(skill as Skill),
     ),
   )
-  if (!isBackgroundKey(key)) {
+  const { backgroundSkills: _skills, backgroundAbilities: _abilities, ...rest } = build
+  if (!def || def.key !== key) {
     const clean = label.trim()
     return {
-      ...build,
+      ...rest,
       backgroundKey: key === 'custom' || clean ? 'custom' : '',
       backgroundLabel: clean,
       features,
@@ -146,31 +183,49 @@ export function chooseBackground(build: Build, key: string, label: string, name:
       skills,
     }
   }
-  const entry = backgrounds[key]
-  for (const skill of entry.skills) skills[skill] = 'proficient'
+  for (const skill of def.skills) skills[skill] = 'proficient'
   return {
-    ...build,
+    ...rest,
     backgroundKey: key,
     backgroundLabel: label,
+    backgroundSkills: [...def.skills],
+    backgroundAbilities: [...def.abilities],
     bonuses,
     skills,
     features: [
       ...features,
-      {
-        id: seedId('background', entry.feat),
-        name: name('feat', entry.feat),
-        source: 'feat',
-        description: '',
-        ref: featRefs[entry.feat],
-      },
+      ...(feat
+        ? [
+            {
+              id: seedId('background', feat.key),
+              name: feat.name,
+              source: 'feat' as const,
+              description: '',
+              ref: feat.ref,
+            },
+          ]
+        : []),
     ],
   }
 }
+/**
+ * RYT-171: builds saved before the background's skills and abilities were kept on them take them
+ * from the campaign's packs, when it has that background.
+ */
+export function withBackgroundFacts(
+  build: Build,
+  origins: OriginCatalog | null | undefined,
+): Build {
+  if (build.backgroundSkills || !origins) return build
+  const def = origins.backgrounds.find((item) => item.key === build.backgroundKey)
+  if (!def) return build
+  return { ...build, backgroundSkills: [...def.skills], backgroundAbilities: [...def.abilities] }
+}
 
-export function classSkillChoices(build: Build) {
+export function classSkillChoices(build: Build, def: ClassDef | null) {
   const fixed = backgroundSkills(build)
   const picked = (Object.keys(build.skills) as Skill[]).filter((skill) => !fixed.includes(skill))
-  const entry = isClassKey(build.classKey) ? classes[build.classKey] : null
+  const entry = def && def.key === build.classKey ? def : null
   return {
     fixed,
     picked,
@@ -179,7 +234,13 @@ export function classSkillChoices(build: Build) {
   }
 }
 
-export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[] {
+export function validateStep(
+  step: CreationStep,
+  draft: SheetDraft,
+  def: ClassDef | null,
+  /** RYT-171: the chosen species, whose options are asked (unknown: none are). */
+  species: SpeciesDef | null = null,
+): StepIssue[] {
   const { build } = draft
   const issues: StepIssue[] = []
   if (step === 'class') {
@@ -191,9 +252,8 @@ export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[]
       issues.push('chooseSpecies')
     // RYT-111: a species option the SRD requires (lineage, ancestry, legacy) is asked here.
     if (
-      choiceKeys.some(
-        (key) => traitChoices[key].species === build.speciesKey && !build.choices?.[key],
-      )
+      species?.key === build.speciesKey &&
+      species.choices.some((choice) => !pickedOption(build, choice.trait))
     )
       issues.push('chooseSpeciesOption')
     if (!build.backgroundKey || (build.backgroundKey === 'custom' && !build.backgroundLabel.trim()))
@@ -207,7 +267,7 @@ export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[]
       issues.push('pointBuy')
   }
   if (step === 'skills') {
-    const { picked, count } = classSkillChoices(build)
+    const { picked, count } = classSkillChoices(build, def)
     if (count !== null && picked.length > count) issues.push('skillCount')
   }
   const blank = (items: { name: string }[]) => items.some((item) => !item.name.trim())
@@ -218,11 +278,15 @@ export function validateStep(step: CreationStep, draft: SheetDraft): StepIssue[]
   return issues
 }
 /** Every applicable step must pass before a sheet is completed. */
-export const validateAll = (draft: SheetDraft) => [
+export const validateAll = (
+  draft: SheetDraft,
+  def: ClassDef | null,
+  species: SpeciesDef | null = null,
+) => [
   ...new Set(
     creationSteps
       .filter((step) => stepApplies(step, draft.build))
-      .flatMap((step) => validateStep(step, draft)),
+      .flatMap((step) => validateStep(step, draft, def, species)),
   ),
 ]
 /** Derived columns follow the build so the server receives one consistent snapshot. */
@@ -259,21 +323,21 @@ export const pointBuyStart = () =>
  * wizard names them on Next and on the review step and lets the player continue anyway.
  */
 export type StepGap = { kind: 'bonuses' } | { kind: 'skills'; missing: number }
-export function stepGaps(step: CreationStep, build: Build): StepGap[] {
+export function stepGaps(step: CreationStep, build: Build, def: ClassDef | null): StepGap[] {
   if (step === 'origin') {
     const total = abilityKeys.reduce((sum, key) => sum + build.bonuses[key], 0)
     return build.backgroundKey && total === 0 ? [{ kind: 'bonuses' }] : []
   }
   if (step === 'skills') {
-    const { picked, count } = classSkillChoices(build)
+    const { picked, count } = classSkillChoices(build, def)
     return count !== null && picked.length < count
       ? [{ kind: 'skills', missing: count - picked.length }]
       : []
   }
   return []
 }
-export const buildGaps = (build: Build) =>
-  creationSteps.flatMap((step) => stepGaps(step, build).map((gap) => ({ step, gap })))
+export const buildGaps = (build: Build, def: ClassDef | null) =>
+  creationSteps.flatMap((step) => stepGaps(step, build, def).map((gap) => ({ step, gap })))
 
 /** Standard array: picking a score another ability holds swaps the two, so no value repeats. */
 export function assignStandard(

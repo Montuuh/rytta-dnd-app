@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Button, FileButton, Select, Slider, Switch, Textarea, TextInput } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import {
   Beer,
   Bell,
@@ -544,6 +545,7 @@ function CardForm({
           </button>
         )}
       </div>
+      <CopyArtPrompt subject={{ kind: 'card', name: title }} />
       {error && (
         <p className="tt-error" role="alert">
           {t(error === true ? 'tabletop.error.save' : error)}

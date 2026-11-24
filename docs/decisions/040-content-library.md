@@ -1,6 +1,7 @@
 # ADR 040: game data is downloaded from a content library
 
-Date: 2026-11-13. Status: accepted for RYT-092 to RYT-094. The user accepted every recommendation of the options
+Date: 2026-11-13. Status: accepted for RYT-092 to RYT-094; the editor role was narrowed to super
+admins by ADR 054 (RYT-173). The user accepted every recommendation of the options
 page (2026-11-13).
 
 ## Context

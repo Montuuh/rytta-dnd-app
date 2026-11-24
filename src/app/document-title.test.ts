@@ -11,6 +11,7 @@ describe('documentTitleKey', () => {
     expect(live('/campaign/c1/combat/e1/table')).toBe('module.combat')
     expect(live('/campaign/c1/glossary/goblin')).toBe('module.glossary')
     expect(live('/campaign/c1/tabletop/s1')).toBe('module.tabletop')
+    expect(live('/campaign/c1/tabletop-table')).toBe('module.tabletop')
   })
 
   it('titles the party sub-pages by their own page', () => {
@@ -37,7 +38,8 @@ describe('documentTitleKey', () => {
 
   it('leaves a campaign home to the campaign name and 404s unknown or planned routes', () => {
     expect(live('/campaign/c1')).toBeNull()
-    expect(live('/campaign/c1/quests')).toBe('page.notFound')
+    expect(live('/campaign/c1/quests')).toBe('module.quests')
+    expect(live('/campaign/c1/atlas')).toBe('page.notFound')
     expect(live('/campaign/c1/nowhere')).toBe('page.notFound')
   })
 

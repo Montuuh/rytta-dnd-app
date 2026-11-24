@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { ViewerButton } from '@/shared/ui/image-viewer'
 import { artUrl } from '@/shared/ui/art-url'
+import { packImageOptions } from '@/shared/api/pack-images'
+import { usePackImagePath } from '@/shared/ui/pack-images-context'
 import { itemImageQuery } from '../api'
 import type { ItemCategory } from '../domain/item'
 import { itemIcons } from './icons'
@@ -25,6 +27,7 @@ export function ItemIcon({
   name,
   frame,
   category,
+  basicKey,
 }: {
   icon: string
   size?: number
@@ -35,15 +38,26 @@ export function ItemIcon({
   frame?: string
   /** Without a picture, a tile of 40px or more shows this category's painting; smaller keeps the glyph. */
   category?: ItemCategory
+  /** RYT-172: the pack item it came from; its pack picture shows when the DM uploaded none. */
+  basicKey?: string | null
 }) {
   const { t } = useTranslation()
   const { state } = useAuth()
   const query = useQuery(itemImageQuery(state.user?.id, imagePath))
+  // Order (owner choice P5 A): the campaign's upload, the pack's picture, the category painting.
+  const packPath = usePackImagePath('item', !imagePath && size >= PAINTED_FROM ? basicKey : null)
+  const pack = useQuery(packImageOptions(state.user?.id, packPath))
   const [failed, setFailed] = useState<string | null>(null)
   const Icon = itemIcons[icon] ?? Package
-  const src = query.data && failed !== query.data ? query.data : null
+  const found = query.data ?? pack.data
+  const src = found && failed !== found ? found : null
   // Wait for a real picture to load before falling back, so the painting never flashes first.
-  const painted = !src && category && size >= PAINTED_FROM && !(imagePath && query.isPending)
+  const painted =
+    !src &&
+    category &&
+    size >= PAINTED_FROM &&
+    !(imagePath && query.isPending) &&
+    !(packPath && pack.isPending)
   const picture = src ? (
     <img
       src={src}

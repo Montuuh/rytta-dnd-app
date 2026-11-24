@@ -79,8 +79,16 @@ function placement(bitmap: ImageBitmap, mode: Mode, view: View, size: number): P
   return [sx, sy, side, side, 0, 0, size, size]
 }
 
+/** A portrait: the square editor with the campaign's storage messages. */
+export function PortraitEditor(
+  props: Omit<Parameters<typeof SquareImageEditor>[0], 'describeError'>,
+) {
+  const describeError = usePortraitErrorText()
+  return <SquareImageEditor {...props} describeError={describeError} />
+}
+
 /** Always opened after choosing an image (P9): crop a square or keep it whole with bars. */
-export function PortraitEditor({
+export function SquareImageEditor({
   file,
   name,
   onCancel,
@@ -88,6 +96,10 @@ export function PortraitEditor({
   onReplace,
   pending,
   error,
+  title,
+  saveLabel,
+  describeError,
+  shape = 'round',
 }: {
   error: Error | null
   file: File
@@ -97,9 +109,16 @@ export function PortraitEditor({
   /** J3-14: a refused picture is replaced from the same dialog instead of a dead end. */
   onReplace: (file: File) => void
   pending: boolean
+  /** RYT-172: the same square editor for other pictures (a library entry). */
+  title?: string
+  saveLabel?: string
+  /** What a failed save says. */
+  describeError: (error: Error | null) => string
+  /** RYT-172: a library picture shows square, not as a round portrait. */
+  shape?: 'round' | 'square'
 }) {
   const { t } = useTranslation()
-  const errorText = usePortraitErrorText()
+  const errorText = describeError
   const picker = useRef<HTMLInputElement>(null)
   const refusal = !readableTypes.includes(file.type)
     ? 'wrongType'
@@ -279,7 +298,9 @@ export function PortraitEditor({
       fullScreen={phone}
       size="lg"
       title={
-        <span className="block-sheet-title user-copy">{t('portrait.editorTitle', { name })}</span>
+        <span className="block-sheet-title user-copy">
+          {title ?? t('portrait.editorTitle', { name })}
+        </span>
       }
       closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
     >
@@ -334,7 +355,7 @@ export function PortraitEditor({
           <Text size="sm" c="dimmed" id="portrait-help">
             {t(mode === 'crop' ? 'portrait.cropHint' : 'portrait.fitHint')}
           </Text>
-          <div className="portrait-stage" data-mode={mode}>
+          <div className="portrait-stage" data-mode={mode} data-shape={shape}>
             <canvas
               ref={canvas}
               width={out}
@@ -342,7 +363,7 @@ export function PortraitEditor({
               className="portrait-canvas"
               tabIndex={mode === 'crop' ? 0 : -1}
               role="img"
-              aria-label={t('portrait.area')}
+              aria-label={t(shape === 'square' ? 'portrait.areaSquare' : 'portrait.area')}
               aria-describedby="portrait-help"
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
@@ -373,7 +394,7 @@ export function PortraitEditor({
             <Text size="sm" c="dimmed" mb={6}>
               {t('portrait.preview')}
             </Text>
-            <Group gap="md" align="flex-end" aria-hidden="true">
+            <Group gap="md" align="flex-end" aria-hidden="true" data-shape={shape}>
               {[72, 48, 32].map((size, index) => (
                 <canvas
                   key={size}
@@ -398,7 +419,7 @@ export function PortraitEditor({
               {t('action.cancel')}
             </Button>
             <Button onClick={() => void save()} loading={pending || encoding} disabled={!bitmap}>
-              {t('portrait.save')}
+              {saveLabel ?? t('portrait.save')}
             </Button>
           </Group>
         </Stack>

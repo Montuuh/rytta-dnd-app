@@ -10,6 +10,8 @@ type TitleInput = {
 /** Routes whose title is not their module's name. Order matters: first match wins. */
 const routeTitles = [
   { pattern: '/session', key: 'session.journal' },
+  // The table screen under the miniatures (RYT-160: also its offline title).
+  { pattern: '/tabletop-table', key: 'module.tabletop' },
   { pattern: '/members', key: 'campaign.manage' },
   { pattern: '/party/roster', key: 'roster.title' },
   { pattern: '/party/:characterId/create', key: 'wizard.editorTitle' },

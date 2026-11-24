@@ -1,8 +1,16 @@
-import { Backpack, BookMarked, Map as TableMap, Store, Swords, Users } from 'lucide-react'
+import {
+  Backpack,
+  BookMarked,
+  Map as TableMap,
+  ScrollText,
+  Store,
+  Swords,
+  Users,
+} from 'lucide-react'
 import type { CampaignModuleKey } from '../domain/campaign'
 
 /** The one module catalogue for navigation, module pages and the DM module switches.
- * Only shipped modules are listed: planned ones (quests, atlas, memories, stronghold, workshop)
+ * Only shipped modules are listed: planned ones (atlas, memories, stronghold, workshop)
  * stay out of the DM controls and navigation for launch, and their paths show "not found".
  * Add an entry here when its page ships. */
 export const campaignModules = [
@@ -31,6 +39,15 @@ export const campaignModules = [
     summary: 'summary.shops',
     icon: Store,
     ticket: 'RYT-005',
+    implemented: true,
+  },
+  {
+    key: 'quests',
+    path: '/quests',
+    label: 'module.quests',
+    summary: 'summary.quests',
+    icon: ScrollText,
+    ticket: 'RYT-006',
     implemented: true,
   },
   {

@@ -127,3 +127,28 @@ Remediation references:
   at the time. The platform-managed `auth.schema_migrations` and `storage.migrations` tables are
   not part of the dump.
 - Not done: a restore rehearsal. It needs a staging database connection.
+
+## Progress 2026-11-22
+
+- **Headers on the live site (criterion 5).** `curl -I` on `https://rytta.pages.dev/`,
+  `/version.json`, `/manifest.webmanifest` and a hashed `/assets/index-*.js`: every response has
+  `Content-Security-Policy` with `frame-ancestors 'none'` and the backend as the only data origin,
+  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security`,
+  `Permissions-Policy` and `Cross-Origin-Opener-Policy`; `/` and `version.json` are `no-cache`;
+  hashed assets are `public, max-age=31536000, immutable`.
+- **Browser run without CSP violations.** Chrome on the live site, signed out: landing, the email
+  sign-in sheet with the Turnstile widget loaded, the three views of the sample game (DM, Player,
+  shared screen), privacy and terms. A `securitypolicyviolation` listener recorded none, and the
+  console showed no CSP message (only an unrelated browser-extension error). Not covered: signed-in
+  screens (backend requests, signed images, realtime socket).
+- **Encrypted backup (criterion 7).** `.github/workflows/backup.yml` now encrypts the dump with age
+  to `BACKUP_AGE_RECIPIENT` inside the runner, deletes the plain files, refuses to upload anything
+  but `backup.tar.age` and its checksum, and does nothing without the key. Not run yet: the
+  workflow stays disabled until the owner creates the key and adds the variable
+  (docs/deployment.md, "Backups").
+- **Still open, owner side.** Google sign-in on staging; the restore rehearsal (staging is
+  synthetic only, so loading a production dump there is the owner's decision); the CI promotion
+  workflow, which first needs the decision on staging's migration history versions (a `db push`
+  against today's staging history would try to re-apply every migration); PRE removal after
+  staging sign-in and frontend exist; the ADR on the hosting decision.

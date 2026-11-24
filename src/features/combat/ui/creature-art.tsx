@@ -1,10 +1,22 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react'
-import { ActionIcon, Button, Loader, Menu, Group, Text, UnstyledButton } from '@mantine/core'
+import {
+  ActionIcon,
+  Button,
+  Loader,
+  Menu,
+  Group,
+  Text,
+  Textarea,
+  UnstyledButton,
+} from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import { ImagePlus, Pencil, RotateCcw, Trash2, type LucideIcon } from 'lucide-react'
+import { ImagePlus, Pencil, RotateCcw, Sparkles, Trash2, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
+import { usePackImagePath } from '@/shared/ui/pack-images-context'
+import { artPrompt, copyArtPrompt, type ArtSubject } from '@/shared/lib/art-prompt'
+import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import {
   creatureArtQuery,
   creatureArtUrl,
@@ -138,6 +150,7 @@ export function CreatureArtControl({
   type,
   target,
   imagePath,
+  packPath = null,
   art,
   credit,
   notice,
@@ -151,6 +164,8 @@ export function CreatureArtControl({
   target: ArtTarget
   /** The private image: the campaign creature's own, or the DM's image of an SRD creature. */
   imagePath: string | null
+  /** RYT-172: the pack entry's picture, shown when the campaign has no image of its own. */
+  packPath?: string | null
   /** Bundled art of the SRD creature (or of the one a campaign creature was copied from). */
   art: { thumb: string; full: string } | null
   credit: CreatureArt | null
@@ -160,6 +175,8 @@ export function CreatureArtControl({
   onViewing?: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  const promptSubject: ArtSubject = { kind: 'creature', name, traits: [type] }
+  const [manualPrompt, setManualPrompt] = useState(false)
   const inputId = useId()
   const errorId = useId()
   const input = useRef<HTMLInputElement>(null)
@@ -190,9 +207,9 @@ export function CreatureArtControl({
   const failed = unreadable || upload.isError || action.isError
   const pending = upload.isPending || action.isPending || encoding
   const srd = 'srdId' in target
-  const hasImage = Boolean(imagePath) || Boolean(art)
+  const hasImage = Boolean(imagePath ?? packPath) || Boolean(art)
   const glyph = type ? typeGlyphs[type] : undefined
-  const plate = usePlateImage(imagePath, art?.full ?? null)
+  const plate = usePlateImage(imagePath ?? packPath, art?.full ?? null)
   // After a save the control may change shape (picker <-> plate, pencil <-> menu), or mount again in
   // the plate's place: focus follows it once.
   useEffect(() => {
@@ -317,6 +334,19 @@ export function CreatureArtControl({
                 >
                   {t('bestiary.art.change')}
                 </Menu.Item>
+                <Menu.Item
+                  leftSection={<Sparkles size={16} aria-hidden="true" />}
+                  onClick={async () => {
+                    const copied = await copyArtPrompt(promptSubject)
+                    setManualPrompt(!copied)
+                    onNotice({
+                      text: t(copied ? 'art.prompt.copied' : 'art.prompt.failed'),
+                      refocus: false,
+                    })
+                  }}
+                >
+                  {t('art.prompt.copy')}
+                </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
                   // The theme's own danger colour: Mantine's red fails AA on the light menu.
@@ -371,6 +401,21 @@ export function CreatureArtControl({
             </span>
           </Token>
         </label>
+      )}
+      {!hasImage && <CopyArtPrompt subject={promptSubject} />}
+      {manualPrompt && (
+        <Textarea
+          className="combat-prompt-manual"
+          label={t('art.prompt.manual')}
+          value={artPrompt(promptSubject)}
+          readOnly
+          autosize
+          minRows={3}
+          maxRows={8}
+          onFocus={(event) => event.currentTarget.select()}
+          data-autofocus
+          ref={(node) => node?.select()}
+        />
       )}
       <Text role="status" size="sm" className="combat-image-status">
         {pending ? t('combat.image.saving') : (notice?.text ?? '')}
@@ -427,7 +472,7 @@ export function CreatureArtControl({
       {viewing && (
         <ArtViewer
           name={name}
-          imagePath={imagePath}
+          imagePath={imagePath ?? packPath}
           art={art?.full}
           credit={credit}
           ownNote={srd ? 'srd' : 'campaign'}
@@ -457,7 +502,9 @@ export function CreaturePortrait({ combatant }: { combatant: Combatant }) {
     srdId && credit
       ? { thumb: creatureArtUrl(srdId, 'thumb'), full: creatureArtUrl(srdId, 'full') }
       : null
-  const path = combatant.image_path ?? null
+  // RYT-172: an NPC from a pack shows its pack picture below the campaign's own (DM view only).
+  const packPath = usePackImagePath('creature', srdId)
+  const path = combatant.image_path ?? packPath
   const plate = usePlateImage(path, art?.full ?? null)
   const [viewing, setViewing] = useState(false)
   const open = useRef<HTMLButtonElement>(null)

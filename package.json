@@ -25,7 +25,8 @@
     "pre:plan": "node scripts/sync-pre.mjs",
     "pre:sync": "node scripts/sync-pre.mjs --apply",
     "pre:restore": "node scripts/sync-pre.mjs --apply --restore",
-    "dev:fixtures": "node scripts/dev-fixtures.mjs"
+    "dev:fixtures": "node scripts/dev-fixtures.mjs",
+    "art:queue": "node scripts/art-queue/server.mjs"
   },
   "dependencies": {
     "@mantine/core": "^9.7.4",
@@ -51,6 +52,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^5.0.5",
+    "bcryptjs": "^2.4.3",
     "husky": "^9.1.7",
     "oxlint": "^1.89.0",
     "prettier": "^3.9.10",

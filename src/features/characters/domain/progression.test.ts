@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { blankDraft, quickDraft } from '../../../../tests/fixtures/srd/with-classes'
 import { describeHistory } from './history'
 import {
   addLibraryFeature,
@@ -10,7 +11,6 @@ import {
   syncProgressionReport,
   type LibraryFeature,
 } from './progression'
-import { blankDraft, quickDraft } from './quick'
 import { classResources } from './resources'
 import { emptyBuild } from './rules'
 import { buildSchema, type HistoryItem } from './sheet'
@@ -19,7 +19,10 @@ import { classKeys } from './srd'
 type Row = { id: string; cat: string; es: string; lv?: number; fc?: string; sb?: string }
 // The bundled glossary index (RYT-071 class features), read as data through Vite.
 const [index] = Object.values(
-  import.meta.glob<Row[]>('../../glossary/content/index.json', { eager: true, import: 'default' }),
+  import.meta.glob<Row[]>('../../../../tests/fixtures/srd/glossary/index.json', {
+    eager: true,
+    import: 'default',
+  }),
 )
 const library: LibraryFeature[] = index!
   // Class features only: species traits and feats (RYT-102) have no class.
@@ -167,7 +170,7 @@ describe('RYT-072 quick and blank sheets', () => {
         classLabel: classKey,
         speciesKey: 'human',
         speciesLabel: 'Humano',
-        backgroundLabel: (key) => key,
+        backgroundLabel: (key: string) => key,
         name: namer,
         library,
         names,
@@ -189,7 +192,7 @@ describe('RYT-072 quick and blank sheets', () => {
       classLabel: 'Monje',
       speciesKey: 'human',
       speciesLabel: 'Humano',
-      backgroundLabel: (key) => key,
+      backgroundLabel: (key: string) => key,
       name: namer,
       library,
       names,

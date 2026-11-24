@@ -1,9 +1,12 @@
 # Basic items catalogue (RYT-103)
 
+> Since RYT-167 the app reads the SRD from the content library (the SRD 5.2.1 pack). These scripts
+> build the test copy in `tests/fixtures/srd/`; change the published SRD in the library.
+
 `build-basic-items.mjs` writes the bilingual catalogue campaigns import as real items:
 
-- `src/features/inventory/content/basic-items.json`: mechanics and both names of every item.
-- `src/features/inventory/content/basic-items.{en,es}.json`: one description per item key.
+- `tests/fixtures/srd/items/basic-items.json`: mechanics and both names of every item.
+- `tests/fixtures/srd/items/basic-items.{en,es}.json`: one description per item key.
 
 The rows live in `data/*.mjs` and were reviewed by hand against the "Equipment" chapter of the
 System Reference Document 5.2.1, English (`SRD_CC_v5.2.1.pdf`, pages 89–102) and official Spanish

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import index from '../content/index.json'
+import index from '../../../../tests/fixtures/srd/glossary/index.json'
 import { buildCatalog, glossaryIds, indexLetter } from './catalog'
 import {
   emptyDraft,

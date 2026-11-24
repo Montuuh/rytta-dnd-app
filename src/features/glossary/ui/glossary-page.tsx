@@ -1,3 +1,4 @@
+import { config } from '@/shared/lib/config'
 import {
   Anchor,
   Button,
@@ -15,6 +16,7 @@ import {
   Title,
 } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
+import { StaleLine } from '@/features/campaigns'
 import { PageHead } from '@/shared/ui/page-head'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
 import { ChevronLeft, Plus, Search, SlidersHorizontal } from 'lucide-react'
@@ -261,7 +263,16 @@ export function GlossaryPage() {
     setParams(next, { replace: true })
   }
 
-  if (glossary.indexError)
+  // RYT-167: the SRD lives in the library; the offline preview build has none to read.
+  if (config.VITE_DATA_MODE !== 'supabase')
+    return (
+      <Stack className="gl-page">
+        <Title order={1}>{t('module.glossary')}</Title>
+        <p className="gl-quiet-note">{t('glossary.noLibrary')}</p>
+      </Stack>
+    )
+  // RYT-161: a failed refresh keeps the glossary already on screen.
+  if (glossary.indexError && !catalog)
     return (
       <Stack className="gl-page">
         <Title order={1}>{t('module.glossary')}</Title>
@@ -357,6 +368,28 @@ export function GlossaryPage() {
           }
         />
       )}
+      <StaleLine
+        queries={[
+          {
+            data: catalog,
+            isError: Boolean(glossary.loadError),
+            error: glossary.loadError,
+            refetch: async () => glossary.retry(),
+          },
+        ]}
+      />
+      <StaleLine
+        missing
+        text={t('glossary.homebrewMissing')}
+        queries={[
+          {
+            data: undefined,
+            isError: Boolean(glossary.homebrewError),
+            error: glossary.homebrewError,
+            refetch: async () => glossary.retry(),
+          },
+        ]}
+      />
 
       {!showReaderOnly && (
         <div className="gl-finder">

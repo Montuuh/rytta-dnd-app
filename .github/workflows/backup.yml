@@ -1,9 +1,10 @@
 name: Backup
 # The free database plan keeps no backups, so this takes a logical dump of production once a day
-# and keeps it as a workflow artifact. It does nothing until the repository secret BACKUP_DB_URL
-# exists (docs/deployment.md, "Backups"). The dump holds personal data and the repository is
-# public, so artifacts are downloadable by anyone: the workflow stays disabled until the dump is
-# encrypted before upload (docs/evidence/RYT-122/owner-checks-2026-11-20.md).
+# and keeps it as a workflow artifact. The dump holds personal data and the repository is public,
+# so artifacts are downloadable by anyone: the dump is encrypted with age to the owner's public key
+# before it leaves the runner, and only the encrypted file is uploaded (RYT-116). It does nothing
+# until both the secret BACKUP_DB_URL and the variable BACKUP_AGE_RECIPIENT exist
+# (docs/deployment.md, "Backups").
 on:
   schedule:
     - cron: '17 3 * * *'
@@ -19,12 +20,16 @@ jobs:
     timeout-minutes: 15
     env:
       BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
     steps:
-      - name: Skip when the secret is not set
+      - name: Skip unless the database secret and the encryption key are set
         id: gate
         run: |
           if [ -z "$BACKUP_DB_URL" ]; then
             echo "BACKUP_DB_URL is not set; nothing to back up."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          elif [[ ! "$BACKUP_AGE_RECIPIENT" =~ ^age1[0-9a-z]{58}$ ]]; then
+            echo "BACKUP_AGE_RECIPIENT is not an age public key; refusing to take an unencrypted backup."
             echo "run=false" >> "$GITHUB_OUTPUT"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
@@ -53,10 +58,27 @@ jobs:
             sha256sum backup/*.sql
           } > backup/MANIFEST.txt
           cat backup/MANIFEST.txt
+      - name: Encrypt and remove the plain dump
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq age
+          mkdir -p encrypted
+          tar -C backup -cf - . | age -r "$BACKUP_AGE_RECIPIENT" -o encrypted/backup.tar.age
+          sha256sum encrypted/backup.tar.age > encrypted/backup.tar.age.sha256
+          rm -rf backup
+          cat encrypted/backup.tar.age.sha256
+      - name: Refuse anything that is not encrypted
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          test ! -e backup
+          unexpected=$(find encrypted -type f ! -name 'backup.tar.age' ! -name 'backup.tar.age.sha256')
+          if [ -n "$unexpected" ]; then echo "Unexpected files: $unexpected"; exit 1; fi
+          if head -c 64 encrypted/backup.tar.age | grep -q 'CREATE\|COPY\|INSERT'; then exit 1; fi
+          head -c 21 encrypted/backup.tar.age | grep -q 'age-encryption.org/v1'
       - uses: actions/upload-artifact@v4
         if: steps.gate.outputs.run == 'true'
         with:
           name: database-backup-${{ github.run_id }}
-          path: backup/
+          path: encrypted/
           retention-days: 14
           if-no-files-found: error

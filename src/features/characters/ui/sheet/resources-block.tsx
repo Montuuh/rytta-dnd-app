@@ -7,7 +7,8 @@ import { maxTrackers, syncProgressionReport } from '../../domain/progression'
 import { actionsFor, resourceSpec, spendAction, type ResourceAction } from '../../domain/resources'
 import { slotsFor } from '../../domain/rules'
 import type { Build, Tracker, Vitals } from '../../domain/sheet'
-import { choiceKeys, traitChoices, type ChoiceKey } from '../../domain/srd'
+import { localName, pickedOption, speciesDefFor } from '../../domain/origin-catalog'
+import { useOriginCatalog } from '../class-catalog'
 import {
   createdSlots,
   metamagicCost,
@@ -25,10 +26,8 @@ import { Counter } from './widgets'
 
 const resourceName = (key: string) => `panel.resource.${key}` as 'panel.resource.monk-focus'
 const actionName = (key: string) => `panel.action.${key}` as 'panel.action.monk-flurry-of-blows'
-const choiceName = (choice: ChoiceKey, option: string) =>
-  `srd.choice.${choice}.${option}` as 'srd.choice.giantAncestry.fire'
 /** The trait option a tracker depends on, shown under its name. */
-const trackerChoice: Record<string, ChoiceKey> = {
+const trackerChoice: Record<string, string> = {
   'goliath-giant-ancestry': 'giantAncestry',
   'dragonborn-breath-weapon': 'draconicAncestry',
 }
@@ -38,7 +37,7 @@ const trackerChoice: Record<string, ChoiceKey> = {
 export function ResourcesBlock(
   props: PanelProps & { onPersonalise: () => void; onFontOfMagic?: (open: boolean) => void },
 ) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const trackerLabel = useTrackerLabel()
   const { build, level, vitals, canEdit, editing, locked, commit, change, onPersonalise } = props
   const library = useSrdLibrary()
@@ -61,7 +60,13 @@ export function ResourcesBlock(
       ).length
     : 0
   const leftOut = report?.leftOut ?? 0
-  const choices = choiceKeys.filter((key) => traitChoices[key].species === build.speciesKey)
+  // RYT-171: the species' options come from the campaign's packs.
+  const species = speciesDefFor(useOriginCatalog(), build.speciesKey)
+  const choices = species?.choices ?? []
+  const traitName = (key: string) => {
+    const trait = species?.traits.find((item) => item.key === key)
+    return trait ? localName(trait.name, i18n.language) : key
+  }
   const usedMarks = marks.filter((tracker) => (vitals.tracker_uses[tracker.id] ?? 0) > 0)
   // The button that was pressed disappears with its own success, so focus moves on deliberately:
   // to the first tracker that "Add them" brought, or to the first mark after "New turn".
@@ -115,16 +120,16 @@ export function ResourcesBlock(
           <Text size="sm" c="dimmed" fw={600} id="panel-choices">
             {t('panel.choicesTitle')}
           </Text>
-          {choices.map((key) => (
+          {choices.map(({ trait: key, options }) => (
             <Select
               key={key}
-              label={t(`srd.trait.${key}`)}
+              label={traitName(key)}
               placeholder={t('panel.choose')}
-              data={traitChoices[key].options.map((option) => ({
-                value: option,
-                label: t(choiceName(key, option)),
+              data={options.map((option) => ({
+                value: option.key,
+                label: localName(option.name, i18n.language),
               }))}
-              value={build.choices?.[key] ?? null}
+              value={pickedOption(build, key) ?? null}
               disabled={!canEdit || props.pending}
               allowDeselect={false}
               comboboxProps={{ withinPortal: true }}
@@ -334,17 +339,18 @@ function TrackerRow({
   commit: (values: Vitals) => void
   onFontOfMagic?: (open: boolean) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const trackerLabel = useTrackerLabel()
   const used = Math.min(tracker.max, vitals.tracker_uses[tracker.id] ?? 0)
   const spec = resourceSpec(tracker.key)
   const options = actionsFor(build, level, tracker.key)
   const choice = tracker.key ? trackerChoice[tracker.key] : undefined
-  const picked = choice ? build.choices?.[choice] : undefined
-  const pickedLabel =
-    choice && picked && (traitChoices[choice].options as readonly string[]).includes(picked)
-      ? t(choiceName(choice, picked))
-      : null
+  const picked = choice ? pickedOption(build, choice) : undefined
+  const species = speciesDefFor(useOriginCatalog(), build.speciesKey)
+  const option = species?.choices
+    .find((item) => item.trait === choice)
+    ?.options.find((item) => item.key === picked)
+  const pickedLabel = option ? localName(option.name, i18n.language) : null
   const set = (next: number) => setUses({ ...vitals.tracker_uses, [tracker.id]: next })
   // A refused option names why for a moment and outlines the resource it needs.
   const [refused, setRefused] = useState<{ cost: number; at: number } | null>(null)

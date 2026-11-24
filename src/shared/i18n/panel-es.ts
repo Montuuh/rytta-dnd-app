@@ -197,6 +197,18 @@ export const panelEs = {
   'creation.basics':
     'Iniciativa {{init}}, velocidad {{speed}} pies, competencia {{prof}}, Percepción pasiva {{pp}}',
   'creation.noResourcesYet': 'Ninguno por ahora',
+  'creation.library.loading': 'Cargando las reglas de la campaña para terminar el personaje…',
+  'creation.library.error':
+    'No se pudieron cargar las reglas de la campaña, que hacen falta para terminar el personaje.',
+  'creation.classes.loading': 'Cargando las clases de la campaña…',
+  'creation.classes.error': 'No se pudieron cargar las clases de la campaña.',
+  'creation.classes.none': 'Esta campaña no tiene clases. El DM las activa en Contenido.',
+  'creation.classes.noneQuick':
+    'La ficha rápida usa las clases del SRD y esta campaña no las tiene. Vuelve y elige la ficha completa.',
+  'creation.origins.loading': 'Cargando las especies y los trasfondos de la campaña…',
+  'creation.origins.error': 'No se pudieron cargar las especies y los trasfondos de la campaña.',
+  'creation.origins.none':
+    'Esta campaña no tiene especies ni trasfondos. El DM los activa en Contenido.',
   'creation.create': 'Crear ficha',
   'creation.blankFor': 'Ficha en blanco para {{name}}',
   'creation.blankTitle': 'Ficha en blanco',
@@ -239,6 +251,8 @@ export const panelEs = {
     'Arrastra la imagen o usa las flechas para elegir el recuadro. Pellizca, usa la rueda o + y − para el zoom.',
   'portrait.fitHint': 'La imagen entera, con bandas negras para completar el cuadrado.',
   'portrait.zoom': 'Zoom',
+  'portrait.areaSquare':
+    'Encuadre de la imagen. Las flechas mueven la imagen; + y − cambian el zoom.',
   'portrait.area': 'Encuadre del retrato. Las flechas mueven la imagen; + y − cambian el zoom.',
   'portrait.preview': 'Así se verá en los tamaños que usa Rytta',
   'portrait.save': 'Guardar retrato',

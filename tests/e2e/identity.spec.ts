@@ -260,7 +260,7 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
 }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await identityFixture(page, { empty: true })
+  const f = await identityFixture(page, { empty: true })
   await page.goto('./')
   // An invitation is waiting: it leads the page and creating a campaign steps back.
   await expect(page.getByRole('region', { name: 'Unirse a una campaña' })).toBeVisible()
@@ -273,8 +273,40 @@ test('empty hub creates a DM campaign, accepts a Player invitation and signs out
   await expect(create).toBeFocused()
   await create.click()
   await page.getByLabel('Nombre de la campaña').fill('Our new table')
-  await page.getByRole('dialog').getByRole('button', { name: 'Crear campaña', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'Siguiente', exact: true }).click()
+  // RYT-167: the campaign's content, with the SRD and the Rytta basics ticked.
+  await expect(dialog.getByRole('heading', { name: 'Contenido de la campaña' })).toBeFocused()
+  const creatures = dialog.getByRole('group', { name: 'Criaturas' })
+  await expect(creatures.getByRole('checkbox', { name: /Documento de referencia/ })).toBeChecked()
+  const basics = dialog
+    .getByRole('group', { name: 'Objetos' })
+    .getByRole('checkbox', { name: /Rytta · Objetos básicos/ })
+  await expect(basics).toBeChecked()
+  await basics.uncheck()
+  await expectTouchTargets(dialog, 'button:visible, .content-choice-pack:visible')
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include('[role="dialog"]')
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+        .analyze()
+    ).violations,
+  ).toEqual([])
+  if (process.env.RYT_CAPTURE)
+    await page.screenshot({
+      path: `docs/evidence/ui-review/ryt-167/create-content-${test.info().project.name}.png`,
+    })
+  await dialog.getByRole('button', { name: 'Crear campaña', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Our new table' })).toBeVisible()
+  const sent = f.calls.find((call) => call.method === 'create_campaign_with_content')!.body
+  expect(sent.chosen).toEqual([
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'creatures' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'spells' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'classes' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'rules' },
+    { pack: '80000000-0000-4000-8000-000000000001', category: 'items' },
+  ])
   await page.getByRole('button', { name: 'Aceptar invitación' }).click()
   await expect(page.getByRole('button', { name: 'Aceptar invitación' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'The Amber Road', level: 2 })).toBeVisible()
@@ -694,15 +726,19 @@ test('self-demotion clears management views and offline actions are not queued',
   await expect(page.getByRole('button', { name: 'Invitar jugador' })).toHaveCount(0)
 })
 
-test('failed refresh hides cached campaign content and offers recovery', async ({ page }) => {
+// RYT-013: a failed refresh keeps what was on screen and says so above it, with Retry.
+test('failed refresh keeps cached campaign content and offers recovery', async ({ page }) => {
   const f = await identityFixture(page)
   await page.goto('./')
   await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
   f.failCampaigns()
   await page.getByRole('button', { name: 'Actualizar', exact: true }).click()
-  await expect(page.getByRole('alert').first()).toContainText('No se pudo cargar')
-  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Reintentar' })).toBeEnabled()
+  // RYT-161: one quiet line with Retry over the kept list, not a red alert.
+  const line = page.locator('.stale-line')
+  await expect(line).toContainText('No se pudo actualizar')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'The Sunken Coast' })).toBeVisible()
+  await expect(line.getByRole('button', { name: 'Reintentar' })).toBeEnabled()
 })
 
 test('home uses a compact settings menu and accessible theme icons', async ({ page }, info) => {
@@ -781,12 +817,15 @@ test('invitation panel distinguishes loading, empty and failed refresh with reco
   await capture(page, info.outputPath('invitations-empty.png'))
   fail = true
   await panel.getByRole('button', { name: 'Actualizar', exact: true }).click()
-  await expect(panel.getByRole('alert')).toBeVisible()
-  await expect(panel.getByText('No tienes invitaciones pendientes.')).toHaveCount(0)
-  fail = false
-  await panel.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  // RYT-013, RYT-161: the last good answer stays; the screen's one line says it is not updated.
+  const line = page.locator('.stale-line')
+  await expect(line).toContainText('No se pudo actualizar')
+  await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
-  await expect(panel.getByRole('alert')).toHaveCount(0)
+  fail = false
+  await line.getByRole('button', { name: 'Reintentar', exact: true }).click()
+  await expect(panel.getByText('No tienes invitaciones pendientes.')).toBeVisible()
+  await expect(line).toHaveCount(0)
 })
 
 for (const language of ['es', 'en'] as const)

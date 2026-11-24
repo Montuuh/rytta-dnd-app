@@ -17,6 +17,7 @@ import {
 } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
+import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowUpDown,
@@ -83,6 +84,7 @@ function savedView(): View {
 export function ItemStore({ campaignId }: { campaignId: string }) {
   const { state } = useAuth()
   const { t, i18n } = useTranslation()
+  const baseLabel = useBasePackLabel(t('store.origin.srd'))
   const [params, setParams] = useSearchParams()
   const query = useQuery(catalogueQuery(state.user!.id, campaignId))
   const roster = useQuery(rosterQuery(state.user!.id, campaignId))
@@ -138,11 +140,6 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     }
   }
   const all = useMemo(() => (query.data ?? []).filter((item) => !item.archived), [query.data])
-  // Catalogue keys already in the campaign, archived ones too: the import skips them.
-  const importedKeys = useMemo(
-    () => new Set((query.data ?? []).flatMap((item) => (item.basic_key ? [item.basic_key] : []))),
-    [query.data],
-  )
   const toggleTemplate = (item: ItemDefinition) => {
     const next = !item.is_template
     const key = `${item.id}:${item.revision}:${next}`
@@ -507,7 +504,9 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                 </span>
                 {!phone && (
                   <span className="store-row-side">
-                    <span className="store-origin">{t(`store.origin.${item.origin}`)}</span>
+                    <span className="store-origin">
+                      {item.origin === 'srd' ? baseLabel : t(`store.origin.${item.origin}`)}
+                    </span>
                     <span className="store-value" data-empty={item.value_gp === null || undefined}>
                       {value(item)}
                     </span>
@@ -664,7 +663,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
       {importing && (
         <BasicImport
           campaignId={campaignId}
-          imported={importedKeys}
+          definitions={query.data ?? []}
           onClose={() => {
             setImporting(false)
             returnFocus()

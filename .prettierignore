@@ -5,9 +5,10 @@ playwright-report
 test-results
 package-lock.json
 docs/evidence
-# Generated SRD content (scripts/glossary/build_content.py)
-src/features/glossary/content/
-# Generated SRD content (scripts/bestiary/build_bestiary.py)
+# Generated SRD test copy (scripts/glossary/build_content.py, scripts/bestiary/build_bestiary.py)
+tests/fixtures/srd/glossary/
+tests/fixtures/srd/bestiary/
+# Generated bestiary art map (scripts/bestiary/import_art.py)
 src/features/bestiary/content/
 # Third-party builds copied as published (public/vendor/*/NOTICE.md)
 public/vendor/

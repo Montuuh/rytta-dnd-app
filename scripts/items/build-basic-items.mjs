@@ -15,7 +15,7 @@ import { weapons } from './data/weapons.mjs'
 
 const outDir = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../src/features/inventory/content',
+  '../../tests/fixtures/srd/items',
 )
 const attribution =
   'Entries with source "srd" adapt the System Reference Document 5.2.1 by Wizards of the Coast LLC ' +

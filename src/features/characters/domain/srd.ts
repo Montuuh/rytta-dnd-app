@@ -52,260 +52,46 @@ export type CasterKind = (typeof casterKinds)[number]
 export const hitDice = [6, 8, 10, 12] as const
 export type HitDie = (typeof hitDice)[number]
 
-export type ClassEntry = {
-  hitDie: HitDie
-  saves: readonly [Ability, Ability]
-  skillCount: number
-  skills: readonly Skill[] | 'any'
-  caster: CasterKind
-  spellAbility: Ability | null
-}
-export const classes = {
-  barbarian: {
-    hitDie: 12,
-    saves: ['str', 'con'],
-    skillCount: 2,
-    skills: ['animalHandling', 'athletics', 'intimidation', 'nature', 'perception', 'survival'],
-    caster: 'none',
-    spellAbility: null,
-  },
-  bard: {
-    hitDie: 8,
-    saves: ['dex', 'cha'],
-    skillCount: 3,
-    skills: 'any',
-    caster: 'full',
-    spellAbility: 'cha',
-  },
-  cleric: {
-    hitDie: 8,
-    saves: ['wis', 'cha'],
-    skillCount: 2,
-    skills: ['history', 'insight', 'medicine', 'persuasion', 'religion'],
-    caster: 'full',
-    spellAbility: 'wis',
-  },
-  druid: {
-    hitDie: 8,
-    saves: ['int', 'wis'],
-    skillCount: 2,
-    skills: [
-      'arcana',
-      'animalHandling',
-      'insight',
-      'medicine',
-      'nature',
-      'perception',
-      'religion',
-      'survival',
-    ],
-    caster: 'full',
-    spellAbility: 'wis',
-  },
-  fighter: {
-    hitDie: 10,
-    saves: ['str', 'con'],
-    skillCount: 2,
-    skills: [
-      'acrobatics',
-      'animalHandling',
-      'athletics',
-      'history',
-      'insight',
-      'intimidation',
-      'persuasion',
-      'perception',
-      'survival',
-    ],
-    caster: 'none',
-    spellAbility: null,
-  },
-  monk: {
-    hitDie: 8,
-    saves: ['str', 'dex'],
-    skillCount: 2,
-    skills: ['acrobatics', 'athletics', 'history', 'insight', 'religion', 'stealth'],
-    caster: 'none',
-    spellAbility: null,
-  },
-  paladin: {
-    hitDie: 10,
-    saves: ['wis', 'cha'],
-    skillCount: 2,
-    skills: ['athletics', 'insight', 'intimidation', 'medicine', 'persuasion', 'religion'],
-    caster: 'half',
-    spellAbility: 'cha',
-  },
-  ranger: {
-    hitDie: 10,
-    saves: ['str', 'dex'],
-    skillCount: 3,
-    skills: [
-      'animalHandling',
-      'athletics',
-      'insight',
-      'investigation',
-      'nature',
-      'perception',
-      'stealth',
-      'survival',
-    ],
-    caster: 'half',
-    spellAbility: 'wis',
-  },
-  rogue: {
-    hitDie: 8,
-    saves: ['dex', 'int'],
-    skillCount: 4,
-    skills: [
-      'acrobatics',
-      'athletics',
-      'deception',
-      'insight',
-      'intimidation',
-      'investigation',
-      'perception',
-      'persuasion',
-      'sleightOfHand',
-      'stealth',
-    ],
-    caster: 'none',
-    spellAbility: null,
-  },
-  sorcerer: {
-    hitDie: 6,
-    saves: ['con', 'cha'],
-    skillCount: 2,
-    skills: ['arcana', 'deception', 'insight', 'intimidation', 'persuasion', 'religion'],
-    caster: 'full',
-    spellAbility: 'cha',
-  },
-  warlock: {
-    hitDie: 8,
-    saves: ['wis', 'cha'],
-    skillCount: 2,
-    skills: [
-      'arcana',
-      'deception',
-      'history',
-      'intimidation',
-      'investigation',
-      'nature',
-      'religion',
-    ],
-    caster: 'pact',
-    spellAbility: 'cha',
-  },
-  wizard: {
-    hitDie: 6,
-    saves: ['int', 'wis'],
-    skillCount: 2,
-    skills: ['arcana', 'history', 'insight', 'investigation', 'medicine', 'nature', 'religion'],
-    caster: 'full',
-    spellAbility: 'int',
-  },
-} as const satisfies Record<string, ClassEntry>
-export type ClassKey = keyof typeof classes
-export const classKeys = Object.keys(classes) as ClassKey[]
+/**
+ * The 12 SRD classes by key. Their tables (hit die, saves, skills, spellcasting, subclass and
+ * improvement levels) are pack data since RYT-168 and left the code with RYT-167; the keys stay for
+ * the class resources, emblems and quick-build presets the app keeps for the SRD classes.
+ */
+export const classKeys = [
+  'barbarian',
+  'bard',
+  'cleric',
+  'druid',
+  'fighter',
+  'monk',
+  'paladin',
+  'ranger',
+  'rogue',
+  'sorcerer',
+  'warlock',
+  'wizard',
+] as const
+export type ClassKey = (typeof classKeys)[number]
 
-export const subclassOf: Record<ClassKey, string> = {
-  barbarian: 'berserker',
-  bard: 'lore',
-  cleric: 'life',
-  druid: 'land',
-  fighter: 'champion',
-  monk: 'open-hand',
-  paladin: 'devotion',
-  ranger: 'hunter',
-  rogue: 'thief',
-  sorcerer: 'draconic',
-  warlock: 'fiend',
-  wizard: 'evoker',
-}
-
-export const species = {
-  dragonborn: {
-    speed: 30,
-    traits: [
-      'draconicAncestry',
-      'breathWeapon',
-      'damageResistance',
-      'darkvision',
-      'draconicFlight',
-    ],
-  },
-  dwarf: {
-    speed: 30,
-    traits: ['darkvision', 'dwarvenResilience', 'dwarvenToughness', 'stonecunning'],
-  },
-  elf: { speed: 30, traits: ['darkvision', 'elvenLineage', 'feyAncestry', 'keenSenses', 'trance'] },
-  gnome: { speed: 30, traits: ['darkvision', 'gnomishCunning', 'gnomishLineage'] },
-  goliath: { speed: 35, traits: ['giantAncestry', 'largeForm', 'powerfulBuild'] },
-  halfling: { speed: 30, traits: ['brave', 'halflingNimbleness', 'luck', 'naturallyStealthy'] },
-  human: { speed: 30, traits: ['resourceful', 'skillful', 'versatile'] },
-  orc: { speed: 30, traits: ['adrenalineRush', 'darkvision', 'relentlessEndurance'] },
-  tiefling: { speed: 30, traits: ['darkvision', 'fiendishLegacy', 'otherworldlyPresence'] },
-} as const
-export type SpeciesKey = keyof typeof species
-export const speciesKeys = Object.keys(species) as SpeciesKey[]
-export type TraitKey = (typeof species)[SpeciesKey]['traits'][number]
-
-/** RYT-102 traits with options the player picks; the choice lives in `build.choices`. */
-export const traitChoices = {
-  draconicAncestry: {
-    species: 'dragonborn',
-    options: [
-      'black',
-      'blue',
-      'brass',
-      'bronze',
-      'copper',
-      'gold',
-      'green',
-      'red',
-      'silver',
-      'white',
-    ],
-  },
-  elvenLineage: { species: 'elf', options: ['drow', 'high', 'wood'] },
-  gnomishLineage: { species: 'gnome', options: ['forest', 'rock'] },
-  giantAncestry: {
-    species: 'goliath',
-    options: ['cloud', 'fire', 'frost', 'hill', 'stone', 'storm'],
-  },
-  fiendishLegacy: { species: 'tiefling', options: ['abyssal', 'chthonic', 'infernal'] },
-} as const satisfies Record<string, { species: SpeciesKey; options: readonly string[] }>
-export type ChoiceKey = keyof typeof traitChoices
-export const choiceKeys = Object.keys(traitChoices) as ChoiceKey[]
-
-export const backgrounds = {
-  acolyte: {
-    abilities: ['int', 'wis', 'cha'],
-    skills: ['insight', 'religion'],
-    feat: 'magicInitiateCleric',
-  },
-  criminal: {
-    abilities: ['dex', 'con', 'int'],
-    skills: ['sleightOfHand', 'stealth'],
-    feat: 'alert',
-  },
-  sage: {
-    abilities: ['con', 'int', 'wis'],
-    skills: ['arcana', 'history'],
-    feat: 'magicInitiateWizard',
-  },
-  soldier: {
-    abilities: ['str', 'dex', 'con'],
-    skills: ['athletics', 'intimidation'],
-    feat: 'savageAttacker',
-  },
-} as const satisfies Record<
-  string,
-  { abilities: readonly [Ability, Ability, Ability]; skills: readonly Skill[]; feat: string }
->
-export type BackgroundKey = keyof typeof backgrounds
-export const backgroundKeys = Object.keys(backgrounds) as BackgroundKey[]
-export type FeatKey = (typeof backgrounds)[BackgroundKey]['feat']
+/**
+ * RYT-171: the SRD species and backgrounds by key. Their tables (speed, traits, options,
+ * abilities, skills and feat) come from the campaign's packs; these keys name the SRD ones in the
+ * interface language and select the effects the app applies to them (owner choice P1 A).
+ */
+export const speciesKeys = [
+  'dragonborn',
+  'dwarf',
+  'elf',
+  'gnome',
+  'goliath',
+  'halfling',
+  'human',
+  'orc',
+  'tiefling',
+] as const
+export type SpeciesKey = (typeof speciesKeys)[number]
+export const backgroundKeys = ['acolyte', 'criminal', 'sage', 'soldier'] as const
+export type BackgroundKey = (typeof backgroundKeys)[number]
 
 export const standardArray = [15, 14, 13, 12, 10, 8] as const
 export const pointBuyBudget = 27

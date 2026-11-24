@@ -277,8 +277,8 @@ export function SuggestDialog({
             <Text className="bld-empty">{t('builder.suggest.noRoom')}</Text>
           ) : crowded ? (
             <Text className="bld-empty">{t('builder.suggest.crowded')}</Text>
-          ) : ideas.length === 0 && catalog.official?.downloaded === false ? (
-            <OfficialElsewhere campaignId={campaignId} total={catalog.officialCount} />
+          ) : ideas.length === 0 && catalog.noPacks ? (
+            <OfficialElsewhere campaignId={campaignId} />
           ) : ideas.length === 0 ? (
             <Text className="bld-empty">{t('builder.suggest.none')}</Text>
           ) : (
@@ -344,7 +344,7 @@ function IdeaList({
                     name={g.creature.name}
                     side="enemy"
                     imageKind="creature"
-                    path={item?.imagePath}
+                    path={item?.imagePath ?? item?.packPath}
                     art={item ? itemArt(item)?.thumb : null}
                     size={44}
                   />

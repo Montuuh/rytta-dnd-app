@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   useCallback,
   useEffect,
@@ -12,8 +12,10 @@ import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign } from '@/features/campaigns'
+import { noPackOrigins, packOriginsOptions } from '@/shared/api/pack-origins'
 import { config } from '@/shared/lib/config'
-import { glossaryBodiesQuery, glossaryIndexQuery, homebrewQuery } from '../api'
+import { PackOriginsContext } from '@/shared/ui/pack-origins-context'
+import { homebrewQuery } from '../api'
 import { buildCatalog } from '../domain/catalog'
 import { createLinker } from '../domain/linker'
 import type { GlossaryLanguage } from '../domain/types'
@@ -21,6 +23,7 @@ import { GlossaryContext, type GlossaryContextValue } from './glossary-context'
 import { useHomebrewManager } from './homebrew-manager'
 import { pushRecent, readRecent, writeRecent } from './recent'
 import { ReferenceSheet } from './reference-sheet'
+import { useGlossarySource } from './glossary-source'
 import './glossary.css'
 
 type LayerProps = {
@@ -38,7 +41,6 @@ type LayerProps = {
 export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: LayerProps) {
   const { i18n } = useTranslation()
   const { state } = useAuth()
-  const cache = useQueryClient()
   const language: GlossaryLanguage = i18n.resolvedLanguage === 'en' ? 'en' : 'es'
   const userId = state.user?.id
   const live = config.VITE_DATA_MODE === 'supabase'
@@ -46,16 +48,21 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
   const [stack, setStack] = useState<string[]>([])
   const [recent, setRecent] = useState(readRecent)
 
-  const index = useQuery(glossaryIndexQuery())
-  const bodies = useQuery({ ...glossaryBodiesQuery(language), enabled: wantBodies })
+  // RYT-164, RYT-165: the campaign's packs, the published SRD, or the demo sample.
+  const source = useGlossarySource({ live, userId, campaignId, language, wantBodies })
+  // RYT-174: which entries of the base pack are no longer the SRD, for the source lines below.
+  const origins = useQuery(packOriginsOptions(userId, campaignId))
   const homebrew = useQuery({
     ...homebrewQuery(userId ?? '', campaignId ?? ''),
     enabled: live && Boolean(userId && campaignId && canBrowse),
   })
 
   const catalog = useMemo(
-    () => (index.data ? buildCatalog(index.data, language, homebrew.data ?? []) : null),
-    [index.data, language, homebrew.data],
+    () =>
+      source.rows
+        ? buildCatalog(source.rows, language, homebrew.data ?? [], source.unlisted)
+        : null,
+    [source.rows, source.unlisted, language, homebrew.data],
   )
   const linker = useMemo(() => (catalog ? createLinker(catalog) : null), [catalog])
   const requestBodies = useCallback(() => setWantBodies(true), [])
@@ -108,18 +115,31 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
   }, [])
-  const retry = useCallback(() => {
-    void cache.invalidateQueries({ queryKey: ['glossary'] })
-  }, [cache])
+  // Stable across renders: the context value only changes when the glossary itself does, so pages
+  // below (open menus, drawers) do not re-render on every library query update.
+  const retrySource = useRef(source.retry)
+  useEffect(() => {
+    retrySource.current = () => {
+      source.retry()
+      if (homebrew.isError) void homebrew.refetch()
+    }
+  })
+  const loadError =
+    source.error ?? (homebrew.isError && homebrew.data !== undefined ? homebrew.error : null)
+  const homebrewError = homebrew.isError && homebrew.data === undefined ? homebrew.error : null
+  const retry = useCallback(() => retrySource.current(), [])
 
   const value = useMemo<GlossaryContextValue>(
     () => ({
       language,
       catalog,
+      classRows: source.classRows ?? null,
       linker,
-      bodies: bodies.data ?? null,
-      bodiesError: bodies.isError,
-      indexError: index.isError,
+      bodies: source.bodies ?? null,
+      bodiesError: source.bodiesError,
+      indexError: source.indexError,
+      loadError,
+      homebrewError,
       requestBodies,
       retry,
       open,
@@ -133,10 +153,13 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     [
       language,
       catalog,
+      source.classRows,
       linker,
-      bodies.data,
-      bodies.isError,
-      index.isError,
+      source.bodies,
+      source.bodiesError,
+      source.indexError,
+      loadError,
+      homebrewError,
       requestBodies,
       retry,
       open,
@@ -150,11 +173,13 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     ],
   )
   return (
-    <GlossaryContext.Provider value={value}>
-      {children}
-      <ReferenceSheet stack={stack} onBack={back} onClose={close} />
-      {manager.element}
-    </GlossaryContext.Provider>
+    <PackOriginsContext.Provider value={origins.data ?? noPackOrigins}>
+      <GlossaryContext.Provider value={value}>
+        {children}
+        <ReferenceSheet stack={stack} onBack={back} onClose={close} />
+        {manager.element}
+      </GlossaryContext.Provider>
+    </PackOriginsContext.Provider>
   )
 }
 

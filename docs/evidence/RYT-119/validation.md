@@ -298,3 +298,59 @@ invitation flood trade-off, and scheduling or a first run of `private.prune_stal
    DM uploading to a campaign at its budget).
 3. Seat cap under real concurrency: two signed-in DMs or clients inviting at the same time.
 4. Production `delete_my_account` removing the Auth user, with a disposable test account.
+
+## Real sessions (2026-11-21)
+
+Test accounts from `scripts/test-accounts.mjs` (see `docs/test-accounts.md`): a PRE DM, a PRE
+Player and an outsider, all email accounts marked as test accounts, plus the PRE campaign "Mesa de
+pruebas" (DM and Player). The owner signed in once on two local dev servers in Chrome: DM on
+`localhost:5173`, Player on `localhost:5174` (each origin keeps its own session; local development
+reads `pre`). Calls went through the app's own Supabase client with the users' real access tokens.
+
+| # | Check | Actor | Expected | Observed | Result |
+|---|-------|-------|----------|----------|--------|
+| 1 | Realtime `pre.encounter_signals` (filter on the campaign) while the DM moved an encounter with one hidden and one visible NPC to initiative and active | Player | only status and revision | 2 UPDATE events whose row holds only `encounter_id, campaign_id, status, revision, updated_at`; `old` holds only `encounter_id` | PASS |
+| 1 | Same channel | DM (control) | same events | same 2 events | PASS |
+| 1 | Realtime on `pre.encounters` (no filter) | Player | nothing | 0 events (the table is not in the `supabase_realtime` publication) | PASS |
+| 1 | `get_combat_state` while active, visible NPC holding the turn | Player | hidden NPC absent | 1 combatant (the visible one); the hidden name and id absent | PASS |
+| 1 | `set_active_turn` to the hidden NPC | DM | refused | `Invalid request` (no RPC gives a hidden combatant the turn) | PASS |
+| 2 | Portrait upload, quota at default | DM | accepted | accepted | PASS |
+| 2 | Portrait upload with `media_mb_per_campaign` = 0 | DM | refused | HTTP 403 `new row violates row-level security policy`; the client maps it to `storageQuota` | PASS |
+| 2 | Shop image upload from the Shops screen, same quota | DM | translated error | "El almacenamiento rechazó la subida. Puede que esta campaña haya llenado su espacio: quita imágenes o archivos que ya no necesite y vuelve a intentarlo." | PASS |
+| 3 | 5 `invite_campaign_member` calls in parallel, one seat free (`members_per_campaign` = 3, 2 members) | DM | exactly one accepted | 1 accepted, 4 `Member limit`; all answered within 286-330 ms | PASS |
+| 3 | 8 calls in parallel, one seat free (limit 4, 3 seats used) | DM | exactly one accepted | 1 accepted, 7 `Member limit`; all answered within 90-117 ms | PASS |
+
+The quota byte query plan was recorded on 2026-11-17 (section above).
+
+Not part of the criteria but noted: a realtime channel that combines a published table with an
+unpublished one delivered no events for either during the run, even to the DM. The app subscribes to
+`encounter_signals` alone, so it is not affected.
+
+### Production account deletion
+
+A disposable account (`rytta.dnd+disposable-202611211320@gmail.com`, marked as a test account, no
+password) was created in Auth and given a production solo campaign through
+`public.create_campaign` under its claims. Then, under its claims, `public.prepare_account_deletion`
+and `public.delete_my_account('DELETE', same request)` ran on production (committed):
+
+- prepare: 0 blockers, 1 campaign to delete, 0 storage paths, 0 revoked invitations.
+- delete: `deleted = true`, `auth_user = "deleted"`, `environment = "public"`, `data_deleted = true`,
+  the solo campaign in `campaigns_deleted`.
+- Afterwards: the Auth user and its identity are gone (Auth users 13 -> 12), the solo campaign is
+  gone; public campaigns 4 -> 3 and members 15 -> 14 (both the disposable's), characters 15 and
+  profiles 8 unchanged.
+
+### Cleanup
+
+Every PRE limit changed for the run is back at its default (`media_mb_per_campaign` 500,
+`members_per_campaign` 30, `campaigns_per_owner` 20, `scenes_per_campaign` 60). The probe
+invitations were revoked, the probe encounter ended and deleted and the control portrait removed;
+the test campaign keeps a hidden shop ("Tienda de prueba") and an unfinished character ("Quota
+probe") as fixtures. The other PRE campaign was not touched (3 members).
+
+## Status
+
+Done (2026-11-21). Every acceptance criterion has evidence: actor checks (2026-11-17), realtime
+delivery, the Storage rejection and query plan, seat concurrency, the flood trade-off and the
+pruning decision (owner, 2026-11-21), and the production Auth-user removal by
+`delete_my_account`.

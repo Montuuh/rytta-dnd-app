@@ -90,9 +90,9 @@ and scan the PRE copy for production references. Known limit: a deleted version'
 private bucket (the storage router needs the template to delete it), as for deleted templates.
 
 Content library (ADR 040, RYT-092): `content_packs` and `content_entries` have RLS on and no grants;
-every read and write goes through security definer RPCs. Writers are the rows of
-`private.content_editors` (RLS on, no grants), granted with owner SQL outside the repository and
-separately in PRE. Signed-in users read published public packs and their own published private
+every read and write goes through security definer RPCs. Writers are super admins only (RYT-173,
+ADR 054): `private.is_content_editor()` answers for `private.super_admins`, and the rows of
+`private.content_editors` (RLS on, no grants) are retired and grant nothing. Signed-in users read published public packs and their own published private
 packs, one kind at a time in pages of 500 (`get_content_entries`); unknown and unreadable packs
 both raise `Forbidden`, and readers never receive drafts, revisions, owners or editors. Editor RPCs
 check revisions or versions, serialise each pack on its row lock and each request id on an advisory
@@ -101,8 +101,8 @@ every field; `save_content_pack` refuses to change the slug or visibility of a p
 `set_content_pack_visibility` is the only (immediate) way to change who reads it. Limits: pack
 payload 16 KB with known keys, entry data 128 KB, index 4 KB, 500 entries per import call, 5000 per
 pack and kind. A retried request id replays the caller's earlier result before the editor check (ids
-and counts only), as in RYT-089. Known limits: a PRE refresh copies the editors, the packs (private
-ones too) and the replies from production, so editors are granted again after `pre:sync`; published
+and counts only), as in RYT-089. Known limits: a PRE refresh copies the super admins, the packs
+(private ones too) and the replies from production; published
 packs cannot be deleted through the API, so a takedown is an owner SQL operation (delete the pack
 row, which cascades to its entries).
 
@@ -352,3 +352,228 @@ every field, check the revision and never move entries between campaigns. Client
 text as plain React text (no HTML). Bundled SRD content is public and carries no private data.
 SQL tests cover anon, outsider, inactive member, Player with the module on and off, DM and a
 cross-campaign DM, plus the guarded PRE mirror.
+
+## Super admin (RYT-153)
+
+- The role lives in `private.super_admins` and is granted per environment by the project owner
+  with SQL; nothing in the repository or the browser grants it. A PRE refresh copies it with the
+  rest of `private`, so PRE has the production super admins.
+- A super admin reads the campaign directory, summaries (including DM emails), the usage report
+  and the admin audit log, and looks up accounts by exact email or username. Auth is shared, so
+  the PRE lookup reads the same accounts as production.
+- `admin_enter_campaign` opens two hours of DM access to one campaign. While open, the access
+  helpers treat the caller as that campaign's DM for play and preparation; the super admin is
+  never written to `campaign_members` and the table never sees them. Expiry, `admin_exit_campaign`
+  or withdrawing the role ends it; withdrawal closes open rows, so a new grant does not revive them.
+- Admin access never manages membership: a trigger refuses inserts, updates and deletes of
+  `campaign_members`, and new invitations, from a caller with admin access who is not an active DM
+  member. A super admin who already belongs to a campaign cannot open admin access to it.
+- Character history shows an admin's change as the DM's without a name; campaign events taken
+  through admin access carry no actor. Dice rolls stay members' only. Table members are not
+  notified of an admin's visit; the admin audit log is the record.
+- Audited: enter (with expiry), exit (with seconds), favourites, account lookups (with the found
+  id) and directory searches by a DM's email.
+
+## Quest journal (RYT-006)
+
+- Quests, objectives, the DM's note (`private.quest_notes`) and read times (`private.quest_reads`)
+  have no client grant; `list_quests`, `save_quest`, `delete_quest` and `mark_quest_seen` are
+  the only paths. Only the campaign's DM (or admin access) writes.
+- A Player reads published quests and visible objectives only while `quests` is in the
+  campaign's player modules. The Player payload has no update time and is ordered by the last
+  Player-visible change, so hidden edits leave no trace.
+- `quest_signals` is the only readable table: a revision per campaign that moves on
+  Player-visible changes only, followed by realtime.
+- `delete_my_account` removes the account's read times and clears it as a quest's author (patched
+  by the quest migration; a future redefinition of that function must keep those lines).
+- Known limit: a concurrent delete and save of the same quest can deadlock and fail one call; no
+  data is lost.
+
+## Campaign content (RYT-162)
+
+- `content_entry_versions`, `campaign_content` and `campaign_content_hidden` have no client grant;
+  only the campaign's DM (or admin access) reads and changes them through RPCs. Players get pack
+  content only through the modules that read it (RYT-094, RYT-164 to RYT-166).
+- Only public, published packs are offered. A pack made private stays listed for a campaign that
+  uses it so its DM can turn it off; its newer versions, changes and entries are refused. Module
+  readers must apply the same rule.
+- Every published version of every entry is kept. Withdrawing content for legal reasons means
+  deleting its rows in `content_entry_versions` too.
+- The campaign bestiary tables stay the record for the SRD creatures and drive `campaign_content`
+  through triggers; changes to the `srd-5-2-1` pack are refused while it is not the published
+  public SRD.
+- `delete_my_account` clears the account as `campaign_content.updated_by` (patched by the
+  migration; a future redefinition of that function must keep the line).
+
+## Pack creatures (RYT-094)
+
+- `get_campaign_creature_packs` and `get_campaign_creature_pack` are read only, for the campaign's
+  DM (or admin access). They serve only packs still offered that the campaign has a row for, and
+  only at its pinned version; another version is refused as stale.
+- A creature from a pack other than the SRD is stored as `<ref>--<key>` in the `srd_id` columns,
+  board tokens and image paths. `ref` is the first 8 hex digits of the pack id, unique by index.
+  Keys never contain `--`, so an SRD key cannot pass for a pack reference. The checks of the three
+  tables, `tabletop_data_ok`, `add_combatants`, `save_combatant_template`, `set_creature_srd_image`
+  and the storage rule `creature_image_access` accept both forms. They were patched in place by the
+  migration, and a future redefinition of those functions must keep the pattern.
+- Creature keys are limited to 70 characters so a reference fits in 80.
+- `add_combatants`, `save_combatant_template` and `set_creature_srd_image` also require a
+  `<ref>--<key>` reference to name a non-SRD pack the campaign has for creatures
+  (`creature_reference_ok`), so the same creature is never stored two ways. Board tokens check the
+  form only.
+- One pack read is capped at 8 MB (`Too large`). Pack size at publish time is not capped yet.
+- Players see a token's `srd_id` when it has no alias, so the pack ref (8 hex digits of its id)
+  shows which pack a creature comes from; it gives no access to the pack.
+- When private packs reach chosen campaigns (RYT-163), these reads and the browser cache of pack
+  versions (kept for the session, not keyed by campaign) must follow the per-campaign offer.
+
+## Pack spells, class features and rules (RYT-164, RYT-165)
+
+- `get_campaign_rule_packs` and `get_campaign_rule_pack` are read only, for every active member of
+  the campaign (Players use spells, class features and rules on their sheets). They serve only packs
+  still offered that the campaign has a row for, and only at its pinned version.
+- Hidden entries are served with the pack and listed by id, so characters that already have them
+  keep their texts (owner choice P2 A); hiding is about what the campaign offers, not secrecy.
+  Packs turned off are served too, for the same reason. Players can see which ids the DM hid and
+  which packs are turned off.
+- `get_srd_rule_pack` serves the published public SRD to any signed-in account (public content) for
+  the glossary outside a campaign. Since RYT-167 nothing of the SRD is bundled: the offline
+  preview build (no backend) shows that the glossary needs the library.
+- Glossary ids are `<kind>.<key>` for the SRD and `<kind>.<ref>--<key>` for other packs. The server
+  does not validate the glossary ids stored in character builds (format only, as before).
+- One read is capped at 8 MB (`Too large`), checked on the entries' size before the answer is
+  built. Reads are not paginated; pack size at publish time is not capped yet.
+
+## Pack items and private packs (RYT-166, RYT-163)
+
+- `get_campaign_item_packs` and `get_campaign_item_pack` are read only, for the campaign's active
+  DM (and admin access): the storeroom import and shop stocking are DM tools. They serve the
+  campaign's item packs at its pinned version, with the keys of its hidden items, capped at 8 MB.
+- The import still goes through `import_basic_items`: the DM sends the item data, as before, and
+  the server does not check it against a pack (a DM can forge any item anyway).
+- `public.content_pack_offers` lists the campaigns a private pack is offered to. It has no client
+  grant; `get_content_pack_offers` and `set_content_pack_offer` are open to super admins only
+  (RYT-173): the owner branch needs the writing role, which only super admins hold, so owning a
+  pack manages nothing by itself. A super admin adds any campaign. The list names the offered
+  campaigns to whoever manages the pack.
+- Every campaign content reader checks `private.content_offered(pack, campaign)`: public and
+  published, or private, published and offered to that campaign. The readers that took the pack
+  alone were rewritten in place by the migration, which fails if any reader is left without its
+  campaign. A campaign removed from the offers keeps its rows (it can turn the pack off and gets
+  it back if offered again) but reads nothing from it.
+- The library has one writing role, the super admin (RYT-173): any super admin can edit, publish
+  or change the visibility of any pack, so a private pack is private from DMs and Players, not
+  from other super admins. A content editor grant alone is refused on every write, draft read,
+  offer change and picture upload. The packs whose first items reach every campaign are the SRD (whose slug
+  is taken once uploaded) and `rytta-basics` only when the SRD's owner or a super admin owns it, so
+  another editor cannot claim a default slug.
+- A private pack offered to a campaign is read by its members as any other pack: its spells and
+  rules reach that campaign's Players. Removing the offer stops server reads at once; copies
+  already in a browser stay until it refreshes.
+- Super admin offers to campaigns they do not run are not written to the admin audit log.
+- A pack owner who is not a super admin cannot manage its offers; super admins can.
+  A pack whose owner deleted their account has no owner and only super admins manage it.
+
+## Pack classes (RYT-168)
+
+- Classes and subclasses travel with the class features through `get_campaign_rule_packs` and
+  `get_campaign_rule_pack`, already open to every active member: no new RPC or grant. Their index
+  is parsed with a schema in the browser; a row that does not read is left out.
+- A pack class's table only drives choices on the character's own sheet (hit die, saves, skill
+  count, slot progression, prepared spells). The server keeps validating sheets as before: a
+  Player can still type any class by hand, so pack data grants nothing the sheet could not hold.
+- References inside a pack (`rune-knight` in a feature or spell of that pack) become
+  `<ref>--rune-knight` in the browser; bare names of another pack's classes cannot be reached.
+
+## Campaign content choice and the SRD out of the code (RYT-167)
+
+- `get_content_choices` lists, to any signed-in account, the published public packs and the
+  caller's own published private packs (super admins only), with their categories and counts.
+- `create_campaign_with_content` creates the campaign and enables exactly the chosen pack
+  categories with the same checks as `set_campaign_content`: a pack that is not offered to the new
+  campaign (unpublished, private and not the caller's) or a category it lacks refuses the request
+  and rolls the campaign back. The caller's own private pack is offered to the campaign first.
+  The input is a bounded list (200 picks, 16 KB, canonical UUIDs, known categories only). There is
+  no idempotency key, as with `create_campaign`; the per-owner campaign cap limits a retry.
+- `get_srd_creature_pack` serves the published public SRD's creatures, traits and CR baselines to
+  signed-in accounts, capped at 8 MB and checked before the answer is built.
+- Nothing is readable without an account: a visitor sees the landing page. The SRD data the code
+  used to bundle (creatures, glossary, basic items, class tables) was loaded into the library and
+  published on 2026-11-23, fetched server side from the public repository at a fixed commit; the
+  temporary `http` extension and loading table were dropped afterwards.
+
+## Species, backgrounds and feats from packs (RYT-171)
+
+- Entries of kind `species`, `background` and `feat` join the classes category
+  (`private.content_category`). They are read through the same campaign readers
+  (`get_campaign_rule_packs`, `get_campaign_rule_pack`: active members, packs offered to the
+  campaign) and `get_srd_rule_pack` (signed-in accounts), and written only by super admins.
+  No grant changes. Hiding one in Content is not secret: it only stops offering it.
+- The migration rebuilds the expression index on `content_category` after replacing it, public
+  first and PRE after, so a PRE index copied by a refresh is rebuilt with the new definition.
+  Before the hosted apply, no published or draft entry of these kinds existed.
+- An SRD entry is told apart by its key having no `--` (the server builds pack ids). The effects
+  the app applies (Dwarven Toughness, Alert, species and feat trackers) only follow SRD keys, so a
+  pack entry cannot grant them by naming itself like one.
+- `backgroundSkills`, `backgroundAbilities` and `choices` are part of the client-declared build, as
+  the rest of it: the server does not validate them and they grant nothing the player could not
+  type by hand. `choices` is bounded (8 keys of 40 characters) and read only through own keys
+  (`pickedOption`), so names such as `constructor` never read inherited values.
+
+## Campaign shell on the device (RYT-160)
+
+- [ADR 052](decisions/052-campaign-shell-on-device.md): `localStorage` keeps, per account, the id,
+  name, role and enabled modules of the campaigns opened on the device, to draw the header and
+  navigation after a reload without signal. Nothing else of the campaign or its members.
+- It is cleared on sign-out (and when the app opens signed out, except after a start without
+  signal, when the session itself is still stored), other accounts' entries are cleared on
+  sign-in, and campaigns no longer listed are dropped on the next successful list. Campaigns
+  entered through the admin panel (RYT-153) are never kept.
+- The kept role and modules only draw navigation; no screen reads kept data and no request is
+  made with it (members, rest requests, the admin banner, leaving are off). The server still
+  authorizes every read and write. Stored content is validated on read and discarded if invalid,
+  and a record filed under another campaign's id is ignored.
+
+## Pack entry pictures (RYT-172)
+
+- [ADR 053](decisions/053-pack-entry-pictures.md): private bucket `pack-images` (2 MB, WebP, PNG,
+  JPEG), path `<env>/<pack id>/<uuid>.<ext>`, routed by the global `private.pack_image_access`.
+- Insert: super admins only (RYT-173), into an existing pack of the path's environment. No update or
+  delete policy: earlier pack versions may still name an object.
+- Select (which also governs listing and signing): super admins and the pack owner read the
+  whole pack, drafts included. Anyone else reads only an object a published version of that pack
+  names, and only for a public pack (signed-in accounts) or one offered to a campaign they are an
+  active member of. Anon never. An entry naming another pack's object gains nothing: the pack in
+  the path decides.
+- `private.content_entry_problem` refuses an `index.image` that is not such a path.
+- `get_campaign_pack_images`: active campaign members (and super admins inside through the admin
+  panel); paths of the campaign's enabled packs at their pinned versions only. The DM receives
+  every picture; other members only classes and subclasses, items the campaign's storeroom holds
+  (by `basic_key`) and creatures of public packs, never an entry the DM hid.
+- Uploaded objects are never deleted through the API (earlier versions may name them). Taking a
+  picture down for legal reasons means deleting the object as the project owner, as for other
+  storage. Account deletion leaves pack pictures with the pack.
+- `private.shop_item_json` now includes `basic_key` (an entry id, no secret).
+
+## Entry origin and protected entries (RYT-174)
+
+- `content_packs.baseline_version` marks the version up to which a pack's entries are the source
+  it started from. Only the base pack (slug `srd-5-2-1`) has one; it is set by the migration and
+  changed only with owner SQL. An environment that uploads the SRD later sets it the same way.
+- The origin of an entry is worked out from `content_entry_versions`, never stored: `srd`,
+  `changed` or `own`. The picture is not a change. An entry withdrawn at the baseline and added
+  again reads as the pack's own.
+- `get_campaign_content_origins` (active members, also admin access) lists the changed and own
+  entries of the campaign's enabled packs at the versions it pins, hidden entries left out, and
+  only for packs offered to the campaign. `get_content_origins` (signed-in accounts) does the
+  same for published packs open to all at their current version. Neither reads drafts. They send
+  keys and origins, no content. Players receive the keys of changed and own creatures and items
+  too; every signed-in account can already read those entries of a pack open to all.
+- Library rows carry `origin` and `protected`, and `get_content_draft` the baseline of a changed
+  entry: super admins only (RYT-173).
+- Protected entries: a trigger on `content_entries` refuses to flag deleted, or to delete, the
+  published row of the 40 entries the app's code names (the 14 tracked conditions, the 12 SRD
+  classes, the 9 SRD species, the 4 SRD backgrounds and `table.creature-baselines`) while their
+  pack exists. The list is `private.content_entry_protected`; a database test compares it with the
+  keys in `src/features/characters/domain/srd.ts`. A takedown of one of them is owner SQL with
+  the trigger disabled.

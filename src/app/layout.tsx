@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from 'react'
 import {
-  Alert,
   Button,
   Drawer,
   Menu,
@@ -17,6 +16,7 @@ import {
   Switch,
   Text,
   UnstyledButton,
+  VisuallyHidden,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
@@ -27,6 +27,7 @@ import {
   Menu as MenuIcon,
   Settings,
   Shield,
+  ShieldCheck,
   UserRound,
 } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
@@ -38,6 +39,10 @@ import { useQuery } from '@tanstack/react-query'
 import {
   CampaignViewContext,
   campaignsQuery,
+  forgetCampaignShells,
+  rememberCampaignShell,
+  keepsStaleData,
+  useCampaignShell,
   leaveBlock,
   LeaveCampaignDialog,
   LeaveCampaignItem,
@@ -51,6 +56,11 @@ import { artUrl } from '@/shared/ui/art-url'
 import { RecoveryDialog, UsernameDialog, useAuth, useUsername } from '@/features/auth'
 import { RestBanner, RestProvider } from '@/features/rest'
 import { useContentEditor } from '@/features/content-library'
+import { AdminBanner, useAdminStatus } from '@/features/admin'
+import { useQuestsUnseen } from '@/features/quests'
+import { ConnectionStatus, ConnectionStrip } from './connection'
+import { useConnection } from './use-connection'
+import { ConnectionContext } from '@/shared/lib/connection-context'
 import { SettingsPanel } from '@/pages/settings-panel'
 
 /** Settings links into a campaign Members page leave the drawer behind them. */
@@ -82,6 +92,8 @@ type NavEntry = {
   icon: ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' }>
   dm?: boolean
   key?: string
+  /** RYT-006: something new waits there (a quiet dot, named for screen readers). */
+  news?: boolean
 }
 
 const sessionModules = ['combat', 'tabletop']
@@ -93,10 +105,22 @@ const sessionRank = (key?: string) => {
 
 /** Only reachable destinations appear in navigation. Planned modules live in the DM module
  * controls (DM Command Center) instead of crowding the bar. */
-function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): NavEntry[] {
+function useNavEntries(
+  campaign: Campaign | undefined,
+  playerPreview: boolean,
+  fromShell = false,
+): NavEntry[] {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const live = config.VITE_DATA_MODE === 'supabase'
+  const questNews = useQuestsUnseen(
+    campaign?.id,
+    live &&
+      campaign?.role === 'player' &&
+      !playerPreview &&
+      !fromShell &&
+      (campaign.player_modules ?? []).includes('quests'),
+  )
   if (!live)
     return modules
       .filter(({ path }) => defaultActivePaths.has(path))
@@ -114,6 +138,7 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
     label: t(label),
     icon,
     key,
+    news: key === 'quests' && questNews,
   }))
   // Running a session: the DM reaches Combat and the Table in one tap, ahead of the rest.
   if (effectiveDm) entries.sort((a, b) => sessionRank(a.key) - sessionRank(b.key))
@@ -129,6 +154,17 @@ function useNavEntries(campaign: Campaign | undefined, playerPreview: boolean): 
   return entries
 }
 
+/** A quiet mark on a destination with something new; its name is read with the label. */
+function NewsDot({ news }: { news?: boolean }) {
+  const { t } = useTranslation()
+  if (!news) return null
+  return (
+    <span className="nav-news">
+      <VisuallyHidden>{` · ${t('quests.changed')}`}</VisuallyHidden>
+    </span>
+  )
+}
+
 function TopNavigation({ entries }: { entries: NavEntry[] }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
@@ -139,7 +175,7 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
   }, [pathname])
   return (
     <nav ref={nav} aria-label={t('nav.main')} className="nav-tabs">
-      {entries.map(({ to, label, icon: Icon, dm }) => (
+      {entries.map(({ to, label, icon: Icon, dm, news }) => (
         <NavLink
           key={to}
           to={to}
@@ -150,6 +186,7 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
         >
           <Icon size={18} aria-hidden="true" />
           {label}
+          <NewsDot news={news} />
         </NavLink>
       ))}
     </nav>
@@ -171,7 +208,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
   return (
     <>
       <nav aria-label={t('nav.main')} className="bottom-nav">
-        {primary.map(({ to, label, short, icon: Icon, dm }) => (
+        {primary.map(({ to, label, short, icon: Icon, dm, news }) => (
           <NavLink
             key={to}
             to={to}
@@ -183,6 +220,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
           >
             <Icon size={22} aria-hidden="true" />
             <span className="bottom-nav-label">{short ?? label}</span>
+            <NewsDot news={news} />
           </NavLink>
         ))}
         {overflow && (
@@ -196,6 +234,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
           >
             <MenuIcon size={22} aria-hidden="true" />
             <span className="bottom-nav-label">{t('nav.more')}</span>
+            <NewsDot news={rest.some((entry) => entry.news)} />
           </UnstyledButton>
         )}
       </nav>
@@ -214,7 +253,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
         returnFocus={false}
       >
         <Stack gap={6} pb="md">
-          {rest.map(({ to, label, icon: Icon, dm }) => (
+          {rest.map(({ to, label, icon: Icon, dm, news }) => (
             <NavLink
               key={to}
               to={to}
@@ -229,6 +268,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
             >
               <Icon size={20} aria-hidden="true" />
               {label}
+              <NewsDot news={news} />
             </NavLink>
           ))}
         </Stack>
@@ -288,17 +328,9 @@ export function Layout() {
   const { state, controller } = useAuth()
   const username = useUsername().data
   const contentEditor = useContentEditor()
+  const adminStatus = useAdminStatus().data
   const live = config.VITE_DATA_MODE === 'supabase'
-  const [online, setOnline] = useState(navigator.onLine)
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine)
-    window.addEventListener('online', update)
-    window.addEventListener('offline', update)
-    return () => {
-      window.removeEventListener('online', update)
-      window.removeEventListener('offline', update)
-    }
-  }, [])
+  const connection = useConnection()
   const [previewScope, setPreviewScope] = useState<string | null>(null)
   const [previewUserId, setPreviewUserId] = useState<string | null>(null)
   const [previewLabel, setPreviewLabel] = useState<string | null>(null)
@@ -342,18 +374,40 @@ export function Layout() {
     ...campaignsQuery(state.user?.id ?? ''),
     enabled: live && !!state.user && !!campaignId,
   })
-  const campaign = !campaigns.isError ? campaigns.data?.find((c) => c.id === campaignId) : undefined
+  // RYT-013: a failed refresh keeps the campaign's header and navigation, as the screen keeps its data.
+  const listed =
+    !campaigns.isError || keepsStaleData(campaigns.data, campaigns.error)
+      ? campaigns.data?.find((c) => c.id === campaignId)
+      : undefined
+  // RYT-160: after a reload without signal, the campaign kept on the device names the header and
+  // draws the navigation; its screens wait for the network.
+  const shell = useCampaignShell(state.user?.id, campaignId, campaigns)
+  const campaign = listed ?? shell
+  // A kept campaign only draws: nothing is requested or offered with it.
+  const fromShell = !listed && Boolean(shell)
+  // RYT-153: inside through the admin panel, not as a member: nothing to leave.
+  const adminInside = Boolean(
+    campaign && adminStatus?.access.some((a) => a.campaign_id === campaign.id),
+  )
+  // RYT-160: an opened campaign is kept for an offline reload, unless entered through the admin
+  // panel (temporary, audited access: RYT-153).
+  const keepUser = state.user?.id
+  useEffect(() => {
+    if (!keepUser || !listed || !adminStatus) return
+    if (adminStatus.access.some((access) => access.campaign_id === listed.id)) return
+    rememberCampaignShell(keepUser, listed)
+  }, [keepUser, listed, adminStatus])
   const scope = `${state.user?.id}:${campaignId}`
   const playerPreview = campaign?.role === 'dm' && previewScope === scope
   const members = useQuery({
     ...membersQuery(state.user?.id ?? '', campaignId ?? ''),
-    enabled: live && !!state.user && !!campaignId && campaign?.role === 'dm',
+    enabled: live && !!state.user && !!campaignId && campaign?.role === 'dm' && !fromShell,
   })
   const previewPlayers =
     !members.isError && members.data
       ? members.data.filter((member) => member.role === 'player')
       : []
-  const entries = useNavEntries(campaign, playerPreview)
+  const entries = useNavEntries(campaign, playerPreview, fromShell)
   // One destination needs no bar: the header already names the page and links home.
   const showNav = (!live || !!campaign) && entries.length > 1
   const mainRef = useRef<HTMLElement>(null)
@@ -372,6 +426,15 @@ export function Layout() {
       closeSettings()
     }
   }, [pathname, closeSettings])
+  // RYT-160: signed out (also a session that expired while the app was closed), no campaign shell
+  // stays on the device; signed in, only this account's.
+  const signedInId = state.user?.id
+  useEffect(() => {
+    // A start without signal can end signed out (`connection`): the session is still on the device,
+    // so its campaigns stay too.
+    if (state.status === 'signed-out' && state.issue !== 'connection') forgetCampaignShells()
+    else if (signedInId) forgetCampaignShells(signedInId)
+  }, [state.status, state.issue, signedInId])
   // Signing out (account deletion) leaves nothing to set up behind the landing.
   const wasSignedIn = useRef(false)
   useEffect(() => {
@@ -438,7 +501,7 @@ export function Layout() {
         exitPreview,
       }}
     >
-      <RestProvider campaignId={live && campaign ? campaign.id : null}>
+      <RestProvider campaignId={live && campaign && !fromShell ? campaign.id : null}>
         <div
           className={`app-layout ${live && !pathname.startsWith('/campaign/') ? 'account-layout' : ''} ${pathname.startsWith('/campaign/') ? 'campaign-layout' : ''} ${pathname.startsWith('/library') ? 'library-layout' : ''} ${campaign?.role === 'dm' && !playerPreview ? 'dm-layout' : ''} ${showNav ? 'has-bottom-nav' : ''}`}
         >
@@ -485,7 +548,7 @@ export function Layout() {
                   }
                 />
                 <div className="header-actions">
-                  {campaign?.role === 'dm' && (
+                  {campaign?.role === 'dm' && !fromShell && (
                     <Popover
                       opened={pickerOpened}
                       onDismiss={() => setPickerOpened(false)}
@@ -614,7 +677,16 @@ export function Layout() {
                             >
                               {t('hub.title')}
                             </Menu.Item>
-                            {contentEditor && (
+                            {adminStatus?.super_admin && (
+                              <Menu.Item
+                                component={NavLink}
+                                to="/admin"
+                                leftSection={<ShieldCheck size={18} aria-hidden="true" />}
+                              >
+                                {t('superAdmin.title')}
+                              </Menu.Item>
+                            )}
+                            {contentEditor && !adminStatus?.super_admin && (
                               <Menu.Item
                                 component={NavLink}
                                 to="/library"
@@ -628,20 +700,25 @@ export function Layout() {
                         )}
                         {/* RYT-095: leaving belongs to the open campaign, in its own group above the
                           account items; never from the DM's Player view. */}
-                        {live && state.user && campaign && !playerPreview && (
-                          <>
-                            <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
-                            <LeaveCampaignItem
-                              block={leaveBlock(campaign.role, members.data, members.isError)}
-                              onSelect={() => {
-                                // The dialog takes focus; it hands it back to the trigger on cancel.
-                                restoreMenuFocus.current = false
-                                setLeaving({ id: campaign.id, name: campaign.name })
-                              }}
-                            />
-                            <Menu.Divider />
-                          </>
-                        )}
+                        {live &&
+                          state.user &&
+                          campaign &&
+                          !fromShell &&
+                          !playerPreview &&
+                          !adminInside && (
+                            <>
+                              <Menu.Label className="user-copy">{campaign.name}</Menu.Label>
+                              <LeaveCampaignItem
+                                block={leaveBlock(campaign.role, members.data, members.isError)}
+                                onSelect={() => {
+                                  // The dialog takes focus; it hands it back to the trigger on cancel.
+                                  restoreMenuFocus.current = false
+                                  setLeaving({ id: campaign.id, name: campaign.name })
+                                }}
+                              />
+                              <Menu.Divider />
+                            </>
+                          )}
                         {/* Language and theme live only in the Settings drawer (RYT-033, RYT-069). */}
                         <Menu.Item
                           leftSection={<Settings size={18} aria-hidden="true" />}
@@ -678,6 +755,7 @@ export function Layout() {
             </header>
             {/* The preview and group-rest notices stick together under the header (RYT-080). */}
             <div className="top-notices">
+              {live && <ConnectionStrip phase={connection.phase} retry={connection.retry} />}
               {playerPreview && (
                 <div className="preview-banner" role="status">
                   <Eye size={18} aria-hidden="true" />
@@ -691,17 +769,16 @@ export function Layout() {
                   </Button>
                 </div>
               )}
+              {live && campaign && !fromShell && <AdminBanner campaignId={campaign.id} />}
               {live && campaign && <RestBanner />}
             </div>
+            {live && <ConnectionStatus phase={connection.phase} />}
             <main id="main-content" ref={mainRef} tabIndex={-1}>
-              {live && !online && (
-                <Alert role="status" mb="lg">
-                  {t('campaign.offline')}
-                </Alert>
-              )}
-              <SettingsDrawerContext.Provider value={settings.open}>
-                <Outlet key={state.user?.id ?? 'guest'} />
-              </SettingsDrawerContext.Provider>
+              <ConnectionContext.Provider value={connection.phase}>
+                <SettingsDrawerContext.Provider value={settings.open}>
+                  <Outlet key={state.user?.id ?? 'guest'} />
+                </SettingsDrawerContext.Provider>
+              </ConnectionContext.Provider>
             </main>
           </div>
           {showNav && <BottomNavigation entries={entries} />}

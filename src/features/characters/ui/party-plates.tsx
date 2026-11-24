@@ -49,7 +49,7 @@ import { hpTone, teammateLive, type HpTone, type PartyMember } from '../domain/p
 import { isClassKey } from '../domain/rules'
 import type { Condition } from '../domain/srd'
 import type { SheetSummary } from '../domain/sheet'
-import { classEmblem } from './class-emblem'
+import { useClassEmblemOf } from './class-emblem'
 import { CreationChooser } from './creation/chooser'
 import './party.css'
 import { useBackToClose } from '@/shared/ui/use-back-to-close'
@@ -91,6 +91,7 @@ export function HeroPlate({
   sheetPath: string
   inventoryPath?: string
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const classLevel = useClassLevel()
   const campaign = useCampaign()
@@ -176,6 +177,7 @@ export function TeammateCard({
   campaignId: string
   portrait: string | null
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const classLevel = useClassLevel()
   const live = teammateLive(member)
@@ -296,6 +298,7 @@ export function DmPlate({
   onShareSaved: () => void
   onResourceError: (error: ResourceError) => void
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const classLevel = useClassLevel()
   const campaign = useCampaign()

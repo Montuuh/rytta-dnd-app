@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-20",
+  "updatedAt": "2026-11-24",
   "items": [
     {
       "id": "RYT-000",
@@ -241,9 +241,12 @@
       "title": "Quest journal",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-002"],
-      "sources": ["Drive: quest register"],
+      "sources": [
+        "Drive: quest register",
+        "Delivered 2026-11-22 (block G): owner chose the recommended options (objectives revealed one by one with a DM note, four statuses, journal by status, bottom sheet on phones, quiet change marks, in-place DM editor, Players read only); migration applied to staging, production and PRE; independent UI review PASS."
+      ],
       "scope": "Visible campaign quests and DM status transitions.",
       "acceptance": [
         "Hidden quest text never reaches player payload/cache.",
@@ -251,7 +254,7 @@
         "Statuses and journal navigation work with keyboard and touch."
       ],
       "validation": ["RLS hidden content tests", "Mobile journal e2e"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-006/validation.md", "docs/decisions/050-quest-journal.md"]
     },
     {
       "id": "RYT-007",
@@ -425,12 +428,13 @@
       "title": "Realtime and recovery",
       "priority": "P0",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-003"],
       "sources": [
         "User: multi-device companion",
         "D&D Sync: live sync",
-        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests."
+        "Producer upkeep 2026-11-17: RYT-007 (done) listed this ticket as a dependency but delivered its own scoped encounter realtime with a polling fallback (ADR 024); that dependency was removed. This ticket still covers app-wide subscriptions, reconnect and two-client hosted tests.",
+        "Delivered 2026-11-21 with RYT-128 (block B): app-wide connection line, refetch on reconnect with a backend health check, stale data kept, channels removed on identity change; two-client realtime verified with real sessions in RYT-119. No new two-account identity-switch browser test."
       ],
       "scope": "Scoped subscriptions, reconnect/refetch and truthful network state.",
       "acceptance": [
@@ -440,7 +444,7 @@
         "Refetch on reconnect and foreground without private-data leakage."
       ],
       "validation": ["Two-client Supabase Realtime tests", "Network loss and identity-switch e2e"],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-013/validation.md", "docs/offline-shell.md"]
     },
     {
       "id": "RYT-014",
@@ -3125,28 +3129,33 @@
     },
     {
       "id": "RYT-094",
-      "title": "The app downloads the SRD from the content library",
+      "title": "Creatures come from the campaign's content packs",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
-      "dependsOn": ["RYT-093"],
+      "status": "done",
+      "dependsOn": ["RYT-093", "RYT-162"],
       "sources": [
         "User 2026-11-13: a download endpoint for game data instead of static files in the repository; the DM downloads what they choose. Build the endpoint and a manager to create and change general downloadable data, in this repository. The SRD goes to the endpoint first; much more downloadable data will be added by hand later.",
-        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first."
+        "User 2026-11-13, options page 9XBLMuP5evGHf7roKGgjbj: accepted every recommendation: P1 A account page, P2 A three columns, P3 A form per kind with JSON beside it, P4 A draft and publish, P5 A both languages side by side and one is enough, P6 A JSON file with a dry-run report plus a one-time SRD upload, P7 A endpoint and manager first.",
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051). RYT-094 narrows to creatures; spells and class content, rules and items move in RYT-164 to RYT-166 and the bundled catalogues leave in RYT-167.",
+        "Delivered 2026-11-23 (block F): owner chose the recommended options (every creature pack works like the SRD with <ref>--<key> references, the bestiary leads to Content and hides instead of removing, a source per pack and the pack on rows when several are enabled, a retryable error and no bundled fallback); migration applied to staging, production and PRE; independent UI review PASS."
       ],
-      "scope": "The bestiary, combat, encounter builder, glossary, automatic term links and class features read the official SRD pack from the content library through queries keyed by pack version (public pack content may be cached on the device), instead of bundled JSON. The bundled catalogues leave the repository; demo mode keeps a small explicit sample. Creature art stays as it is until a separate decision.",
+      "scope": "The bestiary, combat and the encounter builder read creatures from the packs the campaign enabled for creatures (RYT-162), at the campaign's pinned version, with its hidden entries and campaign versions applied, instead of the bundled SRD catalogue. Pack content is cached by version. Creature art stays bundled until a separate decision.",
       "acceptance": [
-        "Bestiary, combat, encounter builder, glossary and character sheet show the same SRD content as before, loaded from the library.",
-        "A new pack version refreshes the cached content; an unreachable library shows a retryable error and never falls back silently.",
-        "src/features/bestiary/content and src/features/glossary/content no longer exist in the repository.",
-        "390px and 820px plus a laptop width, both themes and languages, keyboard and Escape, axe clean; options page answered before UI; independent UI review PASS."
+        "A campaign with the SRD creatures pack shows the same creatures as before in the bestiary, combat and encounter builder, loaded from the library.",
+        "Hidden creatures and campaign versions apply everywhere a creature is listed, added or suggested.",
+        "An unreachable library shows a retryable error and never falls back silently to bundled data.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
       ],
       "validation": [
         "npm run check",
-        "bestiary, combat, encounter-builder, glossary and characters e2e at 390px and 820px",
+        "bestiary, combat and encounter-builder e2e at 390px and 820px",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": [
+        "docs/evidence/RYT-094/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
     },
     {
       "id": "RYT-095",
@@ -3700,14 +3709,15 @@
       "title": "Security hardening for open sign-up: hidden combat data, cross-campaign modifiers, quotas and invitation limits",
       "priority": "P0",
       "owner": "backend",
-      "status": "review",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Launch audit 2026-11-17 (rendered UX audit, backend security audit, scalability and environment audit)",
         "Security audit findings: H-1 (encounters summary and active_combatant readable by Players through table reads and realtime), H-3 (no quotas on campaigns, scenes or uploaded media), M-1 (set_shop_modifier delete not scoped to its campaign), M-2 (unthrottled invitations and unbounded list_my_invitations).",
         "Progress 2026-11-17: migrations applied to production (hosted 20261117012750 and 20261117013004) and mirrored to PRE with baseline row counts unchanged; npm run test:db 250 passed; two independent security reviews returned safe to apply, one blocking client finding fixed. Hosted actor-level verification moved to RYT-119; hosted Auth settings and the frontend release remain owner actions.",
         "Final checks 2026-11-17 on the current tree: npm run check passed (627 unit and database tests, build), format check clean, npm run test:e2e 680 passed, 59 skipped, 0 failed. Hosted PRE actor-level verification passed (RYT-119). Remaining: hosted Auth settings (email provider and confirm email, leaked-password protection, CAPTCHA) and the frontend release, tracked in RYT-122.",
-        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused."
+        "Producer upkeep 2026-11-18: merged to main through PR 13 on 2026-11-18 and live at https://rytta.pages.dev; not Done because criterion 3 still lacks evidence that the quota errors render translated in the UI and that a real Storage upload over the per-campaign byte budget is refused.",
+        "Closed 2026-11-21: translated cap errors rendered in the UI for campaigns, seats, scenes and the media byte budget, and realtime filtering seen by a subscribed Player (RYT-119). The frontend is published and the hosted Auth settings were handled in RYT-157."
       ],
       "scope": "Players can no longer read hidden combatants, true creature names, their damage or a hidden active turn through direct reads or realtime of encounters: the realtime signal row carries no secrets and the summary and active combatant live where only the DM can read them, while get_combat_state keeps its masked projection. set_shop_modifier verifies the shop belongs to the target campaign and deletes only within that campaign. Per-account and per-campaign quotas for campaigns, pending invitations, tabletop scenes and uploaded media bytes, enforced server-side. Invitations are rate-limited per inviting DM and per recipient, and list_my_invitations is bounded. Reviewed backward-compatible migrations, tested in PRE first and mirrored there. Non-goals: auth provider, CAPTCHA and rate-limit configuration in the hosted dashboard (owner action, recorded in the evidence), destructive migrations, autonomous release.",
       "acceptance": [
@@ -3812,7 +3822,8 @@
         "Progress 2026-11-18: PR 20 merged as b66bf8e with the synthetic staging seed, ADR 048 (environments and staging) and a daily logical backup workflow for the production database. The workflow is inactive until the repository secret BACKUP_DB_URL exists; no backup has run and no restore has been rehearsed, so criterion 6 stays open and the ticket is not done.",
         "Progress 2026-11-18: the daily backup workflow ran on main for the first time (run 44362679087: roles, schema and data as a 14-day artifact, checksums verified, row counts equal to production at the time), recorded in docs/evidence/RYT-116/staging-bootstrap.md. Criterion 6 stays open: the restore rehearsal into staging has not been done and needs a staging database connection secret, which the owner has to provide. Staging still has no sign-in (its own OAuth client) and no frontend, and PRE still lives in the production project.",
         "20 November 2026: with the repository public again, the two daily backup artifacts were downloadable by anyone and were deleted; the backup workflow is disabled until the dump is encrypted before upload.",
-        "20 November 2026: the owner added the repository secret STAGING_DB_URL for the restore rehearsal, and a separate Google OAuth web client named Rytta staging was created in the Google Auth Platform project with the staging Supabase callback as its only redirect URI. Enabling the Google provider in the staging project with that client is the owner's step; JavaScript origins wait for the staging site."
+        "20 November 2026: the owner added the repository secret STAGING_DB_URL for the restore rehearsal, and a separate Google OAuth web client named Rytta staging was created in the Google Auth Platform project with the staging Supabase callback as its only redirect URI. Enabling the Google provider in the staging project with that client is the owner's step; JavaScript origins wait for the staging site.",
+        "Progress 2026-11-22: live header check and a signed-out browser run without CSP violations recorded (criterion 5, signed-in screens not covered); the backup workflow now encrypts with age before upload and refuses plain files (criterion 7 code), waiting for the owner key and variable. See docs/evidence/RYT-116/staging-bootstrap.md."
       ],
       "scope": "Owner decisions and plan choices, recorded as an ADR that supersedes ADR 007 when taken: a separate staging Supabase project seeded with synthetic data only and its own OAuth client and redirect URLs; a migration history that replays from zero and matches the hosted history; migrations promoted from CI to staging on merge and to production behind a manual approval with environment-scoped secrets; the pre and pre_private schemas, their backups, realtime publication entries, storage prefixes and localhost redirect URLs removed from the production project; the static site served from a host that sends a Content-Security-Policy, frame-ancestors, nosniff, Referrer-Policy and immutable asset caching; scheduled backups with a rehearsed restore. Non-goals: creating paid services or projects without the owner's explicit decision, destructive migrations before the staging project is verified, autonomous release.",
       "acceptance": [
@@ -3899,12 +3910,13 @@
       "title": "Hosted verification of open sign-up hardening",
       "priority": "P1",
       "owner": "backend",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-113", "RYT-114"],
       "sources": [
         "RYT-113 and RYT-114 evidence 2026-11-17: actor-level, realtime, storage quota and concurrency behaviour were tested only on PGlite; pg_cron is not installed, so private.prune_stale_rows is not scheduled.",
         "Progress 2026-11-17: hosted PRE actor checks and production catalog checks done for both rollouts (seven migrations). Open: realtime delivery filtering, real Storage rejection text, true concurrency, the per-recipient flood trade-off record, production Auth-user deletion and scheduling private.prune_stale_rows (pg_cron absent; first run needs owner approval).",
-        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status."
+        "Observation 2026-11-18 from the RYT-137 production apply: the post-checks found the nightly prune job active in production (scheduled by migration 20261201120000_schedule_pruning, pg_cron installed), so the earlier notes that pg_cron is absent and the prune is unscheduled are out of date. Whether a first run has completed is not recorded here; this note changes no criterion or status.",
+        "Closed 2026-11-21 with real sessions of PRE test accounts: realtime delivery, a real Storage rejection with the translated message, seat-cap concurrency (one of 5 and one of 8 parallel invitations admitted) and production Auth-user removal by delete_my_account with a disposable account. Owner decisions of 2026-11-21 cover the flood trade-off (accepted risk) and pruning (left unscheduled)."
       ],
       "scope": "Verify the RYT-113 and RYT-114 migrations against the hosted PRE schema: actor-level denial and quota tests (anon, outsider, Player, cross-campaign DM), realtime filtering of encounter_signals, the storage quota rejection text, concurrency of the seat cap, the per-recipient invitation flood trade-off and the byte-quota query plan on storage.objects. Schedule or run private.prune_stale_rows only with owner approval. Also covers the second rollout (RYT-115 and RYT-118 migrations), including production removal of the Auth user by delete_my_account once a safe test account exists. Non-goals: new features, destructive data changes, promoting PRE data into production, autonomous release.",
       "acceptance": [
@@ -4149,10 +4161,11 @@
       "title": "Offline shell: a reload without signal opens the app",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-117"],
       "sources": [
-        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker."
+        "Player journey audit 2026-11-17, finding J1-10: a reload while offline shows the browser error page because the manifest has no service worker.",
+        "Delivered 2026-11-21 with RYT-013 (block B) after the owner chose the options P1 A, P2 A, P3 A; independent UI review PASS."
       ],
       "scope": "Add a minimal service worker that caches the app shell so a reload without signal opens the app with its offline banner, with an update path that works with the version notice from RYT-117. Non-goals: offline data or mutations, caching private campaign data or authenticated responses, background sync, push notifications, autonomous release.",
       "acceptance": [
@@ -4168,7 +4181,7 @@
         "npm run test:e2e (offline reload and update notice on the production subpath at 390px and 820px)",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-128/validation.md", "docs/offline-shell.md"]
     },
     {
       "id": "RYT-129",
@@ -4672,11 +4685,12 @@
       "title": "Activation and return figures from the database, without tracking scripts",
       "priority": "P1",
       "owner": "backend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
-        "Changed from the audit: hosting analytics would add a script, and the privacy page states that Rytta has no analytics. The figures come from aggregate, read-only queries run by the owner."
+        "Changed from the audit: hosting analytics would add a script, and the privacy page states that Rytta has no analytics. The figures come from aggregate, read-only queries run by the owner.",
+        "Delivered 2026-11-22: read-only report scripts/reports/activation-return.sql, tested with known counts on PGlite and run on staging and production; privacy wording change proposed to the owner."
       ],
       "scope": "A documented, read-only aggregate report over campaigns created since launch. Activation: first encounter started with a second accepted member within 14 days. Solo preparation counted apart. Return: an activated campaign with DM activity on another day within 28 days. Non-goals: browser instrumentation, per-user rows, new tables, dashboards, any change to the privacy statement beyond what the owner approves.",
       "acceptance": [
@@ -4689,18 +4703,19 @@
       "validation": [
         "Query tested on staging data with known counts; first production run recorded; no migration unless reviewed."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-147/validation.md", "docs/metrics.md"]
     },
     {
       "id": "RYT-148",
       "title": "Help when joining goes wrong: published contact and the wrong Google account",
       "priority": "P1",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-122"],
       "sources": [
         "Product audit of the DM experience, 18 November 2026, reviewed by the producer on 19 November 2026.",
-        "Producer review: the legal copy still reads that the contact address is pending and will be published before launch, and the service has been open since 18 November 2026."
+        "Producer review: the legal copy still reads that the contact address is pending and will be published before launch, and the service has been open since 18 November 2026.",
+        "Delivered 2026-11-22 (block D) after the owner chose the options P1 A and P2 A: Switch account and a contact link in the empty My campaigns, Contact in the sign-in footer; independent UI review PASS. The configured contact link is checked on the live site after release."
       ],
       "scope": "A person who signs in with an account that has no invitation learns which account is signed in and how to switch, and can reach the contact address from that screen and from the legal pages. Non-goals: a support inbox, email delivery of invitations, the reconnect action summary proposed by the audit (existing stale notices cover it).",
       "acceptance": [
@@ -4713,7 +4728,7 @@
       "validation": [
         "Browser tests for the uninvited account and the missing variable; project checks; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-148/validation.md"]
     },
     {
       "id": "RYT-152",
@@ -4822,11 +4837,12 @@
       "title": "Super admin: platform role, campaign directory and an admin panel",
       "priority": "P2",
       "owner": "producer",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-093"],
       "sources": [
         "Owner request, 20 November 2026: \"Haz que haya super admins, mete a [the owner's admin Google account]. Este super admin va a poder buscar todas las campañas para suscribirse o guardar como favoritos, y va a poder acceder con herramientas de superadmin / DM (valorar si es lo mismo o no). Super admin será también el encargado de manejar la biblioteca de contenido. Yo haría un panel de superadmin con múltiples y útiles herramientas. Este super admin, los DM y jugadores no deben poder verlo en el apartado jugadores de la campaña.\"",
-        "The account address is kept out of the repository: the grant is made in each environment, as for content editors."
+        "The account address is kept out of the repository: the grant is made in each environment, as for content editors.",
+        "Delivered 2026-11-22 (block E): owner choices P1 B (summary plus Enter as DM, audited), P2 A (two hours), P3 A (account menu), P4 (Campaigns, Library, Usage, Audit, Accounts) and P5 A (favourites as Supervised); migration applied to staging, production and PRE; the owner's admin account granted in production and PRE; independent UI review PASS."
       ],
       "scope": "A platform super admin role held in a private table and granted outside the repository, starting with the account the owner named. Super admins hold every content editor right (RYT-093) and get an admin panel opened from the account menu, hidden for everyone else: a searchable directory of every campaign with save-as-favourite (subscribe), opening any campaign, and other tools chosen on an options page (for example usage counts, content library, account lookup, audit). Decide on the options page whether opening a campaign gives read-only oversight, the DM tools, or read-only with an explicit, audited switch to DM tools. A super admin never appears in the campaign members, party or player lists, presence or player-facing logs, and is never counted as a member. Non-goals: impersonating a Player, reading private notes outside what the chosen mode grants, a service-role key in the browser, deleting campaigns or accounts from the panel.",
       "acceptance": [
@@ -4840,18 +4856,19 @@
       "validation": [
         "PGlite denial tests for anon, outsider, Player, DM and cross-campaign DM; hosted check of the grant in production; browser tests for the panel and the hidden presence; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-153/validation.md"]
     },
     {
       "id": "RYT-154",
       "title": "Art prompts that follow the project art direction for every image picker",
       "priority": "P3",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": [],
       "sources": [
         "Owner request, 20 November 2026: \"Cuando se quiere crear una criatura, un objeto, o un personaje, me gustaría que la imagen siguiera las doctrinas de arte de todo el proyecto en general. Yo añadiría, para ahorrar tokens, en vez de regenerar la imagen, generar un prompt para cada generación/selector de imagen de Rytta, que dependiendo del item se modificará el prompt para que siga la convención del resto de items (criaturas, personajes, objetos, etc.).\"",
-        "Generated art with paid or API image generation stays parked (RYT-152, 19 November 2026); this ticket only writes prompts."
+        "Generated art with paid or API image generation stays parked (RYT-152, 19 November 2026); this ticket only writes prompts.",
+        "Delivered 2026-11-22 (block D): owner choices P3 A (text button), P4 B (the whole prompt in English, replacing the interface-language criterion) and P5 A (only data on screen); independent UI review PASS."
       ],
       "scope": "Every place where an image is chosen or uploaded (creature, item, character portrait and the other image pickers) offers a copyable prompt built from one shared art direction (docs/interface-art.md, docs/sprite-art.md and the bestiary art conventions) plus a template per kind that fills in the entity data (name, type, size, rarity, category, class, key features) and the framing and format the app expects. The user pastes the prompt into any image tool and uploads the result as today. Non-goals: calling an image generation API, storing generated images automatically, changing existing art.",
       "acceptance": [
@@ -4864,7 +4881,7 @@
       "validation": [
         "Unit tests for the templates; browser tests for copying on each picker; independent UI review."
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-154/validation.md"]
     },
     {
       "id": "RYT-155",
@@ -4970,6 +4987,404 @@
         "email authentication results (SPF, DKIM, DMARC) recorded"
       ],
       "evidence": ["docs/evidence/RYT-158/validation.md"]
+    },
+    {
+      "id": "RYT-159",
+      "title": "Test accounts for hosted checks: email accounts, a PRE test table and a disposable account for deletion",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-157"],
+      "sources": [
+        "Owner request 2026-11-21 during RYT-119: a way to create test accounts in PRE now that sign-in is not only Google; production checks may use the owner's own accounts, plus test accounts where needed."
+      ],
+      "scope": "A script writes idempotent SQL that creates confirmed email accounts in the shared Auth project from settings kept in .env.local (inbox and password; the password is generated when missing and never printed), seeds a PRE campaign with a test DM and a test Player, and can add a disposable account for a deletion check. Accounts are marked as test accounts and the SQL refuses to change any other account. Non-goals: automated sign-in, service-role keys, committing credentials.",
+      "acceptance": [
+        "node scripts/test-accounts.mjs writes SQL with only a bcrypt hash and keeps the password in .env.local without printing it.",
+        "Applying it creates confirmed email accounts marked as test accounts, and a re-run only refreshes their password hash.",
+        "--seed-pre creates the PRE campaign with the test DM and Player through the PRE application functions.",
+        "The owner can sign in with them on the local dev servers, and docs/test-accounts.md explains creation, use and removal."
+      ],
+      "validation": [
+        "three PRE test accounts and the test campaign created on the hosted project",
+        "owner sign-in on localhost:5173 and localhost:5174",
+        "RYT-119 real-session checks run with them"
+      ],
+      "evidence": ["docs/test-accounts.md", "docs/evidence/RYT-119/validation.md"]
+    },
+    {
+      "id": "RYT-160",
+      "title": "Offline reload inside a campaign keeps the campaign name and navigation",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-128"],
+      "sources": [
+        "Independent UI review of RYT-128 and RYT-013, 2026-11-21 (M1): a cold reload without signal inside a campaign shows the offline placeholder without the campaign name, its navigation or the screen title, because no campaign data is stored on the device."
+      ],
+      "scope": "Decide with the owner whether the device may keep the minimum needed to draw a campaign shell offline (campaign id, name, role and enabled modules), and if so keep only that, cleared on sign-out and identity change. Non-goals: offline campaign data, offline mutations.",
+      "acceptance": [
+        "The owner decides whether the campaign name, role and modules may be kept on the device.",
+        "If yes: a cold offline reload inside a campaign shows its name and navigation with the offline line, and nothing else from the campaign is stored.",
+        "If no: the decision is recorded and the placeholder offers a way back to My campaigns."
+      ],
+      "validation": [
+        "owner decision record",
+        "browser test of the cold offline reload inside a campaign at 390 and 820 px"
+      ],
+      "evidence": ["docs/evidence/RYT-160/validation.md"]
+    },
+    {
+      "id": "RYT-161",
+      "title": "Keep data after a failed refresh on every screen, and an exact recovery message",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-013"],
+      "sources": ["Independent UI review of RYT-013, 2026-11-21 (non-blocking notes)."],
+      "scope": "Apply the RYT-013 rule (keep what is on screen after a refetch fails for a connection or server reason; show the error above it otherwise) to the remaining screens: party, sheet, inventory, shops, glossary, journal and combat. When the 6 s limit ends the refresh before every screen has loaded, the line says connection back without claiming the data is up to date.",
+      "acceptance": [
+        "Each listed screen keeps its data after a failed refetch and shows one error with Retry, or none when the connection line already says it.",
+        "The recovery line says up to date only when every query on screen has refreshed.",
+        "Browser tests at 390 and 820 px for at least the party, inventory and combat screens."
+      ],
+      "validation": ["npm run check", "npm run test:e2e", "independent UI review"],
+      "evidence": ["docs/evidence/RYT-161/validation.md"]
+    },
+    {
+      "id": "RYT-162",
+      "title": "Campaign content: the DM chooses packs per kind, at pinned versions",
+      "priority": "P1",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-093", "RYT-153"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051).",
+        "Delivered 2026-11-22 (block H): owner chose the recommended options (Content tab by category with a switch per pack, five categories, a review with collapsible New / Changed / Withdrawn lists, hiding in Content and later in modules, new campaigns start with the SRD, Players do not see Content); only creatures are offered until their modules read the other categories; campaign versions stay in the bestiary until RYT-094; migration applied to staging, production and PRE; independent UI review PASS."
+      ],
+      "scope": "A Content section in the DM Command Center lists the packs a campaign can use by kind (creatures, spells, class content, rules, items) and lets the DM enable a pack for a kind at its current version, hide single entries, and review and accept a newer version (new, changed and withdrawn entries, and entries the campaign changed). Editing an entry from a pack stores a campaign version that can return to the pack's. The data model and RPCs are generic per kind; existing campaign bestiary downloads, removals and creature versions (ADR 039) become the SRD creatures pack with the same result. Modules start reading it in RYT-094 and RYT-164 to RYT-166.",
+      "acceptance": [
+        "Enabling, hiding, updating and campaign versions go through campaign-scoped RPCs with revision checks and idempotent request ids; only the campaign's DM (or admin access) writes; Players read only what the campaign enabled.",
+        "A newly published pack version changes nothing in a campaign until its DM accepts the update, and the review lists what changes.",
+        "Every existing campaign that downloaded the official bestiary keeps the same creatures, removals and creature versions after the migration.",
+        "Denial tests for anon, outsider, Player and other-campaign DM; hosted apply to staging, PRE and production.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite denial and migration tests",
+        "npm run check",
+        "campaign content e2e at 390px and 820px",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-162/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
+    },
+    {
+      "id": "RYT-163",
+      "title": "Private packs offered only to the campaigns their owner adds",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "A private pack lists the campaigns it is offered to; its owner adds campaigns they run as DM and a super admin adds any campaign, from the library. Only those campaigns see the pack in their Content section; public packs stay offered to every DM. Removing a campaign stops its reads at once; the pack stays listed only so its DM can turn it off.",
+      "acceptance": [
+        "A private pack never appears to a DM of a campaign it is not offered to, in lists, searches or entry payloads.",
+        "Denial tests for anon, outsider, Player, other-campaign DM and a DM of a campaign not offered the pack.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite denial tests",
+        "npm run check",
+        "library and campaign content e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-166/validation.md"]
+    },
+    {
+      "id": "RYT-164",
+      "title": "Spells and class features come from the campaign's packs",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Delivered 2026-11-23 (block I) with RYT-164 and RYT-165: spells, class features and rules read from the campaign's packs for every member, hidden entries kept where characters have them and no longer offered, the glossary outside a campaign reads the published SRD, the sheet keeps working without the library; migration applied to staging, production and PRE; independent UI review PASS.",
+        "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it).",
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "Character creation, level up, the sheet's spells and casting read spells and class features from the packs the campaign enabled (spells and classes categories), at its pinned versions and without hidden entries, instead of the bundled glossary. Class and subclass mechanics stay in the app until RYT-168.",
+      "acceptance": [
+        "A campaign with the SRD packs offers the same class features and spells as before.",
+        "Hidden entries are not offered when creating or levelling up; existing characters keep what they already chose.",
+        "An unreachable library never falls back silently: the sheet keeps working from the character's stored data with a retry for rule texts, while creation and level up show a retryable error.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "characters, level-up and casting e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": [
+        "docs/evidence/RYT-164/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
+    },
+    {
+      "id": "RYT-165",
+      "title": "Rules and conditions come from the campaign's packs",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Delivered 2026-11-23 (block I) with RYT-164 and RYT-165: spells, class features and rules read from the campaign's packs for every member, hidden entries kept where characters have them and no longer offered, the glossary outside a campaign reads the published SRD, the sheet keeps working without the library; migration applied to staging, production and PRE; independent UI review PASS.",
+        "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it).",
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "The glossary and the automatic term links read rules and conditions from the packs the campaign enabled, next to the campaign's own homebrew entries, instead of the bundled glossary. The standalone glossary outside a campaign reads the public SRD pack.",
+      "acceptance": [
+        "The glossary and term links show the same SRD rules and conditions as before, plus the campaign's homebrew.",
+        "Hidden entries leave the glossary and stop linking.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": ["npm run check", "glossary e2e", "independent UI review PASS"],
+      "evidence": [
+        "docs/evidence/RYT-164/validation.md",
+        "docs/decisions/051-campaign-content-packs.md"
+      ]
+    },
+    {
+      "id": "RYT-166",
+      "title": "Items as a pack kind: the basic items in a pack, storeroom and shops read packs",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-162"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051)."
+      ],
+      "scope": "The library gains an item kind with an editor form. The SRD items join the SRD pack as a new version and the Rytta homebrew items get their own public pack. The storeroom's import and the shops offer the items of the packs the campaign enabled; items already in a campaign keep their data and their link to the pack entry they came from.",
+      "acceptance": [
+        "The basic items import offers the same items as before, from the pack.",
+        "Items already in campaigns, inventories and shops are unchanged by the migration.",
+        "Economy writes keep their transactional RPCs and idempotency.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered (ADR 051); independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "PGlite migration tests",
+        "npm run check",
+        "campaign-items, shops and inventory e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-166/validation.md"]
+    },
+    {
+      "id": "RYT-167",
+      "title": "The bundled game data catalogues leave the repository",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-094", "RYT-164", "RYT-165", "RYT-166", "RYT-168"],
+      "sources": [
+        "Owner, 22 November 2026: the super admin manages downloadable packs (the SRD and their own) for creatures, spells, classes and subclasses, rules and items, and adds, changes or deletes their entries; DMs download the packs each campaign uses. Options page 1bnxdcQGHBRsmqZ4GmjSun: every recommendation accepted (ADR 051).",
+        "Owner, 23 November 2026, block L options page: every recommendation accepted (P1 A creatures, glossary, items and class tables leave the code, species, backgrounds and feats move to packs in RYT-171; P2 A a Content step when creating a campaign with the SRD and Rytta basics ticked; P3 A existing campaigns move to the SRD version with classes; P4 A the demo reads the published SRD without an account)."
+      ],
+      "scope": "The rest of the SRD (items, classes, subclasses) and the Rytta basic items are loaded into the library and published. The bundled SRD catalogues (creatures, glossary with spells, class features and rules, basic items, class tables) leave src/; every reader uses the campaign's packs, the standalone glossary and the demo read the published SRD. Creating a campaign has a Content step where the DM chooses its packs, with the SRD and the Rytta basics ticked; existing campaigns move to the SRD version with classes.",
+      "acceptance": [
+        "No bundled SRD catalogue of creatures, glossary, items or class tables remains in src/; the build no longer ships them.",
+        "Creating a campaign lets the DM choose its packs per category, with the SRD and the Rytta basics ticked; the campaign pins the versions chosen.",
+        "Existing campaigns keep working: their classes come from the SRD pack version with classes.",
+        "The glossary outside a campaign reads the published SRD for signed-in accounts; anonymous SRD reads stay closed (security review: no anonymous surface shows SRD data), and the no-backend preview says its glossary needs the library.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "full e2e",
+        "hosted counts of the SRD pack",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-167/validation.md"]
+    },
+    {
+      "id": "RYT-168",
+      "title": "Classes and subclasses as pack data",
+      "priority": "P3",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-164"],
+      "sources": [
+        "Owner, 23 November 2026, block I options page 4PFMyrBvXR9fZ9HqhJgULf: every recommendation accepted (P1 A spells, class features and rules now, classes and subclasses in RYT-168; P2 A hidden entries stay on characters that already have them and are no longer offered; P3 A the glossary outside a campaign reads the published SRD, demo keeps the bundled sample; P4 A the sheet keeps working without the library while creation and level up wait for it)."
+      ],
+      "scope": "Classes and subclasses become pack entries with their table (hit die, saving throws, skill choices, slot progression and spellcasting ability, the level a subclass is chosen, improvement levels, prepared spells by level, cantrips), edited with library forms; features gained by level stay feature entries. The SRD classes are uploaded to the SRD pack and character creation and level up read them from the campaign's packs. Class resources with uses stay in the app for the SRD classes.",
+      "acceptance": [
+        "A campaign with the SRD packs offers the same classes and subclasses, with the same mechanics, as before.",
+        "A custom pack can add a class or a subclass that creation and level up offer.",
+        "Existing characters keep their class, subclass and features.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
+      ],
+      "validation": ["npm run check", "creation and level-up e2e", "independent UI review PASS"],
+      "evidence": ["docs/evidence/RYT-168/validation.md"]
+    },
+    {
+      "id": "RYT-169",
+      "title": "Image queue: deliveries request pictures the author paints in ChatGPT, then check and import them",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": [],
+      "sources": [
+        "Owner, 23 November 2026: pictures are generated by hand in ChatGPT (subscription, no API); deliveries should fill a shared list with the prompt and the path to save each picture, the owner marks it generated, and the delivery checks the picture and its import. Options page F3Q9eipGBvT1Qc1D1jBsjL: P1 A local panel, P2 B every new request goes through the queue and nothing already imported is migrated, P3 A new interface art also by hand in ChatGPT, P4 A a rejected picture returns with a corrected prompt and waits on the owner after three rejections, P5 A a counter among the owner actions of the roadmap and a notice at session start, P6 A batches per ChatGPT conversation."
+      ],
+      "scope": "A tracked queue (art/queue/requests.json) of batches and picture requests with purpose, prompt, aspect, background, minimum size, path, acceptance criteria and every attempt. A command line adds, checks, approves, rejects, imports and cancels requests; a local panel (npm run art:queue, 127.0.0.1 only) lets the author copy prompts and batch styles and drop the downloaded PNG, which is saved at the request path and checked at once (real PNG, size, aspect, transparency, C2PA provenance). Imports reuse the existing bestiary, sprite and interface importers. The sprite, bestiary and interface catalogues were fully imported, so nothing was migrated.",
+      "acceptance": [
+        "A request is refused without purpose, prompt, path inside the repository, a supported aspect and an acceptance criterion, or when the prompt borrows a named style.",
+        "Dropping a PNG in the panel saves it at the request path, marks it generated and shows the automatic checks; a non-PNG upload is refused.",
+        "Approval refuses a picture that fails an automatic check or changed after it was marked; a rejection records the reason, keeps the corrected prompt and holds the request after three rejections.",
+        "Import runs each set's importer once and marks nothing imported when it fails.",
+        "docs/art-queue.md documents the flow, the sets, the checks and the commands."
+      ],
+      "validation": [
+        "End-to-end run on a scratch queue: add, refused style, mark, failing transparency, reject, approve, import",
+        "Panel upload, refused non-PNG upload and review tab captured at desktop and 390px",
+        "npm run check"
+      ],
+      "evidence": ["docs/evidence/RYT-169/validation.md"]
+    },
+    {
+      "id": "RYT-170",
+      "title": "Basic items show their own painting instead of their category's",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-169"],
+      "sources": [
+        "Owner, 23 November 2026: create the first image queue requests to test it, after checking which packs, creatures, items or other data should have a picture and do not. Inventory: the 330 SRD creatures, 12 classes, 12 shop types, 9 item categories, 8 covers and 6 empty states already have paintings; the 200 basic items share their 9 category paintings; spells, rules, conditions and class features use icons by design. Pilot batch IMG-001 to IMG-006 (potion of healing, longsword, dagger, healer's kit, torch, spell scroll level 1).",
+        "Owner, 23 November 2026: queue the prompts for every item's own picture; one full Copy prompt button per request in the queue panel."
+      ],
+      "scope": "Basic items get their own painting, requested through the image queue (set interface, art/generated/items/basic/<basic key>.png, imported by scripts/art-gen/build.py into public/art/items/basic and its thumbs). An item with a basic_key and a shipped painting shows it in tiles of 40px or more; an uploaded picture still wins and the category painting stays the fallback. The owner asked on 2026-11-23 for every basic item at once: the six pilot requests plus 194 more in six batches (IMG-001 to IMG-200), each copied from the queue panel as one full prompt.",
+      "acceptance": [
+        "The approved pictures are imported into public/art/items/basic with thumbnails; items still waiting keep their category painting.",
+        "An inventory, storeroom or shop tile of 40px or more of an item with one of those basic keys shows its painting; an uploaded picture still wins and other items keep their category painting."
+      ],
+      "validation": [
+        "npm run check",
+        "Captures at 390px and tablet of inventory and shop tiles",
+        "Independent UI review"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RYT-171",
+      "title": "Species, backgrounds and feats as pack data",
+      "priority": "P3",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-167"],
+      "sources": [
+        "Owner, 23 November 2026, block L options page: every recommendation accepted (P1 A creatures, glossary, items and class tables leave the code, species, backgrounds and feats move to packs in RYT-171; P2 A a Content step when creating a campaign with the SRD and Rytta basics ticked; P3 A existing campaigns move to the SRD version with classes; P4 A the demo reads the published SRD without an account).",
+        "Owner, 23 November 2026, block M options page: every recommendation accepted (P1 A tables in packs, automatic effects for the SRD only; P2 A the classes category, renamed \"Characters\"; P3 A library forms; P4 A the quick sheet offers species of every pack; P5 A level up offers the campaign's feats)."
+      ],
+      "scope": "Species with their traits and choices, backgrounds with their skills, ability options and feat, and the origin feats become pack entries with library forms; the SRD ones are loaded into the SRD pack and character creation reads them from the campaign's packs. The last SRD tables leave the code.",
+      "acceptance": [
+        "A campaign with the SRD packs offers the same species, backgrounds and feats, with the same effects, as before.",
+        "A custom pack can add a species, a background or a feat that creation offers.",
+        "Existing characters keep their species, background and feats.",
+        "390px and 820px, both themes and languages, keyboard and Escape, axe clean; options page answered; independent UI review PASS on the current source."
+      ],
+      "validation": ["npm run check", "creation e2e", "independent UI review PASS"],
+      "evidence": ["docs/evidence/RYT-171/validation.md"]
+    },
+    {
+      "id": "RYT-172",
+      "title": "Library entries carry their own picture, published with the pack",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-167", "RYT-170"],
+      "sources": [
+        "Owner, 23 November 2026: from the super admin's data library it should be possible to view and edit the images of the records. Block P options page, all recommended options chosen the same day."
+      ],
+      "scope": "Creature, item and class entries name a picture in data.index.image, an object of a new private pack-images bucket uploaded by content editors (P1 A, P4 A). The picture is part of the entry's data, published with the pack version (P2 A). The library editor shows the picture the app will show and where it comes from, with Change (square crop, PNG/JPEG/WebP) and Remove; the entry list shows a thumbnail (P3 A). The app shows a pack picture below the campaign's own upload and above the app's painting (P5 A): bestiary, stat block, combat portraits and tokens, the tabletop, inventory, storeroom and shop tiles, and class emblems.",
+      "acceptance": [
+        "Only content editors upload into an existing pack; readers are editors, any signed-in account for published public packs, the owner, and members of campaigns a private pack is offered to; anon never.",
+        "A campaign sees a picture only at the pack version it pins; members read the pictures of their campaign, outsiders and anon are refused.",
+        "The library editor shows the picture and its origin, changes it through the square editor and removes it; the list shows thumbnails; 390 and 820 px, both themes and languages, axe.",
+        "Inventory, shop, bestiary, combat, tabletop and class screens prefer the campaign's upload, then the pack picture, then the app painting."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "denial tests for anon, outsider, player and other-campaign DM",
+        "independent UI review",
+        "hosted apply"
+      ],
+      "evidence": ["docs/evidence/RYT-172/validation.md"]
+    },
+    {
+      "id": "RYT-173",
+      "title": "Only super admins write the content library",
+      "priority": "P1",
+      "owner": "backend",
+      "status": "done",
+      "dependsOn": ["RYT-153", "RYT-163", "RYT-172"],
+      "sources": [
+        "Owner, 23 November 2026: \"Estos datos base los setean los superadmins de momento solamente\" (the admin account named in RYT-153; the address stays out of the repository).",
+        "Library audit of 23 November 2026: writes are open to content editors and to super admins, and any editor can edit, publish or change the visibility of any pack, the SRD included (docs/security.md). Production holds one super admin and two content editor grants, and the SRD and the Rytta basics are owned by an editor account that is not a super admin.",
+        "Delivered 2026-11-24: migration applied to staging, production and PRE after an independent security review; the two public packs moved to the super admin account in production and PRE; the content editor rows stay and grant nothing."
+      ],
+      "scope": "private.is_content_editor() answers only for super admins, in public and PRE, so every library write (packs, entries, import, publish, visibility, pictures and private pack offers) and every draft read is refused to anyone else. The content editor grants stop having any effect; the table and its rows stay until a later cleanup (migrations are append-only and nothing is deleted). The two public packs move to the super admin account as their owner in production and PRE, so ownership, offers and the default item packs follow one account (assumption, reversible with one update). Readers do not change: signed-in accounts read published public packs and campaigns read what they pin. docs/security.md and a decision record state that the library has a single writing role. Non-goals: a per-pack editor role, packs authored by DMs, interface changes (the library already opens from Administration).",
+      "acceptance": [
+        "An account that holds only a content editor grant is refused (Forbidden) on every library write, draft read, pack picture upload and offer change; a super admin still creates, edits, imports, publishes and offers.",
+        "The database tests grant the super admin role where they granted the editor role, and the denial tests for anon, outsider, Player and other-campaign DM still pass.",
+        "Applied to staging, PRE and production: the library answers as editor only for the super admin, and the two public packs are owned by that account; campaigns keep the versions they pin.",
+        "docs/security.md and the decision record describe the single writing role."
+      ],
+      "validation": [
+        "npm run check",
+        "denial tests for anon, outsider, player, other-campaign DM and a former content editor",
+        "security review of the migration",
+        "hosted apply (staging, PRE, production) with the role and ownership verified"
+      ],
+      "evidence": ["docs/evidence/RYT-173/validation.md"]
+    },
+    {
+      "id": "RYT-174",
+      "title": "The base pack becomes Rytta: its name, the origin of each entry and protected entries",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "done",
+      "dependsOn": ["RYT-173", "RYT-171"],
+      "sources": [
+        "Owner, 23 November 2026: \"Mi plan es que los datos de origen base, descargables, de momento sean SRD solo, pero con superadmin iremos añadiendo, modificando y eliminando datos de este SRD, para hacerlo de 'Rytta' basado en el SRD. Así asentamos la base para poder añadir mas features, subclases, hechizos, monstruos, etc.. que no están en el SRD, sino en el origen de datos de 'Rytta'.\"",
+        "Library audit of 23 November 2026: the base pack is recognised by its slug srd-5-2-1, which cannot change once published; its title, description and attribution can. The app names it \"SRD\" in fixed interface text (source filters and licence lines; 26 Spanish strings mention it). Entries carry no origin and the pack one licence, CC-BY-4.0, which asks that changes be indicated and would label Rytta's own entries. Nothing stops the withdrawal of entries the code relies on: the 14 conditions the sheet tracks, the 12 SRD classes, the SRD species and backgrounds whose effects the app applies, and the creature-baselines table.",
+        "Changing or withdrawing SRD entries has to happen in the base pack itself: a second pack cannot change or withdraw another pack's entries, so the plan keeps one pack.",
+        "Owner, 24 November 2026, block Q options page: every recommended option (P1 A the name Rytta with \"Based on the SRD 5.2.1\", P2 A three origins worked out by the server, P3 A everyone reads the origin in the source line, P4 A protected entries cannot be deleted, P5 A only the base pack has an origin per entry).",
+        "Delivered 2026-11-24: migration applied to staging, production and PRE after an independent security review; independent UI review PASS on the second round. The licence lines keep their fixed text (the changes are indicated per entry), and the production pack is renamed at the release, when the deployed app stops printing a fixed \"SRD\"."
+      ],
+      "scope": "Starts with an options page, then three parts. Name: the pack with slug srd-5-2-1 stays the base pack (slug and bare keys unchanged, so stored references keep working) and the app shows the pack's own title and attribution wherever it prints a fixed \"SRD\" for it: Content, campaign creation, the source filters and rows of the bestiary, glossary, spells and items, and the licence lines; the super admin renames the pack from the library. Origin: each entry of the base pack carries its origin (from the SRD unchanged, from the SRD and changed by Rytta, or Rytta's own); the SRD entries are marked from the SRD 5.2.1 as uploaded, editing one marks it changed and a new entry is Rytta's own; the library lists and filters by origin and the attribution states that Rytta changed SRD material and which entries are not SRD. Protected entries: the server refuses to withdraw, or to publish without, the entries the code relies on, and the library says why; their texts stay editable. Options page: the pack's new title in both languages, the origin labels and whether DMs and Players see them, refusing or warning on protected entries, and whether origin applies to other public packs. Non-goals: changing the slug or stored keys, automating the mechanics of new classes, species or feats, a version history or rollback screen, a second default pack.",
+      "acceptance": [
+        "Renaming the base pack in the library changes its name everywhere the app showed a fixed \"SRD\" for it, in both languages; stored creature, item, class and spell references still resolve.",
+        "Every entry of the base pack has an origin; an edited SRD entry shows as changed and a new entry as Rytta's own once published; the library filters by origin and the attribution names the changes.",
+        "Marking the origin does not ask campaigns to review entries whose content did not change, and no campaign leaves the version it pins without its DM accepting an update.",
+        "Withdrawing a protected entry is refused by the server with a reason the library shows; anon, outsider, Player and DM stay refused on every write.",
+        "390px and 820px plus a laptop width, both themes and languages, keyboard and Escape, axe clean; options page answered before UI; independent UI review PASS."
+      ],
+      "validation": [
+        "unit tests for origin and the protected keys",
+        "denial tests for anon, outsider, player and other-campaign DM",
+        "content manager e2e at 390px, 820px and 1440px",
+        "npm run check",
+        "npm run test:e2e",
+        "design critique and audit",
+        "independent UI review PASS",
+        "hosted apply"
+      ],
+      "evidence": ["docs/evidence/RYT-174/validation.md"]
     }
   ]
 }

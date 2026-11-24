@@ -1,5 +1,13 @@
 import { z } from 'zod'
 import { srdCategories } from '@/features/glossary'
+import {
+  backgroundIndexSchema,
+  classIndexSchema,
+  featIndexSchema,
+  speciesIndexSchema,
+  subclassIndexSchema,
+} from '@/features/characters'
+import { packItemIndexSchema } from '@/features/inventory'
 
 /**
  * RYT-092 content library (ADR 040): packs of downloadable game data and their entries. Entries
@@ -8,6 +16,12 @@ import { srdCategories } from '@/features/glossary'
 export type ContentLanguage = 'es' | 'en'
 export const entryStates = ['new', 'changed', 'deleted', 'published'] as const
 export type EntryState = (typeof entryStates)[number]
+/**
+ * RYT-174: where an entry of the base pack comes from, against the SRD the pack started from.
+ * Packs without a baseline send none.
+ */
+export const entryOrigins = ['srd', 'changed', 'own'] as const
+export type EntryOrigin = (typeof entryOrigins)[number]
 
 export const keyPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const kindPattern = /^[a-z][a-z0-9-]{0,31}$/
@@ -20,6 +34,7 @@ export type GlossaryKind = (typeof glossaryKinds)[number]
 export const knownKinds = [
   'creature',
   ...glossaryKinds,
+  'class',
   'subclass',
   'species',
   'background',
@@ -72,6 +87,9 @@ export const draftRowSchema = z.object({
   state: z.enum(entryStates),
   revision: z.number().int().min(1),
   updated_at: z.string(),
+  origin: z.enum(entryOrigins).nullish(),
+  /** The app's code relies on this published entry: its text is editable, it cannot be deleted. */
+  protected: z.boolean().nullish(),
 })
 export type DraftRow = z.infer<typeof draftRowSchema>
 export const draftListSchema = z.array(draftRowSchema)
@@ -87,6 +105,14 @@ export const draftSchema = draftRowSchema.omit({ index: true }).extend({
       version: z.number().int().min(1),
     })
     .optional(),
+  /** The SRD original of a changed entry. */
+  baseline: z
+    .object({
+      name_en: z.string().nullable(),
+      name_es: z.string().nullable(),
+      data: record.nullable(),
+    })
+    .nullish(),
 })
 export type Draft = z.infer<typeof draftSchema>
 
@@ -145,7 +171,8 @@ export type EntryInput = {
 export const entryDataLimit = 131072
 export const entryIndexLimit = 4096
 const byteLength = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
-export type EntryProblem = 'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'duplicate'
+export type EntryProblem =
+  'kind' | 'key' | 'name' | 'data' | 'size' | 'index' | 'item' | 'class' | 'origin' | 'duplicate'
 export function entryProblem(entry: EntryInput): EntryProblem | null {
   if (!kindPattern.test(entry.kind)) return 'kind'
   if (!keyPattern.test(entry.key) || entry.key.length > 80) return 'key'
@@ -163,6 +190,19 @@ export function entryProblem(entry: EntryInput): EntryProblem | null {
       byteLength(index) > entryIndexLimit)
   )
     return 'index'
+  // RYT-166: the storeroom and shops read an item's mechanics as they are.
+  if (entry.kind === 'item' && !packItemIndexSchema.safeParse(index ?? {}).success) return 'item'
+  // RYT-168: creation and level up read a class's table and a subclass's class as they are.
+  if (entry.kind === 'class' && !classIndexSchema.safeParse(index ?? {}).success) return 'class'
+  if (entry.kind === 'subclass' && !subclassIndexSchema.safeParse(index ?? {}).success)
+    return 'class'
+  // RYT-171: creation reads a species', background's and feat's table as they are.
+  const origin = {
+    species: speciesIndexSchema,
+    background: backgroundIndexSchema,
+    feat: featIndexSchema,
+  }[entry.kind]
+  if (origin && !origin.safeParse(index ?? {}).success) return 'origin'
   return null
 }
 
@@ -198,6 +238,7 @@ const libraryErrors = [
   'keyTaken',
   'nothingToPublish',
   'packPublished',
+  'protected',
   'unavailable',
   'mismatch',
   'network',
@@ -212,6 +253,7 @@ export function libraryErrorCode(message: string): LibraryError {
   if (message.includes('Key taken')) return 'keyTaken'
   if (message.includes('Nothing to publish')) return 'nothingToPublish'
   if (message.includes('Pack published')) return 'packPublished'
+  if (message.includes('Entry protected')) return 'protected'
   if (message.includes('unavailable')) return 'unavailable'
   if (message.includes('Request mismatch')) return 'mismatch'
   if (message.includes('Invalid request')) return 'invalid'
@@ -248,3 +290,14 @@ export function sortRows<T extends { name_en: string; name_es: string; key: stri
     )
     .map((item) => item.row)
 }
+
+/** RYT-163: the campaigns a private pack is offered to, and the manager's own campaigns. */
+const offerCampaignSchema = z.object({ id: z.uuid(), name: z.string() })
+export const packOffersSchema = z.object({
+  pack: z.uuid(),
+  visibility: z.enum(['public', 'private']),
+  super_admin: z.boolean(),
+  offered: z.array(offerCampaignSchema.extend({ added_at: z.string() })),
+  mine: z.array(offerCampaignSchema),
+})
+export type PackOffers = z.infer<typeof packOffersSchema>

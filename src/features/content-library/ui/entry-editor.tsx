@@ -14,7 +14,7 @@ import {
 } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Trash2, Undo2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Lock, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import {
@@ -26,7 +26,7 @@ import {
   type CreatureSize,
 } from '@/features/bestiary'
 import { blankDraft, CreatureEditor, draftFromBlock } from '@/features/combat'
-import { featureClasses, spellClasses, spellSchools } from '@/features/glossary'
+import { spellClasses, spellSchools } from '@/features/glossary'
 import { draftQuery, useLibraryAction } from '../api'
 import {
   bodyOf,
@@ -52,6 +52,12 @@ import {
   type EntryInput,
 } from '../domain/library'
 import { tableCount } from '../domain/text'
+import { EntryImageField } from './entry-image'
+import { hasPicture } from './entry-picture'
+import { ClassFields, ClassReferenceField, SubclassFields } from './class-fields'
+import { BackgroundFields, FeatFields, SpeciesFields } from './origin-fields'
+import { ItemFields } from './item-fields'
+import { originLabel } from './labels'
 import type { Guard } from './library-page'
 import { keepEdits, keptEdits } from './unsaved'
 
@@ -194,7 +200,11 @@ function EntryForm({
   // Fields that keep their own text (paragraph breaks) start again when the data changes elsewhere.
   const [generation, setGeneration] = useState(0)
   const [status, setStatus] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+  // A refused save marks every field that blocks it, the empty ones too.
+  const [attempted, setAttempted] = useState(false)
   const [confirm, setConfirm] = useState<'deleteEntry' | 'revertEntry' | null>(null)
+  // RYT-174: the SRD original of a changed entry, shown on request.
+  const [original, setOriginal] = useState(false)
   // Where focus goes once a delete or a discard reaches the form (the button pressed is gone).
   const focusNext = useRef<'heading' | 'restore' | 'conflict' | null>(null)
   const keepMineRef = useRef<HTMLButtonElement>(null)
@@ -289,6 +299,7 @@ function EntryForm({
     if (pending) return t('library.saving')
     const reason = entryProblem(next)
     if (reason) {
+      setAttempted(true)
       const text = t(`library.problem.${reason}`)
       setStatus({ tone: 'error', text })
       return text
@@ -407,7 +418,13 @@ function EntryForm({
             {name}
           </h2>
           <Text size="sm" c="dimmed">
-            {[entry.key || null, state].filter(Boolean).join(' · ')}
+            {[
+              entry.key || null,
+              draft?.origin ? originLabel(t, draft.origin, packTitle(pack, language)) : null,
+              state,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         </div>
         {/* Away from Save, so the save bar fits one row in the narrow editor column. */}
@@ -423,17 +440,54 @@ function EntryForm({
                 {t('library.revert')}
               </Button>
             )}
-            <Button
-              variant="subtle"
-              color="red"
-              leftSection={<Trash2 size={18} aria-hidden="true" />}
-              onClick={() => setConfirm('deleteEntry')}
-            >
-              {t('library.delete')}
-            </Button>
+            {/* RYT-174: an entry the app's code relies on keeps its text editable and cannot go. */}
+            {!draft.protected && (
+              <Button
+                variant="subtle"
+                color="red"
+                leftSection={<Trash2 size={18} aria-hidden="true" />}
+                onClick={() => setConfirm('deleteEntry')}
+              >
+                {t('library.delete')}
+              </Button>
+            )}
           </Group>
         )}
       </div>
+      {draft?.protected && !deleted && (
+        <p className="lib-protected">
+          <Lock size={16} aria-hidden="true" />
+          <span>{t('library.protected')}</span>
+        </p>
+      )}
+      {draft?.baseline && !deleted && (
+        <div className="lib-original">
+          <Button
+            variant="subtle"
+            aria-expanded={original}
+            aria-controls="lib-original-panel"
+            rightSection={
+              <ChevronDown size={18} aria-hidden="true" className="lib-original-chevron" />
+            }
+            onClick={() => setOriginal((open) => !open)}
+          >
+            {t(original ? 'library.originalHide' : 'library.original')}
+          </Button>
+          {original && (
+            <section id="lib-original-panel" aria-label={t('library.originalTitle')}>
+              <dl className="lib-original-names">
+                <dt>{t('library.nameEs')}</dt>
+                <dd>{draft.baseline.name_es || '—'}</dd>
+                <dt>{t('library.nameEn')}</dt>
+                <dd>{draft.baseline.name_en || '—'}</dd>
+              </dl>
+              <pre tabIndex={0} aria-label={t('library.originalData')}>
+                {JSON.stringify(draft.baseline.data, null, 2)}
+              </pre>
+            </section>
+          )}
+        </div>
+      )}
       {conflict && (
         <div className="lib-banner">
           <span>{t('library.conflict')}</span>
@@ -504,8 +558,43 @@ function EntryForm({
                 update({ ...entry, key })
               }}
             />
+            {hasPicture(entry.kind) && (
+              <EntryImageField
+                entry={entry}
+                packId={pack.id}
+                userId={userId}
+                readOnly={deleted}
+                onChange={update}
+              />
+            )}
             {family === 'creature' ? (
               <CreatureFields entry={entry} revision={baseRevision} onStore={storeBlock} />
+            ) : entry.kind === 'item' ? (
+              <ItemFields entry={entry} onChange={update} />
+            ) : entry.kind === 'species' || entry.kind === 'background' || entry.kind === 'feat' ? (
+              // RYT-171: their texts are the pack's features, so no text fields here.
+              entry.kind === 'species' ? (
+                <SpeciesFields entry={entry} onChange={update} revealed={attempted} />
+              ) : entry.kind === 'background' ? (
+                <BackgroundFields
+                  entry={entry}
+                  onChange={update}
+                  revealed={attempted}
+                  packId={pack.id}
+                  userId={userId}
+                />
+              ) : (
+                <FeatFields entry={entry} onChange={update} revealed={attempted} />
+              )
+            ) : entry.kind === 'class' || entry.kind === 'subclass' ? (
+              <>
+                {entry.kind === 'class' ? (
+                  <ClassFields entry={entry} onChange={update} revealed={attempted} />
+                ) : (
+                  <SubclassFields entry={entry} onChange={update} />
+                )}
+                <TextFields entry={entry} generation={generation} onChange={update} />
+              </>
             ) : (
               <TextFields entry={entry} generation={generation} onChange={update} />
             )}
@@ -628,6 +717,9 @@ function TextFields({
     onChange({ ...entry, data: withIndex(entry.data, patch) })
   const label = (prefix: string, value: string) =>
     t(`${prefix}.${value}` as 'srd.class.druid', { defaultValue: value })
+  // RYT-168: a spell names SRD classes and, by key, classes of packs.
+  const spellClassList = Array.isArray(index.cl) ? (index.cl as string[]) : []
+  const srdSpellClass = (value: string) => (spellClasses as readonly string[]).includes(value)
   return (
     <>
       {entry.kind === 'spell' && (
@@ -652,8 +744,10 @@ function TextFields({
           <Checkbox.Group
             label={t('library.classes')}
             className="lib-classes"
-            value={Array.isArray(index.cl) ? (index.cl as string[]) : []}
-            onChange={(value) => setIndex({ cl: value })}
+            value={spellClassList.filter((value) => srdSpellClass(value))}
+            onChange={(value) =>
+              setIndex({ cl: [...value, ...spellClassList.filter((item) => !srdSpellClass(item))] })
+            }
           >
             <div className="lib-class-grid">
               {spellClasses.map((value) => (
@@ -661,6 +755,22 @@ function TextFields({
               ))}
             </div>
           </Checkbox.Group>
+          <TextInput
+            label={t('library.classes.otherSpellClasses')}
+            description={t('library.classes.otherSpellClassesHint')}
+            defaultValue={spellClassList.filter((item) => !srdSpellClass(item)).join(', ')}
+            onChange={(event) =>
+              setIndex({
+                cl: [
+                  ...spellClassList.filter((item) => srdSpellClass(item)),
+                  ...event.currentTarget.value
+                    .split(/[\s,]+/)
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                ],
+              })
+            }
+          />
           <div className="lib-checks">
             <Checkbox
               label={t('library.concentration')}
@@ -677,11 +787,10 @@ function TextFields({
       )}
       {entry.kind === 'feature' && (
         <div className="lib-grid-fields">
-          <Select
+          <ClassReferenceField
             label={t('library.class')}
-            data={featureClasses.map((value) => ({ value, label: label('srd.class', value) }))}
-            value={typeof index.fc === 'string' ? index.fc : null}
-            onChange={(value) => setIndex({ fc: value ?? undefined })}
+            value={typeof index.fc === 'string' ? index.fc : undefined}
+            onChange={(value) => setIndex({ fc: value })}
           />
           <TextInput
             label={t('library.subclass')}

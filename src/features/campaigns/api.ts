@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth'
 import { config } from '@/shared/lib/config'
 import { slowPollMs } from '@/shared/lib/live-poll'
 import type { CampaignRepository } from './domain/campaign'
+import { syncCampaignShells } from './domain/campaign-shell'
 import { setDiceSettings, setPartyLevel } from './data/settings-repository'
 import { CampaignSettingsError, type DiceSettings } from './domain/settings'
 
@@ -33,7 +34,12 @@ const campaignPoll = {
 export const campaignsQuery = (userId: string) =>
   queryOptions({
     queryKey: ['private', userId, 'campaigns'],
-    queryFn: async ({ signal }) => (await repository()).list(signal),
+    queryFn: async ({ signal }) => {
+      const list = await (await repository()).list(signal)
+      // RYT-160: the shells kept for offline follow the list (renamed, left, removed).
+      if (config.VITE_DATA_MODE === 'supabase') syncCampaignShells(userId, list)
+      return list
+    },
     ...campaignPoll,
   })
 export const invitationsQuery = (userId: string) =>
@@ -62,7 +68,13 @@ export const auditEventsQuery = (userId: string, campaignId: string, characterId
     ...campaignPoll,
   })
 export type CampaignAction =
-  | { kind: 'create'; name: string; description: string }
+  | {
+      kind: 'create'
+      name: string
+      description: string
+      /** RYT-167: the pack categories the campaign uses. */
+      chosen?: { pack: string; category: string }[]
+    }
   | { kind: 'invite'; campaignId: string; email: string }
   | { kind: 'respond'; invitationId: string; accept: boolean }
   | { kind: 'revoke'; invitationId: string }
@@ -84,7 +96,7 @@ export function useCampaignAction() {
       if (controller?.getSnapshot().user?.id !== userId) throw new Error('Identity changed')
       switch (action.kind) {
         case 'create':
-          return repo.create(action.name, action.description)
+          return repo.create(action.name, action.description, action.chosen)
         case 'invite':
           return repo.invite(action.campaignId, action.email)
         case 'respond':

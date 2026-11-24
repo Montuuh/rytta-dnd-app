@@ -7,6 +7,8 @@ import {
   type HomebrewDraft,
   type HomebrewEntry,
 } from '../domain/homebrew'
+import { rulePacksSchema, type RuleCategory, type RulePack } from '../domain/packs'
+import type { GlossaryLanguage } from '../domain/types'
 
 async function client() {
   if (config.VITE_DATA_MODE !== 'supabase') throw glossaryError('Forbidden')
@@ -58,4 +60,52 @@ export async function deleteHomebrew(campaignId: string, entryId: string, revisi
     expected_revision: revision,
   })
   if (error) throw glossaryError(error.message)
+}
+
+/** RYT-164, RYT-165: the spells, classes and rules packs a campaign has (every active member). */
+export async function loadRulePacks(campaignId: string, signal: AbortSignal) {
+  const { data, error } = await (
+    await client()
+  )
+    .rpc('get_campaign_rule_packs', { target_campaign: id.parse(campaignId) })
+    .abortSignal(signal)
+  if (error) throw glossaryError(error.message)
+  return rulePacksSchema.parse(data)
+}
+
+/** One pack category at the campaign's pinned version: index rows, or bodies in a language. */
+export async function loadRulePack(
+  campaignId: string,
+  pack: RulePack,
+  part: 'index' | GlossaryLanguage,
+  signal: AbortSignal,
+) {
+  const { data, error } = await (
+    await client()
+  )
+    .rpc('get_campaign_rule_pack', {
+      target_campaign: id.parse(campaignId),
+      target_pack: id.parse(pack.id),
+      target_category: pack.category,
+      at_version: pack.version,
+      part,
+    })
+    .abortSignal(signal)
+  if (error) throw glossaryError(error.message)
+  return data
+}
+
+/** The published SRD's spells, class features or rules, for the glossary outside a campaign. */
+export async function loadSrdRules(
+  category: RuleCategory,
+  part: 'index' | GlossaryLanguage,
+  signal: AbortSignal,
+) {
+  const { data, error } = await (
+    await client()
+  )
+    .rpc('get_srd_rule_pack', { target_category: category, part })
+    .abortSignal(signal)
+  if (error) throw glossaryError(error.message)
+  return data
 }

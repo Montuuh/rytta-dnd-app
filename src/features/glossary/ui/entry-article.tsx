@@ -1,10 +1,13 @@
 import { Accordion, Table, Title } from '@mantine/core'
 import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
+import { entryOriginById } from '@/shared/api/pack-origins'
+import { usePackOrigins } from '@/shared/ui/pack-origins-context'
 import type { GlossaryEntry } from '../domain/catalog'
 import { homebrewParagraphs, type HomebrewEntry } from '../domain/homebrew'
 import { factKeys, type Block, type EntryBody, type FactKey } from '../domain/types'
 import { EntryActions } from './entry-actions'
+import { useClassName } from './class-names'
 import { useGlossary } from './glossary-context'
 import { customFactIcon, factIcons } from './icon-maps'
 import { CategoryIcon } from './icons'
@@ -105,6 +108,7 @@ function Facts({
 
 function SpellBlock({ entry, body }: { entry: GlossaryEntry; body: EntryBody }) {
   const { t } = useTranslation()
+  const className = useClassName()
   const glossary = useGlossary()
   const meta = entry.spell
   const stats = body.spell
@@ -176,7 +180,7 @@ function SpellBlock({ entry, body }: { entry: GlossaryEntry; body: EntryBody }) 
       </ul>
       <p className="gl-spell-classes">
         <span>{t('glossary.spell.classes')}: </span>
-        {meta.classes.map((c) => t(`srd.class.${c}`)).join(', ')}
+        {meta.classes.map((c) => className('class', c)).join(', ')}
       </p>
     </section>
   )
@@ -230,7 +234,12 @@ export function EntryArticle({
   hideHeadword,
 }: EntryArticleProps) {
   const { t, i18n } = useTranslation()
+  const className = useClassName()
   const glossary = useGlossary()
+  // RYT-174: an entry the base pack changed or added no longer cites the SRD alone.
+  const origins = usePackOrigins()
+  const origin = entryOriginById(origins, entry.id)
+  const packName = origins.title?.[i18n.resolvedLanguage === 'en' ? 'en' : 'es'] ?? ''
   const homebrew = entry.homebrew
   const facts = homebrew
     ? homebrew.facts.map((f) => ({ key: 'custom', label: f.label, value: f.value }))
@@ -289,12 +298,12 @@ export function EntryArticle({
         <p className="gl-spell-line">
           {entry.feature.subclass
             ? t('glossary.feature.subclassLine', {
-                subclass: t(`srd.subclass.${entry.feature.subclass}`),
-                className: t(`srd.class.${entry.feature.classKey}`),
+                subclass: className('subclass', entry.feature.subclass),
+                className: className('class', entry.feature.classKey),
                 level: entry.feature.level,
               })
             : t('glossary.feature.line', {
-                className: t(`srd.class.${entry.feature.classKey}`),
+                className: className('class', entry.feature.classKey),
                 level: entry.feature.level,
               })}
         </p>
@@ -332,7 +341,11 @@ export function EntryArticle({
         <p className="gl-source">
           {entry.edition === '2014'
             ? t('glossary.legacySource', { page: body.page })
-            : t('glossary.source', { page: body.page })}
+            : origin === 'own'
+              ? packName
+              : origin === 'changed'
+                ? t('glossary.sourceChanged', { page: body.page, pack: packName })
+                : t('glossary.source', { page: body.page })}
         </p>
       )}
     </article>

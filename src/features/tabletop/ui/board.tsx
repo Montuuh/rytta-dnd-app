@@ -1,3 +1,4 @@
+import { usePackImagePath } from '@/shared/ui/pack-images-context'
 import {
   memo,
   useEffect,
@@ -15,7 +16,7 @@ import { useAuth } from '@/features/auth'
 import { creatureArtUrl } from '@/features/bestiary'
 import { Token, type Combatant } from '@/features/combat'
 import { useCampaign } from '@/features/campaigns'
-import { classEmblem } from '@/features/characters'
+import { useClassEmblemOf } from '@/features/characters'
 import { useCampaignPortraits } from '@/features/inventory'
 import { mediaQuery } from '../api'
 import { cellMaskPath } from '../domain/visibility'
@@ -1015,12 +1016,16 @@ function MapToken({
   onKeyDown?: BoardProps['onItemKeyDown']
   onActivate?: BoardProps['onItemActivate']
 }) {
+  const classEmblem = useClassEmblemOf()
   const { t } = useTranslation()
   const name = combatant?.name ?? item.label ?? t('tabletop.token.untitled')
   const size = Math.max(item.w, item.h)
   const px = size * U
   const side = combatant ? (combatant.kind === 'lair' ? 'lair' : combatant.side) : null
   const srd = combatant?.srd_id ?? item.data.srd_id
+  // Players see a creature's picture only while it has no public alias (RYT-172: also its pack's).
+  const showArt = Boolean(srd) && !(mode !== 'dm' && combatant?.public_name)
+  const packPath = usePackImagePath('creature', srd)
   const defeated = combatant?.defeated || combatant?.hp_band === 'down'
   const active = combatant?.is_active ?? false
   const style = {
@@ -1047,10 +1052,8 @@ function MapToken({
           name={name}
           side={side}
           imageKind={combatant!.kind === 'character' ? 'character' : 'creature'}
-          path={combatant!.image_path}
-          art={
-            srd && !(mode !== 'dm' && combatant?.public_name) ? creatureArtUrl(srd, 'thumb') : null
-          }
+          path={combatant!.image_path ?? (showArt ? packPath : null)}
+          art={showArt && srd ? creatureArtUrl(srd, 'thumb') : null}
           size={Math.round(px * 0.9)}
           active={active}
           defeated={defeated}

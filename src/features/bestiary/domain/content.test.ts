@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import index from '../content/index.json'
-import en from '../content/en.json'
-import es from '../content/es.json'
+import index from '../../../../tests/fixtures/srd/bestiary/index.json'
+import en from '../../../../tests/fixtures/srd/bestiary/en.json'
+import es from '../../../../tests/fixtures/srd/bestiary/es.json'
 import art from '../content/art.json'
 import { trackersOf } from './trackers'
 import { xpForCr } from './stats'
@@ -24,7 +24,7 @@ const bodies = {
 // The glossary's spell ids (read as data: features only import each other's public entrypoint).
 const glossaryIndex = Object.values(
   import.meta.glob<{ default: { id: string; cat: string }[] }>(
-    '../../glossary/content/index.json',
+    '../../../../tests/fixtures/srd/glossary/index.json',
     {
       eager: true,
     },

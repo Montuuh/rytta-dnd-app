@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth'
 import { newRequestId } from '@/shared/lib/request-id'
 import { localizedName } from '@/shared/lib/translations'
 import { usePhone } from '@/shared/ui/use-viewport'
+import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 import { definitionImpactQuery, useMergeItems } from '../api'
 import type { ItemDefinition } from '../domain/item'
 import { ItemIcon } from './item-icon'
@@ -40,6 +41,7 @@ export function MergeItems({
   onDone: (message: string) => void
 }) {
   const { t, i18n } = useTranslation()
+  const baseLabel = useBasePackLabel(t('store.origin.srd'))
   const { state } = useAuth()
   const phone = usePhone()
   const [search, setSearch] = useState('')
@@ -121,7 +123,7 @@ export function MergeItems({
               entries={candidates.map((item) => ({
                 id: item.id,
                 name: name(item),
-                meta: `${t(`inventory.category.${item.category}`)} · ${t(`store.origin.${item.origin}`)}`,
+                meta: `${t(`inventory.category.${item.category}`)} · ${item.origin === 'srd' ? baseLabel : t(`store.origin.${item.origin}`)}`,
                 icon: item.icon,
                 imagePath: item.image_path,
                 rarity: item.rarity,

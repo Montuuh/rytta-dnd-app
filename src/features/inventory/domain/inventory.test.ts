@@ -15,7 +15,7 @@ import {
   type ItemDefinition,
   type ItemStack,
 } from './item'
-import catalogue from '../content/basic-items.json'
+import catalogue from '../../../../tests/fixtures/srd/items/basic-items.json'
 import { basicItemCatalogueSchema, toDefinitionDraft } from './basic-items'
 
 const campaign = '20000000-0000-4000-8000-000000000001'

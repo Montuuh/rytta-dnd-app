@@ -18,7 +18,13 @@ import { Minus, Plus, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useAuth } from '@/features/auth'
-import { membersQuery, useCampaign, useCampaignView } from '@/features/campaigns'
+import {
+  membersQuery,
+  showsData,
+  StaleLine,
+  useCampaign,
+  useCampaignView,
+} from '@/features/campaigns'
 import { GpInput, useCampaignPortraits } from '@/features/inventory'
 import { TradeHistory } from '@/features/trades'
 import { MAX_GP, roundGp } from '@/shared/lib/money'
@@ -100,9 +106,7 @@ export function CharacterParty() {
     void overview.refetch()
   }
   const ownerName = (character: Character) =>
-    (!members.isError &&
-      members.data?.find((member) => member.user_id === character.user_id)?.display_name) ||
-    null
+    members.data?.find((member) => member.user_id === character.user_id)?.display_name || null
   return (
     <Stack gap="lg">
       <PageHead
@@ -151,6 +155,7 @@ export function CharacterParty() {
         )}
       </PageHead>
       <PullToRefresh onRefresh={refresh} />
+      <StaleLine queries={[query, overview, summaries, members, dmRoster]} />
       {notice && <Alert role="status">{t(notice)}</Alert>}
       {archivedNotice && (
         <Alert
@@ -181,7 +186,7 @@ export function CharacterParty() {
         </Alert>
       )}
       {query.isPending && <Text role="status">{t('common.loading')}</Text>}
-      {query.isError && (
+      {!showsData(query) && (
         <Alert color="red" role="alert">
           {t('query.error')}{' '}
           <Button variant="subtle" onClick={() => void query.refetch()}>
@@ -197,7 +202,7 @@ export function CharacterParty() {
           </Link>
         </Alert>
       )}
-      {!query.isError &&
+      {showsData(query) &&
         query.data?.length === 0 &&
         !benched &&
         // RYT-044: a Player without characters is guided to create the first one.
@@ -235,7 +240,7 @@ export function CharacterParty() {
             <Text>{t('characters.emptyPlayer')}</Text>
           </Paper>
         ))}
-      {!query.isError && characters.length > 0 && dm && (
+      {showsData(query) && characters.length > 0 && dm && (
         <div className="party-dm-grid">
           {characters.map((character) => (
             <DmPlate
@@ -258,7 +263,7 @@ export function CharacterParty() {
           ))}
         </div>
       )}
-      {!query.isError && showTeammates && (
+      {showsData(query) && showTeammates && (
         <div className="party-player">
           <div className="party-player-own">
             {characters.map((character) => (

@@ -1,8 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
-import { Alert, Button, Group, Loader, Select, Stack, Text, TextInput, Title } from '@mantine/core'
+import {
+  Alert,
+  Button,
+  Group,
+  Loader,
+  SegmentedControl,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, FileUp, Library, PencilLine, Plus, Search, UploadCloud } from 'lucide-react'
+import { ArrowLeft, FileUp, Library, PencilLine, Plus, Search, Users } from 'lucide-react'
+import { useAdminStatus } from '@/features/admin'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -11,6 +23,7 @@ import { usePhone } from '@/shared/ui/use-viewport'
 import { draftsQuery, libraryQuery } from '../api'
 import {
   entryName,
+  entryOrigins,
   knownKinds,
   libraryErrorCode,
   missingLanguage,
@@ -18,18 +31,21 @@ import {
   sortRows,
   type ContentLanguage,
   type ContentPack,
+  type EntryOrigin,
 } from '../domain/library'
-import { srdSlug } from '../domain/srd'
-import { ImportDialog, PackDialog, PublishDialog, SrdDialog } from './dialogs'
+import { EntryThumb } from './entry-image'
+import { hasPicture } from './entry-picture'
+import { ImportDialog, PackDialog, PublishDialog } from './dialogs'
+import { OffersDialog } from './offers-dialog'
 import { EntryEditor } from './entry-editor'
-import { entryMeta, kindLabel, packLine } from './labels'
+import { entryMeta, kindLabel, originFilterLabel, originLabel, packLine } from './labels'
 import { hasKeptEdits, keepEdits, useKeptEditsVersion } from './unsaved'
 import './library.css'
 
 type Dialog =
   | { kind: 'pack'; pack: ContentPack | null }
   | { kind: 'import'; pack: ContentPack }
-  | { kind: 'srd' }
+  | { kind: 'offers'; pack: ContentPack }
   | { kind: 'publish'; pack: ContentPack }
   | null
 
@@ -214,17 +230,7 @@ export function LibraryPage() {
       </div>
     )
 
-  const hasSrd = packs.some((p) => p.slug === srdSlug)
   const kind = pack ? (params.kind ?? defaultKind(pack)) : null
-  const uploadButton = !hasSrd && (
-    <Button
-      variant="light"
-      leftSection={<UploadCloud size={18} aria-hidden="true" />}
-      onClick={() => openDialog({ kind: 'srd' })}
-    >
-      {t('library.uploadSrd')}
-    </Button>
-  )
   const newPackButton = (
     <Button
       variant="light"
@@ -248,7 +254,6 @@ export function LibraryPage() {
         actions={
           compact || packs.length === 0 ? undefined : (
             <Group gap="xs" wrap="wrap">
-              {uploadButton}
               {newPackButton}
             </Group>
           )
@@ -274,9 +279,7 @@ export function LibraryPage() {
         <div className="lib-empty">
           <Library size={32} aria-hidden="true" />
           <Title order={2}>{t('library.emptyTitle')}</Title>
-          <Text>{t('library.emptyBody')}</Text>
           <Group gap="xs" justify="center">
-            {uploadButton}
             {newPackButton}
           </Group>
         </div>
@@ -324,6 +327,7 @@ export function LibraryPage() {
                 onEdit={() => openDialog({ kind: 'pack', pack })}
                 onImport={() => openDialog({ kind: 'import', pack })}
                 onPublish={() => openDialog({ kind: 'publish', pack })}
+                onOffers={() => openDialog({ kind: 'offers', pack })}
                 titleRef={entriesTitle}
               />
             ) : (
@@ -417,18 +421,8 @@ export function LibraryPage() {
           }}
         />
       )}
-      {dialog?.kind === 'srd' && (
-        <SrdDialog
-          language={language}
-          existing={packs.find((p) => p.slug === srdSlug) ?? null}
-          onClose={closeDialog}
-          onDone={(id, message) => {
-            setDialog(null)
-            setNotice({ text: message, at: `/library/${id}/creature`, seen: false })
-            go(`/library/${id}/creature`)
-            focusEntries()
-          }}
-        />
+      {dialog?.kind === 'offers' && (
+        <OffersDialog pack={dialog.pack} language={language} onClose={closeDialog} />
       )}
       {dialog?.kind === 'publish' && (
         <PublishDialog
@@ -465,6 +459,7 @@ function EntryPane({
   onEdit,
   onImport,
   onPublish,
+  onOffers,
   titleRef,
 }: {
   pack: ContentPack
@@ -476,15 +471,19 @@ function EntryPane({
   onEdit: () => void
   onImport: () => void
   onPublish: () => void
+  onOffers: () => void
   titleRef: (node: HTMLHeadingElement | null) => void
 }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
-  // Another kind starts with an empty search.
+  // RYT-174: the base pack's entries carry their origin; other packs send none and get no filter.
+  const [origin, setOrigin] = useState<'all' | EntryOrigin>('all')
+  // Another kind starts with an empty search and every origin.
   const [searchKind, setSearchKind] = useState(kind)
   if (searchKind !== kind) {
     setSearchKind(kind)
     setQuery('')
+    setOrigin('all')
   }
   const drafts = useQuery(draftsQuery(userId, pack.id, kind))
   const counts = pack.drafts ?? pack.kinds
@@ -494,8 +493,16 @@ function EntryPane({
   }))
   // Rows mark entries with kept edits: repaint when that changes.
   useKeptEditsVersion()
-  const rows = sortRows(drafts.data ?? [], query, language)
+  const found = sortRows(drafts.data ?? [], query, language)
+  // Only where the kind mixes origins: a kind that is all SRD would offer two empty lists.
+  const withOrigin = (drafts.data ?? []).some((row) => row.origin && row.origin !== 'srd')
+  const shown = withOrigin ? origin : 'all'
+  const rows = shown === 'all' ? found : found.filter((row) => row.origin === shown)
+  const originCount = (value: EntryOrigin) => found.filter((row) => row.origin === value).length
   const title = packTitle(pack, language)
+  // RYT-163: a private pack's owner, or a super admin, chooses the campaigns that see it.
+  const admin = useAdminStatus()
+  const manages = pack.visibility === 'private' && (pack.mine || admin.data?.super_admin === true)
   return (
     <Stack gap="sm" className="lib-entries-inner">
       <Link to="/library" onClick={guard.link} className="lib-back">
@@ -526,6 +533,15 @@ function EntryPane({
           >
             {t('library.import')}
           </Button>
+          {manages && (
+            <Button
+              variant="subtle"
+              leftSection={<Users size={18} aria-hidden="true" />}
+              onClick={onOffers}
+            >
+              {t('library.offers.open')}
+            </Button>
+          )}
         </Group>
       </div>
       {!!pack.pending && (
@@ -549,6 +565,27 @@ function EntryPane({
         value={query}
         onChange={(event) => setQuery(event.currentTarget.value)}
       />
+      {withOrigin && (
+        <SegmentedControl
+          fullWidth
+          aria-label={t('library.originFilter')}
+          className="lib-origin"
+          value={shown}
+          onChange={(value) => setOrigin(value as 'all' | EntryOrigin)}
+          data={[
+            { value: 'all' as const, count: found.length },
+            ...entryOrigins.map((value) => ({ value, count: originCount(value) })),
+          ].map(({ value, count }) => ({
+            value,
+            label: (
+              <span className="lib-origin-seg">
+                <span>{originFilterLabel(t, value, title)}</span>{' '}
+                <span className="lib-origin-n">{count}</span>
+              </span>
+            ),
+          }))}
+        />
+      )}
       <Button
         variant="light"
         leftSection={<Plus size={18} aria-hidden="true" />}
@@ -570,7 +607,11 @@ function EntryPane({
         </Alert>
       ) : rows.length === 0 ? (
         <Text className="lib-prompt">
-          {query.trim() ? t('library.noMatches', { query: query.trim() }) : t('library.noEntries')}
+          {found.length > 0
+            ? t('library.noOrigin')
+            : query.trim()
+              ? t('library.noMatches', { query: query.trim() })
+              : t('library.noEntries')}
         </Text>
       ) : (
         <ul className="lib-list lib-entry-list">
@@ -588,13 +629,15 @@ function EntryPane({
                   to={to}
                   onClick={guard.link}
                   data-entry={row.id}
-                  className={`lib-row${row.id === entryId ? ' is-current' : ''}${row.state === 'deleted' ? ' is-deleted' : ''}`}
+                  className={`lib-row${row.id === entryId ? ' is-current' : ''}${row.state === 'deleted' ? ' is-deleted' : ''}${hasPicture(kind) ? ' has-thumb' : ''}`}
                   aria-current={row.id === entryId ? 'page' : undefined}
                 >
+                  {hasPicture(kind) && <EntryThumb row={row} userId={userId} />}
                   <span className="lib-row-name">{entryName(row, language)}</span>
                   <span className="lib-row-meta">
                     {[
                       entryMeta(t, row),
+                      row.origin ? originLabel(t, row.origin, title) : null,
                       state,
                       missing ? t(`library.missing.${missing}`) : null,
                       hasKeptEdits({ userId, packId: pack.id, kind, entryId: row.id })

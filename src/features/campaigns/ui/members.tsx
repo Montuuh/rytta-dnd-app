@@ -25,6 +25,7 @@ import {
   Ellipsis,
   Eye,
   History,
+  Library,
   Lock,
   LogOut,
   Package,
@@ -63,8 +64,18 @@ import { InviteInstructions, SentInvitationRow } from './invite-instructions'
 import './dm-center.css'
 
 type Confirmation = { action: CampaignAction; message: string }
-type DmPanel = 'prepare' | 'members' | 'modules' | 'dice' | 'items' | 'bestiary' | 'audit'
-const dmPanels: DmPanel[] = ['members', 'prepare', 'modules', 'dice', 'items', 'bestiary', 'audit']
+type DmPanel =
+  'prepare' | 'members' | 'modules' | 'content' | 'dice' | 'items' | 'bestiary' | 'audit'
+const dmPanels: DmPanel[] = [
+  'members',
+  'prepare',
+  'modules',
+  'content',
+  'dice',
+  'items',
+  'bestiary',
+  'audit',
+]
 type AuditFilter = 'all' | 'characters' | 'resources'
 
 /** The DM Command Center. `itemsPanel` and `bestiaryPanel` are composed by the page so the
@@ -73,6 +84,7 @@ type AuditFilter = 'all' | 'characters' | 'resources'
 export function CampaignMembers({
   itemsPanel,
   bestiaryPanel,
+  contentPanel,
   roster,
   rosterFeedback,
   memberCharacters,
@@ -83,6 +95,8 @@ export function CampaignMembers({
 }: {
   itemsPanel?: ReactNode
   bestiaryPanel?: ReactNode
+  /** RYT-162: the packs this campaign uses, composed by the page like the bestiary. */
+  contentPanel?: ReactNode
   roster?: readonly {
     user_id: string | null
     archived_at: string | null
@@ -110,7 +124,8 @@ export function CampaignMembers({
     requested &&
     dmPanels.includes(requested) &&
     (requested !== 'items' || itemsPanel) &&
-    (requested !== 'bestiary' || bestiaryPanel)
+    (requested !== 'bestiary' || bestiaryPanel) &&
+    (requested !== 'content' || contentPanel)
       ? requested
       : 'members'
   const setActivePanel = (panel: DmPanel) =>
@@ -311,6 +326,7 @@ export function CampaignMembers({
                   ['members', 'dm.panelMembers', Users],
                   ['prepare', 'dm.prepareSession', CalendarDays],
                   ['modules', 'dm.panelModules', Shield],
+                  ['content', 'dm.panelContent', Library],
                   ['dice', 'dm.panelDice', Dices],
                   ['items', 'dm.panelItems', Package],
                   ['bestiary', 'dm.panelBestiary', PawPrint],
@@ -319,7 +335,9 @@ export function CampaignMembers({
               )
                 .filter(
                   ([key]) =>
-                    (key !== 'items' || itemsPanel) && (key !== 'bestiary' || bestiaryPanel),
+                    (key !== 'items' || itemsPanel) &&
+                    (key !== 'bestiary' || bestiaryPanel) &&
+                    (key !== 'content' || contentPanel),
                 )
                 .map(([key, label, Icon]) => (
                   <Tabs.Tab
@@ -539,6 +557,7 @@ export function CampaignMembers({
                 )}
                 {showItems && itemsPanel}
                 {showBestiary && bestiaryPanel}
+                {activePanel === 'content' && contentPanel}
                 {showAudit && (
                   <section aria-label={t('dm.panelAudit')}>
                     <Stack>

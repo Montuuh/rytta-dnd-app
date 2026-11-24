@@ -1,6 +1,29 @@
 import type { Page } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { beaId, catoId, characterId, dmId, peerId, playerId, hiddenPeerId } from './identity.ts'
 import type { DiceStore } from './dice-store.ts'
+
+/**
+ * RYT-094: the SRD creatures pack, served from the bundled SRD files as the library would (index
+ * rows, then stat blocks and the trait library per language).
+ */
+const bundled = (file: string) =>
+  JSON.parse(readFileSync(`tests/fixtures/srd/bestiary/${file}.json`, 'utf8')) as {
+    monsters: unknown
+    traits?: unknown[]
+  }
+const srdIndex = bundled('index') as unknown as { monsters: Record<string, unknown>[] }
+const srdBodies = { en: bundled('en'), es: bundled('es') } as Record<
+  string,
+  { monsters: Record<string, Record<string, unknown>>; traits: unknown[] }
+>
+export const srdPackId = '80000000-0000-4000-8000-000000000001'
+export const northPackId = 'abcdef12-0000-4000-8000-000000000002'
+/** A second creature pack: two SRD creatures under other names, with English stat blocks only. */
+const northCreatures = [
+  { key: 'yeti', from: 'wolf', en: 'Yeti', es: 'Yeti' },
+  { key: 'snow-troll', from: 'troll', en: 'Snow Troll', es: 'Trol de las nieves' },
+]
 
 // RYT-007 SDK contract fixture: one in-memory combat state shared by several browser contexts.
 // It mirrors the RPC results and the role projection the UI relies on; authorization, atomicity
@@ -397,7 +420,32 @@ export function combatServer() {
       return project(e, actor, table)
     }
     if (method === 'list_combatant_templates') return dm ? templates : fail('Forbidden')
-    if (method === 'get_srd_bestiary') return dm ? officialState() : fail('Forbidden')
+    if (method === 'get_campaign_creature_packs') return dm ? creaturePacks() : fail('Forbidden')
+    if (method === 'get_campaign_creature_pack') {
+      if (!dm) return fail('Forbidden')
+      const pack = creaturePacks().find((p) => p.id === body.target_pack)
+      if (!pack) return fail('Invalid request')
+      if (official.unreachable) return fail('Library unavailable')
+      if (body.at_version !== pack.version) return fail('Stale revision')
+      const part = String(body.part)
+      if (pack.id === srdPackId) {
+        if (part === 'index') return { version: 1, rows: srdIndex.monsters }
+        return { version: 1, monsters: srdBodies[part]!.monsters, traits: srdBodies[part]!.traits }
+      }
+      const source = (from: string) => srdIndex.monsters.find((row) => row.id === from)!
+      if (part === 'index')
+        return {
+          version: 1,
+          rows: northCreatures.map((c) => ({ ...source(c.from), id: c.key, en: c.en, es: c.es })),
+        }
+      return {
+        version: 1,
+        monsters: Object.fromEntries(
+          northCreatures.map((c) => [c.key, { ...srdBodies.en!.monsters[c.from], name: c.en }]),
+        ),
+        traits: [],
+      }
+    }
     if (method === 'list_creature_srd_images')
       return dm
         ? [...srdImages].map(([srd_id, image_path]) => ({
@@ -435,7 +483,7 @@ export function combatServer() {
       'set_combatant_template_image',
       'set_combatant_tracker',
       'set_creature_srd_image',
-      'set_srd_bestiary',
+      'set_campaign_content_hidden',
     ])
     if (dmOnly.has(method) && !dm) return fail('Forbidden')
     // RYT-137 (20261204120000): the DM clears a Player's initiative roll, or re-rolls it.
@@ -496,30 +544,13 @@ export function combatServer() {
       bump(live)
       return result(live, { superseded_roll: old, roll })
     }
-    // RYT-089: the campaign's official bestiary, as set_srd_bestiary does it.
-    if (method === 'set_srd_bestiary') {
-      const srd = body.target_srd === null ? null : String(body.target_srd)
-      const dropVersions = (match: (srd: unknown) => boolean) => {
-        const before = templates.length
-        for (let i = templates.length - 1; i >= 0; i--)
-          if (templates[i]!.srd_override === true && match(templates[i]!.srd_id))
-            templates.splice(i, 1)
-        return before - templates.length
-      }
-      let versions_removed = 0
-      if (body.action === 'download' && srd === null) {
-        official.downloaded = true
-        official.removed.clear()
-      } else if (body.action === 'remove' && srd) {
-        if (!official.downloaded) return fail('Invalid request')
-        official.removed.add(srd)
-        versions_removed = dropVersions((id) => id === srd)
-      } else if (body.action === 'remove_all' && srd === null) {
-        official.downloaded = false
-        official.removed.clear()
-        versions_removed = dropVersions(() => true)
-      } else return fail('Invalid request')
-      return { ...officialState(), versions_removed }
+    // RYT-094: hiding a pack creature (the SRD keeps the campaign's version of it).
+    if (method === 'set_campaign_content_hidden') {
+      const key = String(body.target_key)
+      const hidden = body.target_pack === srdPackId ? official.removed : official.northHidden
+      if (body.hidden) hidden.add(key)
+      else hidden.delete(key)
+      return { kind: 'creature', key, hidden: body.hidden }
     }
     if (method === 'create_encounter') {
       const e: Encounter = {
@@ -551,7 +582,7 @@ export function combatServer() {
       }
       if (data.srd_override === true) {
         const srd = String(data.srd_id ?? '')
-        if (!srd || !official.downloaded || official.removed.has(srd))
+        if (!srd || (!srd.includes('--') && (!official.downloaded || official.removed.has(srd))))
           return fail('Invalid request')
         if (templates.some((t) => t.srd_override === true && t.srd_id === srd))
           return fail('Already modified')
@@ -1071,15 +1102,44 @@ export function combatServer() {
   /** RYT-053: the DM's own image per SRD creature (srd id -> path). */
   const srdImages = new Map<string, string>()
   /**
-   * RYT-089: the campaign's official bestiary. Downloaded by default so earlier specs keep the SRD
-   * creatures; specs of the download set `downloaded` to false first.
+   * RYT-094: the campaign's creature packs. The SRD is enabled by default so earlier specs keep its
+   * creatures; `north` adds a second pack, `unreachable` makes the library fail.
    */
-  const official = { downloaded: true, removed: new Set<string>() }
-  const officialState = () => ({
-    downloaded: official.downloaded,
-    downloaded_at: official.downloaded ? '2026-11-12T10:00:00Z' : null,
-    removed: [...official.removed].sort(),
-  })
+  const official = {
+    downloaded: true,
+    removed: new Set<string>(),
+    north: false,
+    northHidden: new Set<string>(),
+    unreachable: false,
+  }
+  const creaturePacks = () => [
+    {
+      id: srdPackId,
+      ref: '80000000',
+      slug: 'srd-5-2-1',
+      title_en: 'System Reference Document 5.2.1',
+      title_es: 'Documento de referencia del sistema 5.2.1',
+      srd: true,
+      version: 1,
+      enabled: official.downloaded,
+      hidden: [...official.removed].sort(),
+    },
+    ...(official.north
+      ? [
+          {
+            id: northPackId,
+            ref: 'abcdef12',
+            slug: 'northern-beasts',
+            title_en: 'Northern Beasts',
+            title_es: 'Bestias del Norte',
+            srd: false,
+            version: 1,
+            enabled: true,
+            hidden: [...official.northHidden].sort(),
+          },
+        ]
+      : []),
+  ]
   /** Every bucket/path a page asked to sign (RYT-043 privacy checks). */
   const signed: string[] = []
   /** Which illustration a stored path shows: a part of the path (an id) to an artwork name. */
@@ -1206,7 +1266,7 @@ export function combatServer() {
         /* Realtime unavailable: the combat screens fall back to polling. */
       })
       await page.route(
-        /\/rest\/v1\/rpc\/(get_encounter_plan|save_encounter_plan|duplicate_encounter_plan|list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_srd_bestiary|set_srd_bestiary)$/,
+        /\/rest\/v1\/rpc\/(get_encounter_plan|save_encounter_plan|duplicate_encounter_plan|list_encounters|get_combat_state|list_combatant_templates|create_encounter|rename_encounter|delete_encounter|set_encounter_status|add_combatants|update_combatant|remove_combatant|set_initiative|reset_initiative_roll|roll_npc_initiative|set_turn_order|advance_turn|set_active_turn|apply_combat_hp|set_combat_condition|set_concentration|record_death_save|add_combat_effect|remove_combat_effect|undo_combat_event|save_combatant_template|delete_combatant_template|set_combatant_template_image|set_combatant_tracker|list_creature_srd_images|set_creature_srd_image|get_campaign_creature_packs|get_campaign_creature_pack|set_campaign_content_hidden)$/,
         async (route) => {
           const request = route.request()
           const method = new URL(request.url()).pathname.split('/').at(-1)!

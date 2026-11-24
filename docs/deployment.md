@@ -113,11 +113,11 @@ never reaches a bundle). No database migration runs from any build.
 Decision, costs and open items: [ADR 048](decisions/048-environments-staging.md). Three
 environments exist today, all on free plans:
 
-| Environment | Backend                                                       | Frontend                                 | Data                             |
-| ----------- | ------------------------------------------------------------- | ---------------------------------------- | -------------------------------- |
-| Production  | the production Supabase project, `public` / `private` schemas | https://rytta.app, built from main       | real campaigns                   |
-| Staging     | a separate Supabase project (same organisation, eu-west-1)    | none yet                                 | none: no data and no users       |
-| PRE         | `pre` / `pre_private` schemas inside the production project   | local development and loopback previews  | copied from production (ADR 007) |
+| Environment | Backend                                                       | Frontend                                | Data                             |
+| ----------- | ------------------------------------------------------------- | --------------------------------------- | -------------------------------- |
+| Production  | the production Supabase project, `public` / `private` schemas | https://rytta.app, built from main      | real campaigns                   |
+| Staging     | a separate Supabase project (same organisation, eu-west-1)    | none yet                                | none: no data and no users       |
+| PRE         | `pre` / `pre_private` schemas inside the production project   | local development and loopback previews | copied from production (ADR 007) |
 
 - Staging has the full migration history, replayed from zero. It has no OAuth client, no
   redirect URLs and no seed yet, so nobody signs in there; checks run as actors inside

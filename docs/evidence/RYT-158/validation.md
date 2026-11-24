@@ -1,4 +1,5 @@
-# RYT-158 validation: own domain rytta.app
+| Redirect from `rytta.pages.dev` | none | Bulk Redirect list `rytta_pages_dev` and rule "rytta.pages.dev to rytta.app" in the personal account: 301, preserve query string, subpath matching, preserve path suffix | browser session approved by the owner | 2026-11-24 |
+| Redirect from `www.rytta.app` | none | Redirect Rule in the `rytta.app` zone: `https://www.*` to `https://${1}`, 301, preserve query string | browser session approved by the owner | 2026-11-24 || Supabase Auth Site URL | `https://rytta.pages.dev` | `https://rytta.app` (the old origin stays in the redirect allowlist) | browser session approved by the owner | 2026-11-24 |# RYT-158 validation: own domain rytta.app
 
 Decision: [ADR 055](../../decisions/055-own-domain.md). Status: in progress.
 
@@ -52,3 +53,16 @@ personal account to the project account.
   `https://rytta.app/` signed in, with its campaigns listed; no console messages.
 - Not exercised yet: email and password sign-in with the Turnstile widget on the new origin,
   confirmation and reset emails, invitations.
+
+## Switch to rytta.app (2026-11-24)
+
+The owner asked for the switch before the email work. Results checked right after:
+
+- `https://rytta.pages.dev/` answers 301 to `https://rytta.app/`;
+  `/privacy/?a=1&b=2` to `https://rytta.app/privacy/?a=1&b=2`; `/?auth=callback&code=x` to
+  `https://rytta.app/?auth=callback&code=x`.
+- `https://www.rytta.app/privacy/?x=1` answers 301 to `https://rytta.app/privacy/?x=1`.
+- In a browser that had used the old address, opening `https://rytta.pages.dev/` lands on
+  `https://rytta.app/` with the session started there.
+- Deployment addresses of the old project (`<hash>.rytta.pages.dev`) are not redirected and keep
+  serving their builds; they were never shared.

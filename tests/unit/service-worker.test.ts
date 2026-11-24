@@ -12,9 +12,7 @@ describe('offline shell routing (RYT-128)', () => {
   it('answers navigations to the app from the network, then the cached shell', () => {
     expect(route(get('https://rytta.app/', 'navigate'), scope)).toBe('navigation')
     expect(route(get('https://rytta.app/index.html', 'navigate'), scope)).toBe('navigation')
-    expect(route(get('https://rytta.app/?auth=callback', 'navigate'), scope)).toBe(
-      'navigation',
-    )
+    expect(route(get('https://rytta.app/?auth=callback', 'navigate'), scope)).toBe('navigation')
   })
 
   it('leaves other pages, other origins, writes and queries to the network', () => {

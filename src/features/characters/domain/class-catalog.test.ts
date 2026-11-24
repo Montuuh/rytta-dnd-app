@@ -4,6 +4,8 @@ import {
   buildClassCatalog,
   classDefFor,
   offeredClasses,
+  subclassDefFor,
+  subclassIndexSchema,
   subclassesFor,
   type ClassRowLike,
 } from './class-catalog'
@@ -113,5 +115,31 @@ describe('class catalog (RYT-168, RYT-167)', () => {
       spellbook: 2,
     })
     expect(levelUpRequirements(mage, 3, wizard)).toMatchObject({ subclass: true })
+  })
+})
+
+describe('a subclass that gives spellcasting (RYT-175)', () => {
+  const row = (data: Record<string, unknown>): ClassRowLike => ({
+    cat: 'subclass',
+    key: 'b00c5000--spell-blade',
+    en: 'Spell Blade',
+    es: 'Filo arcano',
+    data: { class: 'fighter', ...data },
+  })
+  it('carries its caster kind and ability, and is skipped without the ability', () => {
+    const catalog = buildClassCatalog([
+      ...srdClassRows,
+      row({ caster: 'third', spellAbility: 'int' }),
+    ])
+    expect(subclassDefFor(catalog, 'b00c5000--spell-blade')).toMatchObject({
+      classKey: 'fighter',
+      caster: 'third',
+      spellAbility: 'int',
+    })
+    expect(subclassIndexSchema.safeParse({ class: 'fighter' }).success).toBe(true)
+    expect(subclassIndexSchema.safeParse({ class: 'fighter', caster: 'none' }).success).toBe(true)
+    expect(subclassIndexSchema.safeParse({ class: 'fighter', caster: 'third' }).success).toBe(false)
+    const without = buildClassCatalog([...srdClassRows, row({ caster: 'third' })])
+    expect(subclassDefFor(without, 'b00c5000--spell-blade')).toBeNull()
   })
 })

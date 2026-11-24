@@ -1,4 +1,4 @@
-import type { ClassDef } from './class-catalog'
+import type { ClassDef, SubclassDef } from './class-catalog'
 import { chooseBackground, chooseClass, chooseSpecies, type OriginFeat } from './creation'
 import type { BackgroundDef, SpeciesDef } from './origin-catalog'
 import { syncProgression, type LibraryFeature, type ProgressionNames } from './progression'
@@ -175,11 +175,15 @@ export type BlankChoice = {
   classLabel: string
   /** RYT-168: the chosen class's definition (null for a class typed by hand). */
   classDef?: ClassDef | null
+  subclassKey?: string
+  subclass?: string
+  subclassDef?: SubclassDef | null
   level: number
   speciesKey?: string
   speciesLabel?: string
   /** RYT-171: the chosen species and background from the campaign's packs (null: by hand). */
   speciesDef?: SpeciesDef | null
+  choices?: Record<string, string>
   backgroundKey?: string
   backgroundLabel?: string
   backgroundDef?: BackgroundDef | null
@@ -195,6 +199,20 @@ export function blankDraft(choice: BlankChoice): SheetDraft {
   let build: Build = { ...emptyBuild(), abilityMethod: 'manual', origin: 'blank' }
   const def = choice.classDef ?? null
   build = chooseClass(build, choice.classKey, choice.classLabel, def)
+  if (choice.subclassKey || choice.subclass?.trim()) {
+    const subCaster = choice.subclassDef?.caster
+    build = {
+      ...build,
+      subclassKey: choice.subclassKey ?? '',
+      subclass: (choice.subclass ?? '').trim().slice(0, 60),
+      ...(build.casterKind === 'none' && subCaster && subCaster !== 'none'
+        ? {
+            casterKind: subCaster,
+            spellAbility: choice.subclassDef?.spellAbility ?? build.spellAbility ?? 'int',
+          }
+        : {}),
+    }
+  }
   const language = choice.language ?? 'es'
   if (choice.speciesKey || choice.speciesLabel?.trim()) {
     build = chooseSpecies(
@@ -204,6 +222,9 @@ export function blankDraft(choice: BlankChoice): SheetDraft {
       choice.speciesDef ?? null,
       language,
     )
+  }
+  if (choice.choices && Object.keys(choice.choices).length > 0) {
+    build = { ...build, choices: { ...choice.choices } }
   }
   if (choice.backgroundKey || choice.backgroundLabel?.trim()) {
     build = chooseBackground(

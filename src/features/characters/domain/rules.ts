@@ -444,6 +444,11 @@ export function slotsFor(kind: CasterKind, level: number): number[] {
     // 2024 half casters follow the full table at half their level, rounded up.
     const row = fullCasterSlots[(kind === 'full' ? clamped : Math.ceil(clamped / 2)) - 1]!
     row.forEach((count, index) => (slots[index] = count))
+  } else if (kind === 'third') {
+    if (clamped >= 3) {
+      const row = fullCasterSlots[Math.ceil(clamped / 3) - 1]!
+      row.forEach((count, index) => (slots[index] = count))
+    }
   } else if (kind === 'pact') {
     const count = clamped >= 17 ? 4 : clamped >= 11 ? 3 : clamped >= 2 ? 2 : 1
     const slotLevel = Math.min(5, Math.ceil(clamped / 2))

@@ -1263,10 +1263,16 @@ test('RYT-124 the full wizard names open choices, keeps scores per method and le
 
 test('RYT-124 changing class clears the subclass and class skills, re-suggests HP and says so once', async ({
   page,
-}) => {
+}, info) => {
   await openFullWizard(page)
   await pickClass(page, /Mago/)
-  await page.getByLabel('Subclase').fill('Evocador')
+  // The subclass is asked from the level the class gives it; one of the table's own is typed.
+  await expect(page.getByRole('combobox', { name: 'Subclase' })).toHaveCount(0)
+  for (let i = 0; i < 2; i++) await page.getByRole('button', { name: 'Subir nivel' }).click()
+  await page.getByRole('combobox', { name: 'Subclase' }).click()
+  await page.getByRole('option', { name: 'Otra subclase (casera)' }).click()
+  await page.getByRole('textbox', { name: 'Nombre de la subclase' }).fill('Evocador')
+  await capture(page, `docs/evidence/ui-review/ryt-175/wizard-subclass-${info.project.name}.png`)
   await next(page)
   await page.getByLabel('Especie').selectOption('elf')
   await page.getByRole('radio', { name: 'Alto elfo' }).check()
@@ -1290,7 +1296,8 @@ test('RYT-124 changing class clears the subclass and class skills, re-suggests H
   const lossBox = (await loss.boundingBox())!
   expect(lossBox.y).toBeGreaterThanOrEqual(0)
   expect(lossBox.y + lossBox.height).toBeLessThanOrEqual(page.viewportSize()!.height)
-  await expect(page.getByLabel('Subclase')).toHaveValue('')
+  await expect(page.getByRole('combobox', { name: 'Subclase' })).toHaveValue('Aún sin subclase')
+  await expect(page.getByRole('textbox', { name: 'Nombre de la subclase' })).toHaveCount(0)
   await next(page)
   await expect(page.getByRole('status').filter({ hasText: 'Al cambiar de clase' })).toHaveCount(0)
 })

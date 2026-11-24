@@ -6,6 +6,7 @@ import '../sheet/panel.css'
 import { Link } from 'react-router'
 import { useSrdLibrary } from '@/features/glossary'
 import { blankDraft } from '../../domain/quick'
+import { emptyBuild } from '../../domain/rules'
 import type { SheetRow } from '../../domain/sheet'
 import {
   backgroundDefFor,
@@ -15,7 +16,12 @@ import {
   type BackgroundDef,
   type SpeciesDef,
 } from '../../domain/origin-catalog'
-import { classDefFor, offeredClasses } from '../../domain/class-catalog'
+import {
+  classDefFor,
+  offeredClasses,
+  subclassDefFor,
+  subclassesFor,
+} from '../../domain/class-catalog'
 import {
   useClassCatalog,
   useClassDefName,
@@ -27,6 +33,7 @@ import { Stepper } from '../sheet/widgets'
 import { useCreateSheet } from './use-create-sheet'
 import { ClassesState } from './classes-state'
 import { LibraryWait } from './library-wait'
+import { SpeciesOptions } from './species-options'
 
 /** RYT-072 blank sheet: name, class and level (+ optional species/background); scores at 10. */
 const isCustomKey = (key: string) => key === 'custom'
@@ -50,7 +57,10 @@ export function BlankSheet({
   const nameOf = useClassDefName()
   const classDef = isCustomKey(classKey) ? null : classDefFor(catalog, classKey)
   const [custom, setCustom] = useState('')
+  const [subclassKey, setSubclassKey] = useState<string>('')
+  const [customSubclass, setCustomSubclass] = useState('')
   const [speciesKey, setSpeciesKey] = useState<string>('')
+  const [speciesChoices, setSpeciesChoices] = useState<Record<string, string>>({})
   const [customSpecies, setCustomSpecies] = useState('')
   const [backgroundKey, setBackgroundKey] = useState<string>('')
   const [customBackground, setCustomBackground] = useState('')
@@ -60,6 +70,20 @@ export function BlankSheet({
   const originNames = useOriginNames()
   const speciesDef = speciesDefFor(origins, speciesKey)
   const backgroundDef = backgroundDefFor(origins, backgroundKey)
+  const subclassOptions = subclassesFor(catalog, classKey).map((item) => {
+    const base = nameOf(item, 'subclass')
+    const packTitle = item.pack
+      ? originNames.language.startsWith('en')
+        ? item.pack.title_en
+        : item.pack.title_es
+      : null
+    return {
+      value: item.key,
+      name: base,
+      label: packTitle ? `${base} · ${packTitle}` : base,
+    }
+  })
+  const showSubclass = Boolean(classKey) && level >= (classDef?.subclassLevel ?? 3)
   const option = (def: SpeciesDef | BackgroundDef) => ({
     value: def.key,
     label: def.pack
@@ -71,11 +95,13 @@ export function BlankSheet({
   useEffect(() => heading.current?.focus(), [])
   const submitRef = useRef<HTMLButtonElement>(null)
   const isCustom = classKey === 'custom'
+  const isCustomSubclass = showSubclass && subclassKey === 'custom'
   const isCustomSpecies = speciesKey === 'custom'
   const isCustomBackground = backgroundKey === 'custom'
   const valid =
     name.trim().length > 0 &&
     (!isCustom || custom.trim().length > 0) &&
+    (!isCustomSubclass || customSubclass.trim().length > 0) &&
     (!isCustomSpecies || customSpecies.trim().length > 0) &&
     (!isCustomBackground || customBackground.trim().length > 0) &&
     library !== null
@@ -106,11 +132,21 @@ export function BlankSheet({
         onSubmit={(event) => {
           event.preventDefault()
           if (!valid || !library) return
+          const selectedSubclass = subclassOptions.find((item) => item.value === subclassKey)
           void create(
             blankDraft({
               classKey,
               classLabel: isCustom || !classDef ? custom.trim() : nameOf(classDef),
               classDef,
+              ...(showSubclass && (selectedSubclass || isCustomSubclass)
+                ? {
+                    subclassKey: selectedSubclass ? selectedSubclass.value : '',
+                    subclass: selectedSubclass ? selectedSubclass.name : customSubclass.trim(),
+                    subclassDef: selectedSubclass
+                      ? subclassDefFor(catalog, selectedSubclass.value)
+                      : null,
+                  }
+                : {}),
               speciesKey: speciesKey || undefined,
               speciesLabel: isCustomSpecies
                 ? customSpecies.trim()
@@ -118,6 +154,7 @@ export function BlankSheet({
                   ? originNames.name(speciesDef)
                   : undefined,
               speciesDef,
+              choices: speciesChoices,
               backgroundKey: backgroundKey || undefined,
               backgroundLabel: isCustomBackground
                 ? customBackground.trim()
@@ -155,7 +192,11 @@ export function BlankSheet({
             ]}
             value={classKey}
             allowDeselect={false}
-            onChange={(value) => setClassKey(value ?? 'fighter')}
+            onChange={(value) => {
+              setClassKey(value ?? 'fighter')
+              setSubclassKey('')
+              setCustomSubclass('')
+            }}
             comboboxProps={{ withinPortal: true }}
           />
           <ClassesState
@@ -172,6 +213,37 @@ export function BlankSheet({
               onChange={(event) => setCustom(event.currentTarget.value)}
             />
           )}
+          {showSubclass && (
+            <>
+              <Select
+                label={t('wizard.subclass')}
+                data={[
+                  { value: '', label: t('panel.noSubclass') },
+                  ...subclassOptions.map(({ value: itemValue, label }) => ({
+                    value: itemValue,
+                    label,
+                  })),
+                  { value: 'custom', label: t('panel.otherSubclass') },
+                ]}
+                value={subclassKey}
+                allowDeselect={false}
+                onChange={(value) => {
+                  setSubclassKey(value ?? '')
+                  if (value !== 'custom') setCustomSubclass('')
+                }}
+                comboboxProps={{ withinPortal: true }}
+              />
+              {isCustomSubclass && (
+                <TextInput
+                  label={t('panel.subclassName')}
+                  required
+                  maxLength={60}
+                  value={customSubclass}
+                  onChange={(event) => setCustomSubclass(event.currentTarget.value)}
+                />
+              )}
+            </>
+          )}
           <Select
             label={t('wizard.species')}
             data={[
@@ -182,9 +254,21 @@ export function BlankSheet({
             value={speciesKey}
             allowDeselect={false}
             disabled={origins === null}
-            onChange={(value) => setSpeciesKey(value ?? '')}
+            onChange={(value) => {
+              setSpeciesKey(value ?? '')
+              setSpeciesChoices({})
+            }}
             comboboxProps={{ withinPortal: true }}
           />
+          {speciesDef && speciesDef.choices.length > 0 && (
+            <SpeciesOptions
+              build={{ ...emptyBuild(), speciesKey, choices: speciesChoices }}
+              species={speciesDef}
+              onChoose={(key, value) =>
+                setSpeciesChoices((previous) => ({ ...previous, [key]: value }))
+              }
+            />
+          )}
           {isCustomSpecies && (
             <TextInput
               label={t('wizard.customName')}

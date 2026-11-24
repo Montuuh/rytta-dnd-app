@@ -83,6 +83,7 @@ import { Stepper } from '../sheet/widgets'
 import { BuildSummary } from './build-summary'
 import { SpeciesOptions } from './species-options'
 import { ClassPicker } from './class-picker'
+import { SubclassFields } from '../sheet/subclass-fields'
 import { newRequestId } from '@/shared/lib/request-id'
 
 /** What the wizard keeps across steps: ability scores per method, what a class change removed,
@@ -172,6 +173,9 @@ function ClassStep(props: StepProps) {
   const catalog = useClassCatalog()
   const nameOf = useClassDefName()
   const classOptions = catalog ? offeredClasses(catalog) : []
+  const classDef = classDefFor(catalog, build.classKey)
+  const showSubclass =
+    draft.level >= (classDef?.subclassLevel ?? 3) || Boolean(build.subclassKey || build.subclass)
   return (
     <Stack gap="md">
       <ClassPicker
@@ -259,15 +263,6 @@ function ClassStep(props: StepProps) {
         </Paper>
       )}
       <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-        <TextInput
-          maxLength={60}
-          label={t('wizard.subclass')}
-          value={build.subclass}
-          onChange={(event) => {
-            const subclass = event.currentTarget.value
-            update((current) => ({ ...current, subclass }))
-          }}
-        />
         <div>
           <Text size="sm" fw={500} mb={4}>
             {t('wizard.level')}
@@ -285,6 +280,11 @@ function ClassStep(props: StepProps) {
             />
           )}
         </div>
+        {showSubclass && (
+          <Stack gap="xs">
+            <SubclassFields build={build} change={(apply) => setDraft(apply)} />
+          </Stack>
+        )}
       </SimpleGrid>
     </Stack>
   )

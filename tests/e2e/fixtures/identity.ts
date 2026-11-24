@@ -163,6 +163,26 @@ const bookClassRows = [
     fc: 'bard',
     sb: 'giant-blood',
   },
+  // RYT-175: a subclass that gives spellcasting to a class without it.
+  {
+    id: 'subclass.b00c5000--spell-blade',
+    cat: 'subclass',
+    en: 'Spell Blade',
+    es: 'Filo arcano',
+    class: 'fighter',
+    caster: 'third',
+    spellAbility: 'int',
+  },
+  {
+    id: 'feature.b00c5000--warding-blade',
+    cat: 'feature',
+    en: 'Warding Blade',
+    es: 'Filo protector',
+    nl: 1,
+    lv: 3,
+    fc: 'fighter',
+    sb: 'spell-blade',
+  },
   // RYT-171: a species with an option, a background with its own origin feat, and that feat.
   {
     id: 'species.b00c5000--triton',

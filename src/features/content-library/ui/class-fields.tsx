@@ -27,7 +27,7 @@ const skills = [
   'stealth',
   'survival',
 ] as const
-const casters = ['none', 'full', 'half', 'pact'] as const
+const casters = ['none', 'full', 'half', 'third', 'pact'] as const
 const dice = ['6', '8', '10', '12'] as const
 const keyPattern = /^(?:[0-9a-f]{8}--)?[a-z0-9]+(?:-[a-z0-9]+)*$/
 const other = 'other'
@@ -297,17 +297,54 @@ export function SubclassFields({
 }) {
   const { t } = useTranslation()
   const index = indexOf(entry.data)
+  const setIndex = (patch: Data) => {
+    const next: Data = { ...index, ...patch }
+    for (const [key, value] of Object.entries(next)) if (value === undefined) delete next[key]
+    onChange({ ...entry, data: { ...entry.data, index: next } })
+  }
+  // A subclass can give spellcasting to a class without it; left at "none" the index has no field.
+  const caster = casters.find((value) => value === index.caster) ?? 'none'
   return (
     <div className="lib-grid-fields">
       <ClassReferenceField
         label={t('library.class')}
         value={typeof index.class === 'string' ? index.class : undefined}
-        onChange={(value) => {
-          const next: Data = { ...index, class: value }
-          if (value === undefined) delete next.class
-          onChange({ ...entry, data: { ...entry.data, index: next } })
-        }}
+        onChange={(value) => setIndex({ class: value })}
       />
+      <Select
+        label={t('library.classes.caster')}
+        data={casters.map((value) => ({
+          value,
+          label: t(`srd.caster.${value}` as 'srd.caster.full'),
+        }))}
+        value={caster}
+        allowDeselect={false}
+        onChange={(value) =>
+          setIndex(
+            !value || value === 'none'
+              ? { caster: undefined, spellAbility: undefined }
+              : { caster: value },
+          )
+        }
+      />
+      {caster !== 'none' && (
+        <Select
+          label={t('library.classes.spellAbility')}
+          data={abilities.map((value) => ({
+            value,
+            label: t(`srd.ability.${value}` as 'srd.ability.str'),
+          }))}
+          required
+          allowDeselect={false}
+          value={abilities.find((value) => value === index.spellAbility) ?? null}
+          error={
+            abilities.some((value) => value === index.spellAbility)
+              ? undefined
+              : t('library.classes.chooseError')
+          }
+          onChange={(value) => setIndex({ spellAbility: value ?? undefined })}
+        />
+      )}
     </div>
   )
 }

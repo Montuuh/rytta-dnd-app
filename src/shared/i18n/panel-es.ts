@@ -78,6 +78,7 @@ export const panelEs = {
   'panel.search': 'Buscar',
   'panel.anySpellLevel': 'Incluir conjuros por encima de tus espacios',
   'panel.anyFeatureLevel': 'Incluir rasgos por encima de tu nivel',
+  'panel.anyFeatLevel': 'Incluir dotes por encima de tu nivel',
   'panel.libraryCount_one': '{{count}} resultado',
   'panel.libraryCount_other': '{{count}} resultados',
   'panel.refineSearch': '{{count}} más. Afina la búsqueda para verlos.',

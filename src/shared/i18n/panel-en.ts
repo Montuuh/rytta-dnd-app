@@ -75,6 +75,7 @@ export const panelEn = {
   'panel.search': 'Search',
   'panel.anySpellLevel': 'Include spells above your slots',
   'panel.anyFeatureLevel': 'Include features above your level',
+  'panel.anyFeatLevel': 'Include feats above your level',
   'panel.libraryCount_one': '{{count}} result',
   'panel.libraryCount_other': '{{count}} results',
   'panel.refineSearch': '{{count}} more. Narrow the search to see them.',

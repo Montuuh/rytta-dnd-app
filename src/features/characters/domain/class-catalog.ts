@@ -44,6 +44,8 @@ export type SubclassDef = {
   classKey: string
   srd: boolean
   name: { en: string; es: string } | null
+  caster?: CasterKind
+  spellAbility?: Ability | null
   pack?: { title_en: string; title_es: string }
   hidden?: boolean
 }
@@ -86,7 +88,16 @@ export const classIndexSchema = z
   })
 
 export type ClassIndex = z.input<typeof classIndexSchema>
-export const subclassIndexSchema = z.object({ class: reference })
+export const subclassIndexSchema = z
+  .object({
+    class: reference,
+    caster: z.enum(casterKinds).optional(),
+    spellAbility: z.enum(abilityKeys).nullable().optional(),
+  })
+  // A subclass that gives spellcasting names the ability it casts with.
+  .refine((index) => !index.caster || index.caster === 'none' || Boolean(index.spellAbility), {
+    path: ['spellAbility'],
+  })
 
 /** A class or subclass row of the campaign's packs (the glossary's `ClassRow`). */
 export type ClassRowLike = {
@@ -127,7 +138,17 @@ export function buildClassCatalog(rows: readonly ClassRowLike[]): ClassCatalog {
       if (catalog.subclasses.some((item) => item.key === row.key)) continue
       const parsed = subclassIndexSchema.safeParse(row.data)
       if (!parsed.success) continue
-      catalog.subclasses.push({ key: row.key, classKey: parsed.data.class, srd, name, ...extra })
+      catalog.subclasses.push({
+        key: row.key,
+        classKey: parsed.data.class,
+        srd,
+        name,
+        ...(parsed.data.caster ? { caster: parsed.data.caster } : {}),
+        ...(parsed.data.spellAbility !== undefined
+          ? { spellAbility: parsed.data.spellAbility }
+          : {}),
+        ...extra,
+      })
     }
   }
   return catalog
@@ -136,6 +157,11 @@ export function buildClassCatalog(rows: readonly ClassRowLike[]): ClassCatalog {
 /** A class's definition in the campaign's packs. */
 export function classDefFor(catalog: ClassCatalog | null | undefined, key: string) {
   return catalog?.classes.find((item) => item.key === key) ?? null
+}
+
+/** A subclass's definition in the campaign's packs. */
+export function subclassDefFor(catalog: ClassCatalog | null | undefined, key: string) {
+  return catalog?.subclasses.find((item) => item.key === key) ?? null
 }
 
 /** Classes a new character can take: the ones the campaign offers, SRD first. */

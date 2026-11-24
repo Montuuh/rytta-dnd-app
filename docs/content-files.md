@@ -42,14 +42,14 @@ then shows what it would add, update and refuse before writing anything.
 
 ## What each kind needs in `data.index`
 
-| Kind         | Fields                                                                                   |
-| ------------ | ---------------------------------------------------------------------------------------- |
-| `subclass`   | `class`: the key of its class (a base pack class, or a class of the same pack)           |
-| `feature`    | `id` (`feature.<key>`), `cat` (`feature`), `fc` class, `sb` subclass, `lv` level         |
-| `feat`       | `category` (`origin`, `general`, `fightingStyle`, `epicBoon`), `repeatable`              |
-| `background` | `abilities` (three), `skills` (one to four), `feat` (its origin feat), `featList`        |
-| `species`    | `size`, `speed`, `traits` (each with `key`, `en`, `es`)                                  |
-| `spell`      | `id` (`spell.<key>`), `cat` (`spell`), `lv` (0 for a cantrip), `sc` school, `cl` classes |
+| Kind         | Fields                                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `subclass`   | `class`: the key of its class (a base pack class, or a class of the same pack); optional `caster` and `spellAbility` |
+| `feature`    | `id` (`feature.<key>`), `cat` (`feature`), `fc` class, `sb` subclass, `lv` level                                     |
+| `feat`       | `category` (`origin`, `general`, `fightingStyle`, `epicBoon`), `repeatable`                                          |
+| `background` | `abilities` (three), `skills` (one to four), `feat` (its origin feat), `featList`                                    |
+| `species`    | `size`, `speed`, `traits` (each with `key`, `en`, `es`)                                                              |
+| `spell`      | `id` (`spell.<key>`), `cat` (`spell`), `lv` (0 for a cantrip), `sc` school, `cl` classes                             |
 
 Examples:
 
@@ -82,6 +82,8 @@ Keys that tie entries together:
 
 - A subclass's features are `feature` entries whose key starts with `<class>-<subclass>-` and
   whose index names both (`fc`, `sb`) and the level that grants them (`lv`).
+- A subclass that gives spellcasting to a class without it carries `caster` (`third`, `half`,
+  `full` or `pact`) and `spellAbility` (`int`, `wis`, `cha`…); the ability is required with it.
 - A feat's text is the feature `feat-<feat key>`; a species trait's text is the feature
   `species-<species key>-<trait key>`.
 - Inside a pack other than the base pack, name a base pack class by its bare key (`fighter`) and

@@ -28,6 +28,7 @@ import {
   improvementAmount,
 } from '../../domain/level-up'
 import { finalAbilities, isClassKey, modifier, signed } from '../../domain/rules'
+import { classFeaturesFor } from '../../domain/progression'
 import type { Build, Feature } from '../../domain/sheet'
 import { abilityKeys, type Ability } from '../../domain/srd'
 import { useTrackerLabel } from '../resource-names'
@@ -212,6 +213,12 @@ function useGrantLines(grants: LevelUpGrants) {
     ...grants.resources.added.map((tracker) =>
       t('levelUp.grants.resourceAdded', { name: label(tracker), max: tracker.max }),
     ),
+    ...grants.dieChanges.map(({ tracker, from, to }) =>
+      t('levelUp.grants.resourceDie', { name: label(tracker), from, to }),
+    ),
+    ...grants.resetChanges.map(({ tracker, to }) =>
+      t(`levelUp.grants.reset.${to}`, { name: label(tracker) }),
+    ),
   ].concat(
     grants.proficiency
       ? [
@@ -244,7 +251,9 @@ export function GrantsStep({
   const lines = useGrantLines(
     grants ?? {
       features: [],
-      resources: { added: [], changed: [], features: 0 },
+      resources: { added: [], changed: [], features: 0, addedFeatures: [] },
+      dieChanges: [],
+      resetChanges: [],
       proficiency: null,
       slots: [],
       leftOut: 0,
@@ -337,6 +346,7 @@ export function ChoicesStep({
       {requirements.subclass && (
         <SubclassChoice
           build={build}
+          toLevel={toLevel}
           missing={missing.includes('subclass')}
           value={choices.subclass}
           onChange={(subclass) => onChange({ ...choices, subclass })}
@@ -402,20 +412,32 @@ export function ChoicesStep({
 
 function SubclassChoice({
   build,
+  toLevel,
   missing,
   value,
   onChange,
 }: {
   build: Build
+  toLevel: number
   missing: boolean
   value: LevelUpChoices['subclass']
   onChange: (value: LevelUpChoices['subclass']) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const catalog = useClassCatalog()
   const nameOf = useClassDefName()
+  const library = useSrdLibrary()
   const options = subclassesFor(catalog, build.classKey)
   const mode = value === null ? null : value.key ? 'pack' : 'custom'
+  const selectedKey = value?.key ?? ''
+  const previewFeatures = useMemo(() => {
+    if (!selectedKey || !library) return []
+    return classFeaturesFor(
+      { ...build, subclassKey: selectedKey },
+      toLevel,
+      library.features,
+    ).filter((row) => row.subclass === selectedKey)
+  }, [selectedKey, library, build, toLevel])
   return (
     <div className="levelup-card">
       <fieldset className="levelup-fieldset">
@@ -426,13 +448,27 @@ function SubclassChoice({
         <div className="levelup-choices">
           {options.map((option) => {
             const name = nameOf(option, 'subclass')
+            const detail = option.pack
+              ? i18n.language.startsWith('en')
+                ? option.pack.title_en
+                : option.pack.title_es
+              : undefined
             return (
               <ChoiceCard
                 key={option.key}
                 name="levelup-subclass"
                 checked={value?.key === option.key}
-                onChange={() => onChange({ key: option.key, name })}
+                onChange={() =>
+                  onChange({
+                    key: option.key,
+                    name,
+                    ...(option.caster
+                      ? { caster: option.caster, spellAbility: option.spellAbility ?? null }
+                      : {}),
+                  })
+                }
                 label={name}
+                detail={detail}
               />
             )
           })}
@@ -443,6 +479,28 @@ function SubclassChoice({
             label={t('levelUp.subclass.custom')}
           />
         </div>
+        {previewFeatures.length > 0 && (
+          <section
+            className="levelup-section"
+            aria-label={t('levelUp.subclass.grants', { level: toLevel })}
+          >
+            <h4 className="levelup-subheading">
+              {t('levelUp.subclass.grants', { level: toLevel })}
+            </h4>
+            <ul className="levelup-list">
+              {previewFeatures.map((row) => (
+                <li key={row.id} className="levelup-row">
+                  <Text fw={600} className="user-copy">
+                    <GlossaryTerm id={row.id}>{row.name}</GlossaryTerm>
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    {t('panel.levelShort', { level: row.level })}
+                  </Text>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {mode === 'custom' && (
           <TextInput
             label={t('panel.subclassName')}
@@ -830,17 +888,22 @@ function ChangeList({ summary }: { summary: LevelUpSummary }) {
       <li className="levelup-row">
         <Text fw={600}>{t('levelUp.review.hp', { from: summary.hp.from, to: summary.hp.to })}</Text>
       </li>
-      {summary.grants.features.map((feature) => (
-        <li key={feature.id} className="levelup-row">
-          <Text className="user-copy">
-            {feature.ref ? (
-              <GlossaryTerm id={feature.ref}>{feature.name}</GlossaryTerm>
-            ) : (
-              feature.name
-            )}
-          </Text>
-        </li>
-      ))}
+      {summary.grants.features
+        .filter(
+          (feature) =>
+            !(feature.source === 'feat' && summary.feat && feature.name === summary.feat),
+        )
+        .map((feature) => (
+          <li key={feature.id} className="levelup-row">
+            <Text className="user-copy">
+              {feature.ref ? (
+                <GlossaryTerm id={feature.ref}>{feature.name}</GlossaryTerm>
+              ) : (
+                feature.name
+              )}
+            </Text>
+          </li>
+        ))}
       {lines.map((line) => (
         <li key={line} className="levelup-row">
           <Text>{line}</Text>

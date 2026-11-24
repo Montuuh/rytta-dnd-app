@@ -72,6 +72,7 @@ export const sheetEs = {
   'srd.caster.none': 'Sin conjuros',
   'srd.caster.full': 'Lanzador completo',
   'srd.caster.half': 'Medio lanzador',
+  'srd.caster.third': 'Lanzador de tercio',
   'srd.caster.pact': 'Magia de pacto',
   'srd.license':
     'Datos de reglas del System Reference Document 5.2 de Wizards of the Coast LLC, con licencia CC-BY-4.0.',

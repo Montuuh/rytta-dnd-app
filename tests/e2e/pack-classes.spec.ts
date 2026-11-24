@@ -111,6 +111,13 @@ test('RYT-168 level up offers the SRD subclass and a pack subclass of the class'
   const pack = group.getByRole('radio', { name: 'Colegio de los gigantes' })
   await pack.locator('xpath=..').click()
   await expect(pack).toBeChecked()
+  // RYT-175: the card names its pack and the choice shows what the subclass gives now.
+  await expect(
+    group.locator('label.levelup-choice', { hasText: 'Colegio de los gigantes' }),
+  ).toContainText('Libros del dueño')
+  await expect(
+    group.getByRole('region', { name: 'Rasgos que ganas a nivel 3' }).getByRole('listitem'),
+  ).toContainText(['Poder del gigante'])
   await audit(page, '[role="dialog"]')
   await capture(page, `${evidence}/subclass-es-default-${info.project.name}.png`)
   const adds = dialog
@@ -125,4 +132,64 @@ test('RYT-168 level up offers the SRD subclass and a pack subclass of the class'
   expect(build.subclassKey).toBe('b00c5000--giant-blood')
   expect(build.subclass).toBe('Colegio de los gigantes')
   expect(build.features.map((feature) => feature.ref)).toContain('feature.b00c5000--giant-might')
+})
+
+// RYT-175: the screens that choose a subclass read it from the campaign's packs.
+const packEvidence = 'docs/evidence/ui-review/ryt-175'
+
+test('RYT-175 a blank sheet at level 3 takes a pack subclass that gives spellcasting', async ({
+  page,
+}, info) => {
+  const fixture = await identityFixture(page, { player: true })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(`./#/campaign/${campaignId}/party`)
+  await page.getByRole('button', { name: 'Terminar ficha' }).click()
+  await page.getByRole('dialog').getByText('En blanco', { exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Empezar' }).click()
+  // The subclass is asked from the level the class gives it.
+  await expect(page.getByRole('combobox', { name: 'Subclase' })).toHaveCount(0)
+  const raise = page.getByRole('button', { name: 'Subir nivel', exact: true })
+  await raise.click()
+  await raise.click()
+  const subclass = page.getByRole('combobox', { name: 'Subclase' })
+  await expect(subclass).toHaveValue('Aún sin subclase')
+  await subclass.click()
+  await page.getByRole('option', { name: 'Filo arcano · Libros del dueño' }).click()
+  await audit(page)
+  await capture(page, `${packEvidence}/blank-subclass-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Crear ficha' }).click()
+  await expect(page.getByText('de nivel 3', { exact: false }).first()).toBeVisible()
+  const body = JSON.stringify(sent(fixture.calls, 'b00c5000--spell-blade').at(-1)!.body)
+  expect(body).toContain('"subclassKey":"b00c5000--spell-blade"')
+  expect(body).toContain('"subclass":"Filo arcano"')
+  expect(body).toContain('"casterKind":"third"')
+  expect(body).toContain('"spellAbility":"int"')
+  expect(body).toContain('feature.b00c5000--warding-blade')
+})
+
+test('RYT-175 the sheet library adds a feat once', async ({ page }, info) => {
+  await identityFixture(page, { player: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(sheetUrl)
+  await page.getByRole('button', { name: /^Rasgos/ }).click()
+  await page.getByRole('button', { name: 'Añadir desde la biblioteca' }).click()
+  const library = page.getByRole('dialog', { name: 'Biblioteca' })
+  await library.getByRole('tab', { name: 'Dotes' }).click()
+  // Feats have no class: the class filter leaves with the tab.
+  await expect(library.getByRole('combobox', { name: 'Clase' })).toHaveCount(0)
+  await expect(
+    library.getByRole('switch', { name: 'Incluir dotes por encima de tu nivel' }),
+  ).toBeAttached()
+  await library.getByLabel('Buscar').fill('pendenciero')
+  await expect(library.locator('.library-row')).toContainText('Libros del dueño')
+  await audit(page, '[role="dialog"]')
+  await capture(page, `${packEvidence}/library-feats-${info.project.name}.png`, {
+    fullPage: false,
+  })
+  await library.getByRole('button', { name: 'Añadir Pendenciero', exact: true }).click()
+  await expect(
+    library.getByRole('button', { name: 'Pendenciero ya está en la ficha', exact: true }),
+  ).toHaveAttribute('aria-disabled', 'true')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: /^Rasgos/ })).toContainText('Pendenciero')
 })

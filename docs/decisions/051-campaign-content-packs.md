@@ -134,6 +134,16 @@ Owner choices from the block L options page, all the recommended ones:
   preview build (no backend) says the glossary needs the library. Anonymous reads were therefore
   not opened, which also avoids unbounded anonymous egress (security review of RYT-167).
 
+## A subclass that gives spellcasting (RYT-175, 2026-11-24)
+
+A subclass index can carry `caster` and `spellAbility`. A class without spellcasting takes them
+when that subclass is chosen (creation, sheet, level up) and loses them when it is left; a class
+with its own spellcasting ignores them, and a progression set by hand on the sheet stays. The
+caster kinds gain `third`: no slots before level 3, then the full caster table at a third of the
+level, rounded up. A caster without its ability is refused by the library and skipped by the
+reader. The server needs no change: it stores the kind as text inside the build and only tells
+pact magic apart.
+
 ## Species, backgrounds and feats from packs (RYT-171, 2026-11-23)
 
 Owner choices from the block M options page, all the recommended ones:

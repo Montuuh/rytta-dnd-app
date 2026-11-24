@@ -831,3 +831,36 @@ test('RYT-174 the origin filter and the original read in English and the light t
   await expect(page.getByText('The app uses this entry.')).toBeVisible()
   await audit(page)
 })
+
+test('a subclass can give spellcasting to its class', async ({ page }, info) => {
+  await identityFixture(page)
+  const server = libraryServer({ sample: true })
+  await server.install(page)
+  await page.goto(`./#/library/${homebrewPackId}/subclass`)
+  await page.getByRole('link', { name: /^Círculo de las Brasas/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Círculo de las Brasas' })).toBeFocused()
+  const caster = page.getByRole('combobox', { name: 'Progresión de espacios' })
+  await expect(caster).toHaveValue('Sin conjuros')
+  await expect(page.getByRole('combobox', { name: 'Característica de lanzamiento' })).toHaveCount(0)
+  await caster.click()
+  await page.getByRole('option', { name: 'Lanzador de tercio' }).click()
+  // Spellcasting needs its ability before the entry can be saved.
+  await expect(page.getByText('Elige uno')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Guardar', exact: true })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  )
+  await page.getByRole('combobox', { name: 'Característica de lanzamiento' }).click()
+  await page.getByRole('option', { name: 'Inteligencia' }).click()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await capture(page, `docs/evidence/ui-review/ryt-175/subclass-form-${info.project.name}.png`)
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: /Guardado/ })).toBeVisible()
+  const saved = () => server.entries().find((e) => e.key === 'circle-of-embers')!.data
+  expect(saved()).toMatchObject({ index: { class: 'druid', caster: 'third', spellAbility: 'int' } })
+  // Back to none: the index keeps no spellcasting field.
+  await caster.click()
+  await page.getByRole('option', { name: 'Sin conjuros' }).click()
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click()
+  await expect.poll(() => (saved() as { index: unknown }).index).toEqual({ class: 'druid' })
+})

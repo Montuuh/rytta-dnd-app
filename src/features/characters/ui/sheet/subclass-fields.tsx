@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Select, TextInput } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import { subclassesFor } from '../../domain/class-catalog'
+import { classDefFor, subclassesFor } from '../../domain/class-catalog'
 import type { Build, SheetDraft } from '../../domain/sheet'
 import { useClassCatalog, useClassDefName } from '../class-catalog'
 
@@ -15,16 +16,40 @@ export function SubclassFields({
   build: Build
   change: (update: (draft: SheetDraft) => SheetDraft) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const catalog = useClassCatalog()
   const nameOf = useClassDefName()
-  const options = subclassesFor(catalog, build.classKey).map((item) => ({
-    value: item.key,
-    label: nameOf(item, 'subclass'),
-  }))
+  // "Another subclass" is chosen for one class: changing class goes back to the list.
+  const [typingFor, setTypingFor] = useState(() =>
+    !build.subclassKey && build.subclass ? build.classKey : null,
+  )
+  const typing = typingFor === build.classKey
+  const classDef = classDefFor(catalog, build.classKey)
+  const rawSubclasses = subclassesFor(catalog, build.classKey)
+  const options = rawSubclasses.map((item) => {
+    const base = nameOf(item, 'subclass')
+    const packTitle = item.pack
+      ? i18n.language.startsWith('en')
+        ? item.pack.title_en
+        : item.pack.title_es
+      : null
+    return {
+      value: item.key,
+      name: base,
+      label: packTitle ? `${base} · ${packTitle}` : base,
+      caster: item.caster,
+      spellAbility: item.spellAbility,
+    }
+  })
   if (build.subclassKey && !options.some((option) => option.value === build.subclassKey))
-    options.push({ value: build.subclassKey, label: build.subclass || build.subclassKey })
-  const value = build.subclassKey ? build.subclassKey : build.subclass ? 'custom' : ''
+    options.push({
+      value: build.subclassKey,
+      name: build.subclass || build.subclassKey,
+      label: build.subclass || build.subclassKey,
+      caster: undefined,
+      spellAbility: undefined,
+    })
+  const value = build.subclassKey ? build.subclassKey : typing || build.subclass ? 'custom' : ''
   return (
     <>
       {options.length > 0 && (
@@ -32,7 +57,7 @@ export function SubclassFields({
           label={t('wizard.subclass')}
           data={[
             { value: '', label: t('panel.noSubclass') },
-            ...options,
+            ...options.map(({ value: itemValue, label }) => ({ value: itemValue, label })),
             { value: 'custom', label: t('panel.otherSubclass') },
           ]}
           value={value}
@@ -40,18 +65,41 @@ export function SubclassFields({
           comboboxProps={{ withinPortal: true }}
           onChange={(next) => {
             const option = options.find((item) => item.value === next)
-            change((draft) => ({
-              ...draft,
-              build: {
-                ...draft.build,
-                subclassKey: option ? option.value : '',
-                subclass: option ? option.label : next === 'custom' ? draft.build.subclass : '',
-              },
-            }))
+            setTypingFor(next === 'custom' ? build.classKey : null)
+            change((draft) => {
+              // A subclass gives spellcasting only to a class without it, and leaving that subclass
+              // takes back what it gave: a progression the player set by hand stays.
+              const baseCaster = classDef?.caster ?? 'none'
+              const previous = options.find((item) => item.value === draft.build.subclassKey)
+              const gave =
+                previous?.caster !== undefined &&
+                previous.caster !== 'none' &&
+                draft.build.casterKind === previous.caster
+              const casterPatch =
+                baseCaster !== 'none'
+                  ? {}
+                  : option?.caster && option.caster !== 'none'
+                    ? {
+                        casterKind: option.caster,
+                        spellAbility: option.spellAbility ?? draft.build.spellAbility ?? 'int',
+                      }
+                    : gave
+                      ? { casterKind: 'none' as const, spellAbility: null }
+                      : {}
+              return {
+                ...draft,
+                build: {
+                  ...draft.build,
+                  subclassKey: option ? option.value : '',
+                  subclass: option ? option.name : next === 'custom' ? draft.build.subclass : '',
+                  ...casterPatch,
+                },
+              }
+            })
           }}
         />
       )}
-      {!build.subclassKey && (options.length === 0 || build.subclass) && (
+      {!build.subclassKey && (options.length === 0 || typing || build.subclass) && (
         <TextInput
           label={t('panel.subclassName')}
           maxLength={60}

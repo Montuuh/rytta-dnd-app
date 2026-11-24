@@ -267,6 +267,7 @@ export type SyncChanges = {
   added: Tracker[]
   changed: { tracker: Tracker; from: number }[]
   features: number
+  addedFeatures: Feature[]
 }
 export function syncChanges(before: Build, after: Build): SyncChanges {
   const old = new Map(before.trackers.map((tracker) => [tracker.id, tracker]))
@@ -276,9 +277,11 @@ export function syncChanges(before: Build, after: Build): SyncChanges {
     return prev && prev.max !== tracker.max ? [{ tracker, from: prev.max }] : []
   })
   const had = new Set(before.features.map((feature) => feature.id))
+  const addedFeatures = after.features.filter((feature) => !had.has(feature.id))
   return {
     added,
     changed,
-    features: after.features.filter((feature) => !had.has(feature.id)).length,
+    features: addedFeatures.length,
+    addedFeatures,
   }
 }

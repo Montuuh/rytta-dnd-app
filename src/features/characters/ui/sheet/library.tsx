@@ -5,11 +5,17 @@ import { useTranslation } from 'react-i18next'
 import { GlossaryTerm, useClassName, useSrdLibrary } from '@/features/glossary'
 import { addLibraryFeature } from '../../domain/progression'
 import { slotsFor } from '../../domain/rules'
-import { useClassCatalog, useClassDefName } from '../class-catalog'
+import {
+  useClassCatalog,
+  useClassDefName,
+  useOriginCatalog,
+  useOriginNames,
+} from '../class-catalog'
+import { featRef } from '../../domain/origin-catalog'
 import type { PanelProps } from './panel-types'
 import { BlockSheet } from './widgets'
 
-export type LibraryTab = 'spells' | 'features'
+export type LibraryTab = 'spells' | 'features' | 'feats'
 const plain = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase()
 
 /** RYT-071: add SRD spells and class features from the glossary, filtered by class and level. */
@@ -28,9 +34,11 @@ export function LibraryPicker({
   onTab: (tab: LibraryTab) => void
   props: Pick<PanelProps, 'build' | 'level' | 'change' | 'pending'>
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const library = useSrdLibrary()
   const catalog = useClassCatalog()
+  const origins = useOriginCatalog()
+  const originNames = useOriginNames()
   const className = useClassName()
   const defName = useClassDefName()
   const { build, level, change } = props
@@ -96,6 +104,59 @@ export function LibraryPicker({
               'panel.added',
             ),
         }))
+    if (tab === 'feats') {
+      const feats = origins?.feats ?? []
+      return feats
+        .filter((feat) => {
+          const name = originNames.name(feat)
+          return (
+            !feat.hidden &&
+            feat.key !== 'ability-score-improvement' &&
+            matches(name) &&
+            (anyLevel || (feat.level ?? 1) <= level)
+          )
+        })
+        .sort((a, b) => originNames.name(a).localeCompare(originNames.name(b)))
+        .map((feat) => {
+          const name = originNames.name(feat)
+          const ref = featRef(feat.key)
+          const packTitle = feat.pack
+            ? i18n.language.startsWith('en')
+              ? feat.pack.title_en
+              : feat.pack.title_es
+            : null
+          const parts = [
+            feat.level ? t('panel.levelShort', { level: feat.level }) : null,
+            packTitle,
+          ].filter(Boolean)
+          return {
+            id: ref,
+            name,
+            meta: parts.join(' · '),
+            add: () =>
+              change(
+                (draft) => ({
+                  ...draft,
+                  build: {
+                    ...draft.build,
+                    features: [
+                      ...draft.build.features,
+                      {
+                        id: `lib-feat-${feat.key}`.slice(0, 90),
+                        name,
+                        source: 'feat' as const,
+                        description: '',
+                        ref,
+                        level: draft.level,
+                      },
+                    ].slice(0, 120),
+                  },
+                }),
+                'panel.added',
+              ),
+          }
+        })
+    }
     return library.features
       .filter(
         (feature) =>
@@ -116,7 +177,21 @@ export function LibraryPicker({
             'panel.added',
           ),
       }))
-  }, [library, deferred, tab, classFilter, anyLevel, maxSpellLevel, level, change, t, className])
+  }, [
+    library,
+    origins,
+    originNames,
+    i18n.language,
+    deferred,
+    tab,
+    classFilter,
+    anyLevel,
+    maxSpellLevel,
+    level,
+    change,
+    t,
+    className,
+  ])
   const shown = rows.slice(0, 80)
   return (
     <BlockSheet opened={opened} onClose={onClose} title={t('panel.library')} alert={alert}>
@@ -129,6 +204,7 @@ export function LibraryPicker({
           <Tabs.List grow aria-label={t('panel.library')}>
             <Tabs.Tab value="spells">{t('glossary.tab.spell')}</Tabs.Tab>
             <Tabs.Tab value="features">{t('glossary.tab.feature')}</Tabs.Tab>
+            <Tabs.Tab value="feats">{t('library.kind.feat')}</Tabs.Tab>
           </Tabs.List>
         </Tabs>
         <TextInput
@@ -137,27 +213,40 @@ export function LibraryPicker({
           value={query}
           onChange={(event) => setQuery(event.currentTarget.value)}
         />
-        <Select
-          label={t('glossary.filter.class')}
-          data={[
-            { value: '', label: t('glossary.feature.allClasses') },
-            ...(catalog?.classes ?? []).map((item) => ({ value: item.key, label: defName(item) })),
-          ]}
-          value={classFilter}
-          allowDeselect={false}
-          onChange={(value) => setClassFilter(value ?? '')}
-          comboboxProps={{ withinPortal: true }}
-        />
+        {tab !== 'feats' && (
+          <Select
+            label={t('glossary.filter.class')}
+            data={[
+              { value: '', label: t('glossary.feature.allClasses') },
+              ...(catalog?.classes ?? []).map((item) => ({
+                value: item.key,
+                label: defName(item),
+              })),
+            ]}
+            value={classFilter}
+            allowDeselect={false}
+            onChange={(value) => setClassFilter(value ?? '')}
+            comboboxProps={{ withinPortal: true }}
+          />
+        )}
         <Switch
           size="md"
-          label={tab === 'spells' ? t('panel.anySpellLevel') : t('panel.anyFeatureLevel')}
+          label={
+            tab === 'spells'
+              ? t('panel.anySpellLevel')
+              : tab === 'feats'
+                ? t('panel.anyFeatLevel')
+                : t('panel.anyFeatureLevel')
+          }
           checked={anyLevel}
           onChange={(event) => setAnyLevel(event.currentTarget.checked)}
         />
         <Text size="sm" c="dimmed" aria-live="polite">
-          {library ? t('panel.libraryCount', { count: rows.length }) : t('glossary.loading')}
+          {library && (tab !== 'feats' || origins)
+            ? t('panel.libraryCount', { count: rows.length })
+            : t('glossary.loading')}
         </Text>
-        {library && rows.length === 0 && classFilter && (
+        {library && rows.length === 0 && classFilter && tab !== 'feats' && (
           <div className="library-empty" role="status">
             <Text size="sm">
               {t('panel.libraryNoneInClass', { class: t(`srd.class.${classFilter as 'bard'}`) })}

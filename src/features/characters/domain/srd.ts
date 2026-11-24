@@ -47,7 +47,7 @@ export const conditionKeys = [
 ] as const
 export type Condition = (typeof conditionKeys)[number]
 
-export const casterKinds = ['none', 'full', 'half', 'pact'] as const
+export const casterKinds = ['none', 'full', 'half', 'third', 'pact'] as const
 export type CasterKind = (typeof casterKinds)[number]
 export const hitDice = [6, 8, 10, 12] as const
 export type HitDie = (typeof hitDice)[number]

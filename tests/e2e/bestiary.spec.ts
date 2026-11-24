@@ -141,15 +141,31 @@ for (const [language, theme] of [
     await expectTouchTargets(pane, '.bst-actions button:visible', { height: 44, width: 44 })
     await audit(page, sheet(info) ? '[role="dialog"]' : 'body')
     const addThree = pane.getByRole('button', { name: es ? 'Añadir 3' : 'Add 3', exact: true })
-    await addThree.click()
+    // The request that succeeds is held open, so the test can move focus while it runs.
+    let gate: Promise<void> = Promise.resolve()
+    let open = () => {}
+    await page.route('**/rest/v1/rpc/add_combatants', async (route) => {
+      await gate
+      await route.fallback()
+    })
     if (checkRetry) {
+      await addThree.click()
       await expect(pane.locator('.bst-encounter-add').getByRole('alert')).toBeInViewport()
       await expect(addThree).toBeFocused()
       expect(fight.combatants).toHaveLength(3)
-      await addThree.press('Enter')
     }
+    gate = new Promise<void>((resolve) => (open = resolve))
+    const requested = page.waitForRequest('**/rest/v1/rpc/add_combatants')
+    if (checkRetry) await addThree.press('Enter')
+    else await addThree.click()
+    await requested
+    // UI review: focus the user moved during the request is not pulled back to the button.
+    await dial.focus()
+    open()
     await expect(pane.getByRole('status').filter({ hasText: `3 × ${wolf}` })).toBeVisible()
     await expect(dial).toHaveValue('1')
+    await page.waitForTimeout(1300)
+    await expect(dial).toBeFocused()
 
     if (sheet(info)) {
       await page.keyboard.press('Escape')

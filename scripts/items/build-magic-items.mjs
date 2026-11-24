@@ -216,7 +216,7 @@ for (const [headingEn, headingEs] of magicItemNames) {
 
 writeFileSync(
   path.join(fixtures, 'magic-items.json'),
-  `${JSON.stringify({ format: 'rytta-content', version: 1, kind: 'item', entries }, null, 1)}\n`,
+  `${JSON.stringify({ format: 'rytta-content', version: 1, kind: 'item', entries }, null, 2)}\n`,
 )
 const count = (pick) =>
   Object.entries(

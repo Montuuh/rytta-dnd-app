@@ -91,6 +91,19 @@ level by level; SRD renames such as `hideous-laughter` and `arcane-hand` count a
   subclass" stayed chosen after a class change; the reset line read "se recupera en Descanso
   corto o largo"; unit tests used names from the handbook, now invented ones.
 
+## Base pack, version 5 (2026-11-24)
+
+- The same session published version 5 of the base pack in PRE and in production: 56 feature
+  entries the hosted library lacked and the repository's SRD already had (the texts of the 17
+  SRD feats, 33 traits of the 9 species and 6 class options such as Divine Spark and Flurry of
+  Blows). Read back by SQL: the 56 keys exist in `tests/fixtures/srd/glossary/`, and the
+  summary and block count of each, in English and Spanish, match the published entries;
+  production and PRE hold the same content (same MD5). The texts were not compared block by
+  block.
+- The baseline had stayed at 4, so the 56 read as the app's own. Owner decision ("Sí,
+  muévela"): the baseline moved to 5 in PRE and then production, in one transaction that rolls
+  back unless every entry then reads as SRD. After it: 1736 entries, all of SRD origin, in both.
+
 ## Checks
 
 - First slices: `npm run check:fast` passed (typecheck, lint, architecture, docs with 174

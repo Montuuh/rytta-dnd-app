@@ -65,10 +65,14 @@ for (const [language, scheme] of [
     expect(shown.length).toBeGreaterThan(7500)
     // The card scrolls inside the viewport; the page never scrolls sideways.
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    // No line of the text runs past the card. The text itself is measured: a glossary term at a
+    // line end has an invisible hit area that reaches a few pixels further.
     expect(
-      await card
-        .locator('.item-card-description')
-        .evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+      await card.locator('.item-card-description').evaluate((node) => {
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        return range.getBoundingClientRect().right <= node.getBoundingClientRect().right + 1
+      }),
     ).toBe(true)
     await expectTouchTargets(card, 'button:visible')
     expect(

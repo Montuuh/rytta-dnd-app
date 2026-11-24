@@ -143,6 +143,8 @@ export const bestiaryEs = {
   'bestiary.quickHint':
     'Esta criatura solo tiene los números de combate. Completa su ficha para tener sus acciones a mano.',
   'bestiary.srdPage': 'SRD 5.2.1, p. {{page}} · Wizards of the Coast LLC, CC-BY-4.0',
+  'bestiary.srdPageChanged':
+    'SRD 5.2.1, p. {{page}} · Wizards of the Coast LLC, CC-BY-4.0 · modificado por {{pack}}',
   'bestiary.notesLine': 'Notas del DM: {{notes}}',
   'bestiary.adaptation':
     'Rytta separa el texto oficial en campos, restaura un signo omitido (salvación de Inteligencia del dragón blanco joven) y en los rasgos reutilizables cambia el nombre de la criatura por «la criatura».',

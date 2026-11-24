@@ -1,7 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, characterId, identityFixture } from './fixtures/identity.ts'
-import { expectTouchTargets } from './fixtures/audit.ts'
+import { capture, expectTouchTargets } from './fixtures/audit.ts'
 
 const glossaryUrl = `./#/campaign/${campaignId}/glossary`
 const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
@@ -796,4 +796,30 @@ test('RYT-117 Home and End move row focus across the whole list and the DOM stay
   expect(await page.evaluate(() => scrollY)).toBeLessThan(2000)
   for (let i = 0; i < 100; i++) await page.keyboard.press('ArrowDown')
   await expect.poll(() => page.locator('.gl-row').count()).toBeLessThan(260)
+})
+
+test('RYT-174 the source line follows the entry origin in the base pack', async ({
+  page,
+}, info) => {
+  await identityFixture(page, {
+    player: true,
+    modules: ['party', 'glossary'],
+    packOrigins: [
+      {
+        id: '70000000-0000-4000-8000-000000000002',
+        title_en: 'Rytta',
+        title_es: 'Rytta',
+        entries: [{ kind: 'rule', key: 'long-rest', origin: 'changed' }],
+      },
+    ],
+  })
+  // An entry the base pack changed cites the SRD page and says who changed it.
+  await page.goto(`${glossaryUrl}/rule.long-rest`)
+  await expect(page.locator('.gl-source').last()).toHaveText(
+    /^SRD 5\.2\.1, página \d+ · modificado por Rytta$/,
+  )
+  await capture(page, `docs/evidence/ui-review/ryt-174/source-changed-${info.project.name}.png`)
+  // Any other entry of the pack still cites the SRD alone.
+  await page.goto(`${glossaryUrl}/rule.short-rest`)
+  await expect(page.locator('.gl-source').last()).toHaveText(/^SRD 5\.2\.1, página \d+$/)
 })

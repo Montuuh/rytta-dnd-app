@@ -1,6 +1,6 @@
 import { Checkbox, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import { choiceKey, contentCategories, type ContentChoice } from '../domain/content'
+import { choiceKey, contentCategories, startsFromSrd, type ContentChoice } from '../domain/content'
 import './content.css'
 
 /**
@@ -55,6 +55,7 @@ export function ContentChoiceFields({
                   <span className="content-choice-text">
                     <span className="user-copy">{title(pack)}</span>
                     <span className="content-choice-meta">
+                      {startsFromSrd(pack, title(pack)) && `${t('campaignContent.basedOnSrd')} · `}
                       {t(
                         pack.private
                           ? 'campaignContent.choice.private'

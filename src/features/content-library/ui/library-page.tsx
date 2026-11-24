@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
-import { Alert, Button, Group, Loader, Select, Stack, Text, TextInput, Title } from '@mantine/core'
+import {
+  Alert,
+  Button,
+  Group,
+  Loader,
+  SegmentedControl,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, FileUp, Library, PencilLine, Plus, Search, Users } from 'lucide-react'
@@ -12,6 +23,7 @@ import { usePhone } from '@/shared/ui/use-viewport'
 import { draftsQuery, libraryQuery } from '../api'
 import {
   entryName,
+  entryOrigins,
   knownKinds,
   libraryErrorCode,
   missingLanguage,
@@ -19,13 +31,14 @@ import {
   sortRows,
   type ContentLanguage,
   type ContentPack,
+  type EntryOrigin,
 } from '../domain/library'
 import { EntryThumb } from './entry-image'
 import { hasPicture } from './entry-picture'
 import { ImportDialog, PackDialog, PublishDialog } from './dialogs'
 import { OffersDialog } from './offers-dialog'
 import { EntryEditor } from './entry-editor'
-import { entryMeta, kindLabel, packLine } from './labels'
+import { entryMeta, kindLabel, originFilterLabel, originLabel, packLine } from './labels'
 import { hasKeptEdits, keepEdits, useKeptEditsVersion } from './unsaved'
 import './library.css'
 
@@ -463,11 +476,14 @@ function EntryPane({
 }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
-  // Another kind starts with an empty search.
+  // RYT-174: the base pack's entries carry their origin; other packs send none and get no filter.
+  const [origin, setOrigin] = useState<'all' | EntryOrigin>('all')
+  // Another kind starts with an empty search and every origin.
   const [searchKind, setSearchKind] = useState(kind)
   if (searchKind !== kind) {
     setSearchKind(kind)
     setQuery('')
+    setOrigin('all')
   }
   const drafts = useQuery(draftsQuery(userId, pack.id, kind))
   const counts = pack.drafts ?? pack.kinds
@@ -477,7 +493,12 @@ function EntryPane({
   }))
   // Rows mark entries with kept edits: repaint when that changes.
   useKeptEditsVersion()
-  const rows = sortRows(drafts.data ?? [], query, language)
+  const found = sortRows(drafts.data ?? [], query, language)
+  // Only where the kind mixes origins: a kind that is all SRD would offer two empty lists.
+  const withOrigin = (drafts.data ?? []).some((row) => row.origin && row.origin !== 'srd')
+  const shown = withOrigin ? origin : 'all'
+  const rows = shown === 'all' ? found : found.filter((row) => row.origin === shown)
+  const originCount = (value: EntryOrigin) => found.filter((row) => row.origin === value).length
   const title = packTitle(pack, language)
   // RYT-163: a private pack's owner, or a super admin, chooses the campaigns that see it.
   const admin = useAdminStatus()
@@ -544,6 +565,27 @@ function EntryPane({
         value={query}
         onChange={(event) => setQuery(event.currentTarget.value)}
       />
+      {withOrigin && (
+        <SegmentedControl
+          fullWidth
+          aria-label={t('library.originFilter')}
+          className="lib-origin"
+          value={shown}
+          onChange={(value) => setOrigin(value as 'all' | EntryOrigin)}
+          data={[
+            { value: 'all' as const, count: found.length },
+            ...entryOrigins.map((value) => ({ value, count: originCount(value) })),
+          ].map(({ value, count }) => ({
+            value,
+            label: (
+              <span className="lib-origin-seg">
+                <span>{originFilterLabel(t, value, title)}</span>{' '}
+                <span className="lib-origin-n">{count}</span>
+              </span>
+            ),
+          }))}
+        />
+      )}
       <Button
         variant="light"
         leftSection={<Plus size={18} aria-hidden="true" />}
@@ -565,7 +607,11 @@ function EntryPane({
         </Alert>
       ) : rows.length === 0 ? (
         <Text className="lib-prompt">
-          {query.trim() ? t('library.noMatches', { query: query.trim() }) : t('library.noEntries')}
+          {found.length > 0
+            ? t('library.noOrigin')
+            : query.trim()
+              ? t('library.noMatches', { query: query.trim() })
+              : t('library.noEntries')}
         </Text>
       ) : (
         <ul className="lib-list lib-entry-list">
@@ -591,6 +637,7 @@ function EntryPane({
                   <span className="lib-row-meta">
                     {[
                       entryMeta(t, row),
+                      row.origin ? originLabel(t, row.origin, title) : null,
                       state,
                       missing ? t(`library.missing.${missing}`) : null,
                       hasKeptEdits({ userId, packId: pack.id, kind, entryId: row.id })

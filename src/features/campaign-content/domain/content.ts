@@ -68,6 +68,10 @@ export const hasUpdate = (pack: ContentPack, category: PackCategory) =>
   category.pinned_version !== null &&
   category.pinned_version < pack.version
 
+/** RYT-174: the renamed base pack says what it starts from; a title that names the SRD does not. */
+export const startsFromSrd = (pack: { srd: boolean }, title: string) =>
+  pack.srd && !/srd|5\.2\.1|system reference|referencia del sistema/i.test(title)
+
 export const titleOf = (pack: ContentPack, language: string) =>
   (language.startsWith('es') ? pack.title_es || pack.title_en : pack.title_en || pack.title_es) ||
   pack.slug

@@ -348,6 +348,13 @@ export async function identityFixture(
     inventory?: boolean
     /** RYT-172: pack pictures of the campaign; the longsword then comes from the pack. */
     packImages?: { kind: string; id: string; path: string }[]
+    /** RYT-174: what get_campaign_content_origins and get_content_origins answer. */
+    packOrigins?: {
+      id: string
+      title_en: string
+      title_es: string
+      entries: { kind: string; key: string; origin: 'changed' | 'own' }[]
+    }[]
     modules?: string[]
     party?: boolean
     /** RYT-034: sign in as another Player of the party fixture (for example peerId). */
@@ -1248,6 +1255,9 @@ export async function identityFixture(
     )
       return respond({ Key: url.pathname.split('/object/')[1] })
     if (method === 'get_campaign_pack_images') return respond(options.packImages ?? [])
+    // RYT-174: entries of the base pack that are changed or its own (none unless a test sets them).
+    if (method === 'get_campaign_content_origins' || method === 'get_content_origins')
+      return respond(options.packOrigins ?? [])
     if (method === 'set_character_portrait') {
       portraitPath = (body.new_path as string | null) ?? null
       return respond(null)

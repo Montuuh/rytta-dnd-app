@@ -5357,12 +5357,14 @@
       "title": "The base pack becomes Rytta: its name, the origin of each entry and protected entries",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-173", "RYT-171"],
       "sources": [
         "Owner, 23 November 2026: \"Mi plan es que los datos de origen base, descargables, de momento sean SRD solo, pero con superadmin iremos añadiendo, modificando y eliminando datos de este SRD, para hacerlo de 'Rytta' basado en el SRD. Así asentamos la base para poder añadir mas features, subclases, hechizos, monstruos, etc.. que no están en el SRD, sino en el origen de datos de 'Rytta'.\"",
         "Library audit of 23 November 2026: the base pack is recognised by its slug srd-5-2-1, which cannot change once published; its title, description and attribution can. The app names it \"SRD\" in fixed interface text (source filters and licence lines; 26 Spanish strings mention it). Entries carry no origin and the pack one licence, CC-BY-4.0, which asks that changes be indicated and would label Rytta's own entries. Nothing stops the withdrawal of entries the code relies on: the 14 conditions the sheet tracks, the 12 SRD classes, the SRD species and backgrounds whose effects the app applies, and the creature-baselines table.",
-        "Changing or withdrawing SRD entries has to happen in the base pack itself: a second pack cannot change or withdraw another pack's entries, so the plan keeps one pack."
+        "Changing or withdrawing SRD entries has to happen in the base pack itself: a second pack cannot change or withdraw another pack's entries, so the plan keeps one pack.",
+        "Owner, 24 November 2026, block Q options page: every recommended option (P1 A the name Rytta with \"Based on the SRD 5.2.1\", P2 A three origins worked out by the server, P3 A everyone reads the origin in the source line, P4 A protected entries cannot be deleted, P5 A only the base pack has an origin per entry).",
+        "Delivered 2026-11-24: migration applied to staging, production and PRE after an independent security review; independent UI review PASS on the second round. The licence lines keep their fixed text (the changes are indicated per entry), and the production pack is renamed at the release, when the deployed app stops printing a fixed \"SRD\"."
       ],
       "scope": "Starts with an options page, then three parts. Name: the pack with slug srd-5-2-1 stays the base pack (slug and bare keys unchanged, so stored references keep working) and the app shows the pack's own title and attribution wherever it prints a fixed \"SRD\" for it: Content, campaign creation, the source filters and rows of the bestiary, glossary, spells and items, and the licence lines; the super admin renames the pack from the library. Origin: each entry of the base pack carries its origin (from the SRD unchanged, from the SRD and changed by Rytta, or Rytta's own); the SRD entries are marked from the SRD 5.2.1 as uploaded, editing one marks it changed and a new entry is Rytta's own; the library lists and filters by origin and the attribution states that Rytta changed SRD material and which entries are not SRD. Protected entries: the server refuses to withdraw, or to publish without, the entries the code relies on, and the library says why; their texts stay editable. Options page: the pack's new title in both languages, the origin labels and whether DMs and Players see them, refusing or warning on protected entries, and whether origin applies to other public packs. Non-goals: changing the slug or stored keys, automating the mechanics of new classes, species or feats, a version history or rollback screen, a second default pack.",
       "acceptance": [
@@ -5382,7 +5384,7 @@
         "independent UI review PASS",
         "hosted apply"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-174/validation.md"]
     }
   ]
 }

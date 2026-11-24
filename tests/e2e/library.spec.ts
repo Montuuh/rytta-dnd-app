@@ -716,3 +716,118 @@ test('accounts that are not editors see neither the menu item nor the library', 
   await expect(page.getByRole('link', { name: 'Volver a mis campañas' })).toBeVisible()
   await audit(page)
 })
+
+test('RYT-174 the base pack tells where each entry comes from and keeps what the app needs', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  await identityFixture(page)
+  const server = libraryServer({ srd: true, origins: true })
+  await server.install(page)
+
+  // The origin filter counts the SRD entries, the changed one and the pack's own.
+  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await expect(page.getByRole('heading', { level: 2, name: 'Rytta' })).toBeVisible()
+  const filter = page.getByRole('radiogroup', { name: 'Origen' })
+  await expect(filter.getByRole('radio', { name: 'Todas 331' })).toBeChecked()
+  await expect(filter.getByRole('radio', { name: 'SRD 329' })).toBeAttached()
+  await expect(filter.getByRole('radio', { name: 'Modificadas 1' })).toBeAttached()
+  await filter.getByText('Rytta 1').click()
+  const rows = page.locator('.lib-entry-list .lib-row')
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first()).toContainText('Lobo de ceniza')
+  await expect(rows.first().locator('.lib-row-meta')).toContainText('Rytta')
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-174/origin-list-${info.project.name}.png`)
+
+  // A changed entry says so and shows the SRD original on request.
+  await filter.getByText('Modificadas 1').click()
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first().locator('.lib-row-meta')).toContainText('SRD, modificada por Rytta')
+  await rows.first().click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Lobo de las cumbres' })).toBeFocused()
+  await expect(page.locator('.lib-entry-head')).toContainText('SRD, modificada por Rytta')
+  const original = page.getByRole('button', { name: 'Ver el original del SRD' })
+  await expect(original).toHaveAttribute('aria-expanded', 'false')
+  await original.press('Enter')
+  const panel = page.getByRole('region', { name: 'Original del SRD' })
+  await expect(panel).toContainText('Lobo')
+  await expect(panel).not.toContainText('Lobo de las cumbres')
+  await expect(page.getByRole('button', { name: 'Ocultar el original' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-174/origin-original-${info.project.name}.png`)
+
+  // An entry the app's code relies on keeps its form and has no Delete. A kind that is all
+  // SRD has no origin filter.
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await expect(page.getByRole('link', { name: /^Guerrero/ })).toBeVisible()
+  await expect(page.getByRole('radiogroup', { name: 'Origen' })).toHaveCount(0)
+  await page.getByRole('link', { name: /^Guerrero/ }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Guerrero' })).toBeFocused()
+  await expect(page.getByText('La app usa esta entrada.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Borrar', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Guardar', exact: true })).toBeVisible()
+  await audit(page)
+  await capture(page, `docs/evidence/ui-review/ryt-174/protected-${info.project.name}.png`)
+  // An unprotected entry of the same pack still offers it.
+  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  await page.getByRole('searchbox').fill('lobo de ceniza')
+  await page.getByRole('link', { name: /^Lobo de ceniza/ }).click()
+  await expect(page.getByRole('button', { name: 'Borrar', exact: true })).toBeVisible()
+})
+
+test('RYT-174 the origin filter and the original read in English and the light theme', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  await page.addInitScript(() => {
+    localStorage.setItem('rytta-language', 'en')
+    localStorage.setItem('rytta-theme', 'parchment')
+  })
+  await identityFixture(page)
+  const server = libraryServer({ srd: true, origins: true })
+  await server.install(page)
+  await page.goto(`./#/library/${srdLibraryPackId}/creature`)
+  const filter = page.getByRole('radiogroup', { name: 'Origin' })
+  await expect(filter.getByRole('radio', { name: 'All 331' })).toBeChecked()
+  await expect(page.locator('html')).toHaveAttribute('data-mantine-color-scheme', 'light')
+  // With text at 150% no segment is clipped (UI review round 1).
+  await page.addStyleTag({ content: 'html { font-size: 150% }' })
+  const clipped = await filter.evaluate(
+    (root) =>
+      [...root.querySelectorAll<HTMLElement>('.lib-origin-seg')].filter((label) => {
+        const box = label.getBoundingClientRect()
+        const frame = label.closest('.mantine-SegmentedControl-control')!.getBoundingClientRect()
+        return box.left < frame.left - 1 || box.right > frame.right + 1
+      }).length + (root.scrollWidth > root.clientWidth + 1 ? 1 : 0),
+  )
+  expect(clipped).toBe(0)
+  await capture(page, `docs/evidence/ui-review/ryt-174/origin-list-150-${info.project.name}.png`, {
+    fullPage: false,
+  })
+  await page.addStyleTag({ content: 'html { font-size: 100% }' })
+  await filter.getByText('Changed 1').click()
+  const rows = page.locator('.lib-entry-list .lib-row')
+  await expect(rows).toHaveCount(1)
+  await expect(rows.first().locator('.lib-row-meta')).toContainText('SRD, changed by Rytta')
+  await audit(page)
+  await capture(
+    page,
+    `docs/evidence/ui-review/ryt-174/origin-list-en-light-${info.project.name}.png`,
+  )
+  await rows.first().click()
+  await page.getByRole('button', { name: 'See the SRD original' }).click()
+  await expect(page.getByRole('region', { name: 'SRD original' })).toContainText('Wolf')
+  await audit(page)
+  await capture(
+    page,
+    `docs/evidence/ui-review/ryt-174/origin-original-en-light-${info.project.name}.png`,
+  )
+  await page.goto(`./#/library/${srdLibraryPackId}/class`)
+  await page.getByRole('link', { name: /^Fighter/ }).click()
+  await expect(page.getByText('The app uses this entry.')).toBeVisible()
+  await audit(page)
+})

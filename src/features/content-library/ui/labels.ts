@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next'
+import type { EntryOrigin } from '../domain/library'
 import { isKnownKind, type ContentPack, type DraftRow } from '../domain/library'
 
 export const kindLabel = (t: TFunction, kind: string) =>
@@ -47,4 +48,25 @@ export function entryMeta(t: TFunction, row: Pick<DraftRow, 'kind' | 'index' | '
       level: index.lv,
     })
   return row.key
+}
+
+/** RYT-174: a pack title short enough to sit in a row or a filter segment. */
+const shortTitle = (pack: string) => (pack.length <= 18 ? pack : '')
+
+/** Where an entry comes from, for its row and its editor. */
+export function originLabel(t: TFunction, origin: EntryOrigin, pack: string): string {
+  const short = shortTitle(pack)
+  if (origin === 'srd') return t('library.origin.srd')
+  if (origin === 'changed')
+    return short ? t('library.origin.changed', { pack: short }) : t('library.origin.changedGeneric')
+  return short || t('library.origin.ownGeneric')
+}
+
+/** The name of one segment of the origin filter. */
+export function originFilterLabel(t: TFunction, value: 'all' | EntryOrigin, pack: string): string {
+  if (value !== 'own') return t(`library.originFilter.${value}`)
+  const short = shortTitle(pack)
+  return short
+    ? t('library.originFilter.own', { pack: short })
+    : t('library.originFilter.ownGeneric')
 }

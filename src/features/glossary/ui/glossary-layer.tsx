@@ -12,7 +12,9 @@ import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { useAuth } from '@/features/auth'
 import { useCampaign } from '@/features/campaigns'
+import { noPackOrigins, packOriginsOptions } from '@/shared/api/pack-origins'
 import { config } from '@/shared/lib/config'
+import { PackOriginsContext } from '@/shared/ui/pack-origins-context'
 import { homebrewQuery } from '../api'
 import { buildCatalog } from '../domain/catalog'
 import { createLinker } from '../domain/linker'
@@ -48,6 +50,8 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
 
   // RYT-164, RYT-165: the campaign's packs, the published SRD, or the demo sample.
   const source = useGlossarySource({ live, userId, campaignId, language, wantBodies })
+  // RYT-174: which entries of the base pack are no longer the SRD, for the source lines below.
+  const origins = useQuery(packOriginsOptions(userId, campaignId))
   const homebrew = useQuery({
     ...homebrewQuery(userId ?? '', campaignId ?? ''),
     enabled: live && Boolean(userId && campaignId && canBrowse),
@@ -169,11 +173,13 @@ export function GlossaryLayer({ children, campaignId, canBrowse, pagePath }: Lay
     ],
   )
   return (
-    <GlossaryContext.Provider value={value}>
-      {children}
-      <ReferenceSheet stack={stack} onBack={back} onClose={close} />
-      {manager.element}
-    </GlossaryContext.Provider>
+    <PackOriginsContext.Provider value={origins.data ?? noPackOrigins}>
+      <GlossaryContext.Provider value={value}>
+        {children}
+        <ReferenceSheet stack={stack} onBack={back} onClose={close} />
+        {manager.element}
+      </GlossaryContext.Provider>
+    </PackOriginsContext.Provider>
   )
 }
 

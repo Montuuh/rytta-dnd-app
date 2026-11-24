@@ -161,6 +161,26 @@ the campaign's packs when they are edited. The SRD species and background keys s
 translate their names and select the SRD effects. The published SRD gains them as version 3, and
 existing campaigns move to it as with RYT-167.
 
+## The base pack becomes Rytta (RYT-174, 2026-11-24)
+
+Owner choices from the block Q options page, all the recommended ones:
+
+- P1 A: the base pack is named "Rytta", with the line "Based on the SRD 5.2.1". Its slug
+  (`srd-5-2-1`) and bare keys stay, so stored references keep working; the app shows the pack's
+  title where it printed a fixed "SRD".
+- P2 A: three origins, worked out by the server: from the SRD, from the SRD and changed by Rytta,
+  and Rytta's own. An entry is compared with the SRD as it was published when this was decided
+  (the pack's baseline version); its picture does not count as a change.
+- P3 A: everyone reads the origin in the source line that already exists (glossary, stat block).
+  No new filter for the DM.
+- P4 A: the entries the app's code relies on cannot be withdrawn: the 14 conditions the sheet
+  tracks, the 12 SRD classes, the 9 SRD species, the 4 SRD backgrounds and the creature baselines
+  table. Their texts stay editable.
+- P5 A: only the base pack has an origin per entry. Any other pack is its author's as a whole.
+
+The baseline is a version number on the pack, read from the published versions the library
+already keeps, so marking the origin changes no entry and asks no campaign for a review.
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

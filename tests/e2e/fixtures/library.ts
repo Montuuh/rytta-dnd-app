@@ -64,6 +64,8 @@ export function libraryServer(
     sample?: boolean
     /** RYT-167: the SRD pack as production publishes it (creatures, items and classes). */
     srd?: boolean
+    /** RYT-174: the SRD pack has a baseline: one creature changed, one of the pack's own. */
+    origins?: boolean
   } = {},
 ) {
   const editor = options.editor ?? true
@@ -75,8 +77,8 @@ export function libraryServer(
     packs.push({
       id: srdLibraryPackId,
       slug: 'srd-5-2-1',
-      title_en: 'System Reference Document 5.2.1',
-      title_es: 'Documento de referencia del sistema 5.2.1',
+      title_en: options.origins ? 'Rytta' : 'System Reference Document 5.2.1',
+      title_es: options.origins ? 'Rytta' : 'Documento de referencia del sistema 5.2.1',
       description_en: '',
       description_es: '',
       edition: '2024',
@@ -97,6 +99,39 @@ export function libraryServer(
         updated_at: '2026-11-22T10:00:00Z',
       })
   }
+  // RYT-174: the SRD as uploaded, to tell where each entry of the base pack comes from.
+  const baselines = new Map<string, { name_en: string; name_es: string; data: Json }>()
+  if (options.srd && options.origins) {
+    for (const e of entries)
+      baselines.set(e.id, { name_en: e.name_en, name_es: e.name_es, data: e.data })
+    const wolf = entries.find((e) => e.kind === 'creature' && e.key === 'wolf')!
+    wolf.name_es = 'Lobo de las cumbres'
+    wolf.published = { ...wolf.published!, name_es: wolf.name_es }
+    entries.push({
+      ...wolf,
+      id: id('71'),
+      key: 'ash-wolf',
+      name_en: 'Ash Wolf',
+      name_es: 'Lobo de ceniza',
+      published: { ...wolf.published, name_en: 'Ash Wolf', name_es: 'Lobo de ceniza' },
+    })
+  }
+  const origin = (e: Entry) => {
+    if (!options.origins || e.pack_id !== srdLibraryPackId) return undefined
+    const base = baselines.get(e.id)
+    if (!base) return 'own'
+    return same(base.data, e.data) && base.name_en === e.name_en && base.name_es === e.name_es
+      ? 'srd'
+      : 'changed'
+  }
+  /** Entries the app's code relies on, as private.content_entry_protected lists them. */
+  const guarded = (e: Entry) =>
+    !!options.origins &&
+    e.pack_id === srdLibraryPackId &&
+    !!e.published &&
+    (['class', 'species', 'background'].includes(e.kind) ||
+      (e.kind === 'condition' && e.key !== 'exhaustion') ||
+      (e.kind === 'table' && e.key === 'creature-baselines'))
   if (options.sample) {
     packs.push({
       id: homebrewPackId,
@@ -177,6 +212,8 @@ export function libraryServer(
     state: state(e),
     revision: e.revision,
     updated_at: e.updated_at,
+    ...(origin(e) ? { origin: origin(e) } : {}),
+    ...(guarded(e) ? { protected: true } : {}),
   })
   const problem = (kind: string, item: Json) => {
     const key = typeof item.key === 'string' ? item.key : ''
@@ -199,6 +236,18 @@ export function libraryServer(
           .map(packRow)
           .sort((a, b) => a.slug.localeCompare(b.slug)),
       }
+    // RYT-174: readers get the published entries that are no longer the plain SRD.
+    if (method === 'get_content_origins' || method === 'get_campaign_content_origins')
+      return packs
+        .filter((p) => options.origins && p.id === srdLibraryPackId)
+        .map((p) => ({
+          id: p.id,
+          title_en: p.title_en,
+          title_es: p.title_es,
+          entries: entries
+            .filter((e) => e.pack_id === p.id && e.published && origin(e) !== 'srd')
+            .map((e) => ({ kind: e.kind, key: e.key, origin: origin(e) })),
+        }))
     if (!editor) return { error: 'Forbidden' }
     if (method === 'get_content_pack_offers' || method === 'set_content_pack_offer') {
       const pack = packs.find((p) => p.id === body.target_pack)
@@ -239,6 +288,7 @@ export function libraryServer(
         pack_id: e.pack_id,
         data: e.data,
         published: e.published ?? undefined,
+        baseline: origin(e) === 'changed' ? baselines.get(e.id) : null,
       }
     }
     if (method === 'save_content_pack') {
@@ -328,6 +378,7 @@ export function libraryServer(
       const entry = entries.find((e) => e.id === body.target_entry)
       if (!entry) return { error: 'Entry unavailable' }
       if (entry.revision !== body.expected_revision) return { error: 'Stale revision' }
+      if (method === 'delete_content_entry' && guarded(entry)) return { error: 'Entry protected' }
       if (!entry.published) {
         entries = entries.filter((e) => e !== entry)
         return { id: entry.id, deleted: true }

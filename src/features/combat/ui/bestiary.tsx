@@ -78,6 +78,9 @@ import {
 } from '@/features/bestiary'
 import { QueryFeedback } from '@/features/campaigns'
 import { usePhone, useWide } from '@/shared/ui/use-viewport'
+import type { TFunction } from 'i18next'
+import { entryOrigin, type EntryOrigin } from '@/shared/api/pack-origins'
+import { useBasePackLabel, usePackOrigins } from '@/shared/ui/pack-origins-context'
 import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
 import { showTopOf } from '@/shared/ui/scroll-parent'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
@@ -188,6 +191,7 @@ type EditorState = {
  */
 export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
+  const baseLabel = useBasePackLabel(t('bestiary.source.srd'))
   const { state } = useAuth()
   const { ref: panelRef, split: wide } = useSplit(useWide())
   const catalog = useCreatureCatalog(campaignId)
@@ -373,7 +377,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     .map((pack) => ({
       id: pack.id,
       title: packTitle(pack, catalog.language),
-      short: pack.srd ? t('bestiary.source.srd') : t('bestiary.source.pack'),
+      short: pack.srd ? baseLabel : t('bestiary.source.pack'),
     }))
   const ask = (next: OfficialAsk, target: HTMLElement) => {
     opener.current = target
@@ -1562,6 +1566,14 @@ function useColumnFit(frame: { current: HTMLDivElement | null }, creature: strin
   }, [frame, creature])
 }
 
+/** RYT-174: the stat block's source line by the creature's origin in the base pack. */
+function creatureSource(t: TFunction, origin: EntryOrigin | null, page: number, pack: string) {
+  if (origin === 'own') return pack
+  return origin === 'changed'
+    ? t('bestiary.srdPageChanged', { page, pack })
+    : t('bestiary.srdPage', { page })
+}
+
 function CreatureDetail({
   campaignId,
   item,
@@ -1609,6 +1621,7 @@ function CreatureDetail({
   onCopied: () => void
 }) {
   const { t } = useTranslation()
+  const origins = usePackOrigins()
   const block = catalog.blockFor(item)
   const template = item.source === 'homebrew' ? catalog.templateById.get(item.id) : undefined
   const row = item.source === 'srd' ? catalog.rows.get(item.id) : undefined
@@ -1883,7 +1896,12 @@ function CreatureDetail({
             badges={badges}
             footnote={
               row
-                ? t('bestiary.srdPage', { page: row.pages[catalog.language] })
+                ? creatureSource(
+                    t,
+                    entryOrigin(origins, 'creature', item.id),
+                    row.pages[catalog.language],
+                    origins.title?.[catalog.language] ?? '',
+                  )
                 : template?.notes
                   ? t('bestiary.notesLine', { notes: template.notes })
                   : undefined

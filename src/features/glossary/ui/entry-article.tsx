@@ -1,6 +1,8 @@
 import { Accordion, Table, Title } from '@mantine/core'
 import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
+import { entryOriginById } from '@/shared/api/pack-origins'
+import { usePackOrigins } from '@/shared/ui/pack-origins-context'
 import type { GlossaryEntry } from '../domain/catalog'
 import { homebrewParagraphs, type HomebrewEntry } from '../domain/homebrew'
 import { factKeys, type Block, type EntryBody, type FactKey } from '../domain/types'
@@ -234,6 +236,10 @@ export function EntryArticle({
   const { t, i18n } = useTranslation()
   const className = useClassName()
   const glossary = useGlossary()
+  // RYT-174: an entry the base pack changed or added no longer cites the SRD alone.
+  const origins = usePackOrigins()
+  const origin = entryOriginById(origins, entry.id)
+  const packName = origins.title?.[i18n.resolvedLanguage === 'en' ? 'en' : 'es'] ?? ''
   const homebrew = entry.homebrew
   const facts = homebrew
     ? homebrew.facts.map((f) => ({ key: 'custom', label: f.label, value: f.value }))
@@ -335,7 +341,11 @@ export function EntryArticle({
         <p className="gl-source">
           {entry.edition === '2014'
             ? t('glossary.legacySource', { page: body.page })
-            : t('glossary.source', { page: body.page })}
+            : origin === 'own'
+              ? packName
+              : origin === 'changed'
+                ? t('glossary.sourceChanged', { page: body.page, pack: packName })
+                : t('glossary.source', { page: body.page })}
         </p>
       )}
     </article>

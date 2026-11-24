@@ -143,6 +143,8 @@ export const bestiaryEn = {
   'bestiary.quickHint':
     'This creature only has its combat numbers. Complete its stat block to have its actions at hand.',
   'bestiary.srdPage': 'SRD 5.2.1, p. {{page}} · Wizards of the Coast LLC, CC-BY-4.0',
+  'bestiary.srdPageChanged':
+    'SRD 5.2.1, p. {{page}} · Wizards of the Coast LLC, CC-BY-4.0 · changed by {{pack}}',
   'bestiary.notesLine': 'DM notes: {{notes}}',
   'bestiary.adaptation':
     'Rytta splits the official text into fields, restores one missing sign (Young White Dragon’s Intelligence save) and, in reusable traits, replaces the creature’s name with “the creature”.',

@@ -14,7 +14,7 @@ import {
 } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Trash2, Undo2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Lock, Trash2, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import {
@@ -57,6 +57,7 @@ import { hasPicture } from './entry-picture'
 import { ClassFields, ClassReferenceField, SubclassFields } from './class-fields'
 import { BackgroundFields, FeatFields, SpeciesFields } from './origin-fields'
 import { ItemFields } from './item-fields'
+import { originLabel } from './labels'
 import type { Guard } from './library-page'
 import { keepEdits, keptEdits } from './unsaved'
 
@@ -202,6 +203,8 @@ function EntryForm({
   // A refused save marks every field that blocks it, the empty ones too.
   const [attempted, setAttempted] = useState(false)
   const [confirm, setConfirm] = useState<'deleteEntry' | 'revertEntry' | null>(null)
+  // RYT-174: the SRD original of a changed entry, shown on request.
+  const [original, setOriginal] = useState(false)
   // Where focus goes once a delete or a discard reaches the form (the button pressed is gone).
   const focusNext = useRef<'heading' | 'restore' | 'conflict' | null>(null)
   const keepMineRef = useRef<HTMLButtonElement>(null)
@@ -415,7 +418,13 @@ function EntryForm({
             {name}
           </h2>
           <Text size="sm" c="dimmed">
-            {[entry.key || null, state].filter(Boolean).join(' · ')}
+            {[
+              entry.key || null,
+              draft?.origin ? originLabel(t, draft.origin, packTitle(pack, language)) : null,
+              state,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         </div>
         {/* Away from Save, so the save bar fits one row in the narrow editor column. */}
@@ -431,17 +440,54 @@ function EntryForm({
                 {t('library.revert')}
               </Button>
             )}
-            <Button
-              variant="subtle"
-              color="red"
-              leftSection={<Trash2 size={18} aria-hidden="true" />}
-              onClick={() => setConfirm('deleteEntry')}
-            >
-              {t('library.delete')}
-            </Button>
+            {/* RYT-174: an entry the app's code relies on keeps its text editable and cannot go. */}
+            {!draft.protected && (
+              <Button
+                variant="subtle"
+                color="red"
+                leftSection={<Trash2 size={18} aria-hidden="true" />}
+                onClick={() => setConfirm('deleteEntry')}
+              >
+                {t('library.delete')}
+              </Button>
+            )}
           </Group>
         )}
       </div>
+      {draft?.protected && !deleted && (
+        <p className="lib-protected">
+          <Lock size={16} aria-hidden="true" />
+          <span>{t('library.protected')}</span>
+        </p>
+      )}
+      {draft?.baseline && !deleted && (
+        <div className="lib-original">
+          <Button
+            variant="subtle"
+            aria-expanded={original}
+            aria-controls="lib-original-panel"
+            rightSection={
+              <ChevronDown size={18} aria-hidden="true" className="lib-original-chevron" />
+            }
+            onClick={() => setOriginal((open) => !open)}
+          >
+            {t(original ? 'library.originalHide' : 'library.original')}
+          </Button>
+          {original && (
+            <section id="lib-original-panel" aria-label={t('library.originalTitle')}>
+              <dl className="lib-original-names">
+                <dt>{t('library.nameEs')}</dt>
+                <dd>{draft.baseline.name_es || '—'}</dd>
+                <dt>{t('library.nameEn')}</dt>
+                <dd>{draft.baseline.name_en || '—'}</dd>
+              </dl>
+              <pre tabIndex={0} aria-label={t('library.originalData')}>
+                {JSON.stringify(draft.baseline.data, null, 2)}
+              </pre>
+            </section>
+          )}
+        </div>
+      )}
       {conflict && (
         <div className="lib-banner">
           <span>{t('library.conflict')}</span>

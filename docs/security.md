@@ -554,3 +554,26 @@ cross-campaign DM, plus the guarded PRE mirror.
   picture down for legal reasons means deleting the object as the project owner, as for other
   storage. Account deletion leaves pack pictures with the pack.
 - `private.shop_item_json` now includes `basic_key` (an entry id, no secret).
+
+## Entry origin and protected entries (RYT-174)
+
+- `content_packs.baseline_version` marks the version up to which a pack's entries are the source
+  it started from. Only the base pack (slug `srd-5-2-1`) has one; it is set by the migration and
+  changed only with owner SQL. An environment that uploads the SRD later sets it the same way.
+- The origin of an entry is worked out from `content_entry_versions`, never stored: `srd`,
+  `changed` or `own`. The picture is not a change. An entry withdrawn at the baseline and added
+  again reads as the pack's own.
+- `get_campaign_content_origins` (active members, also admin access) lists the changed and own
+  entries of the campaign's enabled packs at the versions it pins, hidden entries left out, and
+  only for packs offered to the campaign. `get_content_origins` (signed-in accounts) does the
+  same for published packs open to all at their current version. Neither reads drafts. They send
+  keys and origins, no content. Players receive the keys of changed and own creatures and items
+  too; every signed-in account can already read those entries of a pack open to all.
+- Library rows carry `origin` and `protected`, and `get_content_draft` the baseline of a changed
+  entry: super admins only (RYT-173).
+- Protected entries: a trigger on `content_entries` refuses to flag deleted, or to delete, the
+  published row of the 40 entries the app's code names (the 14 tracked conditions, the 12 SRD
+  classes, the 9 SRD species, the 4 SRD backgrounds and `table.creature-baselines`) while their
+  pack exists. The list is `private.content_entry_protected`; a database test compares it with the
+  keys in `src/features/characters/domain/srd.ts`. A takedown of one of them is owner SQL with
+  the trigger disabled.

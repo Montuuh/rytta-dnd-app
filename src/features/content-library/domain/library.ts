@@ -16,6 +16,12 @@ import { packItemIndexSchema } from '@/features/inventory'
 export type ContentLanguage = 'es' | 'en'
 export const entryStates = ['new', 'changed', 'deleted', 'published'] as const
 export type EntryState = (typeof entryStates)[number]
+/**
+ * RYT-174: where an entry of the base pack comes from, against the SRD the pack started from.
+ * Packs without a baseline send none.
+ */
+export const entryOrigins = ['srd', 'changed', 'own'] as const
+export type EntryOrigin = (typeof entryOrigins)[number]
 
 export const keyPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const kindPattern = /^[a-z][a-z0-9-]{0,31}$/
@@ -81,6 +87,9 @@ export const draftRowSchema = z.object({
   state: z.enum(entryStates),
   revision: z.number().int().min(1),
   updated_at: z.string(),
+  origin: z.enum(entryOrigins).nullish(),
+  /** The app's code relies on this published entry: its text is editable, it cannot be deleted. */
+  protected: z.boolean().nullish(),
 })
 export type DraftRow = z.infer<typeof draftRowSchema>
 export const draftListSchema = z.array(draftRowSchema)
@@ -96,6 +105,14 @@ export const draftSchema = draftRowSchema.omit({ index: true }).extend({
       version: z.number().int().min(1),
     })
     .optional(),
+  /** The SRD original of a changed entry. */
+  baseline: z
+    .object({
+      name_en: z.string().nullable(),
+      name_es: z.string().nullable(),
+      data: record.nullable(),
+    })
+    .nullish(),
 })
 export type Draft = z.infer<typeof draftSchema>
 
@@ -221,6 +238,7 @@ const libraryErrors = [
   'keyTaken',
   'nothingToPublish',
   'packPublished',
+  'protected',
   'unavailable',
   'mismatch',
   'network',
@@ -235,6 +253,7 @@ export function libraryErrorCode(message: string): LibraryError {
   if (message.includes('Key taken')) return 'keyTaken'
   if (message.includes('Nothing to publish')) return 'nothingToPublish'
   if (message.includes('Pack published')) return 'packPublished'
+  if (message.includes('Entry protected')) return 'protected'
   if (message.includes('unavailable')) return 'unavailable'
   if (message.includes('Request mismatch')) return 'mismatch'
   if (message.includes('Invalid request')) return 'invalid'

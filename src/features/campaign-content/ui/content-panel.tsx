@@ -24,6 +24,7 @@ import {
 } from '../api'
 import {
   hasUpdate,
+  startsFromSrd,
   liveCategories,
   nameOf,
   titleOf,
@@ -252,7 +253,7 @@ function PackRow({
   const title = titleOf(pack, language)
   const categoryName = t(`campaignContent.category.${category.category}`).toLowerCase()
   const update = hasUpdate(pack, category)
-  const meta = !category.enabled
+  const state = !category.enabled
     ? t('campaignContent.metaOff', { count: category.entries })
     : category.hidden > 0
       ? t('campaignContent.metaHidden', {
@@ -264,6 +265,7 @@ function PackRow({
           version: category.pinned_version ?? pack.version ?? 0,
           count: category.entries,
         })
+  const meta = startsFromSrd(pack, title) ? `${t('campaignContent.basedOnSrd')} · ${state}` : state
   return (
     <li className="content-pack" data-enabled={category.enabled || undefined}>
       <Switch

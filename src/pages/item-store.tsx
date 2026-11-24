@@ -17,6 +17,7 @@ import {
 } from '@mantine/core'
 import { Drawer } from '@/shared/ui/overlays'
 import { usePhone } from '@/shared/ui/use-viewport'
+import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowUpDown,
@@ -83,6 +84,7 @@ function savedView(): View {
 export function ItemStore({ campaignId }: { campaignId: string }) {
   const { state } = useAuth()
   const { t, i18n } = useTranslation()
+  const baseLabel = useBasePackLabel(t('store.origin.srd'))
   const [params, setParams] = useSearchParams()
   const query = useQuery(catalogueQuery(state.user!.id, campaignId))
   const roster = useQuery(rosterQuery(state.user!.id, campaignId))
@@ -502,7 +504,9 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
                 </span>
                 {!phone && (
                   <span className="store-row-side">
-                    <span className="store-origin">{t(`store.origin.${item.origin}`)}</span>
+                    <span className="store-origin">
+                      {item.origin === 'srd' ? baseLabel : t(`store.origin.${item.origin}`)}
+                    </span>
                     <span className="store-value" data-empty={item.value_gp === null || undefined}>
                       {value(item)}
                     </span>

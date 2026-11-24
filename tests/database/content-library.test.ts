@@ -678,5 +678,26 @@ describe('RYT-092 content library', () => {
     // RYT-162 adds content_entry_versions and RYT-163 content_pack_offers in both environments.
     expect(rls).toHaveLength(12)
     for (const table of rls) expect(table, table.name).toMatchObject({ rls: true })
+    // RYT-174 reaches PRE: the origin readers, the baseline column and the protection trigger.
+    for (const name of [
+      'pre.get_content_origins()',
+      'pre.get_campaign_content_origins(uuid)',
+      'pre_private.content_origin(uuid,text,text,text,text,jsonb)',
+      'pre_private.content_entry_protected(uuid,text,text)',
+    ])
+      expect(
+        (await db.query<{ ok: boolean }>(`select to_regprocedure('${name}') is not null ok`))
+          .rows[0]!.ok,
+        name,
+      ).toBe(true)
+    expect(
+      (
+        await db.query(
+          `select 1 from pg_trigger where tgname = 'content_entries_protect'
+              and tgrelid = 'pre.content_entries'::regclass`,
+        )
+      ).rows,
+    ).toHaveLength(1)
+    await db.query('select baseline_version from pre.content_packs limit 1')
   })
 })

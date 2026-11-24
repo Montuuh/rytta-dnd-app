@@ -528,3 +528,100 @@
     height: 96px;
   }
 }
+
+/* RYT-174: origin filter, the protected note and the SRD original of a changed entry. */
+.lib-origin .mantine-SegmentedControl-label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+.lib-protected {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.lib-protected svg {
+  flex: none;
+  margin-top: 2px;
+}
+.lib-original {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.lib-original section {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+.lib-original-names {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+}
+.lib-original-names dt {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.lib-original-names dd {
+  margin: 0;
+}
+.lib-original pre {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--app-raised);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: var(--fs-meta);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.lib-origin-seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+.lib-origin-n {
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.lib-origin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.lib-origin .mantine-SegmentedControl-control {
+  min-width: 0;
+  border: 0;
+}
+.lib-origin .mantine-SegmentedControl-control::before {
+  display: none;
+}
+.lib-origin-seg {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.lib-original [aria-expanded='true'] .lib-original-chevron {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lib-original-chevron {
+    transition: transform 120ms ease;
+  }
+}

@@ -20,6 +20,7 @@ export const campaignContentEs = {
   'campaignContent.none': 'Aún no hay paquetes publicados para esta categoría.',
   'campaignContent.use': 'Usar {{pack}} en {{category}}',
   'campaignContent.meta': 'Versión {{version}} · {{count}} registros',
+  'campaignContent.basedOnSrd': 'Basado en el SRD 5.2.1',
   'campaignContent.metaHidden': 'Versión {{version}} · {{count}} registros · {{hidden}}',
   'campaignContent.hiddenCount_one': '{{count}} oculto',
   'campaignContent.hiddenCount_other': '{{count}} ocultos',

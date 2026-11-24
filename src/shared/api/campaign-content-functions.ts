@@ -6,6 +6,10 @@ export type CampaignContentFunctions = {
   get_campaign_content: { Args: { target_campaign: string }; Returns: Json }
   /** RYT-172: pictures of the campaign's creatures, items and classes at their pinned versions. */
   get_campaign_pack_images: { Args: { target_campaign: string }; Returns: Json }
+  /** RYT-174: entries of the campaign's base pack that are changed or the pack's own. */
+  get_campaign_content_origins: { Args: { target_campaign: string }; Returns: Json }
+  /** RYT-174: the same for the published base pack, outside a campaign. */
+  get_content_origins: { Args: Record<string, never>; Returns: Json }
   set_campaign_content: {
     Args: {
       target_campaign: string

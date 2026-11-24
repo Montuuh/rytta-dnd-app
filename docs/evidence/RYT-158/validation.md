@@ -41,7 +41,9 @@ row says otherwise.
 | Brevo sending domain | none (single sender) | `rytta.app` authenticated with manual records: `brevo-code` TXT, `brevo1._domainkey` and `brevo2._domainkey` CNAME to `b1` and `b2.rytta-app.dkim.brevo.com`, DNS only; sender `Rytta <no-reply@rytta.app>` verified |
 | Email Routing | none | enabled on `rytta.app`: `contacto@rytta.app` to the project mailbox (verified destination); MX `route1` to `route3.mx.cloudflare.net`, SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` and the routing DKIM record added and locked by Cloudflare; catch-all off |
 | DMARC | none | `_dmarc.rytta.app` TXT `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` |
-| Google branding and Search Console | `rytta.pages.dev` | pending |
+| Google Search Console (account that owns the OAuth app) | URL-prefix property `https://rytta.pages.dev/` | + domain property `rytta.app`, verified by the TXT record `google-site-verification=fcmxpyMx-iS9e_sIN-wfNWFZGv0eMU6BKK-Pzijcm_s` (added by hand; the offered Cloudflare authorization was not used) |
+| Google Auth Platform branding (project `rytta-dnd`) | home, privacy and terms on `rytta.pages.dev`; authorized domains `rytta.pages.dev` and both Supabase project hosts | home `https://rytta.app`, privacy `https://rytta.app/privacy/`, terms `https://rytta.app/terms/`; authorized domain `rytta.app` in place of `rytta.pages.dev`, Supabase hosts kept for the OAuth redirect |
+| Google brand verification | failed earlier: "the home page https://rytta.pages.dev is not registered to you" | not resubmitted yet: Google asks to wait 24 hours after verifying the home page domain |
 | Repository docs and tests | `rytta.pages.dev` | `deployment.md`, ADR 047 and 048, `offline-shell.md`, `index.html` comment, service worker unit test; ADR 055 (this delivery) |
 
 ## Check A: the site on rytta.app (2026-11-24)

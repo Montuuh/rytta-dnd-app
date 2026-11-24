@@ -1,6 +1,6 @@
 # RYT-158 validation: own domain rytta.app
 
-Decision: [ADR 055](../../decisions/055-own-domain.md). Status: in progress.
+Decision: [ADR 055](../../decisions/055-own-domain.md). Status: done.
 
 ## Domain
 
@@ -59,8 +59,7 @@ row says otherwise.
   `https://rytta.app/` signed in, with its campaigns listed; no console messages.
 - The email sign-in dialog on `https://rytta.app` renders the Turnstile widget with the hostname
   accepted (no domain error; it asked for the interactive check in the test browser).
-- Not exercised yet, owner steps because they need the human check and a password: email and
-  password sign-in, a reset or confirmation link opened on the new origin, invitations.
+- Owner checks on `https://rytta.app` after the switch (see "Check C" below).
 
 ## Switch to rytta.app (2026-11-24)
 
@@ -88,3 +87,28 @@ The owner asked for the switch before the email work. Results checked right afte
   for its content (a one-word "test"), not for authentication. At the owner's request the project
   mailbox has a filter "to:(contacto@rytta.app): never send it to Spam" (2026-11-24); the test
   message itself stays in Spam.
+
+## Check C: sign-in flows on rytta.app (2026-11-24)
+
+The owner ran the checks in a browser and reported "everything OK, it works". The production Auth
+logs (read through the Supabase connector) show the email flow end to end on the new origin:
+
+- 18:56:34 UTC `POST /recover` from `https://rytta.app/?auth=recovery`, status 200
+  (`user_recovery_requested`); the message left from `no-reply@rytta.app`.
+- 18:57:58 UTC the link in the email: `GET /verify`, status 303 back to `https://rytta.app`.
+- 18:58:00 UTC `POST /token` with the PKCE grant, provider `recovery`, referer `https://rytta.app/`:
+  the verifier stored on the new origin matched, so the session started there.
+- 18:58:09 UTC `PUT /user`, status 200: the new password was saved.
+- 18:42:39 UTC Google sign-in started on `https://rytta.app/` (`/authorize`, provider google).
+- Invitations are in-app records with no email and no link (`campaign_invitations`); nothing in
+  them names an origin. No invitation was created after the switch (the latest is from 10:19
+  UTC); the owner's report covers the flow, the logs do not.
+- An old tab still open on `rytta.pages.dev` refreshed its session at 18:15 UTC with the former
+  build; reloading it follows the redirect.
+
+## Follow-ups outside this ticket
+
+- Move DMARC to `p=quarantine` after two weeks of clean aggregate reports (from 2026-12-08).
+- After 30 days (from 2026-12-24) remove the `rytta.pages.dev` entries from the Supabase redirect
+  allowlist and the Turnstile hostnames. Keep the Bulk Redirect and the first Pages project.
+- The `next` commits of this ticket reach production with the next release.

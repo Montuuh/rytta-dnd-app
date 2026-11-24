@@ -514,4 +514,75 @@ describe('RYT-130 cantrips and the wizard spellbook', () => {
     )
     expect(summary.spells).toEqual(['prep', 'can', 'book1', 'book2'])
   })
+
+  it('reports resource die scaling and rest-reset changes on level up', () => {
+    const rogue = character('rogue', 2)
+    const rogueGrants = levelUpGrants(rogue, 2, 3, library, names)
+    expect(rogueGrants.dieChanges).toEqual([expect.objectContaining({ from: '1d6', to: '2d6' })])
+
+    const bard = character('bard', 4, { subclass: 'Lore', subclassKey: 'lore' })
+    const bardGrants = levelUpGrants(bard, 4, 5, library, names)
+    expect(bardGrants.dieChanges).toEqual([expect.objectContaining({ from: 'd6', to: 'd8' })])
+    expect(bardGrants.resetChanges).toEqual([
+      expect.objectContaining({ from: 'long', to: 'short' }),
+    ])
+  })
+
+  it('adds pack-prefixed subclass features at level 3 and later levels', () => {
+    const packLib: LibraryFeature[] = [
+      ...library,
+      {
+        id: 'feature.a1b2c3d4--barbarian-ember-heart-warmth',
+        name: 'Warmth of the Ember',
+        classKey: 'barbarian',
+        level: 3,
+        subclass: 'a1b2c3d4--ember-heart',
+      },
+      {
+        id: 'feature.a1b2c3d4--barbarian-ember-heart-sparks',
+        name: 'Sparks of the Ember',
+        classKey: 'barbarian',
+        level: 6,
+        subclass: 'a1b2c3d4--ember-heart',
+      },
+    ]
+    const lvl2 = character('barbarian', 2)
+    const plan3 = planLevelUp(
+      {
+        build: lvl2,
+        level: 2,
+        maxHp: 22,
+        hitPoints: { kind: 'average' },
+        choices: {
+          ...noChoices,
+          subclass: { key: 'a1b2c3d4--ember-heart', name: 'Path of the Ember Heart' },
+        },
+      },
+      packLib,
+      names,
+    )
+    expect(plan3?.missing).toEqual([])
+    expect(plan3?.build.features.map((f) => f.ref)).toContain(
+      'feature.a1b2c3d4--barbarian-ember-heart-warmth',
+    )
+    expect(plan3?.build.features.map((f) => f.ref)).not.toContain(
+      'feature.a1b2c3d4--barbarian-ember-heart-sparks',
+    )
+
+    const lvl5 = syncProgression(plan3!.build, 5, packLib, names)
+    const plan6 = planLevelUp(
+      {
+        build: lvl5,
+        level: 5,
+        maxHp: 50,
+        hitPoints: { kind: 'average' },
+        choices: noChoices,
+      },
+      packLib,
+      names,
+    )
+    expect(plan6?.build.features.map((f) => f.ref)).toContain(
+      'feature.a1b2c3d4--barbarian-ember-heart-sparks',
+    )
+  })
 })

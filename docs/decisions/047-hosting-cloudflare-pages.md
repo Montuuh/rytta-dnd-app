@@ -63,3 +63,11 @@ in this decision changes: same build, same generated `_headers`, same policy, no
 `wrangler.jsonc` is removed because Pages needs no configuration file for a static output
 directory; the Worker is retired once the new address is confirmed. A custom domain can be
 attached to the Pages project later without another move.
+
+## Update 2026-11-24: own domain and project account
+
+The owner bought `rytta.app` in the Cloudflare account of the project mailbox, while the Pages
+project lived in the personal account. Pages serves an apex domain only from a zone in its own
+account and connects a repository to one account only, so the build moved to a new Pages project
+`rytta-app` in the project account, with the same build settings and variables, and the old
+project kept only as the redirect source for `rytta.pages.dev`. See ADR 055.

@@ -17,14 +17,15 @@ GitHub Pages to Cloudflare (ADR 047). The owner's constraint for this step is no
 
 ### Hosting
 
-- The static site is the Cloudflare Pages project `rytta`, served at https://rytta.pages.dev,
-  built from `main` on every push. Preview branch deployments are off.
+- The static site is the Cloudflare Pages project `rytta-app`, served at https://rytta.app
+  (ADR 055; https://rytta.pages.dev until 2026-11-24), built from `main` on every push. Preview
+  branch deployments are off.
 - Response headers are generated at build time (`dist/_headers`): a Content Security Policy with
   `frame-ancestors 'none'`, `nosniff`, a referrer policy and immutable caching for hashed
   assets. They were verified on the live host.
 - GitHub Pages and the first Worker deployment are retired. The repository is private.
-- Cost: 0. A custom domain (about 11 USD a year) was considered and deferred by the owner: no
-  spending for now.
+- Cost: the domain only. A custom domain was deferred on 2026-11-18 and bought on 2026-11-24
+  (`rytta.app`, about 14 USD a year, ADR 055).
 
 ### Supabase
 
@@ -58,7 +59,7 @@ staging.
 | Item                                  | Plan or option             | Cost                   |
 | ------------------------------------- | -------------------------- | ---------------------- |
 | Cloudflare Pages project              | free                       | 0                      |
-| Custom domain                         | considered, deferred       | about 11 USD a year    |
+| Custom domain `rytta.app`             | bought 2026-11-24, ADR 055 | about 14 USD a year    |
 | Supabase production                   | free plan                  | 0                      |
 | Supabase staging                      | free plan                  | 0                      |
 | CI on the private repository          | 2,000 free minutes a month | 0 within the allowance |

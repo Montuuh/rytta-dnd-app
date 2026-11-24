@@ -31,7 +31,7 @@ returns (P3 A).
 
 ### Disabling it
 
-- One device: open the site with `?no-sw` (for example `https://rytta.pages.dev/?no-sw`); every
+- One device: open the site with `?no-sw` (for example `https://rytta.app/?no-sw`); every
   registration of the site is removed. Clearing the site data in the browser does the same.
 - Everyone: remove the `offlineShell` plugin and the `registerOfflineShell` call in `src/main.tsx`,
   and publish a `sw.js` that unregisters itself:

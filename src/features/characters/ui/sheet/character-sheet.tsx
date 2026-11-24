@@ -462,12 +462,23 @@ function SheetPanel({
       })
       if (!finished) return
       if (synced) {
+        const featureNames = changes.addedFeatures.map((feature) => feature.name)
+        const featureLine =
+          featureNames.length > 0 && featureNames.length <= 4
+            ? featureNames.join(', ')
+            : featureNames.length > 4
+              ? `${featureNames.slice(0, 3).join(', ')} (+${featureNames.length - 3})`
+              : null
         const lines = [
           ...changes.changed.map(
             ({ tracker, from }) => `${trackerLabel(tracker)}: ${from} → ${tracker.max}`,
           ),
           ...changes.added.map((tracker) => `${trackerLabel(tracker)} (${tracker.max})`),
-          ...(changes.features > 0 ? [t('panel.syncedFeatures', { count: changes.features })] : []),
+          ...(featureLine
+            ? [featureLine]
+            : changes.features > 0
+              ? [t('panel.syncedFeatures', { count: changes.features })]
+              : []),
         ]
         setSyncInfo(lines.length ? lines.join('; ') : null)
       }

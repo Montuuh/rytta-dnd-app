@@ -1,14 +1,16 @@
-import type { Build, Feature, Spell } from './sheet'
+import type { Build, Feature, Spell, Tracker } from './sheet'
 import {
   syncChanges,
   syncProgressionReport,
   type LibraryFeature,
   type ProgressionNames,
+  type RestKind,
   type SyncChanges,
 } from './progression'
 import type { ClassDef } from './class-catalog'
+import { resourceSpec } from './resources'
 import { finalAbilities, modifier, proficiencyBonus, slotsFor } from './rules'
-import { abilityKeys, type Ability, type HitDie } from './srd'
+import { abilityKeys, type Ability, type CasterKind, type HitDie } from './srd'
 
 // Level-up rules of the D&D 2024 classes. Only numbers and levels are encoded, from the class's
 // definition (RYT-168: the campaign's packs, or the app's SRD classes). A class typed by hand gets
@@ -135,7 +137,12 @@ export type Improvement =
   | { kind: 'feat'; name: string; ref?: string }
 export type LevelUpChoices = {
   /** `key` is a subclass of the class (SRD or pack), or empty with a typed `name`. */
-  subclass: { key: string; name: string } | null
+  subclass: {
+    key: string
+    name: string
+    caster?: CasterKind
+    spellAbility?: Ability | null
+  } | null
   improvement: Improvement | null
   spells: SpellPick[]
   cantrips: SpellPick[]
@@ -203,8 +210,15 @@ export function applyChoices(
 ): Build {
   let next = build
   if (requirements.subclass && choices.subclass) {
-    const { key, name } = choices.subclass
-    next = { ...next, subclassKey: key, subclass: name.trim().slice(0, 60) }
+    const { key, name, caster, spellAbility } = choices.subclass
+    next = {
+      ...next,
+      subclassKey: key,
+      subclass: name.trim().slice(0, 60),
+      ...(next.casterKind === 'none' && caster && caster !== 'none'
+        ? { casterKind: caster, spellAbility: spellAbility ?? next.spellAbility ?? 'int' }
+        : {}),
+    }
   }
   const improvement = requirements.improvement ? choices.improvement : null
   if (improvement?.kind === 'abilities') {
@@ -262,6 +276,8 @@ export type SlotChange = { level: number; from: number; to: number }
 export type LevelUpGrants = {
   features: Feature[]
   resources: SyncChanges
+  dieChanges: { tracker: Tracker; from: string; to: string }[]
+  resetChanges: { tracker: Tracker; from: RestKind; to: RestKind }[]
   proficiency: { from: number; to: number } | null
   slots: SlotChange[]
   /** Granted resources left out because the sheet holds the most it can. */
@@ -279,9 +295,27 @@ export function grantsBetween(
   const had = new Set(before.features.map((feature) => feature.id))
   const was = slotsFor(before.casterKind, fromLevel)
   const now = slotsFor(after.casterKind, toLevel)
+  const prevTrackers = new Map(before.trackers.map((tracker) => [tracker.id, tracker]))
+  const dieChanges: LevelUpGrants['dieChanges'] = []
+  const resetChanges: LevelUpGrants['resetChanges'] = []
+  for (const tracker of after.trackers) {
+    const prev = prevTrackers.get(tracker.id)
+    if (!prev) continue
+    if (prev.reset !== tracker.reset) {
+      resetChanges.push({ tracker, from: prev.reset, to: tracker.reset })
+    }
+    const spec = resourceSpec(tracker.key)
+    if (spec?.die) {
+      const from = spec.die(fromLevel)
+      const to = spec.die(toLevel)
+      if (from !== to) dieChanges.push({ tracker, from, to })
+    }
+  }
   return {
     features: after.features.filter((feature) => !had.has(feature.id)),
     resources: syncChanges(before, after),
+    dieChanges,
+    resetChanges,
     proficiency:
       proficiencyBonus(toLevel) !== proficiencyBonus(fromLevel)
         ? { from: proficiencyBonus(fromLevel), to: proficiencyBonus(toLevel) }

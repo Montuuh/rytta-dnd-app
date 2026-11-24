@@ -71,6 +71,7 @@ export const sheetEn = {
   'srd.caster.none': 'No spellcasting',
   'srd.caster.full': 'Full caster',
   'srd.caster.half': 'Half caster',
+  'srd.caster.third': 'Third caster',
   'srd.caster.pact': 'Pact magic',
   'srd.license':
     'Rules data from the System Reference Document 5.2 by Wizards of the Coast LLC, licensed under CC-BY-4.0.',

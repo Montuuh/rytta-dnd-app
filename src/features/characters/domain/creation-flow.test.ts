@@ -132,6 +132,99 @@ describe('resource names (RYT-124)', () => {
     const changes = syncChanges(typed, adopted)
     expect(changes.changed).toEqual([{ tracker: adopted.trackers[0], from: 9 }])
     expect(changes.added).toEqual([])
+    expect(changes.addedFeatures).toEqual([])
+  })
+})
+
+describe('blankDraft at higher levels', () => {
+  it('populates class, pack subclass, species choices, and trackers at level 10', async () => {
+    const { blankDraft } = await import('./quick')
+    const barbarianDef = {
+      key: 'barbarian',
+      srd: true,
+      name: null,
+      hitDie: 12 as const,
+      saves: ['str', 'con'] as const,
+      skillCount: 2,
+      skills: ['athletics', 'perception'] as const,
+      caster: 'none' as const,
+      spellAbility: null,
+      subclassLevel: 3,
+      improvementLevels: [4, 8, 12, 16, 19],
+      prepared: null,
+      cantrips: false,
+    }
+    const elf = {
+      key: 'elf',
+      srd: true,
+      name: { en: 'Elf', es: 'Elfo' },
+      speed: 30,
+      size: 'medium' as const,
+      traits: [{ key: 'elvenLineage', name: { en: 'Elven Lineage', es: 'Linaje élfico' } }],
+      choices: [
+        {
+          trait: 'elvenLineage',
+          options: [{ key: 'high', name: { en: 'High Elf', es: 'Alto elfo' } }],
+        },
+      ],
+    }
+    const packLib = [
+      {
+        id: 'feature.barbarian-rage',
+        name: 'Furia',
+        classKey: 'barbarian',
+        level: 1,
+        subclass: null,
+      },
+      {
+        id: 'feature.a1b2c3d4--barbarian-ember-heart-warmth',
+        name: 'Warmth of the Ember',
+        classKey: 'barbarian',
+        level: 3,
+        subclass: 'a1b2c3d4--ember-heart',
+      },
+      {
+        id: 'feature.a1b2c3d4--barbarian-ember-heart-sparks',
+        name: 'Sparks of the Ember',
+        classKey: 'barbarian',
+        level: 6,
+        subclass: 'a1b2c3d4--ember-heart',
+      },
+      {
+        id: 'feature.a1b2c3d4--barbarian-ember-heart-ashes',
+        name: 'Ashes of the Ember',
+        classKey: 'barbarian',
+        level: 10,
+        subclass: 'a1b2c3d4--ember-heart',
+      },
+    ]
+    const draft = blankDraft({
+      classKey: 'barbarian',
+      classLabel: 'Bárbaro',
+      classDef: barbarianDef,
+      subclassKey: 'a1b2c3d4--ember-heart',
+      subclass: 'Path of the Ember Heart',
+      level: 10,
+      speciesKey: 'elf',
+      speciesLabel: 'Elfo',
+      speciesDef: elf,
+      choices: { elvenLineage: 'high' },
+      language: 'es',
+      library: packLib,
+      names: { resource: (key: string) => key },
+    })
+    expect(draft.level).toBe(10)
+    expect(draft.build.subclassKey).toBe('a1b2c3d4--ember-heart')
+    expect(draft.build.choices).toEqual({ elvenLineage: 'high' })
+    const refs = draft.build.features.map((f) => f.ref)
+    expect(refs).toContain('feature.barbarian-rage')
+    expect(refs).toContain('feature.a1b2c3d4--barbarian-ember-heart-warmth')
+    expect(refs).toContain('feature.a1b2c3d4--barbarian-ember-heart-sparks')
+    expect(refs).toContain('feature.a1b2c3d4--barbarian-ember-heart-ashes')
+    const trackerKeys = draft.build.trackers.map((t) => t.key)
+    expect(trackerKeys).toContain('barbarian-rage')
+    expect(trackerKeys).toContain('elf-detect-magic')
+    expect(trackerKeys).toContain('elf-misty-step')
   })
 })
 

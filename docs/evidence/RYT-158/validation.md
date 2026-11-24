@@ -43,7 +43,7 @@ row says otherwise.
 | DMARC | none | `_dmarc.rytta.app` TXT `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` |
 | Google Search Console (account that owns the OAuth app) | URL-prefix property `https://rytta.pages.dev/` | + domain property `rytta.app`, verified by the TXT record `google-site-verification=fcmxpyMx-iS9e_sIN-wfNWFZGv0eMU6BKK-Pzijcm_s` (added by hand; the offered Cloudflare authorization was not used) |
 | Google Auth Platform branding (project `rytta-dnd`) | home, privacy and terms on `rytta.pages.dev`; authorized domains `rytta.pages.dev` and both Supabase project hosts | home `https://rytta.app`, privacy `https://rytta.app/privacy/`, terms `https://rytta.app/terms/`; authorized domain `rytta.app` in place of `rytta.pages.dev`, Supabase hosts kept for the OAuth redirect |
-| Google brand verification | failed earlier: "the home page https://rytta.pages.dev is not registered to you" | not resubmitted yet: Google asks to wait 24 hours after verifying the home page domain |
+| Google brand verification | failed earlier: "the home page https://rytta.pages.dev is not registered to you" | resubmitted at the owner's request the same day ("I fixed the problems"); verified within five minutes and published: "your brand information is verified and shown to users". The Google account chooser for Rytta now reads "Ir a Rytta" with Rytta's privacy policy and terms, where it named the Supabase project host before |
 | Repository docs and tests | `rytta.pages.dev` | `deployment.md`, ADR 047 and 048, `offline-shell.md`, `index.html` comment, service worker unit test; ADR 055 (this delivery) |
 
 ## Check A: the site on rytta.app (2026-11-24)

@@ -55,8 +55,7 @@ Console. On 2026-11-24 the owner bought `rytta.app`.
 - A confirmation or reset link requested on the old origin and opened after the switch lands on
   the new origin without its PKCE verifier; the app shows the translated way to ask again
   (RYT-157). These links expire after an hour.
-- Google's consent screen still names the Supabase project host, because the OAuth redirect goes
-  through it. A Supabase custom domain removes that but needs a paid plan, which is out of budget;
-  signing in with Google Identity Services and an ID token would avoid the redirect for free and
-  is a separate change.
+- With `rytta.app` verified in Search Console, Google verified the brand on 2026-11-24: the
+  account chooser shows "Rytta" and its legal pages instead of the Supabase project host, even
+  though the OAuth redirect still goes through that host. No Supabase custom domain is needed.
 - An expired domain takes down the app and its email at once; renewal stays automatic.

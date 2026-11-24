@@ -202,7 +202,7 @@ export function ListingDrawer({
             </Stack>
           </Group>
           {description && (
-            <Text className="user-copy item-description">
+            <Text className="user-copy item-description preserve-lines">
               <GlossaryText text={description} />
             </Text>
           )}

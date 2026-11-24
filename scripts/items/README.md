@@ -31,3 +31,30 @@ Conventions:
   capacity where the SRD gives one in pounds (the Chest, which the SRD sizes by volume, uses 300).
   A carried container's `loadReductionPercent` lightens unequipped items up to that capacity; only
   the container that saves the most applies.
+
+## Magic items (RYT-176)
+
+The 268 magic items of the base pack come from the "Magic Items A–Z" section of the same two
+PDFs (English pages 209–253, Spanish pages 228–277). The scripts need `pdfplumber`:
+
+1. `python3 -I scripts/items/magic_items_extract.py <SRD_CC_v5.2.1.pdf> <SP_SRD_CC_v5.2.1.pdf> <raw-dir>`
+   writes one raw JSON per language: heading, page, subtitle and plain text of each item. It
+   joins table cells that wrap, reads the tables that span both columns, moves the stat blocks
+   printed inside an item to the end of its text and puts superscripts back.
+2. `node scripts/items/build-magic-items.mjs <raw-dir>` pairs the languages with
+   `data/magic-item-names.mjs` and writes `tests/fixtures/srd/items/magic-items.json`, a content
+   file of kind `item` (the library imports it as it is). It fails on an unpaired heading, a
+   repeated key or a text over the limit.
+3. `npx vitest run src/features/inventory/domain/magic-items.test.ts`
+
+Conventions (ADR 051, "The SRD magic items"):
+
+- The description is the SRD subtitle (kind of item, rarity, attunement), a blank line and the
+  rules text. A table is one line per row with " | " between cells.
+- `data/magic-item-names.mjs` pairs each English heading with its Spanish one. The two editions
+  sort their own alphabet, so a new pair is read by a person, never guessed.
+- One entry per heading, except the "+1, +2, or +3" headings: one entry per bonus.
+- `rarity` is the item's; where it depends on a variant, the lowest the text lists and no price.
+  `costCp` follows the SRD's values by rarity.
+- The text was checked by script (wrapped cells, broken hyphens, paragraph and table row counts
+  equal in both languages), not read item by item.

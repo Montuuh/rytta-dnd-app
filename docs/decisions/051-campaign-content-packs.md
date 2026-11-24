@@ -181,6 +181,33 @@ Owner choices from the block Q options page, all the recommended ones:
 The baseline is a version number on the pack, read from the published versions the library
 already keeps, so marking the origin changes no entry and asks no campaign for a review.
 
+## The SRD magic items (RYT-176, 2026-11-24)
+
+The base pack gains the "Magic Items A–Z" section of the SRD 5.2.1, in English and in the
+official Spanish edition. Owner choices, all the recommended ones:
+
+- The whole text enters. An item description holds 10000 characters (it held 700 in a pack and
+  2000 in a campaign); the longest item has about 8500 in Spanish. Tables become one line per row
+  with " | " between cells, and the two stat blocks printed inside an item go at the end of its
+  text.
+- Attunement is the first line of the description, as the SRD prints it under the item's name
+  ("Wondrous Item, Rare (Requires Attunement)"). No field of its own and no change on the sheet.
+- The price is the SRD value of the item's rarity (100, 400, 4000, 40000 and 200000 GP; an
+  artifact has none). A potion is worth half and ten pieces of magic ammunition one potion, as
+  the SRD says; an item made from one mundane item adds that item's cost. Only items the SRD
+  types as a potion are halved: other consumables cannot be told from the subtitle.
+
+A pack item now carries a rarity, which a campaign keeps when it takes the item; an item without
+one is common. One entry per SRD heading, except the five "+1, +2, or +3" headings (ammunition,
+armour, shield, wand of the war mage, weapon), which become one entry per bonus because each
+bonus has its own rarity: 268 entries from 258 headings. Eight items whose rarity depends on a
+variant named in their text (the giant strength belt and potion, the feather token, the
+figurine, the horn of Valhalla, the Ioun stone, the potions of healing and the spell scroll)
+enter once, with the lowest rarity their text lists and no price. An item made from one mundane
+item (a shield, plate armour, a dagger) takes its slot, weight and properties, so it can be
+equipped; its magic bonus is not applied by the app. One that fits "any" weapon or armour has no
+slot until the DM gives it one. Rings and worn wondrous items go on their slot.
+
 ## Consequences
 
 - A published pack version never changes a running game until its DM accepts the update.

@@ -5422,13 +5422,14 @@
       "title": "The SRD magic items in the base pack",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "in_progress",
       "dependsOn": ["RYT-103", "RYT-104", "RYT-167", "RYT-174"],
       "sources": [
         "Owner, 24 November 2026, to the offer \"¿Importo ahora los objetos mágicos del SRD 5.2.1 al paquete base?\": \"Sí, objetos SRD\".",
         "Audit of 24 November 2026: the base pack has 197 items, all mundane (75 gear, 40 weapons, 38 tools, 26 consumables, 12 armours, 5 ammunition, 1 shield) and no magic item, although the \"Magic Items\" chapter of the System Reference Document 5.2.1 is CC-BY-4.0 like the rest of the pack.",
         "Findings of 24 November 2026 in the code and the published pack: a pack item keeps `category`, `icon`, `costCp`, `weightLb`, `slot_kind`, `properties` and one description per language; it has no rarity (an item taken from the pack is always created as common, `toDefinitionDraft`) and nothing says whether it needs attunement. The catalogue accepts descriptions of 700 characters at most and a campaign item 2000 (client schemas and `private.check_text` in the item RPCs); the longest description in the pack today has 666. Many magic items of the SRD are longer and several carry tables. Campaign items already have a rarity (`common` to `artifact`) and the screens show it.",
-        "The SRD PDFs (English `SRD_CC_v5.2.1.pdf`, Spanish `SP_SRD_CC_v5.2.1.pdf`, https://www.dndbeyond.com/srd) are not on the development machine; scripts/glossary and scripts/items were built from them and need them again."
+        "The SRD PDFs (English `SRD_CC_v5.2.1.pdf`, Spanish `SP_SRD_CC_v5.2.1.pdf`, https://www.dndbeyond.com/srd) are not on the development machine; scripts/glossary and scripts/items were built from them and need them again.",
+        "Owner, 24 November 2026, on the three decisions and the download of the SRD PDFs: the recommended option in each (the whole text with a larger limit, attunement as the SRD subtitle line, the price of the rarity, download the two PDFs). Recorded in ADR 051, \"The SRD magic items\"."
       ],
       "scope": "Every magic item of the \"Magic Items\" chapter of the SRD 5.2.1 enters the published base pack as an item entry, in English and in the official Spanish edition, so a DM who has the items category finds them where the mundane items are. Parts: (1) the pack item gains a rarity, read when the item is taken into a campaign (today always common); (2) the item text: the SRD subtitle (kind of item, rarity and whether it requires attunement) and the whole rules text, with its tables; the description limits of the catalogue and of a campaign item grow to what the longest SRD item needs, in the client schemas and in the item RPCs, and the item card and the item sheet stay readable with a long text at 390px; (3) an extraction script beside scripts/items that reads the two PDFs and writes the import files and the test copy, with a review report of the English and Spanish pairs; (4) category, icon and slot for each item (armour and weapons by their base item where the SRD names one; rings, cloaks, boots and the like on their slot; potions and scrolls as consumables), a price from the SRD table of values by rarity where the SRD gives one, and no weight where the SRD gives none; (5) import into PRE, review, publication of a new version of the base pack and the same in production; campaigns move to the new version through the existing update flow. Decisions for the owner before building: whether long texts enter whole (the limit grows) or shortened; whether attunement is only the subtitle line or a field of its own; whether items get the price of their rarity or none. Non-goals: tracking the three attuned items on the character sheet; automating charges, bonuses or curses; magic items that are not in the SRD; pictures (they go through the image queue).",
       "acceptance": [
@@ -5447,6 +5448,32 @@
         "npm run check",
         "npm run test:e2e",
         "hosted checks in PRE and production: counts, origin of the new entries, a campaign before and after the update",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-176/validation.md"]
+    },
+    {
+      "id": "RYT-177",
+      "title": "Long item texts: fold them above the actions and read their tables",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-176"],
+      "sources": [
+        "UI review of RYT-176, 24 November 2026, findings left as follow-ups: with the longest SRD magic item (about 8500 characters) at 390px and text at 150%, the actions of the item card are about thirteen screens below the top, and some thirty glossary terms come before them in keyboard order; the shop detail has the same shape with its quantity field. Table captions read as body text, and a three-column table with long cells is hard to read on a phone as one line per row. A full stop after a glossary term can drop alone to the next line. \"Tricks\" in Bag of Tricks links to the cantrip entry. The pick list clamps a description to four lines with no way to read on. The catalogue does not show an item's rarity before it is taken."
+      ],
+      "scope": "The screens that show an item description when it is long: the item card, the shop detail, the trade partner sheet and the pick list. A long description folds after its first lines with a control that opens the rest, so the actions stay near and keyboard users reach them first; captions and rows of the flattened SRD tables are told apart from running text; the pick list lets the reader open the whole text; the catalogue shows the rarity of an item that has one. Small text fixes found in the same review: the punctuation after a glossary term and the false link of \"tricks\". New UI: options page and the design flow first. Non-goals: structured tables in the item data, attunement as a field, automating magic item effects.",
+      "acceptance": [
+        "With the longest SRD magic item, at 390px and text at 150%, the actions of the item card and the quantity field of the shop detail are reachable without scrolling past the whole text, by touch and by keyboard; the whole text is one action away and that action is announced.",
+        "A table caption and a table row read as such in the item card and the shop detail; nothing overflows sideways.",
+        "The pick list opens the whole description of an item; the catalogue shows the rarity of a magic item before it is taken.",
+        "Short descriptions look as they do today.",
+        "390px and 820px, both themes and languages, keyboard, axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "browser tests with the longest SRD item",
+        "npm run check",
+        "npm run test:e2e",
         "independent UI review PASS"
       ],
       "evidence": []

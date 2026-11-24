@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { gpAmount } from '@/shared/lib/money'
-import { translationsSchema, type Translations } from '@/shared/lib/translations'
+import { descriptionLimit, translationsSchema, type Translations } from '@/shared/lib/translations'
 
 export const itemCategories = [
   'weapon',
@@ -115,7 +115,7 @@ export const definitionSchema = z.object({
   /** RYT-104: weight of one unit in lb with three decimals; source of truth over weight_tenths. */
   weight_lb: z.coerce.number().min(0).max(10000).optional(),
   value_gp: z.coerce.number().pipe(gpAmount).nullable(),
-  description: z.string().max(2000),
+  description: z.string().max(descriptionLimit),
   translations: translationsSchema.optional(),
   basic_key: z.string().max(80).nullable().optional(),
   is_template: z.boolean().optional(),

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { rarities } from '@/features/inventory'
 import { livePollInterval, liveStatePollMs } from '@/shared/lib/live-poll'
 import { gpAmount } from '@/shared/lib/money'
-import { translationsSchema } from '@/shared/lib/translations'
+import { descriptionLimit, translationsSchema } from '@/shared/lib/translations'
 
 /** Offer slots per side; the RPC rejects more. */
 export const tradeSlots = 8
@@ -29,7 +29,7 @@ export const tradeItemSchema = z.object({
   quantity: z.number().int().min(1),
   /** RYT-109: what both members of the trade may see of an item on the table. */
   image_path: z.string().max(300).nullable().optional(),
-  description: z.string().max(4000).nullable().optional(),
+  description: z.string().max(descriptionLimit).nullable().optional(),
 })
 export type TradeItem = z.infer<typeof tradeItemSchema>
 

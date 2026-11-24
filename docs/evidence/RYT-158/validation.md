@@ -81,5 +81,6 @@ The owner asked for the switch before the email work. Results checked right afte
 - A message the owner sent from a personal address to `contacto@rytta.app` reached the project
   mailbox through Email Routing in 18 seconds: SPF pass (SRS return path on rytta.app), DKIM pass
   for gmail.com, rytta.app and cloudflare-email.net, DMARC pass, ARC pass. Gmail filed it as spam
-  for its content (a one-word "test"), not for authentication; a mailbox filter for
-  `to:contacto@rytta.app` is the owner's call.
+  for its content (a one-word "test"), not for authentication. At the owner's request the project
+  mailbox has a filter "to:(contacto@rytta.app): never send it to Spam" (2026-11-24); the test
+  message itself stays in Spam.

@@ -1,4 +1,5 @@
-| Redirect from `rytta.pages.dev` | none | Bulk Redirect list `rytta_pages_dev` and rule "rytta.pages.dev to rytta.app" in the personal account: 301, preserve query string, subpath matching, preserve path suffix | browser session approved by the owner | 2026-11-24 |
+| Email Routing | none | enabled on `rytta.app`: `contacto@rytta.app` to the project mailbox (verified destination); MX `route1-3.mx.cloudflare.net`, SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` and the routing DKIM record added and locked by Cloudflare; catch-all off | browser session approved by the owner | 2026-11-24 || Brevo sending domain | none (single sender) | `rytta.app` authenticated (manual records: `brevo-code` TXT, `brevo1._domainkey` and `brevo2._domainkey` CNAME to `b1`/`b2.rytta-app.dkim.brevo.com`, DNS only); sender `Rytta <no-reply@rytta.app>` verified | browser session approved by the owner | 2026-11-24 || Auth email sender (Supabase SMTP through Brevo) | `Rytta <rytta.dnd@gmail.com>` | `Rytta <no-reply@rytta.app>`; host, port, user and stored password unchanged | browser session approved by the owner | 2026-11-24 || Redirect from `rytta.pages.dev` | none | Bulk Redirect list `rytta_pages_dev` and rule "rytta.pages.dev to rytta.app" in the personal account: 301, preserve query string, subpath matching, preserve path suffix | browser session approved by the owner | 2026-11-24 |
+| DMARC | none | `_dmarc.rytta.app` TXT `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` | browser session approved by the owner | 2026-11-24 |
 | Redirect from `www.rytta.app` | none | Redirect Rule in the `rytta.app` zone: `https://www.*` to `https://${1}`, 301, preserve query string | browser session approved by the owner | 2026-11-24 || Supabase Auth Site URL | `https://rytta.pages.dev` | `https://rytta.app` (the old origin stays in the redirect allowlist) | browser session approved by the owner | 2026-11-24 |# RYT-158 validation: own domain rytta.app
 
 Decision: [ADR 055](../../decisions/055-own-domain.md). Status: in progress.
@@ -66,3 +67,13 @@ The owner asked for the switch before the email work. Results checked right afte
   `https://rytta.app/` with the session started there.
 - Deployment addresses of the old project (`<hash>.rytta.pages.dev`) are not redirected and keep
   serving their builds; they were never shared.
+
+## Check B: email on the domain (2026-11-24)
+
+- A password recovery sent from the Supabase dashboard to a test account arrived in the project
+  mailbox inbox (before, the gmail sender landed in spam), from `"Rytta" <no-reply@rytta.app>`,
+  delivered in one second.
+- Gmail's original message: `spf=pass` (Brevo bounce domain), `dkim=pass header.i=@rytta.app
+  header.s=brevo1`, `dmarc=pass (p=NONE) header.from=rytta.app`.
+- Not exercised yet: a message to `contacto@rytta.app` arriving through Email Routing, and the
+  public contact address on the site (`VITE_CONTACT_EMAIL` still names the gmail mailbox).

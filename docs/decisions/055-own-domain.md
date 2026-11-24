@@ -31,9 +31,11 @@ Console. On 2026-11-24 the owner bought `rytta.app`.
   - Receiving: Cloudflare Email Routing forwards the public contact address on the domain to the
     project mailbox. No mailbox is hosted on the domain.
   - Sending: Supabase Auth keeps Brevo as SMTP relay; the sender becomes `no-reply@rytta.app`
-    with the domain authenticated in Brevo (DKIM and the Brevo code record).
-  - One SPF record covers both: `v=spf1 include:_spf.mx.cloudflare.net include:spf.brevo.com ~all`.
-  - DMARC starts at `p=none` with aggregate reports to the contact address and moves to
+    with the domain authenticated in Brevo (the Brevo code TXT record and two DKIM CNAME records,
+    `brevo1` and `brevo2`, DNS only). Brevo sends with its own bounce domain, so DMARC
+    passes through the aligned DKIM signature and the domain's SPF record stays the one Email
+    Routing needs: `v=spf1 include:_spf.mx.cloudflare.net ~all`.
+  - DMARC starts at `p=none` with aggregate reports to Brevo's DMARC service and moves to
     `p=quarantine` after two weeks of clean reports.
 - Auth: Supabase Site URL becomes the new origin; the old origin stays in the redirect allowlist
   for 30 days after the switch so links sent before it keep a way back. Google OAuth client

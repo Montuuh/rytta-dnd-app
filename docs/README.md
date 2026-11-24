@@ -138,3 +138,6 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     panel, the automatic checks, review, import and the status of each request (RYT-169).
 67. [Content files](content-files.md): the import file format per kind, the local check and where
     files with content from a book the owner bought are kept (RYT-175).
+68. [ADR 055: own domain rytta.app](decisions/055-own-domain.md): the domain, the Pages project in
+    the project account, the redirect from rytta.pages.dev and the email sender on the domain
+    (RYT-158).

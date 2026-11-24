@@ -2,9 +2,17 @@
 
 ## Cloudflare Pages
 
-The production host (ADR 047, RYT-116): the Pages project `rytta`, served at
-https://rytta.pages.dev and connected to the repository. It is static files only: no Functions,
-no bindings and no secrets.
+The production host (ADR 047, ADR 055, RYT-158): the Pages project `rytta-app` in the Cloudflare
+account of the project mailbox, served at https://rytta.app (canonical) and
+https://rytta-app.pages.dev, and connected to the repository. The same account holds the
+`rytta.app` registration and DNS zone, the Turnstile widget and Email Routing. It is static files
+only: no Functions, no bindings and no secrets.
+
+The first project, `rytta` (https://rytta.pages.dev), lives in the owner's personal Cloudflare
+account. Its repository connection was removed on 2026-11-24 (Cloudflare connects a repository to
+Pages in one account only), so it keeps serving its last build and no longer deploys. It stays
+only as the source of the permanent redirect from `rytta.pages.dev` to `rytta.app`; never
+delete it, or old links break.
 
 Build settings (the project, Settings, Build):
 
@@ -107,7 +115,7 @@ environments exist today, all on free plans:
 
 | Environment | Backend                                                       | Frontend                                 | Data                             |
 | ----------- | ------------------------------------------------------------- | ---------------------------------------- | -------------------------------- |
-| Production  | the production Supabase project, `public` / `private` schemas | https://rytta.pages.dev, built from main | real campaigns                   |
+| Production  | the production Supabase project, `public` / `private` schemas | https://rytta.app, built from main       | real campaigns                   |
 | Staging     | a separate Supabase project (same organisation, eu-west-1)    | none yet                                 | none: no data and no users       |
 | PRE         | `pre` / `pre_private` schemas inside the production project   | local development and loopback previews  | copied from production (ADR 007) |
 

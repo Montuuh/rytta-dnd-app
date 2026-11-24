@@ -5422,7 +5422,7 @@
       "title": "The SRD magic items in the base pack",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": ["RYT-103", "RYT-104", "RYT-167", "RYT-174"],
       "sources": [
         "Owner, 24 November 2026, to the offer \"¿Importo ahora los objetos mágicos del SRD 5.2.1 al paquete base?\": \"Sí, objetos SRD\".",

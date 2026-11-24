@@ -1,10 +1,7 @@
 # RYT-176: the SRD magic items in the base pack
 
-Status: in progress on 2026-11-24. The items are extracted and built, the app and the database
-accept them (the migration is applied to staging, production and PRE) and the checks below
-passed. Not done yet: the import into the library and the publication of the base pack. Both
-need the super admin's session, and in production the release of the app first: the published
-app reads pack descriptions of 700 characters at most and would leave 88 of the new items out.
+Status: done on 2026-11-24. The 268 magic items of the SRD 5.2.1 are published in the base pack,
+version 4, in production and in PRE, after the app that reads them was released.
 
 ## Owner decisions (2026-11-24)
 
@@ -107,10 +104,29 @@ each item gets the price of its rarity. Recorded in ADR 051, "The SRD magic item
 - The public site, https://rytta.pages.dev, serves build `1b09c73ac7a8-mwulj9n5` (built
   11:13 UTC) with its security headers; the served inventory bundle carries the rarity of a
   pack item and the 10000-character limit.
-- Not checked on the public site: any signed-in screen. The magic items are still not in the
-  library.
+- Not checked on the public site at that point: any signed-in screen. The magic items were not
+  in the library yet.
 - Rollback: revert the merge commit on `main` (Pages redeploys the previous build). The
   migration can stay: it only widens limits, and the previous app works with it.
+
+## Imported and published (2026-11-24)
+
+- Production, with the super admin's session on the public site, through the library's own
+  import: the check reported 268 new, none updated, none refused; the 268 entries were imported
+  as drafts and the stored drafts had the MD5 of the file's entries
+  (`df35d90b8dafb9baaa84391a7057d919`, 481628 characters) before anything was published. The
+  publish review showed 268 new, none changed, none removed; version 4 was published.
+- PRE the same way from the local app: same report, same MD5, version 4.
+- The baseline of the pack moved from 3 to 4 in both, by owner SQL, so the new entries read as
+  the SRD: 1680 entries, all of SRD origin, none changed or own, in production and in PRE. 40
+  entries are protected as before; none of the new ones.
+- The pack's items: 465 published (197 and the 268 at version 4, each with its rarity), nothing
+  pending. The library on the public site lists "Objetos · 465" with the new items marked SRD.
+- A campaign before and after the update, as its DM in production and rolled back: at version 3
+  it reads 197 items; after `update_campaign_content` to version 4 it reads 465, 268 with a
+  rarity, the longest Spanish description with 8506 characters, and no entry of changed or own
+  origin. The three campaigns that use the items of the pack stay at version 3 until their DM
+  updates.
 
 ## Not verified
 
@@ -119,8 +135,9 @@ each item gets the price of its rarity. Recorded in ADR 051, "The SRD magic item
   candle) keep the full value of their rarity.
 - The catalogue import drawer and the DM's proposal review were not captured with a long text.
   The catalogue does not show an item's rarity before it is taken.
-- The import, the publication, the baseline move (so the new entries read as SRD origin) and a
-  campaign before and after the update: nothing of it has happened yet.
+- No DM has updated a real campaign yet: the update, the storeroom import of a magic item and
+  its card were exercised in tests and in the rolled-back check, not by a person on the public
+  site.
 
 ## Follow-ups from the UI review (RYT-177)
 

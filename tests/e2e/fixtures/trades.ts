@@ -44,7 +44,7 @@ const item = (id: string, name: string, icon: string, rarity: string, quantity: 
   quantity,
 })
 
-export function tradeServer() {
+export function tradeServer(options: { daggerDescription?: string } = {}) {
   const inventories: Record<string, Item[]> = {
     [characterId]: [
       item('a1', 'Poción de curación', 'flask-conical', 'uncommon', 3),
@@ -56,7 +56,7 @@ export function tradeServer() {
       {
         ...item('b1', 'Daga élfica', 'sword', 'rare', 1),
         image_path: `pre/${campaignId}/60000000-0000-4000-8000-0000000000b1/70000000-0000-4000-8000-0000000000b1.webp`,
-        description: 'Hoja fina de acero lunar.',
+        description: options.daggerDescription ?? 'Hoja fina de acero lunar.',
       },
     ],
     [catoId]: [],

@@ -7,7 +7,7 @@ import {
   type ItemCategory,
 } from '@/features/inventory'
 import { gpAmount } from '@/shared/lib/money'
-import { translationsSchema } from '@/shared/lib/translations'
+import { descriptionLimit, translationsSchema } from '@/shared/lib/translations'
 
 /** RYT-104: gp with two decimals (0.01 gp is a copper piece), as the server sends it. */
 const amount = z.coerce.number().pipe(gpAmount)
@@ -33,7 +33,7 @@ export const shopItemSchema = z.object({
   weight_tenths: z.number().int().min(0).max(100000).optional(),
   /** Weight of one unit in lb (three decimals); the source of truth over weight_tenths. */
   weight_lb: z.coerce.number().min(0).max(10000).optional(),
-  description: z.string().max(2000),
+  description: z.string().max(descriptionLimit),
   translations: translationsSchema.optional(),
   slot_kind: z.enum(slotKinds),
   properties: itemPropertiesSchema.catch({}),

@@ -48,6 +48,8 @@ class Line:
     x0: float
     size: float
     runs: list[Run] = field(default_factory=list)
+    # x of each cell after the first, where a wide gap in sans text became a tab.
+    stops: list[float] = field(default_factory=list)
 
     @property
     def text(self) -> str:
@@ -90,6 +92,7 @@ def _lines_from_chars(chars, page_no: int, column: int) -> list[Line]:
             gap = ch["x0"] - prev["x1"] if prev is not None else 0
             if prev is not None and gap > 7 and style in ("g", "hs") and text != " ":
                 _append(line, style, "\t")
+                line.stops.append(ch["x0"])
             elif prev is not None and gap > ch["size"] * 0.18 and text != " ":
                 if not line.runs or not line.runs[-1].text.endswith(" "):
                     gap_style = line.runs[-1].style if line.runs else style

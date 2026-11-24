@@ -24,7 +24,13 @@ import { useTranslation } from 'react-i18next'
 import { CopyArtPrompt } from '@/shared/ui/copy-art-prompt'
 import { useAuth } from '@/features/auth'
 import { formatGp } from '@/shared/lib/money'
-import { localizedDescription, localizedName, type Translations } from '@/shared/lib/translations'
+import {
+  descriptionLimit,
+  proposalDescriptionLimit,
+  localizedDescription,
+  localizedName,
+  type Translations,
+} from '@/shared/lib/translations'
 import { fromPounds, toPounds } from '@/shared/lib/weight'
 import { usePhone } from '@/shared/ui/use-viewport'
 import { ViewerButton } from '@/shared/ui/image-viewer'
@@ -861,7 +867,8 @@ export function Forge({
           <Textarea
             autosize
             minRows={2}
-            maxLength={2000}
+            maxRows={14}
+            maxLength={dm ? descriptionLimit : proposalDescriptionLimit}
             label={t('inventory.forge.description')}
             value={texts.description}
             onChange={(event) => setText({ description: event.currentTarget.value })}
@@ -899,7 +906,8 @@ export function Forge({
                 <Textarea
                   autosize
                   minRows={2}
-                  maxLength={2000}
+                  maxRows={14}
+                  maxLength={dm ? descriptionLimit : proposalDescriptionLimit}
                   lang={other}
                   label={t('items.language.description', { language: otherLabel })}
                   description={t('items.language.needsName')}

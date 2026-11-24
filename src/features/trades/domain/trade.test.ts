@@ -1,3 +1,4 @@
+import { descriptionLimit } from '@/shared/lib/translations'
 import { describe, expect, it } from 'vitest'
 import {
   formatCountdown,
@@ -5,6 +6,7 @@ import {
   remainingMs,
   sameOffer,
   tradeErrorCode,
+  tradeItemSchema,
   tradeSlots,
   tradeStateSchema,
   withLine,
@@ -82,5 +84,22 @@ describe('RYT-034 trade domain', () => {
     expect(() =>
       tradeStateSchema.parse({ ...live, trade: { ...live.trade, status: 'haggling' } }),
     ).toThrow()
+  })
+})
+
+describe('RYT-176 a long item text on the trade table', () => {
+  const item = (description: string) => ({
+    item_id: '70000000-0000-4000-8000-000000000001',
+    definition_id: '70000000-0000-4000-8000-000000000002',
+    name: 'Mysterious Deck',
+    icon: 'sparkles',
+    rarity: 'legendary',
+    category: 'gear',
+    quantity: 1,
+    description,
+  })
+  it('reads an item with the longest description and refuses one character more', () => {
+    expect(tradeItemSchema.safeParse(item('a'.repeat(descriptionLimit))).success).toBe(true)
+    expect(tradeItemSchema.safeParse(item('a'.repeat(descriptionLimit + 1))).success).toBe(false)
   })
 })

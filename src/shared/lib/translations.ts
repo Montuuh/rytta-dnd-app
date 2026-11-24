@@ -2,9 +2,13 @@ import { z } from 'zod'
 
 // Optional second-language text of user content. The record's own name and description are
 // the original and the fallback.
+/** RYT-176: the longest text an item carries, so a magic item of the SRD fits whole. */
+export const descriptionLimit = 10000
+/** A Player's proposal keeps the old limit: its draft is stored under a smaller byte ceiling. */
+export const proposalDescriptionLimit = 2000
 const entry = z.object({
   name: z.string().max(100).optional(),
-  description: z.string().max(2000).optional(),
+  description: z.string().max(descriptionLimit).optional(),
 })
 
 export const translationsSchema = z

@@ -5385,6 +5385,98 @@
         "hosted apply"
       ],
       "evidence": ["docs/evidence/RYT-174/validation.md"]
+    },
+    {
+      "id": "RYT-175",
+      "title": "A private pack with the Player's Handbook content the base pack lacks",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "in_progress",
+      "dependsOn": ["RYT-163", "RYT-168", "RYT-171", "RYT-174"],
+      "sources": [
+        "Owner, 24 November 2026: \"Quiero que hagas un análisis de los libros manual del jugador, y del dungeon master. Sé que tiene copyright, pero para jugar en local sin publicar, qué data dirías que se debería importar en rytta como basico. Por ejemplo mas subclases, skills, features, criaturas, items, etc...\" and, after the analysis: \"Sí, prepara un ticket que sirva para importar la data faltante del manual del jugador, de momento en privado.\"",
+        "Analysis of 24 November 2026 against the published base pack: it holds 12 subclasses (one per class), 17 feats, 4 backgrounds, 9 species and 339 spells; the Player's Handbook (2024) has 48 subclasses, about 75 feats, 16 backgrounds, 10 species and about 390 spells. Classes, their features, skills, conditions, rules, weapons and armour are already complete. The book figures are approximate and are confirmed when the import files are prepared.",
+        "Private packs are for content from books the owner bought (ADR 040, ADR 051): they are offered only to the campaigns a super admin adds and never to other DMs. The public site and the public repository must not carry this content."
+      ],
+      "scope": "A private pack for the owner's own table with what the base pack lacks from the Player's Handbook (2024), loaded in this order: the 36 missing subclasses with their features; the missing feats; the 12 missing backgrounds and the missing species; the missing spells. The owner supplies the texts from their own book as import files; the delivery prepares what makes that practical and loads them. Parts: (1) a file format guide per kind (subclass, feature, feat, background, species, spell) with the keys and index fields the app reads (the class a subclass belongs to, the class and subclass of a feature and its level, a feat's category, a background's abilities, skills and origin feat, a spell's level, school and classes), each with one example taken from the base pack, plus a local command that validates a file with the library's own schemas before it is uploaded; (2) a folder for those files that is excluded from the repository, as the book files already are, and a check that no import file is tracked; (3) the private pack created in PRE and production by the super admin, each batch imported with the dry-run report, published as a version and offered only to the owner's campaigns; (4) readers: an entry of a pack other than the base pack cites its own pack in the glossary source line and the stat block footnote (today it cites the SRD page), and the screens that offer subclasses, feats, backgrounds, species and spells are checked with a second pack enabled. Non-goals: anything from this pack in the public base pack, the public repository or a public pack; content of other books (the Dungeon Master's Guide and the Monster Manual get their own tickets); automating the mechanics of the new subclasses and feats (their features show as text and their uses are tracked by hand, as for any pack class); pictures from the book.",
+      "acceptance": [
+        "The pack is private in PRE and production and offered only to the campaigns the owner chose: an outsider, a DM and a Player of another campaign never see it in lists, entries, choices or readers.",
+        "No import file is tracked by the repository: the folder is excluded, the check for tracked import files passes and CI does not need the files.",
+        "Each batch validates locally, imports with a dry-run report that refuses nothing, and is published as a version; the counts loaded equal the counts of the files.",
+        "With the pack enabled in the owner's campaign: level up offers its subclasses for the character's class beside the base one, creation offers its backgrounds, species and origin feats, an improvement offers its general feats, and its spells appear for their classes; with the pack off, none of it is offered and characters keep what they already have.",
+        "An entry of the private pack names its own pack in its source line; base pack entries keep theirs. The base pack is unchanged: every entry still reads as the SRD.",
+        "390px and 820px, both themes and languages, keyboard, axe clean for any screen that changes; independent UI review PASS."
+      ],
+      "validation": [
+        "unit tests for the file validator and the source line of a second pack",
+        "browser tests with a second pack of invented content: subclass at level up, feat, background, species and spell",
+        "npm run check",
+        "npm run test:e2e",
+        "hosted actor checks in PRE and production for who reads the private pack",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-175/validation.md"]
+    },
+    {
+      "id": "RYT-176",
+      "title": "The SRD magic items in the base pack",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "in_progress",
+      "dependsOn": ["RYT-103", "RYT-104", "RYT-167", "RYT-174"],
+      "sources": [
+        "Owner, 24 November 2026, to the offer \"¿Importo ahora los objetos mágicos del SRD 5.2.1 al paquete base?\": \"Sí, objetos SRD\".",
+        "Audit of 24 November 2026: the base pack has 197 items, all mundane (75 gear, 40 weapons, 38 tools, 26 consumables, 12 armours, 5 ammunition, 1 shield) and no magic item, although the \"Magic Items\" chapter of the System Reference Document 5.2.1 is CC-BY-4.0 like the rest of the pack.",
+        "Findings of 24 November 2026 in the code and the published pack: a pack item keeps `category`, `icon`, `costCp`, `weightLb`, `slot_kind`, `properties` and one description per language; it has no rarity (an item taken from the pack is always created as common, `toDefinitionDraft`) and nothing says whether it needs attunement. The catalogue accepts descriptions of 700 characters at most and a campaign item 2000 (client schemas and `private.check_text` in the item RPCs); the longest description in the pack today has 666. Many magic items of the SRD are longer and several carry tables. Campaign items already have a rarity (`common` to `artifact`) and the screens show it.",
+        "The SRD PDFs (English `SRD_CC_v5.2.1.pdf`, Spanish `SP_SRD_CC_v5.2.1.pdf`, https://www.dndbeyond.com/srd) are not on the development machine; scripts/glossary and scripts/items were built from them and need them again.",
+        "Owner, 24 November 2026, on the three decisions and the download of the SRD PDFs: the recommended option in each (the whole text with a larger limit, attunement as the SRD subtitle line, the price of the rarity, download the two PDFs). Recorded in ADR 051, \"The SRD magic items\"."
+      ],
+      "scope": "Every magic item of the \"Magic Items\" chapter of the SRD 5.2.1 enters the published base pack as an item entry, in English and in the official Spanish edition, so a DM who has the items category finds them where the mundane items are. Parts: (1) the pack item gains a rarity, read when the item is taken into a campaign (today always common); (2) the item text: the SRD subtitle (kind of item, rarity and whether it requires attunement) and the whole rules text, with its tables; the description limits of the catalogue and of a campaign item grow to what the longest SRD item needs, in the client schemas and in the item RPCs, and the item card and the item sheet stay readable with a long text at 390px; (3) an extraction script beside scripts/items that reads the two PDFs and writes the import files and the test copy, with a review report of the English and Spanish pairs; (4) category, icon and slot for each item (armour and weapons by their base item where the SRD names one; rings, cloaks, boots and the like on their slot; potions and scrolls as consumables), a price from the SRD table of values by rarity where the SRD gives one, and no weight where the SRD gives none; (5) import into PRE, review, publication of a new version of the base pack and the same in production; campaigns move to the new version through the existing update flow. Decisions for the owner before building: whether long texts enter whole (the limit grows) or shortened; whether attunement is only the subtitle line or a field of its own; whether items get the price of their rarity or none. Non-goals: tracking the three attuned items on the character sheet; automating charges, bonuses or curses; magic items that are not in the SRD; pictures (they go through the image queue).",
+      "acceptance": [
+        "The base pack holds every magic item of the SRD 5.2.1 chapter, each with both names, its rarity, its subtitle and its rules text in both languages; the count equals the count of the chapter and the review report has no unpaired entry.",
+        "An item taken from the pack into a campaign keeps its rarity and its whole text; the mundane items are unchanged and still arrive as common.",
+        "No description is cut: the longest item of the chapter is stored and shown whole, in the catalogue, in the campaign and on the item card.",
+        "Every new entry reads as SRD origin after publication (the baseline moves with the import) and none is protected.",
+        "A campaign pinned at the previous version keeps what it had until its DM updates; after the update the new items are offered.",
+        "Database changes carry denial tests for anon, outsider, player and cross-campaign DM; security review before production.",
+        "390px and 820px, both themes and languages, keyboard, axe clean for the item card and the catalogue with a long text; independent UI review PASS."
+      ],
+      "validation": [
+        "unit tests for the extraction (pairs, rarity, subtitle) and for the item mapping with a rarity",
+        "database tests for the new description limit and the item RPCs",
+        "browser tests: a rare item with a long text taken into a campaign and read on the item card",
+        "npm run check",
+        "npm run test:e2e",
+        "hosted checks in PRE and production: counts, origin of the new entries, a campaign before and after the update",
+        "independent UI review PASS"
+      ],
+      "evidence": ["docs/evidence/RYT-176/validation.md"]
+    },
+    {
+      "id": "RYT-177",
+      "title": "Long item texts: fold them above the actions and read their tables",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-176"],
+      "sources": [
+        "UI review of RYT-176, 24 November 2026, findings left as follow-ups: with the longest SRD magic item (about 8500 characters) at 390px and text at 150%, the actions of the item card are about thirteen screens below the top, and some thirty glossary terms come before them in keyboard order; the shop detail has the same shape with its quantity field. Table captions read as body text, and a three-column table with long cells is hard to read on a phone as one line per row. A full stop after a glossary term can drop alone to the next line. \"Tricks\" in Bag of Tricks links to the cantrip entry. The pick list clamps a description to four lines with no way to read on. The catalogue does not show an item's rarity before it is taken."
+      ],
+      "scope": "The screens that show an item description when it is long: the item card, the shop detail, the trade partner sheet and the pick list. A long description folds after its first lines with a control that opens the rest, so the actions stay near and keyboard users reach them first; captions and rows of the flattened SRD tables are told apart from running text; the pick list lets the reader open the whole text; the catalogue shows the rarity of an item that has one. Small text fixes found in the same review: the punctuation after a glossary term and the false link of \"tricks\". New UI: options page and the design flow first. Non-goals: structured tables in the item data, attunement as a field, automating magic item effects.",
+      "acceptance": [
+        "With the longest SRD magic item, at 390px and text at 150%, the actions of the item card and the quantity field of the shop detail are reachable without scrolling past the whole text, by touch and by keyboard; the whole text is one action away and that action is announced.",
+        "A table caption and a table row read as such in the item card and the shop detail; nothing overflows sideways.",
+        "The pick list opens the whole description of an item; the catalogue shows the rarity of a magic item before it is taken.",
+        "Short descriptions look as they do today.",
+        "390px and 820px, both themes and languages, keyboard, axe clean; independent UI review PASS."
+      ],
+      "validation": [
+        "browser tests with the longest SRD item",
+        "npm run check",
+        "npm run test:e2e",
+        "independent UI review PASS"
+      ],
+      "evidence": []
     }
   ]
 }

@@ -11,6 +11,7 @@ import {
   slotKinds,
   type DefinitionDraft,
   type ItemCategory,
+  type Rarity,
 } from './item'
 
 const money = z.coerce.number().pipe(gpAmount)
@@ -82,7 +83,7 @@ export type ImportItem = {
   category: ItemCategory
   icon: string
   slot_kind: string
-  rarity: 'common'
+  rarity: Rarity
   properties: Record<string, unknown>
   weight_lb: number
   value_gp: number
@@ -111,7 +112,7 @@ export function toImportItem(
     category: item.category,
     icon: item.icon,
     slot_kind: item.slot_kind,
-    rarity: 'common',
+    rarity: item.rarity ?? 'common',
     properties: item.properties,
     weight_lb: round3(item.weightLb),
     value_gp: cpToGp(item.costCp),

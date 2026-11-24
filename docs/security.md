@@ -577,3 +577,20 @@ cross-campaign DM, plus the guarded PRE mirror.
   pack exists. The list is `private.content_entry_protected`; a database test compares it with the
   keys in `src/features/characters/domain/srd.ts`. A takedown of one of them is owner SQL with
   the trigger disabled.
+
+## Item description limit (RYT-176)
+
+- An item description holds 10000 characters (it held 2000): the check on
+  `item_definitions.description` and the two validators every item write goes through,
+  `private.item_draft` and `private.item_translations`. The byte ceiling behind them grows to
+  match: `item_definitions.translations` to 81920 bytes (two languages of 100 + 10000
+  characters of four bytes). The migration raises if a check with the old limit survives it.
+- Who may write an item is unchanged: the validators have no table access and run inside RPCs
+  that authorize first. A Player's proposal does not grow: `item_proposals.draft` keeps its
+  16384 bytes and the proposal form its 2000 characters, so one Player cannot fill the DM's list
+  with long drafts (security review). Names, properties and the 500 items of an import keep
+  their limits. The DM's own calls can be larger than before (an import of 500 long items); the
+  content stays in their campaign.
+- The trade table reads an item's whole description (`tradeItemSchema` took 4000 characters).
+- A pack item carries a rarity. It is content of the library (super admins write it, RYT-173) and
+  reaches a campaign through `import_basic_items`, which already validated the rarity it stores.

@@ -1,10 +1,17 @@
 import { z } from 'zod'
+import { descriptionLimit } from '@/shared/lib/translations'
 import {
   basicItemExtraPropertiesSchema,
   type BasicItem,
   type BasicItemDescriptions,
 } from './basic-items'
-import { itemCategories, itemPropertiesSchema, slotKinds, type ItemCategory } from './item'
+import {
+  itemCategories,
+  itemPropertiesSchema,
+  rarities,
+  slotKinds,
+  type ItemCategory,
+} from './item'
 
 /**
  * RYT-166: items come from the content packs a campaign uses (ADR 051). An entry of kind `item`
@@ -47,6 +54,8 @@ export const packItemIndexSchema = z.object({
     .regex(/^[a-z0-9-]{1,40}$/)
     .optional(),
   slot_kind: z.enum(slotKinds).default('none'),
+  /** RYT-176: magic items carry theirs; everything else is common. */
+  rarity: z.enum(rarities).default('common'),
   /** Exact weight of one unit in pounds. */
   weightLb: z.number().min(0).max(10000).default(0),
   /** Price of one unit in copper pieces (1 GP = 100 CP). */
@@ -63,7 +72,9 @@ export const packItemIndexSchema = z.object({
 })
 export type PackItemIndex = z.infer<typeof packItemIndexSchema>
 
-const bodySchema = z.object({ description: z.string().trim().max(700).optional() }).partial()
+const bodySchema = z
+  .object({ description: z.string().trim().max(descriptionLimit).optional() })
+  .partial()
 
 export const itemPackSchema = z.object({
   id: z.uuid(),
@@ -165,6 +176,7 @@ export function buildItemCatalogue(
         weightLb: mechanics.weightLb,
         costCp: mechanics.costCp,
         properties: mechanics.properties,
+        ...(mechanics.rarity === 'common' ? {} : { rarity: mechanics.rarity }),
         ...(mechanics.pack ? { pack: mechanics.pack } : {}),
       })
       const describe = (own?: string, other?: string) => own || other

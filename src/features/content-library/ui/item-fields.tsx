@@ -4,8 +4,10 @@ import {
   categoryIconDefaults,
   itemCategories,
   packItemIndexSchema,
+  rarities,
   slotKinds,
 } from '@/features/inventory'
+import { descriptionLimit } from '@/shared/lib/translations'
 import { bodyOf, indexOf } from '../domain/forms'
 import type { ContentLanguage, EntryInput } from '../domain/library'
 
@@ -118,6 +120,14 @@ export function ItemFields({
           data={slotKinds.map((value) => ({ value, label: t(`inventory.slotKind.${value}`) }))}
           value={slotKinds.find((value) => value === index.slot_kind) ?? 'none'}
           onChange={(value) => setIndex({ slot_kind: value ?? 'none' })}
+        />
+        <Select
+          label={t('inventory.forge.rarity')}
+          data={rarities.map((value) => ({ value, label: t(`inventory.rarity.${value}`) }))}
+          value={rarities.find((value) => value === index.rarity) ?? 'common'}
+          onChange={(value) =>
+            setIndex({ rarity: value && value !== 'common' ? value : undefined })
+          }
         />
         <NumberInput
           label={t('library.item.weight')}
@@ -293,9 +303,10 @@ export function ItemFields({
         <Textarea
           key={language}
           label={t(language === 'es' ? 'library.item.descriptionEs' : 'library.item.descriptionEn')}
-          maxLength={700}
+          maxLength={descriptionLimit}
           autosize
           minRows={3}
+          maxRows={16}
           value={str(bodyOf(entry.data, language)?.description)}
           onChange={(event) => setDescription(language, event.currentTarget.value)}
         />

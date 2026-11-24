@@ -3,6 +3,7 @@ import { ActionIcon, Button, Group, Stack, Text, Title } from '@mantine/core'
 import { Check, GitCompareArrows, Plus, Users, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { CreatureListItem, StatBlock } from '@/features/bestiary'
+import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import type { EncounterSummary } from '../domain/combat'
 import { NumberDial } from './bestiary-widgets'
 import { npcEntryFor, useSpellLabel } from './creatures'
@@ -157,9 +158,10 @@ export function EncounterCreatureAdd({
       }
     } finally {
       submitting.current = false
-      requestAnimationFrame(() => {
-        if (document.activeElement === document.body) button.focus()
-      })
+      // The button is disabled while the request runs, which drops focus onto the page. One
+      // frame later it may still be disabled, so the return retries until it takes focus. No
+      // overlay is closing: focus the user moved inside the sheet stays where they put it.
+      focusWhenReady(() => button, { from: button, leaving: null, timeout: 1000 })
     }
   }
   return (

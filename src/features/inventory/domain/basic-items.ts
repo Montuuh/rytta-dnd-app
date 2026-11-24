@@ -3,7 +3,14 @@
 // packs (pack-items.ts); this module keeps their shape and helpers.
 import { z } from 'zod'
 import { cpToGp } from '@/shared/lib/money'
-import { itemCategories, itemPropertiesSchema, slotKinds, type DefinitionDraft } from './item'
+import { descriptionLimit } from '@/shared/lib/translations'
+import {
+  itemCategories,
+  itemPropertiesSchema,
+  rarities,
+  slotKinds,
+  type DefinitionDraft,
+} from './item'
 
 export const basicItemLanguages = ['en', 'es'] as const
 export type BasicItemLanguage = (typeof basicItemLanguages)[number]
@@ -62,6 +69,8 @@ export const basicItemSchema = z.object({
   /** Price of one unit in copper pieces (1 GP = 100 CP). */
   costCp: z.number().int().min(0).max(100_000_000),
   properties: itemPropertiesSchema.extend(basicItemExtraPropertiesSchema.shape).strict(),
+  /** RYT-176: a magic item's rarity; an item without one is common. */
+  rarity: z.enum(rarities).optional(),
   /** Lot the SRD sells the item in, when its listed price is not per unit (ammunition). */
   pack: z
     .object({
@@ -78,7 +87,10 @@ export const basicItemCatalogueSchema = z.object({
   attribution: z.string().min(1),
   items: z.array(basicItemSchema).min(1),
 })
-export const basicItemDescriptionsSchema = z.record(z.string(), z.string().trim().min(1).max(700))
+export const basicItemDescriptionsSchema = z.record(
+  z.string(),
+  z.string().trim().min(1).max(descriptionLimit),
+)
 export type BasicItemDescriptions = z.infer<typeof basicItemDescriptionsSchema>
 
 export const basicItemsByKey = (items: readonly BasicItem[]) =>
@@ -123,7 +135,7 @@ export function toDefinitionDraft(
     name: item.name[language],
     category: item.category,
     icon: item.icon,
-    rarity: 'common',
+    rarity: item.rarity ?? 'common',
     weight_lb: item.weightLb,
     value_gp: cpToGp(item.costCp),
     description,

@@ -5385,6 +5385,37 @@
         "hosted apply"
       ],
       "evidence": ["docs/evidence/RYT-174/validation.md"]
+    },
+    {
+      "id": "RYT-175",
+      "title": "A private pack with the Player's Handbook content the base pack lacks",
+      "priority": "P2",
+      "owner": "fullstack",
+      "status": "planned",
+      "dependsOn": ["RYT-163", "RYT-168", "RYT-171", "RYT-174"],
+      "sources": [
+        "Owner, 24 November 2026: \"Quiero que hagas un análisis de los libros manual del jugador, y del dungeon master. Sé que tiene copyright, pero para jugar en local sin publicar, qué data dirías que se debería importar en rytta como basico. Por ejemplo mas subclases, skills, features, criaturas, items, etc...\" and, after the analysis: \"Sí, prepara un ticket que sirva para importar la data faltante del manual del jugador, de momento en privado.\"",
+        "Analysis of 24 November 2026 against the published base pack: it holds 12 subclasses (one per class), 17 feats, 4 backgrounds, 9 species and 339 spells; the Player's Handbook (2024) has 48 subclasses, about 75 feats, 16 backgrounds, 10 species and about 390 spells. Classes, their features, skills, conditions, rules, weapons and armour are already complete. The book figures are approximate and are confirmed when the import files are prepared.",
+        "Private packs are for content from books the owner bought (ADR 040, ADR 051): they are offered only to the campaigns a super admin adds and never to other DMs. The public site and the public repository must not carry this content."
+      ],
+      "scope": "A private pack for the owner's own table with what the base pack lacks from the Player's Handbook (2024), loaded in this order: the 36 missing subclasses with their features; the missing feats; the 12 missing backgrounds and the missing species; the missing spells. The owner supplies the texts from their own book as import files; the delivery prepares what makes that practical and loads them. Parts: (1) a file format guide per kind (subclass, feature, feat, background, species, spell) with the keys and index fields the app reads (the class a subclass belongs to, the class and subclass of a feature and its level, a feat's category, a background's abilities, skills and origin feat, a spell's level, school and classes), each with one example taken from the base pack, plus a local command that validates a file with the library's own schemas before it is uploaded; (2) a folder for those files that is excluded from the repository, as the book files already are, and a check that no import file is tracked; (3) the private pack created in PRE and production by the super admin, each batch imported with the dry-run report, published as a version and offered only to the owner's campaigns; (4) readers: an entry of a pack other than the base pack cites its own pack in the glossary source line and the stat block footnote (today it cites the SRD page), and the screens that offer subclasses, feats, backgrounds, species and spells are checked with a second pack enabled. Non-goals: anything from this pack in the public base pack, the public repository or a public pack; content of other books (the Dungeon Master's Guide and the Monster Manual get their own tickets); automating the mechanics of the new subclasses and feats (their features show as text and their uses are tracked by hand, as for any pack class); pictures from the book.",
+      "acceptance": [
+        "The pack is private in PRE and production and offered only to the campaigns the owner chose: an outsider, a DM and a Player of another campaign never see it in lists, entries, choices or readers.",
+        "No import file is tracked by the repository: the folder is excluded, the check for tracked import files passes and CI does not need the files.",
+        "Each batch validates locally, imports with a dry-run report that refuses nothing, and is published as a version; the counts loaded equal the counts of the files.",
+        "With the pack enabled in the owner's campaign: level up offers its subclasses for the character's class beside the base one, creation offers its backgrounds, species and origin feats, an improvement offers its general feats, and its spells appear for their classes; with the pack off, none of it is offered and characters keep what they already have.",
+        "An entry of the private pack names its own pack in its source line; base pack entries keep theirs. The base pack is unchanged: every entry still reads as the SRD.",
+        "390px and 820px, both themes and languages, keyboard, axe clean for any screen that changes; independent UI review PASS."
+      ],
+      "validation": [
+        "unit tests for the file validator and the source line of a second pack",
+        "browser tests with a second pack of invented content: subclass at level up, feat, background, species and spell",
+        "npm run check",
+        "npm run test:e2e",
+        "hosted actor checks in PRE and production for who reads the private pack",
+        "independent UI review PASS"
+      ],
+      "evidence": []
     }
   ]
 }

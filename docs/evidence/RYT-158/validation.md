@@ -1,6 +1,4 @@
-| Email Routing | none | enabled on `rytta.app`: `contacto@rytta.app` to the project mailbox (verified destination); MX `route1-3.mx.cloudflare.net`, SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` and the routing DKIM record added and locked by Cloudflare; catch-all off | browser session approved by the owner | 2026-11-24 || Brevo sending domain | none (single sender) | `rytta.app` authenticated (manual records: `brevo-code` TXT, `brevo1._domainkey` and `brevo2._domainkey` CNAME to `b1`/`b2.rytta-app.dkim.brevo.com`, DNS only); sender `Rytta <no-reply@rytta.app>` verified | browser session approved by the owner | 2026-11-24 || Auth email sender (Supabase SMTP through Brevo) | `Rytta <rytta.dnd@gmail.com>` | `Rytta <no-reply@rytta.app>`; host, port, user and stored password unchanged | browser session approved by the owner | 2026-11-24 || Redirect from `rytta.pages.dev` | none | Bulk Redirect list `rytta_pages_dev` and rule "rytta.pages.dev to rytta.app" in the personal account: 301, preserve query string, subpath matching, preserve path suffix | browser session approved by the owner | 2026-11-24 |
-| DMARC | none | `_dmarc.rytta.app` TXT `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` | browser session approved by the owner | 2026-11-24 |
-| Redirect from `www.rytta.app` | none | Redirect Rule in the `rytta.app` zone: `https://www.*` to `https://${1}`, 301, preserve query string | browser session approved by the owner | 2026-11-24 || Supabase Auth Site URL | `https://rytta.pages.dev` | `https://rytta.app` (the old origin stays in the redirect allowlist) | browser session approved by the owner | 2026-11-24 |# RYT-158 validation: own domain rytta.app
+# RYT-158 validation: own domain rytta.app
 
 Decision: [ADR 055](../../decisions/055-own-domain.md). Status: in progress.
 
@@ -23,23 +21,28 @@ personal account to the project account.
 
 ## Inventory
 
-| Place | Before | After | Changed by | Date |
-| --- | --- | --- | --- | --- |
-| Turnstile widget "Rytta" hostnames | `localhost`, `rytta.pages.dev` | + `rytta.app` | browser session approved by the owner | 2026-11-24 |
-| Supabase Auth redirect allowlist (production) | 11 entries, `rytta.pages.dev` and localhost | + `https://rytta.app`, `https://rytta.app/`, `https://rytta.app/?sb_flow_id=*`, `https://rytta.app/?auth=*` (15 entries) | browser session approved by the owner | 2026-11-24 |
-| Supabase Auth Site URL | `https://rytta.pages.dev` | pending: `https://rytta.app` at the switch | | |
-| Google OAuth client "Cliente web 4" (production) | redirect URI: the Supabase callback; no JavaScript origins | unchanged: the redirect flow returns through Supabase and needs no origin | | 2026-11-24 |
-| Cloudflare Pages project | `rytta` in the personal account, connected to the repository | `rytta-app` in the project account, same build command, output, production branch and the 7 build variables plus `NODE_VERSION=24`, `VITE_SITE_URL=https://rytta.app`; preview branch deployments None | browser session approved by the owner | 2026-11-24 |
-| First Pages project `rytta` | connected to the repository | repository connection removed; still serves build `1b09c73` at rytta.pages.dev | browser session approved by the owner | 2026-11-24 |
-| Custom domains of `rytta-app` | none | `rytta.app` and `www.rytta.app` (CNAME records to `rytta-app.pages.dev` created by Pages) | browser session approved by the owner | 2026-11-24 |
-| Redirect from `rytta.pages.dev` | none | pending | | |
-| Build variable `VITE_SITE_URL` | `https://rytta.pages.dev` | `https://rytta.app` (new project) | browser session approved by the owner | 2026-11-24 |
-| Build variable `VITE_CONTACT_EMAIL` | the project mailbox on gmail | pending: `contacto@rytta.app` | | |
-| Auth email sender (Supabase SMTP through Brevo) | `Rytta <rytta.dnd@gmail.com>` | pending: `Rytta <no-reply@rytta.app>` | | |
-| Brevo sending domain | none (single sender) | pending: `rytta.app` authenticated | | |
-| Email Routing | none | pending: `contacto@rytta.app` | | |
-| Google branding and Search Console | `rytta.pages.dev` | pending | | |
-| Repository docs and tests | `rytta.pages.dev` | `deployment.md`, ADR 047 and 048, `offline-shell.md`, `index.html` comment, service worker unit test; ADR 055 | this delivery | 2026-11-24 |
+Every change below was made on 2026-11-24 in a browser session approved by the owner, unless the
+row says otherwise.
+
+| Place | Before | After |
+| --- | --- | --- |
+| Turnstile widget "Rytta" hostnames | `localhost`, `rytta.pages.dev` | + `rytta.app` |
+| Supabase Auth redirect allowlist (production) | 11 entries, `rytta.pages.dev` and localhost | + `https://rytta.app`, `https://rytta.app/`, `https://rytta.app/?sb_flow_id=*`, `https://rytta.app/?auth=*` (15 entries) |
+| Supabase Auth Site URL | `https://rytta.pages.dev` | `https://rytta.app`; the old origin stays in the redirect allowlist |
+| Google OAuth client "Cliente web 4" (production) | redirect URI: the Supabase callback; no JavaScript origins | unchanged: the redirect flow returns through Supabase and needs no origin |
+| Cloudflare Pages project | `rytta` in the personal account, connected to the repository | `rytta-app` in the project account: same build command, output and production branch, the 7 build variables plus `NODE_VERSION=24`; preview branch deployments None |
+| First Pages project `rytta` | connected to the repository | repository connection removed; keeps serving build `1b09c73` as the redirect source |
+| Custom domains of `rytta-app` | none | `rytta.app` and `www.rytta.app` (CNAME records to `rytta-app.pages.dev` created by Pages) |
+| Redirect from `rytta.pages.dev` | none | Bulk Redirect list `rytta_pages_dev` and rule "rytta.pages.dev to rytta.app" in the personal account: 301, preserve query string, subpath matching, preserve path suffix |
+| Redirect from `www.rytta.app` | none | Redirect Rule in the `rytta.app` zone from the "WWW to root" template: 301 to the apex, preserve query string |
+| Build variable `VITE_SITE_URL` | `https://rytta.pages.dev` | `https://rytta.app` |
+| Build variable `VITE_CONTACT_EMAIL` | the project mailbox on gmail | `contacto@rytta.app`; production redeployed from `1b09c73` |
+| Auth email sender (Supabase SMTP through Brevo) | `Rytta <rytta.dnd@gmail.com>` | `Rytta <no-reply@rytta.app>`; host, port, user and stored password unchanged |
+| Brevo sending domain | none (single sender) | `rytta.app` authenticated with manual records: `brevo-code` TXT, `brevo1._domainkey` and `brevo2._domainkey` CNAME to `b1` and `b2.rytta-app.dkim.brevo.com`, DNS only; sender `Rytta <no-reply@rytta.app>` verified |
+| Email Routing | none | enabled on `rytta.app`: `contacto@rytta.app` to the project mailbox (verified destination); MX `route1` to `route3.mx.cloudflare.net`, SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` and the routing DKIM record added and locked by Cloudflare; catch-all off |
+| DMARC | none | `_dmarc.rytta.app` TXT `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` |
+| Google branding and Search Console | `rytta.pages.dev` | pending |
+| Repository docs and tests | `rytta.pages.dev` | `deployment.md`, ADR 047 and 048, `offline-shell.md`, `index.html` comment, service worker unit test; ADR 055 (this delivery) |
 
 ## Check A: the site on rytta.app (2026-11-24)
 
@@ -53,7 +56,7 @@ personal account to the project account.
 - Google sign-in on `https://rytta.app` with the project mailbox account returned to
   `https://rytta.app/` signed in, with its campaigns listed; no console messages.
 - Not exercised yet: email and password sign-in with the Turnstile widget on the new origin,
-  confirmation and reset emails, invitations.
+  confirmation and reset links opened on the new origin, invitations.
 
 ## Switch to rytta.app (2026-11-24)
 
@@ -75,5 +78,8 @@ The owner asked for the switch before the email work. Results checked right afte
   delivered in one second.
 - Gmail's original message: `spf=pass` (Brevo bounce domain), `dkim=pass header.i=@rytta.app
   header.s=brevo1`, `dmarc=pass (p=NONE) header.from=rytta.app`.
-- Not exercised yet: a message to `contacto@rytta.app` arriving through Email Routing, and the
-  public contact address on the site (`VITE_CONTACT_EMAIL` still names the gmail mailbox).
+- A message the owner sent from a personal address to `contacto@rytta.app` reached the project
+  mailbox through Email Routing in 18 seconds: SPF pass (SRS return path on rytta.app), DKIM pass
+  for gmail.com, rytta.app and cloudflare-email.net, DMARC pass, ARC pass. Gmail filed it as spam
+  for its content (a one-word "test"), not for authentication; a mailbox filter for
+  `to:contacto@rytta.app` is the owner's call.

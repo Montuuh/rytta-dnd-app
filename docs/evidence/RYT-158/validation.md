@@ -57,8 +57,10 @@ row says otherwise.
   immutable`).
 - Google sign-in on `https://rytta.app` with the project mailbox account returned to
   `https://rytta.app/` signed in, with its campaigns listed; no console messages.
-- Not exercised yet: email and password sign-in with the Turnstile widget on the new origin,
-  confirmation and reset links opened on the new origin, invitations.
+- The email sign-in dialog on `https://rytta.app` renders the Turnstile widget with the hostname
+  accepted (no domain error; it asked for the interactive check in the test browser).
+- Not exercised yet, owner steps because they need the human check and a password: email and
+  password sign-in, a reset or confirmation link opened on the new origin, invitations.
 
 ## Switch to rytta.app (2026-11-24)
 

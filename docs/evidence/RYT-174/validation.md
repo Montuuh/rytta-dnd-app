@@ -88,8 +88,33 @@ protected entries are published.
 - **Security advisors.** No error. The two readers join the standing notice about security
   definer RPCs callable by signed-in accounts.
 - **Names.** The PRE pack is titled "Rytta" (owner choice P1 A), for local use with this code.
-  The production pack keeps the SRD's title until the release: the deployed app still prints
-  its fixed "SRD".
+  The production pack kept the SRD's title until the release (see Released).
+
+## Released
+
+Released on 2026-11-24 at the owner's request, with RYT-173 and the rest of the `next` branch.
+
+- **Source.** Release pull request 38 merged into `main` as `c7098f79` (head `0376ea76`).
+- **Checks before the merge.** Independent UI review current for this source. Clean install and
+  `npm run check` passed (1257 tests, build). The whole browser suite: 1612 passed, 180 skipped,
+  3 failed (casting undo on mobile, shops inline and the update notice on tablet); the three pass
+  when run alone, and the four browser jobs and the checks job of the pull request passed on
+  GitHub at the same commit. `npm run format:check` passes there; locally it only reports the
+  line endings of the Windows checkout.
+- **Build.** No secret key in the build output: the only match for a secret key prefix is the
+  Supabase client's own check of key prefixes.
+- **Migrations.** The 76 local migrations are in the production history; nothing was applied at
+  the release.
+- **Public site.** https://rytta.pages.dev serves build `c7098f7904f5-mwtym1zo` (built
+  2026-11-24 00:31 UTC). The landing page loads without console errors, the privacy and terms
+  pages and the manifest answer, and the bundle carries the two origin readers. Signed-in
+  screens were not opened on the public site.
+- **Name.** After the deployment the production pack was renamed "Rytta" (titles only; slug,
+  version 3, baseline and visibility unchanged). A DM's campaign reads the pack as "Rytta" in
+  Content and in the origin reader, with no changed entry.
+- **Rollback.** Frontend: publish the previous revision of `main` (`7deed6f9`); it ignores the
+  new readers and columns, so the two migrations can stay. The pack's title is one update back
+  to the SRD's. Database: forward corrective migrations only.
 
 ## Acceptance
 

@@ -93,6 +93,25 @@ each item gets the price of its rarity. Recorded in ADR 051, "The SRD magic item
 - Security advisors after the apply: the same three standing kinds as before, none about the
   objects of this migration.
 
+## Released (2026-11-24)
+
+- The app: release pull request 39 merged as `1b09c73a` after its five checks passed on
+  `09722945`. The first run failed in one check of the new browser test: on the CI's fonts a
+  glossary term ends a line of the longest item and the invisible touch area of the term
+  reaches past the card, which the scroll width counted. The test now measures the text.
+- Before merging: clean install, `npm run check` (1270 tests), build without secret keys (only
+  the publishable key), hosted migrations equal to the repository's. Of 1621 local browser
+  tests, three failed: two focus tests that pass alone, and the signed-out landing test, which
+  fails on this machine and passes in CI. `format:check` fails locally on Windows line endings
+  and passes in CI.
+- The public site, https://rytta.pages.dev, serves build `1b09c73ac7a8-mwulj9n5` (built
+  11:13 UTC) with its security headers; the served inventory bundle carries the rarity of a
+  pack item and the 10000-character limit.
+- Not checked on the public site: any signed-in screen. The magic items are still not in the
+  library.
+- Rollback: revert the merge commit on `main` (Pages redeploys the previous build). The
+  migration can stay: it only widens limits, and the previous app works with it.
+
 ## Not verified
 
 - The texts were checked by script, not read item by item against the PDFs.

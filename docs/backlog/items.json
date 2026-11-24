@@ -5481,6 +5481,28 @@
         "independent UI review PASS"
       ],
       "evidence": []
+    },
+    {
+      "id": "RYT-178",
+      "title": "SRD magic items show their own painting instead of their category's",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-170", "RYT-172"],
+      "sources": [
+        "Owner, 24 November 2026: \"Actualiza tambien el listado de imagenes a generar con todo el dataset nuevo de SRD y del manual del jugador.\" Inventory of the two packs the same day: only creature, item and class entries carry a picture (RYT-172). The base pack's 330 creatures and 12 classes are painted and its 200 basic items are queued (RYT-170); its 268 magic items share the 9 category paintings. The handbook pack holds subclasses, features, feats, backgrounds, one species and spells, none of which the app draws."
+      ],
+      "scope": "The 268 SRD magic items get their own painting through the image queue (set interface, art/generated/items/srd/<library key>.png, imported by scripts/art-gen/build.py into public/art/items/srd and its thumbs): IMG-201 to IMG-468 in nine batches by kind of item, with the style of the basic items. An item that comes from one of those library entries and has a shipped painting shows it where its category painting shows today: the library's list and editor and the inventory, storeroom and shop tiles of 40px or more. A campaign's upload and a pack picture still win and the category painting stays the fallback. An entry that stands for several objects (a +1 weapon, the potions of healing, the figurines) shows one representative. Non-goals: pictures for species, backgrounds, subclasses, feats or spells, which have no place in the app today.",
+      "acceptance": [
+        "The approved pictures are imported into public/art/items/srd with thumbnails; items still waiting keep their category painting.",
+        "A tile of 40px or more of an item taken from one of those entries, and the entry's row and editor in the library, show its painting; a campaign's upload and a pack picture still win and other items keep their category painting."
+      ],
+      "validation": [
+        "npm run check",
+        "Captures at 390px and tablet of the library list, inventory and shop tiles",
+        "Independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-178/validation.md"]
     }
   ]
 }

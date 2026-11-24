@@ -571,6 +571,7 @@ export function Forge({
                     kind: 'item',
                     name: texts.name,
                     traits: [draft.category, draft.rarity],
+                    details: texts.description,
                   }}
                 />
               )}

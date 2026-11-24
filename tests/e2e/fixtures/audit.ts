@@ -66,7 +66,7 @@ export async function focusAcrossFrames(page: Page, count = 30): Promise<string[
 
 /**
  * RYT-154: the picker's "Copy art prompt" puts a prompt for the entity on screen in the clipboard
- * and says so; the prompt ends with the shared art direction.
+ * and says so; the prompt ends with what never appears in a picture.
  */
 export async function expectArtPrompt(scope: Page | Locator, page: Page, expected: RegExp) {
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
@@ -77,5 +77,5 @@ export async function expectArtPrompt(scope: Page | Locator, page: Page, expecte
   await expect(scope.getByText(/^(Prompt copiado|Prompt copied)/).first()).toBeVisible()
   const text = await page.evaluate(() => navigator.clipboard.readText())
   expect(text).toMatch(expected)
-  expect(text).toContain('Art direction:')
+  expect(text).toMatch(/Not in the style of any named artist, studio, game or existing work\.$/)
 }

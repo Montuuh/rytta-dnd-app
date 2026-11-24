@@ -171,7 +171,11 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
   const picker = page.getByRole('combobox', { name: 'Partir de un objeto existente' })
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Custom')
   // RYT-154: the prompt follows the name typed so far.
-  await expectArtPrompt(page.getByRole('dialog'), page, /^Item illustration .*"Custom"/)
+  await expectArtPrompt(
+    page.getByRole('dialog'),
+    page,
+    /^Create a square \(1:1\) image, 1024×1024 px\. Item icon: "Custom" [^]*\nStyle: original painterly dark-fantasy still life/,
+  )
   await picker.click()
   expect(
     await picker.evaluate((field) => parseFloat(getComputedStyle(field).fontSize)),

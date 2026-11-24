@@ -5391,7 +5391,7 @@
       "title": "A private pack with the Player's Handbook content the base pack lacks",
       "priority": "P2",
       "owner": "fullstack",
-      "status": "planned",
+      "status": "in_progress",
       "dependsOn": ["RYT-163", "RYT-168", "RYT-171", "RYT-174"],
       "sources": [
         "Owner, 24 November 2026: \"Quiero que hagas un análisis de los libros manual del jugador, y del dungeon master. Sé que tiene copyright, pero para jugar en local sin publicar, qué data dirías que se debería importar en rytta como basico. Por ejemplo mas subclases, skills, features, criaturas, items, etc...\" and, after the analysis: \"Sí, prepara un ticket que sirva para importar la data faltante del manual del jugador, de momento en privado.\"",
@@ -5415,7 +5415,7 @@
         "hosted actor checks in PRE and production for who reads the private pack",
         "independent UI review PASS"
       ],
-      "evidence": []
+      "evidence": ["docs/evidence/RYT-175/validation.md"]
     }
   ]
 }

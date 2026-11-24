@@ -18,6 +18,8 @@ dist-ssr
 coverage/
 playwright-report/
 test-results/
+# Import files with content from books the owner bought: never in the repository (RYT-175).
+content-private/
 supabase/.temp/
 supabase/.branches/
 .husky/_/

@@ -136,3 +136,5 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
     one writing role, the retired editor grant and who owns the public packs (RYT-173).
 66. [Image queue](art-queue.md): how a delivery requests a picture the author paints in ChatGPT, the
     panel, the automatic checks, review, import and the status of each request (RYT-169).
+67. [Content files](content-files.md): the import file format per kind, the local check and where
+    files with content from a book the owner bought are kept (RYT-175).

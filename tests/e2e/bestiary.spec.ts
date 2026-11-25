@@ -280,10 +280,15 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await server.install(page)
   await openBestiary(page)
-  await expect(page.getByRole('tab', { name: 'Bestiario' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  )
+  // RYT-179: the open panel is marked (the switcher names it on phones).
+  if (page.viewportSize()!.width < 768)
+    await expect(page.getByRole('button', { name: 'Bestiario, cambiar de panel' })).toBeVisible()
+  else
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Centro de mando DM' })
+        .getByRole('link', { name: 'Bestiario', exact: true }),
+    ).toHaveAttribute('aria-current', 'page')
   await audit(page)
   await expectTouchTargets(page, '.bst-row-main:visible, .bst-fav:visible')
   await evidence(page, info, 'list')
@@ -963,7 +968,7 @@ test('RYT-046 Players never reach the bestiary', async ({ page }) => {
   })
   await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByRole('tab', { name: 'Bestiario' })).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: 'Centro de mando DM' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Bestiario' })).toHaveCount(0)
   expect(templateRequests).toEqual([])
 })

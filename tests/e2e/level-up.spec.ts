@@ -5,6 +5,8 @@ import { expectTouchTargets, capture } from './fixtures/audit.ts'
 
 const sheetUrl = `./#/campaign/${campaignId}/party/${characterId}`
 const membersUrl = `./#/campaign/${campaignId}/members`
+// RYT-179: the party level is its own command centre panel.
+const levelUrl = `./#/campaign/${campaignId}/members?panel=level`
 
 async function audit(page: Page, path: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -75,7 +77,7 @@ test('RYT-130 the DM sets the party level: confirmation, retry with the same req
 }, info) => {
   const fixture = await identityFixture(page, { party: true, sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto(membersUrl)
+  await page.goto(levelUrl)
   const section = page.getByRole('region', { name: /Nivel del grupo/ })
   await expect(section.getByRole('heading', { name: /Nivel del grupo\s*Sin fijar/ })).toBeVisible()
   await expect(section.getByText('Fíjalo para que cada jugador suba de nivel')).toBeVisible()
@@ -483,7 +485,7 @@ for (const language of ['es', 'en'] as const)
       const tag = `${theme === 'default' ? 'hearth' : 'parchment'}-${language}`
       const dm = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
       await page.emulateMedia({ reducedMotion: 'reduce' })
-      await page.goto(membersUrl)
+      await page.goto(levelUrl)
       await expect(page.locator('.party-level')).toContainText('6')
       await evidence(page, `matrix-${tag}-dm-control`)
       expect(dm.calls.length).toBeGreaterThan(0)
@@ -955,7 +957,7 @@ for (const theme of ['default', 'parchment', 'wizard'] as const)
     await page.addInitScript((id) => localStorage.setItem('rytta-theme', id), theme)
     await identityFixture(page, { party: true, sheet: 'complete' })
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto(membersUrl)
+    await page.goto(levelUrl)
     const section = page.getByRole('region', { name: /Nivel del grupo/ })
     await section.getByRole('button', { name: 'Subir el nivel del grupo' }).click()
     await section.getByRole('button', { name: 'Fijar nivel 6' }).click()

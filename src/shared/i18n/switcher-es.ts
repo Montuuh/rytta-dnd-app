@@ -1,0 +1,30 @@
+import type { switcherEn } from './switcher-en'
+
+/** RYT-179: the DM's quick switcher (panels and actions of the command centre). */
+export const switcherEs = {
+  'switcher.open': 'Buscar panel o acción',
+  'switcher.openShort': 'Buscar',
+  'switcher.title': 'Ir a',
+  'switcher.close': 'Cerrar búsqueda',
+  'switcher.search': 'Buscar panel o acción',
+  'switcher.panels': 'Paneles',
+  'switcher.actions': 'Acciones',
+  'switcher.none': 'Nada coincide con «{{query}}». Prueba otra palabra.',
+  'switcher.found_one': '{{count}} resultado',
+  'switcher.found_other': '{{count}} resultados',
+  'switcher.setLevel': 'Fijar nivel del grupo',
+  'switcher.kw.home': 'inicio centro de mando principal',
+  'switcher.kw.bestiary': 'monstruos criaturas enemigos bestias',
+  'switcher.kw.items': 'almacen tesoro inventario objetos equipo',
+  'switcher.kw.members': 'jugadores grupo personajes invitaciones',
+  'switcher.kw.level': 'nivel grupo subir personajes',
+  'switcher.kw.modules': 'modulos activar desactivar',
+  'switcher.kw.dice': 'dados tiradas',
+  'switcher.kw.content': 'contenido paquetes reglas homebrew',
+  'switcher.kw.audit': 'auditoria registro historial cambios',
+  'switcher.kw.invite': 'invitar jugador unir enlace',
+  'switcher.kw.newCreature': 'crear criatura monstruo bestiario',
+  'switcher.kw.newItem': 'crear objeto almacen',
+  'switcher.kw.loot': 'botin tesoro entregar repartir objetos',
+  'switcher.kw.setLevel': 'nivel grupo fijar personajes',
+} satisfies Record<keyof typeof switcherEn, string>

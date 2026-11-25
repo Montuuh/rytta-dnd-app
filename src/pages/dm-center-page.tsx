@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router'
+import { Navigate, useSearchParams } from 'react-router'
 import {
   CampaignMembers,
   QueryFeedback,
@@ -24,6 +24,14 @@ import { ItemStore } from './item-store'
 
 export function DmCenterPage() {
   const campaign = useCampaign()
+  const [params] = useSearchParams()
+  // RYT-179: Prepare session is no longer a panel; its steps are pending work on the home.
+  if (params.get('panel') === 'prepare') return <Navigate to={`/campaign/${campaign.id}`} replace />
+  return <DmCenter />
+}
+
+function DmCenter() {
+  const campaign = useCampaign()
   const { state } = useAuth()
   const { playerPreview } = useCampaignView()
   const [params] = useSearchParams()
@@ -42,7 +50,6 @@ export function DmCenterPage() {
         itemsPanel={dm ? <ItemStore campaignId={campaign.id} /> : undefined}
         bestiaryPanel={dm ? <BestiaryPanel campaignId={campaign.id} /> : undefined}
         contentPanel={dm ? <CampaignContentPanel campaignId={campaign.id} /> : undefined}
-        roster={roster.isSuccess ? roster.data : undefined}
         rosterFeedback={
           <QueryFeedback
             pending={roster.isPending}
@@ -61,7 +68,6 @@ export function DmCenterPage() {
             />
           )
         }
-        onAssign={(member) => setChoice({ ...member, mode: 'assign' })}
         pendingProposals={proposals}
         partySuggested={partySuggested(party.data)}
         partyBelow={partyBelow(party.data)}

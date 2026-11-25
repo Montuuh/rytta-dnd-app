@@ -70,7 +70,11 @@ Every interface change gets an independent UI review.
 
 ## DM tools and item lists (RYT-027)
 
-DM-only tools live in the DM Command Center tabs (`?panel=` deep links), not in separate
+The DM Command Center is a home board plus panels in three groups (At the table, Party, Settings).
+Panels are links with a current-page mark, in a side navigation from 48em and in a sheet opened
+from the panel name on phones, never tabs (ADR 056); counts are numerals in the row, and the home
+keeps one filled action, the live encounter.
+DM-only tools live in the DM Command Center panels (`?panel=` deep links), not in separate
 navigation items. Item collections use dense 64px rows (rarity-tinted icon, name, one meta
 line, icon actions) with an optional compact grid. Actions that fit stay as 44px icon buttons
 with accessible names; on phones they fold into one ⋯ menu. Avoid stacks of plain text
@@ -169,7 +173,8 @@ use tabular figures with their unit (PG/HP, po/gp, a visible or visually hidden 
 Every page starts with `PageHead`: the h1, one short lede, primary actions and the
 `RefreshControl` on one band (ADR 023). On phones the refresh button sits beside the h1 and its
 relative timestamp is announced through `aria-describedby` instead of a separate visible row;
-pages whose tabs already explain them (DM Command Center) hide the lede on phones. Inside a
+pages whose frame already names them (the DM Command Center panels) hide the lede and the
+repeated panel title on phones. Inside a
 campaign the phone header drops the RYTTA wordmark for the campaign name, and bottom-bar labels
 stay on one line. Keep ledes to one line on laptops. Overlays that mount on
 open use `usePhone`/`useWide` so phones never paint the desktop variant first. Destructive and
@@ -236,7 +241,7 @@ around the token. Progress and success are announced; failures appear under the 
 
 ## Bestiary (ADR 028)
 
-The bestiary is a DM Command Center tab (`?panel=bestiary`, `&creature=` deep link), never a
+The bestiary is a DM Command Center panel (`?panel=bestiary`, `&creature=` deep link), never a
 navigation item. It reads like a field guide: a large search first (both languages, accents ignored,
 Enter opens the best match, ArrowDown enters the list, `/` focuses it from anywhere on the panel)
 with the Filters button beside it (active count; popover from 48em, bottom drawer on phones: CR
@@ -430,7 +435,7 @@ parchment plate set large.
 
 ## Level up (RYT-130)
 
-The DM sets the party level in the DM Command Center (Members tab): a shield seal with the level,
+The DM sets the party level in the DM Command Center (Party level panel): a shield seal with the level,
 a 44px −/value/+ stepper that starts at the highest finished sheet, and one confirmation that says
 what the change does (raising prompts the Players, lowering or clearing only stops the prompts; no
 sheet changes). Each request carries one id, so the retry after a failure never applies twice. A
@@ -547,7 +552,7 @@ token below. On its side, the update notice stacks above the measure readout whi
 
 ## Dice (RYT-133, ADR 046)
 
-The DM sets the table's dice in the DM Command Center, tab "Dice": two groups of exclusive rows (how
+The DM sets the table's dice in the DM Command Center, panel "Dice": two groups of exclusive rows (how
 the table rolls: physical dice, dice in the app, each Player chooses; who sees the rolls: the roller and
 the DM, the whole table, only the roller). Each row is a 44px label with a mark, the choice and what it
 means; the radio is visually hidden and the checked row takes the accent border. A change shows one

@@ -108,7 +108,15 @@ test('RYT-133 the DM sets the dice: confirmation, a failure, the same request re
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(diceUrl)
   const section = page.getByRole('region', { name: 'Dados de la mesa' })
-  await expect(page.getByRole('tab', { name: 'Dados', selected: true })).toBeVisible()
+  // RYT-179: the open panel is marked (the switcher names it on phones).
+  if (page.viewportSize()!.width < 768)
+    await expect(page.getByRole('button', { name: 'Dados, cambiar de panel' })).toBeVisible()
+  else
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Centro de mando DM' })
+        .getByRole('link', { name: 'Dados', exact: true }),
+    ).toHaveAttribute('aria-current', 'page')
   // Physical dice and the roller plus the DM are the defaults.
   const mode = section.getByRole('group', { name: 'Cómo se tira' })
   const visibility = section.getByRole('group', { name: 'Quién ve las tiradas' })
@@ -195,7 +203,7 @@ test('RYT-133 a Player never sees the dice settings', async ({ page }) => {
   await identityFixture(page, { player: true, party: true, sheet: 'complete' })
   await page.goto(diceUrl)
   await expect(page.getByRole('heading', { name: 'Miembros' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'Dados' })).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: 'Centro de mando DM' })).toHaveCount(0)
   await expect(page.getByRole('group', { name: 'Cómo se tira' })).toHaveCount(0)
 })
 

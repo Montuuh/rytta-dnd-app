@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -25,6 +26,7 @@ import {
   Library,
   LogOut,
   Menu as MenuIcon,
+  Search,
   Settings,
   Shield,
   ShieldCheck,
@@ -62,6 +64,18 @@ import { ConnectionStatus, ConnectionStrip } from './connection'
 import { useConnection } from './use-connection'
 import { ConnectionContext } from '@/shared/lib/connection-context'
 import { SettingsPanel } from '@/pages/settings-panel'
+import { DmQuickSwitcher } from './dm-switcher'
+import { useSwitcherShortcuts } from './use-switcher-shortcuts'
+
+/**
+ * RYT-179: the DM entry is current on the campaign index and on the Members page, where the
+ * command centre's panels live; every other campaign route keeps its own mark. A link without
+ * `end` matches the whole campaign, so the end flag is dropped only on the Members page.
+ */
+function dmEntryEnd(pathname: string, to: string) {
+  const rest = pathname.startsWith(to) ? pathname.slice(to.length) : ''
+  return !/^\/members(\/|$)/.test(rest)
+}
 
 /** Settings links into a campaign Members page leave the drawer behind them. */
 const membersPage = /^\/campaign\/[^/]+\/members/
@@ -179,7 +193,7 @@ function TopNavigation({ entries }: { entries: NavEntry[] }) {
         <NavLink
           key={to}
           to={to}
-          end={dm}
+          end={dm ? dmEntryEnd(pathname, to) : undefined}
           className={({ isActive }) =>
             `nav-item ${dm ? 'nav-item-dm' : ''} ${isActive ? 'active' : ''}`
           }
@@ -212,7 +226,7 @@ function BottomNavigation({ entries }: { entries: NavEntry[] }) {
           <NavLink
             key={to}
             to={to}
-            end={dm}
+            end={dm ? dmEntryEnd(pathname, to) : undefined}
             aria-label={short ? label : undefined}
             className={({ isActive }) =>
               `bottom-nav-item ${dm ? 'is-dm' : ''} ${isActive ? 'active' : ''}`
@@ -408,6 +422,22 @@ export function Layout() {
       ? members.data.filter((member) => member.role === 'player')
       : []
   const entries = useNavEntries(campaign, playerPreview, fromShell)
+  // RYT-179: the quick switcher is the DM's, never in Player view or on a kept campaign shell.
+  const switcherOn = live && !!state.user && campaign?.role === 'dm' && !playerPreview && !fromShell
+  const [switcherShown, { open: showSwitcher, close: hideSwitcher }] = useDisclosure(false)
+  const switcherOpened = switcherShown && switcherOn
+  const stopSwitcherEscape = useRef(() => {})
+  useEffect(() => () => stopSwitcherEscape.current(), [])
+  const openSwitcher = useCallback(() => {
+    stopSwitcherEscape.current()
+    showSwitcher()
+    // Escape in the frame the dialog opens reaches no listener yet: close it from the page.
+    stopSwitcherEscape.current = closeOnEscapeWhileOpening(hideSwitcher)
+  }, [showSwitcher, hideSwitcher])
+  useEffect(() => {
+    if (!switcherOn) hideSwitcher()
+  }, [switcherOn, hideSwitcher])
+  useSwitcherShortcuts(switcherOn, switcherOpened, openSwitcher)
   // One destination needs no bar: the header already names the page and links home.
   const showNav = (!live || !!campaign) && entries.length > 1
   const mainRef = useRef<HTMLElement>(null)
@@ -548,6 +578,20 @@ export function Layout() {
                   }
                 />
                 <div className="header-actions">
+                  {switcherOn && (
+                    <Button
+                      variant="subtle"
+                      className="account-button profile-trigger-btn switcher-trigger"
+                      leftSection={<Search size={18} aria-hidden="true" />}
+                      aria-label={t('switcher.open')}
+                      aria-haspopup="dialog"
+                      aria-expanded={switcherOpened}
+                      aria-keyshortcuts="Control+K Meta+K"
+                      onClick={openSwitcher}
+                    >
+                      <span className="profile-label">{t('switcher.openShort')}</span>
+                    </Button>
+                  )}
                   {campaign?.role === 'dm' && !fromShell && (
                     <Popover
                       opened={pickerOpened}
@@ -782,6 +826,16 @@ export function Layout() {
             </main>
           </div>
           {showNav && <BottomNavigation entries={entries} />}
+          {switcherOn && campaign && (
+            <DmQuickSwitcher
+              campaignId={campaign.id}
+              opened={switcherOpened}
+              onClose={() => {
+                stopSwitcherEscape.current()
+                hideSwitcher()
+              }}
+            />
+          )}
           <Drawer
             opened={settingsOpened}
             onClose={settings.close}

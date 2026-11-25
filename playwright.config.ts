@@ -91,19 +91,19 @@ export default defineConfig({
     {
       name: 'desktop',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items,quick-switcher}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } },
     },
     {
       name: 'tablet',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items,quick-switcher}.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport: { width: 820, height: 1180 }, hasTouch: true },
     },
     {
       name: 'mobile',
       testIgnore:
-        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items}.spec.ts',
+        '**/{session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,account,network-budget,list-scroll,overlay-back,level-up,table-screen,phone-map,dice,casting,security-headers,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items,quick-switcher}.spec.ts',
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
     // Rytta targets phones and tablets. Signed-in journeys run at 820px and 390px; the desktop
@@ -114,19 +114,20 @@ export default defineConfig({
         viewport: { width: 1440, height: 1000 },
         // Wide layouts (>= 992px, also landscape tablets): glossary side-by-side reader and the
         // full-width tabletop library and editor; the table screen sets its own 820/1280/1920 sizes.
-        specs: 'identity,combat,bestiary,encounter-builder,glossary,tabletop,library,table-screen',
+        specs:
+          'identity,combat,bestiary,encounter-builder,glossary,tabletop,library,table-screen,quick-switcher',
       },
       {
         name: 'identity-tablet',
         viewport: { width: 820, height: 1180 },
         specs:
-          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items',
+          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items,quick-switcher',
       },
       {
         name: 'identity-mobile',
         viewport: { width: 390, height: 844 },
         specs:
-          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items',
+          'session-journal,identity,characters,character-sheet,inventory,shops,campaign-items,trades,combat,glossary,roster,bestiary,bestiary-official,encounter-builder,tabletop,username,rest,library,legal,account,network-budget,list-scroll,overlay-back,level-up,phone-map,dice,casting,email-auth,offline-shell,account-help,admin,quests,campaign-content,pack-rules,pack-items,pack-classes,glossary-demo,content-choice,pack-origins,pack-images,magic-items,quick-switcher',
       },
     ].map(({ name, viewport, specs }) => ({
       name,

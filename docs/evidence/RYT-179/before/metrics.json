@@ -1,0 +1,470 @@
+{
+  "mobile": {
+    "landing": {
+      "viewportHeight": 844,
+      "pageHeight": 844,
+      "horizontalOverflow": false,
+      "panelTop": null,
+      "tabListHeight": null,
+      "focusableInMain": 4,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "members": {
+      "viewportHeight": 844,
+      "pageHeight": 1663,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 20,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Nivel del grupo Sin fijar",
+        "H2 Invitaciones pendientes"
+      ],
+      "axeViolations": []
+    },
+    "prepare": {
+      "viewportHeight": 844,
+      "pageHeight": 1118,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 13,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Prepara tu primera sesión"
+      ],
+      "axeViolations": []
+    },
+    "modules": {
+      "viewportHeight": 844,
+      "pageHeight": 1134,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 16,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "content": {
+      "viewportHeight": 844,
+      "pageHeight": 1332,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 15,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Contenido de la campaña",
+        "H3 Criaturas",
+        "H3 Conjuros",
+        "H3 Personajes",
+        "H3 Reglas",
+        "H3 Objetos"
+      ],
+      "axeViolations": []
+    },
+    "dice": {
+      "viewportHeight": 844,
+      "pageHeight": 1507,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 15,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Dados de la mesa"
+      ],
+      "axeViolations": []
+    },
+    "items": {
+      "viewportHeight": 844,
+      "pageHeight": 1521,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 35,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Almacén de objetos"
+      ],
+      "axeViolations": []
+    },
+    "bestiary": {
+      "viewportHeight": 844,
+      "pageHeight": 37618,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 106,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Bestiario",
+        "H3 A23(23 en este grupo)",
+        "H3 B14(14 en este grupo)",
+        "H3 C40(40 en este grupo)",
+        "H3 D47(47 en este grupo)",
+        "H3 E30(30 en este grupo)",
+        "H3 F3(3 en este grupo)"
+      ],
+      "axeViolations": []
+    },
+    "audit": {
+      "viewportHeight": 844,
+      "pageHeight": 927,
+      "horizontalOverflow": false,
+      "panelTop": 525,
+      "tabListHeight": 358,
+      "focusableInMain": 9,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "keyboardTrailModules": [
+      "button \"Actualizar\"",
+      "button[tab] \"Módulos activos\"",
+      "input[switch] \"Grupo: visible para jugadores\"",
+      "input[switch] \"Inventario: visible para jugadores\"",
+      "input[switch] \"Tiendas: visible para jugadores\"",
+      "input[switch] \"Misiones: visible para jugadores\"",
+      "input[switch] \"Combate: visible para jugadores\"",
+      "input[switch] \"Mesa: visible para jugadores\"",
+      "input[switch] \"Glosario: visible para jugadores\"",
+      "a \"Centro de mando DM\"",
+      "a \"Combate\"",
+      "a \"Mesa\"",
+      "a \"Grupo\"",
+      "button \"Abrir más secciones\"",
+      "body \":root, :host{--mantine-cursor-type: poin\"",
+      "a \"Saltar al contenido\""
+    ],
+    "pageErrors": []
+  },
+  "tablet": {
+    "landing": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": null,
+      "tabListHeight": null,
+      "focusableInMain": 4,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "members": {
+      "viewportHeight": 1180,
+      "pageHeight": 1302,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 20,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Nivel del grupo Sin fijar",
+        "H2 Invitaciones pendientes"
+      ],
+      "axeViolations": []
+    },
+    "prepare": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 13,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Prepara tu primera sesión"
+      ],
+      "axeViolations": []
+    },
+    "modules": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 16,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "content": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 15,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Contenido de la campaña",
+        "H3 Criaturas",
+        "H3 Conjuros",
+        "H3 Personajes",
+        "H3 Reglas",
+        "H3 Objetos"
+      ],
+      "axeViolations": []
+    },
+    "dice": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 15,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Dados de la mesa"
+      ],
+      "axeViolations": []
+    },
+    "items": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 35,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Almacén de objetos"
+      ],
+      "axeViolations": []
+    },
+    "bestiary": {
+      "viewportHeight": 1180,
+      "pageHeight": 28807,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 148,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Bestiario",
+        "H3 A23(23 en este grupo)",
+        "H3 B14(14 en este grupo)",
+        "H3 C40(40 en este grupo)",
+        "H3 D47(47 en este grupo)",
+        "H3 E30(30 en este grupo)",
+        "H3 F3(3 en este grupo)"
+      ],
+      "axeViolations": []
+    },
+    "audit": {
+      "viewportHeight": 1180,
+      "pageHeight": 1180,
+      "horizontalOverflow": false,
+      "panelTop": 338,
+      "tabListHeight": 108,
+      "focusableInMain": 9,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "keyboardTrailModules": [
+      "button \"Actualizar\"",
+      "button[tab] \"Módulos activos\"",
+      "input[switch] \"Grupo: visible para jugadores\"",
+      "input[switch] \"Inventario: visible para jugadores\"",
+      "input[switch] \"Tiendas: visible para jugadores\"",
+      "input[switch] \"Misiones: visible para jugadores\"",
+      "input[switch] \"Combate: visible para jugadores\"",
+      "input[switch] \"Mesa: visible para jugadores\"",
+      "input[switch] \"Glosario: visible para jugadores\"",
+      "body \":root, :host{--mantine-cursor-type: poin\"",
+      "a \"Saltar al contenido\"",
+      "a \"RYTTA · Mis campañas\"",
+      "a \"Inicio de The Sunken Coast\"",
+      "input[switch] \"Vista jugador\"",
+      "button \"Perfil · Table_Hero · Sesión de dm@examp\"",
+      "a \"Centro de mando DM\""
+    ],
+    "pageErrors": []
+  },
+  "laptop": {
+    "landing": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "panelTop": null,
+      "tabListHeight": null,
+      "focusableInMain": 4,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "members": {
+      "viewportHeight": 800,
+      "pageHeight": 1175,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 20,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Nivel del grupo Sin fijar",
+        "H2 Invitaciones pendientes"
+      ],
+      "axeViolations": []
+    },
+    "prepare": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 13,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Prepara tu primera sesión"
+      ],
+      "axeViolations": []
+    },
+    "modules": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 16,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "content": {
+      "viewportHeight": 800,
+      "pageHeight": 909,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 15,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Contenido de la campaña",
+        "H3 Criaturas",
+        "H3 Conjuros",
+        "H3 Personajes",
+        "H3 Reglas",
+        "H3 Objetos"
+      ],
+      "axeViolations": []
+    },
+    "dice": {
+      "viewportHeight": 800,
+      "pageHeight": 919,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 15,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Dados de la mesa"
+      ],
+      "axeViolations": []
+    },
+    "items": {
+      "viewportHeight": 800,
+      "pageHeight": 924,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 35,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Almacén de objetos"
+      ],
+      "axeViolations": []
+    },
+    "bestiary": {
+      "viewportHeight": 800,
+      "pageHeight": 1245,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 106,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM",
+        "H2 Bestiario",
+        "H3 A23(23 en este grupo)",
+        "H3 B14(14 en este grupo)",
+        "H3 C40(40 en este grupo)",
+        "H3 D47(47 en este grupo)",
+        "H3 E30(30 en este grupo)",
+        "H3 F3(3 en este grupo)"
+      ],
+      "axeViolations": []
+    },
+    "audit": {
+      "viewportHeight": 800,
+      "pageHeight": 800,
+      "horizontalOverflow": false,
+      "panelTop": 228,
+      "tabListHeight": 398,
+      "focusableInMain": 9,
+      "targetsUnder44": 0,
+      "headings": [
+        "H1 Centro de mando DM"
+      ],
+      "axeViolations": []
+    },
+    "keyboardTrailModules": [
+      "button \"Actualizar\"",
+      "button[tab] \"Módulos activos\"",
+      "input[switch] \"Grupo: visible para jugadores\"",
+      "input[switch] \"Inventario: visible para jugadores\"",
+      "input[switch] \"Tiendas: visible para jugadores\"",
+      "input[switch] \"Misiones: visible para jugadores\"",
+      "input[switch] \"Combate: visible para jugadores\"",
+      "input[switch] \"Mesa: visible para jugadores\"",
+      "input[switch] \"Glosario: visible para jugadores\"",
+      "body \":root, :host{--mantine-cursor-type: poin\"",
+      "a \"Saltar al contenido\"",
+      "a \"RYTTA · Mis campañas\"",
+      "a \"Inicio de The Sunken Coast\"",
+      "input[switch] \"Vista jugador\"",
+      "button \"Perfil · Table_Hero · Sesión de dm@examp\"",
+      "a \"Centro de mando DM\""
+    ],
+    "pageErrors": []
+  }
+}

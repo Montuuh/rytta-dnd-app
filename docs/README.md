@@ -141,3 +141,6 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 68. [ADR 055: own domain rytta.app](decisions/055-own-domain.md): the domain, the Pages project in
     the project account, the redirect from rytta.pages.dev and the email sender on the domain
     (RYT-158).
+69. [ADR 056: the DM command centre has a home and grouped navigation](decisions/056-dm-command-centre-home-and-navigation.md):
+    the board, the three panel groups, links instead of tabs, the quick switcher and `?do=` action
+    links (RYT-179).

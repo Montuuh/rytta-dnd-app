@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActionIcon,
   Alert,
@@ -131,6 +131,28 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
     setSeenCreate(createFor)
     if (createFor) setEditor({ item: null, give: [createFor] })
   }
+  // RYT-179: `?do=new` and `?do=loot` (from the quick switcher) act once and leave the URL, so a
+  // reload or Back never repeats them. Loot waits for the catalogue, which its button needs.
+  const action = params.get('do')
+  const due = action === 'new' || (action === 'loot' && !query.isPending) ? action : null
+  const [seenAction, setSeenAction] = useState<string | null>(null)
+  if (due !== seenAction) {
+    setSeenAction(due)
+    if (due === 'new') setEditor({ item: null })
+    else if (due === 'loot' && (query.data ?? []).some((item) => !item.archived)) setGive(true)
+  }
+  useEffect(() => {
+    if (!due) return
+    trigger.current = null
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.delete('do')
+        return next
+      },
+      { replace: true },
+    )
+  }, [due, setParams])
   const setView = (next: View) => {
     setViewState(next)
     try {

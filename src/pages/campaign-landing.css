@@ -1,25 +1,186 @@
-.campaign-destinations {
+/* RYT-179 DM home: four blocks, each a section with a sentence-case h2. The live encounter's
+   action is the screen's one filled control; rows and tiles are links on the surface. */
+.dm-home {
   display: grid;
-  border: 1px solid var(--app-border);
+  gap: 28px;
+  min-width: 0;
+}
+
+.dm-home-block {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dm-home-title {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+/* Now: the encounter that is running, and the way back into it. */
+.dm-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 45%, var(--app-border));
   border-radius: var(--mantine-radius-md);
   background: var(--app-surface);
 }
-.campaign-destinations a {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+
+.dm-now-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.dm-now-name {
+  margin: 0;
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--fs-h3);
+  overflow-wrap: anywhere;
+}
+
+.dm-now-meta {
+  margin: 2px 0 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.dm-now-action {
+  min-height: 44px;
+}
+
+@media (max-width: 30em) {
+  .dm-now-action {
+    flex: 1 1 100%;
+  }
+}
+
+/* Ruled rows: pending work (count in accent ink) and settings (current value in muted ink). */
+.dm-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+
+.dm-rows li + li {
+  border-top: 1px solid var(--app-border);
+}
+
+.dm-row {
+  display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  min-height: 64px;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 12px 8px 14px;
   color: var(--app-text);
   text-decoration: none;
 }
-.campaign-destinations a + a {
-  border-top: 1px solid var(--app-border);
+
+@media (pointer: coarse) {
+  .dm-row {
+    min-height: 56px;
+  }
 }
-.campaign-destinations a:hover {
+
+.dm-row:hover {
   background: var(--app-hover);
 }
-.campaign-destinations svg {
+
+.dm-row:focus-visible {
+  outline-offset: -3px;
+}
+
+.dm-row-icon {
+  flex: none;
+  color: var(--app-accent);
+}
+
+.dm-rows-settings .dm-row-icon {
+  color: var(--app-muted);
+}
+
+.dm-row-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dm-row-value {
+  flex: none;
+  max-width: 45%;
+  text-align: end;
+  color: var(--app-muted);
+}
+
+.dm-row-value.is-count {
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  color: var(--app-accent);
+}
+
+.dm-row-chevron {
+  flex: none;
+  color: var(--app-muted);
+}
+
+/* Session tools: six tiles, two columns on a phone and three from tablets, so no row is left
+   with a lone pair. */
+.dm-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 40em) {
+  .dm-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.dm-tiles li {
+  display: grid;
+}
+
+.dm-tile {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 88px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-decoration: none;
+  text-align: start;
+}
+
+.dm-tile:hover {
+  background: var(--app-hover);
+}
+
+.dm-tile-icon {
+  color: var(--app-accent);
+}
+
+.dm-tile-label {
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.dm-tile-detail {
+  font-size: var(--fs-meta);
   color: var(--app-accent);
 }

@@ -258,6 +258,25 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const [viewingArt, setViewingArt] = useState(false)
   const overlayOpen =
     Boolean(adding || editor || quick || deleting || asking) || creating || viewingArt
+  // RYT-179: `?do=new` (from the quick switcher) starts a new creature once and leaves the URL.
+  const startNew = params.get('do') === 'new'
+  const [startedNew, setStartedNew] = useState(false)
+  if (startNew !== startedNew) {
+    setStartedNew(startNew)
+    if (startNew) setCreating(true)
+  }
+  useEffect(() => {
+    if (!startNew) return
+    opener.current = null
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current)
+        next.delete('do')
+        return next
+      },
+      { replace: true },
+    )
+  }, [startNew, setParams])
   // "/" jumps to the search from anywhere on the panel, as in the glossary.
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {

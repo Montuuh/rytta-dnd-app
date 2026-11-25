@@ -996,9 +996,18 @@ test('RYT-151 the storeroom and shops fill only the table action and mark select
     'outline',
   )
   // The open panel and the pressed filter carry accent ink and a rail or outline, never the fill.
-  const tab = page.getByRole('tab', { name: 'Almacén de objetos' })
-  await expect(tab).toHaveAttribute('aria-selected', 'true')
-  expect(await tab.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/inset/)
+  // RYT-179: the panel is a link in the side navigation; on phones the switcher names it.
+  if (page.viewportSize()!.width >= 768) {
+    const current = page
+      .getByRole('navigation', { name: 'Centro de mando DM' })
+      .getByRole('link', { name: 'Almacén de objetos', exact: true })
+    await expect(current).toHaveAttribute('aria-current', 'page')
+    expect(await current.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/inset/)
+  } else {
+    await expect(
+      page.getByRole('button', { name: 'Almacén de objetos, cambiar de panel' }),
+    ).toBeVisible()
+  }
   const all = page.getByRole('button', { name: /^Todo/ })
   await expect(all).toHaveAttribute('aria-pressed', 'true')
   expect(await all.evaluate((el) => getComputedStyle(el, '::before').content)).not.toBe('none')

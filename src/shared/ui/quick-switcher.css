@@ -1,0 +1,73 @@
+/* Quick switcher: a search field over a grouped list. Selection is ink and a left rail, never a fill. */
+.switcher-content {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+.switcher-header {
+  background: var(--app-surface);
+}
+.switcher-body {
+  padding-top: 4px;
+}
+.switcher-field .mantine-TextInput-input {
+  min-height: 48px;
+  font-size: max(1rem, 16px);
+}
+.switcher-list {
+  margin-top: 8px;
+  /* Tall enough to show both groups where the screen allows, and never taller than the dialog
+     has room for (its own limit less the header and the field), so only the list scrolls. The
+     lower edge fades, so rows below the fold are announced by the cut; a row brought into view
+     with the keyboard stops above the fade. */
+  max-height: min(calc(84vh - 10.5rem), 46rem);
+  max-height: min(calc(84dvh - 10.5rem), 46rem);
+  padding-bottom: 28px;
+  scroll-padding-bottom: 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+.switcher-group + .switcher-group {
+  margin-top: 8px;
+  border-top: 1px solid var(--app-border);
+  padding-top: 4px;
+}
+.switcher-group-label {
+  padding: 8px 12px 4px;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--app-muted);
+}
+.switcher-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 4px 12px;
+  border-left: 3px solid transparent;
+  color: var(--app-text);
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+.switcher-option svg {
+  flex: none;
+  color: var(--app-muted);
+}
+.switcher-option[data-active] {
+  border-left-color: var(--app-accent);
+  background: var(--app-select-tint);
+  color: var(--app-accent);
+}
+.switcher-option[data-active] svg {
+  color: var(--app-accent);
+}
+.switcher-empty {
+  margin: 16px 12px 8px;
+  color: var(--app-muted);
+}
+@media (max-width: 47.99em) {
+  /* Ends mid-row on common phone heights, so the fade shows there is more. */
+  .switcher-list {
+    max-height: 54dvh;
+  }
+}

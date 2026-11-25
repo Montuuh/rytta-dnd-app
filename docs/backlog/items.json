@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-24",
+  "updatedAt": "2026-11-25",
   "items": [
     {
       "id": "RYT-000",
@@ -5503,6 +5503,87 @@
         "Independent UI review"
       ],
       "evidence": ["docs/evidence/RYT-178/validation.md"]
+    },
+    {
+      "id": "RYT-179",
+      "title": "DM command centre: a home that shows the state of the table, and every panel two taps away",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "done",
+      "dependsOn": ["RYT-144", "RYT-151"],
+      "sources": [
+        "Owner, 25 November 2026: \"Audita, mejora y orquestra un revamp a la UX y UI del centro de mando de DM, veo demasiados clicks y poca accesibilidad\".",
+        "Audit of the rendered command centre the same day at 390px, 820px and 1280px (docs/evidence/RYT-179/audit.md): three taps and a scroll to reach any panel, panel content from 525px of 844 on a phone, eight sibling panels that mix session tools with one-time settings, no current-page mark inside the panels; axe WCAG 2.2 AA clean and no target under 44px.",
+        "Owner decision on the options page, 25 November 2026: A, the DM home is a board with the live encounter, the pending work, the session tools and the campaign rows with their current value; A, on a phone the panel title is the switcher and opens a sheet with every panel in groups; A, tablets and laptops get a grouped side navigation with Summary first; A, the bestiary and the storeroom stay in the command centre under At the table, with direct access from the home; A, a quick switcher (slash or Ctrl+K, and a search control on touch) lists panels and actions; A, the first-session steps move to the home as pending work and disappear when complete; C, three deliveries: navigation and home (this ticket), the administration panels inside (RYT-180), the bestiary and the storeroom inside (RYT-181)."
+      ],
+      "scope": "First of three deliveries: the DM's first screen and the navigation between command centre panels; the panels do not change inside. The menu of three links becomes a board: the live encounter with its resume action, the pending work (invitations to accept, item proposals, characters below the party level, and the first-session steps until they are complete), the session tools (bestiary, storeroom, distribute loot, session journal, open the table, solo rehearsal) and the campaign rows with their current value (members, party level, modules, dice, content, audit). Panels are grouped: At the table (bestiary, storeroom), Party (members, party level as its own panel), Settings (modules, dice, content, audit). On a phone the stack of eight tabs is replaced by the panel title as a switcher that opens a sheet with the groups, and a link back to the home; tablets and laptops get a grouped side navigation of links with Summary first. Prepare session stops being a panel and its link opens the home. A quick switcher opens with slash or Ctrl+K and from a search control in the header, and lists the panels and the actions Invite player, New creature, New item, Distribute loot and Set party level. The main navigation marks the command centre as the current page inside every panel and each panel has one heading. Existing ?panel= links and the /items redirect keep working. Non-goals: changes inside the panels (RYT-180, RYT-181), database changes, new modules, a new dependency.",
+      "acceptance": [
+        "An options page with the audit and the directions is answered by the owner before implementation. Answered on 25 November 2026.",
+        "On a 390px phone, from any campaign screen, every command centre panel opens in at most two taps and its first control sits in the first screen (measured before: three taps, content from 525px of 844).",
+        "The DM's first screen shows a live encounter and the pending work without opening a panel; with nothing pending it shows no empty section, and the first-session steps leave it once the three are complete.",
+        "Session tools, party and settings are separate groups in the home, the phone sheet and the side navigation; ?panel= links, the bestiary encounter and creature links, ?panel=prepare and the /items redirect open a working screen.",
+        "Inside every panel the main navigation carries the current-page mark, the panel has one h2, and the side navigation and the sheet are links that load a panel only when chosen.",
+        "The quick switcher opens with slash and Ctrl+K outside text fields and from a labelled control, filters panels and the five actions, runs one with Enter, closes with Escape and returns focus; it is offered to the DM only.",
+        "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "The audit measurement repeated after the change: taps per task, offset of the first panel control, axe and target sizes at the three widths",
+        "Before and after captures; design critique of the rendered result; independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-179/audit.md", "docs/evidence/RYT-179/validation.md"]
+    },
+    {
+      "id": "RYT-180",
+      "title": "DM command centre: the administration panels read and act in fewer steps",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-179"],
+      "sources": [
+        "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the administration panels are redesigned inside after the navigation and the home.",
+        "RYT-179 audit (docs/evidence/RYT-179/audit.md): Invite player is cut by the bottom navigation in the first phone screen, Modules and Audit have no heading, and Refresh appears on panels it does not refresh.",
+        "Carried over from the RYT-179 review, 25 November 2026: keys typed in the first frame after Ctrl+K can be lost; the count next to Members in the side navigation has no visible meaning; the Set party level action lands on the panel without focusing the stepper; Party level and Dice repeat their title under the phone bar and keep their first control below 200px; a failed party, proposal or session query drops its row on the home without a message; the switcher overflows 6px at 390x667 with 150% text; its Panels label scrolls out of view after Home."
+      ],
+      "scope": "Members, party level, modules, dice, content and audit inside the command centre shell from RYT-179: what each panel shows first, its one primary action and the steps each task takes. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the bestiary and the storeroom (RYT-181), database changes.",
+      "acceptance": [
+        "An options page with the current steps per task and the proposed panels is answered by the owner before implementation.",
+        "Each administration panel shows its primary action in the first phone screen and Refresh only where it refetches what the panel shows.",
+        "The tasks measured on the options page take the steps agreed there, measured again after the change.",
+        "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Before and after captures and step counts; design critique of the rendered result; independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-180/validation.md"]
+    },
+    {
+      "id": "RYT-181",
+      "title": "DM command centre: the bestiary and the storeroom at the table in fewer steps",
+      "priority": "P2",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-179", "RYT-180"],
+      "sources": [
+        "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the bestiary and the storeroom are redesigned inside as the third delivery.",
+        "RYT-179 audit (docs/evidence/RYT-179/audit.md): on a phone the bestiary page is 37,618px tall with 106 controls in the main area, and giving an item takes five taps from the navigation."
+      ],
+      "scope": "The bestiary and the item storeroom inside the command centre shell from RYT-179, for use during play: finding a creature and reading its stat block, sending it to an encounter, finding an item and giving it or distributing loot. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the creature and item editors, content packs, database changes.",
+      "acceptance": [
+        "An options page with the current steps per task and the proposed screens is answered by the owner before implementation.",
+        "The tasks measured on the options page take the steps agreed there, measured again after the change.",
+        "The existing bestiary, storeroom, loot and long-list scroll specs pass, updated only where the approved design changes a control.",
+        "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run test:e2e",
+        "Before and after captures and step counts; design critique of the rendered result; independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-181/validation.md"]
     }
   ]
 }

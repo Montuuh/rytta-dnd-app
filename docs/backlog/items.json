@@ -5598,6 +5598,36 @@
         "docs/evidence/RYT-181/validation.md",
         "docs/decisions/058-bestiary-and-storeroom-at-the-table.md"
       ]
+    },
+    {
+      "id": "RYT-182",
+      "title": "DM command centre: the small findings left open by the bestiary and storeroom delivery",
+      "priority": "P3",
+      "owner": "frontend",
+      "status": "planned",
+      "dependsOn": ["RYT-181"],
+      "sources": [
+        "Owner request, 25 November 2026: open a ticket with the minor points left open by RYT-181.",
+        "RYT-181 validation record (docs/evidence/RYT-181/validation.md, Open) and the three rounds of its UI review.",
+        "RYT-180 third review round: where the invitation status wraps (150% text, 820px columns) the break point moves with the width.",
+        "RYT-181 fifth review round, 25 November 2026: at a wide face and 150% text the kind of a creature row shrinks to a sliver before the numbers; with several packs the pack name comes before the type and is what survives truncation; at 820px with 150% text the search field is 176 to 224px wide."
+      ],
+      "scope": "Small fixes in the bestiary, the storeroom and the controls they share, none of which changes a flow: (1) after adding a creature the status line makes the bottom area of the stat block 131px on a phone and on a 1280x800 laptop the second attack ends 7px under the fold until the pane scrolls; (2) in the 820px pane the count is a number field without its minus and plus buttons; (3) with the pane open, Escape in the search clears the query and leaves the pane open; (4) at 820px with 150% text the menu button of both heads wraps alone onto a second row; (5) English says \"given to\" after a give and \"receives\" after an accepted proposal; (6) in Hearth a disabled unchecked checkbox has the same ring as an enabled one; (7) creature search and item search rank through two helpers; (8) the captures in docs/evidence/RYT-181/after predate the review fixes; (9) the invitation status in Members breaks at a different point at each width. (10) a creature row hides its kind and separator when not even a letter and its ellipsis fit, and puts the type before the pack name; (11) the search field at 820px with 150% text keeps a typed word in view. Non-goals: the design-detector findings in the navigation, the character sheet, shops and combat styles; the accessible name of the header brand link; any change to the flows approved in RYT-179, RYT-180 and RYT-181; database changes.",
+      "acceptance": [
+        "Each of the eleven points is fixed, or recorded as accepted with its reason in the validation record.",
+        "The stat block of a creature with two attacks shows both after adding to an encounter on a 390x844 phone and a 1280x800 laptop without scrolling, or the record says why the status line stays where it is.",
+        "English and Spanish use the same sentence shape for a give and for an accepted proposal.",
+        "One search ranking helper serves creatures and items, with the creature rule for the name in the other language kept, or the record says why two remain.",
+        "The after captures of RYT-181 show the delivered state.",
+        "The specs of the bestiary, the storeroom and Members pass on a wider font as well (CI); 390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, axe clean, 44px targets; independent UI review PASS on the current source."
+      ],
+      "validation": [
+        "npm run check",
+        "npm run format:check",
+        "npm run test:e2e",
+        "Captures of each fixed state; independent UI review"
+      ],
+      "evidence": ["docs/evidence/RYT-182/validation.md"]
     }
   ]
 }

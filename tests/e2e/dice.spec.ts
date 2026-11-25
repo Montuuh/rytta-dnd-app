@@ -127,7 +127,9 @@ test('RYT-133 the DM sets the dice: sheet, confirmation, a failure, the same req
   await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toHaveCount(0)
   await expect(page.getByRole('radio')).toHaveCount(0)
   // The h2 stays for assistive technology; on a phone the bar names the panel.
-  await expect(section.getByRole('heading', { level: 2, name: 'Dados', exact: true })).toBeAttached()
+  await expect(
+    section.getByRole('heading', { level: 2, name: 'Dados', exact: true }),
+  ).toBeAttached()
   if (phone) {
     // The first control sits right under the bar, and the whole panel fits the first screen.
     const y = await modeRow.evaluate((node) => node.getBoundingClientRect().top)

@@ -67,7 +67,11 @@ function DmCenter() {
     <CampaignMembers
       itemsPanel={dm ? <ItemStore campaignId={campaign.id} /> : undefined}
       bestiaryPanel={dm ? <BestiaryPanel campaignId={campaign.id} /> : undefined}
-      contentPanel={dm ? <CampaignContentPanel campaignId={campaign.id} title={t('dm.panelContent')} /> : undefined}
+      contentPanel={
+        dm ? (
+          <CampaignContentPanel campaignId={campaign.id} title={t('dm.panelContent')} />
+        ) : undefined
+      }
       rosterFeedback={
         <QueryFeedback
           pending={roster.isPending}

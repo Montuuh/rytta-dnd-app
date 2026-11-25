@@ -1,74 +1,99 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Alert, Button, Group, Loader, Stack, Text } from '@mantine/core'
-import { Dices, TriangleAlert } from 'lucide-react'
+import { ChevronRight, TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { newRequestId } from '@/shared/lib/request-id'
-import { Modal } from '@/shared/ui/overlays'
+import { Drawer, Modal } from '@/shared/ui/overlays'
+import { usePhone } from '@/shared/ui/use-viewport'
 import { useSetDiceSettings } from '../api'
-import { createDiceRequestIds, sameDiceSettings, visibilityChange } from '../domain/dice-settings'
+import { createDiceRequestIds, visibilityChange } from '../domain/dice-settings'
 import {
   CampaignSettingsError,
   diceModes,
-  type DiceMode,
   type DiceSettings,
   type RollVisibility,
 } from '../domain/settings'
+import './dice-settings.css'
 
 /** Default first, then wider, then narrower. */
 const visibilityOrder: readonly RollVisibility[] = ['roller_dm', 'table', 'roller']
 
-/** One group of exclusive choices: a legend, and a row per option with its consequence. */
-function ChoiceGroup<T extends string>({
-  legend,
-  name,
+type Setting = 'dice_mode' | 'roll_visibility'
+
+/**
+ * The options of one setting as a radio group of buttons: arrow keys move the focus without
+ * choosing, and Enter, Space or a tap chooses, so moving through the options never asks the
+ * question once per option.
+ */
+function OptionList({
+  idPrefix,
+  label,
   options,
   value,
-  saved,
-  onChange,
+  onChoose,
 }: {
-  legend: string
-  name: string
-  options: readonly { value: T; title: string; hint: string }[]
-  value: T
-  /** The value the campaign holds now. */
-  saved: T
-  onChange: (next: T) => void
+  idPrefix: string
+  label: string
+  options: readonly { value: string; title: string; hint: string }[]
+  value: string
+  onChoose: (value: string) => void
 }) {
-  const { t } = useTranslation()
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+  const move = (event: KeyboardEvent, index: number) => {
+    const last = options.length - 1
+    const to =
+      event.key === 'ArrowDown' || event.key === 'ArrowRight'
+        ? (index + 1) % options.length
+        : event.key === 'ArrowUp' || event.key === 'ArrowLeft'
+          ? (index + last) % options.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? last
+              : null
+    if (to === null) return
+    event.preventDefault()
+    refs.current[to]?.focus()
+  }
   return (
-    <fieldset className="dice-set-group">
-      <legend className="dice-set-legend">{legend}</legend>
-      {options.map((option) => (
-        <label key={option.value} className="dice-set-option">
-          <input
-            type="radio"
-            className="visually-hidden"
-            name={name}
-            value={option.value}
-            checked={value === option.value}
-            onChange={() => onChange(option.value)}
-          />
-          <span className="dice-set-mark" aria-hidden="true" />
-          <span className="dice-set-text">
-            <span className="dice-set-title">
-              {option.title}
-              {saved === option.value && (
-                <span className="dice-set-current">{t('diceSettings.current')}</span>
-              )}
+    <div role="radiogroup" aria-label={label} className="dice-options">
+      {options.map((option, index) => {
+        const checked = option.value === value
+        return (
+          <button
+            key={option.value}
+            id={`${idPrefix}-${option.value}`}
+            ref={(node) => {
+              refs.current[index] = node
+            }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            tabIndex={checked ? 0 : -1}
+            data-autofocus={checked || undefined}
+            className="dice-option"
+            onKeyDown={(event) => move(event, index)}
+            onClick={() => onChoose(option.value)}
+          >
+            <span className="dice-option-mark" aria-hidden="true" />
+            <span className="dice-option-text">
+              <span className="dice-option-title">{option.title}</span>
+              <span className="dice-option-hint">{option.hint}</span>
             </span>
-            <span className="dice-set-hint">{option.hint}</span>
-          </span>
-        </label>
-      ))}
-    </fieldset>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
 /**
  * RYT-133: the DM chooses how the table rolls (physical dice, dice in the app, or each Player
- * chooses on their device) and who reads the rolls made or recorded in the app. Like the party
- * level, a change goes through one confirmation and one idempotent request: retrying after a
- * failure repeats the same request id, so the change is never applied twice.
+ * chooses on their device) and who reads the rolls made or recorded in the app. RYT-180: two rows
+ * show the current values; a row opens a sheet with the options, and choosing another one asks
+ * once for that single change. Like the party level, a change goes through one confirmation and
+ * one idempotent request: retrying after a failure repeats the same request id, so the change is
+ * never applied twice.
  */
 export function DiceSettingsControl({
   campaignId,
@@ -79,50 +104,67 @@ export function DiceSettingsControl({
 }) {
   const { t } = useTranslation()
   const titleId = useId()
+  const idPrefix = useId()
   const mutation = useSetDiceSettings(campaignId)
-  const [edited, setEdited] = useState<DiceSettings | null>(null)
-  const [asking, setAsking] = useState(false)
+  const phone = usePhone()
+  const [sheet, setSheet] = useState<Setting | null>(null)
+  // The sheet keeps its title while it fades out.
+  const [lastSheet, setLastSheet] = useState<Setting>('dice_mode')
+  const [asking, setAsking] = useState<DiceSettings | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
   const ids = useRef(createDiceRequestIds(newRequestId))
-  const apply = useRef<HTMLButtonElement>(null)
+  const rows = useRef<Partial<Record<Setting, HTMLButtonElement | null>>>({})
   const alert = useRef<HTMLDivElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
-  const shown = edited ?? current
-  const changed = !sameDiceSettings(shown, current)
   const pending = mutation.isPending
-  const edit = (patch: Partial<DiceSettings>) => {
-    // A new value asks again: what was said about the last one no longer applies.
-    setSaved(null)
-    const next = { ...shown, ...patch }
-    setEdited(sameDiceSettings(next, current) ? null : next)
-  }
+  const sheetOpen = useRef(false)
+  const keepSheet = useRef(false)
+  useEffect(() => {
+    sheetOpen.current = sheet !== null
+  }, [sheet])
   // The reason is where the keyboard is: focus moves to it, the retry is the next stop.
   const failedAt = mutation.isError ? mutation.submittedAt : 0
   useEffect(() => {
     if (failedAt) alert.current?.focus()
   }, [failedAt])
-  const open = () => {
-    mutation.reset()
-    setAsking(true)
+
+  const openSheet = (setting: Setting) => {
+    setSaved(null)
+    setLastSheet(setting)
+    setSheet(setting)
   }
-  const close = () => {
+  const choose = (setting: Setting, value: string) => {
+    if (current[setting] === value) {
+      setSheet(null)
+      return
+    }
+    mutation.reset()
+    setAsking({ ...current, [setting]: value } as DiceSettings)
+  }
+  const closeQuestion = () => {
     if (pending) return
-    setAsking(false)
+    setAsking(null)
     mutation.reset()
     // A question that is closed starts over: no id outlives it.
     ids.current.reset()
+    // The same Escape or outside tap must not also reach the sheet under it.
+    keepSheet.current = true
+    window.setTimeout(() => {
+      keepSheet.current = false
+    }, 0)
   }
   const confirm = () => {
+    if (!asking) return
     // The id belongs to the change from what the campaign holds now to what was asked for.
     const from = current
-    const to = shown
+    const to = asking
     mutation.mutate(
       { settings: to, requestId: ids.current.idFor(from, to) },
       {
         onSuccess: () => {
           ids.current.done(from, to)
-          setEdited(null)
-          setAsking(false)
+          setAsking(null)
+          setSheet(null)
           setSaved(t('diceSettings.saved'))
         },
       },
@@ -143,85 +185,135 @@ export function DiceSettingsControl({
     title: t(`diceSettings.visibility.${value}`),
     hint: t(`diceSettings.visibility.${value}Hint`),
   }))
-  const visibility = visibilityChange(current.roll_visibility, shown.roll_visibility)
+  const visibility = asking
+    ? visibilityChange(current.roll_visibility, asking.roll_visibility)
+    : 'same'
+  const settings: { key: Setting; label: string; value: string }[] = [
+    {
+      key: 'dice_mode',
+      label: t('diceSettings.modeLegend'),
+      value: t(`diceSettings.mode.${current.dice_mode}`),
+    },
+    {
+      key: 'roll_visibility',
+      label: t('diceSettings.visibilityLegend'),
+      value: t(`diceSettings.visibility.${current.roll_visibility}`),
+    },
+  ]
+  const sheetTitle = t(
+    lastSheet === 'dice_mode' ? 'diceSettings.modeLegend' : 'diceSettings.visibilityLegend',
+  )
+  const sheetBody = (
+    <OptionList
+      idPrefix={idPrefix}
+      label={sheetTitle}
+      options={lastSheet === 'dice_mode' ? modeOptions : visibilityOptions}
+      value={current[lastSheet]}
+      onChoose={(value) => choose(lastSheet, value)}
+    />
+  )
+  const sheetProps = {
+    opened: sheet !== null,
+    onClose: () => {
+      if (!keepSheet.current) setSheet(null)
+    },
+    title: sheetTitle,
+    returnFocus: false,
+    // The question above the sheet takes Escape and outside taps first.
+    closeOnEscape: asking === null,
+    closeOnClickOutside: asking === null,
+    // Back on the row that opened the sheet.
+    onExitTransitionEnd: () => (rows.current[lastSheet] ?? heading.current)?.focus(),
+    closeButtonProps: { 'aria-label': t('panel.close'), size: 44 },
+    className: 'dice-sheet',
+  }
   return (
-    <section aria-labelledby={titleId} className="dice-set">
-      <div className="dice-set-head">
-        <div className="dice-set-seal" aria-hidden="true">
-          <Dices size={26} />
-        </div>
-        <h2 id={titleId} className="dm-subheading" ref={heading} tabIndex={-1}>
-          {t('diceSettings.title')}
-        </h2>
-      </div>
-      <Text size="sm" c="dimmed">
-        {t('diceSettings.hint')}
-      </Text>
-      <ChoiceGroup<DiceMode>
-        legend={t('diceSettings.modeLegend')}
-        name={`${titleId}-mode`}
-        options={modeOptions}
-        value={shown.dice_mode}
-        saved={current.dice_mode}
-        onChange={(dice_mode) => edit({ dice_mode })}
-      />
-      <ChoiceGroup<RollVisibility>
-        legend={t('diceSettings.visibilityLegend')}
-        name={`${titleId}-visibility`}
-        options={visibilityOptions}
-        value={shown.roll_visibility}
-        saved={current.roll_visibility}
-        onChange={(roll_visibility) => edit({ roll_visibility })}
-      />
-      {changed && (
-        <Group>
-          <Button ref={apply} onClick={open}>
-            {t('diceSettings.apply')}
-          </Button>
-        </Group>
-      )}
-      <div role="status" className="dice-set-saved">
+    <section aria-labelledby={titleId} className="dice-panel">
+      <h2 id={titleId} className="dm-subheading dm-panel-title" ref={heading} tabIndex={-1}>
+        {t('dm.panelDice')}
+      </h2>
+      <ul className="dice-rows">
+        {settings.map((setting) => (
+          <li key={setting.key}>
+            <button
+              type="button"
+              ref={(node) => {
+                rows.current[setting.key] = node
+              }}
+              className="dice-row"
+              aria-haspopup="dialog"
+              onClick={() => openSheet(setting.key)}
+            >
+              <span className="dice-row-text">
+                <span className="dice-row-label">{setting.label}</span>
+                <span className="dice-row-value">{setting.value}</span>
+              </span>
+              <ChevronRight size={20} aria-hidden="true" className="dice-row-chevron" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div role="status" className="dice-saved">
         {saved}
       </div>
+      {!phone ? (
+        <Modal {...sheetProps} centered size="md">
+          {sheetBody}
+        </Modal>
+      ) : (
+        <Drawer {...sheetProps} position="bottom" size="auto">
+          {sheetBody}
+        </Drawer>
+      )}
       <Modal
-        opened={asking}
-        onClose={close}
+        opened={asking !== null}
+        onClose={closeQuestion}
         title={t('diceSettings.confirmTitle')}
         closeOnEscape={!pending}
         closeOnClickOutside={!pending}
         returnFocus={false}
+        centered
+        // Above the sheet it was asked from, whichever of the two mounted first.
+        zIndex={300}
         onExitTransitionEnd={() => {
-          const target = apply.current?.isConnected ? apply.current : heading.current
-          target?.focus()
+          // After a Cancel the sheet is still open: the option that was current takes the focus.
+          // A saved change closes the sheet too, and its own handler returns focus to the row.
+          if (!sheetOpen.current) return
+          const option = document.getElementById(`${idPrefix}-${current[lastSheet]}`)
+          if (option?.isConnected) option.focus()
         }}
         closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44, disabled: pending }}
       >
         <Stack>
-          <ul className="dice-set-summary">
-            {shown.dice_mode !== current.dice_mode && (
-              <li>
-                <span>{t('diceSettings.modeLegend')}</span>
-                <strong>{t(`diceSettings.mode.${shown.dice_mode}`)}</strong>
-              </li>
-            )}
-            {shown.roll_visibility !== current.roll_visibility && (
-              <li>
-                <span>{t('diceSettings.visibilityLegend')}</span>
-                <strong>{t(`diceSettings.visibility.${shown.roll_visibility}`)}</strong>
-              </li>
-            )}
-          </ul>
-          {shown.dice_mode !== current.dice_mode && (
-            <Text size="sm">{t(`diceSettings.confirmMode.${shown.dice_mode}`)}</Text>
-          )}
-          {visibility !== 'same' && (
-            <Text size="sm">
-              {t(
-                visibility === 'narrower' && shown.roll_visibility === 'roller'
-                  ? 'diceSettings.confirmVisibility.narrowerRoller'
-                  : `diceSettings.confirmVisibility.${visibility}`,
+          {asking && (
+            <>
+              <ul className="dice-summary">
+                {asking.dice_mode !== current.dice_mode && (
+                  <li>
+                    <span>{t('diceSettings.modeLegend')}</span>
+                    <strong>{t(`diceSettings.mode.${asking.dice_mode}`)}</strong>
+                  </li>
+                )}
+                {asking.roll_visibility !== current.roll_visibility && (
+                  <li>
+                    <span>{t('diceSettings.visibilityLegend')}</span>
+                    <strong>{t(`diceSettings.visibility.${asking.roll_visibility}`)}</strong>
+                  </li>
+                )}
+              </ul>
+              {asking.dice_mode !== current.dice_mode && (
+                <Text size="sm">{t(`diceSettings.confirmMode.${asking.dice_mode}`)}</Text>
               )}
-            </Text>
+              {visibility !== 'same' && (
+                <Text size="sm">
+                  {t(
+                    visibility === 'narrower' && asking.roll_visibility === 'roller'
+                      ? 'diceSettings.confirmVisibility.narrowerRoller'
+                      : `diceSettings.confirmVisibility.${visibility}`,
+                  )}
+                </Text>
+              )}
+            </>
           )}
           {mutation.isError && (
             <Alert
@@ -236,7 +328,7 @@ export function DiceSettingsControl({
             </Alert>
           )}
           <Group justify="flex-end">
-            <Button variant="subtle" onClick={close} aria-disabled={pending || undefined}>
+            <Button variant="subtle" onClick={closeQuestion} aria-disabled={pending || undefined}>
               {t('action.cancel')}
             </Button>
             <Button

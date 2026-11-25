@@ -66,6 +66,7 @@ export function QuickSwitcher({
   const opener = useRef<HTMLElement | null>(null)
   const chosen = useRef(false)
   const list = useRef<HTMLDivElement>(null)
+  const field = useRef<HTMLInputElement>(null)
 
   const visible = useMemo(
     () =>
@@ -83,6 +84,24 @@ export function QuickSwitcher({
     const focused = document.activeElement
     opener.current = focused instanceof HTMLElement && focused !== document.body ? focused : null
     chosen.current = false
+  }, [opened])
+  // Keys typed between the shortcut and the field taking focus (the dialog opens over a frame or
+  // two) would land on the page behind: they are collected into the query instead. Only while focus
+  // is still outside the dialog: a key pressed on a control inside it (Space on the close button)
+  // belongs to that control.
+  useEffect(() => {
+    if (!opened) return
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || event.key.length !== 1) return
+      if (event.ctrlKey || event.metaKey || event.altKey) return
+      const focused = document.activeElement
+      if (focused instanceof Element && focused.closest('.switcher-content')) return
+      event.preventDefault()
+      setQuery((value) => value + event.key)
+      setActiveIndex(0)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
   }, [opened])
   useEffect(() => {
     if (!active) return
@@ -139,6 +158,7 @@ export function QuickSwitcher({
       }}
     >
       <TextInput
+        ref={field}
         data-autofocus
         role="combobox"
         aria-label={searchLabel}

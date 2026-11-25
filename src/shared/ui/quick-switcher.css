@@ -22,7 +22,7 @@
   max-height: min(calc(84vh - 10.5rem), 46rem);
   max-height: min(calc(84dvh - 10.5rem), 46rem);
   padding-bottom: 28px;
-  scroll-padding-bottom: 28px;
+  scroll-padding-block: 2rem 28px;
   overflow-y: auto;
   overscroll-behavior: contain;
   mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
@@ -32,7 +32,12 @@
   border-top: 1px solid var(--app-border);
   padding-top: 4px;
 }
+/* The label stays at the top of the list while its own group scrolls under it. */
 .switcher-group-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--app-surface);
   padding: 8px 12px 4px;
   font-size: var(--fs-meta);
   font-weight: 600;
@@ -68,6 +73,6 @@
 @media (max-width: 47.99em) {
   /* Ends mid-row on common phone heights, so the fade shows there is more. */
   .switcher-list {
-    max-height: 54dvh;
+    max-height: min(54dvh, calc(84dvh - 10.5rem));
   }
 }

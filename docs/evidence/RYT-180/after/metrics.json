@@ -1,0 +1,520 @@
+{
+ "phone-members": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "overflowX": false,
+  "controls": 7,
+  "firstControl": {
+   "y": 183,
+   "label": "Invitar jugador"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Miembros"
+  ],
+  "badges": 0,
+  "filled": [
+   "Invitar jugador"
+  ],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [
+   64,
+   64,
+   64,
+   64
+  ],
+  "memberRowsInFirstScreen": 4
+ },
+ "phone-level": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "overflowX": false,
+  "controls": 6,
+  "firstControl": {
+   "y": 245,
+   "label": "Subir a nivel 7"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Nivel del grupo 6"
+  ],
+  "badges": 0,
+  "filled": [
+   "Subir a nivel 7"
+  ],
+  "longTexts": [
+   "Los jugadores por debajo de este nivel reciben la subida guiada; una ficha cambia solo cuando su jugador la confirma."
+  ],
+  "longTextChars": 117,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "phone-modules": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "overflowX": false,
+  "controls": 7,
+  "firstControl": {
+   "y": 226,
+   "label": "Grupo: visible para jugadores"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Módulos activos"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "phone-dice": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "overflowX": false,
+  "controls": 2,
+  "firstControl": {
+   "y": 184,
+   "label": "Cómo se tiraDados físicos"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Dados"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "phone-content": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "overflowX": false,
+  "controls": 6,
+  "firstControl": {
+   "y": 228,
+   "label": "Revisar cambios de SRD 5.2.1 en criaturas"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Contenido",
+   "H3 Por revisar",
+   "H3 Criaturas",
+   "H3 Conjuros"
+  ],
+  "badges": 0,
+  "filled": [
+   "Revisar cambios de SRD 5.2.1 en criaturas"
+  ],
+  "longTexts": [
+   "Sin paquetes todavía: Personajes, Reglas, Objetos"
+  ],
+  "longTextChars": 49,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "phone-audit": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "overflowX": false,
+  "controls": 3,
+  "firstControl": {
+   "y": 183,
+   "label": "Personaje"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Auditoría",
+   "H3 27 de octubre"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "tablet-members": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "overflowX": false,
+  "controls": 7,
+  "firstControl": {
+   "y": 239,
+   "label": "Invitar jugador"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Miembros"
+  ],
+  "badges": 0,
+  "filled": [
+   "Invitar jugador"
+  ],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [
+   39,
+   68,
+   68,
+   68,
+   68
+  ],
+  "memberRowsInFirstScreen": 5
+ },
+ "tablet-level": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "overflowX": false,
+  "controls": 6,
+  "firstControl": {
+   "y": 303,
+   "label": "Subir a nivel 7"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Nivel del grupo 6"
+  ],
+  "badges": 0,
+  "filled": [
+   "Subir a nivel 7"
+  ],
+  "longTexts": [
+   "Los jugadores por debajo de este nivel reciben la subida guiada; una ficha cambia solo cuando su jugador la confirma."
+  ],
+  "longTextChars": 117,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "tablet-modules": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "overflowX": false,
+  "controls": 7,
+  "firstControl": {
+   "y": 286,
+   "label": "Grupo: visible para jugadores"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Módulos activos"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "tablet-dice": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "overflowX": false,
+  "controls": 2,
+  "firstControl": {
+   "y": 240,
+   "label": "Cómo se tiraDados físicos"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Dados"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "tablet-content": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "overflowX": false,
+  "controls": 6,
+  "firstControl": {
+   "y": 286,
+   "label": "Revisar cambios de SRD 5.2.1 en criaturas"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Contenido",
+   "H3 Por revisar",
+   "H3 Criaturas",
+   "H3 Conjuros"
+  ],
+  "badges": 0,
+  "filled": [
+   "Revisar cambios de SRD 5.2.1 en criaturas"
+  ],
+  "longTexts": [
+   "Sin paquetes todavía: Personajes, Reglas, Objetos"
+  ],
+  "longTextChars": 49,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "tablet-audit": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "overflowX": false,
+  "controls": 3,
+  "firstControl": {
+   "y": 247,
+   "label": "Personaje"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Auditoría",
+   "H3 27 de octubre"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "laptop-members": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "overflowX": false,
+  "controls": 7,
+  "firstControl": {
+   "y": 254,
+   "label": "Invitar jugador"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Miembros"
+  ],
+  "badges": 0,
+  "filled": [
+   "Invitar jugador"
+  ],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [
+   39,
+   68,
+   68,
+   68,
+   68
+  ],
+  "memberRowsInFirstScreen": 5
+ },
+ "laptop-level": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "overflowX": false,
+  "controls": 6,
+  "firstControl": {
+   "y": 318,
+   "label": "Subir a nivel 7"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Nivel del grupo 6"
+  ],
+  "badges": 0,
+  "filled": [
+   "Subir a nivel 7"
+  ],
+  "longTexts": [
+   "Los jugadores por debajo de este nivel reciben la subida guiada; una ficha cambia solo cuando su jugador la confirma."
+  ],
+  "longTextChars": 117,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "laptop-modules": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "overflowX": false,
+  "controls": 7,
+  "firstControl": {
+   "y": 301,
+   "label": "Grupo: visible para jugadores"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Módulos activos"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "laptop-dice": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "overflowX": false,
+  "controls": 2,
+  "firstControl": {
+   "y": 255,
+   "label": "Cómo se tiraDados físicos"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Dados"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "laptop-content": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "overflowX": false,
+  "controls": 6,
+  "firstControl": {
+   "y": 301,
+   "label": "Revisar cambios de SRD 5.2.1 en criaturas"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Contenido",
+   "H3 Por revisar",
+   "H3 Criaturas",
+   "H3 Conjuros"
+  ],
+  "badges": 0,
+  "filled": [
+   "Revisar cambios de SRD 5.2.1 en criaturas"
+  ],
+  "longTexts": [
+   "Sin paquetes todavía: Personajes, Reglas, Objetos"
+  ],
+  "longTextChars": 49,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "laptop-audit": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "overflowX": false,
+  "controls": 3,
+  "firstControl": {
+   "y": 262,
+   "label": "Personaje"
+  },
+  "small": [],
+  "headings": [
+   "H1 Centro de mando DM",
+   "H2 Auditoría",
+   "H3 27 de octubre"
+  ],
+  "badges": 0,
+  "filled": [],
+  "longTexts": [],
+  "longTextChars": 0,
+  "memberRows": [],
+  "memberRowsInFirstScreen": 0
+ },
+ "flow-phone": {
+  "raiseY": 245,
+  "diceConfirmBox": {
+   "x": 219.609375,
+   "y": 509.140625,
+   "width": 118.890625,
+   "height": 44
+  }
+ },
+ "flow-tablet": {
+  "raiseY": 302.765625,
+  "diceConfirmBox": {
+   "x": 486.609375,
+   "y": 666.984375,
+   "width": 118.890625,
+   "height": 44
+  }
+ },
+ "flow-laptop": {
+  "raiseY": 318.1875,
+  "diceConfirmBox": {
+   "x": 716.609375,
+   "y": 476.984375,
+   "width": 118.890625,
+   "height": 44
+  }
+ }
+}

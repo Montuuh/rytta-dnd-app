@@ -1,0 +1,455 @@
+{
+ "phone-members": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 1217,
+  "panelTop": 183,
+  "panelHeight": 922,
+  "controls": 12,
+  "firstControl": {
+   "y": 183,
+   "label": "Invitar jugador"
+  },
+  "filled": [],
+  "headings": [
+   "H3 846 Invitaciones pendientes"
+  ],
+  "badges": 4,
+  "longTexts": [
+   "Es el único DM: nombra otro DM antes de cambiar este rol.",
+   "No hay invitaciones pendientes para esta campaña.",
+   "La campaña siempre necesita un DM. Nombra a otro miembro DM antes de dejar el rol o salir."
+  ],
+  "longTextChars": 196
+ },
+ "phone-level": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "panelTop": 183,
+  "panelHeight": 328,
+  "controls": 4,
+  "firstControl": {
+   "y": 393,
+   "label": "Bajar el nivel del grupo"
+  },
+  "filled": [],
+  "headings": [
+   "H2 215 Nivel del grupo 6"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Los jugadores por debajo de este nivel reciben la subida guiada en su ficha. Una ficha cambia solo cuando su jugador la confirma.",
+   "4 personajes están por debajo del nivel del grupo."
+  ],
+  "longTextChars": 179
+ },
+ "phone-modules": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "panelTop": 183,
+  "panelHeight": 497,
+  "controls": 7,
+  "firstControl": {
+   "y": 287,
+   "label": "Grupo: visible para jugadores"
+  },
+  "filled": [],
+  "headings": [],
+  "badges": 1,
+  "longTexts": [
+   "Elige qué módulos ven los jugadores en la barra de navegación."
+  ],
+  "longTextChars": 62
+ },
+ "phone-dice": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 1165,
+  "panelTop": 183,
+  "panelHeight": 870,
+  "controls": 0,
+  "firstControl": null,
+  "filled": [],
+  "headings": [
+   "H2 215 Dados de la mesa"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Elige cómo tira la mesa y quién ve las tiradas hechas o anotadas en la app.",
+   "Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.",
+   "Rytta tira los dados de las pruebas, salvaciones, ataques, daño, iniciativa y dados de golpe, y anota cada tirada. Queda marcada como tirada por Rytta y nadie puede cambiarla.",
+   "Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.",
+   "Todos los miembros activos ven cada tirada."
+  ],
+  "longTextChars": 510
+ },
+ "phone-content": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 945,
+  "panelTop": 183,
+  "panelHeight": 650,
+  "controls": 6,
+  "firstControl": {
+   "y": 230,
+   "label": "Usar SRD 5.2.1 en criaturas"
+  },
+  "filled": [],
+  "headings": [
+   "H3 183 Criaturas",
+   "H3 472 Conjuros",
+   "H3 641 Personajes",
+   "H3 710 Reglas",
+   "H3 779 Objetos"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Aún no hay paquetes publicados para esta categoría.",
+   "Aún no hay paquetes publicados para esta categoría.",
+   "Aún no hay paquetes publicados para esta categoría."
+  ],
+  "longTextChars": 153
+ },
+ "phone-audit": {
+  "viewport": [
+   390,
+   844
+  ],
+  "pageHeight": 844,
+  "panelTop": 183,
+  "panelHeight": 290,
+  "controls": 0,
+  "firstControl": null,
+  "filled": [],
+  "headings": [],
+  "badges": 2,
+  "longTexts": [
+   "Historial cronológico de creación de personajes, asignaciones y cambios de recursos."
+  ],
+  "longTextChars": 84
+ },
+ "tablet-members": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "panelTop": 198,
+  "panelHeight": 919,
+  "controls": 12,
+  "firstControl": {
+   "y": 239,
+   "label": "Invitar jugador"
+  },
+  "filled": [],
+  "headings": [
+   "H1 138 Centro de mando DM",
+   "H2 198 Miembros",
+   "H3 881 Invitaciones pendientes"
+  ],
+  "badges": 4,
+  "longTexts": [
+   "Es el único DM: nombra otro DM antes de cambiar este rol.",
+   "No hay invitaciones pendientes para esta campaña.",
+   "La campaña siempre necesita un DM. Nombra a otro miembro DM antes de dejar el rol o salir."
+  ],
+  "longTextChars": 196
+ },
+ "tablet-level": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "panelTop": 198,
+  "panelHeight": 230,
+  "controls": 4,
+  "firstControl": {
+   "y": 366,
+   "label": "Bajar el nivel del grupo"
+  },
+  "filled": [],
+  "headings": [
+   "H1 138 Centro de mando DM",
+   "H2 230 Nivel del grupo 6"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Los jugadores por debajo de este nivel reciben la subida guiada en su ficha. Una ficha cambia solo cuando su jugador la confirma.",
+   "4 personajes están por debajo del nivel del grupo."
+  ],
+  "longTextChars": 179
+ },
+ "tablet-modules": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "panelTop": 198,
+  "panelHeight": 501,
+  "controls": 7,
+  "firstControl": {
+   "y": 306,
+   "label": "Grupo: visible para jugadores"
+  },
+  "filled": [],
+  "headings": [
+   "H1 138 Centro de mando DM",
+   "H2 198 Módulos activos"
+  ],
+  "badges": 1,
+  "longTexts": [
+   "Elige qué módulos ven los jugadores en la barra de navegación."
+  ],
+  "longTextChars": 62
+ },
+ "tablet-dice": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "panelTop": 198,
+  "panelHeight": 720,
+  "controls": 0,
+  "firstControl": null,
+  "filled": [],
+  "headings": [
+   "H1 138 Centro de mando DM",
+   "H2 230 Dados de la mesa"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Elige cómo tira la mesa y quién ve las tiradas hechas o anotadas en la app.",
+   "Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.",
+   "Rytta tira los dados de las pruebas, salvaciones, ataques, daño, iniciativa y dados de golpe, y anota cada tirada. Queda marcada como tirada por Rytta y nadie puede cambiarla.",
+   "Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.",
+   "Todos los miembros activos ven cada tirada."
+  ],
+  "longTextChars": 510
+ },
+ "tablet-content": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "panelTop": 198,
+  "panelHeight": 645,
+  "controls": 6,
+  "firstControl": {
+   "y": 290,
+   "label": "Usar SRD 5.2.1 en criaturas"
+  },
+  "filled": [],
+  "headings": [
+   "H1 138 Centro de mando DM",
+   "H2 198 Contenido de la campaña",
+   "H3 243 Criaturas",
+   "H3 482 Conjuros",
+   "H3 651 Personajes",
+   "H3 720 Reglas",
+   "H3 789 Objetos"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Aún no hay paquetes publicados para esta categoría.",
+   "Aún no hay paquetes publicados para esta categoría.",
+   "Aún no hay paquetes publicados para esta categoría."
+  ],
+  "longTextChars": 153
+ },
+ "tablet-audit": {
+  "viewport": [
+   820,
+   1180
+  ],
+  "pageHeight": 1180,
+  "panelTop": 198,
+  "panelHeight": 289,
+  "controls": 0,
+  "firstControl": null,
+  "filled": [],
+  "headings": [
+   "H1 138 Centro de mando DM",
+   "H2 198 Auditoría"
+  ],
+  "badges": 2,
+  "longTexts": [
+   "Historial cronológico de creación de personajes, asignaciones y cambios de recursos."
+  ],
+  "longTextChars": 84
+ },
+ "laptop-members": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 1117,
+  "panelTop": 212,
+  "panelHeight": 869,
+  "controls": 12,
+  "firstControl": {
+   "y": 254,
+   "label": "Invitar jugador"
+  },
+  "filled": [],
+  "headings": [
+   "H1 152 Centro de mando DM",
+   "H2 212 Miembros",
+   "H3 896 Invitaciones pendientes"
+  ],
+  "badges": 4,
+  "longTexts": [
+   "Es el único DM: nombra otro DM antes de cambiar este rol.",
+   "No hay invitaciones pendientes para esta campaña.",
+   "La campaña siempre necesita un DM. Nombra a otro miembro DM antes de dejar el rol o salir."
+  ],
+  "longTextChars": 196
+ },
+ "laptop-level": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "panelTop": 212,
+  "panelHeight": 210,
+  "controls": 4,
+  "firstControl": {
+   "y": 360,
+   "label": "Bajar el nivel del grupo"
+  },
+  "filled": [],
+  "headings": [
+   "H1 152 Centro de mando DM",
+   "H2 243 Nivel del grupo 6"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Los jugadores por debajo de este nivel reciben la subida guiada en su ficha. Una ficha cambia solo cuando su jugador la confirma.",
+   "4 personajes están por debajo del nivel del grupo."
+  ],
+  "longTextChars": 179
+ },
+ "laptop-modules": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "panelTop": 212,
+  "panelHeight": 482,
+  "controls": 7,
+  "firstControl": {
+   "y": 301,
+   "label": "Grupo: visible para jugadores"
+  },
+  "filled": [],
+  "headings": [
+   "H1 152 Centro de mando DM",
+   "H2 212 Módulos activos"
+  ],
+  "badges": 1,
+  "longTexts": [
+   "Elige qué módulos ven los jugadores en la barra de navegación."
+  ],
+  "longTextChars": 62
+ },
+ "laptop-dice": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 903,
+  "panelTop": 212,
+  "panelHeight": 654,
+  "controls": 0,
+  "firstControl": null,
+  "filled": [],
+  "headings": [
+   "H1 152 Centro de mando DM",
+   "H2 243 Dados de la mesa"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Elige cómo tira la mesa y quién ve las tiradas hechas o anotadas en la app.",
+   "Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.",
+   "Rytta tira los dados de las pruebas, salvaciones, ataques, daño, iniciativa y dados de golpe, y anota cada tirada. Queda marcada como tirada por Rytta y nadie puede cambiarla.",
+   "Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.",
+   "Todos los miembros activos ven cada tirada."
+  ],
+  "longTextChars": 510
+ },
+ "laptop-content": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 893,
+  "panelTop": 212,
+  "panelHeight": 645,
+  "controls": 6,
+  "firstControl": {
+   "y": 304,
+   "label": "Usar SRD 5.2.1 en criaturas"
+  },
+  "filled": [],
+  "headings": [
+   "H1 152 Centro de mando DM",
+   "H2 212 Contenido de la campaña",
+   "H3 257 Criaturas",
+   "H3 496 Conjuros",
+   "H3 665 Personajes",
+   "H3 734 Reglas",
+   "H3 803 Objetos"
+  ],
+  "badges": 0,
+  "longTexts": [
+   "Aún no hay paquetes publicados para esta categoría.",
+   "Aún no hay paquetes publicados para esta categoría.",
+   "Aún no hay paquetes publicados para esta categoría."
+  ],
+  "longTextChars": 153
+ },
+ "laptop-audit": {
+  "viewport": [
+   1280,
+   800
+  ],
+  "pageHeight": 800,
+  "panelTop": 212,
+  "panelHeight": 290,
+  "controls": 0,
+  "firstControl": null,
+  "filled": [],
+  "headings": [
+   "H1 152 Centro de mando DM",
+   "H2 212 Auditoría"
+  ],
+  "badges": 2,
+  "longTexts": [
+   "Historial cronológico de creación de personajes, asignaciones y cambios de recursos."
+  ],
+  "longTextChars": 84
+ },
+ "phone-dice-apply-after-choice": {
+  "x": 33,
+  "y": 864.96875,
+  "width": 161.265625,
+  "height": 44
+ }
+}

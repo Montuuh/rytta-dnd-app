@@ -59,7 +59,13 @@ for (const language of ['es', 'en'] as const)
           await expect(page.getByRole('heading', { level: 1 })).toHaveText(
             es ? 'Centro de mando DM' : 'DM Command Center',
           )
-          await expect(page.getByText('player@example.com', { exact: true })).toBeVisible()
+          // The phone's row keeps the address for the member sheet: the row's `···` is what shows.
+          await expect(
+            page.getByRole('button', {
+              name: es ? 'Acciones de Arin' : 'Actions for Arin',
+              exact: true,
+            }),
+          ).toBeVisible()
           await expect(
             page.getByRole('link', { name: es ? 'Ficha de Arin' : 'Sheet of Arin' }),
           ).toBeVisible()

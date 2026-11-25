@@ -387,3 +387,128 @@ test('the same switcher works in English', async ({ page }) => {
   await dialog.getByRole('combobox').fill('nothing-here')
   await expect(dialog.locator('.switcher-empty')).toContainText('Nothing matches “nothing-here”')
 })
+
+test('keys typed right after Ctrl+K are not lost', async ({ page }) => {
+  await dmPage(page)
+  await page.goto(home)
+  await expect(trigger(page)).toBeVisible()
+  // No wait between the shortcut and the first characters: the field may not have focus yet.
+  await page.keyboard.press('Control+k')
+  await page.keyboard.type('nivel')
+  await expect(field(page)).toHaveValue('nivel')
+  await expect(field(page)).toBeFocused()
+  await expect(
+    switcher(page).getByRole('option', { name: 'Nivel del grupo', exact: true }),
+  ).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(switcher(page)).toHaveCount(0)
+  await page.keyboard.press('/')
+  await page.keyboard.type('dados')
+  await expect(field(page)).toHaveValue('dados')
+})
+
+test('a key pressed on the close button activates it and is not typed into the query', async ({
+  page,
+}) => {
+  await dmPage(page)
+  await page.goto(home)
+  await openByKeyboard(page)
+  await expect(field(page)).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(switcher(page).getByRole('button', { name: 'Cerrar búsqueda' })).toBeFocused()
+  await page.keyboard.press('Space')
+  await expect(switcher(page)).toHaveCount(0)
+  await openByKeyboard(page)
+  await expect(field(page)).toHaveValue('')
+})
+
+test('at 390x667 and 150% text the list fits the screen and its group label stays while it scrolls', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'identity-mobile', 'phone geometry')
+  await page.setViewportSize({ width: 390, height: 667 })
+  await dmPage(page)
+  await page.addInitScript(() => {
+    document.documentElement.style.fontSize = '150%'
+  })
+  await page.goto(`${membersUrl}?panel=items`)
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '150%'
+  })
+  await openByKeyboard(page)
+  const dialog = switcher(page)
+  await expect(dialog).toBeVisible()
+  const box = (await dialog.boundingBox())!
+  expect(box.y).toBeGreaterThanOrEqual(0)
+  expect(box.y + box.height).toBeLessThanOrEqual(667)
+  const list = dialog.getByRole('listbox')
+  const listBox = (await list.boundingBox())!
+  expect(listBox.y + listBox.height).toBeLessThanOrEqual(667)
+  await list.evaluate((node) => {
+    node.scrollTop = node.scrollHeight
+  })
+  // The label of the group now under the top edge is stuck there.
+  const labels = dialog.locator('.switcher-group-label')
+  const stuck = await labels.evaluateAll((nodes, top) => {
+    return nodes.filter((node) => {
+      const rect = node.getBoundingClientRect()
+      return rect.top >= top - 1 && rect.top <= top + 4
+    }).length
+  }, listBox.y)
+  expect(stuck).toBe(1)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('the navigation counts say their unit; the full sentence stays as the description', async ({
+  page,
+}) => {
+  await dmPage(page, { catalogue: true })
+  await page.route('**/rest/v1/campaign_invitations?**', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: '90000000-0000-4000-8000-000000000002',
+          email: 'wait@example.com',
+          expires_at: '2099-01-01T00:00:00Z',
+        },
+      ],
+    }),
+  )
+  await page.goto(`${membersUrl}?panel=dice`)
+  const phone = (page.viewportSize()?.width ?? 0) < 768
+  let links = page.getByRole('navigation', { name: 'Centro de mando DM' })
+  if (phone) {
+    await page.getByRole('button', { name: /cambiar de panel/ }).click()
+    links = page.getByRole('dialog', { name: 'Centro de mando DM' }).getByRole('navigation')
+  }
+  const members = links.getByRole('link', { name: 'Miembros', exact: true })
+  await expect(members).toContainText('1 pendiente')
+  await expect(members).toHaveAccessibleDescription('1 invitación por aceptar')
+  const store = links.getByRole('link', { name: 'Almacén de objetos', exact: true })
+  await expect(store).toContainText('1 por revisar')
+  await expect(store).toHaveAccessibleDescription('1 propuesta por revisar')
+})
+
+test('on the home a failed party, proposal or session query says so with a retry', async ({
+  page,
+}) => {
+  await dmPage(page, { catalogue: true })
+  let failing = true
+  for (const rpc of ['get_party_overview', 'list_item_proposals', 'get_session_continuity'])
+    await page.route(`**/rest/v1/rpc/${rpc}`, (route) =>
+      failing
+        ? route.fulfill({ status: 503, json: { message: 'Service unavailable' } })
+        : route.fallback(),
+    )
+  await page.goto(home)
+  const pending = page.getByRole('region', { name: 'Pendiente' })
+  await expect(pending.getByRole('alert')).toBeVisible()
+  const table = page.getByRole('region', { name: 'En la mesa' })
+  await expect(table.getByRole('alert')).toBeVisible()
+  await expect(table.getByRole('link', { name: 'Almacén de objetos' })).toBeVisible()
+  failing = false
+  await pending.getByRole('button', { name: 'Reintentar' }).click()
+  await table.getByRole('button', { name: 'Reintentar' }).click()
+  await expect(pending.getByRole('alert')).toHaveCount(0)
+  await expect(table.getByRole('alert')).toHaveCount(0)
+})

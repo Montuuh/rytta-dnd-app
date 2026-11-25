@@ -47,3 +47,41 @@ export function createPartyRequestIds(newId: () => string) {
     },
   }
 }
+
+/**
+ * One character of the party overview as the Party level panel lists it. The page builds it from
+ * the characters feature's data, so the campaigns feature never imports that feature.
+ */
+export type PartyCharacter = {
+  id: string
+  name: string
+  /** The Player's name; `null` when no Player holds the character, `undefined` while unknown. */
+  ownerName?: string | null
+  /** The sheet's level; `null` for a sheet that is not finished. */
+  level: number | null
+  /** A finished sheet below the party level. */
+  below: boolean
+  /** The sheet is a draft: no level to show yet. */
+  draft: boolean
+  /** Where the sheet lives. */
+  href: string
+}
+
+/** Characters below the party level first, then the rest; each group by name. */
+export function orderPartyCharacters(rows: readonly PartyCharacter[], language = 'es') {
+  return [...rows].sort(
+    (a, b) => Number(b.below) - Number(a.below) || a.name.localeCompare(b.name, language),
+  )
+}
+
+/** How many finished sheets there are and how many of them are below the party level. */
+export function partyStanding(rows: readonly PartyCharacter[]) {
+  const finished = rows.filter((row) => !row.draft)
+  return { below: finished.filter((row) => row.below).length, total: finished.length }
+}
+
+/** The level a "Raise" action goes to; `null` when the level is already the highest. */
+export function raiseTarget(current: number | null, suggested: number | undefined, max = 20) {
+  if (current === null) return suggested ?? 1
+  return current >= max ? null : current + 1
+}

@@ -51,6 +51,7 @@ export {
   useInventoryAction,
   useItemTemplate,
   usePendingProposalCount,
+  proposalsQuery,
 } from './api'
 export type { CatalogueItem, ImportItem, ImportResult } from './domain/catalogue'
 export { toImportItem } from './domain/catalogue'

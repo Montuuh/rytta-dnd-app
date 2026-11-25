@@ -61,7 +61,8 @@ export function DmCenterShell({
     if (routeChange) return
     window.scrollTo(0, 0)
     if (viaSheet.current) viaSheet.current = false
-    else if (!document.querySelector('[role="dialog"]')) panelBox.current?.focus()
+    else if (!document.querySelector('[role="dialog"]'))
+      panelBox.current?.focus({ preventScroll: true })
   }, [current])
   const closeSheet = () => {
     setSheetOpen(false)
@@ -198,8 +199,13 @@ function DmNavList({
             {group.panels.map((panel) => {
               const Icon = dmPanelIcons[panel]
               const pending = description(panel)
-              const count =
-                panel === 'members' ? counts.members : panel === 'items' ? counts.items : 0
+              // The unit is visible next to the count; the full sentence is the description.
+              const unit =
+                panel === 'members'
+                  ? t('dm.navPending', { count: counts.members })
+                  : panel === 'items'
+                    ? t('dm.navToReview', { count: counts.items })
+                    : ''
               return (
                 <li key={panel}>
                   <Link
@@ -213,7 +219,7 @@ function DmNavList({
                     <span className="dm-nav-label">{t(dmPanelLabels[panel])}</span>
                     {pending && (
                       <span className="dm-nav-count tabular" aria-hidden="true">
-                        {count}
+                        {unit}
                       </span>
                     )}
                   </Link>

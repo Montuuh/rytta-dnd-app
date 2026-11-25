@@ -34,7 +34,7 @@ async function audit(page: Page) {
   ).toEqual([])
   await expectTouchTargets(
     page,
-    'main button:visible, main a.mantine-Button-root:visible, [role="dialog"] button:visible, [role="dialog"] input[type="text"]:visible, .dice-set-option:visible',
+    'main button:visible, main a.mantine-Button-root:visible, [role="dialog"] button:visible, [role="dialog"] input[type="text"]:visible, .dice-row:visible, .dice-option:visible',
   )
 }
 
@@ -101,15 +101,16 @@ async function equipSword(page: Page) {
   await page.goto(sheetUrl)
 }
 
-test('RYT-133 the DM sets the dice: confirmation, a failure, the same request retried, who sees rolls', async ({
+test('RYT-133 the DM sets the dice: sheet, confirmation, a failure, the same request retried, who sees rolls', async ({
   page,
 }, info) => {
   const f = await identityFixture(page, { party: true, sheet: 'complete' })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(diceUrl)
-  const section = page.getByRole('region', { name: 'Dados de la mesa' })
+  const section = page.getByRole('region', { name: 'Dados', exact: true })
   // RYT-179: the open panel is marked (the switcher names it on phones).
-  if (page.viewportSize()!.width < 768)
+  const phone = page.viewportSize()!.width < 768
+  if (phone)
     await expect(page.getByRole('button', { name: 'Dados, cambiar de panel' })).toBeVisible()
   else
     await expect(
@@ -117,26 +118,70 @@ test('RYT-133 the DM sets the dice: confirmation, a failure, the same request re
         .getByRole('navigation', { name: 'Centro de mando DM' })
         .getByRole('link', { name: 'Dados', exact: true }),
     ).toHaveAttribute('aria-current', 'page')
-  // Physical dice and the roller plus the DM are the defaults.
-  const mode = section.getByRole('group', { name: 'Cómo se tira' })
-  const visibility = section.getByRole('group', { name: 'Quién ve las tiradas' })
-  await expect(mode.getByRole('radio', { name: /Dados físicos/ })).toBeChecked()
-  await expect(visibility.getByRole('radio', { name: /Quien tira y el DM/ })).toBeChecked()
-  await expect(section.getByRole('button', { name: 'Aplicar cambios' })).toHaveCount(0)
+  // RYT-180: two rows with the current values; no seal, no intro, no Apply button.
+  const modeRow = section.getByRole('button', { name: /Cómo se tira/ })
+  const visibilityRow = section.getByRole('button', { name: /Quién ve las tiradas/ })
+  await expect(modeRow).toContainText('Dados físicos')
+  await expect(visibilityRow).toContainText('Quien tira y el DM')
+  await expect(modeRow).toHaveAttribute('aria-haspopup', 'dialog')
+  await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toHaveCount(0)
+  await expect(page.getByRole('radio')).toHaveCount(0)
+  // The h2 stays for assistive technology; on a phone the bar names the panel.
+  await expect(section.getByRole('heading', { level: 2, name: 'Dados', exact: true })).toBeAttached()
+  if (phone) {
+    // The first control sits right under the bar, and the whole panel fits the first screen.
+    const y = await modeRow.evaluate((node) => node.getBoundingClientRect().top)
+    expect(y).toBeLessThan(260)
+  } else {
+    expect(
+      await section.evaluate((node) => node.getBoundingClientRect().width),
+    ).toBeLessThanOrEqual(44 * 16 + 1)
+  }
   await audit(page)
   if (process.env.RYT_CAPTURE) await page.screenshot({ path: info.outputPath('dice-setting.png') })
 
-  // The radios are visually hidden: the labels are what a finger taps.
-  await section.locator('label', { hasText: 'Dados en la app' }).click()
-  await expect(mode.getByRole('radio', { name: /Dados en la app/ })).toBeChecked()
-  await section.locator('label', { hasText: 'Toda la mesa' }).click()
-  const apply = section.getByRole('button', { name: 'Aplicar cambios' })
-  await apply.click()
+  // The sheet: the three options with a line each; the current one is checked.
+  await modeRow.click()
+  const sheet = page.getByRole('dialog', { name: 'Cómo se tira' })
+  const options = sheet.getByRole('radiogroup', { name: 'Cómo se tira' })
+  await expect(options.getByRole('radio', { name: /Dados físicos/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
+  await expect(options.getByRole('radio', { name: /Dados en la app/ })).toHaveAttribute(
+    'aria-checked',
+    'false',
+  )
+  await expect(options.getByRole('radio', { name: /Cada jugador elige/ })).toContainText(
+    'hasta entonces, dados físicos',
+  )
+  await audit(page)
+  if (process.env.RYT_CAPTURE) await page.screenshot({ path: info.outputPath('dice-sheet.png') })
+
+  // Arrow keys move through the options without choosing: no question, no request.
+  await expect(options.getByRole('radio', { name: /Dados físicos/ })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(options.getByRole('radio', { name: /Dados en la app/ })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(options.getByRole('radio', { name: /Cada jugador elige/ })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(options.getByRole('radio', { name: /Dados físicos/ })).toBeFocused()
+  await expect(page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })).toHaveCount(0)
+  expect(settingsCalls(f.calls)).toHaveLength(0)
+  // The current option again changes nothing and closes the sheet.
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(modeRow).toBeFocused()
+  expect(settingsCalls(f.calls)).toHaveLength(0)
+
+  // Row, option, Confirm: three taps; nothing is sent until the DM confirms.
+  await modeRow.click()
+  await options.getByRole('radio', { name: /Dados en la app/ }).click()
   const dialog = page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })
+  await expect(dialog).toContainText('Cómo se tira')
   await expect(dialog).toContainText('Dados en la app')
-  await expect(dialog).toContainText('Toda la mesa')
-  await expect(dialog).toContainText('Las tiradas anteriores no se muestran a más gente')
-  // Nothing is sent until the DM confirms.
+  await expect(dialog).not.toContainText('Quién ve las tiradas')
+  await expect(dialog).toContainText('Los jugadores tirarán en la app')
   expect(settingsCalls(f.calls)).toHaveLength(0)
   await audit(page)
 
@@ -151,44 +196,80 @@ test('RYT-133 the DM sets the dice: confirmation, a failure, the same request re
   await expect(dialog.locator(':focus')).toHaveCount(1)
   expect(f.dice.settings()).toEqual({ dice_mode: 'physical', roll_visibility: 'roller_dm' })
   await dialog.getByRole('button', { name: 'Reintentar' }).click()
-  await expect(dialog).toHaveCount(0)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   const sent = settingsCalls(f.calls)
   expect(sent).toHaveLength(2)
   expect(sent[0]!.body.request_id).toBe(sent[1]!.body.request_id)
+  // One change: the other setting travels as it was.
   expect(sent[1]!.body).toMatchObject({
     target_campaign: campaignId,
     new_dice_mode: 'app',
+    new_roll_visibility: 'roller_dm',
+  })
+  expect(f.dice.settings()).toEqual({ dice_mode: 'app', roll_visibility: 'roller_dm' })
+  await expect(section.getByRole('status')).toHaveText('Ajustes de dados guardados.')
+  await expect(modeRow).toContainText('Dados en la app')
+  await expect(modeRow).toBeFocused()
+
+  // Who sees the rolls is its own sheet and its own change.
+  await visibilityRow.click()
+  const who = page.getByRole('dialog', { name: 'Quién ve las tiradas' })
+  await who.getByRole('radio', { name: /Toda la mesa/ }).click()
+  await expect(page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })).toContainText(
+    'Las tiradas anteriores no se muestran a más gente',
+  )
+  await page.getByRole('button', { name: 'Confirmar' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(settingsCalls(f.calls)).toHaveLength(3)
+  expect(settingsCalls(f.calls)[2]!.body).toMatchObject({
+    new_dice_mode: 'app',
     new_roll_visibility: 'table',
   })
-  expect(f.dice.settings()).toEqual({ dice_mode: 'app', roll_visibility: 'table' })
-  await expect(section.locator('.dice-set-saved')).toHaveText('Ajustes de dados guardados.')
-  await expect(mode.getByRole('radio', { name: /Dados en la app/ })).toBeChecked()
-  await expect(mode.locator('.dice-set-current')).toHaveText('En uso')
-  await expect(apply).toHaveCount(0)
+  await expect(visibilityRow).toContainText('Toda la mesa')
 
-  // Narrowing says what is lost; Escape closes the question, focus returns and nothing is sent.
-  await section.locator('label', { hasText: 'Solo quien tira' }).click()
-  await apply.click()
-  await expect(page.getByRole('dialog')).toContainText(
+  // Narrowing says what is lost. Escape closes the question only: the sheet stays with the old
+  // value checked, a second Escape closes it, and nothing is sent.
+  await visibilityRow.click()
+  await who.getByRole('radio', { name: /Solo quien tira/ }).click()
+  await expect(page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })).toContainText(
     'tú dejas de ver las de los jugadores, las anteriores incluidas',
   )
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(apply).toBeFocused()
-  expect(settingsCalls(f.calls)).toHaveLength(2)
-  // Each Player chooses: no consequence is promised beyond the device.
-  await section.locator('label', { hasText: 'Cada jugador elige' }).click()
-  await apply.click()
-  await expect(page.getByRole('dialog')).toContainText('hasta que elija, usa dados físicos')
+  await expect(page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })).toHaveCount(0)
+  await expect(who).toBeVisible()
+  await expect(who.getByRole('radio', { name: /Toda la mesa/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
+  await expect(who.getByRole('radio', { name: /Toda la mesa/ })).toBeFocused()
   await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(visibilityRow).toBeFocused()
+  expect(settingsCalls(f.calls)).toHaveLength(3)
+  // Each Player chooses: no consequence is promised beyond the device. Cancel returns to the sheet.
+  await modeRow.click()
+  await options.getByRole('radio', { name: /Cada jugador elige/ }).click()
+  await expect(page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })).toContainText(
+    'hasta que elija, usa dados físicos',
+  )
+  await page
+    .getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })
+    .getByRole('button', { name: 'Cancelar' })
+    .last()
+    .click()
+  await expect(options.getByRole('radio', { name: /Dados en la app/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
+  expect(settingsCalls(f.calls)).toHaveLength(3)
 })
 
 test('RYT-133 a refused change says so, and a Player has no dice tab', async ({ page }) => {
   const f = await identityFixture(page, { party: true, sheet: 'complete' })
   await page.goto(diceUrl)
-  const section = page.getByRole('region', { name: 'Dados de la mesa' })
-  await section.locator('label', { hasText: 'Dados en la app' }).click()
-  await section.getByRole('button', { name: 'Aplicar cambios' }).click()
+  const section = page.getByRole('region', { name: 'Dados', exact: true })
+  await section.getByRole('button', { name: /Cómo se tira/ }).click()
+  await page.getByRole('radio', { name: /Dados en la app/ }).click()
   const dialog = page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })
   f.dice.failNext = { rpc: 'set_dice_settings', message: 'Forbidden' }
   await dialog.getByRole('button', { name: 'Confirmar' }).click()
@@ -204,7 +285,29 @@ test('RYT-133 a Player never sees the dice settings', async ({ page }) => {
   await page.goto(diceUrl)
   await expect(page.getByRole('heading', { name: 'Miembros' })).toBeVisible()
   await expect(page.getByRole('navigation', { name: 'Centro de mando DM' })).toHaveCount(0)
-  await expect(page.getByRole('group', { name: 'Cómo se tira' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Cómo se tira/ })).toHaveCount(0)
+})
+
+test('RYT-180 the dice panel and its sheet in English and the light theme', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.addInitScript(() => {
+    localStorage.setItem('rytta-language', 'en')
+    localStorage.setItem('rytta-theme', 'parchment')
+  })
+  await identityFixture(page, { party: true, sheet: 'complete' })
+  await page.goto(diceUrl)
+  const section = page.getByRole('region', { name: 'Dice', exact: true })
+  await expect(section.getByRole('button', { name: /How the table rolls/ })).toContainText(
+    'Physical dice',
+  )
+  await audit(page)
+  await section.getByRole('button', { name: /Who sees the rolls/ }).click()
+  const sheet = page.getByRole('dialog', { name: 'Who sees the rolls' })
+  await expect(sheet.getByRole('radio', { name: /The roller and the DM/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
+  await audit(page)
 })
 
 test('RYT-133 physical dice: each line says what to roll, and the result can be recorded', async ({
@@ -3021,4 +3124,30 @@ test('RYT-137 initiative: a state that keeps naming another fight is asked for a
   await expect(entry).toContainText('Ya tiraste: 13')
   expect(reads.length).toBeLessThanOrEqual(5)
   await context.close()
+})
+
+test('RYT-180 changing a dice setting is three taps without scrolling; Back closes the sheet', async ({
+  page,
+}) => {
+  const f = await identityFixture(page, { party: true, sheet: 'complete' })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(diceUrl)
+  const section = page.getByRole('region', { name: 'Dados', exact: true })
+  const row = section.getByRole('button', { name: /Quién ve las tiradas/ })
+  await row.click()
+  const sheet = page.getByRole('dialog', { name: 'Quién ve las tiradas' })
+  for (const option of await sheet.getByRole('radio').all()) await expect(option).toBeInViewport()
+  // Back closes the sheet and the page stays where it was.
+  await page.goBack()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page).toHaveURL(/panel=dice$/)
+  await row.click()
+  await sheet.getByRole('radio', { name: /Toda la mesa/ }).click()
+  const confirm = page
+    .getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })
+    .getByRole('button', { name: 'Confirmar' })
+  await expect(confirm).toBeInViewport({ ratio: 1 })
+  await confirm.click()
+  await expect(row).toContainText('Toda la mesa')
+  expect(settingsCalls(f.calls)).toHaveLength(1)
 })

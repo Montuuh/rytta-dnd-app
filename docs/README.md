@@ -144,3 +144,6 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 69. [ADR 056: the DM command centre has a home and grouped navigation](decisions/056-dm-command-centre-home-and-navigation.md):
     the board, the three panel groups, links instead of tabs, the quick switcher and `?do=` action
     links (RYT-179).
+70. [ADR 057: the DM administration panels act in fewer steps](decisions/057-dm-administration-panels.md):
+    member rows with a sheet per member, the party level saved at once with Undo, dice as two rows
+    with a sheet each, pack versions to review first and the audit per character (RYT-180).

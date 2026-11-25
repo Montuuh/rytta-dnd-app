@@ -1,65 +1,7 @@
 import { useRef, useState } from 'react'
-import { ActionIcon, Button, Group, Menu, Stack, Text, Textarea } from '@mantine/core'
-import { Check, Copy, Ellipsis, X } from 'lucide-react'
+import { Button, Group, Stack, Text, Textarea } from '@mantine/core'
+import { Check, Copy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { SentInvitation } from '../domain/campaign'
-
-export function SentInvitationRow({
-  invitation,
-  busy,
-  onShare,
-  onCancel,
-}: {
-  invitation: SentInvitation
-  busy: boolean
-  onShare: (target: HTMLButtonElement) => void
-  onCancel: (target: HTMLButtonElement) => void
-}) {
-  const { t, i18n } = useTranslation()
-  const menuTrigger = useRef<HTMLButtonElement>(null)
-  return (
-    <li className="member-row">
-      <div className="member-identity">
-        <Text fw={600} className="user-copy">
-          {invitation.email}
-        </Text>
-        <Text size="sm" c="dimmed">
-          {t('hub.expires', {
-            date: new Date(invitation.expires_at).toLocaleDateString(i18n.language),
-          })}
-        </Text>
-      </div>
-      <Menu position="bottom-end">
-        <Menu.Target>
-          <ActionIcon
-            ref={menuTrigger}
-            variant="subtle"
-            size={44}
-            aria-label={t('activation.invite.options', { email: invitation.email })}
-            disabled={busy}
-          >
-            <Ellipsis size={20} aria-hidden="true" />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Item
-            leftSection={<Copy size={18} aria-hidden="true" />}
-            onClick={() => menuTrigger.current && onShare(menuTrigger.current)}
-          >
-            {t('activation.invite.view')}
-          </Menu.Item>
-          <Menu.Item
-            color="red"
-            leftSection={<X size={18} aria-hidden="true" />}
-            onClick={() => menuTrigger.current && onCancel(menuTrigger.current)}
-          >
-            {t('members.revoke')}
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
-    </li>
-  )
-}
 
 export function InviteInstructions({
   email,

@@ -36,7 +36,7 @@ import {
 import { useAuth } from '@/features/auth'
 import { characterRosterQuery, partyOverviewQuery } from '@/features/characters'
 import { encountersQuery, isLive, sessionContinuityQuery } from '@/features/combat'
-import { usePendingProposalCount } from '@/features/inventory'
+import { proposalsQuery, usePendingProposalCount } from '@/features/inventory'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
 import { RefreshControl } from '@/shared/ui/refresh-control'
 import './campaign-landing.css'
@@ -68,6 +68,8 @@ function DmHome() {
   const party = useQuery(partyOverviewQuery(userId, campaign.id))
   const session = useQuery(sessionContinuityQuery(userId, campaign.id))
   const proposals = usePendingProposalCount(campaign.id, true)
+  // The same query as the count: shared by key, read here for its failure.
+  const proposalList = useQuery(proposalsQuery(userId, campaign.id, null))
   const [rehearsing, setRehearsing] = useState(false)
   const rehearsalTile = useRef<HTMLElement | null>(null)
   const live = encounters.data?.find((encounter) => isLive(encounter.status))
@@ -159,7 +161,12 @@ function DmHome() {
         description={t('dm.unlinkedPlayers', { count: steps.unlinked.length })}
       />,
     )
-  const pendingFailed = members.isError || invitations.isError || roster.isError
+  // A query that failed says so with a retry, in this block: its row would otherwise just be
+  // missing.
+  const failedPending = [members, invitations, roster, party, proposalList].filter(
+    (query) => query.isError,
+  )
+  const pendingFailed = failedPending.length > 0
   // The blocks above the tools arrive together: the board is drawn once they have answered, so
   // nothing moves under the thumb after the first paint.
   const settling = [encounters, members, invitations, roster].some((query) => query.isPending)
@@ -232,12 +239,8 @@ function DmHome() {
                   <QueryFeedback
                     pending={false}
                     error
-                    cause={members.error ?? invitations.error ?? roster.error}
-                    retry={() => {
-                      if (members.isError) void members.refetch()
-                      if (invitations.isError) void invitations.refetch()
-                      if (roster.isError) void roster.refetch()
-                    }}
+                    cause={failedPending[0]?.error}
+                    retry={() => failedPending.forEach((query) => void query.refetch())}
                   />
                 )}
                 {pendingRows.length > 0 && <ul className="dm-rows">{pendingRows}</ul>}
@@ -248,6 +251,14 @@ function DmHome() {
               <h2 id="dm-home-table" className="dm-home-title">
                 {t('dm.groupTable')}
               </h2>
+              {session.isError && (
+                <QueryFeedback
+                  pending={false}
+                  error
+                  cause={session.error}
+                  retry={() => void session.refetch()}
+                />
+              )}
               <ul className="dm-tiles">
                 <HomeTile to={href('bestiary')} icon={dmPanelIcons.bestiary}>
                   {t(dmPanelLabels.bestiary)}

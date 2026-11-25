@@ -19,7 +19,7 @@ const actions = [
   { id: 'loot', label: 'loot.open', icon: Gift, place: 'items', run: 'loot' },
   { id: 'newCreature', label: 'bestiary.new', icon: Plus, place: 'bestiary', run: 'new' },
   { id: 'newItem', label: 'catalogue.create', icon: Plus, place: 'items', run: 'new' },
-  { id: 'setLevel', label: 'switcher.setLevel', icon: TrendingUp, place: 'level', run: undefined },
+  { id: 'setLevel', label: 'switcher.setLevel', icon: TrendingUp, place: 'level', run: 'set' },
 ] as const satisfies readonly {
   id: string
   label: string

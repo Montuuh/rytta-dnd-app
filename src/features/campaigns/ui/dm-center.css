@@ -1,347 +1,6 @@
-.member-characters {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-.member-characters button,
-.member-characters summary,
-.member-sheet {
-  min-height: 44px;
-  align-content: center;
-}
-.member-sheet {
-  display: inline-block;
-  overflow-wrap: anywhere;
-  color: var(--app-accent);
-}
-.member-characters summary {
-  cursor: pointer;
-}
 .dm-subheading {
   margin: 0;
   font-size: var(--fs-h3);
-}
-
-.member-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--app-border);
-  border-radius: var(--mantine-radius-md);
-  background: var(--app-surface);
-}
-
-.member-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 64px;
-  padding: 8px 4px 8px 14px;
-}
-
-.member-row + .member-row {
-  border-top: 1px solid var(--app-border);
-}
-
-.member-row .member-identity {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.module-count {
-  flex: none;
-}
-
-.member-row .member-role {
-  flex: none;
-  overflow: visible;
-}
-
-/* RYT-130 party level: a shield seal with the level in the display face next to the title, the
-   copy and the stepper under it. The heading carries the value for assistive technology. */
-.party-level {
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--app-border);
-  border-radius: var(--mantine-radius-md);
-  background: var(--app-surface);
-}
-
-.party-level-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.party-level-seal {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 52px;
-  height: 58px;
-  font-family: Georgia, Cambria, serif;
-  font-size: var(--fs-stat);
-  color: var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-raised));
-  clip-path: polygon(50% 0, 100% 13%, 93% 62%, 50% 100%, 7% 62%, 0 13%);
-}
-
-.party-level-head h2 {
-  margin: 0;
-}
-
-.party-level-head h2:focus-visible {
-  outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
-}
-
-.party-level-body {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-
-.party-level-below {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: var(--fs-meta);
-  color: var(--app-muted);
-}
-
-.party-level-below[data-open] {
-  color: var(--app-text);
-  font-weight: 600;
-}
-
-.party-level-controls {
-  margin-top: 4px;
-}
-
-.party-level-stepper {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid color-mix(in srgb, var(--app-muted) 40%, var(--app-border));
-  border-radius: 12px;
-  background: var(--app-surface);
-}
-
-.party-level-stepper:focus-within {
-  border-color: var(--app-accent);
-}
-
-.party-level-step {
-  display: grid;
-  place-items: center;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--app-accent);
-  cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.party-level-step:first-child {
-  border-radius: 11px 0 0 11px;
-}
-
-.party-level-step:last-child {
-  border-radius: 0 11px 11px 0;
-}
-
-.party-level-step:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.party-level-value {
-  display: grid;
-  place-items: center;
-  min-width: 3rem;
-  font-size: var(--fs-stat);
-  font-family: Georgia, Cambria, serif;
-  line-height: 1;
-}
-
-.party-level-saved:empty {
-  display: none;
-}
-
-.party-level-saved {
-  font-size: var(--fs-meta);
-  color: var(--success);
-}
-
-/* RYT-133 dice settings: a seal beside the title, then two groups of exclusive rows (a mark, the
-   choice and what it means for the table). The checked row takes the accent border; the input is
-   visually hidden, so its label is the 44px target and carries the focus ring. */
-.dice-set {
-  display: grid;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid var(--app-border);
-  border-radius: var(--mantine-radius-md);
-  background: var(--app-surface);
-}
-
-.dice-set-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.dice-set-head h2 {
-  margin: 0;
-}
-
-.dice-set-head h2:focus-visible {
-  outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
-}
-
-.dice-set-seal {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 52px;
-  height: 58px;
-  color: var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-raised));
-  clip-path: polygon(50% 0, 100% 13%, 93% 62%, 50% 100%, 7% 62%, 0 13%);
-}
-
-.dice-set-group {
-  display: grid;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.dice-set-legend {
-  padding: 0;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.dice-set-option {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-height: 44px;
-  margin-top: -1px;
-  padding: 10px 12px;
-  border: 1px solid var(--app-border);
-  background: var(--app-surface);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.dice-set-option:first-of-type {
-  margin-top: 0;
-  border-radius: 12px 12px 0 0;
-}
-
-.dice-set-option:last-of-type {
-  border-radius: 0 0 12px 12px;
-}
-
-.dice-set-option:has(input:checked) {
-  z-index: 1;
-  border-color: var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-surface));
-}
-
-.dice-set-option:has(input:focus-visible) {
-  z-index: 2;
-  outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
-}
-
-.dice-set-mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  border: 2px solid var(--app-muted);
-  border-radius: 50%;
-}
-
-.dice-set-mark::after {
-  content: '';
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--app-accent);
-  transform: scale(0);
-}
-
-.dice-set-option:has(input:checked) .dice-set-mark {
-  border-color: var(--app-accent);
-}
-
-.dice-set-option:has(input:checked) .dice-set-mark::after {
-  transform: scale(1);
-}
-
-.dice-set-text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dice-set-title {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.dice-set-current {
-  margin-inline-start: 8px;
-  font-size: var(--fs-tag);
-  font-weight: 500;
-  color: var(--app-muted);
-}
-
-.dice-set-hint {
-  font-size: var(--fs-meta);
-  color: var(--app-muted);
-}
-
-.dice-set-saved:empty {
-  display: none;
-}
-
-.dice-set-saved {
-  font-size: var(--fs-meta);
-  color: var(--success);
-}
-
-.dice-set-summary {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.dice-set-summary li {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 12px;
-}
-
-.dice-set-summary span {
-  color: var(--app-muted);
 }
 
 /* RYT-179 command centre frame. Phones: a bar under the header (back to the home, the panel
@@ -384,9 +43,11 @@
 }
 
 .dm-nav-link {
-  display: flex;
+  /* Icon beside the label; a pending count sits on its own line under the label. */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  column-gap: 10px;
   min-height: 44px;
   padding: 6px 12px;
   border-radius: var(--mantine-radius-sm);
@@ -397,7 +58,7 @@
 }
 
 .dm-nav-link svg {
-  flex: none;
+  grid-row: 1 / span 2;
   color: var(--app-muted);
 }
 
@@ -421,13 +82,13 @@
 }
 
 .dm-nav-label {
-  flex: 1 1 auto;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .dm-nav-count {
-  flex: none;
+  grid-column: 2;
+  font-size: var(--fs-meta);
   font-weight: 700;
   color: var(--app-accent);
 }
@@ -534,8 +195,7 @@
   /* The panel's own heading repeats the bar: read once, and the first control moves up. */
   .dm-shell-panel .dm-panel-title,
   .dm-shell-panel .bst-head-title,
-  .dm-shell-panel #store-heading,
-  .dm-shell-panel #campaign-content-title {
+  .dm-shell-panel #store-heading {
     position: absolute;
     width: 1px;
     height: 1px;

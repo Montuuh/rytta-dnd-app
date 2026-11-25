@@ -151,8 +151,8 @@ How it works:
 
 The filled accent marks one action per screen: the one the DM uses at the table. Item
 storeroom: Distribute loot (New item outlined, Manage catalogue a quiet link). Members: Invite
-player; Set level N is outlined and enabled only when the stepper differs from the campaign's
-level. Shops: Add item (New shop outlined). Combat: the fight-flow button (Start, Next turn);
+player. Party level: Raise to level N (Set level N under "Another level" is outlined). Content:
+Review changes, only while a pack version waits. Dice, Modules and Audit have none. Shops: Add item (New shop outlined). Combat: the fight-flow button (Start, Next turn);
 adding party members or creatures uses the light variant. Bestiary: Add to encounter in the
 stat block (New creature light). Dialogs and drawers are their own screen with their own fill.
 
@@ -435,11 +435,13 @@ parchment plate set large.
 
 ## Level up (RYT-130)
 
-The DM sets the party level in the DM Command Center (Party level panel): a shield seal with the level,
-a 44px −/value/+ stepper that starts at the highest finished sheet, and one confirmation that says
-what the change does (raising prompts the Players, lowering or clearing only stops the prompts; no
-sheet changes). Each request carries one id, so the retry after a failure never applies twice. A
-line counts the finished characters still below the level.
+The DM sets the party level in the DM Command Center (Party level panel, RYT-180, ADR 057): the
+level as a display numeral with how many characters are below it, a filled action for the next
+level, and "Another level" with the 44px −/value/+ stepper (it starts at the highest finished
+sheet), Set level N and Clear. A change saves at once: no sheet changes until its Player confirms,
+so instead of a confirmation the panel keeps a status line with Undo until the DM leaves or
+changes the level again. Each request carries one id, so the retry after a failure never applies
+twice. A ruled list names the characters with their level, those below first.
 
 A Player below the party level sees one prompt on the sheet with a single action. It opens the
 guided level-up: a full-screen sheet on phones and a modal from 48em, owned by the overlay wrappers
@@ -552,12 +554,13 @@ token below. On its side, the update notice stacks above the measure readout whi
 
 ## Dice (RYT-133, ADR 046)
 
-The DM sets the table's dice in the DM Command Center, panel "Dice": two groups of exclusive rows (how
-the table rolls: physical dice, dice in the app, each Player chooses; who sees the rolls: the roller and
-the DM, the whole table, only the roller). Each row is a 44px label with a mark, the choice and what it
-means; the radio is visually hidden and the checked row takes the accent border. A change shows one
-button, then one confirmation that lists what changes and what it does to earlier rolls; failures
-focus the reason and the retry repeats the same request. "Each Player chooses" is kept on the Player's
+The DM sets the table's dice in the DM Command Center, panel "Dice" (RYT-180, ADR 057): two rows
+with the current value (how the table rolls: physical dice, dice in the app, each Player chooses;
+who sees the rolls: the roller and the DM, the whole table, only the roller). A row opens a sheet
+(bottom drawer on phones, dialog from 48em) with its three options, a mark and one line of what
+each means; arrow keys move without committing. Choosing another option asks once, for that
+change, saying what it does to earlier rolls; failures focus the reason and the retry repeats the
+same request. There is no Apply button. "Each Player chooses" is kept on the Player's
 device (`rytta-dice-choice:<user>:<campaign>` in localStorage, in memory for the session where storage
 is blocked): a two-way control "Physical / In the app" on the sheet, the initiative entry and the hit
 dice, physical until it is used.

@@ -10,9 +10,10 @@ import {
   Text,
   TextInput,
   Title,
+  VisuallyHidden,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, Eye, EyeOff, Search } from 'lucide-react'
+import { ChevronDown, ChevronRight, Eye, EyeOff, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth'
 import { Modal } from '@/shared/ui/overlays'
@@ -49,7 +50,14 @@ const actionMessage = (code: string) =>
         : 'campaignContent.actionError'
 
 /** RYT-162: the DM chooses the packs this campaign uses, per category, at a pinned version. */
-export function CampaignContentPanel({ campaignId }: { campaignId: string }) {
+export function CampaignContentPanel({
+  campaignId,
+  title,
+}: {
+  campaignId: string
+  /** The panel's name, the one the command centre's navigation shows. */
+  title: string
+}) {
   const { t, i18n } = useTranslation()
   const { state } = useAuth()
   const content = useQuery(campaignContentQuery(state.user!.id, campaignId))
@@ -98,63 +106,113 @@ export function CampaignContentPanel({ campaignId }: { campaignId: string }) {
       })
   }
 
+  const byCategory = liveCategories.map((category) => ({
+    category,
+    offered: content.data.flatMap((pack) =>
+      pack.categories
+        .filter((entry) => entry.category === category)
+        .map((entry) => ({ pack, category: entry })),
+    ),
+  }))
+  const withPacks = byCategory.filter(({ offered }) => offered.length > 0)
+  const withoutPacks = byCategory.filter(({ offered }) => offered.length === 0)
+  // A newer version waits: those rows come first, with the way to review it.
+  const pending = withPacks.flatMap(({ offered }) =>
+    offered.filter(({ pack, category }) => hasUpdate(pack, category)),
+  )
+
   return (
     <section aria-labelledby="campaign-content-title" className="content-panel">
-      <Title order={2} id="campaign-content-title" size="h3">
-        {t('campaignContent.title')}
-      </Title>
+      <h2 id="campaign-content-title" className="dm-subheading dm-panel-title">
+        {title}
+      </h2>
       {action.isError && (
         <Alert color="red" role="alert" mt="sm">
           {t(actionMessage(action.error.message))}
         </Alert>
       )}
-      <div role="status" aria-live="polite" className="content-notice">
-        {updated !== null && <Text size="sm">{updated}</Text>}
-      </div>
-      {liveCategories.map((category) => {
-        const offered = content.data.flatMap((pack) =>
-          pack.categories
-            .filter((entry) => entry.category === category)
-            .map((entry) => ({ pack, category: entry })),
-        )
-        return (
-          <section
-            key={category}
-            aria-labelledby={`content-${category}`}
-            className="content-section"
-          >
-            <Title order={3} id={`content-${category}`} className="content-section-title">
-              {t(`campaignContent.category.${category}`)}
-            </Title>
-            {offered.length === 0 ? (
-              <Text c="dimmed" size="sm">
-                {t('campaignContent.none')}
-              </Text>
-            ) : (
-              <ul className="content-packs">
-                {offered.map((target) => (
-                  <PackRow
-                    key={target.pack.id}
-                    target={target}
-                    language={i18n.language}
-                    busy={action.isPending}
-                    onToggle={(enabled) => toggle(target, enabled)}
-                    onBrowse={() => {
-                      remember()
-                      setBrowsing({ target, open: true })
-                    }}
-                    onReview={() => {
+      {/* The live region is always in the page and takes no room; the sentence people see is
+          drawn only when there is one, so an idle panel keeps no empty line. */}
+      <VisuallyHidden role="status">{updated}</VisuallyHidden>
+      {updated !== null && (
+        <Text size="sm" className="content-notice" aria-hidden="true">
+          {updated}
+        </Text>
+      )}
+      {pending.length > 0 && (
+        <section aria-labelledby="content-to-review" className="content-section">
+          <Title order={3} id="content-to-review" className="content-section-title">
+            {t('campaignContent.toReview')}
+          </Title>
+          <ul className="content-packs">
+            {pending.map((target, index) => {
+              const title = titleOf(target.pack, i18n.language)
+              const categoryName = t(`campaignContent.category.${target.category.category}`)
+              return (
+                <li key={switchId(target)} className="content-pack content-review-row">
+                  <span className="content-pack-text">
+                    <span className="user-copy content-pack-title">
+                      {title} · {categoryName}
+                    </span>
+                    <span className="content-pack-meta tabular">
+                      {t('campaignContent.versionChange', {
+                        from: target.category.pinned_version ?? 0,
+                        to: target.pack.version ?? 0,
+                      })}
+                    </span>
+                  </span>
+                  <Button
+                    // One filled button in the panel: the first row's.
+                    variant={index === 0 ? 'filled' : 'default'}
+                    onClick={() => {
                       remember()
                       setUpdated(null)
                       setReviewing({ target, open: true })
                     }}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
-        )
-      })}
+                    aria-label={t('campaignContent.reviewPack', {
+                      pack: title,
+                      category: categoryName.toLowerCase(),
+                    })}
+                  >
+                    {t('campaignContent.review')}
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
+      {withPacks.map(({ category, offered }) => (
+        <section key={category} aria-labelledby={`content-${category}`} className="content-section">
+          <Title order={3} id={`content-${category}`} className="content-section-title">
+            {t(`campaignContent.category.${category}`)}
+          </Title>
+          <ul className="content-packs">
+            {offered.map((target) => (
+              <PackRow
+                key={target.pack.id}
+                target={target}
+                language={i18n.language}
+                busy={action.isPending}
+                onToggle={(enabled) => toggle(target, enabled)}
+                onBrowse={() => {
+                  remember()
+                  setBrowsing({ target, open: true })
+                }}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+      {withoutPacks.length > 0 && (
+        <Text c="dimmed" size="sm" className="content-none">
+          {t('campaignContent.noPacks', {
+            categories: withoutPacks
+              .map(({ category }) => t(`campaignContent.category.${category}`))
+              .join(', '),
+          })}
+        </Text>
+      )}
       {browsing && (
         <EntriesDialog
           key={`${browsing.target.pack.id}:${browsing.target.category.category}`}
@@ -239,20 +297,17 @@ function PackRow({
   busy,
   onToggle,
   onBrowse,
-  onReview,
 }: {
   target: Target
   language: string
   busy: boolean
   onToggle: (enabled: boolean) => void
   onBrowse: () => void
-  onReview: () => void
 }) {
   const { t } = useTranslation()
   const { pack, category } = target
   const title = titleOf(pack, language)
   const categoryName = t(`campaignContent.category.${category.category}`).toLowerCase()
-  const update = hasUpdate(pack, category)
   const state = !category.enabled
     ? t('campaignContent.metaOff', { count: category.entries })
     : category.hidden > 0
@@ -266,46 +321,38 @@ function PackRow({
           count: category.entries,
         })
   const meta = startsFromSrd(pack, title) ? `${t('campaignContent.basedOnSrd')} · ${state}` : state
+  const text = (
+    <span className="content-pack-text">
+      <span className="user-copy content-pack-title">{title}</span>
+      <span className="content-pack-meta">{meta}</span>
+    </span>
+  )
   return (
     <li className="content-pack" data-enabled={category.enabled || undefined}>
       <Switch
         id={switchId(target)}
         className="content-switch"
         checked={category.enabled}
-        disabled={busy}
-        onChange={(event) => onToggle(event.currentTarget.checked)}
-        label={<span className="user-copy content-pack-title">{title}</span>}
-        description={meta}
+        // Busy, not disabled: the switch keeps its place in the tab order and its focus.
+        aria-disabled={busy || undefined}
+        onChange={(event) => {
+          if (!busy) onToggle(event.currentTarget.checked)
+        }}
         aria-label={t('campaignContent.use', { pack: title, category: categoryName })}
       />
-      {category.enabled && (
-        <div className="content-pack-actions">
-          {update && (
-            <span className="content-update">
-              {t('campaignContent.update', { version: pack.version ?? 0 })}
-            </span>
-          )}
-          {update && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={onReview}
-              aria-label={t('campaignContent.reviewPack', { pack: title, category: categoryName })}
-            >
-              {t('campaignContent.review')}
-            </Button>
-          )}
-          {pack.offered && (
-            <Button
-              variant="subtle"
-              size="sm"
-              onClick={onBrowse}
-              aria-label={t('campaignContent.browsePack', { pack: title, category: categoryName })}
-            >
-              {t('campaignContent.browse')}
-            </Button>
-          )}
-        </div>
+      {category.enabled && pack.offered ? (
+        // The whole text part opens the entries: a chevron says so.
+        <button
+          type="button"
+          className="content-pack-open"
+          onClick={onBrowse}
+          aria-label={t('campaignContent.browsePack', { pack: title, category: categoryName })}
+        >
+          {text}
+          <ChevronRight size={20} aria-hidden="true" className="content-pack-chevron" />
+        </button>
+      ) : (
+        <div className="content-pack-open">{text}</div>
       )}
     </li>
   )

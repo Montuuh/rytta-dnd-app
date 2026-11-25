@@ -4,28 +4,21 @@ import type { diceEn } from './dice-en'
  * las últimas tiradas. */
 export const diceEs = {
   'dm.panelDice': 'Dados',
-  'diceSettings.title': 'Dados de la mesa',
-  'diceSettings.hint':
-    'Elige cómo tira la mesa y quién ve las tiradas hechas o anotadas en la app.',
-  'diceSettings.current': 'En uso',
   'diceSettings.modeLegend': 'Cómo se tira',
   'diceSettings.visibilityLegend': 'Quién ve las tiradas',
   'diceSettings.mode.physical': 'Dados físicos',
-  'diceSettings.mode.physicalHint':
-    'Cada jugador tira sus dados. La ficha dice qué tirar y qué sumar, y el resultado se puede anotar: queda marcado como anotado.',
+  'diceSettings.mode.physicalHint': 'Cada jugador tira sus dados y puede anotar el resultado.',
   'diceSettings.mode.app': 'Dados en la app',
-  'diceSettings.mode.appHint':
-    'Rytta tira los dados de las pruebas, salvaciones, ataques, daño, iniciativa y dados de golpe, y anota cada tirada. Queda marcada como tirada por Rytta y nadie puede cambiarla.',
+  'diceSettings.mode.appHint': 'Rytta tira y anota cada tirada; nadie puede cambiarla.',
   'diceSettings.mode.player': 'Cada jugador elige',
   'diceSettings.mode.playerHint':
-    'Cada uno escoge dados físicos o en la app en su dispositivo. Hasta que elija, dados físicos.',
+    'Cada uno elige en su dispositivo; hasta entonces, dados físicos.',
   'diceSettings.visibility.roller_dm': 'Quien tira y el DM',
   'diceSettings.visibility.roller_dmHint': 'El resto de la mesa no ve la tirada.',
   'diceSettings.visibility.table': 'Toda la mesa',
   'diceSettings.visibility.tableHint': 'Todos los miembros activos ven cada tirada.',
   'diceSettings.visibility.roller': 'Solo quien tira',
   'diceSettings.visibility.rollerHint': 'Ni siquiera el DM ve la tirada.',
-  'diceSettings.apply': 'Aplicar cambios',
   'diceSettings.saved': 'Ajustes de dados guardados.',
   'diceSettings.confirmTitle': '¿Cambiar los dados de la mesa?',
   'diceSettings.confirmMode.physical':

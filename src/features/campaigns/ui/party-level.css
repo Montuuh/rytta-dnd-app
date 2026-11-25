@@ -1,0 +1,194 @@
+/* RYT-180 party level: the level as a large numeral with one sentence beside it, one filled action
+   and a disclosure for any other level, then the characters. Changes save at once; the status line
+   after a save offers Undo. */
+.party-level {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.party-level-title {
+  margin: 0;
+}
+
+.party-level-title:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: 2px;
+}
+
+.party-level-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.party-level-numeral {
+  flex: none;
+  min-width: 1.2ch;
+  font-family: var(--mantine-font-family-headings);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--app-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.party-level-status {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--app-muted);
+}
+
+.party-level-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.party-level-hint {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+}
+
+.party-level-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.party-level-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid color-mix(in srgb, var(--app-muted) 40%, var(--app-border));
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+}
+
+.party-level-stepper:focus-within {
+  border-color: var(--app-accent);
+}
+
+.party-level-step {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--app-accent);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.party-level-step:first-child {
+  border-radius: calc(var(--mantine-radius-md) - 1px) 0 0 calc(var(--mantine-radius-md) - 1px);
+}
+
+.party-level-step:last-child {
+  border-radius: 0 calc(var(--mantine-radius-md) - 1px) calc(var(--mantine-radius-md) - 1px) 0;
+}
+
+.party-level-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.party-level-value {
+  display: grid;
+  place-items: center;
+  min-width: 3rem;
+  font-size: var(--fs-stat);
+  font-family: var(--mantine-font-family-headings);
+  line-height: 1;
+}
+
+/* The status line keeps its place (the height of the Undo button), so a save moves nothing. */
+.party-level-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  min-height: 44px;
+  margin-block: -8px;
+  font-size: var(--fs-meta);
+}
+
+.party-level-notice [role='status'] {
+  color: var(--success);
+}
+
+.party-level-error {
+  display: grid;
+  gap: 8px;
+}
+
+.party-level-error:focus {
+  outline: none;
+}
+
+.party-level-characters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+
+.party-level-character + .party-level-character {
+  border-top: 1px solid var(--app-border);
+}
+
+.party-level-character a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 14px;
+  color: var(--app-text);
+  text-decoration: none;
+}
+
+.party-level-character a:hover {
+  background: var(--app-hover);
+}
+
+.party-level-character a:focus-visible {
+  outline: 3px solid var(--app-focus);
+  outline-offset: -3px;
+}
+
+.party-level-who {
+  display: grid;
+  min-width: 0;
+}
+
+.party-level-who strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.party-level-owner {
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  overflow-wrap: anywhere;
+}
+
+.party-level-figure {
+  flex: none;
+  font-size: var(--fs-meta);
+  color: var(--app-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.party-level-character[data-below] .party-level-figure {
+  color: var(--app-accent);
+  font-weight: 600;
+}

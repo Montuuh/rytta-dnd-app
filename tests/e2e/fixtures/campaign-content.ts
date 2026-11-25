@@ -7,7 +7,7 @@ type Json = Record<string, unknown>
 export const srdPackId = '80000000-0000-4000-8000-000000000001'
 export const northPackId = '80000000-0000-4000-8000-000000000002'
 
-export function contentServer(options: { stale?: boolean } = {}) {
+export function contentServer(options: { stale?: boolean; northUpdate?: boolean } = {}) {
   const calls: { method: string; body: Json }[] = []
   const creatures = [
     { kind: 'creature', key: 'aboleth', name_en: 'Aboleth', name_es: 'Aboleth', hidden: false },
@@ -16,7 +16,11 @@ export function contentServer(options: { stale?: boolean } = {}) {
   ]
   const state = {
     srd: { enabled: true, pinned: 1 as number | null },
-    north: { enabled: false, pinned: null as number | null },
+    // northUpdate: a second pack in use whose newer version waits, to see more than one row to review.
+    north: {
+      enabled: Boolean(options.northUpdate),
+      pinned: options.northUpdate ? (1 as number | null) : (null as number | null),
+    },
   }
   const packs = () => [
     {
@@ -42,7 +46,7 @@ export function contentServer(options: { stale?: boolean } = {}) {
       slug: 'northern-beasts',
       title_en: 'Northern Beasts',
       title_es: 'Bestias del Norte',
-      version: 1,
+      version: options.northUpdate ? 2 : 1,
       categories: [
         {
           category: 'creatures',

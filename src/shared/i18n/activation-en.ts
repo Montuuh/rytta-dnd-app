@@ -17,7 +17,6 @@ export const activationEn = {
   'activation.invite.instructions':
     'I’ve invited you to {{campaign}} in Rytta. Go to {{url}}, sign in as {{email}} with Google or with an email and a password, then accept the invitation under My campaigns.',
   'activation.invite.copy': 'Copy instructions',
-  'activation.invite.view': 'View instructions',
   'activation.invite.copied': 'Instructions copied',
   'activation.invite.copyError': 'Select the instructions to copy them manually.',
   'activation.invite.done': 'Done',

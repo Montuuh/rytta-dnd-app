@@ -18,6 +18,11 @@ async function audit(page: Page, scope = '#main-content') {
     page.locator(scope).first(),
     'button:visible, a:visible, input[type="checkbox"]:visible',
   )
+  // A switch is hit by its input: 44px wide as well as tall.
+  await expectTouchTargets(page.locator(scope).first(), 'input[type="checkbox"]:visible', {
+    width: 44,
+    height: 44,
+  })
   const axe = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .include(scope)
@@ -58,7 +63,36 @@ for (const [language, theme] of [
     await expect(section).toContainText(
       es ? 'Versión 1 · 3 registros · 1 oculto' : 'Version 1 · 3 entries · 1 hidden',
     )
-    await expect(section).toContainText(es ? 'Versión 2 disponible' : 'Version 2 available')
+    // RYT-180: the pending version is its own block, first, with the one filled button.
+    const review = page.getByRole('region', { name: es ? 'Por revisar' : 'To review' })
+    await expect(review).toContainText(es ? 'Versión 1 → 2' : 'Version 1 → 2')
+    await expect(
+      review.getByRole('button', {
+        name: es ? 'Revisar cambios de SRD 5.2.1 en criaturas' : /^Review changes to SRD 5.2.1/,
+      }),
+    ).toHaveAttribute('data-variant', 'filled')
+    expect(
+      await page.evaluate(() => {
+        const first = document.querySelector('#main-content section h3')
+        return first?.id
+      }),
+    ).toBe('content-to-review')
+    // Categories without packs are one muted line, not a section each.
+    await expect(page.getByRole('region', { name: es ? 'Reglas' : 'Rules' })).toHaveCount(0)
+    await expect(
+      page.getByText(
+        es
+          ? 'Sin paquetes todavía: Personajes, Reglas, Objetos'
+          : 'No packs yet: Characters, Rules, Items',
+      ),
+    ).toBeVisible()
+    await expect(
+      section.getByRole('button', {
+        name: es
+          ? 'Ver y ocultar registros de SRD 5.2.1 en criaturas'
+          : /^Browse and hide creatures in SRD 5.2.1/,
+      }),
+    ).toBeVisible()
     await expect(
       section.getByRole('switch', { name: es ? /Bestias del Norte/ : /Northern Beasts/ }),
     ).not.toBeChecked()
@@ -111,7 +145,7 @@ test('RYT-162 the DM reviews a new version and accepts it', async ({ page }, inf
   await expect(
     page.getByRole('status').filter({ hasText: 'SRD 5.2.1: actualizado a la versión 2.' }),
   ).toBeVisible()
-  await expect(page.getByText('Versión 2 disponible')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Por revisar' })).toHaveCount(0)
   // Its Review button is gone: the pack's switch takes focus.
   await expect(page.getByRole('switch', { name: 'Usar SRD 5.2.1 en criaturas' })).toBeFocused()
 })
@@ -175,7 +209,7 @@ test('RYT-162 turning packs off keeps their version; the SRD creatures ask first
   // Turning it on again resumes version 1: the newer version still waits for review.
   await srd.click()
   await expect(srd).toBeChecked()
-  await expect(page.getByText('Versión 2 disponible')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Por revisar' })).toContainText('Versión 1 → 2')
   // Another pack turns on and off in one step: nothing is lost.
   const north = page.getByRole('switch', { name: 'Usar Bestias del Norte en criaturas' })
   await north.click()
@@ -210,4 +244,38 @@ test('RYT-162 one dialog after another opens and closes, with a fresh search', a
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(review).toBeFocused()
+})
+
+test('RYT-180 with several versions waiting only the first row has the filled button', async ({
+  page,
+}, info) => {
+  await identityFixture(page)
+  await contentServer({ northUpdate: true }).install(page)
+  await page.goto(panel)
+  const review = page.getByRole('region', { name: 'Por revisar' })
+  await expect(review.getByRole('listitem')).toHaveCount(2)
+  const buttons = review.getByRole('button', { name: /^Revisar cambios de/ })
+  await expect(buttons.nth(0)).toHaveAttribute('data-variant', 'filled')
+  await expect(buttons.nth(1)).not.toHaveAttribute('data-variant', 'filled')
+  await expect(
+    page.locator('#main-content .mantine-Button-root[data-variant="filled"]'),
+  ).toHaveCount(1)
+  await audit(page)
+  await capture(page, info.outputPath('content-two-reviews.png'))
+})
+
+test('RYT-180 without a waiting version there is no block to review and no filled button', async ({
+  page,
+}) => {
+  await identityFixture(page)
+  await contentServer().install(page)
+  await page.goto(panel)
+  await page.getByRole('button', { name: 'Revisar cambios de SRD 5.2.1 en criaturas' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Actualizar a la versión 2' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Por revisar' })).toHaveCount(0)
+  await expect(
+    page.locator('#main-content .mantine-Button-root[data-variant="filled"]'),
+  ).toHaveCount(0)
+  await audit(page)
 })

@@ -5539,18 +5539,20 @@
       "title": "DM command centre: the administration panels read and act in fewer steps",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-179"],
       "sources": [
         "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the administration panels are redesigned inside after the navigation and the home.",
         "RYT-179 audit (docs/evidence/RYT-179/audit.md): Invite player is cut by the bottom navigation in the first phone screen, Modules and Audit have no heading, and Refresh appears on panels it does not refresh.",
-        "Carried over from the RYT-179 review, 25 November 2026: keys typed in the first frame after Ctrl+K can be lost; the count next to Members in the side navigation has no visible meaning; the Set party level action lands on the panel without focusing the stepper; Party level and Dice repeat their title under the phone bar and keep their first control below 200px; a failed party, proposal or session query drops its row on the home without a message; the switcher overflows 6px at 390x667 with 150% text; its Panels label scrolls out of view after Home."
+        "Carried over from the RYT-179 review, 25 November 2026: keys typed in the first frame after Ctrl+K can be lost; the count next to Members in the side navigation has no visible meaning; the Set party level action lands on the panel without focusing the stepper; Party level and Dice repeat their title under the phone bar and keep their first control below 200px; a failed party, proposal or session query drops its row on the home without a message; the switcher overflows 6px at 390x667 with 150% text; its Panels label scrolls out of view after Home.",
+        "Owner decision on the RYT-180 options page, 25 November 2026 (the recommended option in each): member rows are compact and open a sheet per member (P1 A); the party level has a button for the next level and lists the characters (P2 A); a level change saves at once with Undo, a dice change keeps its confirmation (P3 B); dice are two rows with their value and a sheet per setting (P4 A); modules are the list alone (P5 A); pack versions to review come first in Content (P6 A); the audit filters by character and groups by day (P7 A)."
       ],
       "scope": "Members, party level, modules, dice, content and audit inside the command centre shell from RYT-179: what each panel shows first, its one primary action and the steps each task takes. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the bestiary and the storeroom (RYT-181), database changes.",
       "acceptance": [
         "An options page with the current steps per task and the proposed panels is answered by the owner before implementation.",
-        "Each administration panel shows its primary action in the first phone screen and Refresh only where it refetches what the panel shows.",
-        "The tasks measured on the options page take the steps agreed there, measured again after the change.",
+        "Each administration panel shows its primary action in the first phone screen, one title on a phone, no badges, and Refresh only where it refetches what the panel shows.",
+        "Steps on a phone, measured again after the change: raising the party one level takes one tap and can be undone from the panel; the characters below the level are named on arrival; a dice setting changes in three taps without scrolling; linking a character to a Player takes three taps; a pack version to review is the first control of Content; the audit of one character takes two taps; about eight members fit in the first screen.",
+        "Carried from the RYT-179 review: keys typed right after Ctrl+K are kept, the count next to Members in the side navigation says what it counts, Set party level focuses the control, the switcher fits 390x667 at 150% text, and a failed party, proposal or session query shows on the home.",
         "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
       ],
       "validation": [
@@ -5558,7 +5560,11 @@
         "npm run test:e2e",
         "Before and after captures and step counts; design critique of the rendered result; independent UI review"
       ],
-      "evidence": ["docs/evidence/RYT-180/validation.md"]
+      "evidence": [
+        "docs/evidence/RYT-180/audit.md",
+        "docs/evidence/RYT-180/validation.md",
+        "docs/decisions/057-dm-administration-panels.md"
+      ]
     },
     {
       "id": "RYT-181",
@@ -5569,7 +5575,8 @@
       "dependsOn": ["RYT-179", "RYT-180"],
       "sources": [
         "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the bestiary and the storeroom are redesigned inside as the third delivery.",
-        "RYT-179 audit (docs/evidence/RYT-179/audit.md): on a phone the bestiary page is 37,618px tall with 106 controls in the main area, and giving an item takes five taps from the navigation."
+        "RYT-179 audit (docs/evidence/RYT-179/audit.md): on a phone the bestiary page is 37,618px tall with 106 controls in the main area, and giving an item takes five taps from the navigation.",
+        "Carried over from the RYT-180 review, 25 November 2026: holding Enter on the raise action of the party level raises one more level each time its rest ends; the segmented control and the off switch keep cool greys in Parchment; the dice confirmation repeats the line of the chosen option; the switcher placeholder is cut at 390x667 with 150% text; after a stale-version error in the Content review dialog the focus is left on the page."
       ],
       "scope": "The bestiary and the item storeroom inside the command centre shell from RYT-179, for use during play: finding a creature and reading its stat block, sending it to an encounter, finding an item and giving it or distributing loot. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the creature and item editors, content packs, database changes.",
       "acceptance": [

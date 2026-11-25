@@ -282,8 +282,10 @@ a.brand-bar {
   align-items: center;
   min-height: 44px;
 }
-/* The off track must stand out from the capsule in every theme (3:1 non-text contrast). */
-.preview-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track {
+/* The off track must stand out from its surface in every theme (3:1 non-text contrast). */
+.preview-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track,
+.module-switch-row .mantine-Switch-input:not(:checked) + .mantine-Switch-track,
+.content-switch .mantine-Switch-input:not(:checked) + .mantine-Switch-track {
   box-shadow: inset 0 0 0 1.5px var(--app-muted);
 }
 .preview-switch .mantine-Switch-label {
@@ -2295,62 +2297,12 @@ html[data-mantine-color-scheme='light'] .view-switch .mantine-SegmentedControl-i
   padding-top: 18px;
   min-width: 0;
 }
-.module-switch-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: var(--app-surface);
-  overflow: hidden;
-}
-.module-switch-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 56px;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--app-border);
-}
-.module-switch-row:last-child {
-  border-bottom: 0;
-}
-.module-switch-row[data-active] {
-  background: var(--success-soft);
-}
-.module-switch-name {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 10px;
-}
-.module-switch-row .mantine-Switch-track,
 .reveal-switch .mantine-Switch-track {
   cursor: pointer;
 }
-.module-switch-row .mantine-Switch-body,
 .reveal-switch .mantine-Switch-body {
   min-height: 44px;
   align-items: center;
-}
-.audit-filter {
-  align-self: flex-start;
-  max-width: 100%;
-}
-.audit-filter .mantine-SegmentedControl-label {
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-}
-.audit-timeline .mantine-Timeline-itemBullet {
-  background: var(--app-raised);
-  border-color: var(--app-accent);
-  color: var(--app-accent);
-}
-.audit-event {
-  overflow-wrap: anywhere;
 }
 /* RYT-025 character sheet: HP ring, number pad, hit-die pips, condition chips. */
 .hp-head {

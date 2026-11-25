@@ -1,15 +1,21 @@
 import { test, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, identityFixture } from './fixtures/identity.ts'
-import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
+import {
+  capture,
+  clippedLabels,
+  expectTouchTargets,
+  limitMatrix,
+  placeholderRoom,
+} from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
 // ADR 028 / RYT-046..049: the DM Command Center bestiary (SRD 5.2.1 + campaign creatures).
 const size = (project: string) =>
   project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
 const phone = (info: TestInfo) => info.project.name === 'identity-mobile'
-/** Below 62em the stat block opens in a full screen sheet instead of the side pane. */
-const sheet = (info: TestInfo) => (info.project.use.viewport?.width ?? 1440) < 992
+/** Phones open the stat block in a full screen sheet; from 48em it opens in a pane beside the list. */
+const sheet = (info: TestInfo) => (info.project.use.viewport?.width ?? 1440) < 768
 async function evidence(page: Page, info: TestInfo, name: string, ticket = 'RYT-046') {
   const s = size(info.project.name)
   if (s && process.env.RYT_EVIDENCE)
@@ -62,6 +68,18 @@ async function jumpTo(page: Page, group: string) {
 
 async function pick(page: Page, name: RegExp) {
   await page.getByRole('button', { name }).first().click()
+}
+
+/** New creature: an entry of the `···` menu beside Filters, at every width. */
+async function newCreature(page: Page) {
+  await page.getByRole('button', { name: 'Más acciones del bestiario' }).click()
+  await page.getByRole('menuitem', { name: 'Nueva criatura' }).click()
+}
+
+/** An entry of the stat block's `···` menu. */
+async function fromMenu(pane: Locator, page: Page, name: string, creature: string) {
+  await pane.getByRole('button', { name: `Más acciones para ${creature}` }).click()
+  await page.getByRole('menuitem', { name }).click()
 }
 
 for (const [language, theme] of [
@@ -140,7 +158,10 @@ for (const [language, theme] of [
     await capture(page, info.outputPath('contextual-bestiary.png'), { fullPage: false })
     await expectTouchTargets(pane, '.bst-actions button:visible', { height: 44, width: 44 })
     await audit(page, sheet(info) ? '[role="dialog"]' : 'body')
-    const addThree = pane.getByRole('button', { name: es ? 'Añadir 3' : 'Add 3', exact: true })
+    const addThree = pane.getByRole('button', {
+      name: es ? 'Añadir 3 a Cripta' : 'Add 3 to Cripta',
+      exact: true,
+    })
     // The request that succeeds is held open, so the test can move focus while it runs.
     let gate: Promise<void> = Promise.resolve()
     let open = () => {}
@@ -150,7 +171,7 @@ for (const [language, theme] of [
     })
     if (checkRetry) {
       await addThree.click()
-      await expect(pane.locator('.bst-encounter-add').getByRole('alert')).toBeInViewport()
+      await expect(pane.locator('.bst-add-status').getByRole('alert')).toBeInViewport()
       await expect(addThree).toBeFocused()
       expect(fight.combatants).toHaveLength(3)
     }
@@ -163,6 +184,7 @@ for (const [language, theme] of [
     await dial.focus()
     open()
     await expect(pane.getByRole('status').filter({ hasText: `3 × ${wolf}` })).toBeVisible()
+    await expect(pane.getByRole('button', { name: es ? 'Deshacer' : 'Undo' })).toBeVisible()
     await expect(dial).toHaveValue('1')
     await page.waitForTimeout(1300)
     await expect(dial).toBeFocused()
@@ -187,8 +209,10 @@ for (const [language, theme] of [
     await expect(comparison).toContainText(es ? 'Enemigo' : 'Enemy')
     await capture(page, info.outputPath('creature-comparison.png'), { fullPage: false })
     await comparison.getByRole('button', { name: zombie, exact: true }).click()
-    await pane.getByRole('button', { name: es ? 'Añadir' : 'Add', exact: true }).click()
-    await expect(pane.getByRole('status').filter({ hasText: `Cripta: ${zombie}` })).toBeVisible()
+    await pane
+      .getByRole('button', { name: es ? 'Añadir a Cripta' : 'Add to Cripta', exact: true })
+      .click()
+    await expect(pane.getByRole('status').filter({ hasText: `1 × ${zombie}` })).toBeVisible()
     expect(fight.combatants.map((creature) => creature.srd_id)).toEqual([
       'wolf',
       'wolf',
@@ -237,12 +261,16 @@ test('RYT-145 the DM saves a separate campaign variant from an official referenc
   await openBestiary(page)
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('wolf')
   const row = page.locator('[data-row-key="srd:wolf"]')
-  await row.getByRole('button', { name: 'Añadir Lobo a favoritas' }).click()
-  await expect(page.getByText('Lobo está en favoritas.')).toBeVisible()
-  await row.getByRole('button', { name: 'Quitar Lobo de favoritas' }).click()
-  await expect(page.getByText('Lobo se quitó de favoritas.')).toBeVisible()
+  // A row is one tab stop; the bookmark lives in the stat block's menu.
+  await expect(row.getByRole('button')).toHaveCount(1)
   await row.locator('.bst-row-main').click()
   const pane = detail(page, info)
+  await fromMenu(pane, page, 'Añadir Lobo a favoritas', 'Lobo')
+  await expect(page.getByText('Lobo está en favoritas.')).toBeVisible()
+  await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
+  // The entry names what it does: the bookmark is filled and the word is now "Quitar".
+  await page.getByRole('menuitem', { name: 'Quitar Lobo de favoritas' }).click()
+  await expect(page.getByText('Lobo se quitó de favoritas.')).toBeVisible()
   await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
   await page.getByRole('menuitem', { name: 'Crear variante de campaña' }).click()
   const editor = page.getByRole('dialog', { name: 'Variante de campaña de Lobo' })
@@ -290,7 +318,7 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
         .getByRole('link', { name: 'Bestiario', exact: true }),
     ).toHaveAttribute('aria-current', 'page')
   await audit(page)
-  await expectTouchTargets(page, '.bst-row-main:visible, .bst-fav:visible')
+  await expectTouchTargets(page, '.bst-row-main:visible')
   await evidence(page, info, 'list')
 
   // Search works in both languages and without accents; Enter opens the best match.
@@ -320,11 +348,11 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
 
   // English names find Spanish rows; filters narrow the list and say how many remain.
   await search.fill('Wolf')
-  await expect(page.getByRole('button', { name: /^Lobo · Wolf/ })).toBeVisible()
+  await expect(page.locator('.bst-row-name').first()).toHaveText('Lobo')
   await search.fill('')
   await page.getByRole('button', { name: 'Filtros' }).click()
   const filters = phone(info)
-    ? page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+    ? page.getByRole('dialog', { name: 'Filtros' })
     : page.locator('.mantine-Popover-dropdown')
   await filters.getByText('Muerto viviente', { exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: /^\d+ criaturas?$/ })).toHaveText(
@@ -334,8 +362,16 @@ test('RYT-046 the DM searches the SRD catalogue and reads a full stat block', as
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
   await jumpTo(page, 'Z')
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
-  // Favourites live on this device.
-  await page.getByRole('button', { name: 'Añadir Zombi a favoritas' }).click()
+  // Favourites live on this device, in the stat block's menu.
+  await page
+    .getByRole('button', { name: /^Zombi/ })
+    .first()
+    .click()
+  await fromMenu(detail(page, info), page, 'Añadir Zombi a favoritas', 'Zombi')
+  if (sheet(info)) {
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.bst-sheet')).toHaveCount(0)
+  }
   await page.locator('.bst-source label', { hasText: 'Favoritas' }).click()
   await expect(page.getByText('1 criatura', { exact: true })).toBeVisible()
   expect(errors).toEqual([])
@@ -373,7 +409,8 @@ test('with large text and little room, the filters open in a side sheet', async 
 }, info) => {
   test.skip(phone(info), 'Phones always use the bottom sheet')
   const server = combatServer()
-  await page.setViewportSize({ width: info.project.use.viewport?.width ?? 1440, height: 800 })
+  // Short enough that, at 150% text, the dropdown would not fit under the button.
+  await page.setViewportSize({ width: info.project.use.viewport?.width ?? 1440, height: 640 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await server.install(page)
@@ -381,7 +418,7 @@ test('with large text and little room, the filters open in a side sheet', async 
   await page.addStyleTag({ content: 'html { font-size: 150% }' })
   const open = page.getByRole('button', { name: /^Filtros/ })
   await open.click()
-  const filters = page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+  const filters = page.getByRole('dialog', { name: 'Filtros' })
   await expect(filters).toBeVisible()
   await expect(open).toHaveAttribute('aria-expanded', 'true')
   await expect(page.locator('.mantine-Popover-dropdown')).toHaveCount(0)
@@ -393,7 +430,7 @@ test('with large text and little room, the filters open in a side sheet', async 
   await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeVisible()
 })
 
-test('the list reads like an index and active filters stay visible as removable chips', async ({
+test('the list reads like an index and the filters in force are one muted line with Clear', async ({
   page,
 }, info) => {
   const server = combatServer()
@@ -413,58 +450,71 @@ test('the list reads like an index and active filters stay visible as removable 
 
   await page.getByRole('button', { name: 'Filtros' }).click()
   const filters = phone(info)
-    ? page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+    ? page.getByRole('dialog', { name: 'Filtros' })
     : page.locator('.mantine-Popover-dropdown')
   await filters.getByText('Dragón', { exact: true }).click()
   await filters.getByText('Valor de desafío', { exact: true }).click()
   await filters.getByRole('button', { name: /^Ver \d+ criaturas?$/ }).click()
   await expect(filters).toHaveCount(0)
-  // Sorting by CR groups by CR; each filter is a chip that names what it removes.
+  // Sorting by CR groups by CR; the filters in force are one muted line of words, no chips.
   await expect(
     page.getByRole('heading', { level: 3, name: /^VD 1\/8 \(1 en este grupo\)$/ }),
   ).toBeVisible()
-  const summary = page.getByRole('group', { name: 'Filtros aplicados' })
-  await expect(summary.getByRole('button', { name: 'Quitar el filtro Dragón' })).toBeVisible()
-  await expectTouchTargets(page, '.bst-active-chip:visible, .bst-active-clear:visible')
+  const line = page.locator('.bst-filter-line')
+  await expect(line).toContainText('Dragón · por desafío')
+  await expect(page.locator('.bst-active-chip')).toHaveCount(0)
+  await expectTouchTargets(page, '.bst-filter-line button:visible')
   await audit(page)
   await evidence(page, info, 'active-filters', 'RYT-050')
-  await summary.getByRole('button', { name: 'Quitar el filtro Dragón' }).click()
-  // Focus stays in the summary on the chip that took its place.
-  await expect(
-    summary.getByRole('button', { name: 'Quitar el filtro Orden: valor de desafío' }),
-  ).toBeFocused()
-  await page.keyboard.press('Enter')
-  await expect(summary).toHaveCount(0)
+  if (phone(info)) {
+    // The head keeps its one row: the search, Filters and the menu side by side, and the list
+    // starts right under the two lines (no stacked pills pushing it down).
+    const tops = await page.evaluate(() =>
+      ['#bestiary-search', '.bst-filter-button', '.bst-head-menu'].map(
+        (selector) => document.querySelector(selector)!.getBoundingClientRect().top,
+      ),
+    )
+    expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(12)
+    const first = await page.locator('.bst-row-main').first().boundingBox()
+    expect(first!.y).toBeLessThan(470)
+  }
+  // Clear takes every filter off at once and focus goes to the Filters button.
+  await line.getByRole('button', { name: 'Quitar filtros' }).click()
+  await expect(line).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Filtros/ })).toBeFocused()
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible()
 })
 
-test('a laptop with large text reads the stat block in the sheet instead of a squeezed pane', async ({
+test('the stat block opens in a pane when the panel has room and in the sheet when large text leaves none', async ({
   page,
 }, info) => {
-  test.skip(info.project.name !== 'identity-desktop', 'Laptop widths only')
+  test.skip(info.project.name !== 'identity-desktop', 'One project walks the widths')
   const server = combatServer()
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await server.install(page)
-  for (const [width, text, split] of [
-    [992, '100%', false],
+  for (const [width, text, pane] of [
+    [820, '100%', true],
+    [820, '150%', false],
+    [992, '100%', true],
     [1280, '100%', true],
-    [1280, '150%', false],
+    [1280, '150%', true],
     [1440, '100%', true],
   ] as const) {
     await page.setViewportSize({ width, height: 900 })
     await openBestiary(page)
     await page.addStyleTag({ content: `html { font-size: ${text} }` })
     await page.getByRole('button', { name: /^Aboleth/ }).click()
-    const pane = split ? page.locator('.bst-detail') : page.locator('.bst-sheet')
-    await expect(pane.getByRole('heading', { name: 'Aboleth' }).first()).toBeVisible()
+    const detailBox = pane ? page.locator('.bst-detail') : page.locator('.bst-sheet')
+    await expect(detailBox.getByRole('heading', { name: 'Aboleth' }).first()).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    if (split) {
-      const box = (await pane.boundingBox())!
-      expect(box.width).toBeGreaterThanOrEqual(400)
+    if (pane) {
+      const box = (await detailBox.boundingBox())!
+      const list = (await page.locator('.bst-list').boundingBox())!
+      expect(box.width).toBeGreaterThanOrEqual(270)
+      expect(box.x).toBeGreaterThanOrEqual(list.x + list.width)
       expect(box.x + box.width).toBeLessThanOrEqual(width)
-    }
+    } else await expect(page.locator('.bst-detail')).toHaveCount(0)
   }
 })
 
@@ -508,9 +558,12 @@ test('RYT-046/048 the DM adds SRD creatures to an encounter with an alias and ro
   await expectTouchTargets(dialog, 'button:visible')
   await evidence(page, info, 'add-dialog', 'RYT-048')
   await dialog.getByRole('button', { name: 'Añadir 2 a Cripta' }).click()
-  // The success state names the fight and takes over the dialog title.
-  const done = page.getByRole('dialog', { name: 'En el encuentro' })
-  await expect(done.getByText('En Cripta: 2 × Dragón rojo joven.')).toBeVisible()
+  // The dialog closes and the stat block keeps one line that says what was added.
+  await expect(dialog).toHaveCount(0)
+  const done = detail(page, info)
+  await expect(
+    done.getByRole('status').filter({ hasText: '2 × Dragón rojo joven en Cripta' }),
+  ).toBeVisible()
   const added = server.encounters.find((e) => e.id === created.encounter_id)!.combatants
   expect(added.map((c) => [c.name, c.public_name, c.srd_id])).toEqual([
     ['Dragón rojo joven 1', 'Sombra alada 1', 'young-red-dragon'],
@@ -558,8 +611,8 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   // Edit (RYT-089): the SRD wolf gets a campaign version that keeps its origin; the official one
   // never changes.
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
-  await pick(page, /^Lobo · Wolf/)
-  await detail(page, info).getByRole('button', { name: 'Editar', exact: true }).click()
+  await pick(page, /^Lobo/)
+  await fromMenu(detail(page, info), page, 'Editar', 'Lobo')
   let editor = page.getByRole('dialog', { name: 'Editar Lobo en esta campaña' })
   await expect(editor).toBeVisible()
   await editor.getByRole('textbox', { name: 'Nombre', exact: true }).first().fill('Lobo de sombra')
@@ -578,7 +631,7 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   )
   await audit(page, '[role="dialog"]')
   await evidence(page, info, 'editor', 'RYT-047')
-  if (sheet(info)) {
+  if ((info.project.use.viewport?.width ?? 1440) < 992) {
     await editor.locator('.bst-editor-switch label', { hasText: 'Vista previa' }).click()
     await expect(editor.getByRole('heading', { name: 'Lobo de sombra' })).toBeVisible()
     await evidence(page, info, 'editor-preview', 'RYT-047')
@@ -607,7 +660,7 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   }
 
   // Archetype and CR: a leader draft with SRD-median numbers.
-  await page.getByRole('button', { name: 'Nueva criatura' }).click()
+  await newCreature(page)
   const start = page.getByRole('dialog', { name: '¿Cómo quieres empezar?' })
   await audit(page, '[role="dialog"]')
   await evidence(page, info, 'start', 'RYT-049')
@@ -634,7 +687,7 @@ test('RYT-047/049 the DM customises an SRD creature, builds one from an archetyp
   }
 
   // Paste: a 2014 block from a book becomes a draft to review.
-  await page.getByRole('button', { name: 'Nueva criatura' }).click()
+  await newCreature(page)
   await page
     .getByRole('dialog')
     .getByRole('button', { name: /Pegar texto/ })
@@ -681,7 +734,7 @@ test('RYT-051 bestiary instruments: CR bands, glyph tiles, size bases and dials'
   // Filters: a CR band is a toggle; type and size are native checkboxes painted as tiles.
   await page.getByRole('button', { name: 'Filtros' }).click()
   const filters = phone(info)
-    ? page.getByRole('dialog', { name: 'Filtrar y ordenar' })
+    ? page.getByRole('dialog', { name: 'Filtros' })
     : page.locator('.mantine-Popover-dropdown')
   const epic = filters.getByRole('button', { name: /^Épicas/ })
   await epic.click()
@@ -698,7 +751,7 @@ test('RYT-051 bestiary instruments: CR bands, glyph tiles, size bases and dials'
   await expect(page.getByRole('button', { name: /^Dragón rojo anciano/ })).toBeVisible()
 
   // Archetype: the CR is a spin button, size and type are radio tiles.
-  await page.getByRole('button', { name: 'Nueva criatura' }).click()
+  await newCreature(page)
   await page
     .getByRole('dialog')
     .getByRole('button', { name: /Arquetipo y VD/ })
@@ -746,7 +799,7 @@ test('RYT-051 bestiary instruments: CR bands, glyph tiles, size bases and dials'
   expect(errors).toEqual([])
 })
 
-test('RYT-052 rows reached by Shift+Tab stay clear of the sticky search row', async ({
+test('RYT-052 rows reached by Shift+Tab stay clear of the sticky search and index rows', async ({
   page,
 }, info) => {
   test.skip(!sheet(info), 'The search row is sticky only without the side pane')
@@ -761,7 +814,7 @@ test('RYT-052 rows reached by Shift+Tab stay clear of the sticky search row', as
     const covered = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement
       if (!el.closest('.bst-list')) return 0
-      const bar = document.querySelector('.bst-toolbar-search')!.getBoundingClientRect()
+      const bar = document.querySelector('.bst-index-row')!.getBoundingClientRect()
       const r = el.getBoundingClientRect()
       return Math.max(0, Math.min(r.bottom, bar.bottom) - r.top)
     })
@@ -774,7 +827,7 @@ const png = Buffer.from(
   'base64',
 )
 
-test('RYT-053/088 every SRD creature has art: the stat block leads with its plate, which views, changes and restores it', async ({
+test('RYT-053/088 every SRD creature has art: its thumbnail opens the picture, and the menu changes and restores it', async ({
   page,
 }, info) => {
   test.setTimeout(120_000)
@@ -794,24 +847,22 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   )
   await row.locator('.bst-row-main').click()
   const pane = detail(page, info)
-  // RYT-088: the stat block leads with the creature's plate. The print opens the viewer; the pencil
-  // in its corner changes the image.
-  const plate = pane.getByRole('button', { name: 'Ver la imagen de Lobo' })
-  const pencil = pane.getByRole('button', { name: 'Cambiar la imagen de Lobo' })
-  await expect(plate.locator('img')).toHaveAttribute('src', /bestiary\/art\/wolf\.webp$/)
-  await expectTouchTargets(page, '.bst-detail-inner .bst-plate-edit:visible')
-  // Above the name on phones; in its own column beside the stat block on wider panes. (The phone
-  // sheet's own title is also named after the creature.)
+  // The stat block leads with a 56px thumbnail beside the name; tapping it opens the picture.
+  const thumb = pane.getByRole('button', { name: 'Ver la imagen de Lobo' })
+  const more = pane.getByRole('button', { name: 'Más acciones para Lobo' })
+  await expect(thumb.locator('img')).toHaveAttribute('src', /bestiary\/thumbs\/wolf\.webp$/)
+  await expectTouchTargets(page, '.bst-detail-inner .bst-thumb:visible')
   const heading = pane.locator('.sb-name')
-  const at = await settledBox(plate)
+  const at = await settledBox(thumb)
   const name = (await heading.boundingBox())!
-  if (phone(info)) expect(name.y).toBeGreaterThanOrEqual(at.y + at.height)
-  else expect(name.x).toBeGreaterThanOrEqual(at.x + at.width)
+  expect(at.width).toBeGreaterThanOrEqual(44)
+  expect(at.width).toBeLessThanOrEqual(64)
+  expect(name.x).toBeGreaterThanOrEqual(at.x + at.width)
   await audit(page)
-  await evidence(page, info, 'plate', 'RYT-088')
+  await evidence(page, info, 'thumb', 'RYT-088')
 
   // Tap: the viewer opens directly, with the credit of the painted art.
-  await plate.click()
+  await thumb.click()
   // The viewer stacks above the phone sheet (also named after the creature).
   const viewer = page.locator('.image-viewer-content')
   await expect(viewer.getByRole('heading', { name: 'Lobo' })).toBeVisible()
@@ -830,43 +881,42 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   await audit(page, '.image-viewer-content')
   await expectTouchTargets(page, '.image-viewer-content button:visible, .bst-art-label a')
   await evidence(page, info, 'viewer', 'RYT-088')
-  // Escape closes the viewer and gives focus back to the plate.
+  // Escape closes the viewer and gives focus back to the thumbnail.
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveCount(0)
-  await expect(plate).toBeFocused()
+  await expect(thumb).toBeFocused()
 
-  // Change: without the DM's own image the pencil opens the file picker directly, and the DM's image
-  // for this campaign replaces the bundled art.
+  // Change: the menu opens the file picker, and the DM's image for this campaign replaces the
+  // bundled art.
+  await more.click()
   const chooser = page.waitForEvent('filechooser')
-  await pencil.click()
+  await page.getByRole('menuitem', { name: 'Cambiar la imagen…' }).click()
   await (await chooser).setFiles({ name: 'wolf.png', mimeType: 'image/png', buffer: png })
-  // The saved notice is shown in words under the plate; the heading keeps its width.
   await expect(
     pane.getByRole('status').filter({ hasText: 'Imagen de Lobo guardada' }),
   ).toBeVisible()
   expect((await heading.boundingBox())!.width).toBeGreaterThan(60)
-  const status = pane.locator('.combat-image-status')
-  expect((await status.boundingBox())!.y).toBeGreaterThan(at.y + at.height - 1)
   await evidence(page, info, 'saved', 'RYT-088')
   await expect
     .poll(() => server.srdImages.get('wolf'))
     .toMatch(new RegExp(`^pre/${campaignId}/srd-wolf/[0-9a-f-]{36}\\.webp$`))
-  await expect(plate.locator('img')).toHaveAttribute('src', /public-test\/art\//)
-  await expect(pencil).toBeFocused()
+  await expect(thumb.locator('img')).toHaveAttribute('src', /public-test\/art\//)
+  await expect(more).toBeFocused()
   // Its viewer says it is the campaign's own image, with no third-party credit.
-  await plate.click()
+  await thumb.click()
   await expect(viewer).toContainText('Tu imagen para esta criatura en la campaña. Solo la ves tú.')
   await expect(viewer.getByText('Autoría')).toHaveCount(0)
   await page.getByRole('button', { name: 'Cerrar la imagen' }).click()
-  await expect(plate).toBeFocused()
+  await expect(thumb).toBeFocused()
 
-  // Restore: with the DM's own image the pencil opens a short menu; restoring brings the art back.
-  await pencil.click()
-  await expect(page.getByRole('menuitem')).toHaveText([
+  // Restore: with the DM's own image the menu offers to bring the art back.
+  await more.click()
+  for (const entry of [
     'Cambiar la imagen…',
     'Copiar prompt de arte',
     'Recuperar la ilustración original',
   ])
+    await expect(page.getByRole('menuitem', { name: entry })).toBeVisible()
   // RYT-154: the same menu copies a prompt for the DM's own image, in the house style.
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.getByRole('menuitem', { name: 'Copiar prompt de arte' }).click()
@@ -874,29 +924,29 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
     /^Creature portrait .*"Lobo", beast\./,
   )
-  await pencil.click()
+  await more.click()
   await page.getByRole('menuitem', { name: 'Recuperar la ilustración original' }).click()
   await expect(
     pane.getByRole('status').filter({ hasText: 'Lobo vuelve a tener su ilustración original' }),
   ).toBeAttached()
   await expect.poll(() => server.srdImages.has('wolf')).toBe(false)
-  await expect(plate.locator('img')).toHaveAttribute('src', /bestiary\/art\/wolf\.webp$/)
+  await expect(thumb.locator('img')).toHaveAttribute('src', /bestiary\/thumbs\/wolf\.webp$/)
   await expect(page.getByRole('menu')).toHaveCount(0)
-  await expect(pencil).toBeFocused()
+  await expect(more).toBeFocused()
   await audit(page)
 
-  // Keyboard: Enter on the plate opens the viewer; Escape closes only the viewer (the phone sheet
-  // stays) and focus returns to the plate.
-  await plate.focus()
+  // Keyboard: Enter on the thumbnail opens the viewer; Escape closes only the viewer (the phone
+  // sheet stays) and focus returns to the thumbnail.
+  await thumb.focus()
   await page.keyboard.press('Enter')
   await expect(viewer).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveCount(0)
-  await expect(plate).toBeFocused()
+  await expect(thumb).toBeFocused()
   if (sheet(info)) await expect(page.locator('.bst-sheet')).toBeVisible()
 
-  // Art that cannot load: the plate keeps its square with the creature type glyph, and the viewer
-  // says so.
+  // Art that cannot load: the thumbnail keeps its token with the creature type glyph, and the
+  // viewer says so.
   await page.route('**/bestiary/{thumbs,art}/ogre.webp', (route) => route.fulfill({ status: 404 }))
   if (sheet(info)) {
     await page.keyboard.press('Escape')
@@ -905,7 +955,7 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('ogro')
   await page.locator('.bst-row-main', { hasText: /^Ogro/ }).first().click()
   const ogre = detail(page, info).getByRole('button', { name: 'Ver la imagen de Ogro' })
-  await expect(ogre.locator('.bst-plate-glyph')).toBeVisible()
+  await expect(ogre.locator('.combat-token-glyph')).toBeVisible()
   await ogre.click()
   await expect(viewer).toContainText('No se puede mostrar esta imagen ahora.')
   await page.keyboard.press('Escape')
@@ -913,7 +963,7 @@ test('RYT-053/088 every SRD creature has art: the stat block leads with its plat
   expect(errors).toEqual([])
 })
 
-test('RYT-098 a picture in the list opens the viewer; the row beside it keeps opening the stat block', async ({
+test('RYT-098 a creature row is one tab stop: its picture is not a control, the row opens the stat block', async ({
   page,
 }, info) => {
   const server = combatServer()
@@ -923,149 +973,30 @@ test('RYT-098 a picture in the list opens the viewer; the row beside it keeps op
   await openBestiary(page)
   await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
   const row = page.locator('.bst-row', { hasText: /^Lobo/ }).first()
-  const picture = row.getByRole('button', { name: 'Ver la imagen de Lobo' })
   const main = row.locator('.bst-row-main')
-  // Two sibling buttons, never one inside the other.
-  await expect(main.getByRole('button')).toHaveCount(0)
-  await expect(picture.locator('xpath=ancestor::button')).toHaveCount(0)
-  await expectTouchTargets(row, '.combat-token-open')
-  await picture.click()
-  const viewer = page.getByRole('dialog', { name: 'Lobo', exact: true })
-  await expect(viewer.getByRole('img', { name: 'Imagen de Lobo' })).toHaveAttribute(
-    'src',
-    /bestiary\/art\/wolf\.webp$/,
-  )
-  await expect(viewer.getByText('Autoría', { exact: true })).toBeVisible()
-  await audit(page, '.image-viewer-content')
-  await evidence(page, info, 'row-viewer', 'RYT-098')
-  // The picture did not select the creature; Escape returns focus to it.
-  await page.keyboard.press('Escape')
-  await expect(viewer).toHaveCount(0)
-  await expect(picture).toBeFocused()
-  await expect(main).not.toHaveAttribute('aria-current', 'true')
-  // Arrow keys still move between rows from the picture.
+  // One button per row: no picture button, no bookmark, no badge.
+  await expect(row.getByRole('button')).toHaveCount(1)
+  await expect(
+    row.locator('.combat-token-open, .bst-fav, .bst-source-badge, .mantine-Badge-root'),
+  ).toHaveCount(0)
+  await expectTouchTargets(row, '.bst-row-main')
+  // Arrow keys move between rows.
+  await main.focus()
   await page.keyboard.press('ArrowDown')
   await expect(page.locator('.bst-row-main').nth(1)).toBeFocused()
-  // A tap on the row beside the picture opens the stat block, as before.
+  await page.keyboard.press('ArrowUp')
+  await expect(main).toBeFocused()
+  // A tap opens the stat block and marks the row.
   await main.click()
   await expect(main).toHaveAttribute('aria-current', 'true')
   await expect(detail(page, info).locator('.sb-name')).toHaveText('Lobo')
+  await evidence(page, info, 'row-selected', 'RYT-098')
 })
 
-test('RYT-046 Players never reach the bestiary', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  const server = combatServer()
-  await identityFixture(page, {
-    player: true,
-    party: true,
-    sheet: 'complete',
-    modules: ['party', 'combat'],
-  })
-  await server.install(page)
-  const templateRequests: string[] = []
-  page.on('request', (r) => {
-    if (r.url().includes('list_combatant_templates')) templateRequests.push(r.url())
-  })
-  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByRole('navigation', { name: 'Centro de mando DM' })).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: 'Bestiario' })).toHaveCount(0)
-  expect(templateRequests).toEqual([])
-})
-
-test('RYT-091 the stat block uses the room under its plate: it flows in the pane and keeps a stat column in wide sheets', async ({
+test('RYT-181 a campaign creature without a picture gets its thumbnail from the menu', async ({
   page,
 }, info) => {
-  test.skip(phone(info), 'Phones keep the plate above the name (RYT-088 test)')
   const server = combatServer()
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
-  await server.install(page)
-  await openBestiary(page)
-  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('dragón rojo adulto')
-  await page
-    .locator('.bst-row', { has: page.getByText('Dragón rojo adulto', { exact: true }) })
-    .first()
-    .locator('.bst-row-main')
-    .click()
-  const pane = detail(page, info)
-  const plate = pane.locator('.combat-creature-image.is-plate')
-  await expect(plate.locator('img')).toBeVisible()
-  const box = async (locator: Locator) => (await locator.boundingBox())!
-  const at = await settledBox(plate)
-  const name = await box(pane.locator('.sb-name'))
-  const core = await box(pane.locator('.sb-core'))
-  const abilities = await box(pane.locator('.sb-abilities:visible'))
-  const frame = await box(pane.locator('.bst-detail-frame'))
-  const tiles = await pane
-    .locator('.sb-abilities:visible .sb-ability')
-    .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().y)))
-  // The name sits beside the plate in both layouts.
-  expect(name.x).toBeGreaterThanOrEqual(at.x + at.width)
-  if (sheet(info)) {
-    // Wide sheet: a stat column (plate, numbers, abilities in two rows of three) beside the reading.
-    expect(Math.abs(abilities.x - at.x)).toBeLessThan(2)
-    expect(abilities.width).toBeLessThanOrEqual(at.width + 1)
-    expect(new Set(tiles).size).toBe(2)
-    expect(core.y).toBeGreaterThan(at.y + at.height)
-    // Tall enough for the whole column: it stays in view while the reading scrolls.
-    await page.locator('.bst-sheet').evaluate((node) => (node.scrollTop = 600))
-    await expect.poll(async () => Math.round((await box(plate)).y)).toBe(Math.round(at.y))
-    await expect(pane.locator('.sb-main')).toContainText('Acciones legendarias')
-    // A shorter screen (iPad landscape): the column keeps the plate and the numbers, in view above the
-    // action bar, and the abilities lead the reading as one row of six.
-    await page.setViewportSize({ width: 1024, height: 768 })
-    await page.locator('.bst-sheet').evaluate((node) => (node.scrollTop = 0))
-    const reading = pane.locator('.sb-main .sb-abilities')
-    await expect(reading).toBeVisible()
-    await expect(pane.locator('.sb-aside .sb-abilities')).toBeHidden()
-    const row = await reading
-      .locator('.sb-ability')
-      .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().y)))
-    expect(new Set(row).size).toBe(1)
-    await page.locator('.bst-sheet').evaluate((node) => (node.scrollTop = 900))
-    const column = await box(pane.locator('.sb-aside'))
-    const bar = await box(pane.locator('.bst-actions'))
-    expect(column.y).toBeGreaterThan(0)
-    expect(column.y + column.height).toBeLessThanOrEqual(bar.y)
-    // A notice under the plate makes the column taller than the room: it scrolls with the page
-    // instead of hiding its end under the bar.
-    await pane.locator('.sb-aside').evaluate((node) => {
-      const extra = document.createElement('div')
-      extra.style.height = '200px'
-      node.append(extra)
-    })
-    await expect
-      .poll(() => pane.locator('.sb-aside').evaluate((node) => node.hasAttribute('data-unstuck')))
-      .toBe(true)
-    await expect(pane.locator('.sb-aside')).toHaveCSS('position', 'static')
-  } else {
-    // Side pane: the core numbers beside the plate, everything after them under it at full width.
-    expect(core.x).toBeGreaterThanOrEqual(at.x + at.width)
-    expect(abilities.y).toBeGreaterThanOrEqual(at.y + at.height)
-    expect(abilities.width).toBeGreaterThan(frame.width - 2)
-    expect(new Set(tiles).size).toBe(1)
-    // Shift+Tab back to the pencil scrolls it clear of the pinned actions (WCAG 2.4.11).
-    const term = pane.locator('.sb-main a, .sb-main button').first()
-    await term.focus()
-    await page.evaluate(() => window.scrollBy(0, 400))
-    await page.keyboard.press('Shift+Tab')
-    const pencil = pane.getByRole('button', { name: 'Cambiar la imagen de Dragón rojo adulto' })
-    await expect(pencil).toBeFocused()
-    const bar = await box(pane.locator('.bst-actions'))
-    expect((await box(pencil)).y).toBeGreaterThanOrEqual(bar.y + bar.height)
-  }
-  await audit(page)
-  await expectTouchTargets(page, '.bst-detail-inner .bst-plate-edit:visible')
-  await evidence(page, info, 'stat-block', 'RYT-091')
-})
-
-test('RYT-091 a campaign creature that gets its first image keeps its stat column clear of the action bar', async ({
-  page,
-}, info) => {
-  test.skip(info.project.name !== 'identity-tablet', 'The short wide sheet is a tablet layout')
-  const server = combatServer()
-  await page.setViewportSize({ width: 1024, height: 768 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
   await server.install(page)
@@ -1087,17 +1018,14 @@ test('RYT-091 a campaign creature that gets its first image keeps its stat colum
         ac: '19',
         initiative: '+12 (22)',
         hp: '256 (19d12 + 133)',
-        speed:
-          '12 m, excavar 9 m, trepar 12 m, nadar 12 m, volar 24 m (levitar); en su forma de niebla, 3 m y volar 9 m; en la guarida, trepar 18 m y nadar 18 m',
+        speed: '12 m, nadar 12 m',
         abilities: { str: score, dex: score, con: score, int: score, wis: score, cha: score },
         details: { languages: 'común, dracónico' },
         cr: '17',
         sections: [
           {
             kind: 'actions',
-            entries: [
-              { key: 'bite', name: 'Mordisco', text: ['Una dentellada muy larga. '.repeat(40)] },
-            ],
+            entries: [{ key: 'bite', name: 'Mordisco', text: ['Una dentellada muy larga.'] }],
           },
         ],
       },
@@ -1113,20 +1041,43 @@ test('RYT-091 a campaign creature that gets its first image keeps its stat colum
     .locator('.bst-row-main')
     .click()
   const pane = detail(page, info)
-  // No image yet: the token beside the name, no stat column.
-  await expect(pane.locator('.sb-aside')).toHaveCount(0)
-  await pane
-    .getByLabel('Añadir una imagen de Sierpe del pantano')
-    .setInputFiles({ name: 'sierpe.png', mimeType: 'image/png', buffer: png })
+  // No picture yet: a token beside the name that is not a control.
+  await expect(pane.getByRole('button', { name: /^Ver la imagen/ })).toHaveCount(0)
+  await expect(pane.locator('.bst-thumb')).toBeVisible()
+  await pane.getByRole('button', { name: 'Más acciones para Sierpe del pantano' }).click()
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('menuitem', { name: 'Añadir una imagen…' }).click()
+  await (await chooser).setFiles({ name: 'sierpe.png', mimeType: 'image/png', buffer: png })
   await expect(pane.getByRole('status').filter({ hasText: 'guardada' })).toBeVisible({
     timeout: 15_000,
   })
-  // The plate, its notice and a long speed arrive with the column, which no longer fits the short
-  // sheet: it is checked again and scrolls with the page instead of ending under the bar.
-  const aside = pane.locator('.sb-aside')
-  await expect(aside).toBeVisible()
-  await expect.poll(() => aside.evaluate((node) => node.hasAttribute('data-unstuck'))).toBe(true)
-  await expect(aside).toHaveCSS('position', 'static')
+  await expect(
+    pane.getByRole('button', { name: 'Ver la imagen de Sierpe del pantano' }),
+  ).toBeVisible()
+  await expect(
+    pane.getByRole('button', { name: 'Más acciones para Sierpe del pantano' }),
+  ).toBeFocused()
+})
+
+test('RYT-046 Players never reach the bestiary', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const server = combatServer()
+  await identityFixture(page, {
+    player: true,
+    party: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
+  await server.install(page)
+  const templateRequests: string[] = []
+  page.on('request', (r) => {
+    if (r.url().includes('list_combatant_templates')) templateRequests.push(r.url())
+  })
+  await page.goto(`./#/campaign/${campaignId}/members?panel=bestiary`)
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('navigation', { name: 'Centro de mando DM' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Bestiario' })).toHaveCount(0)
+  expect(templateRequests).toEqual([])
 })
 
 // RYT-117: 330 creatures mount only the groups near the viewport.
@@ -1304,4 +1255,616 @@ test('RYT-117 closing a creature opened by a deep link focuses its row', async (
     await expect(page.locator('.bst-sheet')).toHaveCount(0)
     await expect(page.getByRole('button', { name: /^Zombi/ }).first()).toBeFocused()
   }
+})
+
+// RYT-181: the bestiary at the table: a list that fits a phone screen, the stat block in table
+// order, a pane beside the list, and an add that takes two taps.
+test('RYT-181 names that start with the query come first and Enter opens the first result', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await search.fill('goblin')
+  await expect(page.getByText('5 criaturas', { exact: true })).toBeVisible()
+  const names = await page.locator('.bst-row-name').allTextContents()
+  // A name or a word of it that starts with the query beats a match inside a word.
+  expect(names.indexOf('Capitán hobgoblin')).toBeGreaterThan(names.indexOf('Guerrero goblin'))
+  expect(names.indexOf('Capitán hobgoblin')).toBeGreaterThan(names.indexOf('Secuaz goblin'))
+  expect(names[0]).toMatch(/goblin$/)
+  expect(names[0]).not.toMatch(/hob/i)
+  await search.press('Enter')
+  await expect(detail(page, info).locator('.sb-name')).toHaveText(names[0]!)
+  // Accents and case are ignored.
+  await search.fill('CAPITAN')
+  await expect
+    .poll(async () => {
+      const found = await page.locator('.bst-row-name').allTextContents()
+      return found.length > 0 && found.every((name) => /^Capit/.test(name))
+    })
+    .toBe(true)
+})
+
+test('RYT-181 on a phone the first screen shows about seven rows of one tab stop each', async ({
+  page,
+}, info) => {
+  test.skip(!phone(info), 'The first screen of a phone')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  const fit = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll<HTMLElement>('.bst-row')]
+    const boxes = rows.map((row) => row.getBoundingClientRect())
+    // The bottom navigation covers the last 65px of the screen.
+    return {
+      first: boxes[0]!.y,
+      heights: boxes.slice(0, 8).map((box) => box.height),
+      fully: boxes.filter((box) => box.bottom <= innerHeight - 65).length,
+      badges: document.querySelectorAll('.bst-list .mantine-Badge-root, .bst-source-badge').length,
+      stops: rows.slice(0, 8).map((row) => row.querySelectorAll('button, a, input').length),
+    }
+  })
+  expect(fit.first).toBeLessThan(460)
+  for (const height of fit.heights) {
+    expect(height).toBeGreaterThanOrEqual(52)
+    expect(height).toBeLessThanOrEqual(66)
+  }
+  expect(fit.fully).toBeGreaterThanOrEqual(6)
+  expect(fit.badges).toBe(0)
+  expect(fit.stops.every((stops) => stops === 1)).toBe(true)
+  // The count is text and the jump strip shares its line.
+  const count = (await page.getByText('330 criaturas', { exact: true }).boundingBox())!
+  const strip = (await page.locator('.bst-jump').boundingBox())!
+  expect(strip.x).toBeGreaterThan(count.x + count.width - 1)
+  expect(Math.abs(strip.y + strip.height / 2 - (count.y + count.height / 2))).toBeLessThan(20)
+  await audit(page)
+  await expectTouchTargets(page, '.bst-row-main:visible, .bst-head-menu, .bst-filter-button')
+  await evidence(page, info, 'first-screen', 'RYT-181')
+})
+
+test('RYT-181 the stat block reads in table order and a phone shows AC, HP and two attacks at once', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await search.fill('dragon rojo adulto')
+  await search.press('Enter')
+  const pane = detail(page, info)
+  await expect(pane.locator('.sb-name')).toHaveText('Dragón rojo adulto')
+  // Actions, then traits, then the legendary actions, then the abilities and the details.
+  const order = await pane.evaluate((root) => {
+    const at = (node: Element | null) => node?.getBoundingClientRect().top ?? Number.NaN
+    const title = (text: string) =>
+      [...root.querySelectorAll('.sb-section-title')].find((node) => node.textContent === text) ??
+      null
+    return {
+      core: at(root.querySelector('.sb-core')),
+      actions: at(title('Acciones')),
+      traits: at(title('Atributos')),
+      legendary: at(title('Acciones legendarias')),
+      abilities: at(root.querySelector('.sb-abilities')),
+      details: at(root.querySelector('.sb-details')),
+    }
+  })
+  expect(order.core).toBeLessThan(order.actions)
+  expect(order.actions).toBeLessThan(order.traits)
+  expect(order.traits).toBeLessThan(order.legendary)
+  expect(order.legendary).toBeLessThan(order.abilities)
+  expect(order.abilities).toBeLessThan(order.details)
+  await expect(pane.locator('.sb-meta')).toContainText('VD 17')
+  await audit(page)
+  await expectTouchTargets(page, '.bst-detail-inner button:visible, .bst-detail-inner .bst-thumb')
+  await evidence(page, info, 'stat-block-order', 'RYT-181')
+
+  if (!phone(info)) return
+  // A phone's first screen: armor class, hit points and the first two attacks, above the bar.
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.bst-sheet')).toHaveCount(0)
+  await search.fill('guerrero goblin')
+  await search.press('Enter')
+  await expect(pane.locator('.sb-name')).toHaveText('Guerrero goblin')
+  await settledBox(pane.locator('.sb-core'))
+  const view = await page.evaluate(() => {
+    const sheet = document.querySelector('.bst-sheet')!
+    const bar = sheet.querySelector('.bst-actions')!.getBoundingClientRect()
+    const core = sheet.querySelector('.sb-core')!.getBoundingClientRect()
+    const entries = [...sheet.querySelectorAll('.sb-entry')].map((node) =>
+      node.getBoundingClientRect(),
+    )
+    return {
+      core: core.bottom,
+      second: entries[1]!.bottom,
+      barTop: bar.top,
+      barHeight: bar.height,
+      viewport: innerHeight,
+    }
+  })
+  expect(view.core).toBeLessThan(view.viewport)
+  expect(view.second).toBeLessThanOrEqual(view.barTop)
+  expect(view.barHeight).toBeLessThan(80)
+})
+
+test('RYT-181 beside the list the stat block opens in a pane: arrows move it, Escape closes it', async ({
+  page,
+}, info) => {
+  test.skip(phone(info), 'Phones open the stat block in a sheet')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  // Nothing open: no pane, and the rows keep a readable measure.
+  await expect(page.locator('.bst-detail')).toHaveCount(0)
+  expect((await page.locator('.bst-list').boundingBox())!.width).toBeLessThanOrEqual(752)
+  await audit(page)
+  await expectTouchTargets(page, '.bst-row-main:visible')
+  const rows = page.locator('.bst-row-main')
+  await rows.first().click()
+  const pane = page.locator('.bst-detail')
+  await expect(pane.locator('.sb-name')).toHaveText('Aboleth')
+  await expect(rows.first()).toHaveAttribute('aria-current', 'true')
+  const list = (await page.locator('.bst-list').boundingBox())!
+  const box = (await pane.boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(list.x + list.width)
+  expect(box.x + box.width).toBeLessThanOrEqual((info.project.use.viewport?.width ?? 1440) + 1)
+  // On a portrait tablet the narrow list shows the name and the challenge rating only.
+  const meta = page.locator('.bst-row-meta').first()
+  if (info.project.name === 'identity-tablet') await expect(meta).toBeHidden()
+  else await expect(meta).toBeVisible()
+  await expect(page.locator('.bst-row-main').first().locator('.bst-cr')).toBeVisible()
+  await audit(page)
+  await expectTouchTargets(page, '.bst-detail-inner button:visible, .bst-detail-inner .bst-thumb')
+  await evidence(page, info, 'pane', 'RYT-181')
+  // Down moves the selection and the pane follows; Up goes back.
+  await rows.first().focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(rows.nth(1)).toHaveAttribute('aria-current', 'true')
+  await expect(rows.first()).not.toHaveAttribute('aria-current', 'true')
+  await expect(pane.locator('.sb-name')).toHaveText('Acechador invisible')
+  await expect(rows.nth(1)).toBeFocused()
+  await page.keyboard.press('ArrowUp')
+  await expect(pane.locator('.sb-name')).toHaveText('Aboleth')
+  await page.keyboard.press('ArrowDown')
+  await expect(pane.locator('.sb-name')).toHaveText('Acechador invisible')
+  // Escape closes the pane and focus is back on the row.
+  await page.keyboard.press('Escape')
+  await expect(pane).toHaveCount(0)
+  await expect(rows.nth(1)).toBeFocused()
+  await expect(rows.nth(1)).not.toHaveAttribute('aria-current', 'true')
+})
+
+/** A campaign with the fight "Cripta" that the DM opened last. */
+async function withCrypt(page: Page, server: ReturnType<typeof combatServer>) {
+  const { encounter_id: id } = server.act('create_encounter', {
+    encounter_name: 'Cripta',
+  }) as { encounter_id: string }
+  await page.addInitScript(
+    ({ id, campaign }) => sessionStorage.setItem(`rytta.combat.lastEncounter.${campaign}`, id),
+    { id, campaign: campaignId },
+  )
+  return server.encounters.find((entry) => entry.id === id)!
+}
+
+test('RYT-181 a creature joins the encounter in two taps and Undo removes exactly those', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  const fight = await withCrypt(page, server)
+  await openBestiary(page)
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
+  // Tap 1: the row. Tap 2: the filled action, which names the encounter.
+  await page.locator('.bst-row-main', { hasText: /^Lobo/ }).first().click()
+  const pane = detail(page, info)
+  const add = pane.getByRole('button', { name: 'Añadir a Cripta', exact: true })
+  await expect(add).toBeVisible()
+  await audit(page)
+  await expectTouchTargets(pane, '.bst-actions button:visible, .bst-actions a:visible')
+  // The label keeps its whole line box: no descender (p, y) is cut by the button's clip.
+  expect(await clippedLabels(pane, '.bst-actions .bst-action-primary')).toEqual([])
+  await evidence(page, info, 'add-bar', 'RYT-181')
+  // One row at every width, about 60px: the stepper, the filled action on one line, and the menu.
+  const bar = pane.locator('.bst-actions')
+  const barBox = (await bar.boundingBox())!
+  expect(barBox.height).toBeGreaterThanOrEqual(56)
+  expect(barBox.height).toBeLessThanOrEqual(72)
+  const addBox = (await add.boundingBox())!
+  expect(addBox.height).toBeLessThanOrEqual(48)
+  expect(addBox.width).toBeGreaterThanOrEqual(110)
+  const tops = await bar
+    .locator('.bst-bar > *')
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top))
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(4)
+  // Adding does not move what the user is reading: a phone's stat block keeps its scroll position.
+  const frame = pane.locator('.bst-detail-frame')
+  const before = sheet(info)
+    ? await frame.evaluate((node) => {
+        node.scrollTop = 120
+        return node.scrollTop
+      })
+    : 0
+  await add.click()
+  const status = pane.getByRole('status').filter({ hasText: '1 × Lobo en Cripta' })
+  await expect(status).toBeVisible()
+  await expect(add).toBeFocused()
+  if (sheet(info)) {
+    expect(before).toBeGreaterThan(0)
+    expect(await frame.evaluate((node) => node.scrollTop)).toBe(before)
+  }
+  expect(fight.combatants.map((c) => c.srd_id)).toEqual(['wolf'])
+  await expect(pane.getByRole('link', { name: 'Abrir el encuentro' })).toBeVisible()
+  await evidence(page, info, 'added', 'RYT-181')
+  // The line stays; another add replaces it, and Undo removes only the last one.
+  await pane.getByRole('textbox', { name: 'Cuántas' }).fill('2')
+  await pane.getByRole('button', { name: 'Añadir 2 a Cripta' }).click()
+  await expect(pane.getByRole('status').filter({ hasText: '2 × Lobo en Cripta' })).toBeVisible()
+  expect(fight.combatants).toHaveLength(3)
+  const first = fight.combatants[0]!.id
+  await pane.getByRole('button', { name: 'Deshacer' }).click()
+  await expect(pane.getByRole('status').filter({ hasText: 'Quitadas de Cripta' })).toBeVisible()
+  expect(fight.combatants.map((c) => c.id)).toEqual([first])
+  await expect(pane.getByRole('button', { name: 'Deshacer' })).toHaveCount(0)
+  // Undo takes its own button with it: focus goes to the add button, not to the page.
+  await expect(add).toBeFocused()
+
+  // If the encounter moved on and a combatant is already gone, the line says so.
+  await pane.getByRole('button', { name: 'Añadir a Cripta', exact: true }).click()
+  await expect(pane.getByRole('status').filter({ hasText: '1 × Lobo en Cripta' })).toBeVisible()
+  fight.combatants.splice(1, 1)
+  await pane.getByRole('button', { name: 'Deshacer' }).click()
+  await expect(
+    pane.getByRole('status').filter({ hasText: 'No se pudo quitar 1 criatura' }),
+  ).toBeVisible()
+  expect(fight.combatants.map((c) => c.id)).toEqual([first])
+})
+
+test('RYT-181 another encounter or a new one opens the dialog, which leaves the same line', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  const fight = await withCrypt(page, server)
+  await openBestiary(page)
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('zombi')
+  await page
+    .locator('.bst-row-main', { hasText: /^Zombi/ })
+    .first()
+    .click()
+  const pane = detail(page, info)
+  await fromMenu(pane, page, 'Otro encuentro o uno nuevo', 'Zombi')
+  const dialog = page.getByRole('dialog', { name: 'Añadir Zombi a un encuentro' })
+  await expect(dialog).toBeVisible()
+  await page.waitForTimeout(500)
+  await audit(page, '[role="dialog"]')
+  await expectTouchTargets(dialog, 'button:visible')
+  await evidence(page, info, 'add-dialog', 'RYT-181')
+  await dialog.getByRole('button', { name: 'Añadir a Cripta' }).click()
+  // No result screen: the dialog closes and the stat block says it, with the way into the fight.
+  await expect(dialog).toHaveCount(0)
+  await expect(pane.getByRole('status').filter({ hasText: '1 × Zombi en Cripta' })).toBeVisible()
+  await expect(pane.getByRole('link', { name: 'Abrir el encuentro' })).toHaveAttribute(
+    'href',
+    new RegExp(`/combat/${fight.id}`),
+  )
+  expect(fight.combatants.map((c) => c.srd_id)).toEqual(['zombie'])
+  // After the dialog, focus is on the stat block's add button (never the list row behind a sheet).
+  await expect(pane.getByRole('button', { name: 'Añadir a Cripta', exact: true })).toBeFocused()
+  await pane.getByRole('button', { name: 'Deshacer' }).click()
+  await expect(pane.getByRole('status').filter({ hasText: 'Quitada de Cripta' })).toBeVisible()
+  expect(fight.combatants).toHaveLength(0)
+})
+
+test('RYT-181 with no encounter the filled action opens the dialog and names the new one', async ({
+  page,
+}, info) => {
+  test.setTimeout(90_000)
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
+  await page.locator('.bst-row-main', { hasText: /^Lobo/ }).first().click()
+  const pane = detail(page, info)
+  await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Otro encuentro o uno nuevo' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await pane.getByRole('button', { name: 'Añadir a un encuentro' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Añadir Lobo a un encuentro' })
+  await dialog.getByRole('textbox', { name: /Nuevo encuentro/ }).fill('Emboscada')
+  await dialog.getByRole('button', { name: 'Añadir a Emboscada' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(pane.getByRole('status').filter({ hasText: '1 × Lobo en Emboscada' })).toBeVisible()
+  // The fight just made is now the one the bar adds to.
+  await expect(pane.getByRole('button', { name: 'Añadir a Emboscada', exact: true })).toBeVisible()
+  expect(server.encounters.map((entry) => entry.name)).toEqual(['Emboscada'])
+})
+
+test('RYT-181 a quick creature with typed content asks before it is discarded', async ({
+  page,
+}) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await newCreature(page)
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /^Rápida/ })
+    .click()
+  const quick = page.getByRole('dialog', { name: 'Criatura rápida' })
+  // Untouched: Escape closes it without asking.
+  await page.keyboard.press('Escape')
+  await expect(quick).toHaveCount(0)
+  await newCreature(page)
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /^Rápida/ })
+    .click()
+  await quick.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Rata gigante')
+  await page.keyboard.press('Escape')
+  const discard = page.getByRole('dialog', { name: '¿Descartar los cambios?' })
+  await expect(discard.getByRole('button', { name: 'Seguir editando' })).toBeFocused()
+  await audit(page, '[role="dialog"]')
+  await discard.getByRole('button', { name: 'Seguir editando' }).click()
+  await expect(quick.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue(
+    'Rata gigante',
+  )
+  // Cancel asks too; discarding leaves nothing saved.
+  await quick.locator('form').getByRole('button', { name: 'Cancelar' }).click()
+  await expect(discard).toBeVisible()
+  await discard.getByRole('button', { name: 'Descartar cambios' }).click()
+  await expect(quick).toHaveCount(0)
+  expect(server.templates).toHaveLength(0)
+})
+
+test('RYT-181 a favourite carries a bookmark beside its name, and the empty list says where to add one', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  // Nothing in the head describes the screen to the DM.
+  await expect(page.getByText('Solo los DM ven esta sección.')).toHaveCount(0)
+  await page.locator('.bst-source label', { hasText: 'Favoritas' }).click()
+  await expect(
+    page.getByText('Añade criaturas a favoritas desde el menú ··· de su ficha.'),
+  ).toBeVisible()
+  await page.locator('.bst-source label', { hasText: 'Todas' }).click()
+  await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('wolf')
+  const row = page.locator('[data-row-key="srd:wolf"]')
+  await row.locator('.bst-row-main').click()
+  const pane = detail(page, info)
+  await expect(pane.locator('.bst-fav-mark')).toHaveCount(0)
+  await fromMenu(pane, page, 'Añadir Lobo a favoritas', 'Lobo')
+  // A filled bookmark beside the name in the stat block and at the end of the row's name; both are
+  // a mark with a visually hidden word, not a control.
+  await expect(pane.locator('.sb-name-row .bst-fav-mark')).toBeVisible()
+  await expect(pane.locator('.bst-fav-mark .visually-hidden')).toHaveText(/Favorita/)
+  await expect(row.locator('.bst-row-name .bst-fav-mark')).toHaveCount(1)
+  await expect(row.getByRole('button')).toHaveCount(1)
+  // Saying it twice (add, remove, add) swaps the text of one status line that stays mounted.
+  const status = page.locator('.bst-notice [role="status"]')
+  await expect(status.first()).toHaveCount(1)
+  await fromMenu(pane, page, 'Quitar Lobo de favoritas', 'Lobo')
+  await expect(pane.locator('.bst-fav-mark')).toHaveCount(0)
+  await expect(row.locator('.bst-fav-mark')).toHaveCount(0)
+})
+
+test('RYT-181 the filters sheet has one title, the common close, and marks choices by ink and underline', async ({
+  page,
+}, info) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.getByRole('button', { name: 'Filtros' }).click()
+  const filters = phone(info)
+    ? page.getByRole('dialog', { name: 'Filtros', exact: true })
+    : page.locator('.mantine-Popover-dropdown')
+  if (phone(info)) {
+    await expect(filters.getByRole('button', { name: 'Cerrar', exact: true })).toBeVisible()
+    await expect(filters.getByRole('button', { name: 'Cancelar' })).toHaveCount(0)
+  }
+  // The sort choices only say what they are: no help lines under them.
+  await expect(filters.locator('.bst-choice-help')).toHaveCount(0)
+  const epic = filters.getByRole('button', { name: /^Épicas/ })
+  await epic.click()
+  await filters.getByText('Dragón', { exact: true }).click()
+  await filters.getByText('Valor de desafío', { exact: true }).click()
+  // Selected tiles and bands: no check badge, and the underline instead of a border and fill.
+  await expect(filters.locator('.bst-tier-check')).toHaveCount(0)
+  await expect(filters.locator('.bst-tile-seal:visible')).toHaveCount(0)
+  const marks = await filters.evaluate((root) => {
+    const underline = (node: Element | null | undefined) =>
+      node ? getComputedStyle(node).boxShadow : ''
+    const chosen = root.querySelector('.bst-tile:has(input:checked)')
+    const band = root.querySelector('.bst-tier[aria-pressed="true"]')
+    const plain = root.querySelector('.bst-tile:has(input:not(:checked))')
+    return {
+      chosen: underline(chosen),
+      band: underline(band),
+      border: [chosen, plain].map((node) => (node ? getComputedStyle(node).borderTopColor : '')),
+    }
+  })
+  expect(marks.chosen).toContain('0px -3px 0px 0px')
+  expect(marks.band).toContain('0px -3px 0px 0px')
+  expect(marks.border[0]).toBe(marks.border[1])
+})
+
+test('RYT-181 a narrow list beside the pane keeps each name whole', async ({ page }, info) => {
+  const width = info.project.use.viewport?.width ?? 0
+  test.skip(width < 768 || width > 1000, 'The tablet is where the list is narrowest')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  const search = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await search.fill('goblin')
+  await page
+    .locator('.bst-row-main', { hasText: /^Guerrero goblin/ })
+    .first()
+    .click()
+  await expect(page.locator('.bst-detail')).toBeVisible()
+  await search.fill('manto')
+  await expect(page.locator('.bst-row-name').first()).toBeVisible()
+  // A name of one word takes one line: it is never broken inside the word.
+  const broken = await page.evaluate(() =>
+    [...document.querySelectorAll('.bst-row-name')]
+      .filter((node) => !/\s/.test(node.textContent!.trim()))
+      .map((node) => {
+        const range = document.createRange()
+        range.selectNodeContents(node.firstChild!)
+        return { name: node.textContent, lines: range.getClientRects().length }
+      })
+      .filter((entry) => entry.lines > 1),
+  )
+  expect(broken).toEqual([])
+  await audit(page)
+})
+
+test('RYT-181 at 150% text the search row keeps its field, its controls share a height and no segment breaks a word', async ({
+  page,
+}) => {
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+  const field = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  await expect(field).toBeVisible()
+  expect((await field.boundingBox())!.width).toBeGreaterThanOrEqual(100)
+  const heights = await page
+    .locator('.bst-toolbar-search > *')
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height))
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(2)
+  // Segments never hyphenate or break inside a word: a word wider than its segment would overflow.
+  const segments = await page
+    .locator('.bst-source .mantine-SegmentedControl-label')
+    .evaluateAll((labels) =>
+      labels.map((label) => {
+        const style = getComputedStyle(label)
+        return {
+          text: label.textContent,
+          hyphens: style.hyphens,
+          wrap: style.overflowWrap,
+          fits: label.scrollWidth <= label.clientWidth + 1,
+        }
+      }),
+    )
+  expect(segments.length).toBeGreaterThanOrEqual(4)
+  for (const segment of segments) {
+    expect(segment.hyphens, segment.text ?? '').toBe('manual')
+    expect(segment.wrap, segment.text ?? '').toBe('normal')
+    expect(segment.fits, segment.text ?? '').toBe(true)
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('RYT-181 the search placeholder fits its field at the default size', async ({
+  page,
+}, info) => {
+  test.skip(!phone(info), 'The narrowest field')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  const room = await placeholderRoom(page.getByRole('searchbox', { name: 'Buscar criatura' }))
+  expect(room.placeholder.length).toBeGreaterThan(3)
+  expect(room.text).toBeLessThanOrEqual(room.room)
+})
+
+for (const encounter of [true, false])
+  test(`RYT-181 at 150% text the add bar keeps every word readable (${encounter ? 'with' : 'without'} an encounter)`, async ({
+    page,
+  }) => {
+    test.setTimeout(90_000)
+    const server = combatServer()
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+    await server.install(page)
+    if (encounter) await withCrypt(page, server)
+    await openBestiary(page)
+    await page.addStyleTag({ content: 'html { font-size: 150%; }' })
+    await page.getByRole('searchbox', { name: 'Buscar criatura' }).fill('lobo')
+    await page.locator('.bst-row-main', { hasText: /^Lobo/ }).first().click()
+    const bar = page.locator('.bst-actions')
+    const add = bar.getByRole('button', {
+      name: encounter ? 'Añadir a Cripta' : 'Añadir a un encuentro',
+      exact: true,
+    })
+    await expect(add).toBeVisible()
+    await page.waitForTimeout(500)
+    // Not cut sideways or at the descenders, and not an ellipsis of a word or two.
+    expect(await clippedLabels(bar, '.bst-action-primary')).toEqual([])
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    const width = page.viewportSize()!.width
+    if (encounter) {
+      // The stepper's buttons stay inside its border.
+      const inside = await page.locator('.bst-bar-dial').evaluate((dial) => {
+        const outer = dial.getBoundingClientRect()
+        return [...dial.querySelectorAll('.bst-dial-step')].every((step) => {
+          const box = step.getBoundingClientRect()
+          return (
+            box.left >= outer.left - 0.5 &&
+            box.right <= outer.right + 0.5 &&
+            box.top >= outer.top - 0.5 &&
+            box.bottom <= outer.bottom + 0.5
+          )
+        })
+      })
+      expect(inside).toBe(true)
+      if (width < 500) {
+        // The stepper and the menu share a row; the filled action has the next one to itself.
+        const dial = (await page.locator('.bst-bar-dial').boundingBox())!
+        const more = (await bar.locator('[data-bst-more]').boundingBox())!
+        const addBox = (await add.boundingBox())!
+        const barBox = (await bar.boundingBox())!
+        expect(Math.abs(dial.y + dial.height / 2 - (more.y + more.height / 2))).toBeLessThan(8)
+        expect(addBox.y).toBeGreaterThan(dial.y + dial.height - 1)
+        expect(addBox.width).toBeGreaterThan(barBox.width * 0.7)
+      }
+    }
+  })
+
+test('RYT-181 with no selection the laptop head lines up with the list', async ({ page }, info) => {
+  test.skip(info.project.name !== 'identity-desktop', 'Laptop layout')
+  const server = combatServer()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await server.install(page)
+  await openBestiary(page)
+  const measure = await page.evaluate(() => {
+    const width = (selector: string) => document.querySelector(selector)!.getBoundingClientRect()
+    return {
+      row: width('.bst-toolbar-search').width,
+      toolbar: width('.bst-toolbar').width,
+      list: width('.bst-list').width,
+    }
+  })
+  // The search row carries 4px of padding on each side; its content is the list's measure.
+  expect(Math.abs(measure.row - 8 - measure.list)).toBeLessThanOrEqual(4)
+  expect(Math.abs(measure.toolbar - measure.list)).toBeLessThanOrEqual(4)
 })

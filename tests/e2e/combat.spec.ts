@@ -18,7 +18,7 @@ import {
   peerId,
   playerId,
 } from './fixtures/identity.ts'
-import { capture, expectTouchTargets, expectArtPrompt } from './fixtures/audit.ts'
+import { capture, expectTouchTargets } from './fixtures/audit.ts'
 import { combatServer } from './fixtures/combat.ts'
 
 const size = (project: string) =>
@@ -1719,48 +1719,53 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   )
   await page.locator('.bst-row-main', { hasText: 'Goblin' }).click()
   const card = page.locator('.bst-detail:visible, .bst-sheet').first()
-  // No image yet: a designed hexagonal monogram, and the token itself is the picker.
-  await expect(card.locator('.combat-creature-image .combat-token-monogram')).toHaveText('G', {
+  // No image yet: a designed hexagonal monogram beside the name; the menu is the picker.
+  await expect(card.locator('.bst-thumb .combat-token-monogram')).toHaveText('G', {
     timeout: 15_000,
   })
-  const picker = card.getByLabel('Añadir una imagen de Goblin')
-  await expect(picker).toHaveAttribute('type', 'file')
-  // UI review F5: one accessible name, on the control; no loose duplicate text.
-  await expect(card.getByText('Añadir una imagen de Goblin')).toHaveCount(0)
+  const input = card.locator('input.combat-image-input')
+  await expect(input).toHaveAttribute('type', 'file')
+  await expect(card.getByRole('button', { name: /^Ver la imagen/ })).toHaveCount(0)
   // UI review F4: each stat keeps its label and value together.
   await expect(card.locator('.sb-core > div').first()).toHaveText('CA15')
-  await expectTouchTargets(page, '.combat-image-picker')
-  // Keyboard: the picker takes focus and shows the focus ring around the token.
-  // The rows were clicked: a key press puts the browser back in keyboard modality (:focus-visible).
-  await page.keyboard.press('Shift')
-  await picker.focus()
-  await expect(card.locator('.combat-image-picker')).toHaveCSS('outline-style', 'solid')
+  const more = card.getByRole('button', { name: 'Más acciones para Goblin' })
+  await expectTouchTargets(page, '.bst-actions button:visible')
   await audit(page)
   await evidence(page, info.project.name, 'bestiary-empty', 'RYT-043')
-  // RYT-154: without any image, a prompt in the house style sits under the token.
-  await expectArtPrompt(card, page, /^Creature portrait for a tabletop role-playing game/)
+  // RYT-154: without any image, the menu copies a prompt in the house style.
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await more.click()
+  await expect(page.getByRole('menuitem', { name: 'Añadir una imagen…' })).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Copiar prompt de arte' }).click()
+  await expect(card.getByRole('status').filter({ hasText: 'Prompt copiado' })).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+    /^Creature portrait for a tabletop role-playing game/,
+  )
 
-  // An unreadable file is explained next to the token.
-  await picker.setInputFiles({ name: 'notes.png', mimeType: 'image/png', buffer: Buffer.from('x') })
+  // An unreadable file is explained next to the name.
+  await input.setInputFiles({ name: 'notes.png', mimeType: 'image/png', buffer: Buffer.from('x') })
   await expect(card.getByRole('alert')).toHaveText(
     'No se puede leer ese archivo. Elige una imagen PNG, JPG o WebP.',
   )
   expect(server.uploads.size).toBe(0)
 
   // Add: the image is cropped to WebP, stored privately and attached with the revision.
-  await picker.setInputFiles({ name: 'goblin.png', mimeType: 'image/png', buffer: png })
-  await expect(card.locator('.bst-plate-photo img')).toHaveAttribute('src', /goblin/, {
+  await input.setInputFiles({ name: 'goblin.png', mimeType: 'image/png', buffer: png })
+  await expect(card.locator('.bst-thumb img')).toHaveAttribute('src', /goblin/, {
     timeout: 15_000,
   })
   await expect(card.getByRole('alert')).toHaveCount(0)
-  await expect(card.getByRole('status')).toHaveText('Imagen de Goblin guardada')
+  await expect(
+    card.getByRole('status').filter({ hasText: 'Imagen de Goblin guardada' }),
+  ).toBeVisible()
   expect([...server.uploads]).toEqual([
     expect.stringMatching(new RegExp(`^pre/${campaignId}/${goblin.id}/.+\\.webp$`)),
   ])
-  // RYT-088: with an image the stat block leads with its plate; the pencil in its corner opens the
-  // menu (change, remove) and keeps the focus after the save.
-  const token = card.getByRole('button', { name: 'Cambiar la imagen de Goblin' })
+  // With an image the thumbnail opens the picture; the menu changes or removes it and keeps the
+  // focus after the save.
+  const token = more
   await expect(token).toBeFocused()
+  await expect(card.getByRole('button', { name: 'Ver la imagen de Goblin' })).toBeVisible()
   await audit(page)
   await evidence(page, info.project.name, 'bestiary', 'RYT-043')
 
@@ -1772,7 +1777,7 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   await expect.poll(() => server.uploads.size).toBe(2)
   await expect.poll(() => server.templates.find((t) => t.id === goblin.id)?.revision).toBe(2)
   expect(server.templates.find((t) => t.id === goblin.id)?.image_path).toBe([...server.uploads][1])
-  // Remove: the campaign creature goes back to its monogram, and the token is the picker again.
+  // Remove: the campaign creature goes back to its monogram, and the menu offers to add one.
   await token.click()
   await page.getByRole('menuitem', { name: 'Quitar la imagen…' }).click()
   // Removing asks first (a quiet destructive action, axe-clean); Cancel and Escape keep the image,
@@ -1788,7 +1793,7 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   await expect(ask).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(ask).toHaveCount(0)
-  if ((info.project.use.viewport?.width ?? 1440) < 992)
+  if ((info.project.use.viewport?.width ?? 1440) < 768)
     await expect(page.locator('.bst-sheet')).toBeVisible()
   await expect(token).toBeFocused()
   expect(server.templates.find((t) => t.id === goblin.id)?.image_path).toBe([...server.uploads][1])
@@ -1796,7 +1801,10 @@ test('RYT-043 the DM adds and changes a creature image from its bestiary token',
   await page.getByRole('menuitem', { name: 'Quitar la imagen…' }).click()
   await ask.getByRole('button', { name: 'Quitar la imagen' }).click()
   await expect.poll(() => server.templates.find((t) => t.id === goblin.id)?.image_path).toBe(null)
-  await expect(card.getByLabel('Añadir una imagen de Goblin')).toHaveAttribute('type', 'file')
+  await expect(card.getByRole('button', { name: /^Ver la imagen/ })).toHaveCount(0)
+  await token.click()
+  await expect(page.getByRole('menuitem', { name: 'Añadir una imagen…' })).toBeVisible()
+  await page.keyboard.press('Escape')
   expect(errors).toEqual([])
 })
 

@@ -5571,18 +5571,21 @@
       "title": "DM command centre: the bestiary and the storeroom at the table in fewer steps",
       "priority": "P2",
       "owner": "frontend",
-      "status": "planned",
+      "status": "done",
       "dependsOn": ["RYT-179", "RYT-180"],
       "sources": [
         "Owner decision on the RYT-179 options page, 25 November 2026: scope C, the bestiary and the storeroom are redesigned inside as the third delivery.",
         "RYT-179 audit (docs/evidence/RYT-179/audit.md): on a phone the bestiary page is 37,618px tall with 106 controls in the main area, and giving an item takes five taps from the navigation.",
-        "Carried over from the RYT-180 review, 25 November 2026: holding Enter on the raise action of the party level raises one more level each time its rest ends; the segmented control and the off switch keep cool greys in Parchment; the dice confirmation repeats the line of the chosen option; the switcher placeholder is cut at 390x667 with 150% text; after a stale-version error in the Content review dialog the focus is left on the page."
+        "Carried over from the RYT-180 review, 25 November 2026: holding Enter on the raise action of the party level raises one more level each time its rest ends; the segmented control and the off switch keep cool greys in Parchment; the dice confirmation repeats the line of the chosen option; the switcher placeholder is cut at 390x667 with 150% text; after a stale-version error in the Content review dialog the focus is left on the page.",
+        "Owner decision on the RYT-181 options page, 25 November 2026 (A in each of its eight questions): compact creature rows with a thumbnail (P1); a stat block that opens on the numbers and the attacks (P2); the stat block beside the list on tablets and laptops (P3); adding to the open encounter straight from the stat block, with Undo (P4); an item row opens the item with Give as its main action (P5); loot as one line per item with a fixed deliver action (P6); the storeroom head is the search and Filters, like the bestiary (P7); a proposal can be accepted and given directly, with Review first beside it (P8)."
       ],
       "scope": "The bestiary and the item storeroom inside the command centre shell from RYT-179, for use during play: finding a creature and reading its stat block, sending it to an encounter, finding an item and giving it or distributing loot. An options page with the measured steps per task and the directions goes to the owner before implementation. Non-goals: the creature and item editors, content packs, database changes.",
       "acceptance": [
         "An options page with the current steps per task and the proposed screens is answered by the owner before implementation.",
-        "The tasks measured on the options page take the steps agreed there, measured again after the change.",
+        "Measured again on a phone after the change: about seven creatures and six items fit in the first screen; a stat block shows armor class, hit points and its first attacks without scrolling; adding a creature to the open encounter takes two taps and can be undone; giving an item to one character takes four taps; two items to three characters take about eight taps with the deliver action always in view; accepting a proposal takes two taps.",
+        "Search ranks names that start with the query first and Enter opens the best match; the storeroom search stays in view, takes the slash key and its long list is windowed; no badges on either screen; a typed quick creature or new item is not discarded by Escape without asking.",
         "The existing bestiary, storeroom, loot and long-list scroll specs pass, updated only where the approved design changes a control.",
+        "Carried from the RYT-180 review: a held Enter on the raise action does not keep raising; the segmented control and the off switch use the theme greys in Parchment; the dice confirmation does not repeat the option line; the switcher placeholder fits 390x667 at 150% text; a stale-version error in the Content review dialog keeps the focus.",
         "390px, 820px and 1280px, Hearth and Parchment, English and Spanish, 150% text, keyboard and Escape, axe clean, 44px targets; independent UI review PASS on the current source."
       ],
       "validation": [
@@ -5590,7 +5593,11 @@
         "npm run test:e2e",
         "Before and after captures and step counts; design critique of the rendered result; independent UI review"
       ],
-      "evidence": ["docs/evidence/RYT-181/validation.md"]
+      "evidence": [
+        "docs/evidence/RYT-181/audit.md",
+        "docs/evidence/RYT-181/validation.md",
+        "docs/decisions/058-bestiary-and-storeroom-at-the-table.md"
+      ]
     }
   ]
 }

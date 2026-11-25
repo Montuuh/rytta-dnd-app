@@ -1108,3 +1108,16 @@ for (const theme of ['default', 'parchment', 'wizard'] as const)
     await audit(page, info.outputPath(`dm-panel-${theme}.png`))
     await expectTouchTargets(page, 'main a:visible, main button:visible')
   })
+
+test('RYT-181 a held Enter on the raise action raises the party level once', async ({ page }) => {
+  const fixture = await identityFixture(page, { party: true, sheet: 'complete', partyLevel: 6 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto(levelUrl)
+  const section = page.getByRole('region', { name: /Nivel del grupo/ })
+  await section.getByRole('button', { name: 'Subir a nivel 7' }).focus()
+  // Holding the key sends keydown again with `repeat` set: only the first one is a press.
+  for (let repeat = 0; repeat < 4; repeat++) await page.keyboard.down('Enter')
+  await page.keyboard.up('Enter')
+  await expect(section.locator('[role="status"]')).toHaveText('Nivel 7 fijado')
+  expect(setPartyLevelCalls(fixture.calls)).toHaveLength(1)
+})

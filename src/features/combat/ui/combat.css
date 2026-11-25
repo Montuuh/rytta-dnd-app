@@ -1691,55 +1691,11 @@ button.combat-row-main:focus-visible {
 .combat-card.is-creature .combat-card-text {
   flex: 1 1 8rem;
 }
-.combat-creature-image {
-  display: contents;
-}
-.combat-image-picker {
-  position: relative;
-  display: inline-grid;
-  flex: none;
-  padding: 2px;
-  border-radius: 14px;
-  cursor: pointer;
-}
-.combat-image-picker[data-pending] {
-  cursor: progress;
-}
-.combat-image-picker:hover .combat-token-face {
-  filter: brightness(1.1);
-}
-.combat-creature-image:has(.combat-image-input:focus-visible) .combat-image-picker,
-button.combat-image-picker:focus-visible {
-  outline: 3px solid var(--app-focus);
-  outline-offset: 2px;
-}
-.combat-image-seal {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--app-accent);
-  color: var(--app-on-accent);
-  box-shadow: 0 0 0 2px var(--app-surface);
-}
 .combat-image-error {
   order: 10;
   flex: 1 1 100%;
   color: var(--danger);
   font-weight: 600;
-}
-/* RYT-053: with an image the seal is quiet (it marks a menu, not a missing image); progress and
-   saved notices show in words under the token. */
-.combat-image-seal.is-quiet {
-  width: 24px;
-  height: 24px;
-  background: var(--app-surface);
-  color: var(--app-accent);
-  box-shadow: 0 0 0 1.5px var(--app-accent);
 }
 .combat-image-status {
   order: 10;
@@ -1748,13 +1704,6 @@ button.combat-image-picker:focus-visible {
 }
 .combat-image-status:empty {
   display: none;
-}
-/* RYT-154: the art prompt and its manual fallback sit under the token, never between the token
-   and the name of the header row this control's display: contents joins. */
-.combat-creature-image > .art-prompt,
-.combat-creature-image > .combat-prompt-manual {
-  order: 10;
-  flex: 1 1 100%;
 }
 
 /* RYT-045: the Player's own turn. "Up next" turns into the hand-off tile: the side column on

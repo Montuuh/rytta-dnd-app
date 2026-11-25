@@ -19,11 +19,11 @@ export const diceEn = {
   'diceSettings.saved': 'Dice settings saved.',
   'diceSettings.confirmTitle': 'Change the table dice?',
   'diceSettings.confirmMode.physical':
-    'Players roll their own dice. The sheets say what to roll, and initiative and hit dice are typed in. No character data changes.',
+    'The sheets say what to roll; initiative and hit dice are typed in. No character data changes.',
   'diceSettings.confirmMode.app':
-    'Players will roll in the app: Rytta rolls and records every roll, initiative and hit dice included. On the sheets, the numbers stop saying what to roll and roll when tapped. No character data changes.',
+    'On the sheets, the numbers stop saying what to roll and roll when tapped; initiative and hit dice too. No character data changes.',
   'diceSettings.confirmMode.player':
-    'Each Player chooses on their device; until they do, they use physical dice.',
+    'Until each Player chooses, their sheets work as with physical dice.',
   'diceSettings.confirmVisibility.wider':
     'Earlier rolls are not shown to more people: they stay visible only to those who could see them when they were made.',
   'diceSettings.confirmVisibility.narrower':

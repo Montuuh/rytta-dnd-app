@@ -1,0 +1,153 @@
+/* The loot view: one line per item, one fixed action at the bottom. */
+/* The drawer's content is a column and its body takes what the header leaves, so the dock below
+   rests at the bottom of the view however few lines there are (and sticks once they scroll). */
+.loot-drawer {
+  display: flex;
+  flex-direction: column;
+}
+.loot-drawer-body {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+.loot-view {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+}
+.loot-line {
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 var(--mantine-spacing-sm);
+  border: 0;
+  border-bottom: 1px solid var(--app-border);
+  display: grid;
+  gap: 4px;
+}
+.loot-line-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.loot-line-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.loot-recipients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+}
+/* A recipient is a toggle: accent ink and an underline when on, never a fill. */
+.loot-recipient {
+  min-height: 44px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px 6px 0 0;
+  color: var(--app-muted);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+/* Hover is for pointers: after a tap on a touch screen it would stay on as a stuck ink. */
+@media (hover: hover) {
+  .loot-recipient:hover {
+    color: var(--app-text);
+  }
+}
+.loot-recipient[aria-pressed='true'] {
+  background: var(--app-select-tint);
+  box-shadow: var(--select-underline);
+  color: var(--app-accent);
+}
+.loot-all {
+  margin-inline-end: 8px;
+  border-inline-end: 1px solid var(--app-border);
+  border-radius: 0;
+}
+.loot-summary {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  overflow-wrap: anywhere;
+}
+.loot-load {
+  align-self: flex-start;
+}
+.loot-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding: 10px 0 4px;
+  background: var(--mantine-color-body);
+}
+.loot-reason {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+  overflow-wrap: break-word;
+}
+.loot-batch-name {
+  min-width: 0;
+  flex: 1;
+  height: auto;
+  min-height: 44px;
+}
+.loot-batch-name .mantine-Button-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* The item picker: alphabetical, 48px rows. */
+.loot-pick-search {
+  min-height: 48px;
+  font-size: max(1rem, 16px);
+}
+.loot-pick-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.loot-pick-list li + li {
+  border-top: 1px solid var(--app-border);
+}
+.loot-pick-row {
+  width: 100%;
+  min-height: 48px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+@media (hover: hover) {
+  .loot-pick-row:hover {
+    background: var(--app-raised);
+  }
+}
+.loot-pick-row:focus-visible {
+  outline-offset: -3px;
+}
+.loot-pick-row .store-glyph {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+.loot-pick-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.loot-pick-kind {
+  flex: none;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}

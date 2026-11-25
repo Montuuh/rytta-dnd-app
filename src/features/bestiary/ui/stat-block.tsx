@@ -8,6 +8,9 @@ import './bestiary.css'
 
 type Level = 2 | 3 | 4
 
+const playKinds = ['actions', 'bonusActions', 'reactions', 'traits', 'legendaryActions'] as const
+const playRank = (kind: StatBlock['sections'][number]['kind']) => playKinds.indexOf(kind)
+
 /**
  * A creature stat block (ADR 028), the same for SRD and homebrew creatures. The name heading is
  * the anchor (`headingId`); sections are headings one level below, so a screen reader can jump
@@ -18,26 +21,29 @@ export function StatBlockView({
   level = 2,
   headingId,
   media,
-  plate,
   badges,
+  nameMark,
   footnote,
   hideName = false,
+  playOrder = false,
 }: {
   block: StatBlock
   level?: Level
   headingId?: string
   /** Token or image beside the name. */
   media?: ReactNode
-  /**
-   * RYT-088/091: the creature's plate. It leads the block on phones; wider frames place it beside the
-   * name (and lay the numbers out around it) through the `.sb-aside` and `.sb-main` groups.
-   */
-  plate?: ReactNode
   /** Source and status badges under the name. */
   badges?: ReactNode
+  /** A small mark beside the name (a favourite), outside the heading's own text. */
+  nameMark?: ReactNode
   /** Attribution or provenance under the block. */
   footnote?: ReactNode
   hideName?: boolean
+  /**
+   * Table order: the numbers a fight uses first (the strip, then actions, bonus actions, reactions
+   * and traits), the reference after them (abilities, saves, skills, senses, languages).
+   */
+  playOrder?: boolean
 }) {
   const { t } = useTranslation()
   const Name = `h${level}` as const
@@ -122,7 +128,7 @@ export function StatBlockView({
             </dd>
           </div>
         ))}
-      {block.cr && (
+      {block.cr && !playOrder && (
         <div>
           <dt>{t('bestiary.cr')}</dt>
           <dd>{block.cr}</dd>
@@ -130,7 +136,11 @@ export function StatBlockView({
       )}
     </dl>
   )
-  const sections = block.sections.map((section) => (
+  const sections = (
+    playOrder
+      ? [...block.sections].sort((a, b) => playRank(a.kind) - playRank(b.kind))
+      : block.sections
+  ).map((section) => (
     <section key={section.kind} className="sb-section">
       <Section className="sb-section-title">{t(`bestiary.section.${section.kind}`)}</Section>
       {section.intro && (
@@ -157,48 +167,54 @@ export function StatBlockView({
     </section>
   ))
   const foot = footnote && <p className="sb-footnote">{footnote}</p>
-  return (
-    <article
-      className={plate ? 'sb has-plate' : 'sb'}
-      aria-labelledby={hideName ? undefined : headingId}
-    >
-      {!hideName && (
-        <header className="sb-head">
-          {media}
-          <div className="sb-title">
+  const head = !hideName && (
+    <header className="sb-head">
+      {media}
+      <div className="sb-title">
+        {nameMark ? (
+          <div className="sb-name-row">
             <Name id={headingId} className="sb-name" tabIndex={-1}>
               {block.name}
             </Name>
-            {block.meta && <p className="sb-meta">{block.meta}</p>}
-            {badges && <div className="sb-badges">{badges}</div>}
+            {nameMark}
           </div>
-        </header>
-      )}
-      {plate ? (
+        ) : (
+          <Name id={headingId} className="sb-name" tabIndex={-1}>
+            {block.name}
+          </Name>
+        )}
+        {block.meta && (
+          <p className="sb-meta">
+            {playOrder && block.cr
+              ? `${block.meta} · ${t('bestiary.crShort', { cr: block.cr })}`
+              : block.meta}
+          </p>
+        )}
+        {badges && <div className="sb-badges">{badges}</div>}
+      </div>
+    </header>
+  )
+  return (
+    <article
+      className={playOrder ? 'sb is-play' : 'sb'}
+      aria-labelledby={hideName ? undefined : headingId}
+    >
+      {head}
+      {core}
+      {playOrder ? (
         <>
-          <div className="sb-aside">
-            {plate}
-            {core}
-            {abilityList()}
-          </div>
-          <div className="sb-main">
-            {/* Shown instead of the column's list when a short wide frame keeps only the plate and
-                the core numbers in view (RYT-091); one of the two is always display: none. */}
-            {abilityList('is-reading')}
-            {details}
-            {sections}
-            {foot}
-          </div>
+          {sections}
+          {abilityList()}
+          {details}
         </>
       ) : (
         <>
-          {core}
           {abilityList()}
           {details}
           {sections}
-          {foot}
         </>
       )}
+      {foot}
     </article>
   )
 }

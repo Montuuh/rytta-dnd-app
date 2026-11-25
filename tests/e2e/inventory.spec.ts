@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { identityFixture, campaignId } from './fixtures/identity.ts'
 import { expectTouchTargets, capture, limitMatrix, expectArtPrompt } from './fixtures/audit.ts'
+import { giveItem, storeAction } from './fixtures/storeroom.ts'
 
 const url = `./#/campaign/${campaignId}/inventory`
 async function audit(page: Page, path: string) {
@@ -166,7 +167,7 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
   // The inventory page no longer links to the storeroom; the DM opens it from the Command Center.
   await expect(page.getByRole('link', { name: 'Almacén de objetos' })).toHaveCount(0)
   await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
-  await page.getByRole('button', { name: 'Nuevo objeto', exact: true }).click()
+  await storeAction(page, 'new')
   // RYT-104: the static SRD list is gone; the helper searches the campaign, templates first.
   const picker = page.getByRole('combobox', { name: 'Partir de un objeto existente' })
   await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Custom')
@@ -218,21 +219,10 @@ test('the DM forges from an existing item, gives it out and sees the hidden-modu
   await audit(page, info.outputPath('forge.png'))
   await page.getByRole('dialog').getByRole('button', { name: 'Forjar objeto' }).click()
   await expect(page.getByRole('status')).toContainText('Objeto guardado: Espada del alba')
-  const row = page.locator('.store-row').filter({ hasText: 'Espada del alba' })
-  const give = row.getByRole('button', { name: 'Dar Espada del alba a personajes', exact: true })
-  if (await give.count()) await give.click()
-  else {
-    await row.getByRole('button', { name: 'Acciones para Espada del alba', exact: true }).click()
-    await page.getByRole('menuitem', { name: 'Dar a personajes', exact: true }).click()
-  }
-  await page.getByRole('dialog').getByRole('button', { name: 'Arin', exact: true }).click()
-  const delivery = page.getByRole('dialog')
-  await delivery.getByRole('button', { name: 'Revisar reparto' }).click()
-  await expect(delivery).toContainText('Espada del alba × 1')
-  await delivery.getByRole('button', { name: 'Confirmar entrega' }).click()
-  await expect(delivery.getByRole('heading', { name: 'Botín entregado' })).toBeVisible()
-  await delivery.getByRole('button', { name: 'Cerrar', exact: true }).last().click()
+  // Row, Give, character, Give to: the storeroom's four taps, then a line on the list.
+  await giveItem(page, 'Espada del alba', 'Arin')
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('status')).toContainText('Arin recibe Espada del alba.')
   await page.goto(url)
   await expect(
     page.getByRole('button', { name: /Espada del alba, (cantidad|quantity) 1/ }),

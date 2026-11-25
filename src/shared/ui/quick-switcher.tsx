@@ -33,6 +33,8 @@ type Props = {
   onSettled?: () => void
   title: string
   searchLabel: string
+  /** A short hint that fits the field at large text; the accessible name stays `searchLabel`. */
+  placeholder: string
   closeLabel: string
   groups: SwitcherGroup[]
   /** Visible and announced when nothing matches. */
@@ -54,6 +56,7 @@ export function QuickSwitcher({
   onSettled,
   title,
   searchLabel,
+  placeholder,
   closeLabel,
   groups,
   emptyText,
@@ -170,7 +173,7 @@ export function QuickSwitcher({
         autoCorrect="off"
         spellCheck={false}
         enterKeyHint="go"
-        placeholder={searchLabel}
+        placeholder={placeholder}
         leftSection={<Search size={18} aria-hidden="true" />}
         value={query}
         onChange={(event) => {

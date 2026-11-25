@@ -1,14 +1,7 @@
-import { useRef, useState, type MouseEvent } from 'react'
-import { ActionIcon, Button, Group, Stack, Text, Title } from '@mantine/core'
-import { Check, GitCompareArrows, Plus, Users, X } from 'lucide-react'
+import { ActionIcon, Button, Menu, Stack, Text, Title } from '@mantine/core'
+import { Check, GitCompareArrows, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { CreatureListItem, StatBlock } from '@/features/bestiary'
-import { focusWhenReady } from '@/shared/ui/focus-when-ready'
-import type { EncounterSummary } from '../domain/combat'
-import { NumberDial } from './bestiary-widgets'
-import { npcEntryFor, useSpellLabel } from './creatures'
-import { useRunner } from './helpers'
-import { ErrorAlert } from './parts'
+import type { CreatureListItem } from '@/features/bestiary'
 
 const comparisonLimit = 3
 
@@ -16,31 +9,15 @@ export function BestiaryComparisonToggle({
   item,
   keys,
   onToggle,
-  labeled = false,
 }: {
   item: CreatureListItem
   keys: readonly string[]
   onToggle: (key: string) => void
-  labeled?: boolean
 }) {
   const { t } = useTranslation()
   const selected = keys.includes(item.key)
   const disabled = !selected && keys.length >= comparisonLimit
   const Icon = selected ? Check : GitCompareArrows
-  if (labeled) {
-    return (
-      <Button
-        variant="subtle"
-        aria-pressed={selected}
-        aria-label={t('bestiary.compare.toggle', { name: item.name })}
-        leftSection={<Icon size={16} aria-hidden="true" />}
-        onClick={() => onToggle(item.key)}
-        disabled={disabled}
-      >
-        {t('bestiary.compare.action')}
-      </Button>
-    )
-  }
   return (
     <ActionIcon
       variant={selected ? 'light' : 'subtle'}
@@ -52,6 +29,30 @@ export function BestiaryComparisonToggle({
     >
       <Icon size={18} aria-hidden="true" />
     </ActionIcon>
+  )
+}
+
+/** The same toggle as an entry of the stat block's `···` menu. */
+export function BestiaryCompareItem({
+  item,
+  keys,
+  onToggle,
+}: {
+  item: CreatureListItem
+  keys: readonly string[]
+  onToggle: (key: string) => void
+}) {
+  const { t } = useTranslation()
+  const selected = keys.includes(item.key)
+  const Icon = selected ? Check : GitCompareArrows
+  return (
+    <Menu.Item
+      disabled={!selected && keys.length >= comparisonLimit}
+      leftSection={<Icon size={16} aria-hidden="true" />}
+      onClick={() => onToggle(item.key)}
+    >
+      {t(selected ? 'bestiary.compare.remove' : 'bestiary.compare.toggle', { name: item.name })}
+    </Menu.Item>
   )
 }
 
@@ -107,100 +108,5 @@ export function BestiaryComparison({
         ))}
       </ul>
     </section>
-  )
-}
-
-export function EncounterCreatureAdd({
-  campaignId,
-  encounter,
-  item,
-  block,
-}: {
-  campaignId: string
-  encounter: EncounterSummary
-  item: CreatureListItem
-  block: StatBlock | null
-}) {
-  const { t } = useTranslation()
-  const [count, setCount] = useState<number | string>(1)
-  const [added, setAdded] = useState<number | null>(null)
-  const { run, pending, error, trigger, clear } = useRunner(campaignId)
-  const submitting = useRef(false)
-  const intent = useRef<{ count: number; requestId: string } | null>(null)
-  const spellLabel = useSpellLabel()
-  const valid = typeof count === 'number' && Number.isInteger(count) && count >= 1 && count <= 20
-  const add = async (event: MouseEvent<HTMLButtonElement>) => {
-    if (!valid || pending || submitting.current) return
-    submitting.current = true
-    setAdded(null)
-    const button = event.currentTarget
-    const entry = npcEntryFor(
-      item,
-      block,
-      {
-        count,
-        side: item.side ?? 'enemy',
-        hpMode: 'average',
-        alias: '',
-        hidden: false,
-        share: true,
-      },
-      spellLabel,
-    )
-    try {
-      const requestId =
-        intent.current?.count === count ? intent.current.requestId : crypto.randomUUID()
-      intent.current = { count, requestId }
-      if (await run({ kind: 'add', encounterId: encounter.id, entries: [entry], requestId })) {
-        intent.current = null
-        setAdded(count)
-        setCount(1)
-      }
-    } finally {
-      submitting.current = false
-      // The button is disabled while the request runs, which drops focus onto the page. One
-      // frame later it may still be disabled, so the return retries until it takes focus. No
-      // overlay is closing: focus the user moved inside the sheet stays where they put it.
-      focusWhenReady(() => button, { from: button, leaving: null, timeout: 1000 })
-    }
-  }
-  return (
-    <div className="bst-encounter-add">
-      {error && (
-        <ErrorAlert
-          sticky={false}
-          trigger={trigger}
-          onDismiss={(alert) => {
-            if (alert?.contains(document.activeElement)) trigger?.focus()
-            clear()
-          }}
-        >
-          {t(`combat.error.${error}`)}
-        </ErrorAlert>
-      )}
-      {added !== null && (
-        <Text size="sm" role="status" mb={4}>
-          {t('bestiary.add.done', { count: added, name: item.name, encounter: encounter.name })}
-        </Text>
-      )}
-      <Group gap="xs" align="flex-end">
-        <NumberDial
-          label={t('combat.add.count')}
-          icon={Users}
-          min={1}
-          max={20}
-          value={count}
-          onChange={setCount}
-        />
-        <Button
-          leftSection={<Plus size={16} aria-hidden="true" />}
-          onClick={(event) => void add(event)}
-          disabled={!valid || pending}
-          loading={pending}
-        >
-          {t('bestiary.context.add', { count: valid ? count : 1 })}
-        </Button>
-      </Group>
-    </div>
   )
 }

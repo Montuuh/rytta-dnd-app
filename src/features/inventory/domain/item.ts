@@ -201,6 +201,18 @@ export type DefinitionDraft = {
   is_template?: boolean
 }
 
+/**
+ * What stops a draft from being forged: no name, or damage dice that are not "NdM". The forge
+ * disables its action on the same rule, and a Player's proposal is accepted without opening the
+ * forge only when this finds nothing.
+ */
+export function draftIssue(draft: Pick<DefinitionDraft, 'name' | 'properties'>) {
+  if (draft.name.trim().length === 0) return 'name' as const
+  const dice = draft.properties.dice
+  if (dice && !/^\d{1,2}d\d{1,3}$/.test(dice)) return 'dice' as const
+  return null
+}
+
 /** Weight of one unit in lb: weight_lb when the server sent it, else the legacy tenths. */
 export const unitPounds = (definition: Pick<ItemDefinition, 'weight_tenths' | 'weight_lb'>) =>
   definition.weight_lb ?? definition.weight_tenths / 10

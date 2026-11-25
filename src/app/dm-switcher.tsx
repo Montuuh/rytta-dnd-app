@@ -80,6 +80,7 @@ export function DmQuickSwitcher({
       groups={groups}
       title={t('switcher.title')}
       searchLabel={t('switcher.search')}
+      placeholder={t('switcher.placeholder')}
       closeLabel={t('switcher.close')}
       emptyText={(query) => t('switcher.none', { query })}
       countText={(count) => t('switcher.found', { count })}

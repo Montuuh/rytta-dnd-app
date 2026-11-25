@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { campaignId, identityFixture } from './fixtures/identity.ts'
 import { combatServer } from './fixtures/combat.ts'
-import { expectTouchTargets } from './fixtures/audit.ts'
+import { expectTouchTargets, placeholderRoom } from './fixtures/audit.ts'
 
 // RYT-179: the DM's quick switcher (Ctrl+K, "/", the header control) and the deep-link actions
 // (`?do=new`, `?do=loot`) that the pages consume once.
@@ -94,7 +94,7 @@ test('"/" does not open while typing in a field and the bestiary keeps it for it
   await dmPage(page)
   await server.install(page)
   await page.goto(`${membersUrl}?panel=items`)
-  const search = page.getByRole('textbox', { name: 'Buscar objetos' })
+  const search = page.getByRole('searchbox', { name: 'Buscar objetos' })
   await search.click()
   await page.keyboard.press('/')
   await expect(switcher(page)).toHaveCount(0)
@@ -269,7 +269,8 @@ test('?do=loot opens the loot distribution once', async ({ page }) => {
   await page.goto(`${membersUrl}?panel=items&do=loot`)
   const loot = page.getByRole('dialog')
   await expect(loot).toBeVisible()
-  await expect(loot.getByRole('combobox', { name: 'Añadir objeto al reparto' })).toBeVisible()
+  // With no line yet the loot view opens on the item picker.
+  await expect(loot.getByRole('searchbox', { name: 'Buscar objeto para añadir' })).toBeVisible()
   await expect.poll(() => page.url()).not.toContain('do=')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -301,7 +302,7 @@ test('the switcher takes the DM to an action that opens its dialog', async ({ pa
   await openByKeyboard(page)
   await field(page).fill('repartir')
   await page.keyboard.press('Enter')
-  await expect(page.getByRole('combobox', { name: 'Añadir objeto al reparto' })).toBeVisible()
+  await expect(page.getByRole('searchbox', { name: 'Buscar objeto para añadir' })).toBeVisible()
   await expect.poll(() => page.url()).not.toContain('do=')
   await expect(switcher(page)).toHaveCount(0)
 })
@@ -441,6 +442,14 @@ test('at 390x667 and 150% text the list fits the screen and its group label stay
   const box = (await dialog.boundingBox())!
   expect(box.y).toBeGreaterThanOrEqual(0)
   expect(box.y + box.height).toBeLessThanOrEqual(667)
+  // The field opens focused, and a focused field paints no ellipsis: the placeholder itself must
+  // fit, measured as painted (its text width against the room inside the field).
+  await expect(field(page)).toBeFocused()
+  const room = await placeholderRoom(field(page))
+  expect(room.placeholder.length).toBeGreaterThan(3)
+  expect(room.text).toBeLessThanOrEqual(room.room)
+  // The accessible name stays the full question.
+  await expect(field(page)).toHaveAttribute('aria-label', 'Buscar panel o acción')
   const list = dialog.getByRole('listbox')
   const listBox = (await list.boundingBox())!
   expect(listBox.y + listBox.height).toBeLessThanOrEqual(667)

@@ -150,11 +150,11 @@ How it works:
 ## Primary action and selection (RYT-151)
 
 The filled accent marks one action per screen: the one the DM uses at the table. Item
-storeroom: Distribute loot (New item outlined, Manage catalogue a quiet link). Members: Invite
+storeroom: Distribute loot (New item and Manage catalogue in the `···` menu). Members: Invite
 player. Party level: Raise to level N (Set level N under "Another level" is outlined). Content:
 Review changes, only while a pack version waits. Dice, Modules and Audit have none. Shops: Add item (New shop outlined). Combat: the fight-flow button (Start, Next turn);
 adding party members or creatures uses the light variant. Bestiary: Add to encounter in the
-stat block (New creature light). Dialogs and drawers are their own screen with their own fill.
+stat block (New creature in the `···` menu). Dialogs and drawers are their own screen with their own fill.
 
 Selection is never the fill. The selected command-centre tab, shop, segment or pressed toggle
 uses accent ink on `--app-select-tint` with a 3px rail (`--select-rail`, vertical lists) or
@@ -238,6 +238,39 @@ missing information. Exact hit points keep the proportional bar, numbers and ban
 The bestiary token is its own image picker: a visually hidden file input labelled "Add an image of
 …" / "Change the image of …", the token as its label, a camera seal on the rim and the focus ring
 around the token. Progress and success are announced; failures appear under the card.
+
+## Bestiary and storeroom at the table (RYT-181, ADR 058)
+
+This section takes precedence over older passages below where they differ (rows with a CR chip
+and a star, removable filter chips, the stat block led by its plate, the storeroom row menu).
+
+Both screens open on the search with Filters and one `···` menu beside it (New creature and
+Creature packs; New item and Manage catalogue). Search ranks names that start with the query, then
+names where a word starts with it, then the rest; Enter opens the first. Active filters are one
+muted line with a text button to clear them; a filter is removed one by one in the Filters sheet.
+Rows are one button with one tab stop and no badge: a creature row is about 57px (32px token, name,
+"type · AC · HP", "CR n" as text; a small bookmark after the name marks a favourite), an item row
+about 64px (icon, name, "category · rarity · weight", price as text). Rare actions live inside the
+open creature or item.
+
+Stat block: a 56px thumbnail beside the name (it opens the picture; image editing is in `···`),
+then armor class, hit points, initiative and speed, then actions, bonus actions, reactions and
+traits, then abilities, saves, details and lore. Its bar is one row: the main action and `···`.
+From 48em it opens in a pane beside the list (selected row with the rail and `aria-current`,
+arrows move the selection, Escape closes the pane); on phones it is a full-screen sheet. With an
+encounter in progress, or the one opened last in the session, the bar is a count stepper and "Add
+to {encounter}"; a ruled status line above the bar says what was added, with Undo and a link to
+the encounter. The dialog stays for another encounter, a new one or other options, under `···`.
+
+Storeroom: Distribute loot is the one filled action; the proposals row shows only while one
+waits and opens the proposal itself when it is the only one. An item opens a read-only sheet with
+Give (filled), Edit and `···`. Giving is quantity, the characters as a radio list and "Give to
+{character}"; the result is a status line on the list. Loot is one line per item (recipients as
+toggles in ink and underline, an All toggle, quantity per recipient), a searchable alphabetical
+picker, a summary per character and one pinned "Deliver n items" action that says why when it
+cannot act. A proposal offers "Accept and give to {character}" when its draft is valid, "Review
+first" and Reject. Status lines keep their region mounted and use the rail line; a quick creature
+or a new item with typed content asks before it is discarded.
 
 ## Bestiary (ADR 028)
 

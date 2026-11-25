@@ -4,6 +4,7 @@ import { campaignId, identityFixture } from './fixtures/identity.ts'
 import { capture, expectTouchTargets, limitMatrix } from './fixtures/audit.ts'
 import { itemPackState, resetItemPacks } from './fixtures/item-packs.ts'
 import { homebrewPackId, libraryServer, srdLibraryPackId } from './fixtures/library.ts'
+import { storeAction } from './fixtures/storeroom.ts'
 
 // RYT-166 and RYT-163 in both languages and themes: the storeroom import from packs, the library
 // item form and the campaigns of a private pack.
@@ -50,9 +51,7 @@ for (const [language, theme] of [
       await page.emulateMedia({ reducedMotion: 'reduce' })
       // The storeroom import: a source filter and the items that differ from their pack.
       await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
-      await page
-        .getByRole('button', { name: es ? 'Gestionar catálogo' : 'Manage catalogue' })
-        .click()
+      await storeAction(page, 'manage', es)
       await page.getByRole('button', { name: es ? 'Importar objetos' : 'Import items' }).click()
       const drawer = page.getByRole('dialog', { name: es ? 'Importar objetos' : 'Import items' })
       await expect(drawer.getByLabel(es ? 'Fuente' : 'Source')).toBeVisible()

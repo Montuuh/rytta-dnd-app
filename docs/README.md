@@ -147,3 +147,7 @@ and [RYT-005 verification](evidence/RYT-005/validation.md).
 70. [ADR 057: the DM administration panels act in fewer steps](decisions/057-dm-administration-panels.md):
     member rows with a sheet per member, the party level saved at once with Undo, dice as two rows
     with a sheet each, pack versions to review first and the audit per character (RYT-180).
+71. [ADR 058: the bestiary and the storeroom are built for use at the table](decisions/058-bestiary-and-storeroom-at-the-table.md):
+    scanning rows, ranked search, a stat block that opens on the numbers, a pane beside the list,
+    direct add with Undo, the item sheet and giving, loot as lines and proposals accepted as
+    written (RYT-181).

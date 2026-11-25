@@ -1,63 +1,19 @@
-import {
-  useDeferredValue,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-} from 'react'
+import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActionIcon,
   Alert,
-  Badge,
   Button,
-  CloseButton,
   Group,
-  Loader,
   Menu,
-  Popover,
-  RangeSlider,
-  SegmentedControl,
-  Select,
-  Stack,
   Text,
-  TextInput,
-  Textarea,
   Title,
   VisuallyHidden,
   Drawer as CreatureDrawer,
 } from '@mantine/core'
-import { notifications } from '@mantine/notifications'
 import { useQuery } from '@tanstack/react-query'
-import { Drawer, Modal } from '@/shared/ui/overlays'
+import { Modal } from '@/shared/ui/overlays'
 import { afterOverlayEntriesSettle } from '@/shared/ui/use-back-to-close'
-import {
-  ArrowDown01,
-  ArrowDownAZ,
-  ArrowLeft,
-  Bookmark,
-  Check,
-  Crown,
-  Heart,
-  Shield,
-  Zap,
-  Copy,
-  CopyPlus,
-  EllipsisVertical,
-  EyeOff,
-  FilePenLine,
-  PawPrint,
-  Pencil,
-  Plus,
-  Search,
-  SlidersHorizontal,
-  Swords,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { ArrowLeft, Ellipsis, PawPrint, Plus, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '@/features/auth'
@@ -67,63 +23,36 @@ import {
   filterCreatures,
   packTitle,
   referenceKey,
-  searchKey,
-  signed,
-  statBlockToText,
-  StatBlockView,
-  type CreatureArt,
   type CreatureFilters,
   type CreatureListItem,
   type CreatureType,
 } from '@/features/bestiary'
 import { QueryFeedback } from '@/features/campaigns'
-import { usePhone, useWide } from '@/shared/ui/use-viewport'
-import type { TFunction } from 'i18next'
-import { entryOrigin, type EntryOrigin } from '@/shared/api/pack-origins'
-import { useBasePackLabel, usePackOrigins } from '@/shared/ui/pack-origins-context'
-import { centreUntilSettled } from '@/shared/ui/centre-until-settled'
-import { showTopOf } from '@/shared/ui/scroll-parent'
+import { usePhone } from '@/shared/ui/use-viewport'
+import { useBasePackLabel } from '@/shared/ui/pack-origins-context'
 import { focusWhenReady } from '@/shared/ui/focus-when-ready'
-import { Windowed } from '@/shared/ui/windowed'
+import { StatusRail } from '@/shared/ui/rail-line'
 import { encountersQuery } from '../api'
-import type { CombatantTemplate, EncounterSummary, TemplateInput } from '../domain/combat'
+import type { CombatantTemplate } from '../domain/combat'
+import { searchCreatures } from '../domain/creature-search'
 import { AddToEncounterDialog } from './add-to-encounter'
-import {
-  BestiaryComparison,
-  BestiaryComparisonToggle,
-  EncounterCreatureAdd,
-} from './bestiary-encounter'
+import { focusAddButton } from './focus-add'
+import { BestiaryComparison } from './bestiary-encounter'
+import { CreatureDetail } from './bestiary-detail'
+import { CreatureList } from './bestiary-list'
+import { Toolbar } from './bestiary-toolbar'
 import { CreatureEditor } from './creature-editor'
-import { CreatureChanges } from './creature-changes'
 import { blankDraft, draftFromBlock, type CreatureDraft } from './creature-draft'
-import { CreatureArtControl, type ArtNotice } from './creature-art'
-import { itemArt, templateBlock, useCreatureCatalog } from './creatures'
+import { templateBlock, useCreatureCatalog } from './creatures'
+import { addedLine } from './encounter-add'
+import { useEncounterAdd } from './encounter-add'
 import { useRunner } from './helpers'
+import { recallEncounter } from './last-encounter'
 import { NewCreatureDialog } from './new-creature'
-import {
-  OfficialDialog,
-  PacksLink,
-  PacksMissing,
-  VersionNote,
-  type OfficialAsk,
-} from './official-bestiary'
+import { OfficialDialog, PacksMenuItem, PacksMissing, type OfficialAsk } from './official-bestiary'
 import { RunnerError } from './parts'
-import { typeGlyphs } from './bestiary-glyphs'
-import { NumberDial, SideToggle, SizeScale, TileGroup, TypeTiles } from './bestiary-widgets'
-import { Token } from './token'
-import { JumpIndex } from './jump-index'
+import { QuickDialog } from './quick-creature'
 import './bestiary.css'
-
-const crCount = challengeRatings.length - 1
-const crAt = (cr: string) => challengeRatings.indexOf(cr as (typeof challengeRatings)[number])
-/** Quick CR bands for the filters: what a DM usually reaches for when building a fight. */
-const crTiers = [
-  { key: 'minion', range: [0, crAt('1')] },
-  { key: 'low', range: [crAt('2'), crAt('4')] },
-  { key: 'mid', range: [crAt('5'), crAt('10')] },
-  { key: 'high', range: [crAt('11'), crAt('16')] },
-  { key: 'epic', range: [crAt('17'), crCount] },
-] as const satisfies readonly { key: string; range: readonly [number, number] }[]
 
 function useFavorites(campaignId: string) {
   const key = `rytta.bestiary.favorites.${campaignId}`
@@ -151,25 +80,26 @@ function useFavorites(campaignId: string) {
 }
 
 /**
- * The list and stat block sit side by side only when the panel itself has room for both (52rem,
- * so large text needs more): a laptop with the Command Center sidebar or 150% text gets the sheet.
+ * From 48em the stat block opens in a pane beside the list, inside the panel area, when the panel
+ * has room for both (32rem: a 14rem list and an 18rem stat block, so large text needs more width):
+ * a tablet or a laptop with 150% text gets the full screen sheet instead.
  */
-function useSplit(wide: boolean) {
+function useSplit(sideBySide: boolean) {
   const ref = useRef<HTMLElement>(null)
   const [roomy, setRoomy] = useState(true)
   useLayoutEffect(() => {
     const node = ref.current
-    if (!node || !wide) return
+    if (!node || !sideBySide) return
     const measure = () => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-      setRoomy(node.getBoundingClientRect().width >= 52 * rem)
+      setRoomy(node.getBoundingClientRect().width >= 32 * rem)
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(node)
     return () => observer.disconnect()
-  }, [wide])
-  return { ref, split: wide && roomy }
+  }, [sideBySide])
+  return { ref, split: sideBySide && roomy }
 }
 
 type EditorState = {
@@ -193,20 +123,34 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
   const baseLabel = useBasePackLabel(t('bestiary.source.srd'))
   const { state } = useAuth()
-  const { ref: panelRef, split: wide } = useSplit(useWide())
+  const phone = usePhone()
+  const { ref: panelRef, split: wide } = useSplit(!phone)
   const catalog = useCreatureCatalog(campaignId)
   const { favorites, toggle } = useFavorites(campaignId)
   const [params, setParams] = useSearchParams()
   const selectedKey = params.get('creature')
   const encounterId = params.get('encounter')
+  // The encounters are read for the one-tap add: the fight in the address, the one in progress, or
+  // the one opened last in this session. They need no polling here.
   const encounters = useQuery({
     ...encountersQuery(state.user!.id, campaignId),
-    enabled: Boolean(encounterId),
+    refetchInterval: false,
+    staleTime: 15_000,
   })
-  const targetEncounter = encounters.data?.find((encounter) => encounter.id === encounterId)
+  const targetEncounter = encounterId
+    ? encounters.data?.find((encounter) => encounter.id === encounterId)
+    : undefined
   const encounter = targetEncounter?.status === 'ended' ? undefined : targetEncounter
-  const encounterPath = targetEncounter
-    ? `/campaign/${campaignId}/combat/${targetEncounter.id}?view=console`
+  const openEncounters = (encounters.data ?? []).filter((entry) => entry.status !== 'ended')
+  const recalled = recallEncounter(campaignId)
+  const addTarget = encounterId
+    ? encounter
+    : (openEncounters.find((entry) => entry.status === 'active' || entry.status === 'initiative') ??
+      openEncounters.find((entry) => entry.id === recalled))
+  const adds = useEncounterAdd(campaignId)
+  const encounterPath = (id: string) => `/campaign/${campaignId}/combat/${id}?view=console`
+  const backPath = targetEncounter
+    ? encounterPath(targetEncounter.id)
     : `/campaign/${campaignId}/combat`
   const [comparisonKeys, setComparisonKeys] = useState<string[]>([])
   const comparison = comparisonKeys.flatMap((key) => {
@@ -218,16 +162,19 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     setComparisonKeys((current) =>
       current.includes(key) ? current.filter((item) => item !== key) : [...compared, key],
     )
-  const favoriteNotice = useRef<string | null>(null)
+  // What the last action did (saved, copied, hidden, favourite) is one rail line, as in the
+  // storeroom. Every message has a serial, so the same sentence said twice reads as new again.
+  const [noticeState, setNoticeState] = useState<{ text: string; serial: number } | null>(null)
+  const noticeSerial = useRef(0)
+  const setNotice = (text: string | null) =>
+    setNoticeState(text === null ? null : { text, serial: ++noticeSerial.current })
+  const notice = noticeState?.text ?? null
   const toggleFavorite = (item: CreatureListItem) => {
     const saved = !favorites.has(item.key)
     toggle(item.key)
-    if (favoriteNotice.current) notifications.hide(favoriteNotice.current)
-    favoriteNotice.current = notifications.show({
-      message: t(saved ? 'bestiary.favorite.saved' : 'bestiary.favorite.unsaved', {
-        name: item.name,
-      }),
-    })
+    setNotice(
+      t(saved ? 'bestiary.favorite.saved' : 'bestiary.favorite.unsaved', { name: item.name }),
+    )
   }
   const [filters, setFilters] = useState<CreatureFilters>(emptyFilters)
   const [adding, setAdding] = useState<CreatureListItem | null>(null)
@@ -239,7 +186,6 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   } | null>(null)
   const [deleting, setDeleting] = useState<CombatantTemplate | null>(null)
   const [asking, setAsking] = useState<OfficialAsk | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const opener = useRef<HTMLElement | null>(null)
   // After going back to the official creature, focus waits for its stat block's Edit button.
   const focusEdit = useRef<string | null>(null)
@@ -297,11 +243,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   const deferredQuery = useDeferredValue(filters.query)
   const results = useMemo(
     () =>
-      filterCreatures(
-        catalog.items,
-        { ...filters, query: deferredQuery },
-        favorites,
-        challengeRatings,
+      searchCreatures(
+        filterCreatures(catalog.items, { ...filters, query: '' }, favorites, challengeRatings),
+        deferredQuery,
       ),
     [catalog.items, filters, deferredQuery, favorites],
   )
@@ -363,27 +307,43 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
     // Back, Escape and "Volver a la lista" all end on the row that was open.
     focusWhenReady(() => rowOf(key))
   }, [selectedKey, overlayOpen])
+  // Beside the stat block Escape closes the pane; focus goes back to its row (see below).
+  useEffect(() => {
+    if (!wide || !selectedKey) return
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      if (document.querySelector('[role="dialog"], [role="menu"]')) return
+      if (!(event.target as HTMLElement | null)?.closest('.bst-list, .bst-detail')) return
+      event.preventDefault()
+      // Focus returns to the row it is on, even when the pane has not caught up with an arrow yet.
+      const row = (event.target as HTMLElement).closest<HTMLElement>('[data-row-key]')
+      if (row?.dataset.rowKey) lastKey.current = row.dataset.rowKey
+      select(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  })
   useEffect(() => {
     if (!focusEdit.current || selected?.key !== focusEdit.current) return
     focusEdit.current = null
     // A frame later, once the phone sheet has taken focus back from the closed dialog.
     requestAnimationFrame(() =>
-      [...document.querySelectorAll<HTMLElement>('[data-bst-edit]')]
+      [...document.querySelectorAll<HTMLElement>('[data-bst-more]')]
         .find((node) => node.getClientRects().length > 0)
         ?.focus(),
     )
   })
-  const noticeAlert = (
-    <Alert
-      className="combat-alert"
-      role="status"
-      withCloseButton
-      closeButtonLabel={t('common.close')}
-      onClose={() => setNotice(null)}
-      mb="sm"
-    >
-      {notice}
-    </Alert>
+  const noticeRail = (text: string | null) => (
+    <StatusRail className="bst-notice" text={text} serial={noticeState?.serial}>
+      <ActionIcon
+        variant="subtle"
+        size={44}
+        aria-label={t('common.close')}
+        onClick={() => setNotice(null)}
+      >
+        <X size={16} aria-hidden="true" />
+      </ActionIcon>
+    </StatusRail>
   )
   const blockOf = catalog.blockFor
   // RYT-094: the campaign uses no creature pack: Content is where it chooses them.
@@ -463,6 +423,8 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
   }
   const detail = selected ? (
     <CreatureDetail
+      // Another creature starts with its own picture state, count and status.
+      key={selected.key}
       campaignId={campaignId}
       item={selected}
       catalog={catalog}
@@ -470,6 +432,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       toggleFavorite={() => toggleFavorite(selected)}
       encounterId={encounterId}
       encounter={encounter}
+      target={addTarget ? { id: addTarget.id, name: addTarget.name } : null}
+      adds={adds}
+      encounterPath={encounterPath}
       comparisonKeys={compared}
       toggleComparison={toggleComparison}
       inSheet={!wide}
@@ -561,7 +526,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       ref={panelRef}
       data-split={wide || undefined}
     >
-      <div className="bst-head">
+      <div className={!encounterId && !empty ? 'bst-head is-quiet' : 'bst-head'}>
         <div className="bst-head-title">
           <Group gap="xs" wrap="nowrap">
             <PawPrint size={20} className="feature-icon" aria-hidden="true" />
@@ -574,38 +539,34 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
               {targetEncounter.name}
             </Text>
           )}
-          {!encounterId && (
-            <Text size="sm" c="dimmed" mt={4} maw="62ch" className="bst-intro">
-              {t('bestiary.intro')}
-            </Text>
-          )}
         </div>
-        <div className="bst-head-actions">
-          {encounterId && (
-            <Button
-              component={Link}
-              to={encounterPath}
-              variant="subtle"
-              leftSection={<ArrowLeft size={16} aria-hidden="true" />}
-            >
-              {t(targetEncounter ? 'bestiary.context.back' : 'bestiary.context.backList')}
-            </Button>
-          )}
-          {/* RYT-151: "Add to encounter" in the stat block is the filled action beside the list. */}
-          {(!encounterId || empty) && (
-            <Button
-              variant="outline"
-              leftSection={<Plus size={16} aria-hidden="true" />}
-              onClick={(event) => {
-                opener.current = event.currentTarget
-                setCreating(true)
-              }}
-            >
-              {t('bestiary.new')}
-            </Button>
-          )}
-          {!encounterId && !catalog.pending && !noPacks && <PacksLink campaignId={campaignId} />}
-        </div>
+        {(encounterId || empty) && (
+          <div className="bst-head-actions">
+            {encounterId && (
+              <Button
+                component={Link}
+                to={backPath}
+                variant="subtle"
+                leftSection={<ArrowLeft size={16} aria-hidden="true" />}
+              >
+                {t(targetEncounter ? 'bestiary.context.back' : 'bestiary.context.backList')}
+              </Button>
+            )}
+            {/* Nothing to list yet: a new creature is the way in. Otherwise it is in the ··· menu. */}
+            {empty && (
+              <Button
+                variant="outline"
+                leftSection={<Plus size={16} aria-hidden="true" />}
+                onClick={(event) => {
+                  opener.current = event.currentTarget
+                  setCreating(true)
+                }}
+              >
+                {t('bestiary.new')}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
       {encounterId && (
         <>
@@ -621,7 +582,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       )}
       <RunnerError error={error} trigger={trigger} onClose={clear} />
       {/* On phones and tablets an open sheet covers the page: the notice shows inside it. */}
-      {notice && (wide || !selected) && noticeAlert}
+      {noticeRail(wide || !selected ? notice : null)}
       {/* RYT-094: nothing to search before the campaign has a creature or a creature pack. */}
       {!catalog.dataError && (catalog.pending || catalog.items.length > 0 || !noPacks) && (
         <Toolbar
@@ -630,6 +591,34 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           setFilters={setFilters}
           activeFilters={activeFilters}
           count={results.length}
+          menu={
+            !encounterId ? (
+              <Menu position="bottom-end" withinPortal zIndex={420}>
+                <Menu.Target>
+                  <ActionIcon
+                    variant="default"
+                    size={48}
+                    className="bst-head-menu"
+                    aria-label={t('bestiary.headMenu')}
+                  >
+                    <Ellipsis size={20} aria-hidden="true" />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<Plus size={16} aria-hidden="true" />}
+                    onClick={() => {
+                      opener.current = document.querySelector<HTMLElement>('.bst-head-menu')
+                      setCreating(true)
+                    }}
+                  >
+                    {t('bestiary.new')}
+                  </Menu.Item>
+                  {!catalog.pending && !noPacks && <PacksMenuItem campaignId={campaignId} />}
+                </Menu.Dropdown>
+              </Menu>
+            ) : undefined
+          }
           onFirst={() => document.querySelector<HTMLElement>('.bst-row-main')?.focus()}
           onEnter={() => results[0] && select(results[0].key)}
         />
@@ -655,16 +644,14 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
       )}
       {/* RYT-094: a library that cannot be reached shows only its error, never an empty list. */}
       {!catalog.pending && !catalog.dataError && (catalog.items.length > 0 || !noPacks) && (
-        <div className={wide ? 'bst-split' : undefined}>
+        <div className={wide ? 'bst-split' : undefined} data-pane={(wide && selected) || undefined}>
           <CreatureList
             grouping={deferredQuery.trim() ? null : filters.sort === 'cr' ? 'cr' : 'letter'}
-            altLang={catalog.language === 'es' ? 'en' : 'es'}
             showPack={catalog.severalPacks}
-            items={results}
-            artCredit={catalog.artCredit}
-            selectedKey={selectedKey}
             favorites={favorites}
-            toggleFavorite={toggleFavorite}
+            items={results}
+            selectedKey={selectedKey}
+            followSelection={wide && Boolean(selected)}
             comparisonKeys={encounter ? compared : undefined}
             toggleComparison={toggleComparison}
             select={(key, target) => {
@@ -683,19 +670,9 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
               requestAnimationFrame(() => document.getElementById('bestiary-search')?.focus())
             }}
           />
-          {wide && (
+          {wide && selected && (
             <div className="bst-detail" aria-live="off">
-              {detail ?? (
-                <div className="bst-detail-empty">
-                  <span className="bst-detail-empty-icon" aria-hidden="true">
-                    <PawPrint size={28} />
-                  </span>
-                  <Text fw={600}>{t('bestiary.selectPrompt')}</Text>
-                  <Text size="sm" c="dimmed" maw="34ch">
-                    {t('bestiary.selectHint')}
-                  </Text>
-                </div>
-              )}
+              {detail}
             </div>
           )}
         </div>
@@ -726,7 +703,7 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           lockScroll
           zIndex={300}
         >
-          {notice && noticeAlert}
+          {noticeRail(notice)}
           {detail}
         </CreatureDrawer>
       )}
@@ -816,6 +793,25 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
           row={adding.source === 'srd' ? catalog.rows.get(adding.id) : undefined}
           template={templateOf(adding) ?? undefined}
           targetEncounter={encounter}
+          onAdded={(added) => {
+            adds.setLine(
+              addedLine(
+                adding,
+                added.count,
+                { id: added.encounterId, name: added.encounterName },
+                added.ids,
+              ),
+            )
+            setAdding(null)
+            // The stat block's add button is where the user was: the control that opened the dialog
+            // may be gone now (the bar changed shape), and the list row behind the sheet is not it.
+            focusAddButton(document.activeElement, {
+              fallback: () =>
+                opener.current?.isConnected
+                  ? opener.current
+                  : (rowOf(lastKey.current) ?? document.getElementById('bestiary-search')),
+            })
+          }}
           onClose={() => {
             setAdding(null)
             restore()
@@ -872,1220 +868,5 @@ export function BestiaryPanel({ campaignId }: { campaignId: string }) {
         </Group>
       </Modal>
     </section>
-  )
-}
-
-function Toolbar({
-  packs,
-  filters,
-  setFilters,
-  activeFilters,
-  count,
-  onFirst,
-  onEnter,
-}: {
-  /** RYT-094: the enabled creature packs, each a source to filter by. */
-  packs: { id: string; title: string; short: string }[]
-  filters: CreatureFilters
-  setFilters: (next: CreatureFilters) => void
-  activeFilters: number
-  count: number
-  onFirst: () => void
-  onEnter: () => void
-}) {
-  const { t } = useTranslation()
-  const phone = usePhone()
-  const [open, setOpen] = useState(false)
-  // Phones, and screens without room below the button (short or with large text), get a sheet
-  // (bottom on phones, side otherwise); the dropdown would be a sliver or open off screen.
-  const [sheet, setSheet] = useState(phone)
-  const toggle = (button: HTMLElement) => {
-    if (!open) {
-      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-      setSheet(phone || innerHeight - button.getBoundingClientRect().bottom < 16 * rem)
-    }
-    setOpen(!open)
-  }
-  const set = (patch: Partial<CreatureFilters>) => setFilters({ ...filters, ...patch })
-  const range = filters.crRange ?? [0, crCount]
-  // Removing a chip keeps focus in the summary: the chip that took its place, the one before
-  // it when it was the last, or the filters button once the summary is gone.
-  const removeFilter = (patch: Partial<CreatureFilters>, index = 0) => {
-    set(patch)
-    requestAnimationFrame(() => {
-      const left = [...document.querySelectorAll<HTMLElement>('.bst-active-chip')]
-      ;(
-        left[Math.min(index, left.length - 1)] ??
-        document.querySelector<HTMLElement>('.bst-filter-button')
-      )?.focus()
-    })
-  }
-  const chips: { key: string; label: string; patch: Partial<CreatureFilters> }[] = [
-    ...filters.types.map((type) => ({
-      key: `type-${type}`,
-      label: t(`bestiary.type.${type}`),
-      patch: { types: filters.types.filter((x) => x !== type) },
-    })),
-    ...filters.sizes.map((size) => ({
-      key: `size-${size}`,
-      label: t(`bestiary.size.${size}`),
-      patch: { sizes: filters.sizes.filter((x) => x !== size) },
-    })),
-    ...(filters.crRange
-      ? [
-          {
-            key: 'cr',
-            label: t('bestiary.filter.crChip', {
-              low: challengeRatings[filters.crRange[0]],
-              high: challengeRatings[filters.crRange[1]],
-            }),
-            patch: { crRange: null },
-          },
-        ]
-      : []),
-    ...(filters.sort !== 'name'
-      ? [{ key: 'sort', label: t('bestiary.filter.sortChip'), patch: { sort: 'name' as const } }]
-      : []),
-  ]
-  const panel = (
-    <Stack gap="md" className="bst-filters">
-      <div>
-        <Text size="sm" fw={600} id="bst-filter-cr">
-          {t('bestiary.filter.cr', {
-            low: challengeRatings[range[0]],
-            high: challengeRatings[range[1]],
-          })}
-        </Text>
-        <RangeSlider
-          mt={36}
-          mb="lg"
-          size="lg"
-          thumbSize={28}
-          min={0}
-          max={crCount}
-          step={1}
-          minRange={0}
-          value={range}
-          label={(v) => challengeRatings[v]}
-          thumbFromLabel={t('bestiary.filter.crMin')}
-          thumbToLabel={t('bestiary.filter.crMax')}
-          marks={[0, 4, 8, 13, 18, 23, crCount].map((v) => ({
-            value: v,
-            label: challengeRatings[v],
-          }))}
-          onChange={(v) => set({ crRange: v[0] === 0 && v[1] === crCount ? null : v })}
-        />
-        <div className="bst-tiers" role="group" aria-label={t('bestiary.tier.label')}>
-          {crTiers.map((tier) => {
-            const on = range[0] === tier.range[0] && range[1] === tier.range[1]
-            return (
-              <button
-                key={tier.key}
-                type="button"
-                className="bst-tier"
-                aria-pressed={on}
-                onClick={() => set({ crRange: on ? null : [tier.range[0], tier.range[1]] })}
-              >
-                <span className="bst-tier-name">
-                  <Check size={12} strokeWidth={3} className="bst-tier-check" aria-hidden="true" />
-                  {t(`bestiary.tier.${tier.key}`)}
-                </span>
-                <span className="bst-tier-range">
-                  {t('bestiary.tier.range', {
-                    low: challengeRatings[tier.range[0]],
-                    high: challengeRatings[tier.range[1]],
-                  })}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-      <TypeTiles
-        legend={t('bestiary.filter.types')}
-        multiple
-        value={filters.types}
-        onChange={(types) => set({ types })}
-      />
-      <SizeScale
-        legend={t('bestiary.filter.sizes')}
-        multiple
-        value={filters.sizes}
-        onChange={(sizes) => set({ sizes })}
-      />
-      <TileGroup
-        legend={t('bestiary.sort.label')}
-        className="bst-choice-tiles"
-        value={filters.sort}
-        onChange={(sort) => set({ sort })}
-        options={[
-          {
-            value: 'name' as const,
-            content: (
-              <span className="bst-choice">
-                <ArrowDownAZ size={18} aria-hidden="true" />
-                <span>
-                  <span className="bst-choice-title">{t('bestiary.sort.name')}</span>
-                  <span className="bst-choice-help">{t('bestiary.sort.nameHelp')}</span>
-                </span>
-              </span>
-            ),
-          },
-          {
-            value: 'cr' as const,
-            content: (
-              <span className="bst-choice">
-                <ArrowDown01 size={18} aria-hidden="true" />
-                <span>
-                  <span className="bst-choice-title">{t('bestiary.sort.cr')}</span>
-                  <span className="bst-choice-help">{t('bestiary.sort.crHelp')}</span>
-                </span>
-              </span>
-            ),
-          },
-        ]}
-      />
-      <Group justify="space-between" className="bst-filter-actions">
-        <Button
-          variant="subtle"
-          disabled={activeFilters === 0}
-          onClick={() => set({ types: [], sizes: [], crRange: null, sort: 'name' })}
-        >
-          {t('bestiary.filter.clear')}
-        </Button>
-        <Button onClick={() => setOpen(false)}>{t('bestiary.filter.done', { count })}</Button>
-      </Group>
-    </Stack>
-  )
-  const filterButton = (
-    <Button
-      variant={activeFilters ? 'light' : 'default'}
-      leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
-      onClick={(event) => toggle(event.currentTarget)}
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      className="bst-filter-button"
-    >
-      {t('bestiary.filter.button')}
-      {activeFilters > 0 && (
-        <Badge
-          size="sm"
-          ml={6}
-          circle
-          aria-label={t('bestiary.filter.active', { count: activeFilters })}
-        >
-          {activeFilters}
-        </Badge>
-      )}
-    </Button>
-  )
-  return (
-    <>
-      <div className="bst-toolbar-search">
-        <TextInput
-          id="bestiary-search"
-          className="bst-search"
-          type="search"
-          label={t('bestiary.search')}
-          placeholder={t('bestiary.searchPlaceholder')}
-          leftSection={<Search size={18} aria-hidden="true" />}
-          value={filters.query}
-          onChange={(e) => set({ query: e.currentTarget.value })}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowDown') {
-              e.preventDefault()
-              onFirst()
-            } else if (e.key === 'Enter') {
-              e.preventDefault()
-              onEnter()
-            } else if (e.key === 'Escape' && filters.query) {
-              e.preventDefault()
-              set({ query: '' })
-            }
-          }}
-          rightSectionWidth={48}
-          rightSection={
-            filters.query ? (
-              <CloseButton
-                size={44}
-                aria-label={t('bestiary.searchClear')}
-                onClick={() => {
-                  set({ query: '' })
-                  document.getElementById('bestiary-search')?.focus()
-                }}
-              />
-            ) : undefined
-          }
-        />
-        <Popover
-          opened={open && !sheet}
-          onChange={setOpen}
-          position="bottom-end"
-          width={420}
-          trapFocus
-          returnFocus
-          shadow="md"
-          withinPortal
-          // The button owns aria-expanded: the filters may open in the sheet instead.
-          withRoles={false}
-          // Fit the space beside the button and scroll inside: scrolling the page to reach the
-          // results button would take the button out of view and hide the dropdown.
-          middlewares={{ size: { padding: 8 } }}
-        >
-          <Popover.Target>{filterButton}</Popover.Target>
-          <Popover.Dropdown
-            role="dialog"
-            aria-label={t('bestiary.filter.title')}
-            className="bst-filter-dropdown"
-          >
-            {panel}
-          </Popover.Dropdown>
-        </Popover>
-        <Drawer
-          opened={open && sheet}
-          onClose={() => setOpen(false)}
-          position={phone ? 'bottom' : 'right'}
-          title={t('bestiary.filter.title')}
-          closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-          size={phone ? 'auto' : 440}
-          zIndex={320}
-          classNames={{ content: 'bst-filter-drawer', body: 'bst-filter-sheet' }}
-        >
-          {panel}
-        </Drawer>
-      </div>
-      <div className="bst-toolbar">
-        <div className="bst-toolbar-row">
-          {packs.length > 1 ? (
-            // Several packs do not fit as segments on a phone: one list names each of them.
-            <Select
-              className="bst-source-select"
-              aria-label={t('bestiary.source.label')}
-              value={filters.source}
-              onChange={(v) => v && set({ source: v as CreatureFilters['source'] })}
-              allowDeselect={false}
-              comboboxProps={{ zIndex: 420 }}
-              data={[
-                { value: 'all', label: t('bestiary.source.all') },
-                ...packs.map((pack) => ({ value: `pack:${pack.id}`, label: pack.title })),
-                { value: 'homebrew', label: t('bestiary.source.homebrew') },
-                { value: 'favorites', label: t('bestiary.source.favorites') },
-              ]}
-            />
-          ) : (
-            <SegmentedControl
-              className="bst-source ink-seg"
-              aria-label={t('bestiary.source.label')}
-              value={filters.source}
-              onChange={(v) => set({ source: v as CreatureFilters['source'] })}
-              data={[
-                { value: 'all', label: t('bestiary.source.all') },
-                ...packs.map((pack) => ({ value: `pack:${pack.id}`, label: pack.short })),
-                { value: 'homebrew', label: t('bestiary.source.homebrew') },
-                { value: 'favorites', label: t('bestiary.source.favorites') },
-              ]}
-            />
-          )}
-          <p className="bst-count-line" role="status" aria-live="polite">
-            {t('bestiary.count', { count })}
-          </p>
-        </div>
-        {chips.length > 0 && (
-          <div className="bst-active" role="group" aria-label={t('bestiary.filter.summary')}>
-            {chips.map((chip, index) => (
-              <button
-                key={chip.key}
-                type="button"
-                className="bst-active-chip"
-                aria-label={t('bestiary.filter.remove', { label: chip.label })}
-                onClick={() => removeFilter(chip.patch, index)}
-              >
-                <span>{chip.label}</span>
-                <X size={14} strokeWidth={2.5} aria-hidden="true" />
-              </button>
-            ))}
-            {chips.length > 1 && (
-              <Button
-                variant="subtle"
-                className="bst-active-clear"
-                onClick={() => removeFilter({ types: [], sizes: [], crRange: null, sort: 'name' })}
-              >
-                {t('bestiary.filter.clear')}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  )
-}
-
-type Grouping = 'letter' | 'cr' | null
-
-/** Without a query the list reads like an index: letter rules by name, CR rules by challenge. */
-function groupsOf(
-  items: CreatureListItem[],
-  grouping: Grouping,
-  noCr: string,
-  crLabel: (cr: string) => string,
-) {
-  if (!grouping) return [{ key: 'all', label: null as string | null, items }]
-  // Groups are merged by key, so unsorted input never repeats a letter or a challenge rating.
-  const byKey = new Map<string, { key: string; label: string | null; items: CreatureListItem[] }>()
-  for (const item of items) {
-    const key =
-      grouping === 'cr'
-        ? (item.cr ?? '-')
-        : /^\p{L}/u.test(searchKey(item.name))
-          ? searchKey(item.name)[0]!.toLocaleUpperCase()
-          : '#'
-    const group = byKey.get(key)
-    if (group) group.items.push(item)
-    else
-      byKey.set(key, {
-        key,
-        label: grouping === 'cr' ? (item.cr === null ? noCr : crLabel(item.cr)) : key,
-        items: [item],
-      })
-  }
-  const groups = [...byKey.values()]
-  return groups
-}
-
-/** Rows per spacer-backed chunk when a flat (searched) list has no letter or CR groups. */
-const chunkSize = 40
-/** Row height plus gap before any section was measured; measured sections refine it. */
-/** Rows are taller on a phone, where the names and numbers wrap. */
-const firstRowEstimate = () => (window.innerWidth < 600 ? 118 : 90)
-
-function CreatureList({
-  items,
-  grouping,
-  selectedKey,
-  favorites,
-  toggleFavorite,
-  comparisonKeys,
-  toggleComparison,
-  select,
-  emptyText,
-  clear,
-  altLang,
-  artCredit,
-  showPack,
-}: {
-  altLang: string
-  /** RYT-094: several creature packs are enabled: each pack creature names its pack. */
-  showPack: boolean
-  items: CreatureListItem[]
-  /** The credit of an SRD creature's bundled art, for the viewer. */
-  artCredit: (id: string | null | undefined) => CreatureArt | null
-  grouping: Grouping
-  selectedKey: string | null
-  favorites: ReadonlySet<string>
-  toggleFavorite: (item: CreatureListItem) => void
-  comparisonKeys?: readonly string[]
-  toggleComparison: (key: string) => void
-  select: (key: string, target: HTMLElement) => void
-  emptyText: string
-  clear: () => void
-}) {
-  const { t } = useTranslation()
-  const listId = useId()
-  const listRef = useRef<HTMLDivElement>(null)
-  const groups = useMemo(() => {
-    const grouped = groupsOf(items, grouping, t('bestiary.group.noCr'), (cr) =>
-      t('bestiary.crShort', { cr }),
-    )
-    // RYT-117: a long flat result is cut into chunks, each its own windowed list.
-    if (grouping !== null || items.length <= chunkSize) return grouped
-    return Array.from({ length: Math.ceil(items.length / chunkSize) }, (_, index) => ({
-      key: `chunk-${index}`,
-      label: null as string | null,
-      items: items.slice(index * chunkSize, (index + 1) * chunkSize),
-    }))
-  }, [items, grouping, t])
-  const groupOf = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const group of groups) for (const item of group.items) map.set(item.key, group.key)
-    return map
-  }, [groups])
-  // Groups that stay mounted off screen: the open creature's, plus a jump or keyboard target's.
-  // Only the latest jump or keyboard target stays mounted; the one before it is released.
-  const [pinned, setPinned] = useState<string | null>(null)
-  const pin = (key: string | undefined) => {
-    if (key) setPinned(key)
-  }
-  // A new set of results starts at its top, not at the scroll offset of the list it replaced.
-  const signature = `${grouping}|${items.length}|${items[0]?.key}`
-  const shownSignature = useRef(signature)
-  useEffect(() => {
-    if (shownSignature.current === signature) return
-    shownSignature.current = signature
-    if (listRef.current) showTopOf(listRef.current)
-  }, [signature])
-  const [rowEstimate, setRowEstimate] = useState(firstRowEstimate)
-  const job = useRef<{ key: string; focus: boolean } | null>(null)
-  // A row that was not mounted yet (deep link, End key) is focused or scrolled to once it is.
-  useEffect(() => {
-    const todo = job.current
-    if (!todo) return
-    const row = listRef.current?.querySelector<HTMLElement>(
-      `[data-row-key="${CSS.escape(todo.key)}"]`,
-    )
-    if (!row) return
-    job.current = null
-    if (todo.focus) row.querySelector<HTMLElement>('.bst-row-main')?.focus()
-    else centreUntilSettled(row)
-  })
-  // The open creature's row is scrolled into view when it was reached by a link.
-  const scrolledTo = useRef<string | null>(null)
-  useEffect(() => {
-    if (!selectedKey || scrolledTo.current === selectedKey || !groupOf.has(selectedKey)) return
-    scrolledTo.current = selectedKey
-    job.current = { key: selectedKey, focus: false }
-  }, [selectedKey, groupOf])
-  if (items.length === 0)
-    return (
-      <div className="bst-empty">
-        <span className="bst-detail-empty-icon" aria-hidden="true">
-          <Search size={22} />
-        </span>
-        <Text fw={600}>{emptyText}</Text>
-        <Button variant="light" onClick={clear}>
-          {t('bestiary.filter.reset')}
-        </Button>
-      </div>
-    )
-  const goTo = (key: string) => {
-    const row = listRef.current?.querySelector<HTMLElement>(
-      `[data-row-key="${CSS.escape(key)}"] .bst-row-main`,
-    )
-    if (row) row.focus()
-    else {
-      job.current = { key, focus: true }
-      pin(groupOf.get(key))
-    }
-  }
-  // Arrow keys move between rows across groups (from a row or its picture); Home and End jump to
-  // the ends. They follow the data, so a row that is not mounted yet is reached too.
-  const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
-    const active = document.activeElement
-    if (!active?.matches('.bst-row-main, .combat-token-open')) return
-    const current = active.closest('[data-row-key]')?.getAttribute('data-row-key')
-    const at = items.findIndex((item) => item.key === current)
-    if (at < 0) return
-    event.preventDefault()
-    const next =
-      event.key === 'Home'
-        ? 0
-        : event.key === 'End'
-          ? items.length - 1
-          : Math.max(0, Math.min(items.length - 1, at + (event.key === 'ArrowDown' ? 1 : -1)))
-    goTo(items[next]!.key)
-  }
-  const jumpTo = (index: number) => {
-    pin(groups[index]?.key)
-    const head = document.getElementById(`${listId}-${index}`)
-    if (head) centreUntilSettled(head, 'start')
-    head?.focus({ preventScroll: true })
-  }
-  const row = (item: CreatureListItem) => {
-    const favorite = favorites.has(item.key)
-    const current = item.key === selectedKey
-    const alt = item.altName && item.altName !== item.name ? item.altName : null
-    const art = itemArt(item)
-    // RYT-098: a creature with a picture shows it as its own button beside the row, which keeps
-    // opening the stat block; a type glyph stays inside the row.
-    const pictured = Boolean(item.imagePath ?? item.packPath) || Boolean(art)
-    const token = (
-      <Token
-        name={item.name}
-        side={item.side ?? 'enemy'}
-        imageKind="creature"
-        path={item.imagePath ?? item.packPath ?? null}
-        art={art?.thumb}
-        size={44}
-        glyph={item.type ? typeGlyphs[item.type] : undefined}
-        viewable={pictured}
-        fullArt={art?.full}
-        credit={pictured ? artCredit(item.artId) : null}
-      />
-    )
-    return (
-      <li
-        key={item.key}
-        data-row-key={item.key}
-        className={pictured ? 'bst-row is-pictured' : 'bst-row'}
-        data-current={current || undefined}
-      >
-        {pictured && token}
-        <button
-          type="button"
-          className="bst-row-main"
-          aria-current={current ? 'true' : undefined}
-          onClick={(event) => {
-            // A row the user picked is already in view: only a link scrolls the list to its row.
-            scrolledTo.current = item.key
-            select(item.key, event.currentTarget)
-          }}
-        >
-          {!pictured && token}
-          <span className="bst-row-text">
-            <span className="bst-row-name">{item.name}</span>
-            {alt && (
-              <span className="bst-row-alt" lang={altLang}>
-                <span className="visually-hidden"> · </span>
-                {alt}
-              </span>
-            )}
-            <span className="bst-row-meta">
-              {[
-                showPack ? item.pack : null,
-                item.type ? t(`bestiary.type.${item.type}`) : null,
-                item.size[0] ? t(`bestiary.size.${item.size[0]}`) : null,
-                t('bestiary.rowNumbers', { ac: item.ac, hp: item.hp }),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </span>
-          </span>
-          <span className="bst-row-side">
-            {item.cr !== null && (
-              <span className="bst-cr">{t('bestiary.crShort', { cr: item.cr })}</span>
-            )}
-            {item.version ? (
-              <span className="bst-source-badge is-version">{t('bestiary.badge.version')}</span>
-            ) : (
-              item.source === 'homebrew' && (
-                <span className="bst-source-badge is-homebrew">{t('bestiary.badge.homebrew')}</span>
-              )
-            )}
-          </span>
-        </button>
-        {comparisonKeys ? (
-          <BestiaryComparisonToggle item={item} keys={comparisonKeys} onToggle={toggleComparison} />
-        ) : (
-          <ActionIcon
-            variant="subtle"
-            size={44}
-            className="bst-fav"
-            aria-pressed={favorite}
-            aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
-              name: item.name,
-            })}
-            onClick={() => toggleFavorite(item)}
-          >
-            <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
-          </ActionIcon>
-        )}
-      </li>
-    )
-  }
-  const windowed = (group: (typeof groups)[number], index: number, list: ReactNode) => (
-    <Windowed
-      estimate={group.items.length * rowEstimate}
-      pinned={
-        pinned === group.key || (selectedKey !== null && groupOf.get(selectedKey) === group.key)
-      }
-      initiallyMounted={index < 2}
-      onMeasure={(height) => {
-        if (group.items.length < 5) return
-        const next = height / group.items.length
-        setRowEstimate((prev) => (Math.abs(prev - next) < 2 ? prev : next))
-      }}
-    >
-      {list}
-    </Windowed>
-  )
-  return (
-    <div className="bst-list" ref={listRef} onKeyDown={onKey}>
-      {grouping !== null && groups.length > 1 && (
-        <JumpIndex
-          label={t('bestiary.jump')}
-          items={groups.map((group) => group.label ?? group.key)}
-          onJump={jumpTo}
-        />
-      )}
-      {groups.map((group, index) =>
-        group.label === null ? (
-          <div key={group.key}>
-            {windowed(
-              group,
-              index,
-              <ul
-                className="bst-items"
-                aria-label={
-                  groups.length === 1
-                    ? t('bestiary.listLabel')
-                    : t('bestiary.range', {
-                        from: index * chunkSize + 1,
-                        to: index * chunkSize + group.items.length,
-                        total: items.length,
-                      })
-                }
-              >
-                {group.items.map(row)}
-              </ul>,
-            )}
-          </div>
-        ) : (
-          <div key={group.key} className="bst-group">
-            <h3 className="bst-group-head" id={`${listId}-${index}`} tabIndex={-1}>
-              <span>{group.label}</span>
-              <span className="bst-group-count">
-                <span aria-hidden="true">{group.items.length}</span>
-                <span className="visually-hidden">
-                  {t('bestiary.group.size', { count: group.items.length })}
-                </span>
-              </span>
-            </h3>
-            {windowed(
-              group,
-              index,
-              <ul className="bst-items" aria-labelledby={`${listId}-${index}`}>
-                {group.items.map(row)}
-              </ul>,
-            )}
-          </div>
-        ),
-      )}
-    </div>
-  )
-}
-
-/**
- * RYT-091: in a sheet, the stat column beside the reading stays in view only when all of it fits
- * between the sheet's header and its action bar. Its CSS sizes the plate for the usual case; a notice
- * under the plate or a long speed can still make it taller, and then it scrolls with the page instead
- * of hiding its end under the bar.
- */
-function useColumnFit(frame: { current: HTMLDivElement | null }, creature: string) {
-  useEffect(() => {
-    const node = frame.current
-    const sheet = node?.closest<HTMLElement>('.bst-sheet')
-    const aside = node?.querySelector<HTMLElement>('.sb-aside')
-    if (!sheet || !aside) return
-    const check = () => {
-      const head =
-        sheet.querySelector('.mantine-Drawer-header')?.getBoundingClientRect().height ?? 0
-      const bar = sheet.querySelector('.bst-actions')?.getBoundingClientRect().height ?? 0
-      // 12px of air under the header and above the bar.
-      aside.toggleAttribute(
-        'data-unstuck',
-        aside.offsetHeight > sheet.clientHeight - head - bar - 24,
-      )
-    }
-    // The sheet's height and the column's own (a notice under the plate) both decide.
-    const observer = new ResizeObserver(check)
-    observer.observe(sheet)
-    observer.observe(aside)
-    check()
-    return () => observer.disconnect()
-  }, [frame, creature])
-}
-
-/** RYT-174: the stat block's source line by the creature's origin in the base pack. */
-function creatureSource(t: TFunction, origin: EntryOrigin | null, page: number, pack: string) {
-  if (origin === 'own') return pack
-  return origin === 'changed'
-    ? t('bestiary.srdPageChanged', { page, pack })
-    : t('bestiary.srdPage', { page })
-}
-
-function CreatureDetail({
-  campaignId,
-  item,
-  catalog,
-  favorite,
-  toggleFavorite,
-  encounterId,
-  encounter,
-  comparisonKeys,
-  toggleComparison,
-  inSheet,
-  onViewArt,
-  onAdd,
-  onCustomise,
-  onEdit,
-  onComplete,
-  onDuplicate,
-  onDelete,
-  onHide,
-  onRestore,
-  onCopied,
-}: {
-  campaignId: string
-  item: CreatureListItem
-  catalog: ReturnType<typeof useCreatureCatalog>
-  favorite: boolean
-  toggleFavorite: () => void
-  encounterId: string | null
-  encounter?: EncounterSummary
-  comparisonKeys: readonly string[]
-  toggleComparison: (key: string) => void
-  inSheet: boolean
-  /** The image viewer is open (it owns Escape over the phone sheet). */
-  onViewArt: (open: boolean) => void
-  onAdd: (target: HTMLElement) => void
-  onCustomise: (target: HTMLElement) => void
-  onEdit: (target: HTMLElement) => void
-  onComplete: (target: HTMLElement) => void
-  onDuplicate: (target: HTMLElement) => void
-  onDelete: (target: HTMLElement) => void
-  /** RYT-094: hides a pack creature (and its campaign version) in this campaign. */
-  onHide: (target: HTMLElement) => void
-  /** RYT-089: deletes the campaign version, the official creature is listed again. */
-  onRestore: (target: HTMLElement) => void
-  onCopied: () => void
-}) {
-  const { t } = useTranslation()
-  const origins = usePackOrigins()
-  const block = catalog.blockFor(item)
-  const template = item.source === 'homebrew' ? catalog.templateById.get(item.id) : undefined
-  const row = item.source === 'srd' ? catalog.rows.get(item.id) : undefined
-  const headingId = `creature-${item.key.replace(/[^a-z0-9]/gi, '-')}`
-  const based = item.srdId ? catalog.srdName(item.srdId) : null
-  const badges = (
-    <>
-      {item.version ? (
-        <VersionNote onRestore={onRestore} />
-      ) : (
-        <>
-          <Badge variant="light" className={`bst-source-badge is-${item.source}`}>
-            {t(`bestiary.badge.${item.source}`)}
-          </Badge>
-          {based && <Badge variant="outline">{t('bestiary.basedOn', { name: based })}</Badge>}
-        </>
-      )}
-      {item.legendary > 0 && (
-        <Badge variant="outline">{t('bestiary.legendaryBadge', { count: item.legendary })}</Badge>
-      )}
-    </>
-  )
-  // Menu items unmount with the menu: overlays they open return focus to the ⋯ button.
-  const more = useRef<HTMLButtonElement>(null)
-  const fromMenu = () => more.current ?? document.body
-  // RYT-088: a creature with an image leads with its plate (above the name, or in its own column on
-  // wide panes); without one the token stays the file picker beside the name.
-  const pictured = Boolean(item.imagePath ?? item.packPath) || Boolean(itemArt(item))
-  // The stat column appears with the first image too (RYT-091): the check follows it.
-  const frame = useRef<HTMLDivElement>(null)
-  useColumnFit(frame, `${item.key}:${block ? 'block' : 'quick'}:${pictured ? 'plate' : 'token'}`)
-  // Kept here so a save's notice and focus survive the token turning into the plate; another
-  // creature starts without one.
-  const [artNotice, setArtNotice] = useState<(ArtNotice & { key: string }) | null>(null)
-  const [noticeFor, setNoticeFor] = useState(item.key)
-  if (noticeFor !== item.key) {
-    setNoticeFor(item.key)
-    setArtNotice(null)
-  }
-  const media = (
-    <CreatureArtControl
-      // Another creature: the control's own state (viewer, errors) starts fresh.
-      key={item.key}
-      campaignId={campaignId}
-      name={item.name}
-      side={item.side ?? 'enemy'}
-      type={item.type}
-      target={
-        template ? { templateId: template.id, revision: template.revision } : { srdId: item.id }
-      }
-      imagePath={item.imagePath ?? null}
-      packPath={item.packPath ?? null}
-      art={itemArt(item)}
-      credit={catalog.artCredit(item.artId)}
-      notice={artNotice?.key === item.key ? artNotice : null}
-      onNotice={(next) => setArtNotice(next && { ...next, key: item.key })}
-      onViewing={onViewArt}
-    />
-  )
-  const actions = (
-    <div
-      className={inSheet ? 'bst-actions is-sticky' : 'bst-actions is-pinned'}
-      data-encounter={encounterId ? true : undefined}
-    >
-      {encounter ? (
-        <EncounterCreatureAdd
-          key={`${encounter.id}:${item.key}`}
-          campaignId={campaignId}
-          encounter={encounter}
-          item={item}
-          block={block}
-        />
-      ) : (
-        !encounterId && (
-          <Button
-            className="bst-action-primary"
-            leftSection={<Swords size={16} aria-hidden="true" />}
-            onClick={(e) => onAdd(e.currentTarget)}
-          >
-            {t('bestiary.addToEncounter')}
-          </Button>
-        )
-      )}
-      <div className="bst-actions-secondary">
-        {!encounterId &&
-          (item.source === 'srd' ? (
-            // RYT-089: editing an official creature keeps the change in this campaign.
-            <Button
-              variant="light"
-              leftSection={<Pencil size={16} aria-hidden="true" />}
-              disabled={!block}
-              data-bst-edit
-              onClick={(e) => onCustomise(e.currentTarget)}
-            >
-              {t('bestiary.edit')}
-            </Button>
-          ) : (
-            <Button
-              variant="light"
-              leftSection={<Pencil size={16} aria-hidden="true" />}
-              data-bst-edit
-              onClick={(e) => onEdit(e.currentTarget)}
-            >
-              {t('bestiary.edit')}
-            </Button>
-          ))}
-        {/* The bookmark and the menu wrap together, so the text action keeps its word. */}
-        <div className="bst-actions-icons">
-          {encounter ? (
-            <BestiaryComparisonToggle
-              item={item}
-              keys={comparisonKeys}
-              onToggle={toggleComparison}
-              labeled
-            />
-          ) : (
-            !encounterId && (
-              <ActionIcon
-                variant="subtle"
-                size={44}
-                aria-pressed={favorite}
-                aria-label={t(favorite ? 'bestiary.favorite.remove' : 'bestiary.favorite.add', {
-                  name: item.name,
-                })}
-                onClick={toggleFavorite}
-              >
-                <Bookmark size={18} aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
-              </ActionIcon>
-            )
-          )}
-          <Menu position="bottom-end" withinPortal zIndex={420}>
-            <Menu.Target>
-              <ActionIcon
-                ref={more}
-                variant="subtle"
-                size={44}
-                aria-label={t('bestiary.more', { name: item.name })}
-              >
-                <EllipsisVertical size={18} aria-hidden="true" />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {encounter && (
-                <Menu.Item
-                  leftSection={<SlidersHorizontal size={16} aria-hidden="true" />}
-                  onClick={() => onAdd(fromMenu())}
-                >
-                  {t('bestiary.context.addOptions')}
-                </Menu.Item>
-              )}
-              {item.source === 'homebrew' && !block && (
-                <Menu.Item
-                  leftSection={<FilePenLine size={16} aria-hidden="true" />}
-                  onClick={() => onComplete(fromMenu())}
-                >
-                  {t('bestiary.complete')}
-                </Menu.Item>
-              )}
-              {(block || template) && (
-                <Menu.Item
-                  leftSection={<CopyPlus size={16} aria-hidden="true" />}
-                  onClick={() => onDuplicate(fromMenu())}
-                >
-                  {t('bestiary.variant')}
-                </Menu.Item>
-              )}
-              {block && (
-                <Menu.Item
-                  leftSection={<Copy size={16} aria-hidden="true" />}
-                  onClick={() => {
-                    void navigator.clipboard
-                      ?.writeText(statBlockToText(block, catalog.language))
-                      .then(onCopied, () => undefined)
-                  }}
-                >
-                  {t('bestiary.copyText')}
-                </Menu.Item>
-              )}
-              {!encounterId && item.packId && (item.source === 'srd' || item.version) && (
-                <Menu.Item
-                  leftSection={<EyeOff size={16} aria-hidden="true" />}
-                  onClick={() => onHide(fromMenu())}
-                >
-                  {t('bestiary.packs.hide')}
-                </Menu.Item>
-              )}
-              {!encounterId && item.source === 'homebrew' && !item.version && (
-                <Menu.Item
-                  className="bst-menu-danger"
-                  leftSection={<Trash2 size={16} aria-hidden="true" />}
-                  onClick={() => onDelete(fromMenu())}
-                >
-                  {t('bestiary.delete')}
-                </Menu.Item>
-              )}
-            </Menu.Dropdown>
-          </Menu>
-        </div>
-      </div>
-    </div>
-  )
-  if (!block) {
-    if (item.source === 'srd' && catalog.bodiesPending)
-      return (
-        <Group gap="sm" p="md" role="status">
-          <Loader size="sm" />
-          <Text>{t('bestiary.loading')}</Text>
-        </Group>
-      )
-    // A quick creature: the core numbers only.
-    return (
-      <Stack gap="md" className="bst-detail-inner">
-        {/* First in the tab order; on phones it sticks to the bottom of the sheet (CSS order). */}
-        {actions}
-        {/* The same frame as a full stat block, so the plate keeps its column on wide panes. */}
-        <div className="bst-detail-frame">
-          <div className={pictured ? 'bst-detail-body has-plate' : 'bst-detail-body'}>
-            {pictured && media}
-            <Stack gap="md" className="bst-quick">
-              <header className="sb-head">
-                {!pictured && media}
-                <div className="sb-title">
-                  <Title order={inSheet ? 2 : 3} id={headingId} className="sb-name">
-                    {item.name}
-                  </Title>
-                  <div className="sb-badges">{badges}</div>
-                </div>
-              </header>
-              <dl className="sb-core">
-                <div>
-                  <dt>{t('bestiary.ac')}</dt>
-                  <dd>{item.ac}</dd>
-                </div>
-                <div>
-                  <dt>{t('bestiary.hp')}</dt>
-                  <dd>{item.hp}</dd>
-                </div>
-                <div>
-                  <dt>{t('bestiary.initiative')}</dt>
-                  <dd>{signed(item.initiative)}</dd>
-                </div>
-              </dl>
-              {template?.notes && <Text className="combat-notes">{template.notes}</Text>}
-              <Alert
-                variant="light"
-                role="note"
-                icon={<FilePenLine size={18} aria-hidden="true" />}
-              >
-                <Text size="sm">{t('bestiary.quickHint')}</Text>
-                <Button mt="xs" variant="light" onClick={(e) => onComplete(e.currentTarget)}>
-                  {t('bestiary.complete')}
-                </Button>
-              </Alert>
-            </Stack>
-          </div>
-        </div>
-      </Stack>
-    )
-  }
-  return (
-    <Stack gap="md" className="bst-detail-inner">
-      {actions}
-      <div className="bst-detail-frame" ref={frame}>
-        <div className="bst-detail-body">
-          {/* RYT-091: the plate goes inside the block, which lays it out by the frame's width. */}
-          <StatBlockView
-            block={block}
-            level={inSheet ? 2 : 3}
-            headingId={headingId}
-            media={pictured ? undefined : media}
-            plate={pictured ? media : undefined}
-            badges={badges}
-            footnote={
-              row
-                ? creatureSource(
-                    t,
-                    entryOrigin(origins, 'creature', item.id),
-                    row.pages[catalog.language],
-                    origins.title?.[catalog.language] ?? '',
-                  )
-                : template?.notes
-                  ? t('bestiary.notesLine', { notes: template.notes })
-                  : undefined
-            }
-          />
-        </div>
-      </div>
-    </Stack>
-  )
-}
-
-/** Quick creature: the numbers combat needs, nothing more (the RYT-036 dialog). */
-function QuickDialog({
-  template,
-  variantOf,
-  pending,
-  close,
-  save,
-}: {
-  template: CombatantTemplate | null
-  variantOf?: CombatantTemplate
-  pending: boolean
-  close: () => void
-  save: (data: TemplateInput) => void
-}) {
-  const { t } = useTranslation()
-  const phone = usePhone()
-  const source = template ?? variantOf
-  const [name, setName] = useState(
-    variantOf
-      ? t('bestiary.variantName', { name: variantOf.name }).slice(0, 80)
-      : (template?.name ?? ''),
-  )
-  const [side, setSide] = useState<'enemy' | 'ally'>(source?.side ?? 'enemy')
-  const [maxHp, setMaxHp] = useState<number | string>(source?.max_hp ?? 7)
-  const [ac, setAc] = useState<number | string>(source?.armor_class ?? 12)
-  const [bonus, setBonus] = useState<number | string>(source?.initiative_bonus ?? 0)
-  const [legendary, setLegendary] = useState<number | string>(source?.legendary_max ?? 0)
-  const [notes, setNotes] = useState(source?.notes ?? '')
-  const valid =
-    name.trim().length > 0 && [maxHp, ac, bonus, legendary].every((n) => typeof n === 'number')
-  return (
-    <Modal
-      opened
-      onClose={close}
-      fullScreen={phone}
-      zIndex={400}
-      title={
-        variantOf
-          ? t('bestiary.editor.variantTitle', { name: variantOf.name })
-          : template
-            ? t('combat.bestiary.edit', { name: template.name })
-            : t('bestiary.quick.title')
-      }
-      closeButtonProps={{ 'aria-label': t('action.cancel'), size: 44 }}
-    >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (!valid || pending) return
-          save({
-            name: name.trim(),
-            side,
-            max_hp: maxHp as number,
-            armor_class: ac as number,
-            initiative_bonus: bonus as number,
-            legendary_max: legendary as number,
-            notes,
-            ...(variantOf && {
-              srd_id: variantOf.srd_id,
-              hp_formula: variantOf.hp_formula,
-              challenge: variantOf.challenge,
-              creature_type: variantOf.creature_type,
-            }),
-          })
-        }}
-      >
-        <Stack gap="sm">
-          <Text size="sm" c="dimmed">
-            {t(variantOf ? 'bestiary.scope.variant' : 'bestiary.scope.template')}
-          </Text>
-          <TextInput
-            data-autofocus
-            required
-            label={t('combat.add.name')}
-            value={name}
-            maxLength={80}
-            onChange={(event) => setName(event.currentTarget.value)}
-          />
-          <SideToggle legend={t('combat.add.side')} name={name} value={side} onChange={setSide} />
-          <div className="combat-grid-2">
-            <NumberDial
-              label={t('combat.add.maxHp')}
-              icon={Heart}
-              min={1}
-              max={99999}
-              value={maxHp}
-              onChange={setMaxHp}
-            />
-            <NumberDial
-              label={t('combat.add.ac')}
-              icon={Shield}
-              min={0}
-              max={99}
-              value={ac}
-              onChange={setAc}
-            />
-            <NumberDial
-              label={t('combat.add.bonus')}
-              icon={Zap}
-              min={-20}
-              max={30}
-              value={bonus}
-              onChange={setBonus}
-            />
-            <NumberDial
-              label={t('combat.add.legendary')}
-              icon={Crown}
-              min={0}
-              max={9}
-              value={legendary}
-              onChange={setLegendary}
-            />
-          </div>
-          <Textarea
-            label={t('combat.bestiary.notes')}
-            value={notes}
-            maxLength={2000}
-            autosize
-            minRows={3}
-            onChange={(event) => setNotes(event.currentTarget.value)}
-          />
-          {source && valid && (
-            <CreatureChanges
-              reference={source.name}
-              changes={[
-                { field: t('combat.add.name'), before: source.name, after: name.trim() },
-                { field: t('bestiary.hp'), before: source.max_hp, after: maxHp },
-                { field: t('bestiary.ac'), before: source.armor_class, after: ac },
-                { field: t('bestiary.initiative'), before: source.initiative_bonus, after: bonus },
-                {
-                  field: t('combat.add.legendary'),
-                  before: source.legendary_max,
-                  after: legendary,
-                },
-                {
-                  field: t('combat.add.side'),
-                  before: t(`combat.side.${source.side}`),
-                  after: t(`combat.side.${side}`),
-                },
-              ]}
-              sections={source.notes === notes ? [] : [t('combat.bestiary.notes')]}
-              collapsible
-            />
-          )}
-          <Group justify="flex-end" className="bst-dialog-actions">
-            <Button variant="subtle" onClick={close}>
-              {t('action.cancel')}
-            </Button>
-            <Button type="submit" disabled={!valid || pending} loading={pending}>
-              {t('combat.bestiary.save')}
-            </Button>
-          </Group>
-        </Stack>
-      </form>
-    </Modal>
   )
 }

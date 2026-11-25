@@ -22,11 +22,11 @@ export const diceEs = {
   'diceSettings.saved': 'Ajustes de dados guardados.',
   'diceSettings.confirmTitle': '¿Cambiar los dados de la mesa?',
   'diceSettings.confirmMode.physical':
-    'Los jugadores tiran sus dados. Las fichas dicen qué tirar, y la iniciativa y los dados de golpe se escriben a mano. Ningún dato de personaje cambia.',
+    'Las fichas dicen qué tirar; la iniciativa y los dados de golpe se escriben a mano. Ningún dato de personaje cambia.',
   'diceSettings.confirmMode.app':
-    'Los jugadores tirarán en la app: Rytta tira y anota cada tirada, la iniciativa y los dados de golpe incluidas. En las fichas, los números dejan de decir qué tirar y tiran al tocarlos. Ningún dato de personaje cambia.',
+    'En las fichas, los números dejan de decir qué tirar y tiran al tocarlos; la iniciativa y los dados de golpe también. Ningún dato de personaje cambia.',
   'diceSettings.confirmMode.player':
-    'Cada jugador elige en su dispositivo; hasta que elija, usa dados físicos.',
+    'Hasta que cada jugador elija, sus fichas funcionan como con dados físicos.',
   'diceSettings.confirmVisibility.wider':
     'Las tiradas anteriores no se muestran a más gente: siguen visibles solo para quien las veía cuando se hicieron.',
   'diceSettings.confirmVisibility.narrower':

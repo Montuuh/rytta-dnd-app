@@ -7,6 +7,7 @@ export const switcherEs = {
   'switcher.title': 'Ir a',
   'switcher.close': 'Cerrar búsqueda',
   'switcher.search': 'Buscar panel o acción',
+  'switcher.placeholder': 'Panel o acción',
   'switcher.panels': 'Paneles',
   'switcher.actions': 'Acciones',
   'switcher.none': 'Nada coincide con «{{query}}». Prueba otra palabra.',

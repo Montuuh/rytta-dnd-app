@@ -1,0 +1,131 @@
+/* The storeroom's item sheet: the item read-only, one action row, then the give step. */
+.item-sheet-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: var(--fs-h3);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.item-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.item-sheet-glyph {
+  width: 48px;
+  height: 48px;
+}
+.item-sheet-line {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--app-muted);
+  font-size: var(--fs-meta);
+}
+.item-sheet-description {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.item-sheet-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 10px 0;
+  border-block: 1px solid var(--app-border);
+  list-style: none;
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+/* Give and Edit share the row while their words fit; at large text the row wraps (Give on its own
+   line, Edit and ··· under it) so no label is ever cut. */
+.item-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* Give is the wider of the two halves; Edit and the menu share the other. */
+.item-sheet-actions > .mantine-Button-root {
+  flex: 3 1 auto;
+}
+.item-sheet-more {
+  flex: 1 1 auto;
+}
+/* Edit and ··· travel together: when the row wraps they take the second line side by side. */
+.item-sheet-more {
+  display: flex;
+  gap: 8px;
+  min-width: max-content;
+}
+.item-sheet-more > .mantine-Button-root {
+  flex: 1 1 auto;
+}
+.item-sheet-actions .mantine-Button-root {
+  min-width: max-content;
+}
+.item-sheet-actions .mantine-Button-label {
+  overflow: visible;
+}
+/* The menu button keeps the 44px of the buttons beside it at any text size. */
+.item-sheet-more > .mantine-ActionIcon-root {
+  --ai-size: 44px !important;
+  flex: none;
+}
+.item-sheet-share {
+  align-self: flex-start;
+}
+
+/* Characters as a radio list: 48px rows, the chosen one in accent ink with a rail. */
+.give-who {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.give-chars {
+  display: grid;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.give-char {
+  position: relative;
+  min-height: 48px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--app-border);
+}
+.give-char:last-child {
+  border-bottom: 0;
+}
+.give-char:has(input:checked) {
+  background: var(--app-select-tint);
+  box-shadow: var(--select-rail);
+  color: var(--app-accent);
+  font-weight: 600;
+}
+.give-char:has(input:focus-visible) {
+  outline: 2px solid var(--app-focus);
+  outline-offset: -3px;
+}
+.give-char .mantine-Radio-body {
+  align-items: center;
+  width: 100%;
+}
+.give-char .mantine-Radio-label {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding-inline-start: 12px;
+  cursor: pointer;
+  color: inherit;
+}
+/* The whole row is the label: a tap anywhere on its 48px chooses the character. */
+.give-char .mantine-Radio-label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.give-char .mantine-Radio-inner,
+.give-char .mantine-Radio-radio {
+  flex: none;
+}

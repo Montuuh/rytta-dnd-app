@@ -552,6 +552,13 @@ function ReviewDialog({
     enabled: opened,
   })
   const action = useContentAction(campaignId)
+  // The reason is where the keyboard is: after a failed update (a stale version included) focus
+  // moves to the alert, so the reader hears it and the next stop is the retry.
+  const alert = useRef<HTMLDivElement>(null)
+  const failedAt = action.isError ? action.submittedAt : 0
+  useEffect(() => {
+    if (failedAt) alert.current?.focus()
+  }, [failedAt])
   const title = t('campaignContent.reviewTitle', {
     pack: titleOf(target.pack, i18n.language),
     version: target.pack.version ?? 0,
@@ -594,7 +601,7 @@ function ReviewDialog({
             ))
           )}
           {action.isError && (
-            <Alert color="red" role="alert">
+            <Alert ref={alert} tabIndex={-1} color="red" role="alert">
               {t(actionMessage(action.error.message))}
             </Alert>
           )}

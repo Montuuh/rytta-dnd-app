@@ -190,7 +190,7 @@ export function AddItemChooser({
             </Stack>
           )}
           {catalogue.data && items.length === 0 && search.trim() && (
-            <Text c="dimmed">{t('store.noResults')}</Text>
+            <Text c="dimmed">{t('store.noMatch')}</Text>
           )}
           {items.length > 0 && (
             <div className="add-pick-list" role="group" aria-label={t('addItem.pickGroup')}>

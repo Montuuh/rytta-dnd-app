@@ -12,6 +12,9 @@
 .switcher-field .mantine-TextInput-input {
   min-height: 48px;
   font-size: max(1rem, 16px);
+  /* A placeholder wider than the field (150% text on a small phone) ends in an ellipsis, never
+     in a half-cut letter. */
+  text-overflow: ellipsis;
 }
 .switcher-list {
   margin-top: 8px;

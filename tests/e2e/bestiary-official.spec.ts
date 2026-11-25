@@ -8,8 +8,8 @@ import { combatServer } from './fixtures/combat.ts'
 // keeps its own versions of them, and hides single creatures.
 const size = (project: string) =>
   project === 'identity-mobile' ? 'mobile' : project === 'identity-tablet' ? 'tablet' : null
-/** Below 62em the stat block opens in a full screen sheet instead of the side pane. */
-const sheet = (info: TestInfo) => (info.project.use.viewport?.width ?? 1440) < 992
+/** Phones open the stat block in a full screen sheet; from 48em it opens in a pane beside the list. */
+const sheet = (info: TestInfo) => (info.project.use.viewport?.width ?? 1440) < 768
 async function evidence(page: Page, info: TestInfo, name: string) {
   const s = size(info.project.name)
   if (s && process.env.RYT_EVIDENCE)
@@ -61,16 +61,21 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
 
   // The SRD creatures pack, loaded from the library at the campaign's version.
   await expect(page.getByText('330 criaturas', { exact: true })).toBeVisible({ timeout: 15_000 })
-  const packs = page.getByRole('link', { name: 'Paquetes de criaturas' })
-  await expect(packs).toHaveAttribute('href', content)
-  await expectTouchTargets(page, '.bst-head-actions a')
+  // The way to the packs: an entry of the `···` menu beside Filters, at every width.
+  await page.getByRole('button', { name: 'Más acciones del bestiario' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Paquetes de criaturas' })).toHaveAttribute(
+    'href',
+    content,
+  )
+  await page.keyboard.press('Escape')
   await audit(page)
   await evidence(page, info, 'list')
 
   // Edit in place: the change is a campaign version listed instead of the pack's wolf.
   let pane = await open(page, info, 'lobo', 'Lobo')
   await expect(pane.getByRole('button', { name: 'Personalizar' })).toHaveCount(0)
-  await pane.getByRole('button', { name: 'Editar', exact: true }).click()
+  await pane.getByRole('button', { name: 'Más acciones para Lobo' }).click()
+  await page.getByRole('menuitem', { name: 'Editar', exact: true }).click()
   const editor = page.getByRole('dialog', { name: 'Editar Lobo en esta campaña' })
   await editor.getByRole('textbox', { name: 'Clase de armadura' }).fill('14')
   await editor.getByRole('button', { name: 'Guardar criatura' }).click()
@@ -98,7 +103,7 @@ test('RYT-094 the bestiary reads the SRD pack, edits a creature in place and hid
   await back.getByRole('button', { name: 'Volver a la versión del paquete' }).click()
   await expect(page.getByText('Lobo vuelve a ser la versión del paquete.').first()).toBeVisible()
   await expect(
-    detail(page, info).getByRole('button', { name: 'Editar', exact: true }),
+    detail(page, info).getByRole('button', { name: 'Más acciones para Lobo' }),
   ).toBeFocused()
   expect(server.templates.some((t) => t.srd_override === true)).toBe(false)
 
@@ -212,7 +217,7 @@ test('RYT-094 two creature packs: a source list, the pack on each row, its creat
 
   // A pack creature joins the fight with its pack reference.
   const pane = await open(page, info, 'yeti', 'Yeti')
-  await pane.getByRole('button', { name: 'Añadir', exact: true }).click()
+  await pane.getByRole('button', { name: 'Añadir a Paso helado', exact: true }).click()
   const fight = server.encounters.find((e) => e.id === created.encounter_id)!
   await expect.poll(() => fight.combatants.map((c) => c.srd_id)).toEqual(['abcdef12--yeti'])
 })

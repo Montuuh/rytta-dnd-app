@@ -202,6 +202,10 @@ export function PartyLevelControl({
             aria-disabled={pending || resting || undefined}
             aria-busy={pending || undefined}
             leftSection={pending ? <Loader size={16} aria-hidden="true" /> : undefined}
+            // A held Enter repeats keydown, and each repeat is a click: only the first press counts.
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && event.repeat) event.preventDefault()
+            }}
             onClick={() => {
               if (!rest.current) run(raiseTo)
             }}

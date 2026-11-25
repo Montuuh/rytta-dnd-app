@@ -158,6 +158,7 @@ test('RYT-162 a stale update says the pack changed', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'SRD 5.2.1 · versión 2' })
   await dialog.getByRole('button', { name: 'Actualizar a la versión 2' }).click()
   await expect(dialog.getByRole('alert')).toContainText('El paquete cambió mientras revisabas')
+  await expect(dialog.getByRole('alert')).toBeFocused()
 })
 
 test('RYT-162 the DM finds, hides and shows entries', async ({ page }, info) => {

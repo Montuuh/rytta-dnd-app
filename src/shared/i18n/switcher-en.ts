@@ -5,6 +5,7 @@ export const switcherEn = {
   'switcher.title': 'Go to',
   'switcher.close': 'Close search',
   'switcher.search': 'Find a panel or action',
+  'switcher.placeholder': 'Panel or action',
   'switcher.panels': 'Panels',
   'switcher.actions': 'Actions',
   'switcher.none': 'Nothing matches “{{query}}”. Try another word.',

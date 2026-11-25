@@ -183,7 +183,9 @@ test('RYT-133 the DM sets the dice: sheet, confirmation, a failure, the same req
   await expect(dialog).toContainText('Cómo se tira')
   await expect(dialog).toContainText('Dados en la app')
   await expect(dialog).not.toContainText('Quién ve las tiradas')
-  await expect(dialog).toContainText('Los jugadores tirarán en la app')
+  await expect(dialog).toContainText('los números dejan de decir qué tirar')
+  // The question says what changes, not the option's own line again.
+  await expect(dialog).not.toContainText('Rytta tira y anota cada tirada')
   expect(settingsCalls(f.calls)).toHaveLength(0)
   await audit(page)
 
@@ -252,7 +254,7 @@ test('RYT-133 the DM sets the dice: sheet, confirmation, a failure, the same req
   await modeRow.click()
   await options.getByRole('radio', { name: /Cada jugador elige/ }).click()
   await expect(page.getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })).toContainText(
-    'hasta que elija, usa dados físicos',
+    'Hasta que cada jugador elija',
   )
   await page
     .getByRole('dialog', { name: '¿Cambiar los dados de la mesa?' })

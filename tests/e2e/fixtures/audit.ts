@@ -45,6 +45,38 @@ export function limitMatrix(info: TestInfo, base: boolean) {
 }
 
 /**
+ * What a field's placeholder paints, measured: its text width against the room inside the field.
+ * A focused field paints no ellipsis, so "text-overflow: ellipsis" proves nothing; a placeholder
+ * that is wider than its room is cut mid-letter.
+ */
+export async function placeholderRoom(field: Locator) {
+  return field.evaluate((node) => {
+    const input = node as HTMLInputElement
+    const style = getComputedStyle(input)
+    const context = document.createElement('canvas').getContext('2d')!
+    context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+    const text = context.measureText(input.placeholder).width
+    const room = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+    return { text, room, placeholder: input.placeholder }
+  })
+}
+
+/** Buttons whose label is cut by its own box: wider or taller content than the box shows. */
+export async function clippedLabels(scope: Page | Locator, selector: string) {
+  return scope
+    .locator(selector)
+    .evaluateAll((buttons) =>
+      buttons.flatMap((button) =>
+        [button, ...button.querySelectorAll<HTMLElement>('.mantine-Button-label, .bst-add-label')]
+          .filter(
+            (el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1,
+          )
+          .map((el) => `${(button.textContent ?? '').trim()} (${el.className.split(' ')[0]})`),
+      ),
+    )
+}
+
+/**
  * Lets `count` animation frames pass and says which control held focus at the end of each, as its
  * accessible label or text. For "focus stays where it is" and "nothing opens later" checks, so a
  * test waits for frames, never for a fixed time.

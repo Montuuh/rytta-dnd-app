@@ -95,7 +95,10 @@ async function walk(page: Page, row: string, keyAttr: string, below: number, dir
 test('RYT-117 bestiary: after a jump, scrolling up and down keeps the reader’s place', async ({
   page,
 }, info) => {
-  test.skip(info.project.name.endsWith('desktop'), 'Beside the stat block the list scrolls inside')
+  test.skip(
+    (info.project.use.viewport?.width ?? 0) >= 768,
+    'Beside the stat block the list scrolls inside',
+  )
   test.setTimeout(180_000)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })

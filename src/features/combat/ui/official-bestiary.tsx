@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Group, Stack, Text } from '@mantine/core'
+import { Button, Group, Menu, Stack, Text } from '@mantine/core'
 import { Modal } from '@/shared/ui/overlays'
 import { Library, Pencil, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -61,19 +61,17 @@ export function OfficialElsewhere({ campaignId }: { campaignId: string }) {
   )
 }
 
-/** The way to the campaign's creature packs from the bestiary header (hidden creatures, packs). */
-export function PacksLink({ campaignId }: { campaignId: string }) {
+/** The way to the campaign's creature packs (hidden creatures, packs), in the head menu. */
+export function PacksMenuItem({ campaignId }: { campaignId: string }) {
   const { t } = useTranslation()
   return (
-    <Button
+    <Menu.Item
       component={Link}
       to={contentPath(campaignId)}
-      // A way out of the bestiary, quieter than its one action (New creature).
-      variant="subtle"
       leftSection={<Library size={16} aria-hidden="true" />}
     >
       {t('bestiary.packs.link')}
-    </Button>
+    </Menu.Item>
   )
 }
 

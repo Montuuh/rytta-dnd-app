@@ -22,8 +22,9 @@
 html:has(.item-store) {
   scroll-padding-top: 9rem;
 }
-/* One row at the default text size; at large text Filters and ··· wrap under the field, which keeps
-   a readable minimum of about a dozen characters. */
+/* One row at the default text size, even in a wide fallback face: the field's basis is nothing and
+   its minimum is small, so it takes what Filters and ··· leave. At large text the minimum grows
+   with the text, and Filters and ··· wrap under the field, which keeps a usable width. */
 .store-find {
   display: flex;
   flex-wrap: wrap;
@@ -33,10 +34,18 @@ html:has(.item-store) {
   --store-control: max(48px, 2.25rem);
 }
 .store-search {
-  flex: 1 1 9.5rem;
-  min-width: 9.5rem;
+  flex: 1 1 0;
+  min-width: 6rem;
 }
-.store-find > .mantine-ActionIcon-root {
+/* Filters and ··· travel together: when they do not fit beside the field they take the next row
+   as a pair and the field keeps the whole first row. */
+.store-tools {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  align-items: center;
+}
+.store-tools > .mantine-ActionIcon-root {
   --ai-size: var(--store-control) !important;
 }
 .store-search input {

@@ -248,43 +248,45 @@ export function Toolbar({
             ) : undefined
           }
         />
-        <Popover
-          opened={open && !sheet}
-          onChange={setOpen}
-          position="bottom-end"
-          width={420}
-          trapFocus
-          returnFocus
-          shadow="md"
-          withinPortal
-          // The button owns aria-expanded: the filters may open in the sheet instead.
-          withRoles={false}
-          // Fit the space beside the button and scroll inside: scrolling the page to reach the
-          // results button would take the button out of view and hide the dropdown.
-          middlewares={{ size: { padding: 8 } }}
-        >
-          <Popover.Target>{filterButton}</Popover.Target>
-          <Popover.Dropdown
-            role="dialog"
-            aria-label={t('bestiary.filter.title')}
-            className="bst-filter-dropdown"
+        <div className="bst-toolbar-tools">
+          <Popover
+            opened={open && !sheet}
+            onChange={setOpen}
+            position="bottom-end"
+            width={420}
+            trapFocus
+            returnFocus
+            shadow="md"
+            withinPortal
+            // The button owns aria-expanded: the filters may open in the sheet instead.
+            withRoles={false}
+            // Fit the space beside the button and scroll inside: scrolling the page to reach the
+            // results button would take the button out of view and hide the dropdown.
+            middlewares={{ size: { padding: 8 } }}
+          >
+            <Popover.Target>{filterButton}</Popover.Target>
+            <Popover.Dropdown
+              role="dialog"
+              aria-label={t('bestiary.filter.title')}
+              className="bst-filter-dropdown"
+            >
+              {panel}
+            </Popover.Dropdown>
+          </Popover>
+          <Drawer
+            opened={open && sheet}
+            onClose={() => setOpen(false)}
+            position={phone ? 'bottom' : 'right'}
+            title={t('bestiary.filter.title')}
+            closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
+            size={phone ? 'auto' : 440}
+            zIndex={320}
+            classNames={{ content: 'bst-filter-drawer', body: 'bst-filter-sheet' }}
           >
             {panel}
-          </Popover.Dropdown>
-        </Popover>
-        <Drawer
-          opened={open && sheet}
-          onClose={() => setOpen(false)}
-          position={phone ? 'bottom' : 'right'}
-          title={t('bestiary.filter.title')}
-          closeButtonProps={{ 'aria-label': t('common.close'), size: 44 }}
-          size={phone ? 'auto' : 440}
-          zIndex={320}
-          classNames={{ content: 'bst-filter-drawer', body: 'bst-filter-sheet' }}
-        >
-          {panel}
-        </Drawer>
-        {menu}
+          </Drawer>
+          {menu}
+        </div>
       </div>
       <div className="bst-toolbar">
         <div className="bst-toolbar-row">

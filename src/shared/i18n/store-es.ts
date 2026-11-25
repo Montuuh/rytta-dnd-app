@@ -38,6 +38,7 @@ export const storeEs = {
   'store.sortRarity': 'Rareza',
   'store.sortValue': 'Precio',
   'store.clearSearch': 'Limpiar búsqueda',
+  'store.searchPlaceholder': 'Buscar',
   'store.noResults': 'Ningún objeto coincide con estos filtros.',
   'store.noMatch': 'Ningún objeto coincide con la búsqueda.',
   'store.clearFilters': 'Quitar filtros',

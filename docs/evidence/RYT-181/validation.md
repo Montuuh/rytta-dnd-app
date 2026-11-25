@@ -111,13 +111,45 @@ one more tap than before, through the `···` menu, as chosen on the options pa
 - Creature search and item search rank the same way through two helpers; they are not unified.
 - Wide layouts: Escape with focus in the search clears the query and leaves the pane open.
 - At 820px with 150% text the `···` button of both heads wraps alone onto a second row.
-- From the third review round: while a search field is focused and empty the browser draws no
-  ellipsis, so a long placeholder is cut until the first key; English says "given to" after a
-  give and "receives" after an accepted proposal; in Hearth a disabled unchecked checkbox has
-  the same ring as an enabled one.
+- From the third review round: English says "given to" after a give and "receives" after an
+  accepted proposal; in Hearth a disabled unchecked checkbox has the same ring as an enabled one.
 - The captures in `after/` were taken before the two rounds of review fixes; the states they
   changed (the item sheet and the stat block bar at 150% text, the discard dialog, radios and
   checkboxes, the status line when it wraps) were captured by the review, not kept here.
+
+The open points are ticket RYT-182.
+
+## After the first CI run
+
+CI runs on Linux, where the app's font falls back to a wider face. The delivery commit failed
+seven of its own layout tests there that pass locally: at 390px the search row of both screens
+wrapped onto two rows, a creature row with a two-line name measured 72px against a 66px limit,
+the "Add to {encounter}" label was truncated (phone, the 820px pane and desktop at 150% text),
+and the search placeholder did not fit its field. The update notice test also failed there.
+
+- Reproduced locally with a wide face forced (Verdana with 0.02em letter spacing): the
+  placeholder measured 129.2px against CI's 129.8px and the row 72.2px, as on CI.
+- Fixed in the layout, not in the limits: the search field takes what Filters and the menu leave
+  (they stay on one row at the default size and wrap below it as a pair at large text); the add
+  button's width follows its label, so it takes its own row when the label does not fit and wraps
+  before it truncates; the placeholders are "Search"; a creature row's meta line stays on one
+  line where the kind gives way and armor class and hit points always show whole. The row test
+  now states its limit for one-line names and allows 20px per extra line of a name.
+- The update notice test raced the page's own focus on load; it now holds the mocked version
+  answer until the button verifiably has focus. It also uncovered a real defect, fixed: when an
+  element already had focus as the notice appeared, "Not now" sent focus to the main content.
+- Two more review rounds covered these changes. The fourth asked for changes (with the one-line
+  meta the numbers were cut at 150% text; the menu button wrapped alone). The fifth is a PASS on
+  the final source: armor class and hit points whole in every row over 16 combinations of pack,
+  language, face and text size, both heads in one arrangement at large text, no axe error in 32
+  passes. It left three low findings, now in RYT-182: at a wide face and 150% text the kind
+  shrinks to a sliver before the numbers; with several packs the pack name comes before the type
+  and is what survives truncation; at 820px with 150% text the search field is 176 to 224px.
+- `npm run check` passes on that tree. `npm run test:e2e`: 1828 passed, 197 skipped, 3 failed, in
+  a 14.8-minute run that shared the machine with the review (`casting.spec.ts` when the undo runs
+  out, and in `identity.spec.ts` the invitation accepted from a second browser and the profile
+  menu focus); the three passed 24 of 24 when repeated alone. The run on the tree before the
+  last two layout edits was 1831 passed, 0 failed.
 
 ## Not verified
 

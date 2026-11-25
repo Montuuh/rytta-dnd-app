@@ -28,7 +28,7 @@ export const bestiaryEn = {
   'bestiary.changes.section': '{{field}} · revised',
   'bestiary.new': 'New creature',
   'bestiary.search': 'Search creatures',
-  'bestiary.searchPlaceholder': 'Search creature',
+  'bestiary.searchPlaceholder': 'Search',
   'bestiary.searchClear': 'Clear the search',
   'bestiary.source.label': 'Source',
   'bestiary.source.all': 'All',

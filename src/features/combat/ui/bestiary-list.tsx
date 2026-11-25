@@ -228,15 +228,15 @@ export function CreatureList({
               {item.name}
               {favorites.has(item.key) && <FavouriteMark size={14} />}
             </span>
-            <span className="bst-row-meta">
-              {[
+            <RowMeta
+              kind={[
                 showPack ? item.pack : null,
                 item.type ? t(`bestiary.type.${item.type}`) : null,
-                t('bestiary.rowNumbers', { ac: item.ac, hp: item.hp }),
               ]
                 .filter(Boolean)
                 .join(' · ')}
-            </span>
+              numbers={t('bestiary.rowNumbers', { ac: item.ac, hp: item.hp })}
+            />
           </span>
           {item.cr !== null && (
             <span className="bst-cr tabular">
@@ -323,5 +323,18 @@ export function CreatureList({
         ),
       )}
     </div>
+  )
+}
+
+/** The meta line of a row: the kind gives way with an ellipsis, the numbers always show whole. */
+function RowMeta({ kind, numbers }: { kind: string; numbers: string }) {
+  return (
+    <span className="bst-row-meta">
+      {kind && <span className="bst-row-kind">{kind}</span>}
+      <span className="bst-row-numbers">
+        {kind ? ' · ' : ''}
+        {numbers}
+      </span>
+    </span>
   )
 }

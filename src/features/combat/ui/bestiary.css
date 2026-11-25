@@ -24,9 +24,10 @@
   min-height: var(--bst-control, 48px);
   font-size: 1.0625rem;
 }
-/* One row at the default text size. The field keeps a readable minimum (about a dozen characters
-   plus its icon); at large text Filters and the ··· menu wrap to a row under it instead of
-   squeezing it. */
+/* One row at the default text size, even in a wide fallback face: the field's basis is nothing and
+   its minimum is small, so it takes what Filters and ··· leave. The row only wraps when the text is
+   really large (the minimum grows with it); Filters and ··· then go under the field, which keeps a
+   usable width. */
 .bst-toolbar-search {
   display: flex;
   flex-wrap: wrap;
@@ -36,8 +37,16 @@
   --bst-control: max(48px, 2.25rem);
 }
 .bst-toolbar-search .bst-search {
-  flex: 1 1 9.5rem;
-  min-width: 9.5rem;
+  flex: 1 1 0;
+  min-width: 6rem;
+}
+/* Filters and ··· travel together: when they do not fit beside the field they take the next row
+   as a pair and the field keeps the whole first row. */
+.bst-toolbar-tools {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  align-items: center;
 }
 /* Phones and tablets without the side pane: the head keeps the list's measure on a wide window. */
 .bst:has(.bst-split:not([data-pane])) > .bst-toolbar-search {
@@ -110,7 +119,7 @@ html:has(.bst:not([data-split])) {
   min-height: var(--bst-control);
 }
 /* The ··· button is as tall as the field and Filters at any text size. */
-.bst-toolbar-search > .mantine-ActionIcon-root {
+.bst-toolbar-tools > .mantine-ActionIcon-root {
   --ai-size: var(--bst-control) !important;
 }
 /* The filters in force: one muted line with a Clear button (the shared filter line). */
@@ -1091,12 +1100,27 @@ html:has(.bst:not([data-split])) {
   /* Words stay whole: a name wraps at its spaces, and only a word wider than the line breaks. */
   overflow-wrap: break-word;
 }
+/* One line: a wider face never makes the row taller (a name may wrap). The kind gives way with
+   an ellipsis; armor class and hit points always show whole. */
 .bst-row-meta {
+  display: flex;
+  min-width: 0;
   font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
   line-height: 1.3;
   color: var(--app-muted);
-  overflow-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bst-row-kind {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bst-row-numbers {
+  flex: none;
+  white-space: pre;
 }
 /* Challenge rating: text at the row's end, not a chip. */
 .bst-cr {
@@ -1270,19 +1294,29 @@ html:has(.bst:not([data-split])) {
 .bst-detail-inner > .bst-actions.is-sticky {
   order: 99;
 }
-/* One row at every width: the count stepper, the filled action (one line, the encounter's name is
-   cut with an ellipsis) and the ··· button. */
+/* A wrapping row sized by its content. The filled action's basis is its label: beside the stepper
+   and the ··· button when it fits, otherwise on a row of its own with ··· at its end, and only
+   when it is alone and still too long does the label wrap onto a second line (words whole, then
+   cut at two lines). The action's margin reserves the room of the ··· button (44px and the gap),
+   which sits in that margin, so the two always wrap together. */
 .bst-bar {
+  --bst-more: calc(2.75rem + 8px);
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 .bst-bar > .bst-action-primary {
-  flex: 1 1 0;
+  flex: 1 1 max-content;
+  /* Never wider than the row less the room of ···, so that button always follows on the same row. */
+  max-width: calc(100% - var(--bst-more));
   min-width: 0;
-  height: 44px;
+  height: auto;
   min-height: 44px;
+  margin-inline-end: var(--bst-more);
+}
+.bst-bar > .bst-action-primary + .mantine-ActionIcon-root {
+  margin-inline-start: calc(-1 * var(--bst-more));
 }
 .bst-action-primary .mantine-Button-inner {
   min-width: 0;
@@ -1298,14 +1332,17 @@ html:has(.bst:not([data-split])) {
   padding-block: 2px;
   text-box-trim: none;
   line-height: 1.35;
-  white-space: nowrap;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .bst-add-label {
-  display: block;
+  display: -webkit-box;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .bst-bar-dial .bst-dial-step {
   /* The stepper's buttons stay 44px tall at any text size, inside the 44px field. */
@@ -1330,8 +1367,10 @@ html:has(.bst:not([data-split])) {
   height: 44px;
   font-size: 1.125rem;
 }
-/* A narrow bar (a phone's sheet at large text, a tablet's pane): the stepper keeps its 44px
-   buttons but loses its padding, and the add button loses its icon, so the words stay readable. */
+/* A narrow bar (a phone's sheet, a tablet's pane): the stepper keeps its 44px buttons but loses
+   its padding, and the add button loses its icon and some padding, so the words fit beside it.
+   Where they still do not (a wider face, a long encounter name), the button wraps to its own row
+   as above. */
 @container (max-width: 22rem) {
   .bst-bar-dial {
     flex-basis: 7.25rem;
@@ -1342,13 +1381,17 @@ html:has(.bst:not([data-split])) {
     padding-inline: 44px;
     font-size: 1rem;
   }
+  .bst-bar > .bst-action-primary {
+    padding-inline: 8px;
+  }
   .bst-bar > .bst-action-primary .mantine-Button-section {
     display: none;
   }
 }
-/* A pane too narrow for both: the count keeps its field (type it, or Up and Down), and the filled
-   button keeps the room, so "Añadir a …" stays readable. */
-@container (max-width: 18rem) {
+/* A pane too narrow for both (measured in pixels, so large text does not trigger it): the count
+   keeps its field (type it, or Up and Down), and the filled button keeps the room, so
+   "Añadir a …" stays on the row. */
+@container (max-width: 300px) {
   .bst-bar-dial {
     flex-basis: 3.25rem;
     --input-left-section-width: 0px !important;
@@ -1359,49 +1402,6 @@ html:has(.bst:not([data-split])) {
   }
   .bst-bar-dial .bst-dial-input {
     padding-inline: 4px;
-  }
-}
-/* Large text (a phone's sheet at 125% and more): the bar wraps. The stepper, with its buttons, and
-   the ··· button share the first row and the filled action takes a row of its own, its words
-   wrapping whole instead of being cut. */
-@container (max-width: 17rem) {
-  .bst-bar {
-    flex-wrap: wrap;
-  }
-  .bst-bar-dial {
-    --input-left-section-width: 44px !important;
-    --input-right-section-width: 44px !important;
-  }
-  .bst-bar-dial .mantine-NumberInput-section {
-    display: flex;
-  }
-  .bst-bar-dial .bst-dial-input {
-    padding-inline: 44px;
-  }
-  .bst-bar > .bst-action-primary {
-    height: auto;
-    min-height: 44px;
-  }
-  .bst-action-primary .mantine-Button-label,
-  .bst-add-label {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .bst-bar:has(.bst-bar-dial) > .bst-bar-dial {
-    order: 1;
-    flex: 0 0 7.25rem;
-  }
-  .bst-bar:has(.bst-bar-dial) > .mantine-ActionIcon-root {
-    order: 2;
-    margin-inline-start: auto;
-  }
-  .bst-action-primary .mantine-Button-label,
-  .bst-add-label {
-    text-align: center;
-  }
-  .bst-bar:has(.bst-bar-dial) > .bst-action-primary {
-    order: 3;
-    flex: 1 1 100%;
   }
 }
 .bst-add-status {

@@ -1304,16 +1304,33 @@ test('RYT-181 on a phone the first screen shows about seven rows of one tab stop
     return {
       first: boxes[0]!.y,
       heights: boxes.slice(0, 8).map((box) => box.height),
+      // A name may wrap at its spaces on a wider face (a second line of the name), the meta line
+      // never does: it is one line cut with an ellipsis.
+      nameLines: rows.slice(0, 8).map((row) => {
+        const name = row.querySelector('.bst-row-name')!.getBoundingClientRect().height
+        const line = parseFloat(getComputedStyle(row.querySelector('.bst-row-name')!).lineHeight)
+        return Math.round(name / line)
+      }),
+      metaLines: rows.slice(0, 8).map((row) => {
+        const meta = row.querySelector('.bst-row-meta')!
+        return Math.round(
+          meta.getBoundingClientRect().height / parseFloat(getComputedStyle(meta).lineHeight),
+        )
+      }),
       fully: boxes.filter((box) => box.bottom <= innerHeight - 65).length,
       badges: document.querySelectorAll('.bst-list .mantine-Badge-root, .bst-source-badge').length,
       stops: rows.slice(0, 8).map((row) => row.querySelectorAll('button, a, input').length),
     }
   })
   expect(fit.first).toBeLessThan(460)
-  for (const height of fit.heights) {
+  expect(fit.metaLines.every((lines) => lines === 1)).toBe(true)
+  fit.heights.forEach((height, index) => {
     expect(height).toBeGreaterThanOrEqual(52)
-    expect(height).toBeLessThanOrEqual(66)
-  }
+    // A row with its name on one line is 56 to 66px at any face; each extra line of a long name
+    // adds one line of the name (a wider fallback face wraps "Alfombra asfixiante animada").
+    expect(height).toBeLessThanOrEqual(66 + (fit.nameLines[index]! - 1) * 20)
+  })
+  expect(fit.nameLines.filter((lines) => lines > 1).length).toBeLessThanOrEqual(2)
   expect(fit.fully).toBeGreaterThanOrEqual(6)
   expect(fit.badges).toBe(0)
   expect(fit.stops.every((stops) => stops === 1)).toBe(true)
@@ -1788,12 +1805,26 @@ test('RYT-181 the search placeholder fits its field at the default size', async 
   test.skip(!phone(info), 'The narrowest field')
   const server = combatServer()
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await identityFixture(page, { party: true, sheet: 'complete', modules: ['party', 'combat'] })
+  await identityFixture(page, {
+    party: true,
+    inventory: true,
+    sheet: 'complete',
+    modules: ['party', 'combat'],
+  })
   await server.install(page)
   await openBestiary(page)
-  const room = await placeholderRoom(page.getByRole('searchbox', { name: 'Buscar criatura' }))
+  // The accessible name stays the full one; the placeholder is the short word.
+  const creatures = page.getByRole('searchbox', { name: 'Buscar criatura' })
+  const room = await placeholderRoom(creatures)
   expect(room.placeholder.length).toBeGreaterThan(3)
   expect(room.text).toBeLessThanOrEqual(room.room)
+  // The storeroom field is as narrow: same short placeholder, same room.
+  await page.goto(`./#/campaign/${campaignId}/members?panel=items`)
+  const items = page.getByRole('searchbox', { name: 'Buscar objetos' })
+  await expect(items).toBeVisible()
+  const itemRoom = await placeholderRoom(items)
+  expect(itemRoom.placeholder.length).toBeGreaterThan(3)
+  expect(itemRoom.text).toBeLessThanOrEqual(itemRoom.room)
 })
 
 for (const encounter of [true, false])
@@ -1837,14 +1868,17 @@ for (const encounter of [true, false])
       })
       expect(inside).toBe(true)
       if (width < 500) {
-        // The stepper and the menu share a row; the filled action has the next one to itself.
+        // The label no longer fits beside the stepper: the filled action takes the row under it,
+        // with the menu at its end, and the action keeps most of the width.
         const dial = (await page.locator('.bst-bar-dial').boundingBox())!
         const more = (await bar.locator('[data-bst-more]').boundingBox())!
         const addBox = (await add.boundingBox())!
         const barBox = (await bar.boundingBox())!
-        expect(Math.abs(dial.y + dial.height / 2 - (more.y + more.height / 2))).toBeLessThan(8)
+        expect(Math.abs(addBox.y + addBox.height / 2 - (more.y + more.height / 2))).toBeLessThan(8)
         expect(addBox.y).toBeGreaterThan(dial.y + dial.height - 1)
-        expect(addBox.width).toBeGreaterThan(barBox.width * 0.7)
+        expect(more.x).toBeGreaterThan(addBox.x + addBox.width - 1)
+        expect(more.x + more.width).toBeLessThanOrEqual(barBox.x + barBox.width + 1)
+        expect(addBox.width).toBeGreaterThan(barBox.width * 0.6)
       }
     }
   })

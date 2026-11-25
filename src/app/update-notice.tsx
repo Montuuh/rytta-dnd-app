@@ -65,6 +65,10 @@ export function UpdateNotice() {
   const outside = useRef<Element | null>(null)
   useEffect(() => {
     if (!newer || dismissed) return
+    // What holds focus when the notice appears counts too, not only what is focused afterwards.
+    const current = document.activeElement
+    if (current && current !== document.body && !current.closest('.update-notice'))
+      outside.current = current
     const track = (event: FocusEvent) => {
       const target = event.target as Element | null
       if (target && !target.closest('.update-notice')) outside.current = target

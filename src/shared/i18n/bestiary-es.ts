@@ -28,7 +28,7 @@ export const bestiaryEs = {
   'bestiary.changes.section': '{{field}} · revisado',
   'bestiary.new': 'Nueva criatura',
   'bestiary.search': 'Buscar criatura',
-  'bestiary.searchPlaceholder': 'Buscar criatura',
+  'bestiary.searchPlaceholder': 'Buscar',
   'bestiary.searchClear': 'Borrar la búsqueda',
   'bestiary.source.label': 'Origen',
   'bestiary.source.all': 'Todas',

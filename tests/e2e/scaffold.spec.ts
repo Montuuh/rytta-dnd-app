@@ -129,14 +129,26 @@ test('the same build published as the running one shows nothing', async ({ page 
 test('the update notice is quiet, accessible, clear of the bottom bar and returns focus on dismiss', async ({
   page,
 }) => {
-  await page.route('**/version.json*', (route) =>
-    route.fulfill({ json: { id: 'older-build', builtAt: '2026-01-01T00:00:00Z' } }),
-  )
+  // The published build is held back until the page has rendered and the button verifiably holds
+  // focus, so the app's own focus on load cannot race the check: only the notice can move it.
+  let publish!: () => void
+  const published = new Promise<void>((resolve) => (publish = resolve))
+  await page.route('**/version.json*', async (route) => {
+    await published
+    await route.fulfill({ json: { id: 'older-build', builtAt: '2026-01-01T00:00:00Z' } })
+  })
   await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'Glossary', exact: true })).toBeVisible()
   // The glossary of the preview has no library to read (RYT-167): the settings button holds focus.
   const search = page.getByRole('button', { name: 'Settings' })
-  await search.focus()
   const notice = page.getByRole('status').filter({ hasText: 'A new version is available' })
+  await expect(async () => {
+    await search.focus()
+    await page.waitForTimeout(250)
+    await expect(search).toBeFocused()
+  }).toPass({ timeout: 10_000 })
+  await expect(notice).toBeHidden()
+  publish()
   await expect(notice).toBeVisible()
   // It never takes focus, and it stays inside the viewport.
   await expect(search).toBeFocused()

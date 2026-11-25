@@ -35,6 +35,7 @@ export const storeEn = {
   'store.sortRarity': 'Rarity',
   'store.sortValue': 'Price',
   'store.clearSearch': 'Clear search',
+  'store.searchPlaceholder': 'Search',
   'store.noResults': 'No item matches these filters.',
   'store.noMatch': 'No item matches the search.',
   'store.clearFilters': 'Clear filters',

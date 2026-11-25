@@ -306,7 +306,7 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
             type="search"
             enterKeyHint="go"
             aria-label={t('catalogue.search')}
-            placeholder={t('catalogue.search')}
+            placeholder={t('store.searchPlaceholder')}
             rightSectionWidth={48}
             leftSection={<Search size={16} aria-hidden="true" />}
             value={search}
@@ -333,70 +333,72 @@ export function ItemStore({ campaignId }: { campaignId: string }) {
               ) : null
             }
           />
-          {all.length > 0 && (
-            <Button
-              variant="default"
-              className="store-filters-button"
-              data-active={filterCount > 0 || undefined}
-              leftSection={<SlidersHorizontal size={18} aria-hidden="true" />}
-              onClick={(event) => {
-                remember(event.currentTarget)
-                setFiltering(true)
+          <div className="store-tools">
+            {all.length > 0 && (
+              <Button
+                variant="default"
+                className="store-filters-button"
+                data-active={filterCount > 0 || undefined}
+                leftSection={<SlidersHorizontal size={18} aria-hidden="true" />}
+                onClick={(event) => {
+                  remember(event.currentTarget)
+                  setFiltering(true)
+                }}
+              >
+                {t('store.filters')}
+                {filterCount > 0 && (
+                  <>
+                    <span className="store-filters-count tabular" aria-hidden="true">
+                      {filterCount}
+                    </span>
+                    <span className="visually-hidden">
+                      {t('store.filtersActive', { count: filterCount })}
+                    </span>
+                  </>
+                )}
+              </Button>
+            )}
+            <Menu
+              position="bottom-end"
+              withinPortal
+              withInitialFocusPlaceholder={false}
+              onExitTransitionEnd={() => {
+                const run = pendingAction.current
+                pendingAction.current = null
+                run?.()
               }}
             >
-              {t('store.filters')}
-              {filterCount > 0 && (
-                <>
-                  <span className="store-filters-count tabular" aria-hidden="true">
-                    {filterCount}
-                  </span>
-                  <span className="visually-hidden">
-                    {t('store.filtersActive', { count: filterCount })}
-                  </span>
-                </>
-              )}
-            </Button>
-          )}
-          <Menu
-            position="bottom-end"
-            withinPortal
-            withInitialFocusPlaceholder={false}
-            onExitTransitionEnd={() => {
-              const run = pendingAction.current
-              pendingAction.current = null
-              run?.()
-            }}
-          >
-            <Menu.Target>
-              <ActionIcon
-                ref={menuButton}
-                variant="default"
-                size={44}
-                onClick={() => remember(menuButton.current)}
-                aria-label={t('store.menu')}
-                title={t('common.moreActions')}
-              >
-                <Ellipsis size={20} aria-hidden="true" />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                leftSection={<Plus size={18} aria-hidden="true" />}
-                onClick={choose(() => setEditor({ item: null }))}
-              >
-                {t('catalogue.create')}
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<PackagePlus size={18} aria-hidden="true" />}
-                onClick={choose(() => {
-                  setMergeSource(null)
-                  setManaging(true)
-                })}
-              >
-                {t('loot.manage')}
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+              <Menu.Target>
+                <ActionIcon
+                  ref={menuButton}
+                  variant="default"
+                  size={44}
+                  onClick={() => remember(menuButton.current)}
+                  aria-label={t('store.menu')}
+                  title={t('common.moreActions')}
+                >
+                  <Ellipsis size={20} aria-hidden="true" />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item
+                  leftSection={<Plus size={18} aria-hidden="true" />}
+                  onClick={choose(() => setEditor({ item: null }))}
+                >
+                  {t('catalogue.create')}
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<PackagePlus size={18} aria-hidden="true" />}
+                  onClick={choose(() => {
+                    setMergeSource(null)
+                    setManaging(true)
+                  })}
+                >
+                  {t('loot.manage')}
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </div>
         </div>
         {filterParts.length > 0 && (
           <FilterLine

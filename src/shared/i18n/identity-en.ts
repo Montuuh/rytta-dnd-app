@@ -140,7 +140,7 @@ export const identityEn = {
   'members.freeCount_one': '{{count}} free',
   'members.freeCount_other': '{{count}} free',
   'members.openSheet': 'Open the sheet of {{name}}',
-  'members.sentExpires': 'Invitation sent · expires {{date}}',
+  'members.sentExpires': 'Invitation · expires {{date}}',
   'members.colMember': 'Member',
   'members.colCharacter': 'Character',
   'members.colRole': 'Role',

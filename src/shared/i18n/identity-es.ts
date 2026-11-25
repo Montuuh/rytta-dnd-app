@@ -143,7 +143,7 @@ export const identityEs = {
   'members.freeCount_one': '{{count}} libre',
   'members.freeCount_other': '{{count}} libres',
   'members.openSheet': 'Abrir la ficha de {{name}}',
-  'members.sentExpires': 'Invitación enviada · caduca el {{date}}',
+  'members.sentExpires': 'Invitación · caduca el {{date}}',
   'members.colMember': 'Miembro',
   'members.colCharacter': 'Personaje',
   'members.colRole': 'Rol',

@@ -1896,7 +1896,7 @@ test('RYT-180 Members: compact rows, sent invitations in the same list, no badge
   await expect(rows).toHaveCount(5)
   await expect(page.locator('main ul.member-list')).toHaveCount(1)
   await expect(rows.nth(4)).toContainText('wait@example.com')
-  await expect(rows.nth(4)).toContainText('Invitación enviada · caduca el')
+  await expect(rows.nth(4)).toContainText('Invitación · caduca el')
   await expect(page.locator('main .mantine-Badge-root')).toHaveCount(0)
   // One `···` per row, each opening a dialog.
   const more = page.locator('.member-row .member-action')

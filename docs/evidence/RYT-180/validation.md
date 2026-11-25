@@ -116,3 +116,14 @@ the 18 panel states measured.
 
 Real iOS Safari and Android, VoiceOver and TalkBack, hosted data. Error states of the level, the
 dice and character linking are covered by tests, not by captures. The other class themes.
+
+## After the first CI run
+
+- The CI format check failed on two files of the delivery (line breaks only) and one Members
+  test failed on the phone project: with CI's wider fonts the invitation status wrapped onto a
+  third line and the row measured 85px. Both were corrected in follow-up commits; the status now
+  reads "Invitation · expires {date}" so it fits on one line at the default size, and the test
+  allows the invitation row one wrap.
+- A third, narrow review round covered that formatting change and the shorter sentence: PASS.
+  Left open and low: where the status does wrap (150% text, 820px columns) the break point moves
+  with the width.
